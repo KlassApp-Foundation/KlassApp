@@ -41,7 +41,6 @@ class ReportsController extends Controller
     {
         //
         $query = \Request::getQueryString();
-        
         return view("/admin/reports/reports",['query' => $query]);
     }
 
