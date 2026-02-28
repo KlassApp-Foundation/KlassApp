@@ -22,10 +22,10 @@ class AcademicYearsTableSeeder extends Seeder
         {
             DB::table('academic_years')->Insert([
                 'school_id'    =>  $school->id,
-                'name'         =>  '2023-2024',
+                'name'         =>  '2026-2027',
                 'description'  =>  'This is Current Academic Year',
-                'start_date'   =>  '2023-06-01',
-                'end_date'     =>  '2024-04-30',
+                'start_date'   =>  '2026-02-05',
+                'end_date'     =>  '2026-12-03',
                 'status'       =>  '1',
                 'created_at'   =>   date("Y-m-d H:i:s"),
                 'updated_at'   =>   date("Y-m-d H:i:s"),
@@ -33,10 +33,10 @@ class AcademicYearsTableSeeder extends Seeder
 
             DB::table('academic_years')->Insert([
                 'school_id'    =>  $school->id,
-                'name'         =>  '2024-2025',
+                'name'         =>  '2027-2028',
                 'description'  =>  'This is Next Academic Year',
-                'start_date'   =>  '2024-06-01',
-                'end_date'     =>  '2025-04-30',
+                'start_date'   =>  '2027-02-04',
+                'end_date'     =>  '2027-12-2',
                 'status'       =>  '1',
                 'created_at'   =>   date("Y-m-d H:i:s"),
                 'updated_at'   =>   date("Y-m-d H:i:s"),

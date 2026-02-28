@@ -15,11 +15,9 @@ class PayCategoryTableSeeder extends Seeder
     public function run()
     {
          DB::table('pay_categories')->insert([
-          
             'name'             => 'Not Applicable',
             'created_at'        => date("Y-m-d H:i:s"),
             'updated_at'        => date("Y-m-d H:i:s"), 
-
         ]);
           DB::table('pay_categories')->insert([
           

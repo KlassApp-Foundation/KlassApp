@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call(UsergroupTableSeeder::class);
         $this->call(CountriesTableSeeder::class);
-        $this->call(StatesTableSeeder::class);
+        // $this->call(StatesTableSeeder::class); States removed for Uganda's version
         $this->call(CitiesTableSeeder::class);
         $this->call(PlansTableSeeder::class);
         $this->call(MailTemplatesSeeder::class);
