@@ -25,17 +25,24 @@ class UsersSiteAdminTableSeeder extends Seeder
             'usergroup_id' =>   "1"
         ]);
         //dd($siteAdmin->id);
+        $country=DB::table("countries")->where("name", "Uganda")->first();
+       $state=DB::table("states")->where("country_id", $country->id)->first();
+       $city=DB::table("cities")->where("name", "Kabale")->where("country_id", $country->id)->first();
+
+    if (!$country || !$state || !$city) {
+     throw new \Exception("Country, state or city not found. Check seeders!");
+     }
 
         Userprofile::factory()->create([
             'user_id'       =>  $siteAdmin->id,
             'usergroup_id'  =>  1,
-            'firstname'     =>  'siteadmin',
-            'lastname'      =>  'siteadmin',
+            'firstname'     =>  'John',
+            'lastname'      =>  'Doe',
             'profession'    =>  'admin',
-            'address'       =>  'Nammakal,Tamilnadu,India',
-            'country_id'    =>  '7',
-            'city_id'       =>  '31',
-            'state_id'      =>  '24',
+            'address'       =>  'Kabale Main Street',
+            'country_id'    =>  $country->id,
+            'city_id'       =>  $city->id,
+            'state_id'      =>  $state->id,
             'pincode'       =>  '625001'
         ]);
     }

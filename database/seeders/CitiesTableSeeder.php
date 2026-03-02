@@ -16,6 +16,9 @@ class CitiesTableSeeder extends Seeder
 {
     $now = now();
 
+    $country = DB::table("countries")->where("name", "Uganda")->first();
+    $state = DB::table("states")->where("name", "UG")->first();
+
     $districts = [
     'Kampala', 'Kabale', 'Abim', 'Adjumani', 'Agago', 'Alebtong', 'Amolatar', 'Amudat', 'Amuria', 'Amuru',
     'Apac', 'Arua', 'Budaka', 'Bududa', 'Bugiri', 'Bugweri', 'Buhweju', 'Buikwe', 'Bukedea', 'Bukomansimbi',
@@ -30,13 +33,10 @@ class CitiesTableSeeder extends Seeder
     'Nabilatuk','Nakapiripirit','Nakaseke','Nakasongola','Namayingo','Namisindwa','Namutumba','Napak','Nebbi','Ngora','Ntoroko','Ntungamo','Nwoya','Obongi','Omoro','Otuke','Oyam','Pader','Pakwach','Pallisa','Rakai', 'Rubanda', 'Rubirizi', 'Rukiga', 'Rukungiri', 'Rwampara', 'Serere', 'Sheema', 'Sironko', 'Soroti', 'Tororo',
     'Wakiso', 'Yumbe', 'Zombo'
     ];
-
-    $stateId = 1;
-
     foreach ($districts as $district) {
-        DB::table('cities')->insert([
-            'country_id' => 1,
-            'state_id'   => $stateId++,
+        DB::table(table: 'cities')->insert([
+            'country_id' => $country->id,
+            'state_id'   => $state->id,
             'name'       => $district,
             'status'     => 1,
             'created_at' => $now,
@@ -46,20 +46,23 @@ class CitiesTableSeeder extends Seeder
 
     // Foreign Cities (continue state_id)
     $foreignCities = [
-        ['country_id' => 2, 'name' => 'Nairobi'],
-        ['country_id' => 3, 'name' => 'Dodoma'],
-        ['country_id' => 5, 'name' => 'Bujumbura'],
-        ['country_id' => 6, 'name' => 'Juba'],
-        ['country_id' => 7, 'name' => 'Kinshasa'],
-        ['country_id' => 8, 'name' => 'Johannesburg'],
-        ['country_id' => 9, 'name' => 'Lagos'],
-        ['country_id' => 10, 'name' => 'Cairo'],
+        ['country' => "Kenya", 'name' => 'Nairobi'],
+        ['country' => "Tanzania", 'name' => 'Dodoma'],
+        ['country' => "Rwanda", 'name' => 'Bujumbura'],
+        ['country' => "Burundi", 'name' => 'Juba'],
+        ['country' => "South Sudan", 'name' => 'Kinshasa'],
+        ['country' => "DRC", 'name' => 'Johannesburg'],
+        ['country' => "Nigeria", 'name' => 'Lagos'],
+        ['country' => "Egypt", 'name' => 'Cairo'],
+        ['country' => "Other", 'name' => 'Other'],
+        
     ];
-
-    foreach ($foreignCities as $city) {
+foreach ($foreignCities as $city) {
+        $country = DB::table("countries")->where("name", $city["country"])->first();
+        $state = DB::table("states")->where("id", $country->id)->first();
         DB::table('cities')->insert([
-            'country_id' => $city['country_id'],
-            'state_id'   => $stateId++,
+            'country_id' => $country->id,
+            'state_id'   => $state->id,
             'name'       => $city['name'],
             'status'     => 1,
             'created_at' => $now,
@@ -67,14 +70,5 @@ class CitiesTableSeeder extends Seeder
         ]);
     }
 
-    // Final fallback option
-    DB::table('cities')->insert([
-        'country_id' => 11,
-        'state_id'   => $stateId,
-        'name'       => 'Other',
-        'status'     => 1,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ]);
 }
 }

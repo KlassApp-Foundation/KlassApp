@@ -28,11 +28,15 @@ class UsersSchoolAdminTableSeeder extends Seeder
             //admin
             $schoolAdmin = User::factory()->create([
                 'school_id'    =>   $school->id,
-                'name'         =>   'demoschool',
-                'email'        =>   'demoschool@gegok12.com',
-                'mobile_no'    =>   '2230456789',
+                'name'         =>   'Test School',
+                'email'        =>   'testsch@gmail.com',
+                'mobile_no'    =>   '+256781490899',
                 'usergroup_id' =>   3
             ]);
+
+       $country=DB::table("countries")->where("name", "Uganda")->first();
+       $state=DB::table("states")->where("country_id", $country->id)->first();
+       $city=DB::table("cities")->where("name", "Kabale")->where("country_id", $country->id)->first();
 
             Userprofile::factory()->create([
                 'school_id'     =>  $school->id,
@@ -42,9 +46,9 @@ class UsersSchoolAdminTableSeeder extends Seeder
                 'lastname'      =>  'school',
                 'profession'    =>  'admin',
                 'address'       =>  'Namakkal,Tamilnadu,India',
-                'country_id'    =>  7,
-                'city_id'       =>  31,
-                'state_id'      =>  24,
+                'country_id'    =>  $country->id,
+                'city_id'       =>  $city->id,
+                'state_id'      =>  $state->id,
                 'pincode'       =>  '625001'
             ]);
 
@@ -52,7 +56,7 @@ class UsersSchoolAdminTableSeeder extends Seeder
             $librarian =  User::factory()->create([
                 'school_id'    =>   $school->id,
                 'name'         =>   'librarian'.$school->id,
-                'email'        =>   'librarian'.$school->id.'@gegok12.com',
+                'email'        =>   'librarian'.$school->id.'@sch.com',
                 'mobile_no'    =>   '2230456701',
                 'usergroup_id' =>   8
             ]);
@@ -65,9 +69,9 @@ class UsersSchoolAdminTableSeeder extends Seeder
                 'lastname'      =>  'librarian',
                 'profession'    =>  'librarian',
                 'address'       =>  'Namakkal,Tamilnadu,India',
-                'country_id'    =>  7,
-                'city_id'       =>  31,
-                'state_id'      =>  24,
+                'country_id'    =>  $country->id,
+                'city_id'       =>  $city->id,
+                'state_id'      =>  $state->id,
                 'pincode'       =>  '625001'
             ]);
             
@@ -97,9 +101,9 @@ class UsersSchoolAdminTableSeeder extends Seeder
                 'lastname'      =>  'receptionist',
                 'profession'    =>  'others',
                 'address'       =>  'Namakkal,Tamilnadu,India',
-                'country_id'    =>  7,
-                'city_id'       =>  31,
-                'state_id'      =>  24,
+                'country_id'    =>  $country->id,
+                'city_id'       =>  $city->id,
+                'state_id'      =>  $state->id,
                 'pincode'       =>  '625001'
             ]);
             
@@ -129,9 +133,9 @@ class UsersSchoolAdminTableSeeder extends Seeder
                 'lastname'      =>  'accountant',
                 'profession'    =>  'others',
                 'address'       =>  'Namakkal,Tamilnadu,India',
-                'country_id'    =>  7,
-                'city_id'       =>  31,
-                'state_id'      =>  24,
+                'country_id'    =>  $country->id,
+                'city_id'       =>  $city->id,
+                'state_id'      =>  $state->id,
                 'pincode'       =>  '625001'
             ]);
             
@@ -161,9 +165,9 @@ class UsersSchoolAdminTableSeeder extends Seeder
                 'lastname'      =>  'stock_keeper',
                 'profession'    =>  'others',
                 'address'       =>  'Namakkal,Tamilnadu,India',
-                'country_id'    =>  7,
-                'city_id'       =>  31,
-                'state_id'      =>  24,
+                'country_id'    =>  $country->id,
+                'city_id'       =>  $city->id,
+                'state_id'      =>  $state->id,
                 'pincode'       =>  '625001'
             ]);
             
