@@ -129,7 +129,7 @@ class UserProfileController extends Controller
 
     public function create()
     {
-        $country = Country::where('status','1')->get(); 
+        $country = Country::all(); 
         $state = State::get();
         $city = City::get();
         $userprofile = Userprofile::with('country','state','city')->where('user_id', Auth::id())->first();

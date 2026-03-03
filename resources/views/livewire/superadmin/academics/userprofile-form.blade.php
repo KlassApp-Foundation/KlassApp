@@ -1,4 +1,4 @@
-{{-- SPDX-License-Identifier: MIT --}}
+SPDX-License-Identifier: MIT
   
   <div>
 
@@ -238,7 +238,7 @@
       <div class="tw-form-group w-full lg:w-1/2">
         <div class="lg:mr-8 ">
           <div class="mb-2">
-            <label for="relation" class="tw-form-label">City<span class="text-red-500">*</span></label>
+            <label for="relation" class="tw-form-label">City here<span class="text-red-500">*</span></label>
           </div>
           <div class="mb-2">
             <select class="tw-form-control w-full" wire:model.live="city">
@@ -273,7 +273,7 @@
       <div class="tw-form-group w-full lg:w-1/2">
         <div class="lg:mr-8 ">
           <div class="mb-2">
-            <label for="relation" class="tw-form-label">Country<span class="text-red-500">*</span></label>
+            <label for="relation" class="tw-form-label"> Country<span class="text-red-500">*</span></label>
           </div>
           <div class="mb-2">
             <select class="tw-form-control w-full" wire:model.live="country">

@@ -329,9 +329,9 @@ Route::get( '/student/show/medicalHistory/{name}', 'StudentDetailsController@sho
 Route::get( '/document/get/{name}', 'StudentDetailsController@showDocuments' );
 
 //marks
-// Route::get( '/marks/view/{standard_id}', 'MarkController@view' );
-// Route::get( '/marks/show', 'MarkController@show' );
-// Route::get( '/marks/viewmark/{standard_id}/{user_id}/{exam_id}/{academic_year_id}', 'MarkController@viewmark' );
+// Route::get('/marks/view/{standard_id}', 'MarkController@view' );
+// Route::get('/marks/show', 'MarkController@show' );
+// Route::get('/marks/viewmark/{standard_id}/{user_id}/{exam_id}/{academic_year_id}', 'MarkController@viewmark' );
 
 //class wall
 

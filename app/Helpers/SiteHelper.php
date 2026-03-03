@@ -58,7 +58,7 @@ class SiteHelper
     public static function getCountries()
     {
         return Cache::remember( "countries", env('CACHE_TIME'), function ()  {
-            $country = Country::where('status','1')->get();
+            $country = Country::all();
             return CountryResource::collection($country)->keyby('id');
         });
     }
