@@ -330,15 +330,16 @@
               @endif
             </div>
         </div>
-        <div class="flex lg:items-center flex-col lg:flex-row">
-          <div class="g-recaptcha" id="feedback-recaptcha" name="feedback-recaptch"
+        {{-- recaptcha quitted for now --}}
+        {{-- <div class="flex lg:items-center flex-col lg:flex-row">
+          <div class="g-recaptcha" id="feedback-recaptcha" name="feedback-recaptcha"
            data-sitekey="{{ env('GOOGLE_RECAPTCHA_KEY') }}"></div>
           @if ($errors->has('g-recaptcha-response'))
             <span class="invalid-feedback text-red-500 text-xs font-semibold" role="alert">
               <p>{{ $errors->first('g-recaptcha-response') }}</p>
             </span>
           @endif     
-        </div>
+        </div> --}}
         <div class="form-group my-6">
             <div class="w-full z-40">
               <button type="submit" class="btn btn-primary bg-red-600 text-gray-200 uppercase px-8 py-1 tracking-wider w-full z-40">
@@ -357,7 +358,7 @@
   </div>
 </div>
 </div>
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{{-- <script src="https://www.google.com/recaptcha/api.js" async defer></script> --}}
 @endsection
 
 @push('scripts')

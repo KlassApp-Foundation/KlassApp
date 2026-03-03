@@ -32,7 +32,7 @@ class TeacherNoteAddRequest extends FormRequest
 
         return [
             //
-            'notes'                 => 'nullable|checknotes',
+            'notes'=> 'nullable',
         ];
     }
 
@@ -40,7 +40,7 @@ class TeacherNoteAddRequest extends FormRequest
     {
         return [
             //
-            'notes.checknotes'                          => 'Enter Valid Notes',
+            'notes.checknotes'=> 'Enter Valid Notes',
         ];
     }
 }
