@@ -8,9 +8,7 @@ use App\Http\Controllers\Superadmin\DashboardController;
 });*/
 Route::get('/', 'WelcomeController');
 
-
 Auth::routes();
-
 
 
 //Impersonate as teacher

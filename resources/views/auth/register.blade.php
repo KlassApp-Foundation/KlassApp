@@ -352,6 +352,16 @@
               <a href="{{ url('/login') }}" class="underline text-blue-500 mx-1">Sign in</a> here
             </p>
           </div>
+          {{-- check --}}
+          <div class="mt-10 text-red-400 text-sm">
+@if ($errors->any())
+    <div>
+        @foreach ($errors->all() as $error)
+            <p>{{ $error }}</p>
+        @endforeach
+    </div>
+@endif
+          </div>
         </div>
       </form>
     @endif

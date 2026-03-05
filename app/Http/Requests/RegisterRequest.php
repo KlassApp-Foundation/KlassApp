@@ -102,7 +102,7 @@ class RegisterRequest extends FormRequest
             //
         ];
 
-        $rules['g-recaptcha-response']=['required', new ValidRecaptcha];
+        // $rules['g-recaptcha-response']=['required', new ValidRecaptcha];
 
         return $rules;
     }

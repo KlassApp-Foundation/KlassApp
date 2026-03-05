@@ -16,8 +16,7 @@ class UsersStudentTableSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
-    {
+    public function run(){
         $schools = School::where('status',1)->get();
         foreach ($schools as $school) 
         {

@@ -39,8 +39,7 @@ class LoginController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function showLoginForm()
-    {
+    public function showLoginForm(){
         return view('nova::auth.login');
     }
 
