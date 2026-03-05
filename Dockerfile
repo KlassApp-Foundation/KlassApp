@@ -21,7 +21,10 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 COPY . .
 # 
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
+     && php artisan config:cache \
+     && php artisan route:cache \
+     && php artisan view:cache
 
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
