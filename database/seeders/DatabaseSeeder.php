@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\result\CommentTableSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -74,5 +75,8 @@ class DatabaseSeeder extends Seeder
         
         $this->call(TrasactionAccountTableSeeder::class);
           
+        // added student performance tracking system for Ugandan schools
+        $this->call(CommentTableSeeder::class);
+        
     }
 }
