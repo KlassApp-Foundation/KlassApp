@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use Database\Seeders\result\CommentTableSeeder;
+use Database\Seeders\result\ExamTableSeeder;
+use Database\Seeders\result\MarksTableSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -77,6 +79,9 @@ class DatabaseSeeder extends Seeder
           
         // added student performance tracking system for Ugandan schools
         $this->call(CommentTableSeeder::class);
+        $this->call(ExamTableSeeder::class);
+        $this->call(MarksTableSeeder::class);
+
         
     }
 }
