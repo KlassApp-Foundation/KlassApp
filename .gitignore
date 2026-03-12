@@ -104,4 +104,3 @@ public/uploads/reports/*
 .env.staging
 /.vapor
 .vapor/*
-composer.lock
