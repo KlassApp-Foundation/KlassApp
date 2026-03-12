@@ -2,109 +2,38 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class UsergroupTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
-        //
-        DB::table('usergroups')->Insert([
-        	'id'           =>  '1',
-        	'name'         =>  'SiteAdmin',
-            'created_at'   =>   date("Y-m-d H:i:s"),
-            'updated_at'   =>   date("Y-m-d H:i:s"), 
-        ]);
+        $groups = [
+            ['id' => 1, 'name' => 'SiteAdmin'],
+            ['id' => 2, 'name' => 'SiteSubadmin'],
+            ['id' => 3, 'name' => 'SchoolAdmin'],
+            ['id' => 4, 'name' => 'SchoolSubadmin'],
+            ['id' => 5, 'name' => 'Teacher'],
+            ['id' => 6, 'name' => 'Student'],
+            ['id' => 7, 'name' => 'Parent'],
+            ['id' => 8, 'name' => 'Librarian'],
+            ['id' => 9, 'name' => 'OldStudent'],
+            ['id' => 10, 'name' => 'Receptionist'],
+            ['id' => 11, 'name' => 'Accountant'],
+            ['id' => 12, 'name' => 'Stock Keeper'],
+            ['id' => 13, 'name' => 'Non Teaching'],
+        ];
 
-
-        DB::table('usergroups')->Insert([
-        	'id'           =>  '2',
-        	'name'         =>  'SiteSubadmin',
-            'created_at'   =>   date("Y-m-d H:i:s"),
-            'updated_at'   =>   date("Y-m-d H:i:s"), 
-        ]);
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '3',
-            'name'          =>  'SchoolAdmin',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]);
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '4',
-            'name'          =>  'SchoolSubadmin',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]);
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '5',
-            'name'          =>  'Teacher',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]);
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '6',
-            'name'          =>  'Student',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]);
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '7',
-            'name'          =>  'Parent',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]); 
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '8',
-            'name'          =>  'Librarian',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]); 
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '9',
-            'name'          =>  'OldStudent',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]); 
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '10',
-            'name'          =>  'Receptionist',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]); 
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '11',
-            'name'          =>  'Accountant',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]); 
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '12',
-            'name'          =>  'Stock Keeper',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]);  
-
-        DB::table('usergroups')->Insert([
-            'id'            =>  '13',
-            'name'          =>  'Non Teaching',
-            'created_at'    =>  date("Y-m-d H:i:s"),
-            'updated_at'    =>  date("Y-m-d H:i:s"), 
-        ]);  
+        foreach ($groups as $group) {
+            DB::table('usergroups')->updateOrInsert(
+                ['id' => $group['id']], // match condition
+                [
+                    'name'       => $group['name'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
     }
 }

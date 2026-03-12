@@ -31,8 +31,9 @@ class CountriesTableSeeder extends Seeder
 
         //  loop through all countries
          foreach ($countries as $country){
-             DB::table('countries')->Insert([
-            'name'        => $country['name'],
+             DB::table('countries')->updateOrInsert(
+                ['name' => $country['name']],
+                [
             'short_name'  => $country['short_name'],
             'iso_code'    => $country['iso_code'],
             'tel_prefix'  => $country['tel_prefix'],

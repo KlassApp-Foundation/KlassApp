@@ -17,9 +17,10 @@ class UsersSiteAdminTableSeeder extends Seeder
      */
     public function run()
     {
-       $siteAdmin = User::factory()->create([
+       $siteAdmin = User::firstOrCreate (
+        ['email' => 'siteadmin@gmail.com'],
+        [
             'name'         =>   'siteadmin',
-            'email'        =>   'siteadmin@gegok12.com',
             'password'     =>   bcrypt('password'),
             'mobile_no'    =>   '1230456789',
             'usergroup_id' =>   "1"
@@ -33,8 +34,9 @@ class UsersSiteAdminTableSeeder extends Seeder
      throw new \Exception("Country, state or city not found. Check seeders!");
      }
 
-        Userprofile::factory()->create([
-            'user_id'       =>  $siteAdmin->id,
+        Userprofile::firstOrCreate(
+            ['user_id' =>  $siteAdmin->id,],
+            [
             'usergroup_id'  =>  1,
             'firstname'     =>  'John',
             'lastname'      =>  'Doe',

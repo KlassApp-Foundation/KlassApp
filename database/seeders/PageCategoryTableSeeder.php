@@ -2,31 +2,59 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use App\Models\School;
+use App\Models\AcademicYear;
 
 class PageCategoryTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        //
-        $categories = ['english' , 'general_knowledge' , 'mathematics' , 'others' , 'science' , 'social_studies' , 'tamil']; 
+        $now = now();
 
-        foreach ($categories as $category) {
+        // Practical categories for classroom pages/resources in Ugandan schools
+        $categories = [
+            'Lesson Notes & Plans',
+            'Schemes of Work',
+            'Past Papers & Mock Exams',
+            'Revision Materials',
+            'Video Lessons',
+            'Worksheets & Exercises',
+            'Reference Materials',
+            'Project Ideas & Activities',
+            'Assessment & Tests',
+            'Co-curricular Resources',
+            'General Knowledge & Life Skills',
+            'Others / Miscellaneous',
+        ];
 
-            DB::table('class_room_page_categories')->Insert([
-                'school_id' 		=>	1, 
-                'academic_year_id'	=>	1, 
-                'name' 				=>	$category,
-                'status'        	=>  '1',
-                'created_at'    	=>	date("Y-m-d H:i:s"),
-                'updated_at'    	=>  date("Y-m-d H:i:s"),
-            ]);
+        $schools = School::where('status', 1)->get();
+
+        foreach ($schools as $school) {
+            $academicYear = AcademicYear::where([
+                'school_id' => $school->id,
+                'status'    => 1,
+            ])->first();
+
+            if (! $academicYear) {
+                continue;
+            }
+
+            foreach ($categories as $name) {
+                DB::table('class_room_page_categories')->updateOrInsert(
+                    [
+                        'school_id'        => $school->id,
+                        'academic_year_id' => $academicYear->id,
+                        'name'             => $name,
+                    ],
+                    [
+                        'status'     => 1,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]
+                );
+            }
         }
     }
 }

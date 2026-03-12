@@ -2,50 +2,47 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class PayCategoryTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-         DB::table('pay_categories')->insert([
-            'name'             => 'Not Applicable',
-            'created_at'        => date("Y-m-d H:i:s"),
-            'updated_at'        => date("Y-m-d H:i:s"), 
-        ]);
-          DB::table('pay_categories')->insert([
-          
-            'name'             => 'User Defined',
-            'created_at'        => date("Y-m-d H:i:s"),
-            'updated_at'        => date("Y-m-d H:i:s"), 
+        $now = now();
 
-        ]);
-          DB::table('pay_categories')->insert([
-          
-            'name'             => 'On Attendance',
-            'created_at'        => date("Y-m-d H:i:s"),
-            'updated_at'        => date("Y-m-d H:i:s"), 
+        // Realistic Ugandan school payment/fee categories
+        $payCategories = [
+            'Registration / Admission Fee',
+            'Tuition / School Fees',
+            'Development Levy / Capital Fund',
+            'Meals / Lunch Fees',
+            'Transport / Bus Fees',
+            'Uniform & Books',
+            'Medical / Health Insurance',
+            'Co-curricular / Games & Sports',
+            'Examination Fees (UNEB / Mock)',
+            'Activity Fees',
+            'Late Payment Penalty',
+            'Miscellaneous / Other Fees',
+            'User Defined / Custom',
+            'Not Applicable',
+            // Optional extras used in some schools
+            'Boarding Fees',
+            'Caution Money / Deposit (refundable)',
+        ];
 
-        ]);
-           DB::table('pay_categories')->insert([
-          
-            'name'             => 'Computation',
-            'created_at'        => date("Y-m-d H:i:s"),
-            'updated_at'        => date("Y-m-d H:i:s"), 
-
-        ]);
-            /*DB::table('pay_categories')->insert([
-          
-            'name'             => 'Flat Rate',
-            'created_at'        => date("Y-m-d H:i:s"),
-            'updated_at'        => date("Y-m-d H:i:s"), 
-
-        ]);*/
+        foreach ($payCategories as $name) {
+            DB::table('pay_categories')->updateOrInsert(
+                ['name' => $name],
+                [
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
+        }
     }
 }

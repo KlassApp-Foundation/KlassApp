@@ -22,11 +22,12 @@ class BooksCategoryTableSeeder extends Seeder
 ", "Kiswahili", "Physical Education (PE)", "", 'Astro Physics', 'Arts', 'Economics', 'Computer Studies', 'History', 'Music', 'Technology', 'Magazines', 'Question Bank', 'Projects'];
             foreach ($categories as $category) 
             {
-                DB::table('books_category')->Insert([
+                DB::table('books_category')->updateOrInsert(
+                    ['category'  =>   $category,],
+                    [
                     'school_id'        =>   $school->id,
-                    'category'         =>   $category,
-                    'created_at'       =>   date("Y-m-d H:i:s"),
-                    'updated_at'       =>   date("Y-m-d H:i:s"),
+                    'created_at'       =>   now(),
+                    'updated_at'       =>   now(),
                 ]);
             }
         }

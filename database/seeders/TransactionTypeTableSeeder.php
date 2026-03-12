@@ -2,41 +2,44 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class TransactionTypeTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-        //
-         DB::table('transaction_types')->insert([
-            'name'          => 'Salary',
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
-        ]);
+        $now = now();
 
-         DB::table('transaction_types')->insert([
-            'name'          => 'Salary Advance',
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
-        ]);
+        // Realistic transaction types for Ugandan school payroll / payments
+        $transactionTypes = [
+            'Salary Payment',
+            'Salary Advance / Loan',
+            'Salary Deduction (NSSF / PAYE)',
+            'Bonus / Gratuity',
+            'Allowance (Housing / Transport)',
+            'Refund / Salary Return',
+            'Other Payments / Miscellaneous',
+            'Fine / Penalty',
+        ];
 
-         DB::table('transaction_types')->insert([
-            'name'          => 'Salary Return',
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
-        ]);
+        $count = 0;
 
-         DB::table('transaction_types')->insert([
-            'name'          => 'Other payments',
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
-        ]);
+        foreach ($transactionTypes as $name) {
+            DB::table('transaction_types')->updateOrInsert(
+                ['name' => $name],
+                [
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
+
+            $count++;
+        }
+
+        $this->command->info("Seeded {$count} transaction types for payroll.");
     }
 }

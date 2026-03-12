@@ -2,104 +2,127 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
-//use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\DB;
 
 class SettingsTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-         DB::table('settings')->insert([
-            'key'           => 'sitetitle',
-            'name'          => 'Site Title',
-            'description'   => 'Site Title to show in Browser Bar',
-            'value'         => 'School-Plus',
-            'field'         => '{"name":"value","label":"Value", "title":"Site Title" ,"type":"text"}',
-            'active'        => 1,
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
+        $now = now();
 
-        ]);
+        $settings = [
+            [
+                'key'         => 'sitetitle',
+                'name'        => 'Site Title',
+                'description' => 'Site title shown in browser tab / title bar',
+                'value'       => 'School-Plus',
+                'field'       => json_encode([
+                    'name'  => 'value',
+                    'label' => 'Value',
+                    'title' => 'Site Title',
+                    'type'  => 'text',
+                ]),
+                'active'      => 1,
+            ],
 
-        DB::table('settings')->insert([
-            'key'           => 'sitename',
-            'name'          => 'Site Name',
-            'description'   => 'This site name is used in emails and copyrights',
-            'value'         => 'School-Plus',
-            'field'         => '{"name":"value","label":"Value", "title":"Site Title" ,"type":"text"}',
-            'active'        => 1,
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
+            [
+                'key'         => 'sitename',
+                'name'        => 'Site Name',
+                'description' => 'Name used in emails, footer, copyrights, etc.',
+                'value'       => 'School-Plus',
+                'field'       => json_encode([
+                    'name'  => 'value',
+                    'label' => 'Value',
+                    'title' => 'Site Name',
+                    'type'  => 'text',
+                ]),
+                'active'      => 1,
+            ],
 
-        ]);
+            [
+                'key'         => 'sitelogo',
+                'name'        => 'Site Logo',
+                'description' => 'Website logo. Recommended size: 220px × 45px',
+                'value'       => 'images/logo.png',
+                'field'       => json_encode([
+                    'name'  => 'value',
+                    'label' => 'Value',
+                    'type'  => 'browse',
+                ]),
+                'active'      => 1,
+            ],
 
-        DB::table('settings')->insert([
-            'key'           => 'sitelogo',
-            'name'          => 'Site Logo',
-            'description'   => 'Logo of the website. Recommended Size : 220px (w) x 45px (h)',
-            'value'         => 'images/logo.png',
-            'field'         => '{"name":"value","label":"Value" ,"type":"browse"}',
-            'active'        => 1,
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
+            [
+                'key'         => 'favicon',
+                'name'        => 'Favicon',
+                'description' => 'Website favicon (browser tab icon)',
+                'value'       => 'images/favicon.png',
+                'field'       => json_encode([
+                    'name'  => 'value',
+                    'label' => 'Value',
+                    'title' => 'Site Favicon',
+                    'type'  => 'browse',
+                    'disk'  => 'uploads',
+                ]),
+                'active'      => 1,
+            ],
 
-        ]);
+            [
+                'key'         => 'maintenance',
+                'name'        => 'Maintenance Mode',
+                'description' => 'Enable/disable site-wide maintenance mode',
+                'value'       => '0',
+                'field'       => json_encode([
+                    'name'    => 'value',
+                    'label'   => 'Maintenance',
+                    'type'    => 'radio',
+                    'options' => ['1' => 'Active', '0' => 'Inactive'],
+                ]),
+                'active'      => 1,
+            ],
 
-       
-    
-        DB::table('settings')->insert(
-        [
-            'key'           => "favicon",
-            'name'          => "Favicon",
-            'description'   => "Site Favicon",
-            'value'         => 'images/favicon.png',
-            'field'         => '{"name":"value","label":"Value", "title":"Site Favicon" ,"type":"browse", "disk":"uploads"}',
-            'active'        => 1,
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"),  
-        ]);       
-      
-    
-      DB::table('settings')->insert([
-            'key'           => 'maintenance',
-            'name'          => 'Maintenance',
-            'description'   => 'Maintenance',
-            'value'         => 0,
-            'field'         => '{"name":"value","label":"Maintenance" ,"type":"radio", "options":{"1":"Active", "0":"Inactive"}}',
-            'active'        => 1,
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
+            [
+                'key'         => 'login_status',
+                'name'        => 'Login',
+                'description' => 'Allow users to log in',
+                'value'       => '1',
+                'field'       => json_encode([
+                    'name'    => 'value',
+                    'label'   => 'User Login',
+                    'type'    => 'radio',
+                    'options' => ['1' => 'Active', '0' => 'Inactive'],
+                ]),
+                'active'      => 1,
+            ],
 
-        ]);
-       DB::table('settings')->insert([
-            'key'           => 'login_status',
-            'name'          => 'login',
-            'description'   => 'login',
-            'value'         => 1,
-            'field'         => '{"name":"value","label":"Userlogin" ,"type":"radio", "options":{"1":"Active", "0":"Inactive"}}',
-            'active'        => 1,
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
+            [
+                'key'         => 'register_status',
+                'name'        => 'Registration',
+                'description' => 'Allow new user registrations',
+                'value'       => '1',
+                'field'       => json_encode([
+                    'name'    => 'value',
+                    'label'   => 'Register Status',
+                    'type'    => 'radio',
+                    'options' => ['1' => 'Active', '0' => 'Inactive'],
+                ]),
+                'active'      => 1,
+            ],
+        ];
 
-        ]);
-        DB::table('settings')->insert([
-            'key'           => 'register_status',
-            'name'          => 'Register Status',
-            'description'   => 'Register Status',
-            'value'         => 1,
-            'field'         => '{"name":"value","label":"Register Status" ,"type":"radio", "options":{"1":"Active", "0":"Inactive"}}',
-            'active'        => 1,
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
-
-        ]);
-
-      
+        foreach ($settings as $setting) {
+            DB::table('settings')->updateOrInsert(
+                ['key' => $setting['key']],  // unique by key
+                [
+                    ...$setting,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
+        }
     }
 }

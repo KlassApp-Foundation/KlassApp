@@ -24,9 +24,11 @@ class StatesTableSeeder extends Seeder
         ];
       foreach($states as $state){
         $country = DB::table("countries")->where("name", $state['country'])->first();
-        DB::table("states")->insert([
-        'country_id'=> $country->id,
-        'name'      => $state["name"],
+        DB::table("states")->updateOrInsert(
+          ['country_id'=> $country->id,
+           'name' => $state["name"],
+          ],
+          [
         'status'    => $state['status'],
         'created_at'=> date("Y-m-d H:i:s"),
         'updated_at'=> date("Y-m-d H:i:s"), 

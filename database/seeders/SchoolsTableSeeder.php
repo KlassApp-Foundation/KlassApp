@@ -2,39 +2,72 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SchoolsTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-        DB::table('schools')->Insert([
-            'id'           =>  '1',
-            'name'         =>  'Demo School',
-            'email'        =>  'demoschool@gegok12.com',
-            'phone'        =>  '9500979461',
-            'status'       =>  '1',
-            'slug'         =>  'demo-school',
-            'created_at'   =>   date("Y-m-d H:i:s"),
-            'updated_at'   =>   date("Y-m-d H:i:s"),
-        ]);
+        $now = now();
 
+        // Super safe, generic demo schools — no real names or emails
+        $fakeSchools = [
+            [
+                'name'    => 'Test School One',
+                'email'   => 'testschoolone@gmail.com',
+                'phone'   => '+256 700 111 222',
+                'slug'    => 'test-school-one',
+                'status'  => 1,
+            ],
+            [
+                'name'    => 'Demo Academy Uganda',
+                'email'   => 'demoacademyug@gmail.com',
+                'phone'   => '+256 701 333 444',
+                'slug'    => 'demo-academy-uganda',
+                'status'  => 1,
+            ],
+            [
+                'name'    => 'Sample Primary & Secondary School',
+                'email'   => 'sampleschoolkampala@gmail.com',
+                'phone'   => '+256 702 555 666',
+                'slug'    => 'sample-primary-secondary',
+                'status'  => 1,
+            ],
+            [
+                'name'    => 'Kampala Test College',
+                'email'   => 'kampalatestcollege@gmail.com',
+                'phone'   => '+256 703 777 888',
+                'slug'    => 'kampala-test-college',
+                'status'  => 1,
+            ],
+            [
+                'name'    => 'Future Stars International School',
+                'email'   => 'futurestarsdemo@gmail.com',
+                'phone'   => '+256 704 999 000',
+                'slug'    => 'future-stars-international',
+                'status'  => 1,
+            ],
+        ];
 
-        // DB::table('schools')->Insert([
-        //     'id'           =>  '2',
-        //     'name'         =>  'Model School Two',
-        //     'email'        =>  'modelschool2@gegok12.com',
-        //     'phone'        =>  '8999911112',
-        //     'status'       =>  '1',
-        //     'slug'         =>  'model-school-two',
-        //     'created_at'   =>   date("Y-m-d H:i:s"),
-        //     'updated_at'   =>   date("Y-m-d H:i:s"),
-        // ]);
+        foreach ($fakeSchools as $school) {
+            DB::table('schools')->updateOrInsert(
+                ['slug' => $school['slug']],
+                [
+                    'name'       => $school['name'],
+                    'email'      => $school['email'],
+                    'phone'      => $school['phone'],
+                    'status'     => $school['status'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
+        }
+
+        $this->command->info('Seeded ' . count($fakeSchools) . ' safe demo Ugandan schools.');
     }
 }

@@ -2,52 +2,80 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
-use App\Helpers\SiteHelper;
+use App\Models\School;
 use App\Models\Standard;
 use App\Models\Section;
-use App\Models\School;
 use App\Models\User;
+use App\Models\StandardLink;
+use App\Models\RoleUser;
+use App\Helpers\SiteHelper;
 
 class StandardsLinkTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-        //
-        $schools = School::where('status',1)->get();
-        foreach ($schools as $school) 
-        {
-            $standards = Standard::where('school_id',$school->id)->get();
-            $sections = Section::where('school_id',$school->id)->get();
-            $teachers = User::where([['school_id',$school->id],['usergroup_id', 5]])->pluck('id')->toArray();
+        $schools = School::where('status', 1)->get();
 
-            foreach($standards as $stdKey => $standard)
-            {
-                foreach ($sections as $secKey => $section)
-                {
-                    $academic_year = SiteHelper::getAcademicyear($school->id);
-                    $sectionRef = $stdKey * $sections->count() + $secKey + 1;
-                    factory(\App\Models\StandardLink::class, 1)->create([
+        if ($schools->isEmpty()) {
+            $this->command->warn('No active schools found. Skipping standards linking.');
+            return;
+        }
 
-                        'school_id'         =>  $standard->school_id,
-                        'academic_year_id'  =>  $academic_year->id,
-                        'standard_id'       =>  $standard->id,
-                        'section_id'        =>  $section->id,
-                        'class_teacher_id'  =>  $teachers[$sectionRef]
+        $classTeacherRoleId = 5; // Assuming role_id=5 is 'class_coordinator' from your earlier roles seeder
+
+        foreach ($schools as $school) {
+            $standards = Standard::where('school_id', $school->id)->get();
+            $sections  = Section::where('school_id', $school->id)->get();
+            $teachers  = User::where([
+                'school_id'     => $school->id,
+                'usergroup_id'  => 5, // teachers
+            ])->pluck('id')->toArray();
+
+            if ($standards->isEmpty() || $sections->isEmpty() || empty($teachers)) {
+                $this->command->info("Skipping school ID {$school->id} — missing standards, sections, or teachers.");
+                continue;
+            }
+
+            $academicYear = SiteHelper::getAcademicyear($school->id);
+
+            if (! $academicYear) {
+                $this->command->warn("No active academic year for school ID {$school->id}. Skipping.");
+                continue;
+            }
+
+            $teacherIndex = 0; // Cycle through teachers if not enough
+
+            foreach ($standards as $standard) {
+                foreach ($sections as $section) {
+                    // Cycle through available teachers
+                    $classTeacherId = $teachers[$teacherIndex % count($teachers)];
+                    $teacherIndex++;
+
+                    // Create StandardLink
+                    StandardLink::factory()->create([
+                        'school_id'         => $school->id,
+                        'academic_year_id'  => $academicYear->id,
+                        'standard_id'       => $standard->id,
+                        'section_id'        => $section->id,
+                        'class_teacher_id'  => $classTeacherId,
                     ]);
 
-                    factory(\App\Models\RoleUser::class, 1)->create([
-                        'user_id'   =>  $teachers[$sectionRef],
-                        'role_id'   =>  4, 
-                    ]);
+                    // Assign class coordinator role to this teacher for this class
+                    RoleUser::firstOrCreate(
+                        [
+                            'user_id' => $classTeacherId,
+                            'role_id' => $classTeacherRoleId,
+                        ],
+                        [] // no extra fields needed
+                    );
                 }
             }
+
+            $this->command->info("Linked standards & sections for school: {$school->name} ({$standards->count()} × {$sections->count()} combos)");
         }
     }
 }

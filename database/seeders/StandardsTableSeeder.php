@@ -2,55 +2,65 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use App\Models\School;
 
 class StandardsTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-        $standards = ['prekg','lkg','ukg','1','2','3','4','5','6','7','8','9','10','11','12'];
-        $order = ['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15'];
+        $now = now();
 
-        for($i = 0 , $standards , $order ; $i < count($standards) ; $i++) 
-        {
-            DB::table('standards')->Insert([
-                'school_id'         =>  '1',
-                'name'              =>  $standards[$i],
-                'order'             =>  $order[$i],
-                'status'            =>  '1',
-                'created_at'        =>   date("Y-m-d H:i:s"),
-                'updated_at'        =>   date("Y-m-d H:i:s"),
-            ]);
+        // Realistic Ugandan school levels / classes
+        // name = what teachers/students call it
+        // order = for sorting in dropdowns/reports
+        $ugandaStandards = [
+            ['name' => 'Baby Class',     'order' => '01'],
+            ['name' => 'Middle Class',    'order' => '02'],
+            ['name' => 'Top Class',       'order' => '03'],
+            ['name' => 'Primary 1 (P1)',  'order' => '04'],
+            ['name' => 'Primary 2 (P2)',  'order' => '05'],
+            ['name' => 'Primary 3 (P3)',  'order' => '06'],
+            ['name' => 'Primary 4 (P4)',  'order' => '07'],
+            ['name' => 'Primary 5 (P5)',  'order' => '08'],
+            ['name' => 'Primary 6 (P6)',  'order' => '09'],
+            ['name' => 'Primary 7 (P7)',  'order' => '10'],
+            ['name' => 'Senior 1 (S1)',   'order' => '11'],
+            ['name' => 'Senior 2 (S2)',   'order' => '12'],
+            ['name' => 'Senior 3 (S3)',   'order' => '13'],
+            ['name' => 'Senior 4 (S4)',   'order' => '14'],
+            ['name' => 'Senior 5 (S5)',   'order' => '15'],
+            ['name' => 'Senior 6 (S6)',   'order' => '16'],
+        ];
 
-            // DB::table('standards')->Insert([
-            //     'school_id'         =>  '2',
-            //     'name'              =>  $standards[$i],
-            //     'order'             =>  $order[$i],
-            //     'status'            =>  '1',
-            //     'created_at'        =>   date("Y-m-d H:i:s"),
-            //     'updated_at'        =>   date("Y-m-d H:i:s"),
-            // ]);
+        $schools = School::where('status', 1)->get();
+
+        if ($schools->isEmpty()) {
+            $this->command->warn('No active schools found. Skipping standards seeding.');
+            return;
         }
 
-        /*$standardlist = ['prekg' , 'lkg' , 'ukg' , 1 , 2 , 3 , 4 , 5];
-        $orderlist = ['01','02','03','04','05','06','07','08'];
+        foreach ($schools as $school) {
+            foreach ($ugandaStandards as $index => $level) {
+                DB::table('standards')->updateOrInsert(
+                    [
+                        'school_id' => $school->id,
+                        'name'      => $level['name'],
+                    ],
+                    [
+                        'order'      => $level['order'],
+                        'status'     => 1,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]
+                );
+            }
 
-        for($i = 0 ; $i < count($standardlist) ; $i++) 
-        {
-            DB::table('standards')->Insert([
-                'school_id'         =>  '3',
-                'name'              =>  $standardlist[$i],
-                'order'             =>  $orderlist[$i],
-                'status'            =>  '1',
-                'created_at'        =>   date("Y-m-d H:i:s"),
-                'updated_at'        =>   date("Y-m-d H:i:s"),
-            ]);
-        }*/
+            $this->command->info("Seeded Ugandan standards for school: {$school->name}");
+        }
     }
 }

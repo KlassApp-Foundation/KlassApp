@@ -160,7 +160,6 @@ class UsersTableSeeder extends Seeder
                 ]);
         }
 
-
         $librarian =  factory(App\Models\User::class)->create([
             'school_id'    =>   '1',
             'name'         =>   'librarian',

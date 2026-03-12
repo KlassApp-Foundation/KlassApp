@@ -2,50 +2,87 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class NotificationsTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-        //
-        DB::table('notifications')->insert([
-            'id'             	=> '22f33755-8db7-440b-a5ee-74d13120ac81',
-            'type'              => 'App\Notifications\NewMessageNotification',
-            'notifiable_type'	=> 'App\Models\User',
-            'notifiable_id'     => 2,
-            'data'     			=> '{"data":"You Have Been Removed From Video Room"}',
-            'read_at'      		=> null,
-            'created_at'        => date("Y-m-d H:i:s"),
-            'updated_at'        => date("Y-m-d H:i:s"), 
-        ]);
+        $notifications = [
+            [
+                'id'              => Str::uuid()->toString(),
+                'type'            => 'App\\Notifications\\NewMessageNotification',
+                'notifiable_type' => 'App\\Models\\User',
+                'notifiable_id'   => 2,
+                'data'            => json_encode([
+                    'message' => 'You have been removed from Video Room #45',
+                    'room_id' => 45,
+                    'actor'   => 'System',
+                ]),
+                'read_at'         => null,
+            ],
 
-        DB::table('notifications')->insert([
-            'id'             	=> '5a18e09a-48c7-4321-a67a-b598c0ca8a11',
-            'type'              => 'App\Notifications\NewMessageNotification',
-            'notifiable_type'	=> 'App\Models\User',
-            'notifiable_id'     => 2,
-            'data'     			=> '{"data":"Briana Wiegand Disliked Comment In Your Post"}',
-            'read_at'      		=> null,
-            'created_at'        => date("Y-m-d H:i:s"),
-            'updated_at'        => date("Y-m-d H:i:s"), 
-        ]);
-         
-        DB::table('notifications')->insert([
-            'id'             	=> '943c310f-1535-42ab-8573-2aa3cb83b842',
-            'type'              => 'App\Notifications\NewMessageNotification',
-            'notifiable_type'   => 'App\Models\User',
-            'notifiable_id'     => 2,
-            'data'     			=> '{"data":"Briana Wiegand Removed Dislike For Comment In Your Post"}',
-            'read_at'      		=> null,
-            'created_at'        => date("Y-m-d H:i:s"),
-            'updated_at'        => date("Y-m-d H:i:s"), 
-        ]);
+            [
+                'id'              => Str::uuid()->toString(),
+                'type'            => 'App\\Notifications\\LikeNotification',
+                'notifiable_type' => 'App\\Models\\User',
+                'notifiable_id'   => 2,
+                'data'            => json_encode([
+                    'message'    => 'Briana Wiegand liked your comment on post #128',
+                    'post_id'    => 128,
+                    'comment_id' => 456,
+                    'actor'      => 'Briana Wiegand',
+                    'actor_id'   => 15,
+                ]),
+                'read_at'         => null,
+            ],
+
+            [
+                'id'              => Str::uuid()->toString(),
+                'type'            => 'App\\Notifications\\LikeNotification',
+                'notifiable_type' => 'App\\Models\\User',
+                'notifiable_id'   => 2,
+                'data'            => json_encode([
+                    'message'    => 'Briana Wiegand removed their like from your comment on post #128',
+                    'post_id'    => 128,
+                    'comment_id' => 456,
+                    'actor'      => 'Briana Wiegand',
+                    'actor_id'   => 15,
+                ]),
+                'read_at'         => now()->subHours(2), // Mark one as read for realism
+            ],
+
+            // Bonus: add one more variety (e.g. unread reply notification)
+            [
+                'id'              => Str::uuid()->toString(),
+                'type'            => 'App\\Notifications\\ReplyNotification',
+                'notifiable_type' => 'App\\Models\\User',
+                'notifiable_id'   => 2,
+                'data'            => json_encode([
+                    'message'    => 'John Doe replied to your post: "Great insight!"',
+                    'post_id'    => 201,
+                    'reply_id'   => 789,
+                    'actor'      => 'John Doe',
+                    'actor_id'   => 7,
+                ]),
+                'read_at'         => null,
+            ],
+        ];
+
+        foreach ($notifications as $notification) {
+            DB::table('notifications')->updateOrInsert(
+                ['id' => $notification['id']],
+                [
+                    ...$notification,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
     }
 }

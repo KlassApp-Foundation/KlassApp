@@ -15,9 +15,9 @@ class TrasactionAccountTableSeeder extends Seeder
     public function run()
     {
         //
-        DB::table('transaction_accounts')->insert([
-            'school_id'     =>  '1',
-            'user_id'       =>  '1',
+        DB::table('transaction_accounts')->updateOrInsert(
+            ['school_id' =>  '1', 'user_id' =>  '1'],
+            [
             'account_number'=>'348738747833',
             'ifsc_code'     =>'CASH123',
             'name'          => 'Cash Account',

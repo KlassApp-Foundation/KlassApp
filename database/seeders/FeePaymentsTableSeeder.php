@@ -23,8 +23,9 @@ class FeePaymentsTableSeeder extends Seeder
 	 ['id'=> '5','fee_id'=> '1','user_id'=> '6','paid_on'=> '2020-06-02','notify_parent' => '1','status'=> '1',]
 	 ];
 	 foreach($fee_payments as $fee_payment){
-		DB::table("fee_payments")->insert([
-               'id' 			=> $fee_payment['id'],
+		DB::table("fee_payments")->updateOrInsert(
+			['id' => $fee_payment['id'],],
+			[ 
   				'fee_id' 		=> $fee_payment['fee_id'],
   				'user_id' 		=> $fee_payment['user_id'],
   				'paid_on' 		=> $fee_payment['paid_on'],

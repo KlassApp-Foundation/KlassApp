@@ -2,85 +2,81 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
-use App\Models\AcademicYear;
-use App\Helpers\SiteHelper;
+use Illuminate\Support\Facades\DB;
 use App\Models\School;
+use App\Models\AcademicYear;
 
 class LeaveTypesTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-        //
-        $schools = School::where('status',1)->get();
-        foreach ($schools as $school) 
-        {
-            $academic_year = AcademicYear::where([['school_id',$school->id],['status',1]])->first();
-            DB::table('leave_types')->Insert([
-                'school_id'  		=>  $school->id,
-                'academic_year_id'	=>  $academic_year->id,
-                'name'				=>	'Earned Leave or Privilege Leave',
-                'max_no_of_days'	=>	2,
-                'status'        	=>	1,
-                'created_at'    	=>  date("Y-m-d H:i:s"),
-                'updated_at'    	=>  date("Y-m-d H:i:s"), 
-            ]);
+        $now = now();
 
-            DB::table('leave_types')->Insert([
-                'school_id'  		=>  $school->id,
-                'academic_year_id'	=>  $academic_year->id,
-                'name'				=>	'Casual Leave',
-                'max_no_of_days'	=>	1,
-                'status'        	=>	1,
-                'created_at'    	=>  date("Y-m-d H:i:s"),
-                'updated_at'    	=>  date("Y-m-d H:i:s"), 
-            ]);
+        // Common leave types for schools (Uganda context - adjust days if needed)
+        $leaveTypes = [
+            [
+                'name'           => 'Earned Leave / Privilege Leave',
+                'max_no_of_days' => 2,
+                'status'         => 1,
+            ],
+            [
+                'name'           => 'Casual Leave',
+                'max_no_of_days' => 1,
+                'status'         => 1,
+            ],
+            [
+                'name'           => 'Sick Leave / Medical Leave',
+                'max_no_of_days' => 1,
+                'status'         => 1,
+            ],
+            [
+                'name'           => 'Maternity Leave',
+                'max_no_of_days' => 45,   // Uganda labor law allows ~60 days paid, but 45 is common in some sectors
+                'status'         => 1,
+            ],
+            [
+                'name'           => 'Quarantine Leave',
+                'max_no_of_days' => 5,
+                'status'         => 1,
+            ],
+            [
+                'name'           => 'Study Leave / Sabbatical Leave',
+                'max_no_of_days' => 7,
+                'status'         => 1,
+            ],
+        ];
 
-            DB::table('leave_types')->Insert([
-                'school_id'  		=>  $school->id,
-                'academic_year_id'	=>  $academic_year->id,
-                'name'				=>	'Sick Leave or Medical Leave',
-                'max_no_of_days'	=>	1,
-                'status'        	=>	1,
-                'created_at'    	=>  date("Y-m-d H:i:s"),
-                'updated_at'    	=>  date("Y-m-d H:i:s"), 
-            ]);
+        $schools = School::where('status', 1)->get();
 
-            DB::table('leave_types')->Insert([
-                'school_id'  		=>  $school->id,
-                'academic_year_id'	=>  $academic_year->id,
-                'name'				=>	'Maternity Leave',
-                'max_no_of_days'	=>	45,
-                'status'        	=>	1,
-                'created_at'    	=>  date("Y-m-d H:i:s"),
-                'updated_at'    	=>  date("Y-m-d H:i:s"), 
-            ]);
+        foreach ($schools as $school) {
+            $academicYear = AcademicYear::where([
+                'school_id' => $school->id,
+                'status'    => 1,
+            ])->first();
 
-            DB::table('leave_types')->Insert([
-                'school_id'  		=>  $school->id,
-                'academic_year_id'	=>  $academic_year->id,
-                'name'				=>	'Quarantine Leave',
-                'max_no_of_days'	=>	5,
-                'status'        	=>	1,
-                'created_at'    	=>  date("Y-m-d H:i:s"),
-                'updated_at'    	=>  date("Y-m-d H:i:s"),  
-            ]);
+            if (! $academicYear) {
+                continue; // Skip if no active academic year
+            }
 
-            DB::table('leave_types')->Insert([
-                'school_id'  		=>  $school->id,
-                'academic_year_id'	=>  $academic_year->id,
-                'name'				=>	'Study Leave or Sabbatical Leave',
-                'max_no_of_days'	=>	7,
-                'status'        	=>	1,
-                'created_at'    	=>  date("Y-m-d H:i:s"),
-                'updated_at'    	=>  date("Y-m-d H:i:s"),  
-            ]);
+            foreach ($leaveTypes as $type) {
+                DB::table('leave_types')->updateOrInsert(
+                    [
+                        'school_id'        => $school->id,
+                        'academic_year_id' => $academicYear->id,
+                        'name'             => $type['name'],
+                    ],
+                    [
+                        'max_no_of_days' => $type['max_no_of_days'],
+                        'status'         => $type['status'],
+                        'created_at'     => $now,
+                        'updated_at'     => $now,
+                    ]
+                );
+            }
         }
     }
 }

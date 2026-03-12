@@ -2,183 +2,123 @@
 
 namespace Database\Seeders;
 
-use DB;
 use Illuminate\Database\Seeder;
-use App\Models\AcademicYear;
-use App\Helpers\SiteHelper;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Models\School;
+use App\Models\AcademicYear;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\TeacherProfile;
-use Carbon\Carbon;
 
 class UsersSchoolAdminTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        $schools = School::where('status',1)->get();
+        $schools = School::where('status', 1)->get();
 
-        foreach ($schools as $school) 
-        {
-            //admin
-            $schoolAdmin = User::factory()->create([
-                'school_id'    =>   $school->id,
-                'name'         =>   'Test School',
-                'email'        =>   'testsch@gmail.com',
-                'mobile_no'    =>   '+256781490899',
-                'usergroup_id' =>   3
-            ]);
-
-       $country=DB::table("countries")->where("name", "Uganda")->first();
-       $state=DB::table("states")->where("country_id", $country->id)->first();
-       $city=DB::table("cities")->where("name", "Kabale")->where("country_id", $country->id)->first();
-
-            Userprofile::factory()->create([
-                'school_id'     =>  $school->id,
-                'user_id'       =>  $schoolAdmin->id,
-                'usergroup_id'  =>  3,
-                'firstname'     =>  'demo',
-                'lastname'      =>  'school',
-                'profession'    =>  'admin',
-                'address'       =>  'Namakkal,Tamilnadu,India',
-                'country_id'    =>  $country->id,
-                'city_id'       =>  $city->id,
-                'state_id'      =>  $state->id,
-                'pincode'       =>  '625001'
-            ]);
-
-            //librarian
-            $librarian =  User::factory()->create([
-                'school_id'    =>   $school->id,
-                'name'         =>   'librarian'.$school->id,
-                'email'        =>   'librarian'.$school->id.'@sch.com',
-                'mobile_no'    =>   '2230456701',
-                'usergroup_id' =>   8
-            ]);
-
-            Userprofile::factory()->create([
-                'school_id'     =>  $librarian->school_id,
-                'user_id'       =>  $librarian->id,
-                'usergroup_id'  =>  $librarian->usergroup_id,
-                'firstname'     =>  'librarian',
-                'lastname'      =>  'librarian',
-                'profession'    =>  'librarian',
-                'address'       =>  'Namakkal,Tamilnadu,India',
-                'country_id'    =>  $country->id,
-                'city_id'       =>  $city->id,
-                'state_id'      =>  $state->id,
-                'pincode'       =>  '625001'
-            ]);
-            
-            $academic_year = AcademicYear::where([['school_id',$school->id],['status',1]])->first();
-            TeacherProfile::factory()->create([
-                'school_id'         =>  $librarian->school_id,
-                'academic_year_id'  =>  $academic_year->id,
-                'user_id'           =>  $librarian->id,
-                'designation'       =>  'librarian',
-                'status'            =>  1,
-            ]);
-
-            //receptionist
-            $receptionist =  User::factory()->create([
-                'school_id'    =>   $school->id,
-                'name'         =>   'receptionist'.$school->id,
-                'email'        =>   'receptionist'.$school->id.'@gegok12.com',
-                'mobile_no'    =>   '2230456702',
-                'usergroup_id' =>   10
-            ]);
-
-            Userprofile::factory()->create([
-                'school_id'     =>  $receptionist->school_id,
-                'user_id'       =>  $receptionist->id,
-                'usergroup_id'  =>  $receptionist->usergroup_id,
-                'firstname'     =>  'receptionist',
-                'lastname'      =>  'receptionist',
-                'profession'    =>  'others',
-                'address'       =>  'Namakkal,Tamilnadu,India',
-                'country_id'    =>  $country->id,
-                'city_id'       =>  $city->id,
-                'state_id'      =>  $state->id,
-                'pincode'       =>  '625001'
-            ]);
-            
-            $academic_year = AcademicYear::where([['school_id',$school->id],['status',1]])->first();
-            TeacherProfile::factory()->create([
-                'school_id'         =>  $receptionist->school_id,
-                'academic_year_id'  =>  $academic_year->id,
-                'user_id'           =>  $receptionist->id,
-                'designation'       =>  'receptionist',
-                'status'            =>  1,
-            ]);
-
-            //accountant
-            $accountant =  User::factory()->create([
-                'school_id'    =>   $school->id,
-                'name'         =>   'accountant'.$school->id,
-                'email'        =>   'accountant'.$school->id.'@gegok12.com',
-                'mobile_no'    =>   '2230456703',
-                'usergroup_id' =>   11
-            ]);
-
-            Userprofile::factory()->create([
-                'school_id'     =>  $accountant->school_id,
-                'user_id'       =>  $accountant->id,
-                'usergroup_id'  =>  $accountant->usergroup_id,
-                'firstname'     =>  'accountant',
-                'lastname'      =>  'accountant',
-                'profession'    =>  'others',
-                'address'       =>  'Namakkal,Tamilnadu,India',
-                'country_id'    =>  $country->id,
-                'city_id'       =>  $city->id,
-                'state_id'      =>  $state->id,
-                'pincode'       =>  '625001'
-            ]);
-            
-            $academic_year = AcademicYear::where([['school_id',$school->id],['status',1]])->first();
-            TeacherProfile::factory()->create([
-                'school_id'         =>  $accountant->school_id,
-                'academic_year_id'  =>  $academic_year->id,
-                'user_id'           =>  $accountant->id,
-                'designation'       =>  'accountant',
-                'status'            =>  1,
-            ]);
-
-            //stock_keeper
-            $stock_keeper =  User::factory()->create([
-                'school_id'    =>   $school->id,
-                'name'         =>   'stock_keeper'.$school->id,
-                'email'        =>   'stock_keeper'.$school->id.'@gegok12.com',
-                'mobile_no'    =>   '2230456704',
-                'usergroup_id' =>   12
-            ]);
-
-            Userprofile::factory()->create([
-                'school_id'     =>  $stock_keeper->school_id,
-                'user_id'       =>  $stock_keeper->id,
-                'usergroup_id'  =>  $stock_keeper->usergroup_id,
-                'firstname'     =>  'stock_keeper',
-                'lastname'      =>  'stock_keeper',
-                'profession'    =>  'others',
-                'address'       =>  'Namakkal,Tamilnadu,India',
-                'country_id'    =>  $country->id,
-                'city_id'       =>  $city->id,
-                'state_id'      =>  $state->id,
-                'pincode'       =>  '625001'
-            ]);
-            
-            $academic_year = AcademicYear::where([['school_id',$school->id],['status',1]])->first();
-            TeacherProfile::factory()->create([
-                'school_id'         =>  $stock_keeper->school_id,
-                'academic_year_id'  =>  $academic_year->id,
-                'user_id'           =>  $stock_keeper->id,
-                'designation'       =>  'stock_keeper',
-                'status'            =>  1,
-            ]);
+        if ($schools->isEmpty()) {
+            $this->command->warn('No active schools found. Skipping admin/staff seeding.');
+            return;
         }
+
+        // Uganda country/state/city lookup (once)
+        $uganda = DB::table('countries')->where('name', 'Uganda')->first();
+        if (! $uganda) {
+            $this->command->error('Uganda country not found. Skipping.');
+            return;
+        }
+
+        $centralRegion = DB::table('states')->where('country_id', $uganda->id)
+            ->where('name', 'Central Region')->first();
+
+        $kampala = DB::table('cities')->where('country_id', $uganda->id)
+            ->where('name', 'Kampala')->first();
+
+        $stateId = $centralRegion ? $centralRegion->id : null;
+        $cityId  = $kampala ? $kampala->id : null;
+
+        foreach ($schools as $school) {
+            $academicYear = AcademicYear::where([
+                'school_id' => $school->id,
+                'status'    => 1,
+            ])->first();
+
+            if (! $academicYear) {
+                $this->command->info("Skipping school {$school->name} — no active academic year.");
+                continue;
+            }
+
+            // Helper to create user + profile + teacher profile safely
+            $createStaff = function ($roleName, $emailPrefix, $designation) use ($school, $academicYear, $uganda, $stateId, $cityId) {
+                $email = $emailPrefix . '@' . Str::slug($school->name, '') . '.sch.ug';
+
+                // Safe user creation
+                $user = User::firstOrCreate(
+                    ['email' => $email],
+                    [
+                        'school_id'    => $school->id,
+                        'name'         => ucfirst($roleName) . ' ' . $school->name,
+                        'mobile_no'    => '+256 77' . rand(1000000, 9999999),
+                        'usergroup_id' => $this->getUserGroupIdForRole($roleName), // map role to group ID
+                        'password'     => bcrypt('password123'), // change in real life!
+                    ]
+                );
+
+                // Safe profile
+                Userprofile::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'school_id'     => $school->id,
+                        'usergroup_id'  => $user->usergroup_id,
+                        'firstname'     => ucfirst($roleName),
+                        'lastname'      => 'Staff',
+                        'profession'    => $designation,
+                        'address'       => 'School Office, ' . $school->name . ', Kampala',
+                        'country_id'    => $uganda->id,
+                        'state_id'      => $stateId,
+                        'city_id'       => $cityId,
+                        'pincode'       => null,
+                    ]
+                );
+
+                // Safe teacher profile (assuming all these roles use it)
+                TeacherProfile::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'school_id'         => $school->id,
+                        'academic_year_id'  => $academicYear->id,
+                        'designation'       => $designation,
+                        'status'            => 1,
+                    ]
+                );
+
+                return $user;
+            };
+
+            // Create each role safely
+            $createStaff('admin', 'admin', 'Principal / Administrator');
+            $createStaff('librarian', 'librarian', 'Librarian');
+            $createStaff('receptionist', 'reception', 'Receptionist / Secretary');
+            $createStaff('bursar', 'bursar', 'Bursar / Accountant');
+            $createStaff('store_keeper', 'store', 'Store Keeper / Procurement');
+        }
+
+        $this->command->info('Seeded admin & support staff for ' . $schools->count() . ' schools.');
+    }
+
+    /**
+     * Map role name to usergroup_id (adjust IDs based on your DB)
+     */
+    private function getUserGroupIdForRole(string $role): int
+    {
+        return match ($role) {
+            'admin'        => 3,
+            'librarian'    => 8,
+            'receptionist' => 10,
+            'bursar'       => 11,
+            'store_keeper' => 12,
+            default        => 3, // fallback to admin
+        };
     }
 }

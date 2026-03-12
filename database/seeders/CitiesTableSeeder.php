@@ -34,10 +34,12 @@ class CitiesTableSeeder extends Seeder
     'Wakiso', 'Yumbe', 'Zombo'
     ];
     foreach ($districts as $district) {
-        DB::table(table: 'cities')->insert([
-            'country_id' => $country->id,
+        DB::table(table: 'cities')->updateOrInsert(
+            ['name' => $district,
+            'country_id' => $country->id
+            ],
+            [
             'state_id'   => $state->id,
-            'name'       => $district,
             'status'     => 1,
             'created_at' => $now,
             'updated_at' => $now,
@@ -60,10 +62,11 @@ class CitiesTableSeeder extends Seeder
 foreach ($foreignCities as $city) {
         $country = DB::table("countries")->where("name", $city["country"])->first();
         $state = DB::table("states")->where("id", $country->id)->first();
-        DB::table('cities')->insert([
+        DB::table('cities')->updateOrInsert(
+            ['name'=> $city['name']],
+             [
             'country_id' => $country->id,
             'state_id'   => $state->id,
-            'name'       => $city['name'],
             'status'     => 1,
             'created_at' => $now,
             'updated_at' => $now,

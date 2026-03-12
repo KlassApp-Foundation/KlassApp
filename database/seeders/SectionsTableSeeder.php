@@ -23,9 +23,11 @@ class SectionsTableSeeder extends Seeder
 
             foreach ($sections as $section) 
             {
-                DB::table('sections')->Insert([
-                    'school_id'    =>  $school->id,
+                DB::table('sections')->updateOrInsert(
+                    ['school_id'    =>  $school->id,
                     'name'         =>  $section,
+                    ],
+                    [
                     'status'       =>  '1',
                     'created_at'   =>   date("Y-m-d H:i:s"),
                     'updated_at'   =>   date("Y-m-d H:i:s"),

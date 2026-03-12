@@ -23,9 +23,9 @@ class SubscriptionsTableSeeder extends Seeder
         {
             $admin = User::where([['school_id',$school->id],['usergroup_id',3]])->first();
             //dd($admin);
-            DB::table('subscriptions')->insert([
-                'school_id'         =>  $school->id,
-                'user_id'           =>  $admin->id,
+            DB::table('subscriptions')->updateOrInsert(
+                ['school_id' =>  $school->id,'user_id' =>  $admin->id],
+                [
                 'plan_id'           =>  '1',
                 'status'            =>  'pending',
                 'payment_details'   =>  '{"merchant_key":"","txnid":"","amount":"2000.00","firstname":"","email":"","phone":"","hash":"","productinfo":"Subscription Amount","status":"","mode":"","error_Message":"No Error","addedon":""}',
