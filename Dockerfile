@@ -30,6 +30,10 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
      && php artisan route:cache \
      && php artisan view:cache
 
+# switch back to root
+USER root
+
+# fix storage and cache permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
