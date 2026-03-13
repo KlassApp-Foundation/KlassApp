@@ -52,7 +52,8 @@ services:
     container_name: sms_nginx
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
+      # - "8080:80"
 
     volumes:
       - .:/var/www
