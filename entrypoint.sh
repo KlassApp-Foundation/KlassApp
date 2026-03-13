@@ -5,7 +5,7 @@ chmod -R 775 storage bootstrap/cache
 
 echo "Waiting for database at $DB_HOST:$DB_PORT ..."
 
-until mysqladmin ping -h"DB_HOST" -p"DB_PORT" --silent; do
+while ! nc -z $DB_HOST $DB_PORT; do
       sleep 2
 done
 
