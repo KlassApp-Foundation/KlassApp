@@ -11,7 +11,6 @@ done
 
 echo "running migrations"
 
-sleep 5
 # to put migrations inside CI/CD
 php artisan migrate --force
 
