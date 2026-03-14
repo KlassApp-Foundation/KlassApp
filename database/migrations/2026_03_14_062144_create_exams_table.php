@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string("name");
             $table->string("term");
              // match existing table types
-            $table->unsignedBigInteger("standard_id"); 
+            $table->unsignedInteger("standard_id"); 
             $table->unsignedBigInteger('school_id'); 
             $table->unsignedBigInteger('academic_year_id'); 
             $table->unsignedBigInteger('subject_id'); 
