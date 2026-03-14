@@ -24,7 +24,7 @@ class BooksTableSeeder extends Seeder
     	foreach ($schools as $school) 
     	{
     		$academic_year = AcademicYear::where([['school_id',$school->id],['status',1]])->first();
-    		Book::factory(1000)->create([
+    		Book::factory(3)->create([
     			'school_id'			=>	$school->id,
     			'academic_year_id'	=>	$academic_year->id,
     		]);

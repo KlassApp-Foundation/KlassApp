@@ -166,9 +166,15 @@ class UsersStudentTableSeeder extends Seeder
                     ]);
 
                     // Library card
-                    LibraryCard::firstOrCreate([
+                    $lastCardNo=DB::table("library_card")
+                         ->where("school_id", $school->id)
+                         ->max("library_card_no")??0;
+                    $nextCardNo = $lastCardNo + 1;
+                    LibraryCard::firstOrCreate(
+                        ['user_id'   => $student->id],
+                        [
                         'school_id' => $school->id,
-                        'user_id'   => $student->id,
+                        'library_card_no' => $nextCardNo
                     ]);
 
                     $totalStudents++;

@@ -6,7 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\School;
 
-class CommentTableSeeder extends Seeder
+class RemarksTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -17,7 +17,7 @@ class CommentTableSeeder extends Seeder
 
         // Realistic teacher feedback comments for Ugandan schools (demo variety)
         // These are the kinds of things teachers write on report cards/assignments
-        $comments = [
+        $remarks = [
             'Excellent performance! Keep it up.',
             'Good effort. Needs to improve concentration.',
             'Very hardworking student. Well done!',
@@ -42,11 +42,11 @@ class CommentTableSeeder extends Seeder
         $seededCount = 0;
 
         foreach ($schools as $school) {
-            foreach ($comments as $commentText) {
-                DB::table('comments')->updateOrInsert(
+            foreach ($remarks as $remark) {
+                DB::table('remarks')->updateOrInsert(
                     [
                         'school_id' => $school->id,
-                        'comment'   => $commentText,
+                        'remark'   => $remark,
                     ],
                     [
                         'created_at' => $now,

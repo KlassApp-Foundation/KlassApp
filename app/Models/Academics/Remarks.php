@@ -7,11 +7,12 @@ use App\Models\School;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Comments extends Model
+class Remarks extends Model
 {
     use HasFactory;
+    // protected $table = 'comments';  // ← this line fixes everything
 
-    protected $fillable = ["comment", "school_id"];
+    protected $fillable = ["remark", "school_id"];
     public function schoolId(){
         return $this->belongsTo(School::class, "school_id");
     }

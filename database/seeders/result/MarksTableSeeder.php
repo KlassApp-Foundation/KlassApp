@@ -2,8 +2,8 @@
 
 namespace Database\Seeders\result;
 
+use App\Models\Academics\Remarks;
 use Illuminate\Database\Seeder;
-use App\Models\Academics\Comments;
 use App\Models\Academics\Exam;
 use App\Models\School;
 use App\Models\Subject;
@@ -27,7 +27,8 @@ class MarksTableSeeder extends Seeder
         }
 
         $exams    = Exam::take(3)->get();           // Limit to 3 exams for demo
-        $comments = Comments::take(5)->pluck('comment')->toArray(); // few comments
+        $comments = Remarks::take(5)->pluck('remark')->toArray(); // few comments
+        
 
         $totalMarks = 0;
 
