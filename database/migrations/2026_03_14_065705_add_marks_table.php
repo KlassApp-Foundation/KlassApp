@@ -17,9 +17,9 @@ return new class extends Migration
 
             // Foreign keys
             $table->unsignedInteger('student_id');
-            $table->unsignedBigInteger('teacher_id');
+            $table->unsignedInteger('teacher_id');
             $table->unsignedBigInteger('school_id');
-            $table->unsignedBigInteger('subject_id');
+            $table->unsignedInteger('subject_id');
             $table->unsignedBigInteger('exam_id');
 
             // Other columns

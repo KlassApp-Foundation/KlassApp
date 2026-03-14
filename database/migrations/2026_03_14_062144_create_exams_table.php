@@ -21,16 +21,16 @@ return new class extends Migration
              // match existing table types
             $table->unsignedInteger("standard_id"); 
             $table->unsignedBigInteger('school_id'); 
-            $table->unsignedBigInteger('academic_year_id'); 
-            $table->unsignedBigInteger('subject_id'); 
-            $table->unsignedBigInteger('teacher_id'); 
+            $table->unsignedInteger('academic_year_id'); 
+            $table->unsignedInteger('subject_id'); 
+            $table->unsignedInteger('teacher_id'); 
             // foreign keys
             // foreign keys
             $table->foreign('standard_id')->references('id')->on('standards')->cascadeOnDelete();
             $table->foreign('school_id')->references('id')->on('schools')->cascadeOnDelete();
             $table->foreign('academic_year_id')->references('id')->on('academic_years')->cascadeOnDelete();
             $table->foreign('subject_id')->references('id')->on('subjects')->cascadeOnDelete();
-            $table->foreign('teacher_id')->references('id')->on('teachers')->cascadeOnDelete();
+            $table->foreign('teacher_id')->references('id')->on('users')->cascadeOnDelete();
             // hddvncdvcbnc
             $table->timestamps();
         });
