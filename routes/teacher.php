@@ -328,11 +328,27 @@ Route::get( '/student/comparemark/{name}', 'StudentDetailsController@compareMark
 Route::get( '/student/show/medicalHistory/{name}', 'StudentDetailsController@showMedicalHistory' );
 Route::get( '/document/get/{name}', 'StudentDetailsController@showDocuments' );
 
-//marks
+//marks ======== USED THIS =========
 // Route::get('/marks/view/{standard_id}', 'MarkController@view' );
 // Route::get('/marks/show', 'MarkController@show' );
 // Route::get('/marks/viewmark/{standard_id}/{user_id}/{exam_id}/{academic_year_id}', 'MarkController@viewmark' );
 
+// ========== ADD MARKS FOR UGANDAN SCHOOLS =========
+
+Route::prefix('exam')->group(function () {
+
+    // List of exams available for this teacher to enter marks
+    Route::get('/marks', 'MarksController@teacherExamMarksList')->name('teacher.exam.marks');
+
+    // Enter / edit marks for a specific exam
+    Route::get('/{exam}/marks/enter', 'MarksController@enterExamMarks')->name('teacher.exam.marks.enter');
+
+    // Save marks
+    Route::post('/{exam}/marks/save', 'MarksController@saveExamMarks')->name('teacher.exam.marks.save');
+
+    // Optional: view entered marks for this exam
+    Route::get('/{exam}/marks/view', 'MarksController@viewExamMarks')->name('teacher.exam.marks.view');
+});
 //class wall
 
 //page
@@ -403,6 +419,7 @@ Route::group(['middleware' => ['role:student_leave_checker']], function () {
     Route::get('/studentLeave/reject/{id}', 'StudentLeaveController@rejectCreate');
     Route::post('/studentLeave/reject/{id}', 'StudentLeaveController@rejectStore');
 });
+
 
 //noticeboard
     //index

@@ -747,6 +747,16 @@ Route::get( '/emergency', 'SendEmergencyMessageController@create');
 Route::post( '/emergency/send', 'SendEmergencyMessageController@store');
 Route::post( '/student/shift', 'SendMessageController@shift' );
 
+// ========= ADDED FOR UGANDA'S MODEL ===========
+// exams (admin)
+Route::get('/exams', 'ExamController@index')->name('exams.index');
+Route::get('/exams/create', 'Admin\ExamController@create')->name('exams.create');
+Route::post('/exams', 'Admin\ExamController@store')->name('exams.store');
+
+// Optional later: full resource or more actions
+// Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+// But start simple to match the flat style
+
 
 //Addons
 

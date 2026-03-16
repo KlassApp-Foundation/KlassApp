@@ -6,11 +6,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\API\ExamScheduleAPI as ExamScheduleResource;
+use App\Models\Academics\Exam;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Helpers\SiteHelper;
-use App\Models\Exam;
+// use App\Models\Exam;
 use App\Models\User;
 use Exception;
 

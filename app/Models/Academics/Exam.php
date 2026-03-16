@@ -14,7 +14,7 @@ class Exam extends Model
 {
     use HasFactory;
     protected $fillable=[
-        "name", "standard_id", "school_id", "academic_year_id", "term", "subject_id", "teacher_id"
+        "name", "standard_id", "school_id", "academic_year_id", "term", "subject_id", "teacher_id", "type"
         ];
         public function standard(){
             return $this->belongsTo(Standard::class, "standard_id");
