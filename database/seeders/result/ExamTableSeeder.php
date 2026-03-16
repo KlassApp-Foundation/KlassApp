@@ -78,7 +78,7 @@ class ExamTableSeeder extends Seeder
                                 'academic_year_id' => $classRoom->academic_year_id,
                                 'standard_id'      => $classRoom->standard_id,
                                 'subject_id'       => $subject->id,
-                                'name'             => $examName,
+                                'type'             => $examName,
                             ],
                             [
                                 'section_id'   => $classRoom->section_id, // optional if per section

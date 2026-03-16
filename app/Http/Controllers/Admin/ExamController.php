@@ -11,33 +11,46 @@ use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ExamController extends Controller
 {
    public function index()
 {
+            $exam_types = DB::table("exam_types")->get();
+            $subjects    = Subject::where('school_id', Auth::user()->school_id)->get();
+            $standards   = Standard::where('school_id', Auth::user()->school_id)->get(); 
+            $academicYears = AcademicYear::where('school_id', Auth::user()->school_id)->get();
+            
     $exams = Exam::where('school_id', Auth::user()->school_id)
         ->with(['standard', 'subject', 'academicYear', 'teacher'])
         ->latest()
         ->get();
-
-    return view('admin.exams.index', compact('exams'));  // or 'exams.index' if no admin folder
-}
-
-    public function create()
-    {
-        $academicYears = AcademicYear::where('school_id', Auth::user()->school_id)
-            ->orderBy('start_year', 'desc')
+         $teachers    = User::where('school_id', Auth::user()->school_id)
+            ->whereIn('usergroup_id', [3, 5]) // adjust role names
             ->get();
 
+    return view('admin.exams.index', compact('exams', "exam_types", "subjects", "standards", "teachers", "academicYears"));  // or 'exams.index' if no admin folder
+}
+
+    public function list()
+    {
+        // $academicYears = AcademicYear::where('school_id', Auth::user()->school_id)
+        //     ->get();
+        $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
+        ->where('school_id', Auth::user()->school_id)
+        ->latest()
+        ->get();
+        $exam_types = DB::table("exam_types")->get();
         $standards   = Standard::where('school_id', Auth::user()->school_id)->get(); // classes/grades
         $subjects    = Subject::where('school_id', Auth::user()->school_id)->get();
         $teachers    = User::where('school_id', Auth::user()->school_id)
-            ->whereIn('role', ['teacher', 'headteacher']) // adjust role names
+            ->whereIn('usergroup_id', [3, 5]) // adjust role names
             ->get();
+            
 
-        return view('admin.exams.create', compact(
-            'academicYears', 'standards', 'subjects', 'teachers'
+        return view('admin.exams.list', compact(
+            "exams", 'standards', 'subjects', 'teachers',"exam_types", 
         ));
     }
 
@@ -58,9 +71,10 @@ class ExamController extends Controller
 
         Exam::create($validated);
 
+        
         // In store()
     return redirect()->route('exams.index')
-      ->with('success', 'Exam created successfully!');
+      ->with('successmessage', 'Exam created successfully!');
             
     }
 

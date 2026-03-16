@@ -1,19 +1,27 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-    <div class="container-fluid px-6 py-8"> <!-- or just container mx-auto px-4 sm:px-6 lg:px-8 if no fluid -->
-
+    <div class="container-fluid w-full lg:mx-2"> <!-- or just container mx-auto px-4 sm:px-6 lg:px-8 if no fluid -->
+       <div class="">
+         {{-- back --}}
+         <h1 class="admin-h1 my-3 flex items-center">
+        <a href="{{ url('/admin/students') }}" class="rounded-full p-2 bg-gray-100" title="Back">
+           <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 492 492" xml:space="preserve" width="512px" height="512px" class="w-3 h-3 fill-current text-gray-700"><g><g><g><path d="M464.344,207.418l0.768,0.168H135.888l103.496-103.724c5.068-5.064,7.848-11.924,7.848-19.124    c0-7.2-2.78-14.012-7.848-19.088L223.28,49.538c-5.064-5.064-11.812-7.864-19.008-7.864c-7.2,0-13.952,2.78-19.016,7.844    L7.844,226.914C2.76,231.998-0.02,238.77,0,245.974c-0.02,7.244,2.76,14.02,7.844,19.096l177.412,177.412    c5.064,5.06,11.812,7.844,19.016,7.844c7.196,0,13.944-2.788,19.008-7.844l16.104-16.112c5.068-5.056,7.848-11.808,7.848-19.008    c0-7.196-2.78-13.592-7.848-18.652L134.72,284.406h329.992c14.828,0,27.288-12.78,27.288-27.6v-22.788    C492,219.198,479.172,207.418,464.344,207.418z" data-original="#000000" fill="" class="active-path"></path></g></g></g></svg>
+        </a>
+       </div>
         <!-- Page Header / Title Area -->
         <div class="mb-8">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Exams</h1>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Create a new exam for your school</p>
+                    <h3 class=" text-gray-700 dark:text-gray-400">Create a new exam for your school</h3>
+                    
                 </div>
               
             </div>
         </div>
-
+          {{-- Flash Success Message --}}
+   @include('partials.message')
         <!-- Main Card -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
@@ -39,13 +47,20 @@
                         </div>
 
                         <div>
-                            <label for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label for="exam_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Exam Type
+                                {{-- {{ dd($exam_types) }} --}}
                             </label>
-                            <input type="text" name="type" id="type"
-                                   class="tw-form-control w-full"
-                                   value="{{ old('type') }}" placeholder="e.g. Mid-Term, Mock, UNEB Practice">
-                            @error('type')
+                             <select name="exam_type" id="exam_type" required
+                                    class="tw-form-control w-full">
+                                <option value="">Select exam type</option>
+                                @foreach ($exam_types as $exam_type)
+                                     <option value="{{ $exam_type->id }}" {{ old('exam_type') == $exam_type->id ? 'selected' : '' }}>
+                                        {{ $exam_type->name }}
+                                    </option>
+                                @endforeach   
+                            </select>
+                            @error('exam_type')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
                         </div>
@@ -74,6 +89,7 @@
                         <div>
                             <label for="standard_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Class/Standard <span class="text-red-500">*</span>
+                                {{-- {{ dd($standards) }} --}}
                             </label>
                             <select name="standard_id" id="standard_id" required
                                     class="tw-form-control w-full">
@@ -112,8 +128,8 @@
                             <label for="subject_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Subject (optional)
                             </label>
-                            <select class="tw-form-control w-full">
-                                <option value="">Whole Class Exam</option>
+                            <select name="subject_id" class="tw-form-control w-full">
+                                <option value="">Select Subject</option>
                                 @foreach($subjects as $sub)
                                     <option value="{{ $sub->id }}" {{ old('subject_id') == $sub->id ? 'selected' : '' }}>
                                         {{ $sub->name }}
@@ -126,7 +142,7 @@
                             <label for="teacher_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Assigned Teacher (optional)
                             </label>
-                            <select class="tw-form-control w-full">
+                            <select name="teacher_id" class="tw-form-control w-full">
                                 <option value="">Select Teacher</option>
                                 @foreach($teachers as $teacher)
                                     <option value="{{ $teacher->id }}" {{ old('teacher_id') == $teacher->id ? 'selected' : '' }}>
