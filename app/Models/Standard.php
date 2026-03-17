@@ -30,13 +30,13 @@ class Standard extends Model
      * @var array
      */
     protected $fillable = [
-       'school_id' ,  'name' , 'order' , 'status'
+      'name' , "short_name", 'order', "level_type", 'is_active'
     ];
 
-    public function school()
-    {
-        return $this->belongsTo('\App\Models\School','school_id');
-    }
+    // public function school()
+    // {
+    //     return $this->belongsTo('\App\Models\School','school_id');
+    // }
 
     public function currentPromotion()
     {

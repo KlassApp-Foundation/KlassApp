@@ -1,105 +1,124 @@
 <?php
 
-namespace Database\Seeders\result;
+namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\School;
 use App\Models\AcademicYear;
-use App\Models\Standard;
-use App\Models\Subject;
 use App\Models\StandardLink;
+use App\Models\Subject;
 use App\Models\User;
+use Carbon\Carbon;
 
 class ExamTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $now = now();
-
-        // Common Uganda exam types (realistic for schools)
-        $examTypes = [
-            'Mid-Term Exam',
-            'End-of-Term Exam',
-            'Mock Exam',
-            'Pre-Mock Exam',
-            'Continuous Assessment 1',
-            'Continuous Assessment 2',
-            'UNEB Practice Test',
-        ];
-
-        $schools = School::where('status', 1)->get();
+        $schools = School::active()->get(); // assuming you have scopeActive()
 
         if ($schools->isEmpty()) {
-            $this->command->warn('No active schools found. Skipping exam seeding.');
+            $this->command->warn('No active schools. Skipping exams.');
             return;
         }
 
-        $seededCount = 0;
+        $examTemplates = [
+            // Pre-primary / lower primary (lighter)
+            ['type' => 'Continuous Assessment 1', 'offset_days' => 30, 'for_levels' => range(1, 7)],   // P1–P7 order
+            ['type' => 'Continuous Assessment 2', 'offset_days' => 60, 'for_levels' => range(1, 7)],
+            ['type' => 'End-of-Term Exam',        'offset_days' => 90, 'for_levels' => range(1, 10)],
+
+            // Upper primary & secondary
+            ['type' => 'Mid-Term Exam',    'offset_days' => 45,  'for_levels' => range(8, 16)],
+            ['type' => 'End-of-Term Exam', 'offset_days' => 100, 'for_levels' => range(8, 16)],
+            ['type' => 'Mock Exam',        'offset_days' => 180, 'for_levels' => [14,15,16]], // S4,S5,S6
+        ];
+
+        $seeded = 0;
 
         foreach ($schools as $school) {
-            $academicYears = AcademicYear::where([
-                'school_id' => $school->id,
-                'status'    => 1,
-            ])->get();
-
-            if ($academicYears->isEmpty()) {
-                continue;
-            }
-
-            // Get all class rooms (standard + section combos) for this school/year
-            $classRooms = StandardLink::where('school_id', $school->id)
-                ->whereIn('academic_year_id', $academicYears->pluck('id'))
+            $years = AcademicYear::where('school_id', $school->id)
+                ->where('status', 1)
+                ->latest()
+                ->take(2)           // last 1–2 years only
                 ->get();
 
-            if ($classRooms->isEmpty()) continue;
+            if ($years->isEmpty()) continue;
 
-            // Get subjects taught in this school
-            $subjects = Subject::where('school_id', $school->id)->get();
-
-            if ($subjects->isEmpty()) continue;
-
-            // Optional: limit to a few teachers if needed
             $teachers = User::where('school_id', $school->id)
                 ->where('usergroup_id', 5) // teachers
-                ->take(10) // don't overdo it
+                ->inRandomOrder()
+                ->limit(12)
                 ->get();
 
-            foreach ($classRooms as $classRoom) {
-                foreach ($subjects as $subject) {
-                    foreach ($examTypes as $examName) {
-                        // Find or create exam record
-                        DB::table('exams')->updateOrInsert(
-                            [
-                                'school_id'        => $school->id,
-                                'academic_year_id' => $classRoom->academic_year_id,
-                                'standard_id'      => $classRoom->standard_id,
-                                'subject_id'       => $subject->id,
-                                'type'             => $examName,
-                            ],
-                            [
-                                'section_id'   => $classRoom->section_id, // optional if per section
-                                'teacher_id'   => $teachers->isNotEmpty() ? $teachers->random()->id : null,
-                                'max_marks'    => rand(50, 100),
-                                'weight'       => rand(20, 40), // percentage weight in total
-                                'exam_date'    => now()->addDays(rand(10, 90)),
-                                'status'       => 'active',
-                                'created_at'   => $now,
-                                'updated_at'   => $now,
-                            ]
-                        );
+            if ($teachers->isEmpty()) continue;
 
-                        $seededCount++;
+            foreach ($years as $year) {
+                // Get class-rooms (standard + academic_year combos)
+                $classRooms = StandardLink::where('school_id', $school->id)
+                    ->where('academic_year_id', $year->id)
+                    ->get(['standard_id']);
+
+                if ($classRooms->isEmpty()) continue;
+
+                foreach ($classRooms as $cr) {
+                    $standardOrder = Standard::find($cr->standard_id)?->order ?? 99;
+
+                    // Subjects for this standard (you may have a relation or pivot)
+                    $subjects = Subject::where('school_id', $school->id)
+                        ->whereJsonContains('standards', $standardOrder) // if you store allowed standards in json
+                        ->orWhere('standard_id', $cr->standard_id)       // if per subject
+                        ->limit(8) // don't seed every subject
+                        ->get();
+
+                    foreach ($subjects as $subject) {
+                        // Pick 1–3 exam types realistic for this level
+                        $possibleExams = collect($examTemplates)
+                            ->whereIn('for_levels', $standardOrder)
+                            ->random(rand(1, 3));
+
+                        foreach ($possibleExams as $tmpl) {
+                            $examDate = Carbon::parse($year->start_date)
+                                ->addDays($tmpl['offset_days'] + rand(-10, 10));
+
+                            // Pick one teacher (main subject teacher simulation)
+                            $teacher = $teachers->random();
+
+                            DB::table('exams')->updateOrInsert(
+                                [
+                                    'school_id'        => $school->id,
+                                    'academic_year_id' => $year->id,
+                                    'standard_id'      => $cr->standard_id,
+                                    'subject_id'       => $subject->id,
+                                    'type'             => $tmpl['type'],
+                                ],
+                                [
+                                    'teacher_id'    => $teacher->id,
+                                    'scheduled_at'  => $examDate,
+                                    'term'          => $this->guessTerm($examDate, $year), // optional helper
+                                    'status'        => true,
+                                    'created_at'    => now(),
+                                    'updated_at'    => now(),
+                                ]
+                            );
+
+                            $seeded++;
+                        }
                     }
                 }
             }
 
-            $this->command->info("Seeded exams for school: {$school->name} ({$seededCount} so far)");
+            $this->command->info("Seeded ~$seeded exams for {$school->name}");
         }
 
-        $this->command->info("Total exams seeded: {$seededCount}");
+        $this->command->info("Total realistic exams seeded: $seeded");
+    }
+
+    private function guessTerm(Carbon $date, AcademicYear $year): int
+    {
+        $daysIn = $date->diffInDays($year->start_date);
+        if ($daysIn < 60) return 1;
+        if ($daysIn < 120) return 2;
+        return 3;
     }
 }

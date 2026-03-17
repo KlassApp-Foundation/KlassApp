@@ -57,13 +57,14 @@ class ExamController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'             => 'required|string|max:255',
             'standard_id'      => 'required|exists:standards,id',
             'academic_year_id' => 'required|exists:academic_years,id',
             'term'             => 'required|in:1,2,3', // or string if named "Term I", etc.
             'subject_id'       => 'nullable|exists:subjects,id', // nullable if whole-class exam
             'teacher_id'       => 'nullable|exists:users,id',
-            'type'             => 'nullable|string|max:100', // e.g. "Mid-Term", "End-Term", "Mock", "UNEB Prelim"
+            'type'             => 'nullable|string|max:100', // e.g. "Mid-Term", "End-Term", "Mock", 
+            'scheduled_at'     => 'nullable|date_format:Y-m-d\TH:i',
+            'status'             => 'nullable|required|boolean'
         ]);
 
         // Auto-fill school_id from logged-in admin

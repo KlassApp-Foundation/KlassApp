@@ -13,7 +13,8 @@ return new class extends Migration
     {
         //
         Schema::table("exams", function(Blueprint $table){
-            $table->string("type")->nullable();
+            $table->unsignedInteger("type_id");
+            $table->foreign("type_id")->references("id")->on("exam_types")->cascadeOnDelete();
         });
     }
 

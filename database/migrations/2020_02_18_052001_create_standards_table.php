@@ -15,11 +15,11 @@ class CreateStandardsTable extends Migration
     {
         Schema::create('standards', function (Blueprint $table) {
             $table->increments('id');
-            $table->bigInteger('school_id')->unsigned();
-            $table->foreign('school_id')->references('id')->on('schools');
-            $table->string('name');
-            $table->integer('order')->nullable();
-            $table->boolean('status')->default('1');
+            $table->string('name')->unique();
+            $table->string('short_name')->nullable();
+            $table->integer('order')->default(0);
+            $table->enum('level_type', ['pre_primary', 'primary', 'secondary', 'other'])->nullable();
+            $table->boolean('is_active')->default('true');
             $table->timestamps();
             $table->softDeletes();
         });

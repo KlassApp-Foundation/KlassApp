@@ -55,6 +55,7 @@ class SchoolsTableSeeder extends Seeder
         ];
 
         foreach ($fakeSchools as $school) {
+            
             DB::table('schools')->updateOrInsert(
                 ['slug' => $school['slug']],
                 [
