@@ -1,7 +1,7 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-    <div class="container-fluid px-6 py-8">
+    <div class="container-fluid w-full lg:mx-2">
         <div class="mb-8">
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Exam Marks</h1>
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -22,7 +22,7 @@
                 @else
                     <div class="space-y-4">
                         @foreach($exams as $exam)
-                            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                            <div class="flex items-center justify-between p-4 borderr shadow-md hover:shadow-lg dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                 <div>
                                     <h3 class="font-medium text-gray-900 dark:text-white">{{ $exam->name }}</h3>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -30,7 +30,7 @@
                                         {{ $exam->standard->name ?? 'N/A' }}
                                     </p>
                                     <p class="text-xs text-gray-500 mt-1">
-                                        Progress: {{ $exam->entered_count ?? 0 }} students
+                                        {{-- Progress: {{ $exam->entered_count ?? 0 }} students --}}
                                     </p>
                                 </div>
                                 <div class="flex gap-3">

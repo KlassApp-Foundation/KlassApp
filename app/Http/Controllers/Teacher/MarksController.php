@@ -6,6 +6,8 @@ use App\Helpers\SiteHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+use App\Models\Academics\Remarks;
+use App\Models\Standard;
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -20,12 +22,14 @@ class MarksController extends Controller
      */
     public function enter(Request $request, $exam_id)
 {
+    $teacher = Auth::user();
     $exam = Exam::findOrFail($exam_id);
+    if($teacher->id !== $exam->teacher_id){
+        abort();
+    }
     // Add security check: school_id === auth()->user()->school_id
-
-    $standard = $exam->standard; // assuming relation
-    $subject  = $request->subject_id ? Subject::find($request->subject_id) : null;
-
+    $standard = $exam->standard_id; // assuming relation
+    $subject  = $request->subject_id;
     $students = User::whereHas('userprofile', function($q) use ($standard) {
             $q->where('standard_id', $standard->id); // adjust relation name if different
         })
@@ -40,7 +44,6 @@ class MarksController extends Controller
         ->get()
         ->keyBy('student_id')
         ->map(fn($m) => ['marks' => $m->marks, 'comment' => $m->comment]);
-
     return view('marks.enter', compact('exam', 'standard', 'subject', 'students', 'existing'));
 }
 
@@ -49,9 +52,11 @@ public function teacherExamMarksList()
     $teacher = Auth::user();
     $schoolId = $teacher->school_id;
 
+
     // Get exams where this teacher is assigned (adjust based on your logic)
     // Example: exams where teacher is linked via subject or directly
-    $exams = Exam::where('school_id', $schoolId)
+    $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
+        -> where('school_id', $schoolId)
         ->where('academic_year_id', SiteHelper::getAcademicYear($schoolId)->id)
         ->where(function ($q) use ($teacher) {
             // Option 1: teacher is assigned to the exam directly
@@ -74,23 +79,22 @@ public function teacherExamMarksList()
     return view('teacher.marks.teacher-exam-list', compact('exams'));
 }
 
-public function enterExamMarks(Exam $exam)
+public function enterExamMarks( $exam)
 {
     $user = Auth::user();
-    if ($exam->school_id !== $user->school_id) {
-        abort(403, 'Not your school');
-    }
+    $schoolId = $user->school_id;
 
-    // Optional: check if this teacher is allowed to enter for this exam
-    // if (!$exam->isAssignedToTeacher($user)) abort(403);
+    $exams = Exam::findOrFail($exam);
+    $students = User::byStandard(1)->where("school_id", $user->school_id)
+    ->orderBy("name")->get();
+    $remarks = Remarks::where("school_id", 5)->get();
+    // if ($exam->school_id !== $user->school_id) {
+    //     abort(403, 'Not your school');
+    // }
 
     $standard = $exam->standard; // adjust relation name
-    $subject = request('subject_id') ? Subject::find(request('subject_id')) : null;
+    $subject = request('subject_id') ? Subject::find($exam) : null;
 
-    $students = User::where('school_id', $user->school_id)
-        ->whereHas('userprofile', fn($q) => $q->where('standard_id', $standard->id))
-        ->orderBy('name')
-        ->get();
 
     $existing = Marks::where('exam_id', $exam->id)
         ->where('school_id', $exam->school_id)
@@ -99,14 +103,14 @@ public function enterExamMarks(Exam $exam)
         ->keyBy('student_id')
         ->map(fn($m) => ['marks' => $m->marks, 'comment' => $m->comment]);
 
-    return view('marks.enter', compact('exam', 'standard', 'subject', 'students', 'existing'));
+    return view('teacher.marks.enter', compact('exams', "students", 'standard', 'subject', 'existing', "user", "remarks"));
 }
 
 public function saveExamMarks(Request $request, Exam $exam)
 {
     $user = Auth::user();
     if ($exam->school_id !== $user->school_id) {
-        abort(403);
+        abort(403, "Not Authorized");
     }
 
     $validated = $request->validate([
@@ -135,9 +139,24 @@ public function saveExamMarks(Request $request, Exam $exam)
         );
         $saved++;
     }
+    $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
+             ->where("teacher_id", $teacherId)->get();
 
     return redirect()
         ->route('teacher.exam.marks')
         ->with('success', $saved . ' marks saved for ' . $exam->name);
+}
+
+// view examMarks
+public function viewExamMarks($exam){
+    $teacher = Auth::user();
+    $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
+             ->where("teacher_id", $teacher->id)->get();
+    $exm = Exam::first()->standard->name;
+    $students = User::whereHas("studentAcademic", function($q) {
+    $q->whereHas('standardLink');
+})->get();     
+    // exam, marks, students, academic-year, standard
+return view("teacher.marks.view", compact("teacher", "exams", "students", "exm"));
 }
 }
