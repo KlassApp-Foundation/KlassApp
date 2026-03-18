@@ -30,6 +30,11 @@ class Subject extends Model
 	    'school_id' , 'academic_year_id' , 'standard_id' , 'section_id' , 'name' , 'code' , 'type' 
 	];
 
+    // linked to schools =====FOR UGANDAN SCHOOLS=========
+    public function schools()
+{
+    return $this->belongsToMany(School::class);
+}
     public function getNameAttribute($value)
     {
         return strtoupper($value);

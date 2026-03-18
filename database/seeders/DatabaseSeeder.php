@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\result\ClassSeeder;
 use Database\Seeders\result\ExamTableSeeder;
 use Database\Seeders\result\MarksTableSeeder;
 use Database\Seeders\result\RemarksTableSeeder;
@@ -81,6 +82,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RemarksTableSeeder::class);
         $this->call(ExamTableSeeder::class);
         $this->call(MarksTableSeeder::class);
+        $this->call(ClassSeeder::class);
 
         
     }

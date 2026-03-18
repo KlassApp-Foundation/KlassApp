@@ -1,7 +1,8 @@
 <?php
 
-namespace Database\Seeders;
+namespace Database\Seeders\result;
 
+use App\Models\Standard;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\School;
@@ -15,7 +16,7 @@ class ExamTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $schools = School::active()->get(); // assuming you have scopeActive()
+        $schools = School::where("status", 1)->get();
 
         if ($schools->isEmpty()) {
             $this->command->warn('No active schools. Skipping exams.');
