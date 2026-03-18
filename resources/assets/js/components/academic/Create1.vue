@@ -11,7 +11,7 @@
             <div class="w-full lg:w-8/12 md:w-8/12">
               <div class="mb-2">
                 <select v-model="standard_id" name="standard_id" id="standard_id" class="tw-form-control w-full" v-on:change="addRow()">
-                  <option value="" disabled="disabled">Select Standard</option>
+                  <option value="" disabled="disabled">Select Standard </option>
                   <option v-for="standard in standardlist" v-bind:value="standard.id">{{ convertInteger(standard.name) }}</option>
                 </select>
               </div>
