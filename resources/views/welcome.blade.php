@@ -31,26 +31,28 @@
 	<div class="ka-hero-overlay" aria-hidden="true"></div>
 	<div class="ka-hero-inner">
 	<div class="ka-hero-left">
-		<div class="ka-audience ka-animate" role="tablist" aria-label="Audience selector">
-			<button class="active" data-audience="admin">Administrators &amp; Principals</button>
-			<button data-audience="teacher">Teachers</button>
-			<button data-audience="parent">Parents</button>
-		</div>
-		<h1 class="ka-animate ka-type-target" id="heroTitle">Stop managing chaos. Start leading with clarity.</h1>
-		<div class="ka-hero-sub ka-animate ka-type-target" id="heroSubtitle">One platform to run your entire school, smarter, faster, and more securely than ever before.</div>
-
-		<p class="lead ka-animate">KlassApp unifies your entire school ecosystem into one intelligent, future-ready platform that transforms how modern schools connect, operate, and thrive.</p>
-
-		<div class="ka-platform-note ka-animate">
-			<span class="ka-platform-label">Platform capabilities</span>
-			<div class="ka-platform-phrase-wrap">
-				<span id="kaPlatformPhrase" class="ka-platform-phrase">AI-powered automation</span>
+		<div class="ka-hero-panel">
+			<div class="ka-audience ka-animate" role="tablist" aria-label="Audience selector">
+				<button class="active" data-audience="admin">Administrators &amp; Principals</button>
+				<button data-audience="teacher">Teachers</button>
+				<button data-audience="parent">Parents</button>
 			</div>
-		</div>
+			<h1 class="ka-animate ka-type-target" id="heroTitle">Stop managing chaos. Start leading with clarity.</h1>
+			<div class="ka-hero-sub ka-animate ka-type-target" id="heroSubtitle">One platform to run your entire school, smarter, faster, and more securely than ever before.</div>
 
-		<div class="buttons ka-animate">
-			<a class="ka-cta" href="{{ url('/register') }}">Onboard your school</a>
-			<a class="ka-ghost" href="#">Watch Demo</a>
+			<p class="lead ka-animate">KlassApp unifies your entire school ecosystem into one intelligent, future-ready platform that transforms how modern schools connect, operate, and thrive.</p>
+
+			<div class="ka-platform-note ka-animate">
+				<span class="ka-platform-label">Platform capabilities</span>
+				<div class="ka-platform-phrase-wrap">
+					<span id="kaPlatformPhrase" class="ka-platform-phrase">AI-powered automation</span>
+				</div>
+			</div>
+
+			<div class="buttons ka-animate">
+				<a class="ka-cta" href="{{ url('/register') }}">Onboard your school</a>
+				<a class="ka-ghost" href="#">Watch Demo</a>
+			</div>
 		</div>
 
 	</div>
@@ -62,19 +64,26 @@
 <section id="features" class="ka-section ka-texture-shell" style="padding:36px 0;">
 	<div class="ka-container">
 	<h2 class="ka-animate">Features</h2>
-	<p class="ka-animate" style="color:rgba(15,23,42,0.7);">Designed for schools — features that replace several siloed systems with one easy-to-manage platform.</p>
+	<p class="ka-animate ka-features-statement">Designed for schools — features that replace several siloed systems with <span>one easy-to-manage platform</span>.</p>
 	<div class="ka-features-intro ka-animate">
 		<div class="ka-features-media">
 			<img src="{{ asset('images/african-student-tech.dim_800x800.jpg') }}" alt="Students learning in a computer lab" loading="lazy">
 		</div>
 		<div class="ka-features-context">
-			<h3>Everything your school team needs to stay coordinated and productive.</h3>
-			<p>From communication and attendance to progress tracking and analytics, these features are designed to keep day-to-day school operations simple and connected.</p>
+			<div class="ka-features-copy">
+				<h3>Everything your school team needs to stay <span>coordinated and productive</span>.</h3>
+				<p>From communication and attendance to progress tracking and analytics, these features are designed to keep day-to-day school operations simple and connected.</p>
+			</div>
 			<div class="ka-feature-badges">
 				<span>Easy to onboard</span>
 				<span>Simple daily workflows</span>
 				<span>Fast for every role</span>
 			</div>
+			<ul class="ka-feature-highlights" aria-label="Key platform highlights">
+				<li><span class="check" aria-hidden="true">✓</span><span>Real-time sync across all roles</span></li>
+				<li><span class="check" aria-hidden="true">✓</span><span>Works on any device, anywhere</span></li>
+				<li><span class="check" aria-hidden="true">✓</span><span>Up and running in under a day</span></li>
+			</ul>
 		</div>
 	</div>
 	<div class="ka-features" style="margin-top:18px;">
@@ -219,6 +228,19 @@
 	</div>
 </section>
 
+<!-- PRICING CTA -->
+<section class="ka-pricing-cta">
+	<div class="ka-container">
+		<h2 class="ka-animate">Ready to lead your school into the future?</h2>
+		<p class="ka-animate">Set up takes minutes. No training required. Your whole school connected from day one.</p>
+		<div class="ka-pricing-cta-actions ka-animate">
+			<a class="ka-pricing-cta-primary" href="{{ url('/register') }}">Onboard your school now</a>
+			<a class="ka-pricing-cta-secondary" href="#how">See how it works</a>
+		</div>
+		<div class="ka-pricing-cta-note ka-animate">Free 30-day trial · No credit card required · Cancel anytime</div>
+	</div>
+</section>
+
 <!-- FAQ -->
 <section id="faq" class="ka-section ka-texture-shell" style="padding:36px 0;">
 	<div class="ka-container">
@@ -245,7 +267,7 @@
 </div>
 
 <!-- FOOTER -->
-<footer style="padding:48px 24px;border-top:1px solid rgba(255,255,255,0.08);background:#0F172A;">
+<footer style="padding:48px 24px;border-top:1px solid rgba(255,255,255,0.08);background:#0D1526;">
 	<div class="ka-container" style="display:grid;grid-template-columns:1fr auto 1fr;gap:32px;align-items:start;max-width:1200px;">
 		<div class="footer-brand"><img src="{{ $logo }}" alt="KlassApp" class="ka-brand-logo"><div class="footer-tagline">Smarter schools start here.</div></div>
 		<div class="footer-links">

@@ -4,6 +4,7 @@
   --brand-blue: #1E6FD9;
   --brand-green: #22C55E;
   --brand-dark: #0F172A;
+  --logo-navy: #0C1427;
   --brand-light: #F8FAFC;
   --brand-white: #FFFFFF;
   --text-primary: #0F172A;
@@ -78,14 +79,14 @@ section > p {
   left: 0;
   right: 0;
   z-index: 90;
-  background: rgba(15, 23, 42, 0.65);
+  background: #0D1526;
   backdrop-filter: blur(8px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .ka-nav.scrolled {
   backdrop-filter: blur(14px);
-  background: rgba(15, 23, 42, 0.85);
+  background: #0D1526;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -185,24 +186,46 @@ section > p {
 
 .ka-hero-overlay {
   position: absolute;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.72);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  background: linear-gradient(180deg, rgba(12, 20, 39, 0.85) 0%, rgba(12, 20, 39, 0.72) 45%, rgba(12, 20, 39, 0.55) 100%);
   z-index: 1;
+  pointer-events: none;
 }
 
 .ka-hero-inner {
   max-width: 1280px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 0;
   position: relative;
   z-index: 2;
 }
 
 .ka-hero-left {
-  max-width: 860px;
+  max-width: none;
+  flex: 0 0 50%;
+  padding: 30px 34px;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ka-hero-panel {
+  position: relative;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  overflow: visible;
+}
+
+.ka-hero-panel::after {
+  display: none;
 }
 
 .ka-hero h1 {
@@ -259,17 +282,18 @@ section > p {
 
 .ka-audience {
   display: inline-flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  padding: 5px;
-  background: rgba(255, 255, 255, 0.03);
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .ka-audience button {
-  border: 0;
-  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.04);
   color: rgba(255, 255, 255, 0.6);
   border-radius: 999px;
   padding: 8px 14px;
@@ -278,7 +302,13 @@ section > p {
   transition: all 0.25s ease;
 }
 
+.ka-audience button:hover {
+  border-color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 255, 255, 0.88);
+}
+
 .ka-audience button.active {
+  border-color: var(--brand-blue);
   background: var(--brand-blue);
   color: #fff;
 }
@@ -552,12 +582,30 @@ section > p {
   align-items: center;
 }
 
-.ka-features-media,
+.ka-features-statement {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand-dark) !important;
+  text-align: center;
+}
+
+.ka-features-statement span {
+  color: var(--brand-blue);
+}
+
+.ka-features-media {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
 .ka-features-context {
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 32px;
 }
 
 .ka-features-media img {
@@ -575,31 +623,74 @@ section > p {
   font-size: 28px;
   line-height: 1.2;
   color: var(--brand-dark);
+  font-weight: 700;
+}
+
+.ka-features-context h3 span {
+  color: var(--brand-blue);
+}
+
+.ka-features-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .ka-features-context p {
-  margin: 12px 0 0;
+  margin: 0;
   color: var(--text-secondary);
   text-align: left;
 }
 
 .ka-feature-badges {
-  margin-top: 16px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin: 0;
 }
 
 .ka-feature-badges span {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  border: 1px solid rgba(30, 111, 217, 0.2);
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--brand-dark);
+  border: 1px solid rgba(30, 111, 217, 0.14);
+  background: rgba(30, 111, 217, 0.12);
+  color: var(--brand-blue);
   font-size: 12px;
   font-weight: 600;
   padding: 8px 12px;
+}
+
+.ka-feature-highlights {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ka-feature-highlights li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.ka-feature-highlights .check {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(34, 197, 94, 0.14);
+  color: var(--brand-green);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .ka-features {
@@ -986,6 +1077,82 @@ section > p {
   margin-top: 0 !important;
 }
 
+.ka-pricing-cta {
+  margin-top: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    var(--logo-navy);
+  background-size: 28px 28px, auto;
+  color: #fff;
+  text-align: center;
+}
+
+.ka-pricing-cta .ka-container {
+  padding-top: 88px;
+  padding-bottom: 88px;
+}
+
+.ka-pricing-cta h2 {
+  margin: 0;
+  max-width: 760px;
+  color: #fff;
+  font-size: 46px;
+}
+
+.ka-pricing-cta p {
+  margin: 14px auto 0;
+  max-width: 760px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 18px;
+}
+
+.ka-pricing-cta-actions {
+  margin-top: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.ka-pricing-cta-primary,
+.ka-pricing-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  padding: 13px 24px;
+}
+
+.ka-pricing-cta-primary {
+  background: var(--brand-green);
+  color: var(--brand-dark);
+}
+
+.ka-pricing-cta-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.94);
+}
+
+.ka-pricing-cta-secondary {
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  color: #fff;
+  background: transparent;
+}
+
+.ka-pricing-cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.ka-pricing-cta-note {
+  margin-top: 20px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 14px;
+}
+
 #faq h2 {
   font-size: 32px;
 }
@@ -1107,7 +1274,7 @@ section > p {
 /* Footer */
 footer {
   margin-top: 0;
-  background: var(--brand-dark) !important;
+  background: #0D1526 !important;
   border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
   padding: 48px 24px !important;
 }
@@ -1225,6 +1392,10 @@ footer .ka-container {
     gap: 18px;
   }
 
+  .ka-features-context {
+    gap: 14px;
+  }
+
   .ka-stats {
     padding-left: 32px;
     padding-right: 32px;
@@ -1247,15 +1418,27 @@ footer .ka-container {
     padding-right: 20px;
   }
 
+  .ka-nav-actions .ka-cta {
+    display: none;
+  }
+
   .ka-hero-video {
     display: none;
   }
 
   .ka-hero.ka-container {
     background:
-      linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.72)),
       url('/images/african-school-exterior.dim_1200x600.jpg') center top / cover no-repeat,
       #0F172A;
+  }
+
+  .ka-hero-overlay {
+    width: 100%;
+  }
+
+  .ka-hero-inner {
+    display: block;
+    gap: 0;
   }
 
   .ka-links { display: none; }
@@ -1271,6 +1454,25 @@ footer .ka-container {
     border-radius: 12px;
     background: rgba(15, 23, 42, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .ka-hero-left {
+    max-width: none;
+    flex: none;
+    width: 100%;
+    padding: 24px 20px;
+  }
+
+  .ka-hero-panel {
+    width: 100%;
+    padding: 0;
+    border-radius: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .ka-hero-panel::after {
+    display: none;
   }
 
   .ka-audience { display: flex; flex-wrap: wrap; }
@@ -1309,8 +1511,7 @@ footer .ka-container {
     padding-right: 20px;
   }
 
-  .ka-steps::before,
-  .ka-stat + .ka-stat { display: none; }
+  .ka-steps::before { display: none; }
 
   footer .ka-container {
     grid-template-columns: 1fr;
@@ -1333,6 +1534,29 @@ footer .ka-container {
 
   .ka-cta-banner {
     padding: 60px 24px;
+  }
+
+  .ka-pricing-cta .ka-container {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+
+  .ka-pricing-cta h2 {
+    font-size: 34px;
+  }
+
+  .ka-pricing-cta p {
+    font-size: 16px;
+  }
+
+  .ka-pricing-cta-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ka-pricing-cta-primary,
+  .ka-pricing-cta-secondary {
+    width: 100%;
   }
 
   .ka-cta-content form {
