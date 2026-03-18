@@ -2,127 +2,453 @@
 @extends('layouts.empty')
 
 @section('content')
-<div class="w-full flex flex-col mx-2  lg:mx-0 md:mx-0">
-@include('layouts.partials.logo')
-<div class="w-full lg:w-1/3 p-8 mx-auto bg-white relative">
-  @include('partials.message')
-  <div class="justify-content-center">
-    
-    <div class="rounded-full"></div>
-    <div class="card">
-      <div class="card-header   text-center text-2xl font-semibold tracking-wide">{{ __('Login') }}</div>
-      <div class="card-body">
-        @if(\Config::get('settings.login_status')==0)
-        <div class="alert-box success">
-          Login page under maintenance
-        </div>
-        @else
-        <form method="POST" action="{{ route('login') }}" aria-label="{{ __('Login') }}">
-          @csrf
-          <div class="lg:px-5 md:px-5">
-            <div class="form-group my-8">
-              <!-- <label for="email" class="col-sm-4 col-form-label text-md-right">{{ __('E-Mail Address') }}</label> -->
-              <div class="relative">
-                <div class="input-group flex  w-full border-b border-gray-400">
-                  <span class="input-group-addon w-6 flex items-center justify-center" style="color: #aaa;">
-         <svg class="fill-current w-4 h-4" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-     viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
-<g>
-    <g>
-        <path d="M469.333,64H42.667C19.135,64,0,83.135,0,106.667v298.667C0,428.865,19.135,448,42.667,448h426.667
-            C492.865,448,512,428.865,512,405.333V106.667C512,83.135,492.865,64,469.333,64z M42.667,85.333h426.667
-            c1.572,0,2.957,0.573,4.432,0.897c-36.939,33.807-159.423,145.859-202.286,184.478c-3.354,3.021-8.76,6.625-15.479,6.625
-            s-12.125-3.604-15.49-6.635C197.652,232.085,75.161,120.027,38.228,86.232C39.706,85.908,41.094,85.333,42.667,85.333z
-             M21.333,405.333V106.667c0-2.09,0.63-3.986,1.194-5.896c28.272,25.876,113.736,104.06,169.152,154.453
-            C136.443,302.671,50.957,383.719,22.46,410.893C21.957,409.079,21.333,407.305,21.333,405.333z M469.333,426.667H42.667
-            c-1.704,0-3.219-0.594-4.81-0.974c29.447-28.072,115.477-109.586,169.742-156.009c7.074,6.417,13.536,12.268,18.63,16.858
-            c8.792,7.938,19.083,12.125,29.771,12.125s20.979-4.188,29.76-12.115c5.096-4.592,11.563-10.448,18.641-16.868
-            c54.268,46.418,140.286,127.926,169.742,156.009C472.552,426.073,471.039,426.667,469.333,426.667z M490.667,405.333
-            c0,1.971-0.624,3.746-1.126,5.56c-28.508-27.188-113.984-108.227-169.219-155.668c55.418-50.393,140.869-128.57,169.151-154.456
-            c0.564,1.91,1.194,3.807,1.194,5.897V405.333z"/>
-    </g>
-</g> </svg>
-                  </span>
-                  <input id="email" type="text" class="form-control{{ $errors->has('email') ? ' is-invalid' : '' }} px-2 py-2 w-full text-sm focus:outline-none inputAnimation" placeholder="" name="email" value="{{ old('email') }}" required>
-                  <label for="email" class="control-label text-sm">E-Mail Address/ Registration Number</label>
-                </div>
-                
-              </div>
-              @if ($errors->has('email'))
-              <span class="invalid-feedback text-red-500 text-xs font-semibold" role="alert">
-                {{ $errors->first('email') }}
-              </span>
-              @endif
-            </div>
-            <div class="form-group mt-8 mb-3">
-              <!-- <label for="password" class="col-md-4 col-form-label text-md-right">{{ __('Password') }}</label> -->
-              <div class="relative">
-                <div class="input-group flex  w-full border-b border-gray-400">
-                  <span class="input-group-addon w-6 flex items-center justify-center" style="color: #aaa;">
-                
-<svg class="fill-current w-4 h-4" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-     viewBox="0 0 477.867 477.867" style="enable-background:new 0 0 477.867 477.867;" xml:space="preserve">
-<g>
-    <g>
-        <path d="M409.6,170.667h-17.067V153.6C392.439,68.808,323.725,0.094,238.933,0c-84.792,0.094-153.506,68.808-153.6,153.6v17.067
-            H68.267c-9.426,0-17.067,7.641-17.067,17.067V460.8c0,9.426,7.641,17.067,17.067,17.067H409.6c9.426,0,17.067-7.641,17.067-17.067
-            V187.733C426.667,178.308,419.026,170.667,409.6,170.667z M119.467,153.6c0-65.98,53.487-119.467,119.467-119.467
-            S358.4,87.62,358.4,153.6v17.067H119.467V153.6z M392.533,443.733h-307.2V204.8h307.2V443.733z"/>
-    </g>
-</g>
-<g>
-    <g>
-        <path d="M287.209,290.111c-7.211-20.472-26.571-34.152-48.276-34.111c-28.211-0.053-51.124,22.773-51.177,50.984
-            c-0.041,21.705,13.639,41.065,34.111,48.276v37.274c0,9.426,7.641,17.067,17.067,17.067S256,401.959,256,392.533V355.26
-            C282.609,345.888,296.582,316.719,287.209,290.111z M238.933,324.267c-9.426,0-17.067-7.641-17.067-17.067
-            s7.641-17.067,17.067-17.067S256,297.774,256,307.2S248.359,324.267,238.933,324.267z"/>
-    </g>
-</g></svg>
 
-                  </span>
-                  <input id="password" placeholder="" type="password" class="form-control{{ $errors->has('password') ? ' is-invalid' : '' }} px-2 py-2 w-full  text-sm focus:outline-none inputAnimation" name="password" required>
-                  <label for="password" class="control-label text-sm">Password</label>
-                </div>
-              </div>
-              @if ($errors->has('password'))
-              <span class="invalid-feedback text-red-500 text-xs" role="alert">
-                <strong>{{ $errors->first('password') }}</strong>
-              </span>
-              @endif
-            </div>
-            <div class="form-group pt-4">
-              <div class="flex justify-between">
-                <div class="form-check flex items-center">
-                  <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                  <label class="form-check-label  text-sm mx-1" for="remember">
-                    {{ __('Remember Me') }}
-                  </label>
-                </div>
-                <div>
-                  <a class="form-check-label text-xs" href="{{ route('password.request') }}">
-                    {{ __('Forgot Your Password?') }}
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div class="form-group  py-8 flex justify-between">
-              <div class="w-full z-40">
-                <button type="submit" class="btn bg-red-600 text-white uppercase px-8 py-1 tracking-wider w-full z-40" id="login">
-                {{ __('Login') }}
-                </button>
-              </div>
-              
-            </div>
-            <div>
-              <!-- <p class="form-check-label text-center tracking-wider">To Create an Account click <a href="{{ url('/register') }}" class="underline text-blue-500">Signup</a></p> -->
-            </div>
-          </div>
-        </form>
-        @endif
-      </div>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
+  .klass-login-page {
+    width: 100%;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    background: #0D1526;
+    position: relative;
+    overflow: hidden;
+    padding: 24px;
+  }
+
+  .klass-login-page::before {
+    content: "";
+    position: relative;
+    position: absolute;
+    inset: -12% -8%;
+    background:
+      radial-gradient(40% 30% at 18% 20%, rgba(30, 111, 217, 0.12) 0%, rgba(30, 111, 217, 0) 78%),
+      radial-gradient(32% 28% at 82% 18%, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0) 76%),
+      radial-gradient(36% 28% at 70% 82%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 74%),
+      radial-gradient(38% 30% at 20% 88%, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 72%),
+      repeating-linear-gradient(150deg, rgba(255, 255, 255, 0.03) 0 1px, rgba(255, 255, 255, 0) 1px 30px);
+    pointer-events: none;
+    opacity: 0.32;
+  }
+
+  .klass-login-page::after {
+    content: "";
+    position: absolute;
+    inset: auto -18% -32% -18%;
+    height: 66%;
+    background:
+      radial-gradient(46% 46% at 15% 90%, rgba(30, 111, 217, 0.14) 0%, rgba(30, 111, 217, 0) 76%),
+      radial-gradient(44% 44% at 83% 72%, rgba(34, 197, 94, 0.11) 0%, rgba(34, 197, 94, 0) 74%),
+      repeating-linear-gradient(145deg, rgba(255, 255, 255, 0.028) 0 1px, rgba(255, 255, 255, 0) 1px 34px);
+    opacity: 0.28;
+    pointer-events: none;
+  }
+
+  .klass-login-card {
+    width: 100%;
+    max-width: 440px;
+    background: #EEF1F5;
+    border-radius: 16px;
+    box-shadow: 0 28px 60px rgba(5, 11, 27, 0.45), 0 8px 18px rgba(5, 11, 27, 0.28);
+    padding: 48px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .klass-login-intro {
+    text-align: center;
+  }
+
+  .klass-login-logo-frame {
+    width: 140px;
+    margin: 0 auto;
+    overflow: hidden;
+    display: block;
+  }
+
+  .klass-login-logo {
+    width: 236px;
+    max-width: none;
+    height: auto;
+    margin-left: -48px;
+    display: block;
+  }
+
+  .klass-intro-title {
+    margin: 14px 0 0;
+    color: #0d1526;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .klass-intro-sub {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .klass-intro-divider {
+    width: 100%;
+    height: 1px;
+    margin: 18px 0 0;
+    background: #d7dee9;
+  }
+
+  .klass-maintenance {
+    margin-top: 24px;
+    border: 1px solid rgba(30, 111, 217, 0.28);
+    background: rgba(30, 111, 217, 0.08);
+    color: #0d1526;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .klass-form {
+    margin-top: 22px;
+  }
+
+  .klass-field {
+    margin-bottom: 14px;
+  }
+
+  .klass-label {
+    display: block;
+    margin-bottom: 7px;
+    color: #0d1526;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .klass-input {
+    width: 100%;
+    background: #F6F8F8;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 15px;
+    color: #0d1526;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    outline: none;
+    min-height: 48px;
+  }
+
+  .klass-input:focus {
+    border-color: #1e6fd9;
+    box-shadow: 0 0 0 3px rgba(30, 111, 217, 0.12);
+  }
+
+  .klass-input::placeholder {
+    color: #94a3b8;
+  }
+
+  .klass-password-wrap {
+    position: relative;
+  }
+
+  .klass-password-wrap .klass-input {
+    padding-right: 46px;
+  }
+
+  .klass-password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    width: 26px;
+    height: 26px;
+    color: #1e6fd9;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .klass-password-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(30, 111, 217, 0.2);
+    border-radius: 6px;
+  }
+
+  .klass-password-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .klass-actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    margin-bottom: 18px;
+  }
+
+  .klass-checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .klass-checkbox {
+    margin-top: 2px;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid #94a3b8;
+    border-radius: 5px;
+    background: #ffffff;
+    position: relative;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+
+  .klass-checkbox:checked {
+    background: #22c55e;
+    border-color: #22c55e;
+  }
+
+  .klass-checkbox:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    border: solid #0d1526;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  .klass-checkbox-label {
+    color: #334155;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .klass-forgot-link {
+    color: #1e6fd9;
+    font-size: 13px;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .klass-forgot-link:hover {
+    text-decoration: underline;
+  }
+
+  .klass-error {
+    margin-top: 6px;
+    display: block;
+    color: #dc2626;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 600;
+  }
+
+  .klass-submit {
+    margin-top: 6px;
+    width: 100%;
+    border: 0;
+    border-radius: 8px;
+    background: #1E6FD9;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 14px;
+    cursor: pointer;
+    transition: transform 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .klass-submit:hover {
+    background: #1a5fc4;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(30, 111, 217, 0.2);
+  }
+
+  .klass-submit:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(30, 111, 217, 0.18);
+  }
+
+  .klass-meta {
+    margin-top: 14px;
+    text-align: center;
+  }
+
+  .klass-meta-lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .klass-meta-register {
+    margin-top: 9px;
+    color: #334155;
+    font-size: 14px;
+  }
+
+  .klass-meta-register a {
+    color: #22c55e;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .klass-meta-register a:hover {
+    text-decoration: underline;
+  }
+
+  .klass-errors-all {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border: 1px solid rgba(220, 38, 38, 0.18);
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .klass-errors-all p {
+    margin: 0;
+  }
+
+  @media (max-width: 767px) {
+    .klass-login-page {
+      padding: 14px;
+    }
+
+    .klass-login-card {
+      padding: 28px;
+    }
+
+    .klass-actions-row {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .klass-checkbox-row {
+      width: 100%;
+    }
+
+    .klass-forgot-link {
+      display: block;
+      text-align: center;
+    }
+  }
+</style>
+
+<div class="klass-login-page">
+  <div class="klass-login-card">
+    <div class="klass-login-intro">
+      <span class="klass-login-logo-frame">
+        <img src="{{ asset('images/klassapp-logo-primary.png') }}" class="klass-login-logo" alt="KlassApp">
+      </span>
+      <p class="klass-intro-title">Welcome back</p>
+      <p class="klass-intro-sub">Sign in to your school dashboard.</p>
+      <div class="klass-intro-divider"></div>
     </div>
+
+    @if(\Config::get('settings.login_status')==0)
+      <div class="klass-maintenance">
+        Login page is under maintenance
+      </div>
+    @else
+      <form method="POST" action="{{ route('login') }}" aria-label="{{ __('Login') }}" class="klass-form">
+        @csrf
+
+        <div class="klass-field">
+          <label class="klass-label" for="email">Email or Registration Number</label>
+          <input id="email" type="text" class="klass-input{{ $errors->has('email') ? ' is-invalid' : '' }}" name="email" value="{{ old('email') }}" placeholder="your@school.edu or your registration number" required>
+          @if ($errors->has('email'))
+            <span class="klass-error" role="alert">{{ $errors->first('email') }}</span>
+          @endif
+        </div>
+
+        <div class="klass-field">
+          <label class="klass-label" for="password">Password</label>
+          <div class="klass-password-wrap">
+            <input id="password" type="password" class="klass-input{{ $errors->has('password') ? ' is-invalid' : '' }}" name="password" required>
+            <button class="klass-password-toggle" type="button" data-target="password" aria-label="Show or hide password">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M2 12C3.9 8.2 7.5 6 12 6C16.5 6 20.1 8.2 22 12C20.1 15.8 16.5 18 12 18C7.5 18 3.9 15.8 2 12Z" stroke="currentColor" stroke-width="1.7"></path>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"></circle>
+              </svg>
+            </button>
+          </div>
+          @if ($errors->has('password'))
+            <span class="klass-error" role="alert">{{ $errors->first('password') }}</span>
+          @endif
+        </div>
+
+        <div class="klass-actions-row">
+          <div class="klass-checkbox-row">
+            <input id="remember" type="checkbox" class="klass-checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
+            <label for="remember" class="klass-checkbox-label">
+              Remember me
+            </label>
+          </div>
+          <a href="{{ route('password.request') }}" class="klass-forgot-link">Forgot your password?</a>
+        </div>
+
+        <button type="submit" class="klass-submit">Sign in to KlassApp</button>
+
+        <div class="klass-meta">
+          <p class="klass-meta-lock">
+            <svg viewBox="0 0 20 20" width="14" height="14" fill="none" aria-hidden="true">
+              <rect x="4" y="9" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.6"></rect>
+              <path d="M7 9V7.2C7 5.43 8.34 4 10 4C11.66 4 13 5.43 13 7.2V9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+            </svg>
+            Your data is encrypted and secure.
+          </p>
+          <p class="klass-meta-register">New to KlassApp? <a href="{{ url('/register') }}">Register your school for free.</a></p>
+        </div>
+
+        @if ($errors->any())
+          <div class="klass-errors-all">
+            @foreach ($errors->all() as $error)
+              <p>{{ $error }}</p>
+            @endforeach
+          </div>
+        @endif
+      </form>
+    @endif
   </div>
 </div>
-</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const toggleButtons = document.querySelectorAll('.klass-password-toggle');
+    
+    toggleButtons.forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const targetId = this.setAttribute('data-target');
+        const input = document.getElementById(targetId);
+        
+        if (input.type === 'password') {
+          input.type = 'text';
+          this.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+        } else {
+          input.type = 'password';
+          this.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M2 12C3.9 8.2 7.5 6 12 6C16.5 6 20.1 8.2 22 12C20.1 15.8 16.5 18 12 18C7.5 18 3.9 15.8 2 12Z" stroke="currentColor" stroke-width="1.7"></path><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"></circle></svg>';
+        }
+      });
+    });
+  });
+</script>
+
 @endsection
 
