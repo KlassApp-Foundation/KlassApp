@@ -22,6 +22,7 @@ use App\Models\AcademicYear;
 use App\Models\Subscription;
 use App\Models\Plan;
 use App\Models\SchoolDetail;
+use App\Models\Usergroup;
 use Illuminate\Support\Str;
 use App\Models\Userprofile;
 use App\Models\School;
@@ -164,7 +165,7 @@ class RegisterController extends Controller
             $userProfile = Userprofile::create([
                 'user_id'           => $user->id,
                 'school_id'         => $user->school_id,
-                'usergroup_id'      => "3",
+                'usergroup_id'      => $user->usergroup_id,
                 'created_at'        => Carbon::now(),
                 'updated_at'        => Carbon::now(),
             ]);
@@ -257,7 +258,10 @@ class RegisterController extends Controller
 
             $now = Carbon::now();
 
-            $fallbackPlanId = DB::table('plans')->insertGetId([
+            $columns = Schema::getColumnListing('plans');
+            $payload = [];
+
+            $defaults = [
                 'cycle' => 30,
                 'name' => 'free',
                 'display_name' => 'Free',
@@ -274,7 +278,15 @@ class RegisterController extends Controller
                 'no_of_groups' => 3,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ]);
+            ];
+
+            foreach ($defaults as $column => $value) {
+                if (in_array($column, $columns, true)) {
+                    $payload[$column] = $value;
+                }
+            }
+
+            $fallbackPlanId = DB::table('plans')->insertGetId($payload);
 
             $this->safeLogWarning('Created fallback free plan for registration flow', [
                 'plan_id' => $fallbackPlanId,
@@ -294,9 +306,15 @@ class RegisterController extends Controller
     {
         try
         {
+            $schoolAdminGroupId = $this->resolveSchoolAdminGroupId();
+
+            if (!$schoolAdminGroupId) {
+                throw new Exception('No usergroup is available for school administrator accounts.');
+            }
+
             $userData = [
                 'school_id'     => $school->id,
-                'usergroup_id'  => "3",
+                'usergroup_id'  => $schoolAdminGroupId,
                 'name'          => $data['name'],
                 'email'         => $data['email'],
                 'mobile_no'     => $data['mobile_no'],
@@ -321,6 +339,54 @@ class RegisterController extends Controller
         {
             $this->safeLogWarning('School admin creation failed', ['message' => $e->getMessage()]);
             throw $e;
+        }
+    }
+
+    private function resolveSchoolAdminGroupId()
+    {
+        // Primary expected role id used by legacy code and seeders.
+        if (DB::table('usergroups')->where('id', 3)->exists()) {
+            return 3;
+        }
+
+        $nameMatchId = Usergroup::query()
+            ->whereRaw('LOWER(name) IN (?, ?, ?)', ['schooladmin', 'school admin', 'school administrator'])
+            ->value('id');
+
+        if ($nameMatchId) {
+            return (int) $nameMatchId;
+        }
+
+        $anyGroupId = DB::table('usergroups')->orderBy('id')->value('id');
+        if ($anyGroupId) {
+            $this->safeLogWarning('SchoolAdmin usergroup id=3 is missing; using fallback group id', [
+                'fallback_usergroup_id' => (int) $anyGroupId,
+            ]);
+
+            return (int) $anyGroupId;
+        }
+
+        try {
+            $now = Carbon::now();
+
+            DB::table('usergroups')->insert([
+                'id' => 3,
+                'name' => 'SchoolAdmin',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            $this->safeLogWarning('Created fallback SchoolAdmin usergroup for registration flow', [
+                'usergroup_id' => 3,
+            ]);
+
+            return 3;
+        } catch (Throwable $e) {
+            $this->safeLogWarning('Failed to create fallback SchoolAdmin usergroup', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
         }
     }
 
