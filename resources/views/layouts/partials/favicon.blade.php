@@ -5,5 +5,4 @@
 <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('favicon/favicon-96x96.png') }}">
 <link rel="apple-touch-icon" href="{{ asset('favicon/apple-icon.png') }}">
 <link rel="manifest" href="{{ asset('favicon/manifest.json') }}">
->>>>>>> 91e37cd6135e5fb755758d7e3334b2b2cff8612e
 <meta name="theme-color" content="#ffffff">
