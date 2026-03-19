@@ -1,7 +1,33 @@
 {{-- SPDX-License-Identifier: MIT --}}
-<link rel="icon" type="image/x-icon" href="{{ asset('favicon/favicon.ico') }}">
-<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon/favicon-32x32.png') }}">
-<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon/favicon-16x16.png') }}">
-<link rel="icon" type="image/png" sizes="96x96" href="{{ asset('favicon/favicon-96x96.png') }}">
-<link rel="apple-touch-icon" href="{{ asset('favicon/klassapp-favicon.png') }}">
+@php
+	$faviconCandidates = [
+		config('settings.favicon'),
+		'favicons/klassapp-favicon.png',
+		'favicon/klassapp-favicon.png',
+		'favicon/favicon-32x32.png',
+		'favicon/favicon.ico',
+		'favicon.ico',
+	];
+
+	$resolvedFavicon = null;
+
+	foreach ($faviconCandidates as $candidate) {
+		if (!is_string($candidate) || trim($candidate) === '') {
+			continue;
+		}
+
+		$candidate = ltrim($candidate, '/');
+
+		if (file_exists(public_path($candidate))) {
+			$resolvedFavicon = $candidate;
+			break;
+		}
+	}
+
+	$resolvedFavicon = $resolvedFavicon ?? 'favicon/klassapp-favicon.png';
+	$faviconVersion = @filemtime(public_path($resolvedFavicon)) ?: time();
+@endphp
+<link rel="shortcut icon" href="{{ asset($resolvedFavicon) }}?v={{ $faviconVersion }}">
+<link rel="icon" type="image/png" href="{{ asset($resolvedFavicon) }}?v={{ $faviconVersion }}">
+<link rel="apple-touch-icon" href="{{ asset($resolvedFavicon) }}?v={{ $faviconVersion }}">
 <meta name="theme-color" content="#ffffff">
