@@ -604,7 +604,9 @@
     var toggles = document.querySelectorAll('.klass-password-toggle');
 
     for (var i = 0; i < toggles.length; i++) {
-      toggles[i].addEventListener('click', function () {
+      toggles[i].addEventListener('click', function (event) {
+        event.preventDefault();
+
         var targetId = this.getAttribute('data-target');
         var input = document.getElementById(targetId);
 

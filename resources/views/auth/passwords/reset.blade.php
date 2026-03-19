@@ -10,7 +10,7 @@
                 </div>
 
                 <div class="">
-                    <form method="POST" action="{{url('/password/reset/')}}" aria-label="{{ __('Reset Password') }}">
+                    <form method="POST" action="{{ route('password.update') }}" aria-label="{{ __('Reset Password') }}">
                         @csrf
 
                         <input type="hidden" name="token" value="{{ $token }}">

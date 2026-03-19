@@ -435,8 +435,12 @@
       button.addEventListener('click', function(e) {
         e.preventDefault();
 
-        const targetId = this.setAttribute('data-target');
+        const targetId = this.getAttribute('data-target');
         const input = document.getElementById(targetId);
+
+        if (!input) {
+          return;
+        }
 
         if (input.type === 'password') {
           input.type = 'text';
