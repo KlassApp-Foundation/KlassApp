@@ -1,8 +1,8 @@
-@extends('layouts.admin.layout')
+@extends('layouts.teacher.layout')
 
 @section('content')
 <div class="container-fluid w-full lg:mx-2 py-4">
-    {{-- {{ dd($exms) }} --}}
+    {{-- {{ dd($marks) }} --}}
     {{-- Header --}}
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
         <div>
@@ -91,7 +91,7 @@
 
                          {{-- grade --}}
                         <td class="px-4 py-3 text-gray-600">
-                            {{ $mark->teacher->name ?? 'N/A' }}
+                            {{ $mark->grade ?? 'N/A' }}
                         </td>
 
                          {{-- remark --}}
@@ -102,9 +102,9 @@
                         {{-- Actions --}}
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-2">
-                                <a href="{{ route('teacher.exam.marks.enter', $mark->exam->id)  }}" 
+                                <a href="{{ route('teacher.student.marks.edit',[ $mark->exam->id, $mark->student_id, $mark->id])}}" 
                                    class="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100">
-                                    Edit here
+                                    Edit
                                 </a>
 
                                 <button 

@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class MarksController extends Controller
@@ -90,13 +91,16 @@ public function enterExamMarks( $exam)
     $schoolId = $user->school_id;
 
     $exams = Exam::findOrFail($exam);
+        $tr = DB::table("class_teacher_links")->where("teacher_id", $user->id)->first();
+
     // $students = User::byStandard(1)->where("school_id", $user->school_id)
     // ->orderBy("name")->get();
-    // $students = StudentAcademic::where("standardLink_id", 1)->get();
-    $students = User::byStandard($exam->standard_id)
-    ->where('school_id', $exam->school_id)
-    ->orderBy('name')
-    ->get();
+    // $students = StandardLink::where("standard_id", $exam->standard_id)->get();
+    $students = StudentAcademic::with(["user"])->where("standardLink_id", $tr->standardLink_id)->get();
+    // $students = User::byStandard($exam->standard_id)
+    // ->where('school_id', $exam->school_id)
+    // ->orderBy('name')
+    // ->get();
 
 
     $remarks = Remarks::where("school_id", 5)->get();
@@ -116,7 +120,7 @@ public function enterExamMarks( $exam)
         ->keyBy('student_id')
         ->map(fn($m) => ['marks' => $m->marks, 'comment' => $m->comment]);
 
-    return view('teacher.marks.enter', compact('exams', "students", 'standard', 'subject', 'existing', "user", "remarks", "exam"));
+    return view('teacher.marks.enter', compact('exams', "students", 'standard', 'subject', 'existing', "user", "remarks", "exam", "tr"));
 }
 
 public function saveExamMarks(Request $request, Exam $exam)
@@ -154,7 +158,7 @@ public function saveExamMarks(Request $request, Exam $exam)
 
     return redirect()
         ->route('teacher.exam.marks')
-        ->with('successmessage', ' marks saved for ' . $exam->name . "!");
+        ->with('successmessage', ' marks saved!');
 }
 
 // view examMarks
@@ -170,9 +174,72 @@ public function viewExamMarks(Exam $exam, Subject $subject)
       $exms=Standard::where("id", $exam->standard_id)->pluck("id");
       $ll=StandardLink::where("standard_id", 2)->get();
 
-        $marks = Marks::with(["exam", "student", "subject", "teacher", "remark"])->get();
+    //   to add school id relationship and filter according to it
+        $marks = Marks::with(["exam", "student", "subject", "teacher", "remark"])->where('teacher_id', $tr->id)->where('exam_id', $exam->id)->where("school_id", $tr->school_id)->where("subject_id", $exam->subject_id)->get();
     return view('teacher.marks.view', compact( "marks", "exms" ));    // ← recommended if you want all students
         // or 'marks', 'students' if you prefer separate
    
 }
+
+// edit user 
+public function editMark(Exam $exam, User $student, Marks $marks)
+{
+    $teacher = Auth::user();
+
+    // Find the existing mark (or create a new one if allowed)
+    $mark = Marks::firstOrNew([
+        'exam_id'     => $exam->id,
+        'subject_id'  => $exam->subject_id,
+        'student_id'  => $student->student_id,
+        'teacher_id'  => $exam->teacher_id,
+        'school_id'   => $exam->school_id,
+    ]);
+
+    // Optional: security check
+    if ($mark->exists && $mark->teacher_id !== $teacher->id) {
+        abort(403, "You didn't enter this mark.");
+    }
+$remarks = Remarks::where("school_id", $teacher->school_id)->get();
+    // Optional: check if student actually belongs to this exam/standard
+    // if ($student->user_id !== $exam->standard_id) {
+    //     abort(404, "Student not in this class/exam.");
+    // }
+
+    return view('teacher.marks.edit-single', compact('exam', 'mark', "student", "remarks", "marks"));
+}
+
+public function updateMark(Request $request, Exam $exam, User $student)
+{
+    $teacher = Auth::user();
+
+    $validated = $request->validate([
+        'marks'       => 'required|numeric|min:0|max:100', // adjust rules to your system
+        'grade'       => 'nullable|string|max:5',
+        'remark'      => 'nullable|string|max:255',
+        // add other fields you have (attendance, etc.)
+    ]);
+
+    // Find or create
+    $mark = Marks::updateOrCreate(
+        [
+            'exam_id'     => $exam->id,
+            'subject_id'  => $exam->subject_id,
+            'student_id'  => $student->id,
+            'teacher_id'  => $teacher->id,
+            'school_id'   => $teacher->school_id,
+        ],
+        [
+            'marks'       => $validated['marks'],
+            'grade'       => $validated['grade'] ?? null,
+            'remark'      => $validated['remark'] ?? null,
+            // add other fields + maybe 'updated_at' is auto
+        ]
+    );
+
+    // Optional: flash message
+    return redirect()
+        ->route('teacher.exam.marks.view', [$exam]) // or wherever your list is
+        ->with('successmessage', "Marks updated for {$student->name}!");
+}
+
 }

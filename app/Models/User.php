@@ -257,24 +257,24 @@ class User extends Authenticatable implements HasMedia
     }
 
     // ======= TO USE SCOPE TO QUERY STUDENT CLASS BY ID =========
-    public function scopeByStandard($query, $standardId)
-{
-    return $query->whereHas('studentAcademic.standardLink', function ($q) use ($standardId) {
-        $q->where('standard_id', $standardId);
-    });
-}
+//     public function scopeByStandard($query, $standardId)
+// {
+//     return $query->whereHas('studentAcademic.standardLink', function ($q) use ($standardId) {
+//         $q->where('standard_id', $standardId);
+//     });
+// }
 
-    // public function scopeByStandard($query , $standard)
-    // {
-    //     $query->wherehas('studentAcademic',function ($query) use($standard)
-    //         {
-    //             $query->wherehas('standardLink',function ($query) use($standard)
-    //             {
-    //                 $query->where('id','=',$standard);
-    //             });
-    //         });
-    //     return $query;
-    // }
+    public function scopeByStandard($query , $standard)
+    {
+        $query->wherehas('studentAcademic',function ($query) use($standard)
+            {
+                $query->wherehas('standardLink',function ($query) use($standard)
+                {
+                    $query->where('id','=',$standard);
+                });
+            });
+        return $query;
+    }
 
     public function scopeByTransport($query , $transport)
     {

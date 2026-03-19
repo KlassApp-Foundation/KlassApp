@@ -1,4 +1,4 @@
-@extends('layouts.admin.layout')
+@extends('layouts.teacher.layout')
 
 @section('content')
 <div class="container-fluid w-full lg:mx-2">
@@ -42,13 +42,13 @@
                     </thead>
 
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-{{-- {{ dd($students) }} --}}
+{{-- {{ dd($tr) }} --}}
                         @foreach($students as $student)
                        
 
                         <tr>
                             <td class="py-3 text-gray-900 dark:text-white">
-                                {{ $student->name }}
+                                {{ $student->user->name }}
                             </td>
 
                             <td>
