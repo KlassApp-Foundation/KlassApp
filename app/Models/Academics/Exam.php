@@ -9,16 +9,21 @@ use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Exam extends Model
 {
     use HasFactory;
     protected $fillable=[
-         "standard_id", "school_id", "academic_year_id", "term", "subject_id", "teacher_id", "type", "status","scheduled_at"
+         "standard_id", "school_id", "academic_year_id", "term", "subject_id", "teacher_id", "exam_type_id", "status","scheduled_at"
         ];
         public function standard(){
             return $this->belongsTo(Standard::class, "standard_id");
         }
+         public function examType(){
+            return $this->belongsTo(ExamType::class, "exam_type_id");
+        }
+       
         public function school(){
             return $this->belongsTo(School::class, "school_id");
         }

@@ -10,6 +10,7 @@ use App\Models\Academics\Remarks;
 use App\Models\Standard;
 use App\Models\Subject;
 use App\Models\User;
+use App\Models\Userprofile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -52,7 +53,6 @@ public function teacherExamMarksList()
     $teacher = Auth::user();
     $schoolId = $teacher->school_id;
 
-
     // Get exams where this teacher is assigned (adjust based on your logic)
     // Example: exams where teacher is linked via subject or directly
     $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
@@ -68,7 +68,7 @@ public function teacherExamMarksList()
         })
         ->orderBy('created_at', 'desc')
         ->get();
-
+$exm = Exam::where('teacher_id', $teacher->id)->get();
     // Add progress info
     foreach ($exams as $exam) {
         $exam->entered_count = Marks::where('exam_id', $exam->id)
@@ -76,7 +76,7 @@ public function teacherExamMarksList()
             ->count();
     }
 
-    return view('teacher.marks.teacher-exam-list', compact('exams'));
+    return view('teacher.marks.teacher-exam-list', compact('exams', "exm"));
 }
 
 public function enterExamMarks( $exam)
@@ -93,7 +93,8 @@ public function enterExamMarks( $exam)
     // }
 
     $standard = $exam->standard; // adjust relation name
-    $subject = request('subject_id') ? Subject::find($exam) : null;
+    // $subject = request('subject_id') ? Subject::find($exam) : null;
+    $subject = $exams->subject;
 
 
     $existing = Marks::where('exam_id', $exam->id)
@@ -103,7 +104,7 @@ public function enterExamMarks( $exam)
         ->keyBy('student_id')
         ->map(fn($m) => ['marks' => $m->marks, 'comment' => $m->comment]);
 
-    return view('teacher.marks.enter', compact('exams', "students", 'standard', 'subject', 'existing', "user", "remarks"));
+    return view('teacher.marks.enter', compact('exams', "students", 'standard', 'subject', 'existing', "user", "remarks", "exam"));
 }
 
 public function saveExamMarks(Request $request, Exam $exam)
@@ -113,50 +114,44 @@ public function saveExamMarks(Request $request, Exam $exam)
         abort(403, "Not Authorized");
     }
 
-    $validated = $request->validate([
-        'marks.*'    => 'nullable|numeric|min:0|max:100',
-        'comments.*' => 'nullable|string|max:255',
-    ]);
-
-    $saved = 0;
-    $teacherId = $user->id;
-
-    foreach ($validated['marks'] ?? [] as $studentId => $mark) {
+    foreach ($request->marks as $studentId => $mark) {
         if ($mark === null || trim($mark) === '') continue;
-
         Marks::updateOrCreate(
             [
                 'student_id' => $studentId,
                 'exam_id'    => $exam->id,
                 'school_id'  => $exam->school_id,
-                'subject_id' => $request->subject_id ?? null,
+                'subject_id' => $exam->subject_id,
             ],
             [
-                'teacher_id' => $teacherId,
+                'teacher_id' => $exam->teacher_id,
                 'marks'      => $mark,
                 'comment'    => $request->comments[$studentId] ?? null,
             ]
         );
-        $saved++;
     }
-    $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
-             ->where("teacher_id", $teacherId)->get();
 
     return redirect()
         ->route('teacher.exam.marks')
-        ->with('success', $saved . ' marks saved for ' . $exam->name);
+        ->with('successmessage', ' marks saved for ' . $exam->name . "!");
 }
 
 // view examMarks
-public function viewExamMarks($exam){
-    $teacher = Auth::user();
-    $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
-             ->where("teacher_id", $teacher->id)->get();
-    $exm = Exam::first()->standard->name;
-    $students = User::whereHas("studentAcademic", function($q) {
-    $q->whereHas('standardLink');
-})->get();     
-    // exam, marks, students, academic-year, standard
-return view("teacher.marks.view", compact("teacher", "exams", "students", "exm"));
+// In your Teacher/ExamController.php (or wherever it lives)
+
+
+public function viewExamMarks(Exam $exam, Subject $subject)
+{
+    $tr=Auth::user();
+    // 1. Get students in this exam's standard/class using your scope
+    $students = User::byStandard($exam->standard_id)     // ← your scope call here
+        ->where('usergroup_id', 6)                       // or whatever filter you use for students
+        ->orderBy('name', 'asc')
+        ->get();                          // only needed columns
+
+        $marks = Marks::with(["exam", "student", "subject", "teacher"])->get();
+    return view('teacher.marks.view', compact( "marks", "exam" ));    // ← recommended if you want all students
+        // or 'marks', 'students' if you prefer separate
+   
 }
 }

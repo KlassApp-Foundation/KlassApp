@@ -17,16 +17,14 @@
             {{ $exams->name }} • {{ $exams->standard->name ?? '' }} • Term {{ $exams->term }}
         </p>
     </div>
-{{-- {{ route('teacher.exam.marks.save', $exam->id) }} --}}
-{{-- {{ dd($remarks) }} --}}
-    <form action="" method="POST">
+    <form action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">
         @csrf
 
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
 
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    Student Marks
+                    Student Marks for {{ $subject->name }}
                 </h2>
             </div>
 

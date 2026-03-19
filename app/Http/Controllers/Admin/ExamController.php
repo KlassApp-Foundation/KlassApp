@@ -62,14 +62,13 @@ class ExamController extends Controller
             'term'             => 'required|in:1,2,3', // or string if named "Term I", etc.
             'subject_id'       => 'nullable|exists:subjects,id', // nullable if whole-class exam
             'teacher_id'       => 'nullable|exists:users,id',
-            'type'             => 'nullable|string|max:100', // e.g. "Mid-Term", "End-Term", "Mock", 
+            'exam_type_id'      => 'nullable|exists:exam_types,id', 
             'scheduled_at'     => 'nullable|date_format:Y-m-d\TH:i',
-            'status'             => 'nullable|required|boolean'
+            'status'             => 'nullable|boolean'
         ]);
 
         // Auto-fill school_id from logged-in admin
         $validated['school_id'] = Auth::user()->school_id;
-
         Exam::create($validated);
 
         

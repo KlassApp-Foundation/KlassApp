@@ -118,8 +118,8 @@ class StandardsLinkController extends Controller
     public function create()
     {
         // fetch classes
-        $classes = \Illuminate\Support\Facades\DB::table("classes")->get();
-        return view('/admin/school/standardlinks/create', compact("classes"));
+        // $classes = \Illuminate\Support\Facades\DB::table("classes")->get();
+        return view('/admin/school/standardlinks/create');
     }
 
     /**
