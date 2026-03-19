@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Mail\EmailVerification;
 use App\Models\AcademicYear;
 use App\Models\Subscription;
@@ -26,6 +27,7 @@ use App\Models\School;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
+use Throwable;
 
 class RegisterController extends Controller
 {
@@ -67,9 +69,7 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        DB::beginTransaction();
-        try
-        {
+        return DB::transaction(function () use ($data) {
             $school = $this->createSchool($data);
 
             //$this->createSchoolDetails($school); //added in observer
@@ -86,8 +86,6 @@ class RegisterController extends Controller
 
             $this->sendAdminNotifyMail($user);
 
-            DB::commit();
-
             Log::channel('slack')->info('A new user registered.', [
                 'Website' => env('APP_URL'),
                 'User_id' => $user->id,
@@ -97,12 +95,7 @@ class RegisterController extends Controller
             ]);
 
             return $user;
-        }
-        catch(Exception $e)
-        {
-            DB::rollBack();
-            Log::error("Registration Failed");
-        }
+        });
     }
 
     public function showRegistrationForm()
@@ -112,8 +105,22 @@ class RegisterController extends Controller
 
     public function register(RegisterRequest $request)
     {
+        $registrationData = $this->prepareRegistrationData($request->all());
 
-        event(new Registered($user = $this->create($request->all())));
+        try {
+            event(new Registered($user = $this->create($registrationData)));
+        } catch (Throwable $e) {
+            Log::error('Registration Failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()->back()->withInput(
+                $request->except(['password', 'password_confirmation'])
+            )->withErrors([
+                'register' => 'We could not complete your registration right now. Please try again in a moment.',
+            ]);
+        }
 
         $this->guard()->login($user);
 
@@ -140,6 +147,8 @@ class RegisterController extends Controller
                 'name'          =>  $data['school_name'],
                 'email'         =>  $data['email'],
                 'phone'         =>  $data['mobile_no'],
+                'registration_country' => $data['country'] ?? null,
+                'student_size'  =>  $data['student_size'] ?? null,
                 'slug'          =>  Str::slug($data['school_name'], '-'),
                 'status'        =>  "1",
                 'created_at'    =>  Carbon::now(),
@@ -153,7 +162,7 @@ class RegisterController extends Controller
         catch(Exception $e)
         {
             Log::info($e->getMessage());
-            //dd($e->getMessage());
+            throw $e;
         }
     }
 
@@ -174,7 +183,7 @@ class RegisterController extends Controller
         catch(Exception $e)
         {
             Log::info($e->getMessage());
-            //dd($e->getMessage());
+            throw $e;
         }
     }
 
@@ -196,7 +205,7 @@ class RegisterController extends Controller
         catch(Exception $e)
         {
             Log::info($e->getMessage());
-            //dd($e->getMessage());
+            throw $e;
         }
     }
 
@@ -204,17 +213,24 @@ class RegisterController extends Controller
     {
         try
         {
-            $user = User::create([
+            $userData = [
                 'school_id'     => $school->id,
                 'usergroup_id'  => "3",
                 'name'          => $data['name'],
                 'email'         => $data['email'],
                 'mobile_no'     => $data['mobile_no'],
+                'registration_role' => $data['role'] ?? null,
                 'password'      => Hash::make($data['password']),
                 'email_verification_code' => Str::random(40),
                 'created_at'    => Carbon::now(),
                 'updated_at'    => Carbon::now(),
-            ]);
+            ];
+
+            if (Schema::hasColumn('users', 'username')) {
+                $userData['username'] = $this->generateUsernameFromName($data['name']);
+            }
+
+            $user = User::create($userData);
 
             Log::info('School Admin created for School Id ' . $user->school_id);
 
@@ -223,8 +239,74 @@ class RegisterController extends Controller
         catch(Exception $e)
         {
             Log::info($e->getMessage());
-            //dd($e->getMessage());
+            throw $e;
         }
+    }
+
+    private function prepareRegistrationData(array $data)
+    {
+        $normalizedMobileNo = $this->normalizeMobileNo(
+            $data['mobile_no'] ?? '',
+            $data['country'] ?? null
+        );
+
+        $data['mobile_no'] = $normalizedMobileNo;
+
+        return $data;
+    }
+
+    private function normalizeMobileNo($mobileNo, $country)
+    {
+        $digitsOnly = preg_replace('/\D+/', '', (string) $mobileNo);
+
+        if ($digitsOnly !== '' && strpos($digitsOnly, '0') === 0) {
+            $digitsOnly = substr($digitsOnly, 1);
+        }
+
+        $countryCode = $this->resolveCountryCode($country);
+
+        return $countryCode . $digitsOnly;
+    }
+
+    private function resolveCountryCode($country)
+    {
+        $countryCodeMap = [
+            'Uganda' => '+256',
+            'Kenya' => '+254',
+            'Tanzania' => '+255',
+            'Rwanda' => '+250',
+            'Nigeria' => '+234',
+            'Ghana' => '+233',
+            'South Africa' => '+27',
+            'United Kingdom' => '+44',
+            'United States' => '+1',
+        ];
+
+        return $countryCodeMap[$country] ?? '+';
+    }
+
+    private function generateUsernameFromName($name)
+    {
+        $baseUsername = Str::of((string) $name)
+            ->lower()
+            ->replaceMatches('/[^a-z0-9\s\-]/', '')
+            ->trim()
+            ->replaceMatches('/[\s\-]+/', '.')
+            ->value();
+
+        if ($baseUsername === '') {
+            $baseUsername = 'user';
+        }
+
+        $username = $baseUsername;
+        $counter = 1;
+
+        while (User::where('username', $username)->exists()) {
+            $username = $baseUsername . '.' . $counter;
+            $counter++;
+        }
+
+        return $username;
     }
 
     private function createSchoolDetails($school)

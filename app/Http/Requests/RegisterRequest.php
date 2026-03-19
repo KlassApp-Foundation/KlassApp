@@ -53,21 +53,6 @@ class RegisterRequest extends FormRequest
             return preg_match('/^[A-Za-z0-9_~\-!@#\$%\^&*.,:(\)\s]+$/', request('address')) ;
         });*/
 
-        Validator::extend('check_name',function($attribute,$value,$parameters,$validator)
-        {
-            return preg_match('/^[A-Za-z0-9_~\-!@#\$%\^&*.,:(\)]+$/', request('name')) ;
-        });
-
-        Validator::extend('checkunique_name',function($attribute,$value,$parameters,$validator)
-        {
-            $user = User::where('name','LIKE','%'.request('name').'%')->exists();
-            if($user)
-            {
-                return false;
-            }
-            return true;
-        });
-
         Validator::extend('checkunique_email',function($attribute,$value,$parameters,$validator)
         {
             $user = User::where('email','LIKE','%'.request('email').'%')->exists();
@@ -80,7 +65,13 @@ class RegisterRequest extends FormRequest
 
         Validator::extend('checkunique_mobile',function($attribute,$value,$parameters,$validator)
         {
-            $user = User::where('mobile_no','=',request('mobile_no'))->exists();
+            $normalizedMobileNo = $this->normalizeMobileNumber(request('mobile_no'), request('country'));
+
+            if (!$normalizedMobileNo) {
+                return true;
+            }
+
+            $user = User::where('mobile_no', '=', $normalizedMobileNo)->exists();
             if($user)
             {
                 return false;
@@ -94,11 +85,14 @@ class RegisterRequest extends FormRequest
             'city'                  =>  'required',
             'state'                 =>  'required',
             'pincode'               =>  'required',*/
-            'name'                  =>  'required|max:15|checkunique_name|check_name',
-            'mobile_no'             =>  'required|numeric|digits:10|checkunique_mobile',
+            'name'                  =>  ['required', 'string', 'min:2', 'max:100', "regex:/^[\pL\s'\-]+$/u"],
+            'role'                  =>  'nullable|string|max:60',
+            'mobile_no'             =>  ['required', 'regex:/^0?\d{9,10}$/', 'checkunique_mobile'],
+            'country'               =>  'nullable|string|max:100',
+            'student_size'          =>  'nullable|string|max:50',
             'email'                 =>  'required|email|checkunique_email',
-            'password'              =>  'required|min:8|confirmed', 
-            'termsandcondn'         =>  'required', 
+            'password'              =>  'required|min:8|confirmed',
+            'termsandcondn'         =>  'required',
             //
         ];
 
@@ -125,14 +119,19 @@ class RegisterRequest extends FormRequest
             'pincode.required'                      =>  'Pincode is required',*/
 
             'name.required'                         =>  'User Name is required',
-            'name.checkunique_name'                 =>  'User Name already exists. Try different User Name',
-            'name.check_name'                       =>  'Enter a Valid User Name',
-            'name.max:15'                           =>  'User Name should be atmost 15 characters',
+            'name.regex'                            =>  'Please enter your full name using letters, spaces, hyphens, and apostrophes only.',
+            'name.min:2'                            =>  'Your Full Name must be at least 2 characters.',
+            'name.max:100'                          =>  'Your Full Name should be at most 100 characters.',
+
+            'role.max:60'                           =>  'Role should be atmost 60 characters',
 
             'mobile_no.required'                    =>  'Mobile Number is required.OTP will be sent',
-            'mobile_no.numeric'                     =>  'Mobile Number should be numeric.OTP will be sent',
-            'mobile_no.digits:10'                   =>  'Mobile Number should be 10 digits.OTP will be sent',
+            'mobile_no.regex'                       =>  'Please enter your local number only, without the leading zero — between 9 and 10 digits.',
             'mobile_no.checkunique_mobile'          =>  'Mobile Number already exists. Enter different Mobile Number.OTP will be sent',
+
+            'country.max:100'                       =>  'Country should be atmost 100 characters',
+
+            'student_size.max:50'                   =>  'School size should be atmost 50 characters',
 
             'email.required'                        =>  'Email ID is required.Verification Mail will be sent',
             'email.email'                           =>  'Enter a valid Email ID.Verification Mail will be sent',
@@ -145,5 +144,51 @@ class RegisterRequest extends FormRequest
 
             'g-recaptcha-response.required'         =>  'Captcha Required',
         ];
+    }
+
+    private function normalizeMobileNumber($mobileNo, $country)
+    {
+        if (!is_string($mobileNo)) {
+            return null;
+        }
+
+        $digitsOnly = preg_replace('/\D+/', '', $mobileNo);
+
+        if ($digitsOnly === '') {
+            return null;
+        }
+
+        if (strpos($digitsOnly, '0') === 0) {
+            $digitsOnly = substr($digitsOnly, 1);
+        }
+
+        if (!preg_match('/^\d{9,10}$/', $digitsOnly)) {
+            return null;
+        }
+
+        $countryCode = $this->resolveCountryCode($country);
+
+        if (!$countryCode) {
+            return null;
+        }
+
+        return $countryCode . $digitsOnly;
+    }
+
+    private function resolveCountryCode($country)
+    {
+        $countryCodeMap = [
+            'Uganda' => '+256',
+            'Kenya' => '+254',
+            'Tanzania' => '+255',
+            'Rwanda' => '+250',
+            'Nigeria' => '+234',
+            'Ghana' => '+233',
+            'South Africa' => '+27',
+            'United Kingdom' => '+44',
+            'United States' => '+1',
+        ];
+
+        return $countryCodeMap[$country] ?? null;
     }
 }

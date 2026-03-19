@@ -23,7 +23,7 @@ class School extends Model
      * @var array
      */
     protected $fillable = [
-        'name' , 'email' , 'phone' , 'address' , 'country_id' , 'state_id' , 'city_id' , 'pincode' , 'slug' , 'status'
+        'name' , 'email' , 'phone' , 'address' , 'country_id' , 'state_id' , 'city_id' , 'pincode' , 'slug' , 'status', 'registration_country', 'student_size'
     ];
 
        // linked to SUBJECTS =====FOR UGANDAN SCHOOLS=========

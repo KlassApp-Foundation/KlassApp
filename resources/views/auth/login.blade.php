@@ -365,7 +365,7 @@
         Login page is under maintenance
       </div>
     @else
-      <form method="POST" action="{{ route('login') }}" aria-label="{{ __('Login') }}" class="klass-form">
+      <form method="POST" action="/login" aria-label="{{ __('Login') }}" class="klass-form">
         @csrf
 
         <div class="klass-field">
