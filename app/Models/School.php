@@ -26,6 +26,12 @@ class School extends Model
         'name' , 'email' , 'phone' , 'address' , 'country_id' , 'state_id' , 'city_id' , 'pincode' , 'slug' , 'status', 'registration_country', 'student_size'
     ];
 
+       // linked to SUBJECTS =====FOR UGANDAN SCHOOLS=========
+
+    public function subjects()
+{
+    return $this->belongsToMany(Subject::class);
+}
     public function country()
     {
       return $this->belongsTo('App\Models\Country','country_id');
@@ -185,10 +191,10 @@ class School extends Model
         return $this->hasMany('\App\Models\Assignment','school_id','id');
     }
 
-    public function subject()
-    {
-        return $this->hasMany('\App\Models\Subject','school_id','id');
-    }
+    // public function subject()
+    // {
+    //     return $this->hasMany('\App\Models\Subject','school_id','id');
+    // }
 
     public function leaveType()
     {

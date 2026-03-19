@@ -43,7 +43,7 @@ class StaffController extends Controller
     {
         //
        
-         $count    =  User::where('school_id',Auth::user()->school_id)->whereIn('usergroup_id',[8,10,11,12,13])->count();
+         $count    =  User::where('school_id',Auth::user()->school_id)->whereIn('usergroup_id',[4,8,10,11,12,13])->count();
         $alphabet = request('alphabet')?request('alphabet'):'A';
         $query    = \Request::getQueryString();
         if(request('date_of_birth') != null)
@@ -101,6 +101,10 @@ class StaffController extends Controller
         {
           $usergroup_id= 12;
         }
+        else if($request->designation=="school_subadmin")
+          {
+            $usergroup_id=4;
+          }
         else
         {
           $usergroup_id=13;
@@ -190,6 +194,10 @@ class StaffController extends Controller
         else if($request->designation=="stock_keeper")
         {
           $usergroup_id= 12;
+        }
+        else if($request->designation=="school_subadmin")
+        {
+          $usergroup_id= 4;
         }
         else
         {

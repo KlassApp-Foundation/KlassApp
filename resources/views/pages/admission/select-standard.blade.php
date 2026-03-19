@@ -3,7 +3,8 @@
     <!-- <h2 class="fs-title">Select Standard</h2> -->
     <div>
     <label for="name" class="tw-form-label">Select Standard</label>
-    <select name="type" id="type" class="tw-form-control w-full my-2 py-2">
+    
+    <select name="type" id="type" class="tw-form-control w-full my-2 py-2 text-green-600">
     <option value="1">L.K.G</option> 
     <option value="1">I</option> 
     <option value="3">II</option>

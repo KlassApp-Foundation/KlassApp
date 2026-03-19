@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\result\ClassSeeder;
 use Database\Seeders\result\ExamTableSeeder;
+use Database\Seeders\result\ExamTypes;
 use Database\Seeders\result\MarksTableSeeder;
 use Database\Seeders\result\RemarksTableSeeder;
 use Illuminate\Database\Seeder;
@@ -41,7 +43,7 @@ class DatabaseSeeder extends Seeder
         //$this->call(UsersTableSeeder::class);  //test
         $this->call(UsersSchoolAdminTableSeeder::class);  //Experimental //
         $this->call(UsersTeacherTableSeeder::class);  //Experimental //
-       // $this->call(StandardsLinkTableSeeder::class); //test //
+       $this->call(StandardsLinkTableSeeder::class); //test //
         $this->call(UsersStudentTableSeeder::class);  //Experimental //
        
         $this->call(SubscriptionsTableSeeder::class);  //test //
@@ -81,6 +83,8 @@ class DatabaseSeeder extends Seeder
         $this->call(RemarksTableSeeder::class);
         $this->call(ExamTableSeeder::class);
         $this->call(MarksTableSeeder::class);
+        $this->call(ClassSeeder::class);
+        $this->call(ExamTypes::class);
 
         
     }

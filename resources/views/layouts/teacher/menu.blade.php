@@ -22,6 +22,8 @@
             <span class="mx-3 whitespace-no-wrap">Home Works</span>
         </a>
     </li>
+
+   
     <!--end-->
 
     <li class="py-3 px-3 hover:bg-purple-900 {{Request::segment ('2') == 'assignments' ? 'active':''}} && {{Request::segment ('2') == 'assignment' ? 'active':''}}">
@@ -30,6 +32,18 @@
             <span class="mx-3 whitespace-no-wrap">Assignment</span>
         </a>
     </li>
+
+     {{-- ADDED MARKS FOR UGANDAN SCHOOLS --}}
+    {{-- START --}}
+ <li class="py-3 px-3 hover:bg-purple-900 {{Request::segment ('3') == 'marks' ? 'active':''}} && {{Request::segment ('2') == 'marks' ? 'active':''}}">
+        <a href="{{url('teacher/exam/marks')}}" class="flex items-center">
+            <svg class="w-5 h-5 fill-current text-white" height="512" viewBox="0 0 64 64" width="512" xmlns="http://www.w3.org/2000/svg"><g id="Layer_27" data-name="Layer 27"><path d="m62 29h-24a1 1 0 0 0 -1 1v3.61a12.09 12.09 0 0 0 -6-1.61h-3v-2a10 10 0 0 0 3.83-6h.17a4 4 0 0 0 3-6.62v-3.38a13 13 0 0 0 -26 0v3.38a4 4 0 0 0 3 6.62h.2a10 10 0 0 0 3.8 6v2h-3a12 12 0 0 0 -12 12v18a1 1 0 0 0 1 1h33v-2h-8.15l-2.85-16.84 1.21-2.42 2.3 1.15a1 1 0 0 0 .49.11 1 1 0 0 0 .95-.68l2.76-8.32a10 10 0 0 1 5.29 2v26a1 1 0 0 0 1 1h24a1 1 0 0 0 1-1v-32a1 1 0 0 0 -1-1zm-30-7v-4a2 2 0 0 1 0 4zm-22-2a2 2 0 0 1 2-2v4a2 2 0 0 1 -2-2zm2-4a4.09 4.09 0 0 0 -1 .14v-2.14a11 11 0 0 1 22 0v2.14a4.09 4.09 0 0 0 -1-.14 1 1 0 0 0 -1-1 5 5 0 0 1 -4-2l-1.2-1.6a1 1 0 0 0 -1.6 0l-1.2 1.6a5 5 0 0 1 -4 2h-6a1 1 0 0 0 -1 1zm2 6v-5h5a7 7 0 0 0 5.6-2.8l.4-.53.4.53a7.06 7.06 0 0 0 4.6 2.73v5.07a8 8 0 0 1 -16 0zm8 10a9.92 9.92 0 0 0 4-.84v1.48l-4 4.8-4-4.8v-1.48a9.92 9.92 0 0 0 4 .84zm-5.42 8.59-2.19-6.59h2.14l3.89 4.67zm-13.58 3.41a10 10 0 0 1 9.29-10l2.76 8.28a1 1 0 0 0 .95.72 1 1 0 0 0 .45-.11l2.3-1.15 1.25 2.42-2.85 16.84h-8.15v-14h-2v14h-4zm16.18 17 2.67-16h.3l2.67 16zm3.2-18h-.76l-1.08-2.15 1.46-.73 1.46.73zm5-2.41-3.84-1.92 3.93-4.67h2.14zm17.62-9.59h10v2h-10zm16 30h-22v-30h4v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3h4z"/><path d="m46 37h-4a1 1 0 0 0 -1 1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-4a1 1 0 0 0 -1-1zm-1 4h-2v-2h2z"/><path d="m46 45h-4a1 1 0 0 0 -1 1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-4a1 1 0 0 0 -1-1zm-1 4h-2v-2h2z"/><path d="m46 53h-4a1 1 0 0 0 -1 1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-4a1 1 0 0 0 -1-1zm-1 4h-2v-2h2z"/><path d="m49 37h10v2h-10z"/><path d="m49 41h10v2h-10z"/><path d="m49 45h10v2h-10z"/><path d="m49 49h10v2h-10z"/><path d="m49 53h10v2h-10z"/><path d="m49 57h10v2h-10z"/></g></svg>
+            <span class="mx-3 whitespace-no-wrap">Marks</span>
+        </a>
+    </li>
+
+{{-- END --}}
+
    @if(config('gvideoroom.enabled', false))
     <li class="py-3 px-3 hover:bg-purple-900 {{Request::segment ('2') == 'video-conference' ? 'active':''}}">
         <a href="{{url('teacher/video-conference')}}" class="flex items-center">
@@ -158,14 +172,14 @@
             <span class="mx-3 whitespace-no-wrap">Lesson Plans</span>
         </a>
     </li>
-    @if(config('gexam.enabled', false))
+    {{-- @if(config('gexam.enabled', false))
     <li class="py-3 px-3 hover:bg-purple-900 {{Request::segment ('2') == 'exam' ? 'active':''}} || {{Request::segment ('2') == 'exam' ? 'active':''}}">
         <a href="{{ url('/teacher/exam') }}" class="flex  items-center">
             <svg class="w-5 h-5 fill-current text-white" id="Capa_1" enable-background="new 0 0 512 512" height="512" viewBox="0 0 512 512" width="512" xmlns="http://www.w3.org/2000/svg"><g><path d="m60 512h272c33.084 0 60-26.916 60-60v-407c0-8.284-6.716-15-15-15h-75v-15c0-8.284-6.716-15-15-15h-121c-8.284 0-15 6.716-15 15v15h-75c-8.284 0-15 6.716-15 15v377h-46c-8.284 0-15 6.716-15 15v15c0 33.084 26.916 60 60 60zm121-482h91v30h-91zm-90 30h60v15c0 8.284 6.716 15 15 15h121c8.284 0 15-6.716 15-15v-15h60v392c0 16.542-13.458 30-30 30s-30-13.458-30-30v-15c0-8.284-6.716-15-15-15h-196zm181 392c0 10.92 2.934 21.17 8.052 30h-220.052c-16.542 0-30-13.458-30-30z"/><path d="m467 61c-24.813 0-45 20.187-45 45v270c0 1.588.324 3.407.754 4.696l30 91c2.027 6.15 7.771 10.304 14.246 10.304s12.219-4.154 14.246-10.304l30-91c.424-1.273.754-3.073.754-4.696v-270c0-24.813-20.187-45-45-45zm-15 300v-210h30v210zm15-270c8.271 0 15 6.729 15 15v15h-30v-15c0-8.271 6.729-15 15-15zm-9.261 300h18.521l-9.26 28.091z"/><path d="m226 181h91c8.284 0 15-6.716 15-15s-6.716-15-15-15h-91c-8.284 0-15 6.716-15 15s6.716 15 15 15z"/><path d="m317 241h-91c-8.284 0-15 6.716-15 15s6.716 15 15 15h91c8.284 0 15-6.716 15-15s-6.716-15-15-15z"/><path d="m332 346c0-8.284-6.716-15-15-15h-91c-8.284 0-15 6.716-15 15s6.716 15 15 15h91c8.284 0 15-6.716 15-15z"/><path d="m155.394 176.606c2.928 2.93 6.767 4.394 10.606 4.394s7.678-1.464 10.606-4.394l30-30c5.858-5.858 5.858-15.355 0-21.213-5.857-5.858-15.355-5.858-21.213 0l-19.393 19.394-19.394-19.393c-5.857-5.858-15.355-5.858-21.213 0s-5.858 15.355 0 21.213z"/><path d="m155.394 266.606c2.928 2.93 6.767 4.394 10.606 4.394s7.678-1.464 10.606-4.394l30-30c5.858-5.858 5.858-15.355 0-21.213-5.857-5.858-15.355-5.858-21.213 0l-19.393 19.394-19.394-19.393c-5.857-5.858-15.355-5.858-21.213 0s-5.858 15.355 0 21.213z"/><path d="m206.606 305.394c-5.857-5.858-15.355-5.858-21.213 0l-19.393 19.393-19.394-19.393c-5.857-5.858-15.355-5.858-21.213 0s-5.858 15.355 0 21.213l30 30c2.929 2.929 6.768 4.393 10.607 4.393s7.678-1.464 10.606-4.394l30-30c5.859-5.857 5.859-15.355 0-21.212z"/></g></svg>
             <span class="mx-3 whitespace-no-wrap">Exam</span>
         </a>
     </li>
-    @endif
+    @endif --}}
 
     <li class="py-3 px-3 hover:bg-purple-900 {{Request::segment ('2') == 'tasks' ? 'active':''}} || {{Request::segment ('2') == 'task' ? 'active':''}}">
         <a href="{{ url('/teacher/tasks') }}" class="flex  items-center">

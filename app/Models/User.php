@@ -251,6 +251,7 @@ class User extends Authenticatable implements HasMedia
         return $query;
     }
 
+    // ======= TO USE SCOPE TO QUERY STUDENT CLASS BY ID =========
     public function scopeByStandard($query , $standard)
     {
         $query->wherehas('studentAcademic',function ($query) use($standard)

@@ -15,11 +15,11 @@ class CreateStandardsTable extends Migration
     {
         Schema::create('standards', function (Blueprint $table) {
             $table->increments('id');
-            $table->bigInteger('school_id')->unsigned();
-            $table->foreign('school_id')->references('id')->on('schools');
+            $table->unsignedBigInteger("school_id");
+            $table->foreign("school_id")->references("id")->on("schools")->cascadeOnDelete();
             $table->string('name');
-            $table->integer('order')->nullable();
-            $table->boolean('status')->default('1');
+            $table->integer('order')->nullable(0);
+            $table->boolean('status')->default(1);
             $table->timestamps();
             $table->softDeletes();
         });

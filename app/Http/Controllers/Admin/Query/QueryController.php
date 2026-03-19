@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Academics;
+namespace App\Http\Controllers\Admin\Query;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class MarksController extends Controller
+class QueryController extends Controller
 {
     //
 }

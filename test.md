@@ -12,3 +12,7 @@
 6. Run php artisan dusk --filter classname //for single test
 7. Run php artisan dusk --filter classname::functionname//for single function
 7. Run php artisan dusk //to run all the test
+
+## Things to change
+ - To change board of education to UG based
+ - 

@@ -4,7 +4,6 @@
  * (c) 2025 GegoSoft Technologies and GegoK12 Contributors
  */
 namespace App\Http\Controllers\Admin;
-
 use App\Http\Resources\StandardLink as StandardLinkResource;
 use App\Http\Resources\Teacher as TeacherResource;
 use App\Http\Requests\StandardDetailUpdateRequest;
@@ -118,7 +117,8 @@ class StandardsLinkController extends Controller
      */
     public function create()
     {
-        //
+        // fetch classes
+        // $classes = \Illuminate\Support\Facades\DB::table("classes")->get();
         return view('/admin/school/standardlinks/create');
     }
 
