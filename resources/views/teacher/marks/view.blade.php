@@ -1,8 +1,8 @@
-@extends('layouts.admin.layout')
+@extends('layouts.teacher.layout')
 
 @section('content')
 <div class="container-fluid w-full lg:mx-2 py-4">
-    {{-- {{ dd($exam) }} --}}
+    {{-- {{ dd($marks) }} --}}
     {{-- Header --}}
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
         <div>
@@ -44,10 +44,10 @@
                     <th class="px-4 py-3 text-left">Subject</th>
                     <th class="px-4 py-3 text-left">Marks</th>
                     <th class="px-4 py-3 text-left">Exam</th>
-                    <th class="px-4 py-3 text-left">Teacher</th>
-                    <th class="px-4 py-3 text-right">Actions</th>
+                    {{-- <th class="px-4 py-3 text-left">Teacher</th> --}}
                     <th class="px-4 py-3 text-left">Grade</th>
                     <th class="px-4 py-3 text-left">Comment</th>
+                    <th class="px-4 py-3 text-center">Actions</th>
                 </tr>
             </thead>
 
@@ -65,7 +65,7 @@
                         </td>
 
                         {{-- Subject --}}
-                        <td class="px-4 py-3 text-gray-600">
+                        <td class="px-4 py-3 text-xs text-gray-600">
                             {{ $mark->subject->name ?? 'N/A' }}
                         </td>
 
@@ -80,19 +80,29 @@
                         </td>
 
                         {{-- Exam --}}
-                        <td class="px-4 py-3 text-gray-600">
+                        <td class="px-4 text-xs py-3 text-gray-600">
                             {{ $mark->subject->name . " Exam" ?? 'N/A' }}
                         </td>
 
                         {{-- Teacher --}}
-                        <td class="px-4 py-3 text-gray-600">
+                        {{-- <td class="px-4 py-3 text-gray-600">
                             {{ $mark->teacher->name ?? 'N/A' }}
+                        </td> --}}
+
+                         {{-- grade --}}
+                        <td class="px-4 py-3 text-gray-600">
+                            {{ $mark->grade ?? 'N/A' }}
                         </td>
+
+                         {{-- remark --}}
+                        <td class="px-4 py-3 text-gray-600">
+    {{ str($mark->remark->remark ?? 'N/A')->limit(20, '...') }}
+</td>
 
                         {{-- Actions --}}
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-2">
-                                <a href="#" 
+                                <a href="{{ route('teacher.student.marks.edit',[ $mark->exam->id, $mark->student_id, $mark->id])}}" 
                                    class="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100">
                                     Edit
                                 </a>

@@ -348,6 +348,12 @@ Route::prefix('exam')->group(function () {
 
     // Optional: view entered marks for this exam
     Route::get('/{exam}/marks/view', 'MarksController@viewExamMarks')->name('teacher.exam.marks.view');
+
+    // ======edit students marks=======
+    Route::get("/{exam}/students/{student}/mark/{marks}/edit", "MarksController@editMark")->name("teacher.student.marks.edit");
+
+    Route::patch('/{exam}/students/{student}/mark', "MarksController@updateMark")
+    ->name('teacher.marks.update');
 });
 //class wall
 

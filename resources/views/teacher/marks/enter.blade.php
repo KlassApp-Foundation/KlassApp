@@ -1,4 +1,4 @@
-@extends('layouts.admin.layout')
+@extends('layouts.teacher.layout')
 
 @section('content')
 <div class="container-fluid w-full lg:mx-2">
@@ -24,7 +24,7 @@
 
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    Student Marks for {{ $subject->name }}
+                    Exam Marks for {{ $subject->name }}
                 </h2>
             </div>
 
@@ -42,13 +42,13 @@
                     </thead>
 
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-
+{{-- {{ dd($tr) }} --}}
                         @foreach($students as $student)
                        
 
                         <tr>
                             <td class="py-3 text-gray-900 dark:text-white">
-                                {{ $student->name }}
+                                {{ $student->user->name }}
                             </td>
 
                             <td>
@@ -69,10 +69,10 @@
                             </td>
 
                             <td>
-                                 <select name="remark_id" id="comment_id" class="tw-form-control w-full">
+                                 <select name="remark_id[{{ $student->id }}]" id="remark_id" class="tw-form-control w-full">
                                   <option value="">Select Remark</option>
                                   @foreach ($remarks as $remark)
-                                      <option value="{{ $remark->remark }}">{{ $remark->remark }}</option>
+                                      <option value="{{ $remark->id }}">{{ $remark->remark }}</option>
                                   @endforeach
                                  </select>
                             </td>

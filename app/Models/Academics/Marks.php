@@ -13,7 +13,7 @@ class Marks extends Model
 {
     use HasFactory;
     protected $fillable=[
-        "student_id", "subject_id", "exam_id", "teacher_id", "school_id", "marks", "remark_id"
+        "student_id", "subject_id", "exam_id", "teacher_id", "school_id", "marks", "remark_id", "grade"
     ];
     public function student(){
         return $this->belongsTo(User::class, "student_id");

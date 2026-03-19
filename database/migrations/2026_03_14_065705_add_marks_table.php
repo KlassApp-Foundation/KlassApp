@@ -24,7 +24,7 @@ return new class extends Migration
 
             // Other columns
             $table->decimal('marks', 5, 2); // e.g., 100.00 max
-            $table->unsignedBigInteger('comment_id');
+            $table->unsignedBigInteger('remark_id');
 
             // Define foreign key constraints
             $table->foreign('remark_id')->references('id')->on('remarks')->cascadeOnDelete();
