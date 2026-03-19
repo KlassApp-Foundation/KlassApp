@@ -48,7 +48,7 @@ class User extends Authenticatable implements HasMedia
      * @var array
      */
     protected $fillable = [
-        'school_id' , 'usergroup_id' , 'ref_id' ,'name', 'email', 'password','mobile_no','is_activated', 'email_verification_code' , 'email_verified' , 'email_verified_at' , 'platform_token' , 'remember_token'
+        'school_id' , 'usergroup_id' , 'ref_id' ,'name', 'email', 'password','mobile_no','is_activated', 'email_verification_code' , 'email_verified' , 'email_verified_at' , 'platform_token' , 'remember_token', 'registration_role'
     ];
 
     /**
@@ -101,27 +101,27 @@ class User extends Authenticatable implements HasMedia
 
     public function father()
     {
-      
+
          $father=$this->whereHas('parentprofile', function($query) {
               $query->where('relation', 'father');
           });
-       
+
         return $father;
     }
 
     public function mother()
     {
-      
+
          $mother=$this->members()->whereHas('parentprofile', function($query) {
               $query->where('relation', 'mother');
           });
-        
+
         return $mother;
     }
 
     public function scopeByRelation($query ,$student_id, $relation)
     {
-      
+
             $query->whereHas('userParent', function ($q) use($relation)
             {
                 $q->whereHas('parentprofile', function ($qu) use($relation)
@@ -129,8 +129,8 @@ class User extends Authenticatable implements HasMedia
                     $qu->where('relation',$relation);
                 });
             });
-       
-        
+
+
         return $query;
     }
 
@@ -180,14 +180,14 @@ class User extends Authenticatable implements HasMedia
     {
         $query->wherehas('userprofile',function ($query) use($status)
         {
-            $query->where('status',$status); 
+            $query->where('status',$status);
         });
         return $query;
     }
 
     public function scopeByName($query , $name)
     {
-        $query->where('name','LIKE',$name.'%'); 
+        $query->where('name','LIKE',$name.'%');
 
         return $query;
     }
@@ -196,7 +196,7 @@ class User extends Authenticatable implements HasMedia
     {
         $query->wherehas('userprofile',function ($query) use($firstname)
             {
-                $query->where('firstname','LIKE',$firstname.'%'); 
+                $query->where('firstname','LIKE',$firstname.'%');
             });
         return $query;
     }
@@ -205,7 +205,7 @@ class User extends Authenticatable implements HasMedia
     {
         $query->wherehas('userprofile',function ($query) use($lastname)
             {
-                $query->where('lastname','LIKE',$lastname.'%'); 
+                $query->where('lastname','LIKE',$lastname.'%');
             });
         return $query;
     }
@@ -214,7 +214,7 @@ class User extends Authenticatable implements HasMedia
     {
         $query->wherehas('userprofile',function ($query) use($gender)
             {
-                $query->where('gender','=',$gender); 
+                $query->where('gender','=',$gender);
             });
         return $query;
     }
@@ -223,7 +223,7 @@ class User extends Authenticatable implements HasMedia
     {
         $query->wherehas('userprofile',function ($query) use($marital_status)
             {
-                $query->where('marital_status','=',$marital_status); 
+                $query->where('marital_status','=',$marital_status);
             });
         return $query;
     }
@@ -239,15 +239,15 @@ class User extends Authenticatable implements HasMedia
 
     public function scopeByMobileNo($query , $mobile_no)
     {
-        $query->where('mobile_no','LIKE',$mobile_no.'%'); 
-    
+        $query->where('mobile_no','LIKE',$mobile_no.'%');
+
         return $query;
     }
 
     public function scopeByEmailId($query , $email)
     {
-        $query->where('email','LIKE',$email.'%'); 
-           
+        $query->where('email','LIKE',$email.'%');
+
         return $query;
     }
 
@@ -257,8 +257,8 @@ class User extends Authenticatable implements HasMedia
             {
                 $query->wherehas('standardLink',function ($query) use($standard)
                 {
-                    $query->where('id','=',$standard); 
-                }); 
+                    $query->where('id','=',$standard);
+                });
             });
         return $query;
     }
@@ -267,7 +267,7 @@ class User extends Authenticatable implements HasMedia
     {
         $query->wherehas('studentAcademic',function ($query) use($transport)
             {
-                $query->where('mode_of_transport','=',$transport); 
+                $query->where('mode_of_transport','=',$transport);
             });
         return $query;
     }
@@ -283,14 +283,14 @@ class User extends Authenticatable implements HasMedia
 
     public function scopeByAdmissionNumber($query , $admission_number)
     {
-        $query->where('registration_number','LIKE',$admission_number.'%'); 
-           
+        $query->where('registration_number','LIKE',$admission_number.'%');
+
         return $query;
     }
     public function scopeByUserStatus($query , $status)
     {
-        $query->where('status','LIKE',$status.'%'); 
-           
+        $query->where('status','LIKE',$status.'%');
+
         return $query;
     }
 
@@ -309,13 +309,13 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->hasMany('App\Models\Reminder', 'id' ,'entity_id')->where('entity_name','=','App\\Models\\User');
     }
-    
-    public function feedbackParent() 
+
+    public function feedbackParent()
     {
         return $this->hasMany('App\Models\Feedback', 'parent_id', 'id');
     }
 
-    public function feedbackAdmin() 
+    public function feedbackAdmin()
     {
         return $this->hasMany('App\Models\Feedback', 'admin_id', 'id');
     }
@@ -334,7 +334,7 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->hasMany('App\Models\Mark','user_id','id');
     }
-    
+
     public function teacherprofile()
     {
         return $this->hasMany('App\Models\TeacherProfile','user_id','id');
@@ -343,7 +343,7 @@ class User extends Authenticatable implements HasMedia
     public function alumniprofile()
     {
         if(class_exists('Gegok12\Alumni\Models\Alumniprofile'))
-        { 
+        {
             return $this->hasOne('\Gegok12\Alumni\Models\Alumniprofile','user_id','id');
         }
         else
@@ -351,12 +351,12 @@ class User extends Authenticatable implements HasMedia
             return $this->hasOne('App\Models\Alumniprofile','user_id','id');
         }
     }
-    
+
     public function reportUser()
     {
         return $this->hasMany('App\Models\TeacherProfile','reporting_to','id');
     }
-    
+
     public function parentprofile()
     {
         return $this->hasMany('App\Models\ParentProfile','user_id','id');
@@ -366,7 +366,7 @@ class User extends Authenticatable implements HasMedia
     {
         $query->wherehas('userprofile',function ($query) use($blood_group)
             {
-                $query->where('blood_group','=',$blood_group); 
+                $query->where('blood_group','=',$blood_group);
             });
         return $query;
     }
@@ -375,7 +375,7 @@ class User extends Authenticatable implements HasMedia
     {
         $query->wherehas('teacherprofile',function ($query) use($qualification)
             {
-                $query->where('qualification_id','=',$qualification); 
+                $query->where('qualification_id','=',$qualification);
             });
         return $query;
     }
@@ -384,7 +384,7 @@ class User extends Authenticatable implements HasMedia
     {
         $query->wherehas('teacherprofile',function ($query) use($designation)
             {
-                $query->where('designation','LIKE',$designation); 
+                $query->where('designation','LIKE',$designation);
             });
         return $query;
     }
@@ -393,7 +393,7 @@ class User extends Authenticatable implements HasMedia
     {
         $query->wherehas('teacherprofile',function ($query) use($job_type)
             {
-                $query->where('job_type',$job_type); 
+                $query->where('job_type',$job_type);
             });
         return $query;
     }
@@ -409,7 +409,7 @@ class User extends Authenticatable implements HasMedia
                 {
                     $qu->where('firstname','LIKE',$firstname.'%');
                 });
-            }); 
+            });
         });
         return $query;
     }
@@ -424,7 +424,7 @@ class User extends Authenticatable implements HasMedia
                 {
                     $qu->where('firstname','LIKE',$fullname.'%');
                 });
-            /*}); 
+            /*});
         });*/
         return $q;
     }
@@ -439,7 +439,7 @@ class User extends Authenticatable implements HasMedia
                 {
                     $qu->where('lastname','LIKE',$lastname.'%');
                 });
-            }); 
+            });
         });
         return $query;
     }
@@ -451,7 +451,7 @@ class User extends Authenticatable implements HasMedia
             $query->whereHas('userParent', function ($q) use($mobile_no)
             {
                 $q->where('mobile_no',$mobile_no);
-            }); 
+            });
         });*/
         $query->where('mobile_no','LIKE',$mobile_no.'%');
         return $query;
@@ -464,7 +464,7 @@ class User extends Authenticatable implements HasMedia
             $query->whereHas('userParent', function ($q) use($email)
             {
                 $q->where('email',$email);
-            }); 
+            });
         });
         return $query;
     }
@@ -477,9 +477,9 @@ class User extends Authenticatable implements HasMedia
             {
                 $q->whereHas('parentprofile', function ($qu) use($qualification)
                 {
-                    $qu->where('qualification_id','=',$qualification); 
+                    $qu->where('qualification_id','=',$qualification);
                 });
-            }); 
+            });
         });
         return $query;
     }
@@ -492,9 +492,9 @@ class User extends Authenticatable implements HasMedia
             {
                 $q->whereHas('parentprofile', function ($qu) use($occupation)
                 {
-                    $qu->where('profession','LIKE',$occupation); 
+                    $qu->where('profession','LIKE',$occupation);
                 });
-            }); 
+            });
         });
         return $query;
     }
@@ -515,7 +515,7 @@ class User extends Authenticatable implements HasMedia
                         });
                     });
                 });
-            }); 
+            });
         });
         return $query;
     }
@@ -551,7 +551,7 @@ class User extends Authenticatable implements HasMedia
                         });
                     });
                 });
-           /* }); 
+           /* });
         });*/
         return $query;
     }
@@ -570,8 +570,8 @@ class User extends Authenticatable implements HasMedia
     {
         $i = 0;
         $array = [];
-        foreach ($this->teacherprofile as $teacher) 
-        { 
+        foreach ($this->teacherprofile as $teacher)
+        {
             $array['designation']                               = $teacher->designation;
             $array['designation_name']                          = str_replace('_',' ', ucwords($teacher->designation));
             $array['reporting_to']                              = $teacher->reporting_to;
@@ -596,8 +596,8 @@ class User extends Authenticatable implements HasMedia
     {
         $i = 0;
         $array = [];
-        foreach ($this->parentprofile as $parent) 
-        { 
+        foreach ($this->parentprofile as $parent)
+        {
             $array['profession']                                = $parent->profession;
             $array['sub_occupation']                            = $parent->sub_occupation;
             $array['designation']                               = $parent->designation;
@@ -617,8 +617,8 @@ class User extends Authenticatable implements HasMedia
     {
         $i = 0;
         $array = [];
-        foreach ($this->children as $children) 
-        { 
+        foreach ($this->children as $children)
+        {
             $data[] = $children->userStudent->FullName.' ('.$children->userStudent->studentAcademicLatest->standardLink->StandardSection.')';
             $i++;
         }
@@ -676,7 +676,7 @@ class User extends Authenticatable implements HasMedia
         $array = [];
         if (is_array($this->alumniprofile['company_name'])) //new condition
         {
-    
+
             for($i=0;$i<count($this->alumniprofile['company_name']);$i++)
             {
                 $array[$i][]   = $this->alumniprofile['company_name'][$i] == null ? null:$this->alumniprofile['company_name'][$i];
@@ -696,7 +696,7 @@ class User extends Authenticatable implements HasMedia
         $array = [];
         if (is_array($this->alumniprofile['company_name'])) //new condition
         {
-    
+
             for($i=0;$i<count($this->alumniprofile['company_name']);$i++)
             {
                 $array['inputs'][$i]['company_name']    = $this->alumniprofile['company_name'][$i] == null ? null:$this->alumniprofile['company_name'][$i];
@@ -841,7 +841,7 @@ class User extends Authenticatable implements HasMedia
     public function hasRead(Conversation $conversation)
     {
         return $this->conversations->find($conversation->id)->pivot->read_at;
-        
+
     }
 
     public function present()
@@ -853,7 +853,7 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->belongsToMany('App\Models\Conversation')->withPivot('read_at');
     }
-    
+
     public function getLeaveCountAttribute()
     {
         return $this->requestedUser->where('status','approved')->count();
@@ -925,7 +925,7 @@ class User extends Authenticatable implements HasMedia
         $array=[];
         if(count($this->payrolltransactions)!=0 )
         {
-          
+
           $array['salaryadvance']=$this->payrolltransactions()->where('paytype_id',2)->sum('amount');
            $array['returnadvance']=$this->payrolltransactions()->where('paytype_id',3)->sum('amount');
            $array['pending']=$array['salaryadvance']-$array['returnadvance'];
@@ -959,7 +959,7 @@ class User extends Authenticatable implements HasMedia
     }
     public function scopeByActive($query)
     {
-        $query->where('status','active'); 
+        $query->where('status','active');
 
         return $query;
     }

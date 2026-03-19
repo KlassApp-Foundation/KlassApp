@@ -508,7 +508,7 @@
             <div class="klass-phone-shell" id="mobile_shell">
               <span class="klass-phone-prefix" id="mobile_prefix" hidden>+256</span>
               <span class="klass-phone-divider" id="mobile_divider" hidden></span>
-              <input id="mobile_no" type="tel" class="klass-input{{ $errors->has('mobile_no') ? ' is-invalid' : '' }}" name="mobile_no" value="{{ old('mobile_no') }}" placeholder="Select your country first" required>
+              <input id="mobile_no" type="tel" class="klass-input{{ $errors->has('mobile_no') ? ' is-invalid' : '' }}" name="mobile_no" value="{{ old('mobile_no') }}" placeholder="Select your country first" inputmode="numeric" pattern="0?[0-9]{9,10}" minlength="9" maxlength="11" title="Please enter your local number only, without the leading zero — between 9 and 10 digits." required>
             </div>
             @if ($errors->has('mobile_no'))
               <span class="klass-error" role="alert">{{ $errors->first('mobile_no') }}</span>
