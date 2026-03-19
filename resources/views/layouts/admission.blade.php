@@ -15,7 +15,7 @@
                     <div class="container mx-auto px-3 lg:px-0">
                         <div>
                             <!-- <a href="{{ url('/') }}">
-                                <img src="{{ asset('images/gego_k12.png') }}" class="inline-block" style="height:55px;" alt="GegoK12 Logo">
+                                <img src="{{ asset('images/klassapp-k-white.png') }}" class="inline-block" style="height:55px;" alt="KlassApp Logo">
                             </a> -->
                         </div>
                     </div>
