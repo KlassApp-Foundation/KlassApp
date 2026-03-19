@@ -135,17 +135,25 @@ class RegisterController extends Controller
     {
         try
         {
-            $school = School::create([
+            $schoolData = [
                 'name'          =>  $data['school_name'],
                 'email'         =>  $data['email'],
                 'phone'         =>  $data['mobile_no'],
-                'registration_country' => $data['country'] ?? null,
-                'student_size'  =>  $data['student_size'] ?? null,
                 'slug'          =>  Str::slug($data['school_name'], '-'),
                 'status'        =>  "1",
                 'created_at'    =>  Carbon::now(),
                 'updated_at'    =>  Carbon::now(),
-            ]);
+            ];
+
+            if (Schema::hasColumn('schools', 'registration_country')) {
+                $schoolData['registration_country'] = $data['country'] ?? null;
+            }
+
+            if (Schema::hasColumn('schools', 'student_size')) {
+                $schoolData['student_size'] = $data['student_size'] ?? null;
+            }
+
+            $school = School::create($schoolData);
 
             Log::info('New School Created. School Id : '. $school->id. ' Name : '. $school->name );
 
@@ -318,12 +326,15 @@ class RegisterController extends Controller
                 'name'          => $data['name'],
                 'email'         => $data['email'],
                 'mobile_no'     => $data['mobile_no'],
-                'registration_role' => $data['role'] ?? null,
                 'password'      => Hash::make($data['password']),
                 'email_verification_code' => Str::random(40),
                 'created_at'    => Carbon::now(),
                 'updated_at'    => Carbon::now(),
             ];
+
+            if (Schema::hasColumn('users', 'registration_role')) {
+                $userData['registration_role'] = $data['role'] ?? null;
+            }
 
             if (Schema::hasColumn('users', 'username')) {
                 $userData['username'] = $this->generateUsernameFromName($data['name']);
