@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use App\Traits\ThrottlesLogins;
 use App\Traits\RedirectsUsers;
 use Illuminate\Http\Request;
@@ -67,10 +68,12 @@ trait AuthenticatesUsers
 
         Validator::extend('checkschool', function ($attribute, $value, $parameters, $validator) 
         {
-           
-           $users = User::orWhere('email', request('email'))->orWhere('mobile_no', request('email'))->orWhere('name', request('email'))->orWhere('registration_number',request('email'))->first();
+            $users = $this->resolveLoginUser((string) request('email'));
 
-//dump($users);
+            if (!$users) {
+                return FALSE;
+            }
+
             if($users->usergroup_id == 1)
             {
                 return TRUE;
@@ -202,9 +205,19 @@ trait AuthenticatesUsers
      */
     protected function attemptLogin(Request $request)
     {
-        return $this->guard()->attempt(
-            $this->credentials($request), $request->filled('remember')
-        );
+        $user = $this->resolveLoginUser((string) $request->input('email'));
+
+        if (!$user) {
+            return false;
+        }
+
+        if (!Hash::check((string) $request->input('password'), (string) $user->password)) {
+            return false;
+        }
+
+        $this->guard()->login($user, $request->filled('remember'));
+
+        return true;
     }
 
     /**
@@ -216,6 +229,28 @@ trait AuthenticatesUsers
     protected function credentials(Request $request)
     {
         return $request->only($this->username(), 'password');
+    }
+
+    protected function resolveLoginUser(string $login)
+    {
+        $login = trim($login);
+
+        if ($login === '') {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $login);
+
+        return User::query()
+            ->where('email', $login)
+            ->orWhere('registration_number', $login)
+            ->orWhere('name', $login)
+            ->when($digits !== '', function ($query) use ($login, $digits) {
+                $query->orWhere('mobile_no', $login)
+                    ->orWhere('mobile_no', '+' . $digits)
+                    ->orWhere('mobile_no', 'like', '%' . $digits);
+            })
+            ->first();
     }
 
   
@@ -270,10 +305,7 @@ trait AuthenticatesUsers
      */
     public function username()
     {
-       $login = request()->input('email');
-       $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'registration_number';
-       request()->merge([$field => $login]);
-       return $field;
+         return 'email';
     }
 
     /**

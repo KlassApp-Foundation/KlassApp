@@ -369,8 +369,8 @@
         @csrf
 
         <div class="klass-field">
-          <label class="klass-label" for="email">Email or Registration Number</label>
-          <input id="email" type="text" class="klass-input{{ $errors->has('email') ? ' is-invalid' : '' }}" name="email" value="{{ old('email') }}" placeholder="your@school.edu or your registration number" required>
+          <label class="klass-label" for="email">Email, Phone, Name, or Registration Number</label>
+          <input id="email" type="text" class="klass-input{{ $errors->has('email') ? ' is-invalid' : '' }}" name="email" value="{{ old('email') }}" placeholder="your@school.edu, phone, name, or registration number" required>
           @if ($errors->has('email'))
             <span class="klass-error" role="alert">{{ $errors->first('email') }}</span>
           @endif
