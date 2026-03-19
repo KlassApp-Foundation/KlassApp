@@ -46,6 +46,8 @@
                     <th class="px-4 py-3 text-left">Exam</th>
                     <th class="px-4 py-3 text-left">Teacher</th>
                     <th class="px-4 py-3 text-right">Actions</th>
+                    <th class="px-4 py-3 text-left">Grade</th>
+                    <th class="px-4 py-3 text-left">Comment</th>
                 </tr>
             </thead>
 
