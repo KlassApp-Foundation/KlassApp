@@ -25,7 +25,7 @@
         <!-- Main Card -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Add New Exam</h2>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Add New Exam </h2>
             </div>
 
             <div class="p-6">
@@ -34,7 +34,7 @@
 
                     <!-- Row 1 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
+                        {{-- <div>
                             <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Exam Name <span class="text-red-500">*</span>
                             </label>
@@ -44,17 +44,18 @@
                             @error('name')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
-                        </div>
+                        </div> --}}
 
                         <div>
-                            <label for="exam_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label for="exam_type_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Exam Type
                                 {{-- {{ dd($exam_types) }} --}}
                             </label>
-                             <select name="exam_type" id="exam_type" required
+                             <select name="exam_type_id" id="exam_type_id" required
                                     class="tw-form-control w-full">
                                 <option value="">Select exam type</option>
                                 @foreach ($exam_types as $exam_type)
+
                                      <option value="{{ $exam_type->id }}" {{ old('exam_type') == $exam_type->id ? 'selected' : '' }}>
                                         {{ $exam_type->name }}
                                     </option>

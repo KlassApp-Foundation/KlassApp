@@ -17,53 +17,41 @@ class ExamTypes extends Seeder
             [
                 'name' => 'Beginning of Term',
                 'code' => 'BOT',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Weekly Exams',
                 'code' => 'WE',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Mid Term',
                 'code' => 'MID',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
              [
                 'name' => 'Monthly Exams',
                 'code' => 'ME',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
              [
                 'name' => 'Weekly Exams',
                 'code' => 'WE',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'End of Term',
                 'code' => 'EOT',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Mock Exam',
                 'code' => 'MOCK',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Final Exam',
                 'code' => 'FINAL',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
         ];
 
-        DB::table('exam_types')->insert($types);
+        foreach ($types as $type){
+            DB::table('exam_types')->insert($type);
+        }
+
+        
     }
 }

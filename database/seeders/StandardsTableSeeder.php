@@ -39,7 +39,7 @@ class StandardsTableSeeder extends Seeder
 
      foreach ($schools as $school) {
     foreach ($standards as $data) {
-        Standard::create( $data );
+        Standard::create( [...$data, "school_id" => $school->id] );
     }
 }
 
