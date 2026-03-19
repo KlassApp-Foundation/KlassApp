@@ -1,0 +1,1 @@
+{"version":2,"defects":[],"times":{"Tests\\Feature\\Auth\\LoginRegressionTest::test_guest_is_redirected_from_admin_dashboard_to_login":0.111,"Tests\\Feature\\Auth\\LoginRegressionTest::test_login_fails_with_invalid_password":0.094,"Tests\\Feature\\Auth\\LoginRegressionTest::test_login_succeeds_with_valid_credentials":0.405}}

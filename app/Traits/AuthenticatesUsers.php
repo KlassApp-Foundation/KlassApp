@@ -22,7 +22,7 @@ trait AuthenticatesUsers
      *
      * @return \Illuminate\Http\Response
      */
-    
+
 
     /**
      * Handle a login request to the application.
@@ -66,7 +66,7 @@ trait AuthenticatesUsers
     protected function validateLogin(Request $request)
     { //dump($request);
 
-        Validator::extend('checkschool', function ($attribute, $value, $parameters, $validator) 
+        Validator::extend('checkschool', function ($attribute, $value, $parameters, $validator)
         {
             $users = $this->resolveLoginUser((string) request('email'));
 
@@ -80,40 +80,40 @@ trait AuthenticatesUsers
             }
 
 
-          
+
             else
-            { 
+            {
                 $school = School::IsActive($users->school_id)->exists();
                 //dump($school);
                 if($school == FALSE)
-                { 
+                {
                     return FALSE;
                 }
                 else
                 {
                     return TRUE;
-                }  
-            }    
+                }
+            }
         },'Invalid Credentials.You are not in this school');
 
-        Validator::extend('checkusers', function ($attribute, $value, $parameters, $validator) 
+        Validator::extend('checkusers', function ($attribute, $value, $parameters, $validator)
         {
             $users = User::where('email', request('email'))->with('userprofile')->first();
             if($users==null)
-            { 
+            {
                 return FALSE;
             }
             else
             {
                 return TRUE;
-            }       
+            }
         },'Invalid Credentials');
-       
-        Validator::extend('checkactive', function ($attribute, $value, $parameters, $validator) 
+
+        Validator::extend('checkactive', function ($attribute, $value, $parameters, $validator)
         {
             $users = User::where('email', request('email'))->with('userprofile')->first();
             if($users->userprofile->status=="inactive")
-            { 
+            {
                 return FALSE;
             }
             else
@@ -122,11 +122,11 @@ trait AuthenticatesUsers
             }
         },'You are suspended by site admin');
 
-        Validator::extend('checkexit', function ($attribute, $value, $parameters, $validator) 
+        Validator::extend('checkexit', function ($attribute, $value, $parameters, $validator)
         {
             $users = User::where('email', request('email'))->with('userprofile')->first();
             if($users->userprofile->status=="exit")
-            { 
+            {
                 return FALSE;
             }
             else
@@ -134,8 +134,8 @@ trait AuthenticatesUsers
                 return TRUE;
             }
         },'You have exited this school');
-       
-        Validator::extend('checkstatus', function ($attribute, $value, $parameters, $validator) 
+
+        Validator::extend('checkstatus', function ($attribute, $value, $parameters, $validator)
         {
             $user = User::where('email', request('email'))->with(['userprofile','alumniprofile'])->first();
             if(count($user)>0)
@@ -149,41 +149,41 @@ trait AuthenticatesUsers
                     return TRUE;
                 }
                 elseif($user->usergroup_id==4)
-                { 
+                {
                     return TRUE;
                 }
                 elseif ($user->usergroup_id==5)
-                { 
+                {
                     if(\Config::get('settings.login_status')==1)
                     return TRUE;
                 }
                 elseif ($user->usergroup_id==6)
-                { 
+                {
                     return TRUE;
                 }
                 elseif($user->usergroup_id==8)
-                { 
+                {
                     return TRUE;
                 }
                 elseif($user->usergroup_id==9)
-                { 
+                {
                     return TRUE;
                 }
                 elseif($user->usergroup_id==10)
-                { 
+                {
                     return TRUE;
                 }
                 elseif($user->usergroup_id==11)
-                { 
+                {
                     return TRUE;
                 }
                 elseif($user->usergroup_id==12)
-                { 
+                {
                     return TRUE;
                 }
                 return FALSE;
             }
-            return FALSE;   
+            return FALSE;
         },'Invalid Credentials');
 
          $this->validate($request,[
@@ -194,7 +194,7 @@ trait AuthenticatesUsers
         $messages=[];
         $rules=[];
         $this->validate($request,$rules,$messages);
-         
+
     }
 
     /**
@@ -253,7 +253,7 @@ trait AuthenticatesUsers
             ->first();
     }
 
-  
+
 
     /**
      * Send the response after the user was authenticated.
