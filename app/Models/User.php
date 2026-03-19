@@ -69,6 +69,11 @@ class User extends Authenticatable implements HasMedia
      */
     protected $dates = ['deleted_at' , 'email_verified_at'];
 
+    public function standards()
+{
+    return $this->belongsToMany(Standard::class, 'class_students', 'student_id', 'standard_id');
+}
+
     public function school()
     {
         return $this->belongsTo('App\Models\School','school_id');
@@ -252,17 +257,24 @@ class User extends Authenticatable implements HasMedia
     }
 
     // ======= TO USE SCOPE TO QUERY STUDENT CLASS BY ID =========
-    public function scopeByStandard($query , $standard)
-    {
-        $query->wherehas('studentAcademic',function ($query) use($standard)
-            {
-                $query->wherehas('standardLink',function ($query) use($standard)
-                {
-                    $query->where('id','=',$standard);
-                });
-            });
-        return $query;
-    }
+    public function scopeByStandard($query, $standardId)
+{
+    return $query->whereHas('studentAcademic.standardLink', function ($q) use ($standardId) {
+        $q->where('standard_id', $standardId);
+    });
+}
+
+    // public function scopeByStandard($query , $standard)
+    // {
+    //     $query->wherehas('studentAcademic',function ($query) use($standard)
+    //         {
+    //             $query->wherehas('standardLink',function ($query) use($standard)
+    //             {
+    //                 $query->where('id','=',$standard);
+    //             });
+    //         });
+    //     return $query;
+    // }
 
     public function scopeByTransport($query , $transport)
     {

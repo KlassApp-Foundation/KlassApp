@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('exams', function (Blueprint $table) {
+        Schema::table('marks', function (Blueprint $table) {
             //
-            $table->foreignId('exam_type_id')
-          ->nullable()
-          ->constrained()
-          ->cascadeOnDelete();
+            $table->string("grade")->nullable();
         });
     }
 
@@ -25,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('exams', function (Blueprint $table) {
+        Schema::table('marks', function (Blueprint $table) {
             //
         });
     }

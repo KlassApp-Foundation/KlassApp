@@ -24,7 +24,7 @@
 
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    Student Marks for {{ $subject->name }}
+                    Exam Marks for {{ $subject->name }}
                 </h2>
             </div>
 
@@ -42,7 +42,7 @@
                     </thead>
 
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-
+{{-- {{ dd($students) }} --}}
                         @foreach($students as $student)
                        
 
@@ -69,10 +69,10 @@
                             </td>
 
                             <td>
-                                 <select name="remark_id" id="comment_id" class="tw-form-control w-full">
+                                 <select name="remark_id[{{ $student->id }}]" id="remark_id" class="tw-form-control w-full">
                                   <option value="">Select Remark</option>
                                   @foreach ($remarks as $remark)
-                                      <option value="{{ $remark->remark }}">{{ $remark->remark }}</option>
+                                      <option value="{{ $remark->id }}">{{ $remark->remark }}</option>
                                   @endforeach
                                  </select>
                             </td>

@@ -8,7 +8,6 @@
                 Exams assigned to you - enter or update student marks
             </p>
         </div>
-
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Exams to Mark</h2>
