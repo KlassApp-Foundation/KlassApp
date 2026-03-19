@@ -126,7 +126,7 @@ public function saveExamMarks(Request $request, Exam $exam)
             [
                 'teacher_id' => $exam->teacher_id,
                 'marks'      => $mark,
-                'comment'    => $request->comments[$studentId] ?? null,
+                'remark_id'    => $mark->remark_id[$studentId] ?? null,
             ]
         );
     }

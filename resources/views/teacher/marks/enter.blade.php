@@ -69,10 +69,10 @@
                             </td>
 
                             <td>
-                                 <select name="remarks" id="remarks" class="tw-form-control w-full">
+                                 <select name="remark_id" id="comment_id" class="tw-form-control w-full">
                                   <option value="">Select Remark</option>
                                   @foreach ($remarks as $remark)
-                                      <option value="{{ $remark->id }}">{{ $remark->remark }}</option>
+                                      <option value="{{ $remark->remark }}">{{ $remark->remark }}</option>
                                   @endforeach
                                  </select>
                             </td>

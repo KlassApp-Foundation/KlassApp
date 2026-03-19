@@ -24,9 +24,10 @@ return new class extends Migration
 
             // Other columns
             $table->decimal('marks', 5, 2); // e.g., 100.00 max
-            $table->string('comment')->nullable();
+            $table->unsignedBigInteger('comment_id');
 
             // Define foreign key constraints
+            $table->foreign('remark_id')->references('id')->on('remarks')->cascadeOnDelete();
             $table->foreign('student_id')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('teacher_id')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('school_id')->references('id')->on('schools')->cascadeOnDelete();
