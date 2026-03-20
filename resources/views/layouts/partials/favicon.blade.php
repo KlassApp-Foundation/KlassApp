@@ -1,9 +1,9 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @php
     $faviconCandidates = [
-        config('settings.favicon'),
-        'favicons/klassapp-favicon.png',
         'favicon/klassapp-favicon.png',
+        'favicons/klassapp-favicon.png',
+        config('settings.favicon'),
         'favicon/favicon-32x32.png',
         'favicon/favicon.ico',
         'favicon.ico',

@@ -121,7 +121,8 @@ class AuthReadinessCheck extends Command
 
     private function checkMailConfig(array &$issues)
     {
-        $mailer = (string) Config::get('mail.default', '');
+        // Support both modern (mail.default) and legacy (mail.driver) config styles.
+        $mailer = (string) Config::get('mail.default', Config::get('mail.driver', ''));
 
         if ($mailer === '') {
             $issues[] = 'mail.default is empty.';
@@ -129,8 +130,8 @@ class AuthReadinessCheck extends Command
         }
 
         if ($mailer === 'smtp') {
-            $host = (string) Config::get('mail.mailers.smtp.host', '');
-            $port = (string) Config::get('mail.mailers.smtp.port', '');
+            $host = (string) Config::get('mail.mailers.smtp.host', Config::get('mail.host', ''));
+            $port = (string) Config::get('mail.mailers.smtp.port', Config::get('mail.port', ''));
             $from = (string) Config::get('mail.from.address', '');
 
             if ($host === '') {

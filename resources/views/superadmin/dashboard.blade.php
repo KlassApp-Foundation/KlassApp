@@ -17,29 +17,29 @@
     </div>
         <!-- end -->
 
-       
 
 
-        
-   
-
-          
-        
 
 
-        
 
-       
 
-     
 
-        
+
+
+
+
+
+
+
+
+
+
     </div>
 @endsection
 
 @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
-    
+
 
     <style>
         /* messagetable */
@@ -47,7 +47,7 @@
             /*    padding: 1rem 1.5rem;*/
         }
         table.messageTable thead th, table.messageTable thead td {
-            /*padding: 1rem;*/    
+            /*padding: 1rem;*/
             border-bottom: 1px solid #1110;
         }
         table.messageTable {
@@ -73,7 +73,7 @@
             text-align: left;
         }
         }
-        @media only screen and (max-width: 760px), (min-device-width: 768px) 
+        @media only screen and (max-width: 760px), (min-device-width: 768px)
         and (max-device-width: 1024px)  {
 
     /* Force table to not be like tables anymore */
@@ -92,11 +92,11 @@
     tr {
       margin: 0 0 1rem 0;
     }
-      
+
     tr:nth-child(odd) {
       background: #ccc! important;
     }
-    
+
     td {
       /* Behave  like a "row" */
       border: none;
@@ -115,7 +115,7 @@
       width: 45%;
       padding-right: 10px;
       white-space: nowrap;
-      padding-top: 5%;   
+      padding-top: 5%;
     }
 
 
@@ -131,4 +131,4 @@
     border:none! important;
 }
 </style>
-@endpush      
+@endpush
