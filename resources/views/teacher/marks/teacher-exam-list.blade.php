@@ -1,4 +1,4 @@
-@extends('layouts.admin.layout')
+@extends('layouts.teacher.layout')
 
 @section('content')
     <div class="container-fluid w-full lg:mx-2">
@@ -7,8 +7,10 @@
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 Exams assigned to you - enter or update student marks
             </p>
+              {{-- Flash Success Message --}}
+                 @include('partials.message')
+             <!-- Page Header -->
         </div>
-
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Exams to Mark</h2>

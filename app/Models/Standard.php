@@ -38,6 +38,11 @@ class Standard extends Model
     //     return $this->belongsTo('\App\Models\School','school_id');
     // }
 
+    public function students()
+{
+    return $this->belongsToMany(User::class, 'class_students', 'standard_id', 'student_id');
+}
+
     public function currentPromotion()
     {
         return $this->belongsTo('App\Models\Promotion','standard_id','id');

@@ -43,7 +43,7 @@ class MarksTableSeeder extends Seeder
 
             // Get subjects taught in this school (via standard links or subjects table)
             $subjects = Subject::where('school_id', $school->id)->take(8)->get();
-
+            $remarks = Remarks::all()->get();
             foreach ($students as $student) {
                 // Get student's class room (from StudentAcademic)
                 $academic = StudentAcademic::where('user_id', $student->id)->first();
@@ -58,10 +58,18 @@ class MarksTableSeeder extends Seeder
                     // Only seed marks for subjects that make sense for this class
                     // (you can skip or filter better later)
                     foreach ($exams as $exam) {
+                        foreach ($remarks as $remark){
+
+                       
                         // Random marks & comment
                         $marks   = rand(45, 95);
-                        $comment = $comments[array_rand($comments)] ?? 'Good performance';
-
+                         $grade = ($marks >= 80) 
+                             ? "A" 
+                             : (($marks >= 75) 
+                                 ? "B" 
+                                 : (($marks >= 65) 
+                                     ? "C" 
+                                     : "E"));
                         DB::table('marks')->updateOrInsert(
                             [
                                 'student_id'  => $student->id,
@@ -72,14 +80,16 @@ class MarksTableSeeder extends Seeder
                                 'school_id'     => $school->id,
                                 'teacher_id'    => $student->school_id ? rand(1, 100) : null, // fake teacher ID
                                 'marks'         => $marks,
-                                'comment'       => $comment,
-                                'created_at'    => now(),
+                                'remark_id'       => $remark->id,
+                                "grade" =>         $grade,
+                                 'created_at'    => now(),
                                 'updated_at'    => now(),
                             ]
                         );
 
                         $totalMarks++;
                     }
+                     }
                 }
             }
 

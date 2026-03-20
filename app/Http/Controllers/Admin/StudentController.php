@@ -167,6 +167,9 @@ class StudentController extends Controller
           $mes
         ); 
 
+        // create class student from here
+        
+
         return redirect()->back()->with('successmessage',$mes);
       }
       catch(Exception $e)
