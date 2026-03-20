@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - teacher-parent-communication-app |  Online School Management 
+KlassApp - teacher-parent-communication-app |  Online School Management 
 @endsection
 
 @section('content')
@@ -24,7 +24,7 @@ GegoK12 - teacher-parent-communication-app |  Online School Management
 <div class="flex flex-col lg:flex-row justify-between lg:items-center">
 <div class="w-full lg:w-2/3">
 <p class="leading-loose text-justify mb-8 text-gray-700">It's anything but a mystery that parents wish to be associated with their kids' school life. A lot of parents attempt to step over the limits and get as engaged with their kid's instruction as could reasonably be expected. Without parents being associated with the kid's school progress, it is truly inconceivable for any child to have decent instruction. In each educational organization, the correspondence among teacher and parent greatly affects the kid's training. Parent - teacher communication gives numerous advantages in different ways. Nonetheless, there are numerous realities that influence this procedure. The two players, parents and teachers, assume a significant job in the training of a child. They create the basic fundamental abilities. With jobs and other busy activities, parents are currently occupied with their work that they scarcely possess the energy for visiting the school and conversing with the teachers about their ward’s performance in school. Nowadays correspondence among parents and teachers has become a simple task. With the teacher parent chat app, parents can put forth any kind from questions they have, to teachers easily by sitting at home.</p>
-<p class="leading-loose text-justify mb-8 text-gray-700">Gego K12 is a school management software that offers the best parent - teacher chat forum through applications which empower the two parties, parents and teachers to communicate directly from home even after school hours</p>
+<p class="leading-loose text-justify mb-8 text-gray-700">KlassApp is a school management software that offers the best parent - teacher chat forum through applications which empower the two parties, parents and teachers to communicate directly from home even after school hours</p>
 </div>
 <div class="w-full lg:w-1/4">
 	<img src="{{url('images/homework.png')}}" class="mx-auto">

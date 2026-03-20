@@ -18,7 +18,7 @@
 	<div class="container mx-auto py-8">
 		<div class="flex flex-col">
 			<h1 class="font-plex text-3xl font-bold my-8 text-center">Simplified Pricing</h1>
-			<p class="w-full lg:w-2/3 mx-auto text-center font-exo">GegoK12 is completly cloud based solution and you pay to use all modules based on your student strength. No additional cost or setup cost.</p>
+			<p class="w-full lg:w-2/3 mx-auto text-center font-exo">KlassApp is completly cloud based solution and you pay to use all modules based on your student strength. No additional cost or setup cost.</p>
 			<div class="w-full lg:w-1/2 mx-auto flex flex-col lg:flex-row md:flex-row mt-8 items-center px-3 lg:p-0 md:px-0">
 				<div class="w-full lg:w-1/2 md:w-1/2 bg-red-500 p-4 rounded-lg">
 					<ul class="list-outside list-disc px-8">

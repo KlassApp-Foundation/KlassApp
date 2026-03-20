@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - classroom-record-managament | Online School Management 
+KlassApp - classroom-record-managament | Online School Management 
 @endsection
 
 @section('content')

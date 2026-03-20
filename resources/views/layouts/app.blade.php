@@ -8,7 +8,7 @@
         @include('layouts.partials.favicon')
         <!-- CSRF Token -->
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ config('app.name', 'GegoK12') }}</title>
+        <title>{{ config('app.name', 'KlassApp') }}</title>
         <!-- Styles -->
 
         <link href="{{ asset('css/app.css') }}" rel="stylesheet">

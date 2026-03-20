@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - Attendance Management App for Teachers 
+KlassApp - Attendance Management App for Teachers 
 @endsection
 
 @section('content')

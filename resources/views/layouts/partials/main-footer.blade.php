@@ -2,8 +2,8 @@
  <footer class="bg-gray-200 border-t border-gray-300">
 <!-- <div class="container mx-auto py-8 flex flex-wrap px-2 lg:px-0 md:px-0">
     <div class="w-full lg:w-1/4 md:w-full">
-        <h4 class="text-gray-600 text-base font-extrabold mb-3">About GegoK12</h4>
-        <p class="text-sm tracking-wide text-gray-500 leading-relaxed text-justify">GegoK12 is SaaS product developed by <a href="https://gegosoft.com">GegoSoft</a> focusing on automating the School Operations, improving School-Parent-Teacher Communication and serve as a Modern day Cloud ERP for School</p>
+        <h4 class="text-gray-600 text-base font-extrabold mb-3">About KlassApp</h4>
+        <p class="text-sm tracking-wide text-gray-500 leading-relaxed text-justify">KlassApp is SaaS product developed by <a href="https://klassapp.xyz">KlassApp</a> focusing on automating the School Operations, improving School-Parent-Teacher Communication and serve as a Modern day Cloud ERP for School</p>
     </div>
     <div class="w-full lg:w-1/3 md:w-1/2 flex lg:ml-8  my-2 lg:my-0 md:my-4">
         <div>

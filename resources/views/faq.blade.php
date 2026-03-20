@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-	GegoK12 - Frequently Asked Questions
+	KlassApp - Frequently Asked Questions
 @endsection
 
 @section('content')

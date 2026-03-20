@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - School Administrative Software |  Online School Management 
+KlassApp - School Administrative Software |  Online School Management 
 @endsection
 
 @section('content')
@@ -95,6 +95,6 @@ GegoK12 - School Administrative Software |  Online School Management
 
 
 
-<p class="leading-loose text-justify mb-8 text-gray-700">Gego K12 is a complete school administrative software which aims to support a school management in automating and handling the big data with simplicity. Gego K12 is a tool that liberates the school management, faculty, students and parents with the gap in communication.</p>
+<p class="leading-loose text-justify mb-8 text-gray-700">KlassApp is a complete school administrative software which aims to support a school management in automating and handling the big data with simplicity. KlassApp is a tool that liberates the school management, faculty, students and parents with the gap in communication.</p>
 </div>
 @endsection 

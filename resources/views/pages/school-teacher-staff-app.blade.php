@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - School Teacher Staff App |  Online School Management 
+KlassApp - School Teacher Staff App |  Online School Management 
 @endsection
 
 @section('content')
