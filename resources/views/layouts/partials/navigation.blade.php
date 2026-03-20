@@ -1,17 +1,17 @@
 {{-- SPDX-License-Identifier: MIT --}}
-<nav class="navbar bg-white w-full flex  lg:flex-row px-4 lg:px-8 py-2 justify-between items-center">
+<nav class="navbar dashboard-themed-header w-full flex  lg:flex-row px-4 lg:px-8 py-2 justify-between items-center">
     <div class="nav-brand flex items-center">
         @if(\Auth::user())
             <button class="block lg:hidden md:hidden mr-3" onclick="showsidebar('res_sidebar')">
                 <span class="navbar-toggler-icon">
-                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path class="heroicon-ui" d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z"/></svg>
+                    <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path class="heroicon-ui" d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z" fill="white"/></svg>
                 </span>
             </button>
 
             <a class="h-10 object-contain" href="{{ route('dashboard') }}">
                 <img src="{{ asset('images/klassapp-k-white.png') }}" class="h-10 w-auto object-contain mr-3" alt="KlassApp Logo">
             </a>
-            <a class="text-lg lg:text-3xl font-exo font-medium text-gray-600" href="{{ route('dashboard') }}">
+            <a class="text-lg lg:text-3xl font-exo font-medium text-white" href="{{ route('dashboard') }}">
                 <strong>{{ ucwords(Auth::user()->school->name) }}</strong>
             </a>
         @else
@@ -23,7 +23,7 @@
         <ul class="navbar-nav mr-auto flex">
         </ul>
     </div>
- 
+
     <div class="flex flex-col-reverse lg:flex-row md:flex-row items-center">
         <!--academic year drop down-->
         <div class="hidden lg:block md:block">
@@ -51,8 +51,8 @@
                                     <img src="{{ asset('uploads/user/avatar/default-user.jpg') }}" class="w-8 h-8 rounded-full cursor-pointer">
                                 @endif
                                 <div class="user-dtl rounded">
-                                    <ul class="list-reset bg-white border border-gray-400 -mt-3 shadow-lg z-40">
-                                        <div class="flex border-b p-2 items-center">
+                                    <ul class="list-reset border -mt-3 shadow-lg z-40" style="background-color: #0F172A; border-color: #334155;">
+                                        <div class="flex border-b p-2 items-center" style="border-color: #334155;">
                                             @if(Auth::user()->userprofile->avatar!= null)
                                                 <img src="{{ url(Auth::user()->userprofile->AvatarPath) }}" class="w-10 h-10 rounded-full cursor-pointer">
                                             @else
@@ -60,7 +60,7 @@
                                             @endif
                                             <div>
                                                 <div>
-                                                    <a id="navbarDropdown" class="nav-link dropdown-toggle text-sm  no-underline text-black px-2" href="{{url('/admin/dashboard')}}">
+                                                    <a id="navbarDropdown" class="nav-link dropdown-toggle text-sm  no-underline text-white px-2" href="{{url('/admin/dashboard')}}">
                                                         @if(Auth::user()->userprofile->firstname != null)
                                                             {{ Auth::user()->FullName }} <span class="caret"></span>
                                                         @else
@@ -69,18 +69,18 @@
                                                     </a>
                                                 </div>
                                                 <div>
-                                                    <p class="text-sm  no-underline text-black px-2">{{ Auth::user()->email }}</p>
+                                                    <p class="text-sm  no-underline text-gray-300 px-2">{{ Auth::user()->email }}</p>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="py-2 leading-loose">
-                                            <li class="hover:bg-gray-200">
-                                                <a href="{{url('/admin/changepassword')}}" dusk="password-link" class="text-sm no-underline text-black px-3">
+                                            <li class="hover:bg-gray-700">
+                                                <a href="{{url('/admin/changepassword')}}" dusk="password-link" class="text-sm no-underline text-white px-3">
                                                     <span>Change Password</span>
                                                 </a>
                                             </li>
-                                            <li class="hover:bg-gray-200">
-                                                <a href="{{url('/admin/editprofile')}}"  class="text-sm  no-underline text-black px-3">
+                                            <li class="hover:bg-gray-700">
+                                                <a href="{{url('/admin/editprofile')}}"  class="text-sm  no-underline text-white px-3">
                                                     <span>Edit Profile</span>
                                                 </a>
                                             </li>
@@ -89,20 +89,20 @@
                                                     <span>Billing</span>
                                                 </a>
                                             </li>--}}
-                                            <li class="hover:bg-gray-200">
-                                                <a href="{{url('/admin/changeavatar')}}" class="text-sm  no-underline text-black px-3">
+                                            <li class="hover:bg-gray-700">
+                                                <a href="{{url('/admin/changeavatar')}}" class="text-sm  no-underline text-white px-3">
                                                     <span>Change Avatar</span>
                                                 </a>
                                             </li>
                                             @if(Auth::user()->isImpersonating())
-                                            <li class="hover:bg-gray-200">
-                                                <a href="{{url('/teacher/impersonate/stop')}}" class="text-sm  no-underline text-black px-3">
+                                            <li class="hover:bg-gray-700">
+                                                <a href="{{url('/teacher/impersonate/stop')}}" class="text-sm  no-underline text-white px-3">
                                                     <span>Stop Impersonating</span>
                                                 </a>
                                             </li>
                                             @else
-                                            <li class="hover:bg-gray-200">
-                                                <a class="dropdown-item text-sm  no-underline text-black px-3" dusk="logout-link" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">{{ __('Logout') }}</a>
+                                            <li class="hover:bg-gray-700">
+                                                <a class="dropdown-item text-sm  no-underline text-white px-3" dusk="logout-link" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">{{ __('Logout') }}</a>
                                                 <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                                     @csrf
                                                 </form>

@@ -1,0 +1,261 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
+.dashboard-shell {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    padding: 10px;
+    border-radius: 24px;
+    border: 1px solid #d6e3f5;
+    background: #f8fafc;
+}
+
+.dashboard-shell--admin {
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0) 42%),
+        radial-gradient(120% 140% at 100% 100%, rgba(14, 165, 233, 0.16) 0%, rgba(14, 165, 233, 0) 48%),
+        #f8fafc;
+}
+
+.dashboard-shell--teacher {
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgba(251, 146, 60, 0.14) 0%, rgba(251, 146, 60, 0) 44%),
+        radial-gradient(120% 140% at 100% 100%, rgba(56, 189, 248, 0.14) 0%, rgba(56, 189, 248, 0) 48%),
+        #f8fafc;
+}
+
+.dashboard-shell--superadmin {
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgba(245, 158, 11, 0.13) 0%, rgba(245, 158, 11, 0) 44%),
+        radial-gradient(120% 140% at 100% 100%, rgba(14, 165, 233, 0.14) 0%, rgba(14, 165, 233, 0) 48%),
+        #f8fafc;
+}
+
+.dashboard-design-tag {
+    background: #111827;
+    color: #ffffff;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+}
+
+.dashboard-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 6px 0 10px;
+}
+
+.dashboard-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 10px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 55%, #3b82f6 100%);
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+}
+
+.dashboard-shell--admin .dashboard-live-badge {
+    background: linear-gradient(90deg, #15803d 0%, #22c55e 55%, #4ade80 100%);
+    box-shadow: 0 10px 24px rgba(34, 197, 94, 0.32);
+    position: relative;
+    overflow: hidden;
+    animation: admin-badge-glow 2.6s ease-in-out infinite;
+}
+
+.dashboard-shell--admin .dashboard-live-badge::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -30%;
+    width: 24%;
+    height: 100%;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-20deg);
+    animation: admin-badge-sheen 3.4s ease-in-out infinite;
+}
+
+.dashboard-live-badge--teacher {
+    background: linear-gradient(90deg, #1e40af 0%, #2563eb 60%, #60a5fa 100%);
+}
+
+.dashboard-live-badge--superadmin {
+    background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 55%, #60a5fa 100%);
+}
+
+.dashboard-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+    animation: pulse-dot 1.8s ease-out infinite;
+}
+
+@keyframes pulse-dot {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+    }
+
+    70% {
+        box-shadow: 0 0 0 9px rgba(255, 255, 255, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+}
+
+@keyframes admin-badge-glow {
+    0%,
+    100% {
+        box-shadow: 0 10px 24px rgba(34, 197, 94, 0.28);
+    }
+
+    50% {
+        box-shadow: 0 14px 30px rgba(34, 197, 94, 0.42);
+    }
+}
+
+@keyframes admin-badge-sheen {
+    0%,
+    100% {
+        left: -30%;
+        opacity: 0;
+    }
+
+    25% {
+        opacity: 0.8;
+    }
+
+    55% {
+        left: 115%;
+        opacity: 0;
+    }
+}
+
+.dashboard-title {
+    margin: 0;
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+}
+
+.dashboard-subtitle {
+    margin: 4px 0 0;
+    color: #475569;
+    font-size: 0.92rem;
+}
+
+.dashboard-topfold {
+    margin-top: 8px;
+    padding: 14px;
+    border-radius: 22px;
+    border: 1px solid #e2e8f0;
+    background:
+        radial-gradient(110% 120% at 0% 0%, rgba(14, 165, 233, 0.12) 0%, rgba(14, 165, 233, 0) 45%),
+        radial-gradient(95% 110% at 100% 0%, rgba(30, 111, 217, 0.11) 0%, rgba(30, 111, 217, 0) 52%),
+        #f8fafc;
+}
+
+.dashboard-topfold--teacher {
+    background:
+        radial-gradient(110% 120% at 0% 0%, rgba(251, 146, 60, 0.1) 0%, rgba(251, 146, 60, 0) 45%),
+        radial-gradient(95% 110% at 100% 0%, rgba(56, 189, 248, 0.1) 0%, rgba(56, 189, 248, 0) 52%),
+        #f8fafc;
+}
+
+.dashboard-topfold--superadmin {
+    background:
+        radial-gradient(110% 120% at 0% 0%, rgba(14, 165, 233, 0.1) 0%, rgba(14, 165, 233, 0) 45%),
+        radial-gradient(95% 110% at 100% 0%, rgba(245, 158, 11, 0.09) 0%, rgba(245, 158, 11, 0) 52%),
+        #ffffff;
+    border: 1px solid #dbe6f2;
+    border-radius: 20px;
+}
+
+.dashboard-panel-card,
+.dashboard-kpi-card,
+.dashboard-chart-card,
+.dashboard-notice-card {
+    border: 1px solid #dbe5f1;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 16px 34px rgba(14, 23, 46, 0.08);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.dashboard-panel-card:hover,
+.dashboard-kpi-card:hover,
+.dashboard-chart-card:hover,
+.dashboard-notice-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(14, 23, 46, 0.12);
+}
+
+.dashboard-kpi-icon {
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-kpi-value {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+
+.dashboard-kpi-label {
+    font-size: 0.88rem;
+    color: #475569;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.dashboard-panel-title {
+    color: #0f172a;
+    font-size: 1.02rem;
+    font-weight: 700;
+}
+
+.dashboard-chart-card {
+    padding-top: 18px;
+}
+
+.dashboard-chart-canvas {
+    min-height: 210px;
+    margin-top: 8px;
+}
+
+.dashboard-gender-stat {
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #f8fafc;
+}
+
+.dashboard-notice-card .notice-box {
+    max-height: 460px;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-shell {
+        border-radius: 16px;
+        padding: 10px;
+    }
+
+    .dashboard-topfold,
+    .dashboard-topfold--superadmin {
+        padding: 10px;
+        border-radius: 14px;
+    }
+}

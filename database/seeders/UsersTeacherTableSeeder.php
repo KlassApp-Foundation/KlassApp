@@ -21,109 +21,68 @@ class UsersTeacherTableSeeder extends Seeder
      */
     public function run()
     {
-        // $schools = School::where('status',1)->get();
-        // foreach ($schools as $school) 
-        // {
-        //     $academic_year = AcademicYear::where([['school_id',$school->id],['status',1]])->first();
-        //     factory(App\Models\User::class, 1)->create([
-        //         'school_id'    => $school->id,
-        //         'usergroup_id' => 5
-        //     ])->each(function($principal) use($academic_year)
-        //     {
-        //         factory(\App\Models\Userprofile::class, 1)->create([
-        //             'school_id'     =>  $principal->school_id,
-        //             'user_id'       =>  $principal->id,
-        //             'usergroup_id'  =>  $principal->usergroup_id,
-        //             'address'       => 'Madurai,Tamilnadu,India',
-        //             'pincode'       => '625001',
-        //             'date_of_birth' =>  Carbon::now()->subYears(rand(35, 45)),
-        //         ]);
-
-        //         factory(\App\Models\TeacherProfile::class)->create([
-        //             'school_id'         =>  $principal->school_id,
-        //             'academic_year_id'  =>  $academic_year->id,
-        //             'user_id'           =>  $principal->id,
-        //             'status'            =>  1,
-        //             'designation'       =>  'principal',
-        //             'specialization'    =>  $uniSubjects[array_rand($uniSubjects, 1)]
-        //         ]);
-
-        //         factory(\App\Models\LibraryCard::class)->create([
-        //             'school_id' => $principal->school_id,
-        //             'user_id'   => $principal->id,
-        //         ]);
-
-        //         factory(\App\Models\RoleUser::class)->create([
-        //             'role_id'   => 3,
-        //             'user_id'   => $principal->id,
-        //         ]);
-        //     });
-
-        //     $standards = Standard::where('school_id',$school->id)->get();
-        //     $sections = Section::where('school_id',$school->id)->get();
-        //     $teacherCount = $standards->count() * $sections->count();
-
-        //     $uniSubjects = Subject::where([['school_id',$school->id],['academic_year_id',$academic_year->id]])->where('status', 1)->pluck('name')->unique()->flatten()->toArray();
-
-        //     $teachers =  factory(App\Models\User::class, $teacherCount)->create([
-        //         'school_id'    => $school->id,
-        //         'usergroup_id' => 5
-        //     ]);
-
-        //     foreach ($teachers as $teacher) 
-        //     {
-        //         factory(\App\Models\Userprofile::class, 1)->create([
-        //             'school_id'     => $teacher->school_id,
-        //             'user_id'       => $teacher->id,
-        //             'usergroup_id'  => $teacher->usergroup_id,
-        //             'address'       => 'Madurai,Tamilnadu,India',
-        //             'pincode'       => '625001',
-        //             'date_of_birth' =>  Carbon::now()->subYears(rand(35, 45)),
-        //         ]);
-
-        //         factory(\App\Models\TeacherProfile::class)->create([
-        //             'school_id'         =>  $teacher->school_id,
-        //             'academic_year_id'  =>  $academic_year->id,
-        //             'user_id'           =>  $teacher->id,
-        //             'status'            =>  1,
-        //             'designation'       => 'teacher',
-        //             'specialization'    => $uniSubjects[array_rand($uniSubjects, 1)]
-        //         ]);
-
-        //         factory(\App\Models\LibraryCard::class)->create([
-        //             'school_id' => $teacher->school_id,
-        //             'user_id'   => $teacher->id,
-        //         ]);
-        //     }
-
-        //     $staffs =  factory(App\Models\User::class, 15)->create([
-        //         'school_id'    => $school->id,
-        //         'usergroup_id' => 5
-        //     ]);
-
-        //     foreach ($staffs as $staff) 
-        //     {
-        //         factory(\App\Models\Userprofile::class, 1)->create([
-        //             'school_id'     => $staff->school_id,
-        //             'user_id'       => $staff->id,
-        //             'usergroup_id'  => $staff->usergroup_id,
-        //             'address'       => 'Madurai,Tamilnadu,India',
-        //             'pincode'       => '625002',
-        //             'date_of_birth' =>  Carbon::now()->subYears(rand(35, 45)),
-        //         ]);
-
-        //         factory(\App\Models\TeacherProfile::class)->create([
-        //             'school_id'         =>  $staff->school_id,
-        //             'academic_year_id'  =>  $academic_year->id,
-        //             'user_id'           =>  $staff->id,
-        //             'status'            =>  1,
-        //         ]);
-
-        //         factory(\App\Models\LibraryCard::class)->create([
-        //             'school_id' => $staff->school_id,
-        //             'user_id'   => $staff->id,
-        //         ]);
-        //     }
-        // }
+        // Seed one teacher per active school
+        $schools = School::where('status', 1)->get();
+        
+        foreach ($schools as $school) {
+            $academic_year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first();
+            if (!$academic_year) {
+                $academic_year = AcademicYear::where('school_id', $school->id)->orderByDesc('id')->first();
+            }
+            
+            // Create one teacher user per school
+            $teacher_email = 'teacher_' . strtolower(str_replace(' ', '_', $school->name)) . '@' . strtolower(str_replace(' ', '', $school->name)) . '.edu';
+            
+            $user = \App\Models\User::where('email', $teacher_email)->first();
+            if (!$user) {
+                $user_id = DB::table('users')->insertGetId([
+                    'usergroup_id' => 5,
+                    'school_id' => $school->id,
+                    'name' => 'Teacher ' . $school->name,
+                    'email' => $teacher_email,
+                    'mobile_no' => '+256' . rand(700000000, 799999999),
+                    'password' => bcrypt('password'),
+                    'status' => 'active',
+                    'email_verified' => 1,
+                    'mobile_verified' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $user = \App\Models\User::find($user_id);
+            }
+            
+            // Ensure userprofile
+            $profile = \App\Models\Userprofile::where('user_id', $user->id)->first();
+            if (!$profile) {
+                DB::table('userprofiles')->insert([
+                    'school_id' => $school->id,
+                    'user_id' => $user->id,
+                    'usergroup_id' => 5,
+                    'firstname' => 'Teacher',
+                    'lastname' => $school->name,
+                    'profession' => 'teacher',
+                    'address' => $school->name,
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            
+            // Ensure teacher profile
+            $tprofile = \App\Models\TeacherProfile::where('user_id', $user->id)->first();
+            if (!$tprofile && $academic_year) {
+                DB::table('teacherprofile')->insert([
+                    'school_id' => $school->id,
+                    'academic_year_id' => $academic_year->id,
+                    'user_id' => $user->id,
+                    'designation' => 'teacher',
+                    'status' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            
+            echo "Teacher seeded for school: " . $school->name . " (id=" . $user->id . ", email=" . $user->email . ")\n";
+        }
     }
 }
