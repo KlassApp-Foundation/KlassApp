@@ -27,7 +27,7 @@
                         @foreach($exams as $exam)
                             <div class="flex items-center justify-between p-4 borderr shadow-md hover:shadow-lg dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                 <div>
-                                    <h3 class="font-medium text-gray-900 dark:text-white">{{ $exam->name }}</h3>
+                                    <h3 class="font-semibold text-sm text-gray-900 dark:text-white">{{ $exam->subject->name . " EXAM"}}</h3>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
                                         {{ $exam->term ? 'Term ' . $exam->term : '' }} • 
                                         {{ $exam->standard->name ?? 'N/A' }}

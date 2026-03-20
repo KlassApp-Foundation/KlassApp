@@ -78,5 +78,5 @@ class ExamController extends Controller
             
     }
 
-    // You can add edit/update/destroy later...
+    // To add edit/update/destroy later...
 }

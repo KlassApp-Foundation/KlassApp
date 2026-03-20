@@ -169,6 +169,11 @@ class User extends Authenticatable implements HasMedia
     | SCOPES
     |--------------------------------------------------------------------------
     */
+    // app/Models/User.php
+public function scopeStudents($query)
+{
+    return $query->where('usergroup_id', 6);
+}
     public function scopeBySchool($query,$school_id)
     {
        $query->where('school_id',$school_id);
