@@ -753,6 +753,7 @@ Route::get('/exams', 'ExamController@list')->name('exams.list');
 Route::get('/exams/add-new', 'ExamController@index')->name('exams.index');
 Route::get('/exams/create', 'ExamController@create')->name('exams.create');
 Route::post('/exams/store', 'ExamController@store')->name('exams.store');
+Route::get("/marks/view", "MarksController@classExamOverview")->name("marks");
 
 // Optional later: full resource or more actions
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
