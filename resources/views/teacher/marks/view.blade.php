@@ -119,7 +119,9 @@
                     <tr>
                         <td colspan="7" class="text-center py-10">
                             <p class="text-gray-500 text-sm">No marks found</p>
-                            <a href="#" class="mt-2 inline-block text-blue-600 text-sm hover:underline">
+                            {{-- {{ route('teacher.exam.marks.enter', ["exam" => $exam]) }} --}}
+                            {{-- {{ dd($exam) }} --}}
+                            <a href="{{ route('teacher.exam.marks.enter', ["exam" => $exam]) }}" class="mt-2 inline-block text-blue-600 text-sm hover:underline">
                                 + Add your first record
                             </a>
                         </td>
