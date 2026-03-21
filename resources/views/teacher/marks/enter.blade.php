@@ -1,7 +1,7 @@
 @extends('layouts.teacher.layout')
 
 @section('content')
-<div class="container-fluid w-full lg:mx-2">
+<div class="container-fluid w-full py-3 lg:mx-2">
 
       {{-- Flash Success Message --}}
    @include('partials.message')
