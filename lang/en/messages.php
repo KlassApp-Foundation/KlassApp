@@ -48,6 +48,8 @@ return [
 
     'mobile_verify_success_msg'     => 'Mobile Number Verified Successfully',
 
+    'email_verify_success_msg'      => 'Email Verified Successfully',
+
     'follow_success_msg'            => "You Started Following ':page' page",
 
     'unfollow_success_msg'          => "You Unfollowed ':page' page",

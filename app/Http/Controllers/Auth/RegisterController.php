@@ -116,7 +116,7 @@ class RegisterController extends Controller
 
         $this->guard()->login($user);
 
-        if($user->mobile_verified == 0)
+        if($user->email_verified == 0)
         {
             $this->createAuthentication($user,$request,'register');
             return redirect('/verifyotp');

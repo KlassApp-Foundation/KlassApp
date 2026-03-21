@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - Emergency Notification System For Schools
+KlassApp - Emergency Notification System For Schools
 @endsection
 
 @section('content')

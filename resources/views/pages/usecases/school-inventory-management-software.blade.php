@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - school-inventory-management-software
+KlassApp - school-inventory-management-software
 @endsection
 
 @section('content')
@@ -23,7 +23,7 @@ GegoK12 - school-inventory-management-software
 <div class="container mx-auto py-8 px-3">
 <p class="leading-loose text-justify mb-8 text-gray-700">Inventory management is the process of managing assets or stock. In educational places like schools these inventories would include chairs, tables, stationary, electronic items like projectors, scanners, printers, library stock like books, magazines, etc. in a school inventory management refers to the task of management of these resources and ensuring that they are being properly cared for, utilized in the right way and labour on them and the returns on the expenditure are high. With inventory management a school expects a good return of the investment and every stakeholder benefits from the resource.</p>
 <p class="leading-loose text-justify mb-8 text-gray-700">Many people assume that tracking and keeping in check all the school inventories is the job of a store manager. But in reality it is the task of the school admin. For example, when a teacher complains that the fan in a class she recently taught is not working, it is the work of a school admin to ensure that all the resources in the school are properly aligned and functioning. Issuing materials in a school happens on a daily basis and this makes tracking them difficult. In such cases small items might be missed and not get recorded properly. When manually tracking these inventories through paper management, they get subjected to human errors like getting lost and hard to analyse. Without proper management, school equipments are prone to get stolen by students and other employees or get pushed back to the storage and forgotten.</p>
-<p class="leading-loose text-justify mb-8 text-gray-700">In order to solve such problems, going for a systemized method of managing these inventories is the right option. Gego K12 is a school management program which offers a quality school inventory management software.</p>
+<p class="leading-loose text-justify mb-8 text-gray-700">In order to solve such problems, going for a systemized method of managing these inventories is the right option. KlassApp is a school management program which offers a quality school inventory management software.</p>
 
 <div class="flex flex-wrap">
 <!-- **** -->
@@ -36,7 +36,7 @@ GegoK12 - school-inventory-management-software
 </div>
 <div class="w-full px-3">
 <h3 class="text-base text-gray-700 font-semibold ">Classroom Inventory management</h3>
-<p class="text-sm text-gray-700 my-1 text-justify leading-loose">In every class inventories such as stationary, tables, chairs, electric items like fan and projectors are bound to be present. Managing these manually is a difficult task. Through Gego K12’s school inventory management system, every resource in the classroom will get listed and accounted for.</p>
+<p class="text-sm text-gray-700 my-1 text-justify leading-loose">In every class inventories such as stationary, tables, chairs, electric items like fan and projectors are bound to be present. Managing these manually is a difficult task. Through KlassApp’s school inventory management system, every resource in the classroom will get listed and accounted for.</p>
 </div>
 </div>
 </div>

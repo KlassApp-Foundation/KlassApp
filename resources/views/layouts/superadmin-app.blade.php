@@ -8,14 +8,15 @@
         @include('layouts.partials.favicon')
         <!-- CSRF Token -->
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ config('app.name', 'GegoK12') }}</title>
+        <title>{{ config('app.name', 'KlassApp') }}</title>
         <!-- Styles -->
 
          @filamentStyles
         <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+        <link href="{{ asset('css/dashboard-refresh.css') }}" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500&family=IBM+Plex+Sans:wght@500;600;700&family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-     
-        <link rel="stylesheet" href="https://unpkg.com/@themesberg/flowbite@1.2.0/dist/flowbite.min.css" /> 
+
+        <link rel="stylesheet" href="https://unpkg.com/@themesberg/flowbite@1.2.0/dist/flowbite.min.css" />
 
          <script>
         window.User = {!! json_encode(optional(auth()->user())->only('id')) !!}
@@ -49,7 +50,7 @@
 
         <livewire:scripts>
         <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script src="{{ asset('vendor/livewire-alert/livewire-alert.js') }}"></script> 
+        <script src="{{ asset('vendor/livewire-alert/livewire-alert.js') }}"></script>
 
 
         <script>

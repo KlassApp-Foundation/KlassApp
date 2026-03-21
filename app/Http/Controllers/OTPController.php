@@ -6,6 +6,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Traits\AuthenticationProcess;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\OTPRequest;
 use App\Models\Authentication;
@@ -16,14 +17,45 @@ use Log;
 
 class OTPController extends Controller
 {
+    use AuthenticationProcess;
+
     /**
      * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
+
+        if ($request->query('resend') == 1) {
+            $user = Auth::user();
+            $email = (string) $request->query('email', '');
+
+            if ($email === '' || strcasecmp($email, (string) $user->email) !== 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid resend email address.',
+                ], 422);
+            }
+
+            $sent = $this->createAuthentication($user, $request, 'register');
+
+            if ($sent) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Verification email sent!',
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+
         return view('/admin/otp/create');
     }
 
@@ -55,14 +87,13 @@ class OTPController extends Controller
 
                 $user = User::where('id',Auth::id())->first();
 
-                $user->mobile_verification_code = $authentication_update['token'];
-                $user->mobile_verified          = 1;
-                $user->mobile_verified_at       = date('Y-m-d H:i:s');
-                
+                $user->email_verified          = 1;
+                $user->email_verified_at       = date('Y-m-d H:i:s');
+
                 $user->save();
 
                 \DB::commit();
-                return redirect('/admin/dashboard')->with('successmessage',trans('messages.mobile_verify_success_msg'));
+                return redirect('/admin/dashboard')->with('successmessage',trans('messages.email_verify_success_msg'));
             }
             else
             {

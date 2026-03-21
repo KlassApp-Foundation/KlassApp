@@ -2,13 +2,13 @@
 @extends('layouts.accountant.layout')
 
 @section('content')
-    <div class="">
+    <div class="dashboard-shell dashboard-shell--accountant">
         <div>
-            <h1 class="admin-h1 font-plex my-3">Dashboard</h1>
+            <p class="dashboard-subtitle">Review finance-related events, notices, reminders, and unpaid fee signals at a glance.</p>
         </div>
         @include('partials.message')
         <!-- start -->
-        <div class="flex flex-wrap my-2">
+        <div class="flex flex-wrap my-2 dashboard-topfold">
             <!--upcoming events-->
             <div class="w-full lg:w-1/3 md:w-1/2 px-1 my-3">
                 <div class="bg-white custom-shadow px-3 py-2 border">
@@ -44,7 +44,7 @@
                                 <p class="text-sm text-gray-900 font-semibold" style="text-align: center;">No records Found</p>
                             </div>
                         @endif
-                    </div>   
+                    </div>
                 </div>
             </div>
             <!--upcoming events-->
@@ -94,7 +94,7 @@
                                 <p class="text-sm text-gray-900 font-semibold" style="text-align: center;">No Notice Found</p>
                             </div>
                         @endif
-                    </div>   
+                    </div>
                 </div>
             </div>
 
@@ -118,7 +118,7 @@
                 <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full">
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl">Unpaid Fees List</h1>
-                    </div>  
+                    </div>
                     <unpaid-fees url="{{ url('/') }}" mode="accountant"></unpaid-fees>
                 </div>
             </div>

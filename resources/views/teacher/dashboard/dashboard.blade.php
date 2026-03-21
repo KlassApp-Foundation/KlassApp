@@ -2,17 +2,22 @@
 @extends('layouts.teacher.layout')
 
 @section('content')
-    <div class="w-full lg:mx-2 md:mx-2">
-        <h1 class="admin-h1 my-3">Dashboard</h1>
+    <div class="dashboard-shell dashboard-shell--teacher">
+        <div class="dashboard-live-badge dashboard-live-badge--teacher">
+            <span class="dashboard-live-dot"></span>
+            The Teaching Command Center
+        </div>
+        <p class="dashboard-subtitle font-semibold">Stay on top of notice updates, subjects, exams, and day-to-day class rhythm.</p>
+
         <!-- start -->
-        <div class=" flex flex-col lg:flex-row my-2">
+        <div class="flex flex-col lg:flex-row my-2 dashboard-topfold dashboard-topfold--teacher">
             <div class="w-full my-2">
-                <div class="flex flex-col lg:flex-row my-2"> 
+                <div class="flex flex-col lg:flex-row my-2">
                     <div class="w-full lg:w-1/2 my-3 lg:my-0 md:my-0 px-1">
-                        <div class="bg-white custom-shadow px-3 py-2 border">
+                        <div class="bg-white custom-shadow px-3 py-2 border dashboard-panel-card">
                             <div>
                                 <h1 class="text-gray-800 font-semibold text-lg border-b mx-2 py-1 pb-3">Notice Board</h1>
-                            </div> 
+                            </div>
                             <div class="notice-box">
                                 @if(count($dashboard['noticeboard']) > 0)
                                     @foreach($dashboard['noticeboard'] as $noticeboard)
@@ -53,10 +58,10 @@
                     </div>
                     <!-- start -->
                     <div class="w-full lg:w-1/2 my-3 lg:my-0 md:my-2 px-1">
-                        <div class="bg-white custom-shadow px-3 py-2 border">
+                        <div class="bg-white custom-shadow px-3 py-2 border dashboard-panel-card">
                             <div>
                                 <h1 class="text-gray-800 font-semibold text-lg border-b mx-2 py-1 pb-3">Subjects</h1>
-                            </div> 
+                            </div>
                             <div class="notice-box flex flex-wrap lg:flex-row items-center">
                                 @foreach($dashboard['subject'] as $subject)
                                     <div class="w-1/3 lg:w-1/4 px-2 my-5 h-56 subject-box">
@@ -109,23 +114,23 @@
                     </div>
                     <!-- end -->
                 </div>
-            </div>         
+            </div>
         </div>
         <!-- end -->
 
         <!-- start -->
         <div class="flex flex-wrap lg:flex-row md:flex-row">
-           
+
 
             <!-- start -->
             <div class="w-full lg:w-1/4  md:w-1/2 my-3 lg:my-0 md:my-2 px-1">
-                <div class="bg-white px-3 py-2 h-full">
+                <div class="bg-white px-3 py-2 h-full dashboard-panel-card">
                     <div class="border-b mx-2 py-1 pb-3">
                         <h1 class="text-gray-800 font-semibold text-lg">Activity Log</h1>
                     </div>
                     <div class="event-box">
                         <div class="notice-box-list py-3  mx-2">
-                            <!-- ****** -->    
+                            <!-- ****** -->
                             @foreach($dashboard['activitylog'] as $activitylog)
                                 <div class="w-full border-l-2 border-purple-500 relative my-1">
                                     <div class="border py-2 px-2 activity-log ">
@@ -140,7 +145,7 @@
                             @endforeach
                             <!-- ***** -->
 
-                            <!-- ****** -->    
+                            <!-- ****** -->
                             <!-- <div class="w-full border-l-2 border-teal-500 relative my-1">
                               <div class="border py-2 px-2 activity-log ">
                                 <div class="">
@@ -152,8 +157,8 @@
                               </div>
                             </div> -->
                             <!-- ***** -->
-            
-                            <!-- ****** -->    
+
+                            <!-- ****** -->
                             <!-- <div class="w-full border-l-2 border-orange-500 relative my-1">
                               <div class="border py-2 px-2 activity-log ">
                                 <div class="">
@@ -166,7 +171,7 @@
                             </div> -->
                             <!-- ***** -->
 
-                            <!-- ****** -->    
+                            <!-- ****** -->
                             <!-- <div class="w-full border-l-2 border-indigo-500 relative my-1">
                               <div class="border py-2 px-2 activity-log ">
                                 <div class="">
@@ -187,20 +192,20 @@
             <!-- start -->
             @if(config('gexam.enabled', false))
             <div class="w-full lg:w-2/4 md:w-full px-1">
-                <div class="bg-white custom-shadow  py-1 border h-full">
+                <div class="bg-white custom-shadow py-1 border h-full dashboard-panel-card">
                     <div>
                         <h1 class="text-gray-800 px-3 font-semibold text-xl py-2 pb-3">Upcoming Exams</h1>
-                    </div> 
+                    </div>
                     <div class="exam-box mt-2 overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
                                 <tr>
-                                    <th class="font-semibold text-left px-3 pt-2 pb-3 text-base">Exam Name</th> 
-                                    <th class="font-semibold text-left px-3 pt-2 pb-3 text-base w-40">Subject</th> 
+                                    <th class="font-semibold text-left px-3 pt-2 pb-3 text-base">Exam Name</th>
+                                    <th class="font-semibold text-left px-3 pt-2 pb-3 text-base w-40">Subject</th>
                                     <th class="font-semibold text-left px-3 pt-2 pb-3 text-base">Class</th>
                                     <th class="font-semibold text-left px-3 pt-2 pb-3 text-base">Time</th>
                                 </tr>
-                            </thead> 
+                            </thead>
                             @if(count($dashboard['upcomingExam']) > 0)
                                 <tbody>
                                     @foreach($dashboard['upcomingExam'] as $key => $upcomingExams)
@@ -239,7 +244,7 @@
                                       <td class="px-3 py-2">8-B</td>
                                       <td class="px-3 py-2">01.00PM - 3.00PM</td>
                                     </tr> -->
-                                </tbody>  
+                                </tbody>
                             @else
                                 <tbody>
                                     <tr>
@@ -247,40 +252,42 @@
                                             <p class="bg-gray-100 px-4 py-2 border-t border-b text-base font-semibold text-gray-700" style="text-align: center;">No Records Found</p>
                                         </td>
                                     </tr>
-                                </tbody> 
-                            @endif    
+                                </tbody>
+                            @endif
                         </table>
                     </div>
                 </div>
             </div>
             @endif
-            <!-- end -->  
+            <!-- end -->
         </div>
         <!-- end -->
-        
+
         <!-- start -->
         <div class="flex flex-wrap">
             <!--Task Module-->
-            <div class="w-full lg:w-1/2 md:w-1/2">
-                <dashboard-task url="{{ url('/') }}" mode="teacher"></dashboard-task>
+            <div class="w-full lg:w-1/2 md:w-1/2 px-1">
+                <div class="bg-white custom-shadow px-3 py-2 border dashboard-panel-card h-full">
+                    <dashboard-task url="{{ url('/') }}" mode="teacher"></dashboard-task>
+                </div>
             </div>
 
             @if(config('gtimetable.enabled', false))
              <div class="w-full lg:w-1/2 md:w-1/2 my-3 lg:my-0 md:my-2 px-1">
-                <div class="bg-white custom-shadow px-3 py-2 border">
+                <div class="bg-white custom-shadow px-3 py-2 border dashboard-panel-card">
                     <div class="mx-2 py-1">
                         <!-- <p class="text-sm text-gray-500">Monday, June</p>
                         <h1 class="text-gray-800 font-semibold text-3xl ">08</h1> -->
                         <h1 class="text-gray-800 font-semibold text-lg">TimeTable</h1>
-                    </div> 
+                    </div>
 
                     {{-- @if(config('gquiz.enabled', false)) --}}
 
                      <!-- new -->
                     <livewire:timetable.dashboard-timetable-teacher />
-                    
 
-                   
+
+
 
                     <!-- <div class="event-box"> -->
                         <!-- <div class="notice-box-list"> -->

@@ -394,7 +394,7 @@ Route::get( '/downloadformat', 'ImportMemberController@downloadFormat' );
 
 	//show
 	Route::get( '/homework/show/{id}', 'HomeWorkController@show' );
-	
+
 	//edit
 	Route::get( '/homework/edit/list/{id}', 'HomeWorkController@editList' );
 	Route::get( '/homework/edit/{id}', 'HomeWorkController@edit' );
@@ -403,7 +403,7 @@ Route::get( '/downloadformat', 'ImportMemberController@downloadFormat' );
 	Route::get( '/homework/delete/{id}', 'HomeWorkController@destroy' );*/
 //without approval homework -- do not remove
 
-//with approval  
+//with approval
 //homework
 	//index
 	Route::get( '/homeworks', 'Approval\HomeWorkController@index' );
@@ -418,7 +418,7 @@ Route::get( '/downloadformat', 'ImportMemberController@downloadFormat' );
 
 	//show
 	Route::get( '/homework/show/{id}', 'Approval\HomeWorkController@show' );
-	
+
 	//edit
 	Route::get( '/homework/edit/list/{id}', 'Approval\HomeWorkController@editList' );
 	Route::get( '/homework/edit/{id}', 'Approval\HomeWorkController@edit' );
@@ -432,8 +432,8 @@ Route::get( '/downloadformat', 'ImportMemberController@downloadFormat' );
 
     //reject
     Route::post('/homework/reject/{id}', 'Approval\HomeworkApprovalController@reject');
-//with approval  
-    
+//with approval
+
 //student homework
     //show
     Route::get( '/studenthomeworks/{id}', 'StudentHomeworkController@list' );
@@ -485,7 +485,7 @@ Route::get( '/downloadformat', 'ImportMemberController@downloadFormat' );
 	Route::get( '/leavetype/delete/{id}', 'LeaveTypesController@destroy' );
 
 // //videos
-// 	//index 
+// 	//index
 //     Route::get( '/videos/list', 'VideosController@standardlist' );
 // 	Route::get( '/files', 'VideosController@index' );
 // 	Route::get( '/file/list/{type}', 'VideosController@list' );
@@ -753,8 +753,6 @@ Route::get('/exams', 'ExamController@list')->name('exams.list');
 Route::get('/exams/add-new', 'ExamController@index')->name('exams.index');
 Route::get('/exams/create', 'ExamController@create')->name('exams.create');
 Route::post('/exams/store', 'ExamController@store')->name('exams.store');
-Route::get("/{exam}/marks/view", "MarksController@classExamOverview")->name("admin.marks.view");
-Route::get("/marks/all", "MarksController@schoolMarksOverview")->name("marks.all");
 
 // Optional later: full resource or more actions
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
@@ -770,6 +768,3 @@ Route::get('/addon', function () {
 Route::get('/addon/{name}/detail', function () {
     return view('admin.addon.detail');
 });
-
-
-

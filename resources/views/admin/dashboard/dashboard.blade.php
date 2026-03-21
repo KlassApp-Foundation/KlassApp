@@ -2,175 +2,14 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-
-    <style>
-        @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
-
-        .dashboard-shell {
-            font-family: "Plus Jakarta Sans", sans-serif;
-            padding: 10px;
-            border-radius: 24px;
-            background:
-                radial-gradient(120% 140% at 0% 0%, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0) 42%),
-                radial-gradient(120% 140% at 100% 100%, rgba(14, 165, 233, 0.16) 0%, rgba(14, 165, 233, 0) 48%),
-                #f8fafc;
-            border: 1px solid #d6e3f5;
-        }
-
-        .dashboard-live-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin: 2px 0 10px;
-            padding: 8px 14px;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #0ea5e9 0%, #10b981 100%);
-            color: #ffffff;
-            font-size: 0.78rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            box-shadow: 0 10px 24px rgba(14, 165, 233, 0.26);
-        }
-
-        .dashboard-live-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 999px;
-            background: #ffffff;
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
-            animation: pulse-dot 1.8s ease-out infinite;
-        }
-
-        @keyframes pulse-dot {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
-            }
-
-            70% {
-                box-shadow: 0 0 0 9px rgba(255, 255, 255, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-            }
-        }
-
-        .dashboard-heading {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            gap: 12px;
-            margin: 6px 0 10px;
-        }
-
-        .dashboard-title {
-            margin: 0;
-            font-family: "Bricolage Grotesque", sans-serif;
-            font-size: 1.9rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: #0f172a;
-        }
-
-        .dashboard-subtitle {
-            margin: 4px 0 0;
-            color: #475569;
-            font-size: 0.92rem;
-        }
-
-        .dashboard-topfold {
-            margin-top: 8px;
-            padding: 14px;
-            border-radius: 22px;
-            background:
-                radial-gradient(110% 120% at 0% 0%, rgba(14, 165, 233, 0.12) 0%, rgba(14, 165, 233, 0) 45%),
-                radial-gradient(95% 110% at 100% 0%, rgba(30, 111, 217, 0.11) 0%, rgba(30, 111, 217, 0) 52%),
-                #f8fafc;
-            border: 1px solid #e2e8f0;
-        }
-
-        .dashboard-topfold .dashboard-kpi-card,
-        .dashboard-topfold .dashboard-chart-card,
-        .dashboard-topfold .dashboard-notice-card {
-            border: 1px solid #dbe5f1;
-            border-radius: 16px;
-            background: #ffffff;
-            box-shadow: 0 16px 34px rgba(14, 23, 46, 0.08);
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
-        }
-
-        .dashboard-topfold .dashboard-kpi-card:hover,
-        .dashboard-topfold .dashboard-chart-card:hover,
-        .dashboard-topfold .dashboard-notice-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 40px rgba(14, 23, 46, 0.12);
-        }
-
-        .dashboard-topfold .dashboard-kpi-icon {
-            box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
-        }
-
-        .dashboard-topfold .dashboard-kpi-value {
-            font-family: "Bricolage Grotesque", sans-serif;
-            font-weight: 700;
-            color: #0f172a;
-            letter-spacing: -0.01em;
-        }
-
-        .dashboard-topfold .dashboard-kpi-label {
-            font-size: 0.88rem;
-            color: #475569;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .dashboard-panel-title {
-            color: #0f172a;
-            font-size: 1.02rem;
-            font-weight: 700;
-        }
-
-        .dashboard-chart-card {
-            padding-top: 18px;
-        }
-
-        .dashboard-chart-canvas {
-            min-height: 210px;
-            margin-top: 8px;
-        }
-
-        .dashboard-gender-stat {
-            border-radius: 12px;
-            padding: 10px 12px;
-            background: #f8fafc;
-        }
-
-        .dashboard-notice-card .notice-box {
-            max-height: 460px;
-        }
-
-        @media (max-width: 1024px) {
-            .dashboard-topfold {
-                padding: 10px;
-                border-radius: 16px;
-            }
-        }
-    </style>
-
-    <div class="dashboard-shell">
-        <div style="background:#111827;color:#ffffff;padding:10px 14px;border-radius:12px;font-weight:700;letter-spacing:0.04em;margin-bottom:10px;">
-            ADMIN DASHBOARD DESIGN v2
-        </div>
+    <div class="dashboard-shell dashboard-shell--admin">
         <div class="dashboard-heading">
             <div>
                 <div class="dashboard-live-badge">
                     <span class="dashboard-live-dot"></span>
-                    Dashboard Redesign Live
+                    The Admin Command Center
                 </div>
-                <h1 class="admin-h1 font-plex my-3 dashboard-title">Dashboard</h1>
-                <p class="dashboard-subtitle">Live school activity, enrollment pulse, and updates in one place.</p>
+                <p class="dashboard-subtitle font-semibold">Live school activity, enrollment pulse, and updates in one place.</p>
             </div>
         </div>
         @include('partials.message')
@@ -300,7 +139,7 @@
                                 <p class="text-sm text-gray-900 font-semibold" style="text-align: center;">No Notice Found</p>
                             </div>
                         @endif
-                    </div>   
+                    </div>
                 </div>
             </div>
         </div>
@@ -309,7 +148,7 @@
         <!-- start -->
         <!--<div class="flex flex-col lg:flex-row my-2">
             <div class="w-full lg:w-1/2 md:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow  py-1 border">
+                <div class="bg-white custom-shadow py-1 border dashboard-panel-card">
                     <div>
                         <h1 class="text-gray-800 px-4 font-semibold text-lg py-2 pb-3">Exam Toppers</h1>
                     </div>
@@ -400,7 +239,7 @@
                 </div>
             </div>
             <div class="w-full lg:w-1/2 md:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow px-4 py-3 border">
+                <div class="bg-white custom-shadow px-4 py-3 border dashboard-panel-card">
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl">Student Passing</h1>
                     </div>
@@ -417,7 +256,7 @@
         <div class="flex flex-col lg:flex-row my-2">
             @if(config('gexam.enabled', false))
             <div class="w-full lg:w-2/3 px-1 my-2">
-                <div class="bg-white custom-shadow py-1 border">
+                <div class="bg-white custom-shadow py-1 border dashboard-panel-card">
                     <div>
                         <h1 class="text-gray-800 px-3 font-semibold text-xl py-2 pb-3">Upcoming Exams</h1>
                     </div>
@@ -448,7 +287,7 @@
                                             </tr>
                                         @endforeach
                                     @endforeach
-                                </tbody>  
+                                </tbody>
                             @else
                                 <tbody>
                                     <tr class="border-t py-2">
@@ -456,35 +295,35 @@
                                             No Records found
                                         </td>
                                     </tr>
-                                </tbody> 
-                            @endif    
+                                </tbody>
+                            @endif
                         </table>
                     </div>
                 </div>
             </div>
             @endif
             <div class="w-full lg:w-1/3 px-1 my-2">
-                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full">
+                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
                     <view-birthday url="{{ url('/') }}"></view-birthday>
                     <view-birthday-teacher url="{{ url('/') }}" mode="admin"></view-birthday-teacher>
                     <view-work-anniversary url="{{ url('/') }}" mode="admin"></view-work-anniversary>
                 </div>
             </div>
         </div>
-   
+
 
              {{-- <livewire:timetable.dashboard-class />
               <livewire:timetable.dashboard-teacher />
               <livewire:timetable.day-time-table />--}}
-        
+
         <div>
-            <div class="w-full px-1 my-2 bg-white">
+            <div class="w-full px-1 my-2 bg-white dashboard-panel-card">
                 <div class="pt-2 pb-6">
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl">
                             <a href="{{ url('/admin/feedbacks') }}">Parent's Feedback</a>
                         </h1>
-                    </div>  
+                    </div>
                     <div class="pt-3 overflow-x-auto">
                         <table class="table table-bordered messageTable w-full text-sm custom-table" id="messagelist">
                             <thead class="bg-grey-light">
@@ -498,18 +337,18 @@
                             </thead>
                             @if(count($dashboard['feedbacks']) != 0)
                                 @foreach($dashboard['feedbacks'] as $feedback)
-                                    <tbody> 
+                                    <tbody>
                                         <td>
                                             <a href="{{ url('/admin/parent/show/'.$feedback->parent->name) }}">{{ ucfirst($feedback->parent->FullName) }}</a>
                                         </td>
-                                        <td>{{ ucwords(str_replace('_', ' ', (str_replace('/', ' / ',$feedback->latestMessage->category)))) }}</td>          
-                                        <td> 
+                                        <td>{{ ucwords(str_replace('_', ' ', (str_replace('/', ' / ',$feedback->latestMessage->category)))) }}</td>
+                                        <td>
                                             <p> {!! str_limit($feedback->feedbackMessage->first()->message,50,'...') !!}
-                                                @if( $feedback->latestMessage->is_seen == '0' ) 
+                                                @if( $feedback->latestMessage->is_seen == '0' )
                                                     <span class="bg-red-300 rounded-full text-white inline-block px-2 my-1 mb-2"> New </span>
-                                                @endif  
+                                                @endif
                                             </p>
-                                        </td>         
+                                        </td>
                                         <td>{{ date('d-m-Y H:i:s',strtotime($feedback->created_at)) }}</td>
                                         <td>
                                             <div class="flex items-center">
@@ -535,13 +374,13 @@
 
          <!--feedback-->
         <div>
-            <div class="w-full px-1 my-2 bg-white">
+            <div class="w-full px-1 my-2 bg-white dashboard-panel-card">
                 <div class="pt-2 pb-6">
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl">
                             <a href="{{ url('/admin/feedbacks') }}">Pending Event</a>
                         </h1>
-                    </div>  
+                    </div>
                     <div class="pt-3 overflow-x-auto">
                         <table class="table table-bordered messageTable w-full text-sm custom-table" id="messagelist">
                             <thead class="bg-grey-light">
@@ -557,26 +396,26 @@
                             </thead>
                             @if(count($dashboard['events']) != 0)
                                 @foreach($dashboard['events'] as $events)
-                                    <tbody> 
+                                    <tbody>
                                         <td>
 
                                         {{ ucfirst($events->title) }}
                                         </td>
-                                        <td>{{ ucfirst($events->description) }}</td>          
-                                        <td> 
+                                        <td>{{ ucfirst($events->description) }}</td>
+                                        <td>
                                            {{ ucfirst($events->category) }}
-                                        </td> 
-                                         <td> 
+                                        </td>
+                                         <td>
                                            {{ ucfirst($events->location) }}
-                                        </td>   
+                                        </td>
 
                                         <td>{{ date('d-m-Y H:i:s',strtotime($events->start_date)) }} - {{ date('d-m-Y H:i:s',strtotime($events->end_date)) }}</td>
                                         <td>
 
                                             {{$events->organised_by}}
-                                          
+
                                         </td>
-                                     
+
                                         <td>
 
                                         <a href="{{ url('admin/event/approve/'.$events->id) }}" title="Show" class="bg-blue-500 px-2 py-2 text-white ">Waiting for Approve
@@ -600,7 +439,7 @@
             <div class="pt-2 pb-6">
                 <div>
                     <h1 class="text-gray-800 font-semibold text-xl">Expire Documents</h1>
-                </div>  
+                </div>
                 <div class="pt-3 overflow-scroll">
                     <table class="table table-bordered messageTable w-full text-sm custom-table" id="messagelist">
                         <thead class="bg-grey-light">
@@ -615,8 +454,8 @@
                             @foreach($dashboard['expire_document'] as $key => $document)
                                 <tbody>
                                     <td>{{ ucfirst($document->document_type) }}</td>
-                                    <td>{{ $document->start_date }}</td>          
-                                    <td>{{ $document->end_date }}</td>         
+                                    <td>{{ $document->start_date }}</td>
+                                    <td>{{ $document->end_date }}</td>
                                     <td>
                                         <a href="{{ url('transport/vehicle/'.$document->vehicle_id.'/show') }}">{{ $document->vehicle->name }}</a>
                                     </td>
@@ -630,27 +469,27 @@
                     </table>
                 </div>
             </div>
-        </div> 
+        </div>
         <!-- Document Expire --> --}}
 
         <div class="flex flex-col lg:flex-row my-2">
             <div class="w-full xl:w-1/3 lg:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full">
+                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
                     <absentees-student url="{{ url('/') }}"></absentees-student>
                     <absentees-staff url="{{ url('/') }}"></absentees-staff>
                 </div>
             </div>
             <!-- <div class="w-full lg:w-1/3 md:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full">
+                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
                     <absentees-teacher url="{{ url('/') }}"></absentees-teacher>
                     Today's Absentees(Teachers)
                 </div>
             </div> -->
             {{--<div class="w-full lg:w-1/3 md:w-full px-1 my-2">
-                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full">
+                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl">Unpaid Fees List</h1>
-                    </div>  
+                    </div>
                     <unpaid-fees url="{{ url('/') }}" mode="admin"></unpaid-fees>
                 </div>
             </div>--}}
@@ -658,10 +497,10 @@
             <!--Stock Details-->
             @if(config('ginventory.enabled', false))
             <div class="w-full xl:w-1/3 lg:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full">
+                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl">Stock Details</h1>
-                    </div>  
+                    </div>
                     <div class="pt-3">
                         <table class="table table-bordered messageTable w-full text-sm custom-table">
                             <thead class="bg-grey-light">
@@ -670,15 +509,15 @@
                                     <th>Quantity</th>
                                 </tr>
                             </thead>
-                            <tbody> 
+                            <tbody>
                                 @if(count($dashboard['products']) > 0)
                                     @foreach($dashboard['products'] as $product)
                                         <tr>
                                             <td><a href="{{ url('/admin/sales/show/') }}">{{ $product->name }}</a></td>
                                             <td>{{ $product->quantity}}</td>
-                                        </tr>      
+                                        </tr>
                                     @endforeach
-                                @else    
+                                @else
                                     <tr>
                                         <td colspan="6" style="text-align: center;"> No Records found</td>
                                     </tr>
@@ -695,8 +534,10 @@
         <!-- start -->
         <div class="flex flex-wrap">
             <!--Task Module-->
-            <div class="w-full lg:w-1/3 md:w-1/2">
-                <dashboard-task url="{{ url('/') }}" mode="admin"></dashboard-task>
+            <div class="w-full lg:w-1/3 md:w-1/2 px-1">
+                <div class="bg-white custom-shadow px-3 py-2 border dashboard-panel-card h-full">
+                    <dashboard-task url="{{ url('/') }}" mode="admin"></dashboard-task>
+                </div>
             </div>
         </div>
         <!--end-->
@@ -762,7 +603,7 @@
         });
 
         $(document).ready(function(){
-            //  $('messageTable').messageTable();        
+            //  $('messageTable').messageTable();
         });
     </script>
 
@@ -772,7 +613,7 @@
             /*    padding: 1rem 1.5rem;*/
         }
         table.messageTable thead th, table.messageTable thead td {
-            /*padding: 1rem;*/    
+            /*padding: 1rem;*/
             border-bottom: 1px solid #1110;
         }
         table.messageTable {
@@ -798,7 +639,7 @@
             text-align: left;
         }
         }
-        @media only screen and (max-width: 760px), (min-device-width: 768px) 
+        @media only screen and (max-width: 760px), (min-device-width: 768px)
         and (max-device-width: 1024px)  {
 
     /* Force table to not be like tables anymore */
@@ -817,11 +658,11 @@
     tr {
       margin: 0 0 1rem 0;
     }
-      
+
     tr:nth-child(odd) {
       background: #ccc! important;
     }
-    
+
     td {
       /* Behave  like a "row" */
       border: none;
@@ -840,7 +681,7 @@
       width: 45%;
       padding-right: 10px;
       white-space: nowrap;
-      padding-top: 5%;   
+      padding-top: 5%;
     }
 
 
@@ -856,4 +697,4 @@
     border:none! important;
 }
 </style>
-@endpush      
+@endpush

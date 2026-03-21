@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - Text Management System for Schools
+KlassApp - Text Management System for Schools
 @endsection
 
 @section('content')

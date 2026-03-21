@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - Attendance Taker App |  Online School Management 
+KlassApp - Attendance Taker App |  Online School Management 
 @endsection
 
 @section('content')
@@ -23,7 +23,7 @@ GegoK12 - Attendance Taker App |  Online School Management
 <div class="container mx-auto py-8 px-3">
 <p class="leading-loose text-justify mb-8 text-gray-700">Tracking a school attendance is a challenge in itself. There are many reasons why attendance data could be misleading. Such data could have serious ramifications when it comes to student safety. For example, if a student is known that he or she did not attend school for the day, parents and the school officials can follow up with each other and find why the student is missing and if he or she is in danger. The most daunting challenge while marking attendance is inconsistency while taking the attendance. Teachers who work within the same school track attendance differently even when they are given sophisticated tracking system. Many teachers track attendance only at the beginning of the class which leads tardiness into being absent. Most teachers believe that it is the responsibilities of the students to be accurate but they rarely know how to do so. Some teachers are not complaint with the school system of tracking the attendance. In addition to this, staff members or other teachers who have been in a meeting with the student will fail to report the whereabouts of the student during a class hour. Schools are motivated by the system to look good when it comes to attendance.</p>
 <p class="leading-loose text-justify mb-8 text-gray-700">Apart from these the practice of what to do when attendance is lacking depends solely on the seriousness with which the school administration treats the issue. If a school does not follow up with absenteeism for a long time, then this would result in losing several students in the system. In order to overcome all these problems, schools should enable an automated system to track the attendance.</p>
-<p class="leading-loose text-justify mb-8 text-gray-700">Gego K12 is a platform which helps school administration to automate the day to day processes. With the issue in attendance tracking, Gego K12 helps schools take attendance automatically.</p>
+<p class="leading-loose text-justify mb-8 text-gray-700">KlassApp is a platform which helps school administration to automate the day to day processes. With the issue in attendance tracking, KlassApp helps schools take attendance automatically.</p>
 
 
 <div class="flex flex-wrap">
@@ -58,7 +58,7 @@ GegoK12 - Attendance Taker App |  Online School Management
 </div>
 <div class="w-full px-3">
 <h3 class="text-base text-gray-700 font-semibold ">Attendance taker</h3>
-<p class="text-sm text-gray-700 my-1 text-justify leading-loose">With inconsistencies in the school attendance tracking system, Gego K12 gives a solution to track attendance in classes accurately. By installing this software as an entire management for your school, you can easily take attendance without any errors in the classes.</p>
+<p class="text-sm text-gray-700 my-1 text-justify leading-loose">With inconsistencies in the school attendance tracking system, KlassApp gives a solution to track attendance in classes accurately. By installing this software as an entire management for your school, you can easily take attendance without any errors in the classes.</p>
 </div>
 </div>
 </div>

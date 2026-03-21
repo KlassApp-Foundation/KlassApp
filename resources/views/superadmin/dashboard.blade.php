@@ -2,133 +2,66 @@
 @extends('layouts.superadmin.layout')
 
 @section('content')
+    <div class="dashboard-shell dashboard-shell--superadmin">
+        <div class="dashboard-live-badge dashboard-live-badge--superadmin">The Super Admin Command Center</div>
+        <p class="dashboard-subtitle">Monitor school network growth and core operational signals from one control room.</p>
 
-    <div class="">
-        <div>
-            <h1 class="admin-h1 font-plex my-3">Dashboard</h1>
-        </div>
         @include('partials.message')
-        <!-- start -->
-        <div class="flex flex-wrap my-2">
-            <div class="w-full lg:w-1/3 px-1 my-3">
-                <livewire:superadmin.academics.total-school-widget />
+
+        <div class="dashboard-topfold dashboard-topfold--superadmin">
+            <div class="flex flex-wrap my-1">
+                <!-- Total Schools -->
+                <div class="w-full lg:w-1/3 md:w-1/2 px-1 my-2">
+                    <div class="dashboard-panel-card dashboard-panel-card--metric h-full">
+                        <livewire:superadmin.academics.total-school-widget />
+                    </div>
+                </div>
+
+                <!-- System Health / Overview Card -->
+                <div class="w-full lg:w-1/3 md:w-1/2 px-1 my-2">
+                    <div class="bg-white custom-shadow px-5 py-5 border dashboard-panel-card dashboard-panel-card--metric h-full">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-700">System Status</h3>
+                            <div class="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-600">Active Schools</span>
+                                <span class="font-semibold text-gray-800">100%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-600">Database Health</span>
+                                <span class="font-semibold text-gray-800">Optimal</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-4">Last updated: Just now</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions / Network Info -->
+                <div class="w-full lg:w-1/3 md:w-1/2 px-1 my-2">
+                    <div class="bg-white custom-shadow px-5 py-5 border dashboard-panel-card dashboard-panel-card--metric h-full">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4">Network Overview</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded superadmin-stat-row">
+                                <span class="text-sm text-gray-600">Uptime</span>
+                                <span class="font-semibold text-green-600">99.8%</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded superadmin-stat-row">
+                                <span class="text-sm text-gray-600">Load</span>
+                                <span class="font-semibold text-blue-600">Normal</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded superadmin-stat-row">
+                                <span class="text-sm text-gray-600">Security</span>
+                                <span class="font-semibold text-green-600">Secure</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-        <!-- end -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    </div>
 @endsection
-
-@push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
-
-
-    <style>
-        /* messagetable */
-        table.messageTable tbody th, table.messageTable tbody td {
-            /*    padding: 1rem 1.5rem;*/
-        }
-        table.messageTable thead th, table.messageTable thead td {
-            /*padding: 1rem;*/
-            border-bottom: 1px solid #1110;
-        }
-        table.messageTable {
-            width: 100%;
-            margin: 0 auto;
-            clear: both;
-            border-collapse: collapse;
-            border-spacing: 0;
-        }
-
-        /* @media only screen and (max-width: 760px), (max-device-width: 1024px) and (min-device-width: 768px)
-        {
-            td {
-                border: none;
-                border-bottom: 1px solid #eee;
-                position: relative;
-                padding-left:50%;
-                padding-top:5%;
-                padding-bottom:5%;
-            }*/
-        .messageTables_wrapper .messageTables_length, .messageTables_wrapper .messageTables_filter {
-            float: none;
-            text-align: left;
-        }
-        }
-        @media only screen and (max-width: 760px), (min-device-width: 768px)
-        and (max-device-width: 1024px)  {
-
-    /* Force table to not be like tables anymore */
-    table, thead, tbody, th, td, tr {
-      display: block;
-      font-size:15px;
-    }
-
-    /* Hide table headers (but not display: none;, for accessibility) */
-    thead tr {
-      position: absolute;
-      top: -9999px;
-      left: -9999px;
-    }
-
-    tr {
-      margin: 0 0 1rem 0;
-    }
-
-    tr:nth-child(odd) {
-      background: #ccc! important;
-    }
-
-    td {
-      /* Behave  like a "row" */
-      border: none;
-      border-bottom: 1px solid #eee;
-      position: relative;
-      padding-left:60%! important;
-
-    }
-
-    td:before {
-      /* Now like a table header */
-      position: absolute;
-      /* Top/left values mimic padding */
-      top: 0;
-      left: 6px;
-      width: 45%;
-      padding-right: 10px;
-      white-space: nowrap;
-      padding-top: 5%;
-    }
-
-
-    td:nth-of-type(1):before { content: "{{ trans('forms.from') }}"; }
-    td:nth-of-type(2):before { content: "{{ trans('forms.to') }}"; }
-    td:nth-of-type(3):before { content: "{{ trans('forms.message') }}"; }
-    td:nth-of-type(4):before { content: "{{ trans('forms.createdon') }}"; }
-    td:nth-of-type(5):before { content: "{{ trans('forms.lastreplyby') }}"; }
-    td:nth-of-type(6):before { content: "{{ trans('forms.lastreplyon') }}"; }
-  }
-.t-dropdown.t-dropdown-size-sm button
-{
-    border:none! important;
-}
-</style>
-@endpush

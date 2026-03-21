@@ -2,13 +2,13 @@
 @extends('layouts.library.layout')
 
 @section('content')
-    <div class="">
+    <div class="dashboard-shell dashboard-shell--library">
         <div>
-            <h1 class="admin-h1 font-plex my-3">Dashboard</h1>
+            <p class="dashboard-subtitle">Monitor books, lending activity, categories, and updates from one organized library console.</p>
         </div>
         @include('partials.message')
         <!-- start -->
-        <div class="flex flex-wrap my-2">
+        <div class="flex flex-wrap my-2 dashboard-topfold">
             <div class="w-full xl:w-1/3 lg:w-1/2 my-2">
                 <div class="flex flex-wrap lg:flex-row">
                     <div class="w-full lg:w-1/2 md:w-1/2 px-1 my-1">
@@ -101,7 +101,7 @@
                                 <p class="text-sm text-gray-900 font-semibold" style="text-align: center;">No Records Found</p>
                             </div>
                         @endif
-                    </div>   
+                    </div>
                 </div>
             </div>
             <!--upcoming events-->
@@ -152,7 +152,7 @@
                                 <p class="text-sm text-gray-900 font-semibold" style="text-align: center;">No Notice Found</p>
                             </div>
                         @endif
-                    </div>   
+                    </div>
                 </div>
             </div>
         </div>
@@ -185,14 +185,14 @@
                                             <td class="py-3 px-3">{{ $booklending->return_date }}</td>
                                         </tr>
                                     @endforeach
-                                </tbody>  
+                                </tbody>
                             @else
                                 <tbody>
                                     <tr class="border-t py-2">
                                         <td colspan="4" class="text-center py-2">No Records found</td>
                                     </tr>
-                                </tbody> 
-                            @endif    
+                                </tbody>
+                            @endif
                         </table>
                     </div>
                 </div>
