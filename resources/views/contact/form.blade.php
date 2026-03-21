@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-KlassApp - Contact Form 
+KlassApp - Contact Form
 @endsection
 
 @section('content')

@@ -61,8 +61,8 @@
                                     <li class="px-4 py-2 hover:bg-gray-100"><a class="menu__item" href="#">Education Type 3</a></li>
                                     <li class="px-4 py-2 hover:bg-gray-100"><a class="menu__item" href="#">Education Type 4</a></li>
                                 </ul>
-                            </div> 
-                            <div class="py-4">  
+                            </div>
+                            <div class="py-4">
                                 <h2 class="text-base font-semibold text-gray-500 px-4 py-2">Also From KlassApp</h2>
                                 <ul class="leading-loose text-gray-700 font-semibold pt-3 text-sm">
                                     <li class="px-4 py-2 hover:bg-gray-100"><a class="menu__item" href="#">About us</a></li>

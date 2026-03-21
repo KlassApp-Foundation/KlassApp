@@ -62,7 +62,7 @@ trait AuthenticationProcess
         $authentication = Authentication::where([['user_id',$user_id],['type','register']])->orderBy('id','DESC')->get();
         if(count($authentication)>0)
         {
-            return $authentication[0]->status;  
+            return $authentication[0]->status;
         }
         else
         {
