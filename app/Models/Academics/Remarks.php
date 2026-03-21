@@ -13,7 +13,7 @@ class Remarks extends Model
     // protected $table = 'comments';  // ← this line fixes everything
 
     protected $fillable = ["remark", "school_id"];
-    public function schoolId(){
-        return $this->belongsTo(School::class, "school_id");
-    }
+    // public function schoolId(){
+    //     return $this->belongsTo(School::class, "school_id");
+    // }
 }

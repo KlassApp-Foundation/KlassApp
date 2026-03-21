@@ -76,12 +76,11 @@ public function teacherExamMarksList()
        
 // $exm = Exam::where('teacher_id', $teacher->id)->get();
     // Add progress info
-    foreach ($exams as $exam) {
-        $exam->entered_count = Marks::where('exam_id', $exam->id)
-            ->where('teacher_id', $teacher->id) // only count what this teacher entered
-            ->count();
-             
-    }
+    // foreach ($exams as $exam) {
+    //     $exam->entered_count = Marks::where('exam_id', $exam->id)
+    //         ->where('teacher_id', $teacher->id)
+    //         ->count();  
+    // }
     return view('teacher.marks.teacher-exam-list', compact('exams', "exm"));
 }
 
@@ -96,7 +95,11 @@ public function enterExamMarks( $exam)
     // $students = User::byStandard(1)->where("school_id", $user->school_id)
     // ->orderBy("name")->get();
     // $students = StandardLink::where("standard_id", $exam->standard_id)->get();
-    $students = StudentAcademic::with(["user"])->where("standardLink_id", $tr->standardLink_id)->get();
+    $students = StudentAcademic::with(["user"])->where("standardLink_id", $tr->standardLink_id)
+                   ->whereHas('user', function ($query) {
+                   $query->where("usergroup_id", 6);        
+                   })
+               ->get();
     // $students = User::byStandard($exam->standard_id)
     // ->where('school_id', $exam->school_id)
     // ->orderBy('name')
@@ -129,7 +132,7 @@ public function saveExamMarks(Request $request, Exam $exam)
     if ($exam->school_id !== $user->school_id) {
         abort(403, "Not Authorized");
     }
-
+// dd($request->all());
     foreach ($request->marks as $studentId => $mark) {
         if ($mark === null || trim($mark) === '') continue;
 
@@ -169,20 +172,27 @@ public function viewExamMarks(Exam $exam)
 {
     $tr=Auth::user();
     // 1. Get students in this exam's standard/class using your scope
-            
+    if ($exam->school_id !== $tr->school_id || $exam->teacher_id !== $tr->id) {
+         abort(403, "You are not authorized to view this exam.");
+     }
       // only needed columns
-      $exms=Standard::where("id", $exam->standard_id)->pluck("id");
       $ll=StandardLink::where("standard_id", 2)->get();
-
+// dd($exam);
     //   to add school id relationship and filter according to it
         $marks = Marks::with(["exam", "student", "subject", "teacher", "remark"])->where('teacher_id', $tr->id)
+        
         ->where('exam_id', $exam->id)
         ->where("school_id", $tr->school_id)
         ->where("subject_id", $exam->subject_id)
         ->whereHas('student', function ($query) {
-            $query->students();           // ← uses the scope!
-        })->get();
-    return view('teacher.marks.view', compact( "marks", "exms", "exam" ));    // ← recommended if you want all students
+            $query->students();          
+        })
+        ->get();
+       
+        // dd($marks);
+        // dd( "Exam teacher id==>", $exam->teacher_id, "teacher id, logged in==>", $tr->id);
+        // dd($marks);
+    return view('teacher.marks.view', compact( "marks", "exam" ));    // ← recommended if you want all students
         // or 'marks', 'students' if you prefer separate
    
 }

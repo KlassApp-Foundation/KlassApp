@@ -1,7 +1,7 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-<div class="w-full px-4 py-6">
+<div class="w-full py-4 lg:mx-2">
     
     <div class="bg-white shadow-lg rounded-2xl overflow-hidden">
         

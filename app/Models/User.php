@@ -5,6 +5,7 @@
  */
 namespace App\Models;
 
+use App\Models\Academics\Marks;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 //use Spatie\MediaLibrary\HasMedia\HasMediaTrait;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -348,9 +349,13 @@ public function scopeStudents($query)
         return $this->hasOne('App\Models\StudentAcademic','user_id','id')->orderByDesc('id')->limit(1);
     }
 
-    public function marks()
+    // public function marks()
+    // {
+    //     return $this->hasMany('App\Models\Mark','user_id','id');
+    // }
+     public function marks()
     {
-        return $this->hasMany('App\Models\Mark','user_id','id');
+        return $this->hasMany(Marks::class, "student_id", "id");
     }
 
     public function teacherprofile()

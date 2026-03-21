@@ -48,12 +48,12 @@
 
                         <tr>
                             <td class="py-3 text-gray-900 dark:text-white">
-                                {{ $student->user->name }}
+                                {{ $student->user->name  }}
                             </td>
 
                             <td>
                                 <input type="number"
-                                       name="marks[{{ $student->id }}]"
+                                       name="marks[{{ $student->user->id }}]"
                                        class="tw-form-control w-24"
                                        min="0"
                                        max="100"
@@ -63,13 +63,13 @@
 
                             <td>
                                 <input type="number"
-                                       name="out_of[{{ $student->id }}]"
+                                       name="out_of[{{ $student->user->id }}]"
                                        value="100"
                                        class="tw-form-control w-24">
                             </td>
 
                             <td>
-                                 <select name="remark_id[{{ $student->id }}]" id="remark_id" class="tw-form-control w-full">
+                                 <select name="remark_id[{{ $student->user->id }}]" id="remark_id" class="tw-form-control w-full">
                                   <option value="">Select Remark</option>
                                   @foreach ($remarks as $remark)
                                       <option value="{{ $remark->id }}">{{ $remark->remark }}</option>
