@@ -9,7 +9,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Favicon -->
     @include('layouts.partials.favicon')
-    <title>{{ config('app.name', 'GegoK12') }}</title>
+    <title>{{ config('app.name', 'KlassApp') }}</title>
     <!-- Scripts -->
     <script src="{{ asset('js/app.js') }}"></script>
     <!-- Styles -->

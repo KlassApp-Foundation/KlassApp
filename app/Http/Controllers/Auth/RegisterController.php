@@ -20,7 +20,9 @@ use Illuminate\Support\Facades\Schema;
 use App\Mail\EmailVerification;
 use App\Models\AcademicYear;
 use App\Models\Subscription;
+use App\Models\Plan;
 use App\Models\SchoolDetail;
+use App\Models\Usergroup;
 use Illuminate\Support\Str;
 use App\Models\Userprofile;
 use App\Models\School;
@@ -82,18 +84,6 @@ class RegisterController extends Controller
 
             $this->createAcademicYear($school);
 
-            $this->sendEmailVerification($user);
-
-            $this->sendAdminNotifyMail($user);
-
-            Log::channel('slack')->info('A new user registered.', [
-                'Website' => env('APP_URL'),
-                'User_id' => $user->id,
-                'User_name' => $user->name,
-                'School_id' => $user->school_id,
-                'School_name' => $user->school->name,
-            ]);
-
             return $user;
         });
     }
@@ -109,10 +99,12 @@ class RegisterController extends Controller
 
         try {
             event(new Registered($user = $this->create($registrationData)));
+
+            // Non-critical side effects should not break registration success.
+            $this->dispatchRegistrationSideEffects($user);
         } catch (Throwable $e) {
-            Log::error('Registration Failed', [
+            $this->safeLogError('Registration Failed', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()->back()->withInput(
@@ -124,7 +116,7 @@ class RegisterController extends Controller
 
         $this->guard()->login($user);
 
-        if($user->mobile_verified == 0)
+        if($user->email_verified == 0)
         {
             $this->createAuthentication($user,$request,'register');
             return redirect('/verifyotp');
@@ -143,17 +135,25 @@ class RegisterController extends Controller
     {
         try
         {
-            $school = School::create([
+            $schoolData = [
                 'name'          =>  $data['school_name'],
                 'email'         =>  $data['email'],
                 'phone'         =>  $data['mobile_no'],
-                'registration_country' => $data['country'] ?? null,
-                'student_size'  =>  $data['student_size'] ?? null,
                 'slug'          =>  Str::slug($data['school_name'], '-'),
                 'status'        =>  "1",
                 'created_at'    =>  Carbon::now(),
                 'updated_at'    =>  Carbon::now(),
-            ]);
+            ];
+
+            if (Schema::hasColumn('schools', 'registration_country')) {
+                $schoolData['registration_country'] = $data['country'] ?? null;
+            }
+
+            if (Schema::hasColumn('schools', 'student_size')) {
+                $schoolData['student_size'] = $data['student_size'] ?? null;
+            }
+
+            $school = School::create($schoolData);
 
             Log::info('New School Created. School Id : '. $school->id. ' Name : '. $school->name );
 
@@ -161,7 +161,7 @@ class RegisterController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
+            $this->safeLogWarning('School creation failed', ['message' => $e->getMessage()]);
             throw $e;
         }
     }
@@ -173,7 +173,7 @@ class RegisterController extends Controller
             $userProfile = Userprofile::create([
                 'user_id'           => $user->id,
                 'school_id'         => $user->school_id,
-                'usergroup_id'      => "3",
+                'usergroup_id'      => $user->usergroup_id,
                 'created_at'        => Carbon::now(),
                 'updated_at'        => Carbon::now(),
             ]);
@@ -182,7 +182,7 @@ class RegisterController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
+            $this->safeLogWarning('User profile creation failed', ['message' => $e->getMessage()]);
             throw $e;
         }
     }
@@ -191,21 +191,122 @@ class RegisterController extends Controller
     {
         try
         {
+            $defaultPlanId = $this->resolveDefaultPlanId();
+
+            if (!$defaultPlanId) {
+                $defaultPlanId = $this->createFallbackPlan();
+            }
+
+            if (!$defaultPlanId) {
+                $this->safeLogWarning('Skipping subscription creation: no plan available', [
+                    'school_id' => $user->school_id,
+                    'user_id' => $user->id,
+                ]);
+
+                return;
+            }
+
             Subscription::create([
                 'school_id'     =>  $user->school_id,
                 'user_id'       =>  $user->id,
-                'plan_id'       =>  "1",
+                'plan_id'       =>  $defaultPlanId,
                 'status'        =>  "pending",
                 'created_at'    =>  Carbon::now(),
                 'updated_at'    =>  Carbon::now(),
             ]);
 
-            Log::info('School subscription created for School Id '. $user->school_id);
+            Log::info('School subscription created for School Id '. $user->school_id, [
+                'plan_id' => $defaultPlanId,
+            ]);
         }
-        catch(Exception $e)
+        catch(Throwable $e)
         {
-            Log::info($e->getMessage());
-            throw $e;
+            $this->safeLogWarning('Subscription creation failed', [
+                'message' => $e->getMessage(),
+                'school_id' => $user->school_id,
+                'user_id' => $user->id,
+            ]);
+        }
+    }
+
+    private function resolveDefaultPlanId()
+    {
+        $planQuery = Plan::query();
+
+        if (Schema::hasColumn('plans', 'is_active')) {
+            $planQuery->where('is_active', 1);
+        }
+
+        if (Schema::hasColumn('plans', 'order')) {
+            $planQuery->orderBy('order');
+        } else {
+            $planQuery->orderBy('id');
+        }
+
+        $activePlanId = $planQuery->value('id');
+
+        if ($activePlanId) {
+            return (int) $activePlanId;
+        }
+
+        $anyPlanId = Plan::query()
+            ->orderBy('id')
+            ->value('id');
+
+        return $anyPlanId ? (int) $anyPlanId : null;
+    }
+
+    private function createFallbackPlan()
+    {
+        try {
+            $existingPlanId = Plan::query()->orderBy('id')->value('id');
+            if ($existingPlanId) {
+                return (int) $existingPlanId;
+            }
+
+            $now = Carbon::now();
+
+            $columns = Schema::getColumnListing('plans');
+            $payload = [];
+
+            $defaults = [
+                'cycle' => 30,
+                'name' => 'free',
+                'display_name' => 'Free',
+                'order' => 1,
+                'is_active' => 1,
+                'amount' => 0,
+                'no_of_members' => 50,
+                'no_of_events' => 5,
+                'no_of_folders' => 5,
+                'no_of_files' => 50,
+                'no_of_videos' => 5,
+                'no_of_audios' => 0,
+                'no_of_bulletins' => 5,
+                'no_of_groups' => 3,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+
+            foreach ($defaults as $column => $value) {
+                if (in_array($column, $columns, true)) {
+                    $payload[$column] = $value;
+                }
+            }
+
+            $fallbackPlanId = DB::table('plans')->insertGetId($payload);
+
+            $this->safeLogWarning('Created fallback free plan for registration flow', [
+                'plan_id' => $fallbackPlanId,
+            ]);
+
+            return (int) $fallbackPlanId;
+        } catch (Throwable $e) {
+            $this->safeLogWarning('Failed to create fallback plan', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
         }
     }
 
@@ -213,18 +314,27 @@ class RegisterController extends Controller
     {
         try
         {
+            $schoolAdminGroupId = $this->resolveSchoolAdminGroupId();
+
+            if (!$schoolAdminGroupId) {
+                throw new Exception('No usergroup is available for school administrator accounts.');
+            }
+
             $userData = [
                 'school_id'     => $school->id,
-                'usergroup_id'  => "3",
+                'usergroup_id'  => $schoolAdminGroupId,
                 'name'          => $data['name'],
                 'email'         => $data['email'],
                 'mobile_no'     => $data['mobile_no'],
-                'registration_role' => $data['role'] ?? null,
                 'password'      => Hash::make($data['password']),
                 'email_verification_code' => Str::random(40),
                 'created_at'    => Carbon::now(),
                 'updated_at'    => Carbon::now(),
             ];
+
+            if (Schema::hasColumn('users', 'registration_role')) {
+                $userData['registration_role'] = $data['role'] ?? null;
+            }
 
             if (Schema::hasColumn('users', 'username')) {
                 $userData['username'] = $this->generateUsernameFromName($data['name']);
@@ -238,8 +348,56 @@ class RegisterController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
+            $this->safeLogWarning('School admin creation failed', ['message' => $e->getMessage()]);
             throw $e;
+        }
+    }
+
+    private function resolveSchoolAdminGroupId()
+    {
+        // Primary expected role id used by legacy code and seeders.
+        if (DB::table('usergroups')->where('id', 3)->exists()) {
+            return 3;
+        }
+
+        $nameMatchId = Usergroup::query()
+            ->whereRaw('LOWER(name) IN (?, ?, ?)', ['schooladmin', 'school admin', 'school administrator'])
+            ->value('id');
+
+        if ($nameMatchId) {
+            return (int) $nameMatchId;
+        }
+
+        $anyGroupId = DB::table('usergroups')->orderBy('id')->value('id');
+        if ($anyGroupId) {
+            $this->safeLogWarning('SchoolAdmin usergroup id=3 is missing; using fallback group id', [
+                'fallback_usergroup_id' => (int) $anyGroupId,
+            ]);
+
+            return (int) $anyGroupId;
+        }
+
+        try {
+            $now = Carbon::now();
+
+            DB::table('usergroups')->insert([
+                'id' => 3,
+                'name' => 'SchoolAdmin',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            $this->safeLogWarning('Created fallback SchoolAdmin usergroup for registration flow', [
+                'usergroup_id' => 3,
+            ]);
+
+            return 3;
+        } catch (Throwable $e) {
+            $this->safeLogWarning('Failed to create fallback SchoolAdmin usergroup', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
         }
     }
 
@@ -365,10 +523,9 @@ class RegisterController extends Controller
                 Log::info('Verification Email Sent');
             }
         }
-        catch(Exception $e)
+        catch(Throwable $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            $this->safeLogWarning('Email verification queue failed', ['message' => $e->getMessage()]);
         }
     }
 
@@ -377,17 +534,65 @@ class RegisterController extends Controller
         try
         {
             $admin = User::where('usergroup_id',1)->first();
-            if (env('MAIL_STATUS') == 'on')
+            if ($admin && env('MAIL_STATUS') == 'on')
             {
                 Mail::to($admin->email)->queue(new AdminNotifyNewUserMail($user));
 
                 Log::info('Verification Email Sent');
             }
         }
-        catch(Exception $e)
+        catch(Throwable $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            $this->safeLogWarning('Admin notify email queue failed', ['message' => $e->getMessage()]);
+        }
+    }
+
+    private function logNewRegistrationToSlack(User $user)
+    {
+        try {
+            Log::channel('slack')->info('A new user registered.', [
+                'Website' => env('APP_URL'),
+                'User_id' => $user->id,
+                'User_name' => $user->name,
+                'School_id' => $user->school_id,
+                'School_name' => optional($user->school)->name,
+            ]);
+        } catch (Throwable $e) {
+            $this->safeLogWarning('Slack registration log skipped', [
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function dispatchRegistrationSideEffects(User $user)
+    {
+        try {
+            $this->sendEmailVerification($user);
+            $this->sendAdminNotifyMail($user);
+            $this->logNewRegistrationToSlack($user);
+        } catch (Throwable $e) {
+            $this->safeLogWarning('Registration side effects failed', [
+                'message' => $e->getMessage(),
+                'user_id' => $user->id,
+            ]);
+        }
+    }
+
+    private function safeLogError($message, array $context = [])
+    {
+        try {
+            Log::error($message, $context);
+        } catch (Throwable $e) {
+            error_log($message . ': ' . ($context['message'] ?? $e->getMessage()));
+        }
+    }
+
+    private function safeLogWarning($message, array $context = [])
+    {
+        try {
+            Log::warning($message, $context);
+        } catch (Throwable $e) {
+            error_log($message . ': ' . ($context['message'] ?? $e->getMessage()));
         }
     }
 }

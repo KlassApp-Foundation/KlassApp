@@ -8,7 +8,7 @@
   <body id="app">
   <div class="fixed w-full h-full overflow-auto">
   <div class="fixed bg-white px-5 py-2 rounded-b-lg mx-2 lg:mx-16 z-40">
-  	<img src="{{url('images/gego_k12.png')}}" class="w-12 lg:w-24">
+  	<img src="{{url('images/klassapp-k-white.png')}}" class="w-12 lg:w-24">
   </div>
   @include('pages.video.__video-bar')
   @yield('content')

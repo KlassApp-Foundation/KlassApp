@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - student-database-management-system |  Online School Management 
+KlassApp - student-database-management-system |  Online School Management 
 @endsection
 
 @section('content')
@@ -25,7 +25,7 @@ GegoK12 - student-database-management-system |  Online School Management
 <h3 class="text-xl lg:text-2xl text-gray-800 py-3 italic">Student Information System</h3>
 <p class="leading-loose text-justify mb-8 text-gray-700">Information plays an important role in the development and management of every school. The huge amount of data that piles up every day is sent to different departments that manage the data independently. There are no common procedures or program for sorting through this vast data. In this way, the management faces challenges in areas of storing and managing the database, difficulty in updating and maintaining, security and backup.</p>
 <p class="leading-loose text-justify mb-8 text-gray-700">A Student Database Management System is a tool which helps a school manage data, scheduling and communications. A school uses and stores a large amount of data. This must be properly communicated to faculty, students and parents.</p>
-<p class="leading-loose text-justify mb-8 text-gray-700">Gego K12 is a school management software that provides the users with a Student Database Management System. This software manages to implement all the necessary operations and documentations with just a click of a fingertip.</p>
+<p class="leading-loose text-justify mb-8 text-gray-700">KlassApp is a school management software that provides the users with a Student Database Management System. This software manages to implement all the necessary operations and documentations with just a click of a fingertip.</p>
 
 <div class="flex flex-wrap">
 <!-- **** -->

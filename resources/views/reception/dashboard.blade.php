@@ -3,13 +3,13 @@
 
 @section('content')
 
-    <div class="">
+    <div class="dashboard-shell dashboard-shell--reception">
         <div>
-            <h1 class="admin-h1 font-plex my-3">Dashboard</h1>
+            <p class="dashboard-subtitle">Manage front-desk operations, events, notices, and day-to-day tasks with clarity.</p>
         </div>
         @include('partials.message')
         <!-- start -->
-        <div class="flex flex-col lg:flex-row my-2">
+        <div class="flex flex-col lg:flex-row my-2 dashboard-topfold">
             <div class="w-full lg:w-1/3 md:w-1/3 my-2">
                 <div class="flex flex-wrap lg:flex-row">
                     <div class=" w-full lg:w-1/2 px-1 my-1">
@@ -76,7 +76,7 @@
                                 <p class="text-sm text-gray-900 font-semibold" style="text-align: center;">No records Found</p>
                             </div>
                         @endif
-                    </div>   
+                    </div>
                 </div>
             </div>
             <!--upcoming events-->
@@ -127,7 +127,7 @@
                                 <p class="text-sm text-gray-900 font-semibold" style="text-align: center;">No Notice Found</p>
                             </div>
                         @endif
-                    </div>   
+                    </div>
                 </div>
             </div>
         </div>

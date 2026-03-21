@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 
 class MarksController extends Controller
 {
+
 
 // all marks according to exam and standard
  public function schoolMarksOverview()
@@ -38,7 +40,7 @@ class MarksController extends Controller
 $studentCount = $students->pluck('student_id')->unique()->count();
 // to flter subjects depending on class
 $subjects = Subject::where("school_id", $schoolId)->get();
-    
+
     return view('admin.marks.school-overview', compact('exams', "students", "studentCount", "subjects"));
 }
     // get all student marks per class
@@ -51,7 +53,7 @@ $subjects = Subject::where("school_id", $schoolId)->get();
     $marksQuery = Marks::with(['student', 'subject', 'remark', "exam"])
         ->where('exam_id', $exam->id)
         ->where('school_id', $schoolId)
-        ->whereHas('student', fn($q) => $q->students()); 
+        ->whereHas('student', fn($q) => $q->students());
 
     // Group by student → compute aggregates
     $studentMarks = $marksQuery->get()

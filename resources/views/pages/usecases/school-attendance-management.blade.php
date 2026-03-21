@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - school-attendance-management |  Online School Management 
+KlassApp - school-attendance-management |  Online School Management 
 @endsection
 
 @section('content')
@@ -30,7 +30,7 @@ GegoK12 - school-attendance-management |  Online School Management
 	<img src="{{url('images/student-attendance.png')}}" class="mx-auto">
 </div>
 </div>
-<p class="leading-loose text-justify mb-8 text-gray-700">Gego K12 is a school management software that comes with a foolproof tool in tracking school attendance. This tool collects daily class attendance from each class and updates it to the parents via notification through the app. Thus, if a student is playing hooky or is missing from class, parents can immediately reach out to the concerned authorities.</p>
+<p class="leading-loose text-justify mb-8 text-gray-700">KlassApp is a school management software that comes with a foolproof tool in tracking school attendance. This tool collects daily class attendance from each class and updates it to the parents via notification through the app. Thus, if a student is playing hooky or is missing from class, parents can immediately reach out to the concerned authorities.</p>
 
 <div class="flex flex-wrap">
 <!-- **** -->

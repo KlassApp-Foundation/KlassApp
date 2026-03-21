@@ -13,8 +13,8 @@ services:
       APP_ENV: ${APP_ENV}
       APP_DEBUG: ${APP_DEBUG}
       DB_CONNECTION: ${DB_CONNECTION}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
+      DB_HOST: database
+      DB_PORT: 3306
       DB_DATABASE: ${DB_DATABASE}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -52,14 +52,14 @@ services:
     container_name: sms_nginx
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      # - "8080:80"
+      # - "80:80"
+      # - "443:443"
+      - "8080:80"
     volumes:
       - .:/var/www
       - ./public:/var/www/public:ro
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - /etc/letsencrypt:/etc/letsencrypt
+      # - /etc/letsencrypt:/etc/letsencrypt
     networks:
       - laravel
     depends_on:

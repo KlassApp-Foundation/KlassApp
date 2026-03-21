@@ -2,7 +2,7 @@
 <div class="container lg:mx-auto lg:my-32 my-2 p-4">
   <h2 class="font-plex font-extrabold text-black text-2xl lg:text-4xl md:text-4xl  text-center my-4">Better Communication makes a Best School</h2>
   <div class="w-full lg:w-2/3 md:w-2/3 mx-auto text-center font-primary leading-relaxed mb-4">
-    A proper channelized communication between Parent & School Administration, Parent & Teacher makes a school life better for a student. With GegoK12 we focus to bring the right tools to make the communication easy, effective and more responsible. With parent apps and teacher apps in place, the communication is simpler and more authentic.
+    A proper channelized communication between Parent & School Administration, Parent & Teacher makes a school life better for a student. With KlassApp we focus to bring the right tools to make the communication easy, effective and more responsible. With parent apps and teacher apps in place, the communication is simpler and more authentic.
   </div>
   <div class="hidden lg:block md:block">
   <div class="flex flex-col lg:flex-row md:flex-row my-8 lg:my-24">

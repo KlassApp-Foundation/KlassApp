@@ -8,10 +8,11 @@
         @include('layouts.partials.favicon')
         <!-- CSRF Token -->
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ config('app.name', 'GegoK12') }}</title>
+        <title>{{ config('app.name', 'KlassApp') }}</title>
         <!-- Styles -->
 
         <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+        <link href="{{ asset('css/dashboard-refresh.css') }}" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500&family=IBM+Plex+Sans:wght@500;600;700&family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
          <script>
@@ -19,7 +20,7 @@
     </script>
 
     <!-- <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script> -->
-    
+
     <!-- new -->
     <script>
        window.AppConfig = {
@@ -34,7 +35,7 @@
           gvideoroom_enabled: @json(config('gvideoroom.enabled')),
           galumni_enabled: @json(config('galumni.enabled')),
           gfee_enabled: @json(config('gfee.enabled'))
-          
+
        };
     </script>
     <!-- end -->

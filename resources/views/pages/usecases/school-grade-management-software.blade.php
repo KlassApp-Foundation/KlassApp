@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - school-grade-management-software
+KlassApp - school-grade-management-software
 @endsection
 
 @section('content')
@@ -26,7 +26,7 @@ GegoK12 - school-grade-management-software
   <div class="w-full lg:w-2/3">
 	<p class="leading-loose text-justify mb-8 text-gray-700">Today’s world is very competitive and accuracy is the key to solving all problems. When grades are wrongly calculated, it is a very grievous mistake on the part of the school. Accurate calculations done manually produce rare success since the human brain is not designed to be perfect throughout the calculation and hence, using the right school grade management software is vital. This helps the students know where they rank and improve themselves. Having the perfect grade management system gives an overview of every student’s performance in school and is the perfect reflection of the work done in a school. It serves as a prototype for admissions for the upcoming year. For the parents the grades are the reference which helps them access their ward’s performance academically.</p>
 <p class="leading-loose text-justify mb-8 text-gray-700">Hence the grade sheet should be seen as a tool for accurate communication and evaluation of the student’s academic behaviour and progress without any hassle for the school or the parents. Without a grade system, students will lack the necessary push to learn anything. Today the grades remain the primary focus of education on a student and school. The grade system identifies the weakness and strengths of the students. It gives a detailed view on where the child is lacking in concentration and needs to improve. Hence managing school grade system is an important factor in the development of education.</p>
-<p class="leading-loose text-justify mb-8 text-gray-700">Gego K12 is a school management software that promotes a school grade management system that is designed and built specifically to provide automated and precise results for every internal and external examinations.</p>
+<p class="leading-loose text-justify mb-8 text-gray-700">KlassApp is a school management software that promotes a school grade management system that is designed and built specifically to provide automated and precise results for every internal and external examinations.</p>
 </div>
 <div class="w-full lg:w-1/4">
 <img src="{{url('images/grade.png')}}" class="mx-auto">
@@ -75,7 +75,7 @@ GegoK12 - school-grade-management-software
 </div>
 <div class="w-full px-3">
 <h3 class="text-base text-gray-700 font-semibold ">Promotion</h3>
-<p class="text-sm text-gray-700 my-1 text-justify leading-loose">Using this module the admin can promote or de-promote any student based on their grades. With Gego K12, it is easy to separate the students who are promoted to the next standard with the ones who are detained. This module also sends the message over to the parents regarding their ward’s promotion news.</p>
+<p class="text-sm text-gray-700 my-1 text-justify leading-loose">Using this module the admin can promote or de-promote any student based on their grades. With KlassApp, it is easy to separate the students who are promoted to the next standard with the ones who are detained. This module also sends the message over to the parents regarding their ward’s promotion news.</p>
 </div>
 </div>
 </div>
@@ -107,7 +107,7 @@ GegoK12 - school-grade-management-software
 </div>
 <div class="w-full px-3">
 <h3 class="text-base text-gray-700 font-semibold ">Customizable</h3>
-<p class="text-sm text-gray-700 my-1 text-justify leading-loose">With Gego K12, it is easy to customize the grade system based on the syllabus with which the school is affiliated. For example, the tool is perfect for CBSE, State board, or even ICSE</p>
+<p class="text-sm text-gray-700 my-1 text-justify leading-loose">With KlassApp, it is easy to customize the grade system based on the syllabus with which the school is affiliated. For example, the tool is perfect for CBSE, State board, or even ICSE</p>
 </div>
 </div>
 </div>

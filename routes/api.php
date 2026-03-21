@@ -25,16 +25,16 @@ Route::post('/reset/check', 'Api\UserController@checkReset');
 Route::post('/reset/change/password', 'Api\UserController@resetChangePassword');
 
 Route::group([
-	'prefix' => 'v2', 
+	'prefix' => 'v2',
 	'namespace' =>'Api' ,
-    
+
 	'middleware' => ['auth:sanctum'],
 ], function () {
 
     //Logout
 
     //Route::post('/logout/devices', 'LoginController@logoutDevices');
-    
+
     Route::post('/logout', 'LoginController@logout');
 
     //me
@@ -60,7 +60,7 @@ Route::group([
 	//school details
 
 	Route::get('/school/details', 'SchoolController@index');
-     
+
     //Holiday
 
     Route::get('/holiday/list','EventsController@holidaylist');
@@ -92,13 +92,13 @@ Route::group([
 
     Route::get('/leave/list','LeaveController@create');
 
-    Route::post('/leave/add/{student_id}','LeaveController@store'); 
+    Route::post('/leave/add/{student_id}','LeaveController@store');
 
-    Route::get('/leave/show/{id}','LeaveController@show');  
+    Route::get('/leave/show/{id}','LeaveController@show');
 
-    Route::post('/leave/edit/{id}','LeaveController@update');  
+    Route::post('/leave/edit/{id}','LeaveController@update');
 
-    Route::get('/leave/delete/{id}','LeaveController@destroy'); 
+    Route::get('/leave/delete/{id}','LeaveController@destroy');
 
     //media files
 
@@ -120,7 +120,7 @@ Route::group([
 
     Route::get('/messages','FeedbackController@sentMessages');
 
-    
+
     Route::get('/notifications/{studentid}','FeedbackController@notifications');
 
 
@@ -133,8 +133,8 @@ Route::group([
     Route::get('/feedback/category/list','FeedbackController@list');
 
 	Route::post('/feedback/send/{student_id}','FeedbackController@store');
-    
-    //Route::post('/feedback/save/{feedbackid}','FeedbackController@conversationsave');	
+
+    //Route::post('/feedback/save/{feedbackid}','FeedbackController@conversationsave');
 
     //Discipline
 
@@ -165,12 +165,12 @@ Route::group([
     //LessonPlan
 
     Route::get('/lessonplan/{student_id}','LessonPlanController@index');
-    
+
      Route::get('/lessonplan/print/{id}','LessonPlanController@print');
 
     Route::get('/lessonplan/{student_id}/{subject_id}','LessonPlanController@subjectIndex');
 
-   
+
 
     //Fees
 
@@ -220,11 +220,11 @@ Route::group([
 
     Route::get('/assignments/completed/{student_id}','AssignmentController@completed');
 
-    Route::get('/assignment/show/{student_id}/{id}','AssignmentController@show'); 
+    Route::get('/assignment/show/{student_id}/{id}','AssignmentController@show');
 
     Route::post('/assignment/submit/{assignment_id}/{student_id}','AssignmentController@store');
 
-    Route::get('/assignment/delete/{id}/{student_id}','AssignmentController@destroy');  
+    Route::get('/assignment/delete/{id}/{student_id}','AssignmentController@destroy');
 
 
 
@@ -238,30 +238,30 @@ Route::group([
         Route::get('/tasks/completed/{student_id}','TaskController@completedList');
 
         //mark complete
-        Route::post('/tasks/mark/complete','TaskController@changestatus'); 
+        Route::post('/tasks/mark/complete','TaskController@changestatus');
 
         //add
-        Route::get('/task/add/list','TaskController@create');  
-        Route::post('/task/add/{student_id}','TaskController@store'); 
+        Route::get('/task/add/list','TaskController@create');
+        Route::post('/task/add/{student_id}','TaskController@store');
 
         //show
-        Route::get('/task/show/{id}','TaskController@show');  
+        Route::get('/task/show/{id}','TaskController@show');
 
         //edit
-        Route::get('/task/edit/{id}','TaskController@edit');  
+        Route::get('/task/edit/{id}','TaskController@edit');
         Route::post('/task/edit/{id}/{student_id}','TaskController@update');
 
         //snooze
-        Route::post('/task/snooze/{id}/{student_id}', 'TaskController@snooze');  
+        Route::post('/task/snooze/{id}/{student_id}', 'TaskController@snooze');
 
         //delete
-        Route::get('/task/delete/{id}','TaskController@destroy'); 
-        
+        Route::get('/task/delete/{id}','TaskController@destroy');
+
     //viewers details
-        
+
     Route::post('/student/modules','StudentHistoryController@update');
 
-    
+
 
 });
 
@@ -284,6 +284,3 @@ Route::get('/events/show/details/{id}','Api\EventsController@showdetails');
 //Route::get('/parents', 'Api\TestController@parents');
 
 //Route::get('/events','Api\TestController@events');
-
-
-

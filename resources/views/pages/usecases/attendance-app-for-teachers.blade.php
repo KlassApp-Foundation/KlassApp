@@ -2,7 +2,7 @@
 @extends('layouts.main')
 
 @section('title')
-GegoK12 - Attendance App for Teachers 
+KlassApp - Attendance App for Teachers 
 @endsection
 
 @section('content')
@@ -35,7 +35,7 @@ GegoK12 - Attendance App for Teachers
 </div>
 
 <p class="leading-loose text-justify mb-8 text-gray-700">
-Gego K12 is a platform which helps school administration to automate the day to day processes. With the issue in attendance tracking, Gego K12 helps schools take attendance automatically.
+KlassApp is a platform which helps school administration to automate the day to day processes. With the issue in attendance tracking, KlassApp helps schools take attendance automatically.
 </p>
 <div class="flex flex-wrap">
 <!-- **** -->
@@ -69,7 +69,7 @@ Gego K12 is a platform which helps school administration to automate the day to 
 </div>
 <div class="w-full px-3">
 <h3 class="text-base text-gray-700 font-semibold ">Attendance taker</h3>
-<p class="text-sm text-gray-700 my-1 text-justify leading-loose">With inconsistencies in the school attendance tracking system, Gego K12 gives a solution to track attendance in classes accurately. By installing this software as an entire management for your school, you can easily take attendance without any errors in the classes.</p>
+<p class="text-sm text-gray-700 my-1 text-justify leading-loose">With inconsistencies in the school attendance tracking system, KlassApp gives a solution to track attendance in classes accurately. By installing this software as an entire management for your school, you can easily take attendance without any errors in the classes.</p>
 </div>
 </div>
 </div>

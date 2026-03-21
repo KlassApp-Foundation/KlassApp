@@ -1,5 +1,5 @@
 {{-- SPDX-License-Identifier: MIT --}}
-<nav class="navbar bg-white w-full flex  lg:flex-row px-4 lg:px-8 py-2 justify-between items-center">
+<nav class="navbar dashboard-themed-header w-full flex  lg:flex-row px-4 lg:px-8 py-2 justify-between items-center">
   <div class="nav-brand flex items-center">
     @if(\Auth::user())
       <button class="block lg:hidden md:hidden mr-3" onclick="showsidebar('res_sidebar')">
@@ -12,11 +12,11 @@
         <a class="h-10 object-contain" href="{{ route('dashboard') }}">
           <img src="{{ Auth::user()->SchoolLogoPath }}" class="h-10 w-auto object-cover">
         </a>
-         <a class="text-lg lg:text-3xl font-exo font-medium text-gray-700 px-4" href="{{ route('dashboard') }}">
+         <a class="text-lg lg:text-3xl font-exo font-medium text-white px-4" href="{{ route('dashboard') }}">
           <strong>{{ ucwords(Auth::user()->school->name) }}</strong>
         </a>
       @else
-        <a class="text-xl lg:text-3xl md:text-3xl font-exo font-medium text-gray-600" href="{{ route('dashboard') }}">
+        <a class="text-xl lg:text-3xl md:text-3xl font-exo font-medium text-white" href="{{ route('dashboard') }}">
           <strong>{{ ucwords(Auth::user()->school->name) }}</strong>
         </a>
       @endif

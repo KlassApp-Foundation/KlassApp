@@ -1,7 +1,7 @@
 {{-- SPDX-License-Identifier: MIT --}}
 <div class="bg-gray-200 border-t border-gray-300">
 <div class="container mx-auto py-8 flex flex-col">
-    <h3 class="text-gray-600 text-center mb-3 font-extrabold ">Explore GegoK12 by usecases served</h3>
+    <h3 class="text-gray-600 text-center mb-3 font-extrabold ">Explore KlassApp by usecases served</h3>
     <div class="flex lg:justify-around flex-wrap px-2 lg:px-0 md:px-0">
         <ul class="m-0 w-full lg:w-1/4 md:w-1/2">
             <li class="text-gray-600 my-4">
