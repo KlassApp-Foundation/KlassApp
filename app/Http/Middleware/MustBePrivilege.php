@@ -17,24 +17,31 @@ class MustBePrivilege
      */
     public function handle($request, Closure $next)
     {
-        $academic_year = SiteHelper::getAcademicYear(\Auth::user()->school_id);
-        if($academic_year != null)
-        {
-            $standard_count = Standard::where('school_id',\Auth::user()->school_id)->count();
+        $schoolId = \Auth::user()->school_id;
+        $academicYear = SiteHelper::getAcademicYear($schoolId);
+        $standardCount = Standard::where('school_id', $schoolId)->count();
 
-            if($standard_count > 0)
-            {
+        // Allow onboarding routes to avoid redirect loops for first-time schools.
+        $isAcademicSetupRoute = $request->is('admin/academics') || $request->is('admin/academic/*');
+        $isStandardSetupRoute = $request->is('admin/standard/create') || $request->is('admin/standard/add');
+
+        if ($academicYear === null) {
+            if ($isAcademicSetupRoute) {
                 return $next($request);
             }
-            else
-            {
-                return redirect('/admin/standard/create');
-            }
-        }
-        else
-        {
+
             return redirect('/admin/academics');
         }
+
+        if ($standardCount === 0) {
+            if ($isStandardSetupRoute || $isAcademicSetupRoute) {
+                return $next($request);
+            }
+
+            return redirect('/admin/standard/create');
+        }
+
+        return $next($request);
 
         abort(404);
     }
