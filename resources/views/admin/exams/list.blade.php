@@ -33,7 +33,7 @@
                 <td class="p-2">{{ $exam->term }}</td>
                 <td class="p-2">{{ $exam->standard->name ?? '-' }}</td>
                 <td class="p-2 ">{{ $exam->subject->name ?? '-' }}</td>
-                <td class="p-2">{{ $exam->teacher?->name ?? $exam->teacher?->email }}</td> 
+                <td class="p-2">{{ $exam->teacher?->id ?? $exam->teacher?->email }}</td> 
                 <td class="p-2">{{ $exam->academicYear->name ?? '-' }}</td>
                 <td class="p-2 space-x-2">
                     <a href="#" class="text-blue-500 hover:text-blue-700">Edit</a>

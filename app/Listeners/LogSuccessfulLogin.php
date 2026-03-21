@@ -10,6 +10,7 @@ use Illuminate\Auth\Events\Login;
 use App\Traits\LogActivity;
 use App\Mail\LoggedInMail;
 use App\Traits\Common;
+use PhpParser\Node\Stmt\TryCatch;
 
 class LogSuccessfulLogin implements ShouldQueue
 {
@@ -44,11 +45,14 @@ class LogSuccessfulLogin implements ShouldQueue
             'Logged In'
         );
         
-        if(env('MAIL_STATUS') == 'on')
-        {
-            if($event->user->email != null)
+        if(env('MAIL_STATUS') == 'on') {
+            try{
+                if($event->user->email != null)
             {
                 Mail::to($event->user->email)->queue(new LoggedInMail($event->user));
+            }
+            }catch(\Exception $e){
+                \Log::error('Login mail failed: ' . $e->getMessage());
             }
         }
     }

@@ -5,15 +5,46 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+use App\Models\Subject;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class MarksController extends Controller
 {
-    // get all student marks per class
-    public function classExamOverview()
+
+// all marks according to exam and standard
+ public function schoolMarksOverview()
 {
-    $exam = Exam::first();
+    $schoolId = Auth::user()->school_id;
+
+   $students = User::with(
+    ["marks.subject", "marks.remark", "marks.exam", "marks.student", "marks.teacher", "marks.school" ])
+            ->whereHas("marks.exam", function ($query) use($schoolId){
+                $query->forSchool($schoolId);
+            })
+            ->where("usergroup_id", 6)
+            ->get();
+
+    //
+    // $marks = Marks::with(["subject", "remark", "exam", "student", "teacher", "school" ])
+    // ->whereHas("exam", function ($query) use($schoolId) {
+    //     $query->forSchool($schoolId);
+    // })
+    // ->whereHas("student", function($query){
+    //     $query->students();
+    // })
+    // ->get();
+$studentCount = $students->pluck('student_id')->unique()->count();
+// to flter subjects depending on class
+$subjects = Subject::where("school_id", $schoolId)->get();
+    
+    return view('admin.marks.school-overview', compact('exams', "students", "studentCount", "subjects"));
+}
+    // get all student marks per class
+    public function classExamOverview(Exam $exam)
+{
+    // $exam = Exam::first();
     $schoolId = Auth::user()->school_id; // or pass as param if multi-school admin
 
     // Get all marks for this exam + school

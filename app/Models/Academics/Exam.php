@@ -17,6 +17,10 @@ class Exam extends Model
     protected $fillable=[
          "standard_id", "school_id", "academic_year_id", "term", "subject_id", "teacher_id", "exam_type_id", "status","scheduled_at"
         ];
+
+        public function marks(){
+           return $this->hasMany(Marks::class);
+       }
         public function standard(){
             return $this->belongsTo(Standard::class, "standard_id");
         }
@@ -36,4 +40,9 @@ class Exam extends Model
         public function teacher(){
             return $this->belongsTo(User::class, "teacher_id");
         }
+
+        // ============= SCOPES ==========
+    public function scopeForSchool($query, $val) {
+        return $query->where("school_id", $val);
+    }
 }

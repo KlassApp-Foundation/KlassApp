@@ -85,4 +85,6 @@ class StudentAcademic extends Model
     {
         return $this->hasMany('\App\Models\Timetable','academic_year_id','id');
     }
+
+   
 }

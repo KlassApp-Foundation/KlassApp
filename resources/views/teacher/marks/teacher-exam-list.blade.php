@@ -17,7 +17,7 @@
             </div>
 
             <div class="p-6">
-               
+                {{-- {{ dd($exams) }} --}}
                 @if($exams->isEmpty())
                     <p class="text-center py-12 text-gray-500 dark:text-gray-400">
                         No exams assigned to you for marking yet.
@@ -37,12 +37,12 @@
                                     </p>
                                 </div>
                                 <div class="flex gap-3">
-                                    <a href="{{ route('teacher.exam.marks.enter', $exam->id) }}"
+                                    <a href="{{ route('teacher.exam.marks.enter', $exam) }}"
                                        class="py-2 px-4 rounded text-white bg-green-500 hover:bg-green-600 text-sm">
                                         Enter / Edit Marks
                                     </a>
                                     <!-- Optional view link -->
-                                    <a href="{{ route('teacher.exam.marks.view', $exam->id) }}"
+                                    <a href="{{ route('teacher.exam.marks.view', $exam) }}"
                                        class="py-2 px-4 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">
                                         View Entered Marks
                                     </a>
