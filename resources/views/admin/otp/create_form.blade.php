@@ -63,6 +63,20 @@
     transform: translateY(-1px);
     box-shadow: 0 12px 26px rgba(29, 78, 216, 0.35);
   }
+
+  .klass-otp-resend-link {
+    color: #1d4ed8;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .klass-otp-resend-link.is-disabled {
+    color: #94a3b8;
+    text-decoration: none;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
 </style>
 
 <div class="klass-otp-form-wrap">
@@ -72,7 +86,7 @@
     </div>
   @else
     <h2 class="klass-otp-title">{{ __('Verify OTP') }}</h2>
-    <p class="klass-otp-subtitle">Enter the one-time password sent to your registered number.</p>
+    <p class="klass-otp-subtitle">Please enter the verification code sent to {{ optional(auth()->user())->email }}.</p>
 
     <form method="POST" action="{{ url('/verifyotp') }}" aria-label="{{ __('Verify OTP') }}">
       @csrf
@@ -99,6 +113,139 @@
           {{ __('Verify') }}
         </button>
       </div>
+
+      <div class="text-xs text-gray-600 mt-4 leading-relaxed">
+        <p>If you don't see the verification code, check your spam or junk folder.</p>
+        <p class="mt-1">
+          You can also
+          <a
+            href="#"
+            id="resendVerificationLink"
+            class="klass-otp-resend-link"
+            data-email="{{ optional(auth()->user())->email }}"
+          >resend verification code</a>
+        </p>
+        <p id="resendSuccessMessage" class="mt-2 text-green-600 font-semibold hidden">Verification email sent!</p>
+        <p id="resendCountdownMessage" class="mt-1 text-gray-600 hidden">Resend available in 60s</p>
+        <p id="resendErrorMessage" class="mt-2 text-red-600 font-semibold hidden">Something went wrong. Please try again.</p>
+        <p class="mt-1">Please allow around 1-3 minutes for the next email to arrive.</p>
+      </div>
     </form>
+
+    <script>
+      (function () {
+        var resendLink = document.getElementById('resendVerificationLink');
+        if (!resendLink) {
+          return;
+        }
+
+        var successMessage = document.getElementById('resendSuccessMessage');
+        var countdownMessage = document.getElementById('resendCountdownMessage');
+        var errorMessage = document.getElementById('resendErrorMessage');
+        var countdown = 60;
+        var timer = null;
+
+        function hide(el) {
+          if (el) {
+            el.classList.add('hidden');
+          }
+        }
+
+        function show(el) {
+          if (el) {
+            el.classList.remove('hidden');
+          }
+        }
+
+        function setLinkState(disabled) {
+          resendLink.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+          if (disabled) {
+            resendLink.classList.add('is-disabled');
+          } else {
+            resendLink.classList.remove('is-disabled');
+          }
+        }
+
+        function stopCountdown() {
+          if (timer) {
+            window.clearInterval(timer);
+            timer = null;
+          }
+        }
+
+        function startCountdown() {
+          stopCountdown();
+          countdown = 60;
+          show(countdownMessage);
+          countdownMessage.textContent = 'Resend available in ' + countdown + 's';
+
+          timer = window.setInterval(function () {
+            countdown -= 1;
+
+            if (countdown <= 0) {
+              stopCountdown();
+              setLinkState(false);
+              hide(successMessage);
+              hide(countdownMessage);
+              return;
+            }
+
+            countdownMessage.textContent = 'Resend available in ' + countdown + 's';
+          }, 1000);
+        }
+
+        resendLink.addEventListener('click', function (event) {
+          event.preventDefault();
+
+          if (resendLink.classList.contains('is-disabled')) {
+            return;
+          }
+
+          hide(errorMessage);
+          hide(successMessage);
+          hide(countdownMessage);
+
+          var email = resendLink.getAttribute('data-email') || '';
+          if (!email) {
+            show(errorMessage);
+            return;
+          }
+
+          setLinkState(true);
+
+          var resendUrl = '/verifyotp?resend=1&email=' + encodeURIComponent(email);
+
+          fetch(resendUrl, {
+            method: 'GET',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+          })
+            .then(function (response) {
+              if (!response.ok) {
+                throw new Error('Request failed');
+              }
+              return response.json();
+            })
+            .then(function (data) {
+              if (!data || data.success !== true) {
+                throw new Error('Resend failed');
+              }
+
+              show(successMessage);
+              startCountdown();
+            })
+            .catch(function () {
+              stopCountdown();
+              setLinkState(false);
+              hide(successMessage);
+              hide(countdownMessage);
+              show(errorMessage);
+            });
+        });
+      })();
+    </script>
   @endif
 </div>
