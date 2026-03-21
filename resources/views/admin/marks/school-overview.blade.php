@@ -1,106 +1,48 @@
 @extends('layouts.admin.layout')
-
 @section('content')
 
-<div class="w-full px-2 py-4 grid grid-cols-1 gap-6">
+<div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-bold mb-4">Filter Marks</h2>
 
-    <h3 class="text-center text-lg font-semibold text-gray-700">
-        {{ $studentCount . " Students found" }}
-    </h3>
+    <form action="{{ route('marks', ['class'=>0,'year'=>0,'term'=>0]) }}" 
+          method="GET" 
+          onsubmit="event.preventDefault(); 
+                   window.location=this.action.replace('/0/year/0/term/0',
+                   '/'+document.getElementById('class').value+
+                   '/year/'+document.getElementById('year').value+
+                   '/term/'+document.getElementById('term').value);">
 
-    <table class="w-full border border-gray-200 rounded-lg overflow-hidden bg-white ">
-
-        {{-- HEADER --}}
-        <thead class="bg-gray-100 text-left text-sm text-gray-600">
-            <tr>
-                <th class="p-3">#</th>
-                <th class="p-3">Student</th>
-
-                @foreach($subjects as $subject)
-                    <th class="p-3">
-                        {{ str($subject->name)->limit(8, '...') }}
-                    </th>
+        <div class="mb-4">
+            <label class="block font-medium">Class</label>
+            <select id="class" class="w-full border rounded px-2 py-1">
+                @foreach($classes as $class)
+                    <option value="{{ $class->id }}">{{ $class->name }}</option>
                 @endforeach
+            </select>
+        </div>
 
-                <th class="p-3">Total</th>
-                <th class="p-3">Average</th>
-                <th class="p-3">Position</th>
-                <th class="p-3">Comment</th>
-            </tr>
-        </thead>
+        <div class="mb-4">
+            <label class="block font-medium">Year</label>
+            <select id="year" class="w-full border rounded px-2 py-1">
+                @foreach($years as $year)
+                    <option value="{{ $year->id }}">{{ $year->name }}</option>
+                @endforeach
+            </select>
+        </div>
 
-        {{-- BODY --}}
-        <tbody class="divide-y divide-gray-200">
+        <div class="mb-4">
+            <label class="block font-medium">Term</label>
+            <select id="term" class="w-full border rounded px-2 py-1">
+                @foreach($terms as $term)
+                    <option value="{{ $term }}">{{ $term }}</option>
+                @endforeach
+            </select>
+        </div>
 
-            @foreach($students as $student)
-
-                @php
-                    // Map marks by subject_id (safe)
-                    $marks = $student->marks->keyBy(fn($m) => (int) $m->subject_id);
-
-                    $total = 0;
-                    $count = 0;
-                @endphp
-
-                <tr class="hover:bg-gray-50 transition">
-
-                    {{-- LOOP INDEX --}}
-                    <td class="px-4 py-3 text-gray-500">
-                        {{ $loop->iteration }}
-                    </td>
-
-                    {{-- STUDENT NAME --}}
-                    <td class="px-4 py-3 font-medium text-gray-800">
-                        {{ $student->name }}
-                    </td>
-
-                    {{-- SUBJECT MARKS --}}
-                    @foreach($subjects as $subject)
-
-                        @php
-                            $markObj = $marks->get($subject->id);
-                            // dd($marks);
-                            $mark = $markObj ? $markObj->marks : 0;
-
-                            if ($mark > 0) {
-                                $total += $mark;
-                                $count++;
-                            }
-                        @endphp
-
-                        <td class="px-4 py-3 text-gray-800">
-                            {{ $mark }}
-                        </td>
-
-                    @endforeach
-
-                    {{-- TOTAL --}}
-                    <td class="px-4 py-3 font-semibold text-gray-900">
-                        {{ $total }}
-                    </td>
-
-                    {{-- AVERAGE --}}
-                    <td class="px-4 py-3 text-gray-800">
-                        {{ $count ? round($total / $count, 2) : 0 }}
-                    </td>
-
-                    {{-- POSITION (you can fill later) --}}
-                    <td class="px-4 py-3 text-gray-500">
-                        -
-                    </td>
-
-                    {{-- COMMENT (optional) --}}
-                    <td class="px-4 py-3 text-gray-500">
-                        -
-                    </td>
-
-                </tr>
-
-            @endforeach
-
-        </tbody>
-    </table>
-
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
+            View Marks
+        </button>
+    </form>
 </div>
 
 @endsection
