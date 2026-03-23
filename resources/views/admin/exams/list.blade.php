@@ -4,7 +4,6 @@
 <div class="w-full lg:mx-2">
     <div class="py-3 flex items-center justify-between">
         <h3>Exams Schedule</h3>
-        {{-- add btn --}}
          <div class="flex items-center" dusk="add-button">
                     <a href="{{url('/admin/exams/add-new/')}}" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">
                         <span class="mx-1 text-sm font-semibold">Add</span>

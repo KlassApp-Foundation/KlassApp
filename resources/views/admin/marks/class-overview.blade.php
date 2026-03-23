@@ -27,7 +27,6 @@
                         <th class="px-6 py-3 text-center">Position</th>
                     </tr>
                 </thead>
-{{-- {{ dd($exam) }} --}}
                 <tbody class="divide-y divide-gray-200">
                     @foreach($rankedStudents as $student)
                         <tr class="hover:bg-gray-50 transition duration-150">

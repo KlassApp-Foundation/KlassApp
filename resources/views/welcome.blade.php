@@ -17,7 +17,8 @@
 			<a href="#testimonials">Testimonials</a>
 		</div>
 		<div class="ka-nav-actions">
-			<a class="ka-cta" href="{{ url('/register') }}">Onboard your school</a>
+			<a class="ka-cta" href="{{ url('/register') }}" onmouseenter="this.style.transform='translateY(-3px) scale(1.02)';this.style.background='linear-gradient(120deg,#4ade80 0%,#22c55e 55%,#16a34a 100%)';this.style.boxShadow='0 12px 24px rgba(34,197,94,0.34)';" onmouseleave="this.style.transform='';this.style.background='';this.style.boxShadow='';" onfocus="this.style.transform='translateY(-3px) scale(1.02)';this.style.background='linear-gradient(120deg,#4ade80 0%,#22c55e 55%,#16a34a 100%)';this.style.boxShadow='0 12px 24px rgba(34,197,94,0.34)';" onblur="this.style.transform='';this.style.background='';this.style.boxShadow='';">Join</a>
+			<a class="ka-portal" href="{{ route('login') }}" onmouseenter="this.style.animationPlayState='paused, paused';this.style.background='linear-gradient(120deg,#0f3fb8 0%,#1d4ed8 46%,#0ea5e9 100%)';this.style.boxShadow='0 14px 28px rgba(29,78,216,0.5)';" onmouseleave="this.style.animationPlayState='running, running';this.style.background='';this.style.boxShadow='';" onfocus="this.style.animationPlayState='paused, paused';this.style.background='linear-gradient(120deg,#0f3fb8 0%,#1d4ed8 46%,#0ea5e9 100%)';this.style.boxShadow='0 14px 28px rgba(29,78,216,0.5)';" onblur="this.style.animationPlayState='running, running';this.style.background='';this.style.boxShadow='';">Portal</a>
 			<div class="ka-hamburger" id="kaHamburger" aria-label="menu">☰</div>
 		</div>
 	</div>
@@ -50,8 +51,9 @@
 			</div>
 
 			<div class="buttons ka-animate">
-				<a class="ka-cta" href="{{ url('/register') }}">Onboard your school</a>
-				<a class="ka-ghost" href="#">Watch Demo</a>
+				<a class="ka-cta" href="{{ url('/register') }}" onmouseenter="this.style.transform='translateY(-3px) scale(1.02)';this.style.background='linear-gradient(120deg,#4ade80 0%,#22c55e 55%,#16a34a 100%)';this.style.boxShadow='0 12px 24px rgba(34,197,94,0.34)';" onmouseleave="this.style.transform='';this.style.background='';this.style.boxShadow='';" onfocus="this.style.transform='translateY(-3px) scale(1.02)';this.style.background='linear-gradient(120deg,#4ade80 0%,#22c55e 55%,#16a34a 100%)';this.style.boxShadow='0 12px 24px rgba(34,197,94,0.34)';" onblur="this.style.transform='';this.style.background='';this.style.boxShadow='';">Join</a>
+				<a class="ka-portal" href="{{ route('login') }}" onmouseenter="this.style.animationPlayState='paused, paused';this.style.background='linear-gradient(120deg,#0f3fb8 0%,#1d4ed8 46%,#0ea5e9 100%)';this.style.boxShadow='0 14px 28px rgba(29,78,216,0.5)';" onmouseleave="this.style.animationPlayState='running, running';this.style.background='';this.style.boxShadow='';" onfocus="this.style.animationPlayState='paused, paused';this.style.background='linear-gradient(120deg,#0f3fb8 0%,#1d4ed8 46%,#0ea5e9 100%)';this.style.boxShadow='0 14px 28px rgba(29,78,216,0.5)';" onblur="this.style.animationPlayState='running, running';this.style.background='';this.style.boxShadow='';">Portal</a>
+				<a class="ka-ghost" href="https://calendly.com/moemucu/talk-to-mucu" target="_blank" rel="noopener noreferrer">Book a demo</a>
 			</div>
 		</div>
 
@@ -234,8 +236,9 @@
 		<h2 class="ka-animate">Ready to lead your school into the future?</h2>
 		<p class="ka-animate">Set up takes minutes. No training required. Your whole school connected from day one.</p>
 		<div class="ka-pricing-cta-actions ka-animate">
-			<a class="ka-pricing-cta-primary" href="{{ url('/register') }}">Onboard your school now</a>
-			<a class="ka-pricing-cta-secondary" href="#how">See how it works</a>
+			<a class="ka-cta" href="{{ url('/register') }}" onmouseenter="this.style.transform='translateY(-3px) scale(1.02)';this.style.background='linear-gradient(120deg,#4ade80 0%,#22c55e 55%,#16a34a 100%)';this.style.boxShadow='0 12px 24px rgba(34,197,94,0.34)';" onmouseleave="this.style.transform='';this.style.background='';this.style.boxShadow='';" onfocus="this.style.transform='translateY(-3px) scale(1.02)';this.style.background='linear-gradient(120deg,#4ade80 0%,#22c55e 55%,#16a34a 100%)';this.style.boxShadow='0 12px 24px rgba(34,197,94,0.34)';" onblur="this.style.transform='';this.style.background='';this.style.boxShadow='';">Join</a>
+			<a class="ka-portal" href="{{ route('login') }}" onmouseenter="this.style.animationPlayState='paused, paused';this.style.background='linear-gradient(120deg,#0f3fb8 0%,#1d4ed8 46%,#0ea5e9 100%)';this.style.boxShadow='0 14px 28px rgba(29,78,216,0.5)';" onmouseleave="this.style.animationPlayState='running, running';this.style.background='';this.style.boxShadow='';" onfocus="this.style.animationPlayState='paused, paused';this.style.background='linear-gradient(120deg,#0f3fb8 0%,#1d4ed8 46%,#0ea5e9 100%)';this.style.boxShadow='0 14px 28px rgba(29,78,216,0.5)';" onblur="this.style.animationPlayState='running, running';this.style.background='';this.style.boxShadow='';">Portal</a>
+			<a class="ka-ghost" href="https://calendly.com/moemucu/talk-to-mucu" target="_blank" rel="noopener noreferrer">Book a demo</a>
 		</div>
 		<div class="ka-pricing-cta-note ka-animate">Free 30-day trial · No credit card required · Cancel anytime</div>
 	</div>
@@ -300,6 +303,54 @@
 	window.addEventListener('scroll', function(){
 		document.querySelector('.ka-nav').classList.toggle('scrolled', window.scrollY > 20);
 	});
+
+	// Force clear interaction state for CTA buttons so hover is always visible.
+	function bindCtaInteractionState(selector) {
+		document.querySelectorAll(selector).forEach(function(el){
+			var isCta = el.classList.contains('ka-cta');
+			var isPortal = el.classList.contains('ka-portal');
+			
+			var add = function(){ 
+				el.classList.add('is-hovered');
+				// Apply same hover effect to both Join and Portal: blue gradient, lift, glow
+				el.style.background = 'linear-gradient(120deg, #0f3fb8 0%, #1d4ed8 46%, #0ea5e9 100%)';
+				el.style.transform = 'translateY(-3px) scale(1.02)';
+				el.style.boxShadow = '0 12px 24px rgba(34, 197, 94, 0.34)';
+				
+				if (isPortal) {
+					el.style.animationPlayState = 'paused, paused';
+				}
+			};
+			var remove = function(){ 
+				el.classList.remove('is-hovered');
+				el.style.background = '';
+				el.style.transform = '';
+				el.style.boxShadow = '';
+				
+				if (isPortal) {
+					el.style.animationPlayState = 'running, running';
+				}
+			};
+			var holdTimer = null;
+			var hold = function(ms){
+				add();
+				if (holdTimer) window.clearTimeout(holdTimer);
+				holdTimer = window.setTimeout(remove, ms || 900);
+			};
+
+			el.addEventListener('mouseenter', add);
+			el.addEventListener('mouseleave', remove);
+			el.addEventListener('focus', add);
+			el.addEventListener('blur', remove);
+			el.addEventListener('pointerenter', add);
+			el.addEventListener('pointerleave', remove);
+			el.addEventListener('touchstart', function(){ hold(1200); }, { passive: true });
+			el.addEventListener('click', function(){ hold(900); });
+		});
+	}
+
+	bindCtaInteractionState('a.ka-cta');
+	bindCtaInteractionState('a.ka-portal');
 
 	// Smooth scroll and active nav highlight
 	document.querySelectorAll('nav a[href^="#"]').forEach(function(a){
