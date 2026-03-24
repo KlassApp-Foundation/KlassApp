@@ -18,7 +18,7 @@ return new class extends Migration
             $table->id();
             $table->string("term");
             $table->dateTime("scheduled_at")->nullable();
-            $table->boolean("status")->nullable();
+            $table->enum("status", ["done", "postponed", "undone"])->default("undone");
              // match existing table types
             // $table->unsignedInteger("exam_type_id"); 
             $table->unsignedInteger("standard_id"); 

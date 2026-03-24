@@ -62,17 +62,10 @@ public function teacherExamMarksList()
     $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
         -> where('school_id', $schoolId)
         ->where('academic_year_id', SiteHelper::getAcademicYear($schoolId)->id)
-        ->where(function ($q) use ($teacher) {
-            // Option 1: teacher is assigned to the exam directly
-            $q->where('teacher_id', $teacher->id)
-              // Option 2: teacher teaches one of the subjects in the exam
-              ->orWhereHas('subject', function ($sq) use ($teacher) {
-                  $sq->where('teacher_id', $teacher->id); // adjust relation
-              });
-        })
-
+        ->where("teacher_id", $teacher->id)
         ->orderBy('created_at', 'desc')
         ->get();
+        // dd($exams);
 
 // $exm = Exam::where('teacher_id', $teacher->id)->get();
     // Add progress info
@@ -91,15 +84,15 @@ public function enterExamMarks( $exam)
 
     $exams = Exam::findOrFail($exam);
         $tr = DB::table("class_teacher_links")->where("teacher_id", $user->id)->first();
-
-    // $students = User::byStandard(1)->where("school_id", $user->school_id)
-    // ->orderBy("name")->get();
-    // $students = StandardLink::where("standard_id", $exam->standard_id)->get();
-    $students = StudentAcademic::with(["user"])->where("standardLink_id", $tr->standardLink_id)
+    
+    $students = StandardLink::where("standard_id", $exam->standard_id)->get();
+    $students = StudentAcademic::with(["user"])
+                //    ->where("standardLink_id", $tr->standardLink_id)
                    ->whereHas('user', function ($query) {
                    $query->where("usergroup_id", 6);
                    })
                ->get();
+               dd($students);
     // $students = User::byStandard($exam->standard_id)
     // ->where('school_id', $exam->school_id)
     // ->orderBy('name')
@@ -132,7 +125,6 @@ public function saveExamMarks(Request $request, Exam $exam)
     if ($exam->school_id !== $user->school_id) {
         abort(403, "Not Authorized");
     }
-// dd($request->all());
     foreach ($request->marks as $studentId => $mark) {
         if ($mark === null || trim($mark) === '') continue;
 
@@ -177,7 +169,6 @@ public function viewExamMarks(Exam $exam)
      }
       // only needed columns
       $ll=StandardLink::where("standard_id", 2)->get();
-// dd($exam);
     //   to add school id relationship and filter according to it
         $marks = Marks::with(["exam", "student", "subject", "teacher", "remark"])->where('teacher_id', $tr->id)
 
@@ -232,7 +223,7 @@ public function updateMark(Request $request, Exam $exam, User $student)
     ]);
 
     // Find or create
-    $mark = Marks::updateOrCreate(
+    Marks::updateOrCreate(
         [
             'exam_id'     => $exam->id,
             'subject_id'  => $exam->subject_id,
