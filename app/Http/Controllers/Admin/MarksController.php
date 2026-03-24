@@ -41,7 +41,7 @@ class MarksController extends Controller
     // ->get();
 $studentCount = $students->pluck('student_id')->unique()->count();
 // to flter subjects depending on class
-$subjects = Subject::where("school_id", $schoolId)->get();
+$subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get();
 
     return view('admin.marks.school-overview', compact('exams', "students", "studentCount", "subjects"));
 }
@@ -56,6 +56,12 @@ $subjects = Subject::where("school_id", $schoolId)->get();
         })
         ->latest('created_at'); // or whatever default sort
 
+        // query all users who're students with student props
+        $schoolId = Auth::user()->school_id;
+        
+                //    dd(Exam::forSchool($schoolId)->count());
+                // dd(User::where('usergroup_id', 6)->count());
+                //    dd(Marks::whereHas('exam', fn($q) => $q->forSchool($schoolId))->count());
     // Apply filters only if present
     if ($request->filled('term')) {
         // $query->where('exam.term', $request->term);
@@ -79,12 +85,31 @@ $subjects = Subject::where("school_id", $schoolId)->get();
         });
         $class = Standard::find($request->class);
     }
+
+    $all_students = User::with([
+                    'marks.subject',
+                    'marks.remark',
+                    'marks.exam',
+                    'marks.student',
+                    'marks.teacher',
+                    'marks.school',
+                    'school',
+                    'userprofile',
+                   ])
+                   ->whereHas("marks.exam", function ($q) use($schoolId){
+                    $q->forSchool($schoolId);
+                   })
+                   ->where("usergroup_id", 6)
+                   ->where("school_id", $schoolId)
+                   ->orderBy("created_at", "desc")
+                   ->get();
     
     // Add more filters the same way (subject, student name search, min_marks, etc.)
-
+    $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", $request->class)->get();
+    // dd($request->class);
     $marks = $query->paginate(15)->appends($request->query());
     // dd($marks);
-    return view('admin.marks.filter', compact('marks', 'year', "term", "class"));
+    return view('admin.marks.filter', compact('marks', 'year', "term", "class", "all_students", "subjects"));
 }
 
 // private function to compute grade

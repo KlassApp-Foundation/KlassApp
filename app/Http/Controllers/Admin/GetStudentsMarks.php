@@ -26,7 +26,7 @@ class GetStudentsMarks extends Controller
                     'marks.exam',
                     'marks.student',
                     'marks.teacher',
-                    'marks.school',
+                    'marks.school', 
                     'school',
                     'userprofile',
                    ])

@@ -11,30 +11,12 @@ class StandardsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $now = now();
         $schools = School::where("status", 1)->get();
         $standards = [
-            // Pre-primary (Nursery)
-            ['name' => 'Baby Class',     'order' => 1,  'status' => '1'],
-            ['name' => 'Middle Class',   'order' => 2,  'status' => '1'],
-            ['name' => 'Top Class',      'order' => 3,  'status' => '1'],
-
-            // Primary
-            ['name' => 'Primary 1',      'order' => 4,  'status' => '1'],
-            ['name' => 'Primary 2',      'order' => 5,  'status' => '1'],
-            ['name' => 'Primary 3',      'order' => 6,  'status' => '1'],
-            ['name' => 'Primary 4',      'order' => 7,  'status' => '1'],
-            ['name' => 'Primary 5',      'order' => 8,  'status' => '1'],
-            ['name' => 'Primary 6',      'order' => 9,  'status' => '1'],
-            ['name' => 'Primary 7',      'order' => 10, 'status' => '1'],
-
-            // Secondary (O & A level)
-            ['name' => 'Senior 1',       'order' => 11, 'status' => '1'],
-            ['name' => 'Senior 2',       'order' => 12, 'status' => '1'],
-            ['name' => 'Senior 3',       'order' => 13, 'status' => '1'],
-            ['name' => 'Senior 4',       'order' => 14, 'status' => '1'],
-            ['name' => 'Senior 5',       'order' => 15, 'status' => '1'],
-            ['name' => 'Senior 6',       'order' => 16, 'status' => '1'],
+            // Phases
+            ['name' => 'Nursery',       'order' => 1,  'status' => '1'],
+            ['name' => 'Primary',       'order' => 2,  'status' => '1'],
+            ['name' => 'Secondary',     'order' => 3,  'status' => '1'],
         ];
 
      foreach ($schools as $school) {
