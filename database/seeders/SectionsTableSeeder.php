@@ -19,7 +19,10 @@ class SectionsTableSeeder extends Seeder
 
         foreach ($schools as $school) 
         {
-            $sections = ['A', 'B'];
+            $sections = [
+                'Baby Class',  'Middle Class','Top Class', 'Primary 1', 'Primary 2', 
+                'Primary 3', 'Primary 4', 'Primary 5',   'Primary 6', 'Primary 7',
+                ];
 
             foreach ($sections as $section) 
             {
@@ -29,8 +32,8 @@ class SectionsTableSeeder extends Seeder
                     ],
                     [
                     'status'       =>  '1',
-                    'created_at'   =>   date("Y-m-d H:i:s"),
-                    'updated_at'   =>   date("Y-m-d H:i:s"),
+                    'created_at'   =>   now(),
+                    'updated_at'   =>   now(),
                 ]);
             }
         }

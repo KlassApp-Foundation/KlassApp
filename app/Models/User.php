@@ -75,6 +75,7 @@ class User extends Authenticatable implements HasMedia
         return $this->belongsTo('App\Models\School','school_id');
     }
 
+
     public function userprofile()
     {
         return $this->hasOne('App\Models\Userprofile','user_id','id');
@@ -140,6 +141,9 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany('App\Models\StudentParentLink','parent_id','id');
     }
 
+    public function userClass(){
+        // return $this->belongsTo(Standard)
+    }
     public function usergroup()
     {
         return $this->belongsTo('App\Models\Usergroup','usergroup_id');

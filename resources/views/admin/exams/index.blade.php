@@ -34,22 +34,28 @@
 
                     <!-- Row 1 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        {{-- <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Exam Name <span class="text-red-500">*</span>
+                        <div>
+                            <label for="exam_type_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Class
                             </label>
-                            <input type="text" name="name" id="name"
-                                   class="tw-form-control w-full"
-                                   value="{{ old('name') }}" placeholder="e.g. Term 1 Mid-Term Science" required>
-                            @error('name')
+                             <select name="section_id" id="section_id" required
+                                    class="tw-form-control w-full">
+                                <option value="">Select exam type</option>
+                                @foreach ($sections as $section)
+
+                                     <option value="{{ $section->id }}" {{ old('section_id') == $section->id ? 'selected' : '' }}>
+                                        {{ $section->name }}
+                                    </option>
+                                @endforeach   
+                            </select>
+                            @error('section')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
-                        </div> --}}
+                        </div>
 
                         <div>
                             <label for="exam_type_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Exam Type
-                                {{-- {{ dd($exam_types) }} --}}
                             </label>
                              <select name="exam_type_id" id="exam_type_id" required
                                     class="tw-form-control w-full">

@@ -51,7 +51,6 @@ class ExamTypes extends Seeder
         foreach ($types as $type){
             DB::table('exam_types')->insert($type);
         }
-
-        
+        $this->command->info("Exam types seeded successfully!");
     }
 }

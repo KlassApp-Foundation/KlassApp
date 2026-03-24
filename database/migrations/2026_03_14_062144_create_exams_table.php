@@ -18,18 +18,19 @@ return new class extends Migration
             $table->id();
             $table->string("term");
             $table->dateTime("scheduled_at")->nullable();
-            $table->boolean("status")->nullable();
+            $table->enum("status", ["done", "postponed", "undone"])->default("undone");
              // match existing table types
             // $table->unsignedInteger("exam_type_id"); 
             $table->unsignedInteger("standard_id"); 
             $table->unsignedBigInteger('school_id'); 
             $table->unsignedInteger('academic_year_id'); 
             $table->unsignedInteger('subject_id'); 
-            $table->unsignedInteger('teacher_id'); 
+            $table->unsignedInteger('teacher_id');
+            $table->unsignedInteger('section_id'); 
 
             // foreign keys
             // foreign keys
-            // $table->foreign('exam_type_id')->references('id')->on('exam_types')->cascadeOnDelete();
+            $table->foreign('section_id')->references('id')->on('sections')->cascadeOnDelete();
              $table->foreign('standard_id')->references('id')->on('standards')->cascadeOnDelete();
             $table->foreign('school_id')->references('id')->on('schools')->cascadeOnDelete();
             $table->foreign('academic_year_id')->references('id')->on('academic_years')->cascadeOnDelete();

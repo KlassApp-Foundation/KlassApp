@@ -4,6 +4,7 @@
 namespace App\Models\Academics;
 
 use App\Models\School;
+use App\Models\Section;
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,10 +14,14 @@ class Marks extends Model
 {
     use HasFactory;
     protected $fillable=[
-        "student_id", "subject_id", "exam_id", "teacher_id", "school_id", "marks", "remark_id", "grade"
+        "student_id", "subject_id", "section_id", "exam_id", "teacher_id", "school_id", "marks", "remark_id", "grade"
     ];
     public function student(){
         return $this->belongsTo(User::class, "student_id");
+    }
+
+     public function section(){
+        return $this->belongsTo(Section::class, "section_id");
     }
 
  public function remark(){

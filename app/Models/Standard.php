@@ -5,6 +5,7 @@
  */
 namespace App\Models;
 
+use App\Models\Academics\Classes;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laracasts\Presenter\PresentableTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -61,5 +62,8 @@ class Standard extends Model
     public function standardLink()
     {
         return $this->hasMany('\App\Models\StandardLink','standard_id','id');
+    }
+    public function classes(){
+        return $this->hasMany(Classes::class);
     }
 }
