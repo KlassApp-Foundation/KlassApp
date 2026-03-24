@@ -21,12 +21,13 @@ return new class extends Migration
             $table->unsignedBigInteger('school_id');
             $table->unsignedInteger('subject_id');
             $table->unsignedBigInteger('exam_id');
-
+            $table->unsignedInteger('section_id'); 
             // Other columns
             $table->decimal('marks', 5, 2); // e.g., 100.00 max
             $table->unsignedBigInteger('remark_id');
 
             // Define foreign key constraints
+             $table->foreign('section_id')->references('id')->on('sections')->cascadeOnDelete();
             $table->foreign('remark_id')->references('id')->on('remarks')->cascadeOnDelete();
             $table->foreign('student_id')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('teacher_id')->references('id')->on('users')->cascadeOnDelete();

@@ -33,7 +33,7 @@ class StandardController extends Controller
         $school_id = Auth::user()->school_id;
         $standards = Standard::where('school_id', $school_id)->orderBy('order')->get();
 
-        return view('/admin/school/standards/index', ['standards' => $standards]);
+        return view('admin.school.standards.index', ['standards' => $standards]);
     }
 
     /**
@@ -120,4 +120,10 @@ class StandardController extends Controller
             //dd($e->getMessage());
         }
     }
+
+    // =========== UG update, added delete =============
+    // public function destroy($standardId){
+    //     $admin = Auth::user();
+    //     Standard::softDeleted()
+    // }
 }

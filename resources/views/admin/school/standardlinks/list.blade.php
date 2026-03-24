@@ -5,11 +5,11 @@
           <table class="w-full">
              <thead class="bg-grey-light">
                 <tr class="border-t-2 border-b-2">
-                   <th class="text-left text-sm px-2 py-2 text-grey-darker">Standard</th>
-                   <th class="text-left text-sm px-2 py-2 text-grey-darker">Section</th>
+                   <th class="text-left text-sm px-2 py-2 text-grey-darker">Level</th>
+                   <th class="text-left text-sm px-2 py-2 text-grey-darker">Class</th>
                    <th class="text-left text-sm px-2 py-2 text-grey-darker">Class Teacher</th>
                    <th class="text-left text-sm px-2 py-2 text-grey-darker" width="40%">Subjects & Teacher</th>
-                   <th class="text-left text-sm px-2 py-2 text-grey-darker text-center" width="5%">Status</th>
+                   <th class="text-sm px-2 py-2 text-grey-darker text-center" width="5%">Status</th>
                    <th class="text-left text-sm px-2 py-2 text-grey-darker " width="7%">Actions</th>
                 </tr>
              </thead>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 use App\Models\AcademicYear;
 use App\Models\School;          // probably not needed if school_id from auth
+use App\Models\Section;
 use App\Models\Standard;
 use App\Models\Subject;
 use App\Models\User;
@@ -15,12 +16,14 @@ use Illuminate\Support\Facades\DB;
 
 class ExamController extends Controller
 {
-   public function index()
-{
-            $exam_types = DB::table("exam_types")->get();
-            $subjects    = Subject::where('school_id', Auth::user()->school_id)->get();
-            $standards   = Standard::where('school_id', Auth::user()->school_id)->get(); 
-            $academicYears = AcademicYear::where('school_id', Auth::user()->school_id)->get();
+   public function index(){
+
+   $school_id = Auth::user()->school_id;
+    $exam_types = DB::table("exam_types")->get();
+    $subjects    = Subject::where('school_id', Auth::user()->school_id)->get();
+    $standards   = Standard::where('school_id', Auth::user()->school_id)->get(); 
+    $academicYears = AcademicYear::where('school_id', Auth::user()->school_id)->get();
+    $sections = Section::where("school_id", $school_id)->get();
             
     $exams = Exam::where('school_id', Auth::user()->school_id)
         ->with(['standard', 'subject', 'academicYear', 'teacher'])
@@ -30,7 +33,9 @@ class ExamController extends Controller
             ->whereIn('usergroup_id', [3, 5]) // adjust role names
             ->get();
 
-    return view('admin.exams.index', compact('exams', "exam_types", "subjects", "standards", "teachers", "academicYears"));  // or 'exams.index' if no admin folder
+    return view('admin.exams.index', compact(
+        'exams', "exam_types", "subjects", "standards", "teachers", "sections", "academicYears"
+        ));  
 }
 
     public function list()

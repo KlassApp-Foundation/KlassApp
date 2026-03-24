@@ -20,26 +20,22 @@ class ClassesSeeder extends Seeder
         $standards = Standard::where("status", 1)->get();
         $classes = [
             // Pre-primary (Nursery)
-            ['name' => 'Baby Class',     'order' => 1,  'status' => '1'],
-            ['name' => 'Middle Class',   'order' => 2,  'status' => '1'],
-            ['name' => 'Top Class',      'order' => 3,  'status' => '1'],
-
-            // Primary
-            ['name' => 'Primary 1',      'order' => 4,  'status' => '1'],
-            ['name' => 'Primary 2',      'order' => 5,  'status' => '1'],
-            ['name' => 'Primary 3',      'order' => 6,  'status' => '1'],
-            ['name' => 'Primary 4',      'order' => 7,  'status' => '1'],
-            ['name' => 'Primary 5',      'order' => 8,  'status' => '1'],
-            ['name' => 'Primary 6',      'order' => 9,  'status' => '1'],
-            ['name' => 'Primary 7',      'order' => 10, 'status' => '1'],
-
-            // Secondary (O & A level)
-            ['name' => 'Senior 1',       'order' => 11, 'status' => '1'],
-            ['name' => 'Senior 2',       'order' => 12, 'status' => '1'],
-            ['name' => 'Senior 3',       'order' => 13, 'status' => '1'],
-            ['name' => 'Senior 4',       'order' => 14, 'status' => '1'],
-            ['name' => 'Senior 5',       'order' => 15, 'status' => '1'],
-            ['name' => 'Senior 6',       'order' => 16, 'status' => '1'],
+            ['name' => 'Baby Class',     'position' => 1,  'status' => '1'],
+            ['name' => 'Middle Class',   'position' => 2,  'status' => '1'],
+            ['name' => 'Top Class',      'position' => 3,  'status' => '1'],
+            ['name' => 'Primary 1',      'position' => 4,  'status' => '1'],
+            ['name' => 'Primary 2',      'position' => 5,  'status' => '1'],
+            ['name' => 'Primary 3',      'position' => 6,  'status' => '1'],
+            ['name' => 'Primary 4',      'position' => 7,  'status' => '1'],
+            ['name' => 'Primary 5',      'position' => 8,  'status' => '1'],
+            ['name' => 'Primary 6',      'position' => 9,  'status' => '1'],
+            ['name' => 'Primary 7',      'position' => 10, 'status' => '1'],
+            ['name' => 'Senior 1',       'position' => 11, 'status' => '1'],
+            ['name' => 'Senior 2',       'position' => 12, 'status' => '1'],
+            ['name' => 'Senior 3',       'position' => 13, 'status' => '1'],
+            ['name' => 'Senior 4',       'position' => 14, 'status' => '1'],
+            ['name' => 'Senior 5',       'position' => 15, 'status' => '1'],
+            ['name' => 'Senior 6',       'position' => 16, 'status' => '1'],
         ];
 
      foreach ($schools as $school) {

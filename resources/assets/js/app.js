@@ -115,7 +115,8 @@ Vue.component('edit-discipline', require('./components/discipline/Edit.vue').def
 //academic
 Vue.component('standard-setup', require('./components/settings/StandardSetup.vue').default);
 Vue.component('class-tab', require('./components/academic/class/classTab.vue').default);
-Vue.component('create-class', require('./components/academic/Create1.vue').default);
+// Vue.component('create-class', require('./components/academic/Create1.vue').default);
+Vue.component('create-uganda', require('./components/academic/CreateUganda.vue').default);
 Vue.component('edit-class', require('./components/academic/Edit.vue').default);
 Vue.component('standardfilter', require('./components/academic/Filter.vue').default);
 

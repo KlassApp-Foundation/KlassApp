@@ -12,7 +12,9 @@
                 <div class="">
                     <div class="mb-2">
                         <label for="standard_id" class="tw-form-label"
-                            >Standard<span class="text-red-500">*</span></label
+                            >Standard<span class="text-red-500"
+                                >*</span
+                            ></label
                         >
                     </div>
                     <div class="flex flex-col lg:flex-row md:flex-row">
@@ -297,7 +299,7 @@
                                     name="class_teacher_id"
                                 >
                                     <option value="" disabled>
-                                        Select Class Teacher here
+                                        Select Class Teacher
                                     </option>
                                     <option
                                         v-for="teacher in teacherlist"
@@ -399,7 +401,7 @@
                                     class="tw-form-control w-full"
                                 >
                                     <option value="" disabled="disabled">
-                                        Select Standard
+                                        Select Standard Elicom256
                                     </option>
                                     <option
                                         v-for="standard in standardlist"

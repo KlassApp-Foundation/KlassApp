@@ -125,6 +125,7 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 	Route::post( '/standard/add', 'StandardController@store' );
 	Route::get( '/standard/create', 'StandardController@create' );
 	Route::post( '/standard/create', 'StandardController@add' );
+	Route::get( '/standards', 'StandardController@index' );
 
 //sections
 	//add
@@ -758,7 +759,9 @@ Route::get('/marks/filter', 'MarksController@classExamOverview')->name('admin.ma
 Route::get("/marks/student/{learner}/class/{class}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
 // Optional later: full resource or more actions
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-// But start simple to match the flat style
+// handle classes
+Route::get("/classes/add", "ClassesController@create")->name("admin.classes.add");
+Route::post("/classes/store", "ClassesController@store")->name("admin.classes.store");
 
 
 //Addons
