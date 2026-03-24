@@ -20,6 +20,7 @@ use App\Traits\LogActivity;
 use App\Models\Teacherlink;
 use App\Models\TempTimetable;
 use App\Helpers\SiteHelper;
+use App\Models\Academics\Classes;
 use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\Timetable;
@@ -78,7 +79,7 @@ class StandardsLinkController extends Controller
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
 
         $subjectlist = Subject::where([['school_id',Auth::user()->school_id],['academic_year_id',$academic_year->id],['type','!=','exam']])->get()->groupBy(['standard_id','section_id']);
-       // $standardlist = Standard::where('school_id',Auth::user()->school_id)->orderBy('name','ASC')->get();
+    //    $standardlist = Standard::where('school_id',Auth::user()->school_id)->orderBy('name','ASC')->get();
         // $standardlist = FacadesDB::table('standards')->where('school_id',Auth::user()->school_id)->orderByRaw('FIELD(name,"prekg","lkg","ukg","1","2","3","4","5","6","7","8","9","10","11","12")')->get();
         $standardlist = FacadesDB::table('standards')->where('school_id',Auth::user()->school_id)->orderBy("created_at", "asc")->get();
         $sectionlist = Section::where('school_id',Auth::user()->school_id)->orderBy('name', 'ASC')->get();
@@ -138,7 +139,7 @@ class StandardsLinkController extends Controller
             $academic_year = SiteHelper::getAcademicYear($school_id);
            
             $standard = $this->createStandardLink($school_id , $academic_year->id , $request);
-
+            
             $message = trans('messages.add_success_msg',['module' => 'Standard Details']);
 
             $ip= $this->getRequestIP();
@@ -372,4 +373,7 @@ class StandardsLinkController extends Controller
             //dd($e->getMessage());
         }
     }
+
+    // ============== Ug mode@elicom ========
+    
 }

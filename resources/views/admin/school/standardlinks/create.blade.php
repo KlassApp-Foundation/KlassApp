@@ -17,6 +17,9 @@
         <div class="my-2">
             @include('partials.message')
         </div>
-        <create-class url="{{ url('/') }}"></create-class>
+        {{-- Ugandan change here @elicomelijah --}}
+        <create-uganda url="{{ url('/') }}"></create-uganda>
+        {{-- <create-class url="{{ url('/') }}"></create-class> --}}
+        
     </div>
 @endsection

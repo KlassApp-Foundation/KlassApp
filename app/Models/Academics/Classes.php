@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 class Classes extends Model
 {
     use HasFactory;
-    protected $fillable = ["name", "status", "school_id", "standard_id"];
+    protected $fillable = ["name", "status", "position", "school_id", "standard_id"];
 
     public function school(){
         return $this->belongsTo(School::class);

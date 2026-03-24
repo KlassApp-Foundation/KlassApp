@@ -17,15 +17,24 @@
                @foreach($standards as $standard)
                   <tr class="border-t-2 border-b-2">    
                      <td class="py-3 px-2">{{ $standard->name }}</td>
-                     <td class="py-3 px-2">
+                     <td class="py-3 px-2 text-center">
                         @if( $standard->status == 1)
-                           <a href="#" rel="{{ url('/admin/standard/updateStatus/'.$standard->id) }}" class=" status" value="0"><img src="{{asset('uploads/icons/actions/tick.svg')}}" class="w-5 h-5"></a>
+                           <a href="#" rel="{{ url('/admin/standard/updateStatus/'.$standard->id) }}" class=" status bg-green-400 px-4 py-1 rounded text-white font-semibold" value="0">
+                              Edit
+                              {{-- <img src="{{asset('uploads/icons/actions/tick.svg')}}" class="w-5 h-5"> --}}
+                           </a>
                         @else
-                           <a href="#" rel="{{ url('/admin/standard/updateStatus/'.$standard->id) }}" class="status" value="1"><img src="{{asset('uploads/icons/actions/close.svg')}}" class="w-5 h-5"></a>
+                           <a href="#" rel="{{ url('/admin/standard/updateStatus/'.$standard->id) }}" class="status bg-green-400 px-4 py-1 rounded text-white font-semibold" value="1">
+                              Edit
+                              {{-- <img src="{{asset('uploads/icons/actions/close.svg')}}" class="w-5 h-5"> --}}
+                           </a>
                         @endif
                      </td>
-                     <td class="py-3 px-2">
-                        <a href="#" rel="{{url('/admin/standard/delete/'.$standard->id)}}" class="delete"><img src="{{asset('uploads/icons/actions/trash.svg')}}" class="w-5 h-5 ml-1"></a>
+                     <td class="py-3 px-2 text-center">
+                        <a href="#" rel="{{url('/admin/standard/delete/'.$standard->id)}}" class="delete bg-red-400 px-4 py-1 rounded text-white font-semibold">
+                           Delete
+                           {{-- <img src="{{asset('uploads/icons/actions/trash.svg')}}" class="w-5 h-5 ml-1"> --}}
+                        </a>
                      </td>
                   </tr>
                @endforeach

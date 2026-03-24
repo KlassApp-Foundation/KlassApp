@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('classes', function (Blueprint $table) {
             $table->id();
             $table->string("name");
-            $table->integer("order");
-            $table->string("status");
+            $table->integer("position");
+            $table->string("status")->default("1");
             $table->unsignedBigInteger("school_id");
             $table->foreign("school_id")->references("id")->on("schools")->cascadeOnDelete();
             $table->unsignedInteger("standard_id"); 
