@@ -16,7 +16,7 @@ class GetStudentsMarks extends Controller
 {
     //
     
-    public function GetStudentMarks(User $learner, $class){
+    public function GetStudentMarks(User $learner, $section){
         $admin = Auth::user();
         $schoolId = $admin->school_id;
 
@@ -37,13 +37,11 @@ class GetStudentsMarks extends Controller
                    ->where('usergroup_id', 6)
                    ->first();
             $subjects = Subject::where("school_id", $schoolId)
-                        ->where("school_id", $schoolId)
-                        ->where("standard_id", $class)
+                        ->where("section_id", $section)
                         ->get();
 
-            $term =  Exam::where("standard_id", $class)->pluck("term")->first();
-            $class_name = Standard::find($class)->name;
-            $controls = ["SUBJECT", "OUT OF", "MOT", "EOT", "AVG", "AGG", "REMARK", "TEACHER"];
+            $class_name = Section::find($section)->name;
+            $controls = ["SUBJECT", "OUT OF", "BOT", "MOT", "EOT", "AVG", "AGG", "REMARK", "TEACHER"];
             $grading_system = [
                 "0-39"=>"F9",
                  "40-44"=>"P8",
@@ -55,7 +53,7 @@ class GetStudentsMarks extends Controller
                  "85-100"=>"D1"
                  ];
 
-            return view("admin.marks.student", compact("subjects", "learner", "controls", "term", "class_name", "grading_system"));
+            return view("admin.marks.student", compact("subjects", "learner", "controls", "class_name", "grading_system"));
     }
     
 }
