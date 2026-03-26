@@ -22,7 +22,7 @@
         <!-- Card Header -->
         <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ $marks->student->name ?? 'Student' }}
+                Marks for {{ $marks->student->name ?? 'Student' }}
             </h2>
         </div>
 
@@ -32,7 +32,7 @@
             'student' => $student->id
         ]) }}">
             @csrf
-            @method('PATCH')
+            @method('PUT')
 
             <div class="p-6 space-y-6">
 
@@ -69,19 +69,17 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Remark / Comment
                     </label>
-                   <select name="remark_id" class="tw-form-control w-full">
-                       <option value="{{ $marks->remark_id }}">
+                    {{-- {{ dd($remarks) }} --}}
+                  <select name="remark_id" class="tw-form-control w-full">
+                        <option value="">Select Remark</option>
+                    
                         @foreach ($remarks as $remark)
-                           {{ $remark->id ===  $marks->remark_id ? $remark->remark : " select remark" }}
-                     @endforeach
-                       </option>
-            @foreach ($remarks as $remark)
-                <option value="{{ $remark->id }}"
-                    {{ old('remark_id', $marks->remark_id) == $remark->id ? 'selected' : '' }}>
-                    {{ $remark->remark }}
-                </option>
-            @endforeach
-</select>
+                            <option value="{{ $remark->id }}"
+                                {{ old('remark_id', $marks->remark_id ?? '') == $remark->id ? 'selected' : '' }}>
+                                {{ $remark->remark }}
+                            </option>
+                          @endforeach
+                      </select>
                 </div>
 
             </div>
