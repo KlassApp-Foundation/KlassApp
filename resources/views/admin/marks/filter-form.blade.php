@@ -23,17 +23,17 @@
         </select>
     </div>
 
-    <!-- Class -->
+    <!-- standard -->
     <div>
-        <label for="class" class="block text-sm text-gray-700">Class</label>
-        <select name="class" id="class" class="border-gray-300 rounded-lg p-1">
-            <option value="">-- Select Class --</option>
-            @forelse ($classes as $class)
-                <option value="{{ $class->id }}" @selected(old("class", request('class')) == $class->id) >
-                    {{ $class->name }}
+        <label for="standard" class="block text-sm text-gray-700">Level/Standard</label>
+        <select name="standard" id="standard" class="border-gray-300 rounded-lg p-1">
+            <option value="">-- Select standard --</option>
+            @forelse ($standards as $standard)
+                <option value="{{ $standard->id }}" @selected(old("standard", request('standard')) == $standard->id) >
+                    {{ $standard->name }}
                 </option>
             @empty
-                <option disabled>No classes available</option>
+                <option disabled>No standards available</option>
             @endforelse
         </select>
     </div>
@@ -49,6 +49,21 @@
                 </option>
             @empty
                 <option disabled>No years available</option>
+            @endforelse
+        </select>
+    </div>
+
+    {{-- subject --}}
+     <div>
+        <label for="year" class="block text-sm text-gray-700">Subject</label>
+        <select name="subject" id="year" class="border-gray-300 rounded-lg p-1">
+            <option value="">-- Select Subject --</option>
+            @forelse ($subjects as $subject)
+                <option value="{{ $subject->id }}" @selected(old("subject", request('subject')) == $subject->id)>
+                    {{ $subject->name }}
+                </option>
+            @empty
+                <option disabled>No subject available</option>
             @endforelse
         </select>
     </div>
