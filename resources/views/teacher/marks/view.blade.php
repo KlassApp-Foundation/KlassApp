@@ -2,7 +2,6 @@
 
 @section('content')
 <div class="container-fluid w-full lg:mx-2 py-4">
-    {{-- {{ dd($marks) }} --}}
     {{-- Header --}}
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
         <div>
@@ -120,7 +119,6 @@
                         <td colspan="7" class="text-center py-10">
                             <p class="text-gray-500 text-sm">No marks found</p>
                             {{-- {{ route('teacher.exam.marks.enter', ["exam" => $exam]) }} --}}
-                            {{-- {{ dd($exam) }} --}}
                             <a href="{{ route('teacher.exam.marks.enter', ["exam" => $exam]) }}" class="mt-2 inline-block text-blue-600 text-sm hover:underline">
                                 + Add your first record
                             </a>

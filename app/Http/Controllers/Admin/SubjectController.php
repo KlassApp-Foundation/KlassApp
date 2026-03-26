@@ -30,6 +30,19 @@ class SubjectController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+
+    // index
+    public function index(){
+        $school_id = Auth::user()->school_id;
+        $subject = Subject::where("school_id", $school_id)->get();
+        return view("admin.subject.index", compact("subject", "school_id"));
+    }
+
+    public function addNewSubjaect(){
+        $school_id = Auth::user()->school_id;
+        $subject = Subject::where("school_id", $school_id)->get();
+        return view("admin.subject.create", compact("subject", "school_id"));
+    }
     public function store(SubjectRequest $request)
     {
        //

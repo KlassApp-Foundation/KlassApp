@@ -19,6 +19,7 @@ use Spatie\MediaLibrary\Models\Media;
 use Laravel\Sanctum\HasApiTokens;
 use App\Presenters\UserPresenter;
 use App\Helpers\SiteHelper;
+use App\Models\Academics\Exam;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -164,12 +165,18 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany('App\Models\Subscription','user_id','id');
     }
 
+    public function section(){
+        return $this->belongsToMany(Section::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | SCOPES
     |--------------------------------------------------------------------------
     */
     // app/Models/User.php
+
+   
 public function scopeStudents($query)
 {
     return $query->where('usergroup_id', 6);
@@ -355,6 +362,11 @@ public function scopeStudents($query)
      public function marks()
     {
         return $this->hasMany(Marks::class, "student_id", "id");
+    }
+
+     public function exam()
+    {
+        return $this->hasMany(Exam::class, "teacher_id", "id");
     }
 
     public function teacherprofile()

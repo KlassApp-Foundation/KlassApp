@@ -18,13 +18,13 @@ class Exam extends Model
     protected $fillable=[
          "standard_id", "school_id", "section_id", "academic_year_id", "term", "subject_id", "teacher_id", "exam_type_id", "status","scheduled_at"
         ];
-
+      protected $dates = ["deleted_at"];  
         public function marks(){
            return $this->hasMany(Marks::class);
        }
 
         public function section(){
-           return $this->hasMany(Section::class, "section_id");
+           return $this->belongsTo(Section::class, "section_id");
        }
         public function standard(){
             return $this->belongsTo(Standard::class, "standard_id");

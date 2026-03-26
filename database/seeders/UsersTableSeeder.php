@@ -19,7 +19,7 @@ class UsersTableSeeder extends Seeder
 
         factory(App\Models\User::class, 1)->create([
             'name'         =>   'siteadmin',
-            'email'        =>   'siteadmin@gegok12.com',
+            'email'        =>   'siteadmin@gmail.com',
             'password'     =>  bcrypt('password'),
             'mobile_no'    =>   '1230456789',
             'usergroup_id' =>   "1"

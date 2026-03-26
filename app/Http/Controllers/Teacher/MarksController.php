@@ -65,7 +65,6 @@ public function teacherExamMarksList()
         ->where("teacher_id", $teacher->id)
         ->orderBy('created_at', 'desc')
         ->get();
-        // dd($exams);
 
 // $exm = Exam::where('teacher_id', $teacher->id)->get();
     // Add progress info
@@ -77,22 +76,31 @@ public function teacherExamMarksList()
     return view('teacher.marks.teacher-exam-list', compact('exams', "exm"));
 }
 
-public function enterExamMarks( $exam)
+public function enterExamMarks($exam)
 {
     $user = Auth::user();
     $schoolId = $user->school_id;
-
+    $trId = $user->id;
     $exams = Exam::findOrFail($exam);
-        $tr = DB::table("class_teacher_links")->where("teacher_id", $user->id)->first();
+    $tr = DB::table("class_teacher_links")->where("teacher_id", $trId)->first();
     
     $students = StandardLink::where("standard_id", $exam->standard_id)->get();
+    // users in a class
     $students = StudentAcademic::with(["user"])
                 //    ->where("standardLink_id", $tr->standardLink_id)
                    ->whereHas('user', function ($query) {
                    $query->where("usergroup_id", 6);
                    })
                ->get();
-               dd($students);
+     $allStudents = User::with(["school", "marks"])
+                    ->where("usergroup_id", 6)
+                    ->where("school_id", $schoolId)
+                    // ->whereHas("marks", function($q) use($exams){
+                    //     $q->where("standard_id", $exams->standard_id)
+                    //        ->where("section_id", $exams->section_id);
+                    // })
+                  ->get();
+               dd($allStudents);
     // $students = User::byStandard($exam->standard_id)
     // ->where('school_id', $exam->school_id)
     // ->orderBy('name')

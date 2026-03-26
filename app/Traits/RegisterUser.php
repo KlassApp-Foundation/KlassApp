@@ -36,11 +36,6 @@ trait RegisterUser
             $user->school_id    = $school_id;
             $user->usergroup_id = $usergroup_id;
 
-            if(!is_null($data->name))
-            {
-                $user->name = $data->name;
-            }
-
             $user->password                 = bcrypt('password'); //demo 
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
@@ -336,10 +331,6 @@ trait RegisterUser
 
                 $user->school_id    = $school_id;
                 $user->usergroup_id = $usergroup_id;
-                if(!is_null($data->name))
-                {
-                    $user->name = $data->name;
-                }
                 $user->password = bcrypt('password'); //demo 
                 $user->email = $data->email;
                 $user->mobile_no = $data->mobile_no;
@@ -524,11 +515,6 @@ trait RegisterUser
             $user = new User;
             $user->school_id    = $school_id;
             $user->usergroup_id = $usergroup_id;
-
-            if(!is_null($data->name))
-            {
-                $user->name = $data->name;
-            }
 
             $user->password                 = bcrypt('password'); //demo 
             $user->email                    = $data->email;
@@ -761,7 +747,6 @@ trait RegisterUser
 
             $user->school_id                = $school_id;
             $user->usergroup_id             = $usergroup_id;
-            $user->name                     = $data->name;
             $user->password                 = bcrypt('password'); //demo 
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
