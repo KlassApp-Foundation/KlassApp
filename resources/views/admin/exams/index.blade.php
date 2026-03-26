@@ -27,10 +27,14 @@
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Add New Exam </h2>
             </div>
-
             <div class="p-6">
-                <form action="{{ route('exams.store') }}" method="POST">
+                 
+                <form action="{{ $exam ? route('admin.exams.update', $exam->id) : route('admin.exams.store') }}" method="POST">
+                    {{-- {{ dd($exam) }} --}}
                     @csrf
+                    @if ($exam)
+                        @method('PUT')
+                    @endif
 
                     <!-- Row 1 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -40,15 +44,16 @@
                             </label>
                              <select name="section_id" id="section_id" required
                                     class="tw-form-control w-full">
-                                <option value="">Select exam type</option>
+                                <option value="">Select Class</option>
+                               
                                 @foreach ($sections as $section)
-
-                                     <option value="{{ $section->id }}" {{ old('section_id') == $section->id ? 'selected' : '' }}>
+                                     <option value="{{ $section->id }}" 
+                                        {{ old('section_id', optional($exam)->section_id) == $section->id ? 'selected' : '' }}>
                                         {{ $section->name }}
                                     </option>
                                 @endforeach   
                             </select>
-                            @error('section')
+                            @error('section_id')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
                         </div>
@@ -62,12 +67,12 @@
                                 <option value="">Select exam type</option>
                                 @foreach ($exam_types as $exam_type)
 
-                                     <option value="{{ $exam_type->id }}" {{ old('exam_type') == $exam_type->id ? 'selected' : '' }}>
+                                     <option value="{{ $exam_type->id }}" {{ old('exam_type_id', optional($exam)->exam_type_id) == $exam_type->id ? 'selected' : '' }}>
                                         {{ $exam_type->name }}
                                     </option>
                                 @endforeach   
                             </select>
-                            @error('exam_type')
+                            @error('exam_type_id')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
                         </div>
@@ -83,7 +88,8 @@
                                     class="tw-form-control w-full">
                                 <option value="">Select Year</option>
                                 @foreach($academicYears as $year)
-                                    <option value="{{ $year->id }}" {{ old('academic_year_id') == $year->id ? 'selected' : '' }}>
+                                    <option value="{{ $year->id }}"
+                                         {{ old('academic_year_id', optional($exam)->academic_year_id) == $year->id ? 'selected' : '' }}>
                                         {{ $year->name ?? $year->start_year . ' - ' . $year->end_year }}
                                     </option>
                                 @endforeach
@@ -95,14 +101,15 @@
 
                         <div>
                             <label for="standard_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Class/Standard <span class="text-red-500">*</span>
+                                Level <span class="text-red-500">*</span>
                                 {{-- {{ dd($standards) }} --}}
                             </label>
                             <select name="standard_id" id="standard_id" required
                                     class="tw-form-control w-full">
-                                <option value="">Select Class</option>
+                                <option value="">Select Level</option>
                                 @foreach($standards as $std)
-                                    <option value="{{ $std->id }}" {{ old('standard_id') == $std->id ? 'selected' : '' }}>
+                                    <option value="{{ $std->id }}"
+                                         {{ old('standard_id', optional($exam)->standard_id) == $std->id ? 'selected' : '' }}>
                                         {{ $std->name }}
                                     </option>
                                 @endforeach
@@ -122,9 +129,9 @@
                             <select name="term" id="term" required
                                     class="tw-form-control w-full">
                                 <option value="">Select Term</option>
-                                <option value="1" {{ old('term') == '1' ? 'selected' : '' }}>Term 1</option>
-                                <option value="2" {{ old('term') == '2' ? 'selected' : '' }}>Term 2</option>
-                                <option value="3" {{ old('term') == '3' ? 'selected' : '' }}>Term 3</option>
+                                <option value="1" {{ old('term', optional($exam)->term) == '1' ? 'selected' : '' }}>Term 1</option>
+                                <option value="2" {{ old('term', optional($exam)->term) == '2' ? 'selected' : '' }}>Term 2</option>
+                                <option value="3" {{ old('term', optional($exam)->term) == '3' ? 'selected' : '' }}>Term 3</option>
                             </select>
                             @error('term')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -138,7 +145,8 @@
                             <select name="subject_id" class="tw-form-control w-full">
                                 <option value="">Select Subject</option>
                                 @foreach($subjects as $sub)
-                                    <option value="{{ $sub->id }}" {{ old('subject_id') == $sub->id ? 'selected' : '' }}>
+                                    <option value="{{ $sub->id }}"
+                                         {{ old('subject_id', optional($exam)->subject_id) == $sub->id ? 'selected' : '' }}>
                                         {{ $sub->name }}
                                     </option>
                                 @endforeach
@@ -152,7 +160,8 @@
                             <select name="teacher_id" class="tw-form-control w-full">
                                 <option value="">Select Teacher</option>
                                 @foreach($teachers as $teacher)
-                                    <option value="{{ $teacher->id }}" {{ old('teacher_id') == $teacher->id ? 'selected' : '' }}>
+                                    <option value="{{ $teacher->id }}" 
+                                        {{ old('teacher_id', optional($exam)->teacher_id) == $teacher->id ? 'selected' : '' }}> 
                                         {{ $teacher->name }}
                                     </option>
                                 @endforeach

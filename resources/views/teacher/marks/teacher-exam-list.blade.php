@@ -17,7 +17,6 @@
             </div>
 
             <div class="p-6">
-                {{-- {{ dd($exams) }} --}}
                 @if($exams->isEmpty())
                     <p class="text-center py-12 text-gray-500 dark:text-gray-400">
                         No exams assigned to you for marking yet.

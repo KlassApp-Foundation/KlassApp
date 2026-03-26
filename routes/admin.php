@@ -312,9 +312,11 @@ Route::post( '/promotion/import', 'PromotionController@import' );
 	Route::get( '/document/delete/{id}', 'DocumentsController@destroy' );
 	//subjects
 	//add
+	Route::get( '/subjects', 'SubjectController@index' );
+	Route::get( '/subjects/add-new', 'SubjectController@addNewSubjaect' );
 	Route::post( '/subjects/add', 'SubjectController@store' );
 	Route::post( '/subjects/create', 'SubjectController@create' );
-
+	
 	Route::get( '/subject/delete/{id}', 'SubjectController@destroy' );
 
 
@@ -753,7 +755,9 @@ Route::post( '/student/shift', 'SendMessageController@shift' );
 Route::get('/exams', 'ExamController@list')->name('exams.list');
 Route::get('/exams/add-new', 'ExamController@index')->name('exams.index');
 Route::get('/exams/create', 'ExamController@create')->name('exams.create');
-Route::post('/exams/store', 'ExamController@store')->name('exams.store');
+Route::get('/exams/{exam}/edit', 'ExamController@edit')->name('admin.exams.edit');
+Route::put('/exams/{exam}/update', 'ExamController@update')->name('admin.exams.update');
+Route::post('/admin/exams/store', 'ExamController@store')->name('admin.exams.store');
 Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
 Route::get('/marks/filter', 'MarksController@classExamOverview')->name('admin.marks.filter');
 Route::get("/marks/student/{learner}/class/{class}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");

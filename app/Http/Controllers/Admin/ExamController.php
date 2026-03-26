@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamType;
 use App\Models\AcademicYear;
 use App\Models\School;          // probably not needed if school_id from auth
 use App\Models\Section;
@@ -26,7 +27,7 @@ class ExamController extends Controller
     $sections = Section::where("school_id", $school_id)->get();
             
     $exams = Exam::where('school_id', Auth::user()->school_id)
-        ->with(['standard', 'subject', 'academicYear', 'teacher'])
+        ->with(['standard', 'subject', 'academicYear', 'teacher', 'section'])
         ->latest()
         ->get();
          $teachers    = User::where('school_id', Auth::user()->school_id)
@@ -63,6 +64,7 @@ class ExamController extends Controller
     {
         $validated = $request->validate([
             'standard_id'      => 'required|exists:standards,id',
+            'section_id'       => 'required|exists:sections,id',
             'academic_year_id' => 'required|exists:academic_years,id',
             'term'             => 'required|in:1,2,3', // or string if named "Term I", etc.
             'subject_id'       => 'nullable|exists:subjects,id', // nullable if whole-class exam
@@ -78,10 +80,48 @@ class ExamController extends Controller
 
         
         // In store()
-    return redirect()->route('exams.index')
+    return redirect()->route('exams.list')
       ->with('successmessage', 'Exam created successfully!');
             
     }
 
     // To add edit/update/destroy later...
+
+    public function edit(Exam $exam){
+
+        $school_id = Auth::user()->school_id;
+        $exam_types = ExamType::all();
+        $subjects    = Subject::where('school_id', $school_id)->get();
+        $standards   = Standard::where('school_id', $school_id)->get(); 
+        $academicYears = AcademicYear::where('school_id', $school_id)->get();
+        $sections = Section::where("school_id", $school_id)->get();
+        $teachers = User::where('usergroup_id', 5)->where("school_id", $school_id)->get();
+
+        return view("admin.exams.index", compact(
+            "exam", "exam_types", "subjects", "standards", "academicYears", "sections", "teachers"
+            ));
+    }
+    public function update(Request $request, Exam $exam){
+        
+        $validated = $request->validate([
+            'standard_id'      => 'required|exists:standards,id',
+            'section_id'       => 'required|exists:sections,id',
+            'academic_year_id' => 'required|exists:academic_years,id',
+            'term'             => 'required|in:1,2,3', // or string if named "Term I", etc.
+            'subject_id'       => 'nullable|exists:subjects,id', // nullable if whole-class exam
+            'teacher_id'       => 'nullable|exists:users,id',
+            'exam_type_id'      => 'nullable|exists:exam_types,id', 
+            'scheduled_at'     => 'nullable|date_format:Y-m-d\TH:i',
+            'status'             => 'nullable|in:done,postponed,undone'
+        ]);
+        $exam->update($validated);
+
+        return redirect()->route("exams.list")->with("successmessage", "Exam updated successfully!");
+    }
+
+    public function archieve(Exam $exam){
+        $school_id = Auth::user()->school_id;
+        $exam->where("school_id", $school_id)->delete();
+        return redirect()->route("exams.list")->with("successmessage", "Exam deleted successfully!");
+    }
 }

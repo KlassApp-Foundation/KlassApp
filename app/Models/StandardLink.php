@@ -195,25 +195,25 @@ class StandardLink extends Model
 
     public function getStandardNameAttribute()
     { 
-        if( ($this->standard->name == 'PREKG') || ($this->standard->name == 'prekg') )
+        if( ($this->standard->name == 'Nursery') || ($this->standard->name == 'Nursery') )
         {
-            $standard_name = 'PREKG';
+            $standard_name = 'Nursery';
         }
-        elseif( ($this->standard->name == 'LKG') || ($this->standard->name == 'lkg') )
+        elseif( ($this->standard->name == 'Primary') || ($this->standard->name == 'Primary') )
         {
-            $standard_name = 'LKG';
+            $standard_name = 'Primary';
         }
-        elseif ( ($this->standard->name == 'UKG') || ($this->standard->name == 'ukg') ) 
+        elseif ( ($this->standard->name == 'Secondary') || ($this->standard->name == 'Secondary') ) 
         {
-            $standard_name = 'UKG';
+            $standard_name = 'Secondary';
         }
-        else
-        {
-            if($this->standard != null)
-            {
-                $standard_name = $this->standard->present()->integerToRoman($this->standard->name);
-            }
-        }
+        // else
+        // {
+        //     if($this->standard != null)
+        //     {
+        //         $standard_name = $this->standard->present()->integerToRoman($this->standard->name);
+        //     }
+        // }
 
         return $standard_name;
     }

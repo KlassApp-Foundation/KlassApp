@@ -31,10 +31,9 @@ trait AcademicProcess
     {
         try
         {  
-            $nursery            = ['prekg','lkg','ukg'];
-            $primary            = ['1','2','3','4','5'];
-            $secondary          = ['6','7','8','9','10'];
-            $higher_secondary   = ['11','12'];
+            $nursery            = ['Nursery'];
+            $primary            = ["Primary"];
+            $secondary          = ['Secondary'];  
 
             if($data->standards == 'nursery')
             {
@@ -46,12 +45,12 @@ trait AcademicProcess
             }
             elseif($data->standards == 'secondary')
             {
-                $list = array_merge($nursery,$primary,$secondary);
+                $list = $secondary;
             }
-            else
-            {
-                $list = array_merge($nursery,$primary,$secondary,$higher_secondary);
-            }
+            // else
+            // {
+            //     $list = array_merge($nursery,$primary,$secondary,$higher_secondary);
+            // }
 
             for($i = 0 ; $i < count($list) ; $i++) 
             {
@@ -72,6 +71,54 @@ trait AcademicProcess
             dd($e->getMessage());
         } 
     }
+
+//     public function addStandardUg($school_id, $data)
+// {
+//     try
+//     {  
+//         $lists = [
+//             'nursery'    => 'Nursery',
+//             'primary'    => 'Primary',
+//             'secondary'  => 'Secondary',
+//             'advanced'   => 'Advanced',     // if you want to support it later
+//             'international' => 'International',
+//         ];
+
+//         $selected = strtolower(trim($data->standards));
+
+//         if (!array_key_exists($selected, $lists)) {
+//             throw new \Exception("Invalid standards level selected: " . $selected);
+//         }
+
+//         $standardName = $lists[$selected];
+
+//         // Check if it already exists for this school to avoid duplicates
+//         $exists = Standard::where('school_id', $school_id)
+//                           ->where('name', strtolower($standardName))
+//                           ->exists();
+
+//         if ($exists) {
+//             throw new \Exception("This standard already exists for the school.");
+//         }
+
+//         $standard = new Standard;
+
+//         $standard->school_id = $school_id;
+//         $standard->name      = strtolower($standardName);   // nursery, primary, secondary
+//         $standard->order     = $this->getNextOrder($school_id);  // we'll add this helper below
+//         $standard->status    = 1;
+
+//         $standard->save();
+
+//         return $standard;
+//     }
+//     catch (Exception $e)
+//     {
+//         Log::error('addStandard error: ' . $e->getMessage());
+//         throw $e;
+//     } 
+// }
+
 
     public function createStandard($school_id , $data)
     {

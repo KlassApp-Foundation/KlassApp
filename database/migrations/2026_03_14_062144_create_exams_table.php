@@ -38,6 +38,7 @@ return new class extends Migration
             $table->foreign('teacher_id')->references('id')->on('users')->cascadeOnDelete();
             // hddvncdvcbnc
             $table->timestamps();
+            $table->softDeletes();
         });
     }
     }

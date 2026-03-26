@@ -48,22 +48,37 @@ class StandardsLinkController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+       public function index()
     {
-        
-        //$standardLinks = StandardLink::with('teacher','teacherlink','standard','section')->where('school_id',Auth::user()->school_id)->get()->sortBy('standard.order');
-        $school_id=Auth::user()->school_id;
+        $school_id = Auth::user()->school_id;
         $academic_year = SiteHelper::getAcademicYear($school_id);
-        $standards = Standard::where('school_id',$school_id)->orderBy('order')->pluck('id')->toArray();
-        if(count($standards) > 0)
-            {
-                $standard = implode(' ,',$standards);
-                $standardLinks = StandardLink::where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->orderByRaw('FIELD(standard_id,'.$standard.')')->orderBy('section_id')->get();
-            }
 
-        $teacher_count = User::where('school_id',Auth::user()->school_id)->where('usergroup_id',5)->count();
+        $standards = Standard::where('school_id', $school_id)
+            ->orderBy('order')
+            ->pluck('id')
+            ->toArray();
 
-        return view('/admin/school/standardlinks/index', [ 'standardLinks' => $standardLinks , 'teacher_count' => $teacher_count ]);
+        if (count($standards) > 0)
+        {
+            $standard = implode(' ,', $standards);
+
+            $standardLinks = StandardLink::where([
+                ['school_id', $school_id],
+                ['academic_year_id', $academic_year->id]
+            ])
+            ->orderByRaw('FIELD(standard_id,' . $standard . ')')
+            ->orderBy('section_id')
+            ->get();
+        }
+
+        $teacher_count = User::where('school_id', $school_id)
+            ->where('usergroup_id', 5)
+            ->count();
+
+        return view('admin.school.standardlinks.index', [
+            'standardLinks' => $standardLinks,
+            'teacher_count' => $teacher_count
+        ]);
     }
 
     /**
@@ -158,7 +173,7 @@ class StandardsLinkController extends Controller
         catch(Exception $e)
         {
             Log::info($e->getMessage());
-            dd($e->getMessage());
+            // dd($e->getMessage());
         }
     }
 
