@@ -24,8 +24,9 @@
 
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    Exam Marks for {{ $subject->name }}
+                    Exam Marks for {{ $subject->name }} 
                 </h2>
+                <p>{{ $total }} students</p>
             </div>
 
             <div class="p-6 overflow-x-auto">
@@ -42,17 +43,17 @@
                     </thead>
 
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        @foreach($students as $student)
-                       
+                        @foreach($allStudents as $student)
+                       {{-- {{ dd($student) }} --}}
 
                         <tr>
                             <td class="py-3 text-gray-900 dark:text-white">
-                                {{ $student->user->name  }}
+                                {{ filled($student->name) ? $student->name : "student" ." ". $student->id  }}
                             </td>
 
                             <td>
                                 <input type="number"
-                                       name="marks[{{ $student->user->id }}]"
+                                       name="marks[{{ $student->id }}]"
                                        class="tw-form-control w-24"
                                        min="0"
                                        max="100"
@@ -62,13 +63,13 @@
 
                             <td>
                                 <input type="number"
-                                       name="out_of[{{ $student->user->id }}]"
+                                       name="out_of[{{ $student->id }}]"
                                        value="100"
                                        class="tw-form-control w-24">
                             </td>
 
                             <td>
-                                 <select name="remark_id[{{ $student->user->id }}]" id="remark_id" class="tw-form-control w-full">
+                                 <select name="remark_id[{{ $student->id }}]" id="remark_id" class="tw-form-control w-full">
                                   <option value="">Select Remark</option>
                                   @foreach ($remarks as $remark)
                                       <option value="{{ $remark->id }}">{{ $remark->remark }}</option>
