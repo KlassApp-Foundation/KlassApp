@@ -61,10 +61,10 @@
                
             </div>
             <div class="p-6">
-                @if (!empty($marks) && $marks->isNotEmpty())
-                    @include('admin.marks.results-table', ['marks' => $marks])
-                @else
-                    @if (request()->hasAny(['term', 'year', 'class']))
+                 @if (!empty($marks) && $marks->isNotEmpty())
+                     @include('admin.marks.results-table2', ['marks' => $marks])
+                  @else
+                @if (request()->hasAny(['term', 'year', 'class']))
                         <div class="text-center py-16 text-gray-500">
                             <div class="text-6xl mb-4 opacity-40">🔍</div>
                             <h4 class="text-xl font-medium text-gray-700 mb-2">No marks found</h4>

@@ -49,67 +49,83 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     public function classExamOverview(Request $request)
 {
     $student_usergroup_id = 6;
-    $query = Marks::query()
-        ->with(['student', 'subject', "remark", 'exam']) 
-        ->whereHas("student", function($q) use($student_usergroup_id){
-            $q->where("usergroup_id", $student_usergroup_id);
-        })
-        ->latest('created_at'); // or whatever default sort
-
-        // query all users who're students with student props
-        $schoolId = Auth::user()->school_id;
+    $schoolId = Auth::user()->school_id;
+    // eagerload marks
+    // $query = Marks::query()
+    //     ->with(['student', 'subject', "remark", 'exam']) 
+    //     ->whereHas("student", function($q) use($student_usergroup_id){
+    //         $q->where("usergroup_id", $student_usergroup_id);
+    //     })
+    //     ->latest('created_at');
+    //     $schoolId = Auth::user()->school_id;
         
-                //    dd(Exam::forSchool($schoolId)->count());
-                // dd(User::where('usergroup_id', 6)->count());
-                //    dd(Marks::whereHas('exam', fn($q) => $q->forSchool($schoolId))->count());
+    // ============ eagerload users ===========
+  $query = User::query()
+    ->with(['marks' => function ($q) use ($request) {
+        $q->with('exam', 'subject', 'remark');
+
+        // Filter marks only via exam relation
+        $q->when($request->filled('term'), function ($q2) use ($request) {
+            $q2->whereHas('exam', fn($e) => $e->where('term', $request->term));
+        });
+
+        $q->when($request->filled('year'), function ($q2) use ($request) {
+            $q2->whereHas('exam', fn($e) => $e->where('academic_year_id', $request->year));
+        });
+
+        $q->when($request->filled('standard'), function ($q2) use ($request) {
+            $q2->whereHas('exam', fn($e) => $e->where('standard_id', $request->standard));
+        });
+
+        $q->when($request->filled('subject'), function ($q2) use ($request) {
+            $q2->where('subject_id', $request->subject);
+        });
+    }])
+    ->where('usergroup_id', 6)
+    ->where('school_id', $schoolId)
+    ->latest('created_at');
+
+        
     // Apply filters only if present
-    if ($request->filled('term')) {
-        // $query->where('exam.term', $request->term);
-        $query->whereHas("exam", function($q) use($request){
-            $q->where("term", $request->term);
-        });
-        $term = $request->term;
-    }
+    // if ($request->filled('term')) {
+    //     $query->whereHas("exam", function($q) use($request){
+    //         $q->where("term", $request->term);
+    //     });
+    //     $term = $request->term;
+    // }
     
-    if ($request->filled('year')) {
-        // $query->where('exam.academic_year_id', $request->year); // adjust column name
-        $query->whereHas("exam", function($q) use($request){
-            $q->where("academic_year_id", $request->year);
-        });
-        $year = AcademicYear::where("id", $request->year)->pluck("name")->first();
-    }
+    // if ($request->filled('year')) {
+    //     $query->whereHas("exam", function($q) use($request){
+    //         $q->where("academic_year_id", $request->year);
+    //     });
+    //     $year = AcademicYear::where("id", $request->year)->pluck("name")->first();
+    // }
 
-    if ($request->filled('class')) {
-        $query->whereHas('exam', function($q) use ($request) {
-            $q->where('standard_id', $request->class); // or however your relation works
-        });
-        $class = Standard::find($request->class);
-    }
+    // if ($request->filled('standard')) {
+    //     $query->whereHas('exam', function($q) use ($request) {
+    //         $q->where('standard_id', $request->standard); // or however your relation works
+    //     });
+    //     $class = Standard::find($request->standard);
+    // }
 
-    $all_students = User::with([
-                    'marks.subject',
-                    'marks.remark',
-                    'marks.exam',
-                    'marks.student',
-                    'marks.teacher',
-                    'marks.school',
-                    'school',
-                    'userprofile',
-                   ])
-                   ->whereHas("marks.exam", function ($q) use($schoolId){
-                    $q->forSchool($schoolId);
-                   })
-                   ->where("usergroup_id", 6)
-                   ->where("school_id", $schoolId)
-                   ->orderBy("created_at", "desc")
-                   ->get();
+    // if($request->filled("subject")){
+    //     $query->where("subject_id", $request->subject);
+    // }
     
     // Add more filters the same way (subject, student name search, min_marks, etc.)
-    $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", $request->class)->get();
+    
     // dd($request->class);
     $marks = $query->paginate(15)->appends($request->query());
+    $students = $query->paginate(15)->appends($request->query());
+    // other filter options
+    $years = AcademicYear::where('school_id', $schoolId)->get();
+    $standards = Standard::where('school_id', $schoolId)->get();
+    $terms = [1,2,3]; // or your DB terms
+    $subjects = Subject::where("school_id", $schoolId)->get();
     // dd($marks);
-    return view('admin.marks.filter', compact('marks', 'year', "term", "class", "all_students", "subjects"));
+    return view('admin.marks.filter', compact(
+        'marks', 'year', "term", "class", "subjects", "years", "standards", "terms", "students"
+        ));
 }
 
 // private function to compute grade
