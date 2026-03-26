@@ -921,12 +921,12 @@
         </a>
       </li>  --}}
 
-    <!-- <li class="py-3 px-3 {{Request::segment ('2') == 'subjects' ? 'active':''}} && {{Request::segment ('2') == 'subject' ? 'active':''}}">
+     <li class="py-3 px-3 {{Request::segment ('2') == 'subjects' ? 'active':''}} && {{Request::segment ('2') == 'subject' ? 'active':''}}">
         <a href="{{url('/admin/subjects')}}" class="flex items-center">
             <img src="{{asset('uploads/icons/sidebar/subject.svg')}}" class="w-5 h-5">
             <span class="mx-3 whitespace-no-wrap">Subjects</span>
         </a>
-    </li> -->
+    </li> 
 
     <!--<li class="py-3 px-3 {{Request::segment ('2') == 'files' ? 'active':''}} && {{Request::segment ('2') == 'videos' ? 'active':''}}">
         <a href="{{url('/admin/videos')}}" class="flex items-center">

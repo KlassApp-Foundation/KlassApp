@@ -15,6 +15,7 @@ use App\Traits\LogActivity;
 use App\Models\Standard;
 use App\Traits\Common;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class StandardController extends Controller
 {
@@ -32,7 +33,15 @@ class StandardController extends Controller
         //
         $school_id = Auth::user()->school_id;
         $standards = Standard::where('school_id', $school_id)->orderBy('order')->get();
-
+        // $standards = DB::table("standards")->where("school_id", $school_id)->get();
+        dd(
+    DB::table('standards')
+        ->where('school_id', $school_id)
+            ->orderBy('order')
+        ->get(['id', 'name', 'order', 'school_id', 'created_at'])
+);
+        dd($standards);
+        
         return view('admin.school.standards.index', ['standards' => $standards]);
     }
 

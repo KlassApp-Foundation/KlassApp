@@ -42,7 +42,6 @@
                     </thead>
 
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-{{-- {{ dd($tr) }} --}}
                         @foreach($students as $student)
                        
 

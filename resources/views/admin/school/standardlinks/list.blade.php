@@ -17,7 +17,7 @@
                 <tbody class="bg-grey-light">
                    @foreach($standardLinks as $standardLink)
                       <tr class="border-t-2 border-b-2">    
-                         <td class="py-3 px-2">{{ $standardLink->StandardName }}</td>
+                         <td class="py-3 px-2">{{ $standardLink->StandardName  }}</td>
                          <td class="py-3 px-2">{{ $standardLink->section->name }} 
                             @if( $standardLink->stream!=null && $standardLink->stream!='' )
                                ({{ $standardLink->stream }})

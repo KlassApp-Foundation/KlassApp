@@ -18,6 +18,7 @@
                   <tr class="border-t-2 border-b-2">    
                      <td class="py-3 px-2">{{ $standard->name }}</td>
                      <td class="py-3 px-2 text-center">
+                        
                         @if( $standard->status == 1)
                            <a href="#" rel="{{ url('/admin/standard/updateStatus/'.$standard->id) }}" class=" status bg-green-400 px-4 py-1 rounded text-white font-semibold" value="0">
                               Edit

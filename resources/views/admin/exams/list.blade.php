@@ -4,6 +4,8 @@
 <div class="w-full lg:mx-2">
     <div class="py-3 flex items-center justify-between">
         <h3>Exams Schedule</h3>
+
+           
         {{-- add btn --}}
          <div class="flex items-center" dusk="add-button">
                     <a href="{{url('/admin/exams/add-new/')}}" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">
@@ -13,12 +15,14 @@
                 </div>
     </div>
     <table class="min-w-full divide-y divide-gray-200">
+        {{-- Flash Success Message --}}
+       @include('partials.message')
         <thead class="bg-gray-100">
             <tr>
                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Name</th>
                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class / Standard</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teacher</th>
                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</th>
@@ -29,18 +33,20 @@
             @forelse ($exams as $exam)
             <tr>
                 <td class="p-2">{{ $loop->iteration }}</td>
-                <td class="p-2">{{ $exam->name }}</td>
                 <td class="p-2">{{ $exam->term }}</td>
                 <td class="p-2">{{ $exam->standard->name ?? '-' }}</td>
+                <td class="p-2">{{ $exam->section->name }}</td>
                 <td class="p-2 ">{{ $exam->subject->name ?? '-' }}</td>
-                <td class="p-2">{{ $exam->teacher?->name ?? $exam->teacher?->email }}</td>
+                <td class="p-2">
+                   {{ filled($exam->teacher?->name) ? $exam->teacher->name : $exam->teacher?->email }}
+                 </td>
                 <td class="p-2">{{ $exam->academicYear->name ?? '-' }}</td>
                 <td class="p-2 space-x-2">
-                    <a href="#" class="text-blue-500 hover:text-blue-700">Edit</a>
+                    <a href="{{ route("admin.exams.edit", $exam) }}" class="text-blue-500 hover:text-blue-700">Edit</a>
                     <form action="#" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="text-red-500 hover:text-red-700" onclick="return confirm('Are you sure?')">Delete</button>
+                        <button type="submit" class="text-red-500 hover:text-red-700" onclick="return confirm('Are you sure?')">Archieve</button>
                     </form>
                 </td>
             </tr>

@@ -22,3 +22,7 @@ sudo systemctl reload nginx
 ## changed vue files to match Ugandan system
 
 ✅ resources/assets/js/components/settings/StandardSetup.vue
+
+## To checkout later
+- Promotion
+- To link student to academics
