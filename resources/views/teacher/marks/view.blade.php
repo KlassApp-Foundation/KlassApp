@@ -38,7 +38,7 @@
         <table class="min-w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200 text-gray-600 uppercase text-xs">
                 <tr>
-                    <th class="px-4 py-3 text-left">#</th>
+                    <th class="px-4 py-3 text-left">ID</th>
                     <th class="px-4 py-3 text-left">Student</th>
                     <th class="px-4 py-3 text-left">Subject</th>
                     <th class="px-4 py-3 text-left">Marks</th>
@@ -60,7 +60,7 @@
 
                         {{-- Student --}}
                         <td class="px-4 py-3 font-medium text-gray-800">
-                            {{ $mark->student->name ?? 'N/A' }}
+                            {{ filled($mark->student->name) ? $mark->student->name : 'student' . " ". $mark->student->id }}
                         </td>
 
                         {{-- Subject --}}
@@ -102,12 +102,12 @@
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-2">
                                 <a href="{{ route('teacher.student.marks.edit',[ $mark->exam->id, $mark->student_id, $mark->id])}}" 
-                                   class="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100">
+                                   class="px-3 py-1 text-xs font-medium bg-green-200 text-gray-700 bg-blue-50 rounded-md hover:bg-green-300">
                                     Edit
                                 </a>
 
                                 <button 
-                                    class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100">
+                                    class="px-3 py-1 text-xs font-medium text-gray-700 bg-red-200 rounded-md hover:bg-red-300">
                                     Delete
                                 </button>
                             </div>

@@ -276,6 +276,8 @@ public function scopeStudents($query)
 //     });
 // }
 
+// In User model
+
     public function scopeByStandard($query , $standard)
     {
         $query->wherehas('studentAcademic',function ($query) use($standard)

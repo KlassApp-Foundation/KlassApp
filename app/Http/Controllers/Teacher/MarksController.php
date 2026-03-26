@@ -76,55 +76,40 @@ public function teacherExamMarksList()
     return view('teacher.marks.teacher-exam-list', compact('exams', "exm"));
 }
 
-public function enterExamMarks($exam)
+public function enterExamMarks(Exam $exam)
 {
     $user = Auth::user();
     $schoolId = $user->school_id;
     $trId = $user->id;
-    $exams = Exam::findOrFail($exam);
+    $exams = Exam::findOrFail($exam->id);
     $tr = DB::table("class_teacher_links")->where("teacher_id", $trId)->first();
     
     $students = StandardLink::where("standard_id", $exam->standard_id)->get();
-    // users in a class
-    $students = StudentAcademic::with(["user"])
-                //    ->where("standardLink_id", $tr->standardLink_id)
-                   ->whereHas('user', function ($query) {
-                   $query->where("usergroup_id", 6);
-                   })
-               ->get();
-     $allStudents = User::with(["school", "marks"])
+    
+     $allStudents = User::with(["school", "marks", "studentAcademic.standardLink"])
                     ->where("usergroup_id", 6)
                     ->where("school_id", $schoolId)
-                    // ->whereHas("marks", function($q) use($exams){
-                    //     $q->where("standard_id", $exams->standard_id)
-                    //        ->where("section_id", $exams->section_id);
-                    // })
+                    ->whereHas("studentAcademic", function($q) use($exam){
+                        $q->whereHas("standardLink", function($q2) use($exam){
+                            $q2->where("standard_id", $exam->standard_id)
+                               ->where("section_id", $exam->section_id);
+                        });
+                    })
                   ->get();
-               dd($allStudents);
-    // $students = User::byStandard($exam->standard_id)
-    // ->where('school_id', $exam->school_id)
-    // ->orderBy('name')
-    // ->get();
-
-
-    $remarks = Remarks::where("school_id", 5)->get();
-    // if ($exam->school_id !== $user->school_id) {
-    //     abort(403, 'Not your school');
-    // }
+     $total = $allStudents->count();             
+            //    dd($allStudents);
+  
+    $remarks = Remarks::all();
+   
 
     $standard = $exam->standard; // adjust relation name
     // $subject = request('subject_id') ? Subject::find($exam) : null;
     $subject = $exams->subject;
 
 
-    $existing = Marks::where('exam_id', $exam->id)
-        ->where('school_id', $exam->school_id)
-        ->when($subject, fn($q) => $q->where('subject_id', $subject->id))
-        ->get()
-        ->keyBy('student_id')
-        ->map(fn($m) => ['marks' => $m->marks, 'comment' => $m->comment]);
+    
 
-    return view('teacher.marks.enter', compact('exams', "students", 'standard', 'subject', 'existing', "user", "remarks", "exam", "tr"));
+    return view('teacher.marks.enter', compact('exams', "allStudents", 'standard', 'subject', "user", "remarks", "exam", "tr", "total"));
 }
 
 public function saveExamMarks(Request $request, Exam $exam)
@@ -154,7 +139,8 @@ public function saveExamMarks(Request $request, Exam $exam)
                 'teacher_id' => $exam->teacher_id,
                 'marks'      => $mark,
                 'remark_id'    => $request->remark_id[$studentId] ?? null,
-                "grade" => $grade
+                "grade" => $grade,
+                "section_id" => $exam->section_id
             ]
         );
     }
@@ -210,7 +196,7 @@ public function editMark(Exam $exam, User $student, Marks $marks)
     if ($mark->exists && $mark->teacher_id !== $teacher->id) {
         abort(403, "You didn't enter this mark.");
     }
-$remarks = Remarks::where("school_id", $teacher->school_id)->get();
+$remarks = Remarks::all();
     // Optional: check if student actually belongs to this exam/standard
     // if ($student->user_id !== $exam->standard_id) {
     //     abort(404, "Student not in this class/exam.");
