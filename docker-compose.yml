@@ -4,9 +4,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     container_name: sms-app
     restart: unless-stopped
-    working_dir: /var/www
+    working_dir: /var/www 
     env_file:
       - .env
     environment:
