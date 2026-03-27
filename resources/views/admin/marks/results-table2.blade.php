@@ -1,4 +1,5 @@
 <div class="overflow-x-auto">
+  
     <table class="min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-50">
             <tr>
@@ -7,24 +8,23 @@
 
                 @foreach ($subjects as $subject)
                     <th class="p-2 text-left font-medium text-gray-500 uppercase tracking-wider">
-                        {{ $subject->name }}
+                        {{ str($subject->name)->limit(4, "") }}
                     </th>
                 @endforeach
 
-                <th class="p-2 text-left font-medium text-gray-500 uppercase tracking-wider">Total Marks</th>
-                
+                <th class="p-2 text-left font-medium text-gray-500 uppercase tracking-wider">Total</th>
                 <th class="p-2 text-left font-medium text-gray-500 uppercase tracking-wider">Grade</th>
                 <th class="p-2 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="bg-white divide-y divide-gray-200 ">
             @foreach ($students as $student)
-                <tr class="hover:bg-gray-50 transition text-sm font-medium text-gray-700">
+                <tr class="hover:bg-gray-50 transition text-xs font-medium text-gray-700 ">
                     {{-- ID --}}
-                    <td class="text-center p-2 whitespace-nowrap">{{ $loop->iteration }}</td>
+                    <td class="text-center p-2 whitespace-nowrap border border-gray-400">{{ $loop->iteration }}</td>
 
                     {{-- Student Name --}}
-                    <td class="p-2 whitespace-nowrap">
+                    <td class="p-2 whitespace-nowrap border border-gray-400">
                         {{ filled($student->name) ? $student->name : "student " . $student->id }}       
                     </td>
 
@@ -33,13 +33,13 @@
                         @php
                             $mark = $student->marks->firstWhere('subject_id', $subject->id);
                         @endphp
-                        <td class="p-2 text-center whitespace-nowrap ">
+                        <td class="p-2 text-center whitespace-nowrap border border-gray-400">
                             {{ $mark?->marks ?? '—' }}
                         </td>
                     @endforeach
 
                     {{-- Total Marks --}}
-                    <td class=" p-2 text-center whitespace-nowrap">
+                    <td class=" p-2 text-center whitespace-nowrap border border-gray-400">
                         {{ $student->marks->sum('marks') ?? '—' }}
                     </td>
  
@@ -55,16 +55,23 @@
                     </td> --}}
 
                     {{-- Grade --}}
-                    <td class="p-2 text-center whitespace-nowrap">
+                    <td class="p-2 text-center whitespace-nowrap border border-gray-400">
                         {{ $student->marks->first()?->grade ?? '—' }}
                     </td>
 
                     {{-- Actions --}}
-                    <td class=" p-2 whitespace-nowrap text-sm text-gray-500 flex gap-3 font-semibold">
-                        <a href="#" class="bg-green-400 px-2 rounded text-white">Edit</a>
+                    <td class="p-2 text-center whitespace-nowrap border border-gray-400 flex items-center justify-center gap-2">
+                        <a href="#" class="bg-green-400 px-2 py-1 rounded text-white">Edit</a>
+                        {{-- <a href="
+                        {{ route("admin.marks.student.class", [$student, $student->marks->first()->exam?->section_id]) }}" 
+                         class="bg-blue-400 px-2 py-1 rounded text-white">
+                         View
+                        </a> --}}
                         <a href="
                         {{ route("admin.marks.student.class", [$student, $student->marks->first()->exam?->section_id]) }}" 
-                         class="bg-blue-400 px-2 rounded text-white">View</a>
+                         class="bg-blue-400 px-2 py-1 rounded text-white">
+                         Download Report
+                        </a>
                     </td>
                 </tr>
             @endforeach
