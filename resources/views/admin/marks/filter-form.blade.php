@@ -2,17 +2,20 @@
 
 {{-- @section('content') --}}
 {{-- max-w-2xl mx-auto --}}
-<div class=" bg-white p-3 rounded-lg shadow-md">
+<div class=" bg-white p-3 rounded-lg shadow-md text-xs">
 
-    <h2 class="text-lg font-bold mb-2 text-gray-600">Filter Students Marks</h2>
+    <h2 class="text-sm font-bold mb-2 text-gray-600">Filter Students Marks</h2>
 
-   <form method="GET" action="{{ route('admin.marks.filter') }}" class="flex items-end justify-end gap-4">
+   <form method="GET" action="{{ route('admin.marks.filter') }}" class="flex items-end justify-end gap-2">
 
     <!-- Term -->
     <div>
-        <label for="term" class="block text-sm text-gray-700">Term</label>
-        <select name="term" id="term" class="border-gray-300 rounded-lg p-1">
-            <option value="">-- Select Term --</option>
+        <label for="term" class="block text-gray-700">
+            <span>Term</span>
+            <span class="text-red-400">*</span>
+        </label>
+        <select name="term" id="term" class="border-gray-300 rounded-lg p-1" required>
+            <option value="">-- Term --</option>
             @forelse ($terms as $term)
                 <option value="{{ $term }}" @selected(old('term', request('term')) == $term) >
                     {{ $term }}
@@ -25,9 +28,9 @@
 
     <!-- standard -->
     <div>
-        <label for="standard" class="block text-sm text-gray-700">Level/Standard</label>
+        <label for="standard" class="block  text-gray-700">Level/Standard</label>
         <select name="standard" id="standard" class="border-gray-300 rounded-lg p-1">
-            <option value="">-- Select standard --</option>
+            <option value="">-- standard --</option>
             @forelse ($standards as $standard)
                 <option value="{{ $standard->id }}" @selected(old("standard", request('standard')) == $standard->id) >
                     {{ $standard->name }}
@@ -40,9 +43,9 @@
 
     <!-- Year -->
     <div>
-        <label for="year" class="block text-sm text-gray-700">Year</label>
+        <label for="year" class="block  text-gray-700">Year</label>
         <select name="year" id="year" class="border-gray-300 rounded-lg p-1">
-            <option value="">-- Select Year --</option>
+            <option value="">-- Year --</option>
             @forelse ($years as $year)
                 <option value="{{ $year->id }}" @selected(old("year", request('year')) == $year->id)>
                     {{ $year->name }}
@@ -53,17 +56,53 @@
         </select>
     </div>
 
+    {{-- class/section --}}
+     <div>
+        <label for="year" class="block  text-gray-700">
+            <span>Class</span>
+            <span class="text-red-400">*</span>
+        </label>
+        <select name="class" id="class" class="border-gray-300 rounded-lg p-1" required>
+            <option value="">-- Class --</option>
+            @forelse ($classes as $class)
+                <option value="{{ $class->id }}" @selected(old("class", request('class')) == $class->id)>
+                    {{ $class->name }}
+                </option>
+            @empty
+                <option disabled>No class available</option>
+            @endforelse
+        </select>
+    </div>
+
     {{-- subject --}}
      <div>
-        <label for="year" class="block text-sm text-gray-700">Subject</label>
+        <label for="year" class="block  text-gray-700">Subject</label>
         <select name="subject" id="year" class="border-gray-300 rounded-lg p-1">
-            <option value="">-- Select Subject --</option>
+            <option value="">-- Subject --</option>
             @forelse ($subjects as $subject)
                 <option value="{{ $subject->id }}" @selected(old("subject", request('subject')) == $subject->id)>
                     {{ $subject->name }}
                 </option>
             @empty
                 <option disabled>No subject available</option>
+            @endforelse
+        </select>
+    </div>
+
+     {{-- exam type --}}
+     <div>
+        <label for="year" class="block  text-gray-700">
+            <span>Exam Type</span>
+            {{-- <span class="text-red-400">*</span> --}}
+        </label>
+        <select name="examType" id="year" class="border-gray-300 rounded-lg p-1" >
+            <option value="">-- Exam Type --</option>
+            @forelse ($examTypes as $examType)
+                <option value="{{ $examType->id }}" @selected(old("examType", request('examType')) == $examType->id)>
+                    {{ $examType->name }}
+                </option>
+            @empty
+                <option disabled>No exam type available</option>
             @endforelse
         </select>
     </div>

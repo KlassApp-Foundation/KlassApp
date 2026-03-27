@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
 
 use App\Models\AcademicYear;
+use App\Models\Section;
 use App\Models\Standard;
 use App\Models\Subject;
 use App\Models\User;
@@ -66,7 +68,8 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
 
         // Filter marks only via exam relation
         $q->when($request->filled('term'), function ($q2) use ($request) {
-            $q2->whereHas('exam', fn($e) => $e->where('term', $request->term));
+            $q2->whereHas('exam', fn($e) => $e
+            ->where('term', $request->term));
         });
 
         $q->when($request->filled('year'), function ($q2) use ($request) {
@@ -80,11 +83,19 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
         $q->when($request->filled('subject'), function ($q2) use ($request) {
             $q2->where('subject_id', $request->subject);
         });
+
+        $q->when($request->filled("class"), function($q2) use($request){
+            $q2->whereHas("exam", fn($e) =>$e ->where("section_id", $request->class));
+        });
+
+        $q->when($request->filled("examType"), function($q2) use($request){
+            $q2->whereHas("exam", fn($e) =>$e->where("exam_type_id", $request->examType));
+        });
     }])
     ->where('usergroup_id', 6)
     ->where('school_id', $schoolId)
     ->latest('created_at');
-
+// dd($request->class);
         
     // Apply filters only if present
     // if ($request->filled('term')) {
@@ -120,11 +131,17 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     // other filter options
     $years = AcademicYear::where('school_id', $schoolId)->get();
     $standards = Standard::where('school_id', $schoolId)->get();
+    $classes = Section::where("school_id", $schoolId)->get();
     $terms = [1,2,3]; // or your DB terms
-    $subjects = Subject::where("school_id", $schoolId)->get();
+    $subjects = Subject::where("school_id", $schoolId)->where("section_id", $request->class)->get();
+    $examTypes = ExamType::all();
+    $type = ExamType::find($request->examType);
+    $term = Exam::where("term", $request->term)->pluck("term")->first();
+    $class = Section::find($request->class);
+    // dd($subjects);
     // dd($marks);
     return view('admin.marks.filter', compact(
-        'marks', 'year', "term", "class", "subjects", "years", "standards", "terms", "students"
+        'marks', 'year', "term", "class", "subjects", "years", "standards", "terms", "students", "classes", "examTypes", "type", "term"
         ));
 }
 
