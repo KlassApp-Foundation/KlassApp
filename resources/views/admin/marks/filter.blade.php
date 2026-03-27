@@ -5,8 +5,8 @@
 <div class="container-fluid w-full lg:mx-2">
 
     {{-- Sticky Filter Bar --}}
-    <div class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b flex justify-end">
-        <div class="py-2 px-4">
+    <div class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b flex items-center justify-end">
+        <div class="flex items-center justify-end">
             @include('admin.marks.filter-form')   <!-- your form include -->
         </div>
     </div>
@@ -50,11 +50,14 @@
         {{-- Results Section --}}
         <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
             <div class="p-2 border-b flex items-center gap-8">
-                <h3 class="text-lg font-semibold text-gray-800"> Exam Results </h3>
-                    @if(!empty($marks) && $marks->isNotEmpty()) 
+                <h3 class="text-lg font-semibold text-gray-800"> 
+                    {{ $type->name . " " . $term }}  Exam Results 
+                    for
+                    
+                </h3>
+                    @if(!empty($students) && $students->isNotEmpty()) 
                     <div class="flex items-center gap-2 text-sm font-semibold text-gray-600">
                         <span>{{ $class->name }}</span>
-                        <span>{{ "Term " . $term }}</span>
                         <span> {{ $year }} </span>
                     </div>
                       @endif
