@@ -31,6 +31,9 @@ COPY . .
 RUN usermod -u ${USER_ID} www-data && \
     groupmod -g ${GROUP_ID} www-data 
 
+# give www-data to create vendor folder
+RUN chown -R www-data:www-data /var/www
+
 # switch to www-data for composer install
 USER www-data
 # install dependencies and cache configs
