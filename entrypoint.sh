@@ -2,23 +2,22 @@
 
 set -e #exit on every error
 
-echo "Fixing Laravel permission (after volume mount)"
-
 # Use absolute paths for reliability
-chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
-chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+# chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 # Ensure all required subdirectories exist and are writable (-p create if not exist)
-mkdir -p /var/www/storage/logs \
-         /var/www/storage/framework/sessions \
-         /var/www/storage/framework/views \
-         /var/www/storage/framework/cache
+# mkdir -p /var/www/storage/logs \
+#          /var/www/storage/framework/sessions \
+#          /var/www/storage/framework/views \
+#          /var/www/storage/framework/cache \
+#          /var/www/bootstrap/cache
 
-chown -R www-data:www-data /var/www/storage/framework /var/www/storage/logs
-chmod -R 775 /var/www/storage/framework /var/www/storage/logs
-
-echo "Permissions fixed successfully."
-
+# chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
+# # Set group-writable permissions (775) without forcing ownership change
+# chmod -R 775 /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
+# make sure the current user (www-data) can write 
+# chmod -R g+w /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
 # waiting for DB
 echo "Waiting for database at $DB_HOST:$DB_PORT ..."
 while ! nc -z $DB_HOST $DB_PORT; do
