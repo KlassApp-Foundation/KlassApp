@@ -31,12 +31,6 @@ COPY . .
 RUN usermod -u ${USER_ID} www-data && \
     groupmod -g ${GROUP_ID} www-data 
 
-# ownership for the whole project
-RUN chown -R www-data:www-data /var/www
-
-# make storage and cache writable
-RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-
 # switch to www-data for composer install
 USER www-data
 # install dependencies and cache configs
@@ -45,17 +39,13 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
      && php artisan route:cache \
      && php artisan view:cache
 
-# switch back to root
+# Switch back to root so entrypoint can fix permissions after volume mount
 USER root
 
-# fix storage and cache permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+# copy and prepare entry point
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 9000
-
-COPY entrypoint.sh /entrypoint.sh
-
-RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT [ "/entrypoint.sh" ]
