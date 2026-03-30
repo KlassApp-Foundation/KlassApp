@@ -14,7 +14,7 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="mb-2">
                     <label for="standard_id" class="tw-form-label">
-                        Class <span class="text-red-500">*</span>
+                        Level <span class="text-red-500">*</span>
                     </label>
                 </div>
                 <select
@@ -24,7 +24,7 @@
                     class="tw-form-control w-full"
                     @change="addRow()"
                 >
-                    <option value="" disabled>Select Level / Class</option>
+                    <option value="" disabled>Select Level / Standard</option>
                     <option
                         v-for="level in standardlist"
                         :key="level.id"
@@ -59,7 +59,7 @@
                             class="tw-form-control w-full"
                             @change="addRow()"
                         >
-                            <option value="" disabled>Select Section</option>
+                            <option value="" disabled>Select Class</option>
                             <option
                                 v-for="section in sectionlist"
                                 :key="section.id"
@@ -252,8 +252,8 @@
                 </tbody>
             </table>
             <p v-else class="text-gray-500 text-sm py-4">
-                No subjects found for this level and class. Please add
-                subjects first.
+                No subjects found for this level and class. Please add subjects
+                first.
             </p>
         </div>
 
