@@ -771,6 +771,8 @@ Route::post("/classes/store", "ClassesController@store")->name("admin.classes.st
 Route::get("/academic-term", "Academics\AcademicTermController@index")->name("admin.academic-term");
 Route::get("/academic-term/create", "Academics\AcademicTermController@create")->name("admin.academic-term.create");
 Route::post("/academic-term/store", "Academics\AcademicTermController@store")->name("admin.academic-term.store");
+Route::get("/academic-term/{term}/edit", "Academics\AcademicTermController@edit")->name("admin.academic-term.edit");
+Route::patch("/academic-term/{termId}/update", "Academics\AcademicTermController@update")->name("admin.academic-term.update");
 Route::delete("/academic-term/{termId}/destroy", "Academics\AcademicTermController@destroy")->name("admin.academic-term.destroy");
 
 // ============== FEES STRUCTURE =================
@@ -778,6 +780,8 @@ Route::get("/fees-categories", "Academics\FeesCategoryController@index")->name("
 Route::get("/fees-categories/create", "Academics\FeesCategoryController@create")->name("admin.fees-categories.create");
 Route::post("/fees-categories/store", "Academics\FeesCategoryController@store")->name("admin.fees-categories.store");
 Route::delete("/fees-categories/{fee}/destroy", "Academics\FeesCategoryController@destroy")->name("admin.fees-categories.destroy");
+Route::get("/fees-categories/{fee}/edit", "Academics\FeesCategoryController@edit")->name("admin.fees-categories.edit");
+Route::patch("/fees-categories/{fee}/update", "Academics\FeesCategoryController@update")->name("admin.fees-categories.update");
 //Addons
 
 Route::get('/addon', function () {

@@ -2,6 +2,9 @@
 
 @section('content')
 <div class="py-6">
+    @php
+        $new_term = $new_term ?? null
+    @endphp
     <div class="container mx-auto p-6 bg-white shadow rounded ">
     <h2 class="text-xl font-semibold mb-4">Add Academic Term</h2>
 
@@ -15,10 +18,12 @@
             </ul>
         </div>
     @endif
-
-    <form action="{{ route('admin.academic-term.store') }}" method="POST">
+    <form action="{{
+    $new_term ?  route('admin.academic-term.update', $new_term->id) : route('admin.academic-term.store') }}" method="POST">
         @csrf
-
+        @if ($new_term !== null)
+            @method("PATCH")
+        @endif
         {{-- Name --}}
         <div class="mb-4">
             <label for="name" class="block font-medium mb-1">Name</label>
@@ -26,7 +31,7 @@
                     <option value="______">Select Term</option>
                     @foreach ($terms as $term)
                         <option value="{{ $term }}" 
-                        {{ old("name") == $term ? "selected" : ""}} 
+                        {{ old("name", $new_term?->name) == $term ? "selected" : ""}} 
                         > {{ $term }}</option>
                     @endforeach
                 </select>
@@ -39,7 +44,7 @@
                 type="date"
                 name="starts_on"
                 id="starts_on"
-                value="{{ old('starts_on') }}"
+                value="{{ old('starts_on', optional($new_term)->starts_on?->format('Y-m-d')) }}"
                 class="w-full border rounded p-2"
             >
         </div>
@@ -51,7 +56,7 @@
                 type="date"
                 name="ends_on"
                 id="ends_on"
-                value="{{ old('ends_on') }}"
+                value="{{ old('ends_on', optional($new_term)->ends_on?->format("Y-m-d")) }}"
                 class="w-full border rounded p-2"
             >
         </div>
@@ -59,7 +64,7 @@
         {{-- Submit --}}
         <div>
             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                Add Academic Term
+                {{$new_term ? "Update Term" : "Add Academic Term"}}
             </button>
         </div>
     </form>

@@ -30,19 +30,20 @@ class UpdateAcademicTermRequest extends FormRequest
     }
     public function rules(): array
     {
+        $termId = $this->route("termId");
         return [
             "name" => [
                 "sometimes",
                 "string",
                 "max:255",
-                Rule::unique("academic_terms")->where(function ($query){
-                    return $query->where("school_id", auth()->user()->school_id);
-                })
+                Rule::unique("academic_terms")
+                ->ignore($termId)
+                ->where(fn($query) => $query->where("school_id", auth()->user()->school_id))
             ],
-            "school_id" => "sometimes|exists:schools,id",
-            "academic_year_id" => "sometimes|exists:academic_years,id",
-            "starts_on"  =>"sometimes|date",
-            "ends_on"    =>"sometimes|date|after_or_equal:starts_on"
+            "school_id" => "sometimes|nullable|exists:schools,id",
+            "academic_year_id" => "sometimes|nullable|exists:academic_years,id",
+            "starts_on"  =>"sometimes|nullable|date",
+            "ends_on"    =>"sometimes|nullable|date|after_or_equal:starts_on"
         ];
     }
 }
