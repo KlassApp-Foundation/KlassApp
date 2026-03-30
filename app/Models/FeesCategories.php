@@ -13,4 +13,20 @@ class FeesCategories extends Model
     // for laravel to return 1.50 instead of 1.5
     protected $casts = ["amount" => "decimal:2"];
 
+    public function school(){
+        return $this->belongsTo(School::class, "school_id");
+    }
+
+     public function standard(){
+        return $this->belongsTo(Standard::class, "standard_id");
+    }
+
+    public function section(){
+        return $this->belongsTo(Section::class, "section_id");
+    }
+
+    public function term(){
+        return $this->belongsTo(AcademicTerm::class, "academic_term_id");
+    }
+
 }
