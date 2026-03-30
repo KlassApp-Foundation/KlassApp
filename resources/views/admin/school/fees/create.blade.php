@@ -2,6 +2,9 @@
 
 @section('content')
 <div class="py-6">
+    @php
+        $fee = $fee ?? null
+    @endphp
     <div class="container mx-auto p-6 bg-white shadow rounded ">
     <h2 class="text-xl font-semibold mb-4">Add Academic Term</h2>
 
@@ -16,9 +19,14 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.fees-categories.store') }}" method="POST">
+    <form action="
+    {{$fee ? route("admin.fees-categories.update", $fee->id) : route('admin.fees-categories.store') }}
+     " method="POST">
         @csrf
-
+       @if ($fee !== null)
+           @method("PATCH")
+       @endif
+        
         {{-- Fee name --}}
         <div class="mb-4">
             <label for="name" class="block font-medium mb-1">
@@ -29,7 +37,7 @@
                 type="text"
                 name="name"
                 id="name"
-                value="{{ old('name') }}"
+                value="{{ old('name', $fee?->name) }}"
                 class="w-full border rounded p-2"
                 placeholder="Academics"
                 required
@@ -48,7 +56,7 @@
                 min="0"
                 step="1000"
                 id="amount"
-                value="{{ old('amount') }}"
+                value="{{ old('amount', $fee?->amount) }}"
                 class="w-full border rounded p-2"
                 required
             >
@@ -64,7 +72,7 @@
                     <option value="______">Select Standard</option>
                     @foreach ($standards as $standard)
                         <option value="{{ $standard->id }}" 
-                        {{ old("standard_id") == $standard->id ? "selected" : ""}} 
+                        {{ old("standard_id", $fee?->standard_id) === $standard->id ? "selected" : ""}} 
                         > {{ $standard->name }}</option>
                     @endforeach
                 </select>
@@ -77,7 +85,7 @@
                     <option value="">Select Class</option>
                     @foreach ($sections as $section)
                         <option value="{{ $section->id }}" 
-                        {{ old("section_id") == $section->id ? "selected" : ""}} 
+                        {{ old("section_id", $fee?->section_id) == $section->id ? "selected" : ""}} 
                         > {{ $section->name }}</option>
                     @endforeach
                 </select>
@@ -90,7 +98,7 @@
                     <option value="">Select Term</option>
                     @foreach ($terms as $term)
                         <option value="{{ $term->id }}" 
-                        {{ old("academic_term_id") == $term->id ? "selected" : ""}} 
+                        {{ old("academic_term_id", $fee?->academic_term_id) == $term->id ? "selected" : ""}} 
                         > {{ $term->name }}</option>
                     @endforeach
                 </select>
@@ -100,7 +108,7 @@
         {{-- Submit --}}
         <div>
             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                Add Fee
+               {{$fee ? "Update Fee" : "Add Fee"}}
             </button>
         </div>
     </form>

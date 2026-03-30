@@ -45,7 +45,7 @@
                             </td>
                             <td class="py-2 px-4 border text-center space-x-2">
                                 {{-- Edit --}}
-                                <a href="$"
+                                <a href="{{route("admin.academic-term.edit", $term)}}"
                                    class="text-blue-600 hover:underline">Edit</a>
 
                                 {{-- Delete --}}
