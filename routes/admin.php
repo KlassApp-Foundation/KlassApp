@@ -767,6 +767,11 @@ Route::get("/marks/student/{learner}/class/{class}", "GetStudentsMarks@GetStuden
 Route::get("/classes/add", "ClassesController@create")->name("admin.classes.add");
 Route::post("/classes/store", "ClassesController@store")->name("admin.classes.store");
 
+// ========== ACADEMIC TERM ============
+Route::get("/academic-term", "Academics\AcademicTermController@index")->name("admin.academic-term");
+Route::get("/academic-term/create", "Academics\AcademicTermController@create")->name("admin.academic-term.create");
+Route::post("/academic-term/store", "Academics\AcademicTermController@store")->name("admin.academic-term.store");
+Route::delete("/academic-term/{termId}/destroy", "Academics\AcademicTermController@destroy")->name("admin.academic-term.destroy");
 
 //Addons
 

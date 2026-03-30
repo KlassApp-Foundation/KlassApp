@@ -22,9 +22,10 @@ return new class extends Migration
             $table->unsignedInteger('subject_id');
             $table->unsignedBigInteger('exam_id');
             $table->unsignedInteger('section_id'); 
-            // Other columns
-            $table->decimal('marks', 5, 2); // e.g., 100.00 max
             $table->unsignedBigInteger('remark_id');
+            // Other columns
+           $table->decimal('marks', 5, 2); // e.g., 100.00 max
+           $table->string("grade");
 
             // Define foreign key constraints
              $table->foreign('section_id')->references('id')->on('sections')->cascadeOnDelete();
