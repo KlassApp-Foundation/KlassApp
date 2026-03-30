@@ -22,7 +22,7 @@ class UpdateFeesCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        $feesCategoryId = $this->route("fees_category"); //id from rout
+        $feesCategoryId = $this->route("fee"); //id from rout
         return [
             "name" => [
                 "sometimes",
@@ -34,9 +34,9 @@ class UpdateFeesCategoryRequest extends FormRequest
 
              "school_id" => "sometimes|exists:schools,id",
             "standard_id" => "sometimes|exists:standards,id",
-            "section_id" => "sometimes|exists:sections,id",
-            "academic_term_id" => "sometimes|exists:academic_terms,id",
-            "amount"  =>"sometimes|numeric|min:0|regex:/^\d*(\.\d{1,2})?$/",
+            "section_id" => "sometimes|nullable|exists:sections,id",
+            "academic_term_id" => "sometimes|nullable|exists:academic_terms,id",
+            "amount"  =>"sometimes|nullable|numeric|min:0|regex:/^\d*(\.\d{1,2})?$/",
         ];
     }
 }
