@@ -15,16 +15,20 @@
                 <div class='flex items-center justify-between w-full px-6'>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Exams</h1>
                     {{-- <h3 class=" text-gray-700 dark:text-gray-400">Create a new exam for your school</h3> --}}
-                    <form method="GET" action="{{ route("admin.exams.create") }}">
-                        <select name="section" id="section" class="tw-form-control w-full bg-gray-400">
-                            @foreach ($sections as $section)
-                         <option value="{{ $section->id }}" 
-                            {{ old('section', optional($exam)->section_id) == $section->id ? 'selected' : '' }}>
-                            {{ $section->name }}
-                         </option>
-                    @endforeach   
-                        </select>
-                    </form>
+                   <form method="GET" action="{{ route('admin.exams.create') }}">
+                        <select name="section" id="section"
+                           class="tw-form-control w-full bg-gray-400"
+                           onchange="this.form.submit()">
+                           <option value="">Select Class</option>
+                           @foreach ($sections as $section)
+                               <option value="{{ $section->id }}" 
+                                   {{ old('section', optional($exam)->section_id) == $section->id ? 'selected' : '' }}>
+                                   {{ $section->name }}
+                               </option>
+                           @endforeach   
+                   
+                       </select>
+                   </form>
                 </div>
               
             </div>
@@ -55,6 +59,7 @@
                 <form action="{{ $exam ? route('admin.exams.update', $exam->id) : route('admin.exams.store') }}" method="POST">
                     {{-- {{ dd($exam) }} --}}
                     @csrf
+                    <input type="hidden" name="section_id" value="{{ request('section') }}">
                     @if ($exam)
                         @method('PUT')
                     @endif

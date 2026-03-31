@@ -56,7 +56,7 @@ class GetStudentsMarks extends Controller
                  "75-84"=>"D2",
                  "85-100"=>"D1"
                  ];
-            
+            // added to get fees
             $sectionId = $learner->marks->first()?->section_id;
             $fees = FeesCategories::where("school_id", $admin->school_id)
                                     ->where(function ($query) use($sectionId){
@@ -66,7 +66,7 @@ class GetStudentsMarks extends Controller
                                               }
                                     }) 
                                 ->sum("amount");
-
+// added to get dates
             $now = now();                    
             $currentTerm = AcademicTerm::where("school_id", $schoolId)
                            ->where("starts_on", "<=", $now)
@@ -78,10 +78,43 @@ class GetStudentsMarks extends Controller
                         ->where("starts_on", ">", $currentTerm->ends_on)
                         ->orderBy("starts_on", "asc")
                         ->first();                       
-                               
+    //  position
+    // total students
+    $learners = User::with(["studentAcademic.standardLink", "marks"])
+                     ->where("school_id", $schoolId)
+                     ->where("usergroup_id", 6)
+                     ->whereHas("studentAcademic", function ($q) use($section){
+                        $q->whereHas("standardLink", function ($q2) use($section){
+                            $q2->where("section_id", $section);
+                        });
+                     });
+                    
+    $totalLearners = $learners->count();
+         
+        $learners = $learners->get();
+        
+        // totals
+        $learners = $learners->map(function ($learner){
+            $learner->total = $learner->marks->sum("marks");
+            return $learner;
+        });
+        //   get position
+        $learners = $learners->sortByDesc("total")->values();
+        // dd($learners);
+        $position = 1;
+        $prevtotal = null;
+        $learners = $learners->map(function ($student, $index) use(&$position, &$prevtotal){
+            if($prevtotal !== null && $student->total < $prevtotal){
+                $position = $index + 1;
+            }
+            $student->position = $position;
+            $prevtotal = $student->total;
+            return $student;
+        });
+        $myPos = $learners->where("id", $learner->id)->first()?->position;
             // $byStandard = $fees->where("standard_id", )
-            return view("admin.marks.student", compact(
-                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "currentTerm", "nextTerm"
+    return view("admin.marks.student", compact(
+                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "currentTerm", "nextTerm", "totalLearners", "myPos"
                 ));
     }
     
