@@ -13,6 +13,7 @@ use App\Models\Standard;
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 
 class MarksController extends Controller
@@ -79,11 +80,40 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     ->where('usergroup_id', 6)
     ->where('school_id', $schoolId)
     ->latest('created_at');
-    // dd($request->class);
+    
     $marks = $query->paginate(15)->appends($request->query());
     
-    
-    $students = $query->paginate(15)->appends($request->query());
+    // $students = $query->paginate(15)->appends($request->query());
+        $students = $query->get();
+           // calculate total
+           $students = $students->map(function ($student) {
+           $student->total = $student->marks->sum('marks');
+           return $student;
+       });
+       $students = $students->sortByDesc("total")->values();
+       // position with tie support
+       $position = 1;
+       $prevTotal = null;
+       $students = $students->map(function($student, $index) use (&$position, &$prevTotal){
+        if ($prevTotal !== null && $student->total < $prevTotal){
+            $position = $index + 1;
+        }
+        $student->position = $position;
+        $prevTotal = $student->total;
+
+        return $student;
+       });
+    //    paginate
+    $page = request()->get("page", 1);
+    $perpage = 15;
+    $students = new LengthAwarePaginator(
+        $students->forPage($page, $perpage),
+        $students->count(),
+        $perpage,
+        $page,
+        ["path" => request()->url(), "query" => request()->query()]
+    );
+    //    dd($position);
     // other filter options
     $years = AcademicYear::where('school_id', $schoolId)->get();
     $standards = Standard::where('school_id', $schoolId)->get();
