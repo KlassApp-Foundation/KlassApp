@@ -28,6 +28,7 @@
                     <p class="text-sm text-gray-600 font-medium">Total Students</p>
                     <h3 class="text-3xl font-bold text-blue-700 mt-1">
                         {{ $marks->pluck('student_id')->unique()->count() }}
+                        {{-- {{ dd($marks) }} --}}
                     </h3>
                 </div>
 

@@ -12,10 +12,19 @@
         <!-- Page Header / Title Area -->
         <div class="mb-8">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
+                <div class='flex items-center justify-between w-full px-6'>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Exams</h1>
-                    <h3 class=" text-gray-700 dark:text-gray-400">Create a new exam for your school</h3>
-                    
+                    {{-- <h3 class=" text-gray-700 dark:text-gray-400">Create a new exam for your school</h3> --}}
+                    <form method="GET" action="{{ route("admin.exams.create") }}">
+                        <select name="section" id="section" class="tw-form-control w-full bg-gray-400">
+                            @foreach ($sections as $section)
+                         <option value="{{ $section->id }}" 
+                            {{ old('section', optional($exam)->section_id) == $section->id ? 'selected' : '' }}>
+                            {{ $section->name }}
+                         </option>
+                    @endforeach   
+                        </select>
+                    </form>
                 </div>
               
             </div>
@@ -25,7 +34,10 @@
         <!-- Main Card -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Add New Exam </h2>
+                <h2 class="text-sm font-semibold text-gray-700 dark:text-white"> Select Class </h2>
+                <div class="">
+
+                </div>
             </div>
             <div class="p-6">
 
@@ -49,7 +61,7 @@
 
                     <!-- Row 1 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
+                        {{-- <div>
                             <label for="exam_type_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Class
                             </label>
@@ -67,6 +79,21 @@
                             @error('section_id')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
+                        </div> --}}
+
+                         <div>
+                            <label for="subject_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Subject (optional)
+                            </label>
+                            <select name="subject_id" class="tw-form-control w-full">
+                                <option value="">Select Subject</option>
+                                @foreach($subjects as $sub)
+                                    <option value="{{ $sub->id }}"
+                                         {{ old('subject_id', optional($exam)->subject_id) == $sub->id ? 'selected' : '' }}>
+                                        {{ $sub->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div>
@@ -151,21 +178,7 @@
                             @enderror
                         </div>
 
-                        <div>
-                            <label for="subject_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Subject (optional)
-                            </label>
-                            <select name="subject_id" class="tw-form-control w-full">
-                                <option value="">Select Subject</option>
-                                @foreach($subjects as $sub)
-                                    <option value="{{ $sub->id }}"
-                                         {{ old('subject_id', optional($exam)->subject_id) == $sub->id ? 'selected' : '' }}>
-                                        {{ $sub->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
+                       
                         <div>
                             <label for="teacher_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Assigned Teacher (optional)

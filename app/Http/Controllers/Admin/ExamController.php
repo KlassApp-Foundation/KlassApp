@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
 
 class ExamController extends Controller
 {
-   public function create(){
+   public function create(Request $request){
 
    $school_id = Auth::user()->school_id;
     $exam_types = DB::table("exam_types")->get();
@@ -29,7 +29,6 @@ class ExamController extends Controller
     $academicYears = AcademicYear::where('school_id', Auth::user()->school_id)->get();
     $sections = Section::where("school_id", $school_id)->get();
     $terms = AcademicTerm::where("school_id", $school_id)->get();
-            
     $exams = Exam::where('school_id', Auth::user()->school_id)
         ->with(['standard', 'subject', 'academicYear', 'teacher', 'section'])
         ->latest()
@@ -37,7 +36,10 @@ class ExamController extends Controller
          $teachers    = User::where('school_id', Auth::user()->school_id)
             ->whereIn('usergroup_id', [3, 5]) // adjust role names
             ->get();
-
+    if($request->filled("section")){
+        dd($request);
+    }
+    // $sections =         
     return view('admin.exams.create', compact(
         'exams', "exam_types", "subjects", "standards", "teachers", "sections", "academicYears", "terms"
         ));  
