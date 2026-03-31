@@ -29,7 +29,7 @@ class MarksController extends Controller
     $teacher = Auth::user();
     $exam = Exam::findOrFail($exam_id);
     if($teacher->id !== $exam->teacher_id){
-        abort();
+        abort(403, "You are not authorized.");
     }
 
     // Add security check: school_id === auth()->user()->school_id
@@ -210,12 +210,19 @@ public function updateMark(Request $request, Exam $exam, User $student)
     $teacher = Auth::user();
 
     $validated = $request->validate([
-        'marks'       => 'required|numeric|min:0|max:100', // adjust rules to your system
+        'marks'       => 'sometimes|nullable|numeric|min:0|max:100', // adjust rules to your system
         'grade'       => 'nullable|string|max:5',
         'remark'      => 'nullable|string|max:255',
         // add other fields you have (attendance, etc.)
     ]);
-
+     $mark = $validated["marks"];
+     $grade = ($mark >= 80)
+                ? "A"
+                : (($mark >= 75)
+                    ? "B"
+                    : (($mark >= 65)
+                        ? "C"
+                        : "E"));
     // Find or create
     Marks::updateOrCreate(
         [
@@ -227,7 +234,7 @@ public function updateMark(Request $request, Exam $exam, User $student)
         ],
         [
             'marks'       => $validated['marks'],
-            'grade'       => $validated['grade'] ?? null,
+            'grade'       => $grade ?? null,
             'remark'      => $validated['remark'] ?? null,
             // add other fields + maybe 'updated_at' is auto
         ]

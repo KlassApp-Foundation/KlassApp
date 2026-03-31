@@ -17,8 +17,8 @@
         <select name="term" id="term" class="border-gray-300 rounded-lg p-1" required>
             <option value="">-- Term --</option>
             @forelse ($terms as $term)
-                <option value="{{ $term }}" @selected(old('term', request('term')) == $term) >
-                    {{ $term }}
+                <option value="{{ $term->id }}" @selected(old('term', request("term") === $term->id )) >
+                    {{ $term->name }}
                 </option>
             @empty
                 <option disabled>No terms available</option>

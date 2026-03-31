@@ -59,17 +59,21 @@
                         {{ $student->marks->first()?->grade ?? '—' }}
                     </td>
 
+                    <td class="p-2 text-center whitespace-nowrap border border-gray-400">
+                        {{ $student->marks->first()?->grade ?? '—' }}
+                    </td>
+
                     {{-- Actions --}}
                     <td class="p-2 text-center whitespace-nowrap border border-gray-400 flex items-center justify-center gap-2">
-                        <a href="#" class="bg-green-400 px-2 py-1 rounded text-white">Edit</a>
-                        {{-- <a href="
-                        {{ route("admin.marks.student.class", [$student, $student->marks->first()->exam?->section_id]) }}" 
-                         class="bg-blue-400 px-2 py-1 rounded text-white">
-                         View
-                        </a> --}}
+                        <a href="#" class="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-white">Edit Marks</a>
                         <a href="
                         {{ route("admin.marks.student.class", [$student, $student->marks->first()->exam?->section_id]) }}" 
-                         class="bg-blue-400 px-2 py-1 rounded text-white">
+                         class="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-white">
+                         Report View
+                        </a>
+                        <a href="
+                        {{ route("admin.report.student.class", [$student, $student->marks->first()->exam?->section_id]) }}" 
+                         class="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-white">
                          Download Report
                         </a>
                     </td>

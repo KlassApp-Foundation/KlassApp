@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
-
+use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Section;
 use App\Models\Standard;
@@ -67,9 +67,10 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
         $q->with('exam', 'subject', 'remark');
 
         // Filter marks only via exam relation
+        // by term
         $q->when($request->filled('term'), function ($q2) use ($request) {
             $q2->whereHas('exam', fn($e) => $e
-            ->where('term', $request->term));
+            ->where('academic_term_id', $request->term));
         });
 
         $q->when($request->filled('year'), function ($q2) use ($request) {
@@ -132,11 +133,10 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     $years = AcademicYear::where('school_id', $schoolId)->get();
     $standards = Standard::where('school_id', $schoolId)->get();
     $classes = Section::where("school_id", $schoolId)->get();
-    $terms = [1,2,3]; // or your DB terms
     $subjects = Subject::where("school_id", $schoolId)->where("section_id", $request->class)->get();
     $examTypes = ExamType::all();
     $type = ExamType::find($request->examType);
-    $term = Exam::where("term", $request->term)->pluck("term")->first();
+    $terms = AcademicTerm::where("school_id", $schoolId)->get();
     $class = Section::find($request->class);
     // dd($subjects);
     // dd($marks);

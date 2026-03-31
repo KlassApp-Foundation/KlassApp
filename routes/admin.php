@@ -311,15 +311,23 @@ Route::post( '/promotion/import', 'PromotionController@import' );
 	//delete
 	Route::get( '/document/delete/{id}', 'DocumentsController@destroy' );
 	//subjects
-	//add
-	Route::get( '/subjects', 'SubjectController@index' );
-	Route::get( '/subjects/add-new', 'SubjectController@addNewSubjaect' );
-	Route::post( '/subjects/add', 'SubjectController@store' );
-	Route::post( '/subjects/create', 'SubjectController@create' );
+	//============= frozen ===========
+	// Route::get( '/subjects', 'SubjectController@index' );
+	// Route::get( '/subjects/add-new', 'SubjectController@addNewSubjaect' );
+	// Route::post( '/subjects/add', 'SubjectController@store' );
+	// Route::post( '/subjects/create', 'SubjectController@create' );
+	// Route::get( '/subject/delete/{id}', 'SubjectController@destroy' );
+
+	// =============== NEW VERSION OF SUBJECTS @UG =============
+	Route::get("/subjects", "UgSubjectController@index")->name("admin.subjects");
+	Route::get("/subjects/add-new", "UgSubjectController@create");
+	Route::post("/subject/store", "UgSubjectController@store")->name("admin.subject.store");
+	Route::get("/subjects/{subject}/edit", "UgSubjectController@edit")->name("admin.subjects.edit");
+	Route::patch("/subjects/{subject}/update", "UgSubjectController@update")->name("admin.subject.update");
+	Route::delete("/subjects/{subject}/destroy", "UgSubjectController@destroy")->name("admin.subject.destroy");
+	Route::post("/subjects/{subject}/restore", "UgSubjectController@restore")->name("admin.subject.restore");
+	Route::delete("/subjects/{subject}/force-delete", "UgSubjectController@forceDestroy")->name("admin.subject.force-delete");
 	
-	Route::get( '/subject/delete/{id}', 'SubjectController@destroy' );
-
-
 
 Route::get( '/standardLink/id-card/{id}', 'StandardsLinkController@idcard' );
 Route::get( '/standardLink/id-card-print/{id}', 'StandardsLinkController@printidcard' );
@@ -752,15 +760,19 @@ Route::post( '/student/shift', 'SendMessageController@shift' );
 
 // ========= ADDED FOR UGANDA'S MODEL ===========
 // exams (admin)
-Route::get('/exams', 'ExamController@list')->name('exams.list');
-Route::get('/exams/add-new', 'ExamController@index')->name('exams.index');
-Route::get('/exams/create', 'ExamController@create')->name('exams.create');
+Route::get('/exams', 'ExamController@index')->name('admin.exams');
+Route::get('/exams/add-new', 'ExamController@create')->name('admin.exams.create');
+// Route::get('/exams/create', 'ExamController@create')->name('exams.create');
 Route::get('/exams/{exam}/edit', 'ExamController@edit')->name('admin.exams.edit');
 Route::put('/exams/{exam}/update', 'ExamController@update')->name('admin.exams.update');
 Route::post('/admin/exams/store', 'ExamController@store')->name('admin.exams.store');
+Route::delete('/admin/exams/{examId}/archieve', 'ExamController@archieve')->name('admin.exams.archieve');
+
+
 Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
 Route::get('/marks/filter', 'MarksController@classExamOverview')->name('admin.marks.filter');
 Route::get("/marks/student/{learner}/class/{class}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
+Route::get("/report/student/{learner}/class/{class}", "DownloadStudentReport@download")->name("admin.report.student.class");
 // Optional later: full resource or more actions
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 // handle classes

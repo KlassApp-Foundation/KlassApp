@@ -12,7 +12,10 @@
     </h1>
     <div class="flex items-center justify-center shadow-lg px-6">
         <div class="w-full">
-            <add-subjects></add-subjects> 
+            @include('partials.message')
+
+            {{-- <add-subjects></add-subjects>  --}}
+            @include("admin.subject.form")
         </div>
     </div> 
 </div>
