@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Academics\ExamType;
+use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Section;
 use App\Models\Standard;
@@ -21,7 +22,7 @@ class FilterMarksForm extends Controller
 
     $standards = Standard::where("school_id", $school_id)->get();
     $years   = AcademicYear::where("school_id", $school_id)->get();
-    $terms   = [1,2,3];
+    $terms = AcademicTerm::where("school_id", $school_id)->get();
     $subjects = Subject::where("school_id", $school_id)->get();
     $classes = Section::where("school_id", $school_id)->get();
      $examTypes = ExamType::all();

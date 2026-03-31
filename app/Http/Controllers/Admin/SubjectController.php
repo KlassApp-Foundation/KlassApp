@@ -41,6 +41,7 @@ class SubjectController extends Controller
     public function addNewSubjaect(){
         $school_id = Auth::user()->school_id;
         $subject = Subject::where("school_id", $school_id)->get();
+        // dd($subject);
         return view("admin.subject.create", compact("subject", "school_id"));
     }
     public function store(SubjectRequest $request)

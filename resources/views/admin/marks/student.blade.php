@@ -25,7 +25,7 @@ $filteredMarks = $learner->marks->filter(
 
     <div class="text-right">
         <img src="{{ asset('images/el-el.png') }}" alt="STUDENT PHOTO" class="w-24 h-24 object-cover border border-gray-400">
-        <p class="text-sm text-gray-500">Term {{$filteredMarks->first()?->exam?->term }}</p>
+        <p class="text-sm text-gray-500">Term: {{$filteredMarks->first()?->exam?->academicTerm->name }}</p>
     </div>
 </div>
 
@@ -47,7 +47,9 @@ $filteredMarks = $learner->marks->filter(
                 </td>
                 <td class="p-3 border border-gray-500"> {{ $class_name }}</td>
                 <td class="p-3 border border-gray-500"> {{ $learner->stream ?? "A" }}</td>
-                <td class="p-3 border border-gray-500"> {{ $filteredMarks->first()?->exam?->term }}</td>
+                <td class="p-3 border border-gray-500">
+                     {{ $filteredMarks->first()?->exam?->academicTerm->name ?? "-" }}
+                </td>
             </tr>
         </tbody>
 
@@ -76,8 +78,10 @@ $filteredMarks = $learner->marks->filter(
     </thead>
 
     <tbody class="text-sm">
+        {{-- {{dd($subjects);}} --}}
         @foreach ($subjects as $subject)
           @php
+          
             $mark = $filteredMarks
             ->where('subject_id', $subject->id)
             ->sortBy(fn($m) => array_search($m->exam->examType->name, $allowedTypes));

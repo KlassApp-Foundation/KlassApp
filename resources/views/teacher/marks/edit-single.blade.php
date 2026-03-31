@@ -32,7 +32,7 @@
             'student' => $student->id
         ]) }}">
             @csrf
-            @method('PUT')
+            @method('PATCH')
 
             <div class="p-6 space-y-6">
 
