@@ -41,7 +41,7 @@
                             </td>
 
                             <td class="py-2 px-4 border">
-                                {{ $term->ends_on ? \Carbon\Carbon::parse($term->ends_on)->format('Y-m-d') : '-' }}
+                                {{ $term->ends_on ? \Carbon\Carbon::parse($term->ends_on)->format('d M, Y') : '-' }}
                             </td>
                             <td class="py-2 px-4 border text-center space-x-2">
                                 {{-- Edit --}}

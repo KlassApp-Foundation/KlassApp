@@ -34,7 +34,7 @@
     </div>
 
     {{-- Table --}}
-    <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+    <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm p-2">
         <h3 class='text-center py-2 font-semibold text-gray-700'>
             <span>{{$exam->examType->name}}</span>
             <span>{{ $exam->academicTerm->name }}</span>
