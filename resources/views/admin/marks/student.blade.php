@@ -1,17 +1,18 @@
 @extends('layouts.admin.layout')
 @section('content')
 
-@php
-$allowedTypes = ["Beginning of Term", "Mid Term", "End of Term"];
-$subjectAverages = [];
 
-// filter once globally
-$filteredMarks = $learner->marks->filter(
-    fn($m) => in_array($m->exam?->examType?->name, $allowedTypes)
-);
-@endphp
-
-<div class="container-fluid w-full lg:mx-2 py-4 px-6">
+@if (!is_null($learner))
+    <div class="container-fluid w-full lg:mx-2 py-4 px-6">
+      @php
+          $allowedTypes = ["Beginning of Term", "Mid Term", "End of Term"];
+          $subjectAverages = [];
+          
+          // filter once globally
+          $filteredMarks = $learner->marks->filter(
+              fn($m) => in_array($m->exam?->examType?->name, $allowedTypes)
+          );
+       @endphp
     {{-- ======== header ======= --}}
    <div class="flex items-center justify-between border-b border-gray-400 pb-4">
         <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center font-bold">
@@ -37,6 +38,8 @@ $filteredMarks = $learner->marks->filter(
                 <th class="p-3 border border-gray-500">Class</th>
                 <th class="p-3 border border-gray-500">Stream</th>
                 <th class="p-3 border border-gray-500">Term</th>
+                <th class="p-3 border border-gray-500">Position</th>
+                <th class="p-3 border border-gray-500">Out Of</th>
             </tr>
         </thead>
         <tbody>
@@ -48,8 +51,10 @@ $filteredMarks = $learner->marks->filter(
                 <td class="p-3 border border-gray-500"> {{ $class_name }}</td>
                 <td class="p-3 border border-gray-500"> {{ $learner->stream ?? "A" }}</td>
                 <td class="p-3 border border-gray-500">
-                     {{ $filteredMarks->first()?->exam?->academicTerm->name ?? "-" }}
+                    {{ $filteredMarks->first()?->exam?->academicTerm->name ?? "-" }}
                 </td>
+                <td class="p-3 border border-gray-500"> {{ $myPos ?? "-" }}</td>
+                <td class="p-3 border border-gray-500"> {{ $totalLearners ?? "-" }}</td>
             </tr>
         </tbody>
 
@@ -245,6 +250,12 @@ $filteredMarks = $learner->marks->filter(
         </tbody>
     </table>
 </div>
-
+ <h3 class="text-center text-lg font-semibold py-10">
+ This report card is invalid without the official school stamp
+</h3>
 </div>
+@else
+    <h3 class="text-center text-lg font-semibold">No records found</h3>
+@endif
+
 @endsection
