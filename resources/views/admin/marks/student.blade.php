@@ -57,9 +57,13 @@ $filteredMarks = $learner->marks->filter(
 
 {{-- ============== performance summary ============== --}}
 <div class="flex items-center justify-center py-4 ">
+    @php
+        $termMap = ["First Term" => 1, "Second Term" => 2, "Third Term" => 3];
+        $termName = $filteredMarks->first()?->exam?->academicTerm->name;
+    @endphp
     <h3 class="font-bold text-xl text-gray-700 uppercase">
         {{ $filteredMarks->first()?->exam?->examType->name }}
-        {{ $filteredMarks->first()?->exam?->term }}
+        {{ $termMap[$termName] ?? "-" }}
         {{ $filteredMarks->first()?->exam?->academicYear->name }}
         <span>STUDENT REPORT CARD</span>
     </h3>
@@ -139,9 +143,12 @@ $filteredMarks = $learner->marks->filter(
             <td class="p-3 border border-gray-500">{{$average ?? "-"}}</td>
             <td class="p-3 border border-gray-500">{{ $grade }}</td>
             <td class="p-3 border border-gray-500">{{$remark}}</td>
-            <td class="p-3 border border-gray-500">{{$learner->marks->first()->teacher->name}}</td>
+            {{-- {{ dd($learner) }} --}}
+            <td class="p-3 border border-gray-500">
+                {{$learner->marks->where("subject_id", $subject->id)->first()?->teacher->name ?? "-"}}
+            </td>
         </tr>
-        @endforeach
+        @endforeach 
     </tbody>
 
     @php
@@ -173,27 +180,27 @@ $filteredMarks = $learner->marks->filter(
 <table class="w-full mt-8 border border-gray-400 rounded-xl overflow-hidden text-sm">
     <thead class="bg-gray-200 text-sm uppercase text-gray-600">
         <tr>
-            <th class="p-3 border text-left">Class teacher's comment</th>
-            <th class="p-3 border text-left">Sign</th>
+            <th class="p-3 border border-gray-500 text-left">Class teacher's comment</th>
+            <th class="p-3 border border-gray-500 text-left">Sign</th>
         </tr>
     </thead>
     <tbody>
         <tr>
-        <td class="p-3 border">______________________</td>
-        <td class="p-3 border">______________________</td>
+        <td class="p-3 border border-gray-500">______________________</td>
+        <td class="p-3 border border-gray-500">______________________</td>
     </tr>
     </tbody>
 
     <thead class="bg-gray-200 text-sm uppercase text-gray-600">
         <tr>
-            <th class="p-3 border text-left">Head teacher's comment</th>
-            <th class="p-3 border text-left">Sign</th>
+            <th class="p-3 border border-gray-500 text-left">Head teacher's comment</th>
+            <th class="p-3 border border-gray-500 text-left">Sign</th>
         </tr>
     </thead>
     <tbody>
         <tr>
-        <td class="p-3 border">______________________</td>
-        <td class="p-3 border">______________________</td>
+        <td class="p-3 border border-gray-500">______________________</td>
+        <td class="p-3 border border-gray-500">______________________</td>
     </tr>
     </tbody>
 </table>
@@ -202,16 +209,16 @@ $filteredMarks = $learner->marks->filter(
 <table class="w-full mt-8 border border-gray-400 rounded-xl overflow-hidden text-sm">
     <thead class="bg-gray-200 text-sm uppercase text-gray-600">
         <tr>
-            <th class="p-3 border text-left">Next term begins on</th>
-            <th class="p-3 border text-left">End on</th>
-            <th class="p-3 border text-left">Fees for next term</th>
+            <th class="p-3 border border-gray-500 text-left ">Next term begins on</th>
+            <th class="p-3 border border-gray-500 text-left ">End on</th>
+            <th class="p-3 border border-gray-500 text-left ">Fees for next term</th>
         </tr>
     </thead>
     <tbody>
         <tr>
-        <td class="p-3 border">2026/05/12</td>
-        <td class="p-3 border">2026/08/17</td>
-        <td class="p-3 border">UGX 500,000</td>
+        <td class="p-3 border border-gray-500">{{$nextTerm->starts_on?->format("d M, Y")}}</td>
+        <td class="p-3 border border-gray-500">{{$nextTerm->ends_on?->format("d M, Y")}}</td>
+        <td class="p-3 border border-gray-500">UGX {{$fees}}</td>
     </tr>
     </tbody>
 </table>
@@ -222,17 +229,17 @@ $filteredMarks = $learner->marks->filter(
     <table class="w-full border border-gray-400 rounded-xl overflow-hidden">
         <thead class="bg-gray-100 uppercase text-gray-700">
             <tr>
-                <th class="p-2 border text-center">Grade</th>
+                <th class="p-2 border border-gray-500 text-center">Grade</th>
                 @foreach ($grading_system as $range => $grade)
-                    <th class="p-2 border text-center">{{ $grade }}</th>
+                    <th class="p-2 border border-gray-500 text-center ">{{ $grade }}</th>
                 @endforeach
             </tr>
         </thead>
         <tbody class="bg-gray-200 uppercase text-gray-700">
             <tr>
-                <td class="p-2 border text-center">Range</td>
+                <td class="p-2 border border-gray-500 text-center">Range</td>
                 @foreach ($grading_system as $range => $grade)
-                    <td class="p-2 border text-center">{{ $range }}</td>
+                    <td class="p-2 border border-gray-500 text-center">{{ $range }}</td>
                 @endforeach
             </tr>
         </tbody>
