@@ -54,8 +54,18 @@ class Exam extends Model
             return $this->belongsTo(Userprofile::class, "teacher_id");
         }
 
+        // toggle exam status
+        public function changeExamStatus(){
+            $this->status = match ($this->status){
+                "undone" => "done",
+                "postponed" => "undone"
+            };
+            $this->save();
+        }
+
         // ============= SCOPES ==========
     public function scopeForSchool($query, $val) {
         return $query->where("school_id", $val);
     }
+
 }

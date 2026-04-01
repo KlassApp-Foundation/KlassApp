@@ -23,17 +23,46 @@
                     </p>
                 @else
                     <div class="space-y-4">
+                       
                         @foreach($exams as $exam)
+                         @php
+                            $termMap = ["First Term" => 1, "Second Term" => 2, "Third Term" => 3];
+                            $term = strtolower($termMap[$exam->academicTerm->name])
+                        @endphp
                             <div class="flex items-center justify-between p-4 borderr shadow-md hover:shadow-lg dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                 <div>
-                                    <h3 class="font-semibold text-sm text-gray-900 dark:text-white">{{ $exam->subject->name . " EXAM"}}</h3>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        {{ $exam->term ? 'Term ' . $exam->term : '' }} • 
-                                        {{ $exam->standard->name ?? 'N/A' }}
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-semibold text-sm text-red-00 dark:text-white">{{ $exam->subject->name . " EXAM"}}
+                                    </h3>
+                                    <p class='bg-gray-400 px-1 text-red-500 rounded-full text-xs '>
+                                        {{ $exam->status }}
                                     </p>
-                                    <p class="text-xs text-gray-500 mt-1">
-                                        {{-- Progress: {{ $exam->entered_count ?? 0 }} students --}}
+                                    </div>
+                                    <div class="flex gap-10 items-center">
+                                        <p class="text-xs text-gray-600 dark:text-gray-400">
+                                        <span>{{ $exam->section->name ?? '-' }}</span>
+                                        <span>{{ $exam->examType->name ?? "-" }}</span>
+                                         <span>{{ $term ?? '-' }}</span>
                                     </p>
+                                    
+                                    {{-- to mark the exam as done --}}
+                                   <form action="{{ route("teacher.marks.change-status", $exam) }}" method='POST'>
+                                    @csrf
+                                    @method("PATCH")
+                                    @php
+                                        $btntext = match ($exam->status){
+                                           "undone" => "Mark as done",
+                                           "done" => "Mark as undone",
+                                        }
+                                    @endphp
+
+                                    @if ($exam->status === "undone" || $exam->status === "postponed")
+                                        <button type="submit" class='bg-blue-500 text-white py-1 px-2 rounded text-xs'> {{$btntext}}
+                                         </button>
+                                    @endif
+                                         
+                                   </form>
+                                    </div>
                                 </div>
                                 <div class="flex gap-3">
                                     <a href="{{ route('teacher.exam.marks.enter', $exam) }}"
