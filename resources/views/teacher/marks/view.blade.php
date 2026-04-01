@@ -6,7 +6,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
         <div>
             <h2 class="text-2xl font-semibold text-gray-800">{{ $exam->examType->code }} Exam Marks</h2>
-            <p class="text-sm text-gray-500">Manage and review student performance</p>
+            <p class="text-sm text-gray-500">student performance</p>
         </div>
 
         <a href="#" class="inline-flex items-center px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg shadow hover:bg-green-600">
