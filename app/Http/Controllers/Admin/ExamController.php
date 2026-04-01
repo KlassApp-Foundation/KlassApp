@@ -60,9 +60,11 @@ class ExamController extends Controller
             ->whereIn('usergroup_id', [3, 5]) // adjust role names
             ->get();
             
-
+       $headers = [
+        "ID", "Term", "Type", "Status", "Level", "Class", "Subject", "Teacher", "Academic Year", "Actions"
+        ];     
         return view('admin.exams.index', compact(
-            "exams", 'standards', 'subjects', 'teachers',"exam_types", 
+            "exams", 'standards', 'subjects', 'teachers',"exam_types", "headers"
         ));
     }
 

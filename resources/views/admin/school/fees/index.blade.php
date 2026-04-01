@@ -21,39 +21,39 @@
         @if($fees->isEmpty())
             <p class="text-gray-500">No academic terms found for this year.</p>
         @else
-            <table class="min-w-full bg-white border rounded">
+            <table class="min-w-full bg-white border border-gray-400 rounded">
                 <thead class="bg-gray-200 text-left">
                     <tr>
-                        <th class="py-2 px-4 border">No.</th>
-                        <th class="py-2 px-4 border">Name</th>
-                        <th class="py-2 px-4 border">Amount</th>
-                        <th class="py-2 px-4 border">Level</th>
-                        <th class="py-2 px-4 border">Class</th>
-                        <th class="py-2 px-4 border">Term</th>
-                        <th class="py-2 px-4 border text-center">Actions</th>
+                        <th class="py-2 px-4 border border-gray-400">No.</th>
+                        <th class="py-2 px-4 border border-gray-400">Name</th>
+                        <th class="py-2 px-4 border border-gray-400">Amount</th>
+                        <th class="py-2 px-4 border border-gray-400">Level</th>
+                        <th class="py-2 px-4 border border-gray-400">Class</th>
+                        <th class="py-2 px-4 border border-gray-400">Term</th>
+                        <th class="py-2 px-4 border border-gray-400 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($fees as $fee)
                         <tr class="hover:bg-gray-50">
-                            <td class="py-2 px-4 border">{{ $loop->iteration }}</td>
-                            <td class="py-2 px-4 border">{{ $fee->name }}</td>
-                            <td class="py-2 px-4 border">
+                            <td class="py-2 px-4 border border-gray-400">{{ $loop->iteration }}</td>
+                            <td class="py-2 px-4 border border-gray-400">{{ $fee->name }}</td>
+                            <td class="py-2 px-4 border border-gray-400">
                                 {{ $fee->amount ?? "-" }}
                             </td>
 
-                            <td class="py-2 px-4 border">
+                            <td class="py-2 px-4 border border-gray-400">
                                 {{ $fee->standard->name ?? '-' }}
                             </td>
 
-                            <td class="py-2 px-4 border">
+                            <td class="py-2 px-4 border border-gray-400">
                                 {{ $fee->section->name ?? 'All' }}
                             </td>
 
-                            <td class="py-2 px-4 border">
+                            <td class="py-2 px-4 border border-gray-400">
                                 {{ $fee->term->name ?? 'All' }}
                             </td>
-                            <td class="py-2 px-4 border text-center space-x-2">
+                            <td class="py-2 px-4 border border-gray-400 text-center space-x-6">
                                 {{-- Edit --}}
                                 <a href="{{route("admin.fees-categories.edit", $fee)}}"
                                    class="text-blue-600 hover:underline">Edit</a>

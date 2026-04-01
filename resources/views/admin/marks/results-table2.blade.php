@@ -1,21 +1,21 @@
 <div class="overflow-x-auto">
   
-    <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-700">
+    <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-900">
         <thead class="bg-gray-50">
             <tr>
-                <th class="p-2 text-left font-medium uppercase tracking-wider">ID</th>
-                <th class="p-2 text-left font-medium uppercase tracking-wider">Student</th>
+                <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">ID</th>
+                <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">Student</th>
 
                 @foreach ($subjects as $subject)
-                    <th class="p-2 text-left font-medium uppercase tracking-wider">
+                    <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">
                         {{ str($subject->name)->limit(4, "") }}
                     </th>
                 @endforeach
 
-                <th class="p-2 text-left font-medium uppercase tracking-wider">Total</th>
-                <th class="p-2 text-left font-medium uppercase tracking-wider">Grade</th>
-                <th class="p-2 text-left font-medium uppercase tracking-wider">Position</th>
-                <th class="p-2 text-left font-medium uppercase tracking-wider">Actions</th>
+                <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">Total</th>
+                <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">Grade</th>
+                <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">Position</th>
+                <th class="p-2 text-center  font-medium uppercase tracking-wider border border-gray-400">Actions</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200 ">
@@ -25,8 +25,9 @@
                     <td class="text-center p-2 whitespace-nowrap border border-gray-400">{{ $loop->iteration }}</td>
 
                     {{-- Student Name --}}
-                    <td class="p-2 whitespace-nowrap border border-gray-400">
-                        {{ filled($student->name) ? $student->name : "student " . $student->id }}       
+                    <td class="p-2 whitespace-nowrap border border-gray-400 ">
+                        {{-- {{ filled($student->name) ? $student->name : "student " . $student->id }}    --}}
+                        {{ ucwords(strtolower($student->userprofile?->firstname . " ".$student->userprofile?->lastname ?? "Student". $student->id)) }}       
                     </td>
 
                     {{-- Marks per Subject --}}

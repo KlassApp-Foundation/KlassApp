@@ -4,13 +4,20 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Student Report Card</title>
     <style>
-        @page { margin: 2mm 7mm; background-color: #fffaf0; } /* top-bottom 10mm, sides 15mm */
+        @page { margin: 2mm 7mm; } /* top-bottom 10mm, sides 15mm */
+        *, html{
+            widows: 100%;
+            background-color: #defaf5;
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: sans-serif;
             font-size: 12px;
             line-height: 1.5;
             color: #333;
             position: relative;
+            padding: 15px 18px;
         }
         
         table {
@@ -19,7 +26,7 @@
             margin: 10px 0 0;
         }
         .table{
-            margin: 27px 0 0;
+            margin: 24px 0 0;
         }
         th, td {
             border: 1px solid #555;
@@ -33,8 +40,9 @@
             font-size: 11px;
         }
         .school-name {
-            font-size: 18px;
+            font-size: 25px;
             font-weight: bold;
+            text-transform: uppercase
         }
         .title {
             font-size: 16px;

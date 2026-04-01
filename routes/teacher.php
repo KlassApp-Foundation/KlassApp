@@ -354,6 +354,8 @@ Route::prefix('exam')->group(function () {
 
     Route::patch('/{exam}/students/{student}/mark', "MarksController@updateMark")
     ->name('teacher.marks.update');
+    Route::patch('/{exam}/change-status', "MarksController@TogglekStatus")
+    ->name('teacher.marks.change-status');
 });
 //class wall
 
