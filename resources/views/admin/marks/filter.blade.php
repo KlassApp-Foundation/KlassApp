@@ -27,7 +27,8 @@
                 <div class="bg-gradient-to-br from-blue-50 to-white p-5 rounded-xl shadow-sm border hover:shadow transition">
                     <p class="text-sm text-gray-600 font-medium">Total Students</p>
                     <h3 class="text-3xl font-bold text-blue-700 mt-1">
-                        {{ $marks->pluck('student_id')->unique()->count() }}
+                        {{-- {{ dd($marks) }} --}}
+                        {{ $students->unique()->count() }}
                         {{-- {{ dd($marks) }} --}}
                     </h3>
                 </div>
@@ -35,7 +36,7 @@
                 <div class="bg-gradient-to-br from-green-50 to-white p-5 rounded-xl shadow-sm border hover:shadow transition">
                     <p class="text-sm text-gray-600 font-medium">Subjects Covered</p>
                     <h3 class="text-3xl font-bold text-green-700 mt-1">
-                        {{ $marks->pluck('subject_id')->unique()->count() }}
+                        {{ $subjectsCovered }}
                     </h3>
                 </div>
 

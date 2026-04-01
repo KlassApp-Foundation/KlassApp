@@ -76,6 +76,14 @@ public function teacherExamMarksList()
     return view('teacher.marks.teacher-exam-list', compact('exams', "exm"));
 }
 
+// mark exam as done
+public function TogglekStatus(Exam $exam){   
+    $exam->changeExamStatus();
+    return redirect()
+        ->route('teacher.exam.marks')
+        ->with('successmessage', ' Exam status updated!');
+}
+
 public function enterExamMarks(Exam $exam)
 {
     $user = Auth::user();
@@ -242,8 +250,8 @@ public function updateMark(Request $request, Exam $exam, User $student)
 
     // Optional: flash message
     return redirect()
-        ->route('teacher.exam.marks.view', [$exam]) // or wherever your list is
-        ->with('successmessage', "Marks updated for {$student->name}!");
+        ->route('teacher.exam.marks')
+        ->with('successmessage', $student->name . "'s ". '  Marks updated!');
 }
 
 }

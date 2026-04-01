@@ -120,6 +120,8 @@ class DownloadStudentReport extends Controller
                 "defaultFont" => "sans-serif",
                 "isHtml5ParserEnabled" => true,
                 "isRemoteEnabled" => true, //for external images
+                "isPhpEnabled" => true,
+                "isJavascriptEnabled" => true,
                 "tempDir" =>storage_path("app/dompdf"),
                 "fontDir" =>storage_path("app/dompdf/fonts"),
                 "fontCache" =>storage_path("app/dompdf/fonts")

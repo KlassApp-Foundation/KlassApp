@@ -119,14 +119,21 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     $standards = Standard::where('school_id', $schoolId)->get();
     $classes = Section::where("school_id", $schoolId)->get();
     $subjects = Subject::where("school_id", $schoolId)->where("section_id", $request->class)->get();
+   
+    $subjectsCovered = Exam::where("school_id", $schoolId)
+                       ->where("section_id", $request->class)
+                       ->where("academic_term_id", $request->term)
+                       ->distinct("subject_id")
+                       ->count("subject_id");
+
     $examTypes = ExamType::all();
     $type = ExamType::find($request->examType);
     $terms = AcademicTerm::where("school_id", $schoolId)->get();
-    $class = Section::find($request->class);
-    // dd($subjects);
+    $class = Section::where("id", $request->class)->first();
+    // dd($class);
     // dd($marks);
     return view('admin.marks.filter', compact(
-        'marks', 'year', "term", "class", "subjects", "years", "standards", "terms", "students", "classes", "examTypes", "type", "term"
+        'marks', 'year', "term", "class", "subjects", "years", "standards", "terms", "students", "classes", "examTypes", "type", "term", "subjectsCovered"
         ));
 }
 
