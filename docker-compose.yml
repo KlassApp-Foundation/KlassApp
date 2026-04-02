@@ -8,6 +8,7 @@ services:
     container_name: sms-app
     ports:
       - "8000:80"
+      - "9000:9000"
     restart: unless-stopped
     working_dir: /var/www
     env_file:
