@@ -34,7 +34,6 @@ class User extends Authenticatable implements HasMedia
     use SoftDeletes;
     use Notifiable;
     use HasFactory;
-
     protected $presenter = "App\Presenters\UserprofilePresenter";
 
     /**

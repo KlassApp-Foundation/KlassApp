@@ -572,19 +572,20 @@ trait RegisterUser
             $user = new User;
             $user->school_id    = $school_id;
             $user->usergroup_id = $usergroup_id;
-
+            
             if(!is_null($data->name))
             {
                 $user->name = $data->name;
             }
-
+// dd($data);
             $user->password                 = bcrypt('password'); //demo 
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
             $user->email_verification_code  = Str::random(40);
 
+
             $user->save();
-            
+
             $userprofile = new Userprofile;
 
             $userprofile->school_id     = $school_id;
@@ -702,28 +703,31 @@ trait RegisterUser
 
             if($data->designation == 'principal')
             {
-                $user->addRole('principal');
+                // $user->addRole('principal');
+                $user->attachRole("principal");
+                
+                
             }
 
             if($data->designation == 'transport_coordinator')
             {
-                $user->addRole('transport_coordinator');
+                $user->attachRole('transport_coordinator');
             }
 
             if($data->designation == 'driver')
             {
-                $user->addRole('transport_driver');
+                $user->attachRole('transport_driver');
             }
 
             if( ($data->designation == 'principal') || ($data->designation == 'vice_principal') || ($data->designation == 'head_of_the_department') )
             {
-                $user->addRole('leave_checker');
-                $user->addRole('class_coordinator');
+                $user->attachRole('leave_checker');
+                $user->attachRole('class_coordinator');
 
             }
             else
             {
-                $user->addRole('leave_applier');
+                $user->attachRole('leave_applier');
             }
 
             \DB::commit();
@@ -733,7 +737,7 @@ trait RegisterUser
         {
             \DB::rollBack();
             Log::info($e->getMessage());
-            //dd($e->getMessage());
+           throw $e;
         } 
     }
 

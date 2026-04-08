@@ -82,7 +82,7 @@ class AdmissionStudentRequest extends FormRequest
             'community'                 => 'required|check_community',
             'mother_tongue'             => 'required|check_mother_tongue',
             'identification_marks'      => 'required|check_identification_marks',
-            'aadhar_number'             => 'required|digits:12',
+            'aadhar_number'             => 'nullable|digits:12',
             'blood_group'               => 'required',
             'school_last_studied'       => 'nullable|check_school_last_studied',
             'reason_for_leaving'        => 'nullable|check_reason_for_leaving',

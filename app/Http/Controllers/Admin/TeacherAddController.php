@@ -195,8 +195,9 @@ class TeacherAddController extends Controller
         {
           $usergroup_id=5;
         }
-
+        // dd($request);
         $user = $this->CreateTeacher($request , $school_id , $academic_year , $path,$usergroup_id);
+        // dd($user);
         $mes = trans('messages.add_success_msg',['module' => 'Teacher']);
         \Session::forget('avatar_path');
 
@@ -213,7 +214,7 @@ class TeacherAddController extends Controller
       }
       catch(Exception $e)
       {
-        //dd($e->getMessage());
+        dd($e->getMessage());
       } 
     }
 }
