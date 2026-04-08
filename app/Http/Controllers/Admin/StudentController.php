@@ -141,6 +141,7 @@ class StudentController extends Controller
       //
       try
       {
+        
         $school_id = Auth::user()->school_id;
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
@@ -158,7 +159,6 @@ class StudentController extends Controller
 
         $user = $this->CreateUser($request , $school_id , $academic_year->id , $path , 6);
         $mes = trans('messages.add_success_msg',['module' => 'Student']);
-
         $ip= $this->getRequestIP();
         if(!$user){
           throw new \Exception("User createion failed");

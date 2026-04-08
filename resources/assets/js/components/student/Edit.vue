@@ -421,7 +421,9 @@
                             name="caste"
                             id="caste"
                         >
-                            <option value="" disabled>Select Caste</option>
+                            <option value="Others" disabled>
+                                Select Caste
+                            </option>
                             <option
                                 v-for="castes in castelist"
                                 v-bind:value="castes.id"
@@ -858,10 +860,10 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="registration_number" class="tw-form-label"
-                            >Admission Number<span class="text-red-500"
-                                >*</span
-                            ></label
+                        <label for="registration_number" class="tw-form-label">
+                            Admission Number
+                            <!-- <span class="text-red-500">*</span> -->
+                            </label
                         >
                     </div>
                     <div class="mb-2">

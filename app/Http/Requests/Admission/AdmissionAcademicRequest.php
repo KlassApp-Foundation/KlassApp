@@ -43,7 +43,7 @@ class AdmissionAcademicRequest extends FormRequest
         if( ( $standard->name == '10' ) || ( $standard->name == '11' )  || ( $standard->name == '12' ) )
         {
             $rules['group_selection']           = 'required'; 
-            $rules['board_registration_number'] = 'required|numeric'; 
+            $rules['board_registration_number'] = 'nullable|numeric'; 
         }
 
         return $rules;
