@@ -206,7 +206,7 @@ SPDX-License-Identifier: MIT
           </div>
           <div class="mb-2">
             <select class="tw-form-control w-full" wire:model.live="caste">
-            <option value="">Select caste</option>
+            <option value="others">Select caste</option>
             <option value="bc">BC</option>
             <option value="bcm">BCM</option>
             <option value="fc">FC</option>
