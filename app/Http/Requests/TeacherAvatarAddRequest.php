@@ -47,7 +47,7 @@ class TeacherAvatarAddRequest extends FormRequest
 
         return [
             //
-            'avatar'    => 'required|file_extension',
+            'avatar'    => 'nullable|file_extension',
         ];
     }
 

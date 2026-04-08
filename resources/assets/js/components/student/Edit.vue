@@ -408,7 +408,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
                     <div class="mb-2">
                         <label for="caste" class="tw-form-label"
                             >Caste<span class="text-red-500">*</span></label
@@ -437,7 +437,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
                     <div class="mb-2">
                         <label for="sub_caste" class="tw-form-label"
                             >Sub Caste<span class="text-red-500"></span
@@ -1018,7 +1018,7 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-1/3">
+            <div class="tw-form-group w-full lg:w-1/3 hidden">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label

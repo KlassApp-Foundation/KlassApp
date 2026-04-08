@@ -100,7 +100,7 @@ class EditUserDetailRequest extends FormRequest
                 'city'              =>  'required',
                 'state'             =>  'required',
                 'country'           =>  'required',
-                'pincode'           =>  'required|numeric|min:6',
+                'pincode'           =>  'nullable|numeric|min:6',
                 'family'            =>  'nullable',
                 'marriage_status'   =>  'required',
                 'giving_no'         =>  'nullable|numeric',
@@ -120,7 +120,7 @@ class EditUserDetailRequest extends FormRequest
         
         if(Input::hasFile('avatar')!= '')
         {
-            $rules['avatar']='required|mimes:jpg,jpeg,png,bmp';
+            $rules['avatar']='nullable|mimes:jpg,jpeg,png,bmp';
         }
         return $rules;
     }

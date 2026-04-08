@@ -86,7 +86,7 @@
                     <span v-if="errors.group_selection" class="text-red-500 text-xs font-semibold">{{ errors.group_selection[0] }}</span>
                 </div>
 
-                <div class="flex flex-col lg:flex-row">
+                <div class=" flex-col lg:flex-row hidden">
                     <div class="w-full lg:w-1/2 lg:mr-2">
                         <div class="my-1">
                             <label for="board_registration_number" class="tw-form-label"><h6 class="text-sm font-bold mb-3">Board Registration Number<span class="text-red-500 whitespace-no-wrap">*Only For Class X , XI , XII</span></h6></label>

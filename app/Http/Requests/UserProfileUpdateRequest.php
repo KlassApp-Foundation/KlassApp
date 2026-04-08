@@ -116,7 +116,7 @@ class UserProfileUpdateRequest extends FormRequest
             'birth_place'               => 'nullable|check_birth_place',
             'native_place'              => 'nullable|check_native_place',
             'mother_tongue'             => 'required|check_mother_tongue',
-            'caste'                     => 'required',
+            'caste'                     => 'nullable',
             'notes'                     => 'nullable|string|checknotes',
             'registration_number'       => 'required|numeric',
             'EMIS_number'               => 'nullable|numeric',
