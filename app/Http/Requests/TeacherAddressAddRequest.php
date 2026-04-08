@@ -42,9 +42,9 @@ class TeacherAddressAddRequest extends FormRequest
 
             'city_id.required'                          => 'City is required',
 
-            // 'pincode.required'                          => 'Pincode is required',
-            // 'pincode.numeric'                           => 'Pincode should be numeric',
-            // 'pincode.digits:6'                          => 'Pincode should be 6 digits',
+            'pincode.required'                          => 'Pincode is required',
+            'pincode.numeric'                           => 'Pincode should be numeric',
+            'pincode.digits:6'                          => 'Pincode should be 6 digits',
         ];
     }
 }
