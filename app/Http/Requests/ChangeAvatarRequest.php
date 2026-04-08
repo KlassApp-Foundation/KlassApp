@@ -25,7 +25,7 @@ class ChangeAvatarRequest extends FormRequest
     {
         return [
             //
-            'avatar'    => 'required|mimes:jpg,jpeg,png',
+            'avatar'    => 'nullable|mimes:jpg,jpeg,png',
         ];
     }
 

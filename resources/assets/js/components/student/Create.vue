@@ -242,7 +242,9 @@
             </div>
         </div>
 
-        <portal-target name="address"></portal-target>
+        <div class="hidden">
+            <portal-target name="address"></portal-target>
+        </div>
 
         <div class="tw-form-group">
             <div class="flex flex-col lg:flex-row">
@@ -433,7 +435,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
                     <div class="mb-2">
                         <label for="caste" class="tw-form-label"
                             >Caste<span class="text-red-500">*</span></label
@@ -462,7 +464,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden hidden">
                     <div class="mb-2">
                         <label for="sub_caste" class="tw-form-label"
                             >Sub Caste<span class="text-red-500"></span
@@ -853,7 +855,7 @@
             />
         </div>
 
-        <div class="flex flex-col lg:flex-row">
+        <div class="flex-col lg:flex-row hidden">
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
@@ -1068,7 +1070,7 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-1/3">
+            <div class="tw-form-group w-full lg:w-1/3 hidden">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label
