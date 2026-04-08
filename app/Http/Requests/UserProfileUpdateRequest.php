@@ -107,7 +107,7 @@ class UserProfileUpdateRequest extends FormRequest
             'lastname'                  => 'nullable|check_lastname|max:15',
             'date_of_birth'             => 'required|date|check_date_of_birth',
             'gender'                    => 'required',
-            'blood_group'               => 'required',
+            'blood_group'               => 'nullable',
             'aadhar_number'             => 'nullable|numeric|digits:12|check_unique_aadhar_number',
             'city_id'                   => 'required',
             'state_id'                  => 'required',

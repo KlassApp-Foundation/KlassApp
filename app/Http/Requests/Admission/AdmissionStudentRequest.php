@@ -83,7 +83,7 @@ class AdmissionStudentRequest extends FormRequest
             'mother_tongue'             => 'required|check_mother_tongue',
             'identification_marks'      => 'required|check_identification_marks',
             'aadhar_number'             => 'nullable|digits:12',
-            'blood_group'               => 'required',
+            'blood_group'               => 'nullable',
             'school_last_studied'       => 'nullable|check_school_last_studied',
             'reason_for_leaving'        => 'nullable|check_reason_for_leaving',
             'permanent_address'         => 'required',
