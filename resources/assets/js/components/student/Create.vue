@@ -216,7 +216,7 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-2/5">
+            <div class="tw-form-group w-full lg:w-2/5 hidden">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="aadhar_number" class="tw-form-label"
@@ -335,7 +335,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
                     <div class="mb-2">
                         <label for="pincode" class="tw-form-label"
                             >Pincode</label
@@ -462,7 +462,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
                     <div class="mb-2">
                         <label for="sub_caste" class="tw-form-label"
                             >Sub Caste<span class="text-red-500"></span

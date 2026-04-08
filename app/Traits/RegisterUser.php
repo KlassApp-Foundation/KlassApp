@@ -27,6 +27,16 @@ use Log;
  */
 trait RegisterUser
 {
+    /**
+     * Create a new student user with profile and academic details.
+     *
+     * @param object $data Request payload containing user, profile, and academic info
+     * @param int $school_id School identifier
+     * @param int $academic_year_id Academic year identifier
+     * @param string $path Avatar path if available
+     * @param int $usergroup_id User group id for the student
+     * @return \App\Models\User Newly created user
+     */
     public function CreateUser($data , $school_id , $academic_year_id , $path , $usergroup_id)
     {
         \DB::beginTransaction();
@@ -35,6 +45,11 @@ trait RegisterUser
             $user = new User;
             $user->school_id    = $school_id;
             $user->usergroup_id = $usergroup_id;
+
+            if(!is_null($data->name))
+            {
+                $user->name = $data->name;
+            }
 
             $user->password                 = bcrypt('password'); //demo 
             $user->email                    = $data->email;
@@ -176,6 +191,16 @@ trait RegisterUser
         } 
     }
 
+    /**
+     * Update an existing student user profile and academic record.
+     *
+     * @param object $data Request payload with updated fields
+     * @param int $school_id School identifier
+     * @param int $academic_year_id Academic year identifier
+     * @param int $user_id User identifier to update
+     * @param string $path Avatar path if replaced
+     * @return \App\Models\Userprofile Updated profile
+     */
     public function UpdateUser($data , $school_id , $academic_year_id ,$user_id , $path)
     {
         \DB::beginTransaction();
@@ -320,6 +345,15 @@ trait RegisterUser
         } 
     }
 
+    /**
+     * Create a parent user and link to a student.
+     *
+     * @param int|null $student_id Student identifier to attach (optional)
+     * @param object $data Request payload containing parent details
+     * @param int $school_id School identifier
+     * @param int $usergroup_id Parent role id
+     * @return \App\Models\User Parent user model
+     */
     public function CreateParent($student_id ,$data , $school_id , $usergroup_id)
     {
         \DB::beginTransaction();
@@ -331,6 +365,10 @@ trait RegisterUser
 
                 $user->school_id    = $school_id;
                 $user->usergroup_id = $usergroup_id;
+                if(!is_null($data->name))
+                {
+                    $user->name = $data->name;
+                }
                 $user->password = bcrypt('password'); //demo 
                 $user->email = $data->email;
                 $user->mobile_no = $data->mobile_no;
@@ -432,6 +470,15 @@ trait RegisterUser
         } 
     }
 
+    /**
+     * Update parent profile details and qualifications.
+     *
+     * @param int $student_id Associated student id
+     * @param object $data Request payload containing parent updates
+     * @param int $school_id School identifier
+     * @param int $user_id Parent user identifier
+     * @return \App\Models\Userprofile Updated parent profile
+     */
     public function UpdateParent($student_id , $data , $school_id , $user_id)
     {
         \DB::beginTransaction();
@@ -507,6 +554,16 @@ trait RegisterUser
         } 
     }
 
+    /**
+     * Create a teacher user with profile and teacher-specific attributes.
+     *
+     * @param object $data Request payload with teacher info
+     * @param int $school_id School identifier
+     * @param \App\Models\AcademicYear $academic_year Academic year model
+     * @param string $path Avatar path if provided
+     * @param int $usergroup_id Teacher role id
+     * @return \App\Models\User Newly created teacher
+     */
     public function CreateTeacher($data , $school_id , $academic_year , $path , $usergroup_id)
     { 
         \DB::beginTransaction();
@@ -515,6 +572,11 @@ trait RegisterUser
             $user = new User;
             $user->school_id    = $school_id;
             $user->usergroup_id = $usergroup_id;
+
+            if(!is_null($data->name))
+            {
+                $user->name = $data->name;
+            }
 
             $user->password                 = bcrypt('password'); //demo 
             $user->email                    = $data->email;
@@ -640,28 +702,28 @@ trait RegisterUser
 
             if($data->designation == 'principal')
             {
-                $user->attachRole('principal');
+                $user->addRole('principal');
             }
 
             if($data->designation == 'transport_coordinator')
             {
-                $user->attachRole('transport_coordinator');
+                $user->addRole('transport_coordinator');
             }
 
             if($data->designation == 'driver')
             {
-                $user->attachRole('transport_driver');
+                $user->addRole('transport_driver');
             }
 
             if( ($data->designation == 'principal') || ($data->designation == 'vice_principal') || ($data->designation == 'head_of_the_department') )
             {
-                $user->attachRole('leave_checker');
-                $user->attachRole('class_coordinator');
+                $user->addRole('leave_checker');
+                $user->addRole('class_coordinator');
 
             }
             else
             {
-                $user->attachRole('leave_applier');
+                $user->addRole('leave_applier');
             }
 
             \DB::commit();
@@ -675,6 +737,16 @@ trait RegisterUser
         } 
     }
 
+    /**
+     * Create or update a mark entry for a student exam.
+     *
+     * @param object $data Payload with mark details and associations
+     * @param int $school_id School identifier
+     * @param \App\Models\AcademicYear $academic_year Academic year model
+     * @param int $sc_grade Scholastic grading scheme id
+     * @param int|null $non_sc_grade Non-scholastic grading scheme id
+     * @return \App\Models\Mark|\Gegok12\Exam\Models\Mark Persisted mark model
+     */
     public function CreateMark($data , $school_id , $academic_year,$sc_grade,$non_sc_grade)
     {
         \DB::beginTransaction();
@@ -738,46 +810,68 @@ trait RegisterUser
         } 
     }
 
+    /**
+     * Create or fetch an alumni user and seed profile data.
+     *
+     * @param object $data Request payload with alumni details
+     * @param int $usergroup_id Alumni role id
+     * @param int $school_id School identifier
+     * @param string $passing_session Passing year/batch
+     * @return \App\Models\User Alumni user model
+     */
     public function AddAlumni($data, $usergroup_id, $school_id, $passing_session)
     { 
         \DB::beginTransaction();
         try
-        {            
-            $user = new User;
-
-            $user->school_id                = $school_id;
-            $user->usergroup_id             = $usergroup_id;
-            $user->password                 = bcrypt('password'); //demo 
-            $user->email                    = $data->email;
-            $user->mobile_no                = $data->mobile_no;
-            if($data->email_verification_code != null)
-            {
-                $user->email_verification_code  = $data->email_verification_code;
-            }
-            else
-            {
-                $user->email_verification_code  = Str::random(40);
-            }
-
-            if($data->email_verification_code != null)
-            {
-                $user->registration_number      = $data->registration_number;
-            }
-
-            $user->save();
-
-            $data->passing_session = $passing_session;
+        {   $user = User::where('email', $data->email)
+                // ->orWhere('mobile_no', $data->mobile_no)
+                // ->orWhere('registration_number', $data->registration_number)
+                ->first(); 
 
             $path = '';
+                
+            if(!$user) 
+            {
+                $user = new User;
 
-            $userprofile = new Userprofile;
+                $user->school_id                = $school_id;
+                $user->usergroup_id             = $usergroup_id;
+                $user->name                     = $data->name;
+                $user->password                 = bcrypt('password'); //demo 
+                $user->email                    = $data->email;
+                $user->mobile_no                = $data->mobile_no;
+                if($data->email_verification_code != null)
+                {
+                    $user->email_verification_code  = $data->email_verification_code;
+                }
+                else
+                {
+                    $user->email_verification_code  = Str::random(40);
+                }
 
-            $userprofile->school_id     = $school_id;
-            $userprofile->user_id       = $user->id;
-            $userprofile->usergroup_id  = $usergroup_id;
-            $userprofile->firstname     = $data->name;
-            $userprofile->avatar        = "uploads/male.png";
-            $userprofile->save();
+                if($data->email_verification_code != null)
+                {
+                    $user->registration_number      = $data->registration_number;
+                }
+
+                $user->save();
+
+                // $data->passing_session = $passing_session;
+
+                
+
+                $userprofile = new Userprofile;
+
+                $userprofile->school_id     = $school_id;
+                $userprofile->user_id       = $user->id;
+                $userprofile->usergroup_id  = $usergroup_id;
+                $userprofile->firstname     = $data->name;
+                $userprofile->avatar        = "uploads/male.png";
+                $userprofile->save();
+            }
+            else{
+                $data->passing_session = $passing_session;
+            }
 
             $alumniprofile = $this->CreateAlumni($data, $path, $usergroup_id, $school_id, $user);
 
@@ -792,6 +886,16 @@ trait RegisterUser
         } 
     }
 
+    /**
+     * Create an alumni profile record for an existing user.
+     *
+     * @param object $data Alumni profile payload
+     * @param string $path Photo path
+     * @param int $usergroup_id Alumni role id
+     * @param int $school_id School identifier
+     * @param \App\Models\User $user User to link
+     * @return mixed Persisted alumni profile
+     */
     public function CreateAlumni($data, $path,$usergroup_id,$school_id,$user)
     { 
         \DB::beginTransaction();
@@ -800,57 +904,54 @@ trait RegisterUser
             if(class_exists('Gegok12\Alumni\Models\Alumniprofile'))
             {  
                 $alumni = new \Gegok12\Alumni\Models\Alumniprofile;
-            }
-            else{
-                $alumni = new Alumniprofile;
-            }
 
-            $alumni->school_id          = $school_id;
-            $alumni->user_id            = $user->id;
-            $alumni->name               = $user->name;
-            $alumni->email              = $user->email;
-            $alumni->mobile_no          = $user->mobile_no;          
-            $alumni->passing_session    = $data->passing_session;
-            $alumni->photo              = $path;   
-     
-            $alumni->institution_name   = $data->institution_name;
-            $alumni->degree             = $data->degree;
-            $alumni->specialization     = $data->specialization;
-            $alumni->college_start_year = $data->college_start_year;
-            if($data->current_studying != 1)
-            {
-                $alumni->college_end_year  = $data->college_end_year;
-                $alumni->grade             = $data->grade;
-            }
-            else
-            {
-                $alumni->college_end_year  = null;
-                $alumni->grade             = null;
-            }
+                $alumni->school_id          = $school_id;
+                $alumni->user_id            = $user->id;
+                $alumni->name               = $user->name;
+                $alumni->email              = $user->email;
+                $alumni->mobile_no          = $user->mobile_no;          
+                $alumni->passing_session    = $data->passing_session;
+                $alumni->photo              = $path;   
+         
+                $alumni->institution_name   = $data->institution_name;
+                $alumni->degree             = $data->degree;
+                $alumni->specialization     = $data->specialization;
+                $alumni->college_start_year = $data->college_start_year;
+                if($data->current_studying != 1)
+                {
+                    $alumni->college_end_year  = $data->college_end_year;
+                    $alumni->grade             = $data->grade;
+                }
+                else
+                {
+                    $alumni->college_end_year  = null;
+                    $alumni->grade             = null;
+                }
 
-            $alumni->company_name      = $data->company_name;
-            $alumni->designation       = $data->designation;
-            $alumni->location          = $data->location;
-            $alumni->job_start_year    = $data->job_start_year;
-            $alumni->job_start_month   = $data->job_start_month;
-            if($data->present != 1)
-            {
-                $alumni->job_end_year      = $data->job_end_year;
-                $alumni->job_end_month     = $data->job_end_month;
-            }
-            else
-            {
-                $alumni->job_end_year      = null;
-                $alumni->job_end_month     = null;
-            }
+                $alumni->company_name      = $data->company_name;
+                $alumni->designation       = $data->designation;
+                $alumni->location          = $data->location;
+                $alumni->job_start_year    = $data->job_start_year;
+                $alumni->job_start_month   = $data->job_start_month;
+                if($data->present != 1)
+                {
+                    $alumni->job_end_year      = $data->job_end_year;
+                    $alumni->job_end_month     = $data->job_end_month;
+                }
+                else
+                {
+                    $alumni->job_end_year      = null;
+                    $alumni->job_end_month     = null;
+                }
 
-            $alumni->twitter           = $data->twitter;
-            $alumni->linkedin          = $data->linkedin;
-            $alumni->telegram          = $data->telegram;
-            $alumni->facebook          = $data->facebook;
-            $alumni->about_me          = $data->about_me;
+                $alumni->twitter           = $data->twitter;
+                $alumni->linkedin          = $data->linkedin;
+                $alumni->telegram          = $data->telegram;
+                $alumni->facebook          = $data->facebook;
+                $alumni->about_me          = $data->about_me;
 
-            $alumni->save();
+                $alumni->save();
+            }
          
             \DB::commit();
             return $alumni;

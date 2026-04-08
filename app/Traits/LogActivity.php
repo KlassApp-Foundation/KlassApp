@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Models\User;
+
 trait LogActivity
 {
     /**
@@ -12,7 +14,7 @@ trait LogActivity
      * @param text $properties
      * @param text $message
      */
-    public function doActivityLog($performed_on, $caused_by, $properties, $logname, $message) 
+    public function doActivityLog( $performed_on, $caused_by, $properties, $logname, $message) 
     {
         activity()
             ->performedOn($performed_on)
