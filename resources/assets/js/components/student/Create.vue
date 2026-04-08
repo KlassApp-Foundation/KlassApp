@@ -183,10 +183,10 @@
             <div class="tw-form-group w-full lg:w-2/5">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="blood_group" class="tw-form-label"
-                            >Blood Group<span class="text-red-500"
-                                >*</span
-                            ></label
+                        <label for="blood_group" class="tw-form-label">
+                            Blood Group
+                            <!-- <span class="text-red-500">*</span> -->
+                            </label
                         >
                     </div>
                     <div class="mb-2">
