@@ -80,9 +80,9 @@ class UsersStudentTableSeeder extends Seeder
                             'lastname'      => $faker->lastName,
                             'profession'    => 'Student',
                             'address'       => $faker->streetAddress . ', Kampala, Uganda',
-                            'country_id'    => DB::table('countries')->where('name', 'Uganda')->value('id'),
-                            'city_id'       => DB::table('cities')->where('name', 'Kampala')->value('id'),
-                            'state_id'      => DB::table('states')->where('name', 'Central Region')->value('id'),
+                            'country_id'    => DB::table('countries')->where('name', 'Uganda')->value('id') ?? null,
+                            'city_id'       => DB::table('cities')->where('name', 'Kampala')->value('id') ?? null,
+                            'state_id'      => DB::table('states')->where('name', 'Central Region')->value('id') ?? null,
                             'gender'        => $faker->randomElement(['male', 'female']),
                             'date_of_birth' => $faker->dateTimeBetween('-18 years', '-5 years'),
                         ]
@@ -118,6 +118,9 @@ class UsersStudentTableSeeder extends Seeder
                         'lastname'      => $faker->lastName,
                         'profession'    => 'Parent',
                         'address'       => $faker->streetAddress . ', Kampala, Uganda',
+                        'country_id'    => DB::table('countries')->where('name', 'Uganda')->value('id') ?? null,
+                        'city_id'       => DB::table('cities')->where('name', 'Kampala')->value('id') ?? null,
+                        'state_id'      => DB::table('states')->where('name', 'Central Region')->value('id') ?? null,
                         'gender'        => 'male',
                         'date_of_birth' => Carbon::now()->subYears(rand(30, 55)),
                     ]);
@@ -150,6 +153,9 @@ class UsersStudentTableSeeder extends Seeder
                         'lastname'      => $faker->lastName,
                         'profession'    => 'Parent',
                         'address'       => $faker->streetAddress . ', Kampala, Uganda',
+                        'country_id'    => DB::table('countries')->where('name', 'Uganda')->value('id') ?? null,
+                        'city_id'       => DB::table('cities')->where('name', 'Kampala')->value('id') ?? null,
+                        'state_id'      => DB::table('states')->where('name', 'Central Region')->value('id') ?? null,
                         'gender'        => 'female',
                         'date_of_birth' => Carbon::now()->subYears(rand(28, 50)),
                     ]);
