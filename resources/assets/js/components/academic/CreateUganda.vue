@@ -43,7 +43,7 @@
         </div>
 
         <!-- Section -->
-        <div class="flex flex-col lg:flex-row">
+        <div class="hidden flex-col lg:flex-row">
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="mb-2">
                     <label for="section_id" class="tw-form-label">
@@ -269,7 +269,7 @@
         </div>
 
         <!-- Add Section Modal -->
-        <div v-if="show === 'section'" class="modal modal-mask">
+        <div v-if="show === 'section'" class="modal modal-mask hidden">
             <div class="modal-wrapper px-4">
                 <div class="modal-container w-full max-w-md px-8 mx-auto">
                     <div class="modal-header flex justify-between items-center">

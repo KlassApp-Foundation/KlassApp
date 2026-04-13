@@ -25,7 +25,7 @@ class CreateSubjectsTable extends Migration
             $table->foreign('section_id')->references('id')->on('sections');
             $table->string('name');
             $table->string('code')->nullable();
-            $table->enum('type',['Sciences','Humanities','Languages', 'Creative', 'Other'])->nullable();
+            $table->enum('type',['core','elective'])->nullable();
             $table->boolean('status')->default('1');
 
             $table->timestamps();

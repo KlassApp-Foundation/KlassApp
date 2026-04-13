@@ -20,8 +20,8 @@ class SectionsTableSeeder extends Seeder
         foreach ($schools as $school) 
         {
             $sections = [
-                'Baby Class',  'Middle Class','Top Class', 'Primary 1', 'Primary 2', 
-                'Primary 3', 'Primary 4', 'Primary 5',   'Primary 6', 'Primary 7',
+                'Baby Class',  'Middle Class','Top Class', 'Primary One', 'Primary Two', 
+                'Primary Three', 'Primary Four', 'Primary Five',   'Primary Six', 'Primary Seven',
                 ];
 
             foreach ($sections as $section) 

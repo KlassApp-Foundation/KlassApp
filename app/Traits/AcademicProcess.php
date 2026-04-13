@@ -16,6 +16,7 @@ use App\Models\Section;
 use App\Models\Subject;
 use App\Models\TempTimetable;
 use App\Models\User;
+use App\Services;
 use Exception;
 
 /**
@@ -63,7 +64,7 @@ trait AcademicProcess
                 
                 $standard->save();
             }
-
+            
             return $standard;
         }
         catch(Exception $e)
@@ -141,6 +142,7 @@ trait AcademicProcess
             $standard->status       =   1;
             
             $standard->save();
+            $this-> defaultClassesAndSubjects($standard);
 
             return $standard;
         }
@@ -157,7 +159,7 @@ trait AcademicProcess
             $section = new Section;
 
             $section->school_id    =   $school_id;
-            $section->name         =   ucfirst($data->section);
+            $section->name         =   ucfirst($data->name);
             $section->status       =   1;
 
             $section->save();
@@ -187,7 +189,11 @@ trait AcademicProcess
 
             $subject->save();
 
-            return $subject;
+            // return $subject;
+            return redirect('/admin/sections')->with(
+    'success',
+    trans('messages.add_success_msg', ['module' => 'Section'])
+);
         }
         catch(Exception $e)
         {

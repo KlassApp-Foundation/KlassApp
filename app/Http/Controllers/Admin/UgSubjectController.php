@@ -21,7 +21,7 @@ class UgSubjectController extends Controller
          return [
             "sections" => Section::where("school_id", $school_id)->get(),
         "standards" => Standard::where("school_id", $school_id)->get(),
-        "types" => ["Sciences", "Humanities", "Languages", "Creative"]
+        "types" => ["Core", "Elective"]
          ];
     }
     public function index()

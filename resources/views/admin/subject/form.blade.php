@@ -26,7 +26,7 @@
                 <!-- Class -->
                 {{-- standard and section --}}
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
+                    {{-- <div>
                     <label for="standard_id" class="block text-gray-700 font-medium mb-1">Level</label>
                     <select name="standard_id" id="standard_id"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 "
@@ -40,14 +40,14 @@
                             </option>
                         @endforeach
                     </select>
-                </div>
+                </div> --}}
 {{-- section --}}
                 <div>
                     <label for="section_id" class="block text-gray-700 font-medium mb-1">Select Class</label>
                     <select name="section_id" id="section_id"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('section_id') border-red-500 @enderror"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 "
                         required>
-                        <option value="">Select Class</option>
+                        <option value="_______" disabled>Select Class</option>
                          @foreach($sections as $section)
                             <option value="{{ $section->id }}"
                                 {{ old("section_id", $subject?->section_id) == $section->id ? "selected" : "" }}
@@ -86,8 +86,8 @@
                         required>
                         <option value="">Select Type</option>
                         @foreach ($types as $type)
-                            <option value="Sciences" {{ old('type', $subject?->type) == $type ? 'selected' : '' }}>
-                                {{ $type }}
+                            <option value="{{strtolower($type)}}" {{ old('type', $subject?->type) == strtolower($type) ? 'selected' : '' }}>
+                                {{ $type }} 
                             </option>
                         @endforeach
                     </select>

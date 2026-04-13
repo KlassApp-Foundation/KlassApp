@@ -92,6 +92,15 @@
     </li>
     <!-- end -->
 
+    {{-- ============== start added standards link for now @elicomUG ================ --}}
+    <li class="py-3 px-3 {{Request::segment ('2') == 'standards' ? 'active':''}} && {{Request::segment ('2') == 'standard' ? 'active':''}}">
+        <a href="{{url('/admin/standards')}}" class="flex items-center whitespace-no-wrap">
+            <img src="{{asset('uploads/icons/sidebar/standard.svg')}}" class="w-5 h-5">
+            <span class="mx-3 whitespace-no-wrap">Standards</span>
+        </a>
+    </li>
+    {{-- end --}}
+
     {{-- =========== subjects ============= --}}
     <li class="py-3 px-3 {{Request::segment ('2') == 'subjects' ? 'active':''}} && {{Request::segment ('2') == 'subject' ? 'active':''}}">
         <a href="{{url('/admin/classes')}}" class="flex items-center">
@@ -946,13 +955,7 @@
         </ul>
     </li>
     <!-- end -->
-{{-- ============== added standards link for now @elicomUG ================ --}}
-    <li class="py-3 px-3 {{Request::segment ('2') == 'standards' ? 'active':''}} && {{Request::segment ('2') == 'standard' ? 'active':''}}">
-        <a href="{{url('/admin/standards')}}" class="flex items-center whitespace-no-wrap">
-            <img src="{{asset('uploads/icons/sidebar/standard.svg')}}" class="w-5 h-5">
-            <span class="mx-3 whitespace-no-wrap">Standards</span>
-        </a>
-    </li>
+
     
     {{-- <li class="py-3 px-3 {{(Request::segment ('2') == 'sections' || Request::segment ('2') == 'section') ? 'active':''}}">
         <a href="{{url('/admin/sections')}}" class="flex items-center whitespace-no-wrap">
