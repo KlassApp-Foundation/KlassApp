@@ -776,6 +776,7 @@ Route::get("/report/student/{learner}/class/{class}", "DownloadStudentReport@dow
 // Optional later: full resource or more actions
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 // handle classes
+Route::get("/classes/index", "ClassesController@index")->name("admin.classes.index");
 Route::get("/classes/add", "ClassesController@create")->name("admin.classes.add");
 Route::post("/classes/store", "ClassesController@store")->name("admin.classes.store");
 

@@ -27,6 +27,7 @@ class ClassesController extends Controller
             ));
     }
 
+
      public function store(Request $request){
 
         $school_id = Auth::user()->school_id;
