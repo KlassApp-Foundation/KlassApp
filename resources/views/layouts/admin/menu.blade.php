@@ -92,6 +92,24 @@
     </li>
     <!-- end -->
 
+    {{-- =========== subjects ============= --}}
+    <li class="py-3 px-3 {{Request::segment ('2') == 'subjects' ? 'active':''}} && {{Request::segment ('2') == 'subject' ? 'active':''}}">
+        <a href="{{url('/admin/classes')}}" class="flex items-center">
+            <img src="{{asset('uploads/icons/sidebar/subject.svg')}}" class="w-5 h-5">
+            <span class="mx-3 whitespace-no-wrap">Classes</span>
+        </a>
+    </li> 
+    {{-- ====== end ========= --}}
+
+     {{-- =========== subjects ============= --}}
+    <li class="py-3 px-3 {{Request::segment ('2') == 'subjects' ? 'active':''}} && {{Request::segment ('2') == 'subject' ? 'active':''}}">
+        <a href="{{url('/admin/subjects')}}" class="flex items-center">
+            <img src="{{asset('uploads/icons/sidebar/subject.svg')}}" class="w-5 h-5">
+            <span class="mx-3 whitespace-no-wrap">Subjects</span>
+        </a>
+    </li> 
+    {{-- ====== end ========= --}}
+
     <!--start-->
     <li class="py-3 px-3  {{(Request::segment ('2') == 'standardlinks' || Request::segment ('2') == 'standardlink' || Request::segment ('2') == 'standardLink') ? 'active':''}}">
         <a href="{{url('/admin/standardlinks')}}" class="flex items-center whitespace-no-wrap">
@@ -101,6 +119,7 @@
         </a>
     </li>
     <!--end-->
+
 
      <!--start-->
     <li class="py-3 px-3  {{(Request::segment ('2') == 'academic-terms' || Request::segment ('2') == 'academic-term') ? 'active':''}}">
@@ -942,12 +961,7 @@
         </a>
       </li>  --}}
 
-     <li class="py-3 px-3 {{Request::segment ('2') == 'subjects' ? 'active':''}} && {{Request::segment ('2') == 'subject' ? 'active':''}}">
-        <a href="{{url('/admin/subjects')}}" class="flex items-center">
-            <img src="{{asset('uploads/icons/sidebar/subject.svg')}}" class="w-5 h-5">
-            <span class="mx-3 whitespace-no-wrap">Subjects</span>
-        </a>
-    </li> 
+    
 
     <!--<li class="py-3 px-3 {{Request::segment ('2') == 'files' ? 'active':''}} && {{Request::segment ('2') == 'videos' ? 'active':''}}">
         <a href="{{url('/admin/videos')}}" class="flex items-center">

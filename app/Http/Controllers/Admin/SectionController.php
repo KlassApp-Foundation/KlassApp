@@ -35,7 +35,7 @@ class SectionController extends Controller
             $school_id = Auth::user()->school_id;
           
             $section = $this->createSection($school_id , $request);
-
+dd($section);
             $message = trans('messages.add_success_msg',['module' => 'Section']);
 
             $ip= $this->getRequestIP();
