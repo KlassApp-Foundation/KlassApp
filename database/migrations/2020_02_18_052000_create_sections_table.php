@@ -20,7 +20,9 @@ class CreateSectionsTable extends Migration
             $table->string('name');
             $table->boolean('status')->default('1');
             $table->timestamps();
+
             $table->softDeletes();
+            $table->unique(["school_id", "name"]);
         });
     }
 

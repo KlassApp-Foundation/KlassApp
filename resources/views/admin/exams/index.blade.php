@@ -43,7 +43,7 @@
                 <td class="px-2 py-3 border border-gray-400">
                    {{ filled($exam->teacher?->name) ? $exam->teacher->name : $exam->teacher?->email }}
                  </td>
-                <td class="p-2 border border-gray-400">{{ $exam->academicYear->name ?? '-' }}</td>
+                <td class="px-2 py-3 border border-gray-400">{{ $exam->academicYear->name ?? '-' }}</td>
                 <td class="p-2 space-x-2 border border-gray-400">
                     <a href="{{ route("admin.exams.edit", $exam) }}" class="text-blue-500 hover:text-blue-700">Edit</a>
                     <form action="{{route("admin.exams.archieve", $exam->id)}}" method="POST" class="inline">
@@ -55,7 +55,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="8" class="px-4 py-2 text-center text-gray-500">No exams found.</td>
+                <td colspan="10" class="px-4 py-2 text-center text-gray-500">No exams found.</td>
             </tr>
             @endforelse
         </tbody>

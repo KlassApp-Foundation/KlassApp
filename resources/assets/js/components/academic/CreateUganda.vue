@@ -14,7 +14,7 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="mb-2">
                     <label for="standard_id" class="tw-form-label">
-                        Level <span class="text-red-500">*</span>
+                        Level Test level <span class="text-red-500">*</span>
                     </label>
                 </div>
                 <select
@@ -43,7 +43,7 @@
         </div>
 
         <!-- Section -->
-        <div class="flex flex-col lg:flex-row">
+        <!-- <div class="hidden flex-col lg:flex-row">
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="mb-2">
                     <label for="section_id" class="tw-form-label">
@@ -88,7 +88,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- Class Teacher -->
         <div class="tw-form-group">
@@ -125,7 +125,7 @@
         </div>
 
         <!-- Subjects Section -->
-        <div class="tw-form-group">
+        <!-- <div class="tw-form-group">
             <div class="flex flex-col lg:flex-row items-center">
                 <div class="w-full lg:w-1/3 md:w-1/3">
                     <label class="tw-form-label">
@@ -142,7 +142,7 @@
                     </a>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- Subject-Teacher Assignment Table -->
         <div class="tw-form-group" v-if="standard_id && section_id">
@@ -269,7 +269,7 @@
         </div>
 
         <!-- Add Section Modal -->
-        <div v-if="show === 'section'" class="modal modal-mask">
+        <div v-if="show === 'section'" class="modal modal-mask hidden">
             <div class="modal-wrapper px-4">
                 <div class="modal-container w-full max-w-md px-8 mx-auto">
                     <div class="modal-header flex justify-between items-center">
@@ -328,7 +328,7 @@
         </div>
 
         <!-- Add Subject Modal -->
-        <div v-if="show === 'subject'" class="modal modal-mask">
+        <!-- <div v-if="show === 'subject'" class="hidden modal modal-mask">
             <div class="modal-wrapper px-4">
                 <div class="modal-container w-full max-w-2xl px-8 mx-auto">
                     <div class="modal-header flex justify-between items-center">
@@ -437,7 +437,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
 </template>
 

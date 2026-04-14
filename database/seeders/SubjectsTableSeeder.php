@@ -29,8 +29,8 @@ class SubjectsTableSeeder extends Seeder
             "Primary 7"      => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
 
             // Lower Secondary (S1–S4) — new competence-based curriculum
-            "Senior 1"       => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Kiswahili', 'Physical Education', 'Entrepreneurship'],
-            "Senior 2"       => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Kiswahili', 'Physical Education', 'Entrepreneurship'],
+            "Senior 1"       => ['English Language', 'Mathematics', 'Biology', 'Physics', 'Chemistry', 'History & Government', 'Geography', 'Religious Education'],
+            "Senior 2"       => ['English Language', 'Mathematics', 'Biology', 'Physics', 'Chemistry', 'History & Government', 'Geography', 'Religious Education'],
             "Senior 3"       => ['English Language', 'Mathematics', 'Biology', 'Physics', 'Chemistry', 'History & Government', 'Geography', 'Religious Education'],
             "Senior 4"       => ['English Language', 'Mathematics', 'Biology', 'Physics', 'Chemistry', 'History & Government', 'Geography', 'Religious Education'],
 

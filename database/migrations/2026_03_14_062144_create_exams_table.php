@@ -16,10 +16,8 @@ return new class extends Migration
         
         Schema::create('exams', function (Blueprint $table) {
             $table->id();
-            $table->dateTime("scheduled_at")->nullable();
-            $table->enum("status", ["done", "postponed", "undone"])->default("undone");
+           
              // match existing table types
-            // $table->unsignedInteger("exam_type_id"); 
             $table->unsignedInteger("standard_id"); 
             $table->unsignedBigInteger('school_id'); 
             $table->unsignedInteger('academic_year_id'); 
@@ -27,7 +25,10 @@ return new class extends Migration
             $table->unsignedInteger('teacher_id');
             $table->unsignedInteger('section_id'); 
 
-            // foreign keys
+            $table->dateTime("scheduled_at")->nullable();
+            $table->enum("status", ["done", "submitted", "undone"])->default("undone");
+            $table->string("exam_type")->nullable();
+
             // foreign keys
             $table->foreign('section_id')->references('id')->on('sections')->cascadeOnDelete();
              $table->foreign('standard_id')->references('id')->on('standards')->cascadeOnDelete();

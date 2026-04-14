@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Section;
+use App\Models\Standard;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -23,9 +25,12 @@ class FeesCategoriesRequest extends FormRequest
 
     protected function prepareForValidation():void
     {
+        
        if(auth()->check()){
+        // $section = Section::find($this->section_id);
           $this->merge([
-            "school_id" => auth()->user()->school_id
+            "school_id" => auth()->user()->school_id,
+            // "standard_id" => $section->standard_id,
           ]);
        }
     }

@@ -1,5 +1,8 @@
 <?php
 
+// use Symfony\Component\Routing\Route;
+
+
 include ('addon.php');
 
 
@@ -129,8 +132,16 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 
 //sections
 	//add
-	Route::post( '/section/add', 'SectionController@store' );
+	// Route::post( '/section/add', 'SectionController@store' )->name("admin.section.store");
 
+// 	Route::post('/classes/add-class', function () {
+//     dd('ROUTE HIT');
+// });
+	// ======= added route for classes/sections@UG ========
+	Route::post('/classes/add-class', 'SectionController@save' )->name("admin.class.add");
+	Route::get("/classes", "SectionController@index")->name("admin.classes");
+	Route::get("/classes/create", "SectionController@create")->name("admin.classes.create");
+	Route::delete("/classes/delete/{class}", "SectionController@destroy")->name("admin.classes.delete");
 //notes
 Route::post( '/getnotes', 'NotesController@index' );
 Route::get( '/notes/delete/{id}', 'NotesController@delete' );
@@ -770,17 +781,16 @@ Route::delete('/admin/exams/{examId}/archieve', 'ExamController@archieve')->name
 
 
 Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
-Route::get('/marks/filter', 'MarksController@classExamOverview')->name('admin.marks.filter');
+Route::get('/marks/filter', "FilterMarksForm@classExamOverview")->name('admin.marks.filter');
 Route::get("/marks/student/{learner}/class/{class}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
 Route::get("/report/student/{learner}/class/{class}", "DownloadStudentReport@download")->name("admin.report.student.class");
 // Optional later: full resource or more actions
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 // handle classes
-Route::get("/classes/index", "ClassesController@index")->name("admin.classes.index");
 Route::get("/classes/add", "ClassesController@create")->name("admin.classes.add");
 Route::post("/classes/store", "ClassesController@store")->name("admin.classes.store");
 
-// ========== ACADEMIC TERM ============
+// ========== ACADEMIC TERM ============	
 Route::get("/academic-term", "Academics\AcademicTermController@index")->name("admin.academic-term");
 Route::get("/academic-term/create", "Academics\AcademicTermController@create")->name("admin.academic-term.create");
 Route::post("/academic-term/store", "Academics\AcademicTermController@store")->name("admin.academic-term.store");

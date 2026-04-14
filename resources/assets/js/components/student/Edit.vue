@@ -255,7 +255,7 @@
                 <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="state" class="tw-form-label"
-                            >State<span class="text-red-500">*</span></label
+                            >Region<span class="text-red-500">*</span></label
                         >
                     </div>
                     <div class="mb-2">
@@ -265,7 +265,7 @@
                             v-model="state_id"
                             name="state_id"
                         >
-                            <option value="" disabled>Select State</option>
+                            <option value="" disabled>Select Region</option>
                             <option
                                 v-for="state in statelist[this.country_id]"
                                 v-bind:value="state.id"
@@ -284,7 +284,7 @@
                 <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="city" class="tw-form-label"
-                            >City<span class="text-red-500">*</span></label
+                            >District<span class="text-red-500">*</span></label
                         >
                     </div>
                     <div class="mb-2">
@@ -294,7 +294,7 @@
                             v-model="city_id"
                             name="city_id"
                         >
-                            <option value="" disabled>Select City</option>
+                            <option value="" disabled>Select District</option>
                             <option
                                 v-for="city in citylist[this.state_id]"
                                 v-bind:value="city.id"

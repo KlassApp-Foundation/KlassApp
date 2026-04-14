@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\AcademicYear;
+use App\Models\Section;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,10 +26,12 @@ class CreateUgSubjectRequest extends FormRequest
     protected function prepareForValidation():void
     {
         if(auth()->check()){
+            // $section = Section::find($this->section_id);
             $this->merge([
                 "school_id" => auth()->user()->school_id,
                 "academic_year_id" => AcademicYear::where("school_id", auth()->user()->school_id)
-                                                    ->pluck("id")->first()
+                                     ->pluck("id")->first(),
+                // "standard_id" =>  $section->standard_id                 
             ]);
         }
     }
@@ -45,13 +48,13 @@ class CreateUgSubjectRequest extends FormRequest
                                  ->where("section_id", $this->section_id);
                 })
             ],
-            'school_id'        => 'required|exists:standards,id',
+            'school_id'        => 'required|exists:schools,id',
             'academic_year_id' => 'required|exists:academic_years,id',
             'standard_id'      => 'required|exists:standards,id',
             'section_id'       => 'required|exists:sections,id',
             // 'name'             => 'required|string|max:255',
             'code'             => 'nullable|string|max:255', // nullable if whole-class exam
-            'type'             => 'nullable|in:Sciences,Humanities,Languages,Creative,Other',
+            'type'             => 'nullable|in:core,elective',
             'status'           => 'nullable|boolean',
         ];
     }

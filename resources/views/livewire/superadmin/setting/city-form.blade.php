@@ -47,11 +47,11 @@ SPDX-License-Identifier: MIT
      <div class="tw-form-group w-full lg:w-1/2">
         <div class="lg:mr-8 ">
           <div class="mb-2">
-            <label for="relation" class="tw-form-label">State<span class="text-red-500">*</span></label>
+            <label for="relation" class="tw-form-label">Region<span class="text-red-500">*</span></label>
           </div>
           <div class="mb-2">
             <select class="tw-form-control w-full" wire:model.live="state">
-              <option value="">Select State</option>
+              <option value="">Select Region</option>
               @foreach($states as $value)
             <option value="{{ $value->id }}">{{ ucfirst($value->name) }}</option>
             @endforeach

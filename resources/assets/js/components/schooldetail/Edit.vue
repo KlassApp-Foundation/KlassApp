@@ -129,11 +129,11 @@
                 <div class="tw-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="state" class="tw-form-label">State<span class="text-red-500">*</span></label>
+                            <label for="state" class="tw-form-label">Region<span class="text-red-500">*</span></label>
                         </div>
                         <div class="w-full lg:w-3/4 my-2">
                             <select class="tw-form-control w-full" id="state_id" v-model="state_id" name="state_id">
-                                <option value="" disabled>Select State</option>
+                                <option value="" disabled>Select Region</option>
                                 <option v-for="state in statelist[this.country_id]" v-bind:value="state.id">{{state.name}}</option>
                             </select>  
                         </div>
@@ -146,11 +146,11 @@
                 <div class="tw-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="city" class="tw-form-label">City<span class="text-red-500">*</span></label>
+                            <label for="city" class="tw-form-label">District<span class="text-red-500">*</span></label>
                         </div>
                         <div class="w-full lg:w-3/4 my-2">
                             <select class="tw-form-control w-full" id="city_id" v-model="city_id" name="city_id">
-                                <option value="" disabled>Select City</option>
+                                <option value="" disabled>Select District</option>
                                 <option v-for="city in citylist [this.state_id]" v-bind:value="city.id">{{city.name}}</option>
                             </select>   
                         </div>
