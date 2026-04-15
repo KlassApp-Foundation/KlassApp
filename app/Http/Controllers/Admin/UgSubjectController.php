@@ -19,7 +19,7 @@ class UgSubjectController extends Controller
     protected function shipData(){
          $school_id = Auth::user()->school_id;
          return [
-            "sections" => Section::where("school_id", $school_id)->get(),
+            // "sections" => Section::where("school_id", $school_id)->get(),
         "standards" => Standard::where("school_id", $school_id)->get(),
         "types" => ["Core", "Elective"]
          ];

@@ -11,6 +11,8 @@
             </div>
         </div>  
         @include('partials.message')
-        <standard-setup url="{{ url('/') }}" academic_year_id="{{ $academic_year_id }}"></standard-setup>
+        <standard-setup 
+        url="{{ url('/') }}" academic_year_id="{{ $academic_year_id }}">
+        </standard-setup>
     </div>
 @endsection

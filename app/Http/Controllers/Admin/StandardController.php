@@ -16,9 +16,17 @@ use App\Models\Standard;
 use App\Traits\Common;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use App\Services\AcademicSetupService;
 
 class StandardController extends Controller
 {
+
+// constructor dependency injection 
+protected $academicSetupService;
+    public function __construct(AcademicSetupService $academicSetupService){
+        $this->academicSetupService = $academicSetupService;
+    }
+
     use AcademicProcess;
     use LogActivity;
     use Common;
@@ -59,7 +67,9 @@ class StandardController extends Controller
             $school_id = Auth::user()->school_id;
           
             $standard = $this->createStandard($school_id , $request);
-
+            // add default subjects@UG
+            // $this-> defaultClassesAndSubjects($standard);
+            $this->academicSetupService->defaultClassesAndSubjects($standard);
             $message = trans('messages.add_success_msg',['module' => 'Standard']);
 
             $ip= $this->getRequestIP();
@@ -108,7 +118,8 @@ class StandardController extends Controller
             $school_id = Auth::user()->school_id;
           
             $standard = $this->addStandard($school_id , $request);
-
+            // add default subjects@UG
+            $this->academicSetupService->defaultClassesAndSubjects($standard);
             $message = trans('messages.standard_setup_success_msg');
 
             $ip= $this->getRequestIP();

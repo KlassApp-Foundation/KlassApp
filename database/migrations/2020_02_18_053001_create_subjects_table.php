@@ -21,8 +21,8 @@ class CreateSubjectsTable extends Migration
             $table->foreign('academic_year_id')->references('id')->on('academic_years');
             $table->integer('standard_id')->unsigned();
             $table->foreign('standard_id')->references('id')->on('standards');
-            $table->integer('section_id')->unsigned();
-            $table->foreign('section_id')->references('id')->on('sections');
+            // $table->integer('section_id')->unsigned();
+            // $table->foreign('section_id')->references('id')->on('sections');
             $table->string('name');
             $table->string('code')->nullable();
             $table->enum('type',['core','elective'])->nullable();
@@ -30,7 +30,7 @@ class CreateSubjectsTable extends Migration
 
             $table->timestamps();
             $table->softDeletes();
-            $table->unique(["school_id", "section_id", "name"]);
+            $table->unique(["school_id", "standard_id", "name"]);
         });
     }
 

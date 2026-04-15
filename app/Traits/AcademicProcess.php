@@ -16,7 +16,6 @@ use App\Models\Section;
 use App\Models\Subject;
 use App\Models\TempTimetable;
 use App\Models\User;
-use App\Services;
 use Exception;
 
 /**
@@ -142,7 +141,7 @@ trait AcademicProcess
             $standard->status       =   1;
             
             $standard->save();
-            $this-> defaultClassesAndSubjects($standard);
+            
 
             return $standard;
         }

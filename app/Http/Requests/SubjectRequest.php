@@ -33,7 +33,7 @@ class SubjectRequest extends FormRequest
                 ['school_id',Auth::user()->school_id],
                 ['name',request('subject')],
                 ['standard_id',request('subject_standard_id')],
-                ['section_id',request('subject_section_id')],
+                // ['section_id',request('subject_section_id')],
             ])->exists();
     
             if($subject)
@@ -68,7 +68,7 @@ class SubjectRequest extends FormRequest
         return
         [
             'subject_standard_id.required'  =>  'Standard Is Required',
-            'subject_section_id.required'   =>  'Section Is Required',
+            // 'subject_section_id.required'   =>  'Section Is Required',
             'subject.required'              =>  'Name Is Required',
             'subject.check_unique_subject'  =>  'Subject Already Exists',
             'subject.check_subject'         =>  'Enter Valid Name',

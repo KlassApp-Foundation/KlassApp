@@ -44,13 +44,13 @@ class UpdateUgSubjectRequest extends FormRequest
                       ->ignore($subjectId)
                       ->where( function ($query){
                     return $query->where("school_id", auth()->user()->school_id)
-                                 ->where("section_id", $this->section_id);
+                                 ->where("standard_id", $this->standard_id);
                 })
             ],
             'school_id'        => 'sometimes|nullable|exists:standards,id',
             'academic_year_id' => 'sometimes|nullable|exists:academic_years,id',
             'standard_id'      => 'sometimes|nullable|exists:standards,id',
-            'section_id'       => 'sometimes|nullable|exists:sections,id',
+            // 'section_id'       => 'sometimes|nullable|exists:sections,id',
             // 'name'             => 'required|string|max:255',
             'code'             => 'nullable|string|max:255', // nullable if whole-class exam
             'type'             => 'nullable|in:Sciences,Humanities,Languages,Creative,Other',
