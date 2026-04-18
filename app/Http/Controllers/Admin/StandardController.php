@@ -16,9 +16,17 @@ use App\Models\Standard;
 use App\Traits\Common;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use App\Services\AcademicSetupService;
 
 class StandardController extends Controller
 {
+
+// constructor dependency injection 
+protected $academicSetupService;
+    public function __construct(AcademicSetupService $academicSetupService){
+        $this->academicSetupService = $academicSetupService;
+    }
+
     use AcademicProcess;
     use LogActivity;
     use Common;
@@ -57,12 +65,16 @@ class StandardController extends Controller
         try
         {
             $school_id = Auth::user()->school_id;
-          
-            $standard = $this->createStandard($school_id , $request);
-
+        //   dd($request);
+            $standards = $this->createStandard($school_id , $request);
+            // add default subjects@UG
+            foreach ($standards as $standard){
+                $this->academicSetupService->defaultClassesAndSubjects($standards);
+            }
             $message = trans('messages.add_success_msg',['module' => 'Standard']);
 
-            $ip= $this->getRequestIP();
+            foreach ($standards as $standard){
+               $ip= $this->getRequestIP();
             $this->doActivityLog(
                 $standard,
                 Auth::user(),
@@ -70,10 +82,11 @@ class StandardController extends Controller
                 LOGNAME_ADD_STANDARD,
                 $message
             );
+            }
 
-            $res['success'] = $message;
+            
 
-            return $res;
+            return ['success' => $message];
         }
         catch(Exception $e)
         {
@@ -90,8 +103,11 @@ class StandardController extends Controller
     {
         //
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-
-        return view('/admin/school/standards/add' , ['academic_year_id' => $academic_year->id]);
+        $board = ["uneb", "cambridge", "ib", "montessori", "other"];
+        $standards = ["nursery", "primary", "o-level", "a-level"];
+// ['academic_year_id' => $academic_year->id]
+// compact("board", "academic_year")
+        return view('admin.school.standards.add', ['academic_year_id' => $academic_year->id]);
     }
 
     /**
@@ -106,12 +122,16 @@ class StandardController extends Controller
         try
         {
             $school_id = Auth::user()->school_id;
-          
-            $standard = $this->addStandard($school_id , $request);
-
+            $standards = $this->addStandard($school_id , $request);
+            // add default subjects@UG
+            foreach ($standards as $standard){
+                $this->academicSetupService->defaultClassesAndSubjects($standards);
+            }
+            
             $message = trans('messages.standard_setup_success_msg');
 
-            $ip= $this->getRequestIP();
+            foreach($standards as $standard){
+                $ip= $this->getRequestIP();
             $this->doActivityLog(
                 $standard,
                 Auth::user(),
@@ -119,14 +139,13 @@ class StandardController extends Controller
                 LOGNAME_ADD_STANDARD_SETUP,
                 $message
             );
+            }
 
-            $res['success'] = $message;
-
-            return $res;
+             return ['success' => $message];
         }
         catch(Exception $e)
         {
-            //dd($e->getMessage());
+            dd($e->getMessage());
         }
     }
 

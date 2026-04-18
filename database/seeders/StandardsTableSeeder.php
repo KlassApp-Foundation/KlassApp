@@ -14,9 +14,10 @@ class StandardsTableSeeder extends Seeder
         $schools = School::where("status", 1)->get();
         $standards = [
             // Phases
-            ['name' => 'Nursery',       'order' => 1,  'status' => '1'],
-            ['name' => 'Primary',       'order' => 2,  'status' => '1'],
-            ['name' => 'Secondary',     'order' => 3,  'status' => '1'],
+            ['name' => 'nursery',       'order' => 1,  'status' => '1'],
+            ['name' => 'primary',       'order' => 2,  'status' => '1'],
+            ['name' => 'o-level',     'order' => 3,  'status' => '1'],
+            ['name' => 'a-level',     'order' => 4,  'status' => '1'],
         ];
 
      foreach ($schools as $school) {
@@ -24,8 +25,6 @@ class StandardsTableSeeder extends Seeder
         Standard::create( [...$data, "school_id" => $school->id] );
     }
 }
-
-
         $this->command->info('Seeded ' . count($standards) . ' national standards.');
     }
 }

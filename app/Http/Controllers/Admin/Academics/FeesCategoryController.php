@@ -11,6 +11,7 @@ use App\Models\Section;
 use App\Models\Standard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class FeesCategoryController extends Controller
 {
@@ -30,6 +31,10 @@ class FeesCategoryController extends Controller
     public function index()
     {
         //
+        // $region = DB::table("states")
+        //            ->where("country_id", 1)
+        //            ->get();
+        //            dd($region);
         $school_id = Auth::user()->school_id;
         $fees = FeesCategories::where("school_id", $school_id)->get();
         return view("admin.school.fees.index", compact(

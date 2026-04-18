@@ -41,14 +41,14 @@ class StandardRequest extends FormRequest
             return preg_match('/^[A-Za-z0-9_~\-!@#\$%\^&*.,:(\)\s]+$/', request('standard')) ;
         });
 
-        Validator::extend('check_standard_value',function($attribute,$value,$parameters,$validator)
-        { 
-            if( ( request('standard') < 13 ) || ( strtolower(request('standard')) == 'prekg' )  || ( strtolower(request('standard')) == 'lkg' )  || ( strtolower(request('standard')) == 'ukg' ) )
-            {
-                return true;
-            }
-            return false;
-        });
+        // Validator::extend('check_standard_value',function($attribute,$value,$parameters,$validator)
+        // { 
+        //     if( ( request('standard') < 13 ) || ( strtolower(request('standard')) == 'prekg' )  || ( strtolower(request('standard')) == 'lkg' )  || ( strtolower(request('standard')) == 'ukg' ) )
+        //     {
+        //         return true;
+        //     }
+        //     return false;
+        // });
 
         $rules = [
             //       

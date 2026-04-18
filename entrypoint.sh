@@ -27,6 +27,7 @@ done
 echo "running migrations"
 
 # to put migrations inside CI/CD
+# php artisan migrate:fresh --seed
 php artisan migrate --force
 
 # clear caches on startup (helps after permission fixes)

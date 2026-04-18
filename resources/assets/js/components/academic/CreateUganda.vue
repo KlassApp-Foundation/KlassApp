@@ -42,8 +42,9 @@
             </div>
         </div>
 
-        <!-- Section -->
-        <!-- <div class="hidden flex-col lg:flex-row">
+        <!-- Section  @UG is class -->
+        <div class="flex-col lg:flex-row">
+            <!-- Fixed: add "flex" -->
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="mb-2">
                     <label for="section_id" class="tw-form-label">
@@ -75,7 +76,7 @@
                             {{ errors.section_id[0] }}
                         </span>
                     </div>
-                    <div class="w-full lg:w-4/12 md:w-4/12">
+                    <div class="w-full lg:w-4/12 md:w-4/12 hidden">
                         <div class="lg:mx-3 md:mx-3">
                             <a
                                 href="#"
@@ -88,7 +89,7 @@
                     </div>
                 </div>
             </div>
-        </div> -->
+        </div>
 
         <!-- Class Teacher -->
         <div class="tw-form-group">
@@ -268,7 +269,7 @@
             </a>
         </div>
 
-        <!-- Add Section Modal -->
+        <!-- Add Section Modal =====hidden=====-->
         <div v-if="show === 'section'" class="modal modal-mask hidden">
             <div class="modal-wrapper px-4">
                 <div class="modal-container w-full max-w-md px-8 mx-auto">

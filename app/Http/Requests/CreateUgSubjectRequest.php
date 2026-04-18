@@ -45,7 +45,7 @@ class CreateUgSubjectRequest extends FormRequest
                 "min:2",
                 Rule::unique("subjects")->where( function ($query){
                     return $query->where("school_id", auth()->user()->school_id)
-                                 ->where("section_id", $this->section_id);
+                                 ->where("standard_id", $this->standard_id);
                 })
             ],
             'school_id'        => 'required|exists:schools,id',
