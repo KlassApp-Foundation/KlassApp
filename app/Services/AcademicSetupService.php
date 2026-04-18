@@ -85,18 +85,18 @@ class AcademicSetupService
         $subjects = $data[$standardName]["subjects"] ?? [];
 
         foreach ($subjects as $subjectName => $code) {
-            // foreach ($classes as $class) {
+            foreach ($classes as $class) {
                 Subject::firstOrCreate([
                     "school_id"        => $school_id,
                     "academic_year_id" => $academicYear->id,
                     "standard_id"      => $standard->id,
-                    // "section_id"       => $class->id,
+                    "section_id"       => $class->id,
                     "name"             => $subjectName,
                     "code"             => $code,
                     "type"             => "core",
                     "status"           => 1
                 ]);
-            // }
+            }
         }
     }
 }

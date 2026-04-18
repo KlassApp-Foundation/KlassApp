@@ -6,7 +6,7 @@
         </div>
 
         <div
-            class="grid place-items-center bg-white shadow-xl rounded-3xl overflow-hidden border border-gray-100"
+            class="grid px-4 bg-white shadow-xl rounded-3xl overflow-hidden border border-gray-100"
         >
             <!-- Board of Education -->
             <div class="flex flex-col lg:flex-row">
@@ -48,58 +48,60 @@
             <div class="flex flex-col lg:flex-row" v-if="board">
                 <div class="tw-form-group w-full lg:w-1/2">
                     <div class="mb-2">
-                        <label class="block text-sm font-medium text-gray-700">
+                        <label
+                            class="block text-lg font-semibold text-gray-700"
+                        >
                             Highest Level
                             <span class="text-red-500">*</span>
                         </label>
                     </div>
-                    <div class="flex flex-wrap gap-x-6 gap-y-2">
-                        <label class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-4 px-2">
+                        <label class="flex items-center gap-2">
                             <input
                                 type="radio"
                                 value="nursery"
                                 v-model="standards"
-                                class="mr-2"
+                                class=""
                             />
                             <span class="text-sm">Nursery / Kindergarten</span>
                         </label>
 
-                        <label class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label class="flex items-center gap-2">
                             <input
                                 type="radio"
                                 value="primary"
                                 v-model="standards"
-                                class="mr-2"
+                                class=""
                             />
                             <span class="text-sm">Primary</span>
                         </label>
 
-                        <label class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label class="flex items-center gap-2">
                             <input
                                 type="radio"
                                 value="O-Level"
                                 v-model="standards"
-                                class="mr-2"
+                                class=""
                             />
                             <span class="text-sm">Secondary (O-Level)</span>
                         </label>
 
-                        <label class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label class="flex items-center gap-2">
                             <input
                                 type="radio"
                                 value="A-Level"
                                 v-model="standards"
-                                class="mr-2"
+                                class=""
                             />
-                            <span class="text-sm">Advanced (A-Level)</span>
+                            <span class="text-sm">Secondary (A-Level)</span>
                         </label>
 
-                        <label class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label class="flex items-center gap-2">
                             <input
                                 type="radio"
                                 value="international"
                                 v-model="standards"
-                                class="mr-2"
+                                class=""
                             />
                             <span class="text-sm">International</span>
                         </label>

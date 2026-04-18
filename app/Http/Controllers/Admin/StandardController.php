@@ -65,14 +65,16 @@ protected $academicSetupService;
         try
         {
             $school_id = Auth::user()->school_id;
-          
-            $standard = $this->createStandard($school_id , $request);
+        //   dd($request);
+            $standards = $this->createStandard($school_id , $request);
             // add default subjects@UG
-            // $this-> defaultClassesAndSubjects($standard);
-            $this->academicSetupService->defaultClassesAndSubjects($standard);
+            foreach ($standards as $standard){
+                $this->academicSetupService->defaultClassesAndSubjects($standards);
+            }
             $message = trans('messages.add_success_msg',['module' => 'Standard']);
 
-            $ip= $this->getRequestIP();
+            foreach ($standards as $standard){
+               $ip= $this->getRequestIP();
             $this->doActivityLog(
                 $standard,
                 Auth::user(),
@@ -80,10 +82,11 @@ protected $academicSetupService;
                 LOGNAME_ADD_STANDARD,
                 $message
             );
+            }
 
-            $res['success'] = $message;
+            
 
-            return $res;
+            return ['success' => $message];
         }
         catch(Exception $e)
         {
@@ -100,8 +103,11 @@ protected $academicSetupService;
     {
         //
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-
-        return view('/admin/school/standards/add' , ['academic_year_id' => $academic_year->id]);
+        $board = ["uneb", "cambridge", "ib", "montessori", "other"];
+        $standards = ["nursery", "primary", "o-level", "a-level"];
+// ['academic_year_id' => $academic_year->id]
+// compact("board", "academic_year")
+        return view('admin.school.standards.add', ['academic_year_id' => $academic_year->id]);
     }
 
     /**
@@ -116,13 +122,16 @@ protected $academicSetupService;
         try
         {
             $school_id = Auth::user()->school_id;
-          
-            $standard = $this->addStandard($school_id , $request);
+            $standards = $this->addStandard($school_id , $request);
             // add default subjects@UG
-            $this->academicSetupService->defaultClassesAndSubjects($standard);
+            foreach ($standards as $standard){
+                $this->academicSetupService->defaultClassesAndSubjects($standards);
+            }
+            
             $message = trans('messages.standard_setup_success_msg');
 
-            $ip= $this->getRequestIP();
+            foreach($standards as $standard){
+                $ip= $this->getRequestIP();
             $this->doActivityLog(
                 $standard,
                 Auth::user(),
@@ -130,14 +139,13 @@ protected $academicSetupService;
                 LOGNAME_ADD_STANDARD_SETUP,
                 $message
             );
+            }
 
-            $res['success'] = $message;
-
-            return $res;
+             return ['success' => $message];
         }
         catch(Exception $e)
         {
-            //dd($e->getMessage());
+            dd($e->getMessage());
         }
     }
 

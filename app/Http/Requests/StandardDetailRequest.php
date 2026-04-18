@@ -95,7 +95,7 @@ class StandardDetailRequest extends FormRequest
         $messages = 
         [
             'standard_id.required'                          =>  'Standard is required',
-            'standard_id.check_standard_link'               =>  'Class Already Exists',
+            'standard_id.check_standard_link'               =>  'Standard Already Exists',
             'section_id.required'                           =>  'Section is required',
             'no_of_students.required'                       =>  'No Of Students is required',
             'no_of_students.numeric'                        =>  'No Of Students Should be Number',

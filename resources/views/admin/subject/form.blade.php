@@ -3,6 +3,7 @@
        @php
            $subject = $subject ?? null
        @endphp
+
         <div class="px-6 py-6">
             <form action="
             {{ $subject ?  route('admin.subject.update', $subject->id) : route('admin.subject.store') }}

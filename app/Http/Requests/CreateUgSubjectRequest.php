@@ -51,7 +51,7 @@ class CreateUgSubjectRequest extends FormRequest
             'school_id'        => 'required|exists:schools,id',
             'academic_year_id' => 'required|exists:academic_years,id',
             'standard_id'      => 'required|exists:standards,id',
-            // 'section_id'       => 'required|exists:sections,id',
+            'section_id'       => 'required|exists:sections,id',
             // 'name'             => 'required|string|max:255',
             'code'             => 'nullable|string|max:255', // nullable if whole-class exam
             'type'             => 'nullable|in:core,elective',

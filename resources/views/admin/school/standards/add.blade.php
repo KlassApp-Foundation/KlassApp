@@ -11,6 +11,7 @@
             </div>
         </div>  
         @include('partials.message')
+        {{-- @include("admin.school.standards.standard_form") --}}
         <standard-setup 
         url="{{ url('/') }}" academic_year_id="{{ $academic_year_id }}">
         </standard-setup>

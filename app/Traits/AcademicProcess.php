@@ -31,40 +31,29 @@ trait AcademicProcess
     {
         try
         {  
-            $nursery            = ['Nursery'];
-            $primary            = ["Primary"];
-            $secondary          = ['Secondary'];  
 
-            if($data->standards == 'nursery')
-            {
-                $list = $nursery;
-            }
-            elseif($data->standards == 'primary')
-            {
-                $list = array_merge($nursery,$primary);
-            }
-            elseif($data->standards == 'secondary')
-            {
-                $list = $secondary;
-            }
-            // else
-            // {
-            //     $list = array_merge($nursery,$primary,$secondary,$higher_secondary);
-            // }
-
+            $map = [
+                'nursery' => ['nursery'],
+                 'primary' => ['nursery', 'primary'],
+                 'O-Level' => ['O-Level'],
+                 'A-Level' => ['A-Level'],
+            ];
+            
+            $list = $map[$data->standards] ?? [];
+            $standards = [];
             for($i = 0 ; $i < count($list) ; $i++) 
             {
                 $standard = new Standard;
-
                 $standard->school_id    =   $school_id;
                 $standard->name         =   strtolower($list[$i]);
                 $standard->order        =   $i;
                 $standard->status       =   1;
                 
                 $standard->save();
+                $standards[] = $standard;
             }
             
-            return $standard;
+            return $standards;
         }
         catch(Exception $e)
         {
@@ -79,7 +68,7 @@ trait AcademicProcess
 //         $lists = [
 //             'nursery'    => 'Nursery',
 //             'primary'    => 'Primary',
-//             'secondary'  => 'Secondary',
+//             'a-level'  => 'a-level',
 //             'advanced'   => 'Advanced',     // if you want to support it later
 //             'international' => 'International',
 //         ];
@@ -104,7 +93,7 @@ trait AcademicProcess
 //         $standard = new Standard;
 
 //         $standard->school_id = $school_id;
-//         $standard->name      = strtolower($standardName);   // nursery, primary, secondary
+//         $standard->name      = strtolower($standardName);   // nursery, primary, a-level
 //         $standard->order     = $this->getNextOrder($school_id);  // we'll add this helper below
 //         $standard->status    = 1;
 
@@ -139,6 +128,8 @@ trait AcademicProcess
             }
             $standard->order        =   $value;
             $standard->status       =   1;
+
+           
             
             $standard->save();
             

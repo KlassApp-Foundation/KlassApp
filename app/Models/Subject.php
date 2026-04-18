@@ -29,7 +29,7 @@ class Subject extends Model
     // removed section_id@Uganda
 	protected $fillable = [
 
-	    'school_id' , 'academic_year_id' , 'standard_id'  , 'name' , 'code' , 'type' 
+	    'school_id' , 'academic_year_id' , 'standard_id', "section_id", 'name' , 'code' , 'type' 
 	];
 
     // linked to schools =====FOR UGANDAN SCHOOLS=========
