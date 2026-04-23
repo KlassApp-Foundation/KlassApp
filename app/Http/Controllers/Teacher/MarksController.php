@@ -79,6 +79,7 @@ public function teacherExamMarksList()
 
 // mark exam as done
 public function TogglekStatus(Exam $exam){   
+    // $marks = Marks::where("exam_id", $exam->id)->get();
     $exam->changeExamStatus();
     return redirect()
         ->route('teacher.exam.marks')
@@ -153,7 +154,8 @@ public function saveExamMarks(Request $request, Exam $exam)
             ]
         );
     }
-
+     // change exam status
+     $exam->changeExamStatus();
     return redirect()
         ->route('teacher.exam.marks')
         ->with('successmessage', ' marks saved!');

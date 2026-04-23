@@ -20,13 +20,25 @@ use Illuminate\Support\Facades\DB;
 
 class ExamController extends Controller
 {
+
+// fetch class to link subject on exam creation
+public function sections(){
+    $school_id = Auth::user()->school_id;
+    $classes = Section::where("school_id", $school_id)->get();
+    return view("admin.exams.create", compact("classes"));
+}
+
    public function create(Request $request){
 
    $school_id = Auth::user()->school_id;
-    // $exam_types = DB::table("exam_types")->get();
-    $standards   = Standard::where('school_id', $school_id)->get(); 
-    $academicYears = AcademicYear::where('school_id', $school_id)->get();
+    
+    // $standards   = Standard::where('school_id', $school_id)->get(); 
     $sections = Section::where("school_id", $school_id)->get();
+    $academicYears = AcademicYear::where('school_id', $school_id)->get();
+    $selectedClassId = $request->get("section");
+    if($selectedClassId){
+        $subjects = Subject::where('section_id', $selectedClassId) ->where("school_id", $school_id)->get();
+    }
     $terms = AcademicTerm::where("school_id", $school_id)->get();
     $exams = Exam::where('school_id', $school_id)
         ->with(['standard', 'subject', 'academicYear', 'teacher', 'section'])
@@ -35,13 +47,9 @@ class ExamController extends Controller
          $teachers    = User::where('school_id', $school_id)
             ->whereIn('usergroup_id', [3, 5]) // adjust role names
             ->get();
-    if($request->filled("section")){
-        $subjects    = Subject::where('school_id', $school_id)->where("section_id", $request->section)->get();
-        // dd($request->section);
-    }
     // $sections =         
     return view('admin.exams.create', compact(
-        'exams', "subjects", "standards", "teachers", "sections", "academicYears", "terms"
+        'exams', "teachers", "sections", "academicYears", "terms", "subjects"
         ));  
 }
 
@@ -61,7 +69,7 @@ class ExamController extends Controller
             ->get();
             
        $headers = [
-        "ID", "Term", "Type", "Status", "Level", "Class", "Subject", "Teacher", "Academic Year", "Actions"
+        "No", "Term", "Type", "Status", "Level", "Class", "Subject", "Teacher", "Actions"
         ];     
         return view('admin.exams.index', compact(
             "exams", 'standards', 'subjects', 'teachers', "headers"
@@ -71,6 +79,7 @@ class ExamController extends Controller
     public function store(CreateExamRequest $request)
     {
         $validated = $request->validated();
+        // dd($validated);
         Exam::create($validated);
     return redirect()->route('admin.exams')
       ->with('successmessage', 'Exam created successfully!');
@@ -83,18 +92,20 @@ class ExamController extends Controller
 
         $school_id = Auth::user()->school_id;
         // $exam_types = ExamType::all();
-        $subjects    = Subject::where('school_id', $school_id)->get();
+        $subjects    = Subject::where('school_id', $school_id)->where("section_id", $exam->section_id)->get();
         $standards   = Standard::where('school_id', $school_id)->get(); 
         $academicYears = AcademicYear::where('school_id', $school_id)->get();
         $sections = Section::where("school_id", $school_id)->get();
         $teachers = User::where('usergroup_id', 5)->where("school_id", $school_id)->get();
         $terms = AcademicTerm::where("school_id", $school_id)->get();
+        // dd($subjects);
         return view("admin.exams.create", compact(
             "exam", "subjects", "standards", "academicYears", "sections", "teachers", "terms"
             ));
     }
     public function update(UpdateExamsRequest $request, string $exam){
-        
+            // dd($request);
+
     $validated = $request->validated();
     Exam::where("id", $exam)->update($validated);
     return redirect()->route("admin.exams")->with("successmessage", "Exam updated successfully!");

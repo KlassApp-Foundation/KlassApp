@@ -30,7 +30,7 @@ class AcademicSetupService
                     "Science"          => "010"
                 ]
             ],
-            "O-Level" => [
+            "o-level" => [
                 "sections" => ['Senior One', 'Senior Two', 'Senior Three', 'Senior Four'],
                 "subjects" => [
                     "English Language"                => "112",
@@ -42,7 +42,7 @@ class AcademicSetupService
                     "History and Political Education" => "241"
                 ]
             ],
-        "A-Level" => [
+        "a-level" => [
             "sections" => ['Senior Five', 'Senior Six'],
             "subjects" => [
                 "General Paper"                  => "800",
@@ -66,7 +66,6 @@ class AcademicSetupService
         ];
 
         $standardName = strtolower(trim($standard->name ?? ''));
-
         if (!isset($data[$standardName])) {
             return; // or log a warning
         }

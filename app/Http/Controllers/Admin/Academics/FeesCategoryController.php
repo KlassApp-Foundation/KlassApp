@@ -59,7 +59,7 @@ class FeesCategoryController extends Controller
         //
         
         $validated = $request->validated();
-        dd($validated);
+        // dd($validated);
         FeesCategories::create($validated);
         return redirect()->route("admin.fees-categories")->with("successmessage", "Added Fee Category!");
     }

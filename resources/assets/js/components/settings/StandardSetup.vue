@@ -79,7 +79,7 @@
                         <label class="flex items-center gap-2">
                             <input
                                 type="radio"
-                                value="O-Level"
+                                value="o-level"
                                 v-model="standards"
                                 class=""
                             />
@@ -89,7 +89,7 @@
                         <label class="flex items-center gap-2">
                             <input
                                 type="radio"
-                                value="A-Level"
+                                value="a-level"
                                 v-model="standards"
                                 class=""
                             />

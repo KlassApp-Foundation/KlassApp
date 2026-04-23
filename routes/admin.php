@@ -773,7 +773,7 @@ Route::post( '/student/shift', 'SendMessageController@shift' );
 // exams (admin)
 Route::get('/exams', 'ExamController@index')->name('admin.exams');
 Route::get('/exams/add-new', 'ExamController@create')->name('admin.exams.create');
-// Route::get('/exams/create', 'ExamController@create')->name('exams.create');
+// Route::get('/exams/classes/all', 'ExamController@sections')->name('admin.exams.classes.all');
 Route::get('/exams/{exam}/edit', 'ExamController@edit')->name('admin.exams.edit');
 Route::put('/exams/{exam}/update', 'ExamController@update')->name('admin.exams.update');
 Route::post('/admin/exams/store', 'ExamController@store')->name('admin.exams.store');

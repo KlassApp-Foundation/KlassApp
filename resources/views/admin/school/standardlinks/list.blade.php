@@ -81,7 +81,7 @@
     @else
         <div style="text-align: center;">
             <!-- <a href="{{ url('/admin/teacher/add') }}" class="font-semibold text-s" style="text-align: center">Add Teachers</a> -->
-            <p class="font-semibold text-s">You Need To Add Teachers Before Adding Class.<a href="{{ url('/admin/teacher/add') }}" style="text-align: center"><u>Click Here To Add Teachers</u></a></p>
+            <p class="font-semibold text-s">You Need To Add Teachers Before Assigning Them To Classes and Subjects.<a href="{{ url('/admin/teacher/add') }}" style="text-align: center"><u>Click Here To Add Teachers</u></a></p>
         </div>
     @endif
 </div>

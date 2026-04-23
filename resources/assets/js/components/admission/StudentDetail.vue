@@ -35,11 +35,11 @@
                                     <div class="flex tw-form-control py-2 my-1">
                                         <div class="w-1/4 flex items-center mr-2 lg:mr-8 md:mr-8">
                                             <input type="radio" name="gender" v-model="gender" id="gender1" value="male"> 
-                                            <span class="text-sm mx-2">Boy</span>
+                                            <span class="text-sm mx-2">Male</span>
                                         </div>
                                         <div class="w-1/4 flex items-center ">
                                             <input type="radio" name="gender" v-model="gender" id="gender2" value="female">
-                                            <span class="text-sm mx-2">Girl</span>
+                                            <span class="text-sm mx-2">Female</span>
                                         </div>
                                     </div>
                                 </div>

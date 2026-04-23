@@ -137,7 +137,7 @@
                                 id="gender1"
                                 value="male"
                             />
-                            <span class="text-sm mx-1">Boy</span>
+                            <span class="text-sm mx-1">Male</span>
                         </div>
                         <div
                             class="w-1/2 flex items-center tw-form-control lg:mr-8 md:mr-8"
@@ -149,7 +149,7 @@
                                 id="gender2"
                                 value="female"
                             />
-                            <span class="text-sm mx-1">Girl</span>
+                            <span class="text-sm mx-1">Female</span>
                         </div>
                     </div>
                     <span

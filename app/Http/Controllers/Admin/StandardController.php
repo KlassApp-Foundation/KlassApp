@@ -69,7 +69,7 @@ protected $academicSetupService;
             $standards = $this->createStandard($school_id , $request);
             // add default subjects@UG
             foreach ($standards as $standard){
-                $this->academicSetupService->defaultClassesAndSubjects($standards);
+                $this->academicSetupService->defaultClassesAndSubjects($standard);
             }
             $message = trans('messages.add_success_msg',['module' => 'Standard']);
 
@@ -125,7 +125,7 @@ protected $academicSetupService;
             $standards = $this->addStandard($school_id , $request);
             // add default subjects@UG
             foreach ($standards as $standard){
-                $this->academicSetupService->defaultClassesAndSubjects($standards);
+                $this->academicSetupService->defaultClassesAndSubjects($standard);
             }
             
             $message = trans('messages.standard_setup_success_msg');
