@@ -100,8 +100,8 @@
                                         <div class="advanced_search_option_container flex my-2 lg:my-1 md:my-1 w-full lg:w-3/5 md:w-3/5" id="gender">
                                             <select name="gender" v-model="gender" id="gender" class="filter-form-control" data-type="dropdown">
                                                 <option value="" disabled="disabled">Gender</option>
-                                                <option value="male">Boy</option>    
-                                                <option value="female">Girl</option>   
+                                                <option value="male">Male</option>    
+                                                <option value="female">Female</option>   
                                             </select>     
                                         </div>
                                     </div>

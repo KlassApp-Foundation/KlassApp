@@ -48,10 +48,10 @@ class SchoolObserver
             // Previous Academic Year
             AcademicYear::create([
                 'school_id'   => $school->id,
-                'name'        => $prevYear . '-' . $currentYear,
+                'name'        => $prevYear,
                 'description' => 'Previous Academic Year',
-                'start_date'  => $prevYear . '-06-01',
-                'end_date'    => $currentYear . '-04-30',
+                'start_date'  => $prevYear . '-02-01',
+                'end_date'    => $currentYear . '-12-15',
                 'status'      => 0, // OLD
                 'created_at'  => now(),
                 'updated_at'  => now(),
@@ -60,10 +60,10 @@ class SchoolObserver
             // Current Academic Year
             AcademicYear::create([
                 'school_id'   => $school->id,
-                'name'        => $currentYear . '-' . ($currentYear + 1),
+                'name'        => $currentYear,
                 'description' => 'Current Academic Year',
-                'start_date'  => $currentYear . '-06-01',
-                'end_date'    => ($currentYear + 1) . '-04-30',
+                'start_date'  => $currentYear . '-02-01',
+                'end_date'    => $currentYear . '-12-15',
                 'status'      => 1, // CURRENT
                 'created_at'  => now(),
                 'updated_at'  => now(),

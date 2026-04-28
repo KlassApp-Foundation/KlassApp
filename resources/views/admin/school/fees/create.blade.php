@@ -29,6 +29,23 @@
         
         {{-- classes --}}
       <div class="grid grid-cols-2 gap-4">
+
+        {{-- level --}}
+        <div class="">
+            <label for="standard_id" class="block font-medium mb-1">
+                <span>Level</span>
+                <span class='text-red-400'>*</span>
+            </label>
+                <select name="standard_id" id="standard_id"  class="border rounded p-2 w-full" required>
+                    <option value="______">Select Level</option>
+                    @foreach ($standards as $standard)
+                        <option value="{{ $standard->id }}" 
+                        {{ old("standard_id", $fee?->standard_id) === $standard->id ? "selected" : ""}} 
+                        > {{ $standard->name }}</option>
+                    @endforeach
+                </select>
+        </div>
+        
          <div class="">
             <label for="section_id" class="block font-medium mb-1">Class </label>
                 <select name="section_id" id="section_id"  class="border rounded p-2 w-full">
@@ -89,21 +106,7 @@
             >
         </div>
 
-        {{-- Name --}}
-        <div class="">
-            <label for="standard_id" class="block font-medium mb-1">
-                <span>Level</span>
-                <span class='text-red-400'>*</span>
-            </label>
-                <select name="standard_id" id="standard_id"  class="border rounded p-2 w-full" required>
-                    <option value="______">Select Standard</option>
-                    @foreach ($standards as $standard)
-                        <option value="{{ $standard->id }}" 
-                        {{ old("standard_id", $fee?->standard_id) === $standard->id ? "selected" : ""}} 
-                        > {{ $standard->name }}</option>
-                    @endforeach
-                </select>
-        </div>
+        
       </div>
         
         {{-- Submit --}}

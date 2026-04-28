@@ -58,7 +58,7 @@ class Exam extends Model
         public function changeExamStatus(){
             $this->status = match ($this->status){
                 "undone" => "done",
-                "postponed" => "undone"
+                "done" => "submitted"
             };
             $this->save();
         }

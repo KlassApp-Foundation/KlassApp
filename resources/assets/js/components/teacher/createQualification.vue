@@ -127,9 +127,13 @@
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <!-- <label for="qualification_id" class="tw-form-label">Additional Courses / Certificates<span class="text-red-500">*</span></label> -->
-                        <label for="qualification_id" class="tw-form-label"
-                            >Professional Courses / Certificates</label
+                        <label
+                            for="qualification_id"
+                            class="tw-form-label flex items-center gap-1"
                         >
+                            <span>Professional Courses / Certificates</span>
+                            <span class="text-red-400">*</span>
+                        </label>
                     </div>
                     <div class="mb-2">
                         <select
@@ -137,6 +141,7 @@
                             id="qualification_id"
                             v-model="input.qualification_id"
                             name="qualification_id[]"
+                            required
                             v-on:change="enableDiv(input.qualification_id)"
                         >
                             <option value="" disabled>Select</option>

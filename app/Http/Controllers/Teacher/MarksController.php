@@ -66,7 +66,7 @@ public function teacherExamMarksList()
         ->where("teacher_id", $teacher->id)
         ->orderBy('created_at', 'desc')
         ->get();
-
+// dd( SiteHelper::getAcademicYear($schoolId)->id);
 // $exm = Exam::where('teacher_id', $teacher->id)->get();
     // Add progress info
     // foreach ($exams as $exam) {
@@ -79,6 +79,7 @@ public function teacherExamMarksList()
 
 // mark exam as done
 public function TogglekStatus(Exam $exam){   
+    // $marks = Marks::where("exam_id", $exam->id)->get();
     $exam->changeExamStatus();
     return redirect()
         ->route('teacher.exam.marks')
@@ -153,7 +154,8 @@ public function saveExamMarks(Request $request, Exam $exam)
             ]
         );
     }
-
+     // change exam status
+     $exam->changeExamStatus();
     return redirect()
         ->route('teacher.exam.marks')
         ->with('successmessage', ' marks saved!');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Subject;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CreateExamRequest extends FormRequest
@@ -26,6 +27,16 @@ class CreateExamRequest extends FormRequest
                 "school_id" => auth()->user()->school_id
             ]);
         }
+
+        if($this->subject_id){
+            $subject = Subject::find($this->subject_id);
+            if($subject){
+                $this->merge([
+                    "standard_id" => $subject->standard_id,
+                    "section_id" => $subject->section_id
+                ]);
+            }
+        }
     }
     public function rules(): array
     {
@@ -35,9 +46,9 @@ class CreateExamRequest extends FormRequest
             'section_id'       => 'required|exists:sections,id',
             'academic_year_id' => 'required|exists:academic_years,id',
             'academic_term_id' => 'required|exists:academic_terms,id', // or string if named "Term I", etc.
-            'subject_id'       => 'nullable|exists:subjects,id', // nullable if whole-class exam
+            'subject_id'       => 'required|exists:subjects,id', // nullable if whole-class exam
             'teacher_id'       => 'nullable|exists:users,id',
-            'exam_type'      => 'nullable|string|min:1|max:255', 
+            'exam_type'      => 'required|string|min:1|max:255', 
             'scheduled_at'     => 'nullable|date_format:Y-m-d\TH:i',
             'status'             => 'nullable|boolean'
         ];

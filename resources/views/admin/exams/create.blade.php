@@ -20,8 +20,19 @@
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
 
             <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Create / Edit Exam</h2>
+            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex flex-col text-gray-800 dark:text-white">
+                    <span class='text-lg font-semibold'>Create / Edit Exam</span>
+                    <span class='text-xs bg-blue-300 px-2 rounded-full text-white'>First select class to add an exam</span>
+                </div>
+                <form action="{{ route("admin.exams.create") }}" method='GET'>
+                    <select name="section" id="section" class='p-2 rounded bg-gray-400' onchange='this.form.submit()'>
+                        <option value="">Select Class</option>
+                        @foreach ($sections as $section )
+                            <option value="{{$section->id}}">{{ $section->name }}</option>
+                        @endforeach
+                    </select>
+                </form>
             </div>
 
             <div class="p-6">
@@ -43,27 +54,11 @@
                         @method('PUT')
                     @endif
 
-                    <input type="hidden" name="section_id" value="{{ request('section') }}">
+                    {{-- <input type="hidden" name="section_id" value="{{ request('section') }}"> --}}
 
                     <!-- 2-Column Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                        <!-- Scheduled Date & Time -->
-                        <div>
-                            <label for="scheduled_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Scheduled Date & Time <span class="text-red-500">*</span>
-                            </label>
-                            <input type="datetime-local" 
-                                   name="scheduled_at" 
-                                   id="scheduled_at"
-                                   value="{{ old('scheduled_at', optional($exam)->scheduled_at ? \Carbon\Carbon::parse($exam->scheduled_at)->format('Y-m-d\TH:i') : '') }}"
-                                   class="tw-form-control w-full" />
-                            @error('scheduled_at')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Academic Year -->
+                          <!-- Academic Year -->
                         <div>
                             <label for="academic_year_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Academic Year <span class="text-red-500">*</span>
@@ -77,71 +72,14 @@
                                     </option>
                                 @endforeach
                             </select>
-                            @error('academic_year_id')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
                         </div>
 
-                        <!-- Subject -->
-                        <div>
-                            <label for="subject_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Subject (optional)
-                            </label>
-                            <select name="subject_id" class="tw-form-control w-full">
-                                <option value="">Select Subject</option>
-                                @foreach($subjects as $sub)
-                                    <option value="{{ $sub->id }}"
-                                        {{ old('subject_id', optional($exam)->subject_id) == $sub->id ? 'selected' : '' }}>
-                                        {{ $sub->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <!-- Exam Type -->
-                        <div>
-                            <label for="exam_type_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Exam Type <span class="text-red-500">*</span>
-                            </label>
-                            <select name="exam_type_id" id="exam_type_id" required class="tw-form-control w-full">
-                                <option value="">Select exam type</option>
-                                @foreach ($exam_types as $exam_type)
-                                    <option value="{{ $exam_type->id }}" 
-                                        {{ old('exam_type_id', optional($exam)->exam_type_id) == $exam_type->id ? 'selected' : '' }}>
-                                        {{ $exam_type->name }}
-                                    </option>
-                                @endforeach   
-                            </select>
-                            @error('exam_type_id')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Level (Standard) -->
-                        <div>
-                            <label for="standard_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Level <span class="text-red-500">*</span>
-                            </label>
-                            <select name="standard_id" id="standard_id" required class="tw-form-control w-full">
-                                <option value="">Select Level</option>
-                                @foreach($standards as $std)
-                                    <option value="{{ $std->id }}"
-                                        {{ old('standard_id', optional($exam)->standard_id) == $std->id ? 'selected' : '' }}>
-                                        {{ $std->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('standard_id')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Term -->
+                         <!-- Term -->
                         <div>
                             <label for="academic_term_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Term <span class="text-red-500">*</span>
                             </label>
-                            <select name="academic_term_id" id="academic_term_id" required class="tw-form-control w-full">
+                            <select name="academic_term_id" id="academic_term_id" required class="tw-form-control w-full p-2">
                                 <option value="">Select Term</option>
                                 @foreach ($terms as $term)
                                     <option value="{{ $term->id }}"
@@ -150,19 +88,68 @@
                                     </option>
                                 @endforeach
                             </select>
-                            @error('academic_term_id')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
                         </div>
 
+
+                        <!-- Scheduled Date & Time -->
+                        <div>
+                            <label for="scheduled_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Scheduled Date & Time <span class="text-red-500">*</span>
+                            </label>
+                            <input type="datetime-local" 
+                                   name="scheduled_at" 
+                                   id="scheduled_at"
+                                   value="{{ old('scheduled_at', optional($exam)->scheduled_at ? \Carbon\Carbon::parse($exam->scheduled_at)->format('Y-m-d\TH:i') : '') }}"
+                                   class="tw-form-control w-full" />
+                        </div>
+
+                      
+                        <!-- Subject -->
+                        <div>
+                            <label for="subject_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <span>Subject</span>
+                                 <span class="text-red-500">*</span>
+                            </label>
+                            <select name="subject_id" class="tw-form-control w-full">
+                                <option value="">Select Subject</option>
+                                @foreach($subjects as $subject)
+                                     <option value="{{ $subject->id }}"
+                                        {{ old('subject_id', optional($exam)->subject_id) == $subject->id ? 'selected' : '' }}>
+                                        {{ $subject->name }}
+                                    </option>
+                                   
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- exam type --}}
+                        <div>
+                            <label for="exam_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Exam Type <span class="text-red-500">*</span>
+                            </label>
+                           <input
+                type="text"
+                name="exam_type"
+                id="exam_type"
+                value="{{ old('exam_type', optional($exam)->exam_type) }}" 
+                class="w-full border rounded p-2"
+                placeholder="Beginning Of Term"
+                required
+            >
+                        </div>
+                        
+
+                       
                         <!-- Assigned Teacher -->
                         <div class="">
                             <label for="teacher_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Assigned Teacher
                             </label>
-                            <select name="teacher_id" class="tw-form-control w-full">
+                             {{-- {{ dd($teachers) }} --}}
+                            <select name="teacher_id" class="tw-form-control w-full p-2">
                                 <option value="">Select Teacher</option>
                                 @foreach($teachers as $teacher)
+                               
                                     <option value="{{ $teacher->id }}" 
                                         {{ old('teacher_id', optional($exam)->teacher_id) == $teacher->id ? 'selected' : '' }}>
                                         {{ $teacher->name }}
@@ -189,3 +176,4 @@
         </div>
     </div>
 @endsection
+

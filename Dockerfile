@@ -51,7 +51,8 @@ USER root
 
 # Align PHP-FPM with app user
 RUN sed -i 's/user = www-data/user = appuser/g' /usr/local/etc/php-fpm.d/www.conf \
- && sed -i 's/group = www-data/group = appgroup/g' /usr/local/etc/php-fpm.d/www.conf
+ && sed -i 's/group = www-data/group = appgroup/g' /usr/local/etc/php-fpm.d/www.conf \
+ && sed -i 's|^;*listen = .*|listen = 0.0.0.0:9000|' /usr/local/etc/php-fpm.d/www.conf
 
 # Entry point
 COPY entrypoint.sh /entrypoint.sh

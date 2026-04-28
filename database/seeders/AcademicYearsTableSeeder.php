@@ -22,7 +22,7 @@ class AcademicYearsTableSeeder extends Seeder
             // Current / Active for 2026
             [
                 'name'        => '2026',
-                'description' => 'Current Academic Year 2026',
+                'description' => 'Current Academic Year',
                 'start_date'  => '2026-02-02', // Official Term 1 start
                 'end_date'    => '2026-12-04', // Official Term 3 end
                 'status'      => '1',          // Active
@@ -30,7 +30,7 @@ class AcademicYearsTableSeeder extends Seeder
             // Next year (pre-seed for planning)
             [
                 'name'        => '2027',
-                'description' => 'Upcoming Academic Year 2027',
+                'description' => 'Upcoming Academic Year',
                 'start_date'  => '2027-02-01', // Tentative - usually early Feb
                 'end_date'    => '2027-12-03', // Tentative
                 'status'      => '0',          // Inactive / future

@@ -773,7 +773,7 @@ Route::post( '/student/shift', 'SendMessageController@shift' );
 // exams (admin)
 Route::get('/exams', 'ExamController@index')->name('admin.exams');
 Route::get('/exams/add-new', 'ExamController@create')->name('admin.exams.create');
-// Route::get('/exams/create', 'ExamController@create')->name('exams.create');
+// Route::get('/exams/classes/all', 'ExamController@sections')->name('admin.exams.classes.all');
 Route::get('/exams/{exam}/edit', 'ExamController@edit')->name('admin.exams.edit');
 Route::put('/exams/{exam}/update', 'ExamController@update')->name('admin.exams.update');
 Route::post('/admin/exams/store', 'ExamController@store')->name('admin.exams.store');
@@ -781,7 +781,7 @@ Route::delete('/admin/exams/{examId}/archieve', 'ExamController@archieve')->name
 
 
 Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
-Route::get('/marks/filter', "FilterMarksForm@classExamOverview")->name('admin.marks.filter');
+Route::get('/marks/filter', "MarksController@classExamOverview")->name('admin.marks.filter');
 Route::get("/marks/student/{learner}/class/{class}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
 Route::get("/report/student/{learner}/class/{class}", "DownloadStudentReport@download")->name("admin.report.student.class");
 // Optional later: full resource or more actions

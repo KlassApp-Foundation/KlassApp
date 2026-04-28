@@ -20,7 +20,7 @@
         <thead class="bg-gray-100 text-gray-700 text-sm">
             <tr>
                 @foreach ($headers as $header)
-                    <th class="px-4 py-2 text-left font-medium uppercase tracking-wider border border-gray-400">
+                    <th class="px-4 py-2 text-left font-bold capitalize tracking-wider border border-gray-400">
                         {{ $header }}
                     </th>
                 @endforeach
@@ -30,10 +30,11 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200 text-sm">
             @forelse ($exams as $exam)
+            {{-- {{ dd($exam) }} --}}
             <tr>
                 <td class="px-2 py-3 border border-gray-400">{{ $loop->iteration }}</td>
                 <td class="px-2 py-3 border border-gray-400">{{ $exam->academicTerm->name }}</td>
-                <td class="px-2 py-3 border border-gray-400">{{ $exam->examType->name }}</td>
+                <td class="px-2 py-3 border border-gray-400">{{ $exam->exam_type }}</td>
                 <td class="px-2 py-3 border border-gray-400">{{ $exam->status }}</td>
                 <td class="px-2 py-3 border border-gray-400">{{ $exam->standard->name ?? '-' }}</td>
                 <td class="px-2 py-3 border border-gray-400">{{ $exam->section->name }}</td>
@@ -43,7 +44,7 @@
                 <td class="px-2 py-3 border border-gray-400">
                    {{ filled($exam->teacher?->name) ? $exam->teacher->name : $exam->teacher?->email }}
                  </td>
-                <td class="px-2 py-3 border border-gray-400">{{ $exam->academicYear->name ?? '-' }}</td>
+                {{-- <td class="px-2 py-3 border border-gray-400">{{ $exam->academicYear->name ?? '-' }}</td> --}}
                 <td class="p-2 space-x-2 border border-gray-400">
                     <a href="{{ route("admin.exams.edit", $exam) }}" class="text-blue-500 hover:text-blue-700">Edit</a>
                     <form action="{{route("admin.exams.archieve", $exam->id)}}" method="POST" class="inline">

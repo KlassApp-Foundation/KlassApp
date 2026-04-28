@@ -27,7 +27,7 @@
     </div>
 
     <!-- standard -->
-    <div>
+    {{-- <div>
         <label for="standard" class="block  text-gray-700">Level/Standard</label>
         <select name="standard" id="standard" class="border-gray-300 rounded-lg p-1">
             <option value="">-- standard --</option>
@@ -39,7 +39,7 @@
                 <option disabled>No standards available</option>
             @endforelse
         </select>
-    </div>
+    </div> --}}
 
     <!-- Year -->
     <div>
@@ -90,10 +90,9 @@
     </div>
 
      {{-- exam type --}}
-     <div>
+     {{-- <div>
         <label for="year" class="block  text-gray-700">
             <span>Exam Type</span>
-            {{-- <span class="text-red-400">*</span> --}}
         </label>
         <select name="examType" id="year" class="border-gray-300 rounded-lg p-1" >
             <option value="">-- Exam Type --</option>
@@ -105,7 +104,7 @@
                 <option disabled>No exam type available</option>
             @endforelse
         </select>
-    </div>
+    </div> --}}
 
     <button type="submit" class="bg-blue-600 text-white p-1 font-semibold rounded-lg">
        Apply Filter
