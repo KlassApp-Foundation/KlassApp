@@ -17,6 +17,7 @@ use App\Traits\LogActivity;
 use App\Traits\Common;
 use League\Csv\Writer;
 use Exception;
+use Illuminate\Support\Facades\Session;
 
 class TeacherImportExportController extends Controller
 {
@@ -97,13 +98,15 @@ class TeacherImportExportController extends Controller
         try
         {
             Excel::import(new TeachersImport,$request->file('import_file'));
-            $count = \Session::get('count');
+            $count = Session::get('count');
+                    
+
             if($count != 0)
             {
                 return back()->with('failmessage','You can add only '.$count.' Members');
             }
          
-            $insertedcount = \Session::get('insertedcount');
+            $insertedcount = Session::get('insertedcount');
             if($insertedcount > 0)
             {
                 $message=trans('messages.import_success_msg',['module' => 'Teacher']);
@@ -125,64 +128,81 @@ class TeacherImportExportController extends Controller
         }
         catch(Exception $e)
         {
-            //dd($e->getMessage());
+            dd($e->getMessage());
         }
     }
 
-    public function downloadFormat(Request $request)
-    {      
-        $csv = Writer::createFromFileObject(new \SplTempFileObject());
+   public function downloadFormat(Request $request)
+{
+    $csv = Writer::createFromFileObject(new \SplTempFileObject());
 
-        $csv->insertOne(['firstname','lastname','mobile_no','email','gender','date_of_birth','blood_group','address','city','state','country','pincode','aadhar_number','joining_date','employee_id','ug_degree','pg_degree','specialization','additional_coures','sub_additional_coures','designation','notes']);
-        $csv->insertOne([
-            'firstname',
-            'lastname',
-            'mobile_no',
-            'email',
-            '(male , female)',
-            'date_of_birth',
-            '(a+,a1+,b+,b1+,o+,ab+,a1b+,a-,a1-,b-,b1-,o-,ab-,a1b-)',
-            'address',
-            'city',
-            'state',
-            'country',
-            'pincode',
-            'aadhar_number',
-            'joining_date',
-            'employee_id',
-            'ug degree (full form)',
-            'pg degree (full form)',
-            'specialization',
-            'Elementary Teacher Education Program , Bachelor of Elementary Education (B.EI.Ed.) , Physical Education Program (C.P.Ed.) , Pre-School Teacher Education Program , Nursery Teacher Education Program , Junior Basic Training (JBT) , Teachers Training Certificate (TTC) , Diploma in Education (DED) , Nursery Teacher Training (NTT) , Elementary Teacher Education (ETE) , Primary Teachers Certificate (PTC) , Basic Training Certificate (BTC) , Others',
-            'if additional_coures is others',
-            'assistant_teacher,co_ordinator,head_of_the_department,librarian,others,principal,senior_teacher,teacher,vice_principal',
-            'notes',
-        ]);
+    /*
+    |--------------------------------------------------------------------------
+    | HEADER (UNCHANGED - IMPORTANT FOR IMPORT COMPATIBILITY)
+    |--------------------------------------------------------------------------
+    */
+    $csv->insertOne([
+        'firstname','lastname','mobile_no','email','gender','date_of_birth',
+        'blood_group','address','city','state','country','pincode',
+        'aadhar_number','joining_date','employee_id','ug_degree','pg_degree',
+        'specialization','additional_coures','sub_additional_coures',
+        'designation','notes'
+    ]);
 
-        $csv->output('School Plus Add Teacher Format'.date('_d-m-Y_H:i').'.csv');
-       
-        $message=('Downloaded Sample Format File Successfully');
+    /*
+    |--------------------------------------------------------------------------
+    | SAMPLE ROW (UG SIMPLIFIED)
+    |--------------------------------------------------------------------------
+    */
+    $csv->insertOne([
+        'John',
+        'Kato',
+        '256700000000',
+        'john@example.com',
+        'male',
+        '1990-05-10',
+        'O+',
+        'Kampala Central',
+        'Kampala',
+        'Central',
+        'Uganda',
+        '',
+        '',
+        '2025-01-10',
+        'EMP001',
+        'Bachelor of Education',
+        'Master of Education',
+        'Mathematics',
+        'Teacher Training Certificate, Diploma in Education',
+        '',
+        'teacher',
+        'Sample notes'
+    ]);
 
-        $ip= $this->getRequestIP();
-        $this->doActivityLog(
-            Auth::user(),
-            Auth::user(),
-            ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-            LOGNAME_DOWNLOAD_SAMPLE_FORMAT_TEACHER,
-            $message
-        );
-    }
+    $csv->output('UG_Teacher_Format_' . date('_d-m-Y_H:i') . '.csv');
 
+    $message = 'Downloaded UG Teacher Sample Format Successfully';
+
+    $ip = $this->getRequestIP();
+
+    $this->doActivityLog(
+        Auth::user(),
+        Auth::user(),
+        ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT']],
+        LOGNAME_DOWNLOAD_SAMPLE_FORMAT_TEACHER,
+        $message
+    );
+}
      public function teacherexport(Request $request)
    {
     
      /* if(!\Session::has('headings'))
        {*/
-        \Session::forget('teacher_headings');
+        Session::forget('teacher_headings');
       // }
     $heads=[];
     $heads=array_values($request->headings);
-    \Session::put('teacher_headings', $heads);
+    Session::put('teacher_headings', $heads);
        // dd($heads);
 
    }
