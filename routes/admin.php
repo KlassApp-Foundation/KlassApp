@@ -781,7 +781,7 @@ Route::delete('/admin/exams/{examId}/archieve', 'ExamController@archieve')->name
 
 
 Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
-Route::get('/marks/filter', "FilterMarksForm@classExamOverview")->name('admin.marks.filter');
+Route::get('/marks/filter', "MarksController@classExamOverview")->name('admin.marks.filter');
 Route::get("/marks/student/{learner}/class/{class}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
 Route::get("/report/student/{learner}/class/{class}", "DownloadStudentReport@download")->name("admin.report.student.class");
 // Optional later: full resource or more actions

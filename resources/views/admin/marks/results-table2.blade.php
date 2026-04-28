@@ -1,21 +1,21 @@
 <div class="overflow-x-auto">
   
     <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-900">
-        <thead class="bg-gray-50">
+        <thead class="bg-gray-50 uppercase">
             <tr>
-                <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">ID</th>
-                <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">Student</th>
+                <th class="p-2 text-left font-medium tracking-wider border border-gray-400">No</th>
+                <th class="p-2 text-left font-medium tracking-wider border border-gray-400">Student</th>
 
                 @foreach ($subjects as $subject)
-                    <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">
+                    <th class="p-2 text-left font-medium tracking-wider border border-gray-400">
                         {{ str($subject->name)->limit(4, "") }}
                     </th>
                 @endforeach
 
-                <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">Total</th>
-                <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">Grade</th>
-                <th class="p-2 text-left font-medium uppercase tracking-wider border border-gray-400">Position</th>
-                <th class="p-2 text-center  font-medium uppercase tracking-wider border border-gray-400">Actions</th>
+                <th class="p-2 text-left font-medium tracking-wider border border-gray-400">Total</th>
+                <th class="p-2 text-left font-medium tracking-wider border border-gray-400">Grade</th>
+                <th class="p-2 text-left font-medium tracking-wider border border-gray-400">Position</th>
+                <th class="p-2 text-center  font-medium tracking-wider border border-gray-400">Actions</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200 ">
@@ -68,15 +68,15 @@
 
                     {{-- Actions --}}
                     <td class="p-2 text-center whitespace-nowrap border border-gray-400 flex items-center justify-center gap-2">
-                        <a href="#" class="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-white">Edit Marks</a>
+                        {{-- <a href="{{ route('teacher.student.marks.edit',[ $student->marks->first()->exam_id, $student->id, $student->marks->first()->id])}}" class="bg-green-600 hover:bg-green-500 px-2 py-1 rounded text-white">Edit Marks</a> --}}
                         <a href="
-                        {{ route("admin.marks.student.class", [$student, $student->marks->first()->exam?->section_id]) }}" 
-                         class="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-white">
+                        {{ route("admin.marks.student.class", [$student, $class->id]) }}" 
+                         class="bg-green-600 hover:bg-green-500 px-2 py-1 rounded text-white">
                          Report View
                         </a>
                         <a href="
-                        {{ route("admin.report.student.class", [$student, $student->marks->first()->exam?->section_id]) }}" 
-                         class="bg-green-500 hover:bg-green-600 px-2 py-1 rounded text-white">
+                        {{ route("admin.report.student.class", [$student, $class->id]) }}" 
+                         class="bg-green-600 hover:bg-green-500 px-2 py-1 rounded text-white">
                          Download Report
                         </a>
                     </td>

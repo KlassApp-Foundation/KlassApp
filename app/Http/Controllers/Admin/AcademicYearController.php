@@ -101,7 +101,7 @@ class AcademicYearController extends Controller
 
             $academic->school_id    = Auth::user()->school_id;
             //$academic->name         = $request->name;
-            $academic->name         = $curr_year.'-'.$next_year;
+            $academic->name         = $curr_year;
             $academic->description  = $request->description;
             $academic->start_date   = date('Y-m-d',strtotime($request->start_date));
             $academic->end_date     = date('Y-m-d',strtotime($request->end_date));
@@ -230,13 +230,15 @@ class AcademicYearController extends Controller
         {
             $academic = AcademicYear::where('id',$id)->first();
 
-            //$academic->name         = $request->name;
+            // $academic->name         = $request->name;
             $academic->description  = $request->description;
             $academic->start_date   = date('Y-m-d',strtotime($request->start_date));
             $academic->end_date     = date('Y-m-d',strtotime($request->end_date));
+            // $academic->name         =date('Y-m-d',strtotime($request->start_date));
             if($request->status == 'current')
             {
                 $academic->status       = 1;
+                // $academic->name = 
             }
             elseif($request->status == 'new')
             {

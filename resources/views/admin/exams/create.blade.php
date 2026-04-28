@@ -21,7 +21,10 @@
 
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Create / Edit Exam</h2>
+                <div class="flex flex-col text-gray-800 dark:text-white">
+                    <span class='text-lg font-semibold'>Create / Edit Exam</span>
+                    <span class='text-xs bg-blue-300 px-2 rounded-full text-white'>First select class to add an exam</span>
+                </div>
                 <form action="{{ route("admin.exams.create") }}" method='GET'>
                     <select name="section" id="section" class='p-2 rounded bg-gray-400' onchange='this.form.submit()'>
                         <option value="">Select Class</option>

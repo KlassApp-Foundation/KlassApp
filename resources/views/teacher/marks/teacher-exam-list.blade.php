@@ -54,6 +54,7 @@
                                         $btntext = match ($exam->status){
                                            "undone"     =>  "Mark as done",
                                            "done"       =>  "Submit Marks",
+                                           "submitted"       =>  "Marks Submitted",
                                         }
                                     @endphp
 

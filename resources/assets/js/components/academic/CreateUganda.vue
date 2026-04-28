@@ -14,7 +14,7 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="mb-2">
                     <label for="standard_id" class="tw-form-label">
-                        Level Test level <span class="text-red-500">*</span>
+                        Level / Standard <span class="text-red-500">*</span>
                     </label>
                 </div>
                 <select

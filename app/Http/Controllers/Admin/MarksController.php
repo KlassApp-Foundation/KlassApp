@@ -48,8 +48,11 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     // ============ eagerload users ===========
   $query = User::query()
     ->with(['marks' => function ($q) use ($request) {
-        $q->with('exam', 'subject', 'remark');
-
+        $q->with('exam', 'subject', 'remark')
+         ->whereHas("exam", function($e) use($request){
+            $e->where("status", "submitted");
+        });
+      
         // Filter marks only via exam relation
         // by term
         $q->when($request->filled('term'), function ($q2) use ($request) {
@@ -61,28 +64,26 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
             $q2->whereHas('exam', fn($e) => $e->where('academic_year_id', $request->year));
         });
 
-        $q->when($request->filled('standard'), function ($q2) use ($request) {
-            $q2->whereHas('exam', fn($e) => $e->where('standard_id', $request->standard));
-        });
-
-        $q->when($request->filled('subject'), function ($q2) use ($request) {
+         $q->when($request->filled('subject'), function ($q2) use ($request) {
             $q2->where('subject_id', $request->subject);
         });
 
         $q->when($request->filled("class"), function($q2) use($request){
             $q2->whereHas("exam", fn($e) =>$e ->where("section_id", $request->class));
+            
         });
 
-        $q->when($request->filled("examType"), function($q2) use($request){
-            $q2->whereHas("exam", fn($e) =>$e->where("exam_type_id", $request->examType));
-        });
+        // $q->when($request->filled('standard'), function ($q2) use ($request) {
+        //     $q2->whereHas('exam', fn($e) => $e->where('standard_id', $request->standard));
+        // });
     }])
     ->where('usergroup_id', 6)
     ->where('school_id', $schoolId)
     ->latest('created_at');
-    
     $marks = $query->paginate(15)->appends($request->query());
-    
+
+// dd($class_id);
+
     // $students = $query->paginate(15)->appends($request->query());
         $students = $query->get();
            // calculate total

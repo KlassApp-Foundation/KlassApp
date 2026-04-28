@@ -66,7 +66,7 @@ public function teacherExamMarksList()
         ->where("teacher_id", $teacher->id)
         ->orderBy('created_at', 'desc')
         ->get();
-
+// dd( SiteHelper::getAcademicYear($schoolId)->id);
 // $exm = Exam::where('teacher_id', $teacher->id)->get();
     // Add progress info
     // foreach ($exams as $exam) {

@@ -34,7 +34,7 @@ public function sections(){
     
     // $standards   = Standard::where('school_id', $school_id)->get(); 
     $sections = Section::where("school_id", $school_id)->get();
-    $academicYears = AcademicYear::where('school_id', $school_id)->get();
+    $academicYears = AcademicYear::where('school_id', $school_id)->where("") ->get();
     $selectedClassId = $request->get("section");
     if($selectedClassId){
         $subjects = Subject::where('section_id', $selectedClassId) ->where("school_id", $school_id)->get();
