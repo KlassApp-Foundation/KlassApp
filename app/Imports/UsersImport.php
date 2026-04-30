@@ -38,9 +38,13 @@ class UsersImport implements ToCollection, WithHeadingRow
             $insertedcount = 0;
 
             foreach ($rows as $row) {
-
+                $row = collect($row)->filter(function ($value, $key) {
+                    return is_string($key); // removes numeric keys like 11 => 11
+                });
+            // dd(array_keys($row->toArray()));
                 // ✅ Minimal required fields
-                if (empty($row['firstname'])) {
+                if (empty($row['firstname']) || empty($row['class'])) {
+                    Log::warning('Skipping invalid row', $row->toArray());
                     continue;
                 }
 
@@ -50,7 +54,7 @@ class UsersImport implements ToCollection, WithHeadingRow
 
                 /*
                 |--------------------------------------------------------------------------
-                | BASIC STUDENT DATA
+                | BASIC STUDENT DATA        
                 |--------------------------------------------------------------------------
                 */
                 $student->firstname     = $row['firstname'] ?? null;
@@ -83,28 +87,31 @@ class UsersImport implements ToCollection, WithHeadingRow
                 | CLASS / SECTION (SAFE)
                 |--------------------------------------------------------------------------
                 */
-                $class_name = null;
+                $standard = null;
+                $section = null;
+                $sectionVal = strtolower($row["class"]);
 
-                if (!empty($row['class'])) {
-                    if (is_numeric($row['class'])) {
-                        $class_name = $row['class'];
-                    } else {
-                        $class_name = $this->romanToInteger($row['class']);
+                if($sectionVal){
+                    // derrive standards from sections
+                    if(str_starts_with($sectionVal, "p")){
+                    $standard = Standard::where('school_id', $school_id)->where( 'name', 'primary')->first();
                     }
+                    $prefixes = ['b', 'm', 't'];
+                    if (collect($prefixes)->contains(fn($p) => str_starts_with($sectionVal, $p))) {
+                        $standard = Standard::where('school_id', $school_id)->where('name', 'nursery')->first();
+                    }
+                    $alevel = ['Senior Five', 'Senior Six'];
+                    $olevel =  ['Senior One', 'Senior Two', 'Senior Three', 'Senior Four'];
+                    if(in_array($sectionVal, $alevel)){
+                    $standard = Standard::where('school_id', $school_id)->where( 'name', 'a-level')->first();
+                    }
+                   if(in_array($sectionVal, $olevel)){
+                    $standard = Standard::where('school_id', $school_id)->where( 'name', 'o-level')->first();
+                    }
+                    $section      = Section::where([['school_id', $school_id], ['name', 'LIKE', $sectionVal]])->first();
+
                 }
-
-                $standard = $class_name
-                    ? Standard::where('school_id', $school_id)
-                        ->where('name', 'LIKE', $class_name)
-                        ->first()
-                    : null;
-
-                $section = !empty($row['section'])
-                    ? Section::where('school_id', $school_id)
-                        ->where('name', 'LIKE', $row['section'])
-                        ->first()
-                    : null;
-
+              
                 if ($standard && $section) {
                     $standardLink = StandardLink::where([
                         ['school_id', $school_id],
@@ -186,6 +193,7 @@ class UsersImport implements ToCollection, WithHeadingRow
 
         } catch (Exception $e) {
             Log::error('Import Error: ' . $e->getMessage());
+            dd($e->getMessage());
         }
     }
 }

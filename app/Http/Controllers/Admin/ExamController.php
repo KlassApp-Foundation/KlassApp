@@ -33,8 +33,8 @@ public function sections(){
    $school_id = Auth::user()->school_id;
     
     // $standards   = Standard::where('school_id', $school_id)->get(); 
-    $sections = Section::where("school_id", $school_id)->get();
-    $academicYears = AcademicYear::where('school_id', $school_id)->where("") ->get();
+    $sections = Section::where("school_id", $school_id)->orderByDesc("id")->get();
+    $academicYears = AcademicYear::where('school_id', $school_id)->get();
     $selectedClassId = $request->get("section");
     if($selectedClassId){
         $subjects = Subject::where('section_id', $selectedClassId) ->where("school_id", $school_id)->get();
@@ -45,7 +45,7 @@ public function sections(){
         ->latest()
         ->get();
          $teachers    = User::where('school_id', $school_id)
-            ->whereIn('usergroup_id', [3, 5]) // adjust role names
+            ->where('usergroup_id', 5) 
             ->get();
     // $sections =         
     return view('admin.exams.create', compact(
@@ -65,7 +65,7 @@ public function sections(){
         $standards   = Standard::where('school_id', Auth::user()->school_id)->get(); // classes/grades
         $subjects    = Subject::where('school_id', Auth::user()->school_id)->get();
         $teachers    = User::where('school_id', Auth::user()->school_id)
-            ->whereIn('usergroup_id', [3, 5]) // adjust role names
+            ->whereIn('usergroup_id', [3, 5])
             ->get();
             
        $headers = [

@@ -142,10 +142,8 @@ class TeacherImportExportController extends Controller
     |--------------------------------------------------------------------------
     */
     $csv->insertOne([
-        'firstname','lastname','mobile_no','email','gender','date_of_birth',
-        'blood_group','address','city','state','country','pincode',
-        'aadhar_number','joining_date','employee_id','ug_degree','pg_degree',
-        'specialization','additional_coures','sub_additional_coures',
+        'firstname','lastname','mobile_no','email','gender','date_of_birth', 'blood_group','address','city','state',
+        'country','joining_date','employee_id','ug_degree','pg_degree','specialization','additional_coures',
         'designation','notes'
     ]);
 
@@ -155,43 +153,24 @@ class TeacherImportExportController extends Controller
     |--------------------------------------------------------------------------
     */
     $csv->insertOne([
-        'John',
-        'Kato',
-        '256700000000',
-        'john@example.com',
-        'male',
-        '1990-05-10',
-        'O+',
-        'Kampala Central',
-        'Kampala',
-        'Central',
-        'Uganda',
-        '',
-        '',
-        '2025-01-10',
-        'EMP001',
-        'Bachelor of Education',
-        'Master of Education',
-        'Mathematics',
-        'Teacher Training Certificate, Diploma in Education',
-        '',
-        'teacher',
-        'Sample notes'
+        'John','Kato','256700000000','john@example.com','male','1990-05-10','O+','Kampala Central','Kampala','Central','Uganda', '2025-01-10', 'EMP001', 'Bachelor of Education', 'Master of Education', 'Mathematics',
+        'Teacher Training Certificate, Diploma in Education','Head Of Department','Sample notes'
     ]);
 
-    $csv->output('UG_Teacher_Format_' . date('_d-m-Y_H:i') . '.csv');
+    $filename = 'klassapp_teacher_template' . date('d-m-Y_H:i') . '.csv';
+    $csv->output($filename);
 
     $message = 'Downloaded UG Teacher Sample Format Successfully';
+exit;
+    // $ip = $this->getRequestIP();
 
-    $ip = $this->getRequestIP();
-
-    $this->doActivityLog(
-        Auth::user(),
-        Auth::user(),
-        ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT']],
-        LOGNAME_DOWNLOAD_SAMPLE_FORMAT_TEACHER,
-        $message
-    );
+    // $this->doActivityLog(
+    //     Auth::user(),
+    //     Auth::user(),
+    //     ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT']],
+    //     LOGNAME_DOWNLOAD_SAMPLE_FORMAT_TEACHER,
+    //     $message
+    // );
 }
      public function teacherexport(Request $request)
    {
