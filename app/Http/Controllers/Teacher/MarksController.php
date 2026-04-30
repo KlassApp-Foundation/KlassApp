@@ -8,6 +8,7 @@ use App\Models\Academics\Exam;
 
 use App\Models\Academics\Marks;
 use App\Models\Academics\Remarks;
+use App\Models\AcademicYear;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
@@ -60,13 +61,15 @@ public function teacherExamMarksList()
 
     // Get exams where this teacher is assigned (adjust based on your logic)
     // Example: exams where teacher is linked via subject or directly
+        $yrId = AcademicYear::where("school_id", $schoolId)->where("name", now()->year)->value("id");
+
     $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
         -> where('school_id', $schoolId)
-        ->where('academic_year_id', SiteHelper::getAcademicYear($schoolId)->id)
+        ->where('academic_year_id', $yrId)
         ->where("teacher_id", $teacher->id)
         ->orderBy('created_at', 'desc')
         ->get();
-// dd( SiteHelper::getAcademicYear($schoolId)->id);
+    // dd($exams);
 // $exm = Exam::where('teacher_id', $teacher->id)->get();
     // Add progress info
     // foreach ($exams as $exam) {
