@@ -97,6 +97,12 @@
             @endif
         </div>
 
+        {{-- <a href="
+          {{ route("admin.marksheet.download", [$student, $class->id]) }}" 
+           class="bg-green-600 hover:bg-green-500 px-2 py-1 rounded text-white">
+           Download Report
+          </a> --}}
+
     </div>
 </div>
 

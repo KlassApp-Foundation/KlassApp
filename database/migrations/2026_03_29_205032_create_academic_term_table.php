@@ -18,6 +18,11 @@ return new class extends Migration
             $table->string("name");
             $table->dateTime("starts_on")->nullable();
             $table->dateTime("ends_on")->nullable();
+<<<<<<< HEAD
+=======
+            
+            $table->enum("status", ["last", "current", "next"]);
+>>>>>>> 64c5206 (added marksheet download module)
             $table->foreign("school_id")->references("id")->on("schools")->cascadeOnDelete();
             $table->foreign("academic_year_id")->references("id")->on("academic_years")->cascadeOnDelete();
 

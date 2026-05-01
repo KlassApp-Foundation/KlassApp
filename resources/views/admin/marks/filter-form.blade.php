@@ -109,6 +109,13 @@
     <button type="submit" class="bg-blue-600 text-white p-1 font-semibold rounded-lg">
        Apply Filter
     </button>
+
+   @if ($students && $students->isNotEmpty())
+        <a href="{{ route('admin.marksheet.download', request()->query()) }}"
+   class="bg-green-600 text-white p-1 rounded-lg font-semibold">
+    Download PDF
+</a>
+   @endif
 @csrf
 </form>
 
