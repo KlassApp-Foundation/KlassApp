@@ -73,16 +73,12 @@
 </div>
 
    <div class="">
-
+    <!-- ================= Main Marks Table ===================== -->
     <table class="w-full border border-gray-400 rounded-xl overflow-hidden">
         {{-- header --}}
     <thead class="bg-gray-100 text-sm uppercase text-gray-600">
         <tr>
-            {{-- <th class="p-3 border border-gray-500">Subject</th> --}}
-            {{-- <th class="p-3 border border-gray-500">Out Of</th> --}}
-            {{-- @foreach ($exams as $exam)
-                <th class="p-3 border border-gray-500">{{ $exam->exam_type }}</th>
-            @endforeach --}}
+           
             @foreach ($controls as $control)
                 <th class="p-3 border border-gray-500">{{ $control }}</th>
             @endforeach
@@ -160,7 +156,6 @@
             <td class="p-3 border border-gray-500">{{$remark}}</td>
             {{-- {{ dd($learner) }} --}}
             <td class="p-3 border border-gray-500">
-                
                 {{$learner->marks->where("subject_id", $subject->id)->first()?->teacher?->name ?? "N/A"}}
             </td>
         </tr>

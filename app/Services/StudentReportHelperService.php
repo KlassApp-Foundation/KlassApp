@@ -103,5 +103,31 @@ return $learners;
                        ->get();
                        dd($exams);
   }
+
+  public function examsDone($schoolId, $exam){
+    return Exam::where("school_id", $schoolId)
+                       ->where("section_id", $exam->section_id)
+                       ->where("academic_term_id", $exam->academic_term_id)
+                       ->where("academic_year_id", $exam->academic_year_id)
+                       ->count();
+  }
+
+  public function grade($section, $schoolId, $learner, $exam){
+   $allSubjects = Subject::where("school_id", $schoolId)
+                                 ->where("section_id", $section)
+                                 ->with("mark", function($q) use($learner, $exam){
+                                    $q->where("student_id", $learner->first()->id)
+                                    ->with("exam", function ($q2) use($exam){
+                                        $q2->where("section_id", $exam->school_id)
+                                          ->where("academic_term_id", $exam->academic_term_id)
+                                          ->where("academic_year_id", $exam->academic_year_id);
+                                    });
+                                 })
+                                 ->get();
+    // foreach($allSubjects as $subject=>$mark){
+    //     return $mark;
+    // }
+    return $allSubjects;
+  }
 }
 

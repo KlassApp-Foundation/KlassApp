@@ -75,7 +75,7 @@
                          Report View
                         </a>
                         <a href="
-                        {{ route("admin.report.student.class", [$student, $class->id]) }}" 
+                        {{ route("admin.report.student.class", [$student, $class->id, $exam]) }}" 
                          class="bg-green-600 hover:bg-green-500 px-2 py-1 rounded text-white">
                          Download Report
                         </a>

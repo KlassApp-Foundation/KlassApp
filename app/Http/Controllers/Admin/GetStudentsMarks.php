@@ -30,6 +30,8 @@ class GetStudentsMarks extends Controller
         //  dd($exam);
                 //    subjects
             $subjects = $studentHelper->subjects($schoolId, $section, $learner, $exam);
+            $grade = $studentHelper->grade($section, $schoolId, $learner, $exam);
+            // dd($grade->first()->mark->average("marks"));
             // dd($subjects->first()->mark);
             $exams = $studentHelper->exam($schoolId, $exam);
             $controls = ["SUBJECT", "OUT OF"];
@@ -48,15 +50,11 @@ class GetStudentsMarks extends Controller
              $marks = $exam->marks->where("student_id", $learner->first()->id);
              $total = $marks->sum("marks");
              
-             $examsDone = Exam::where("school_id", $schoolId)
-                       ->where("section_id", $exam->section_id)
-                       ->where("academic_term_id", $exam->academic_term_id)
-                       ->where("academic_year_id", $exam->academic_year_id)
-                       ->count();
+             $examsDone = $studentHelper->examsDone($schoolId, $exam);
             //  $xy = $marks->map(function($marks) use($examsDone){
             //     $total = $marks->marks->sum('marks');
             //     $marks->total = $total;
-            //     $marks->average = $total / $examsDone;
+            $average = $total / $examsDone;
 
             //     return $marks;
             //  });
@@ -83,8 +81,7 @@ class GetStudentsMarks extends Controller
     $learners = $studentHelper->totalStudentsInClass($schoolId, $section);
                     
     $totalLearners = $learners->count();
-         
-        $learners = $learners->get();
+    $learners = $learners->get();
         
         // totals
         $learners = $studentHelper->totalMarks($learners);
@@ -96,6 +93,7 @@ class GetStudentsMarks extends Controller
 
         $myPos = $learners->where("id", $learner->first()->id)->value("position");
         $learner = $learner->where("id", $learner->first()->id)->first();
+        // 
             // $byStandard = $fees->where("standard_id", )
             // dd($learner);
     return view("admin.marks.student", compact(
