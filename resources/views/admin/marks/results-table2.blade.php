@@ -70,7 +70,7 @@
                     <td class="p-2 text-center whitespace-nowrap border border-gray-400 flex items-center justify-center gap-2">
                         {{-- <a href="{{ route('teacher.student.marks.edit',[ $student->marks->first()->exam_id, $student->id, $student->marks->first()->id])}}" class="bg-green-600 hover:bg-green-500 px-2 py-1 rounded text-white">Edit Marks</a> --}}
                         <a href="
-                        {{ route("admin.marks.student.class", [$student, $class->id]) }}" 
+                        {{ route("admin.marks.student.class", [$student, $class->id,  $exam]) }}" 
                          class="bg-green-600 hover:bg-green-500 px-2 py-1 rounded text-white">
                          Report View
                         </a>
