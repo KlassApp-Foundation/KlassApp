@@ -5,6 +5,7 @@
  */
 namespace App\Models;
 
+use App\Models\Academics\Marks;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 
@@ -69,7 +70,7 @@ class Subject extends Model
 
     public function mark()
     {
-        return $this->hasMany('App\Models\Mark','subject_id','id');
+        return $this->hasMany(Marks::class,'subject_id','id');
     }
 
     public function schedule()

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\SiteHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamType;
@@ -42,9 +43,9 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     // get all student marks per class
     public function classExamOverview(Request $request)
 {
-    $student_usergroup_id = 6;
     $schoolId = Auth::user()->school_id;
-        
+    $academic_year_id = AcademicYear::where("school_id", $schoolId)->where("description", "Current Academic Year")->value("id");
+    
     // ============ eagerload users ===========
   $query = User::query()
     ->with(['marks' => function ($q) use ($request) {
@@ -52,9 +53,7 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
          ->whereHas("exam", function($e) use($request){
             $e->where("status", "submitted");
         });
-      
-        // Filter marks only via exam relation
-        // by term
+              // by term
         $q->when($request->filled('term'), function ($q2) use ($request) {
             $q2->whereHas('exam', fn($e) => $e
             ->where('academic_term_id', $request->term));
@@ -69,6 +68,7 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
         });
 
         $q->when($request->filled("class"), function($q2) use($request){
+            // $q2->whereHas("")
             $q2->whereHas("exam", fn($e) =>$e ->where("section_id", $request->class));
             
         });
@@ -76,19 +76,30 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
         // $q->when($request->filled('standard'), function ($q2) use ($request) {
         //     $q2->whereHas('exam', fn($e) => $e->where('standard_id', $request->standard));
         // });
-    }])
+    }, "studentAcademic.standardLink"])
     ->where('usergroup_id', 6)
     ->where('school_id', $schoolId)
+    ->whereHas("studentAcademic", function ($query) use($request){
+        $query->whereHas("standardLink", function($q2) use($request){
+            $q2->where("section_id", $request->class);
+        });
+    })
     ->latest('created_at');
     $marks = $query->paginate(15)->appends($request->query());
 
-// dd($class_id);
-
     // $students = $query->paginate(15)->appends($request->query());
+    // get total exams done (subjects covered)
+    $examsDone = Exam::where("school_id", $schoolId)
+          ->where("section_id", $request->class)
+          ->where("academic_term_id", $request->term)
+          ->where("academic_year_id", $academic_year_id)
+          ->count();
         $students = $query->get();
            // calculate total
-           $students = $students->map(function ($student) {
-           $student->total = $student->marks->sum('marks');
+           $students = $students->map(function ($student) use($examsDone) {
+            $total = $student->marks->sum('marks');
+           $student->total = $total;
+           $student->average = $total / $examsDone;
            return $student;
        });
        $students = $students->sortByDesc("total")->values();
@@ -131,10 +142,14 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     $type = ExamType::find($request->examType);
     $terms = AcademicTerm::where("school_id", $schoolId)->get();
     $class = Section::where("id", $request->class)->first();
-    // dd($class);
-    // dd($marks);
+    $exam = Exam::where("school_id", $schoolId)
+           ->where("academic_year_id", $academic_year_id)
+           ->where("academic_term_id", $request->term)->first();
+       $headers = ['Total', 'Average', 'Grade', 'Position', 'Actions'];    
+    //    dd($exam);
     return view('admin.marks.filter', compact(
-        'marks', 'year', "term", "class", "subjects", "years", "standards", "terms", "students", "classes", "examTypes", "type", "term", "subjectsCovered"
+        'marks', 'year', "term", "class", "subjects", "years", "standards", "terms", "students", "classes", "examTypes",
+         "type", "term", "subjectsCovered", "headers", "exam"
         ));
 }
 
