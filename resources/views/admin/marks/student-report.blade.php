@@ -7,7 +7,7 @@
         @page { margin: 2mm 7mm; } /* top-bottom 10mm, sides 15mm */
         *, html{
             widows: 100%;
-            background-color: #defaf5;
+            background-color: #f9fbfc;
             margin: 0;
             padding: 0;
         }
@@ -15,7 +15,7 @@
             font-family: sans-serif;
             font-size: 12px;
             line-height: 1.5;
-            color: #333;
+            color: #2d3748;
             position: relative;
             padding: 15px 18px;
         }
@@ -29,12 +29,12 @@
             margin: 24px 0 0;
         }
         th, td {
-            border: 1px solid #555;
+            border: 1px solid #e2e8f0;
             padding: 8px 10px;
             vertical-align: middle;
         }
         th {
-            background-color: #f0f0f0;
+            background-color: #f1f5f9;
             font-weight: bold;
             text-transform: uppercase;
             font-size: 11px;
@@ -85,19 +85,35 @@
             text-decoration: underline;
             color: red;
         }
+        .watermark {
+    position: absolute;
+    top: 40%;
+    left: 10%;
+    width: 80%;
+    text-align: center;
+    opacity: 0.05;
+    font-size: 60px;
+    color: #000;
+    font-weight: 900;
+    transform: rotate(-60deg);
+}
     </style>
 </head>
 <body>
 
 @if (!is_null($learner))
-    @php
+    {{-- @php
         $allowedTypes = ["Beginning of Term", "Mid Term", "End of Term"];
         $subjectAverages = [];
         $filteredMarks = $learner->marks->filter(fn($m) => in_array($m->exam?->examType?->name, $allowedTypes));
-    @endphp
+    @endphp --}}
 
     <!-- watermark -->
-    <div style="position: fixed; top: 40%; left: 10%; width: 80%; text-align: center; opacity: 0.08; font-size: 60px; color: #000; font-weight: 900; transform: rotate(-60deg); z-index: -1;">
+    {{-- <div style="position: fixed; top: 40%; left: 10%; width: 80%; text-align: center; opacity: 0.08; font-size: 60px; color: #ee04ee; font-weight: 900; transform: rotate(-60deg);">
+        {{ $learner->school->name }}
+    </div> --}}
+    <body>
+    <div class="watermark">
         {{ $learner->school->name }}
     </div>
     <!-- Header -->
@@ -142,7 +158,7 @@
                 </td>
                 <td>{{ $class_name }}</td>
                 <td>{{ $learner->stream ?? "A" }}</td>
-                <td>{{ $filteredMarks->first()?->exam?->academicTerm->name ?? "-" }}</td>
+                <td>{{ $learner->marks->first()->exam->academicTerm->name ?? "-" }}</td>
                 <td>{{ $myPos ?? "-" }}</td>
                 <td>{{ $totalLearners ?? "-" }}</td>
             </tr>
@@ -150,22 +166,22 @@
     </table>
     </div>
 
-    <!-- Performance Summary -->
+    <!-- =========== Performance Summary =============== -->
    <div class="table">
      <div>
         @php
             $termMap = ["First Term" => 1, "Second Term" => 2, "Third Term" => 3];
-            $termName = $filteredMarks->first()?->exam?->academicTerm->name;
+            $termName = $learner->marks->first()->exam->academicTerm->name;
         @endphp
         <h3 class="title">
-            {{ $filteredMarks->first()?->exam?->examType->name }}
+            {{ $learner->marks->first()->exam->exam_type }}
             {{ $termMap[$termName] ?? "-" }}
-            {{ $filteredMarks->first()?->exam?->academicYear->name }}
+            {{ $termName->academicYear }}
             <span>STUDENT REPORT CARD</span>
         </h3>
     </div>
 
-    <!-- Main Marks Table -->
+    <!-- ================= Main Marks Table ===================== -->
     <table>
         <thead>
             <tr>
@@ -177,21 +193,21 @@
         <tbody>
             @foreach ($subjects as $subject)
                 @php
-                    $mark = $filteredMarks
-                        ->where('subject_id', $subject->id)
-                        ->sortBy(fn($m) => array_search($m->exam->examType->name, $allowedTypes));
+                    // $mark = $filteredMarks
+                    //     ->where('subject_id', $subject->id)
+                    //     ->sortBy(fn($m) => array_search($m->exam->examType->name, $allowedTypes));
 
-                    $marksByType = $mark->keyBy(fn($m) =>$m->exam?->examType?->name);
+                    // $marksByType = $mark->keyBy(fn($m) =>$m->exam?->examType?->name);
 
-                    $bot = $marksByType["Beginning of Term"]->marks ?? null;
-                    $mot = $marksByType["Mid Term"]->marks ?? null;
-                    $eot = $marksByType["End of Term"]->marks ?? null;
+                    // $bot = $marksByType["Beginning of Term"]->marks ?? null;
+                    // $mot = $marksByType["Mid Term"]->marks ?? null;
+                    // $eot = $marksByType["End of Term"]->marks ?? null;
 
-                    $values = collect([$bot, $mot, $eot])->filter(fn($v) =>$v !== null);
-                    $average = $values->count() > 0 ? round($values->avg(), 1) : null;
+                    // $values = collect([$bot, $mot, $eot])->filter(fn($v) =>$v !== null);
+                    // $average = $values->count() > 0 ? round($values->avg(), 1) : null;
 
-                    $subjectAverages[] = $average ?? 0;
-                    $totalAverages = count($subjectAverages) ? array_sum($subjectAverages) : null;
+                    // $subjectAverages[] = $average ?? 0;
+                    // $totalAverages = count($subjectAverages) ? array_sum($subjectAverages) : null;
 
                     if ($average >= 85) { $grade = "D1"; $remark = "Well done!"; }
                     elseif ($average >= 80) { $grade = "D2"; $remark = "Good work!"; }
@@ -206,33 +222,45 @@
                 <tr>
                     <td>{{ $subject->name }}</td>
                     <td>100</td>
-                    <td>{{ $bot ?? "-" }}</td>
-                    <td>{{ $mot ?? "-" }}</td>
-                    <td>{{ $eot ?? "-" }}</td>
-                    <td>{{ $average ?? "-" }}</td>
+                    @foreach ($marksFromSubject as $subje)
+                      <td>
+                          {{$marks->first()->subject_id === $subje->id? $subject->mark->first()->marks : "N/A" }}
+                      </td>                 
+                    @endforeach
+                    <td>{{
+                    $marks->first()->subject_id === $subject->id ?
+                    $subject->mark->first()->marks / $examsDone : "-"
+                    }}</td>
+                    {{-- <td>{{ $bot ?? "-" }}</td> --}}
+                    {{-- <td>{{ $mot ?? "-" }}</td> --}}
+                    {{-- <td>{{ $eot ?? "-" }}</td> --}}
+                    {{-- <td>{{ $average ?? "-" }}</td> --}}
                     <td>{{ $grade }}</td>
                     <td>{{ $remark }}</td>
-                    <td>{{ $learner->marks->where("subject_id", $subject->id)->first()?->teacher->name ?? "-" }}</td>
+                    <td>{{ $learner->marks->where("subject_id", $subject->id)->first()?->teacher->name ?? "N/A" }}</td>
                 </tr>
             @endforeach
         </tbody>
-        @php
+        {{-- @php
             $marksByType = $filteredMarks->groupBy(fn($m) => $m->exam?->examType?->name);
             $botTotal = collect($marksByType['Beginning of Term'] ?? [])->sum('marks');
             $motTotal = collect($marksByType['Mid Term'] ?? [])->sum('marks');
             $eotTotal = collect($marksByType['End of Term'] ?? [])->sum('marks');
-        @endphp
+        @endphp --}}
         <tfoot>
+            @php
+            $span = count($controls) - 4
+        @endphp
             <tr class="total-row">
                 <th>TOTAL</th>
                 <th>400</th>
-                <th>{{ $botTotal }}</th>
-                <th>{{ $motTotal }}</th>
-                <th>{{ $eotTotal }}</th>
-                <th>{{ $totalAverages }}</th>
-                <th></th>
-                <th></th>
-                <th></th>
+                <th>{{ $total }}</th>
+                {{-- <th>{{ $motTotal }}</th> --}}
+                {{-- <th>{{ $eotTotal }}</th> --}}
+                <th>{{ $total / $examsDone  }}</th>
+                <th colspan="{{$span}}"></th>
+                {{-- <th></th> --}}
+                {{-- <th></th> --}}
             </tr>
         </tfoot>
     </table>
