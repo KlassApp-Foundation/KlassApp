@@ -4,23 +4,24 @@
 <meta charset="UTF-8">
 <title>Marks Sheet</title>
 <style>
-    @page { margin: 10mm 10mm; }
+    @page { margin: 2mm 2mm; }
     body {
         font-family: sans-serif;
         font-size: 12px;
         line-height: 1.4;
         color: #333;
         margin: 0;
-        padding: 10px;
+        padding: 0;
     }
     table {
         width: 100%;
         border-collapse: collapse;
-        margin: 15px 0;
+        /* margin: 5px auto; */
+        /* table-layout: fixed;  */
     }
     th, td {
         border: 1px solid #555;
-        padding: 6px 8px;
+        padding: 5px;
         text-align: center;
         vertical-align: middle;
         font-size: 11px;
@@ -33,20 +34,17 @@
     tr:nth-child(even) td {
         background-color: #f9f9f9;
     }
-    .name{
-         min-width: 220px;
-    }
     .header-table td {
         border: 0;
         text-align: left;
         padding: 2px 5px;
     }
-    .student-name {
-        text-align: left;
+    .name,.student-name {
         padding-left: 5px;
-    white-space: nowrap;
-
+        white-space: nowrap;
+        width: 20%
     }
+    .student-name{text-align: left;}
     .title {
         text-align: center;
         font-weight: bold;
@@ -99,7 +97,6 @@
                 @endforeach
 
                 <td>{{ $student->total ?? '-' }}</td>
-                <td>{{ $student->average ?? '-' }}</td>
                 <td>{{ $student->marks->first()?->grade ?? '-' }}</td>
                 <td>{{ $student->position ?? '-' }}</td>
             </tr>

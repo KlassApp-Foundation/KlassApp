@@ -126,12 +126,11 @@
                         <div>
                             <label for="exam_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Exam Type <span class="text-red-500">*</span>
-                            </label>
-                          
+                            </label>       
                    <select name="exam_type_id" class="tw-form-control w-full">
                                 <option value="">Select Exam Type</option>
                                 @foreach($examTypes as $examType)
-                                     <option value="{{ $subject->id }}"
+                                     <option value="{{ $examType->id }}"
                                         {{ old('exam_type_id', optional($exam)->exam_type_id) == $examType->id ? 'selected' : '' }}>
                                         {{ $examType->name }}
                                     </option>

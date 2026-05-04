@@ -59,6 +59,18 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
             ->where('academic_term_id', $request->term));
         });
 
+        $q->when($request->filled("class"), function($q2) use($request){
+            // $q2->whereHas("")
+            $q2->whereHas("exam", fn($e) =>$e ->where("section_id", $request->class));
+            
+        });
+        // by exam type
+        $q->when($request->filled("examType"), function($q2) use($request){
+            // $q2->whereHas("")
+            $q2->whereHas("exam", fn($e) =>$e ->where("exam_type_id", $request->examType));
+            
+        });
+
         $q->when($request->filled('year'), function ($q2) use ($request) {
             $q2->whereHas('exam', fn($e) => $e->where('academic_year_id', $request->year));
         });
@@ -67,11 +79,7 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
             $q2->where('subject_id', $request->subject);
         });
 
-        $q->when($request->filled("class"), function($q2) use($request){
-            // $q2->whereHas("")
-            $q2->whereHas("exam", fn($e) =>$e ->where("section_id", $request->class));
-            
-        });
+        
 
         // $q->when($request->filled('standard'), function ($q2) use ($request) {
         //     $q2->whereHas('exam', fn($e) => $e->where('standard_id', $request->standard));
@@ -85,7 +93,7 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
         });
     })
     ->latest('created_at');
-    $marks = $query->paginate(15)->appends($request->query());
+    // $marks = $query->paginate(15)->appends($request->query());
 
     // $students = $query->paginate(15)->appends($request->query());
     // get total exams done (subjects covered)
@@ -95,11 +103,12 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
           ->where("academic_year_id", $academic_year_id)
           ->count();
         $students = $query->get();
+        // dd($students);
            // calculate total
            $students = $students->map(function ($student) use($examsDone) {
             $total = $student->marks->sum('marks');
            $student->total = $total;
-           $student->average = $total / $examsDone;
+           $student->average = $examsDone ? $total / $examsDone : 0;
            return $student;
        });
        $students = $students->sortByDesc("total")->values();
@@ -117,7 +126,7 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
        });
     //    paginate
     $page = request()->get("page", 1);
-    $perpage = 15;
+    $perpage = 6;
     $students = new LengthAwarePaginator(
         $students->forPage($page, $perpage),
         $students->count(),
@@ -125,11 +134,13 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
         $page,
         ["path" => request()->url(), "query" => request()->query()]
     );
+    // $students->appends($request->query());
+    // $students = $students->paginate(5)->appends($request->query());
     //    dd($position);
     // other filter options
     $years = AcademicYear::where('school_id', $schoolId)->get();
     $standards = Standard::where('school_id', $schoolId)->get();
-    $classes = Section::where("school_id", $schoolId)->get();
+    $classes = Section::where("school_id", $schoolId)->orderByDesc("id")->get();
     $subjects = Subject::where("school_id", $schoolId)->where("section_id", $request->class)->get();
    
     $subjectsCovered = Exam::where("school_id", $schoolId)
@@ -141,15 +152,16 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     $examTypes = ExamType::all();
     $type = ExamType::find($request->examType);
     $terms = AcademicTerm::where("school_id", $schoolId)->get();
-    $class = Section::where("id", $request->class)->first();
+    $class = Section::find($request->class);
     $exam = Exam::where("school_id", $schoolId)
+           ->where("section_id", $class->id)
            ->where("academic_year_id", $academic_year_id)
            ->where("academic_term_id", $request->term)->first();
        $headers = ['Total', 'Average', 'Grade', 'Position', 'Actions'];    
     //    dd($exam);
     return view('admin.marks.filter', compact(
         'marks', 'year', "term", "class", "subjects", "years", "standards", "terms", "students", "classes", "examTypes",
-         "type", "term", "subjectsCovered", "headers", "exam"
+         "type", "term", "subjectsCovered", "headers", "exam",
         ));
 }
 

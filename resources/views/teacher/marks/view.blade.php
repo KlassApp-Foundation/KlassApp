@@ -3,10 +3,18 @@
 @section('content')
 <div class="container-fluid w-full lg:mx-2 py-2 text-gray-800">
     {{-- Header --}}
+    @php
+        $examStatus = match ($exam->status) {
+          "undone" => "Unmarked work",
+          "done" => "You haven't submitted marks!",
+          default => "Marks Submitted",
+       }
+    @endphp
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
         <div>
             <h2 class="text-2xl font-semibold ">{{ $exam->examType->code }} Exam Marks</h2>
-            <p class="text-sm ">student performance</p>
+                <p class="text-xs bg-gray-400 text-center rounded-full text-red-500">
+                {{$examStatus}}</p>
         </div>
 
         <a href="#" class="inline-flex items-center px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg shadow hover:bg-green-600">

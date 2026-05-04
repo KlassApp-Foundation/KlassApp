@@ -30,7 +30,7 @@ class DownloadMarksSheet extends Controller
        $students = $service->buildMarksheet($students, $examsDone);
        $subjects = Subject::where("school_id", $schoolId)->where("section_id", $request->class)->get();
        $term = AcademicTerm::where("school_id", $schoolId)->where("id", $request->term)->value("name");
-       $headers = ['Total', 'Average', 'Grade', 'Position'];    
+       $headers = ['Total', 'Grade', 'Position'];    
 
         // 3. generate PDF
         // dd($subjects);

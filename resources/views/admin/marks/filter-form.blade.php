@@ -42,7 +42,7 @@
     </div> --}}
 
     <!-- Year -->
-    <div>
+    {{-- <div>
         <label for="year" class="block  text-gray-700">Year</label>
         <select name="year" id="year" class="border-gray-300 rounded-lg p-1">
             <option value="">-- Year --</option>
@@ -54,7 +54,7 @@
                 <option disabled>No years available</option>
             @endforelse
         </select>
-    </div>
+    </div> --}}
 
     {{-- class/section --}}
      <div>
@@ -75,7 +75,7 @@
     </div>
 
     {{-- subject --}}
-     <div>
+     {{-- <div>
         <label for="year" class="block  text-gray-700">Subject</label>
         <select name="subject" id="year" class="border-gray-300 rounded-lg p-1">
             <option value="">-- Subject --</option>
@@ -87,12 +87,13 @@
                 <option disabled>No subject available</option>
             @endforelse
         </select>
-    </div>
+    </div> --}}
 
      {{-- exam type --}}
-     {{-- <div>
+     <div>
         <label for="year" class="block  text-gray-700">
             <span>Exam Type</span>
+            <span class="text-red-400">*</span> 
         </label>
         <select name="examType" id="year" class="border-gray-300 rounded-lg p-1" >
             <option value="">-- Exam Type --</option>
@@ -104,7 +105,7 @@
                 <option disabled>No exam type available</option>
             @endforelse
         </select>
-    </div> --}}
+    </div>
 
     <button type="submit" class="bg-blue-600 text-white p-1 font-semibold rounded-lg">
        Apply Filter

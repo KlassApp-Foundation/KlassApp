@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helpers\SiteHelper;
 use App\Models\Academics\Exam;
+use App\Models\Academics\Marks;
 use App\Models\FeesCategories;
 use App\Models\Section;
 use App\Models\Subject;
@@ -81,6 +82,23 @@ public function totalMarks($learners){
         });
 return $learners;
 }
+
+public function learnersTotal($exam, $learner){
+    // dd($learner);
+    $total = Exam::with("marks", "subject") 
+            ->where("school_id", $exam->school_id)
+            ->where("academic_year_id", $exam->academic_year_id)
+            ->where("academic_term_id", $exam->academic_term_id)
+            ->with("marks", function($q) use( $learner, $exam) {
+                    $q->where("student_id", $learner->id);
+                    // ->where("subject_id", $exam->subject_id);
+                    })
+                    ->get();
+   
+return $total;
+}
+
+
   public function position($learners ){
      $position = 1;
      $prevtotal = null;
@@ -96,12 +114,12 @@ return $learners;
 
   public function exam ($schoolId, $exam){
     return Exam::where("school_id", $schoolId)
+                       ->with(["examType"])
                        ->where("section_id", $exam->section_id)
                        ->where("academic_year_id", $exam->academic_year_id)
                        ->where("academic_term_id", $exam->academic_term_id)
                     //    ->where("status", $exam->status) //========to be added
                        ->get();
-                       dd($exams);
   }
 
   public function examsDone($schoolId, $exam){
@@ -129,5 +147,6 @@ return $learners;
     // }
     return $allSubjects;
   }
+//   grading school system
 }
 
