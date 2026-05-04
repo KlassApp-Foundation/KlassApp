@@ -18,7 +18,7 @@ class Exam extends Model
 {
     use HasFactory;
     protected $fillable=[
-         "standard_id", "school_id", "section_id", "academic_year_id", "academic_term_id", "subject_id", "teacher_id", "exam_type", "status","scheduled_at"
+         "standard_id", "school_id", "section_id", "academic_year_id", "academic_term_id", "subject_id", "teacher_id", "exam_type_id", "status","scheduled_at"
         ];
       protected $dates = ["deleted_at"];  
         public function marks(){

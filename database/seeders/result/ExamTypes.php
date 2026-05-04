@@ -15,7 +15,7 @@ class ExamTypes extends Seeder
     {
         $types = [
             [
-                'name' => 'Beginning of Term',
+                'name' => 'Beginning Of Term',
                 'code' => 'BOT',
             ],
             [
@@ -35,12 +35,16 @@ class ExamTypes extends Seeder
                 'code' => 'WE',
             ],
             [
-                'name' => 'End of Term',
+                'name' => 'End Of Term',
                 'code' => 'EOT',
             ],
             [
                 'name' => 'Mock Exam',
                 'code' => 'MOCK',
+            ],
+            [
+                'name' => 'Pre Mock Exam',
+                'code' => 'PreMOCK',
             ],
             [
                 'name' => 'Final Exam',
