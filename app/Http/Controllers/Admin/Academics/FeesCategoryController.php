@@ -24,7 +24,7 @@ class FeesCategoryController extends Controller
 
          return [
             "standards" => Standard::where("school_id", $school_id)->get(),
-             "sections" =>  Section::where("school_id", $school_id)->where("status", 1)->get(),
+             "sections" =>  Section::where("school_id", $school_id)->where("status", 1)->orderByDesc("id")->get(),
               "terms" =>   AcademicTerm::where("school_id", $school_id)->get()
          ];
     }

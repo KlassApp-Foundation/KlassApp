@@ -11,11 +11,11 @@
         </div>
     </div>
 
-    <div class="grid gap-6 mt-6">
+    <div class="grid gap-4 mt-6">
 
         {{-- Page Header --}}
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Students Marks Overview</h1>
+            <h1 class="text-xl font-bold text-gray-800">Students Marks Overview</h1>
             <p class="text-gray-600 mt-1">
                 Filter and review student performance by class, academic year, and term.
             </p>
@@ -24,7 +24,7 @@
         {{-- Stats Cards (only meaningful when filtered) --}}
         @if (request()->hasAny(['term', 'year', 'class']))
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div class="bg-gradient-to-br from-blue-50 to-white p-5 rounded-xl shadow-sm border hover:shadow transition">
+                <div class="bg-gradient-to-br from-blue-50 to-white p-2 rounded-xl shadow-sm border hover:shadow transition">
                     <p class="text-sm text-gray-600 font-medium">Total Students</p>
                     <h3 class="text-3xl font-bold text-blue-700 mt-1">
                         {{-- {{ dd($marks) }} --}}
@@ -33,17 +33,17 @@
                     </h3>
                 </div>
 
-                <div class="bg-gradient-to-br from-green-50 to-white p-5 rounded-xl shadow-sm border hover:shadow transition">
+                <div class="bg-gradient-to-br from-green-50 to-white p-2 rounded-xl shadow-sm border hover:shadow transition">
                     <p class="text-sm text-gray-600 font-medium">Subjects Covered</p>
                     <h3 class="text-3xl font-bold text-green-700 mt-1">
                         {{ $subjectsCovered }}
                     </h3>
                 </div>
 
-                <div class="bg-gradient-to-br from-purple-50 to-white p-5 rounded-xl shadow-sm border hover:shadow transition">
+                <div class="bg-gradient-to-br from-purple-50 to-white p-2 rounded-xl shadow-sm border hover:shadow transition">
                     <p class="text-sm text-gray-600 font-medium">Records Found</p>
                     <h3 class="text-3xl font-bold text-purple-700 mt-1">
-                        {{ $marks->total() }}
+                        {{ $students->total() }}
                     </h3>
                 </div>
             </div>
@@ -66,8 +66,8 @@
                
             </div>
             <div class="p-6">
-                 @if (!empty($marks) && $marks->isNotEmpty())
-                     @include('admin.marks.results-table2', ['marks' => $marks])
+                 @if (!empty($students) && $students->isNotEmpty())
+                     @include('admin.marks.results-table2')
                   @else
                 @if (request()->hasAny(['term', 'year', 'class']))
                         <div class="text-center py-16 text-gray-500">

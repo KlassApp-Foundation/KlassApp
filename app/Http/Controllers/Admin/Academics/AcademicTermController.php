@@ -19,15 +19,17 @@ class AcademicTermController extends Controller
         $school_id = Auth::user()->school_id;
         return [
         "terms" => ["First Term", "Second Term", "Third Term"],
-         "yr" => AcademicYear::where("school_id", $school_id)->value("id")
+         "yr" => AcademicYear::where("school_id", $school_id)->where("description", "Current Academic Year")->value("id")
         ];
     }
     public function index()
     {
         //
         $school_id = Auth::user()->school_id;
-        $academic_year = AcademicYear::where("school_id", $school_id)->first();
+        $academic_year = AcademicYear::where("school_id", $school_id)->where("description", "Current Academic Year")->first();
+        
         $terms = AcademicTerm::where("school_id", $school_id)->where("academic_year_id", $academic_year->id)->get();
+        // dd($academic_year);
         return view("admin.school.term.index", compact(
             "academic_year", "terms"
         ) );

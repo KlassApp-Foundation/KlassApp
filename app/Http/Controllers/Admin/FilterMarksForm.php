@@ -24,7 +24,7 @@ class FilterMarksForm extends Controller
     $years   = AcademicYear::where("school_id", $school_id)->get();
     $terms = AcademicTerm::where("school_id", $school_id)->get();
     $subjects = Subject::where("school_id", $school_id)->get();
-    $classes = Section::where("school_id", $school_id)->get();
+    $classes = Section::where("school_id", $school_id)->orderByDesc("id")->get();
      $examTypes = ExamType::all();
     return view('admin.marks.filter', compact(
         'standards','years','terms', "subjects", "classes", "examTypes"

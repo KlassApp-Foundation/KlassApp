@@ -33,9 +33,9 @@ class Exam extends Model
         public function standard(){
             return $this->belongsTo(Standard::class, "standard_id");
         }
-        //  public function examType(){
-        //     return $this->belongsTo(ExamType::class, "exam_type_id");
-        // }
+         public function examType(){
+            return $this->belongsTo(ExamType::class);
+        }
        
         public function school(){
             return $this->belongsTo(School::class, "school_id");

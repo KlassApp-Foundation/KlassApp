@@ -65,7 +65,7 @@
         $termName = $learner->marks->first()->exam->academicTerm->name;
     @endphp
     <h3 class="font-bold text-xl text-gray-700 uppercase">
-        {{ $learner->marks->first()->exam->exam_type }}
+        {{ $learner->marks->first()->exam->examType->name }}
         {{ $termMap[$termName] ?? "-" }}
         {{ $termName->academicYear }}
         <span>STUDENT REPORT CARD</span>
@@ -146,18 +146,31 @@
             @endforeach
            
             {{-- @if ($marks->first()->subject_id === $subject->id) --}}
-                <td class="p-3 border border-gray-500">{{
+                {{-- <td class="p-3 border border-gray-500">{{
                     $marks->first()->subject_id === $subject->id ?
                 $subject->mark->first()->marks / $examsDone : "-"
-                }}</td>
+                }}</td> --}}
             {{-- @endif --}}
 
+            {{-- {{dd($studentTotals)}} --}}
+            @foreach ($studentTotals as $studentTotal)
+            @if ($studentTotal->subject_id === $subject->id)
+                 <td class="p-3 border border-gray-500">
+                {{ $studentTotal->marks->average("marks") }}
+            </td>
+            @endif
+
+               
+            @endforeach
             <td class="p-3 border border-gray-500">{{ $grade }}</td>
-            <td class="p-3 border border-gray-500">{{$remark}}</td>
-            {{-- {{ dd($learner) }} --}}
             <td class="p-3 border border-gray-500">
                 {{$learner->marks->where("subject_id", $subject->id)->first()?->teacher?->name ?? "N/A"}}
             </td>
+            <td class="p-3 border border-gray-500">{{$remark}}</td>
+            
+            
+            {{-- {{ dd($learner) }} --}}
+            
         </tr>
         @endforeach 
     </tbody>
@@ -179,8 +192,8 @@
         @endphp
         <tr>
              <th class="p-3 text-left border border-gray-500">TOTAL</th>
-             <th class="p-3 text-left border border-gray-500">{{400}}</th>
-             <th class="p-3 text-left border border-gray-500">{{ $total }}</th>
+             <th class="p-3 text-lg text-center border border-gray-500">{{400}}</th>
+             <th class="p-3 text-lg text-center border border-gray-500">{{ $total }}</th>
              {{-- @foreach ($marksFromSubject as $subje)
                 <td class="p-3 border border-gray-500">
                     {{$marks->first()->subject_id === $subje->id? $subject->mark->first()->marks : "N/A" }}
@@ -188,8 +201,8 @@
             @endforeach --}}
              {{-- <th class="p-3 text-left border border-gray-500">{{ $motTotal }}</th> --}}
              {{-- <th class="p-3 text-left border border-gray-500">{{ $eotTotal }}</th> --}}
-             <th class="p-3 text-left border border-gray-500">{{ $total / $examsDone }}tt</th>
-             <th colspan="{{$span}}" class="p-3 text-left border border-gray-500"></th>
+             <th class="p-3 text-lg text-center border border-gray-500">{{ $total / $examsDone }}</th>
+             <th colspan="{{$span}}" class="p-3 text-center border border-gray-500"></th>
              
         </tr>
     </thead>    

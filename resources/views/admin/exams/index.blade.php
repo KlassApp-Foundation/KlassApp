@@ -34,7 +34,7 @@
             <tr>
                 <td class="px-2 py-3 border border-gray-400">{{ $loop->iteration }}</td>
                 <td class="px-2 py-3 border border-gray-400">{{ $exam->academicTerm->name }}</td>
-                <td class="px-2 py-3 border border-gray-400">{{ $exam->exam_type }}</td>
+                <td class="px-2 py-3 border border-gray-400">{{ $exam->examType->code }}</td>
                 <td class="px-2 py-3 border border-gray-400">{{ $exam->status }}</td>
                 <td class="px-2 py-3 border border-gray-400">{{ $exam->standard->name ?? '-' }}</td>
                 <td class="px-2 py-3 border border-gray-400">{{ $exam->section->name }}</td>

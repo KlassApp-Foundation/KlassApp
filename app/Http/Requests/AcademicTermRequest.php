@@ -27,7 +27,9 @@ class AcademicTermRequest extends FormRequest
        if(auth()->check()){
           $this->merge([
             "school_id" => auth()->user()->school_id,
-            "academic_year_id" => AcademicYear::where("school_id", auth()->user()->school_id)->value("id")
+            "academic_year_id" => AcademicYear::where("school_id", auth()->user()->school_id)
+                              ->where("description", "Current Academic Year")
+                              ->value("id")
           ]);
        }
     }

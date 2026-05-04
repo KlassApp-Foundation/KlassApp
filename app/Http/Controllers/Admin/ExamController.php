@@ -78,6 +78,7 @@ public function sections(){
 
     public function store(CreateExamRequest $request)
     {
+        // dd($request);
         $validated = $request->validated();
         // dd($validated);
         Exam::create($validated);

@@ -22,39 +22,49 @@ class GetStudentsMarks extends Controller
 {
     //
     
-    public function GetStudentMarks(StudentReportHelperService $studentHelper,  User $learner, string $section, Exam $exam){
+    public function GetStudentMarks(StudentReportHelperService $studentHelper,  User $user, string $section, Exam $exam){
         $admin = Auth::user();
         $schoolId = $admin->school_id;
         // learner
-         $learner = $studentHelper->learner($schoolId, $learner, $exam);
+         $learner = $studentHelper->learner($schoolId, $user, $exam);
         //  dd($exam);
                 //    subjects
             $subjects = $studentHelper->subjects($schoolId, $section, $learner, $exam);
             $grade = $studentHelper->grade($section, $schoolId, $learner, $exam);
             // dd($grade->first()->mark->average("marks"));
-            // dd($subjects->first()->mark);
+            // dd($grade);
             $exams = $studentHelper->exam($schoolId, $exam);
+
+            // dd($exams);
             $controls = ["SUBJECT", "OUT OF"];
+            // many exam types
+            $uniqueExamTypes = $exams->pluck('examType.id')->unique();
+            $cals = ["AVG"];
             $marksFromSubject = [];
             foreach ($exams as $ex){
-                if(!in_array(strtoupper($ex->exam_type), $controls)){
-                    $controls[] = strtoupper($ex->exam_type);
+                if(!in_array(strtoupper($ex->examType->code), $controls)){
+                    $controls[] = strtoupper($ex->examType->first()->code);
                     $marksFromSubject[] = $ex->subject;
                     // 
-                }  
+                    if($uniqueExamTypes){
+                        $controls= array_merge($controls, $cals);
+                    }
+                }
+                
             }
-            // dd($marksFromSubject);
-             $next = [ "AVG", "AGG", "REMARK", "TEACHER"];
+            // dd($controls);
+             $next = ["GRADE", "TEACHER", "REMARK"];
            $controls= array_merge($controls, $next);
-        //    $student = $learner->first();
+        //    student's total marks
+        $studentTotals = $studentHelper->learnersTotal($exam, $user);
              $marks = $exam->marks->where("student_id", $learner->first()->id);
-             $total = $marks->sum("marks");
+            //  $total = $marks->sum("marks");
              
              $examsDone = $studentHelper->examsDone($schoolId, $exam);
             //  $xy = $marks->map(function($marks) use($examsDone){
             //     $total = $marks->marks->sum('marks');
             //     $marks->total = $total;
-            $average = $total / $examsDone;
+            // $average = $total / $examsDone;
 
             //     return $marks;
             //  });
@@ -85,6 +95,8 @@ class GetStudentsMarks extends Controller
         
         // totals
         $learners = $studentHelper->totalMarks($learners);
+        $total = $learners->find($user->id)->total;
+       
         //   get position
         $learners = $learners->sortByDesc("total")->values();
         // dd($learners);
@@ -97,7 +109,7 @@ class GetStudentsMarks extends Controller
             // $byStandard = $fees->where("standard_id", )
             // dd($learner);
     return view("admin.marks.student", compact(
-                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "currentTerm", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total"
+                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "currentTerm", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "studentTotals"
                 ));
     }
     
