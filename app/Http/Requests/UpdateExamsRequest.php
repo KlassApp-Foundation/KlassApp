@@ -39,7 +39,7 @@ class UpdateExamsRequest extends FormRequest
             'term'             => 'sometimes|nullable|in:1,2,3', // or string if named "Term I", etc.
             'subject_id'       => 'sometimes|nullable|exists:subjects,id', // sometimes|nullable if whole-class exam
             'teacher_id'       => 'sometimes|nullable|exists:users,id',
-            'exam_type'      => 'sometimes|nullable|min:1|max:255', 
+            'exam_type_id'      => 'sometimes|exists:exam_types,id', 
             'scheduled_at'     => 'sometimes|nullable|date_format:Y-m-d\TH:i',
             'status'             => 'sometimes|nullable|in:done,postponed,undone'
         ];

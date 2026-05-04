@@ -127,15 +127,18 @@
                             <label for="exam_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Exam Type <span class="text-red-500">*</span>
                             </label>
-                           <input
-                type="text"
-                name="exam_type"
-                id="exam_type"
-                value="{{ old('exam_type', optional($exam)->exam_type) }}" 
-                class="w-full border rounded p-2"
-                placeholder="Beginning Of Term"
-                required
-            >
+                          
+                   <select name="exam_type_id" class="tw-form-control w-full">
+                                <option value="">Select Exam Type</option>
+                                @foreach($examTypes as $examType)
+                                     <option value="{{ $subject->id }}"
+                                        {{ old('exam_type_id', optional($exam)->exam_type_id) == $examType->id ? 'selected' : '' }}>
+                                        {{ $examType->name }}
+                                    </option>
+                                   
+                                @endforeach
+                            </select>
+
                         </div>
                         
 

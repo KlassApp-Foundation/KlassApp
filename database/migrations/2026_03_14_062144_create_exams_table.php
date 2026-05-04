@@ -24,11 +24,10 @@ return new class extends Migration
             $table->unsignedInteger('subject_id'); 
             $table->unsignedInteger('teacher_id');
             $table->unsignedInteger('section_id'); 
+            
 
             $table->dateTime("scheduled_at")->nullable();
             $table->enum("status", ["done", "submitted", "undone"])->default("undone");
-            $table->string("exam_type")->nullable();
-
             // foreign keys
             $table->foreign('section_id')->references('id')->on('sections')->cascadeOnDelete();
              $table->foreign('standard_id')->references('id')->on('standards')->cascadeOnDelete();
@@ -36,6 +35,7 @@ return new class extends Migration
             $table->foreign('academic_year_id')->references('id')->on('academic_years')->cascadeOnDelete();
             $table->foreign('subject_id')->references('id')->on('subjects')->cascadeOnDelete();
             $table->foreign('teacher_id')->references('id')->on('users')->cascadeOnDelete();
+            
             // hddvncdvcbnc
             $table->timestamps();
             $table->softDeletes();

@@ -47,9 +47,9 @@ public function sections(){
          $teachers    = User::where('school_id', $school_id)
             ->where('usergroup_id', 5) 
             ->get();
-    // $sections =         
+    $examTypes =  ExamType::all();
     return view('admin.exams.create', compact(
-        'exams', "teachers", "sections", "academicYears", "terms", "subjects"
+        'exams', "teachers", "sections", "academicYears", "terms", "subjects", "examTypes"
         ));  
 }
 
@@ -98,9 +98,10 @@ public function sections(){
         $sections = Section::where("school_id", $school_id)->get();
         $teachers = User::where('usergroup_id', 5)->where("school_id", $school_id)->get();
         $terms = AcademicTerm::where("school_id", $school_id)->get();
+        $examTypes =  ExamType::all();
         // dd($subjects);
         return view("admin.exams.create", compact(
-            "exam", "subjects", "standards", "academicYears", "sections", "teachers", "terms"
+            "exam", "subjects", "standards", "academicYears", "sections", "teachers", "terms", "examTypes"
             ));
     }
     public function update(UpdateExamsRequest $request, string $exam){

@@ -48,7 +48,7 @@ class CreateExamRequest extends FormRequest
             'academic_term_id' => 'required|exists:academic_terms,id', // or string if named "Term I", etc.
             'subject_id'       => 'required|exists:subjects,id', // nullable if whole-class exam
             'teacher_id'       => 'nullable|exists:users,id',
-            'exam_type'      => 'required|string|min:1|max:255', 
+            'exam_type_id'      => 'required|exists:exam_types,id', 
             'scheduled_at'     => 'nullable|date_format:Y-m-d\TH:i',
             'status'             => 'nullable|boolean'
         ];
