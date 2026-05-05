@@ -74,9 +74,7 @@
                                 </a>
 
                                 {{-- Delete --}}
-                                <form action="{{ route('admin.grades.remove', $rule->id) }}" 
-                                      method="POST"
-                                      onsubmit="return confirm('Delete this grading rule?');">
+                                <form action="{{ route('admin.grades.remove', $rule->id) }}" method="POST">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"

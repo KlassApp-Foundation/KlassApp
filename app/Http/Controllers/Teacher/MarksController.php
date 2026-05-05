@@ -15,6 +15,7 @@ use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Services\GradingSystemService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -125,22 +126,16 @@ public function enterExamMarks(Exam $exam)
     return view('teacher.marks.enter', compact('exams', "allStudents", 'standard', 'subject', "user", "remarks", "exam", "tr", "total"));
 }
 
-public function saveExamMarks(Request $request, Exam $exam)
+public function saveExamMarks(Request $request, Exam $exam, GradingSystemService $gradingSystem)
 {
     $user = Auth::user();
-    if ($exam->school_id !== $user->school_id) {
+    $schoolId = $user->school_id;
+    if ($exam->school_id !== $schoolId) {
         abort(403, "Not Authorized");
     }
     foreach ($request->marks as $studentId => $mark) {
         if ($mark === null || trim($mark) === '') continue;
-
-        $grade = ($mark >= 80)
-                ? "A"
-                : (($mark >= 75)
-                    ? "B"
-                    : (($mark >= 65)
-                        ? "C"
-                        : "E"));
+        $grade = $gradingSystem->grade($mark,$schoolId, $exam);
         Marks::updateOrCreate(
             [
                 'student_id' => $studentId,
@@ -219,10 +214,10 @@ $remarks = Remarks::all();
     return view('teacher.marks.edit-single', compact('exam', 'mark', "student", "remarks", "marks"));
 }
 
-public function updateMark(Request $request, Exam $exam, User $student)
+public function updateMark(Request $request, Exam $exam, User $student, GradingSystemService $gradingSystem)
 {
     $teacher = Auth::user();
-
+    $schoolId = $teacher->school_id;
     $validated = $request->validate([
         'marks'       => 'sometimes|nullable|numeric|min:0|max:100', // adjust rules to your system
         'grade'       => 'nullable|string|max:5',
@@ -230,13 +225,7 @@ public function updateMark(Request $request, Exam $exam, User $student)
         // add other fields you have (attendance, etc.)
     ]);
      $mark = $validated["marks"];
-     $grade = ($mark >= 80)
-                ? "A"
-                : (($mark >= 75)
-                    ? "B"
-                    : (($mark >= 65)
-                        ? "C"
-                        : "E"));
+      $grade = $gradingSystem->grade($mark,$schoolId, $exam);
     // Find or create
     Marks::updateOrCreate(
         [
