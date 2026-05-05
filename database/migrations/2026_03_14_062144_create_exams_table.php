@@ -30,7 +30,7 @@ return new class extends Migration
             $table->enum("status", ["done", "submitted", "undone"])->default("undone");
             // foreign keys
             $table->foreign('section_id')->references('id')->on('sections')->cascadeOnDelete();
-             $table->foreign('standard_id')->references('id')->on('standards')->cascadeOnDelete();
+            $table->foreign('standard_id')->references('id')->on('standards')->cascadeOnDelete();
             $table->foreign('school_id')->references('id')->on('schools')->cascadeOnDelete();
             $table->foreign('academic_year_id')->references('id')->on('academic_years')->cascadeOnDelete();
             $table->foreign('subject_id')->references('id')->on('subjects')->cascadeOnDelete();
