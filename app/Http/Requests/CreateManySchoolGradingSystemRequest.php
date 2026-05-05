@@ -6,7 +6,7 @@ use App\Models\Academics\SchoolGradingSystem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
-class CreateSchoolGradingSystem extends FormRequest
+class CreateManySchoolGradingSystemRequest extends FormRequest
 {
     /**
      * Authorization
@@ -37,7 +37,6 @@ class CreateSchoolGradingSystem extends FormRequest
             'standard_id' => 'required|exists:standards,id',
 
             'grade' => 'required|string|max:2',
-            'rank' => 'required|integer|min:2|distinct',
 
             'min_score' => 'required|integer|min:0|max:100',
             'max_score' => 'required|integer|min:0|max:100|gte:min_score',
@@ -49,28 +48,36 @@ class CreateSchoolGradingSystem extends FormRequest
     /**
      * Custom validation (NO OVERLAPPING RANGES)
      */
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function ($validator) {
+    public function withValidator($validator)
+{
+    $validator->after(function ($validator) {
+
+        if (!$this->grades || !is_array($this->grades)) {
+            return;
+        }
+
+        foreach ($this->grades as $i => $row) {
 
             $exists = SchoolGradingSystem::where('school_id', $this->school_id)
                 ->where('standard_id', $this->standard_id)
-                ->where(function ($q) {
-                    $q->whereBetween('min_score', [$this->min_score, $this->max_score])
-                      ->orWhereBetween('max_score', [$this->min_score, $this->max_score])
-                      ->orWhere(function ($q2) {
-                          $q2->where('min_score', '<=', $this->min_score)
-                             ->where('max_score', '>=', $this->max_score);
+                ->where(function ($q) use ($row) {
+
+                    $q->whereBetween('min_score', [$row['min_score'], $row['max_score']])
+                      ->orWhereBetween('max_score', [$row['min_score'], $row['max_score']])
+                      ->orWhere(function ($q2) use ($row) {
+                          $q2->where('min_score', '<=', $row['min_score'])
+                             ->where('max_score', '>=', $row['max_score']);
                       });
                 })
                 ->exists();
 
             if ($exists) {
                 $validator->errors()->add(
-                    'range',
-                    'This grading range overlaps with an existing one for this standard.'
+                    "grades.$i.range",
+                    "Grade range overlaps with existing record."
                 );
             }
-        });
-    }
+        }
+    });
+}
 }

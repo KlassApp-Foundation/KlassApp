@@ -13,7 +13,7 @@
                 @endforeach
 
                 <th class="p-2 text-left font-medium tracking-wider border border-gray-400">Total</th>
-                <th class="p-2 text-left font-medium tracking-wider border border-gray-400">Grade</th>
+                <th class="p-2 text-left font-medium tracking-wider border border-gray-400">Division</th>
                 <th class="p-2 text-left font-medium tracking-wider border border-gray-400">Position</th>
                 <th class="p-2 text-center  font-medium tracking-wider border border-gray-400">Actions</th>
             </tr>
@@ -50,6 +50,7 @@
                     </td>
  
                     {{-- Grade --}}
+                    {{-- {{ dd($student->marks->first()) }} --}}
                     <td class="p-2 text-center whitespace-nowrap border border-gray-400">
                         {{ $student->marks->first()?->grade ?? '—' }}
                     </td>

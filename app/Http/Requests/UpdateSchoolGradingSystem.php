@@ -33,7 +33,8 @@ class UpdateSchoolGradingSystem extends FormRequest
     public function rules(): array
     {
         // get current model ID from route
-        $gradingSystem = $this->route('school_grading_system');
+        $grade = $this->route('grade');
+        // dd($grade);
 
         return [
             'school_id' => 'required|exists:schools,id',
@@ -48,13 +49,15 @@ class UpdateSchoolGradingSystem extends FormRequest
                         ->where('school_id', $this->school_id)
                         ->where('standard_id', $this->standard_id)
                     )
-                    ->ignore($gradingSystem?->id),
+                    ->ignore($grade?->id),
             ],
 
             'min_score' => 'required|integer|min:0|max:100',
             'max_score' => 'required|integer|min:0|max:100|gte:min_score',
+            'rank' => 'required|integer|min:2|distinct',
 
             'remark' => 'nullable|string|max:255',
+            
         ];
     }
 
@@ -65,12 +68,12 @@ class UpdateSchoolGradingSystem extends FormRequest
     {
         $validator->after(function ($validator) {
 
-            $gradingSystem = $this->route('school_grading_system');
+            $grade = $this->route('grade');
 
             $exists = SchoolGradingSystem::where('school_id', $this->school_id)
                 ->where('standard_id', $this->standard_id)
-                ->when($gradingSystem, function ($q) use ($gradingSystem) {
-                    $q->where('id', '!=', $gradingSystem->id);
+                ->when($grade, function ($q) use ($grade) {
+                    $q->where('id', '!=', $grade->id);
                 })
                 ->where(function ($q) {
                     $q->whereBetween('min_score', [$this->min_score, $this->max_score])

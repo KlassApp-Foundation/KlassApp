@@ -811,9 +811,10 @@ Route::patch("/fees-categories/{fee}/update", "Academics\FeesCategoryController@
 Route::get("/grades", "Academics\SchoolGradingSystemController@index")->name("admin.grades");
 Route::get("/grades/create", "Academics\SchoolGradingSystemController@create")->name("admin.grades.create");
 Route::post("/grades/store", "Academics\SchoolGradingSystemController@store")->name("admin.grades.store");
-Route::delete("/grades/remove", "Academics\SchoolGradingSystemController@destroy")->name("admin.grades.remove");
+// Route::post("/grades/store", "Academics\SchoolGradingSystemController@storeMany")->name("admin.grades.store-many");
+Route::delete("/grades/{grade}", "Academics\SchoolGradingSystemController@destroy")->name("admin.grades.remove");
 Route::get("/grades/{grade}/edit", "Academics\SchoolGradingSystemController@edit")->name("admin.grades.edit");
-Route::patch("/grades/{grade}/update", "Academics\SchoolGradingSystemController@update")->name("admin.grades.update");
+Route::put("/grades/{grade}/", "Academics\SchoolGradingSystemController@update")->name("admin.grades.update");
 
 //Addons
 

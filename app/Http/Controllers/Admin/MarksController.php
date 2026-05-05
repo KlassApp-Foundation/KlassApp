@@ -13,6 +13,7 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\Subject;
 use App\Models\User;
+use App\Services\GradingSystemService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -41,7 +42,7 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     return view('admin.marks.school-overview', compact('exams', "students", "studentCount", "subjects"));
 }
     // get all student marks per class
-    public function classExamOverview(Request $request)
+    public function classExamOverview(Request $request, GradingSystemService $gradingSystem)
 {
     $schoolId = Auth::user()->school_id;
     $academic_year_id = AcademicYear::where("school_id", $schoolId)->where("description", "Current Academic Year")->value("id");
@@ -103,15 +104,19 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
           ->where("academic_year_id", $academic_year_id)
           ->count();
         $students = $query->get();
+        $agg = $gradingSystem->aggregates($students);
+        // dd($agg);
         // dd($students);
            // calculate total
            $students = $students->map(function ($student) use($examsDone) {
             $total = $student->marks->sum('marks');
            $student->total = $total;
            $student->average = $examsDone ? $total / $examsDone : 0;
+        //    $student->grade = $gradingSystem->grade($mark,$schoolId, $exam);
            return $student;
        });
        $students = $students->sortByDesc("total")->values();
+    //    dd($students->first()->marks);
        // position with tie support
        $position = 1;
        $prevTotal = null;

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger("school_id");
             $table->unsignedInteger("standard_id"); 
 
+            $table->integer("rank");
             $table->string('grade'); // A, B, C...
             $table->integer('min_score'); // 80
             $table->integer('max_score'); // 100
@@ -24,6 +25,8 @@ return new class extends Migration
             $table->foreign("school_id")->references("id")->on("schools")->cascadeOnDelete();
             $table->foreign('standard_id')->references('id')->on('standards')->cascadeOnDelete();
             $table->timestamps();
+
+            $table->uniqid(["school_id", "standard_id", "grade", "rank"]);
         });
     }
 
