@@ -27,21 +27,29 @@ class DownloadStudentReport extends Controller
 
          $exams = $studentHelper->exam($schoolId, $exam);
             $controls = ["SUBJECT", "OUT OF"];
+             $cals = ["AVG"];
+             $uniqueExamTypes = $exams->pluck('examType')->unique()->count();
             $marksFromSubject = [];
             foreach ($exams as $ex){
-                if(!in_array(strtoupper($ex->exam_type), $controls)){
-                    $controls[] = strtoupper($ex->exam_type);
+                if(!in_array(strtoupper($ex->examType->code), $controls)){
+                    $controls[] = strtoupper($ex->examType->first()->code);
                     $marksFromSubject[] = $ex->subject;
-                    // 
-                }  
+                    // check for more exam types to add average
+                    if($uniqueExamTypes > 1){
+                        $controls= array_merge($controls, $cals);
+                    }
+                }
+                
             }
             // dd($marksFromSubject);
-             $next = [ "AVG", "AGG", "REMARK", "TEACHER"];
+             $next = ["DIVISION", "TEACHER", "REMARK"];
            $controls= array_merge($controls, $next);
 
-           $marks = $exam->marks->where("student_id", $learner->first()->id);
-            $total = $marks->sum("marks");
+           $marks = $exam->marks->where("student_id", $learner->id);
+            $total = $learner->marks->sum("marks");
+            // dd($total);
             $examsDone = $studentHelper->examsDone($schoolId, $exam);
+            $grade = $studentHelper->grade($learner, $exam);
 
             $class_name = Section::find($section)->name;
             $grading_system = [
@@ -71,12 +79,12 @@ class DownloadStudentReport extends Controller
     // dd($learners);
       // position
         $learners = $studentHelper->position($learners);
+        $nextTerm = AcademicTerm::where("school_id", $schoolId)->where("starts_on", ">", now())->first();
 
-        $myPos = $learners->where("id", $learner->first()->id)->value("position");
-        $learner = $learner->where("id", $learner->first()->id)->first();
-    //    dd($exam);
+        $myPos = $learners->where("id", $learner->id)->value("position");
+        $learner = $learner->where("id", $learner->id)->first();
         $pdf = Pdf::loadView("admin.marks.student-report", compact(
-            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "currentTerm", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total"
+            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade"
             ));     
         $pdf->setPaper("a4", "portrait");    
         $pdf->setOptions([
@@ -99,11 +107,10 @@ class DownloadStudentReport extends Controller
              }
             $first_name = $learner->userprofile->firstname ?? "student";
             $last_name = $learner->userprofile->lastname ?? "unknown";
-            // dd($learner);
+            
             $filename = str_replace(
                 " ", "_", $first_name . "_" . $last_name
-                ) . "report_card.pdf";
-
+                ) . "_report_card.pdf";
             return $pdf->download("$filename");    
 
     }

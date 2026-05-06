@@ -22,31 +22,20 @@ class GradingSystemService
     }
 
     // give grades to marks
-    public function aggregates($students){
-        foreach ($students as $student){
-            foreach($student->marks as $mark){
-                 
-                 $grade = SchoolGradingSystem::where("school_id", $mark->school_id)
-                         ->where("standard_id", $mark->exam->first()->standard_id)
-                         ->where("min_score", "<=", $mark->marks)
-                         ->where("max_score", ">=", $mark->marks);
-                        //  ->value("rank");
-                         
-                // $arrayGrade = $grade->toArray();
-                // dd($grade); 
-                return $grade;   
-            }
-           
-        }
-        
-        // dd($exam);
-        // return SchoolGradingSystem::where('school_id', $schoolId)
-        //         ->where('standard_id', $exam->standard_id)
-        //         ->where('min_score', '<=', $mark)
-        //         ->where('max_score', '>=', $mark)
-        //         ->value("grade");
-    return $students;
+    public function aggregates($student, $exam)
+{
+    $gradingMap = SchoolGradingSystem::where("school_id", $student->school_id)
+        ->where("standard_id", $exam->standard_id)
+        ->pluck('rank', 'grade');
+
+    $aggregates = 0;
+
+    foreach ($student->marks as $mark) {
+        $aggregates += $gradingMap[$mark->grade] ?? 0;
     }
+
+    return $aggregates;
+}
     public function defaults(int $schoolId, int $standardId){
         $grades = [
     ["school_id"=>$schoolId, "standard_id"=>$standardId, "grade"=>"D1", "min_score"=>95, "max_score"=>100, "remark"=>"Excellent"],

@@ -27,48 +27,38 @@ class GetStudentsMarks extends Controller
         $schoolId = $admin->school_id;
         // learner
          $learner = $studentHelper->learner($schoolId, $user, $exam);
-        //  dd($exam);
+        //  dd($learner);
                 //    subjects
             $subjects = $studentHelper->subjects($schoolId, $section, $learner, $exam);
-            $grade = $studentHelper->grade($section, $schoolId, $learner, $exam);
-            // dd($grade->first()->mark->average("marks"));
-            // dd($grade);
+            $grade = $studentHelper->grade($learner, $exam);
+
             $exams = $studentHelper->exam($schoolId, $exam);
 
-            // dd($exams);
+            // dd($grade);
             $controls = ["SUBJECT", "OUT OF"];
             // many exam types
-            $uniqueExamTypes = $exams->pluck('examType.id')->unique();
+            $uniqueExamTypes = $exams->pluck('examType')->unique()->count();
             $cals = ["AVG"];
             $marksFromSubject = [];
             foreach ($exams as $ex){
                 if(!in_array(strtoupper($ex->examType->code), $controls)){
                     $controls[] = strtoupper($ex->examType->first()->code);
                     $marksFromSubject[] = $ex->subject;
-                    // 
-                    if($uniqueExamTypes){
+                    // check for more exam types to add average
+                    if($uniqueExamTypes > 1){
                         $controls= array_merge($controls, $cals);
                     }
                 }
                 
             }
             // dd($controls);
-             $next = ["GRADE", "TEACHER", "REMARK"];
+             $next = ["DIVISION", "TEACHER", "REMARK"];
            $controls= array_merge($controls, $next);
         //    student's total marks
         $studentTotals = $studentHelper->learnersTotal($exam, $user);
-             $marks = $exam->marks->where("student_id", $learner->first()->id);
-            //  $total = $marks->sum("marks");
+             $marks = $exam->marks->where("student_id", $learner->id);
              
-             $examsDone = $studentHelper->examsDone($schoolId, $exam);
-            //  $xy = $marks->map(function($marks) use($examsDone){
-            //     $total = $marks->marks->sum('marks');
-            //     $marks->total = $total;
-            // $average = $total / $examsDone;
-
-            //     return $marks;
-            //  });
-            //  dd($xy);         
+             $examsDone = $studentHelper->examsDone($schoolId, $exam);     
 
             $class_name = Section::find($section)->name;
             $grading_system = [
@@ -81,10 +71,8 @@ class GetStudentsMarks extends Controller
                  "75-84"=>"D2",
                  "85-100"=>"D1"
                  ];
-            // added to get fees
-            // dd($section);
+            
             $fees = $studentHelper->fees($admin, $section);
-// added to get dates
                              
     //  position
     // total students
@@ -96,20 +84,20 @@ class GetStudentsMarks extends Controller
         // totals
         $learners = $studentHelper->totalMarks($learners);
         $total = $learners->find($user->id)->total;
-       
         //   get position
         $learners = $learners->sortByDesc("total")->values();
         // dd($learners);
         // position
         $learners = $studentHelper->position($learners);
 
-        $myPos = $learners->where("id", $learner->first()->id)->value("position");
-        $learner = $learner->where("id", $learner->first()->id)->first();
-        // 
+        $myPos = $learners->where("id", $learner->id)->value("position");
+        $learner = $learner->where("id", $learner->id)->first();
+        $nextTerm = AcademicTerm::where("school_id", $schoolId)->where("starts_on", ">", now())->first();
+        
             // $byStandard = $fees->where("standard_id", )
-            // dd($learner);
+            // dd($nextTerm);
     return view("admin.marks.student", compact(
-                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "currentTerm", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "studentTotals"
+                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "studentTotals", "uniqueExamTypes", "grade"
                 ));
     }
     

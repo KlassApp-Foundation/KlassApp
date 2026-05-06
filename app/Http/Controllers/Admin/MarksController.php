@@ -98,21 +98,25 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
 
     // $students = $query->paginate(15)->appends($request->query());
     // get total exams done (subjects covered)
-    $examsDone = Exam::where("school_id", $schoolId)
+    $exams = Exam::where("school_id", $schoolId)
           ->where("section_id", $request->class)
           ->where("academic_term_id", $request->term)
-          ->where("academic_year_id", $academic_year_id)
-          ->count();
+          ->where("academic_year_id", $academic_year_id);
+          
+    $examsDone = $exams->count();
+    $exam = $exams->first();
         $students = $query->get();
-        $agg = $gradingSystem->aggregates($students);
+        
         // dd($agg);
         // dd($students);
            // calculate total
-           $students = $students->map(function ($student) use($examsDone) {
+           $students = $students->map(function ($student) use($examsDone, $exam, $gradingSystem) {
             $total = $student->marks->sum('marks');
-           $student->total = $total;
-           $student->average = $examsDone ? $total / $examsDone : 0;
-        //    $student->grade = $gradingSystem->grade($mark,$schoolId, $exam);
+             $aggregates = $gradingSystem->aggregates($student, $exam);
+             $student->total = $total;
+             $student->average = $examsDone ? $total / $examsDone : 0;
+             $student->avg = $aggregates;
+            // dd($aggregates);
            return $student;
        });
        $students = $students->sortByDesc("total")->values();

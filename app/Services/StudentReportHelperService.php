@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Helpers\SiteHelper;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+use App\Models\Academics\SchoolGradingSystem;
 use App\Models\FeesCategories;
 use App\Models\Section;
 use App\Models\Subject;
@@ -13,9 +14,9 @@ use App\Models\User;
 class StudentReportHelperService
 {
 
-public function learner($schoolId, $learner, $exam){
+public function learner($schoolId, $user, $exam){
     // dd($exam);
-    return $learner = User::with([
+    $learner = User::with([
                     'marks.subject',
                     'marks.remark',
                     'marks.exam',
@@ -29,20 +30,23 @@ public function learner($schoolId, $learner, $exam){
                        $query->forSchool($schoolId)
                        ->where("section_id", $exam->section_id)
                        ->where("academic_year_id", $exam->academic_year_id)
-                       ->where("academic_term_id", $exam->academic_term_id)
-                       ->where("status", $exam->status);
+                       ->where("academic_term_id", $exam->academic_term_id);
+                    //    ->where("status", $exam->status);
                    })
-                   ->where('id', $learner->id)
+                   ->where('id', $user->id)
                    ->where('usergroup_id', 6)
-                   ->get();
+                   ->first();
+             
+        
+         return $learner;        
 }
 
 // subjects
 public function subjects($schoolId, $section, $learner, $exam){
-    return  $subjects = Subject::where("school_id", $schoolId)
+    $subjects =  Subject::where("school_id", $schoolId)
                                  ->where("section_id", $section)
                                  ->with("mark", function($q) use($learner, $exam){
-                                    $q->where("student_id", $learner->first()->id)
+                                    $q->where("student_id", $learner->id)
                                     ->with("exam", function ($q2) use($exam){
                                         $q2->where("section_id", $exam->school_id)
                                           ->where("academic_term_id", $exam->academic_term_id)
@@ -50,6 +54,8 @@ public function subjects($schoolId, $section, $learner, $exam){
                                     });
                                  })
                                  ->get();
+                                
+          return $subjects;
 }
 
 // fees
@@ -130,23 +136,28 @@ return $total;
                        ->count();
   }
 
-  public function grade($section, $schoolId, $learner, $exam){
-   $allSubjects = Subject::where("school_id", $schoolId)
-                                 ->where("section_id", $section)
-                                 ->with("mark", function($q) use($learner, $exam){
-                                    $q->where("student_id", $learner->first()->id)
-                                    ->with("exam", function ($q2) use($exam){
-                                        $q2->where("section_id", $exam->school_id)
-                                          ->where("academic_term_id", $exam->academic_term_id)
-                                          ->where("academic_year_id", $exam->academic_year_id);
-                                    });
-                                 })
-                                 ->get();
-    // foreach($allSubjects as $subject=>$mark){
-    //     return $mark;
-    // }
-    return $allSubjects;
+  public function grade($learner, $exam){
+       $agg = 0;   
+       $remark = null;
+       foreach($learner->marks as $mark){
+        $gradeMapping = SchoolGradingSystem::where('school_id', $learner->school_id)
+                ->where('standard_id', $exam->standard_id)
+                ->where('grade', $mark->grade)
+                ->first();
+        $agg += $gradeMapping->rank;
+        $remark[] = $gradeMapping;
+       }         
+       return ["agg" => $agg, "remark" => $remark];
   }
 //   grading school system
+// public function grade(int $mark, int $schoolId, Exam $exam){
+//         // dd($exam);
+//         return SchoolGradingSystem::where('school_id', $schoolId)
+//                 ->where('standard_id', $exam->standard_id)
+//                 ->where('min_score', '<=', $mark)
+//                 ->where('max_score', '>=', $mark)
+//                 ->value("grade");
+    
+//     }
 }
 
