@@ -97,7 +97,7 @@ class StandardsLinkController extends Controller
     //    $standardlist = Standard::where('school_id',Auth::user()->school_id)->orderBy('name','ASC')->get();
         // $standardlist = FacadesDB::table('standards')->where('school_id',Auth::user()->school_id)->orderByRaw('FIELD(name,"prekg","lkg","ukg","1","2","3","4","5","6","7","8","9","10","11","12")')->get();
         $standardlist = FacadesDB::table('standards')->where('school_id',Auth::user()->school_id)->orderBy("created_at", "asc")->get();
-        $sectionlist = Section::where('school_id',Auth::user()->school_id)->orderBy('name', 'ASC')->get();
+        $sectionlist = Section::where('school_id',Auth::user()->school_id)->orderByDesc("id")->get();
 
         $standardLinks = SiteHelper::getStandardLinkList(Auth::user()->school_id);
 

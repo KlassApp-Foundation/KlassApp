@@ -24,8 +24,8 @@
             {{-- Head --}}
             <thead class="bg-gray-50 uppercase text-xs text-gray-600">
                 <tr>
-                    <th class="p-2 border">#</th>
-                    <th class="p-2 border">Level</th>
+                    <th class="p-2 border">Rank</th>
+                    {{-- <th class="p-2 border">Level</th> --}}
                     <th class="p-2 border">Grade</th>
                     <th class="p-2 border text-center">Range</th>
                     <th class="p-2 border">Remark</th>
@@ -40,13 +40,13 @@
 
                         {{-- Index --}}
                         <td class="p-2 border">
-                            {{ $loop->iteration }}
+                            {{ $rule->rank }}
                         </td>
 
                         {{-- Standard --}}
-                        <td class="p-2 border">
+                        {{-- <td class="p-2 border">
                             {{ $rule->standard?->name ?? '—' }}
-                        </td>
+                        </td> --}}
 
                         {{-- Grade --}}
                         <td class="p-2 border font-semibold">

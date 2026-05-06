@@ -15,6 +15,7 @@ class SchoolGradingSystem extends Model
         'school_id',
         'standard_id',
         'grade',
+        'rank',
         'min_score',
         'max_score',
         'remark',

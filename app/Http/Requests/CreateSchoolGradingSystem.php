@@ -37,7 +37,7 @@ class CreateSchoolGradingSystem extends FormRequest
             'standard_id' => 'required|exists:standards,id',
 
             'grade' => 'required|string|max:2',
-            'rank' => 'required|integer|min:2|distinct',
+            'rank' => 'required|integer|min:1|distinct',
 
             'min_score' => 'required|integer|min:0|max:100',
             'max_score' => 'required|integer|min:0|max:100|gte:min_score',

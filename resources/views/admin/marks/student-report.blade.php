@@ -30,14 +30,15 @@
         }
         th, td {
             border: 1px solid #e2e8f0;
-            padding: 8px 10px;
+            padding: 10px 10px;
             vertical-align: middle;
+            font-size: 12px;
         }
         th {
             background-color: #f1f5f9;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 11px;
+            font-size: 13px;
         }
         .school-name {
             font-size: 25px;
@@ -102,16 +103,7 @@
 <body>
 
 @if (!is_null($learner))
-    {{-- @php
-        $allowedTypes = ["Beginning of Term", "Mid Term", "End of Term"];
-        $subjectAverages = [];
-        $filteredMarks = $learner->marks->filter(fn($m) => in_array($m->exam?->examType?->name, $allowedTypes));
-    @endphp --}}
-
-    <!-- watermark -->
-    {{-- <div style="position: fixed; top: 40%; left: 10%; width: 80%; text-align: center; opacity: 0.08; font-size: 60px; color: #ee04ee; font-weight: 900; transform: rotate(-60deg);">
-        {{ $learner->school->name }}
-    </div> --}}
+    
     <body>
     <div class="watermark">
         {{ $learner->school->name }}
@@ -145,8 +137,9 @@
             <tr>
                 <th>Name</th>
                 <th>Class</th>
-                <th>Stream</th>
+                {{-- <th>Stream</th> --}}
                 <th>Term</th>
+                <th>Agg</th>
                 <th>Position</th>
                 <th>Out Of</th>
             </tr>
@@ -157,8 +150,9 @@
                     <strong>{{ $learner->userprofile->firstname }} {{ $learner->userprofile->lastname }}</strong>
                 </td>
                 <td>{{ $class_name }}</td>
-                <td>{{ $learner->stream ?? "A" }}</td>
+                {{-- <td>{{ $learner->stream ?? "A" }}</td> --}}
                 <td>{{ $learner->marks->first()->exam->academicTerm->name ?? "-" }}</td>
+                <th>{{$grade["agg"] ?? "-" }}</th>
                 <td>{{ $myPos ?? "-" }}</td>
                 <td>{{ $totalLearners ?? "-" }}</td>
             </tr>
@@ -193,74 +187,48 @@
         <tbody>
             @foreach ($subjects as $subject)
                 @php
-                    // $mark = $filteredMarks
-                    //     ->where('subject_id', $subject->id)
-                    //     ->sortBy(fn($m) => array_search($m->exam->examType->name, $allowedTypes));
-
-                    // $marksByType = $mark->keyBy(fn($m) =>$m->exam?->examType?->name);
-
-                    // $bot = $marksByType["Beginning of Term"]->marks ?? null;
-                    // $mot = $marksByType["Mid Term"]->marks ?? null;
-                    // $eot = $marksByType["End of Term"]->marks ?? null;
-
-                    // $values = collect([$bot, $mot, $eot])->filter(fn($v) =>$v !== null);
-                    // $average = $values->count() > 0 ? round($values->avg(), 1) : null;
-
-                    // $subjectAverages[] = $average ?? 0;
-                    // $totalAverages = count($subjectAverages) ? array_sum($subjectAverages) : null;
-
-                    if ($average >= 85) { $grade = "D1"; $remark = "Well done!"; }
-                    elseif ($average >= 80) { $grade = "D2"; $remark = "Good work!"; }
-                    elseif ($average >= 75) { $grade = "C3"; $remark = "Promising Learner!"; }
-                    elseif ($average >= 65) { $grade = "C4"; $remark = "Fairly done!"; }
-                    elseif ($average >= 55) { $grade = "C5"; $remark = "Put more energy!"; }
-                    elseif ($average >= 50) { $grade = "C6"; $remark = "Improve!"; }
-                    elseif ($average >= 45) { $grade = "P7"; $remark = "Read harder!"; }
-                    elseif ($average >= 40) { $grade = "P8"; $remark = "Read harder!"; }
-                    else { $grade = "F9"; $remark = "Wake up!"; }
+                 $score = $subject->mark->first()->marks;
+                 $average = $subject->mark->average("marks");
                 @endphp
                 <tr>
                     <td>{{ $subject->name }}</td>
                     <td>100</td>
                     @foreach ($marksFromSubject as $subje)
                       <td>
-                          {{$marks->first()->subject_id === $subje->id? $subject->mark->first()->marks : "N/A" }}
+                          {{$score ? floor($score) : "-"}}
                       </td>                 
                     @endforeach
-                    <td>{{
-                    $marks->first()->subject_id === $subject->id ?
-                    $subject->mark->first()->marks / $examsDone : "-"
-                    }}</td>
-                    {{-- <td>{{ $bot ?? "-" }}</td> --}}
-                    {{-- <td>{{ $mot ?? "-" }}</td> --}}
-                    {{-- <td>{{ $eot ?? "-" }}</td> --}}
-                    {{-- <td>{{ $average ?? "-" }}</td> --}}
-                    <td>{{ $grade }}</td>
-                    <td>{{ $remark }}</td>
+                        @if ($uniqueExamTypes > 1)
+                             <td>
+                            {{ $score ? floor($score) : "-" }}
+                        </td>
+                        @endif
+                    {{-- ============ grade ========= --}}
+                    <td>{{ $subject->mark->first()->grade }}</td>
+                    {{-- ============ Remark ========= --}}
+                    @foreach($grade['remark'] as $comment)
+                     @if ($comment->grade === $subject->mark->first()->grade)
+                          <td>{{$comment->remark}}</td>
+                     @endif
+                    @endforeach
                     <td>{{ $learner->marks->where("subject_id", $subject->id)->first()?->teacher->name ?? "N/A" }}</td>
                 </tr>
             @endforeach
         </tbody>
-        {{-- @php
-            $marksByType = $filteredMarks->groupBy(fn($m) => $m->exam?->examType?->name);
-            $botTotal = collect($marksByType['Beginning of Term'] ?? [])->sum('marks');
-            $motTotal = collect($marksByType['Mid Term'] ?? [])->sum('marks');
-            $eotTotal = collect($marksByType['End of Term'] ?? [])->sum('marks');
-        @endphp --}}
         <tfoot>
             @php
-            $span = count($controls) - 4
+            $span = count($controls) - 3
         @endphp
             <tr class="total-row">
                 <th>TOTAL</th>
                 <th>400</th>
                 <th>{{ $total }}</th>
-                {{-- <th>{{ $motTotal }}</th> --}}
-                {{-- <th>{{ $eotTotal }}</th> --}}
-                <th>{{ $total / $examsDone  }}</th>
+                @if ($uniqueExamTypes > 1)
+                    <td>
+                    {{floor($average) * $examsDone ?? "-" }}
+                </td>     
+                @endif     
                 <th colspan="{{$span}}"></th>
-                {{-- <th></th> --}}
-                {{-- <th></th> --}}
             </tr>
         </tfoot>
     </table>
