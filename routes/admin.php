@@ -302,6 +302,13 @@ Route::get( '/activity', 'ActivityLogController@index' );
 	Route::post( '/importTeachers', 'TeacherImportExportController@import' );
 	Route::get( '/downloadformat/teacher', 'TeacherImportExportController@downloadFormat' );
 
+	// ======= Student Promotion @UG
+	Route::get("/students/promotions", "StudentPromotionRuleController@index")->name("students.promotion");
+	Route::get("/students/promotions/create", "StudentPromotionRuleController@create")->name("students.promotion.create");
+	Route::get("/students/promotions/edit/{rule}", "StudentPromotionRuleController@edit")->name("students.promotion.edit");
+	Route::post("/students/promotions/store", "StudentPromotionRuleController@store")->name("students.promotion.store");
+	Route::put("/students/promotions/update", "StudentPromotionRuleController@update")->name("students.promotion.update");
+	Route::delete("/students/promotions/remove", "StudentPromotionRuleController@destroy")->name("students.promotion.remove");
 //promotion
 Route::get( '/promotion/list', 'PromotionController@index' );
 Route::get( '/promotion/create', 'PromotionController@create' );
