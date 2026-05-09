@@ -921,11 +921,11 @@
                 </a>
             </li>
      {{-- @if(config('gexam.enabled', false)) --}}
-            <li class="py-3 px-2 hover:font-semibold {{Request::segment ('2') == 'examrules' ? 'active':''}}">
-                <a href="{{ url('/admin/examrules') }}" class="flex items-center">
+            <li class="py-3 px-2 hover:font-semibold {{Request::segment ('3') == 'promotions' ? 'active':''}}">
+                <a href="{{ url('/admin/students/promotions') }}" class="flex items-center">
                     <!--  <img src="{{asset('uploads/icons/sidebar/rules.svg')}}" class="w-5 h-5"> -->
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" height="512px" viewBox="-40 -20 640 640" width="512px"><g><path d="m428.667969 80h-300c-27.613281 0-50 22.386719-50 50v310c0 5.523438 4.476562 10 10 10 5.519531 0 10-4.476562 10-10v-310c0-16.566406 13.429687-30 30-30h300c16.566406 0 30 13.433594 30 30v420c0 16.566406-13.433594 30-30 30-16.570313 0-30-13.433594-30-30v-50c0-11.046875-8.957031-20-20-20h-360c-11.046875 0-20 8.953125-20 20v50c0 27.613281 22.386719 50 50 50h380c27.609375 0 50-22.386719 50-50v-420c0-27.613281-22.390625-50-50-50zm-380 500c-16.570313 0-30-13.433594-30-30v-50h360v50c0 10.820312 3.507812 21.34375 10 30zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m378.667969 200c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-160c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m158.667969 250c0 5.523438 4.476562 10 10 10h210c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-210c-5.523438 0-10 4.476562-10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m168.667969 320h210c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-210c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m168.667969 380h210c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-210c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m168.667969 440h170c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-170c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m508.667969 0h-300c-27.613281 0-50 22.386719-50 50 0 5.523438 4.476562 10 10 10 5.519531 0 10-4.476562 10-10 0-16.566406 13.429687-30 30-30h300c16.566406 0 30 13.433594 30 30v420c0 16.566406-13.433594 30-30 30-5.523438 0-10 4.476562-10 10s4.476562 10 10 10c27.609375 0 50-22.386719 50-50v-420c0-27.613281-22.390625-50-50-50zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/></g> </svg>
-                    <span class="mx-3 whitespace-no-wrap">Exam Rules</span>
+                    <span class="mx-3 whitespace-no-wrap">Promotion Rules</span>
                 </a>
             </li>
 
@@ -937,13 +937,13 @@
                 </a>
             </li>
   {{-- @endif --}}
-            <li class="py-3 px-2 hover:font-semibold {{Request::segment ('2') == 'promotion' ? 'active':''}}">
+            {{-- <li class="py-3 px-2 hover:font-semibold {{Request::segment ('2') == 'promotion' ? 'active':''}}">
                 <a href="{{ url('/admin/promotion/create') }}" class="flex items-center">
                     <!--  <img src="{{asset('uploads/icons/sidebar/promotion.svg')}}" class="w-5 h-5"> -->
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" id="Capa_1" enable-background="new 0 0 512 512" height="512px" viewBox="0 0 512 512" width="512px"><g><path d="m497 161h-60c-8.284 0-15 6.716-15 15s6.716 15 15 15h23.787l-73.093 73.093c-6.583-30.894-26.794-56.8-54.017-71.104 16.093-13.767 26.323-34.2 26.323-56.989 0-41.355-33.645-75-75-75s-75 33.645-75 75c0 22.789 10.23 43.222 26.323 56.988-25.113 13.196-44.261 36.262-52.247 64.012-1.878-2.151-3.844-4.24-5.91-6.252-7.355-7.167-15.59-13.13-24.454-17.789 16.073-13.767 26.288-34.187 26.288-56.959 0-41.355-33.645-75-75-75s-75 33.645-75 75c0 22.789 10.23 43.222 26.323 56.988-33.452 17.578-56.323 52.672-56.323 93.012v110c0 8.284 6.716 15 15 15h122c3.979 0 7.794-1.58 10.606-4.394l109.394-109.393 39.394 39.394c5.857 5.857 15.355 5.857 21.213 0l164.393-164.394v23.787c0 8.284 6.716 15 15 15s15-6.716 15-15v-60c0-8.284-6.716-15-15-15zm-257-25c0-24.813 20.187-45 45-45s45 20.187 45 45-20.187 45-45 45-45-20.187-45-45zm-180 40c0-24.813 20.187-45 45-45s45 20.187 45 45-20.187 45-45 45-45-20.187-45-45zm70.787 245h-100.787v-95c0-41.355 33.645-75 75-75 19.629 0 38.177 7.541 52.229 21.233 14.024 13.666 22.066 31.967 22.644 51.531.016.528.06 1.048.128 1.56v46.462zm176.213-76.213-39.394-39.394c-5.857-5.857-15.355-5.857-21.213 0l-36.393 36.394v-55.787c0-41.355 33.645-75 75-75s75 33.645 75 75v5.787z" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/></g> </svg>
-                    <span class="mx-3 whitespace-no-wrap">Promotions</span>
+                    <span class="mx-3 whitespace-no-wrap">Promotion</span>
                 </a>
-            </li>
+            </li> --}}
 
             <li class="py-3 px-2 hover:font-semibold {{Request::segment ('2') == 'leavetypes' ? 'active':''}} || {{Request::segment ('2') == 'leavetype' ? 'active':''}}">
                 <a href="{{ url('/admin/leavetypes') }}" class="flex items-center">
