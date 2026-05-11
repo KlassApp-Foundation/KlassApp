@@ -206,16 +206,19 @@
         <thead class="bg-gray-100 uppercase text-gray-700">
             <tr>
                 <th class="p-2 border border-gray-500 text-center">Grade</th>
-                @foreach ($grading_system as $range => $grade)
-                    <th class="p-2 border border-gray-500 text-center ">{{ $grade }}</th>
+                @foreach ($grading_system as $grade)
+                {{-- {{dd($grade)}} --}}
+                    <th class="p-2 border border-gray-500 text-center ">{{ $grade->grade }}</th>
                 @endforeach
             </tr>
         </thead>
         <tbody class="bg-gray-200 uppercase text-gray-700">
             <tr>
                 <td class="p-2 border border-gray-500 text-center">Range</td>
-                @foreach ($grading_system as $range => $grade)
-                    <td class="p-2 border border-gray-500 text-center">{{ $range }}</td>
+                @foreach ($grading_system as $grade)
+                    <td class="p-2 border border-gray-500 text-center">
+                        {{ $grade->min_score . "-" . $grade->max_score }}
+                    </td>
                 @endforeach
             </tr>
         </tbody>

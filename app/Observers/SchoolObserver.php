@@ -44,34 +44,47 @@ class SchoolObserver
 
             $currentYear = Carbon::now()->year;
             $prevYear    = $currentYear - 1;
+            $nextYear    = $currentYear + 1;
 
             // Previous Academic Year
-            AcademicYear::create([
-                'school_id'   => $school->id,
-                'name'        => $prevYear,
-                'description' => 'Previous Academic Year',
-                'start_date'  => $prevYear . '-02-01',
-                'end_date'    => $currentYear . '-12-15',
-                'status'      => 0, // OLD
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ]);
+            // AcademicYear::create([
+            //     'school_id'   => $school->id,
+            //     'name'        => $prevYear,
+            //     'description' => 'Previous Academic Year',
+            //     'start_date'  => Carbon::create($prevYear, 2, 1),
+            //     'end_date'    => Carbon::create($prevYear, 12, 15),
+            //     'status'      => 0,
+            //     'created_at'  => now(),
+            //     'updated_at'  => now(),
+            // ]);
 
             // Current Academic Year
+            // AcademicYear::create([
+            //     'school_id'   => $school->id,
+            //     'name'        => $currentYear,
+            //     'description' => 'Current Academic Year',
+            //     'start_date'  => Carbon::create($currentYear, 2, 1),
+            //     'end_date'    => Carbon::create($currentYear, 12, 15),
+            //     'status'      => 1,
+            //     'created_at'  => now(),
+            //     'updated_at'  => now(),
+            // ]);
+
+             // Upcoming Academic Year
             AcademicYear::create([
                 'school_id'   => $school->id,
-                'name'        => $currentYear,
-                'description' => 'Current Academic Year',
-                'start_date'  => $currentYear . '-02-01',
-                'end_date'    => $currentYear . '-12-15',
-                'status'      => 1, // CURRENT
+                'name'        => $nextYear,
+                'description' => 'Upcoming Academic Year',
+                'start_date'  => Carbon::create($nextYear, 2, 1),
+                'end_date'    => Carbon::create($nextYear, 12, 15),
+                'status'      => 1,
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ]);
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
+            \Illuminate\Support\Facades\Log::info($e->getMessage());
             //dd($e->getMessage());
         }
     }

@@ -20,7 +20,7 @@ return new class extends Migration
 
             $table->foreign("school_id")->references("id")->on("schools")->cascadeOnDelete();
             $table->foreign('standard_id')->references('id')->on('standards')->cascadeOnDelete();
-            $table->foreign("section_id")->references("id")->on("sections")->nullOnDelete();
+            $table->foreign("section_id")->references("id")->on("sections")->cascadeOnDelete();
             $table->timestamps();
 
             $table->unique(["section_id", "min_average"]);

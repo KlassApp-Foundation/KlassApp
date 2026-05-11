@@ -14,9 +14,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Marks (%)
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Grade / Remark
-                </th>
+                
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Grade
                 </th>
@@ -58,17 +56,7 @@
                             <span class="text-xs text-gray-500">/{{ $mark->exam?->max_marks ?? '?' }}</span>
                         @endif --}}
                     </td>
-                    {{-- ============ remark in exam ============= --}}
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        @if($mark->remark)
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                {{ $mark->remark->color_class ?? 'bg-gray-100 text-gray-800' }}">
-                                {{ $mark->remark->remark ?? $mark->remark->id ?? '—' }}
-                            </span>
-                        @else
-                            —
-                        @endif
-                    </td>
+                   
                     {{-- =========== grade ============ --}}
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {{ $mark->grade ?? '—' }}

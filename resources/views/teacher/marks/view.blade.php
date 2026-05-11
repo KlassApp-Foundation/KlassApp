@@ -40,14 +40,20 @@
             </select>
         </form>
     </div>
-
+  @php
+       $termVal = match ($exam->academicTerm->name){
+              "First Term"     =>  1,
+              "Second Term"       =>  2,
+              "Third Term"       =>  3,
+               };
+  @endphp
     {{-- Table --}}
     <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm p-1">
         <h3 class='text-center py-2 font-semibold '>
+            {{-- {{ dd($exam) }} --}}
             <span>{{$exam->examType->name}}</span>
-            <span>{{ $exam->academicTerm->name }}</span>
+            <span>{{ $termVal . ", ". $exam->academicYear->name }}</span>
             <span>{{$exam->subject->name}}</span>
-             <span>Exam</span> 
              
             </h3>
         <table class="min-w-full text-sm">
@@ -59,7 +65,6 @@
                     <th class="px-4 py-3 text-left border border-gray-400">Marks</th>
                     <th class="px-4 py-3 text-left border border-gray-400">Exam</th>
                     <th class="px-4 py-3 text-left border border-gray-400">Grade</th>
-                    <th class="px-4 py-3 text-left border border-gray-400">Comment</th>
                     <th class="px-4 py-3 text-center border border-gray-400">Actions</th>
                 </tr>
             </thead>
@@ -105,11 +110,6 @@
                          {{-- grade --}}
                         <td class="p-1  border border-gray-400">
                             {{ $mark->grade ?? 'N/A' }}
-                        </td>
-
-                         {{-- remark --}}
-                        <td class="p-1  border border-gray-400">
-                            {{ str($mark->remark->remark ?? 'N/A')->limit(20, '...') }}
                         </td>
 
                         {{-- Actions --}}

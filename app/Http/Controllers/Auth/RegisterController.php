@@ -494,12 +494,13 @@ class RegisterController extends Controller
     {
         try
         {
+            $year = Carbon::now()->year;
             $detail = AcademicYear::create([
                 'school_id'     =>  $school->id,
-                'name'          =>  '2020-2021',
+                'name'          =>  $year,
                 'description'   =>  'Current Academic Year',
-                'start_date'    =>  '2020-06-01',
-                'end_date'      =>  '2021-05-31',
+                'start_date'    =>  Carbon::create($year, 2, 1),
+                'end_date'      =>  Carbon::create($year, 12, 15),
                 'status'        =>  1,
             ]);
 

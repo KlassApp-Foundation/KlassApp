@@ -13,7 +13,7 @@ class MarksReportService
  public function getMarks($request, $schoolId)
     {
         return User::with(['marks' => function ($q) use ($request) {
-            $q->with('exam', 'subject', 'remark')
+            $q->with('exam', 'subject')
               ->whereHas("exam", function ($e) {
                   $e->where("status", "submitted");
               });

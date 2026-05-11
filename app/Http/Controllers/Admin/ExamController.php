@@ -34,10 +34,11 @@ public function sections(){
     
     // $standards   = Standard::where('school_id', $school_id)->get(); 
     $sections = Section::where("school_id", $school_id)->orderByDesc("id")->get();
-    $academicYears = AcademicYear::where('school_id', $school_id)->get();
+    $academicYears = AcademicYear::where('school_id', $school_id)->where("end_date", ">", now()) ->get();
+    // dd($academicYears);
     $selectedClassId = $request->get("section");
     if($selectedClassId){
-        $subjects = Subject::where('section_id', $selectedClassId) ->where("school_id", $school_id)->get();
+    $subjects = Subject::where('section_id', $selectedClassId) ->where("school_id", $school_id)->get();
     }
     $terms = AcademicTerm::where("school_id", $school_id)->get();
     $exams = Exam::where('school_id', $school_id)
