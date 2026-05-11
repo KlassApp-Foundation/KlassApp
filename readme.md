@@ -1,16 +1,16 @@
 # UGANDAS SCHOOL MANAGEMENT SYSTEM
 
 ## Todos
+
 - Add exam table
 
-# To be hosted on
-* VPS: Hetzer
-* Domain name: Cloudflare (ugasch.com)
+## To be hosted on
 
+- VPS: Hetzer
+- Domain name: Cloudflare (ugasch.com)
 
+## After deployment:
 
-# After deployment:
 - Add CI/CD pipelines
 
-
- 
+# 10/05 Review

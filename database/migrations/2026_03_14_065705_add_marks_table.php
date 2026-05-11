@@ -22,7 +22,7 @@ return new class extends Migration
             $table->unsignedInteger('subject_id');
             $table->unsignedBigInteger('exam_id');
             $table->unsignedInteger('section_id'); 
-            $table->unsignedBigInteger('remark_id');
+            $table->unsignedBigInteger('remark_id')->nullable();
             // Other columns
            $table->decimal('marks', 5, 2); // e.g., 100.00 max
            $table->string("grade");

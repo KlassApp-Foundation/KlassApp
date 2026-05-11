@@ -88,11 +88,6 @@
                             {{ $student->marks->first()->grade ?? '-' }}
                         </td>
 
-                         {{-- remark --}}
-                        <td class="p-1  border border-gray-400">
-                            {{ str($student->marks->first()->remark->remark ?? 'missed exam')->limit(20, '...') }}
-                        </td>
-
                         {{-- Actions --}}
                         <td class="p-1 border border-gray-400 space-x-6 text-center">
                             @if ($student->marks->isNotEmpty())

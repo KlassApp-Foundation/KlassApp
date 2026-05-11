@@ -28,7 +28,7 @@ class MarksController extends Controller
     $schoolId = Auth::user()->school_id;
 
    $students = User::with(
-    ["marks.subject", "marks.remark", "marks.exam", "marks.student", "marks.teacher", "marks.school" ])
+    ["marks.subject", "marks.exam", "marks.student", "marks.teacher", "marks.school" ])
             ->whereHas("marks.exam", function ($query) use($schoolId){
                 $query->forSchool($schoolId);
             })
@@ -50,7 +50,7 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     // ============ eagerload users ===========
   $query = User::query()
     ->with(['marks' => function ($q) use ($request) {
-        $q->with('exam', 'subject', 'remark')
+        $q->with('exam', 'subject')
          ->whereHas("exam", function($e) use($request){
             $e->where("status", "submitted");
         });

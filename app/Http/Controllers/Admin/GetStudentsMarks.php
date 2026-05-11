@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+use App\Models\Academics\SchoolGradingSystem;
 use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
 use App\Models\Section;
@@ -61,16 +62,18 @@ class GetStudentsMarks extends Controller
              $examsDone = $studentHelper->examsDone($schoolId, $exam);     
 
             $class_name = Section::find($section)->name;
-            $grading_system = [
-                "0-39"=>"F9",
-                 "40-44"=>"P8",
-                 "45-49"=>"P7",
-                 "50-59"=>"C5",
-                 "60-64"=>"C4",
-                 "65-74"=>"C3",
-                 "75-84"=>"D2",
-                 "85-100"=>"D1"
-                 ];
+            $grading_system = SchoolGradingSystem::where("school_id", $schoolId)->get();
+            // dd($grading_system);
+            //  = [
+            //     "0-39"=>"F9",
+            //      "40-44"=>"P8",
+            //      "45-49"=>"P7",
+            //      "50-59"=>"C5",
+            //      "60-64"=>"C4",
+            //      "65-74"=>"C3",
+            //      "75-84"=>"D2",
+            //      "85-100"=>"D1"
+            //      ];
             
             $fees = $studentHelper->fees($admin, $section);
                              

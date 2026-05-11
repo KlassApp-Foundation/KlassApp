@@ -38,7 +38,6 @@
                             <th class="py-3">Student</th>
                             <th class="py-3">Marks</th>
                             <th class="py-3">Out Of</th>
-                            <th class="py-3">Remarks</th>
                         </tr>
                     </thead>
 
@@ -66,15 +65,6 @@
                                        name="out_of[{{ $student->id }}]"
                                        value="100"
                                        class="tw-form-control w-24">
-                            </td>
-
-                            <td>
-                                 <select name="remark_id[{{ $student->id }}]" id="remark_id" class="tw-form-control w-full">
-                                  <option value="">Select Remark</option>
-                                  @foreach ($remarks as $remark)
-                                      <option value="{{ $remark->id }}">{{ $remark->remark }}</option>
-                                  @endforeach
-                                 </select>
                             </td>
                         </tr>
                         @endforeach

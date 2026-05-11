@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 
 use App\Models\Academics\Marks;
-use App\Models\Academics\Remarks;
 use App\Models\AcademicYear;
 use App\Models\Standard;
 use App\Models\StandardLink;
@@ -70,20 +69,12 @@ public function teacherExamMarksList()
         ->where("teacher_id", $teacher->id)
         ->orderBy('created_at', 'desc')
         ->get();
-    // dd($exams);
-// $exm = Exam::where('teacher_id', $teacher->id)->get();
-    // Add progress info
-    // foreach ($exams as $exam) {
-    //     $exam->entered_count = Marks::where('exam_id', $exam->id)
-    //         ->where('teacher_id', $teacher->id)
-    //         ->count();
-    // }
+   
     return view('teacher.marks.teacher-exam-list', compact('exams', "exm"));
 }
 
 // mark exam as done
 public function TogglekStatus(Exam $exam){   
-    // $marks = Marks::where("exam_id", $exam->id)->get();
     $exam->changeExamStatus();
     return redirect()
         ->route('teacher.exam.marks')
@@ -111,10 +102,6 @@ public function enterExamMarks(Exam $exam)
                     })
                   ->get();
      $total = $allStudents->count();             
-            //    dd($allStudents);
-  
-    $remarks = Remarks::all();
-   
 
     $standard = $exam->standard; // adjust relation name
     // $subject = request('subject_id') ? Subject::find($exam) : null;
@@ -123,7 +110,7 @@ public function enterExamMarks(Exam $exam)
 
     
 
-    return view('teacher.marks.enter', compact('exams', "allStudents", 'standard', 'subject', "user", "remarks", "exam", "tr", "total"));
+    return view('teacher.marks.enter', compact('exams', "allStudents", 'standard', 'subject', "user", "exam", "tr", "total"));
 }
 
 public function saveExamMarks(Request $request, Exam $exam, GradingSystemService $gradingSystem)
@@ -146,7 +133,6 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
             [
                 'teacher_id' => $exam->teacher_id,
                 'marks'      => $mark,
-                'remark_id'    => $request->remark_id[$studentId] ?? null,
                 "grade" => $grade,
                 "section_id" => $exam->section_id
             ]
@@ -173,7 +159,7 @@ public function viewExamMarks(Exam $exam)
       // only needed columns
       $ll=StandardLink::where("standard_id", 2)->get();
     //   to add school id relationship and filter according to it
-        $marks = Marks::with(["exam", "student", "subject", "teacher", "remark"])->where('teacher_id', $tr->id)
+        $marks = Marks::with(["exam", "student", "subject", "teacher"])->where('teacher_id', $tr->id)
 
         ->where('exam_id', $exam->id)
         ->where("school_id", $tr->school_id)
@@ -205,13 +191,12 @@ public function editMark(Exam $exam, User $student, Marks $marks)
     if ($mark->exists && $mark->teacher_id !== $teacher->id) {
         abort(403, "You didn't enter this mark.");
     }
-$remarks = Remarks::all();
     // Optional: check if student actually belongs to this exam/standard
     // if ($student->user_id !== $exam->standard_id) {
     //     abort(404, "Student not in this class/exam.");
     // }
 
-    return view('teacher.marks.edit-single', compact('exam', 'mark', "student", "remarks", "marks"));
+    return view('teacher.marks.edit-single', compact('exam', 'mark', "student", "marks"));
 }
 
 public function updateMark(Request $request, Exam $exam, User $student, GradingSystemService $gradingSystem)
@@ -221,8 +206,6 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
     $validated = $request->validate([
         'marks'       => 'sometimes|nullable|numeric|min:0|max:100', // adjust rules to your system
         'grade'       => 'nullable|string|max:5',
-        'remark'      => 'nullable|string|max:255',
-        // add other fields you have (attendance, etc.)
     ]);
      $mark = $validated["marks"];
       $grade = $gradingSystem->grade($mark,$schoolId, $exam);
@@ -238,8 +221,6 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
         [
             'marks'       => $validated['marks'],
             'grade'       => $grade ?? null,
-            'remark'      => $validated['remark'] ?? null,
-            // add other fields + maybe 'updated_at' is auto
         ]
     );
 
