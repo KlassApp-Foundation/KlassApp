@@ -18,7 +18,6 @@ public function learner($schoolId, $user, $exam){
     // dd($exam);
     $learner = User::with([
                     'marks.subject',
-                    'marks.remark',
                     'marks.exam',
                     'marks.student',
                     'marks.teacher',
@@ -84,6 +83,7 @@ public function totalStudentsInClass($schoolId, $section){
 public function totalMarks($learners){
     $learners = $learners->map(function ($learner){
             $learner->total = $learner->marks->sum("marks");
+            $learner->average = $learner->marks->average("marks");
             return $learner;
         });
 return $learners;
@@ -129,6 +129,7 @@ return $total;
   }
 
   public function examsDone($schoolId, $exam){
+    // to add exam type filter
     return Exam::where("school_id", $schoolId)
                        ->where("section_id", $exam->section_id)
                        ->where("academic_term_id", $exam->academic_term_id)

@@ -13,6 +13,7 @@ use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Models\User;
+use App\Services\StudentPromotionService;
 use App\Services\StudentReportHelperService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -23,7 +24,7 @@ class GetStudentsMarks extends Controller
 {
     //
     
-    public function GetStudentMarks(StudentReportHelperService $studentHelper,  User $user, string $section, Exam $exam){
+    public function GetStudentMarks(StudentReportHelperService $studentHelper,  User $user, string $section, Exam $exam, StudentPromotionService $studentPromotion){
         $admin = Auth::user();
         $schoolId = $admin->school_id;
         // learner
@@ -35,7 +36,7 @@ class GetStudentsMarks extends Controller
 
             $exams = $studentHelper->exam($schoolId, $exam);
 
-            // dd($grade);
+            // dd($exams);
             $controls = ["SUBJECT", "OUT OF"];
             // many exam types
             $uniqueExamTypes = $exams->pluck('examType')->unique()->count();
@@ -60,7 +61,6 @@ class GetStudentsMarks extends Controller
              $marks = $exam->marks->where("student_id", $learner->id);
              
              $examsDone = $studentHelper->examsDone($schoolId, $exam);     
-
             $class_name = Section::find($section)->name;
             $grading_system = SchoolGradingSystem::where("school_id", $schoolId)->get();
             // dd($grading_system);
@@ -87,6 +87,9 @@ class GetStudentsMarks extends Controller
         // totals
         $learners = $studentHelper->totalMarks($learners);
         $total = $learners->find($user->id)->total;
+        $avg = $total / $examsDone;
+        $promotion = $studentPromotion->promoteToNextClass($avg, $exam, $schoolId, $user);
+        // dd($promotion);
         //   get position
         $learners = $learners->sortByDesc("total")->values();
         // dd($learners);
