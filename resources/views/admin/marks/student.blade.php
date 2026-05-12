@@ -4,13 +4,6 @@
 {{-- {{ dd($learner) }} --}}
 @if (!is_null($learner))
     <div class="container-fluid w-full lg:mx-2 py-4 px-6">
-      {{-- @php
-          $allowedTypes = ["Beginning of Term", "Mid Term", "End of Term"];
-          $subjectAverages = [];
-                    $filteredMarks = $learner->marks->filter(
-              fn($m) => in_array($m->exam?->exam_type, $allowedTypes)
-          );
-       @endphp --}}
     {{-- ======== header ======= --}}
    <div class="flex items-center justify-between border-b border-gray-400 pb-4">
         <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center font-bold">
@@ -102,7 +95,6 @@
             <td class="p-3 border border-gray-500">100</td>
             {{-- {{ dd($marksFromSubject) }} --}}
                 <td class="p-3 border border-gray-500">
-                    {{-- {{dd($subject->)}} --}}
                     {{ $score ? floor($score) : "-" }}
                 </td>                 
            
@@ -121,13 +113,11 @@
             @foreach($grade['remark'] as $comment)
             @if ($comment->grade === $subject->mark->first()->grade)
                  <td class="p-3 border border-gray-500">{{$comment->remark}}</td>
+                 @else
+            <td class="p-3 border border-gray-500"> - </td>
             @endif
+            
               @endforeach
-            
-            
-            
-            {{-- {{ dd($learner) }} --}}
-            
         </tr>
         @endforeach 
     </tbody>
