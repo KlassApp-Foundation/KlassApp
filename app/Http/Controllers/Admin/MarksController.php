@@ -14,12 +14,18 @@ use App\Models\Standard;
 use App\Models\Subject;
 use App\Models\User;
 use App\Services\GradingSystemService;
+use App\Services\StudentPromotionService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 
 class MarksController extends Controller
 {
+    protected $studentPromotion;
+    public function __construct(StudentPromotionService $studentPromotion)
+    {
+        $this->studentPromotion = $studentPromotion;
+    }
 
 
 // all marks according to exam and standard
@@ -133,6 +139,17 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
 
         return $student;
        });
+       $examTypes = ExamType::all();
+       $type = ExamType::find($request->examType);
+       
+       
+    //    promote only on end of year exams
+    if($type?->name === "Beginning Of Term"){
+        $promotion = $this->studentPromotion->promoteStudents($students, $schoolId, $request->class);
+    }
+    //    promotion
+        // dd($students);
+
     //    paginate
     $page = request()->get("page", 1);
     $perpage = 6;
@@ -158,8 +175,7 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
                        ->distinct("subject_id")
                        ->count("subject_id");
 
-    $examTypes = ExamType::all();
-    $type = ExamType::find($request->examType);
+    
     $terms = AcademicTerm::where("school_id", $schoolId)->get();
     $class = Section::find($request->class);
     $exam = Exam::where("school_id", $schoolId)
@@ -167,10 +183,10 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
            ->where("academic_year_id", $academic_year_id)
            ->where("academic_term_id", $request->term)->first();
        $headers = ['Total', 'Average', 'Grade', 'Position', 'Actions'];    
-    //    dd($exam);
+       
     return view('admin.marks.filter', compact(
         'marks', 'year', "term", "class", "subjects", "years", "standards", "terms", "students", "classes", "examTypes",
-         "type", "term", "subjectsCovered", "headers", "exam",
+         "type", "term", "subjectsCovered", "headers", "exam", "promotion"
         ));
 }
 
