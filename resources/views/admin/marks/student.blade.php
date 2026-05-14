@@ -108,16 +108,13 @@
             {{-- @endforeach --}}
             <td class="p-3 border border-gray-500">{{ $subject->mark->first()->grade }}</td>
             <td class="p-3 border border-gray-500">
-                {{$learner->marks->where("subject_id", $subject->id)->first()?->teacher?->name ?? "N/A"}}
+                {{$learner->marks->where("subject_id", $subject->id)->first()?->teacher?->name ?? "-"}}
             </td>
-            @foreach($grade['remark'] as $comment)
-            @if ($comment->grade === $subject->mark->first()->grade)
-                 <td class="p-3 border border-gray-500">{{$comment->remark}}</td>
-                 @else
-            <td class="p-3 border border-gray-500"> - </td>
-            @endif
-            
-              @endforeach
+            @php
+                $subjectGrade = $subject->mark->first()->grade;
+                $remark = collect($grade['remark'])->firstWhere('grade', $subjectGrade);
+            @endphp
+                 <td class="p-3 border border-gray-500">{{ $remark->remark ?? '-' }}</td>
         </tr>
         @endforeach 
     </tbody>
@@ -152,7 +149,7 @@
     </thead>
     <tbody>
         <tr>
-        <td class="p-3 border border-gray-500">______________________</td>
+        <td class="p-3 border border-gray-500 ">{{$promotion ?? "Advised to repeat"}}</td>
         <td class="p-3 border border-gray-500">______________________</td>
     </tr>
     </tbody>

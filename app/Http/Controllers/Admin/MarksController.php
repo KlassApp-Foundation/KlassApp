@@ -107,13 +107,13 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     $exams = Exam::where("school_id", $schoolId)
           ->where("section_id", $request->class)
           ->where("academic_term_id", $request->term)
+          ->where("exam_type_id", $request->examType)
           ->where("academic_year_id", $academic_year_id);
-          
     $examsDone = $exams->count();
     $exam = $exams->first();
         $students = $query->get();
         
-        // dd($agg);
+        // dd($examsDone);
         // dd($students);
            // calculate total
            $students = $students->map(function ($student) use($examsDone, $exam, $gradingSystem) {
@@ -144,12 +144,10 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
        
        
     //    promote only on end of year exams
-    if($type?->name === "Beginning Of Term"){
-        $promotion = $this->studentPromotion->promoteStudents($students, $schoolId, $request->class);
+    // dd($type);
+    if($type?->name === "End Of Year"){
+        $promotion = $this->studentPromotion->promoteStudents($students, $schoolId, $request->class, $examsDone);
     }
-    //    promotion
-        // dd($students);
-
     //    paginate
     $page = request()->get("page", 1);
     $perpage = 6;
@@ -191,12 +189,17 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
 }
 
 // private function to compute grade
-private function computeGrade($average)
+public function promoteStudents(Request $request)
 {
-    if ($average >= 80) return 'A';
-    if ($average >= 70) return 'B';
-    if ($average >= 60) return 'C';
-    if ($average >= 50) return 'D';
-    return 'E';
+    $schoolId = Auth::user()->school_id;
+    $sectionId = $request->sectionId;
+    $promote = $this->studentPromotion->finalizePromotions($schoolId, $sectionId);
+    return redirect()->route("admin.marks.filter")->with("successmessage", $promote . "!");
+   
+}
+
+// demote student
+public function demoteStudent(){
+    
 }
 }

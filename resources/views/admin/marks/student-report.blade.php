@@ -205,12 +205,13 @@
                         @endif
                     {{-- ============ grade ========= --}}
                     <td>{{ $subject->mark->first()->grade }}</td>
+                     @php
+                       $subjectGrade = $subject->mark->first()->grade;
+                       $remark = collect($grade['remark'])->firstWhere('grade', $subjectGrade);
+                     @endphp
                     {{-- ============ Remark ========= --}}
-                    @foreach($grade['remark'] as $comment)
-                     @if ($comment->grade === $subject->mark->first()->grade)
-                          <td>{{$comment->remark}}</td>
-                     @endif
-                    @endforeach
+                          <td>{{ $remark->remark ?? '-' }}</td>
+                    
                     <td>{{ $learner->marks->where("subject_id", $subject->id)->first()?->teacher->name ?? "N/A" }}</td>
                 </tr>
             @endforeach
@@ -245,7 +246,7 @@
         </thead>
         <tbody>
             <tr>
-                <td>___________________________</td>
+                <td>{{$promotion ?? "Advised to repeat"}}</td>
                 <td>___________________________</td>
             </tr>
         </tbody>
@@ -292,15 +293,15 @@
             <tr>
                 <th>Grade</th>
                 @foreach ($grading_system as $range => $grade)
-                    <th>{{ $grade }}</th>
+                    <th>{{ $grade->grade }}</th>
                 @endforeach
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><strong>Range</strong></td>
-                @foreach ($grading_system as $range => $grade)
-                    <td>{{ $range }}</td>
+                @foreach ($grading_system as $grade)
+                    <td>{{ $grade->min_score . "-" . $grade->max_score }}</td>
                 @endforeach
             </tr>
         </tbody>

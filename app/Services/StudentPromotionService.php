@@ -15,56 +15,8 @@ use App\Models\User;
 
 class StudentPromotionService
 {
-    public function promoteToNextClass($avg, $exam, $schoolId, $user){
-        $nextAcademicYearId = AcademicYear::where("school_id", $schoolId)->where("description", "Upcoming Academic Year")->value("id");
-        $currentStandardId = StandardLink::where("school_id", $schoolId)->where("section_id", $exam->section_id)->value("standard_id");
-        $nextSection = Section::where("school_id", $schoolId)
-                         ->where("id", ">", $exam->section_id)
-                         ->orderBy("id")
-                         ->first();
-       $nextStandard = Standard::where("school_id", $schoolId)
-                         ->where("id", ">", $currentStandardId)
-                         ->orderBy("id")
-                         ->first();                  
-        $rules = StudentPromotionRules::where("school_id", $schoolId)
-                 ->where("section_id", $exam->section_id)
-                 ->where("min_average", "<=", $avg)
-                  ->first();
-                //   dd($rules);
-        $student = StudentAcademic::where("school_id", $schoolId)->where("user_id", $user->id)->first();
-        
-       if($rules){
-             Promotion::create([
-            'school_id' => $schoolId,
-            'user_id' => $user->id, 
-            'current_academic_year_id' => $exam->academic_year_id,
-            'current_standard_id' => $currentStandardId,
-            'current_section_id' => $exam->section_id,
-            'exam_id' => $exam->id,
-            'next_academic_year_id' => $nextAcademicYearId,
-            'next_standard_id' => $nextStandard?->id ?? $currentStandardId,
-            'next_section_id' => $nextSection?->id ?? null,
-            'comments' => "Promoted to $nextSection->name",
-            'status' => 1,
-        ]);
-
-        $nextStandardLink = StandardLink::where([
-            ['school_id', $schoolId],
-            ['standard_id', $nextStandard->id ?? $currentStandardId],
-            ['section_id', $nextSection->id],
-      ])->first();
-      $student->standardLink_id = $nextStandardLink->id;
-      $student->save();
-
-
-           
-        }
-    return $rules;
-    }
-
-
-    // promote many students
-     public function promoteStudents($students, $schoolId, $sectionId){
+    // promote class students
+     public function promoteStudents($students, string $schoolId, string $sectionId, int $examsDone){
         
         $currentStandardId = StandardLink::where("school_id", $schoolId)->where("section_id", $sectionId)->value("standard_id");
         $nextSection = Section::where("school_id", $schoolId)
@@ -86,40 +38,69 @@ class StudentPromotionService
                     continue;
                 }
             }
-            $avg = $student->marks->average("marks");
+            $avg = $student->marks->sum("marks") / $examsDone;
             $rules = StudentPromotionRules::where("school_id", $schoolId)
                  ->where("section_id", $sectionId)
                  ->where("min_average", "<=", $avg)
                   ->first();
-            $exam = $student->marks->first()->exam;
-            // dd($exam->academic_year_id);
+            
+            // dd($avg);
 
             if($rules){
-            $promotion = Promotion::create([
-            'school_id' => $schoolId,
-            'user_id' => $student->id, 
-            'current_academic_year_id' => $exam->academic_year_id,
-            'current_standard_id' => $currentStandardId,
-            'current_section_id' => $exam->section_id,
-            'exam_id' => $exam->id,
-            'next_academic_year_id' => $nextAcademicYearId,
-            'next_standard_id' => $nextStandard?->id ?? $currentStandardId,
-            'next_section_id' => $nextSection?->id ?? null,
-            'comments' => "Promoted to $nextSection->name",
-            'status' => 1,
-        ]);
 
-        $nextStandardLink = StandardLink::where([
-            ['school_id', $schoolId],
-            ['standard_id', $nextStandard->id ?? $currentStandardId],
-            ['section_id', $nextSection->id],
-      ])->first();
-      $learner->standardLink_id = $nextStandardLink->id;
-      $learner->save();
-        }
+            $exam = $student->marks->first()->exam;
+           $promotion = Promotion::updateOrCreate(
+                        [
+                            'school_id' => $schoolId,
+                            'user_id' => $student->id,
+                            'current_academic_year_id' => $exam->academic_year_id,
+                            'current_standard_id' => $currentStandardId,
+                            'current_section_id' => $exam->section_id,
+                            'exam_id' => $exam->id,
+                        ],
+                        [
+                            'next_academic_year_id' => $nextAcademicYearId,
+                            'next_standard_id' => $nextStandard?->id ?? $currentStandardId,
+                            'next_section_id' => $nextSection?->id ?? null,
+                            'comments' => "Promoted to {$nextSection->name}",
+                            'status' => 1,
+                        ]
+                     );
+
+        $promotion = Promotion::where("id", $promotion->id)->value("comments");
+        }   
         }
         return $promotion;
-    
     }
+
+    // promotion finalization
+    public function finalizePromotions(string $schoolId, string $sectionId)
+{
+    $promotions = Promotion::where('school_id', $schoolId)
+        ->where('current_section_id', $sectionId)
+        ->where('status', 1)
+        ->get();
+$promote =  "";
+    foreach ($promotions as $promotion) {
+        $promote = $promotion->comments;
+        $student = StudentAcademic::where(
+            'user_id',
+            $promotion->user_id
+        )->first();
+
+        $nextStandardLink = StandardLink::where([
+            'school_id' => $schoolId,
+            'standard_id' => $promotion->next_standard_id,
+            'section_id' => $promotion->next_section_id,
+        ])->first();
+
+        if ($student && $nextStandardLink) {
+            $student->standardLink_id = $nextStandardLink->id;
+            $student->save();
+        }
+        
+    }
+    return $promote;
+}
 
 }

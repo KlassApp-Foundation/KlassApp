@@ -19,7 +19,7 @@
     </div>
 
     {{-- Form --}}
-    <form method="POST" action="{{ $rule ? route("students.promotion.update") : route('students.promotion.store') }}">
+    <form method="POST" action="{{ $rule ? route("students.promotion.update", $rule->id) : route('students.promotion.store') }}">
         @csrf
         @if (isset($rule))
             @method("PUT")

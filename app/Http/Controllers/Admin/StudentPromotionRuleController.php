@@ -64,19 +64,16 @@ class StudentPromotionRuleController extends Controller
     public function edit(StudentPromotionRules $rule)
 {
     $schoolId = Auth::user()->school_id;
-    // $rule = StudentPromotionRules::findOrFail($id);
     $sections = Section::where('school_id', $schoolId)->orderByDesc('id')->get();
-
     return view('admin.school.promotion.create', compact('rule', 'sections'));
 }
 
     //  * Update the specified resource in storage.
     public function update(
         UpdateStudentPromotionRulesRequest $request,
-        StudentPromotionRules $studentPromotionRules
+        StudentPromotionRules $rule
     ) {
-
-        $studentPromotionRules->update($request->validated());
+       $rule->update($request->validated());
         return redirect()->route("students.promotion") ->with("successmessage", "Promotion Rule Updated!");
     }
 

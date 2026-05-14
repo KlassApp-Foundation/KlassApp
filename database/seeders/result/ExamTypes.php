@@ -47,7 +47,7 @@ class ExamTypes extends Seeder
                 'code' => 'PreMOCK',
             ],
             [
-                'name' => 'Final Exam',
+                'name' => 'End Of Year',
                 'code' => 'FINAL',
             ],
         ];
