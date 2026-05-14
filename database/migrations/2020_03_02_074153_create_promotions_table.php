@@ -36,6 +36,8 @@ class CreatePromotionsTable extends Migration
             $table->string('comments')->nullable();
             $table->boolean('status')->default(0);
             $table->timestamps();
+
+            $table->unique(["user_id", "next_section_id"]);
             $table->softDeletes();
         });
     }
