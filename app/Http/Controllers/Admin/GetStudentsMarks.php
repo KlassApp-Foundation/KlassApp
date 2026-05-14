@@ -8,6 +8,7 @@ use App\Models\Academics\Marks;
 use App\Models\Academics\SchoolGradingSystem;
 use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
+use App\Models\Promotion;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
@@ -63,17 +64,6 @@ class GetStudentsMarks extends Controller
              $examsDone = $studentHelper->examsDone($schoolId, $exam);     
             $class_name = Section::find($section)->name;
             $grading_system = SchoolGradingSystem::where("school_id", $schoolId)->get();
-            // dd($grading_system);
-            //  = [
-            //     "0-39"=>"F9",
-            //      "40-44"=>"P8",
-            //      "45-49"=>"P7",
-            //      "50-59"=>"C5",
-            //      "60-64"=>"C4",
-            //      "65-74"=>"C3",
-            //      "75-84"=>"D2",
-            //      "85-100"=>"D1"
-            //      ];
             
             $fees = $studentHelper->fees($admin, $section);
                              
@@ -87,8 +77,12 @@ class GetStudentsMarks extends Controller
         // totals
         $learners = $studentHelper->totalMarks($learners);
         $total = $learners->find($user->id)->total;
-        $avg = $total / $examsDone;
-        $promotion = $studentPromotion->promoteToNextClass($avg, $exam, $schoolId, $user);
+        // $avg = $total / $examsDone;
+        // $promotion = $studentPromotion->promoteToNextClass($avg, $exam, $schoolId, $user);
+        $promotion = Promotion::where("school_id", $schoolId)
+                              ->where("user_id", $user->id)
+                              ->where("current_section_id", $exam->section_id)
+                              ->value("comments");
         // dd($promotion);
         //   get position
         $learners = $learners->sortByDesc("total")->values();
@@ -103,7 +97,7 @@ class GetStudentsMarks extends Controller
             // $byStandard = $fees->where("standard_id", )
             // dd($nextTerm);
     return view("admin.marks.student", compact(
-                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "studentTotals", "uniqueExamTypes", "grade"
+                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "studentTotals", "uniqueExamTypes", "grade", "promotion"
                 ));
     }
     

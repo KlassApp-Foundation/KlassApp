@@ -63,7 +63,7 @@
                     <th class="px-4 py-3 text-left border border-gray-400">Student</th>
                     {{-- <th class="px-4 py-3 text-left border border-gray-400">Subject</th> --}}
                     <th class="px-4 py-3 text-left border border-gray-400">Marks</th>
-                    <th class="px-4 py-3 text-left border border-gray-400">Exam</th>
+                    {{-- <th class="px-4 py-3 text-left border border-gray-400">Exam</th> --}}
                     <th class="px-4 py-3 text-left border border-gray-400">Grade</th>
                     <th class="px-4 py-3 text-center border border-gray-400">Actions</th>
                 </tr>
@@ -78,8 +78,9 @@
                         </td>
 
                         {{-- Student --}}
-                        <td class="p-1 font-medium  border border-gray-400">
-                            {{ filled($mark->student->name) ? $mark->student->name : 'student' . " ". $mark->student->id }}
+                        <td class="p-1 font-medium  border border-gray-400  space-x-2">
+                            <span>{{ $mark->student->userprofile->firstname ?? $mark->student->name }}</span>
+                            <span>{{ $mark->student->userprofile->lastname ?? "" }}</span>
                         </td>
 
                         {{-- Subject --}}
@@ -98,9 +99,9 @@
                         </td>
 
                         {{-- Exam --}}
-                        <td class="px-4 text-xs py-3  border border-gray-400">
+                        {{-- <td class="px-4 text-xs py-3  border border-gray-400">
                             {{ $mark->subject->name . " Exam" ?? 'N/A' }}
-                        </td>
+                        </td> --}}
 
                         {{-- Teacher --}}
                         {{-- <td class="p-1 ">

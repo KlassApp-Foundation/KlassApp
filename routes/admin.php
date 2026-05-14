@@ -307,7 +307,7 @@ Route::get( '/activity', 'ActivityLogController@index' );
 	Route::get("/students/promotions/create", "StudentPromotionRuleController@create")->name("students.promotion.create");
 	Route::get("/students/promotions/edit/{rule}", "StudentPromotionRuleController@edit")->name("students.promotion.edit");
 	Route::post("/students/promotions/store", "StudentPromotionRuleController@store")->name("students.promotion.store");
-	Route::put("/students/promotions/update", "StudentPromotionRuleController@update")->name("students.promotion.update");
+	Route::put("/students/promotions/update/{rule}", "StudentPromotionRuleController@update")->name("students.promotion.update");
 	Route::delete("/students/promotions/remove", "StudentPromotionRuleController@destroy")->name("students.promotion.remove");
 //promotion
 Route::get( '/promotion/list', 'PromotionController@index' );
@@ -789,6 +789,7 @@ Route::delete('/admin/exams/{examId}/archieve', 'ExamController@archieve')->name
 
 Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
 Route::get('/marks/filter', "MarksController@classExamOverview")->name('admin.marks.filter');
+Route::get('/promotion', "MarksController@promoteStudents")->name('admin.students.promote');
 Route::get("/marks/student/{user}/class/{class}/{exam}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
 Route::get("/report/student/{learner}/class/{class}/{exam}", "DownloadStudentReport@download")->name("admin.report.student.class");
 Route::get('/marks/download/', "DownloadMarksSheet@download")->name("admin.marksheet.download");
