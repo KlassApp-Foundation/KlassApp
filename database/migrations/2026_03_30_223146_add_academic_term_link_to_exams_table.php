@@ -13,10 +13,8 @@ return new class extends Migration
     {
         Schema::table('exams', function (Blueprint $table) {
             //
-            $table->foreignId('exam_type_id')
-          ->nullable()
-          ->constrained()
-          ->cascadeOnDelete();
+            $table->unsignedBigInteger('academic_term_id');
+            $table->foreign("academic_term_id")->references("id")->on("academic_terms")->cascadeOnDelete();
         });
     }
 

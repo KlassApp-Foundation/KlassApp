@@ -20,6 +20,7 @@ use App\Traits\LogActivity;
 use App\Models\Teacherlink;
 use App\Models\TempTimetable;
 use App\Helpers\SiteHelper;
+use App\Models\Academics\Classes;
 use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\Timetable;
@@ -35,7 +36,7 @@ use Exception;
 use PDF;
 use Log;
 use DB;
-
+use Illuminate\Support\Facades\DB as FacadesDB;
 
 class StandardsLinkController extends Controller
 {
@@ -47,22 +48,37 @@ class StandardsLinkController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+       public function index()
     {
-        
-        //$standardLinks = StandardLink::with('teacher','teacherlink','standard','section')->where('school_id',Auth::user()->school_id)->get()->sortBy('standard.order');
-        $school_id=Auth::user()->school_id;
+        $school_id = Auth::user()->school_id;
         $academic_year = SiteHelper::getAcademicYear($school_id);
-        $standards = Standard::where('school_id',$school_id)->orderBy('order')->pluck('id')->toArray();
-        if(count($standards) > 0)
-            {
-                $standard = implode(' ,',$standards);
-                $standardLinks = StandardLink::where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->orderByRaw('FIELD(standard_id,'.$standard.')')->orderBy('section_id')->get();
-            }
 
-        $teacher_count = User::where('school_id',Auth::user()->school_id)->where('usergroup_id',5)->count();
+        $standards = Standard::where('school_id', $school_id)
+            ->orderBy('order')
+            ->pluck('id')
+            ->toArray();
 
-        return view('/admin/school/standardlinks/index', [ 'standardLinks' => $standardLinks , 'teacher_count' => $teacher_count ]);
+        if (count($standards) > 0)
+        {
+            $standard = implode(' ,', $standards);
+
+            $standardLinks = StandardLink::where([
+                ['school_id', $school_id],
+                ['academic_year_id', $academic_year->id]
+            ])
+            ->orderByRaw('FIELD(standard_id,' . $standard . ')')
+            ->orderBy('section_id')
+            ->get();
+        }
+
+        $teacher_count = User::where('school_id', $school_id)
+            ->where('usergroup_id', 5)
+            ->count();
+
+        return view('admin.school.standardlinks.index', [
+            'standardLinks' => $standardLinks,
+            'teacher_count' => $teacher_count
+        ]);
     }
 
     /**
@@ -78,9 +94,10 @@ class StandardsLinkController extends Controller
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
 
         $subjectlist = Subject::where([['school_id',Auth::user()->school_id],['academic_year_id',$academic_year->id],['type','!=','exam']])->get()->groupBy(['standard_id','section_id']);
-       // $standardlist = Standard::where('school_id',Auth::user()->school_id)->orderBy('name','ASC')->get();
-        $standardlist = DB::table('standards')->where('school_id',Auth::user()->school_id)->orderByRaw('FIELD(name,"prekg","lkg","ukg","1","2","3","4","5","6","7","8","9","10","11","12")')->get();
-        $sectionlist = Section::where('school_id',Auth::user()->school_id)->orderBy('name', 'ASC')->get();
+    //    $standardlist = Standard::where('school_id',Auth::user()->school_id)->orderBy('name','ASC')->get();
+        // $standardlist = FacadesDB::table('standards')->where('school_id',Auth::user()->school_id)->orderByRaw('FIELD(name,"prekg","lkg","ukg","1","2","3","4","5","6","7","8","9","10","11","12")')->get();
+        $standardlist = FacadesDB::table('standards')->where('school_id',Auth::user()->school_id)->orderBy("created_at", "asc")->get();
+        $sectionlist = Section::where('school_id',Auth::user()->school_id)->orderByDesc("id")->get();
 
         $standardLinks = SiteHelper::getStandardLinkList(Auth::user()->school_id);
 
@@ -137,7 +154,7 @@ class StandardsLinkController extends Controller
             $academic_year = SiteHelper::getAcademicYear($school_id);
            
             $standard = $this->createStandardLink($school_id , $academic_year->id , $request);
-
+            
             $message = trans('messages.add_success_msg',['module' => 'Standard Details']);
 
             $ip= $this->getRequestIP();
@@ -156,7 +173,7 @@ class StandardsLinkController extends Controller
         catch(Exception $e)
         {
             Log::info($e->getMessage());
-            dd($e->getMessage());
+            // dd($e->getMessage());
         }
     }
 
@@ -371,4 +388,7 @@ class StandardsLinkController extends Controller
             //dd($e->getMessage());
         }
     }
+
+    // ============== Ug mode@elicom ========
+    
 }

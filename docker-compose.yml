@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     container_name: sms-app
     restart: unless-stopped
     working_dir: /var/www
@@ -18,6 +19,8 @@ services:
       DB_DATABASE: ${DB_DATABASE}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      USER_ID: 1000
+      GROUP_ID: 1000
       # PHP_FPM_LISTEN: "0.0.0.0:9000"
     volumes:
       - .:/var/www

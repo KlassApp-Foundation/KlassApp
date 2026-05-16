@@ -27,6 +27,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Hash;
+use Illuminate\Support\Facades\Log;
 
 class StudentController extends Controller
 {
@@ -140,6 +141,7 @@ class StudentController extends Controller
       //
       try
       {
+        
         $school_id = Auth::user()->school_id;
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
@@ -157,24 +159,26 @@ class StudentController extends Controller
 
         $user = $this->CreateUser($request , $school_id , $academic_year->id , $path , 6);
         $mes = trans('messages.add_success_msg',['module' => 'Student']);
-
         $ip= $this->getRequestIP();
-        $this->doActivityLog(
+        if(!$user){
+          throw new \Exception("User createion failed");
+          }
+          $this->doActivityLog(
           $user,
           Auth::user(),
           ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
           LOGNAME_ADD_STUDENT,
           $mes
         ); 
-
-        // create class student from here
         
-
+        // create class student from here
         return redirect()->back()->with('successmessage',$mes);
       }
       catch(Exception $e)
       {
-        //dd($e->getMessage());
+        // Log::error($e);
+        // return back()->with("errormessage", $e->getMessage());
+        dd($e->getMessage());
       } 
     }
 

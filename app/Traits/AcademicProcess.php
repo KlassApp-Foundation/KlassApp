@@ -31,47 +31,83 @@ trait AcademicProcess
     {
         try
         {  
-            $nursery            = ['prekg','lkg','ukg'];
-            $primary            = ['1','2','3','4','5'];
-            $secondary          = ['6','7','8','9','10'];
-            $higher_secondary   = ['11','12'];
 
-            if($data->standards == 'nursery')
-            {
-                $list = $nursery;
-            }
-            elseif($data->standards == 'primary')
-            {
-                $list = array_merge($nursery,$primary);
-            }
-            elseif($data->standards == 'secondary')
-            {
-                $list = array_merge($nursery,$primary,$secondary);
-            }
-            else
-            {
-                $list = array_merge($nursery,$primary,$secondary,$higher_secondary);
-            }
-
+            $map = [
+                'nursery' => ['nursery'],
+                 'primary' => ['nursery', 'primary'],
+                 'O-Level' => ['O-Level'],
+                 'A-Level' => ['A-Level'],
+            ];
+            
+            $list = $map[$data->standards] ?? [];
+            $standards = [];
             for($i = 0 ; $i < count($list) ; $i++) 
             {
                 $standard = new Standard;
-
                 $standard->school_id    =   $school_id;
                 $standard->name         =   strtolower($list[$i]);
                 $standard->order        =   $i;
                 $standard->status       =   1;
                 
                 $standard->save();
+                $standards[] = $standard;
             }
-
-            return $standard;
+            
+            return $standards;
         }
         catch(Exception $e)
         {
             dd($e->getMessage());
         } 
     }
+
+//     public function addStandardUg($school_id, $data)
+// {
+//     try
+//     {  
+//         $lists = [
+//             'nursery'    => 'Nursery',
+//             'primary'    => 'Primary',
+//             'a-level'  => 'a-level',
+//             'advanced'   => 'Advanced',     // if you want to support it later
+//             'international' => 'International',
+//         ];
+
+//         $selected = strtolower(trim($data->standards));
+
+//         if (!array_key_exists($selected, $lists)) {
+//             throw new \Exception("Invalid standards level selected: " . $selected);
+//         }
+
+//         $standardName = $lists[$selected];
+
+//         // Check if it already exists for this school to avoid duplicates
+//         $exists = Standard::where('school_id', $school_id)
+//                           ->where('name', strtolower($standardName))
+//                           ->exists();
+
+//         if ($exists) {
+//             throw new \Exception("This standard already exists for the school.");
+//         }
+
+//         $standard = new Standard;
+
+//         $standard->school_id = $school_id;
+//         $standard->name      = strtolower($standardName);   // nursery, primary, a-level
+//         $standard->order     = $this->getNextOrder($school_id);  // we'll add this helper below
+//         $standard->status    = 1;
+
+//         $standard->save();
+
+//         return $standard;
+//     }
+//     catch (Exception $e)
+//     {
+//         Log::error('addStandard error: ' . $e->getMessage());
+//         throw $e;
+//     } 
+// }
+
 
     public function createStandard($school_id , $data)
     {
@@ -92,8 +128,11 @@ trait AcademicProcess
             }
             $standard->order        =   $value;
             $standard->status       =   1;
+
+           
             
             $standard->save();
+            
 
             return $standard;
         }
@@ -110,7 +149,7 @@ trait AcademicProcess
             $section = new Section;
 
             $section->school_id    =   $school_id;
-            $section->name         =   ucfirst($data->section);
+            $section->name         =   ucfirst($data->name);
             $section->status       =   1;
 
             $section->save();
@@ -140,7 +179,11 @@ trait AcademicProcess
 
             $subject->save();
 
-            return $subject;
+            // return $subject;
+            return redirect('/admin/sections')->with(
+    'success',
+    trans('messages.add_success_msg', ['module' => 'Section'])
+);
         }
         catch(Exception $e)
         {

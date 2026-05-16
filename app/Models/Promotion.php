@@ -20,11 +20,8 @@ class Promotion extends Model
      */
     protected $table = 'promotions';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    //  * The attributes that are mass assignable.
+     
     protected $fillable = [
         'school_id' , 'user_id' , 'current_academic_year_id' ,'current_standard_id', 'current_section_id', 'exam_id','next_academic_year_id','next_standard_id', 'next_section_id' , 'comments' , 'status'
     ];

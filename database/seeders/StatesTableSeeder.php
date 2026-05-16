@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
-use DB;
+// use DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class StatesTableSeeder extends Seeder
 {
@@ -22,17 +23,46 @@ class StatesTableSeeder extends Seeder
         ['country' => 'Egypt', 'name' => 'EG', 'status' => '1'],
         ['country' => 'Other', 'name' => 'OTHER', 'status' => '1']
         ];
+       $ugandanRegions = [
+           ['name' => 'Central'],
+           ['name' => 'Eastern'],
+           ['name' => 'Northern'],
+           ['name' => 'Western'],
+        ];
+
       foreach($states as $state){
         $country = DB::table("countries")->where("name", $state['country'])->first();
+
+        if(!$country){
+          continue;
+        }
+
+        if ($state['country'] === 'Uganda') {
+                // Special handling for Uganda → use regions instead of country code
+                foreach ($ugandanRegions as $region) {
+                    DB::table('states')->updateOrInsert(
+                        [
+                            'country_id' => $country->id,
+                            'name'       => $region['name'],  
+                        ],
+                        [
+                            'status'     => $state['status'],
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]
+                    );
+                }
+            }else{
         DB::table("states")->updateOrInsert(
           ['country_id'=> $country->id,
            'name' => $state["name"],
           ],
           [
         'status'    => $state['status'],
-        'created_at'=> date("Y-m-d H:i:s"),
-        'updated_at'=> date("Y-m-d H:i:s"), 
+        'created_at'=> now(),
+        'updated_at'=> now(), 
         ]);
+        }
       }
     }
     }

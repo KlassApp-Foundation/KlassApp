@@ -159,7 +159,7 @@
                                 id="gender1"
                                 value="male"
                             />
-                            <span class="text-sm mx-1">Boy</span>
+                            <span class="text-sm mx-1">Male</span>
                         </div>
                         <div class="w-1/2 flex items-center">
                             <input
@@ -169,7 +169,7 @@
                                 id="gender2"
                                 value="female"
                             />
-                            <span class="text-sm mx-1">Girl</span>
+                            <span class="text-sm mx-1">Female</span>
                         </div>
                     </div>
                     <span
@@ -183,10 +183,10 @@
             <div class="tw-form-group w-full lg:w-2/5">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="blood_group" class="tw-form-label"
-                            >Blood Group<span class="text-red-500"
-                                >*</span
-                            ></label
+                        <label for="blood_group" class="tw-form-label">
+                            Blood Group
+                            <!-- <span class="text-red-500">*</span> -->
+                            </label
                         >
                     </div>
                     <div class="mb-2">
@@ -216,7 +216,7 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-2/5">
+            <div class="tw-form-group w-full lg:w-2/5 hidden">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="aadhar_number" class="tw-form-label"
@@ -242,7 +242,9 @@
             </div>
         </div>
 
+        <!-- <div class="hidden"> -->
         <portal-target name="address"></portal-target>
+        <!-- </div> -->
 
         <div class="tw-form-group">
             <div class="flex flex-col lg:flex-row">
@@ -278,7 +280,7 @@
                 <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="state" class="tw-form-label"
-                            >State<span class="text-red-500">*</span></label
+                            >Region<span class="text-red-500">*</span></label
                         >
                     </div>
                     <div class="mb-2">
@@ -288,7 +290,7 @@
                             v-model="state_id"
                             name="state_id"
                         >
-                            <option value="" disabled>Select State</option>
+                            <option value="" disabled>Select Region</option>
                             <option
                                 v-for="state in statelist[this.country_id]"
                                 v-bind:value="state.id"
@@ -318,7 +320,7 @@
                             name="city_id"
                         >
                             <option value="" disabled>
-                                Select City hereee
+                                Select District
                             </option>
                             <option
                                 v-for="city in citylist[this.state_id]"
@@ -335,7 +337,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
                     <div class="mb-2">
                         <label for="pincode" class="tw-form-label"
                             >Pincode</label
@@ -433,7 +435,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
                     <div class="mb-2">
                         <label for="caste" class="tw-form-label"
                             >Caste<span class="text-red-500">*</span></label
@@ -446,7 +448,9 @@
                             name="caste"
                             id="caste"
                         >
-                            <option value="" disabled>Select Caste</option>
+                            <option value="Others" disabled>
+                                Select Caste
+                            </option>
                             <option
                                 v-for="castes in castelist"
                                 v-bind:value="castes.id"
@@ -462,7 +466,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden hidden">
                     <div class="mb-2">
                         <label for="sub_caste" class="tw-form-label"
                             >Sub Caste<span class="text-red-500"></span
@@ -853,7 +857,7 @@
             />
         </div>
 
-        <div class="flex flex-col lg:flex-row">
+        <div class="flex-col lg:flex-row hidden">
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
@@ -907,11 +911,10 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="registration_number" class="tw-form-label"
-                            >Admission Number<span class="text-red-500"
-                                >*</span
-                            ></label
-                        >
+                        <label for="registration_number" class="tw-form-label">
+                            Admission Number
+                            <!-- <span class="text-red-500">*</span> -->
+                        </label>
                     </div>
                     <div class="mb-2">
                         <input
@@ -1020,10 +1023,9 @@
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="roll_number" class="tw-form-label"
-                            >Roll Number<span class="text-red-500"
-                                >*</span
-                            ></label
-                        >
+                            >Roll Number
+                            <!-- <span class="text-red-500">*</span> -->
+                        </label>
                     </div>
                     <div class="mb-2">
                         <input
@@ -1068,7 +1070,7 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-1/3">
+            <div class="tw-form-group w-full lg:w-1/3 hidden">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label

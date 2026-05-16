@@ -1,7 +1,7 @@
 @extends('layouts.teacher.layout')
 
 @section('content')
-<div class="container-fluid w-full lg:mx-2">
+<div class="container-fluid w-full py-3 lg:mx-2">
 
       {{-- Flash Success Message --}}
    @include('partials.message')
@@ -24,8 +24,9 @@
 
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    Exam Marks for {{ $subject->name }}
+                    Exam Marks for {{ $subject->name }} 
                 </h2>
+                <p>{{ $total }} students</p>
             </div>
 
             <div class="p-6 overflow-x-auto">
@@ -37,23 +38,21 @@
                             <th class="py-3">Student</th>
                             <th class="py-3">Marks</th>
                             <th class="py-3">Out Of</th>
-                            <th class="py-3">Remarks</th>
                         </tr>
                     </thead>
 
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-{{-- {{ dd($tr) }} --}}
-                        @foreach($students as $student)
-                       
+                        @foreach($allStudents as $student)
+                       {{-- {{ dd($student) }} --}}
 
                         <tr>
                             <td class="py-3 text-gray-900 dark:text-white">
-                                {{ $student->user->name  }}
+                                {{ filled($student->name) ? $student->name : "student" ." ". $student->id  }}
                             </td>
 
                             <td>
                                 <input type="number"
-                                       name="marks[{{ $student->user->id }}]"
+                                       name="marks[{{ $student->id }}]"
                                        class="tw-form-control w-24"
                                        min="0"
                                        max="100"
@@ -63,18 +62,9 @@
 
                             <td>
                                 <input type="number"
-                                       name="out_of[{{ $student->user->id }}]"
+                                       name="out_of[{{ $student->id }}]"
                                        value="100"
                                        class="tw-form-control w-24">
-                            </td>
-
-                            <td>
-                                 <select name="remark_id[{{ $student->user->id }}]" id="remark_id" class="tw-form-control w-full">
-                                  <option value="">Select Remark</option>
-                                  @foreach ($remarks as $remark)
-                                      <option value="{{ $remark->id }}">{{ $remark->remark }}</option>
-                                  @endforeach
-                                 </select>
                             </td>
                         </tr>
                         @endforeach

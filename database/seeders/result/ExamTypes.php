@@ -15,7 +15,7 @@ class ExamTypes extends Seeder
     {
         $types = [
             [
-                'name' => 'Beginning of Term',
+                'name' => 'Beginning Of Term',
                 'code' => 'BOT',
             ],
             [
@@ -35,7 +35,7 @@ class ExamTypes extends Seeder
                 'code' => 'WE',
             ],
             [
-                'name' => 'End of Term',
+                'name' => 'End Of Term',
                 'code' => 'EOT',
             ],
             [
@@ -43,7 +43,11 @@ class ExamTypes extends Seeder
                 'code' => 'MOCK',
             ],
             [
-                'name' => 'Final Exam',
+                'name' => 'Pre Mock Exam',
+                'code' => 'PreMOCK',
+            ],
+            [
+                'name' => 'End Of Year',
                 'code' => 'FINAL',
             ],
         ];
@@ -51,7 +55,6 @@ class ExamTypes extends Seeder
         foreach ($types as $type){
             DB::table('exam_types')->insert($type);
         }
-
-        
+        $this->command->info("Exam types seeded successfully!");
     }
 }

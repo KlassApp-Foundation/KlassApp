@@ -20,8 +20,18 @@ class CreateSectionsTable extends Migration
             $table->string('name');
             $table->boolean('status')->default('1');
             $table->timestamps();
+
+            $table->unsignedInteger('next_section_id')
+                  ->nullable();
+
+            $table->foreign('next_section_id')
+                  ->references('id')
+                  ->on('sections')
+                  ->nullOnDelete();
+
             $table->softDeletes();
-        });
+            $table->unique(["school_id", "name"]);
+        }); 
     }
 
     /**

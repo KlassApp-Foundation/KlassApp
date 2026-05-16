@@ -19,6 +19,7 @@ use Spatie\MediaLibrary\Models\Media;
 use Laravel\Sanctum\HasApiTokens;
 use App\Presenters\UserPresenter;
 use App\Helpers\SiteHelper;
+use App\Models\Academics\Exam;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -33,7 +34,6 @@ class User extends Authenticatable implements HasMedia
     use SoftDeletes;
     use Notifiable;
     use HasFactory;
-
     protected $presenter = "App\Presenters\UserprofilePresenter";
 
     /**
@@ -70,15 +70,11 @@ class User extends Authenticatable implements HasMedia
      */
     protected $dates = ['deleted_at' , 'email_verified_at'];
 
-    public function standards()
-{
-    return $this->belongsToMany(Standard::class, 'class_students', 'student_id', 'standard_id');
-}
-
     public function school()
     {
         return $this->belongsTo('App\Models\School','school_id');
     }
+
 
     public function userprofile()
     {
@@ -145,6 +141,9 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany('App\Models\StudentParentLink','parent_id','id');
     }
 
+    public function userClass(){
+        // return $this->belongsTo(Standard)
+    }
     public function usergroup()
     {
         return $this->belongsTo('App\Models\Usergroup','usergroup_id');
@@ -165,12 +164,18 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany('App\Models\Subscription','user_id','id');
     }
 
+    public function section(){
+        return $this->belongsToMany(Section::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | SCOPES
     |--------------------------------------------------------------------------
     */
     // app/Models/User.php
+
+   
 public function scopeStudents($query)
 {
     return $query->where('usergroup_id', 6);
@@ -270,6 +275,8 @@ public function scopeStudents($query)
 //     });
 // }
 
+// In User model
+
     public function scopeByStandard($query , $standard)
     {
         $query->wherehas('studentAcademic',function ($query) use($standard)
@@ -356,6 +363,11 @@ public function scopeStudents($query)
      public function marks()
     {
         return $this->hasMany(Marks::class, "student_id", "id");
+    }
+
+     public function exam()
+    {
+        return $this->hasMany(Exam::class, "teacher_id", "id");
     }
 
     public function teacherprofile()

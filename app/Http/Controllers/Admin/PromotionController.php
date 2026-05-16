@@ -15,13 +15,14 @@ use App\Imports\PromotionImport;
 use App\Models\StudentAcademic;
 use Illuminate\Http\Request;
 use App\Models\AcademicYear;
+use App\Models\Academics\Exam;
 use App\Models\StandardLink;
 use App\Models\Standard;
 use App\Traits\LogActivity;
 use App\Helpers\SiteHelper;
 use League\Csv\Writer;
 use App\Traits\Common;
-use App\Models\Exam;
+// use App\Models\Exam;
 use App\Models\User;
 use SplFileObject;
 use Exception;
@@ -99,7 +100,7 @@ class PromotionController extends Controller
     {
         //
         try
-        {
+        { 
             $standardLink   =   StandardLink::where('id',$request->curr_standardlink_id)->first();
             $standard_name  =   $standardLink->StandardSection;
             $exam           =   Exam::where('id',$request->exam_id)->where('standard_id',$request->curr_standardlink_id)->first();

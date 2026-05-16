@@ -1,8 +1,8 @@
 {{-- SPDX-License-Identifier: MIT --}}
-<div class="relative">
-   <div class="flex flex-row justify-between custom-table">
-      <table class="w-1/2">
-         <caption><h1 class="admin-h1 mb-6">Sections History</h1></caption>
+<div class="">
+   <div class=" custom-table flex items-center justify-center">
+      <table class="w-full max-w-sm lg:max-w-xl">
+         <caption><h1 class="admin-h1 mb-6">Class History</h1></caption>
          <thead class="bg-grey-light">
             <tr class="border-t-2 border-b-2">
                <th class="text-left text-sm px-2 py-2 text-grey-darker">Section Name</th>
@@ -10,20 +10,28 @@
                <th class="text-left text-sm px-2 py-2 text-grey-darker">Actions</th>
             </tr>
          </thead>
-         @if(count($sections) != 0)
+         @if(!is_null($sections) && count($sections) != 0)
             <tbody class="bg-grey-light">
                @foreach($sections as $section)
                   <tr class="border-t-2 border-b-2">    
                      <td class="py-3 px-2">{{ $section->name }}</td>
                      <td class="py-3 px-2">
-                        @if( $section->status == 1)
+                        {{ $section->status === 1 ? "Active" : "Inactive" }}
+                        {{-- @if( $section->status == 1)
                            <a href="#" rel="{{ url('/admin/section/updateStatus/'.$section->id) }}" class="status" value="0"><img src="{{asset('uploads/icons/actions/tick.svg')}}" class="w-5 h-5"></a>
                         @else
                            <a href="#" rel="{{ url('/admin/section/updateStatus/'.$section->id) }}" class="status" value="1"><img src="{{asset('uploads/icons/actions/close.svg')}}" class="w-5 h-5"></a>
-                        @endif
+                        @endif --}}
                      </td>
-                     <td class="py-3 px-2">
-                        <a href="#" rel="{{url('/admin/section/delete/'.$section->id)}}" class="delete"><img src="{{asset('uploads/icons/actions/trash.svg')}}" class="w-5 h-5 ml-1"></a>
+                     <td class="py-3 px-2 flex items-center justify-center gap-2 sm:gap-4">
+                        {{-- <a href="#" rel="{{url('/admin/section/delete/'.$section->id)}}" class="delete"><img src="{{asset('uploads/icons/actions/trash.svg')}}" class="w-5 h-5 ml-1">
+                        </a> --}}
+                        <a href="#" class='bg-green-500 px-2 rounded text-white'>Edit</a>
+                       <form action="{{route("admin.classes.delete", $section)}}" method='POST' >
+                        @csrf
+                        @method("DELETE")
+                        <input type="submit" value="Delete" class='bg-red-300 px-2 rounded cursor-pointer   '>
+                       </form>
                      </td>
                   </tr>
                @endforeach

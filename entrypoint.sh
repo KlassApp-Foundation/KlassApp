@@ -1,17 +1,29 @@
 #!/bin/sh
 
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R 775 storage bootstrap/cache
+set -e #exit on every error
 
-echo "Waiting for database at $DB_HOST:$DB_PORT ..."
+echo "Waiting for database DNS ($DB_HOST)..."
+# Wait for DNS to resolve first
+while ! getent hosts "$DB_HOST" > /dev/null 2>&1; do
+     sleep 1
+done     
 
-while ! nc -z $DB_HOST $DB_PORT; do
-      sleep 2
+echo "Waiting for database at ($DB_HOST:$DB_PORT) ..."
+while ! nc -z "$DB_HOST" "$DB_PORT"; do
+      sleep 1
 done
+echo "Database is ready!"
 
-echo "running migrations"
-
+echo "Running migrations (safe)..."
+php artisan migrate --force --no-interaction || true
 # to put migrations inside CI/CD
-php artisan migrate --force
+# php artisan migrate:fresh --seed
 
-php-fpm -F
+# clear caches on startup (helps after permission fixes)
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
+
+echo "starting PHP-FPM"
+exec php-fpm -F

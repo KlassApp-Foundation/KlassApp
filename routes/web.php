@@ -48,6 +48,8 @@ Route::group(['middleware' => ['siteadmin'], 'namespace' => 'Admin'], function (
   /*Route::view('/admission-form', 'pages.admission.admission');*/
 //test pages hidden
 
+// Route::view('/admission-form', 'pages.admission.admission')
+
 //user list
 Route::get('/demo/schoolList', 'Demo\WelcomeController@schoolList');
 Route::get('/demo/list/{school_id}', 'Demo\WelcomeController@list');

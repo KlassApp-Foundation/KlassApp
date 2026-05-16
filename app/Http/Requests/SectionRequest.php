@@ -36,10 +36,9 @@ class SectionRequest extends FormRequest
             return true;
         });
 
-        Validator::extend('check_section',function($attribute,$value,$parameters,$validator)
-        {
-            return preg_match('/^[[:<:]][A-Za-z][[:>:]]+$/', request('section')) ;
-        });
+       Validator::extend('check_section', function ($attribute, $value, $parameters, $validator) {
+    return preg_match('/^[A-Za-z0-9 ]+$/', $value);
+       });
 
         return [
             //

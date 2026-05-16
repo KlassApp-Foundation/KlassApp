@@ -41,7 +41,7 @@ class CreateAdmissionsTable extends Migration
             $table->longText('address_for_communication');
             $table->enum('siblings',['yes','no'])->nullable();
             $table->string('half_yearly_mark_details');
-            $table->enum('board_of_education',['CBSE','Matric','ICSE','State Board','Anglo Indian','Others'])->nullable(); 
+            $table->enum('board_of_education',['UNEB','Cambridge International','International Baccalaureate (IB)'])->nullable(); 
             $table->enum('choice_of_language',['Tamil','English','Sanskrit','French'])->nullable(); 
             $table->longText('group_selection')->nullable();
             $table->string('board_registration_number')->nullable();

@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('marks', function (Blueprint $table) {
+        Schema::table('exams', function (Blueprint $table) {
             //
-            $table->string("grade")->nullable();
+            $table->unsignedBigInteger("exam_type_id");
+            $table->foreign('exam_type_id')->references('id')->on('exam_types')->cascadeOnDelete();
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('marks', function (Blueprint $table) {
+        Schema::table('exams', function (Blueprint $table) {
             //
         });
     }

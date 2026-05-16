@@ -137,7 +137,7 @@
                                 id="gender1"
                                 value="male"
                             />
-                            <span class="text-sm mx-1">Boy</span>
+                            <span class="text-sm mx-1">Male</span>
                         </div>
                         <div
                             class="w-1/2 flex items-center tw-form-control lg:mr-8 md:mr-8"
@@ -149,7 +149,7 @@
                                 id="gender2"
                                 value="female"
                             />
-                            <span class="text-sm mx-1">Girl</span>
+                            <span class="text-sm mx-1">Female</span>
                         </div>
                     </div>
                     <span
@@ -163,10 +163,10 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="blood_group" class="tw-form-label"
-                            >Blood Group<span class="text-red-500"
-                                >*</span
-                            ></label
+                        <label for="blood_group" class="tw-form-label">
+                            Blood Group
+                            <!-- <span class="text-red-500" >*</span> -->
+                            </label
                         >
                     </div>
                     <div class="mb-2">
@@ -255,7 +255,7 @@
                 <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="state" class="tw-form-label"
-                            >State<span class="text-red-500">*</span></label
+                            >Region<span class="text-red-500">*</span></label
                         >
                     </div>
                     <div class="mb-2">
@@ -265,7 +265,7 @@
                             v-model="state_id"
                             name="state_id"
                         >
-                            <option value="" disabled>Select State</option>
+                            <option value="" disabled>Select Region</option>
                             <option
                                 v-for="state in statelist[this.country_id]"
                                 v-bind:value="state.id"
@@ -284,7 +284,7 @@
                 <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="city" class="tw-form-label"
-                            >City<span class="text-red-500">*</span></label
+                            >District<span class="text-red-500">*</span></label
                         >
                     </div>
                     <div class="mb-2">
@@ -294,7 +294,7 @@
                             v-model="city_id"
                             name="city_id"
                         >
-                            <option value="" disabled>Select City</option>
+                            <option value="" disabled>Select District</option>
                             <option
                                 v-for="city in citylist[this.state_id]"
                                 v-bind:value="city.id"
@@ -408,7 +408,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
                     <div class="mb-2">
                         <label for="caste" class="tw-form-label"
                             >Caste<span class="text-red-500">*</span></label
@@ -421,7 +421,9 @@
                             name="caste"
                             id="caste"
                         >
-                            <option value="" disabled>Select Caste</option>
+                            <option value="Others" disabled>
+                                Select Caste
+                            </option>
                             <option
                                 v-for="castes in castelist"
                                 v-bind:value="castes.id"
@@ -437,7 +439,7 @@
                     >
                 </div>
 
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
+                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
                     <div class="mb-2">
                         <label for="sub_caste" class="tw-form-label"
                             >Sub Caste<span class="text-red-500"></span
@@ -858,10 +860,10 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="registration_number" class="tw-form-label"
-                            >Admission Number<span class="text-red-500"
-                                >*</span
-                            ></label
+                        <label for="registration_number" class="tw-form-label">
+                            Admission Number
+                            <!-- <span class="text-red-500">*</span> -->
+                            </label
                         >
                     </div>
                     <div class="mb-2">
@@ -1018,7 +1020,7 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-1/3">
+            <div class="tw-form-group w-full lg:w-1/3 hidden">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label

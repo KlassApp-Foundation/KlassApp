@@ -5,6 +5,7 @@
  */
 namespace App\Models;
 
+use App\Models\Academics\Marks;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,9 +26,11 @@ class Subject extends Model
      *
      * @var array
      */
+
+    // removed section_id@Uganda
 	protected $fillable = [
 
-	    'school_id' , 'academic_year_id' , 'standard_id' , 'section_id' , 'name' , 'code' , 'type' 
+	    'school_id' , 'academic_year_id' , 'standard_id', "section_id", 'name' , 'code' , 'type' 
 	];
 
     // linked to schools =====FOR UGANDAN SCHOOLS=========
@@ -67,7 +70,7 @@ class Subject extends Model
 
     public function mark()
     {
-        return $this->hasMany('App\Models\Mark','subject_id','id');
+        return $this->hasMany(Marks::class,'subject_id','id');
     }
 
     public function schedule()

@@ -11,17 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('class_students', function (Blueprint $table) {
-            //
+        Schema::create('academic_terms', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger("school_id");
-            $table->unsignedInteger("standard_id");
-            $table->unsignedInteger("student_id");
-
-            $table->foreign("standard_id")->references("id")->on("standards")->cascadeOnDelete();
-            $table->foreign("student_id")->references("id")->on("users")->cascadeOnDelete();
+            $table->unsignedInteger("academic_year_id");
+            $table->string("name");
+            $table->dateTime("starts_on")->nullable();
+            $table->dateTime("ends_on")->nullable();
+            $table->enum("status", ["last", "current", "next"]);
             $table->foreign("school_id")->references("id")->on("schools")->cascadeOnDelete();
+            $table->foreign("academic_year_id")->references("id")->on("academic_years")->cascadeOnDelete();
+
             $table->timestamps();
+            $table->unique(["school_id", "name"]);
         });
     }
 
@@ -30,8 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('class_students', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('academic_terms');
     }
 };

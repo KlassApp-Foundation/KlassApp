@@ -124,7 +124,7 @@
   <div class="flex flex-col lg:flex-row md:flex-row">
     <div class="w-full lg:w-1/3 mr-2 lg:mr-8 md:mr-8">
       <div class="mb-2">
-        <label class="tw-form-label">City</label>
+        <label class="tw-form-label">District</label>
       </div>
       <div class="mb-2">
         <!-- <select class="tw-form-control w-full" id="city_id" v-model="city_id" name="city_id">
@@ -132,7 +132,7 @@
          <option value="" v-for="city in citylist" v-bind:value="city.id">{{city.name}}</option>
         </select>  -->  
         <select class="tw-form-control w-full" v-model="city_id" name="city_id">
-        <option value="">Select City</option>
+        <option value="">Select District</option>
         <option v-for="city in citylist" :value="city.id" :key="city.id">
           {{ city.name }}
         </option>
@@ -143,7 +143,7 @@
 
     <div class="w-full lg:w-1/3 mr-2 lg:mr-8 md:mr-8">
       <div class="mb-2">
-        <label class="tw-form-label">State</label>
+        <label class="tw-form-label">Region</label>
       </div>
       <div class="mb-2">
         <!-- <select class="tw-form-control w-full" id="state_id" v-model="state_id" name="state_id">
@@ -151,7 +151,7 @@
          <option value="" v-for="state in statelist" v-bind:value="state.id">{{state.name}}</option>
         </select> --> 
         <select class="tw-form-control w-full" id="state_id" v-model="state_id" name="state_id">
-        <option value="">Select State</option>
+        <option value="">Select Region</option>
         <option v-for="state in statelist" :value="state.id" :key="state.id">
           {{ state.name }}
         </option>

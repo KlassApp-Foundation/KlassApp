@@ -43,7 +43,7 @@ class MarksTableSeeder extends Seeder
 
             // Get subjects taught in this school (via standard links or subjects table)
             $subjects = Subject::where('school_id', $school->id)->take(8)->get();
-            $remarks = Remarks::all()->get();
+            $remarks = Remarks::all();
             foreach ($students as $student) {
                 // Get student's class room (from StudentAcademic)
                 $academic = StudentAcademic::where('user_id', $student->id)->first();

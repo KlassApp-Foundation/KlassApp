@@ -19,13 +19,8 @@ class UserprofileObserver
         //
         try
         {
-            $name = strtolower($userprofile->firstname).$userprofile->user_id.rand(10,99);
-            $update = [ 'name' => $name ];
-            $user = User::where('id',$userprofile->user_id); 
-            if(is_null($userprofile->user->name))
-            {
-                $user->update($update);
-            }
+            $name = strtolower($userprofile->firstname) . $userprofile->user_id . rand(1,10);
+            User::where('id', $userprofile->user_id)->update(['name' => $name]);
         }
         catch(Exception $e)
         {

@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class ExamType extends Model
 {
     use HasFactory;
-    protected $fillable = ["name"];
+    protected $fillable = ["name", "code"];
 }

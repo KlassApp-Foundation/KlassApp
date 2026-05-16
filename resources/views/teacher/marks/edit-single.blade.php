@@ -11,7 +11,6 @@
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
             Edit Marks
         </h1>
-{{-- {{ dd($marks) }} --}}
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
             {{ $exam->examType->name }} • {{$exam->subject->name ?? '' }} here
         </p>
@@ -23,7 +22,7 @@
         <!-- Card Header -->
         <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ $marks->student->name ?? 'Student' }}
+                Marks for {{ $marks->student->name ?? 'Student' }}
             </h2>
         </div>
 
@@ -53,38 +52,6 @@
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
-
-                <!-- Grade -->
-                {{-- <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Grade (optional)
-                    </label>
-                    <input type="text"
-                           name="grade"
-                           value="{{ old('grade', $mark->grade) }}"
-                           class="tw-form-control w-24">
-                </div> --}}
-
-                <!-- Remark -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Remark / Comment
-                    </label>
-                   <select name="remark_id" class="tw-form-control w-full">
-                       <option value="{{ $marks->remark_id }}">
-                        @foreach ($remarks as $remark)
-                           {{ $remark->id ===  $marks->remark_id ? $remark->remark : " select remark" }}
-                     @endforeach
-                       </option>
-            @foreach ($remarks as $remark)
-                <option value="{{ $remark->id }}"
-                    {{ old('remark_id', $marks->remark_id) == $remark->id ? 'selected' : '' }}>
-                    {{ $remark->remark }}
-                </option>
-            @endforeach
-</select>
-                </div>
-
             </div>
 
             <!-- Footer -->

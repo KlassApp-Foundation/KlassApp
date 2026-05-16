@@ -5,11 +5,11 @@
           <table class="w-full">
              <thead class="bg-grey-light">
                 <tr class="border-t-2 border-b-2">
-                   <th class="text-left text-sm px-2 py-2 text-grey-darker">Standard</th>
-                   <th class="text-left text-sm px-2 py-2 text-grey-darker">Section</th>
+                   <th class="text-left text-sm px-2 py-2 text-grey-darker">Level</th>
+                   <th class="text-left text-sm px-2 py-2 text-grey-darker">Class</th>
                    <th class="text-left text-sm px-2 py-2 text-grey-darker">Class Teacher</th>
                    <th class="text-left text-sm px-2 py-2 text-grey-darker" width="40%">Subjects & Teacher</th>
-                   <th class="text-left text-sm px-2 py-2 text-grey-darker text-center" width="5%">Status</th>
+                   <th class="text-sm px-2 py-2 text-grey-darker text-center" width="5%">Status</th>
                    <th class="text-left text-sm px-2 py-2 text-grey-darker " width="7%">Actions</th>
                 </tr>
              </thead>
@@ -17,7 +17,7 @@
                 <tbody class="bg-grey-light">
                    @foreach($standardLinks as $standardLink)
                       <tr class="border-t-2 border-b-2">    
-                         <td class="py-3 px-2">{{ $standardLink->StandardName }}</td>
+                         <td class="py-3 px-2">{{ $standardLink->standard->name  }}</td>
                          <td class="py-3 px-2">{{ $standardLink->section->name }} 
                             @if( $standardLink->stream!=null && $standardLink->stream!='' )
                                ({{ $standardLink->stream }})
@@ -81,7 +81,7 @@
     @else
         <div style="text-align: center;">
             <!-- <a href="{{ url('/admin/teacher/add') }}" class="font-semibold text-s" style="text-align: center">Add Teachers</a> -->
-            <p class="font-semibold text-s">You Need To Add Teachers Before Adding Class.<a href="{{ url('/admin/teacher/add') }}" style="text-align: center"><u>Click Here To Add Teachers</u></a></p>
+            <p class="font-semibold text-s">You Need To Add Teachers Before Assigning Them To Classes and Subjects.<a href="{{ url('/admin/teacher/add') }}" style="text-align: center"><u>Click Here To Add Teachers</u></a></p>
         </div>
     @endif
 </div>

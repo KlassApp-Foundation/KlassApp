@@ -205,10 +205,9 @@ Route::group([
 
     //Mark
 
-    Route::get('/marks/{student_id}/{exam_id}','MarksController@index');
-    Route::get('/marks/graph/{student_id}/{exam_id}','MarksController@getmarks');
-
-    Route::get('/mark/show/{mark_id}','MarksController@show');
+    // Route::get('/marks/{student_id}/{exam_id}','MarksController@index');
+    // Route::get('/marks/graph/{student_id}/{exam_id}','MarksController@getmarks');
+    // Route::get('/mark/show/{mark_id}','MarksController@show');
 
     //Teacher
 

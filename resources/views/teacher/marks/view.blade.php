@@ -1,13 +1,20 @@
 @extends('layouts.teacher.layout')
 
 @section('content')
-<div class="container-fluid w-full lg:mx-2 py-4">
-    {{-- {{ dd($marks) }} --}}
+<div class="container-fluid w-full lg:mx-2 py-2 text-gray-800">
     {{-- Header --}}
+    @php
+        $examStatus = match ($exam->status) {
+          "undone" => "Unmarked work",
+          "done" => "You haven't submitted marks!",
+          default => "Marks Submitted",
+       }
+    @endphp
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
         <div>
-            <h2 class="text-2xl font-semibold text-gray-800">{{ $exam->examType->code }} Exam Marks</h2>
-            <p class="text-sm text-gray-500">Manage and review student performance</p>
+            <h2 class="text-2xl font-semibold ">{{ $exam->examType->code }} Exam Marks</h2>
+                <p class="text-xs bg-gray-400 text-center rounded-full text-red-500">
+                {{$examStatus}}</p>
         </div>
 
         <a href="#" class="inline-flex items-center px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg shadow hover:bg-green-600">
@@ -16,38 +23,49 @@
     </div>
 
     {{-- Filters --}}
-    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+    <div class="bg-white p-1 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
         <input 
             type="text" 
             placeholder="Search student..." 
-            class="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+            class="w-full md:w-1/3 px-3 py-1 border border-gray-400 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none"
         >
 
-        <div class="flex gap-2">
-            <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                <option>All Subjects</option>
+        <form action="" method="GET" class="flex gap-1">
+            <select class="p-1 border border-gray-300 rounded-lg text-sm">
+                <option>All Classes</option>
             </select>
 
-            <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+            <select class="p-1 border border-gray-300 rounded-lg text-sm">
                 <option>All Exams</option>
             </select>
-        </div>
+        </form>
     </div>
-
+  @php
+       $termVal = match ($exam->academicTerm->name){
+              "First Term"     =>  1,
+              "Second Term"       =>  2,
+              "Third Term"       =>  3,
+               };
+  @endphp
     {{-- Table --}}
-    <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+    <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm p-1">
+        <h3 class='text-center py-2 font-semibold '>
+            {{-- {{ dd($exam) }} --}}
+            <span>{{$exam->examType->name}}</span>
+            <span>{{ $termVal . ", ". $exam->academicYear->name }}</span>
+            <span>{{$exam->subject->name}}</span>
+             
+            </h3>
         <table class="min-w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-200 text-gray-600 uppercase text-xs">
+            <thead class="bg-gray-50 border-b border-gray-200  text-sm">
                 <tr>
-                    <th class="px-4 py-3 text-left">#</th>
-                    <th class="px-4 py-3 text-left">Student</th>
-                    <th class="px-4 py-3 text-left">Subject</th>
-                    <th class="px-4 py-3 text-left">Marks</th>
-                    <th class="px-4 py-3 text-left">Exam</th>
-                    {{-- <th class="px-4 py-3 text-left">Teacher</th> --}}
-                    <th class="px-4 py-3 text-left">Grade</th>
-                    <th class="px-4 py-3 text-left">Comment</th>
-                    <th class="px-4 py-3 text-center">Actions</th>
+                    <th class="px-4 py-3 text-left border border-gray-400">No</th>
+                    <th class="px-4 py-3 text-left border border-gray-400">Student</th>
+                    {{-- <th class="px-4 py-3 text-left border border-gray-400">Subject</th> --}}
+                    <th class="px-4 py-3 text-left border border-gray-400">Marks</th>
+                    {{-- <th class="px-4 py-3 text-left border border-gray-400">Exam</th> --}}
+                    <th class="px-4 py-3 text-left border border-gray-400">Grade</th>
+                    <th class="px-4 py-3 text-center border border-gray-400">Actions</th>
                 </tr>
             </thead>
 
@@ -55,22 +73,23 @@
                 @forelse($marks as $mark)
                     <tr class="hover:bg-gray-50 transition">
                         {{-- ID --}}
-                        <td class="px-4 py-3 text-gray-500">
+                        <td class="p-1  border border-gray-400">
                             {{ $loop->iteration }}
                         </td>
 
                         {{-- Student --}}
-                        <td class="px-4 py-3 font-medium text-gray-800">
-                            {{ $mark->student->name ?? 'N/A' }}
+                        <td class="p-1 font-medium  border border-gray-400  space-x-2">
+                            <span>{{ $mark->student->userprofile->firstname ?? $mark->student->name }}</span>
+                            <span>{{ $mark->student->userprofile->lastname ?? "" }}</span>
                         </td>
 
                         {{-- Subject --}}
-                        <td class="px-4 py-3 text-xs text-gray-600">
+                        {{-- <td class="p-1 text-xs  border border-gray-400">
                             {{ $mark->subject->name ?? 'N/A' }}
-                        </td>
+                        </td> --}}
 
                         {{-- Marks --}}
-                        <td class="px-4 py-3">
+                        <td class="p-1 border border-gray-400">
                             <span class="px-2 py-1 text-sm font-semibold rounded-full
                                 {{ $mark->marks >= 70 ? 'bg-green-100 text-green-700' : 
                                    ($mark->marks >= 50 ? 'bg-yellow-100 text-yellow-700' : 
@@ -80,47 +99,39 @@
                         </td>
 
                         {{-- Exam --}}
-                        <td class="px-4 text-xs py-3 text-gray-600">
+                        {{-- <td class="px-4 text-xs py-3  border border-gray-400">
                             {{ $mark->subject->name . " Exam" ?? 'N/A' }}
-                        </td>
+                        </td> --}}
 
                         {{-- Teacher --}}
-                        {{-- <td class="px-4 py-3 text-gray-600">
+                        {{-- <td class="p-1 ">
                             {{ $mark->teacher->name ?? 'N/A' }}
                         </td> --}}
 
                          {{-- grade --}}
-                        <td class="px-4 py-3 text-gray-600">
+                        <td class="p-1  border border-gray-400">
                             {{ $mark->grade ?? 'N/A' }}
                         </td>
 
-                         {{-- remark --}}
-                        <td class="px-4 py-3 text-gray-600">
-    {{ str($mark->remark->remark ?? 'N/A')->limit(20, '...') }}
-</td>
-
                         {{-- Actions --}}
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex justify-end gap-2">
+                        <td class="p-1 border border-gray-400 space-x-6 text-center">
                                 <a href="{{ route('teacher.student.marks.edit',[ $mark->exam->id, $mark->student_id, $mark->id])}}" 
-                                   class="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100">
+                                   class="px-3 py-1 text-xs font-medium bg-green-500 text-white bg-blue-50 rounded-md hover:bg-green-600">
                                     Edit
                                 </a>
 
                                 <button 
-                                    class="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100">
+                                    class="px-3 py-1 text-xs font-medium text-white bg-red-400 rounded-md hover:bg-red-500">
                                     Delete
                                 </button>
-                            </div>
                         </td>
                     </tr>
 
                 @empty
                     <tr>
                         <td colspan="7" class="text-center py-10">
-                            <p class="text-gray-500 text-sm">No marks found</p>
+                            <p class=" text-sm">No marks found</p>
                             {{-- {{ route('teacher.exam.marks.enter', ["exam" => $exam]) }} --}}
-                            {{-- {{ dd($exam) }} --}}
                             <a href="{{ route('teacher.exam.marks.enter', ["exam" => $exam]) }}" class="mt-2 inline-block text-blue-600 text-sm hover:underline">
                                 + Add your first record
                             </a>
@@ -129,6 +140,12 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+    <div class="flex items-center justify-end py-4 text-sm font-semibold ">
+        {{-- <span>By</span> --}}
+            <span>
+                {{ "Tr. " . $exam->officialTeacher->firstname . " " . $exam->officialTeacher->firstname }}
+            </span>
     </div>
 </div>
 @endsection

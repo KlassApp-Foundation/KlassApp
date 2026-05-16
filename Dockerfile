@@ -1,47 +1,63 @@
 FROM php:8.3-fpm
+
+# Accept build arguments from docker-compose
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
- git \
- curl \
- zip \
- unzip \
- openssl \
- libpng-dev \
- libonig-dev \
- libxml2-dev \
- libzip-dev \
- libicu-dev \
- netcat-openbsd
+    git \
+    curl \
+    zip \
+    unzip \
+    openssl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    libicu-dev \
+    netcat-openbsd
 
- # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl
+# Install PHP extensions
+RUN docker-php-ext-install \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl
 
-# install composer
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# set working directory
+# Working directory
 WORKDIR /var/www
-COPY . .
-# ownership for the whole project
-RUN chown -R www-data:www-data /var/www
-# switch to www-data User before running the composer
-USER www-data
-# install dependencies and cache configs
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader \
-     && php artisan config:cache \
-     && php artisan route:cache \
-     && php artisan view:cache
 
-# switch back to root
+# Create consistent app user
+RUN groupadd -g ${GROUP_ID} appgroup \
+    && useradd -u ${USER_ID} -g appgroup -m appuser
+
+# Copy project (owned by appuser)
+COPY --chown=appuser:appgroup . .
+
+RUN chown -R appuser:appgroup /var/www
+USER appuser
+RUN composer install --no-interaction --prefer-dist
+
+# Switch back to root for PHP-FPM config
 USER root
 
-# fix storage and cache permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+# Align PHP-FPM with app user
+RUN sed -i 's/user = www-data/user = appuser/g' /usr/local/etc/php-fpm.d/www.conf \
+ && sed -i 's/group = www-data/group = appgroup/g' /usr/local/etc/php-fpm.d/www.conf \
+ && sed -i 's|^;*listen = .*|listen = 0.0.0.0:9000|' /usr/local/etc/php-fpm.d/www.conf
+
+# Entry point
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 9000
 
-COPY entrypoint.sh /entrypoint.sh
-
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT [ "/entrypoint.sh" ]
+ENTRYPOINT ["/entrypoint.sh"]

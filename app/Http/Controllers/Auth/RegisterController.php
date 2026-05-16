@@ -78,7 +78,7 @@ class RegisterController extends Controller
 
             $user = $this->createSchoolAdmin($school, $data);
 
-            $this->createUserProfile($user);
+            $this->createUserProfile($user, $data);
 
             $this->createSchoolSubscription($user);
 
@@ -166,7 +166,7 @@ class RegisterController extends Controller
         }
     }
 
-    private function createUserProfile(User $user)
+    private function createUserProfile(User $user, array $data)
     {
         try
         {
@@ -174,6 +174,7 @@ class RegisterController extends Controller
                 'user_id'           => $user->id,
                 'school_id'         => $user->school_id,
                 'usergroup_id'      => $user->usergroup_id,
+                'firstname'         => $data['name'],
                 'created_at'        => Carbon::now(),
                 'updated_at'        => Carbon::now(),
             ]);
@@ -323,7 +324,6 @@ class RegisterController extends Controller
             $userData = [
                 'school_id'     => $school->id,
                 'usergroup_id'  => $schoolAdminGroupId,
-                'name'          => $data['name'],
                 'email'         => $data['email'],
                 'mobile_no'     => $data['mobile_no'],
                 'password'      => Hash::make($data['password']),
@@ -336,7 +336,7 @@ class RegisterController extends Controller
                 $userData['registration_role'] = $data['role'] ?? null;
             }
 
-            if (Schema::hasColumn('users', 'username')) {
+            if (Schema::hasColumn('users', 'name')) {
                 $userData['username'] = $this->generateUsernameFromName($data['name']);
             }
 
@@ -459,7 +459,7 @@ class RegisterController extends Controller
         $username = $baseUsername;
         $counter = 1;
 
-        while (User::where('username', $username)->exists()) {
+        while (User::where('name', $username)->exists()) {
             $username = $baseUsername . '.' . $counter;
             $counter++;
         }
@@ -494,12 +494,13 @@ class RegisterController extends Controller
     {
         try
         {
+            $year = Carbon::now()->year;
             $detail = AcademicYear::create([
                 'school_id'     =>  $school->id,
-                'name'          =>  '2020-2021',
+                'name'          =>  $year,
                 'description'   =>  'Current Academic Year',
-                'start_date'    =>  '2020-06-01',
-                'end_date'      =>  '2021-05-31',
+                'start_date'    =>  Carbon::create($year, 2, 1),
+                'end_date'      =>  Carbon::create($year, 12, 15),
                 'status'        =>  1,
             ]);
 

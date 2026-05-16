@@ -4,11 +4,11 @@
       <table class="w-full">
          <thead class="bg-grey-light">
             <tr class="border-t-2 border-b-2">
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Standard</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Section</th>
+               <th class="text-left text-sm px-2 py-2 text-grey-darker">Level</th>
+               <th class="text-left text-sm px-2 py-2 text-grey-darker">Class</th>
                <th class="text-left text-sm px-2 py-2 text-grey-darker">Class Teacher</th>
                <th class="text-left text-sm px-2 py-2 text-grey-darker">Subjects & Teacher</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker text-center">Status</th>
+               <th class="text-sm px-2 py-2 text-grey-darker text-center">Status</th>
                <th class="text-left text-sm px-2 py-2 text-grey-darker" width="14%">Actions</th>
             </tr>
          </thead>
@@ -16,7 +16,7 @@
             <tbody class="bg-grey-light">
                @foreach($standardLinks as $standardLink)
                   <tr class="border-t-2 border-b-2">    
-                     <td class="py-3 px-2">{{ $standardLink->StandardName }}</td>
+                     <td class="py-3 px-2">{{ $standardLink->standard->name }}</td>
                      <td class="py-3 px-2">{{ $standardLink->section->name }} 
                         @if( ($standardLink->standard_id == '11') || ($standardLink->standard_id == '12') )
                            ({{ $standardLink->stream }})
