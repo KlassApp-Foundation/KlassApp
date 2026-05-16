@@ -309,24 +309,24 @@
 		document.querySelectorAll(selector).forEach(function(el){
 			var isCta = el.classList.contains('ka-cta');
 			var isPortal = el.classList.contains('ka-portal');
-			
-			var add = function(){ 
+
+			var add = function(){
 				el.classList.add('is-hovered');
 				// Apply same hover effect to both Join and Portal: blue gradient, lift, glow
 				el.style.background = 'linear-gradient(120deg, #0f3fb8 0%, #1d4ed8 46%, #0ea5e9 100%)';
 				el.style.transform = 'translateY(-3px) scale(1.02)';
 				el.style.boxShadow = '0 12px 24px rgba(34, 197, 94, 0.34)';
-				
+
 				if (isPortal) {
 					el.style.animationPlayState = 'paused, paused';
 				}
 			};
-			var remove = function(){ 
+			var remove = function(){
 				el.classList.remove('is-hovered');
 				el.style.background = '';
 				el.style.transform = '';
 				el.style.boxShadow = '';
-				
+
 				if (isPortal) {
 					el.style.animationPlayState = 'running, running';
 				}
@@ -541,6 +541,3 @@
 @endpush
 
 @endsection
-
- 
-

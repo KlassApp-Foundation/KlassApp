@@ -38,10 +38,10 @@
                     'status'    => 1,
                 ])->first();
 
-
                 if (! $academicYear) {
                     $this->command->info("Skipping school {$school->name} — no active academic year.");
                     continue;
+
                 }
 
                 $classRooms = StandardLink::where([
@@ -79,24 +79,24 @@
                                   ->whereIn("state_id", State::pluck("id"))
                                   ->inRandomOrder()
                                   ->first();
-                        if ($city) {
-    Userprofile::firstOrCreate(
-        ['user_id' => $student->id],
-        [
-            'school_id'     => $school->id,
-            'usergroup_id'  => 6,
-            'firstname'     => $faker->firstName,
-            'lastname'      => $faker->lastName,
-            'profession'    => 'Student',
-            'address'       => $faker->streetAddress . ', Kampala, Uganda',
-            'country_id'    => $city->country_id,
-            'city_id'       => $city->id,
-            'state_id'      => $city->state_id,
-            'gender'        => $faker->randomElement(['male', 'female']),
-            'date_of_birth' => $faker->dateTimeBetween('-18 years', '-5 years'),
-        ]
-    );
-}
+                        if ($city){
+                            Userprofile::firstOrCreate(
+                            ['user_id' => $student->id],
+                            [
+                                'school_id'     => $school->id,
+                                'usergroup_id'  => 6,
+                                'firstname'     => $faker->firstName,
+                                'lastname'      => $faker->lastName,
+                                'profession'    => 'Student',
+                                'address'       => $faker->streetAddress . ', Kampala, Uganda',
+                                'country_id'    => $city->country_id,
+                                'city_id'       => $city->id,
+                                'state_id'      => $city->state_id,
+                                'gender'        => $faker->randomElement(['male', 'female']),
+                                'date_of_birth' => $faker->dateTimeBetween('-18 years', '-5 years'),
+                            ]
+                        );
+                        }
 
 
                         // Link to class room
