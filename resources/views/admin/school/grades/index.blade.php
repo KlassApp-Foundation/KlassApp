@@ -24,7 +24,7 @@
             {{-- Head --}}
             <thead class="bg-gray-50 uppercase text-xs text-gray-600">
                 <tr>
-                    <th class="p-2 border">Rank</th>
+                    <th class="p-2 border">Points</th>
                     {{-- <th class="p-2 border">Level</th> --}}
                     <th class="p-2 border">Grade</th>
                     <th class="p-2 border text-center">Range</th>
@@ -40,7 +40,7 @@
 
                         {{-- Index --}}
                         <td class="p-2 border">
-                            {{ $rule->rank }}
+                            {{ $rule->points }}
                         </td>
 
                         {{-- Standard --}}

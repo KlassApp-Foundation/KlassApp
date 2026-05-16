@@ -62,12 +62,12 @@
              {{-- Rank --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Rank
+                    {{$rankname}}
                 </label>
                 <input 
                     type="number" 
-                    name="rank" 
-                    value="{{ old('rank', $grade->rank ?? '') }}"
+                    name="points" 
+                    value="{{ old('points', $grade->points ?? '') }}"
                     placeholder="e.g. 1"
                     class="w-full border border-gray-400 rounded p-2"
                 >

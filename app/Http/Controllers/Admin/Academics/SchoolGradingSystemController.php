@@ -29,9 +29,16 @@ private function formatData(){
       //store comments
     public function create(){
         $school_id = Auth::user()->school_id;
+        $standard = Standard::where("school_id", $school_id)->value("name");
+        $rankname = "";
+        if($standard === "nursery" || $standard === "primary"){
+            $rankname = "Rank";
+        }else{
+            $rankname = "Points";
+        }
         
         $standards = Standard::where("school_id", $school_id)->get();
-         return view("admin.school.grades.create", compact("standards"));
+         return view("admin.school.grades.create", compact("standards", "rankname"));
     }
 
      public function store(CreateSchoolGradingSystem $request){

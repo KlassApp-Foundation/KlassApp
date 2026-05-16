@@ -31,8 +31,9 @@ class StudentPromotionRuleController extends Controller
     public function create()
 {
    $schoolId = auth()->user()->school_id;
+   $ruletypes = ["average", "aggregate", "points"];
     $sections = Section::where('school_id', $schoolId)->orderByDesc('id')->get();
-    return view('admin.school.promotion.create', compact('sections'));
+    return view('admin.school.promotion.create', compact('sections', "ruletypes"));
 }
 
     //  * Store a newly created resource in storage.
