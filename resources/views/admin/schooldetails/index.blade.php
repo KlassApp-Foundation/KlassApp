@@ -86,6 +86,7 @@
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
                         <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Country</p>
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
+                            {{-- {{ dd($school->country) }} --}}
                             @if($school->country_id != null)
                                 {{ $school->country->name }}
                             @else

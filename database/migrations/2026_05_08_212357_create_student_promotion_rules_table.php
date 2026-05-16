@@ -16,7 +16,9 @@ return new class extends Migration
             $table->unsignedBigInteger("school_id");
             $table->unsignedInteger("standard_id"); 
             $table->unsignedInteger('section_id');
-            $table->integer("min_average");
+            $table->integer("min_average")->nullable();
+            $table->string("min_aggregate")->nullable();
+            $table->string("min_points")->nullable();
 
             $table->foreign("school_id")->references("id")->on("schools")->cascadeOnDelete();
             $table->foreign('standard_id')->references('id')->on('standards')->cascadeOnDelete();

@@ -62,10 +62,18 @@ class StoreStudentPromotionRulesRequest extends FormRequest
             ],
 
             'min_average' => [
-                'required',
+                'nullable',
                 'integer',
                 'min:0',
                 'max:100',
+            ],
+            'min_aggregate' => [
+                'nullable',
+                'string',
+            ],
+            'min_points' => [
+                'nullable',
+                'string',
             ],
         ];
     }
