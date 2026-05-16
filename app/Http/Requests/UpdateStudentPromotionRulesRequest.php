@@ -64,11 +64,19 @@ class UpdateStudentPromotionRulesRequest extends FormRequest
             ],
 
             'min_average' => [
-                'sometimes',
+                'nullable',
                 'required',
                 'integer',
                 'min:0',
                 'max:100',
+            ],
+            'min_aggregate' => [
+                'nullable',
+                'string',
+            ],
+            'min_points' => [
+                'nullable',
+                'string',
             ],
         ];
     }

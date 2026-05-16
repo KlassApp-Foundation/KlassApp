@@ -3,14 +3,21 @@
 namespace App\Services;
 
 use App\Helpers\SiteHelper;
+use App\Models\Academics\SchoolGradingSystem;
 use App\Models\Section;
 use App\Models\Subject;
 
 class AcademicSetupService
 {
+    protected $gradingSystemService;
+    public function __construct(GradingSystemService $gradingSystemService)
+    {
+        $this->gradingSystemService=$gradingSystemService;
+    }
     public function defaultClassesAndSubjects($standard)
     {
         $school_id = $standard->school_id;
+        $standardId = $standard->id;
         $academicYear = SiteHelper::getAcademicYear($school_id);
 
         $data = [
@@ -97,5 +104,46 @@ class AcademicSetupService
                 ]);
             }
         }
+// grading system for primary
+        $primary_grades = [
+    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"D1", "rank" => 1,  "min_score"=>95, "max_score"=>100, "remark"=>"Excellent"],
+    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"D2", "rank" => 2, "min_score"=>90, "max_score"=>94, "remark"=>"Very Good"],
+    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"C3", "rank" => 3, "min_score"=>75, "max_score"=>89, "remark"=>"Good"],
+    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"C4", "rank" => 4, "min_score"=>65, "max_score"=>74, "remark"=>"Fair"],
+    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"C5", "rank" => 5, "min_score"=>60, "max_score"=>64, "remark"=>"Tried"],
+    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"C6", "rank" => 6, "min_score"=>50, "max_score"=>59,"remark"=>"Improve"],
+    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"P7", "rank" => 7, "min_score"=>45, "max_score"=>49, "remark"=>"Improve"],
+    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"P8", "rank" => 8, "min_score"=>40, "max_score"=>44, "remark"=>"Poor"],
+    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"F9", "rank" => 9, "min_score"=>0,  "max_score"=>39, "remark"=>"Very Poor"],
+];
+// for secondary (O'level)
+$olevel_grades = [
+    [ "school_id"=>$school_id, "grade" => "A", "rank" => 1, "min_score" => 80, "max_score" => 100, "remark" => "Exceptional" ],
+    [ "school_id"=>$school_id, "grade" => "B", "rank" => 2, "min_score" => 70, "max_score" => 79, "remark" => "Outstanding" ],
+    [ "school_id"=>$school_id, "grade" => "C", "rank" => 3, "min_score" => 60, "max_score" => 69, "remark" => "Satisfactory" ],
+    [ "school_id"=>$school_id, "grade" => "D", "rank" => 4, "min_score" => 50, "max_score" => 59, "remark" => "Basic" ],
+    [ "school_id"=>$school_id, "grade" => "E", "rank" => 5, "min_score" => 40, "max_score" => 49, "remark" => "Elementary" ],
+    [ "school_id"=>$school_id, "grade" => "F", "rank" => 6, "min_score" => 0, "max_score" => 39, "remark" => "Fail" ],
+];
+$alevel_grades = [
+    [ "school_id"=>$school_id, "grade" => "A", "points" => 6, "rank" => 1, "min_score" => 80, "max_score" => 100, "remark" => "Excellent" ],
+    [ "school_id"=>$school_id, "grade" => "B", "points" => 5, "rank" => 2, "min_score" => 70, "max_score" => 79, "remark" => "Very Good" ],
+    [ "school_id"=>$school_id, "grade" => "C", "points" => 4, "rank" => 3, "min_score" => 60, "max_score" => 69, "remark" => "Good" ],
+    [ "school_id"=>$school_id, "grade" => "D", "points" => 3, "rank" => 4, "min_score" => 50, "max_score" => 59, "remark" => "Fair" ],
+    [ "school_id"=>$school_id, "grade" => "E", "points" => 2, "rank" => 5, "min_score" => 40, "max_score" => 49, "remark" => "Pass" ],
+    [ "school_id"=>$school_id, "grade" => "O", "points" => 1, "rank" => 6, "min_score" => 35, "max_score" => 39, "remark" => "Subsidiary Pass" ],
+    [ "school_id"=>$school_id, "grade" => "F", "points" => 0, "rank" => 7, "min_score" => 0,  "max_score" => 34, "remark" => "Fail" ],
+];
+
+if($standardName === "primary"){
+foreach ($primary_grades as $grade) {
+        SchoolGradingSystem::create($grade);
+    }
+}elseif ($standardName === "o-level") {
+    foreach ($olevel_grades as $grade) {
+        SchoolGradingSystem::create($grade);
+    }
+}
+        
     }
 }
