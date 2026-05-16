@@ -54,7 +54,7 @@ class UpdateSchoolGradingSystem extends FormRequest
 
             'min_score' => 'required|integer|min:0|max:100',
             'max_score' => 'required|integer|min:0|max:100|gte:min_score',
-            'rank' => 'required|integer|min:1|distinct',
+            'points' => 'required|integer|min:1|distinct',
 
             'remark' => 'nullable|string|max:255',
             

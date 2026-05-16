@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger("school_id");
             $table->unsignedInteger("standard_id"); 
 
-            $table->integer("rank");
+            $table->integer("points");
             $table->string('grade'); // A, B, C...
             $table->integer('min_score'); // 80
             $table->integer('max_score'); // 100

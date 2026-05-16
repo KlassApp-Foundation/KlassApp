@@ -62,10 +62,12 @@ class UpdateStudentPromotionRulesRequest extends FormRequest
                 'integer',
                 'exists:sections,id',
             ],
-
+            'rule_type' => [
+                'required',
+                'in:average,aggregate,points',
+            ],
             'min_average' => [
                 'nullable',
-                'required',
                 'integer',
                 'min:0',
                 'max:100',
@@ -76,7 +78,9 @@ class UpdateStudentPromotionRulesRequest extends FormRequest
             ],
             'min_points' => [
                 'nullable',
-                'string',
+                'integer',
+                'min:0',
+                'max:100',
             ],
         ];
     }
