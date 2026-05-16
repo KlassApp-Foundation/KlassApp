@@ -106,44 +106,48 @@ class AcademicSetupService
         }
 // grading system for primary
  $primary_grades = [
-    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"D1", "points"=>1, "min_score"=>95, "max_score"=>100, "remark"=>"Excellent"],
-    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"D2", "points"=>2, "min_score"=>90, "max_score"=>94, "remark"=>"Very Good"],
-    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"C3", "points"=>3, "min_score"=>75, "max_score"=>89, "remark"=>"Good"],
-    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"C4", "points"=>4, "min_score"=>65, "max_score"=>74, "remark"=>"Fair"],
-    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"C5", "points"=>5, "min_score"=>60, "max_score"=>64, "remark"=>"Needs Effort"],
-    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"C6", "points"=>6, "min_score"=>50, "max_score"=>59, "remark"=>"Weak"],
-    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"P7", "points"=>7, "min_score"=>45, "max_score"=>49, "remark"=>"Poor"],
-    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"P8", "points"=>8, "min_score"=>40, "max_score"=>44, "remark"=>"Very Poor"],
-    ["school_id"=>$school_id, "standard_id"=>$standardId, "grade"=>"F9", "points"=>9, "min_score"=>0,  "max_score"=>39, "remark"=>"Fail"],
+    [ "grade"=>"D1", "points"=>1, "min_score"=>95, "max_score"=>100, "remark"=>"Excellent"],
+    [ "grade"=>"D2", "points"=>2, "min_score"=>90, "max_score"=>94, "remark"=>"Very Good"],
+    [ "grade"=>"C3", "points"=>3, "min_score"=>75, "max_score"=>89, "remark"=>"Good"],
+    [ "grade"=>"C4", "points"=>4, "min_score"=>65, "max_score"=>74, "remark"=>"Fair"],
+    [ "grade"=>"C5", "points"=>5, "min_score"=>60, "max_score"=>64, "remark"=>"Needs Effort"],
+    [ "grade"=>"C6", "points"=>6, "min_score"=>50, "max_score"=>59, "remark"=>"Weak"],
+    [ "grade"=>"P7", "points"=>7, "min_score"=>45, "max_score"=>49, "remark"=>"Poor"],
+    [ "grade"=>"P8", "points"=>8, "min_score"=>40, "max_score"=>44, "remark"=>"Very Poor"],
+    [ "grade"=>"F9", "points"=>9, "min_score"=>0,  "max_score"=>39, "remark"=>"Fail"],
 ];
 
 // for secondary (O'level)
 $olevel_grades = [
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "A", "points" => 6, "min_score" => 80, "max_score" => 100, "remark" => "Exceptional" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "B", "points" => 5, "min_score" => 70, "max_score" => 79, "remark" => "Outstanding" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "C", "points" => 4, "min_score" => 60, "max_score" => 69, "remark" => "Satisfactory" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "D", "points" => 3, "min_score" => 50, "max_score" => 59, "remark" => "Basic" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "E", "points" => 2, "min_score" => 40, "max_score" => 49, "remark" => "Elementary" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "F", "points" => 0, "min_score" => 0,  "max_score" => 39, "remark" => "Fail" ],
+    [  "grade" => "A", "points" => 6, "min_score" => 80, "max_score" => 100, "remark" => "Exceptional" ],
+    [  "grade" => "B", "points" => 5, "min_score" => 70, "max_score" => 79, "remark" => "Outstanding" ],
+    [  "grade" => "C", "points" => 4, "min_score" => 60, "max_score" => 69, "remark" => "Satisfactory" ],
+    [  "grade" => "D", "points" => 3, "min_score" => 50, "max_score" => 59, "remark" => "Basic" ],
+    [  "grade" => "E", "points" => 2, "min_score" => 40, "max_score" => 49, "remark" => "Elementary" ],
+    [  "grade" => "F", "points" => 0, "min_score" => 0,  "max_score" => 39, "remark" => "Fail" ],
 ];
 
 $alevel_grades = [
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "A", "points" => 6, "min_score" => 80, "max_score" => 100, "remark" => "Excellent" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "B", "points" => 5, "min_score" => 70, "max_score" => 79, "remark" => "Very Good" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "C", "points" => 4, "min_score" => 60, "max_score" => 69, "remark" => "Good" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "D", "points" => 3, "min_score" => 50, "max_score" => 59, "remark" => "Fair" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "E", "points" => 2, "min_score" => 40, "max_score" => 49, "remark" => "Pass" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "O", "points" => 1, "min_score" => 35, "max_score" => 39, "remark" => "Subsidiary Pass" ],
-    [ "school_id"=>$school_id, "standard_id"=>$standardId, "grade" => "F", "points" => 0, "min_score" => 0,  "max_score" => 34, "remark" => "Fail" ],
+    [  "grade" => "A", "points" => 6, "min_score" => 80, "max_score" => 100, "remark" => "Excellent" ],
+    [  "grade" => "B", "points" => 5, "min_score" => 70, "max_score" => 79, "remark" => "Very Good" ],
+    [  "grade" => "C", "points" => 4, "min_score" => 60, "max_score" => 69, "remark" => "Good" ],
+    [  "grade" => "D", "points" => 3, "min_score" => 50, "max_score" => 59, "remark" => "Fair" ],
+    [  "grade" => "E", "points" => 2, "min_score" => 40, "max_score" => 49, "remark" => "Pass" ],
+    [  "grade" => "O", "points" => 1, "min_score" => 35, "max_score" => 39, "remark" => "Subsidiary Pass" ],
+    [  "grade" => "F", "points" => 0, "min_score" => 0,  "max_score" => 34, "remark" => "Fail" ],
 ];
 
 if($standardName === "primary"){
 foreach ($primary_grades as $grade) {
-        SchoolGradingSystem::create($grade);
+        SchoolGradingSystem::create(["school_id" => $school_id, "standard_id"=>$standardId, ...$grade]);
     }
 }elseif ($standardName === "o-level") {
     foreach ($olevel_grades as $grade) {
-        SchoolGradingSystem::create($grade);
+        SchoolGradingSystem::create(["school_id" => $school_id, "standard_id"=>$standardId, ...$grade]);
+    }
+}elseif($standardName === "a-level"){
+    foreach ($alevel_grades as $grade) {
+        SchoolGradingSystem::create(["school_id" => $school_id, "standard_id"=>$standardId, ...$grade]);
     }
 }
         

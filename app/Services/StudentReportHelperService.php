@@ -145,7 +145,8 @@ return $total;
                 ->where('standard_id', $exam->standard_id)
                 ->where('grade', $mark->grade)
                 ->first();
-        $agg += $gradeMapping->rank;
+                
+        $agg += $gradeMapping->points;
         $remark[] = $gradeMapping;
        }         
        return ["agg" => $agg, "remark" => $remark];

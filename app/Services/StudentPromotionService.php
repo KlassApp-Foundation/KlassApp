@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Helpers\SiteHelper;
+use App\Models\Academics\SchoolGradingSystem;
 use App\Models\AcademicYear;
 use App\Models\Promotion;
 use App\Models\Section;
@@ -38,17 +39,40 @@ class StudentPromotionService
                     continue;
                 }
             }
-            $avg = $student->marks->sum("marks") / $examsDone;
-            $rules = StudentPromotionRules::where("school_id", $schoolId)
-                 ->where("section_id", $sectionId)
-                 ->where("min_average", "<=", $avg)
-                  ->first();
+            $points = 0;
+            foreach ($student->marks as $mark){
+                $pts = SchoolGradingSystem::where('school_id', $schoolId)
+                ->where('standard_id', $mark->exam->standard_id)
+                ->where('grade', $mark->grade)
+                ->value("points");
+                $points += $pts;
+            }
             
-            // dd($avg);
+            $avg = $student->marks->sum("marks") / $examsDone;
+
+            $rules = StudentPromotionRules::where("school_id", $schoolId)
+                    ->where("section_id", $sectionId)
+                    ->where(function ($query) use ($avg, $points) {
+                        $query->where(function ($q) use ($avg) {
+                            $q->where("rule_type", "average")
+                              ->where("min_average", "<=", $avg);
+                        })
+                        ->orWhere(function ($q) use ($points) {
+                            $q->where("rule_type", "aggregate")
+                              ->where("min_aggregate", ">=", $points);
+                        })
+                        ->orWhere(function ($q) use ($points) {
+                            $q->where("rule_type", "points")
+                              ->where("min_points", "<=", $points);
+                        });
+                    })
+                    ->first();
+            
+            // dd($rules);
 
             if($rules){
 
-            $exam = $student->marks->first()->exam;
+            $exam = $student->marks->first()->exam; //to be removed
            $promotion = Promotion::updateOrCreate(
                         [
                             'school_id' => $schoolId,

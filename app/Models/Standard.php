@@ -6,6 +6,7 @@
 namespace App\Models;
 
 use App\Models\Academics\Classes;
+use App\Models\Academics\SchoolGradingSystem;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laracasts\Presenter\PresentableTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -48,7 +49,9 @@ class Standard extends Model
     {
         return $this->belongsTo('App\Models\Promotion','standard_id','id');
     }
-
+public function schoolGradingSystem(){
+        return $this->belongsToMany(SchoolGradingSystem::class);
+    }
     public function nextPromotion()
     {
         return $this->belongsTo('App\Models\Promotion','standard_id','id');

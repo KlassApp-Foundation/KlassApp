@@ -147,6 +147,7 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     // dd($type);
     if($type?->name === "End Of Year"){
         $promotion = $this->studentPromotion->promoteStudents($students, $schoolId, $request->class, $examsDone);
+        // dd($promotion);
     }
     //    paginate
     $page = request()->get("page", 1);

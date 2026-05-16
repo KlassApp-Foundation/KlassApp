@@ -26,7 +26,7 @@ return new class extends Migration
             $table->foreign('standard_id')->references('id')->on('standards')->cascadeOnDelete();
             $table->timestamps();
 
-            $table->unique(["school_id", "standard_id", "grade", "rank"]);
+            $table->unique(["school_id", "standard_id", "grade", "points"]);
         });
     }
 

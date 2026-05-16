@@ -49,7 +49,7 @@ private function formatData(){
     // retrieve comments
     public function index(){
         $schoolId = Auth::user()->school_id;
-        $gradingRules = SchoolGradingSystem::where("school_id", $schoolId)->orderByDesc("max_score")->get();
+        $gradingRules = SchoolGradingSystem::with("standard")->where("school_id", $schoolId)->orderByDesc("max_score")->get();
         return view("admin.school.grades.index", compact("gradingRules"));
     }
     // update comments

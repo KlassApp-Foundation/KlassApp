@@ -40,6 +40,7 @@ class StudentPromotionRuleController extends Controller
     public function store(StoreStudentPromotionRulesRequest $request)
     {
         $validated = $request->validated();
+        // dd($validated);
          StudentPromotionRules::create($validated);
         return redirect()->route("students.promotion") ->with("successmessage", "Promotion Rule set!");
     }
@@ -65,8 +66,9 @@ class StudentPromotionRuleController extends Controller
     public function edit(StudentPromotionRules $rule)
 {
     $schoolId = Auth::user()->school_id;
+    $ruletypes = ["average", "aggregate", "points"];
     $sections = Section::where('school_id', $schoolId)->orderByDesc('id')->get();
-    return view('admin.school.promotion.create', compact('rule', 'sections'));
+    return view('admin.school.promotion.create', compact('rule', 'sections', 'ruletypes'));
 }
 
     //  * Update the specified resource in storage.
@@ -74,7 +76,9 @@ class StudentPromotionRuleController extends Controller
         UpdateStudentPromotionRulesRequest $request,
         StudentPromotionRules $rule
     ) {
-       $rule->update($request->validated());
+        $validated = $request->validated();
+        //  dd($validated);
+       $rule->update($validated);
         return redirect()->route("students.promotion") ->with("successmessage", "Promotion Rule Updated!");
     }
 

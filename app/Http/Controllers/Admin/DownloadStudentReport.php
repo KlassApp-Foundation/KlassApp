@@ -34,7 +34,7 @@ class DownloadStudentReport extends Controller
             $marksFromSubject = [];
             foreach ($exams as $ex){
                 if(!in_array(strtoupper($ex->examType->code), $controls)){
-                    $controls[] = strtoupper($ex->examType->first()->code);
+                    $controls[] = strtoupper($ex->examType->code);
                     $marksFromSubject[] = $ex->subject;
                     // check for more exam types to add average
                     if($uniqueExamTypes > 1){
