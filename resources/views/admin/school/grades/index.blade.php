@@ -24,7 +24,11 @@
             {{-- Head --}}
             <thead class="bg-gray-50 uppercase text-xs text-gray-600">
                 <tr>
-                    <th class="p-2 border">Points</th>
+                    @php
+                        $tx = $gradingRules->first()->standard->name;
+                        $st = $tx === "primary" ? "Aggregates" : "Points"
+                    @endphp
+                    <th class="p-2 border">{{ucwords($st)}}</th>
                     {{-- <th class="p-2 border">Level</th> --}}
                     <th class="p-2 border">Grade</th>
                     <th class="p-2 border text-center">Range</th>

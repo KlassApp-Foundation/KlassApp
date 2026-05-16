@@ -44,8 +44,10 @@ class GetStudentsMarks extends Controller
             $cals = ["AVG"];
             $marksFromSubject = [];
             foreach ($exams as $ex){
+                
                 if(!in_array(strtoupper($ex->examType->code), $controls)){
-                    $controls[] = strtoupper($ex->examType->first()->code);
+                    // dd($ex->examType->code);
+                    $controls[] = strtoupper($ex->examType->code);
                     $marksFromSubject[] = $ex->subject;
                     // check for more exam types to add average
                     if($uniqueExamTypes > 1){
@@ -57,6 +59,7 @@ class GetStudentsMarks extends Controller
             // dd($controls);
              $next = ["DIVISION", "TEACHER", "REMARK"];
            $controls= array_merge($controls, $next);
+        //    dd($controls);
         //    student's total marks
         $studentTotals = $studentHelper->learnersTotal($exam, $user);
              $marks = $exam->marks->where("student_id", $learner->id);
@@ -81,7 +84,7 @@ class GetStudentsMarks extends Controller
         // $promotion = $studentPromotion->promoteToNextClass($avg, $exam, $schoolId, $user);
         $promotion = Promotion::where("school_id", $schoolId)
                               ->where("user_id", $user->id)
-                              ->where("current_section_id", $exam->section_id)
+                            //   ->where("current_section_id", $exam->section_id)
                               ->value("comments");
         // dd($promotion);
         //   get position

@@ -27,7 +27,8 @@
                 <tr>
                     <th class="p-2 border">#</th>
                     <th class="p-2 border">Section</th>
-                    <th class="p-2 border text-center">Minimum Average</th>
+                    <th class="p-2 border text-center">Minimum Score</th>
+                    <th class="p-2 border text-center">Rule Type</th>
                     <th class="p-2 border text-center">Actions</th>
                 </tr>
             </thead>
@@ -48,9 +49,14 @@
                             {{ $rule->section?->name ?? 'All Sections' }}
                         </td>
 
-                        {{-- Minimum Average --}}
+                        {{-- Minimum Average/aggregate/points --}}
                         <td class="p-2 border text-center">
-                            {{ $rule->min_average }}
+                            {{ $rule->min_average ?? $rule->min_points ?? $rule->min_aggregate }}
+                        </td>
+
+                         {{-- rule type --}}
+                        <td class="p-2 border text-center">
+                            {{ $rule->rule_type ?? "-" }}
                         </td>
 
                         {{-- Actions --}}

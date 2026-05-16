@@ -69,7 +69,7 @@
                     <option value="">-- Select Rule Type --</option>
 
                     @foreach ($ruletypes as $ruletype)
-                        <option value="{{ $ruletype }}"
+                        <option value="{{ old('rule_type', $ruletype ?? '') }}"
                             {{ old('rule_type', $rule->rule_type ?? '') == $ruletype ? 'selected' : '' }}>
                             {{ ucfirst($ruletype) }}
                         </option>
@@ -95,10 +95,10 @@
             {{-- MIN AGGREGATE --}}
             <div id="aggregate-box" class="hidden">
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Minimum Aggregate
+                    Maximum Aggregate
                 </label>
 
-                <input type="text"
+                <input type="number"
                        name="min_aggregate"
                        class="w-full border border-gray-400 rounded px-3 py-2"
                        value="{{ old('min_aggregate', $rule->min_aggregate ?? '') }}">

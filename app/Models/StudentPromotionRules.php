@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class StudentPromotionRules extends Model
 {
     use HasFactory;
-    protected $fillable = ["school_id", "standard_id", "section_id", "min_average", "min_aggregate"];
+    protected $fillable = ["school_id", "standard_id", "section_id", "rule_type", "min_average", "min_aggregate", "min_points"];
 
     public function school(){
         return $this->belongsTo(School::class);
