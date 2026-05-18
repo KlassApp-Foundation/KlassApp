@@ -11,8 +11,8 @@
         </div>
         <div>
             <h2 class="font-bold text-2xl text-gray-700 uppercase">{{ $learner->school->name }}</h2>
-            <p class="text-sm text-gray-500">P.O.Box 58, Kabale, Uganda</p>
-            <p class="text-sm text-gray-500">+256781490899</p>
+            <p class="text-sm text-gray-500">{{$school->address}}</p>
+            <p class="text-sm text-gray-500">{{$school->phone}}</p>
         </div>
 
     <div class="text-right">

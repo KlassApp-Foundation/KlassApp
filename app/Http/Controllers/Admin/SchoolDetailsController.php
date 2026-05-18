@@ -92,7 +92,7 @@ class SchoolDetailsController extends Controller
             $school->country_id = $request->country_id;
             $school->state_id   = $request->state_id;
             $school->city_id    = $request->city_id;
-            $school->pincode    = $request->pincode;
+            // $school->pincode    = $request->pincode ?? null;
 
             $school->save();
 
@@ -113,7 +113,8 @@ class SchoolDetailsController extends Controller
 
             foreach($request->request as $key => $value)
             {
-                $arrays = ['about_us' , 'admission_open' , 'admission_close_message' , 'admission_close_on' , 'affiliation_no' , 'affiliated_by' , 'board' , 'date_of_establishment' , 'landline_no' , 'moto' , 'school_logo' , 'website'];
+                // 'affiliation_no' , 'affiliated_by' , 
+                $arrays = ['about_us' , 'admission_open' , 'admission_close_message' , 'admission_close_on' , 'board' , 'date_of_establishment' , 'moto' , 'school_logo' , 'website'];
                 foreach($arrays as $array)
                 {
                     if($key == $array)
@@ -174,7 +175,7 @@ class SchoolDetailsController extends Controller
         $array['details']['country_id']   = $school->country_id;
         $array['details']['state_id']     = $school->state_id;
         $array['details']['city_id']      = $school->city_id;
-        $array['details']['pincode']      = $school->pincode;      
+        // $array['details']['pincode']      = $school->pincode;      
         $array['details']['countrylist']  = SiteHelper::getCountries();
         $array['details']['statelist']    = SiteHelper::getStates();
         $array['details']['citylist']     = SiteHelper::getCities();
@@ -222,7 +223,7 @@ class SchoolDetailsController extends Controller
             $school->country_id = $request->country_id;
             $school->state_id   = $request->state_id;
             $school->city_id    = $request->city_id;
-            $school->pincode    = $request->pincode;
+            // $school->pincode    = $request->pincode ?? null;
 
             $school->save();
 
@@ -250,7 +251,8 @@ class SchoolDetailsController extends Controller
             
             foreach($request->request as $key => $value)
             {
-                $arrays = ['about_us' , 'admission_open' , 'admission_close_message' , 'admission_close_on' , 'affiliation_no' , 'affiliated_by' , 'board' , 'date_of_establishment' , 'landline_no' , 'moto' , 'website'];
+                // 'affiliation_no' , 'affiliated_by' , 
+                $arrays = ['about_us' , 'admission_open' , 'admission_close_message' , 'admission_close_on' , 'board' , 'date_of_establishment' , 'moto' , 'website'];
                 foreach($arrays as $array)
                 {
                     if($key == 'admission_open')
@@ -299,7 +301,7 @@ class SchoolDetailsController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
+            \Illuminate\Support\Facades\Log::info($e->getMessage());
             //dd($e->getMessage());
         }
     }

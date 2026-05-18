@@ -62,7 +62,7 @@
             </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row">
+        <!-- <div class="flex flex-col lg:flex-row">
             <div class="tw-form-group w-full lg:w-1/2">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
@@ -116,7 +116,7 @@
                     >
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <div class="flex flex-col lg:flex-row">
             <div class="tw-form-group w-full lg:w-1/2">
@@ -211,7 +211,7 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-1/2">
+            <!-- <div class="tw-form-group w-full lg:w-1/2">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="landline_no" class="tw-form-label"
@@ -236,7 +236,7 @@
                         >{{ errors.landline_no[0] }}</span
                     >
                 </div>
-            </div>
+            </div> -->
         </div>
 
         <portal-target name="school_address"></portal-target>
@@ -337,7 +337,7 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-1/2">
+            <!-- <div class="tw-form-group w-full lg:w-1/2">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="pincode" class="tw-form-label"
@@ -360,7 +360,7 @@
                         >{{ errors.pincode[0] }}</span
                     >
                 </div>
-            </div>
+            </div> -->
         </div>
 
         <div class="flex flex-col lg:flex-row">
@@ -433,11 +433,14 @@ export default {
             statelist: [],
             citylist: [],
             boardlist: [
-                { id: "stateboard", name: "State Board" },
-                { id: "matric", name: "Matriculation" },
-                { id: "cbse", name: "CBSE" },
-                { id: "icse", name: "ICSE" },
-                { id: "ib", name: "IB" },
+                {
+                    id: "uneb",
+                    name: "UNEB (Uganda National Examinations Board)",
+                },
+                { id: "cambridge", name: "Cambridge International (CIE)" },
+                { id: "ib", name: "International Baccalaureate (IB)" },
+                { id: "montessori", name: "Montessori" },
+                { id: "other", name: "Other / Custom Curriculum" },
             ],
             errors: [],
             success: null,

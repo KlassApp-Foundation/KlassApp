@@ -96,11 +96,11 @@ class GetStudentsMarks extends Controller
         $myPos = $learners->where("id", $learner->id)->value("position");
         $learner = $learner->where("id", $learner->id)->first();
         $nextTerm = AcademicTerm::where("school_id", $schoolId)->where("starts_on", ">", now())->first();
-        
+         $school = Auth::user()->school;
             // $byStandard = $fees->where("standard_id", )
             // dd($nextTerm);
     return view("admin.marks.student", compact(
-                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "studentTotals", "uniqueExamTypes", "grade", "promotion"
+                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "studentTotals", "uniqueExamTypes", "grade", "promotion", "school"
                 ));
     }
     
