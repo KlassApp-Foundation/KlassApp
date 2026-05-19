@@ -1,0 +1,731 @@
+{
+  "name": "whatsapp-inbound-router",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Evolution API Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 400],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-inbound",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "webhookId": "whatsapp-inbound-router"
+    },
+    {
+      "id": "extract-message",
+      "name": "Extract Message Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [460, 400],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "phone",
+              "type": "string",
+              "value": "={{ $json.data.key.remoteJid ?? $json.key.remoteJid ?? $json.from }}"
+            },
+            {
+              "id": "2",
+              "name": "messageBody",
+              "type": "string",
+              "value": "={{ $json.data.message.conversation ?? $json.data.message.extendedTextMessage.text ?? $json.message?.conversation ?? $json.body ?? '' }}"
+            },
+            {
+              "id": "3",
+              "name": "messageId",
+              "type": "string",
+              "value": "={{ $json.data.key.id ?? $json.key.id ?? '' }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "normalise-phone",
+      "name": "Normalise Phone to E.164",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const raw = $input.first().json.phone || '';\nlet digits = raw.replace(/\\D/g, '');\nif (digits.startsWith('0')) digits = '256' + digits.slice(1);\nif (!digits.startsWith('256')) digits = '256' + digits;\nconst normalised = '+' + digits;\n\nreturn [{ json: { ...$input.first().json, phone: normalised } }];"
+      }
+    },
+    {
+      "id": "generate-hmac",
+      "name": "Generate HMAC Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const crypto = require('crypto');\nconst prev = $input.first().json;\nconst timestamp = Date.now().toString();\nconst body = JSON.stringify({ phone: prev.phone });\nconst payload = timestamp + '.' + body;\nconst secret = process.env.WHATSAPP_HMAC_SECRET;\nconst signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');\n\nreturn [{ json: { ...prev, hmacTimestamp: timestamp, hmacSignature: signature, identifyBody: body } }];"
+      }
+    },
+    {
+      "id": "identify-user",
+      "name": "Identify User (Laravel API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1120, 400],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.LARAVEL_API_URL }}/api/whatsapp/identify-user",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-WhatsApp-Signature", "value": "={{ $json.hmacSignature }}" },
+            { "name": "X-WhatsApp-Timestamp", "value": "={{ $json.hmacTimestamp }}" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.phone }}" }
+          ]
+        },
+        "options": {
+          "allowResponseErrors": true
+        }
+      }
+    },
+    {
+      "id": "check-identified",
+      "name": "Is User Identified?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1340, 400],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.identified }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "send-not-linked",
+      "name": "Send: Number Not Linked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1560, 560],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE_NAME }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.phone.replace('+', '') }}"
+            },
+            {
+              "name": "text",
+              "value": "Hi! Your number isn't linked to a KlassApp account. Ask your school admin to register you."
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "extract-user-info",
+      "name": "Extract User Info",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [1560, 240],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "e1", "name": "phone", "type": "string", "value": "={{ $('Normalise Phone to E.164').first().json.phone }}" },
+            { "id": "e2", "name": "messageBody", "type": "string", "value": "={{ $('Normalise Phone to E.164').first().json.messageBody }}" },
+            { "id": "e3", "name": "messageId", "type": "string", "value": "={{ $('Normalise Phone to E.164').first().json.messageId }}" },
+            { "id": "e4", "name": "user_id", "type": "number", "value": "={{ $json.user_id }}" },
+            { "id": "e5", "name": "user_type", "type": "string", "value": "={{ $json.user_type }}" },
+            { "id": "e6", "name": "user_name", "type": "string", "value": "={{ $json.name }}" },
+            { "id": "e7", "name": "school_id", "type": "number", "value": "={{ $json.school_id }}" },
+            { "id": "e8", "name": "children", "type": "array", "value": "={{ $json.children ?? [] }}" },
+            { "id": "e9", "name": "children_count", "type": "number", "value": "={{ $json.children_count ?? 0 }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "keyword-switch",
+      "name": "Route by Keyword",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [1780, 240],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "outputKey": "grades",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "conditions": [
+                  {
+                    "id": "r1",
+                    "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}",
+                    "rightValue": "1",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "or",
+                "conditions": [
+                  { "id": "r2", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "grades", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r3", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "results", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r4", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "marks", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              }
+            },
+            {
+              "outputKey": "fees",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "conditions": [
+                  { "id": "r5", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "2", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r6", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "fees", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r7", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "fee", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r8", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "balance", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "or"
+              }
+            },
+            {
+              "outputKey": "attendance",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "conditions": [
+                  { "id": "r9", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "3", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r10", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "attend", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r11", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "attendance", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "or"
+              }
+            },
+            {
+              "outputKey": "events",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "conditions": [
+                  { "id": "r12", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "4", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r13", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "events", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r14", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "calendar", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r15", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "schedule", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "or"
+              }
+            },
+            {
+              "outputKey": "menu",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "conditions": [
+                  { "id": "r16", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "0", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r17", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "menu", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r18", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "hi", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r19", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "hello", "operator": { "type": "string", "operation": "equals" } },
+                  { "id": "r20", "leftValue": "={{ $json.messageBody.trim().toLowerCase() }}", "rightValue": "start", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "or"
+              }
+            }
+          ]
+        },
+        "options": { "fallbackOutput": "extra", "renameFallbackOutput": "rag_query" }
+      }
+    },
+    {
+      "id": "send-menu",
+      "name": "Send Menu",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2000, 40],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE_NAME }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $json.phone.replace('+', '') }}" },
+            {
+              "name": "text",
+              "value": "=Hi {{ $json.user_name }} 👋\n\nReply with a number:\n1️⃣ Grades & results\n2️⃣ Fee balance\n3️⃣ Attendance\n4️⃣ School events\n\nOr just type your question 💬"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fetch-grades",
+      "name": "Fetch Grades (Laravel API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2000, 240],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.LARAVEL_API_URL }}/api/whatsapp/student/{{ $json.children[0].student_id }}/grades?term=current",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-WhatsApp-Signature", "value": "={{ $json.hmacSignature ?? '' }}" },
+            { "name": "X-WhatsApp-Timestamp", "value": "={{ $json.hmacTimestamp ?? Date.now().toString() }}" }
+          ]
+        },
+        "options": { "allowResponseErrors": true }
+      }
+    },
+    {
+      "id": "format-grades",
+      "name": "Format Grades Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 240],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $input.first().json;\nconst grades = prev.exams || [];\nconst studentName = prev.student_name || 'Student';\nconst className = prev.class || 'N/A';\n\nif (!grades.length || prev.message) {\n  return [{ json: { ...prev, responseText: prev.message || 'No results available yet for ' + studentName + '.' } }];\n}\n\nlet text = `📊 *${studentName} — ${className}*\\n\\n`;\ngrades.forEach(exam => {\n  text += `*${exam.exam_name}*\\n`;\n  exam.marks.forEach(m => {\n    text += `${m.subject}: ${m.score}% (${m.grade})\\n`;\n  });\n  text += `Overall: ${exam.average}% | Position: ${exam.position}\\n\\n`;\n});\n\nreturn [{ json: { ...prev, responseText: text.trim() } }];"
+      }
+    },
+    {
+      "id": "send-grades",
+      "name": "Send Grades",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2440, 240],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE_NAME }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $('Extract User Info').first().json.phone.replace('+', '') }}" },
+            { "name": "text", "value": "={{ $json.responseText }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fetch-fees",
+      "name": "Fetch Fee Balance (Laravel API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2000, 440],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.LARAVEL_API_URL }}/api/whatsapp/fees/{{ $json.children[0].student_id }}/balance",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-WhatsApp-Signature", "value": "={{ $json.hmacSignature ?? '' }}" },
+            { "name": "X-WhatsApp-Timestamp", "value": "={{ $json.hmacTimestamp ?? Date.now().toString() }}" }
+          ]
+        },
+        "options": { "allowResponseErrors": true }
+      }
+    },
+    {
+      "id": "format-fees",
+      "name": "Format Fees Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 440],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $input.first().json;\nconst studentName = prev.student_name || 'Student';\nconst totalFees = prev.total_fees || '0';\nconst currency = prev.currency || 'UGX';\n\nlet text = `💰 *${studentName}'s Fee Balance*\\nOwed: ${currency} ${totalFees}\\n\\n`;\nif (prev.fee_breakdown && prev.fee_breakdown.length) {\n  prev.fee_breakdown.forEach(f => {\n    text += `• ${f.name}: ${currency} ${f.amount}\\n`;\n  });\n}\ntext += `\\nReply PAY for payment options`;\n\nreturn [{ json: { ...prev, responseText: text } }];"
+      }
+    },
+    {
+      "id": "send-fees",
+      "name": "Send Fee Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2440, 440],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE_NAME }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $('Extract User Info').first().json.phone.replace('+', '') }}" },
+            { "name": "text", "value": "={{ $json.responseText }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fetch-attendance",
+      "name": "Fetch Attendance (Laravel API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2000, 640],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.LARAVEL_API_URL }}/api/whatsapp/student/{{ $json.children[0].student_id }}/attendance?period=term",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-WhatsApp-Signature", "value": "={{ $json.hmacSignature ?? '' }}" },
+            { "name": "X-WhatsApp-Timestamp", "value": "={{ $json.hmacTimestamp ?? Date.now().toString() }}" }
+          ]
+        },
+        "options": { "allowResponseErrors": true }
+      }
+    },
+    {
+      "id": "format-attendance",
+      "name": "Format Attendance Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 640],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $input.first().json;\nconst studentName = prev.student_name || 'Student';\n\nlet text = `📅 *${studentName}'s Attendance*\\nPresent: ${prev.present} days\\nAbsent: ${prev.absent} days\\nLate: ${prev.late} days\\nRate: ${prev.attendance_rate}\\n\\nThis term`;\n\nif (prev.recent_absences && prev.recent_absences.length) {\n  text += `\\n\\nRecent absences:\\n`;\n  prev.recent_absences.forEach(a => {\n    text += `• ${a.date}: ${a.status}\\n`;\n  });\n}\n\nreturn [{ json: { ...prev, responseText: text } }];"
+      }
+    },
+    {
+      "id": "send-attendance",
+      "name": "Send Attendance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2440, 640],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE_NAME }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $('Extract User Info').first().json.phone.replace('+', '') }}" },
+            { "name": "text", "value": "={{ $json.responseText }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fetch-events",
+      "name": "Fetch Events (Laravel API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2000, 840],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.LARAVEL_API_URL }}/api/whatsapp/school/{{ $json.school_id }}/events?upcoming=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-WhatsApp-Signature", "value": "={{ $json.hmacSignature ?? '' }}" },
+            { "name": "X-WhatsApp-Timestamp", "value": "={{ $json.hmacTimestamp ?? Date.now().toString() }}" }
+          ]
+        },
+        "options": { "allowResponseErrors": true }
+      }
+    },
+    {
+      "id": "format-events",
+      "name": "Format Events Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 840],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $input.first().json;\nconst events = (prev.events || []).slice(0, 5);\n\nif (!events.length) {\n  return [{ json: { ...prev, responseText: '📅 No upcoming events at the moment.' } }];\n}\n\nlet text = `📅 *Upcoming Events*\\n\\n`;\nevents.forEach((e, i) => {\n  text += `*${i + 1}. ${e.title}*\\n📆 ${e.start_date}`;\n  if (e.end_date && e.end_date !== e.start_date) text += ` — ${e.end_date}`;\n  text += `\\n🕐 ${e.time}\\n📍 ${e.venue}\\n\\n`;\n});\n\nreturn [{ json: { ...prev, responseText: text.trim() } }];"
+      }
+    },
+    {
+      "id": "send-events",
+      "name": "Send Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2440, 840],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE_NAME }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $('Extract User Info').first().json.phone.replace('+', '') }}" },
+            { "name": "text", "value": "={{ $json.responseText }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "call-flowise",
+      "name": "Flowise RAG Query",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2000, 1040],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.FLOWISE_URL }}/api/v1/prediction/{{ $env.FLOWISE_CHATFLOW_ID }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.FLOWISE_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "question", "value": "={{ $json.messageBody }}" },
+            { "name": "overrideConfig", "type": "jsonValue", "value": "={ \"school_id\": {{ $json.school_id }}, \"user_name\": \"{{ $json.user_name }}\" }" }
+          ]
+        },
+        "options": { "allowResponseErrors": true, "timeout": 5000 }
+      }
+    },
+    {
+      "id": "format-rag",
+      "name": "Format RAG Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 1040],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $input.first().json;\nconst response = prev.text || prev.output || prev.message || '';\n\nif (!response || (prev.statusCode && prev.statusCode >= 400)) {\n  return [{ json: { ...prev, responseText: \"I couldn't find that information. Reply MENU to see what I can help with.\" } }];\n}\n\nreturn [{ json: { ...prev, responseText: response } }];"
+      }
+    },
+    {
+      "id": "send-rag",
+      "name": "Send RAG Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2440, 1040],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE_NAME }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $('Extract User Info').first().json.phone.replace('+', '') }}" },
+            { "name": "text", "value": "={{ $json.responseText }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "sticky-inbound",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [240, 320],
+      "parameters": {
+        "color": 3,
+        "width": 1300,
+        "height": 160,
+        "content": "## 1. Inbound Processing\nEvolution API webhook → extract message → normalise phone → generate HMAC → identify user"
+      }
+    },
+    {
+      "id": "sticky-identified",
+      "name": "Sticky Note 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1560, 480],
+      "parameters": {
+        "color": 5,
+        "width": 400,
+        "height": 120,
+        "content": "## 2. Unknown User\nPhone not linked → send registration prompt → stop"
+      }
+    },
+    {
+      "id": "sticky-routing",
+      "name": "Sticky Note 3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1780, 0],
+      "parameters": {
+        "color": 4,
+        "width": 900,
+        "height": 1200,
+        "content": "## 3. Keyword Routing\nSwitch node routes to: Menu / Grades / Fees / Attendance / Events / RAG (natural language)"
+      }
+    }
+  ],
+  "connections": {
+    "Evolution API Webhook": {
+      "main": [
+        [{ "node": "Extract Message Data", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract Message Data": {
+      "main": [
+        [{ "node": "Normalise Phone to E.164", "type": "main", "index": 0 }]
+      ]
+    },
+    "Normalise Phone to E.164": {
+      "main": [
+        [{ "node": "Generate HMAC Signature", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generate HMAC Signature": {
+      "main": [
+        [{ "node": "Identify User (Laravel API)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Identify User (Laravel API)": {
+      "main": [
+        [{ "node": "Is User Identified?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is User Identified?": {
+      "main": [
+        [{ "node": "Extract User Info", "type": "main", "index": 0 }],
+        [{ "node": "Send: Number Not Linked", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract User Info": {
+      "main": [
+        [{ "node": "Route by Keyword", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route by Keyword": {
+      "main": [
+        [{ "node": "Send Menu", "type": "main", "index": 0 }],
+        [{ "node": "Fetch Grades (Laravel API)", "type": "main", "index": 0 }],
+        [{ "node": "Fetch Fee Balance (Laravel API)", "type": "main", "index": 0 }],
+        [{ "node": "Fetch Attendance (Laravel API)", "type": "main", "index": 0 }],
+        [{ "node": "Fetch Events (Laravel API)", "type": "main", "index": 0 }],
+        [{ "node": "Flowise RAG Query", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Grades (Laravel API)": {
+      "main": [
+        [{ "node": "Format Grades Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format Grades Response": {
+      "main": [
+        [{ "node": "Send Grades", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Fee Balance (Laravel API)": {
+      "main": [
+        [{ "node": "Format Fees Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format Fees Response": {
+      "main": [
+        [{ "node": "Send Fee Balance", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Attendance (Laravel API)": {
+      "main": [
+        [{ "node": "Format Attendance Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format Attendance Response": {
+      "main": [
+        [{ "node": "Send Attendance", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Events (Laravel API)": {
+      "main": [
+        [{ "node": "Format Events Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format Events Response": {
+      "main": [
+        [{ "node": "Send Events", "type": "main", "index": 0 }]
+      ]
+    },
+    "Flowise RAG Query": {
+      "main": [
+        [{ "node": "Format RAG Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format RAG Response": {
+      "main": [
+        [{ "node": "Send RAG Response", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "pinData": {},
+  "tags": []
+}
