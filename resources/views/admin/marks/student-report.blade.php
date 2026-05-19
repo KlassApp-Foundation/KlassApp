@@ -119,8 +119,8 @@
         </td>
         <td style="width:70%; text-align:center; border: 0;">
             <h2 class="school-name">{{ $learner->school->name }}</h2>
-            <p>P.O.Box 58, Kabale, Uganda</p>
-            <p>+256781490899</p>
+            <p>{{$school->address ?? "School Address"}}</p>
+            <p>{{$school->phone ?? "School Phone"}}</p>
         </td>
         <td class="photo" style="width:15%; text-align:center; border: 0;">
             {{ $learner->userprofile->firstname }}

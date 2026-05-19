@@ -77,11 +77,12 @@ class DownloadStudentReport extends Controller
       // position
         $learners = $studentHelper->position($learners);
         $nextTerm = AcademicTerm::where("school_id", $schoolId)->where("starts_on", ">", now())->first();
-
+        $school = Auth::user()->school;
+        
         $myPos = $learners->where("id", $learner->id)->value("position");
         $learner = $learner->where("id", $learner->id)->first();
         $pdf = Pdf::loadView("admin.marks.student-report", compact(
-            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade", "promotion"
+            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade", "promotion", "school"
             ));     
         $pdf->setPaper("a4", "portrait");    
         $pdf->setOptions([

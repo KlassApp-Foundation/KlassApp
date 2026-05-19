@@ -72,6 +72,7 @@ public function sections(){
        $headers = [
         "No", "Term", "Type", "Status", "Level", "Class", "Subject", "Teacher", "Actions"
         ];     
+       
         return view('admin.exams.index', compact(
             "exams", 'standards', 'subjects', 'teachers', "headers"
         ));

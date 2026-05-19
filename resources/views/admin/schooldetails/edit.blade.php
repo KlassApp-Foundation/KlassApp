@@ -28,7 +28,7 @@
                     <label for="address" class="tw-form-label">Address<span class="text-red-500">*</span></label>
                   </div>
                   <div class="w-full lg:w-3/4 my-2 relative">
-                    <input type="text" name="address" class="tw-form-control w-full" id="address" value="{{ $school->address }}" required>
+                    <input type="text" name="address" class="tw-form-control w-full" id="address" value="{{ $school->address }}" required placeholder='P.O.Box 58, Kabale'>
                     <span class="absolute m-2 top-0 right-0">
                       <a href="#" onclick="codeAddress(); return false;" dusk="getCords" id="getCords">
                         <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="30.239px" height="30.239px" viewBox="0 0 30.239 30.239" xml:space="preserve" class="w-4 h-4 fill-current text-gray-600"><g><path d="M20.194,3.46c-4.613-4.613-12.121-4.613-16.734,0c-4.612,4.614-4.612,12.121,0,16.735

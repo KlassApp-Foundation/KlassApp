@@ -94,7 +94,7 @@
                             @endif
                         </p>
                     </li>
-                    <li class="flex pb-2 flex-col lg:flex-row py-3">
+                    {{-- <li class="flex pb-2 flex-col lg:flex-row py-3">
                         <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Pincode</p>
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
                             @if($school->pincode != null)
@@ -103,7 +103,7 @@
                                 NULL
                             @endif
                         </p>
-                    </li>
+                    </li> --}}
                 </ul>
             </div>
         </div>
