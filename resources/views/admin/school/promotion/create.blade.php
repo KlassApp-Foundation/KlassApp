@@ -43,7 +43,7 @@
                         class="w-full border border-gray-400 rounded px-3 py-2"
                         required>
 
-                    <option value="">-- Select Section --</option>
+                    <option value="">-- Select Class --</option>
 
                     @foreach ($sections as $section)
                         <option value="{{ $section->id }}"
