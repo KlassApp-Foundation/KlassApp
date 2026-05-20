@@ -411,7 +411,7 @@
 
           <div class="klass-field">
             <label class="klass-label" for="school_name">School Name</label>
-            <input id="school_name" type="text" class="klass-input" name="school_name" value="{{ old('school_name') }}" placeholder="e.g. Lincoln Academy" required>
+            <input id="school_name" type="text" class="klass-input" name="school_name" value="{{ old('school_name') }}" placeholder="name of the school" required>
             @if ($errors->has('school_name'))
               <span class="klass-error" role="alert">{{ $errors->first('school_name') }}</span>
             @endif
@@ -425,7 +425,7 @@
             @endif
           </div>
 
-          <div class="klass-field">
+          {{-- <div class="klass-field">
             <label class="klass-label" for="role">Your Role</label>
             <select id="role" name="role" class="klass-select">
               <option value="" @if(old('role')=='') selected @endif>Select your role</option>
@@ -435,7 +435,7 @@
               <option value="IT or Tech Staff" @if(old('role')=='IT or Tech Staff') selected @endif>IT or Tech Staff</option>
               <option value="Other" @if(old('role')=='Other') selected @endif>Other</option>
             </select>
-          </div>
+          </div> --}}
 
           <div class="klass-field">
             <label class="klass-label" for="country">Country</label>
