@@ -92,31 +92,11 @@
     </li>
     <!-- end -->
 
-    {{-- ============== start added standards link for now @elicomUG ================ --}}
-    <li class="py-3 px-3 {{Request::segment ('2') == 'standards' ? 'active':''}} && {{Request::segment ('2') == 'standard' ? 'active':''}}">
-        <a href="{{url('/admin/standards')}}" class="flex items-center whitespace-no-wrap">
-            <img src="{{asset('uploads/icons/sidebar/standard.svg')}}" class="w-5 h-5">
-            <span class="mx-3 whitespace-no-wrap">Standards</span>
-        </a>
-    </li>
     {{-- end --}}
 
-    {{-- =========== subjects ============= --}}
-    <li class="py-3 px-3 {{Request::segment ('2') == 'subjects' ? 'active':''}} && {{Request::segment ('2') == 'subject' ? 'active':''}}">
-        <a href="{{url('/admin/classes')}}" class="flex items-center">
-            <img src="{{asset('uploads/icons/sidebar/subject.svg')}}" class="w-5 h-5">
-            <span class="mx-3 whitespace-no-wrap">Classes</span>
-        </a>
-    </li> 
     {{-- ====== end ========= --}}
 
-     {{-- =========== subjects ============= --}}
-    <li class="py-3 px-3 {{Request::segment ('2') == 'subjects' ? 'active':''}} && {{Request::segment ('2') == 'subject' ? 'active':''}}">
-        <a href="{{url('/admin/subjects')}}" class="flex items-center">
-            <img src="{{asset('uploads/icons/sidebar/subject.svg')}}" class="w-5 h-5">
-            <span class="mx-3 whitespace-no-wrap">Subjects</span>
-        </a>
-    </li> 
+
     {{-- ====== end ========= --}}
 
     <!--start-->
@@ -128,7 +108,13 @@
         </a>
     </li>
     <!--end-->
-
+  {{-- =========== subjects ============= --}}
+    <li class="py-3 px-3 {{Request::segment ('2') == 'subjects' ? 'active':''}} && {{Request::segment ('2') == 'subject' ? 'active':''}}">
+        <a href="{{url('/admin/subjects')}}" class="flex items-center">
+           @include("layouts.admin.one-logo")
+            <span class="mx-3 whitespace-no-wrap">Subjects</span>
+        </a>
+    </li> 
 
      <!--start-->
     <li class="py-3 px-3  {{(Request::segment ('2') == 'academic-terms' || Request::segment ('2') == 'academic-term') ? 'active':''}}">
@@ -139,6 +125,8 @@
         </a>
     </li>
     <!--end-->
+
+       
 
      <!--start-->
     <li class="py-3 px-3  {{(Request::segment ('2') == 'fees-categories' || Request::segment ('2') == 'fees-category') ? 'active':''}}">
@@ -332,8 +320,7 @@
     @endphp
     <li class="py-3 px-3  {{$class}}">
         <a href="{{ url('/admin/exams') }}" class="flex items-center">
-        <!--  <img src="{{asset('uploads/icons/sidebar/homework.svg')}}" class="w-5 h-5"> -->
-            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" id="Capa_1" enable-background="new 0 0 512 512" height="512px" viewBox="0 0 512 512" width="512px"><g><g><path d="m74.791 114.523c26.424.368 67.758 5.62 114.616 28.55 7.392 3.619 16.401.608 20.066-6.88 3.641-7.441.561-16.425-6.881-20.067-51.852-25.374-97.892-31.189-127.384-31.6-.071-.001-.143-.001-.213-.001-8.187 0-14.88 6.579-14.994 14.791-.115 8.283 6.507 15.091 14.79 15.207z" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m202.593 176.126c-51.852-25.374-97.892-31.189-127.384-31.6-.071-.001-.143-.001-.213-.001-8.187 0-14.88 6.579-14.994 14.791-.116 8.284 6.506 15.092 14.789 15.208 26.424.368 67.758 5.62 114.616 28.55 7.392 3.619 16.401.608 20.066-6.88 3.641-7.443.561-16.427-6.88-20.068z" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m202.593 236.126c-51.852-25.374-97.892-31.189-127.384-31.6-.071-.001-.143-.001-.213-.001-8.187 0-14.88 6.579-14.994 14.791-.116 8.284 6.506 15.092 14.789 15.208 26.424.368 67.758 5.62 114.616 28.55 7.392 3.619 16.401.608 20.066-6.88 3.641-7.443.561-16.427-6.88-20.068z" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m309.407 116.126c-7.441 3.641-10.521 12.625-6.881 20.067 2.604 5.32 7.937 8.41 13.484 8.41 2.213 0 4.461-.492 6.582-1.53 37.64-18.419 75.865-28.024 113.616-28.55 8.283-.115 14.905-6.924 14.789-15.208-.115-8.283-6.876-14.901-15.207-14.79-42.213.589-84.735 11.221-126.383 31.601z" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m500.638 7.584c-18.59-4.713-37.148-7.584-60.591-7.584-.016 0-.035 0-.05 0-43.627.009-110.281 11.25-183.997 63.569-73.272-52-139.55-63.382-182.937-63.566-24.136-.104-43.055 2.852-61.7 7.581-6.678 1.67-11.363 7.669-11.363 14.552v294.5c0 4.619 2.128 8.98 5.769 11.823 6.635 5.182 13.606 2.463 13.981 2.448 41.952-10.63 127.258-17.266 227.25 57.729 2.667 2 5.833 3 9 3s6.333-1 9-3c31.188-23.391 63.401-40.556 96-51.235v159.599c0 8.284 6.716 15 15 15h60c8.284 0 15-6.716 15-15v-172.236c21.132 1.097 36.088 4.848 41.675 6.252.277.008 7.061 2.515 13.557-2.557 3.641-2.843 5.769-7.204 5.769-11.823v-294.5c-.001-6.883-4.685-12.882-11.363-14.552zm-470.638 290.414v-263.956c9.661-1.955 24.286-4.124 42.937-4.04 39.466.168 100.214 10.809 168.063 59.726v258.166c-45.801-29.614-93.332-47.095-141.641-52.035-29.797-3.047-53.622-.62-69.359 2.139zm385.485-56.998h-18.969l9.484-29.8zm5.515 241h-30v-211h30zm61-183.931c-8.266-1.429-18.763-2.783-31-3.342v-38.667c.009-1.64-.255-3.321-.813-4.942l-29.894-93.926c-2.22-6.938-9.127-11.275-16.273-10.32-31.752 4.227-63.585 14.069-94.613 29.253-7.441 3.641-10.521 12.625-6.881 20.066 2.604 5.32 7.937 8.41 13.484 8.41 2.213 0 4.461-.492 6.582-1.53 20.297-9.932 40.912-17.319 61.544-22.097l-22.324 70.143c-.521 1.513-.806 3.135-.813 4.823v50.053c-30.537 8.934-60.681 22.965-90 41.91v-258.175c68.249-49.206 129.329-59.72 169.004-59.728h.043c18.182 0 32.464 2.124 41.954 4.043z" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/></g></g> </svg>
+         @include("layouts.admin.paper")
             <span class="mx-3 whitespace-no-wrap">Exams</span>
         </a>
     </li>
@@ -538,13 +525,13 @@
             <svg class="w-5 h-5 fill-current text-white" id="Capa_1" enable-background="new 0 0 512 512" height="512" viewBox="0 0 512 512" width="512" xmlns="http://www.w3.org/2000/svg"><g><path d="m467 227h-16v-152c0-3.978-1.58-7.793-4.394-10.606l-60-60c-2.812-2.813-6.627-4.394-10.606-4.394-13.307 0-291.326 0-300 0-8.284 0-15 6.716-15 15v152h-16c-8.284 0-15 6.716-15 15v285c0 24.813 20.187 45 45 45h362c24.813 0 45-20.187 45-45v-225c0-8.284-6.716-15-15-15zm-151 0v-152c0-3.978-1.58-7.793-4.394-10.606l-34.393-34.394h68.787v61c0 8.284 6.716 15 15 15h60v121zm-75-190.787 39.787 39.787h-39.787zm174.787 39.787h-39.787v-39.787zm-324.787-46h120v61c0 8.284 6.716 15 15 15h60v121h-35.729l-25.854-51.708c-2.541-5.082-7.735-8.292-13.417-8.292h-120zm361 437c0 8.271-6.729 15-15 15h-362c-8.271 0-15-6.729-15-15v-270h141.729l25.854 51.708c2.541 5.082 7.735 8.292 13.417 8.292h211z"/><path d="m301 391h105c8.284 0 15-6.716 15-15s-6.716-15-15-15h-105c-8.284 0-15 6.716-15 15s6.716 15 15 15z"/><path d="m301 451h105c8.284 0 15-6.716 15-15s-6.716-15-15-15h-105c-8.284 0-15 6.716-15 15s6.716 15 15 15z"/></g></svg>
             <span class="mx-3 whitespace-no-wrap flex items-center justify-between w-10/12">Records <img src="{{url('images/right-arrow.svg')}}" class="w-2 h-2"> </span>
         </a>
-        <ul class="list-reset sites-sidebar">
-            <!-- <li class="py-3 px-3 hover:font-semibold">
+        <ul class="hidden list-reset sites-sidebar">
+             {{-- <li class="py-3 px-3 hover:font-semibold">
                 <a href="{{url('/admin/fees')}}" class="flex  items-center">
                     <svg class="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56"><path fill-rule="evenodd" d="M13,22 L13,32 C16.5185185,31.6836983 18,29.7128954 18,27.1094891 C18,24.6034063 16.8477366,23.1192214 13,22 Z M10,17 L10,8 C6.72727273,8.41538462 5,10.3307692 5,12.4307692 C5,14.5307692 6.36363636,16.0769231 10,17 Z M12.8398058,17.7367206 L13.9116505,18.0138568 C19.784466,19.4226328 23,21.9168591 23,26.8360277 C23,32.4942263 18.5339806,35.704388 12.8398058,36.1200924 L12.8398058,40 L10.3165049,40 L10.3165049,36.1200924 C4.64466019,35.6812933 0.15631068,32.3787529 0,26.8360277 L4.6223301,26.8360277 C5.02427184,29.5381062 6.72135922,31.5242494 10.3165049,31.9168591 L10.3165049,21.8475751 L9.40097087,21.6166282 C3.72912621,20.2540416 0.669902913,17.6212471 0.669902913,12.9330254 C0.669902913,7.75981524 4.68932039,4.34180139 10.3165049,3.90300231 L10.3165049,0 L12.8398058,0 L12.8398058,3.90300231 C18.4223301,4.36489607 22.4640777,7.82909931 22.6427184,13.0715935 L17.9980583,13.0715935 C17.707767,10.1616628 15.6980583,8.47575058 12.8398058,8.10623557 L12.8398058,17.7367206 Z" transform="translate(16 8)"/></svg>
                     <span class="mx-3 whitespace-no-wrap">Fees Records</span>
                 </a>
-            </li> -->
+            </li>  --}}
 
             <li class="py-3 px-3 hover:font-semibold {{Request::segment ('2') == 'disciplines' ? 'active':''}} || {{Request::segment ('2') == 'discipline' ? 'active':''}}">
                 <a href="{{ url('/admin/disciplines') }}" class="flex  items-center">
@@ -834,9 +821,9 @@
     <!--activity log-->
 
     <!--add on new-->
-    <li class="py-3 px-3 {{Request::segment ('2') == 'addon' ? 'active':''}}">
+    <li class="py-3 px-3 hidden {{Request::segment ('2') == 'addon' ? 'active':''}}">
         <a href="{{ url('/admin/addon') }}" class="flex  items-center">
-            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" height="512px" viewBox="-1 0 512 512" width="512px"><g><path d="m360 242.839844v-207.839844c0-19.300781-15.699219-35-35-35h-290c-19.300781 0-35 15.699219-35 35v381c0 19.300781 15.699219 35 35 35h227.148438c24.152343 36.710938 65.714843 61 112.851562 61 74.4375 0 135-60.5625 135-135 0-79.980469-69.660156-143.085938-150-134.160156zm-325 178.160156c-2.757812 0-5-2.242188-5-5v-381c0-2.757812 2.242188-5 5-5h290c2.757812 0 5 2.242188 5 5v214.722656c-14.539062 5.15625-27.941406 12.734375-39.71875 22.253906-3.734375-1.410156 6.6875-.976562-155.28125-.976562-8.285156 0-15 6.714844-15 15s6.714844 15 15 15h128.484375c-6.320313 9.242188-11.523437 19.308594-15.410156 30h-113.074219c-8.285156 0-15 6.714844-15 15s6.714844 15 15 15h105.953125c-2.425781 20.433594-.191406 40.886719 6.414063 60zm340 61c-57.898438 0-105-47.101562-105-105s47.101562-105 105-105 105 47.101562 105 105-47.101562 105-105 105zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m135 121h150c8.285156 0 15-6.714844 15-15s-6.714844-15-15-15h-150c-8.285156 0-15 6.714844-15 15s6.714844 15 15 15zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m135 181h150c8.285156 0 15-6.714844 15-15s-6.714844-15-15-15h-150c-8.285156 0-15 6.714844-15 15s6.714844 15 15 15zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m135 241h150c8.285156 0 15-6.714844 15-15s-6.714844-15-15-15h-150c-8.285156 0-15 6.714844-15 15s6.714844 15 15 15zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m90 106c0 8.285156-6.714844 15-15 15s-15-6.714844-15-15 6.714844-15 15-15 15 6.714844 15 15zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m90 166c0 8.285156-6.714844 15-15 15s-15-6.714844-15-15 6.714844-15 15-15 15 6.714844 15 15zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m90 226c0 8.285156-6.714844 15-15 15s-15-6.714844-15-15 6.714844-15 15-15 15 6.714844 15 15zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m90 286c0 8.285156-6.714844 15-15 15s-15-6.714844-15-15 6.714844-15 15-15 15 6.714844 15 15zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m90 346c0 8.285156-6.714844 15-15 15s-15-6.714844-15-15 6.714844-15 15-15 15 6.714844 15 15zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m375 301c-8.285156 0-15 6.714844-15 15v45h-30c-8.285156 0-15 6.714844-15 15s6.714844 15 15 15h45c8.285156 0 15-6.714844 15-15v-60c0-8.285156-6.714844-15-15-15zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/></g> </svg>
+           @include("layouts.admin.paper")
             <span class="mx-3 whitespace-no-wrap">Add On</span>
         </a>
     </li>
@@ -899,8 +886,7 @@
 
             <li class="py-3 px-2 hover:font-semibold {{Request::segment ('2') == 'academics' ? 'active':''}} || {{Request::segment ('2') == 'academic' ? 'active':''}}">
                 <a href="{{ url('admin/academics') }}" class="flex items-center">
-                    <!--<img src="{{asset('uploads/icons/sidebar/academic.svg')}}" class="w-5 h-5">   -->
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Capa_1" x="0px" y="0px" viewBox="0 0 512.001 512.001" style="enable-background:new 0 0 512.001 512.001;" xml:space="preserve" width="512px" height="512px"><g><g><g><path d="M511.03,349.749c0-19.506-12.509-36.136-29.924-42.313V152.629l30.896-12.349L255.669,37.825L0,140.28l121.018,48.496 v71.201c0,21.949,15.388,41.731,43.329,55.702c24.645,12.323,57.079,19.109,91.329,19.109s66.685-6.786,91.329-19.109 c27.941-13.971,43.329-33.752,43.329-55.702V188.91l60.846-24.32v142.847c-17.415,6.176-29.924,22.807-29.924,42.313 c0,17.844,10.467,33.287,25.584,40.516l-24.816,74.448l28.389,9.463l15.73-47.189l15.73,47.189l28.389-9.463l-24.816-74.448 C500.561,383.035,511.03,367.593,511.03,349.749z M360.411,259.976c0,21.188-44.79,44.886-104.734,44.886    c-59.944,0-104.734-23.698-104.734-44.886v-59.209l104.727,41.968l104.742-41.866V259.976z M255.684,210.504L80.445,140.28 l175.239-70.224l175.691,70.224L255.684,210.504z M466.143,364.711c-8.25,0-14.962-6.712-14.962-14.962 c0-8.25,6.712-14.962,14.962-14.962c8.25,0,14.962,6.712,14.962,14.962C481.105,357.999,474.393,364.711,466.143,364.711z" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/></g></g></g></svg>
+                   @include("layouts.admin.gown")
                     <span class="mx-3 whitespace-no-wrap">Academic Years</span>
                 </a>
             </li>
@@ -920,22 +906,25 @@
                     <span class="mx-3 whitespace-no-wrap">Holidays List</span>
                 </a>
             </li>
-     {{-- @if(config('gexam.enabled', false)) --}}
-            <li class="py-3 px-2 hover:font-semibold {{Request::segment ('3') == 'promotions' ? 'active':''}}">
-                <a href="{{ url('/admin/students/promotions') }}" class="flex items-center">
-                    <!--  <img src="{{asset('uploads/icons/sidebar/rules.svg')}}" class="w-5 h-5"> -->
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" height="512px" viewBox="-40 -20 640 640" width="512px"><g><path d="m428.667969 80h-300c-27.613281 0-50 22.386719-50 50v310c0 5.523438 4.476562 10 10 10 5.519531 0 10-4.476562 10-10v-310c0-16.566406 13.429687-30 30-30h300c16.566406 0 30 13.433594 30 30v420c0 16.566406-13.433594 30-30 30-16.570313 0-30-13.433594-30-30v-50c0-11.046875-8.957031-20-20-20h-360c-11.046875 0-20 8.953125-20 20v50c0 27.613281 22.386719 50 50 50h380c27.609375 0 50-22.386719 50-50v-420c0-27.613281-22.390625-50-50-50zm-380 500c-16.570313 0-30-13.433594-30-30v-50h360v50c0 10.820312 3.507812 21.34375 10 30zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m378.667969 200c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-160c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m158.667969 250c0 5.523438 4.476562 10 10 10h210c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-210c-5.523438 0-10 4.476562-10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m168.667969 320h210c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-210c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m168.667969 380h210c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-210c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m168.667969 440h170c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-170c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m508.667969 0h-300c-27.613281 0-50 22.386719-50 50 0 5.523438 4.476562 10 10 10 5.519531 0 10-4.476562 10-10 0-16.566406 13.429687-30 30-30h300c16.566406 0 30 13.433594 30 30v420c0 16.566406-13.433594 30-30 30-5.523438 0-10 4.476562-10 10s4.476562 10 10 10c27.609375 0 50-22.386719 50-50v-420c0-27.613281-22.390625-50-50-50zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/></g> </svg>
-                    <span class="mx-3 whitespace-no-wrap">Promotion Rules</span>
-                </a>
-            </li>
 
-             <li class="py-3 px-2 hover:font-semibold {{Request::segment ('3') == 'grade' ? 'active':''}}">
+            <li class="py-3 px-2 hover:font-semibold {{Request::segment ('3') == 'grade' ? 'active':''}}">
                 <a href="{{ route('admin.grades') }}" class="flex items-center">
                     <!--  <img src="{{asset('uploads/icons/sidebar/rules.svg')}}" class="w-5 h-5"> -->
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" height="512px" viewBox="-40 -20 640 640" width="512px"><g><path d="m428.667969 80h-300c-27.613281 0-50 22.386719-50 50v310c0 5.523438 4.476562 10 10 10 5.519531 0 10-4.476562 10-10v-310c0-16.566406 13.429687-30 30-30h300c16.566406 0 30 13.433594 30 30v420c0 16.566406-13.433594 30-30 30-16.570313 0-30-13.433594-30-30v-50c0-11.046875-8.957031-20-20-20h-360c-11.046875 0-20 8.953125-20 20v50c0 27.613281 22.386719 50 50 50h380c27.609375 0 50-22.386719 50-50v-420c0-27.613281-22.390625-50-50-50zm-380 500c-16.570313 0-30-13.433594-30-30v-50h360v50c0 10.820312 3.507812 21.34375 10 30zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m378.667969 200c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-160c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m158.667969 250c0 5.523438 4.476562 10 10 10h210c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-210c-5.523438 0-10 4.476562-10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m168.667969 320h210c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-210c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m168.667969 380h210c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-210c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m168.667969 440h170c5.519531 0 10-4.476562 10-10s-4.480469-10-10-10h-170c-5.523438 0-10 4.476562-10 10s4.476562 10 10 10zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/><path d="m508.667969 0h-300c-27.613281 0-50 22.386719-50 50 0 5.523438 4.476562 10 10 10 5.519531 0 10-4.476562 10-10 0-16.566406 13.429687-30 30-30h300c16.566406 0 30 13.433594 30 30v420c0 16.566406-13.433594 30-30 30-5.523438 0-10 4.476562-10 10s4.476562 10 10 10c27.609375 0 50-22.386719 50-50v-420c0-27.613281-22.390625-50-50-50zm0 0" data-original="#000000" class="active-path" data-old_color="#000000" fill="#FFFFFF"/></g> </svg>
                     <span class="mx-3 whitespace-no-wrap">Grading System</span>
                 </a>
             </li>
+            
+     {{-- @if(config('gexam.enabled', false)) --}}
+            <li class="py-3 px-2 hover:font-semibold {{Request::segment ('3') == 'promotions' ? 'active':''}}">
+                <a href="{{ url('/admin/students/promotions') }}" class="flex items-center">
+                    <!--  <img src="{{asset('uploads/icons/sidebar/rules.svg')}}" class="w-5 h-5"> -->
+                    @include("layouts.admin.one-logo")
+                    <span class="mx-3 whitespace-no-wrap">Promotion Rules</span>
+                </a>
+            </li>
+
+             
   {{-- @endif --}}
             {{-- <li class="py-3 px-2 hover:font-semibold {{Request::segment ('2') == 'promotion' ? 'active':''}}">
                 <a href="{{ url('/admin/promotion/create') }}" class="flex items-center">

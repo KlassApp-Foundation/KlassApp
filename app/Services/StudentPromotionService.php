@@ -54,15 +54,15 @@ class StudentPromotionService
                     ->where("section_id", $sectionId)
                     ->where(function ($query) use ($avg, $points) {
                         $query->where(function ($q) use ($avg) {
-                            $q->where("rule_type", "average")
+                            $q->where("rule_type", "min_average")
                               ->where("min_average", "<=", $avg);
                         })
                         ->orWhere(function ($q) use ($points) {
-                            $q->where("rule_type", "aggregate")
+                            $q->where("rule_type", "min_aggregate")
                               ->where("min_aggregate", ">=", $points);
                         })
                         ->orWhere(function ($q) use ($points) {
-                            $q->where("rule_type", "points")
+                            $q->where("rule_type", "min_points")
                               ->where("min_points", "<=", $points);
                         });
                     })
