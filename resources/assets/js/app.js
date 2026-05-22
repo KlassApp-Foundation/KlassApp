@@ -104,6 +104,7 @@ Vue.component('create-promotion', require('./components/promotion/Create.vue').d
 
 //attendance
 Vue.component('create-attendance', require('./components/attendance/Create.vue').default);
+Vue.component('attendance-records', require('./components/attendance/Index.vue').default);
 Vue.component('create-staff-attendance', require('./components/attendance/staff/Create.vue').default);
 
 

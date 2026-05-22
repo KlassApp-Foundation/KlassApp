@@ -17,6 +17,7 @@ use App\Models\AbsentReason;
 use App\Traits\LogActivity;
 use App\Helpers\SiteHelper;
 use App\Models\Attendance;
+use Illuminate\Support\Facades\Log;
 use League\Csv\Writer;
 use App\Traits\Common;
 use Carbon\Carbon;
@@ -35,29 +36,47 @@ class AttendanceController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function list()
-    {
-        //
-        $array = [];
-        $school_id = Auth::user()->school_id;
+{
+    $school_id = Auth::user()->school_id;
+    $academic_year = SiteHelper::getAcademicYear($school_id);
 
-        $academic_year = SiteHelper::getAcademicYear($school_id);
+    $standardLinklist = SiteHelper::getStandardLinkList($school_id);
 
-        $standardLinklist = SiteHelper::getStandardLinkList($school_id);
+    $studentAcademic = StudentAcademic::with('user')
+        ->where('school_id', $school_id)
+        ->where('academic_year_id', $academic_year->id)
+        ->whereHas('user', function($q) {
+            $q->where('status', 'active')
+              ->whereNull('deleted_at');
+        })
+        ->get();
 
-        $studentAcademic = StudentAcademic::with('user')->where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->whereHas('user', function($q){
-                        $q->where([['status','active'],['deleted_at',null]]);
-                    })->get();
-        
-        $studentlist = StudentlistResource::collection($studentAcademic)->groupBy('standardLink_id');
+    // Group students manually and format properly
+    $studentlist = [];
 
-        $absentReasonlist   = AbsentReason::where('status',1)->get();
-
-        $array['standardlist']      = $standardLinklist;
-        $array['studentlist']       = $studentlist;
-        $array['absentReasonlist']  = $absentReasonlist;
-
-        return $array;
+    foreach ($studentAcademic as $student) {
+        $std_id = $student->standardLink_id;
+        if (!isset($studentlist[$std_id])) {
+            $studentlist[$std_id] = [];
+        }
+     $name = optional($student->user)->userprofile;
+        $studentlist[$std_id][] = [
+            'user_id'        => $student->user_id,
+            'id'             => $student->id,
+            'name'           => $name->firstname . " " . $name->lastname  ?? 'No Name',
+            'avatar'         => optional($student->user)->avatar ?? null,
+            'standardLink_id'=> $student->standardLink_id,
+        ];
     }
+
+    $absentReasonlist = AbsentReason::where('status', 1)->get();
+
+    return [
+        'standardlist'     => $standardLinklist,
+        'studentlist'      => $studentlist,
+        'absentReasonlist' => $absentReasonlist,
+    ];
+}
 
     /**
      * Show the form for creating a new resource.
@@ -68,7 +87,6 @@ class AttendanceController extends Controller
     {
         //
         $standard = \Request::get('standardLink_id') ? \Request::get('standardLink_id'):'';
-
         return view('/teacher/attendance/create' ,['standard' => $standard]);
     }
 
@@ -78,37 +96,40 @@ class AttendanceController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(AttendanceAddRequest $request)
-    { 
-        //
-        try
-        {
-            $school_id      = Auth::user()->school_id;
-            $academic_year  = SiteHelper::getAcademicYear($school_id);
-            $admin          = Auth::id();
+    public function store(Request $request)
+{ 
+    try
+    {
+        $school_id      = Auth::user()->school_id;
+        $academic_year  = SiteHelper::getAcademicYear($school_id);
+        $admin          = Auth::id();
+       
+        $attendance = $this->createAttendance($school_id , $academic_year->id , $admin , $request);
 
-            $attendance = $this->createAttendance($school_id , $academic_year->id , $admin , $request);
+        $message = trans('messages.add_success_msg',['module' => 'Attendance']);
 
-            $message = trans('messages.add_success_msg',['module' => 'Attendance']);
+        $ip = $this->getRequestIP();
+        $this->doActivityLog(
+            $attendance,
+            Auth::user(),
+            ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
+            LOGNAME_ADD_ATTENDANCE,
+            $message
+        );
 
-            $ip= $this->getRequestIP();
-            $this->doActivityLog(
-                $attendance,
-                Auth::user(),
-                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                LOGNAME_ADD_ATTENDANCE,
-                $message
-            );
-
-            $res['success'] = $message;
-
-            return $res;
-        }
-        catch(Exception $e)
-        {
-            //dd($e->getMessage());
-        }
+        return response()->json([
+            'success' => $message
+        ]);
     }
+    catch(Exception $e)
+    {
+        Log::error($e->getMessage());
+        return response()->json([
+            'error' => 'Something went wrong',
+            'message' => $e->getMessage()
+        ], 422);
+    }
+}
 
     public function export($standardLink_id)
     {

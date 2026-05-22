@@ -19,6 +19,7 @@ use App\Models\AbsentReason;
 use App\Traits\LogActivity;
 use App\Helpers\SiteHelper;
 use App\Models\Attendance;
+use App\Models\Section;
 use League\Csv\Writer;
 use App\Traits\Common;
 use Carbon\Carbon;
@@ -248,4 +249,50 @@ class AttendanceController extends Controller
 
         return $attendance;
     }
+
+    // =============== attendance records ===============================
+   public function index(Request $request)
+{
+    $school_id = Auth::user()->school_id;
+    $academic_year = SiteHelper::getAcademicYear($school_id);
+
+    $date    = $request->date ?? now()->format('Y-m-d');
+    $session = $request->session;
+    $section = $request->section;
+    $classes = Section::where("school_id", $school_id)->get();
+    // dd($section);
+
+    $standardLink_id = $request->standardLink_id;
+
+    // Get Standards for dropdown
+    $standardlist = SiteHelper::getStandardLinkList($school_id);
+
+    // Get Attendance Records
+    $attendances = Attendance::with(['user', 'absentReason', 'standardLink'])
+        ->where('school_id', $school_id)
+        ->whereHas("user", function($q){
+            $q->where("usergroup_id", 6);
+        })
+        ->where('date', $date)
+        ->whereHas("standardLink", function($q) use ($section) {
+            $q->whereHas("section", function ($q2) use($section){
+                $q2->where("id", $section);
+            });
+                // ->where("section_id", $section);
+        })
+        ->when($session, function($q) use ($session) {
+            return $q->where('session', $session);
+        })
+        ->orderBy('id')
+        ->get();
+        // dd($attendances);
+    return view('admin.attendance.index', compact(
+        'attendances', 
+        'standardlist', 
+        'date', 
+        'session', 
+        'classes',
+        'section'
+    ));
+}
 }

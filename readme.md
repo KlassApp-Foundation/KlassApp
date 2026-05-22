@@ -1,4 +1,4 @@
-# UGANDAS SCHOOL MANAGEMENT SYSTEM
+# KLASSAPP, THE UGANDA'S SCHOOL MANAGEMENT SYSTEM
 
 ## Flow of setting the system up to start working for a school
 
@@ -118,3 +118,5 @@ After everything, you can proceed to finalize student promotion just below the m
 -   Student and teacher Attendance
 -   WhatsApp integration
 -   Bulk messaging
+
+https://klassapp.xyz/

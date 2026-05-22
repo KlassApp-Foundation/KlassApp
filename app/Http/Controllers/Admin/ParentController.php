@@ -27,6 +27,7 @@ use App\Traits\LogActivity;
 use App\Models\Userprofile;
 use App\Models\ActivityLog;
 use App\Models\Feedback;
+use App\Models\ParentProfile;
 use App\Traits\Common;
 use App\Models\User;
 use Exception;
@@ -64,6 +65,8 @@ class ParentController extends Controller
     {
         //
         $query = \Request::getQueryString();
+        $test = ParentProfile::all();
+        dd($test);
 
         return view('/admin/parent/index',[ 'query' => $query ]);
     }
@@ -127,13 +130,18 @@ class ParentController extends Controller
             $user = $this->CreateParent($student_id , $request , $school_id , 7);
 
             $ip= $this->getRequestIP();
-            $this->doActivityLog(
-              $user,
-              Auth::user(),
-              ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-              LOGNAME_ADD_PARENT,
-              trans('messages.add_success_msg',['module'=>'Parent'])
-            );
+            if ($user instanceof \Illuminate\Database\Eloquent\Model) {
+    $this->doActivityLog(
+        $user,
+        Auth::user(),
+        ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT']],
+        LOGNAME_ADD_PARENT,
+        trans('messages.add_success_msg',['module'=>'Parent'])
+    );
+} else {
+    Log::warning('Activity log skipped: user is null');
+}
+
 
             if($request->parent == 'add')
             {
@@ -149,7 +157,7 @@ class ParentController extends Controller
         catch(Exception $e)
         {
             Log::info($e->getMessage());
-            //dd($e->getMessage());
+            dd($e->getMessage());
         }
     }
 
