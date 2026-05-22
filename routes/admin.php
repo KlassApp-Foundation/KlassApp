@@ -473,6 +473,7 @@ Route::get( '/downloadformat', 'ImportMemberController@downloadFormat' );
 
 //attendance
 	//add
+	Route::get('/attendance', 'AttendanceController@index');
 	Route::get( '/attendance/list', 'AttendanceController@list' );
 	Route::get( '/attendance/add', 'AttendanceController@create' );
 	Route::post( '/attendance/add', 'AttendanceController@store' );
