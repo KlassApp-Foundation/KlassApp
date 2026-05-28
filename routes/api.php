@@ -283,3 +283,9 @@ Route::get('/events/show/details/{id}','Api\EventsController@showdetails');
 //Route::get('/parents', 'Api\TestController@parents');
 
 //Route::get('/events','Api\TestController@events');
+
+// =====================================================================
+// WhatsApp Inbound Webhook (Evolution API → Laravel)
+// This route is OUTSIDE HMAC middleware since Evolution API does not send HMAC headers.
+// =====================================================================
+Route::post('/whatsapp/inbound', 'Api\WhatsAppController@handleInbound');

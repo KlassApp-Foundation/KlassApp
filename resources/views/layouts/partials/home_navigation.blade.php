@@ -3,7 +3,7 @@
     <nav class="navbar sticky bg-white w-full flex  lg:flex-row px-4 lg:px-8 pt-4 mb-0 justify-between items-center shadow">
         <div>
             <a href="{{ url('/') }}" >
-                <img src="{{ asset('images/klassapp-k-white.png') }}" class="inline-block mb-4" style="height:55px;" alt="KlassApp Logo">
+                <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="inline-block mb-4" style="height:45px; width: auto;" alt="KlassApp Logo">
             </a>
         </div>
 

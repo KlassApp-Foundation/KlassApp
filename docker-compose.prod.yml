@@ -1,0 +1,166 @@
+# =====================================================================
+# KlassApp + WhatsApp Stack — Single Portainer Deployment
+# Deploy via: Portainer → Stacks → Add Stack → Paste this file
+# Required env vars: APP_KEY, EVOLUTION_API_KEY, WHATSAPP_HMAC_SECRET
+# =====================================================================
+
+services:
+  # ==================== KLASSAPP: DATABASE ====================
+  database:
+    image: mysql:8.0
+    restart: unless-stopped
+    ports:
+      - "3307:3306"        # Exposed on 3307 to avoid conflicts — change to 3306 if you want standard port
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-klassapp}
+      MYSQL_USER: ${DB_USERNAME:-klassapp}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - klassapp
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ==================== WHATSAPP: DATABASE ====================
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: evolution
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: evolution
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - klassapp
+
+  # ==================== CACHE (shared) ====================
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - klassapp
+
+  # ==================== KLASSAPP: APP ====================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    container_name: sms-app
+    restart: unless-stopped
+    working_dir: /var/www
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL:-http://klassapp.xyz}
+      DB_CONNECTION: mysql
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-klassapp}
+      DB_USERNAME: ${DB_USERNAME:-klassapp}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      EVOLUTION_API_URL: http://evolution:8080
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+      EVOLUTION_INSTANCE_NAME: ${EVOLUTION_INSTANCE_NAME:-klassapp}
+      WHATSAPP_HMAC_SECRET: ${WHATSAPP_HMAC_SECRET}
+    volumes:
+      - .:/var/www
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - klassapp
+
+  # ==================== KLASSAPP: WEB SERVER ====================
+  nginx:
+    image: nginx:alpine
+    container_name: sms_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      # - "443:443"       # Uncomment after SSL certs are set up
+    volumes:
+      - .:/var/www
+      - ./public:/var/www/public:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      # - /etc/letsencrypt:/etc/letsencrypt   # Uncomment for SSL
+    networks:
+      - klassapp
+    depends_on:
+      - app
+
+  # ==================== WHATSAPP: EVOLUTION API ====================
+  evolution:
+    image: evoapicloud/evolution-api:latest
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      SERVER_URL: http://localhost:8081
+      AUTHENTICATION_TYPE: apikey
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://evolution:evolution@postgres:5432/evolution
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379/1
+      CACHE_REDIS_PREFIX_KEY: klassapp
+    volumes:
+      - evolution_data:/evolution/instances
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - klassapp
+
+  # ==================== WHATSAPP: n8n (Workflows) ====================
+  n8n:
+    image: n8nio/n8n:1.94.1
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_SECURE_COOKIE: "false"
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
+      NODE_FUNCTION_ALLOW_EXTERNAL: "*"
+      N8N_RUNNERS_ENABLED: "false"
+      WEBHOOK_URL: http://localhost:5678
+      WHATSAPP_HMAC_SECRET: ${WHATSAPP_HMAC_SECRET}
+      EVOLUTION_API_URL: http://evolution:8080
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+      EVOLUTION_INSTANCE_NAME: ${EVOLUTION_INSTANCE_NAME:-klassapp}
+      # Reaches Laravel via internal network — no host.docker.internal needed
+      LARAVEL_API_URL: http://nginx:80
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - redis
+      - evolution
+      - nginx
+    networks:
+      - klassapp
+
+# ==================== VOLUMES ====================
+volumes:
+  db_data:
+  postgres_data:
+  evolution_data:
+  n8n_data:
+
+# ==================== NETWORK ====================
+networks:
+  klassapp:
+    driver: bridge

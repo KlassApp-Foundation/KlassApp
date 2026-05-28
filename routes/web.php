@@ -8,6 +8,14 @@ use App\Http\Controllers\Superadmin\DashboardController;
 });*/
 Route::get('/', 'WelcomeController');
 
+// Landing page (public)
+Route::get('/landing', function () {
+    return view('landing');
+});
+
+// Premium School Pages (public)
+Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class, 'show']);
+
 Auth::routes();
 
 

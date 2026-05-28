@@ -21,7 +21,7 @@ class WhatsAppPhoneHelper
     public static function validate(string $input): bool
     {
         $normalised = self::normalise($input);
-        return preg_match('/^\+256(7[0578]\d{8})$/', $normalised) === 1;
+        return preg_match('/^\+256(7[0578]\d{7})$/', $normalised) === 1;
     }
 
     public static function formatMessage(string $studentName, string $title, array $rows, string $footer = ''): string

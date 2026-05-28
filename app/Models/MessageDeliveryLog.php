@@ -12,6 +12,8 @@ class MessageDeliveryLog extends Model
 {
     protected $table = 'message_delivery_log';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'whatsapp_message_id',
         'phone',

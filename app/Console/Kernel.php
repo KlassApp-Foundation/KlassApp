@@ -36,6 +36,9 @@ class Kernel extends ConsoleKernel
             \App\Console\Commands\DataSeeder\SeedAttendance::class,
 
             \App\Console\Commands\AddStandard::class,
+
+        // WhatsApp
+            \App\Console\Commands\SendFeeReminders::class,
     ];
 
     /**
@@ -91,6 +94,14 @@ class Kernel extends ConsoleKernel
                  
         $schedule->command('gego:checkwebnotification')
                  ->everyMinute()
+                 ->withoutOverlapping();
+
+        $schedule->command('whatsapp:send-fee-reminders --type=reminder')
+                 ->weekly()
+                 ->withoutOverlapping();
+
+        $schedule->command('whatsapp:send-fee-reminders --type=overdue')
+                 ->daily()
                  ->withoutOverlapping();
     }
 

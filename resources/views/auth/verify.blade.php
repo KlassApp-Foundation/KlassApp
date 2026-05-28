@@ -28,12 +28,17 @@
         text-align: center;
     }
 
-    .klass-auth-logo-frame {
-        width: 156px;
-        margin: 0 auto;
-        overflow: hidden;
-        display: block;
-    }
+.klass-auth-logo-frame {
+    width: 180px;
+    margin: 0 auto 4px;
+    display: block;
+}
+
+.klass-auth-logo {
+    width: 100%;
+    height: auto;
+    display: block;
+}
 
     .klass-auth-logo {
         width: 236px;
@@ -89,7 +94,7 @@
     <div class="klass-auth-card">
         <div class="klass-auth-intro">
             <span class="klass-auth-logo-frame">
-                <img src="{{ asset('images/klassapp-logo-primary.png') }}" class="klass-auth-logo" alt="KlassApp">
+                <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-auth-logo" alt="KlassApp">
             </span>
             <h1 class="klass-auth-title">{{ __('Verify Your Email Address') }}</h1>
 

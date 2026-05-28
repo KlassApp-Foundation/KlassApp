@@ -40,7 +40,7 @@ services:
       - postgres
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.94.1
     restart: unless-stopped
     ports:
       - "5678:5678"
@@ -49,6 +49,9 @@ services:
       N8N_PORT: 5678
       N8N_PROTOCOL: http
       N8N_SECURE_COOKIE: "false"
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
+      NODE_FUNCTION_ALLOW_EXTERNAL: "*"
+      N8N_RUNNERS_ENABLED: "false"
       WEBHOOK_URL: http://localhost:5678
       WHATSAPP_HMAC_SECRET: ${WHATSAPP_HMAC_SECRET}
       EVOLUTION_API_URL: http://evolution:8080

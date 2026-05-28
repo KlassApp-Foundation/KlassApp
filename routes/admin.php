@@ -17,6 +17,10 @@ Route::post( '/dashboard/send/reminder/{fee_id}', 'DashboardController@sendRemin
 Route::get( '/dashboard/tasklist/{task_flag}','DashboardController@list' );
 Route::get( '/dashboard/task/count','DashboardController@listCount' );
 
+// WhatsApp phone linking
+Route::get( '/whatsapp/phone', 'UserProfileController@phoneLink' )->name( 'whatsapp.phone' );
+Route::post( '/whatsapp/phone', 'UserProfileController@linkWhatsApp' );
+
 //admission
 Route::get(	'/admissionlist','AdmissionController@admissionlist' );
 Route::get(	'/admissions','AdmissionController@index' );
@@ -375,6 +379,8 @@ Route::get( '/settings/maintenancesettings', 'Setting\MaintenanceController@crea
 Route::post( '/settings/maintenancesettings', 'Setting\MaintenanceController@store' );
 Route::get( '/settings/seodetailsettings', 'Setting\SeoDetailController@create' );
 Route::post( '/settings/seodetailsettings', 'Setting\SeoDetailController@store' );
+Route::get( '/settings/premium-page', 'Setting\PremiumPageController@edit' )->name('admin.settings.premium-page');
+Route::post( '/settings/premium-page', 'Setting\PremiumPageController@update' );
 
 //password and avatar
 

@@ -18,6 +18,7 @@ use App\Traits\Common;
 use App\Models\State;
 use App\Models\User;
 use App\Models\City;
+use App\Models\WhatsAppUser;
 use Exception;
 use Hash;
 
@@ -252,5 +253,57 @@ class UserProfileController extends Controller
             Log::info($e->getMessage());
             dd($e->getMessage());
         }
-    }  
+    }
+
+    /**
+     * Show WhatsApp phone-linking page.
+     */
+    public function phoneLink()
+    {
+        $waUser = WhatsAppUser::where('user_id', Auth::id())
+            ->where('user_type', get_class(Auth::user()))
+            ->first();
+
+        return view('/admin/whatsapp/phone-link', [
+            'waUser' => $waUser,
+            'user'   => Auth::user(),
+        ]);
+    }
+
+    /**
+     * Link or unlink WhatsApp phone number.
+     */
+    public function linkWhatsApp(Request $request)
+    {
+        $request->validate([
+            'phone'    => 'required|string|max:20',
+            'unlink'   => 'boolean',
+        ]);
+
+        $user = Auth::user();
+
+        if ($request->boolean('unlink')) {
+            WhatsAppUser::where('user_id', $user->id)
+                ->where('user_type', get_class($user))
+                ->delete();
+
+            $this->doActivityLog($user, $user, [], 'Unlinked WhatsApp Number');
+            return back()->with('success', 'WhatsApp number unlinked successfully.');
+        }
+
+        // Upsert: link/update the phone number
+        $waUser = WhatsAppUser::updateOrCreate(
+            [
+                'user_id'   => $user->id,
+                'user_type' => get_class($user),
+            ],
+            [
+                'phone'    => $request->phone,
+                'opted_in' => true,
+            ]
+        );
+
+        $this->doActivityLog($waUser, $user, ['phone' => $request->phone], 'Linked WhatsApp Number');
+        return back()->with('success', 'WhatsApp number linked successfully.');
+    }
 }

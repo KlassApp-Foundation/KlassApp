@@ -2,7 +2,7 @@
 @extends('layouts.minimal')
 
 @section('content')
-<?php $logo = file_exists(public_path('images/klassapp-logo-dark.png')) ? asset('images/klassapp-logo-dark.png') : (file_exists(public_path('images/klassapp-logo-primary.png')) ? asset('images/klassapp-logo-primary.png') : (file_exists(public_path('favicon/klassapp-favicon.png')) ? asset('favicon/klassapp-favicon.png') : (file_exists(public_path('uploads/klassapp_assets.png')) ? asset('uploads/klassapp_assets.png') : asset('uploads/demologo.png')))); ?>
+<?php $logo = asset('images/klassapp-logo-primary.svg'); ?>
 
 <nav class="ka-nav">
 	<div class="ka-container">
