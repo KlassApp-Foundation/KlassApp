@@ -18,6 +18,7 @@ use App\Models\Events;
 use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
+use App\Services\OutboundWhatsAppService;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -677,6 +678,13 @@ class WhatsAppController extends Controller
 
         // Route to appropriate handler
         $this->routeInbound($whatsappUser, $phone, $body, $whatsAppService);
+
+        // Flush any queued notifications — parent's inbound just opened a free window
+        $outboundService = app(OutboundWhatsAppService::class);
+        $flushed = $outboundService->flushPending($whatsappUser);
+        if ($flushed > 0) {
+            Log::info("handleInbound: flushed {$flushed} pending notifications for {$phone}");
+        }
 
         return response()->json(['status' => 'routed']);
     }

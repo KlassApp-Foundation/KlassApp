@@ -8,6 +8,7 @@ use App\Models\Academics\Exam;
 use App\Models\FeesCategories;
 use App\Models\StudentAcademic;
 use App\Models\User;
+use App\Models\WhatsAppPendingNotification;
 use App\Models\WhatsAppUser;
 use Illuminate\Support\Facades\Log;
 
@@ -25,6 +26,222 @@ class OutboundWhatsAppService
     public function __construct(
         protected WhatsAppService $whatsApp,
     ) {}
+
+    // =====================================================================
+    // Cost-optimised queue: send free within window, queue for later if cold
+    // =====================================================================
+
+    /**
+     * Queue a notification for later delivery.
+     *
+     * @return WhatsAppPendingNotification
+     */
+    public function queueNotification(
+        int $whatsappUserId,
+        string $flowType,
+        ?string $message = null,
+        ?string $templateName = null,
+        array $templateVariables = [],
+        ?\Carbon\Carbon $sendAfter = null,
+    ): WhatsAppPendingNotification {
+        return WhatsAppPendingNotification::create([
+            'whatsapp_user_id'   => $whatsappUserId,
+            'flow_type'          => $flowType,
+            'message'            => $message,
+            'template_name'      => $templateName,
+            'template_variables' => $templateVariables ?: null,
+            'send_after'         => $sendAfter,
+        ]);
+    }
+
+    /**
+     * If the 24hr service window is open, send immediately (free).
+     * Otherwise, queue for later delivery when a window opens.
+     */
+    private function queueOrSend(
+        string $phone,
+        ?int $userId,
+        string $message,
+        string $flowType,
+        ?string $templateName = null,
+        array $templateVariables = [],
+    ): int {
+        $whatsappUser = WhatsAppUser::findByPhone($phone);
+
+        if ($whatsappUser && $this->whatsApp->isWithinServiceWindow($phone)) {
+            // Window is open — send immediately (FREE)
+            try {
+                $this->whatsApp->sendText($phone, $message, $flowType, $userId);
+                return 1;
+            } catch (\Throwable $e) {
+                Log::error("queueOrSend: immediate send failed for {$phone}", [
+                    'error' => $e->getMessage(),
+                    'flow'  => $flowType,
+                ]);
+                return 0;
+            }
+        }
+
+        // Window closed — queue for later (avoid cold send cost)
+        if ($whatsappUser) {
+            $this->queueNotification(
+                whatsappUserId: $whatsappUser->id,
+                flowType: $flowType,
+                message: $templateName ? null : $message,
+                templateName: $templateName,
+                templateVariables: $templateVariables,
+            );
+            Log::info("queueOrSend: queued {$flowType} for {$phone} (window closed)");
+            return 0;
+        }
+
+        // No WhatsApp user linked — can't queue, can't send
+        Log::warning("queueOrSend: no linked user for {$phone}");
+        return 0;
+    }
+
+    /**
+     * Send all pending notifications for a user immediately.
+     * Call this inside handleInbound() after the user sends a message —
+     * their reply opens the 24hr window, so all queued items send FREE.
+     *
+     * @param  WhatsAppUser $user  The user whose queue to flush
+     * @return int                 Number of notifications sent
+     */
+    public function flushPending(WhatsAppUser $user): int
+    {
+        $pending = WhatsAppPendingNotification::where('whatsapp_user_id', $user->id)
+            ->where(function ($q) {
+                $q->whereNull('send_after')
+                  ->orWhere('send_after', '<=', now());
+            })
+            ->get();
+
+        if ($pending->isEmpty()) {
+            return 0;
+        }
+
+        $sent = 0;
+        foreach ($pending as $notification) {
+            try {
+                if ($notification->template_name) {
+                    $this->whatsApp->sendTemplate(
+                        $user->phone,
+                        $notification->template_name,
+                        $notification->template_variables ?? [],
+                        'utility',
+                        $user->user_id,
+                    );
+                } elseif ($notification->message) {
+                    $this->whatsApp->sendText(
+                        $user->phone,
+                        $notification->message,
+                        $notification->flow_type,
+                        $user->user_id,
+                    );
+                } else {
+                    $notification->delete();
+                    continue;
+                }
+                $notification->delete();
+                $sent++;
+            } catch (\Throwable $e) {
+                Log::error("flushPending: failed for {$user->phone}", [
+                    'notification_id' => $notification->id,
+                    'error'           => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($sent > 0) {
+            Log::info("flushPending: sent {$sent} pending notifications to {$user->phone}");
+        }
+
+        return $sent;
+    }
+
+    /**
+     * Flush pending notifications for ALL WhatsApp users who have an open window.
+     * Called by the cron when a batch window is available.
+     *
+     * @param  int $limit Max users to process
+     * @return int Total notifications sent
+     */
+    public function flushAllOpenWindows(int $limit = 50): int
+    {
+        $users = WhatsAppUser::optedIn()
+            ->where('last_inbound_at', '>=', now()->subHours(24))
+            ->limit($limit)
+            ->get();
+
+        $total = 0;
+        foreach ($users as $user) {
+            $total += $this->flushPending($user);
+        }
+
+        return $total;
+    }
+
+    /**
+     * Send queued notifications whose send_after deadline has passed
+     * (cold sends — these cost $0.004 each).
+     *
+     * @param  int $limit Max pending records to process
+     * @return int Total cold sends made
+     */
+    public function sendExpiredQueue(int $limit = 100): int
+    {
+        $pending = WhatsAppPendingNotification::where('send_after', '<=', now())
+            ->whereNotNull('send_after')
+            ->with('whatsappUser')
+            ->limit($limit)
+            ->get();
+
+        $sent = 0;
+        foreach ($pending as $notification) {
+            $user = $notification->whatsappUser;
+            if (!$user) {
+                $notification->delete();
+                continue;
+            }
+
+            try {
+                if ($notification->template_name) {
+                    $this->whatsApp->sendTemplate(
+                        $user->phone,
+                        $notification->template_name,
+                        $notification->template_variables ?? [],
+                        'utility',
+                        $user->user_id,
+                    );
+                } elseif ($notification->message) {
+                    $this->whatsApp->sendText(
+                        $user->phone,
+                        $notification->message,
+                        $notification->flow_type,
+                        $user->user_id,
+                    );
+                }
+                $notification->delete();
+                $sent++;
+            } catch (\Throwable $e) {
+                Log::error("sendExpiredQueue: failed", [
+                    'notification_id' => $notification->id,
+                    'error'           => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($sent > 0) {
+            Log::info("sendExpiredQueue: cold-sent {$sent} expired notifications");
+        }
+
+        return $sent;
+    }
+
+    // =====================================================================
+    //  Public notification methods — now use queueOrSend
+    // =====================================================================
 
     /**
      * Notify parents when a student's exam results are published.
@@ -52,12 +269,7 @@ class OutboundWhatsAppService
         $sent = 0;
 
         foreach ($this->getParentPhones($student) as $phone) {
-            try {
-                $this->whatsApp->sendText($phone, $message, 'grades', $studentId);
-                $sent++;
-            } catch (\Throwable $e) {
-                Log::error("Failed to send grade notification to {$phone}: " . $e->getMessage());
-            }
+            $sent += $this->queueOrSend($phone, $studentId, $message, 'grades');
         }
 
         return $sent;
@@ -91,12 +303,7 @@ class OutboundWhatsAppService
         $sent = 0;
 
         foreach ($this->getParentPhones($student) as $phone) {
-            try {
-                $this->whatsApp->sendText($phone, $message, 'fee_reminder', $studentId);
-                $sent++;
-            } catch (\Throwable $e) {
-                Log::error("Failed to send fee reminder to {$phone}: " . $e->getMessage());
-            }
+            $sent += $this->queueOrSend($phone, $studentId, $message, 'fee_reminder');
         }
 
         return $sent;
@@ -201,12 +408,7 @@ class OutboundWhatsAppService
 
         $sent = 0;
         foreach ($this->getParentPhones($student) as $phone) {
-            try {
-                $this->whatsApp->sendText($phone, $message, 'grades', $studentId);
-                $sent++;
-            } catch (\Throwable $e) {
-                Log::error("Failed to send comprehensive grades to {$phone}: " . $e->getMessage());
-            }
+            $sent += $this->queueOrSend($phone, $studentId, $message, 'grades');
         }
 
         return $sent;

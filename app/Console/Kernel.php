@@ -39,6 +39,7 @@ class Kernel extends ConsoleKernel
 
         // WhatsApp
             \App\Console\Commands\SendFeeReminders::class,
+            \App\Console\Commands\SendWhatsAppPendingNotifications::class,
     ];
 
     /**
@@ -103,6 +104,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('whatsapp:send-fee-reminders --type=overdue')
                  ->daily()
                  ->withoutOverlapping();
+
+        $schedule->command('whatsapp:send-pending --flush-open')
+                 ->everyFifteenMinutes()
+                 ->withoutOverlapping()
+                 ->appendOutputTo(storage_path('logs/whatsapp-pending.log'));
     }
 
     /**
