@@ -103,6 +103,7 @@ public/uploads/reports/*
 !public/uploads/reports/index.html.vapor/
 TODO.md
 .sisyphus/
+knowledge.md
 .env.production
 .env.staging
 /.vapor
