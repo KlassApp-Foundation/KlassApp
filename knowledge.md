@@ -119,13 +119,6 @@ GET  /                                  → WelcomeController
 GET  /landing                           → landing.blade.php (marketing page)
 GET  /schools/{slug}                    → SchoolPageController@show (premium pages)
 POST /api/whatsapp/inbound              → WhatsAppController@handleInbound (no HMAC)
-POST /api/whatsapp/identify              → WhatsAppController@identify (HMAC)
-POST /api/whatsapp/delivery-webhook      → WhatsAppController@deliveryWebhook
-GET  /api/whatsapp/check-window          → WhatsAppController@checkWindow
-GET  /api/whatsapp/grades                → WhatsAppController@grades (HMAC)
-GET  /api/whatsapp/attendance            → WhatsAppController@attendance (HMAC)
-GET  /api/whatsapp/fees                  → WhatsAppController@feeBalance (HMAC)
-GET  /api/whatsapp/events                → WhatsAppController@schoolEvents (HMAC)
 ```
 
 ### 4.2 Admin WhatsApp Route
@@ -148,17 +141,15 @@ POST /admin/whatsapp/phone              → UserProfileController@linkWhatsApp
                                        ↕
                            OutboundWhatsAppService (business logic)
                                        ↕
-                           WhatsAppController (role routing via usergroup_id)
-                                       ↕
                            MessageDeliveryLog (DB tracking)
 ```
 
 ### 5.2 Services
 
 | File | Purpose |
-|---|---|---|
-| `app/Services/WhatsAppService.php` | HTTP transport layer — `sendText()`, `sendTemplate()`, `sendMedia()`, `sendTextSafe()` (auto template fallback when window closed), `isWithinServiceWindow()`. Logs to `message_delivery_log`. |
-| `app/Services/OutboundWhatsAppService.php` | Business logic — `notifyGradesPublished()`, `notifyFeeReminder()`, `getParentPhones()`, `notifyComprehensiveGrades()`. Depends on `WhatsAppService`. |
+|---|---|
+| `app/Services/WhatsAppService.php` | HTTP transport layer — `sendText()`, `sendTemplate()`, `sendMedia()` via Evolution API. Logs to `message_delivery_log`. |
+| `app/Services/OutboundWhatsAppService.php` | Business logic — `notifyGradesPublished()`, `notifyFeeReminder()`, `getParentPhones()`. Depends on `WhatsAppService`. |
 | `app/Helpers/WhatsAppPhoneHelper.php` | Phone utilities — `normalise()`, `validate()` (regex: `\+256(7[0578]\d{7})`), `formatMessage()`. |
 
 ### 5.3 Inbound Webhook
@@ -167,8 +158,7 @@ POST /admin/whatsapp/phone              → UserProfileController@linkWhatsApp
 - **Controller**: `WhatsAppController@handleInbound`
 - **Validation**: `StoreWhatsAppWebhookRequest` — validates `event=messages.upsert`, `remoteJid`, message content, payload size (1MB), phone format
 - **Guards**: Ignores group messages (`@g.us`), own messages (`fromMe=true`), non-message events
-- **Keywords**: 23+ keywords routed via `routeInbound()` — role-scoped routing by `usergroup_id` (3=admin, 5=teacher, 6=student, 7=parent, 10=receptionist, 11=accountant). See `WhatsAppController` for full map.
-- **Dual-role**: Any staff role (admin/teacher/receptionist/accountant) with children gets `MY CHILDREN` menu option.
+- **Keywords**: `menu`, `grades`, `fees`, `attendance`, `events`, `optin`, `optout`
 
 ### 5.4 Outbound Hooks
 
@@ -176,8 +166,6 @@ POST /admin/whatsapp/phone              → UserProfileController@linkWhatsApp
 |---|---|---|
 | **Event** | `app/Events/GradesPublished.php` | Dispatched when marks published (`$student`, `$examId`) |
 | **Listener** | `app/Listeners/SendGradesToWhatsApp.php` | Calls `OutboundWhatsAppService::notifyGradesPublished()` |
-| **Event** | `app/Events/MarksUpdated.php` | Dispatched when teacher saves marks (per-student subject completion) |
-| **Listener** | `app/Listeners/NotifyAdminMarksUpdated.php` | Notifies admin of completed marks |
 | **Command** | `app/Console/Commands/SendFeeReminders.php` | `whatsapp:send-fee-reminders` with `--type=reminder\|overdue`, `--school-id`, `--dry-run` |
 | **Schedule** | `app/Console/Kernel.php` | Weekly reminders (Mondays), daily overdue — both `withoutOverlapping()` |
 
@@ -185,8 +173,8 @@ POST /admin/whatsapp/phone              → UserProfileController@linkWhatsApp
 
 | Model | Table | Key Fields |
 |---|---|---|
-| `WhatsAppUser` | `whatsapp_users` | `phone`, `user_id`, `verified_at`, `opted_in`, `last_inbound_at` |
-| `MessageDeliveryLog` | `message_delivery_log` | `whatsapp_message_id`, `phone`, `category`, `status`, `direction`, `flow_type`, `error_message` |
+| `WhatsAppUser` | `whatsapp_users` | `phone`, `user_id`, `opted_out`, `unsubscribed_at` |
+| `MessageDeliveryLog` | `message_delivery_log` | `whatsapp_message_id`, `phone`, `category`, `status`, `direction`, `flow_type` |
 | *(Note: `$timestamps = false` on MessageDeliveryLog — migration has no `created_at`/`updated_at`)* |
 
 ### 5.6 WhatsApp Business Config
@@ -205,36 +193,6 @@ POST /admin/whatsapp/phone              → UserProfileController@linkWhatsApp
 - `WhatsAppPhoneHelper::normalise()`: strips non-digits, ensures E.164
 - `WhatsAppPhoneHelper::validate()`: regex = `/^\+256(7[0578]\d{7})$/`
 - wa.me links: `str_replace('+', '', $phone)` to strip `+` prefix
-
-### 5.8 Role-Based Menu System
-
-The `WhatsAppController` implements a full role-based menu with `sendMenu()` and `routeInbound()`:
-
-| Role | usergroup_id | Menu Items |
-|---|---|---|
-| **Admin** | 3 | GRADES, ATTENDANCE, FEES, EXAMS, REPORTS, NOTICES, EVENTS, MY CHILDREN (if parent) |
-| **Teacher** | 5 | MARKS, TIMETABLE, ASSIGNMENTS, HOMEWORK, STUDENTS, ATTENDANCE, NOTICES, MY CHILDREN (if parent) |
-| **Student** | 6 | GRADES, ATTENDANCE, FEES, TIMETABLE, ASSIGNMENTS, HOMEWORK, EVENTS |
-| **Parent** | 7 | GRADES, FEES, ATTENDANCE, EVENTS (scoped to linked children) |
-| **Receptionist** | 10 | CALL LOG, NOTICES, EVENTS, STUDENTS, MY CHILDREN (if parent) |
-| **Accountant** | 11 | FEES, REPORTS, NOTICES, MY CHILDREN (if parent) |
-
-- **16 handler methods**: `sendStudentGrades()`, `sendStudentAttendance()`, `sendStudentFees()`, `sendTeacherMarks()`, `sendTimetable()`, `sendAssignments()`, `sendHomework()`, `sendStudentList()`, `sendStaffList()`, `sendAdminExams()`, `sendAdminFees()`, `sendAdminReports()`, `sendNotices()`, `sendCallLog()`, `sendAccountantFees()`, `sendAccountantReports()`
-- **`user_type` eliminated**: Role is derived from `users.usergroup_id` via `resolveUserType()` using `match()` — no sync issues.
-- **Multi-child**: `sendGrades()`, `sendFees()`, `sendAttendance()` send one message per child (all children, not just first).
-
-### 5.9 24-Hour Service Window
-
-- **`last_inbound_at`** column on `whatsapp_users` — updated on every inbound message
-- **`checkWindow()`**: Returns `window_open` bool + `last_inbound_at` timestamp for n8n/proactive outbound
-- **`sendTextSafe()`**: Checks window — sends free-form if open, falls back to template if closed (and template name provided)
-- **`isWithinServiceWindow()`**: Uses `last_inbound_at` (not `message_delivery_log` scan)
-
-### 5.10 Delivery Webhook
-
-- **`deliveryWebhook()`**: Accepts `sent`, `delivered`, `read`, `failed`, `received` statuses
-- **`handleDeliveryFailure()`**: Counts consecutive failures per phone within an hour. Alerts after 3rd failure (logs repeat every 3 failures).
-- **Fallback status**: Unknown `message_id` returns 404 (logged as warning).
 
 ---
 
@@ -260,8 +218,6 @@ The `WhatsAppController` implements a full role-based menu with `sendMenu()` and
 | `2026_05_16_000001_create_whatsapp_users_table.php` | `whatsapp_users` |
 | `2026_05_16_000002_create_message_delivery_log_table.php` | `message_delivery_log` |
 | `2026_05_27_000001_create_premium_pages_table.php` | `premium_pages` |
-| `2026_05_29_000002_drop_user_type_from_whatsapp_users.php` | `whatsapp_users` (dropped `user_type` column) |
-| `2026_05_29_000003_add_last_inbound_at_to_whatsapp_users.php` | `whatsapp_users` (added `last_inbound_at`) |
 
 ### 7.3 Test DB
 
@@ -356,11 +312,6 @@ Append summaries here after each work session. Format:
 - **Status**: ✅ Done
 - **Edge case flagged**: Non-Uganda phone numbers bypass validation in premium templates
 
-### 2026-05-28: Committed all to whatsapp branch — feat(whatsapp): inbound validation, outbound hooks, phone-linking UI, premium templates
-- **Commit**: `cc6890c` on `whatsapp` branch (72 files, +4724/-336)
-- **Work done**: Committed all uncommitted changes from items #1-#6: WhatsApp phone-linking UI, landing page CTAs, premium template WhatsApp buttons, inbound webhook FormRequest, OutboundWhatsAppService + GradesPublished event + SendFeeReminders command, feature tests. Also committed premium school pages, landing page, SVG logo migration, docker-compose.prod.yml, knowledge.md, klassapp-knowledge skill.
-- **Status**: ✅ All committed to `whatsapp` branch (1 commit ahead of `origin/main`)
-
 ### 2026-05-28: Created knowledge.md + klassapp-knowledge skill
 - **Work done**: Created `knowledge.md` as canonical project knowledge base. Created `klassapp-knowledge` skill (`~/.agents/skills/klassapp-knowledge/SKILL.md`) that enforces reading knowledge.md at session start and appending session summaries on exit. Verified project structure, CI/CD, Docker, WhatsApp stack, routes, and services are all documented.
 - **Files modified**: knowledge.md (NEW), .agents/skills/klassapp-knowledge/SKILL.md (NEW), ~/.agents/skills/klassapp-knowledge/SKILL.md (NEW, global copy), .sisyphus/memory/session-context.md (updated header)
@@ -378,12 +329,4 @@ Append summaries here after each work session. Format:
 - **Work done**: Created phone-linking page at `/admin/whatsapp/phone` with linked/unlinked states. Added sidebar menu item.
 - **Files modified**: UserProfileController (phoneLink, linkWhatsApp), admin menu blade, new phone-link.blade.php, routes/admin.php
 - **Key decisions**: Placed under Settings in admin sidebar. Phone saved to existing `users.whatsapp_phone` column.
-- **Status**: ✅ Done
-
-### 2026-05-29: WhatsApp Phase 2 — role-based menus, window tracking, multi-child, delivery alerts
-- **Work done**: Full role-based menu system for all 6 user groups. Eliminated `whatsapp_users.user_type` column (derived from `users.usergroup_id` via `resolveUserType()`). Fixed marks completion logic (per-student subject completion). 24-hour window tracking (`last_inbound_at` column + `sendTextSafe()` fallback). Delivery webhook robustness (consecutive failure detection + alerting at 3+ failures/hour). Multi-child parent flow (grades/fees/attendance now iterate ALL children). MarksUpdated event + listener. Two new migrations.
-- **Files modified**: WhatsAppController (role-based sendMenu/routeInbound, 16 handlers, delivery failure handler), WhatsAppUser model (fillable/casts), WhatsAppService (sendTextSafe, isWithinServiceWindow), OutboundWhatsAppService (notifyComprehensiveGrades), MarksController (completion logic), UserProfileController (phone linking cleanup), routes/api.php (WhatsApp endpoints), EventServiceProvider (MarksUpdated), WhatsAppUserFactory (user_type removed), .gitignore (.phpunit.cache, .sisyphus), knowledge.md (this entry)
-- **Files created**: `MarksUpdated.php` (event), `NotifyAdminMarksUpdated.php` (listener), `2026_05_29_000002_drop_user_type_from_whatsapp_users.php` (migration), `2026_05_29_000003_add_last_inbound_at_to_whatsapp_users.php` (migration)
-- **Key decisions**: Routing by `users.usergroup_id` (not string `user_type`). Dual-role handled universally: any staff role with children gets MY CHILDREN. Multi-child sends separate messages per child. Window tracking uses dedicated column (not log scan). sendTextSafe checks window, falls back to template. Delivery failure alerts at 3+ failures/hour.
-- **Commit**: `49ab087` on `whatsapp` branch (15 files, +1143/-221). PR #82 updated.
 - **Status**: ✅ Done
