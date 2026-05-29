@@ -15,6 +15,13 @@
     <env name="SESSION_DRIVER" value="array"/>
     <env name="QUEUE_DRIVER" value="sync"/>
     <env name="MAIL_DRIVER" value="array"/>
+    <env name="DB_CONNECTION" value="sqlite"/>
+    <env name="DB_DATABASE" value=":memory:"/>
+    <env name="WHATSAPP_BUSINESS_NUMBER" value="+256767538805"/>
+    <env name="WHATSAPP_BUSINESS_NAME" value="KlassApp"/>
+    <env name="EVOLUTION_API_URL" value="http://localhost:8080"/>
+    <env name="EVOLUTION_API_KEY" value="test-key"/>
+    <env name="EVOLUTION_INSTANCE_NAME" value="klassapp"/>
   </php>
   <source>
     <include>

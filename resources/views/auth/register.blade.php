@@ -62,17 +62,14 @@
   }
 
   .klass-register-logo-frame {
-    width: 164px;
+    width: 180px;
     margin: 0 auto;
-    overflow: hidden;
     display: block;
   }
 
   .klass-register-logo {
-    width: 236px;
-    max-width: none;
+    width: 100%;
     height: auto;
-    margin-left: -36px;
     display: block;
   }
 
@@ -394,7 +391,7 @@
   <div class="klass-register-card">
     <div class="klass-register-intro">
       <span class="klass-register-logo-frame">
-        <img src="{{ asset('images/klassapp-logo-primary.png') }}" class="klass-register-logo" alt="KlassApp">
+        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-register-logo" alt="KlassApp">
       </span>
       <p class="klass-intro-title">Your school's future starts here.</p>
       <p class="klass-intro-sub">Register your school and start your free 30-day Pro trial.</p>

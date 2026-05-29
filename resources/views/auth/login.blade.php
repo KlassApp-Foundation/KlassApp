@@ -62,17 +62,14 @@
   }
 
   .klass-login-logo-frame {
-    width: 140px;
+    width: 180px;
     margin: 0 auto;
-    overflow: hidden;
     display: block;
   }
 
   .klass-login-logo {
-    width: 236px;
-    max-width: none;
+    width: 100%;
     height: auto;
-    margin-left: -48px;
     display: block;
   }
 
@@ -353,7 +350,7 @@
   <div class="klass-login-card">
     <div class="klass-login-intro">
       <span class="klass-login-logo-frame">
-        <img src="{{ asset('images/klassapp-logo-primary.png') }}" class="klass-login-logo" alt="KlassApp">
+        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-login-logo" alt="KlassApp">
       </span>
       <p class="klass-intro-title">Welcome back</p>
       <p class="klass-intro-sub">Sign in to your school dashboard.</p>

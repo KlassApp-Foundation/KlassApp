@@ -95,8 +95,8 @@ section > p {
 }
 
 .ka-brand-logo {
-  width: 38px;
-  height: 38px;
+  width: 140px;
+  height: auto;
   object-fit: contain;
 }
 

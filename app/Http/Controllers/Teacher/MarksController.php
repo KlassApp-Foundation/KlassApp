@@ -19,6 +19,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Events\MarksUpdated;
+use App\Events\GradesPublished;
 
 class MarksController extends Controller
 {
@@ -138,8 +140,50 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
             ]
         );
     }
-     // change exam status
-     $exam->changeExamStatus();
+
+    // Notify school admins that marks were entered/updated
+    try {
+        event(new MarksUpdated($exam, $user));
+    } catch (\Throwable $e) {
+        \Log::warning("Failed to dispatch MarksUpdated: {$e->getMessage()}");
+    }
+
+    // Check if any student now has marks in ALL subjects → comprehensive notification
+    try {
+        $outbound = app(\App\Services\OutboundWhatsAppService::class);
+
+        // Total subjects assigned to this standard/class
+        $totalSubjects = Subject::where('school_id', $exam->school_id)
+            ->where('standard_id', $exam->standard_id)
+            ->where('is_active', 1)
+            ->count();
+
+        if ($totalSubjects > 0) {
+            // All exams of the same exam type + term + class (this exam period)
+            $periodExamIds = Exam::where('standard_id', $exam->standard_id)
+                ->where('exam_type_id', $exam->exam_type_id)
+                ->where('academic_term_id', $exam->academic_term_id)
+                ->where('school_id', $exam->school_id)
+                ->pluck('id');
+
+            foreach (array_keys($request->marks) as $studentId) {
+                $studentMarksCount = Marks::whereIn('exam_id', $periodExamIds)
+                    ->where('student_id', $studentId)
+                    ->count();
+
+                // Student now has marks in all subjects → notify parent
+                if ($studentMarksCount >= $totalSubjects) {
+                    $sent = $outbound->notifyComprehensiveGrades($studentId, $exam->id);
+                    \Log::info("GradesPublished: student {$studentId} completed all {$totalSubjects} subjects, sent {$sent} message(s)");
+                }
+            }
+        }
+    } catch (\Throwable $e) {
+        \Log::warning("Failed to check/dispatch GradesPublished: {$e->getMessage()}");
+    }
+
+    // change exam status
+    $exam->changeExamStatus();
     return redirect()
         ->route('teacher.exam.marks')
         ->with('successmessage', ' marks saved!');

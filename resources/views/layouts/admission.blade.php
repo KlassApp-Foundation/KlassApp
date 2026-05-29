@@ -15,7 +15,7 @@
                     <div class="container mx-auto px-3 lg:px-0">
                         <div>
                             <!-- <a href="{{ url('/') }}">
-                                <img src="{{ asset('images/klassapp-k-white.png') }}" class="inline-block" style="height:55px;" alt="KlassApp Logo">
+                                <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="inline-block" style="height:45px; width: auto;" alt="KlassApp Logo">
                             </a> -->
                         </div>
                     </div>

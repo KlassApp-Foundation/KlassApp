@@ -230,4 +230,9 @@ class School extends Model
 
         return $array;
     }
+
+    public function premiumPage()
+    {
+        return $this->hasOne(\App\Models\PremiumPage::class);
+    }
 }

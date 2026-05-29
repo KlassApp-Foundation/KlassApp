@@ -9,7 +9,7 @@
             </button>
 
             <a class="h-10 object-contain" href="{{ route('dashboard') }}">
-                <img src="{{ asset('images/klassapp-k-white.png') }}" class="h-10 w-auto object-contain mr-3" alt="KlassApp Logo">
+                <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="h-10 w-auto object-contain mr-3" alt="KlassApp Logo">
             </a>
 
         @else
