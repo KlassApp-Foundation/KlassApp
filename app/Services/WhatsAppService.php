@@ -88,6 +88,81 @@ class WhatsAppService
     }
 
     /**
+     * Send an interactive List Message via Evolution API.
+     *
+     * WhatsApp List Messages present a "View Options" button that opens a
+     * scrollable list of up to 10 items. Each item has a title and optional
+     * description. Items can span multiple sections with section headers.
+     *
+     * @param string $phone E.164 format
+     * @param string $title Header text above the list
+     * @param array $sections Array of sections, each with 'title' and 'rows'.
+     *                        Rows: [['title' => 'Option', 'description' => '...'], ...]
+     *                        Max 10 rows total across all sections.
+     * @param string|null $description Body text below the title
+     * @param string|null $footerText Footer text
+     * @param string $buttonText Label for the CTA button (default: "View Options")
+     * @param string|null $flowType Category for analytics
+     * @param int|null $userId KlassApp user ID
+     */
+    public function sendList(
+        string $phone,
+        string $title,
+        array $sections,
+        ?string $description = null,
+        ?string $footerText = null,
+        string $buttonText = 'View Options',
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        // Build the rows preview for logging
+        $preview = collect($sections)->flatMap(fn($s) => $s['rows'] ?? [])
+            ->pluck('title')->implode(', ');
+
+        $response = Http::withHeaders([
+            'apikey' => $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->post("{$this->baseUrl}/message/sendList/{$this->instanceName}", [
+            'number'     => $this->cleanPhone($phone),
+            'title'      => $title,
+            'description' => $description ?? '',
+            'footerText'  => $footerText ?? '',
+            'buttonText'  => $buttonText,
+            'sections'    => $sections,
+        ]);
+
+        $messageId = $response->json('key.id') ?? Str::uuid()->toString();
+        $status = $response->successful() ? 'sent' : 'failed';
+
+        $log = MessageDeliveryLog::create([
+            'whatsapp_message_id' => $messageId,
+            'phone'               => $phone,
+            'category'            => 'interactive',
+            'status'              => $status,
+            'content_preview'     => "List: {$title} — {$preview}",
+            'user_id'             => $userId,
+            'flow_type'           => $flowType ?? 'menu',
+        ]);
+
+        if (!$response->successful()) {
+            Log::error('WhatsApp sendList failed', [
+                'phone'    => $phone,
+                'title'    => $title,
+                'status'   => $response->status(),
+                'body'     => $response->body(),
+            ]);
+            $log->markFailed("HTTP {$response->status()}: {$response->body()}");
+        }
+
+        return [
+            'success'    => $response->successful(),
+            'message_id' => $messageId,
+            'log_id'     => $log->id,
+            'status'     => $status,
+        ];
+    }
+
+    /**
      * Send a text message with automatic 24hr window fallback.
      *
      * If the service window is closed and $fallbackTemplate is provided,

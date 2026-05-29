@@ -17,9 +17,10 @@ Route::post( '/dashboard/send/reminder/{fee_id}', 'DashboardController@sendRemin
 Route::get( '/dashboard/tasklist/{task_flag}','DashboardController@list' );
 Route::get( '/dashboard/task/count','DashboardController@listCount' );
 
-// WhatsApp phone linking
+// WhatsApp
 Route::get( '/whatsapp/phone', 'UserProfileController@phoneLink' )->name( 'whatsapp.phone' );
 Route::post( '/whatsapp/phone', 'UserProfileController@linkWhatsApp' );
+Route::get( '/whatsapp/dashboard', 'WhatsAppDashboardController@index' )->name( 'whatsapp.dashboard' );
 
 //admission
 Route::get(	'/admissionlist','AdmissionController@admissionlist' );

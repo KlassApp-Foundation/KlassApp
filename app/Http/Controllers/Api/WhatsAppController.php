@@ -876,85 +876,144 @@ class WhatsAppController extends Controller
         $role = $user->user->usergroup_id;
         $hasChildren = $user->user->children()->exists();
 
+        // Send a brief greeting first
+        $greeting = "👋 Hello, *{$name}*! What would you like to do?";
+        $whatsAppService->sendText($phone, $greeting, 'menu_greeting', $user->user_id);
+
+        // Build interactive list sections per role
+        $sections = $this->buildMenuSections($role, $hasChildren);
+
+        // Send the interactive list
+        $whatsAppService->sendList(
+            phone: $phone,
+            title: '🏫 KlassApp Menu',
+            sections: $sections,
+            description: 'Tap an option below:',
+            footerText: 'Reply OPTIN / OPTOUT anytime',
+            buttonText: 'View Options',
+            flowType: 'menu',
+            userId: $user->user_id,
+        );
+    }
+
+    /**
+     * Build role-specific interactive menu sections.
+     *
+     * @param int $role usergroup_id
+     * @param bool $hasChildren Whether user has linked children
+     * @return array Sections array for sendList()
+     */
+    private function buildMenuSections(int $role, bool $hasChildren): array
+    {
         $menu = match ($role) {
             // — SchoolAdmin (3) —
-            3 => "👋 Hello, *{$name}*!\n\n"
-                . "🏫 *KlassApp Admin Menu*\n\n"
-                . "Send any keyword:\n\n"
-                . "👥 *STUDENTS* — Student list & search\n"
-                . "👔 *STAFF* — Staff list & management\n"
-                . "📝 *EXAMS* — Exam overview & results\n"
-                . "💰 *FEES* — Fee collection report\n"
-                . "📊 *REPORTS* — Attendance & grade reports\n"
-                . "📢 *NOTICES* — School announcements\n"
-                . "🎉 *EVENTS* — Upcoming school events\n"
-                . "📋 *MENU* — Show this menu again",
+            3 => [
+                'Management' => [
+                    ['title' => 'STUDENTS',   'description' => 'Student list & search'],
+                    ['title' => 'STAFF',      'description' => 'Staff list & management'],
+                    ['title' => 'EXAMS',      'description' => 'Exam overview & results'],
+                    ['title' => 'FEES',       'description' => 'Fee collection report'],
+                    ['title' => 'REPORTS',    'description' => 'Attendance & grade reports'],
+                    ['title' => 'NOTICES',    'description' => 'School announcements'],
+                ],
+                'School Life' => [
+                    ['title' => 'EVENTS',     'description' => 'Upcoming school events'],
+                    ['title' => 'MENU',       'description' => 'Show this menu again'],
+                ],
+            ],
 
             // — Teacher (5) —
-            5 => "👋 Hello, *{$name}*!\n\n"
-                . "📚 *KlassApp Teacher Menu*\n\n"
-                . "Send any keyword:\n\n"
-                . "📝 *MARKS* — Enter or view exam marks\n"
-                . "📅 *ATTENDANCE* — Mark class attendance\n"
-                . "📋 *TIMETABLE* — View my timetable\n"
-                . "📖 *ASSIGNMENTS* — View assignments\n"
-                . "🎉 *EVENTS* — Upcoming school events\n"
-                . "📋 *MENU* — Show this menu again",
+            5 => [
+                'Teaching' => [
+                    ['title' => 'MARKS',      'description' => 'Enter or view exam marks'],
+                    ['title' => 'ATTENDANCE', 'description' => 'Mark class attendance'],
+                    ['title' => 'TIMETABLE',  'description' => 'View my timetable'],
+                ],
+                'Resources' => [
+                    ['title' => 'ASSIGNMENTS','description' => 'View assignments'],
+                    ['title' => 'HOMEWORK',   'description' => 'View homework tasks'],
+                    ['title' => 'NOTICES',    'description' => 'School announcements'],
+                    ['title' => 'EVENTS',     'description' => 'Upcoming school events'],
+                ],
+            ],
 
             // — Student (6) —
-            6 => "👋 Hello, *{$name}*!\n\n"
-                . "📚 *KlassApp Student Menu*\n\n"
-                . "Send any keyword:\n\n"
-                . "📊 *GRADES* — View my exam results\n"
-                . "📅 *ATTENDANCE* — View my attendance\n"
-                . "💰 *FEES* — Check my fee balance\n"
-                . "📋 *TIMETABLE* — View class timetable\n"
-                . "📝 *HOMEWORK* — View pending homework\n"
-                . "🎉 *EVENTS* — Upcoming school events\n"
-                . "📋 *MENU* — Show this menu again",
+            6 => [
+                'My Data' => [
+                    ['title' => 'GRADES',     'description' => 'View my exam results'],
+                    ['title' => 'ATTENDANCE', 'description' => 'View my attendance'],
+                    ['title' => 'FEES',       'description' => 'Check my fee balance'],
+                ],
+                'School Life' => [
+                    ['title' => 'TIMETABLE',  'description' => 'View class timetable'],
+                    ['title' => 'HOMEWORK',   'description' => 'View pending homework'],
+                    ['title' => 'EVENTS',     'description' => 'Upcoming school events'],
+                ],
+            ],
 
             // — Parent (7) —
-            7 => "👋 Hello, *{$name}*!\n\n"
-                . "📚 *KlassApp Parent Menu*\n\n"
-                . "Send any keyword:\n\n"
-                . "📊 *GRADES* — View child's exam results\n"
-                . "💰 *FEES* — Check fee balance\n"
-                . "📅 *ATTENDANCE* — View attendance record\n"
-                . "🎉 *EVENTS* — Upcoming school events\n"
-                . "📋 *MENU* — Show this menu again",
+            7 => [
+                'My Children' => [
+                    ['title' => 'GRADES',     'description' => 'View child\'s exam results'],
+                    ['title' => 'FEES',       'description' => 'Check fee balance'],
+                    ['title' => 'ATTENDANCE', 'description' => 'View attendance record'],
+                    ['title' => 'EVENTS',     'description' => 'Upcoming school events'],
+                ],
+            ],
 
             // — Receptionist/Secretary (10) —
-            10 => "👋 Hello, *{$name}*!\n\n"
-                . "📚 *KlassApp Reception Menu*\n\n"
-                . "Send any keyword:\n\n"
-                . "📢 *NOTICES* — School announcements\n"
-                . "🎉 *EVENTS* — Upcoming school events\n"
-                . "📞 *CALLS* — Call log entries\n"
-                . "📋 *MENU* — Show this menu again",
+            10 => [
+                'Front Desk' => [
+                    ['title' => 'CALLS',      'description' => 'Call log entries'],
+                    ['title' => 'NOTICES',    'description' => 'School announcements'],
+                    ['title' => 'EVENTS',     'description' => 'Upcoming school events'],
+                ],
+            ],
 
             // — Accountant/Bursar (11) —
-            11 => "👋 Hello, *{$name}*!\n\n"
-                . "📚 *KlassApp Accountant Menu*\n\n"
-                . "Send any keyword:\n\n"
-                . "💰 *FEES* — Fee collection summary\n"
-                . "📊 *REPORTS* — Financial reports\n"
-                . "🎉 *EVENTS* — Upcoming school events\n"
-                . "📋 *MENU* — Show this menu again",
+            11 => [
+                'Finance' => [
+                    ['title' => 'FEES',       'description' => 'Fee collection summary'],
+                    ['title' => 'REPORTS',    'description' => 'Financial reports'],
+                    ['title' => 'EVENTS',     'description' => 'Upcoming school events'],
+                ],
+            ],
 
-            default => "👋 Hello, *{$name}*!\n\n"
-                . "📚 *KlassApp WhatsApp*\n\n"
-                . "Send *MENU* to see available options.",
+            default => [
+                'General' => [
+                    ['title' => 'MENU',       'description' => 'Show this menu'],
+                ],
+            ],
         };
 
-        // Dual-role: any staff member can also be a parent
+        // Add dual-role option for staff who are also parents
         if ($hasChildren && !in_array($role, [6, 7])) {
-            $menu .= "\n👨‍👩‍👧‍👧 *MY CHILDREN* — View your children's data";
+            $childrenSection = [];
+            // Insert into the first section, or create one
+            $firstKey = array_key_first($menu);
+            $menu[$firstKey][] = [
+                'title' => 'MY CHILDREN',
+                'description' => 'View your children\'s data',
+            ];
         }
 
-        $menu .= "\n❌ *OPTOUT* — Stop notifications\n\n";
-        $menu .= "_Reply with a keyword to get started._";
+        // Add OPTOUT as last item in the last section
+        $lastKey = array_key_last($menu);
+        // Convert to array so we can modify
+        $lastSection = $menu[$lastKey];
+        // Only add OPTOUT if the section won't exceed 10 total rows across all sections
+        // (WhatsApp limit is 10 rows total)
+        $totalRows = collect($menu)->flatten(1)->count();
+        if ($totalRows < 10) {
+            $lastSection[] = ['title' => 'OPTOUT', 'description' => 'Stop notifications'];
+            $menu[$lastKey] = $lastSection;
+        }
 
-        $whatsAppService->sendText($phone, $menu, 'menu', $user->user_id);
+        // Convert to API format
+        return collect($menu)->map(fn($rows, $title) => [
+            'title' => $title,
+            'rows'  => $rows,
+        ])->values()->toArray();
     }
 
     /**
