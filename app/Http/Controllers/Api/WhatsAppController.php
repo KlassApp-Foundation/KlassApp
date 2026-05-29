@@ -68,17 +68,18 @@ class WhatsAppController extends Controller
         }
 
         $user = $whatsappUser->user;
+        $userType = $this->resolveUserType($user);
         $response = [
             'identified' => true,
             'user_id'    => $user->id,
             'name'       => $user->name,
-            'user_type'  => $whatsappUser->user_type,
+            'user_type'  => $userType,
             'school_id'  => $user->school_id,
             'school_name' => $user->school?->name,
         ];
 
         // If parent, include linked children
-        if ($whatsappUser->user_type === 'parent') {
+        if ($userType === 'parent') {
             $children = $user->children()
                 ->with(['studentAcademic.standard', 'studentAcademic.section'])
                 ->get()
@@ -97,7 +98,7 @@ class WhatsAppController extends Controller
         }
 
         // If teacher, include linked classes
-        if ($whatsappUser->user_type === 'teacher') {
+        if ($userType === 'teacher') {
             $teacherProfile = $user->teacherProfile;
             if ($teacherProfile) {
                 $linkedStandards = $teacherProfile->standards()
@@ -441,6 +442,8 @@ class WhatsAppController extends Controller
      *   "status": "delivered|read|failed",
      *   "phone": "+256701234567"
      * }
+     *
+     * Tracks retries for failed messages and alerts after 3 consecutive failures.
      */
     public function deliveryWebhook(Request $request)
     {
@@ -453,6 +456,7 @@ class WhatsAppController extends Controller
             'status'              => 'required|in:sent,delivered,read,failed,received',
             'template_name'       => 'nullable|string',
             'error'               => 'nullable|string',
+            'error_code'          => 'nullable|string',
         ]);
 
         // Inbound: create a new log entry (these are the messages that open the 24hr window)
@@ -481,11 +485,52 @@ class WhatsAppController extends Controller
         match ($status) {
             'delivered' => $log->markDelivered(),
             'read'      => $log->markRead(),
-            'failed'    => $log->markFailed($request->input('error', 'Unknown error')),
+            'failed'    => $this->handleDeliveryFailure($log, $request),
             'sent'      => $log->update(['status' => 'sent']),
         };
 
         return response()->json(['status' => 'updated']);
+    }
+
+    /**
+     * Handle a delivery failure with retry tracking and alerting.
+     *
+     * Counts consecutive failures per phone. After 3 failures,
+     * logs a high-severity alert for operational review.
+     */
+    private function handleDeliveryFailure(MessageDeliveryLog $log, Request $request): void
+    {
+        $error = $request->input('error', 'Unknown error');
+        $errorCode = $request->input('error_code', '');
+        $phone = $request->input('phone');
+
+        $log->markFailed($errorCode ? "[{$errorCode}] {$error}" : $error);
+
+        // Count consecutive failures for this phone in the last hour
+        $consecutiveFailures = MessageDeliveryLog::where('phone', $phone)
+            ->where('direction', 'outbound')
+            ->where('status', 'failed')
+            ->where('sent_at', '>=', now()->subHour())
+            ->count();
+
+        Log::warning('WhatsApp delivery failure', [
+            'phone'               => $phone,
+            'message_id'          => $log->whatsapp_message_id,
+            'error'               => $error,
+            'error_code'          => $errorCode,
+            'consecutive_failures' => $consecutiveFailures,
+        ]);
+
+        // Alert after 3+ consecutive failures in an hour — likely a systemic issue
+        if ($consecutiveFailures >= 3 && $consecutiveFailures % 3 === 0) {
+            Log::error('WHATSAPP DELIVERY: High failure rate detected', [
+                'phone'                => $phone,
+                'consecutive_failures' => $consecutiveFailures,
+                'recent_error'         => $error,
+                'alert_threshold'      => 3,
+                'action_required'      => 'Check Evolution API status, phone validity, or WhatsApp account health.',
+            ]);
+        }
     }
 
     public function checkWindow(Request $request)
@@ -494,11 +539,16 @@ class WhatsAppController extends Controller
         if (!$phone) {
             return response()->json(['error' => 'phone required'], 422);
         }
-        $open = MessageDeliveryLog::where('phone', $phone)
-            ->where('direction', 'inbound')
-            ->where('sent_at', '>=', now()->subHours(24))
-            ->exists();
-        return response()->json(['window_open' => $open, 'phone' => $phone]);
+
+        $whatsappUser = WhatsAppUser::findByPhone($phone);
+        $open = $whatsappUser && $whatsappUser->last_inbound_at
+            && $whatsappUser->last_inbound_at->gt(now()->subHours(24));
+
+        return response()->json([
+            'window_open'     => $open,
+            'phone'           => $phone,
+            'last_inbound_at' => $whatsappUser?->last_inbound_at?->toIso8601String(),
+        ]);
     }
 
     // =====================================================================
@@ -575,6 +625,9 @@ class WhatsAppController extends Controller
             'content_preview'     => \Illuminate\Support\Str::limit($body, 200),
         ]);
 
+        // Track last inbound activity (opens 24hr service window)
+        WhatsAppUser::where('phone', $phone)->update(['last_inbound_at' => now()]);
+
         // Identify user
         $whatsappUser = WhatsAppUser::with(['user.userprofile', 'user.school'])
             ->where('phone', $phone)
@@ -639,31 +692,166 @@ class WhatsAppController extends Controller
     private function routeInbound(WhatsAppUser $user, string $phone, string $body, WhatsAppService $whatsAppService): void
     {
         $trimmed = strtolower(trim($body));
+        $role = $user->user->usergroup_id;
+        $hasChildren = $user->user->children()->exists();
 
-        // Keyword matching
+        // Universal: menu/help
         if (in_array($trimmed, ['menu', 'help', 'start', 'options'])) {
             $this->sendMenu($user, $phone, $whatsAppService);
             return;
         }
 
-        if (in_array($trimmed, ['grades', 'results', 'marks', 'report', 'exams'])) {
-            $this->sendGrades($user, $phone, $whatsAppService);
+        // Universal: optin / optout
+        if ($trimmed === 'optin') {
+            $user->update(['opted_in' => true]);
+            $whatsAppService->sendText(
+                $phone,
+                "✅ You have re-enabled WhatsApp notifications.\n\nSend *MENU* to see available options.",
+                'opted_in',
+                $user->user_id,
+            );
+            Log::info("WhatsApp opt-in: user {$user->user_id}");
             return;
         }
 
-        if (in_array($trimmed, ['fees', 'fee', 'balance', 'payment', 'pay'])) {
-            $this->sendFees($user, $phone, $whatsAppService);
+        if (in_array($trimmed, ['optout', 'stop', 'unsubscribe'])) {
+            $user->update(['opted_in' => false]);
+            $whatsAppService->sendText(
+                $phone,
+                "You have been unsubscribed from WhatsApp notifications. Reply *OPTIN* to re-enable.",
+                'opted_out',
+                $user->user_id,
+            );
+            Log::info("WhatsApp opt-out: user {$user->user_id}");
             return;
         }
 
-        if (in_array($trimmed, ['attendance', 'absent', 'present', 'late'])) {
-            $this->sendAttendance($user, $phone, $whatsAppService);
-            return;
-        }
-
+        // Universal: events (any role)
         if (in_array($trimmed, ['events', 'event', 'calendar', 'news'])) {
             $this->sendEvents($user, $phone, $whatsAppService);
             return;
+        }
+
+        // -- Role-specific routing --
+
+        // SchoolAdmin (3)
+        if ($role === 3) {
+            if (in_array($trimmed, ['students', 'student', 'learner'])) {
+                $this->sendStudentList($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['staff', 'teacher', 'employees'])) {
+                $this->sendStaffList($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['exams', 'exam', 'marks', 'results', 'report'])) {
+                $this->sendAdminExams($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['fees', 'fee', 'balance', 'payment', 'pay'])) {
+                $this->sendAdminFees($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['reports', 'analytics', 'stats'])) {
+                $this->sendAdminReports($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['notices', 'announcements', 'bulletin'])) {
+                $this->sendNotices($user, $phone, $whatsAppService);
+                return;
+            }
+        }
+
+        // Teacher (5)
+        if ($role === 5) {
+            if (in_array($trimmed, ['marks', 'exam', 'results', 'grades'])) {
+                $this->sendTeacherMarks($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['attendance', 'absent', 'present', 'late'])) {
+                $this->sendAttendance($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['timetable', 'schedule', 'periods'])) {
+                $this->sendTimetable($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['assignments', 'homework', 'tasks'])) {
+                $this->sendAssignments($user, $phone, $whatsAppService);
+                return;
+            }
+        }
+
+        // Student (6)
+        if ($role === 6) {
+            if (in_array($trimmed, ['grades', 'results', 'marks', 'exam'])) {
+                $this->sendStudentGrades($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['attendance', 'absent', 'present', 'late'])) {
+                $this->sendStudentAttendance($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['fees', 'fee', 'balance', 'payment'])) {
+                $this->sendStudentFees($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['timetable', 'schedule', 'periods'])) {
+                $this->sendTimetable($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['homework', 'hw', 'assignment'])) {
+                $this->sendHomework($user, $phone, $whatsAppService);
+                return;
+            }
+        }
+
+        // Parent (7)
+        if ($role === 7) {
+            if (in_array($trimmed, ['grades', 'results', 'marks', 'report', 'exams'])) {
+                $this->sendGrades($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['fees', 'fee', 'balance', 'payment', 'pay'])) {
+                $this->sendFees($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['attendance', 'absent', 'present', 'late'])) {
+                $this->sendAttendance($user, $phone, $whatsAppService);
+                return;
+            }
+        }
+
+        // Receptionist/Secretary (10)
+        if ($role === 10) {
+            if (in_array($trimmed, ['notices', 'announcements', 'bulletin'])) {
+                $this->sendNotices($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['calls', 'call', 'phone', 'visitor'])) {
+                $this->sendCallLog($user, $phone, $whatsAppService);
+                return;
+            }
+        }
+
+        // Accountant/Bursar (11)
+        if ($role === 11) {
+            if (in_array($trimmed, ['fees', 'fee', 'balance', 'payment', 'pay', 'collections'])) {
+                $this->sendAccountantFees($user, $phone, $whatsAppService);
+                return;
+            }
+            if (in_array($trimmed, ['reports', 'analytics', 'financial', 'summary'])) {
+                $this->sendAccountantReports($user, $phone, $whatsAppService);
+                return;
+            }
+        }
+
+        // Dual-role: any staff member with children can access parent features
+        if ($hasChildren && !in_array($role, [6, 7])) {
+            if (in_array($trimmed, ['my children', 'children', 'kids', 'my kids'])) {
+                $this->sendGrades($user, $phone, $whatsAppService);
+                return;
+            }
         }
 
         // Unknown keyword — send menu
@@ -684,58 +872,97 @@ class WhatsAppController extends Controller
      */
     private function sendMenu(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
     {
-        $name = $user->user->name ?? 'Parent';
-        $userType = $user->user_type;
+        $name = $user->user->name ?? 'User';
+        $role = $user->user->usergroup_id;
+        $hasChildren = $user->user->children()->exists();
 
-        if ($userType === 'parent') {
-            $menu = "👋 Hello, *{$name}*!\n\n";
-            $menu .= "📚 *KlassApp WhatsApp Menu*\n\n";
-            $menu .= "Send any of these keywords:\n\n";
-            $menu .= "📊 *GRADES* — View student results\n";
-            $menu .= "💰 *FEES* — Check fee balance\n";
-            $menu .= "📅 *ATTENDANCE* — View attendance record\n";
-            $menu .= "🎉 *EVENTS* — Upcoming school events\n";
-            $menu .= "📋 *MENU* — Show this menu again\n";
-            $menu .= "❌ *OPTOUT* — Stop notifications\n\n";
-            $menu .= "_Reply with a keyword to get started._";
-        } elseif ($userType === 'teacher') {
-            $menu = "👋 Hello, *{$name}*!\n\n";
-            $menu .= "📚 *KlassApp WhatsApp Menu (Teacher)*\n\n";
-            $menu .= "Send any of these keywords:\n\n";
-            $menu .= "📅 *ATTENDANCE* — Mark class attendance\n";
-            $menu .= "🎉 *EVENTS* — Upcoming school events\n";
-            $menu .= "📋 *MENU* — Show this menu again\n";
-            $menu .= "❌ *OPTOUT* — Stop notifications\n\n";
-            $menu .= "_Reply with a keyword to get started._";
-        } else {
-            $menu = "👋 Hello, *{$name}*!\n\n";
-            $menu .= "📚 *KlassApp WhatsApp Menu*\n\n";
-            $menu .= "Send *MENU* to see available options.\n";
-            $menu .= "❌ *OPTOUT* — Stop notifications";
+        $menu = match ($role) {
+            // — SchoolAdmin (3) —
+            3 => "👋 Hello, *{$name}*!\n\n"
+                . "🏫 *KlassApp Admin Menu*\n\n"
+                . "Send any keyword:\n\n"
+                . "👥 *STUDENTS* — Student list & search\n"
+                . "👔 *STAFF* — Staff list & management\n"
+                . "📝 *EXAMS* — Exam overview & results\n"
+                . "💰 *FEES* — Fee collection report\n"
+                . "📊 *REPORTS* — Attendance & grade reports\n"
+                . "📢 *NOTICES* — School announcements\n"
+                . "🎉 *EVENTS* — Upcoming school events\n"
+                . "📋 *MENU* — Show this menu again",
+
+            // — Teacher (5) —
+            5 => "👋 Hello, *{$name}*!\n\n"
+                . "📚 *KlassApp Teacher Menu*\n\n"
+                . "Send any keyword:\n\n"
+                . "📝 *MARKS* — Enter or view exam marks\n"
+                . "📅 *ATTENDANCE* — Mark class attendance\n"
+                . "📋 *TIMETABLE* — View my timetable\n"
+                . "📖 *ASSIGNMENTS* — View assignments\n"
+                . "🎉 *EVENTS* — Upcoming school events\n"
+                . "📋 *MENU* — Show this menu again",
+
+            // — Student (6) —
+            6 => "👋 Hello, *{$name}*!\n\n"
+                . "📚 *KlassApp Student Menu*\n\n"
+                . "Send any keyword:\n\n"
+                . "📊 *GRADES* — View my exam results\n"
+                . "📅 *ATTENDANCE* — View my attendance\n"
+                . "💰 *FEES* — Check my fee balance\n"
+                . "📋 *TIMETABLE* — View class timetable\n"
+                . "📝 *HOMEWORK* — View pending homework\n"
+                . "🎉 *EVENTS* — Upcoming school events\n"
+                . "📋 *MENU* — Show this menu again",
+
+            // — Parent (7) —
+            7 => "👋 Hello, *{$name}*!\n\n"
+                . "📚 *KlassApp Parent Menu*\n\n"
+                . "Send any keyword:\n\n"
+                . "📊 *GRADES* — View child's exam results\n"
+                . "💰 *FEES* — Check fee balance\n"
+                . "📅 *ATTENDANCE* — View attendance record\n"
+                . "🎉 *EVENTS* — Upcoming school events\n"
+                . "📋 *MENU* — Show this menu again",
+
+            // — Receptionist/Secretary (10) —
+            10 => "👋 Hello, *{$name}*!\n\n"
+                . "📚 *KlassApp Reception Menu*\n\n"
+                . "Send any keyword:\n\n"
+                . "📢 *NOTICES* — School announcements\n"
+                . "🎉 *EVENTS* — Upcoming school events\n"
+                . "📞 *CALLS* — Call log entries\n"
+                . "📋 *MENU* — Show this menu again",
+
+            // — Accountant/Bursar (11) —
+            11 => "👋 Hello, *{$name}*!\n\n"
+                . "📚 *KlassApp Accountant Menu*\n\n"
+                . "Send any keyword:\n\n"
+                . "💰 *FEES* — Fee collection summary\n"
+                . "📊 *REPORTS* — Financial reports\n"
+                . "🎉 *EVENTS* — Upcoming school events\n"
+                . "📋 *MENU* — Show this menu again",
+
+            default => "👋 Hello, *{$name}*!\n\n"
+                . "📚 *KlassApp WhatsApp*\n\n"
+                . "Send *MENU* to see available options.",
+        };
+
+        // Dual-role: any staff member can also be a parent
+        if ($hasChildren && !in_array($role, [6, 7])) {
+            $menu .= "\n👨‍👩‍👧‍👧 *MY CHILDREN* — View your children's data";
         }
+
+        $menu .= "\n❌ *OPTOUT* — Stop notifications\n\n";
+        $menu .= "_Reply with a keyword to get started._";
 
         $whatsAppService->sendText($phone, $menu, 'menu', $user->user_id);
     }
 
     /**
-     * Send grades/results to a parent for their children.
-     *
-     * @param WhatsAppUser $user
-     * @param string $phone
-     * @param WhatsAppService $whatsAppService
+     * Send grades/results to a parent for ALL their children.
+     * Sends one message per child to keep each message focused.
      */
     private function sendGrades(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
     {
-        if ($user->user_type !== 'parent') {
-            $whatsAppService->sendText(
-                $phone,
-                "📊 Grades are only available for parents.\n\nIf you are a parent, contact your school to update your account type.",
-                'grades_unauthorized',
-                $user->user_id,
-            );
-            return;
-        }
-
         $children = $user->user->children()
             ->with(['studentAcademic.standard', 'studentAcademic.section'])
             ->get();
@@ -750,77 +977,74 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // Get grades for the first child (or all if only one)
-        $student = $children->first();
-        $studentName = $student->name;
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $sentAny = false;
 
-        // Reuse the same query logic as grades() method
-        $examQuery = Exam::where('student_id', $student->id);
-        $academicYear = \App\Helpers\SiteHelper::getAcademicYear($user->user->school_id);
-        if ($academicYear) {
-            $examQuery->where('academic_year_id', $academicYear->id);
+        foreach ($children as $student) {
+            $studentName = $student->name;
+            $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+
+            $examQuery = Exam::where('student_id', $student->id);
+            $academicYear = \App\Helpers\SiteHelper::getAcademicYear($user->user->school_id);
+            if ($academicYear) {
+                $examQuery->where('academic_year_id', $academicYear->id);
+            }
+
+            $exams = $examQuery->with(['marks', 'examType'])->latest()->take(3)->get();
+
+            if ($exams->isEmpty()) {
+                $whatsAppService->sendText(
+                    $phone,
+                    "📊 *Results for {$studentName}*\n_{$className}_\n\nNo results available yet.\n\nResults will be sent here once published by the school.",
+                    'grades_none',
+                    $user->user_id,
+                );
+                continue;
+            }
+
+            $message = "📊 *Results for {$studentName}*\n_{$className}_\n\n";
+
+            foreach ($exams as $exam) {
+                $examName = $exam->name ?? $exam->examType?->name ?? 'Exam';
+                $term = $exam->term ?? 'N/A';
+                $message .= "📝 *{$examName}* ({$term})\n";
+
+                $marks = $exam->marks->take(5);
+                foreach ($marks as $mark) {
+                    $subject = $mark->subject_name ?? 'Unknown';
+                    $score = $mark->marks_obtained ?? '-';
+                    $total = $mark->marks_total ?? 100;
+                    $grade = $mark->grade ?? '-';
+                    $message .= "• {$subject}: {$score}/{$total} ({$grade})\n";
+                }
+
+                $avg = $marks->avg('marks_obtained');
+                if ($avg) {
+                    $message .= "_Average: " . round($avg, 1) . "%_\n";
+                }
+                $message .= "\n";
+            }
+
+            $message .= "_Send GRADES for latest results._";
+            $whatsAppService->sendText($phone, $message, 'grades', $user->user_id);
+            $sentAny = true;
         }
 
-        $exams = $examQuery->with(['marks', 'examType'])->latest()->take(3)->get();
-
-        if ($exams->isEmpty()) {
+        if (!$sentAny) {
             $whatsAppService->sendText(
                 $phone,
-                "📊 *Results for {$studentName}*\n_{$className}_\n\nNo results available yet.\n\nResults will be sent here once published by the school.",
-                'grades_none',
+                "📊 No results found for any of your children.\n\nResults will appear here once published by the school.",
+                'grades_none_all',
                 $user->user_id,
             );
-            return;
         }
-
-        $message = "📊 *Results for {$studentName}*\n_{$className}_\n\n";
-
-        foreach ($exams as $exam) {
-            $examName = $exam->name ?? $exam->examType?->name ?? 'Exam';
-            $term = $exam->term ?? 'N/A';
-            $message .= "📝 *{$examName}* ({$term})\n";
-
-            $marks = $exam->marks->take(5);
-            foreach ($marks as $mark) {
-                $subject = $mark->subject_name ?? 'Unknown';
-                $score = $mark->marks_obtained ?? '-';
-                $total = $mark->marks_total ?? 100;
-                $grade = $mark->grade ?? '-';
-                $message .= "• {$subject}: {$score}/{$total} ({$grade})\n";
-            }
-
-            $avg = $marks->avg('marks_obtained');
-            if ($avg) {
-                $message .= "_Average: " . round($avg, 1) . "%_\n";
-            }
-            $message .= "\n";
-        }
-
-        $message .= "_Send GRADES for latest results._";
-
-        $whatsAppService->sendText($phone, $message, 'grades', $user->user_id);
     }
 
     /**
-     * Send fee balance to a parent.
-     *
-     * @param WhatsAppUser $user
-     * @param string $phone
-     * @param WhatsAppService $whatsAppService
+     * Send fee balance to a parent for ALL their children.
+     * Sends one message per child.
      */
     private function sendFees(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
     {
-        if ($user->user_type !== 'parent') {
-            $whatsAppService->sendText(
-                $phone,
-                "💰 Fee information is only available for parents.\n\nIf you are a parent, contact your school to update your account type.",
-                'fees_unauthorized',
-                $user->user_id,
-            );
-            return;
-        }
-
         $children = $user->user->children()
             ->with(['studentAcademic.standard'])
             ->get();
@@ -835,38 +1059,50 @@ class WhatsAppController extends Controller
             return;
         }
 
-        $student = $children->first();
-        $studentName = $student->name;
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $sentAny = false;
 
-        // Reuse the same query logic as feeBalance() method
-        $feeCategories = FeesCategories::where('school_id', $user->user->school_id)
-            ->where('standard_id', function ($q) use ($student) {
-                $q->select('standard_id')
-                    ->from('student_academics')
-                    ->where('student_id', $student->id)
-                    ->latest()
-                    ->limit(1);
-            })
-            ->get();
+        foreach ($children as $student) {
+            $studentName = $student->name;
+            $className = $student->studentAcademic?->standard?->name ?? 'N/A';
 
-        $totalFees = $feeCategories->sum('amount');
+            $feeCategories = FeesCategories::where('school_id', $user->user->school_id)
+                ->where('standard_id', function ($q) use ($student) {
+                    $q->select('standard_id')
+                        ->from('student_academics')
+                        ->where('student_id', $student->id)
+                        ->latest()
+                        ->limit(1);
+                })
+                ->get();
 
-        $message = "💰 *Fee Balance for {$studentName}*\n_{$className}_\n\n";
+            $totalFees = $feeCategories->sum('amount');
 
-        if ($feeCategories->isEmpty()) {
-            $message .= "No fee structure found.\n\nContact the school office for details.";
-        } else {
-            foreach ($feeCategories as $category) {
-                $dueDate = $category->due_date ? date('d M Y', strtotime($category->due_date)) : 'N/A';
-                $message .= "• {$category->name}: UGX " . number_format($category->amount, 0) . "\n";
-                $message .= "  Due: {$dueDate}\n";
+            $message = "💰 *Fee Balance for {$studentName}*\n_{$className}_\n\n";
+
+            if ($feeCategories->isEmpty()) {
+                $message .= "No fee structure found.\n\nContact the school office for details.";
+            } else {
+                foreach ($feeCategories as $category) {
+                    $dueDate = $category->due_date ? date('d M Y', strtotime($category->due_date)) : 'N/A';
+                    $message .= "• {$category->name}: UGX " . number_format($category->amount, 0) . "\n";
+                    $message .= "  Due: {$dueDate}\n";
+                }
+                $message .= "\n💵 *Total: UGX " . number_format($totalFees, 0) . "*\n";
+                $message .= "\n_Contact school office for payment status._";
             }
-            $message .= "\n💵 *Total: UGX " . number_format($totalFees, 0) . "*\n";
-            $message .= "\n_Contact school office for payment status._";
+
+            $whatsAppService->sendText($phone, $message, 'fees', $user->user_id);
+            $sentAny = true;
         }
 
-        $whatsAppService->sendText($phone, $message, 'fees', $user->user_id);
+        if (!$sentAny) {
+            $whatsAppService->sendText(
+                $phone,
+                "💰 No fee information found for any of your children.\n\nContact the school office for details.",
+                'fees_none_all',
+                $user->user_id,
+            );
+        }
     }
 
     /**
@@ -876,19 +1112,15 @@ class WhatsAppController extends Controller
      * @param string $phone
      * @param WhatsAppService $whatsAppService
      */
+    /**
+     * Send attendance summary to a parent for ALL their children.
+     * Sends one message per child.
+     */
     private function sendAttendance(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
     {
-        if ($user->user_type !== 'parent') {
-            $whatsAppService->sendText(
-                $phone,
-                "📅 Attendance is only available for parents.\n\nIf you are a parent, contact your school to update your account type.",
-                'attendance_unauthorized',
-                $user->user_id,
-            );
-            return;
-        }
-
-        $children = $user->user->children()->get();
+        $children = $user->user->children()
+            ->with(['studentAcademic.standard'])
+            ->get();
 
         if ($children->isEmpty()) {
             $whatsAppService->sendText(
@@ -900,43 +1132,63 @@ class WhatsAppController extends Controller
             return;
         }
 
-        $student = $children->first();
-        $studentName = $student->name;
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $sentAny = false;
 
-        // Reuse the same query logic as attendance() method
-        $records = Attendance::where('student_id', $student->id)
-            ->where('date', '>=', Carbon::now()->subMonth())
-            ->orderBy('date', 'desc')
-            ->get();
+        foreach ($children as $student) {
+            $studentName = $student->name;
+            $className = $student->studentAcademic?->standard?->name ?? 'N/A';
 
-        $totalDays = $records->count();
-        $presentDays = $records->where('status', 'present')->count();
-        $absentDays = $records->where('status', 'absent')->count();
-        $lateDays = $records->where('status', 'late')->count();
-        $attendanceRate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
+            $records = Attendance::where('student_id', $student->id)
+                ->where('date', '>=', Carbon::now()->subMonth())
+                ->orderBy('date', 'desc')
+                ->get();
 
-        $message = "📅 *Attendance for {$studentName}*\n_{$className}_\n_This month_\n\n";
-        $message .= "✅ Present: {$presentDays} days\n";
-        $message .= "❌ Absent: {$absentDays} days\n";
-        $message .= "⏰ Late: {$lateDays} days\n";
-        $message .= "📊 Rate: {$attendanceRate}%\n";
-
-        // Show recent absences
-        $recentAbsent = $records->where('status', '!=', 'present')->take(3);
-        if ($recentAbsent->isNotEmpty()) {
-            $message .= "\n📌 *Recent absences:*\n";
-            foreach ($recentAbsent as $record) {
-                $date = Carbon::parse($record->date)->format('D d M Y');
-                $status = ucfirst($record->status);
-                $remark = $record->remark ? " ({$record->remark})" : '';
-                $message .= "• {$date}: {$status}{$remark}\n";
+            if ($records->isEmpty()) {
+                $whatsAppService->sendText(
+                    $phone,
+                    "📅 *Attendance for {$studentName}*\n_{$className}_\n_This month_\n\nNo attendance records found.",
+                    'attendance_none',
+                    $user->user_id,
+                );
+                continue;
             }
+
+            $totalDays = $records->count();
+            $presentDays = $records->where('status', 'present')->count();
+            $absentDays = $records->where('status', 'absent')->count();
+            $lateDays = $records->where('status', 'late')->count();
+            $attendanceRate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
+
+            $message = "📅 *Attendance for {$studentName}*\n_{$className}_\n_This month_\n\n";
+            $message .= "✅ Present: {$presentDays} days\n";
+            $message .= "❌ Absent: {$absentDays} days\n";
+            $message .= "⏰ Late: {$lateDays} days\n";
+            $message .= "📊 Rate: {$attendanceRate}%\n";
+
+            $recentAbsent = $records->where('status', '!=', 'present')->take(3);
+            if ($recentAbsent->isNotEmpty()) {
+                $message .= "\n📌 *Recent absences:*\n";
+                foreach ($recentAbsent as $record) {
+                    $date = Carbon::parse($record->date)->format('D d M Y');
+                    $status = ucfirst($record->status);
+                    $remark = $record->remark ? " ({$record->remark})" : '';
+                    $message .= "• {$date}: {$status}{$remark}\n";
+                }
+            }
+
+            $message .= "\n_Send ATTENDANCE for updated record._";
+            $whatsAppService->sendText($phone, $message, 'attendance', $user->user_id);
+            $sentAny = true;
         }
 
-        $message .= "\n_Send ATTENDANCE for updated record._";
-
-        $whatsAppService->sendText($phone, $message, 'attendance', $user->user_id);
+        if (!$sentAny) {
+            $whatsAppService->sendText(
+                $phone,
+                "📅 No attendance records found for any of your children.",
+                'attendance_none_all',
+                $user->user_id,
+            );
+        }
     }
 
     /**
@@ -985,5 +1237,376 @@ class WhatsAppController extends Controller
         $message .= "_Send EVENTS for latest updates._";
 
         $whatsAppService->sendText($phone, $message, 'events', $user->user_id);
+    }
+
+    // ----------------------------------------------------------------
+    //  Student handlers
+    // ----------------------------------------------------------------
+
+    /**
+     * Send grades/results to a student for their own record.
+     */
+    private function sendStudentGrades(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $student = $user->user;
+        $studentName = $student->name;
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+
+        $examQuery = Exam::where('student_id', $student->id);
+        $academicYear = \App\Helpers\SiteHelper::getAcademicYear($student->school_id);
+        if ($academicYear) {
+            $examQuery->where('academic_year_id', $academicYear->id);
+        }
+
+        $exams = $examQuery->with(['marks', 'examType'])->latest()->take(5)->get();
+
+        if ($exams->isEmpty()) {
+            $whatsAppService->sendText(
+                $phone,
+                "📊 *My Results*\n_{$className}_\n\nNo results available yet.",
+                'grades_none',
+                $user->user_id,
+            );
+            return;
+        }
+
+        $message = "📊 *My Results — {$studentName}*\n_{$className}_\n\n";
+        foreach ($exams as $exam) {
+            $examName = $exam->name ?? $exam->examType?->name ?? 'Exam';
+            $message .= "📝 *{$examName}*\n";
+            foreach ($exam->marks as $mark) {
+                $subject = $mark->subject_name ?? 'Unknown';
+                $score = $mark->marks_obtained ?? '-';
+                $total = $mark->marks_total ?? 100;
+                $grade = $mark->grade ?? '';
+                $message .= "  • {$subject}: {$score}/{$total} {$grade}\n";
+            }
+            $message .= "\n";
+        }
+
+        $whatsAppService->sendText($phone, $message, 'grades', $user->user_id);
+    }
+
+    /**
+     * Send attendance summary to a student for their own record.
+     */
+    private function sendStudentAttendance(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $student = $user->user;
+        $academicYear = \App\Helpers\SiteHelper::getAcademicYear($student->school_id);
+
+        $records = Attendance::where('student_id', $student->id)
+            ->when($academicYear, fn ($q) => $q->whereBetween('date', [
+                $academicYear->start_date ?? Carbon::now()->startOfYear(),
+                $academicYear->end_date ?? Carbon::now()->endOfYear(),
+            ]))
+            ->orderBy('date', 'desc')
+            ->get();
+
+        $totalDays = $records->count();
+        $presentDays = $records->where('status', 'present')->count();
+        $absentDays = $records->where('status', 'absent')->count();
+        $rate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
+
+        $message = "📅 *My Attendance*\n_{$student->name}_\n\n";
+        $message .= "✅ Present: {$presentDays}\n";
+        $message .= "❌ Absent: {$absentDays}\n";
+        $message .= "📊 Rate: {$rate}%\n\n";
+
+        $recentAbsent = $records->where('status', '!=', 'present')->take(3);
+        if ($recentAbsent->isNotEmpty()) {
+            $message .= "Recent absences:\n";
+            foreach ($recentAbsent as $record) {
+                $message .= "  • " . Carbon::parse($record->date)->format('d M Y') . "\n";
+            }
+        }
+
+        $whatsAppService->sendText($phone, $message, 'attendance', $user->user_id);
+    }
+
+    /**
+     * Send fee balance to a student for their own record.
+     */
+    private function sendStudentFees(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $student = $user->user;
+
+        $feeCategories = FeesCategories::where('school_id', $student->school_id)
+            ->where('standard_id', function ($q) use ($student) {
+                $q->select('standard_id')
+                    ->from('student_academics')
+                    ->where('student_id', $student->id)
+                    ->latest()
+                    ->limit(1);
+            })
+            ->get();
+
+        $totalFees = $feeCategories->sum('amount');
+        $message = "💰 *My Fee Balance*\n_{$student->name}_\n\n";
+
+        if ($feeCategories->isEmpty()) {
+            $message .= "No fee structure found.";
+        } else {
+            foreach ($feeCategories as $category) {
+                $dueDate = $category->due_date ? date('d M Y', strtotime($category->due_date)) : 'N/A';
+                $message .= "• {$category->name}: UGX " . number_format($category->amount, 0) . "\n";
+                $message .= "  Due: {$dueDate}\n";
+            }
+            $message .= "\n💵 *Total: UGX " . number_format($totalFees, 0) . "*";
+            $message .= "\n\n_Contact school office for payment status._";
+        }
+
+        $whatsAppService->sendText($phone, $message, 'fees', $user->user_id);
+    }
+
+    // ----------------------------------------------------------------
+    //  Teacher handlers
+    // ----------------------------------------------------------------
+
+    /**
+     * Send marks overview for the teacher's subjects.
+     */
+    private function sendTeacherMarks(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $teacher = $user->user;
+
+        $exams = Exam::with(['standard', 'subject', 'examType'])
+            ->where('teacher_id', $teacher->id)
+            ->where('school_id', $teacher->school_id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        if ($exams->isEmpty()) {
+            $whatsAppService->sendText(
+                $phone,
+                "📝 *My Exams*\n\nNo exams assigned to you yet.",
+                'marks_none',
+                $user->user_id,
+            );
+            return;
+        }
+
+        $message = "📝 *My Exams & Marks*\n\n";
+        foreach ($exams as $exam) {
+            $marksCount = Marks::where('exam_id', $exam->id)->count();
+            $status = $exam->status === 'completed' ? '✅' : '⏳';
+            $message .= "{$status} {$exam->subject?->name} — {$exam->standard?->name}\n";
+            $message .= "  {$marksCount} mark(s) entered\n\n";
+        }
+        $message .= "_Log into the portal to enter marks._";
+
+        $whatsAppService->sendText($phone, $message, 'marks', $user->user_id);
+    }
+
+    /**
+     * Send timetable for a teacher or student.
+     */
+    private function sendTimetable(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $message = "📋 *My Timetable*\n\n";
+        $message .= "Timetable is available on the KlassApp portal.\n\n";
+        $message .= "Log in to view or download your full schedule.";
+
+        $whatsAppService->sendText($phone, $message, 'timetable', $user->user_id);
+    }
+
+    /**
+     * Send assignments overview for a teacher.
+     */
+    private function sendAssignments(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $message = "📖 *My Assignments*\n\n";
+        $message .= "Assignments can be managed via the KlassApp portal.\n\n";
+        $message .= "Log in to create or review assignments.";
+
+        $whatsAppService->sendText($phone, $message, 'assignments', $user->user_id);
+    }
+
+    /**
+     * Send homework overview for a student.
+     */
+    private function sendHomework(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $message = "📝 *Pending Homework*\n\n";
+        $message .= "Homework can be viewed on the KlassApp portal.\n\n";
+        $message .= "Log in to see assigned homework and due dates.";
+
+        $whatsAppService->sendText($phone, $message, 'homework', $user->user_id);
+    }
+
+    // ----------------------------------------------------------------
+    //  Admin handlers
+    // ----------------------------------------------------------------
+
+    /**
+     * Send student list summary to admin.
+     */
+    private function sendStudentList(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $schoolId = $user->user->school_id;
+        $totalStudents = User::where('school_id', $schoolId)->where('usergroup_id', 6)->count();
+        $totalStaff = User::where('school_id', $schoolId)->where('usergroup_id', 5)->count();
+
+        $message = "👥 *Student Summary*\n\n";
+        $message .= "Total students: {$totalStudents}\n";
+        $message .= "Total teachers: {$totalStaff}\n\n";
+        $message .= "_Use the portal for detailed student management._";
+
+        $whatsAppService->sendText($phone, $message, 'students', $user->user_id);
+    }
+
+    /**
+     * Send staff list summary to admin.
+     */
+    private function sendStaffList(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $schoolId = $user->user->school_id;
+        $teachers = User::where('school_id', $schoolId)->where('usergroup_id', 5)->count();
+        $accountants = User::where('school_id', $schoolId)->where('usergroup_id', 11)->count();
+        $receptionists = User::where('school_id', $schoolId)->where('usergroup_id', 10)->count();
+
+        $message = "👔 *Staff Summary*\n\n";
+        $message .= "Teachers: {$teachers}\n";
+        $message .= "Accountants: {$accountants}\n";
+        $message .= "Receptionists: {$receptionists}\n\n";
+        $message .= "_Use the portal for detailed staff management._";
+
+        $whatsAppService->sendText($phone, $message, 'staff', $user->user_id);
+    }
+
+    /**
+     * Send exam overview to admin.
+     */
+    private function sendAdminExams(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $schoolId = $user->user->school_id;
+
+        $activeExams = Exam::where('school_id', $schoolId)
+            ->where('status', '!=', 'completed')
+            ->count();
+
+        $completedExams = Exam::where('school_id', $schoolId)
+            ->where('status', 'completed')
+            ->count();
+
+        $message = "📝 *Exam Overview*\n\n";
+        $message .= "Active exams: {$activeExams}\n";
+        $message .= "Completed: {$completedExams}\n\n";
+        $message .= "_Use the portal for detailed exam management._";
+
+        $whatsAppService->sendText($phone, $message, 'exams', $user->user_id);
+    }
+
+    /**
+     * Send fee report to admin.
+     */
+    private function sendAdminFees(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $schoolId = $user->user->school_id;
+        $totalCategories = FeesCategories::where('school_id', $schoolId)->count();
+        $totalFees = FeesCategories::where('school_id', $schoolId)->sum('amount');
+
+        $message = "💰 *Fee Report*\n\n";
+        $message .= "Fee categories: {$totalCategories}\n";
+        $message .= "Total expected: UGX " . number_format($totalFees, 0) . "\n\n";
+        $message .= "_Use the portal for detailed fee tracking._";
+
+        $whatsAppService->sendText($phone, $message, 'fees_report', $user->user_id);
+    }
+
+    /**
+     * Send reports summary to admin.
+     */
+    private function sendAdminReports(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $message = "📊 *School Reports*\n\n";
+        $message .= "Reports are available on the KlassApp portal:\n\n";
+        $message .= "📈 Attendance reports\n";
+        $message .= "📝 Grade/result reports\n";
+        $message .= "💰 Financial reports\n\n";
+        $message .= "_Log into the portal to generate detailed reports._";
+
+        $whatsAppService->sendText($phone, $message, 'reports', $user->user_id);
+    }
+
+    // ----------------------------------------------------------------
+    //  Receptionist / Secretary handlers
+    // ----------------------------------------------------------------
+
+    /**
+     * Send notices/announcements.
+     */
+    private function sendNotices(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $message = "📢 *School Announcements*\n\n";
+        $message .= "Notices are available on the KlassApp portal.\n\n";
+        $message .= "_Log in to view all announcements._";
+
+        $whatsAppService->sendText($phone, $message, 'notices', $user->user_id);
+    }
+
+    /**
+     * Send call log summary to receptionist.
+     */
+    private function sendCallLog(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $message = "📞 *Call Log*\n\n";
+        $message .= "Call logs can be managed via the KlassApp portal.\n\n";
+        $message .= "_Log in to view or add call entries._";
+
+        $whatsAppService->sendText($phone, $message, 'call_log', $user->user_id);
+    }
+
+    // ----------------------------------------------------------------
+    //  Accountant handlers
+    // ----------------------------------------------------------------
+
+    /**
+     * Send fee collection summary for accountant.
+     */
+    private function sendAccountantFees(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $schoolId = $user->user->school_id;
+        $categories = FeesCategories::where('school_id', $schoolId)->count();
+        $total = FeesCategories::where('school_id', $schoolId)->sum('amount');
+
+        $message = "💰 *Fee Collection Summary*\n\n";
+        $message .= "Active fee categories: {$categories}\n";
+        $message .= "Total expected revenue: UGX " . number_format($total, 0) . "\n\n";
+        $message .= "_Use the portal to track payments and arrears._";
+
+        $whatsAppService->sendText($phone, $message, 'fees_accountant', $user->user_id);
+    }
+
+    /**
+     * Send financial reports summary for accountant.
+     */
+    private function sendAccountantReports(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    {
+        $message = "📊 *Financial Reports*\n\n";
+        $message .= "Reports available on the KlassApp portal:\n\n";
+        $message .= "💰 Fee collection reports\n";
+        $message .= "📋 Payment tracking\n";
+        $message .= "📈 Revenue analytics\n\n";
+        $message .= "_Log into the portal for detailed financial reports._";
+
+        $whatsAppService->sendText($phone, $message, 'reports_accountant', $user->user_id);
+    }
+
+    /**
+     * Derive a human-readable user type from the users.usergroup_id.
+     */
+    private function resolveUserType(User $user): string
+    {
+        return match ($user->usergroup_id) {
+            3  => 'admin',
+            5  => 'teacher',
+            6  => 'student',
+            7  => 'parent',
+            10 => 'receptionist',
+            11 => 'accountant',
+            default => 'unknown',
+        };
     }
 }

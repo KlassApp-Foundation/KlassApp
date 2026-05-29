@@ -119,7 +119,6 @@ class OutboundWhatsAppService
         foreach ($parents as $parent) {
             $waUser = WhatsAppUser::optedIn()
                 ->where('user_id', $parent->id)
-                ->where('user_type', get_class($parent))
                 ->first();
 
             if ($waUser?->phone) {
@@ -136,6 +135,81 @@ class OutboundWhatsAppService
         }
 
         return array_unique($phones);
+    }
+
+    /**
+     * Notify parents with a comprehensive grades report across all subjects.
+     * Called when the LAST subject's marks are entered for a student.
+     *
+     * @param  int   $studentId
+     * @param  int   $examId     The triggering exam (last subject completed)
+     * @return int   Number of messages sent
+     */
+    public function notifyComprehensiveGrades(int $studentId, int $examId): int
+    {
+        $student = User::with(['studentAcademic.standard'])->find($studentId);
+        if (!$student) {
+            return 0;
+        }
+
+        $triggerExam = Exam::find($examId);
+        if (!$triggerExam) {
+            return 0;
+        }
+
+        // Find all exams for this period (same exam type + term + class)
+        $periodExams = Exam::with(['examType', 'subject'])
+            ->where('standard_id', $triggerExam->standard_id)
+            ->where('exam_type_id', $triggerExam->exam_type_id)
+            ->where('academic_term_id', $triggerExam->academic_term_id)
+            ->where('school_id', $triggerExam->school_id)
+            ->get();
+
+        if ($periodExams->isEmpty()) {
+            return 0;
+        }
+
+        // Get all marks for this student across those exams
+        $examIds = $periodExams->pluck('id');
+        $marks = Marks::whereIn('exam_id', $examIds)
+            ->where('student_id', $studentId)
+            ->get()
+            ->keyBy('exam_id');
+
+        $rows = [];
+        foreach ($periodExams as $exam) {
+            $mark = $marks->get($exam->id);
+            $subjectName = $exam->subject->name ?? 'Unknown';
+            if ($mark) {
+                $grade = $mark->grade ?? 'N/A';
+                $score = $mark->marks ?? 'N/A';
+                $rows[] = "• {$subjectName}: {$score} ({$grade})";
+            } else {
+                $rows[] = "• {$subjectName}: —";
+            }
+        }
+
+        $examTypeName = $triggerExam->examType?->name ?? 'Exam';
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+
+        $message = WhatsAppPhoneHelper::formatMessage(
+            $student->name,
+            "{$examTypeName} Results — {$className}",
+            $rows,
+            'All subjects completed! Check the KlassApp portal for details.'
+        );
+
+        $sent = 0;
+        foreach ($this->getParentPhones($student) as $phone) {
+            try {
+                $this->whatsApp->sendText($phone, $message, 'grades', $studentId);
+                $sent++;
+            } catch (\Throwable $e) {
+                Log::error("Failed to send comprehensive grades to {$phone}: " . $e->getMessage());
+            }
+        }
+
+        return $sent;
     }
 
     /**

@@ -261,7 +261,6 @@ class UserProfileController extends Controller
     public function phoneLink()
     {
         $waUser = WhatsAppUser::where('user_id', Auth::id())
-            ->where('user_type', get_class(Auth::user()))
             ->first();
 
         return view('/admin/whatsapp/phone-link', [
@@ -284,7 +283,6 @@ class UserProfileController extends Controller
 
         if ($request->boolean('unlink')) {
             WhatsAppUser::where('user_id', $user->id)
-                ->where('user_type', get_class($user))
                 ->delete();
 
             $this->doActivityLog($user, $user, [], 'Unlinked WhatsApp Number');
@@ -293,10 +291,7 @@ class UserProfileController extends Controller
 
         // Upsert: link/update the phone number
         $waUser = WhatsAppUser::updateOrCreate(
-            [
-                'user_id'   => $user->id,
-                'user_type' => get_class($user),
-            ],
+            ['user_id' => $user->id],
             [
                 'phone'    => $request->phone,
                 'opted_in' => true,

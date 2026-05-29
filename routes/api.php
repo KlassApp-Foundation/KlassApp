@@ -285,7 +285,20 @@ Route::get('/events/show/details/{id}','Api\EventsController@showdetails');
 //Route::get('/events','Api\TestController@events');
 
 // =====================================================================
-// WhatsApp Inbound Webhook (Evolution API → Laravel)
-// This route is OUTSIDE HMAC middleware since Evolution API does not send HMAC headers.
+// WhatsApp API — REST endpoints for n8n/Typebot integration
 // =====================================================================
-Route::post('/whatsapp/inbound', 'Api\WhatsAppController@handleInbound');
+Route::prefix('whatsapp')->group(function () {
+    // Inbound webhook (Evolution API → Laravel, outside Sanctum)
+    Route::post('/inbound', 'Api\WhatsAppController@handleInbound');
+
+    // Identify user by phone number
+    Route::post('/identify-user', 'Api\WhatsAppController@identify');
+
+    // Student data endpoints (used by n8n for parent/student flows)
+    Route::get('/student/{studentId}/grades', 'Api\WhatsAppController@grades');
+    Route::get('/student/{studentId}/attendance', 'Api\WhatsAppController@attendance');
+    Route::get('/fees/{studentId}/balance', 'Api\WhatsAppController@feeBalance');
+
+    // School-wide endpoints
+    Route::get('/school/{schoolId}/events', 'Api\WhatsAppController@schoolEvents');
+});

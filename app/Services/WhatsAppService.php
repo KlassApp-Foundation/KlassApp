@@ -88,6 +88,47 @@ class WhatsAppService
     }
 
     /**
+     * Send a text message with automatic 24hr window fallback.
+     *
+     * If the service window is closed and $fallbackTemplate is provided,
+     * sends a template instead of free-form text. This ensures proactive
+     * outbound messages always reach the user.
+     *
+     * @param string $phone E.164 format
+     * @param string $message Free-form text (used when window is open)
+     * @param string|null $fallbackTemplate Template name if window is closed
+     * @param array $templateVariables Variables for the fallback template
+     * @param string|null $flowType Category for analytics
+     * @param int|null $userId KlassApp user ID
+     */
+    public function sendTextSafe(
+        string $phone,
+        string $message,
+        ?string $fallbackTemplate = null,
+        array $templateVariables = [],
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        if ($this->isWithinServiceWindow($phone)) {
+            return $this->sendText($phone, $message, $flowType, $userId);
+        }
+
+        if ($fallbackTemplate) {
+            Log::info('WhatsApp: window closed, using template fallback', [
+                'phone'     => $phone,
+                'template'  => $fallbackTemplate,
+            ]);
+            return $this->sendTemplate($phone, $fallbackTemplate, $templateVariables, 'utility', $userId);
+        }
+
+        // Window closed but no fallback template — log warning, send as free-form anyway
+        Log::warning('WhatsApp: window closed, sending free-form outside window', [
+            'phone' => $phone,
+        ]);
+        return $this->sendText($phone, $message, $flowType, $userId);
+    }
+
+    /**
      * Send a pre-approved template message via Evolution API.
      *
      * Used for proactive outbound messages outside the 24hr window.
@@ -187,19 +228,15 @@ class WhatsAppService
      *
      * Returns true if the user has sent a message within the last 24 hours,
      * meaning free-form messages can be sent without using a template.
-     *
-     * Note: This is a simplified check. In production, you'd track the
-     * exact window open/close times from Evolution API webhooks.
+     * Uses the tracked last_inbound_at timestamp on whatsapp_users.
      */
     public function isWithinServiceWindow(string $phone): bool
     {
-        // Check if user sent a message in the last 24 hours
-        // This would ideally be tracked via Evolution API webhook events
-        $lastActivity = MessageDeliveryLog::where('phone', $phone)
-            ->where('sent_at', '>=', now()->subHours(24))
-            ->exists();
-
-        return $lastActivity;
+        $whatsappUser = WhatsAppUser::findByPhone($phone);
+        if (!$whatsappUser || !$whatsappUser->last_inbound_at) {
+            return false;
+        }
+        return $whatsappUser->last_inbound_at->gt(now()->subHours(24));
     }
 
     /**

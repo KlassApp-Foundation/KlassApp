@@ -15,14 +15,15 @@ class WhatsAppUser extends Model
     protected $fillable = [
         'phone',
         'user_id',
-        'user_type',
         'verified_at',
         'opted_in',
+        'last_inbound_at',
     ];
 
     protected $casts = [
-        'verified_at' => 'datetime',
-        'opted_in'    => 'boolean',
+        'verified_at'     => 'datetime',
+        'opted_in'        => 'boolean',
+        'last_inbound_at' => 'datetime',
     ];
 
     /**
@@ -39,14 +40,6 @@ class WhatsAppUser extends Model
     public function scopeOptedIn($query)
     {
         return $query->where('opted_in', true);
-    }
-
-    /**
-     * Scope: filter by user type.
-     */
-    public function scopeOfType($query, string $type)
-    {
-        return $query->where('user_type', $type);
     }
 
     /**

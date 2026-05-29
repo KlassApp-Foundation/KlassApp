@@ -13,6 +13,7 @@ yarn-error.log
 .env
 .env.dusk.local
 .phpunit.result.cache
+.phpunit.cache/
 .DS_Store
 public/livewire-tmp/
 public/avatars/
@@ -100,6 +101,8 @@ public/uploads/student/*
 
 public/uploads/reports/*
 !public/uploads/reports/index.html.vapor/
+TODO.md
+.sisyphus/
 .env.production
 .env.staging
 /.vapor

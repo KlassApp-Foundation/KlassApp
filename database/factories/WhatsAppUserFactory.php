@@ -15,7 +15,6 @@ class WhatsAppUserFactory extends Factory
         return [
             'phone'       => '+2567' . $this->faker->numerify('########'),
             'user_id'     => User::factory(),
-            'user_type'   => User::class,
             'opted_in'    => true,
             'verified_at' => now(),
         ];
