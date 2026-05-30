@@ -74,8 +74,10 @@ class UsersImport implements ToCollection, WithHeadingRow
                 |--------------------------------------------------------------------------
                 */
                 $country = !empty($row['country'])? Country::where('name', 'LIKE', '%' . $row['country'] . '%')->first() : null;
-                $state   = !empty($row['state']) ? State::where('name', 'LIKE', '%' . $row['state'] . '%')->first() : null;
-                $city    = !empty($row['city']) ? City::where('name', 'LIKE', '%' . $row['city'] . '%')->first() : null;
+                // $state   = !empty($row['state']) ? State::where('name', 'LIKE', '%' . $row['state'] . '%')->first() : null;
+                $state   = !empty($row['region']) ? State::where('name', 'LIKE', '%' . $row['region'] . '%')->first() : null;
+                // $city    = !empty($row['city']) ? City::where('name', 'LIKE', '%' . $row['city'] . '%')->first() : null;
+                $city    = !empty($row['district']) ? City::where('name', 'LIKE', '%' . $row['district'] . '%')->first() : null;
 
                 $student->country_id = $country->id ?? null;
                 $student->state_id   = $state->id ?? null;
