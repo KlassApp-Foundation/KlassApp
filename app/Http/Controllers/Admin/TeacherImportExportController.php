@@ -142,7 +142,7 @@ class TeacherImportExportController extends Controller
     |--------------------------------------------------------------------------
     */
     $csv->insertOne([
-        'firstname','lastname','mobile_no','email','gender','date_of_birth', 'blood_group','address','city','state',
+        'firstname','lastname','mobile_no','email','gender','date_of_birth', 'blood_group','address', 'district', 'region',
         'country','joining_date','employee_id','ug_degree','pg_degree','specialization','additional_coures',
         'designation','notes'
     ]);
@@ -192,7 +192,7 @@ exit;
     //dd($heads);
      $users = $this->TeacherFilter($request,Auth::user()->school_id,5);    
         $csv = Writer::createFromFileObject(new \SplTempFileObject());
-     $default=array('employee_id','designation','name','email','mobile_no','gender','Joining_date','adhaar','blood_group','date_of_birth','address','city','state','country','pincode',);
+     $default=array('employee_id','designation','name','email','mobile_no','gender','Joining_date','adhaar','blood_group','date_of_birth','address','region','district','country','pincode',);
      $result=[];
      $result = array_intersect($default, $heads);
      $result = array_map('ucfirst', $result);
@@ -253,11 +253,11 @@ exit;
                 {
                     $data[]=$user->userprofile->address;
                 }
-                if(in_array('city', $heads))
+                if(in_array('region', $heads))
                 {
                     $data[]=$user->userprofile->city->name;
                 }
-                if(in_array('state', $heads))
+                if(in_array('district', $heads))
                 {
                     $data[]=$user->userprofile->state->name;
                 }

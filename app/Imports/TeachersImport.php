@@ -50,12 +50,12 @@ class TeachersImport implements ToCollection, WithHeadingRow
                     ? Country::where('name', 'LIKE', '%' . $row['country'] . '%')->first()
                     : null;
 
-                $state = !empty($row['state'])
-                    ? State::where('name', 'LIKE', '%' . $row['state'] . '%')->first()
+                $state = !empty($row['region'])
+                    ? State::where('name', 'LIKE', '%' . $row['region'] . '%')->first()
                     : null;
 
-                $city = !empty($row['city'])
-                    ? City::where('name', 'LIKE', '%' . $row['city'] . '%')->first()
+                $city = !empty($row['district'])
+                    ? City::where('name', 'LIKE', '%' . $row['district'] . '%')->first()
                     : null;
 
                 /*

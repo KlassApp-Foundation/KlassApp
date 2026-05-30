@@ -6,7 +6,8 @@
 
 The school admin signs up by providing the School Name, Name Of The Admin(eg HM, Secretary or any other assigned person), Country, Mobile number, Approximate number of students, Email Address, Password
 
-## **2. Level Setup**
+## **2. Level And Board Of Curriculum Setup**
+
 
 After signup, the user will be taken to school standard setup, here, the school is expected to choose the board of education (preferably UNEB) and the highest level of education provided, eg nursery, primary, o'level etc
 NOTE: Chosing primary, nursery is created along, so primary schools don't need to set nursery section as it's auto created for them.
@@ -20,17 +21,15 @@ There are some default models setupautomatically anlong Level setup, they includ
 After, the user adds teachers from users > Staff > Teachers
 Here the admin views all teachers in the school, and to add, in top right corner, you'll get three oprions ie(Add, Export, Import)
 
--   Add
+-   **Add**
     Here, you'll be adding a single user, prefered when you have few teachers to add, like 2
--   Import
+-   **Import**
     This' the most efficient for the first school setup, the user is expected to have teachers in an excel or csv file with the following values
-    'firstname','lastname','mobile_no','email','gender','date_of_birth', 'blood_group','address','city','state',
-    'country','joining_date','employee_id','ug_degree','pg_degree','specialization','additional_coures',
-    'designation','notes'
+
+    firstname,lastname,mobile_no,email,gender,date_of_birth,blood_group,address,district,region,country,joining_date,employee_id,ug_degree,pg_degree,specialization,additional_coures,designation,notes
+
     To achieve this, on the top right corner, click Import, this takes you to a page where you'll be required to choose the file from your local machine, then the job is accomplished.
     **Note:** You can download the format by clicking Download Sample Format button
-
-To add a single student, on the top right corner, click Add, then provide the teacher's info
 
 ## **4. Assigning Teachers to Classes and subjects**
 
@@ -48,10 +47,10 @@ Head over to Setup A Class, here you'll be required to select the following;
 The same process as adding teachers
 
 To import students from an excel or csv file, here is the format to follow
-firstname,lastname,gender,date_of_birth,class,address,city,state,country,mother_tongue,joining_date
-**Note:** City=Region, state=District
+firstname,lastname,gender,date_of_birth,class,address,region,district,country,mother_tongue,joining_date
 
-## **Settings**
+## **Settings** Here, order does not matter
+
 
 **School Details**
 You can edit the school details here before you move on, like address, school motto etc. This helps in providing the correct school info on learner's report cards
@@ -89,7 +88,8 @@ You'll need to provide the following info
     After selecting these, click the Save Academic Term button and add other terms in the same process
     **Note:** When an academic year ends, you just have to update dates of the academic terms by clicking the edit button of a term to be updated under Actions column
 
-## **Fees**
+
+## **Fees Structure**
 
 On this page, you'll see your school's fees structure if added, if not, click + Add Category button on the top right corner, to add a fee
 Here, you'll select the following
@@ -105,7 +105,8 @@ Here, you'll select the following
 Here, you'll see a list of exams and assigned teachers
 You can add an exam by clicking the Add Exam button in the top right corner, when there, you'll need to first select a class before others
 
-## **Marks**
+## **Marks Report card & marksheet generation and prototion of students**
+
 
 Here, you'll need to filter by Term, Class and Exam type to see marks
 After getting results, you can proceed to download the marks sheet by clicking download marks sheet on the top right corner just after the filter form

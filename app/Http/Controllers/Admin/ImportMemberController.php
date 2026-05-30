@@ -83,7 +83,7 @@ class ImportMemberController extends Controller
 
     // ✅ SIMPLE, SCHOOL-FRIENDLY HEADERS @Ugandan schools
     $csv->insertOne([
- 'firstname', 'lastname', 'gender', 'date_of_birth', 'class', 'address', 'city', 'state', 'country', 'mother_tongue', 'joining_date'
+ 'firstname', 'lastname', 'gender', 'date_of_birth', 'class', 'address', 'region', 'district', 'country', 'mother_tongue', 'joining_date'
     ]);
     // ✅ REALISTIC UGANDA SAMPLE @Ugandan schools
     $csv->insertOne([
