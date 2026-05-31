@@ -1,17 +1,29 @@
 # Roadmap
 
+```mermaid
+timeline
+    title KlassApp Roadmap
+    Phase 1 — Core : Grade publishing : Fee reminders : Attendance alerts : Interactive menu
+    Phase 2 — Engage : Smart delivery : Multi-child flow : Delivery dashboard : Failure escalation
+    Phase 3 — Scale : LIN integration : Self-registration : Parent network
+    Phase 4 — Ecosystem : Student transfers : New roles : PTA elections : Canteen : Alumni
+    Phase 5 — Integrations : LIN & Fee Management : ERP extensions : Google Workspace : Notion
+```
+
+---
+
 ## Student Transfers Between Schools
 
-A parent should be able to transfer their child from one school to another — at their discretion — within the KlassApp ecosystem. When a child moves:
+A parent should be able to transfer their child from one school to another at their discretion within the KlassApp ecosystem. When a child moves:
 
 - The parent initiates the transfer from the WhatsApp menu
 - The new school receives a verification request
 - Upon approval, the child's parent link, grade history, and attendance records are shared with the new school
-- The former school retains a copy — their data independence is preserved
+- The former school retains a copy, preserving their data independence
 
-This makes KlassApp sticky across a student's entire academic journey — not just per-school.
+This makes KlassApp sticky across a student's entire academic journey, not just per-school.
 
-**Future vision**: Student academic data lives on blockchain, owned by the parent and student — not by any single school. A transfer becomes a permission grant: the parent authorizes the new school to view the student's on-chain record. No school "owns" the data; the student carries it.
+**Future vision**: Student academic data lives on blockchain, owned by the parent and student, not by any single school. A transfer becomes a permission grant: the parent authorizes the new school to view the student's on-chain record. No school owns the data; the student carries it.
 
 ---
 
@@ -30,40 +42,38 @@ The current role set (admin, teacher, bursar, librarian, nurse, secretary) will 
 
 ---
 
-## Fix Pricing Model
+## Pricing Tiers
 
-The pricing structure needs refinement. Key improvements:
-
-- **Free tier** for smaller schools (up to a threshold)
-- **Fair usage caps** that scale with school size
-- **Scalable pricing tiers** that match school size
-- **Bundle pricing** for school groups / multi-campus institutions
-- **No hidden fees** — schools know exactly what they'll pay monthly
+| Tier | Students | Pricing | Key Features |
+|---|---|---|---|
+| **Starter** | Up to 200 | Free | Full WhatsApp parent layer, fee reminders, grade publishing, attendance alerts |
+| **Growth** | Up to 1,000 | Contact us | All Starter features + delivery dashboard, multi-child, priority support |
+| **Premium** | Unlimited | Contact us | All Growth features + custom branded school page, dedicated onboarding, ERP integration
 
 ---
 
 ## Feature Modules
 
-### Blockchain-Based Voting
+### Transparent PTA Elections
 
-Secure, transparent voting for:
+Fair, verifiable elections for:
 - Parent-Teacher Association (PTA) elections
 - School board decisions
 - Student council elections
 - Policy ratification (uniform changes, fee adjustments)
 
-The blockchain provides an immutable audit trail — any stakeholder can verify the tally without trusting a central authority.
+Every vote is recorded immutably. Any stakeholder can verify the tally without trusting a central authority.
 
-### File Management (IPFS)
+### Permanent Digital Records
 
-Decentralized file storage for:
+Important student documents that never get lost:
 - Report cards and transcripts (parent can request a verifiable copy)
 - Circulars and policy documents
 - Student portfolio artifacts
 - Sports and event photos (with parent consent)
 - Medical records and immunization certificates
 
-Files are content-addressed on IPFS — permanent, tamper-proof, and accessible via a link from WhatsApp.
+Documents are stored permanently and tamper-proof, accessible anytime from WhatsApp.
 
 ### Canteen Module
 
@@ -90,11 +100,11 @@ Files are content-addressed on IPFS — permanent, tamper-proof, and accessible 
 |---|---|
 | **Google Workspace** | Sync classroom calendars, Drive documents for report attachments |
 | **Notion** | School wiki, policy docs, staff knowledge base sync |
-| **School Pay** | In-chat fee payment processing via mobile money |
-| **Custom WhatsApp Extensions** | KlassApp's core differentiator: sits on top of any school ERP and surfaces relevant data to parents — without replacing the school's existing system |
+| **LIN & Fee Management** | Fee balance notifications and reminders tied to each student's LIN |
+| **Custom WhatsApp Extensions** | Sits on top of any school ERP and surfaces relevant data to parents, without replacing the school's existing system |
 | **Calendar (Google / Outlook)** | Two-way sync of school events and parent calendar |
 
-This is KlassApp's core differentiator. Most Ugandan schools already run some form of digital record system, but these are built for the admin office — the parent is left out entirely. KlassApp's custom WhatsApp extension layer sits on top of any ERP (from a $50 spreadsheet setup to a $10,000 integrated platform) and surfaces grades, fees, attendance, and events directly to parents via WhatsApp. The school keeps what works. KlassApp adds the parent connection.
+This is KlassApp's core differentiator. Most schools in the region already run some form of digital record system, but these are built for the admin office. The parent is left out entirely. KlassApp's custom WhatsApp extension layer sits on top of any ERP, from a $50 spreadsheet setup to a $10,000 integrated platform, and surfaces grades, fees, attendance, and events directly to parents via WhatsApp. The school keeps what works. KlassApp adds the parent connection.
 
 ---
 
@@ -102,8 +112,8 @@ This is KlassApp's core differentiator. Most Ugandan schools already run some fo
 
 | Phase | Status |
 |---|---|
-| Phase 1 — Connect (grades, fees, attendance, menu) | ✅ Complete |
+| Phase 1 — Core (grades, fees, attendance, menu) | ✅ Complete |
 | Phase 2 — Engage (queue, dashboard, multi-child, delivery) | ✅ Complete |
 | Phase 3 — Scale (LIN integration, self-registration, parent network) | 🚧 In progress |
-| Phase 4 — Ecosystem (transfers, roles, voting, IPFS, canteen, alumni) | 📋 Planned |
-| Phase 5 — Integrations (School Pay, ERPs, Google Workspace, Notion) | 📋 Planned |
+| Phase 4 — Ecosystem (transfers, roles, PTA elections, digital records, canteen, alumni) | 📋 Planned |
+| Phase 5 — Integrations (LIN & Fee Management, ERP extensions, Google Workspace, Notion) | 📋 Planned |

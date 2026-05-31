@@ -6,7 +6,7 @@ How KlassApp WhatsApp transforms communication across every role in your school.
 
 ## Overview
 
-KlassApp plugs into your existing school management system (or works alongside it) and adds a WhatsApp layer that reaches every parent. No new app for parents to install. No training. Just a bot they already know how to use.
+KlassApp doesn't replace a school's existing system. It adds a parent-facing communication layer on top. KlassApp plugs into your existing school management system (or works alongside it) and adds a WhatsApp layer that reaches every parent. No new app for parents to install. No training. Just a bot they already know how to use.
 
 ```mermaid
 flowchart TB
@@ -68,7 +68,7 @@ flowchart LR
     R1 --> D[Delivery dashboard tracks each]
 ```
 
-Each message is personalized per child — name, subject scores, grade, and teacher comments. Parents of multiple children receive separate messages for each.
+Each message is personalized per child: name, subject scores, grade, and teacher comments. Parents of multiple children receive separate messages for each.
 
 ### Fee Reminder Campaigns
 
@@ -79,7 +79,7 @@ Replace expensive SMS blasts with WhatsApp reminders that cost a fraction:
 | Cost per message | 30 UGX | 0-15 UGX |
 | Delivery rate | ~70% | 95%+ |
 | Rich formatting | Plain text | Bold, tables, clickable |
-| Parent reply | No | Yes — check balance, dispute |
+| Parent reply | No | Yes (check balance, dispute) |
 | Read receipts | No | Yes (delivered/read tracking) |
 
 **Campaign Types:**
@@ -90,7 +90,7 @@ Replace expensive SMS blasts with WhatsApp reminders that cost a fraction:
 | **Overdue** | Daily | Parents past due date | Escalation notice, late fee warning |
 | **Receipt** | On payment | The paying parent | Confirmation, updated balance |
 
-All campaigns work in **dry-run mode** first — preview exactly who will be contacted and what the message will look like before sending live.
+All campaigns work in **dry-run mode** first. You preview exactly who will be contacted and what the message will look like before sending live.
 
 ### Delivery Dashboard
 
@@ -111,12 +111,12 @@ flowchart LR
 ```
 
 - **Total messages sent** this week / month / quarter
-- **Delivery rate** — percentage that reached parents
-- **Failure rate** — messages that bounced (with reasons)
-- **Linked parents** — how many have active WhatsApp connections
-- **Trend chart** — daily volume over 7/30/90 days
-- **Flow breakdown** — grades vs fees vs attendance vs events
-- **Recent activity** — last 50 messages with status
+- **Delivery rate**: percentage that reached parents
+- **Failure rate**: messages that bounced (with reasons)
+- **Linked parents**: how many have active WhatsApp connections
+- **Trend chart**: daily volume over 7/30/90 days
+- **Flow breakdown**: grades vs fees vs attendance vs events
+- **Recent activity**: last 50 messages with status
 
 ### Batch Student Import
 
@@ -136,7 +136,7 @@ The system validates every row, links each student to their parent's WhatsApp, a
 
 ### Attendance Alerts
 
-Mark attendance in your existing register — parents receive a daily summary:
+Mark attendance in your existing register and parents receive a daily summary:
 
 ```
 Good evening, Mrs. Nakato.
@@ -179,6 +179,8 @@ Need to inform parents about a schedule change, homework deadline, or class trip
 
 ### Automated Fee Workflow
 
+The result: parents pay on time because they always know what they owe. Schools that switch to WhatsApp reminders report fee collection improving within the first term.
+
 ```mermaid
 sequenceDiagram
     participant B as Bursar
@@ -214,7 +216,7 @@ Due Date:     15 June 2026
 
 ### Payment Confirmation
 
-When a payment is recorded, the parent automatically receives a receipt via WhatsApp — no printing, no lost slips.
+When a payment is recorded, the parent automatically receives a receipt via WhatsApp. No printing, no lost slips.
 
 ---
 
@@ -289,7 +291,7 @@ Before exams, parents receive the timetable automatically.
 
 ### Transport & Closure Updates
 
-Route changes, early closings, and emergency closures reach every parent immediately — no phone trees, no SMS credits.
+Route changes, early closings, and emergency closures reach every parent immediately. No phone trees, no SMS credits.
 
 ---
 
@@ -301,11 +303,11 @@ The school admin links their own WhatsApp number through the admin panel. This i
 
 ### Step 2: Import Parents
 
-Upload your student roster (CSV from EMIS or school system) to link parents to their children.
+Upload your student roster (CSV from your EMIS export or school records) to link parents to their children in bulk. A school of 500 students typically completes this step in under 10 minutes.
 
 ### Step 3: Configure Roles
 
-Assign which staff members can trigger which notifications — admins control everything, teachers only their classes, bursars only fees.
+Assign which staff members can trigger which notifications. Admins control everything, teachers only their classes, bursars only fees.
 
 ### Step 4: Run a Test
 
@@ -314,6 +316,22 @@ Send a dry-run fee reminder to preview messages and verify delivery.
 ### Step 5: Go Live
 
 The first real notification goes out. Parents who aren't yet linked receive an invitation to register.
+
+---
+
+## Pricing
+
+KlassApp offers three tiers based on school size. All tiers include the full WhatsApp parent layer.
+
+| Tier | Students | Pricing |
+|---|---|---|
+| **Starter** | Up to 200 | Free |
+| **Growth** | Up to 1,000 | Contact us |
+| **Premium** | Unlimited | Contact us |
+
+Premium schools also receive a custom branded school page on klassapp.com, a professional digital presence that parents can find and share.
+
+[Request pricing →](mailto:info@klassapp.com)
 
 ---
 
