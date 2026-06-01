@@ -2,120 +2,132 @@
 
 ---
 
-## For Schools
-
-### How much does it cost?
-
-KlassApp uses WhatsApp's free 24-hour service window for most messages. Replies to parent queries cost nothing. Proactive notifications (grade publish, fee reminders) sent outside that window use Meta-approved templates at a tiny cost — typically 0-15 UGX per message, compared to 30 UGX for SMS. Most schools see **60-80% of their messages delivered for free**.
-
-### Do parents need to install an app?
-
-No. Everything works inside WhatsApp. Parents interact with a contact just like any other chat.
-
-### How do we onboard parents?
-
-Two ways:
-1. **Import** — Upload your student roster (EMIS export or CSV). The system links parent phone numbers and sends a welcome message.
-2. **Self-registration** — Parents send their child's LIN to the bot and are verified by their NIN. No admin effort needed.
-
-### What if a parent doesn't have WhatsApp?
-
-Then they can't receive messages. However, with 98% WhatsApp penetration among Ugandan smartphone users, this affects very few families. Those without smartphones continue with traditional communication (circulars, SMS).
-
-### Can parents opt out?
-
-Yes. Replying "OPTOUT" immediately stops all messages. Replying "OPTIN" re-enables them. The school admin can see opt-out counts on the dashboard.
-
-### Is it secure?
-
-- All communication between KlassApp and the school is encrypted
-- Parent NINs are SHA-256 hashed and never stored as plaintext
-- Messages are sent individually (not in broadcast groups)
-- The school controls exactly what data is shared
-- The school's data stays in their own database
-
-### What roles can use KlassApp?
-
-Every school role has something:
-
-| Role | Use Case |
-|---|---|
-| **Admin** | Full control — campaigns, dashboard, settings |
-| **Teacher** | Grade publishing, attendance alerts, class broadcasts |
-| **Bursar** | Fee reminders, receipts, overdue escalation |
-| **Librarian** | Overdue book alerts, new arrivals |
-| **Nurse** | Health record updates, sick-day alerts |
-| **Secretary** | Calendar distribution, exam schedules, transport updates |
-
-### Does it integrate with our existing school management system?
-
-KlassApp connects to your school's database. If you already use a school management system, KlassApp can read grade, fee, and attendance data from it. For schools without an existing system, KlassApp's platform includes what you need.
-
-### What happens if the school internet goes down?
-
-Messages queue locally and are delivered when the connection is restored. No data is lost.
-
----
-
 ## For Parents
 
-### Is this free for me?
+### How do I get started?
 
-Receiving messages costs you nothing. Sending messages uses your regular WhatsApp data. Most Ugandan networks (MTN, Airtel) zero-rate WhatsApp, so even sending messages typically costs nothing.
+When your school activates KlassApp, you'll receive a WhatsApp message from the bot inviting you to register. Follow the prompts to link your child. If your school supports self-registration, you can also text the bot your child's LIN (Learner Identification Number) to get started immediately.
 
-### How do I start?
+### Is it free?
 
-Your school can link you automatically by importing your phone number from their records. You'll receive a welcome message. Alternatively, if your school supports self-registration, send "lin" to the bot to link yourself.
+Receiving messages is always free. Sending messages uses your standard WhatsApp data, which is often zero-rated on MTN and Airtel in Uganda, meaning it doesn't count against your data bundle.
 
-### Can I check my child's information anytime?
+### Do I need to install anything?
 
-Yes. Send any message to the KlassApp bot and you'll receive a menu. Tap "View Options" to see grades, fees, attendance, and events.
+No. Everything works inside WhatsApp, the app already on your phone. There is no account to create, no password to remember, and no separate app to download.
 
-### What if I have more than one child?
+### How do I check my child's fees?
 
-All your children at the school are linked to the same number. When you check grades, you'll receive results for each child separately.
+Send "fees" to the bot. You'll receive a full breakdown of what's due and when.
 
-### Will I be added to a group chat?
+### How do I check my child's grades?
 
-No. All messages are sent to you individually — never as part of a broadcast group. Other parents cannot see your phone number or your child's information.
+Send "results" or "grades" to the bot. You'll receive the latest term results.
 
-### How do I stop messages?
+### How do I report my child absent?
 
-Reply "OPTOUT" to the bot. You'll stop receiving all messages. Your phone remains linked in case you want to opt back in later (reply "OPTIN").
+Send "absent" followed by the reason to the bot. The school's attendance records are updated in real time.
 
-### Is my personal data safe?
+### What about my National ID (NIN)?
 
-- Your **phone number** is stored only for messaging purposes
-- Your **NIN** (if used for self-registration) is hashed immediately and never stored as plaintext
-- Your **child's data** belongs to the school, not to KlassApp
-- The school controls what data is accessed and when
+If the school requires NIN for verification, you send it once during registration. It is hashed (converted to a code) the moment it arrives and is never stored as plaintext. Only the school can verify your identity; KlassApp staff cannot see your NIN.
 
-### My child finished school at this school. What happens?
+### Can I opt out?
 
-Your phone link is managed by the school. When your child leaves, the school can deactivate the link. You can also opt out at any time.
+Yes. Reply "OPTOUT" at any time to stop receiving messages. Reply "OPTIN" to re-enable them. Your phone number stays linked either way.
 
-### Can I contact multiple schools through one bot?
+### I have children at different schools. Will this work?
 
-Yes. If you have children at different schools that both use KlassApp, the bot handles them all from the same WhatsApp contact.
+Yes. If both schools use KlassApp, everything comes through your one WhatsApp number. Each school's data is kept separate.
 
----
+### Can my child's other parent also get messages?
 
-## Technical Questions
+The school can link multiple parents to the same child. Speak to the school if you need a second parent added.
 
-### What is the 24-hour service window?
+### What if I lose my phone or change my number?
 
-When a parent sends a message to the bot, a 24-hour window opens during which the school can send proactive messages **for free**. This is Meta's pricing policy — service conversations cost nothing. KlassApp is designed to maximize in-window delivery.
-
-### How does the self-registration (LIN) process work?
-
-The Learner Identification Number (LIN) is a 12-digit unique identifier assigned to every Ugandan student by the Ministry of Education. When a parent sends their child's LIN to the bot, it looks up the student in the school's records and asks for the parent's NIN. If the NIN hash matches, the parent is linked to all children associated with that NIN.
-
-### Why LIN and not just the student name?
-
-Student names are not unique — there are dozens of "Amope Nandawula" in Ugandan schools. The LIN is guaranteed unique nationwide. This means self-registration works even if the parent doesn't know which class or section their child is in.
+Contact your school. They can update your linked phone number in their records.
 
 ---
 
-## Still Have Questions?
+## For Schools
 
-Contact the school directly, or reach out to KlassApp support through your school admin.
+### How is KlassApp different from SMS?
+
+SMS costs 30 UGX per message, has ~70% delivery rate, and is one-way. KlassApp WhatsApp costs 0-15 UGX per message, delivers at 95%+, and parents can reply to check fees, report absence, or ask for grades.
+
+### How is KlassApp different from other school apps?
+
+Most school apps require parents to download, register, and remember yet another password. KlassApp works inside WhatsApp, the app parents already use daily. Zero friction.
+
+### Does KlassApp replace our existing school system?
+
+No. KlassApp adds a parent-facing communication layer on top of whatever you already use, whether that's a high-end ERP, a spreadsheet, or paper records.
+
+### What data do we need to provide?
+
+Your student roster: student names, their LINs (if available), and parent phone numbers. A CSV export from your EMIS system or school records is all it takes.
+
+### How long does setup take?
+
+Most schools are up and running in under an hour. Uploading the student roster takes about 10 minutes for a school of 500 students.
+
+### Is parent data secure?
+
+Yes. Parent phone numbers are never visible to other parents. Messages are sent individually (no broadcast groups). NIN data is hashed immediately on receipt. All data is stored in Uganda.
+
+### What if a parent opts out?
+
+They can reply "OPTOUT" at any time. The school sees which parents have opted out in the delivery dashboard. Parents can re-enable with "OPTIN".
+
+### What kind of support do you offer?
+
+Starter schools get email support. Growth and Premium schools get priority support with dedicated onboarding assistance.
+
+### Can we send messages in bulk?
+
+Yes, and unlike WhatsApp broadcast lists, our messages are automated, scheduled, role-based, and track delivery per parent.
+
+### Does it work on slow networks?
+
+Yes. WhatsApp messages are lightweight and deliver reliably even on 2G/3G connections.
+
+---
+
+## Technical
+
+### Does KlassApp store any parent data?
+
+We store only what's needed to deliver the service:
+- Phone number (for message delivery)
+- Linked children (for personalization)
+- Hashed NIN (the original is immediately discarded after verification)
+
+We never store message content beyond what's required for delivery tracking.
+
+### Is my data encrypted?
+
+Yes. All data in transit is encrypted via WhatsApp's end-to-end protocol. Data at rest is encrypted in our database.
+
+### Where is data stored?
+
+All data is stored within Uganda, in compliance with local data protection regulations.
+
+### What happens if KlassApp goes down?
+
+Parent messages queue up and are delivered once service resumes. The school's own systems remain unaffected. KlassApp is a separate layer, not a replacement.
+
+### Can KlassApp integrate with our existing ERP?
+
+Yes. KlassApp's custom WhatsApp extension layer bridges any school ERP to WhatsApp, whether it's a local system, an international platform, or a custom-built solution.
+
+### What about EMIS/LIN integration?
+
+KlassApp connects to Uganda's EMIS database via three paths:
+1. **CSV import** (available now): upload your EMIS export
+2. **Self-registration** (coming soon): parents link using their child's LIN
+3. **Ministry API** (long-term): real-time verification
+
+### What happens to messages in the 24-hour WhatsApp window?
+
+Meta's 24-hour service window means we can proactively message parents about fees, grades, and attendance within that window, and the messages are free. Replies from parents extend the window. KlassApp optimizes message timing to maximize free delivery within the window.

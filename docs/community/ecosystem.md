@@ -6,7 +6,7 @@ The bigger picture: market, vision, and why KlassApp's approach is different.
 
 ## The Market
 
-Uganda's education system is massive, under-digitized, and ready for a parent-facing revolution.
+East Africa's education system is massive, under-digitized, and ready for a parent-facing revolution.
 
 ```mermaid
 flowchart TD
@@ -34,10 +34,10 @@ flowchart TD
 
 | Factor | What Changed | Why It Matters |
 |---|---|---|
-| **WhatsApp reach** | Uganda has one of Africa's highest WhatsApp engagement rates; businesses can conversationally engage parents without per-message overhead | Every parent is already on WhatsApp — no app to install, no friction |
-| **EMIS mandate** | Ministry of Education requires all students to have a LIN | Every student is already in a national database — we just connect the parent |
+| **WhatsApp reach** | Uganda has one of Africa's highest WhatsApp engagement rates; businesses can conversationally engage parents without per-message overhead | Every parent is already on WhatsApp, no app to install, no friction |
+| **EMIS mandate** | Ministry of Education requires all students to have a LIN | Every student is already in a national database. We just connect the parent |
 | **Smartphone adoption** | $40 smartphones now common; data costs at all-time low | WhatsApp is the de facto OS for most Ugandans |
-| **Mobile money** | 70%+ of school fees paid via mobile money | Parents already transact on their phones — notifications drive action |
+| **Mobile money** | 70%+ of school fees paid via mobile money | Parents already transact on their phones. Notifications drive action |
 
 ### Addressable Market
 
@@ -69,7 +69,7 @@ flowchart LR
 
 ## The EMIS / LIN Advantage
 
-Most edtech companies in Africa build features on top of school data. KlassApp built the **parent connection layer** — and the EMIS/LIN system is the key that unlocks it at national scale.
+Most edtech companies in Africa build features on top of school data. KlassApp built the **parent connection layer**, and the EMIS/LIN system is the key that unlocks it at national scale.
 
 ```mermaid
 flowchart TB
@@ -107,7 +107,7 @@ Schools upload their EMIS export. Parents are linked in bulk. No data entry. No 
 
 A parent texts their child's LIN to the bot. The bot asks for their NIN, verifies the hash against school records, and links them instantly. **Zero school admin effort.** The parent onboards themselves.
 
-This is the moat: no other school communication tool in Uganda connects to the national LIN system. Every registered student is a potential connection.
+This is the moat: no other school communication tool in East Africa connects to Uganda's national LIN system. Every registered student is a potential connection.
 
 ---
 
@@ -115,7 +115,7 @@ This is the moat: no other school communication tool in Uganda connects to the n
 
 ```mermaid
 quadrantChart
-    title School Communication in Uganda
+    title School Communication in East Africa
     x-axis "Narrow Feature Set" --> "Broad Platform"
     y-axis "Low Parent Reach" --> "High Parent Reach"
     quadrant-1 "Leaders"
@@ -135,7 +135,7 @@ quadrantChart
 |---|---|---|---|
 | **SMS gateways** | Bulk SMS to parent lists | Costly (30 UGX/msg), low engagement, one-way | WhatsApp is cheaper, two-way, higher open rates |
 | **School Facebook groups** | Free, easy to set up | Algorithm hides posts, not private, chaotic | Private, structured, organized by student |
-| **School apps** | Custom mobile app | Parents must download, update, remember password | Works inside WhatsApp — zero friction |
+| **School apps** | Custom mobile app | Parents must download, update, remember password | Works inside WhatsApp with zero friction |
 | **WhatsApp broadcast lists** | Manual, teacher-run | Unstructured, no automation, teacher burns out | Automated, scheduled, role-based |
 | **Paper circulars** | Printed notes home | Lost, late, no read confirmation | Instant delivery with read receipts |
 
@@ -143,43 +143,7 @@ quadrantChart
 
 ## Beyond School ERPs
 
-Most school management systems in Uganda — whether digital or paper-based — are built for the school, not the parent. They track fees, grades, and attendance inside the admin office but have no way to push that information to families.
-
-These systems fall into two camps:
-
-| Type | Reach | Limitation |
-|---|---|---|
-| **High-end ERPs** (computer lab, dedicated IT staff) | Used by ~5% of schools | Built for admin, not parents. Parents get nothing. |
-| **Paper-based / spreadsheets** (majority of schools) | No digital parent reach | Data exists but is inaccessible to parents. |
-
-KlassApp sits at the **intersection of both**. It doesn't replace a school's existing system — it adds a parent-facing communication layer on top:
-
-- For **high-end schools**: KlassApp integrates with their ERP via a custom WhatsApp extension and surfaces grades, fees, and attendance to parents automatically
-- For **low-tech schools**: KlassApp's own lightweight data layer handles everything — no computer lab needed
-
-Both types of school reach the same outcome: **parents informed via WhatsApp, with zero friction.**
-
-```mermaid
-flowchart LR
-    subgraph High["High-End Schools"]
-        ERP["Existing School ERP"]
-        EXT["KlassApp<br/>WhatsApp Extension"]
-        ERP --> EXT
-    end
-
-    subgraph Low["Low-Tech Schools"]
-        DB["KlassApp<br/>Built-in Data Layer"]
-    end
-
-    subgraph Parent["Parent"]
-        W["WhatsApp"]
-    end
-
-    EXT --> W
-    DB --> W
-```
-
-This is the wedge: KlassApp works for the school with a $10,000 ERP and the school with a paper register. Both connect parents. Both pay the same. Neither has to change what works.
+KlassApp doesn't replace a school's existing system. It adds a parent-facing communication layer on top. Whether a school runs a $10,000 ERP or a paper register, parents get the same experience.
 
 ---
 
@@ -187,7 +151,7 @@ This is the wedge: KlassApp works for the school with a $10,000 ERP and the scho
 
 ```mermaid
 flowchart LR
-    subgraph Phase1["Phase 1 — Connect"]
+    subgraph Phase1["Phase 1 — Core"]
         F1["Grade notifications"]
         F2["Fee reminders"]
         F3["Attendance alerts"]
@@ -211,11 +175,52 @@ flowchart LR
     Phase1 --> Phase2 --> Phase3
 ```
 
-**Phase 1** (Complete): Grade publishing, fee reminders, attendance alerts, interactive bot menu.
+**Phase 1 — Core** (Complete): Grade publishing, fee reminders, attendance alerts, interactive bot menu.
 
-**Phase 2** (Complete): Smart message delivery, notification queue, delivery dashboard, multi-child parent flow, delivery failure escalation.
+**Phase 2 — Engage** (Complete): Smart message delivery, notification queue, delivery dashboard, multi-child parent flow, delivery failure escalation.
 
-**Phase 3** (In progress): EMIS/LIN integration — CSV bulk import (Path 2), parent self-registration (Path 3), nationwide parent network, potential government and NGO partnerships.
+**Phase 3 — Scale** (In progress): EMIS/LIN integration with CSV bulk import (Path 2), parent self-registration (Path 3), nationwide parent network, and potential government and NGO partnerships.
+
+---
+
+## East Africa Expansion
+
+KlassApp starts in Uganda and expands methodically across the region.
+
+| Country | Schools | Students | WhatsApp Penetration | Entry Timeline |
+|---|---|---|---|---|
+| **Uganda** (home market) | 74,000 | 20M+ | 98% | Live |
+| **Kenya** | 90,000+ | 18M+ | 95% | Phase 4 |
+| **Tanzania** | 60,000+ | 17M+ | 90% | Phase 4 |
+| **Rwanda** | 12,000+ | 4M+ | 85% | Phase 5 |
+| **Burundi** | 5,000+ | 4M+ | 70% | Phase 5 |
+| **South Sudan** | 4,000+ | 3M+ | 60% | Phase 5 |
+
+```mermaid
+gantt
+    title East Africa Expansion Timeline
+    dateFormat  YYYY-MM
+    axisFormat  %Y
+
+    section Uganda
+    Core Build & Pilot        :done, ug1, 2025-01, 2025-10
+    Market Launch             :done, ug2, 2025-07, 2026-03
+    Nationwide Scale          :active, ug3, 2026-01, 2027-03
+
+    section Kenya
+    Market Assessment         :ken1, 2026-01, 2026-07
+    Launch                    :ken2, 2026-07, 2027-03
+
+    section Tanzania
+    Market Assessment         :tz1, 2026-04, 2026-10
+    Launch                    :tz2, 2026-10, 2027-06
+
+    section Rwanda
+    Entry                     :rw1, 2027-01, 2027-07
+
+    section Burundi & South Sudan
+    Entry                     :bss1, 2027-07, 2028-01
+```
 
 ---
 
@@ -223,13 +228,13 @@ flowchart LR
 
 KlassApp is designed to fit into a school's existing tech stack, not replace it.
 
-### School Pay
+### LIN & Fee Management
 
-In-chat fee payment processing. When a parent checks their balance and sees fees due, they can pay directly within WhatsApp via mobile money. No portal login. No bank visit. The transaction updates the school's fee records in real time.
+The LIN is the single identifier that ties a student to their parent in KlassApp and to their fee account at the school. When a parent checks their child's balance, the same LIN that linked them drives the query. Fee reminders, overdue notices, and receipts are delivered via WhatsApp automatically. Payment itself is handled by the school's existing channels (mobile money, bank, in-person). The parent knows what they owe and when it's due, without needing to call the bursar's office.
 
 ### Custom WhatsApp Extensions for School ERPs
 
-Most Ugandan schools that have digitized use an ERP — but these systems are admin-facing only. KlassApp's custom extension layer bridges any ERP to WhatsApp:
+Most schools in the region that have digitized use an ERP, but these systems are admin-facing only. KlassApp's custom extension layer bridges any ERP to WhatsApp:
 
 ```mermaid
 flowchart LR
@@ -249,7 +254,7 @@ The extension handles:
 - Inbound query routing (parent asks "fees" → extension fetches from ERP)
 - Opt-out sync (parent opts out → ERP is updated)
 
-This means KlassApp works with **any** school ERP — whether it's a local Ugandan developer's system, an international platform, or a custom-built solution.
+This means KlassApp works with **any** school ERP, whether it's a local developer's system, an international platform, or a custom-built solution.
 
 ### Google Workspace & Notion
 

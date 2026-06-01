@@ -83,11 +83,11 @@ class ImportMemberController extends Controller
 
     // ✅ SIMPLE, SCHOOL-FRIENDLY HEADERS @Ugandan schools
     $csv->insertOne([
- 'firstname', 'lastname', 'gender', 'date_of_birth', 'class', 'address', 'region', 'district', 'country', 'mother_tongue', 'joining_date'
+ 'firstname', 'lastname', 'gender', 'date_of_birth', 'class', 'address', 'region', 'district', 'country', 'joining_date', "LIN"
     ]);
     // ✅ REALISTIC UGANDA SAMPLE @Ugandan schools
     $csv->insertOne([
-        'Bukayo', 'Saka', 'male', '2012-05-14', 'Primary One', 'Kekuubo', 'Western', 'Kabale', 'Uganda', 'Rukiga', '2025-01-10'
+        'Bukayo', 'Saka', 'male', '2012-05-14', 'Primary One', 'Kekuubo', 'Western', 'Kabale', 'Uganda', '2025-01-10', "U12F0521A33556"
     ]);
 
     // Headers (EXACTLY your system format)

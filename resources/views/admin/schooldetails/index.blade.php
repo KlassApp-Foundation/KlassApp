@@ -24,18 +24,22 @@
                     @foreach($details as $key => $value)
                         <li class="flex pb-2 flex-col lg:flex-row py-3">
                             @if($key == 'admission_open')
-                                <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Admission Open Status</p>
+                                {{-- Commented out: Admission related --}}
+                                {{-- <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Admission Open Status</p> --}}
                             @else
                                 <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">{{ str_replace('_' , ' ' , ucwords($key)) }}</p>
                             @endif
                             <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
                                 @if($key == 'admission_open')
+                                    {{-- Commented out: Admission related --}}
+                                    {{-- 
                                     @if( $value->meta_value == '0' )
                                         <p class="text-white px-4 mx-1 bg-red-500 rounded">Closed</p>
                                     @else
                                         <p class="text-white px-4 mx-1 custom-green rounded">Open</p>
                                         <a href="{{ url('/'.Auth::user()->school->slug.'/admission-form') }}" class="text-white px-4 mx-1 blue-bg rounded">View</a>
                                     @endif
+                                    --}}
                                 @elseif($key != 'school_logo')
                                     @if( ($value->meta_value != null) && ($value->meta_value != '-') )
                                         {{ $value->meta_value }}
@@ -53,6 +57,30 @@
                             </p>
                         </li>
                     @endforeach
+
+                    {{-- Commented out unwanted fields --}}
+                    {{-- 
+                    <li class="flex pb-2 flex-col lg:flex-row py-3">
+                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Affiliated By</p>
+                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">...</p>
+                    </li>
+                   
+                    
+                    --}}
+
+                     <li class="flex pb-2 flex-col lg:flex-row py-3">
+                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Center Number</p>
+                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">{{ $school->center_no ?? "N/A" }}</p>
+                    </li>
+                    @if($school->landline_no != null)
+                    <li class="flex pb-2 flex-col lg:flex-row py-3">
+                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Phone No</p>
+                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">{{ $school->landline_no }}</p>
+                    </li>
+                            @else
+                                NULL
+                            @endif
+                    
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
                         <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Address</p>
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
@@ -64,7 +92,7 @@
                         </p>
                     </li>
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
-                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">City</p>
+                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">District</p>
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
                             @if($school->city_id != null)
                                 {{ $school->city->name }}
@@ -74,7 +102,7 @@
                         </p>
                     </li>
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
-                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">State</p>
+                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Region</p>
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
                             @if($school->state_id != null)
                                 {{ $school->state->name }}
@@ -86,7 +114,6 @@
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
                         <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Country</p>
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
-                            {{-- {{ dd($school->country) }} --}}
                             @if($school->country_id != null)
                                 {{ $school->country->name }}
                             @else
@@ -94,16 +121,6 @@
                             @endif
                         </p>
                     </li>
-                    {{-- <li class="flex pb-2 flex-col lg:flex-row py-3">
-                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Pincode</p>
-                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
-                            @if($school->pincode != null)
-                                {{ $school->pincode }}
-                            @else
-                                NULL
-                            @endif
-                        </p>
-                    </li> --}}
                 </ul>
             </div>
         </div>

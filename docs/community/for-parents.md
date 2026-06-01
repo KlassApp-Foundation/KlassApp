@@ -1,12 +1,18 @@
 # For Parents
 
-Your child's school updates — delivered to the app you already use every day.
+You care deeply about your child's education. KlassApp makes sure you're never left wondering.
+
+When exams are marked, you know. When your child is absent, you know. When fees are due, you know before you arrive at the school gate and find out the hard way.
+
+All of this reaches you through WhatsApp, the app already on your phone. No new app to download. No account to create. No password to remember. Just a message.
+
+**It's free to receive messages.** WhatsApp is zero-rated on MTN and Airtel in Uganda, meaning you don't use your data bundle to receive KlassApp notifications.
 
 ---
 
 ## How It Works
 
-KlassApp turns your child's school into a WhatsApp contact. You talk to it the same way you talk to any other contact — send a message, get a reply. No app to download, no account to create, no password to remember.
+KlassApp turns your child's school into a WhatsApp contact. You talk to it the same way you talk to any other contact. Send a message, get a reply. No app to download, no account to create, no password to remember.
 
 ```mermaid
 sequenceDiagram
@@ -65,7 +71,7 @@ Balance:      70,000
 Due Date:     15 June 2026
 ```
 
-Know exactly what you owe — and when it's due. No more surprises at the school gate.
+Know exactly what you owe and when it's due. No more surprises at the school gate.
 
 ### View Attendance
 
@@ -170,6 +176,8 @@ The school imports your phone number from their records. You'll receive a welcom
 
 ### Method 2: Self-Registration (Using LIN)
 
+> **What is a LIN?** Your child's Learner Identification Number (LIN) is a 12-digit code assigned to them by the Ministry of Education. It appears on their school admission letter, their UNEB registration slip, or you can ask for it at the school office.
+
 If your school supports self-registration, you can link yourself:
 
 1. Send **"lin"** to the KlassApp bot
@@ -193,7 +201,7 @@ sequenceDiagram
     Bot->>Parent: Welcome menu →
 ```
 
-> Your NIN is never stored in plaintext — it's hashed immediately and discarded. Only the school can verify you, not KlassApp.
+> Your NIN is never stored in plaintext. It's hashed immediately and discarded. Only the school can verify you, not KlassApp.
 
 ---
 
@@ -211,6 +219,18 @@ Reply **OPTIN** to re-enable notifications.
 
 If you have more than one child at the school (or at different schools using KlassApp), all their information comes through one number. Menus and queries automatically consider all your linked children.
 
+### Multiple Schools
+
+If your children attend different schools that both use KlassApp, everything comes through your one WhatsApp number. Each school's data is kept separate. Switching between them is as simple as the menu.
+
+---
+
+## Important to Know
+
+## Still Have Questions?
+
+See the [FAQ](faq.md) for common questions, or contact your school directly.
+
 ---
 
 ## Important to Know
@@ -219,12 +239,7 @@ If you have more than one child at the school (or at different schools using Kla
 |---|---|
 | **Cost** | Receiving messages is free. Sending messages uses your standard WhatsApp data (often zero-rated by MTN/Airtel) |
 | **Data** | Only your phone number and linked children are stored. Your NIN is hashed and never stored as plaintext |
+| **Your NIN** | Your National ID number is never stored. It is hashed (converted to a code) the moment you send it, and the original is immediately discarded. Not even KlassApp staff can see it. |
 | **Control** | You can opt out at any time. The school controls what messages are sent |
 | **School independence** | Each school manages their own data. Moving schools? Your previous school's data stays with them |
-| **Group chats** | You are messaged individually — not added to any broadcast groups |
-
----
-
-## Still Have Questions?
-
-See the [FAQ](faq.md) for common questions, or contact your school directly.
+| **Group chats** | You are messaged individually, not added to any broadcast groups |

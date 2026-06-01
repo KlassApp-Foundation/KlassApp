@@ -22,7 +22,7 @@ class SchoolDetailsTable extends Migration
 
            /* $table->text('moto')->nullable();
             $table->string('affiliated_by')->nullable();
-            $table->string('affiliation_no')->nullable();
+            $table->string('center_no')->nullable();
             $table->dateTime('date_of_establishment');
             $table->string('board');
             $table->text('school_logo')->nullable();

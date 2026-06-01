@@ -8,7 +8,6 @@ The school admin signs up by providing the School Name, Name Of The Admin(eg HM,
 
 ## **2. Level And Board Of Curriculum Setup**
 
-
 After signup, the user will be taken to school standard setup, here, the school is expected to choose the board of education (preferably UNEB) and the highest level of education provided, eg nursery, primary, o'level etc
 NOTE: Chosing primary, nursery is created along, so primary schools don't need to set nursery section as it's auto created for them.
 There are some default models setupautomatically anlong Level setup, they include;
@@ -26,7 +25,7 @@ Here the admin views all teachers in the school, and to add, in top right corner
 -   **Import**
     This' the most efficient for the first school setup, the user is expected to have teachers in an excel or csv file with the following values
 
-    firstname,lastname,mobile_no,email,gender,date_of_birth,blood_group,address,district,region,country,joining_date,employee_id,ug_degree,pg_degree,specialization,additional_coures,designation,notes
+    firstname,lastname,mobile_no,email,gender,date_of_birth,address,district,region,country,joining_date,employee_id, specialization, designation, notes
 
     To achieve this, on the top right corner, click Import, this takes you to a page where you'll be required to choose the file from your local machine, then the job is accomplished.
     **Note:** You can download the format by clicking Download Sample Format button
@@ -49,11 +48,7 @@ The same process as adding teachers
 To import students from an excel or csv file, here is the format to follow
 firstname,lastname,gender,date_of_birth,class,address,region,district,country,mother_tongue,joining_date
 
-## **Settings** Here, order does not matter
-
-
-**School Details**
-You can edit the school details here before you move on, like address, school motto etc. This helps in providing the correct school info on learner's report cards
+## **Settings**
 
 **Academic Years**
 Here, you'll see 2 years, the current year and the next year. Make sure in the type column, the current academic year is highlighted as "Current Academic Year", if not, click the "Change Current Academic Year" on the top right corner
@@ -63,6 +58,9 @@ Verdict: when editing, on the type
 New Academic Year = Next Year
 Current Academic Year = Current year (today)
 Old Year = Last Year
+
+**School Details**
+You can edit the school details here before you move on, like address, school motto etc. This helps in providing the correct school info on learner's report cards
 
 **Grading System**
 This' straight forward, ther's a default grading system, so you can modify it the way you want, or even add a new range by clicking the Add Grading Rule on the top right corner
@@ -88,7 +86,6 @@ You'll need to provide the following info
     After selecting these, click the Save Academic Term button and add other terms in the same process
     **Note:** When an academic year ends, you just have to update dates of the academic terms by clicking the edit button of a term to be updated under Actions column
 
-
 ## **Fees Structure**
 
 On this page, you'll see your school's fees structure if added, if not, click + Add Category button on the top right corner, to add a fee
@@ -105,8 +102,7 @@ Here, you'll select the following
 Here, you'll see a list of exams and assigned teachers
 You can add an exam by clicking the Add Exam button in the top right corner, when there, you'll need to first select a class before others
 
-## **Marks Report card & marksheet generation and prototion of students**
-
+## **Marks, Report card & marksheet generation and prototion of students**
 
 Here, you'll need to filter by Term, Class and Exam type to see marks
 After getting results, you can proceed to download the marks sheet by clicking download marks sheet on the top right corner just after the filter form
@@ -121,3 +117,4 @@ After everything, you can proceed to finalize student promotion just below the m
 -   Bulk messaging
 
 https://klassapp.xyz/
+0779412269

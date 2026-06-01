@@ -39,7 +39,7 @@ class Userprofile extends Model
      * @var array
      */
     protected $fillable = [
-      'school_id' , 'user_id' , 'usergroup_id' , 'firstname' , 'lastname'  , 'alternate_no' , 'gender' , 'date_of_birth' , 'blood_group' , 'birth_place' , 'native_place' , 'mother_tongue' , 'caste', 'sub_caste' , 'address' , 'city_id' , 'state_id' , 'country_id' , 'pincode' , 'relation' , 'aadhar_number' , 'registration_number' , 'EMIS_number' , 'joining_date' , 'notes' , 'avatar' , 'marital_status' , 'status'
+      'school_id' , 'user_id' , 'usergroup_id' , 'firstname' , 'lastname'  , 'alternate_no' , 'gender' , 'date_of_birth' , 'blood_group' , 'birth_place' , 'native_place' , 'mother_tongue' , 'caste', 'sub_caste' , 'address' , 'city_id' , 'state_id' , 'country_id' , 'pincode' , 'relation' , 'aadhar_number' , 'registration_number' , 'LIN' , 'joining_date' , 'notes' , 'avatar' , 'marital_status' , 'status'
     ];
 
 
