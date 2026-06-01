@@ -82,7 +82,7 @@ class DetailRequest extends FormRequest
             'name'                  =>  'required|max:30|checkunique_schoolname|check_keyword',
             'moto'                  =>  'required|max:50',
             'affiliated_by'         =>  'required|max:100',
-            'affiliation_no'        =>  'required|numeric',
+            'center_no'        =>  'required|numeric',
             'date_of_establishment' =>  'required|check_date',
             'board'                 =>  'required',
             'landline_no'           =>  'required|numeric|digits:10',
@@ -124,7 +124,7 @@ class DetailRequest extends FormRequest
             'affiliated_by.required'            =>  'Affiliated Name Is Required',
             'affiliated_by.max'                 =>  'Affiliated Name Should Not Exceed More Than 100 Characters',
 
-            'affiliation_no.required'           =>  'Affiliation Number Is Required',
+            'center_no.required'           =>  'Affiliation Number Is Required',
 
             'date_of_establishment.required'    =>  'Select Establishment Date',
             'date_of_establishment.check_date'  =>  'Select Valid Date',

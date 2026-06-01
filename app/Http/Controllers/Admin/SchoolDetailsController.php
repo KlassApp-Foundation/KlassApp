@@ -113,8 +113,8 @@ class SchoolDetailsController extends Controller
 
             foreach($request->request as $key => $value)
             {
-                // 'affiliation_no' , 'affiliated_by' , 
-                $arrays = ['about_us' , 'admission_open' , 'admission_close_message' , 'admission_close_on' , 'board' , 'date_of_establishment' , 'moto' , 'school_logo' , 'website'];
+                // 'center_no' , 'affiliated_by' , 'admission_close_message' , 'admission_open' ,'admission_close_on'
+                $arrays = ['about_us'  , 'board' , 'date_of_establishment' , 'moto' , 'school_logo' , 'website'];
                 foreach($arrays as $array)
                 {
                     if($key == $array)
@@ -158,17 +158,17 @@ class SchoolDetailsController extends Controller
         $school   = School::where('id',$school_id)->first();
         $details  = SchoolDetail::select('meta_key','meta_value')->where('school_id',$school_id)->get();
         $plucked  = $details->pluck('meta_value','meta_key');
-        if($plucked['admission_open'] == 0)
-        {
-            $admission_open = false;
-        }
-        else
-        {
-            $admission_open = true;
-        }
+        // if($plucked['admission_open'] == 0)
+        // {
+        //     $admission_open = false;
+        // }
+        // else
+        // {
+        //     $admission_open = true;
+        // }
 
         $array['details']                 = $plucked;
-        $array['details']['admission_open']  = $admission_open;
+        // $array['details']['admission_open']  = $admission_open;
         $array['details']['school_logo_display']  = $plucked['school_logo']=='-' ? null:$this->getFilePath($plucked['school_logo']);
         $array['details']['name']         = $school->name;
         $array['details']['address']      = $school->address;
@@ -251,8 +251,8 @@ class SchoolDetailsController extends Controller
             
             foreach($request->request as $key => $value)
             {
-                // 'affiliation_no' , 'affiliated_by' , 
-                $arrays = ['about_us' , 'admission_open' , 'admission_close_message' , 'admission_close_on' , 'board' , 'date_of_establishment' , 'moto' , 'website'];
+                // 'center_no' , 'affiliated_by' , 'admission_open' , 'admission_close_message' , 'admission_close_on' ,
+                $arrays = ['about_us' ,  'board' , 'date_of_establishment' , 'moto' , 'website'];
                 foreach($arrays as $array)
                 {
                     if($key == 'admission_open')

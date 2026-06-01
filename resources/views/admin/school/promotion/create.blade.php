@@ -36,7 +36,7 @@
             {{-- Section --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Section
+                    Class
                 </label>
 
                 <select name="section_id"

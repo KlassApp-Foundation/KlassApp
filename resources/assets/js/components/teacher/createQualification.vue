@@ -94,31 +94,6 @@
             </div>
         </div>
 
-        <div class="tw-form-group w-full lg:w-1/3">
-            <div class="lg:mr-8 md:mr-8">
-                <div class="mb-2">
-                    <label for="sub_qualification" class="tw-form-label"
-                        >Other Courses / Certificates</label
-                    >
-                </div>
-                <div class="mb-2">
-                    <input
-                        type="text"
-                        v-model="sub_qualification"
-                        name="sub_qualification"
-                        id="sub_qualification"
-                        class="tw-form-control w-full"
-                        placeholder="Eg:SSLC,HSSLC,Diploma"
-                    />
-                </div>
-                <span
-                    v-if="errors.sub_qualification"
-                    class="text-red-500 text-xs font-semibold"
-                    >{{ errors.sub_qualification[0] }}</span
-                >
-            </div>
-        </div>
-
         <div class="flex flex-col">
             <div
                 class="tw-form-group w-full lg:w-1/3"
@@ -131,8 +106,11 @@
                             for="qualification_id"
                             class="tw-form-label flex items-center gap-1"
                         >
-                            <span>Professional Courses / Certificates</span>
-                            <span class="text-red-400">*</span>
+                            <span
+                                >Professional Courses / Certificates
+                                (Optional)</span
+                            >
+                            <!-- <span class="text-red-400">*</span> -->
                         </label>
                     </div>
                     <div class="mb-2">
@@ -208,6 +186,31 @@
                 </a>
             </div>
         </div>
+        <div class="tw-form-group w-full lg:w-1/3">
+            <div class="lg:mr-8 md:mr-8">
+                <div class="mb-2">
+                    <label for="sub_qualification" class="tw-form-label"
+                        >Other Courses / Certificates (Optional)</label
+                    >
+                </div>
+                <div class="mb-2">
+                    <input
+                        type="text"
+                        v-model="sub_qualification"
+                        name="sub_qualification"
+                        id="sub_qualification"
+                        class="tw-form-control w-full"
+                        placeholder="Eg:SSLC,HSSLC,Diploma"
+                    />
+                </div>
+                <span
+                    v-if="errors.sub_qualification"
+                    class="text-red-500 text-xs font-semibold"
+                    >{{ errors.sub_qualification[0] }}</span
+                >
+            </div>
+        </div>
+
         <div class="flex flex-col lg:flex-row">
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">

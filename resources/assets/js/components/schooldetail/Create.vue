@@ -93,7 +93,7 @@
             <div class="tw-form-group w-full lg:w-1/2">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="affiliation_no" class="tw-form-label"
+                        <label for="center_no" class="tw-form-label"
                             >Affiliation No.<span class="text-red-500"
                                 >*</span
                             ></label
@@ -102,21 +102,47 @@
                     <div class="w-full lg:w-3/4 my-2">
                         <input
                             type="text"
-                            name="affiliation_no"
-                            v-model="affiliation_no"
-                            id="affiliation_no"
+                            name="center_no"
+                            v-model="center_no"
+                            id="center_no"
                             class="tw-form-control w-full"
                             placeholder="Affiliation No"
                         />
                     </div>
                     <span
-                        v-if="errors.affiliation_no"
+                        v-if="errors.center_no"
                         class="text-red-500 text-xs font-semibold"
-                        >{{ errors.affiliation_no[0] }}</span
+                        >{{ errors.center_no[0] }}</span
                     >
                 </div>
             </div>
         </div> -->
+
+        <!-- Cernter number -->
+        <div class="tw-form-group w-full lg:w-1/2">
+            <div class="lg:mr-8 md:mr-8">
+                <div class="mb-2">
+                    <label for="center_no" class="tw-form-label"
+                        >Center No.<span class="text-red-500">*</span></label
+                    >
+                </div>
+                <div class="w-full lg:w-3/4 my-2">
+                    <input
+                        type="text"
+                        name="center_no"
+                        v-model="center_no"
+                        id="center_no"
+                        class="tw-form-control w-full"
+                        placeholder="Center No"
+                    />
+                </div>
+                <span
+                    v-if="errors.center_no"
+                    class="text-red-500 text-xs font-semibold"
+                    >{{ errors.center_no[0] }}</span
+                >
+            </div>
+        </div>
 
         <div class="flex flex-col lg:flex-row">
             <div class="tw-form-group w-full lg:w-1/2">
@@ -211,13 +237,11 @@
                 </div>
             </div>
 
-            <!-- <div class="tw-form-group w-full lg:w-1/2">
+            <div class="tw-form-group w-full lg:w-1/2">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="landline_no" class="tw-form-label"
-                            >Landline No<span class="text-red-500"
-                                >*</span
-                            ></label
+                            >Phone No<span class="text-red-500">*</span></label
                         >
                     </div>
                     <div class="w-full lg:w-3/4 my-2">
@@ -227,7 +251,7 @@
                             v-model="landline_no"
                             id="landline_no"
                             class="tw-form-control w-full"
-                            placeholder="Landline No"
+                            placeholder="Phone No"
                         />
                     </div>
                     <span
@@ -236,7 +260,7 @@
                         >{{ errors.landline_no[0] }}</span
                     >
                 </div>
-            </div> -->
+            </div>
         </div>
 
         <portal-target name="school_address"></portal-target>
@@ -419,7 +443,7 @@ export default {
             name: "",
             moto: "",
             affiliated_by: "",
-            affiliation_no: "",
+            center_no: "",
             date_of_establishment: "",
             board: "",
             school_logo: "",
@@ -474,7 +498,7 @@ export default {
             formData.append("name", this.name);
             formData.append("moto", this.moto);
             formData.append("affiliated_by", this.affiliated_by);
-            formData.append("affiliation_no", this.affiliation_no);
+            formData.append("center_no", this.center_no);
             formData.append(
                 "date_of_establishment",
                 this.date_of_establishment

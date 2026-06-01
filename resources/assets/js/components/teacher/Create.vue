@@ -292,7 +292,7 @@
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="blood_group" class="tw-form-label">
-                            Blood Group
+                            Blood Group (optional)
                             <!-- <span class="text-red-500">*</span> -->
                         </label>
                     </div>
@@ -527,7 +527,7 @@
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="reporting_to" class="tw-form-label"
-                            >Report Tocc</label
+                            >Report Tocc (Optional)</label
                         >
                     </div>
                     <div

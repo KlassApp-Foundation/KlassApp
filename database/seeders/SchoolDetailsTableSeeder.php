@@ -22,7 +22,7 @@ class SchoolDetailsTableSeeder extends Seeder
             'admission_open',
             'admission_close_message',
             'admission_close_on',
-            'affiliation_no',
+            'center_no',
             'affiliated_by',
             'board',
             'date_of_establishment',
@@ -38,7 +38,7 @@ class SchoolDetailsTableSeeder extends Seeder
             'admission_open'            => '1',  // 1 = open, 0 = closed
             'admission_close_message'   => 'Admissions for the current academic year are now closed. Contact us for next session.',
             'admission_close_on'        => null,
-            'affiliation_no'            => 'N/A',
+            'center_no'            => 'N/A',
             'affiliated_by'             => 'Ministry of Education and Sports',
             'board'                     => 'UNEB',  // Uganda National Examinations Board — most relevant
             'date_of_establishment'     => '2000-01-01',
