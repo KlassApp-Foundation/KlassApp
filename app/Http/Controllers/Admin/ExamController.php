@@ -48,6 +48,7 @@ public function sections(){
          $teachers    = User::where('school_id', $school_id)
             ->where('usergroup_id', 5) 
             ->get();
+            // dd($teachers);
     $examTypes =  ExamType::all();
     return view('admin.exams.create', compact(
         'exams', "teachers", "sections", "academicYears", "terms", "subjects", "examTypes"

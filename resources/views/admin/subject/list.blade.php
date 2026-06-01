@@ -48,7 +48,7 @@
              <tbody class="bg-grey-light text-gray-500">
                @foreach($archievedSubjects as $subjects)
                   <tr class="border-t-2 border-b-2">    
-                     {{ dd($subjects->standardlink) }}
+                     {{-- {{ dd($subjects->standardlink) }} --}}
                      <td class="py-3 px-2 bg-gray-300 border border-gray-400">{{ $subjects->name }}</td>
                      <td class="py-3 px-2 bg-gray-300 border border-gray-400 ">{{ $subjects->standardlink->standard->name}} - {{$subjects->standardlink->section->name  }}</td>
                      <td class="py-3 px-2 bg-gray-300 border border-gray-400">{{ $subjects->code }}</td>

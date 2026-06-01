@@ -1,17 +1,65 @@
-<form 
-    method="GET" 
+<form
+    id="promotionForm"
+    method="GET"
     action="{{ route('admin.students.promote') }}"
     class="flex items-end justify-end gap-2"
 >
-    <input 
-        type="hidden" 
-        name="sectionId" 
+    <input
+        type="hidden"
+        name="sectionId"
         value="{{ $class->id }}"
     >
+
     <button
-        type="submit"
+        type="button"
+        id="promoteBtn"
         class="px-2 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
     >
-        Finalize Promition
+        Finalize Promotion
     </button>
 </form>
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+
+    $('#promoteBtn').on('click', function () {
+
+        swal({
+            title: "Finalize Student Promotion?",
+            text: "This action will promote eligible students to the next class. Ensure report cards have been downloaded and results have been verified before continuing.",
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "Cancel",
+                    value: false,
+                    visible: true
+                },
+                confirm: {
+                    text: "Yes, Finalize",
+                    value: true
+                }
+            },
+            dangerMode: true,
+        })
+        .then((confirmed) => {
+
+            if (confirmed) {
+
+                swal({
+                    title: "Processing...",
+                    text: "Promoting students. Please wait.",
+                    icon: "info",
+                    buttons: false,
+                    closeOnClickOutside: false,
+                    closeOnEsc: false
+                });
+
+                $('#promotionForm').submit();
+            }
+        });
+    });
+
+});
+</script>
+@endpush

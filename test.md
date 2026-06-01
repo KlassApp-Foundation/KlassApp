@@ -29,8 +29,8 @@
 ✅ academic term and fees relocation
 
 exam setup **teacher**
-student and teacher full names in UI
-teacher marks input cleanup (UI)
+✅ student and teacher full names in UI
+✅ teacher marks input cleanup (UI)
 
 Last year performance
 promotion bug check

@@ -25,7 +25,7 @@ class Exam extends Model
            return $this->hasMany(Marks::class);
        }
        public function academicTerm(){
-        return $this->belongsTo(AcademicTerm::class, "academic_term_id");
+        return $this->belongsTo(AcademicTerm::class);
        }
         public function section(){
            return $this->belongsTo(Section::class, "section_id");

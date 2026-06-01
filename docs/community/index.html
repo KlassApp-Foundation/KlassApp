@@ -1,248 +1,260 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>KlassApp Community</title>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="klassapp-logo.svg">
-  <link rel="alternate icon" href="klassapp-logo.svg">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.css">
-  <style>
-    :root {
-      --brand-blue: #1E6FD9;
-      --brand-green: #22C55E;
-      --brand-dark: #0F172A;
-      --brand-light: #F8FAFC;
-      --brand-white: #FFFFFF;
-      --brand-blue-dark: #185DA8;
-      --brand-green-dark: #16A34A;
+    <head>
+        <meta charset="UTF-8" />
+        <title>KlassApp Community</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="icon" type="image/svg+xml" href="klassapp-logo.svg" />
+        <link rel="alternate icon" href="klassapp-logo.svg" />
+        <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
-      --sidebar-bg: var(--brand-white);
-      --sidebar-border: #E2E8F0;
-      --sidebar-name-color: var(--brand-dark);
-      --sidebar-nav-link-color: var(--brand-dark);
-      --sidebar-nav-link-color--active: var(--brand-blue);
-      --sidebar-nav-link-border-color--active: var(--brand-blue);
-      --sidebar-nav-link-font-weight--active: 600;
+        <link
+            rel="stylesheet"
+            href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css"
+        />
+        <link
+            rel="stylesheet"
+            href="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.css"
+        />
+        <style>
+            :root {
+                --brand-blue: #1e6fd9;
+                --brand-green: #22c55e;
+                --brand-dark: #0f172a;
+                --brand-light: #f8fafc;
+                --brand-white: #ffffff;
+                --brand-blue-dark: #185da8;
+                --brand-green-dark: #16a34a;
 
-      --theme-color: var(--brand-blue);
-      --link-color: var(--brand-blue);
-      --link-color--hover: var(--brand-blue-dark);
+                --sidebar-bg: var(--brand-white);
+                --sidebar-border: #e2e8f0;
+                --sidebar-name-color: var(--brand-dark);
+                --sidebar-nav-link-color: var(--brand-dark);
+                --sidebar-nav-link-color--active: var(--brand-blue);
+                --sidebar-nav-link-border-color--active: var(--brand-blue);
+                --sidebar-nav-link-font-weight--active: 600;
 
-      --base-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --heading-font-family: 'Bricolage Grotesque', 'Inter', -apple-system, sans-serif;
-      --heading-h1-font-weight: 700;
-      --heading-h2-font-weight: 600;
+                --theme-color: var(--brand-blue);
+                --link-color: var(--brand-blue);
+                --link-color--hover: var(--brand-blue-dark);
 
-      --code-font-family: 'JetBrains Mono', 'Fira Code', monospace;
+                --base-font-family: "Inter", -apple-system, BlinkMacSystemFont,
+                    "Segoe UI", sans-serif;
+                --heading-font-family: "Bricolage Grotesque", "Inter",
+                    -apple-system, sans-serif;
+                --heading-h1-font-weight: 700;
+                --heading-h2-font-weight: 600;
 
-      --blockquote-border-color: var(--brand-green);
-      --blockquote-background: #F0FDF4;
+                --code-font-family: "JetBrains Mono", "Fira Code", monospace;
 
-      --table-row-odd-background: var(--brand-light);
-      --table-border-color: #E2E8F0;
+                --blockquote-border-color: var(--brand-green);
+                --blockquote-background: #f0fdf4;
 
-      --notice-border-radius: 8px;
-    }
+                --table-row-odd-background: var(--brand-light);
+                --table-border-color: #e2e8f0;
 
-    .sidebar > h1 {
-      text-align: left;
-      padding: 24px 20px 8px;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+                --notice-border-radius: 8px;
+            }
 
-    .sidebar > h1 a.app-name-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-    }
+            .sidebar > h1 {
+                text-align: left;
+                padding: 24px 20px 8px;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
 
-    .sidebar > h1 img {
-      max-width: 42px;
-      height: auto;
-      display: block;
-    }
+            .sidebar > h1 a.app-name-link {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-decoration: none;
+            }
 
-    .sidebar > h1 span {
-      font-family: 'Bricolage Grotesque', 'Inter', sans-serif;
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--brand-dark);
-    }
+            .sidebar > h1 img {
+                max-width: 42px;
+                height: auto;
+                display: block;
+            }
 
-    .sidebar ul li a {
-      font-size: 15px;
-      padding: 8px 20px;
-      color: #334155;
-      transition: color 0.15s ease;
-    }
+            .sidebar > h1 span {
+                font-family: "Bricolage Grotesque", "Inter", sans-serif;
+                font-size: 20px;
+                font-weight: 700;
+                color: var(--brand-dark);
+            }
 
-    .sidebar ul li a:hover {
-      color: var(--brand-blue);
-    }
+            .sidebar ul li a {
+                font-size: 15px;
+                padding: 8px 20px;
+                color: #334155;
+                transition: color 0.15s ease;
+            }
 
-    .sidebar ul li.active > a {
-      color: var(--brand-blue);
-      font-weight: 600;
-    }
+            .sidebar ul li a:hover {
+                color: var(--brand-blue);
+            }
 
-    .app-name-link {
-      text-decoration: none;
-    }
+            .sidebar ul li.active > a {
+                color: var(--brand-blue);
+                font-weight: 600;
+            }
 
-    .cover {
-      display: none !important;
-    }
+            .app-name-link {
+                text-decoration: none;
+            }
 
-    .markdown-section h1 {
-      font-family: var(--heading-font-family);
-      font-weight: 700;
-      color: var(--brand-dark);
-      border-bottom: 2px solid var(--brand-green);
-      padding-bottom: 8px;
-    }
+            .cover {
+                display: none !important;
+            }
 
-    .markdown-section h2 {
-      font-family: var(--heading-font-family);
-      font-weight: 600;
-      color: var(--brand-dark);
-    }
+            .markdown-section h1 {
+                font-family: var(--heading-font-family);
+                font-weight: 700;
+                color: var(--brand-dark);
+                border-bottom: 2px solid var(--brand-green);
+                padding-bottom: 8px;
+            }
 
-    .markdown-section h3 {
-      font-family: var(--heading-font-family);
-      font-weight: 600;
-      color: var(--brand-dark);
-    }
+            .markdown-section h2 {
+                font-family: var(--heading-font-family);
+                font-weight: 600;
+                color: var(--brand-dark);
+            }
 
-    .markdown-section a {
-      color: var(--brand-blue);
-    }
+            .markdown-section h3 {
+                font-family: var(--heading-font-family);
+                font-weight: 600;
+                color: var(--brand-dark);
+            }
 
-    .markdown-section a:hover {
-      color: var(--brand-blue-dark);
-    }
+            .markdown-section a {
+                color: var(--brand-blue);
+            }
 
-    .markdown-section blockquote {
-      border-left: 4px solid var(--brand-green);
-      background: #F0FDF4;
-      padding: 12px 20px;
-      border-radius: 0 8px 8px 0;
-    }
+            .markdown-section a:hover {
+                color: var(--brand-blue-dark);
+            }
 
-    .markdown-section table {
-      border-radius: 8px;
-      overflow: hidden;
-    }
+            .markdown-section blockquote {
+                border-left: 4px solid var(--brand-green);
+                background: #f0fdf4;
+                padding: 12px 20px;
+                border-radius: 0 8px 8px 0;
+            }
 
-    .markdown-section th {
-      background: var(--brand-blue);
-      color: var(--brand-white);
-      font-weight: 600;
-      font-family: var(--heading-font-family);
-      padding: 12px 16px;
-    }
+            .markdown-section table {
+                border-radius: 8px;
+                overflow: hidden;
+            }
 
-    .markdown-section td {
-      padding: 10px 16px;
-    }
+            .markdown-section th {
+                background: var(--brand-blue);
+                color: var(--brand-white);
+                font-weight: 600;
+                font-family: var(--heading-font-family);
+                padding: 12px 16px;
+            }
 
-    .markdown-section code {
-      color: var(--brand-dark);
-      background: #F1F5F9;
-      border-radius: 4px;
-      padding: 2px 6px;
-    }
+            .markdown-section td {
+                padding: 10px 16px;
+            }
 
-    .markdown-section pre {
-      border-radius: 8px;
-      border: 1px solid #E2E8F0;
-    }
+            .markdown-section code {
+                color: var(--brand-dark);
+                background: #f1f5f9;
+                border-radius: 4px;
+                padding: 2px 6px;
+            }
 
-    .sidebar-nav {
-      padding-top: 0;
-    }
+            .markdown-section pre {
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+            }
 
-    .sidebar-toggle {
-      bottom: auto;
-      top: 10px;
-    }
+            .sidebar-nav {
+                padding-top: 0;
+            }
 
-    .docsify-pagination-container {
-      border-top: 2px solid #E2E8F0;
-      margin-top: 40px;
-      padding-top: 20px;
-    }
+            .sidebar-toggle {
+                bottom: auto;
+                top: 10px;
+            }
 
-    .pagination-item {
-      border-radius: 8px;
-      transition: all 0.15s ease;
-    }
+            .docsify-pagination-container {
+                border-top: 2px solid #e2e8f0;
+                margin-top: 40px;
+                padding-top: 20px;
+            }
 
-    .pagination-item:hover {
-      background: var(--brand-light);
-    }
+            .pagination-item {
+                border-radius: 8px;
+                transition: all 0.15s ease;
+            }
 
-    .pagination-item-label {
-      font-family: var(--heading-font-family);
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--brand-blue);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+            .pagination-item:hover {
+                background: var(--brand-light);
+            }
 
-    .pagination-item-title {
-      font-family: var(--heading-font-family);
-      font-weight: 600;
-      font-size: 16px;
-      color: var(--brand-dark);
-    }
+            .pagination-item-label {
+                font-family: var(--heading-font-family);
+                font-weight: 600;
+                font-size: 13px;
+                color: var(--brand-blue);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
 
-    .pagination-item:hover .pagination-item-title {
-      color: var(--brand-blue);
-    }
+            .pagination-item-title {
+                font-family: var(--heading-font-family);
+                font-weight: 600;
+                font-size: 16px;
+                color: var(--brand-dark);
+            }
 
-    .pagination-item-subtitle {
-      font-size: 13px;
-      color: #64748B;
-    }
-  </style>
-</head>
-<body>
-  <div id="app"></div>
-  <script>
-    window.$docsify = {
-      name: 'KlassApp',
-      logo: 'klassapp-logo.svg',
-      repo: '',
-      loadSidebar: true,
-      maxLevel: 3,
-      subMaxLevel: 2,
-      auto2top: true,
-      mergeNavbar: false,
-      darkMode: {
-        defaultTheme: 'light',
-        preventFlash: true,
-      },
-    }
-  </script>
-  <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-dark-mode@latest/dist/index.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-mermaid@latest/dist/docsify-mermaid.min.js"></script>
+            .pagination-item:hover .pagination-item-title {
+                color: var(--brand-blue);
+            }
 
-</body>
+            .pagination-item-subtitle {
+                font-size: 13px;
+                color: #64748b;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app"></div>
+        <script>
+            window.$docsify = {
+                name: "KlassApp",
+                logo: "klassapp-logo.svg",
+                repo: "",
+                loadSidebar: true,
+                maxLevel: 3,
+                subMaxLevel: 2,
+                auto2top: true,
+                mergeNavbar: false,
+                darkMode: {
+                    defaultTheme: "light",
+                    preventFlash: true,
+                },
+            };
+        </script>
+        <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+        <script src="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
+        <script src="//cdn.jsdelivr.net/npm/docsify-dark-mode@latest/dist/index.min.js"></script>
+        <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+        <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
+        <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
+        <script src="//cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+        <script src="//cdn.jsdelivr.net/npm/docsify-mermaid@latest/dist/docsify-mermaid.min.js"></script>
+    </body>
 </html>

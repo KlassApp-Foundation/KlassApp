@@ -13,8 +13,9 @@
             Enter Marks
         </h1>
 
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ $exams->name }} • {{ $exams->standard->name ?? '' }} • Term {{ $exams->term }}
+        <p class="mt-1  text-gray-600 dark:text-gray-400">
+            {{-- {{ dd($exam) }} --}}
+            {{ $exam->subject->name }} • {{ $exam->academicTerm->name }}
         </p>
     </div>
     <form action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">
@@ -29,12 +30,12 @@
                 <p>{{ $total }} students</p>
             </div>
 
-            <div class="p-6 overflow-x-auto">
+            <div class="p-6 overflow-x-auto text-sm">
 
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
 
                     <thead>
-                        <tr class="text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
+                        <tr class="text-left uppercase font-semibold text-gray-700 dark:text-gray-300">
                             <th class="py-3">Student</th>
                             <th class="py-3">Marks</th>
                             <th class="py-3">Out Of</th>
@@ -46,8 +47,9 @@
                        {{-- {{ dd($student) }} --}}
 
                         <tr>
-                            <td class="py-3 text-gray-900 dark:text-white">
-                                {{ filled($student->name) ? $student->name : "student" ." ". $student->id  }}
+                            <td class="py-3 text-gray-900 dark:text-white flex items-center gap-2">
+                                <span>{{ $student->userprofile->firstname }}</span>
+                                <span>{{ $student->userprofile->lastname }}</span>
                             </td>
 
                             <td>

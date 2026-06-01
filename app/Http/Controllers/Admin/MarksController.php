@@ -142,12 +142,10 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
        $examTypes = ExamType::all();
        $type = ExamType::find($request->examType);
        
-       
-    //    promote only on end of year exams
-    // dd($type);
+    
     if($type?->name === "End Of Year"){
         $promotion = $this->studentPromotion->promoteStudents($students, $schoolId, $request->class, $examsDone);
-        // dd($promotion);
+        
     }
     //    paginate
     $page = request()->get("page", 1);
@@ -194,8 +192,8 @@ public function promoteStudents(Request $request)
 {
     $schoolId = Auth::user()->school_id;
     $sectionId = $request->sectionId;
-    $promote = $this->studentPromotion->finalizePromotions($schoolId, $sectionId);
-    return redirect()->route("admin.marks.filter")->with("successmessage", $promote . "!");
+    $this->studentPromotion->finalizePromotions($schoolId, $sectionId);
+    return redirect()->route("admin.marks.filter")->with("successmessage",  "Success, Learners have been promoted to the next class!");
    
 }
 
