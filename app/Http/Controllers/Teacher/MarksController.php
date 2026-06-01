@@ -85,14 +85,8 @@ public function TogglekStatus(Exam $exam){
 
 public function enterExamMarks(Exam $exam)
 {
-    $user = Auth::user();
-    $schoolId = $user->school_id;
-    $trId = $user->id;
-    $exams = Exam::findOrFail($exam->id);
-    $tr = DB::table("class_teacher_links")->where("teacher_id", $trId)->first();
-    
-    $students = StandardLink::where("standard_id", $exam->standard_id)->get();
-    
+    $schoolId = Auth::user()->school_id;
+        
      $allStudents = User::with(["school", "marks", "studentAcademic.standardLink"])
                     ->where("usergroup_id", 6)
                     ->where("school_id", $schoolId)
@@ -105,14 +99,10 @@ public function enterExamMarks(Exam $exam)
                   ->get();
      $total = $allStudents->count();             
 
-    $standard = $exam->standard; // adjust relation name
-    // $subject = request('subject_id') ? Subject::find($exam) : null;
-    $subject = $exams->subject;
+    $exam = $exam->load("academicTerm", "section", "subject", "teacher");
+    // dd($allStudents);
 
-
-    
-
-    return view('teacher.marks.enter', compact('exams', "allStudents", 'standard', 'subject', "user", "exam", "tr", "total"));
+    return view('teacher.marks.enter', compact( "allStudents", "exam", "total"));
 }
 
 public function saveExamMarks(Request $request, Exam $exam, GradingSystemService $gradingSystem)

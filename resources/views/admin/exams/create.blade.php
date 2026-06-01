@@ -148,13 +148,15 @@
                                 Assigned Teacher
                             </label>
                              {{-- {{ dd($teachers) }} --}}
-                            <select name="teacher_id" class="tw-form-control w-full p-2">
+                            <select name="teacher_id" class="tw-form-control w-full p-2 text-sm">
                                 <option value="">Select Teacher</option>
                                 @foreach($teachers as $teacher)
-                               
+                               @php
+                                   $tr = $teacher->userprofile;
+                               @endphp
                                     <option value="{{ $teacher->id }}" 
-                                        {{ old('teacher_id', optional($exam)->teacher_id) == $teacher->id ? 'selected' : '' }}>
-                                        {{ $teacher->name }}
+                                        {{ old('teacher_id', optional($exam)->teacher_id) == $teacher->id ? 'selected' : '' }} >
+                                        {{ ucwords(strtolower($tr->firstname)) . " " .  ucwords(strtolower($tr->lastname))}}
                                     </option>
                                 @endforeach
                             </select>

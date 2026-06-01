@@ -8,6 +8,7 @@
         @include('layouts.partials.favicon')
         <!-- CSRF Token -->
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        
         <title>{{ config('app.name', 'KlassApp') }}</title>
         <!-- Styles -->
 
@@ -38,6 +39,8 @@
 
        };
     </script>
+        <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
     <!-- end -->
 
  <livewire:styles>

@@ -13,13 +13,15 @@ use App\Models\StudentAcademic;
 use App\Models\StudentPromotionRules;
 use App\Models\Subject;
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 class StudentPromotionService
 {
     // promote class students
-     public function promoteStudents($students, string $schoolId, string $sectionId, int $examsDone){
+     public function promoteStudents(Collection $students, string $schoolId, string $sectionId, int $examsDone){
         
         $currentStandardId = StandardLink::where("school_id", $schoolId)->where("section_id", $sectionId)->value("standard_id");
+        
         $nextSection = Section::where("school_id", $schoolId)
                          ->where("id", ">", $sectionId)
                          ->orderBy("id")
@@ -28,8 +30,9 @@ class StudentPromotionService
                          ->where("id", ">", $currentStandardId)
                          ->orderBy("id")
                          ->first();            
-       $nextAcademicYearId = AcademicYear::where("school_id", $schoolId)->where("description", "Upcoming Academic Year")->value("id");         
+       $nextAcademicYearId = AcademicYear::where("school_id", $schoolId)->where("description", "Upcoming Academic Year")->value("id");   
        $promotions = Promotion::where("school_id", $schoolId)->get();
+
         // loop through students
         $promotion = null;
         foreach ($students as $student){
@@ -46,29 +49,30 @@ class StudentPromotionService
                 ->where('grade', $mark->grade)
                 ->value("points");
                 $points += $pts;
-            }
-            
-            $avg = $student->marks->sum("marks") / $examsDone;
+            }     
 
+            $avg = $student->marks->sum("marks") / $examsDone;
+            // dd($avg); 
             $rules = StudentPromotionRules::where("school_id", $schoolId)
                     ->where("section_id", $sectionId)
                     ->where(function ($query) use ($avg, $points) {
+                        // by average
                         $query->where(function ($q) use ($avg) {
-                            $q->where("rule_type", "min_average")
+                            $q->where("rule_type", "average")
                               ->where("min_average", "<=", $avg);
                         })
+                        // by aggregates
                         ->orWhere(function ($q) use ($points) {
-                            $q->where("rule_type", "min_aggregate")
+                            $q->where("rule_type", "aggregate")
                               ->where("min_aggregate", ">=", $points);
                         })
+                        // by points
                         ->orWhere(function ($q) use ($points) {
-                            $q->where("rule_type", "min_points")
+                            $q->where("rule_type", "points")
                               ->where("min_points", "<=", $points);
                         });
                     })
                     ->first();
-            
-            // dd($rules);
 
             if($rules){
 
