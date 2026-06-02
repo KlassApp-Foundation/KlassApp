@@ -1,4 +1,4 @@
-# GegoK12
+# KlassApp
 
 #### Version 1.0
 
@@ -45,7 +45,7 @@ Report card re-design
 ✅ Leave
 ✅ Class wall
 **TO Fix**
-✅ white attendance bug
+✅ attendance bug
 
 ## Next
 

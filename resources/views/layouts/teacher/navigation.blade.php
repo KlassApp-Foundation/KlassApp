@@ -45,19 +45,20 @@
           <!-- start -->
           <li>
             <div class="profile-click" dusk="profile-menu">
-              @if(Auth::user()->userprofile->avatar!= null)
-                <img src="{{ Auth::user()->userprofile->AvatarPath }}" class="w-8 h-8 rounded-full cursor-pointer">
-              @else
-                <img src="{{asset('uploads/user/avatar/default-user.jpg')}}" class="w-8 h-8 rounded-full cursor-pointer">
-              @endif
-              <div class="user-dtl rounded">
+              {{-- @if(Auth::user()->userprofile->avatar!= null) --}}
+                {{-- <img src="{{ Auth::user()->userprofile->AvatarPath }}" class="w-8 h-8 rounded-full cursor-pointer"> --}}
+                <img src="{{ asset('uploads/user/avatar/default-user.jpg') }}" class="w-8 h-8 rounded-full cursor-pointer">
+              {{-- @else --}}
+          
+                            <div class="user-dtl rounded">
                 <ul class="list-reset border shadow-lg" style="background-color: #0F172A; border-color: #334155;">
                   <div class="flex border-b p-2 items-center" style="border-color: #334155;">
-                    @if(Auth::user()->userprofile->avatar!= null)
+                    {{-- @if(Auth::user()->userprofile->avatar!= null)
                       <img src="{{ Auth::user()->userprofile->AvatarPath }}" class="w-10 h-10 rounded-full cursor-pointer">
-                    @else
-                      <img src="{{asset('uploads/user/avatar/default-user.jpg')}}" class="w-10 h-10 rounded-full cursor-pointer">
-                    @endif
+                    @else --}}
+                       <img src="{{ asset('uploads/user/avatar/default-user.jpg') }}" class="w-8 h-8 rounded-full cursor-pointer">
+                    {{-- @endif --}}
+                    
                     <div>
                       <div>
                         <a id="navbarDropdown" class="nav-link dropdown-toggle text-sm  no-underline text-white px-2" href="{{url('/teacher/dashboard')}}">

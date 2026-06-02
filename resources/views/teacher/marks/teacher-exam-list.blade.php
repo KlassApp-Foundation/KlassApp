@@ -3,7 +3,7 @@
 @section('content')
     <div class="container-fluid w-full lg:mx-2">
         <div class="mb-8">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Exam Marks</h1>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Exams</h1>
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 Exams assigned to you - enter or update student marks
             </p>
