@@ -40,7 +40,7 @@ class SiteHelper
                 $academic_year=$academic_year->where('id',$academic_year_id);
             }
          
-            $academic_year=$academic_year->first();
+            $academic_year=$academic_year->where("description", "Current Academic Year")->first();
             return $academic_year;
         });
     } 

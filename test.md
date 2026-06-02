@@ -47,6 +47,8 @@ Report card re-design
 **TO Fix**
 ✅ attendance bug
 
+-   Teachers' images/avatars
+
 ## Next
 
 -   Holidays

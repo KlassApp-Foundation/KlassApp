@@ -67,7 +67,8 @@
             <div class="p-6">
                  @if (!empty($students) && $students->isNotEmpty())
                      @include('admin.marks.results-table2')
-                        <div class="py-4 flex items-center justify-end gap-2">
+                       @if ($type->name === "End Of Year")
+                            <div class="py-4 flex items-center justify-end gap-2">
                             <div class="flex items-center gap-1">
                                 <span class='text-red-400 underline font-semibold'>NOTE:</span>
                                 <p class='text-sm'>Downlad Student Report cards before finalizing promotion </p>
@@ -76,6 +77,7 @@
                               @include("admin.marks.promotion")
                           @endif  
                         </div>
+                       @endif
                   @else
                 @if (request()->hasAny(['term', 'year', 'class']))
                         <div class="text-center py-16 text-gray-500">

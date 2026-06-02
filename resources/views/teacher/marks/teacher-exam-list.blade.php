@@ -58,7 +58,7 @@
                                         }
                                     @endphp
 
-                                    @if ($exam->status === "undone" || $exam->status === "done")
+                                    @if ( $exam->status === "done")
                                         <button type="submit" class='bg-blue-500 text-white py-1 px-2 rounded text-xs'> {{$btntext}}
                                          </button>
                                     @endif

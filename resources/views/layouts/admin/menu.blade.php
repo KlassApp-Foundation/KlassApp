@@ -508,7 +508,14 @@
              <li class="py-3 px-3 hover:font-semibold">
                 <a href="{{url('/admin/attendance')}}" class="flex  items-center">
                    🙋
-                    <span class="mx-3 whitespace-no-wrap">Attendance Records</span>
+                    <span class="mx-3 whitespace-no-wrap">Learner Attendance</span>
+                </a>
+            </li> 
+
+             <li class="py-3 px-3 hover:font-semibold">
+                <a href="{{url('/admin/attendance/staff/add')}}" class="flex  items-center">
+                   🧑‍🏫
+                    <span class="mx-3 whitespace-no-wrap">Teacher Attendance</span>
                 </a>
             </li> 
 
@@ -1204,7 +1211,7 @@ m129 -327 l0 -97 -52 -13 c-186 -44 -319 -190 -306 -334 l5 -50 -61 -27 c-33
                 </a>
             </li>
 
-            <lir class="py-3 px-3 hover:font-semibold {{Request::segment ('3') == 'studentsattendance' ? 'active':''}} || {{Request::segment ('4') == 'studentsattendance' ? 'active':''}}">
+            <li class="py-3 px-3 hover:font-semibold {{Request::segment ('3') == 'studentsattendance' ? 'active':''}} || {{Request::segment ('4') == 'studentsattendance' ? 'active':''}}">
                 <a href="{{ url('admin/transport/studentsattendance/list') }}" class="flex  items-center">
                     <svg class="w-5 h-5 fill-current text-white" version="1.0" xmlns="http://www.w3.org/2000/svg"
  width="512.000000pt" height="512.000000pt" viewBox="0 0 512.000000 512.000000"
