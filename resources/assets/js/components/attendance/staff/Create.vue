@@ -1,325 +1,305 @@
 <template>
-  <div class="bg-white shadow px-4 py-3">
-    <div>
-	    <div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{this.success}}</div>
-      
+    <div class="bg-white shadow px-4 py-3">
+        <div>
+            <!-- Success Message -->
+            <div v-if="success" class="alert alert-success" id="success-alert">
+                {{ success }}
+            </div>
 
-      <div class="my-5">
-        <div class="tw-form-group w-full lg:w-3/5">
-          <div class="lg:mr-8 md:mr-8 flex flex-col lg:flex-row md:flex-row lg:items-center w-full">
-            <div class="mb-2 w-full lg:w-1/4 md:w-1/3">
-              <label for="date" class="tw-form-label">Date<span class="text-red-500">*</span></label>
+            <!-- Date -->
+            <div class="my-5">
+                <div class="tw-form-group w-full lg:w-3/5">
+                    <div
+                        class="flex flex-col lg:flex-row lg:items-center w-full"
+                    >
+                        <div class="mb-2 w-full lg:w-1/4">
+                            <label for="date" class="tw-form-label"
+                                >Date <span class="text-red-500">*</span></label
+                            >
+                        </div>
+                        <div class="mb-2 w-full lg:w-3/4">
+                            <input
+                                type="date"
+                                v-model="date"
+                                class="tw-form-control w-full"
+                            />
+                            <span
+                                v-if="errors.date"
+                                class="text-red-500 text-xs font-semibold"
+                            >
+                                {{ errors.date[0] }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="mb-2 w-full lg:w-3/4  md:w-2/3">
-              <input type="date" name="date" v-model="date" class="tw-form-control w-full" id="date">
-              <span v-if="errors.date" class="text-red-500 text-xs font-semibold">{{errors.date[0]}}</span>
+
+            <!-- Session -->
+            <div class="my-5">
+                <div class="tw-form-group w-full lg:w-3/5">
+                    <div
+                        class="flex flex-col lg:flex-row lg:items-center w-full"
+                    >
+                        <div class="mb-2 w-full lg:w-1/4">
+                            <label class="tw-form-label"
+                                >Session
+                                <span class="text-red-500">*</span></label
+                            >
+                        </div>
+                        <div class="mb-2 w-full lg:w-3/4">
+                            <div class="flex gap-6">
+                                <label class="flex items-center cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        v-model="session"
+                                        value="forenoon"
+                                        class="mr-2"
+                                    />
+                                    <span>Forenoon</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        v-model="session"
+                                        value="afternoon"
+                                        class="mr-2"
+                                    />
+                                    <span>Afternoon</span>
+                                </label>
+                            </div>
+                            <span
+                                v-if="errors.session"
+                                class="text-red-500 text-xs font-semibold"
+                            >
+                                {{ errors.session[0] }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
+
+            <!-- Select Staff Button -->
+            <div class="my-6" v-if="!staffsLoaded">
+                <button
+                    @click="selectStaffs"
+                    class="btn btn-submit blue-bg text-white rounded px-3 py-1 text-sm font-medium"
+                >
+                    Select Staffs
+                </button>
+            </div>
+
+            <!-- Staff Lists -->
+            <div v-if="staffsLoaded" class="flex flex-col lg:flex-row gap-4">
+                <!-- Present Staff -->
+                <div class="w-full lg:w-1/2 bg-white shadow border px-4 py-4">
+                    <h2 class="font-semibold text-base text-gray-700 mb-4">
+                        Present Staffs
+                        <span class="text-xs text-gray-500"
+                            >({{ presents.length }})</span
+                        >
+                    </h2>
+                    <div
+                        v-for="staff in presents"
+                        :key="staff.user_id"
+                        class="flex items-center py-2 border-b"
+                    >
+                        <input
+                            type="checkbox"
+                            :checked="true"
+                            @change="markAbsent(staff)"
+                            class="w-5 h-5 mr-3 accent-green-600"
+                        />
+                        <span class="tw-form-label">{{ staff.user_name }}</span>
+                    </div>
+                </div>
+
+                <!-- Absent Staff -->
+                <div class="w-full lg:w-1/2 bg-white shadow border px-4 py-4">
+                    <h2 class="font-semibold text-base text-gray-700 mb-4">
+                        Absent Staffs
+                        <span class="text-xs text-gray-500"
+                            >({{ absents.length }})</span
+                        >
+                    </h2>
+                    <div
+                        v-for="(staff, index) in absents"
+                        :key="staff.user_id"
+                        class="flex flex-col lg:flex-row gap-3 py-3 border-b"
+                    >
+                        <div class="flex items-center flex-1">
+                            <input
+                                type="checkbox"
+                                :checked="true"
+                                @change="markPresent(staff, index)"
+                                class="w-5 h-5 mr-3 accent-red-600"
+                            />
+                            <span class="tw-form-label">{{
+                                staff.user_name
+                            }}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <select
+                                v-model="staff.reason_id"
+                                class="tw-form-control"
+                            >
+                                <option value="" disabled>Select Reason</option>
+                                <option
+                                    v-for="reason in absentReasonlist"
+                                    :key="reason.id"
+                                    :value="reason.id"
+                                >
+                                    {{ reason.title }}
+                                </option>
+                            </select>
+                            <input
+                                type="text"
+                                v-model="staff.remarks"
+                                class="tw-form-control"
+                                placeholder="Remarks"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div v-if="staffsLoaded" class="my-6 flex gap-3">
+                <button
+                    @click="submitForm"
+                    class="btn btn-submit blue-bg text-white rounded px-3 py-1 text-sm font-medium"
+                >
+                    Submit Attendance
+                </button>
+                <button
+                    @click="resetForm"
+                    class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 text-sm font-medium"
+                >
+                    Reset
+                </button>
+            </div>
         </div>
-      </div>
-
-      <div class="my-5">
-        <div class="tw-form-group  w-full lg:w-3/5">
-          <div class="lg:mr-8 md:mr-8 flex flex-col lg:flex-row md:flex-row lg:items-center w-full">
-            <div class="mb-2 w-full lg:w-1/4 md:w-1/3">
-              <label for="session" class="tw-form-label">Session<span class="text-red-500">*</span></label>
-            </div>
-            <div class="mb-2 w-full lg:w-3/4  md:w-2/3 ">
-            <div class="flex">
-              <div class="w-1/2 flex items-center tw-form-control mr-1 lg:mr-4 md:mr-4"> 
-                <input type="radio" v-model="session" name="session" id="forenoon" value="forenoon">
-                <span class="text-sm mx-1">Forenoon</span>
-              </div>
-              <div class="w-1/2 flex items-center tw-form-control"> 
-                <input type="radio" v-model="session" name="session" id="afternoon" value="afternoon">
-                <span class="text-sm mx-1">Afternoon</span>
-              </div>
-              </div>
-               <span v-if="errors.session" class="text-red-500 text-xs font-semibold">{{errors.session[0]}}</span>
-            </div>
-           
-          </div> 
-        </div>
-      </div> 
-
-      <div class="my-6" id="select_student_btn">
-        <a href="#" class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="selectStudent()">Select Staffs</a>
-      </div>
-
-      <div class="w-full flex flex-col lg:flex-row hidden" id="select">
-        <div class="w-full lg:w-1/2 bg-white shadow border px-4">
-          <div class="w-full my-4">
-            <div class="flex justify-between items-center my-4">
-              <h2 class="font-semibold text-base text-gray-700 capitalize">staffs
-              <span class="text-xs">( Click on checkbox to mark absent )</span></h2>
-            </div>
-            <div v-for="(present,index) in presents" class="">
-              <div class="flex items-center py-1" :id="present.present_id">
-                <div class="w-6">
-                  <input type="checkbox" name="present_id" v-model="present.present_id" class="tw-form-control w-full" @click="absentStudent($event,present.user,index)">
-                </div>
-                <div class="mx-2"> 
-                  <p class="tw-form-label">{{ present.user_name }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="w-full lg:w-1/2 bg-white shadow border px-4 lg:ml-2 my-2 lg:my-0">
-          <div class="w-full my-4">
-            <div class="flex justify-between items-center my-4">
-              <h2 class="font-semibold text-base text-gray-700 capitalize">Absent Staffs</h2>
-            </div>
-            <div class="flex flex-wrap items-center justify-between py-1" v-for="(absent,index) in absents">
-              <div class="flex items-center">
-                <div class="w-6">
-                  <input type="checkbox" name="user_id" v-model="absent.user_id" class="tw-form-control w-full">
-                </div>
-                <div class="mx-2"> 
-                  <p class="tw-form-label">{{ absent.user_name }}</p>
-                </div>
-              </div>
-              <div class="flex items-center">
-                <div class="mx-1">
-                  <select name="reason_id" v-model="absent.reason_id" id="reason_id" class="tw-form-control w-full">
-                    <option value="" disabled>Select Reason</option>
-                    <option v-for="reason in absentReasonlist" v-bind:value="reason.id">{{ reason.title }}</option>
-                  </select>
-                  <span v-if="errors['reason_id'+index]" class="text-red-500 text-xs font-semibold">{{errors['reason_id'+index]}}</span>
-                </div>
-
-                <div class="mx-1">
-                  <input type="text" name="remarks" v-model="absent.remarks" class="tw-form-control w-full" placeholder="Remarks">
-                  <span v-if="errors['remarks'+index]" class="text-red-500 text-xs font-semibold">{{errors['remarks'+index]}}</span>
-                </div>
-              </div>
-            </div>
-            <div class="flex justify-end my-6" id="save_btn">
-              <a href="#" class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="savestaffs()">Save</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    	<div class="my-6 hidden" id="btn_div">
-        <a href="#" id="submit-btn" class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="submitForm()">Submit</a>
-    		<a href="#" class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 mr-3 text-sm font-medium" @click="resetForm()">Reset</a>	
-    	</div>
-	  </div>
-  </div>
+    </div>
 </template>
 
 <script>
-	export default {
-    props:['url','standard','mode'],
-    data(){
-      return{
-        list:[],
-        absentReasonlist:[],
-        stafflist:[],
-        user_id:[],
-        date:'',
-        session:'',
-        status:'',
-        reason_id:[],
-        remarks:'',
-        presents:[{ 
-          present_id : '',
-        }],
-        absents:[{ 
-          user_id : '',
-          reason_id:'',
-          remarks:'',
-        }],
-        errors:[],
-        success:null,
-      }
+export default {
+    props: ["url", "mode"],
+
+    data() {
+        return {
+            stafflist: [],
+            absentReasonlist: [],
+            presents: [],
+            absents: [],
+            date: "",
+            session: "",
+            staffsLoaded: false,
+            errors: {},
+            success: null,
+        };
     },
-        
-    methods:
-    {
-      resetForm()
-      {
-        window.location.reload();
-      },
 
-      groupBy(array, key)
-      {
-        const result = {}
-        var count = Object.keys(array).length;
-        var list = Object.keys(array);
-        for(var i = 0 , array , list , key ; i < count ; i++)
-        { 
-          if(list[i] == key)
-          { 
-            return array[key];
-          }
-        }
-      },
-
-      selectStudent()
-      {
-        if($('#select').hasClass('hidden'))
-        {
-          $('#select').removeClass('hidden').addClass('block');
-          $('#select_student_btn').addClass('hidden').removeClass('block');
-        }
-        this.presents.splice(0,1);
-        this.absents.splice(0,1);
-        
-        var staffs = this.stafflist;
-        var count = Object.keys(staffs).length;
-        for(var i=0,staffs ; i < count ; i++)
-        { 
-          this.presents.push({
-            present_id:staffs[i].teacher_id,
-            user_name:staffs[i].teacher_name,
-            user:staffs[i],
-          });
-        }
-      },
-
-      absentStudent(e,student,index)
-      {
-        if (!e.target.checked) 
-        { 
-          var staffs = this.stafflist;
-          var count = Object.keys(staffs).length;
-          for(var i=0,staffs ; i < count ; i++)
-          { 
-            if(staffs[i].teacher_id == student.teacher_id)
-            {
-              this.absents.push({
-                user_id:staffs[i].teacher_id,
-                user_name:staffs[i].teacher_name,
-                user:staffs[i],
-                reason_id:'',
-                remarks:'',
-              });
-
-              $('#'+student.teacher_id).removeClass('block').addClass('hidden');
+    methods: {
+        async getData() {
+            try {
+                const { data } = await axios.get(
+                    `/${this.mode}/attendance/staff/list`
+                );
+                this.stafflist = data.stafflist || [];
+                this.absentReasonlist = data.absentReasonlist || [];
+            } catch (error) {
+                console.error(error);
             }
-          }
-        }
-        else
-        {
-          this.absents.splice(index,1);
-        }
-      },
+        },
 
-      presentStudent(e,student,index)
-      { 
-        if (!e.target.checked) 
-        { 
-          var staffs = this.stafflist;
-          var count = Object.keys(staffs).length;
-          for(var i=0,staffs ; i < count ; i++)
-          { 
-            if(staffs[i].teacher_id == student.teacher_id)
-            {
-              this.presents.push({
-                present_id:staffs[i].teacher_id,
-                user_name:staffs[i].teacher_name,
-                user:staffs[i],
-              });
-              this.absents.splice(index,1);
+        selectStaffs() {
+            if (!this.date || !this.session) {
+                alert("Please select Date and Session first!");
+                return;
             }
-          }
-        }
-      },
 
-      savestaffs()
-      {
-        if($('#btn_div').hasClass('hidden'))
-        {
-          $('#btn_div').removeClass('hidden').addClass('block');
-          $('#save_btn').addClass('hidden').removeClass('block');
-        }
-      },
+            this.presents = this.stafflist.map((staff) => ({
+                user_id: staff.teacher_id,
+                user_name: staff.teacher_name,
+                reason_id: "",
+                remarks: "",
+            }));
 
-      submitForm()
-      {
-        this.errors=[];
-        this.success=null; 
+            this.absents = [];
+            this.staffsLoaded = true;
+        },
 
-        let formData=new FormData();
-   
-        formData.append('date',this.date);                 
-        formData.append('session',this.session); 
-        
-        formData.append('absentCount',this.absents.length);
-        for(let i=0; i<this.absents.length;i++)
-        {
-          if(typeof this.absents[i]['user_id'] !== "undefined")
-          {
-            formData.append('user_id'+i,this.absents[i]['user_id']);
-          }
-          else
-          {
-            formData.append('user_id'+i,'');
-          }
+        markAbsent(staff) {
+            const index = this.presents.findIndex(
+                (s) => s.user_id === staff.user_id
+            );
+            if (index !== -1) {
+                this.presents.splice(index, 1);
+                this.absents.push({
+                    user_id: staff.user_id,
+                    user_name: staff.user_name,
+                    reason_id: "",
+                    remarks: "",
+                });
+            }
+        },
 
-          if(typeof this.absents[i]['reason_id'] !== "undefined")
-          {
-            formData.append('reason_id'+i,this.absents[i]['reason_id']);
-          }
-          else
-          {
-            formData.append('reason_id'+i,'');
-          }
+        markPresent(staff, index) {
+            this.absents.splice(index, 1);
+            this.presents.push({
+                user_id: staff.user_id,
+                user_name: staff.user_name,
+                reason_id: "",
+                remarks: "",
+            });
+        },
 
-          if(typeof this.absents[i]['remarks'] !== "undefined")
-          {
-            formData.append('remarks'+i,this.absents[i]['remarks']);
-          }
-          else
-          {
-            formData.append('remarks'+i,'');
-          }
-        } 
+        async submitForm() {
+            this.errors = {};
+            this.success = null;
 
-        formData.append('presentCount',this.presents.length);
-        for(let i=0; i<this.presents.length;i++)
-        {
-          if(typeof this.presents[i]['present_id'] !== "undefined")
-          {
-            formData.append('present_id'+i,this.presents[i]['present_id']);
-          }
-          else
-          {
-            formData.append('present_id'+i,'');
-          }
-        }
-      
-        axios.post('/'+this.mode+'/attendance/staff/add',formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {     
-          this.success = response.data.success;
-          //this.resetForm();
-        }).catch(error => {
-          this.errors = error.response.data.errors;
-        });
-      },
+            const formData = new FormData();
+            formData.append("date", this.date);
+            formData.append("session", this.session);
 
-      getData()
-      {
-        axios.get('/'+this.mode+'/attendance/staff/list').then(response => {
-          this.list = response.data;
-          this.setData();
-          console.log(this.list)
-        });
-      },
-      setData()
-      {
-        if(Object.keys(this.list).length > 0)
-        {
-          this.stafflist      = this.list.stafflist;
-          this.absentReasonlist = this.list.absentReasonlist;
-        }
-      },
+            // Absents
+            formData.append("absentCount", this.absents.length);
+            this.absents.forEach((staff, i) => {
+                formData.append(`user_id${i}`, staff.user_id);
+                formData.append(`reason_id${i}`, staff.reason_id || "");
+                formData.append(`remarks${i}`, staff.remarks || "");
+            });
+
+            // Presents
+            formData.append("presentCount", this.presents.length);
+            this.presents.forEach((staff, i) => {
+                formData.append(`present_id${i}`, staff.user_id);
+            });
+
+            try {
+                const res = await axios.post(
+                    `/${this.mode}/attendance/staff/add`,
+                    formData,
+                    { headers: { "Content-Type": "multipart/form-data" } }
+                );
+                this.success =
+                    res.data.success || "Attendance submitted successfully!";
+            } catch (error) {
+                if (error.response?.data?.errors) {
+                    this.errors = error.response.data.errors;
+                } else {
+                    console.error(error);
+                }
+            }
+        },
+
+        resetForm() {
+            window.location.reload();
+        },
     },
-    created()
-    {
-      this.getData();
-    }
-  }
+
+    created() {
+        this.getData();
+    },
+};
 </script>

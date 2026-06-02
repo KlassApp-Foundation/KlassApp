@@ -16,6 +16,7 @@ use App\Models\Section;
 use App\Models\Subject;
 use App\Models\TempTimetable;
 use App\Models\User;
+use Carbon\Carbon;
 use Exception;
 
 /**
@@ -423,70 +424,109 @@ trait AcademicProcess
         } 
     }
 
-    public function createStaffAttendance($school_id , $academic_year_id , $admin , $data)
-    { 
-        \DB::beginTransaction();
-        try
-        {            
-            for($i=0 ; $i < $data->absentCount ; $i++)
-            {
-                $staff    = 'user_id'.$i;
-                $reason     = 'reason_id'.$i;
-                $remarks    = 'remarks'.$i;
-
-                $attendance = new Attendance;
-
-                $attendance->school_id          = $school_id;
-                $attendance->academic_year_id   = $academic_year_id;
-                $attendance->date               = date('Y-m-d',strtotime($data->date));
-                $attendance->session            = $data->session;
-                $attendance->user_id            = $data->$staff;
-                $attendance->reason_id          = $data->$reason;
-                $attendance->remarks            = $data->$remarks;
-                $attendance->status             = 0;
-                $attendance->recorded_by        = $admin;
-
-                $attendance->save();
-
-                $staff = User::where('id',$data->$staff)->first();
-                
-                    $array=[];
-
-                    $array['school_id']  = $school_id;
-                    $array['user_id']    = $staff->id;
-                    $array['message']    = 'Dear staff,'.$staff->FullName.' absent today.';
-                    $array['type']       = 'private message';
-                            
-                    event(new SinglePushEvent($array));
-
-                    $this->sendToAttendanceReminder($school_id,$attendance->date,$staff->id,$staff->mobile_no,$staff->email,$staff->FullName);
-            }
-
-            for($i=0 ; $i < $data->presentCount ; $i++)
-            {
-                $staff    = 'present_id'.$i;
-                if($data->$staff != 'false')
-                {
-                    $attendance = new Attendance;
-
-                    $attendance->school_id          = $school_id;
-                    $attendance->academic_year_id   = $academic_year_id;
-                    $attendance->date               = date('Y-m-d',strtotime($data->date));
-                    $attendance->session            = $data->session;
-                    $attendance->user_id            = $data->$staff;
-                    $attendance->status             = 1;
-                    $attendance->recorded_by        = $admin;
-
-                    $attendance->save();
-                }
-            }
-            \DB::commit();
-            return $attendance;
-        }
-        catch(Exception $e)
+   public function createStaffAttendance($school_id, $academic_year_id, $admin, $data)
+{ 
+    \DB::beginTransaction();
+    try
+    {            
+        // ==================== ABSENT STAFF ====================
+        for($i = 0; $i < ($data->absentCount ?? 0); $i++)
         {
-            \DB::rollBack();
-            //dd($e->getMessage());
-        } 
+            $userKey    = 'user_id' . $i;
+            $reasonKey  = 'reason_id' . $i;
+            $remarksKey = 'remarks' . $i;
+
+            $user_id   = $data->$userKey ?? null;
+            $reason_id = $data->$reasonKey ?? null;
+            $remarks   = $data->$remarksKey ?? null;
+
+            if(empty($user_id)) continue;
+
+            $attendance = new Attendance;
+
+            $attendance->school_id          = $school_id;
+            $attendance->academic_year_id   = $academic_year_id;
+            $attendance->date               = $this->parseDate($data->date ?? null);
+            $attendance->session            = $data->session ?? 'forenoon';
+            $attendance->user_id            = $user_id;
+            $attendance->reason_id          = $reason_id;
+            $attendance->remarks            = $remarks;
+            $attendance->status             = 0;
+            $attendance->recorded_by        = $admin;
+
+            $attendance->save();
+
+            // Get staff details for notification
+            $staff = User::where('id', $user_id)->first();
+
+            if($staff) {
+                $array = [
+                    'school_id' => $school_id,
+                    'user_id'   => $staff->id,
+                    'message'   => 'Dear ' . ($staff->FullName ?? 'Staff') . ', you were marked absent today.',
+                    'type'      => 'private message'
+                ];
+                
+                event(new SinglePushEvent($array));
+
+                $this->sendToAttendanceReminder(
+                    $school_id, 
+                    $attendance->date, 
+                    $staff->id, 
+                    $staff->mobile_no ?? null,
+                    $staff->email ?? null,
+                    $staff->FullName ?? 'Staff'
+                );
+            }
+        }
+
+        // ==================== PRESENT STAFF ====================
+        for($i = 0; $i < ($data->presentCount ?? 0); $i++)
+        {
+            $presentKey = 'present_id' . $i;
+            $present_id = $data->$presentKey ?? null;
+
+            if(empty($present_id) || $present_id === 'false') {
+                continue;
+            }
+
+            $attendance = new Attendance;
+
+            $attendance->school_id          = $school_id;
+            $attendance->academic_year_id   = $academic_year_id;
+            $attendance->date               = $this->parseDate($data->date ?? null);
+            $attendance->session            = $data->session ?? 'forenoon';
+            $attendance->user_id            = $present_id;
+            $attendance->status             = 1;
+            $attendance->recorded_by        = $admin;
+
+            $attendance->save();
+        }
+
+        \DB::commit();
+        return true; // or the last attendance if needed
     }
+    catch(Exception $e)
+    {
+        \DB::rollBack();
+        \Log::error('Staff Attendance Error: ' . $e->getMessage());
+        throw $e; // This will help you see the real error
+    } 
+}
+
+/**
+ * Safe date parser
+ */
+private function parseDate($date)
+{
+    if(empty($date)) {
+        return now()->format('Y-m-d');
+    }
+
+    try {
+        return Carbon::parse($date)->format('Y-m-d');
+    } catch(Exception $e) {
+        return now()->format('Y-m-d');
+    }
+}
 }

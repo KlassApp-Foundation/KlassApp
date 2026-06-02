@@ -1,28 +1,54 @@
-## NEW THINGS LEARNT
+# QUESTIONS TO ANSWER LATER
 
-## NGINX
+## 1. Students For Head Teacher / DOS
 
-# Why nginx
+How many students are enrolled?
+How many new students joined this term?
+How many students left?
+Which class is growing fastest?
+Which students have poor attendance?
+Which students are academically struggling?
+Which students have disciplinary issues?
 
--   serve static files
--   Load balancing
--   Reverse proxing
--   Http caching
+## 2. Academic Questions
 
-# Reloading nginx after changes
+For Academic Registrar
+Which class performs best?
+Which subject performs worst?
+Which teacher produces the best results?
+Which students improved most?
+Which students dropped in performance?
+How many students passed?
+What is the overall school mean score?
 
-sudo nginx -t
-sudo systemctl reload nginx
+## 3. Teacher Questions
 
-## Found && interpreted
+For Head Teacher
+Which teachers are absent most?
+Which teachers submit marks late?
+Which teachers have unfinished syllabi?
+Which teachers have the highest student performance?
 
-✅ Standards = Levels
-✅ Sections = classes
+## 4. Attendance Questions
 
-## changed vue files to match Ugandan system
+For Administration
+Which students are absent today?
+Which classes have attendance issues?
+What is school attendance this week?
+Which students are becoming chronic absentees?
 
-✅ resources/assets/js/components/settings/StandardSetup.vue
+## 5. Staff Payroll Questions
 
-## To checkout later
-- Promotion
-- To link student to academics
+How much salary is due this month?
+Who hasn't been paid?
+What are payroll costs by department?
+How much are statutory deductions?
+
+## 6. Parent Questions
+🧑‍🏫
+Has my child attended school today?
+How much fees balance remains?
+What were my child's results?
+What homework was assigned?
+Has my child been disciplined?
+What school announcements exist?
