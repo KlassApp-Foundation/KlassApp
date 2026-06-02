@@ -16,6 +16,7 @@ use App\Models\StandardLink;
 use App\Models\AbsentReason;
 use App\Traits\LogActivity;
 use App\Helpers\SiteHelper;
+use App\Models\AcademicYear;
 use App\Models\Attendance;
 use Illuminate\Support\Facades\Log;
 use League\Csv\Writer;
@@ -38,13 +39,16 @@ class AttendanceController extends Controller
     public function list()
 {
     $school_id = Auth::user()->school_id;
-    $academic_year = SiteHelper::getAcademicYear($school_id);
-
+    // $academic_year = SiteHelper::getAcademicYear($school_id);
+    $academic_year_id = AcademicYear::where("school_id", $school_id)
+                                     ->where("description", "Current Academic Year")
+                                     ->value("id");
+    
     $standardLinklist = SiteHelper::getStandardLinkList($school_id);
-
+    // $testacademy = StudentAcademic::with('user')->get();
     $studentAcademic = StudentAcademic::with('user')
         ->where('school_id', $school_id)
-        ->where('academic_year_id', $academic_year->id)
+        ->where('academic_year_id', $academic_year_id)
         ->whereHas('user', function($q) {
             $q->where('status', 'active')
               ->whereNull('deleted_at');
@@ -75,6 +79,7 @@ class AttendanceController extends Controller
         'standardlist'     => $standardLinklist,
         'studentlist'      => $studentlist,
         'absentReasonlist' => $absentReasonlist,
+        // "test" => $testacademy
     ];
 }
 
