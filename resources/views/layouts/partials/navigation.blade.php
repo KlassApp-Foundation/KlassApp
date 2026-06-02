@@ -47,7 +47,7 @@
                             <div class="profile-click" dusk="profile-menu">
                                 @if(Auth::user()->userprofile->avatar!= null)
                                     <img src="{{ url(Auth::user()->userprofile->AvatarPath) }}" class="w-8 h-8 rounded-full cursor-pointer">
-                                @else
+                                @else 
                                     <img src="{{ asset('uploads/user/avatar/default-user.jpg') }}" class="w-8 h-8 rounded-full cursor-pointer">
                                 @endif
                                 <div class="user-dtl rounded">
