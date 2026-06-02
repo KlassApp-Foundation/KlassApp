@@ -32,17 +32,23 @@ exam setup **teacher**
 ✅ student and teacher full names in UI
 ✅ teacher marks input cleanup (UI)
 
-Last year performance
-promotion bug check
+**Later** Last year performance
+✅ promotion bug check
 Report card re-design
-attendance bug
 
 <!-- **school pay  -->
 
 ## Teacher
 
 **To remove**
+✅ Reception
+✅ Leave
+✅ Class wall
+**TO Fix**
+✅ white attendance bug
 
--   Reception
--   Leave
--   Class wall
+## Next
+
+-   Holidays
+-   Librarian cleanup
+-   Calendar
