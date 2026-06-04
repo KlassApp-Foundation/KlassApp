@@ -513,7 +513,7 @@
             </li> 
 
              <li class="py-3 px-3 hover:font-semibold">
-                <a href="{{url('/admin/attendance/staff/add')}}" class="flex  items-center">
+                <a href="{{url('/admin/attendance/staff/list')}}" class="flex  items-center">
                    🧑‍🏫
                     <span class="mx-3 whitespace-no-wrap">Teacher Attendance</span>
                 </a>

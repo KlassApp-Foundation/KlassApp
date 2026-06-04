@@ -757,9 +757,9 @@ Route::post('/bankdetails/update/{id}', 'BankDetailController@update');
 
 // staffAttendance
 
-Route::get( '/attendance/staff/list', 'StaffAttendanceController@list');
+Route::get( '/attendance/staff/list', 'StaffAttendanceController@list')->name("admin.attendance.staff.list");
 Route::get( '/attendance/staff/add', 'StaffAttendanceController@create');
-Route::post( '/attendance/staff/add', 'StaffAttendanceController@store');
+Route::post( '/attendance/staff/add', 'StaffAttendanceController@store')->name("admin.attendance.staff.add");
 
 Route::get( '/absentees/staff', 'StaffAttendanceController@staff');
 Route::get( '/absentees/staff/list', 'StaffAttendanceController@stafflist');

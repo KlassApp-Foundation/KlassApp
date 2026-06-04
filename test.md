@@ -45,7 +45,7 @@ Report card re-design
 ✅ Leave
 ✅ Class wall
 **TO Fix**
-✅ attendance bug
+- attendance bug
 
 -   Teachers' images/avatars
 
