@@ -2,7 +2,11 @@
     <div class="bg-white shadow px-4 py-3">
         <div>
             <!-- Success Message -->
-            <div v-if="success" class="alert alert-success" id="success-alert">
+            <div
+                v-if="success != null"
+                class="alert alert-success"
+                id="success-alert"
+            >
                 {{ success }}
             </div>
 
@@ -10,18 +14,20 @@
             <div class="my-5">
                 <div class="tw-form-group w-full lg:w-3/5">
                     <div
-                        class="flex flex-col lg:flex-row lg:items-center w-full"
+                        class="lg:mr-8 md:mr-8 flex flex-col lg:flex-row md:flex-row lg:items-center w-full"
                     >
-                        <div class="mb-2 w-full lg:w-1/4">
-                            <label for="date" class="tw-form-label"
-                                >Date <span class="text-red-500">*</span></label
-                            >
+                        <div class="mb-2 w-full lg:w-1/4 md:w-1/3">
+                            <label for="date" class="tw-form-label">
+                                Date<span class="text-red-500">*</span>
+                            </label>
                         </div>
-                        <div class="mb-2 w-full lg:w-3/4">
+                        <div class="mb-2 w-full lg:w-3/4 md:w-2/3">
                             <input
                                 type="date"
+                                name="date"
                                 v-model="date"
                                 class="tw-form-control w-full"
+                                id="date"
                             />
                             <span
                                 v-if="errors.date"
@@ -38,34 +44,39 @@
             <div class="my-5">
                 <div class="tw-form-group w-full lg:w-3/5">
                     <div
-                        class="flex flex-col lg:flex-row lg:items-center w-full"
+                        class="lg:mr-8 md:mr-8 flex flex-col lg:flex-row md:flex-row lg:items-center w-full"
                     >
-                        <div class="mb-2 w-full lg:w-1/4">
-                            <label class="tw-form-label"
-                                >Session
-                                <span class="text-red-500">*</span></label
-                            >
+                        <div class="mb-2 w-full lg:w-1/4 md:w-1/3">
+                            <label for="session" class="tw-form-label">
+                                Session<span class="text-red-500">*</span>
+                            </label>
                         </div>
-                        <div class="mb-2 w-full lg:w-3/4">
-                            <div class="flex gap-6">
-                                <label class="flex items-center cursor-pointer">
+                        <div class="mb-2 w-full lg:w-3/4 md:w-2/3">
+                            <div class="flex">
+                                <div
+                                    class="w-1/2 flex items-center tw-form-control mr-1 lg:mr-4 md:mr-4"
+                                >
                                     <input
                                         type="radio"
                                         v-model="session"
+                                        name="session"
+                                        id="forenoon"
                                         value="forenoon"
-                                        class="mr-2"
                                     />
-                                    <span>Forenoon</span>
-                                </label>
-                                <label class="flex items-center cursor-pointer">
+                                    <span class="text-sm mx-1">Forenoon</span>
+                                </div>
+                                <div
+                                    class="w-1/2 flex items-center tw-form-control"
+                                >
                                     <input
                                         type="radio"
                                         v-model="session"
+                                        name="session"
+                                        id="afternoon"
                                         value="afternoon"
-                                        class="mr-2"
                                     />
-                                    <span>Afternoon</span>
-                                </label>
+                                    <span class="text-sm mx-1">Afternoon</span>
+                                </div>
                             </div>
                             <span
                                 v-if="errors.session"
@@ -79,103 +90,173 @@
             </div>
 
             <!-- Select Staff Button -->
-            <div class="my-6" v-if="!staffsLoaded">
-                <button
-                    @click="selectStaffs"
-                    class="btn btn-submit blue-bg text-white rounded px-3 py-1 text-sm font-medium"
+            <div class="my-6" id="select_student_btn">
+                <a
+                    href="#"
+                    class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium"
+                    @click="selectStudent"
                 >
                     Select Staffs
-                </button>
+                </a>
             </div>
 
-            <!-- Staff Lists -->
-            <div v-if="staffsLoaded" class="flex flex-col lg:flex-row gap-4">
-                <!-- Present Staff -->
-                <div class="w-full lg:w-1/2 bg-white shadow border px-4 py-4">
-                    <h2 class="font-semibold text-base text-gray-700 mb-4">
-                        Present Staffs
-                        <span class="text-xs text-gray-500"
-                            >({{ presents.length }})</span
-                        >
-                    </h2>
-                    <div
-                        v-for="staff in presents"
-                        :key="staff.user_id"
-                        class="flex items-center py-2 border-b"
-                    >
-                        <input
-                            type="checkbox"
-                            :checked="true"
-                            @change="markAbsent(staff)"
-                            class="w-5 h-5 mr-3 accent-green-600"
-                        />
-                        <span class="tw-form-label">{{ staff.user_name }}</span>
-                    </div>
-                </div>
-
-                <!-- Absent Staff -->
-                <div class="w-full lg:w-1/2 bg-white shadow border px-4 py-4">
-                    <h2 class="font-semibold text-base text-gray-700 mb-4">
-                        Absent Staffs
-                        <span class="text-xs text-gray-500"
-                            >({{ absents.length }})</span
-                        >
-                    </h2>
-                    <div
-                        v-for="(staff, index) in absents"
-                        :key="staff.user_id"
-                        class="flex flex-col lg:flex-row gap-3 py-3 border-b"
-                    >
-                        <div class="flex items-center flex-1">
-                            <input
-                                type="checkbox"
-                                :checked="true"
-                                @change="markPresent(staff, index)"
-                                class="w-5 h-5 mr-3 accent-red-600"
-                            />
-                            <span class="tw-form-label">{{
-                                staff.user_name
-                            }}</span>
-                        </div>
-                        <div class="flex gap-2">
-                            <select
-                                v-model="staff.reason_id"
-                                class="tw-form-control"
+            <!-- Staff Selection Area -->
+            <div class="w-full flex flex-col lg:flex-row hidden" id="select">
+                <!-- Present Staffs -->
+                <div class="w-full lg:w-1/2 bg-white shadow border px-4">
+                    <div class="w-full my-4">
+                        <div class="flex justify-between items-center my-4">
+                            <h2
+                                class="font-semibold text-base text-gray-700 capitalize"
                             >
-                                <option value="" disabled>Select Reason</option>
-                                <option
-                                    v-for="reason in absentReasonlist"
-                                    :key="reason.id"
-                                    :value="reason.id"
+                                Staffs
+                                <span class="text-xs"
+                                    >(Click on checkbox to mark absent)</span
                                 >
-                                    {{ reason.title }}
-                                </option>
-                            </select>
-                            <input
-                                type="text"
-                                v-model="staff.remarks"
-                                class="tw-form-control"
-                                placeholder="Remarks"
-                            />
+                            </h2>
+                        </div>
+                        <div
+                            v-for="(present, index) in presents"
+                            :key="index"
+                            class=""
+                        >
+                            <div
+                                class="flex items-center py-1"
+                                :id="present.present_id"
+                            >
+                                <div class="w-6">
+                                    <input
+                                        type="checkbox"
+                                        v-model="present.present_id"
+                                        class="tw-form-control w-full"
+                                        @click="
+                                            absentStudent(
+                                                $event,
+                                                present.user,
+                                                index
+                                            )
+                                        "
+                                    />
+                                </div>
+                                <div class="mx-2">
+                                    <p class="tw-form-label">
+                                        {{ present.user_name }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Absent Staffs -->
+                <div
+                    class="w-full lg:w-1/2 bg-white shadow border px-4 lg:ml-2 my-2 lg:my-0"
+                >
+                    <div class="w-full my-4">
+                        <div class="flex justify-between items-center my-4">
+                            <h2
+                                class="font-semibold text-base text-gray-700 capitalize"
+                            >
+                                Absent Staffs
+                            </h2>
+                        </div>
+
+                        <div
+                            class="flex flex-wrap items-center justify-between py-1"
+                            v-for="(absent, index) in absents"
+                            :key="index"
+                        >
+                            <div class="flex items-center">
+                                <div class="w-6">
+                                    <input
+                                        type="checkbox"
+                                        name="user_id"
+                                        v-model="absent.user_id"
+                                        class="tw-form-control w-full"
+                                    />
+                                </div>
+                                <div class="mx-2">
+                                    <p class="tw-form-label">
+                                        {{ absent.user_name }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center">
+                                <div class="mx-1">
+                                    <select
+                                        name="reason_id"
+                                        v-model="absent.reason_id"
+                                        class="tw-form-control w-full"
+                                    >
+                                        <option value="" disabled>
+                                            Select Reason
+                                        </option>
+                                        <option
+                                            v-for="reason in absentReasonlist"
+                                            :key="reason.id"
+                                            :value="reason.id"
+                                        >
+                                            {{ reason.title }}
+                                        </option>
+                                    </select>
+                                    <span
+                                        v-if="errors['reason_id' + index]"
+                                        class="text-red-500 text-xs font-semibold"
+                                    >
+                                        {{ errors["reason_id" + index] }}
+                                    </span>
+                                </div>
+
+                                <div class="mx-1">
+                                    <input
+                                        type="text"
+                                        name="remarks"
+                                        v-model="absent.remarks"
+                                        class="tw-form-control w-full"
+                                        placeholder="Remarks"
+                                    />
+                                    <span
+                                        v-if="errors['remarks' + index]"
+                                        class="text-red-500 text-xs font-semibold"
+                                    >
+                                        {{ errors["remarks" + index] }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Button -->
+                        <div class="flex justify-end my-6" id="save_btn">
+                            <a
+                                href="#"
+                                class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium"
+                                @click="savestaffs"
+                            >
+                                Save
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Submit Buttons -->
-            <div v-if="staffsLoaded" class="my-6 flex gap-3">
-                <button
+            <!-- Submit / Reset Buttons -->
+            <div class="my-6 hidden" id="btn_div">
+                <a
+                    href="#"
+                    id="submit-btn"
+                    class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium"
                     @click="submitForm"
-                    class="btn btn-submit blue-bg text-white rounded px-3 py-1 text-sm font-medium"
                 >
-                    Submit Attendance
-                </button>
-                <button
+                    Submit
+                </a>
+                <a
+                    href="#"
+                    class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 mr-3 text-sm font-medium"
                     @click="resetForm"
-                    class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 text-sm font-medium"
                 >
                     Reset
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -183,118 +264,118 @@
 
 <script>
 export default {
-    props: ["url", "mode"],
+    props: ["url", "standard", "mode"],
 
     data() {
         return {
-            stafflist: [],
+            list: [],
             absentReasonlist: [],
-            presents: [],
-            absents: [],
+            stafflist: [],
             date: "",
             session: "",
-            staffsLoaded: false,
+            presents: [],
+            absents: [],
             errors: {},
             success: null,
         };
     },
 
     methods: {
-        async getData() {
-            try {
-                const { data } = await axios.get(
-                    `/${this.mode}/attendance/staff/list`
-                );
-                this.stafflist = data.stafflist || [];
-                this.absentReasonlist = data.absentReasonlist || [];
-            } catch (error) {
-                console.error(error);
-            }
+        resetForm() {
+            window.location.reload();
         },
 
-        selectStaffs() {
-            if (!this.date || !this.session) {
-                alert("Please select Date and Session first!");
-                return;
-            }
+        selectStudent() {
+            $("#select").removeClass("hidden").addClass("block");
+            $("#select_student_btn").addClass("hidden").removeClass("block");
 
-            this.presents = this.stafflist.map((staff) => ({
-                user_id: staff.teacher_id,
-                user_name: staff.teacher_name,
-                reason_id: "",
-                remarks: "",
-            }));
-
+            this.presents = [];
             this.absents = [];
-            this.staffsLoaded = true;
+
+            this.stafflist.forEach((staff) => {
+                this.presents.push({
+                    present_id: staff.teacher_id,
+                    user_name: staff.teacher_name,
+                    user: staff,
+                });
+            });
         },
 
-        markAbsent(staff) {
-            const index = this.presents.findIndex(
-                (s) => s.user_id === staff.user_id
-            );
-            if (index !== -1) {
-                this.presents.splice(index, 1);
+        absentStudent(e, student, index) {
+            if (!e.target.checked) {
+                // Move to absent
                 this.absents.push({
-                    user_id: staff.user_id,
-                    user_name: staff.user_name,
+                    user_id: student.teacher_id,
+                    user_name: student.teacher_name,
                     reason_id: "",
                     remarks: "",
                 });
+                $("#" + student.teacher_id).addClass("hidden");
+            } else {
+                // Remove from absent
+                this.absents = this.absents.filter(
+                    (a) => a.user_id !== student.teacher_id
+                );
             }
         },
 
-        markPresent(staff, index) {
-            this.absents.splice(index, 1);
-            this.presents.push({
-                user_id: staff.user_id,
-                user_name: staff.user_name,
-                reason_id: "",
-                remarks: "",
-            });
+        savestaffs() {
+            $("#btn_div").removeClass("hidden").addClass("block");
+            $("#save_btn").addClass("hidden").removeClass("block");
         },
 
-        async submitForm() {
+        submitForm() {
             this.errors = {};
             this.success = null;
 
-            const formData = new FormData();
-            formData.append("date", this.date);
-            formData.append("session", this.session);
+            let formData = new FormData();
+            formData.append("date", this.date || "");
+            formData.append("session", this.session || "");
 
-            // Absents
             formData.append("absentCount", this.absents.length);
-            this.absents.forEach((staff, i) => {
-                formData.append(`user_id${i}`, staff.user_id);
-                formData.append(`reason_id${i}`, staff.reason_id || "");
-                formData.append(`remarks${i}`, staff.remarks || "");
-            });
-
-            // Presents
-            formData.append("presentCount", this.presents.length);
-            this.presents.forEach((staff, i) => {
-                formData.append(`present_id${i}`, staff.user_id);
-            });
-
-            try {
-                const res = await axios.post(
-                    `/${this.mode}/attendance/staff/add`,
-                    formData,
-                    { headers: { "Content-Type": "multipart/form-data" } }
+            for (let i = 0; i < this.absents.length; i++) {
+                formData.append("user_id" + i, this.absents[i].user_id || "");
+                formData.append(
+                    "reason_id" + i,
+                    this.absents[i].reason_id || ""
                 );
-                this.success =
-                    res.data.success || "Attendance submitted successfully!";
-            } catch (error) {
-                if (error.response?.data?.errors) {
-                    this.errors = error.response.data.errors;
-                } else {
-                    console.error(error);
-                }
+                formData.append("remarks" + i, this.absents[i].remarks || "");
             }
+
+            formData.append("presentCount", this.presents.length);
+            for (let i = 0; i < this.presents.length; i++) {
+                formData.append(
+                    "present_id" + i,
+                    this.presents[i].present_id || ""
+                );
+            }
+
+            axios
+                .post("/" + this.mode + "/attendance/staff/add", formData, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                })
+                .then((response) => {
+                    this.success = response.data.success;
+                    console.log("teacher att res==>", response);
+                })
+                .catch((error) => {
+                    this.errors = error.response?.data?.errors || {};
+                    console.error("Response error==>", error);
+                });
         },
 
-        resetForm() {
-            window.location.reload();
+        getData() {
+            axios
+                .get("/" + this.mode + "/attendance/staff/list")
+                .then((response) => {
+                    this.list = response.data;
+                    this.setData();
+                });
+        },
+
+        setData() {
+            this.stafflist = this.list.stafflist || [];
+            this.absentReasonlist = this.list.absentReasonlist || [];
         },
     },
 

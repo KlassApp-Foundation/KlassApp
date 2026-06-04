@@ -424,96 +424,95 @@ trait AcademicProcess
         } 
     }
 
-   public function createStaffAttendance($school_id, $academic_year_id, $admin, $data)
+  public function createStaffAttendance($school_id, $academic_year_id, $admin, $data)
 { 
     \DB::beginTransaction();
     try
     {            
+        $attendanceRecord = null;
+
         // ==================== ABSENT STAFF ====================
-        for($i = 0; $i < ($data->absentCount ?? 0); $i++)
+        $absentCount = (int) ($data->absentCount ?? 0);
+
+        for($i = 0; $i < $absentCount; $i++)
         {
             $userKey    = 'user_id' . $i;
             $reasonKey  = 'reason_id' . $i;
             $remarksKey = 'remarks' . $i;
 
-            $user_id   = $data->$userKey ?? null;
-            $reason_id = $data->$reasonKey ?? null;
-            $remarks   = $data->$remarksKey ?? null;
+            $user_id    = $data->$userKey ?? null;
+            $reason_id  = $data->$reasonKey ?? null;
+            $remarks    = $data->$remarksKey ?? null;
 
-            if(empty($user_id)) continue;
+            if (empty($user_id)) continue;
 
-            $attendance = new Attendance;
+            $attendanceRecord = new Attendance;
+            $attendanceRecord->school_id        = $school_id;
+            $attendanceRecord->academic_year_id = $academic_year_id;
+            $attendanceRecord->date             = !empty($data->date) ? date('Y-m-d', strtotime($data->date)) : now()->format('Y-m-d');
+            $attendanceRecord->session          = $data->session ?? 'forenoon';
+            $attendanceRecord->user_id          = $user_id;
+            $attendanceRecord->reason_id        = $reason_id;
+            $attendanceRecord->remarks          = $remarks;
+            $attendanceRecord->status           = 0;
+            $attendanceRecord->recorded_by      = $admin;
+            $attendanceRecord->save();
 
-            $attendance->school_id          = $school_id;
-            $attendance->academic_year_id   = $academic_year_id;
-            $attendance->date               = $this->parseDate($data->date ?? null);
-            $attendance->session            = $data->session ?? 'forenoon';
-            $attendance->user_id            = $user_id;
-            $attendance->reason_id          = $reason_id;
-            $attendance->remarks            = $remarks;
-            $attendance->status             = 0;
-            $attendance->recorded_by        = $admin;
-
-            $attendance->save();
-
-            // Get staff details for notification
-            $staff = User::where('id', $user_id)->first();
-
-            if($staff) {
-                $array = [
+            // Notification
+            $staff = User::find($user_id);
+            if ($staff) {
+                event(new SinglePushEvent([
                     'school_id' => $school_id,
                     'user_id'   => $staff->id,
                     'message'   => 'Dear ' . ($staff->FullName ?? 'Staff') . ', you were marked absent today.',
                     'type'      => 'private message'
-                ];
-                
-                event(new SinglePushEvent($array));
+                ]));
 
-                $this->sendToAttendanceReminder(
-                    $school_id, 
-                    $attendance->date, 
-                    $staff->id, 
-                    $staff->mobile_no ?? null,
-                    $staff->email ?? null,
-                    $staff->FullName ?? 'Staff'
-                );
+                // Only call if method exists
+                if (method_exists($this, 'sendToAttendanceReminder')) {
+                    $this->sendToAttendanceReminder(
+                        $school_id, 
+                        $attendanceRecord->date, 
+                        $staff->id, 
+                        $staff->mobile_no ?? null, 
+                        $staff->email ?? null, 
+                        $staff->FullName ?? ''
+                    );
+                }
             }
         }
 
         // ==================== PRESENT STAFF ====================
-        for($i = 0; $i < ($data->presentCount ?? 0); $i++)
+        $presentCount = (int) ($data->presentCount ?? 0);
+
+        for($i = 0; $i < $presentCount; $i++)
         {
             $presentKey = 'present_id' . $i;
             $present_id = $data->$presentKey ?? null;
 
-            if(empty($present_id) || $present_id === 'false') {
-                continue;
-            }
+            if (empty($present_id)) continue;
 
-            $attendance = new Attendance;
-
-            $attendance->school_id          = $school_id;
-            $attendance->academic_year_id   = $academic_year_id;
-            $attendance->date               = $this->parseDate($data->date ?? null);
-            $attendance->session            = $data->session ?? 'forenoon';
-            $attendance->user_id            = $present_id;
-            $attendance->status             = 1;
-            $attendance->recorded_by        = $admin;
-
-            $attendance->save();
+            $attendanceRecord = new Attendance;
+            $attendanceRecord->school_id        = $school_id;
+            $attendanceRecord->academic_year_id = $academic_year_id;
+            $attendanceRecord->date             = !empty($data->date) ? date('Y-m-d', strtotime($data->date)) : now()->format('Y-m-d');
+            $attendanceRecord->session          = $data->session ?? 'forenoon';
+            $attendanceRecord->user_id          = $present_id;
+            $attendanceRecord->status           = 1;
+            $attendanceRecord->recorded_by      = $admin;
+            $attendanceRecord->save();
         }
 
         \DB::commit();
-        return true; // or the last attendance if needed
+        return $attendanceRecord;
     }
-    catch(Exception $e)
+    catch(\Exception $e)
     {
         \DB::rollBack();
-        \Log::error('Staff Attendance Error: ' . $e->getMessage());
-        throw $e; // This will help you see the real error
+        \Log::error('Staff Attendance Error: ' . $e->getMessage() . ' | Line: ' . $e->getLine());
+        throw $e;   // This will show the real error
     } 
 }
-
 /**
  * Safe date parser
  */
