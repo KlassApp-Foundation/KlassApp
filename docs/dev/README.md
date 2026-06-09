@@ -86,6 +86,9 @@ The WhatsApp layer connects KlassApp to parents and staff via the WhatsApp Busin
 | [emis-lin-onboarding.md](emis-lin-onboarding.md) | EMIS/LIN integration, Path 2 CSV import, Path 3 self-registration | Admin |
 | [models.md](models.md) | Database table schemas and relationships | Developer |
 | [testing.md](testing.md) | PHPUnit test setup, factories, and running | Developer |
+| [digitalocean-deployment.md](digitalocean-deployment.md) | DO $200 credit — 10-school testing environment provisioning | Ops / Admin |
+| [schoolpay-integration.md](schoolpay-integration.md) | SchoolPay API integration spec (payment aggregator) | Developer |
+| [ai-agent-layer.md](ai-agent-layer.md) | AI Agent Layer spec — marksheet ingestion, analysis, enrichment | Developer |
 
 ---
 

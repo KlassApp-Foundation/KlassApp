@@ -7,4 +7,7 @@
 - [EMIS/LIN Onboarding](emis-lin-onboarding.md)
 - [Models](models.md)
 - [Cost Optimization](cost-optimization.md)
+- [DigitalOcean Deployment](digitalocean-deployment.md)
+- [SchoolPay Integration](schoolpay-integration.md)
+- [AI Agent Layer](ai-agent-layer.md)
 - [Testing](testing.md)

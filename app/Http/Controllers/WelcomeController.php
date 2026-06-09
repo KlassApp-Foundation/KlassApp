@@ -15,7 +15,6 @@ class WelcomeController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function __invoke(){
-        return view('welcome');
-        //return view('developer_version');
+        return view('landing');
     }
 }
