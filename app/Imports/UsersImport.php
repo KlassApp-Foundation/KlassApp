@@ -135,6 +135,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                     : null;
 
                 $student->registration_number = $row['admission_number'] ?? null;
+                $student->LIN         = $row['LIN'] ?? null;
                 $student->std_school_pay_number         = $row['std_school_pay_number'] ?? null;
                 $student->notes               = $row['notes'] ?? null;
 
