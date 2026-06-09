@@ -380,9 +380,7 @@ Route::get( '/settings/maintenancesettings', 'Setting\MaintenanceController@crea
 Route::post( '/settings/maintenancesettings', 'Setting\MaintenanceController@store' );
 Route::get( '/settings/seodetailsettings', 'Setting\SeoDetailController@create' );
 Route::post( '/settings/seodetailsettings', 'Setting\SeoDetailController@store' );
-Route::get( '/settings/premium-page', 'Setting\PremiumPageController@edit' )->name('admin.settings.premium-page');
-Route::post( '/settings/premium-page', 'Setting\PremiumPageController@update' );
-
+Route::post( '/settings/seodetailsettings', 'Setting\SeoDetailController@store' );
 //password and avatar
 
 Route::get( '/changepassword', 'UserProfileController@ChangePassword' );

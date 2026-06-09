@@ -107,13 +107,15 @@ class AppServiceProvider extends ServiceProvider {
         }
         //
 
-        if ( !\App::runningInConsole() && count( Schema::getColumnListing( 'settings' ) ) ) {
-
-            $settings = Setting::all();
-
-            foreach ( $settings as $key => $setting ) {
-                Config::set( 'settings.'.$setting->key, $setting->value );
+        try {
+            if ( !\App::runningInConsole() && Schema::hasTable('settings') && count( Schema::getColumnListing( 'settings' ) ) ) {
+                $settings = Setting::all();
+                foreach ( $settings as $key => $setting ) {
+                    Config::set( 'settings.'.$setting->key, $setting->value );
+                }
             }
+        } catch (\Exception $e) {
+            // DB not available — skip settings load
         }
 
         Paginator::useBootstrap();

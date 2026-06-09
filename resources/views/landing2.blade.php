@@ -38,11 +38,11 @@
 
     <style>
         :root {
-            --navy: #0D1526;
+            --navy: #0F172A;
             --blue: #1E6FD9;
             --green: #22C55E;
             --amber: #D97706;
-            --surface: #FAFAF5;
+            --surface: #FFFFFF;
             --white: #FFFFFF;
             --wa-header: #075E54;
             --wa-bg: #E5DDD5;
@@ -56,7 +56,7 @@
             font-family: 'DM Sans', system-ui, sans-serif;
             color: #1F2937;
             overflow-x: hidden;
-            background: var(--surface);
+            background: #FFFFFF;
         }
 
         /* ── Scroll reveal ── */
@@ -77,6 +77,9 @@
         /* ── Navigation ── */
         .navbar { transition: background 0.3s, box-shadow 0.3s; }
         .navbar.scrolled { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); box-shadow: 0 1px 0 rgba(0,0,0,0.06); }
+        /* ── Left/right compact scroll (Flare-style) ── */
+        .navbar { transition: background 0.3s, box-shadow 0.3s, padding 0.3s; background: transparent; box-shadow: none; }
+        .navbar.scrolled { background: rgba(255,255,255,0.92) !important; backdrop-filter: blur(12px) saturate(180%); -webkit-backdrop-filter: blur(12px) saturate(180%); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 
         /* ── Hero dot-grid ── */
         .dot-grid {
@@ -276,10 +279,16 @@
         }
 
         /* ── CTA section pattern ── */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         .cta-pattern {
             background-image:
-                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 50%, rgba(255,255,255,0.05) 0%, transparent 50%);
+                radial-gradient(circle at 20% 50%, rgba(30,111,217,0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(30,111,217,0.03) 0%, transparent 50%);
         }
 
         /* ── Section accent bars ── */
@@ -291,30 +300,13 @@
 
         /* ── Warm ambient backgrounds ── */
         .bg-warm-glow {
-            background:
-                radial-gradient(ellipse 80% 60% at 0% 50%, rgba(217,119,6,0.06) 0%, transparent 70%),
-                radial-gradient(ellipse 60% 50% at 100% 50%, rgba(30,111,217,0.04) 0%, transparent 70%),
-                #FAFAF5;
+            background: #FAFAFA;
         }
         .bg-warm-glow-strong {
-            background:
-                radial-gradient(ellipse 70% 50% at 50% 0%, rgba(217,119,6,0.10) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 40% at 30% 100%, rgba(30,111,217,0.06) 0%, transparent 50%),
-                #FFFFFF;
-        }
-        /* ── Navbar scroll styles ── */
-        .navbar { background: transparent; box-shadow: none; }
-        .navbar.scrolled {
-            background: rgba(255,255,255,0.92) !important;
-            backdrop-filter: blur(12px) saturate(180%);
-            -webkit-backdrop-filter: blur(12px) saturate(180%);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            background: #F5F5F5;
         }
         .bg-amber-glow {
-            background:
-                radial-gradient(ellipse 80% 50% at 50% 100%, rgba(217,119,6,0.12) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 40% at 20% 0%, rgba(217,119,6,0.06) 0%, transparent 50%),
-                #FFFCF5;
+            background: #F8F6F1;
         }
 
         /* ── African geometric pattern overlay ── */
@@ -411,13 +403,13 @@
      HERO
      ═══════════════════════════════════════════════════ -->
 <section class="min-h-screen bg-warm-glow flex items-center relative overflow-hidden pt-20">
-    <div class="absolute inset-0 bg-slate-50">
+    <div class="absolute inset-0 bg-white">
         <div class="absolute inset-0 opacity-[0.08]" style="background-image: url('data:image/svg+xml,%3Csvg width=\u002260\u0022 height=\u002260\u0022 viewBox=\u00220 0 60 60\u0022 xmlns=\u0022http://www.w3.org/2000/svg\u0022%3E%3Cg fill=\u0022none\u0022 fill-rule=\u0022evenodd\u0022%3E%3Cg fill=\u0022%231E6FD9\u0022 fill-opacity=\u00220.3\u0022%3E%3Cpath d=\u0022M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\u0022/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); background-size: 60px 60px;"></div>
     </div>
 
     <div class="absolute top-1/4 -left-32 w-96 h-96 bg-brand-blue/10 rounded-full blur-[120px] pointer-events-none"></div>
-    <div class="absolute bottom-1/4 -right-32 w-80 h-80 bg-brand-green/5 rounded-full blur-[100px] pointer-events-none"></div>
-    <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-brand-amber/5 rounded-full blur-[80px] pointer-events-none"></div>
+    <div class="absolute bottom-1/4 -right-32 w-80 h-80 bg-brand-green/3 rounded-full blur-[100px] pointer-events-none"></div>
+    <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-brand-amber/3 rounded-full blur-[80px] pointer-events-none"></div>
 
     <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 w-full">
         <div class="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
@@ -426,21 +418,20 @@
 
                 <!-- Audience Selector Tabs -->
                 <div class="flex gap-2 mb-5 flex-wrap" role="tablist" aria-label="Audience selector">
-                    <button class="audience-tab active px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border-2 text-brand-green bg-white shadow-sm" style="border-color: #22C55E;" data-audience="admin">Administrators &amp; Principals</button>
-                    <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="teacher">Teachers</button>
-                    <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="parent">Parents</button>
+                    <button class="audience-tab active px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-900 bg-white shadow-sm" data-audience="admin">Administrators &amp; Principals</button>
+                    <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white hover:shadow-sm" data-audience="teacher">Teachers</button>
+                    <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white hover:shadow-sm" data-audience="parent">Parents</button>
                 </div>
 
-                <h1 class="font-display font-extrabold text-slate-900 leading-[1.08] tracking-[-0.02em]"
-                    style="font-size: clamp(2.5rem, 5vw, 4.5rem); min-height: 1.2em;">
+                <h1 class="font-display font-extrabold leading-[1.08] tracking-[-0.02em]"
+                    style="font-size: clamp(2.5rem, 5vw, 4.5rem); background: linear-gradient(135deg, #1E6FD9 0%, #22C55E 35%, #D97706 70%, #1E6FD9 100%); background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: gradientShift 6s ease infinite;">
                     <span id="typewriter-text"></span><span id="typewriter-cursor" class="text-brand-amber">|</span>
                 </h1>
                 <div id="admin-tagline" class="font-display font-semibold text-slate-500 text-xl sm:text-2xl mt-2 mb-5 opacity-0 transition-opacity duration-700" style="letter-spacing: -0.01em;">
-                    <span class="text-brand-amber/60">✦</span> And the command centre your admin team runs on.
+                    <span class="text-brand-amber/60">✦</span> And the system your admin team operates on.
                 </div>
                 <p class="text-lg leading-relaxed text-slate-600 mb-8 max-w-lg">
-                    <span class="text-brand-green font-semibold"><span id="hero-typelist" class="text-brand-green font-semibold"></span><span id="hero-typelist-cursor" class="text-brand-green">|</span></span>
-                    <span class="hero-static-rest"> delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators, dashboards that make running a school feel effortless.</span>
+                    <span id="hero-typelist" class="text-brand-green font-semibold"></span><span id="hero-typelist-cursor" class="text-brand-green">|</span> — delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators — dashboards that make running a school feel effortless.
                 </p>
                 <div class="flex flex-wrap gap-4">
                     <a href="{{ url('/register') }}"
@@ -581,7 +572,7 @@
 <!-- ═══════════════════════════════════════════════════
      SOCIAL PROOF MARQUEE
      ═══════════════════════════════════════════════════ -->
-<section class="bg-surface py-8 overflow-hidden border-t border-gray-200/50">
+<section class="bg-white py-8 overflow-hidden border-t border-gray-200/50">
     <div class="max-w-7xl mx-auto px-6">
         <p class="text-center text-sm font-medium text-gray-500 uppercase tracking-wider mb-5">
             Trusted by schools across Africa
@@ -629,7 +620,7 @@
                 <ul class="space-y-5">
                     <li class="flex gap-3 text-gray-600">
                         <span class="text-red-400 mt-0.5 shrink-0">✕</span>
-                        <span>Parents find out about exam results at the end of term, weeks after they're published.</span>
+                        <span>Parents find out about exam results at the end of term — weeks after they're published.</span>
                     </li>
                     <li class="flex gap-3 text-gray-600">
                         <span class="text-red-400 mt-0.5 shrink-0">✕</span>
@@ -637,7 +628,7 @@
                     </li>
                     <li class="flex gap-3 text-gray-600">
                         <span class="text-red-400 mt-0.5 shrink-0">✕</span>
-                        <span>Absence notifications never reach home. Parents discover their child skipped school weeks later.</span>
+                        <span>Absence notifications never reach home — parents discover their child skipped school weeks later.</span>
                     </li>
                     <li class="flex gap-3 text-gray-600">
                         <span class="text-red-400 mt-0.5 shrink-0">✕</span>
@@ -654,11 +645,11 @@
                 <ul class="space-y-5">
                     <li class="flex gap-3 text-gray-600">
                         <span class="text-brand-green mt-0.5 shrink-0">✓</span>
-                        <span>Grades delivered to WhatsApp the moment results are published, real-time, no waiting.</span>
+                        <span>Grades delivered to WhatsApp the moment results are published — real-time, no waiting.</span>
                     </li>
                     <li class="flex gap-3 text-gray-600">
                         <span class="text-brand-green mt-0.5 shrink-0">✓</span>
-                        <span>Personalised fee balance, one message away. Every parent gets their own data, not a group broadcast.</span>
+                        <span>Personalised fee balance — one message away. Every parent gets their own data, not a group broadcast.</span>
                     </li>
                     <li class="flex gap-3 text-gray-600">
                         <span class="text-brand-green mt-0.5 shrink-0">✓</span>
@@ -666,7 +657,7 @@
                     </li>
                     <li class="flex gap-3 text-gray-600">
                         <span class="text-brand-green mt-0.5 shrink-0">✓</span>
-                        <span>Works on any phone, any network, no app required. Just WhatsApp, which parents already use every day.</span>
+                        <span>Works on any phone, any network, no app required. Just WhatsApp — which parents already use every day.</span>
                     </li>
                 </ul>
             </div>
@@ -968,7 +959,7 @@
 <!-- ═══════════════════════════════════════════════════
      FOR SCHOOLS + PREMIUM PAGES
      ═══════════════════════════════════════════════════ -->
-<section id="schools" class="py-24 bg-slate-100 relative overflow-hidden">
+<section id="schools" class="py-24 bg-white relative overflow-hidden">
     <div class="absolute inset-0 pattern-diamonds pointer-events-none"></div>
     <div class="absolute top-1/3 -right-32 w-96 h-96 bg-brand-amber/5 rounded-full blur-[120px] pointer-events-none"></div>
     <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
@@ -977,7 +968,7 @@
             A complete school management<br class="hidden sm:block" /> platform — with parents built in.
         </h2>
         <p class="text-slate-600 text-lg max-w-2xl mb-14 reveal">
-            KlassApp isn't just WhatsApp. It's a full school management system with admin, teacher, and bursar dashboards, and every feature is designed to keep parents informed. For parents, it's the simplest way to stay connected: no app, no login, just a familiar chat interface they already use every day.
+            KlassApp isn't just WhatsApp. It's a full school management system with admin, teacher, and bursar dashboards — and every feature is designed to keep parents informed. For parents, it's the simplest way to stay connected: no app, no login, just a familiar chat interface they already use every day.
         </p>
 
         <div class="grid sm:grid-cols-2 gap-6 mb-16">
@@ -990,7 +981,7 @@
             <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition reveal reveal-delay-1">
                 <h3 class="font-display font-bold text-xl text-slate-900 mb-3">💬 WhatsApp Notifications</h3>
                 <p class="text-slate-600 leading-relaxed">
-                    Broadcast fee reminders, exam results and school events to every parent automatically; no app needed.
+                    Broadcast fee reminders, exam results and school events to every parent automatically — no app needed.
                 </p>
             </div>
             <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition reveal reveal-delay-2">
@@ -1274,7 +1265,7 @@
 <!-- ═══════════════════════════════════════════════════
      CTA
      ═══════════════════════════════════════════════════ -->
-<section id="demo" class="py-24 bg-slate-50 cta-pattern relative overflow-hidden border-t border-slate-200">
+<section id="demo" class="py-24 bg-white relative overflow-hidden border-t border-slate-200">
     <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
         <h2 class="font-display font-bold text-4xl lg:text-5xl text-slate-900 mb-4 reveal">
             Ready to bring parents closer to school?
@@ -1314,11 +1305,11 @@
 <!-- ═══════════════════════════════════════════════════
      FOOTER
      ═══════════════════════════════════════════════════ -->
-<footer class="relative py-20 bg-slate-50 border-t border-slate-200 overflow-hidden">
-    <!-- Oversized decorative wordmark -->
+<footer class="relative py-20 bg-white border-t border-slate-200 overflow-hidden">
+    <!-- Oversized decorative KlassApp wordmark in brand gradient colors -->
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
-        <span class="font-display font-extrabold text-[22vw] leading-none tracking-tighter"
-              style="color: rgba(34,197,94,0.05); transform: translateY(10%);">KlassApp</span>
+        <span class="font-display font-extrabold text-[18vw] leading-none tracking-tighter whitespace-nowrap"
+              style="background: linear-gradient(135deg, #1E6FD9 0%, #22C55E 50%, #0F172A 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0.03; transform: translateY(10%);">KlassApp</span>
     </div>
 
     <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-12">
@@ -1368,22 +1359,27 @@
     }, { threshold: 0.1 });
     reveals.forEach(el => observer.observe(el));
 
-    // ── Nav scroll effect (compact on scroll down, full on scroll up) ──
+    // ── Nav scroll effect (left-right compact, Flare-style) ──
     let lastScroll = 0;
     const nav = document.querySelector('.navbar');
     const navLogo = document.getElementById('navLogo');
     window.addEventListener('scroll', () => {
         const y = window.scrollY;
+        const goingDown = y > lastScroll;
         if (y > 60) {
             nav.classList.add('scrolled');
-            nav.style.paddingTop = '0.75rem';
-            nav.style.paddingBottom = '0.75rem';
-            if (navLogo) navLogo.style.height = '2.5rem';
+            // Shrink padding from full to compact
+            nav.style.paddingTop = goingDown ? '0.75rem' : '';
+            nav.style.paddingBottom = goingDown ? '0.75rem' : '';
+            // Logo shrinks east-west (width transform)
+            if (navLogo) {
+                navLogo.style.transform = goingDown ? 'scaleX(0.85)' : 'scaleX(1)';
+            }
         } else {
             nav.classList.remove('scrolled');
             nav.style.paddingTop = '';
             nav.style.paddingBottom = '';
-            if (navLogo) navLogo.style.height = '';
+            if (navLogo) navLogo.style.transform = '';
         }
         lastScroll = y;
     });
@@ -1415,11 +1411,11 @@
     const audienceCopy = {
         admin: {
             title: "The school in every parent's pocket.",
-            subtitle: 'And the system your admin team operates on.'
+            subtitle: 'And the command centre your admin team runs on.'
         },
         teacher: {
             title: 'Spend less time on admin. More time doing what you love.',
-            subtitle: 'KlassApp handles the noise so you can focus on what actually matters: teaching.'
+            subtitle: 'KlassApp handles the noise so you can focus on what actually matters — teaching.'
         },
         parent: {
             title: "Always in the loop. Never in the dark.",
@@ -1462,14 +1458,12 @@
 
         titleEl.classList.remove('hero-reveal', 'is-typing');
         taglineEl.classList.remove('hero-reveal');
-        // Keep opacity 1 and set min-height so H1 never collapses
-        titleEl.style.opacity = '1';
-        titleEl.style.transform = 'translateY(0)';
+        titleEl.style.opacity = '0';
+        titleEl.style.transform = 'translateY(16px)';
         taglineEl.style.opacity = '0';
         taglineEl.style.transform = 'translateY(16px)';
 
         requestAnimationFrame(function() {
-            titleEl.textContent = '';
             titleEl.classList.add('hero-reveal');
             typeWriter(titleEl, audienceCopy[aud].title, 45 + Math.random() * 35, token, function() {
                 taglineEl.innerHTML = '<span class="text-brand-amber/60">✦</span> ' + audienceCopy[aud].subtitle;
@@ -1485,15 +1479,11 @@
             const isActive = btn.getAttribute('data-audience') === aud;
             btn.classList.toggle('active', isActive);
             if (isActive) {
-                btn.classList.add('bg-white', 'text-brand-green', 'shadow-sm');
+                btn.classList.add('bg-white', 'text-slate-900', 'shadow-sm');
                 btn.classList.remove('bg-white/70', 'text-slate-600', 'hover:bg-white');
-                btn.style.borderColor = '#22C55E';
-                btn.style.borderWidth = '2px';
             } else {
-                btn.classList.remove('bg-white', 'text-brand-green', 'shadow-sm');
+                btn.classList.remove('bg-white', 'text-slate-900', 'shadow-sm');
                 btn.classList.add('bg-white/70', 'text-slate-600', 'hover:bg-white');
-                btn.style.borderColor = '';
-                btn.style.borderWidth = '';
             }
         });
         animateHeroCopy(aud);

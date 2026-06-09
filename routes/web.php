@@ -8,6 +8,11 @@ use App\Http\Controllers\Superadmin\DashboardController;
 });*/
 Route::get('/', 'WelcomeController');
 
+// Landing page v2 (Flare-style)
+Route::get('/landing2', function () {
+    return view('landing2');
+});
+
 // Landing page (public)
 Route::get('/landing', function () {
     return view('landing');
