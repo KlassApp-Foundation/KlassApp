@@ -93,10 +93,10 @@ trait RegisterUser
             {
                 $userprofile->native_place = $data->native_place;
             }
-            if(!is_null($data->mother_tongue))
-            {
-                $userprofile->mother_tongue = $data->mother_tongue;
-            }
+            // if(!is_null($data->mother_tongue))
+            // {
+            //     $userprofile->mother_tongue = $data->mother_tongue;
+            // }
             if(!is_null($data->caste))
             {
                 $userprofile->caste = $data->caste;
@@ -111,9 +111,9 @@ trait RegisterUser
            /* $userprofile->registration_number   = $data->registration_number;*/
             
             
-            if(!is_null($data->EMIS_number))
+            if(!is_null($data->lin))
             {
-                $userprofile->EMIS_number = $data->EMIS_number;
+                $userprofile->lin = $data->lin;
             }
             if(!is_null($data->notes))
             {
@@ -243,10 +243,10 @@ trait RegisterUser
             {
                 $userprofile->native_place = $data->native_place;
             }
-            if(!is_null($data->mother_tongue))
-            {
-                $userprofile->mother_tongue = $data->mother_tongue;
-            }
+            // if(!is_null($data->mother_tongue))
+            // {
+            //     $userprofile->mother_tongue = $data->mother_tongue;
+            // }
             if(!is_null($data->caste))
             {
                 $userprofile->caste = $data->caste;
@@ -258,9 +258,9 @@ trait RegisterUser
 
             $userprofile->joining_date          = date('Y-m-d',strtotime($data->joining_date));            
             
-            if(!is_null($data->EMIS_number))
+            if(!is_null($data->lin))
             {
-                $userprofile->EMIS_number = $data->EMIS_number;
+                $userprofile->lin = $data->lin;
             }
             if(!is_null($data->notes))
             {

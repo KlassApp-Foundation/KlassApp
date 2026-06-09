@@ -34,7 +34,7 @@ class SchoolController extends Controller
         $array['schoolLogo']            = $details['school_logo']=='-' ? null:$this->getFilePath($details['school_logo']);
         $array['moto']                  = $details['moto']=='-' ? null:$details['moto'];
         $array['affiliatedBy']          = $details['affiliated_by']=='-' ? null:$details['affiliated_by'];
-        $array['affiliationNo']         = $details['affiliation_no']=='-' ? null:$details['affiliation_no'];
+        $array['affiliationNo']         = $details['center_no']=='-' ? null:$details['center_no'];
         $array['dateOfEstablishment']   = $details['date_of_establishment']=='-' ? null:$details['date_of_establishment'];
         $array['board']                 = $details['board']=='-' ? null:$details['board'];
         $array['landlineNo']            = $details['landline_no']=='-' ? null:$details['landline_no'];

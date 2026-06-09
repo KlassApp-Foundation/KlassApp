@@ -141,10 +141,10 @@ class TeacherImportExportController extends Controller
     | HEADER (UNCHANGED - IMPORTANT FOR IMPORT COMPATIBILITY)
     |--------------------------------------------------------------------------
     */
+    // to remove 'blood_group', 'ug_degree','pg_degree','additional_coures'
     $csv->insertOne([
-        'firstname','lastname','mobile_no','email','gender','date_of_birth', 'blood_group','address', 'district', 'region',
-        'country','joining_date','employee_id','ug_degree','pg_degree','specialization','additional_coures',
-        'designation','notes'
+        'firstname','lastname','mobile_no','email','gender','date_of_birth', 'address','district','region',
+        'country','joining_date','employee_id','specialization','designation','notes'
     ]);
 
     /*
@@ -153,8 +153,7 @@ class TeacherImportExportController extends Controller
     |--------------------------------------------------------------------------
     */
     $csv->insertOne([
-        'John','Kato','256700000000','john@example.com','male','1990-05-10','O+','Kampala Central','Kampala','Central','Uganda', '2025-01-10', 'EMP001', 'Bachelor of Education', 'Master of Education', 'Mathematics',
-        'Teacher Training Certificate, Diploma in Education','Head Of Department','Sample notes'
+        'John','Kato','256700000000','john@example.com','male','1990-05-10','Kampala Central','Kampala','Central','Uganda', '2025-01-10', 'EMP001', 'Mathematics','Head Of Department','Sample notes'
     ]);
 
     $filename = 'klassapp_teacher_template' . date('d-m-Y_H:i') . '.csv';

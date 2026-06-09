@@ -44,7 +44,7 @@ class ExportMemberController extends Controller
 
         if(count($users) > 0)
         {
-            $csv->insertOne(['firstname','lastname','parent_name','standard','admission_number','EMIS','Joining_date','caste','adhaar','blood_group','gender','date_of_birth','address','city','state','country','pincode','mobile_no','email','notes','status',]);
+            $csv->insertOne(['firstname','lastname','parent_name','standard','admission_number','lin','Joining_date','caste','adhaar','blood_group','gender','date_of_birth','address','city','state','country','pincode','mobile_no','email','notes','status',]);
       
             foreach($users as $user)
             {
@@ -55,7 +55,7 @@ class ExportMemberController extends Controller
                     $user->members[0]['userprofile']['firstname'].' '.$user->members[0]['userprofile']['lastname'],
                     $user->studentAcademicLatest->standardLink->StandardSection,
                     $user->userprofile->registration_number,
-                    $user->userprofile->EMIS_number,
+                    $user->userprofile->LIN,
                     $user->userprofile->joining_date,
                     $user->userprofile->caste,
                     $user->userprofile->aadhar_number,
@@ -113,7 +113,7 @@ class ExportMemberController extends Controller
     //dd($heads);
      $users = $this->MemberFilter($request,Auth::user()->school_id,6,'active');    
         $csv = Writer::createFromFileObject(new \SplTempFileObject());
-     $default=array('name','email','mobile_no','parent_name','standard','gender','admission_number','EMIS','Joining_date','caste','adhaar','blood_group','date_of_birth','address','city','state','country','pincode','notes');
+     $default=array('name','email','mobile_no','parent_name','standard','gender','admission_number','LIN','Joining_date','caste','adhaar','blood_group','date_of_birth','address','city','state','country','pincode','notes');
      $result=[];
      $result = array_intersect($default, $heads);
      $result = array_map('ucfirst', $result);
@@ -163,9 +163,9 @@ class ExportMemberController extends Controller
                 {
                     $data[]=$user->userprofile->registration_number;
                 }
-                if(in_array('EMIS', $heads))
+                if(in_array('LIN', $heads))
                 {
-                    $data[]=$user->userprofile->EMIS_number;
+                    $data[]=$user->userprofile->LIN;
                 }
                 if(in_array('Joining_date', $heads))
                 {
@@ -245,7 +245,7 @@ class ExportMemberController extends Controller
     //dd($heads);
        
         $csv = Writer::createFromFileObject(new \SplTempFileObject());
-     $default=array('name','email','mobile_no','parent_name','standard','gender','admission_number','EMIS','Joining_date','caste','adhaar','blood_group','date_of_birth','address','city','state','country','pincode','notes');
+     $default=array('name','email','mobile_no','parent_name','standard','gender','admission_number','LIN','Joining_date','caste','adhaar','blood_group','date_of_birth','address','city','state','country','pincode','notes');
      $result=[];
      $result = array_intersect($default, $heads);
      $result = array_map('ucfirst', $result);

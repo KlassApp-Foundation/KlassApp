@@ -45,7 +45,7 @@ class CreateUserprofilesTable extends Migration
             $table->string('aadhar_number')->nullable();
             $table->integer('total_periods')->nullable();
             $table->string('registration_number')->nullable();
-            $table->string('EMIS_number')->nullable();
+            $table->string('LIN')->nullable();
             $table->date('joining_date')->nullable();
             $table->longtext('notes')->nullable();
             $table->string('avatar')->nullable();

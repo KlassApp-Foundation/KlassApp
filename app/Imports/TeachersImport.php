@@ -8,7 +8,6 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Collection;
 use App\Models\Qualification;
-use App\Models\Subscription;
 use App\Models\AcademicYear;
 use App\Traits\RegisterUser;
 use App\Models\Country;
@@ -36,45 +35,43 @@ class TeachersImport implements ToCollection, WithHeadingRow
 
             foreach ($rows as $row) {
 
-                // ✅ skip empty rows
-                if (empty($row['firstname'])) {
+                // ✅ Skip empty rows
+                if (empty($row['firstname'] ?? null)) {
                     continue;
                 }
 
                 /*
                 |--------------------------------------------------------------------------
-                | LOCATION (UG SAFE)
+                | LOCATION
                 |--------------------------------------------------------------------------
                 */
-                $country = !empty($row['country'])
+                $country = !empty($row['country'] ?? null)
                     ? Country::where('name', 'LIKE', '%' . $row['country'] . '%')->first()
                     : null;
 
-                $state = !empty($row['region'])
+                $state = !empty($row['region'] ?? null)
                     ? State::where('name', 'LIKE', '%' . $row['region'] . '%')->first()
                     : null;
 
-                $city = !empty($row['district'])
+                $city = !empty($row['district'] ?? null)
                     ? City::where('name', 'LIKE', '%' . $row['district'] . '%')->first()
                     : null;
 
                 /*
                 |--------------------------------------------------------------------------
-                | QUALIFICATIONS (SAFE)
+                | QUALIFICATIONS - Now Safe
                 |--------------------------------------------------------------------------
                 */
                 $qualification_array = [];
 
-                if (!empty($row['additional_coures'])) {
-
+                // Additional Courses (if column exists)
+                if (!empty($row['additional_coures'] ?? null)) {
                     $courses = array_map('trim', str_getcsv($row['additional_coures']));
 
                     foreach ($courses as $course) {
-
                         $q = Qualification::where('type', 'teacher')
                             ->where('display_name', 'LIKE', '%' . $course . '%')
-                            ->pluck('id')
-                            ->first();
+                            ->value('id');
 
                         if ($q) {
                             $qualification_array[] = $q;
@@ -82,52 +79,54 @@ class TeachersImport implements ToCollection, WithHeadingRow
                     }
                 }
 
+                // UG Degree (Safe)
+                $ug_degree = null;
+                if (!empty($row['ug_degree'] ?? null)) {
+                    $ug_degree = Qualification::where('type', 'ug')
+                        ->where('display_name', 'LIKE', '%' . $row['ug_degree'] . '%')
+                        ->value('id');
+                }
+
+                // PG Degree (Safe)
+                $pg_degree = null;
+                if (!empty($row['pg_degree'] ?? null)) {
+                    $pg_degree = Qualification::where('type', 'pg')
+                        ->where('display_name', 'LIKE', '%' . $row['pg_degree'] . '%')
+                        ->value('id');
+                }
+
                 /*
                 |--------------------------------------------------------------------------
-                | UG / PG DEGREE SAFE
+                | EMPLOYEE ID
                 |--------------------------------------------------------------------------
                 */
-                $ug_degree = Qualification::where('type', 'ug')
-                    ->where('display_name', 'LIKE', '%' . ($row['ug_degree'] ?? '') . '%')
-                    ->value('id') ?? null;
-
-                $pg_degree = Qualification::where('type', 'pg')
-                    ->where('display_name', 'LIKE', '%' . ($row['pg_degree'] ?? '') . '%')
-                    ->value('id') ?? null;
-
-                /*
-                |--------------------------------------------------------------------------
-                | EMPLOYEE ID FORMAT (EMP001)
-                |--------------------------------------------------------------------------
-                */
-                $employee_id = !empty($row['employee_id'])
+                $employee_id = !empty($row['employee_id'] ?? null)
                     ? $row['employee_id']
                     : 'EMP' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
 
                 /*
                 |--------------------------------------------------------------------------
-                | BUILD TEACHER OBJECT (CLEAN DTO STYLE)
+                | BUILD TEACHER OBJECT
                 |--------------------------------------------------------------------------
                 */
                 $teacher = new \stdClass();
                 $teacher->firstname        = $row['firstname'];
                 $teacher->lastname         = $row['lastname'] ?? null;
                 $teacher->mobile_no        = $row['mobile_no'] ?? null;
-                $teacher->email            = !empty($row['email']) ? strtolower($row['email']) : null;
+                $teacher->email            = !empty($row['email'] ?? null) ? strtolower($row['email']) : null;
                 $teacher->gender           = $row['gender'] ?? null;
 
-                $teacher->date_of_birth    = !empty($row['date_of_birth'])
+                $teacher->date_of_birth    = !empty($row['date_of_birth'] ?? null)
                     ? Carbon::parse($row['date_of_birth'])->format('Y-m-d')
                     : null;
 
                 $teacher->blood_group      = $row['blood_group'] ?? null;
-
                 $teacher->address          = $row['address'] ?? null;
                 $teacher->city_id          = $city->id ?? null;
                 $teacher->state_id         = $state->id ?? null;
                 $teacher->country_id       = $country->id ?? null;
 
-                $teacher->joining_date     = !empty($row['joining_date'])
+                $teacher->joining_date     = !empty($row['joining_date'] ?? null)
                     ? Carbon::parse($row['joining_date'])->format('Y-m-d')
                     : null;
 
@@ -145,28 +144,26 @@ class TeachersImport implements ToCollection, WithHeadingRow
                 | DUPLICATE CHECK
                 |--------------------------------------------------------------------------
                 */
-                $exists = User::where([
-                        ['mobile_no', $teacher->mobile_no],
-                        ['school_id', $school_id]
-                    ])
-                    ->orWhereHas('teacherprofile', function ($q) use ($employee_id) {
-                        $q->where('employee_id', $employee_id);
+                $exists = User::where('school_id', $school_id)
+                    ->where(function ($query) use ($teacher, $employee_id) {
+                        $query->where('mobile_no', $teacher->mobile_no)
+                              ->orWhereHas('teacherprofile', function ($q) use ($employee_id) {
+                                  $q->where('employee_id', $employee_id);
+                              });
                     })
                     ->exists();
 
                 if (!$exists) {
-                   $this->CreateTeacher($teacher, $school_id, $academic_year, "", 5);
-
+                    $this->CreateTeacher($teacher, $school_id, $academic_year, "", 5);
                     $insertedcount++;
-                    
                 }
             }
+
             Session::put('insertedcount', $insertedcount);
 
         } catch (Exception $e) {
             Log::error('Teacher Import Error: ' . $e->getMessage());
-                dd($e->getMessage());
-
+            dd($e->getMessage()); // Remove dd() in production
         }
     }
 }

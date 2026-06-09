@@ -471,7 +471,7 @@ class RegisterController extends Controller
     {
         try
         {
-            $keys = ['school_logo', 'moto', 'affiliated_by', 'affiliation_no', 'date_of_establishment', 'board', 'landline_no', 'about_us' , 'website'];
+            $keys = ['school_logo', 'moto', 'affiliated_by', 'center_no', 'date_of_establishment', 'board', 'landline_no', 'about_us' , 'website'];
 
             foreach ($keys as $key) {
                 $detail = SchoolDetail::create([
