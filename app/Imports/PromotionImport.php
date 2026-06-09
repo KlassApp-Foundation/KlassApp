@@ -37,7 +37,7 @@ class PromotionImport implements ToCollection , WithHeadingRow
             
             foreach ($rows as $row) 
             { 
-                $curr_studentAcademic = StudentAcademic::where('roll_number',$row['roll_number'])->first();
+                $curr_studentAcademic = StudentAcademic::where('std_school_pay_number',$row['std_school_pay_number'])->first();
               
                 if($curr_studentAcademic->academic_status == NULL)
                 { 
@@ -86,7 +86,7 @@ class PromotionImport implements ToCollection , WithHeadingRow
                             $next_studentAcademic->academic_year_id           = $next_academic_year_id;
                             $next_studentAcademic->user_id                    = $user->id;
                             $next_studentAcademic->standardLink_id            = $next_standardLink->id;
-                            $next_studentAcademic->roll_number                = $curr_studentAcademic->roll_number;
+                            $next_studentAcademic->std_school_pay_number                = $curr_studentAcademic->std_school_pay_number;
                             $next_studentAcademic->id_card_number             = $curr_studentAcademic->id_card_number;
                             $next_studentAcademic->board_registration_number  = $curr_studentAcademic->board_registration_number;
 

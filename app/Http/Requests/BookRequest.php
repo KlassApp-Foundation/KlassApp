@@ -47,12 +47,12 @@ class BookRequest extends FormRequest
         return [
             
             'title'   => 'required|check_title|max:100',
-            'author'  => 'required|max:100',
-            'category_id'=>'required',
+            'author'  => 'nullable|max:100',
+            'category_id'=>'required|exists:books_category,id',
             'book_code'=>'required|unique:books',
-            'isbn_number'=>['required','unique:books',new ISBN],
-            'availability'=>'required|numeric',
-            'cover_image'=>'required|mimes:jpg,jpeg,png',
+            'isbn_number'=>['nullable','unique:books',new ISBN],
+            'quantity'=>'nullable|numeric',
+            'cover_image'=>'nullable|mimes:jpg,jpeg,png',
            
         ];
     }
@@ -63,12 +63,12 @@ class BookRequest extends FormRequest
             
             'title.required'     =>  'Title is required',
             'title.check_title'   =>  'Already Exists',
-            'author.required'     => 'Author is Required',
+            // 'author.required'     => 'Author is Required',
             'category_id.required'=>'Select Category',
             'book_code.required'=>'Book Code Required',
-            'isbn_number.required'=>'Isbn Number Required',
-            'availability.required'=>'Availability Required',
-            'cover_image.required'=>'Cover Image Required',
+            // 'isbn_number.required'=>'Isbn Number Required',
+            // 'quantity.required'=>'quantity Required',
+            // 'cover_image.required'=>'Cover Image Required',
             'cover_image.mimes'=>'Choose jpg,jpeg,png file',
            
         ];

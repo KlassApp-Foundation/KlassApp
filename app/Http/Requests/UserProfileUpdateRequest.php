@@ -119,10 +119,10 @@ class UserProfileUpdateRequest extends FormRequest
             'caste'                     => 'nullable',
             'notes'                     => 'nullable|string|checknotes',
             'registration_number'       => 'nullable|numeric',
-            'EMIS_number'               => 'nullable|numeric',
+            'LIN'               => 'nullable|numeric',
             'joining_date'              => 'required|date|check_joining_date',
             'standard'                  => 'required',
-            'roll_number'               => 'nullable|numeric',
+            'std_school_pay_number'               => 'nullable|numeric',
             'id_card_number'            => 'nullable|numeric',   
             'mode_of_transport'         => 'nullable',
             'siblings'                  => 'required', 
@@ -230,16 +230,16 @@ class UserProfileUpdateRequest extends FormRequest
             'registration_number.required'                      => 'Registration Number Is Required',
             'registration_number.numeric'                       => 'Registration Number Should Be Numeric',
 
-            'EMIS_number.required'                              => 'EMIS Number Is Required',
-            'EMIS_number.numeric'                               => 'EMIS Number Should Be Numeric',
+            'LIN.required'                              => 'LIN Number Is Required',
+            'LIN.numeric'                               => 'LIN Number Should Be Numeric',
 
             'joining_date.required'                             => 'Joining Date Is Required',
             'joining_date.check_joining_date'                   => 'Select A Valid Joining Date',
 
             'standard.required'                                 => 'Class Is Required',
 
-            'roll_number.required'                              => 'Roll Number Is Required',
-            'roll_number.numeric'                               => 'Roll Number Should Be Numeric',
+            'std_school_pay_number.required'                              => 'Student School Pay Number Is Required',
+            'std_school_pay_number.numeric'                               => 'Student School Pay Number Should Be Numeric',
 
             'id_card_number.required'                           => 'ID Card Number Is Required',
             'id_card_number.numeric'                            => 'ID Card Number Should Be Numeric',

@@ -35,7 +35,7 @@ class UserprofileFactory extends Factory
 
     $registration_number = $this->faker->unique()->randomNumber($nbDigits = 6, $strict = false);
 
-    $EMIS_number = $this->faker->unique()->randomNumber($nbDigits = 6, $strict = false);
+    $LIN = $this->faker->unique()->randomNumber($nbDigits = 6, $strict = false);
 
     $joining_date = $this->faker->dateTimeBetween($startDate = '-4 years', $endDate = '-2 years', $timezone = null);
 
@@ -67,7 +67,7 @@ class UserprofileFactory extends Factory
         'country_id'            =>  7,
         'pincode'               =>  $pincode, 
         'registration_number'   =>  $registration_number,
-        'EMIS_number'           =>  $EMIS_number,
+        'LIN'           =>  $LIN,
         'joining_date'          =>  $joining_date,
         'avatar'                =>  $avatar,
     ];

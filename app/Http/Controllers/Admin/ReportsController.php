@@ -231,14 +231,14 @@ class ReportsController extends Controller
 
             if(count($users) > 0)
             {   
-                $csv->insertOne(['roll_number','class','firstname','lastname','mobile_no','email','fee_title','term','amount','paid_on']);
+                $csv->insertOne(['std_school_pay_number','class','firstname','lastname','mobile_no','email','fee_title','term','amount','paid_on']);
           
                 foreach($users as $user)
                 { 
                     foreach ($user->feePayment as $feePayment) 
                     {
                         $csv->insertOne([
-                            $user->studentAcademicLatest->roll_number,
+                            $user->studentAcademicLatest->std_school_pay_number,
                             $user->studentAcademicLatest->standardLink->StandardSection,
                             $user->userprofile->firstname,
                             $user->userprofile->lastname,
@@ -289,12 +289,12 @@ class ReportsController extends Controller
 
                 if(count($users) > 0)
                 {   
-                    $csv->insertOne(['roll_number','class','firstname','lastname','date_of_birth']);
+                    $csv->insertOne(['std_school_pay_number','class','firstname','lastname','date_of_birth']);
               
                     foreach($users as $user)
                     { 
                         $csv->insertOne([
-                            $user->studentAcademicLatest->roll_number,
+                            $user->studentAcademicLatest->std_school_pay_number,
                             $user->studentAcademicLatest->standardLink->StandardSection,
                             $user->userprofile->firstname,
                             $user->userprofile->lastname,

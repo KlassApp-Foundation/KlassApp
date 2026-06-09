@@ -23,7 +23,7 @@ class CreateStudentAcademicsTable extends Migration
             $table->foreign('user_id')->references('id')->on('users');
             $table->integer('standardLink_id')->unsigned()->nullable();
             $table->foreign('standardLink_id')->references('id')->on('standards_link');
-            $table->string('roll_number')->nullable();
+            $table->string('std_school_pay_number')->nullable();
             $table->string('id_card_number')->nullable();
             $table->string('board_registration_number')->nullable();
             $table->enum('mode_of_transport',['auto','car','city_bus','cycle','rickshaw','school_bus','taxi','walking'])->nullable();

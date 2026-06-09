@@ -21,7 +21,7 @@ class VideoRoomUser extends JsonResource
             'email'         => $this->email,
             'mobile_no'     => $this->mobile_no, 
             'class'         => $this->studentAcademicLatest->standardLink->StandardSection,
-            'roll_number'   => $this->studentAcademicLatest->roll_number,
+            'std_school_pay_number'   => $this->studentAcademicLatest->std_school_pay_number,
         ];
     }
 }

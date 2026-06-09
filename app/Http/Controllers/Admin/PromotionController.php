@@ -120,14 +120,14 @@ class PromotionController extends Controller
                 $file   =   'uploads/promotion/promotionlist'.$standard_name.date('_d-m-Y_H_i_s').'.csv';
                 $file_open = fopen($file, 'w');
 
-                fputcsv($file_open,['roll_number','student_name','academic_status','comments']);
+                fputcsv($file_open,['std_school_pay_number','student_name','academic_status','comments']);
       
                 foreach($users as $user)
                 { 
                     $studentAcademic = StudentAcademic::where([['user_id',$user->id],['school_id',Auth::user()->school_id],['academic_year_id',$request->curr_academic_year_id]])->first();
                     $csv_file=[];
 
-                    $csv_file[] = $studentAcademic->roll_number;
+                    $csv_file[] = $studentAcademic->std_school_pay_number;
                     $csv_file[] = $user->userprofile->firstname.' '.$user->userprofile->lastname;
                     $csv_file[] = 'P';
                     $csv_file[] = '';

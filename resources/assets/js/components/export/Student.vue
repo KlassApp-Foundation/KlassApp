@@ -116,11 +116,11 @@
                             ><br />
                             <input
                                 type="checkbox"
-                                id="EMIS"
-                                value="EMIS"
+                                id="LIN"
+                                value="LIN"
                                 v-model="checkedNames"
                             />
-                            <label for="EMIS">EMIS</label><br />
+                            <label for="LIN">LIN</label><br />
                             <input
                                 type="checkbox"
                                 id="Joining_date"
@@ -239,7 +239,7 @@ export default {
                 "standard",
                 "gender",
                 "admission_number",
-                "EMIS",
+                "LIN",
                 "Joining_date",
                 "caste",
                 "adhaar",

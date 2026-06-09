@@ -23,11 +23,13 @@ class CreateBooksTable extends Migration
             $table->foreign('category_id')->references('id')->on('books_category');
             $table->string('book_code');
             $table->string('title');
-            $table->string('author');
-            $table->bigInteger('isbn_number');
+            $table->string('author')->nullable();
+            $table->bigInteger('isbn_number')->nullable();
             $table->string('cover_image')->nullable();
-            $table->integer('availability');
+            $table->integer('quantity')->nullable()->default(1);
             $table->timestamps();
+
+            $table->unique(["school_id", "book_code"]);
         });
     }
 

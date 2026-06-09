@@ -152,7 +152,7 @@ class UserProfileAddRequest extends FormRequest
             'LIN'               => 'nullable|alpha_num|min:14|max:14',
             'joining_date'              => 'required|date|check_joining_date',
             'standard'                  => 'required',
-            'roll_number'               => 'nullable|numeric',
+            'std_school_pay_number'               => 'nullable|numeric',
             'id_card_number'            => 'nullable|numeric',  
             'mode_of_transport'         => 'nullable',
             'siblings'                  => 'required',
@@ -274,8 +274,8 @@ class UserProfileAddRequest extends FormRequest
 
             'standard.required'                                 => 'Class Is Required',
 
-            'roll_number.required'                              => 'Roll Number Is Required',
-            'roll_number.numeric'                               => 'Roll Number Should Be Numeric',
+            'std_school_pay_number.required'                              => 'Student School Pay Number Is Required',
+            'std_school_pay_number.numeric'                               => 'Student School Pay Number Should Be Numeric',
 
             'id_card_number.required'                           => 'ID Card Number Is Required',
             'id_card_number.numeric'                            => 'ID Card Number Should Be Numeric',
