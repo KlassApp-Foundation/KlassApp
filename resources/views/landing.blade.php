@@ -76,54 +76,105 @@
 
         /* ── Navigation ── */
         /* ── Navbar ── */
-        .navbar {
+        /* ── Navbar (Flare-style 3-layer: header > nav-container > nav-pill) ── */
+        .site-header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 50;
-            padding: 20px 40px;
-            background: transparent;
-            border: none;
-            box-shadow: none;
-            transition: all 0.25s ease;
+            height: 104px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .site-header.scrolled { height: 88px; }
+
+        .nav-container {
+            width: 100%;
+            max-width: 1024px;
+            margin: 0 104px;
+            transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .site-header.scrolled .nav-container {
+            max-width: 1280px;
+            margin: 0;
+        }
+
+        .nav-pill {
             display: flex;
             align-items: center;
             justify-content: space-between;
-        }
-        .navbar .nav-logo-img {
-            height: 40px;
-            width: auto;
-            border-radius: 10px;
-            transition: all 0.25s ease;
-        }
-        .navbar .nav-logo-text {
-            font-size: 20px;
-            font-weight: 600;
-            transition: all 0.25s ease;
-        }
-        .navbar .nav-cta {
-            padding: 10px 24px;
-            font-size: 15px;
-            transition: all 0.25s ease;
-        }
-        .navbar.scrolled {
-            padding: 10px 40px;
-            background: rgba(255,255,255,0.95);
+            height: 56px;
+            padding: 8px 8px 8px 20px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(0,0,0,0.06);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        height 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        background 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
         }
-        .navbar.scrolled .nav-logo-img {
-            height: 28px;
-            border-radius: 7px;
+        .site-header.scrolled .nav-pill {
+            padding: 0;
+            height: 40px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
-        .navbar.scrolled .nav-logo-text {
+
+        .nav-pill .logo-text {
+            font-family: 'Sora', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: #0D1526;
+            transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        font-weight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .site-header.scrolled .nav-pill .logo-text {
             font-size: 16px;
             font-weight: 500;
         }
-        .navbar.scrolled .nav-cta {
+
+        .nav-pill .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+            transition: gap 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .site-header.scrolled .nav-pill .nav-links { gap: 16px; }
+
+        .nav-pill .nav-links a {
+            color: #475569;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .nav-pill .nav-links a:hover { color: #1E6FD9; }
+
+        .nav-pill .nav-cta {
+            padding: 10px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            border-radius: 9999px;
+            background: #1E6FD9;
+            color: #fff;
+            text-decoration: none;
+            transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        background 0.2s ease;
+        }
+        .nav-pill .nav-cta:hover { background: #22C55E; }
+        .site-header.scrolled .nav-pill .nav-cta {
             padding: 7px 18px;
             font-size: 13px;
         }
@@ -412,39 +463,40 @@
 <!-- ═══════════════════════════════════════════════════
      NAVIGATION
      ═══════════════════════════════════════════════════ -->
-<nav id="mainNav" class="navbar">
-    <div style="max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between;">
-        <a href="#" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
-            <img src="{{ asset('images/klassapp-logo-primary.svg') }}"
-                 alt="KlassApp"
-                 style="height: 40px; width: auto; border-radius: 10px; transition: all 0.25s ease;" />
-            <span class="nav-logo-text" style="color: #0F172A;">KlassApp</span>
-        </a>
-
-        <div class="hidden md:flex items-center gap-8">
-            <a href="#features" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Features</a>
-            <a href="#pricing" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Pricing</a>
-            <a href="#schools" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Schools</a>
-            <a href="#contact" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Contact</a>
-            <a href="#demo"
-               class="nav-cta bg-brand-blue text-white rounded-lg font-semibold hover:bg-blue-700 transition btn-scale"
-               style="padding: 10px 24px; font-size: 15px;">
-                Get Started
+<!-- ═══════════════════════════════════════════════════
+     NAVIGATION (Flare-style: header > nav-container > nav-pill)
+     ═══════════════════════════════════════════════════ -->
+<header id="mainNav" class="site-header">
+    <div class="nav-container">
+        <div class="nav-pill">
+            <!-- Logo -->
+            <a href="#" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+                <img src="{{ asset('images/klassapp-logo-primary.svg') }}"
+                     alt="KlassApp"
+                     style="height: 32px; width: auto;" />
+                <span class="logo-text">KlassApp</span>
             </a>
+            <!-- Nav Links + CTA -->
+            <div class="nav-links hidden md:flex" style="align-items: center;">
+
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#schools">Schools</a>
+            <a href="#contact">Contact</a>
+            <a href="#demo" class="nav-cta">Get Started</a>
             <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
                target="_blank"
-               class="text-slate-500 hover:text-slate-900 transition text-sm font-medium flex items-center gap-1.5"
+               style="display: flex; align-items: center; gap: 6px; color: #475569; text-decoration: none; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: color 0.2s ease;"
+               onmouseover="this.style.color='#1E6FD9'" onmouseout="this.style.color='#475569'"
                aria-label="Chat on WhatsApp">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.272-.198z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.977.546 3.826 1.494 5.404L2 22l4.667-1.463A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.182c-1.736 0-3.37-.535-4.738-1.528l-.339-.234-2.77.868.918-2.686-.22-.352A8.164 8.164 0 013.818 12c0-4.509 3.673-8.182 8.182-8.182s8.182 3.673 8.182 8.182-3.673 8.182-8.182 8.182z"/></svg>
                 WhatsApp
             </a>
         </div>
+    </div>
+</header>
 
-        <button id="hamburger" class="md:hidden text-slate-700 p-2" aria-label="Menu">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 12h18M3 6h18M3 18h18"/>
-            </svg>
-        </button>
+    <div id="mobileMenu" class="mobile-menu absolute top-full left-0 right-0 bg-white flex-col py-6 px-6 gap-4 border-t border-slate-200 shadow-lg">
     </div>
 
     <div id="mobileMenu" class="mobile-menu absolute top-full left-0 right-0 bg-white flex-col py-6 px-6 gap-4 border-t border-slate-200 shadow-lg">
@@ -462,7 +514,7 @@
 <!-- ═══════════════════════════════════════════════════
      HERO
      ═══════════════════════════════════════════════════ -->
-<section class="min-h-screen bg-warm-glow flex items-center relative overflow-hidden pt-20">
+<section class="min-h-screen bg-warm-glow flex items-center relative overflow-hidden pt-32">
     <div class="absolute inset-0 bg-slate-50">
         <div class="absolute inset-0 opacity-[0.08]" style="background-image: url('data:image/svg+xml,%3Csvg width=\u002260\u0022 height=\u002260\u0022 viewBox=\u00220 0 60 60\u0022 xmlns=\u0022http://www.w3.org/2000/svg\u0022%3E%3Cg fill=\u0022none\u0022 fill-rule=\u0022evenodd\u0022%3E%3Cg fill=\u0022%231E6FD9\u0022 fill-opacity=\u00220.3\u0022%3E%3Cpath d=\u0022M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\u0022/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); background-size: 60px 60px;"></div>
     </div>
@@ -1421,7 +1473,7 @@
     reveals.forEach(el => observer.observe(el));
 
     // ── Nav scroll effect (Flare-style toggle .scrolled class) ──
-    const nav = document.querySelector('.navbar');
+    const nav = document.querySelector('.site-header');
     window.addEventListener('scroll', () => {
         nav.classList.toggle('scrolled', window.scrollY > 60);
     });
