@@ -543,9 +543,9 @@
                 </div>
 
                 <div style="min-height: 5rem;">
-                    <h1 class="font-display font-extrabold text-slate-900 leading-[1.08] tracking-[-0.02em]"
-                        style="font-size: clamp(2.5rem, 5vw, 4.5rem); min-height: 1.2em;">
-                        <span id="typewriter-text"></span><span id="typewriter-cursor" class="text-brand-amber">|</span>
+                    <h1 class="font-display font-extrabold leading-[1.08] tracking-[-0.02em]"
+                        style="font-size: clamp(2.5rem, 5vw, 4.5rem); min-height: 1.2em; background: linear-gradient(135deg, #1E6FD9 0%, #22C55E 35%, #D97706 70%, #1E6FD9 100%); background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: gradientShift 6s ease infinite;">
+                        <span id="typewriter-text"></span><span id="typewriter-cursor" style="color: #D97706;">|</span>
                     </h1>
                     <div id="admin-tagline" class="font-display font-semibold text-slate-500 text-xl sm:text-2xl mt-2 mb-5 opacity-0 transition-opacity duration-700" style="letter-spacing: -0.01em; min-height: 1.5em;">
                     </div>
