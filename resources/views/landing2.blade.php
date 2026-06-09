@@ -431,7 +431,7 @@
                     <span class="text-brand-amber/60">✦</span> And the system your admin team operates on.
                 </div>
                 <p class="text-lg leading-relaxed text-slate-600 mb-8 max-w-lg">
-                    <span id="hero-typelist" class="text-brand-green font-semibold"></span><span id="hero-typelist-cursor" class="text-brand-green">|</span> — delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators — dashboards that make running a school feel effortless.
+                    <span id="hero-typelist" class="text-brand-green font-semibold"></span><span id="hero-typelist-cursor" class="text-brand-green">|</span>, delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators, dashboards that make running a school feel effortless.
                 </p>
                 <div class="flex flex-wrap gap-4">
                     <a href="{{ url('/register') }}"
