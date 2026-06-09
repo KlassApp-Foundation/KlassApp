@@ -91,19 +91,21 @@ class BookController extends Controller
             $book->category_id          =   $request->category_id;
             $book->book_code            =   $request->book_code;
             $book->isbn_number          =   $request->isbn_number;
-            $book->availability         =   $request->availability;
+            $book->quantity         =   $request->quantity;
             $cover_image = $request->file('cover_image');
             if($cover_image)
             {
-                $path =$this->uploadFile(Auth::user()->school->slug.'/uploads/library/books',$cover_image);
+                $path = $this->uploadFile(Auth::user()->school->slug.'/uploads/library/books',$cover_image);
                 $book->cover_image = $path; 
+            }else{
+                $book->cover_image = $book->cover_image;
             }
 
             $book->save();
 
             $message = trans('messages.add_success_msg',['module' => 'Book']);
 
-            $ip= $this->getRequestIP();
+            $ip = $this->getRequestIP();
             $this->doActivityLog(
                 $book,
                 Auth::user(),
@@ -170,12 +172,12 @@ class BookController extends Controller
         {
             $book = Book::where('id',$id)->where('school_id',Auth::user()->school_id)->first();
 
-            $book->author       =   $request->author;
-            $book->title        =   $request->title;
-            $book->category_id  =   $request->category_id;
-            $book->book_code    =   $request->book_code;
-            $book->isbn_number  =   $request->isbn_number;
-            $book->availability =   $request->availability;
+            $book->author       =   $request->author ?? $book->author;
+            $book->title        =   $request->title ?? $book->title;
+            $book->category_id  =   $request->category_id ?? $book->category_id;
+            $book->book_code    =   $request->book_code ?? $book->book_code ;
+            $book->isbn_number  =   $request->isbn_number ?? null;
+            $book->quantity     =   $request->quantity ?? $book->isbn_number;
             $cover_image = $request->file('cover_image');
             if($cover_image)
             {
@@ -184,7 +186,7 @@ class BookController extends Controller
             }
             else
             {
-                $book->cover_image = $book->cover_image;
+                $book->cover_image = $book->cover_image ?? null;
             }
 
             $book->save();

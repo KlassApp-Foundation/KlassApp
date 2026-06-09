@@ -24,7 +24,7 @@ class Book extends JsonResource
           'book_code'=>$this->book_code,
           'isbn_number'=>$this->isbn_number,
           'cover_image'=>url($this->cover_image),
-          'availability'=>$this->availability,                                         
+          'quantity'=>$this->quantity,                                         
           
        ];
    }
