@@ -75,8 +75,58 @@
         .reveal-delay-4 { transition-delay: 0.4s; }
 
         /* ── Navigation ── */
-        .navbar { transition: background 0.3s, box-shadow 0.3s; }
-        .navbar.scrolled { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); box-shadow: 0 1px 0 rgba(0,0,0,0.06); }
+        /* ── Navbar ── */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            padding: 20px 40px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .navbar .nav-logo-img {
+            height: 40px;
+            width: auto;
+            border-radius: 10px;
+            transition: all 0.25s ease;
+        }
+        .navbar .nav-logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+        .navbar .nav-cta {
+            padding: 10px 24px;
+            font-size: 15px;
+            transition: all 0.25s ease;
+        }
+        .navbar.scrolled {
+            padding: 10px 40px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .navbar.scrolled .nav-logo-img {
+            height: 28px;
+            border-radius: 7px;
+        }
+        .navbar.scrolled .nav-logo-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .navbar.scrolled .nav-cta {
+            padding: 7px 18px;
+            font-size: 13px;
+        }
 
         /* ── Hero dot-grid ── */
         .dot-grid {
@@ -362,12 +412,13 @@
 <!-- ═══════════════════════════════════════════════════
      NAVIGATION
      ═══════════════════════════════════════════════════ -->
-<nav id="mainNav" class="navbar fixed top-0 left-0 right-0 z-50 py-5 px-6 lg:px-12 transition-all duration-300">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-        <a href="#" class="flex-shrink-0">
-             <img id="navLogo" src="{{ asset('images/klassapp-logo-primary.svg') }}"
-                  alt="KlassApp"
-                  class="h-14 w-auto transition-all duration-300" />
+<nav id="mainNav" class="navbar">
+    <div style="max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between;">
+        <a href="#" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+            <img src="{{ asset('images/klassapp-logo-primary.svg') }}"
+                 alt="KlassApp"
+                 style="height: 40px; width: auto; border-radius: 10px; transition: all 0.25s ease;" />
+            <span class="nav-logo-text" style="color: #0F172A;">KlassApp</span>
         </a>
 
         <div class="hidden md:flex items-center gap-8">
@@ -376,7 +427,8 @@
             <a href="#schools" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Schools</a>
             <a href="#contact" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Contact</a>
             <a href="#demo"
-               class="bg-brand-blue text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition btn-scale">
+               class="nav-cta bg-brand-blue text-white rounded-lg font-semibold hover:bg-blue-700 transition btn-scale"
+               style="padding: 10px 24px; font-size: 15px;">
                 Get Started
             </a>
             <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
@@ -1368,24 +1420,10 @@
     }, { threshold: 0.1 });
     reveals.forEach(el => observer.observe(el));
 
-    // ── Nav scroll effect (compact on scroll down, full on scroll up) ──
-    let lastScroll = 0;
+    // ── Nav scroll effect (Flare-style toggle .scrolled class) ──
     const nav = document.querySelector('.navbar');
-    const navLogo = document.getElementById('navLogo');
     window.addEventListener('scroll', () => {
-        const y = window.scrollY;
-        if (y > 60) {
-            nav.classList.add('scrolled');
-            nav.style.paddingTop = '0.75rem';
-            nav.style.paddingBottom = '0.75rem';
-            if (navLogo) navLogo.style.height = '2.5rem';
-        } else {
-            nav.classList.remove('scrolled');
-            nav.style.paddingTop = '';
-            nav.style.paddingBottom = '';
-            if (navLogo) navLogo.style.height = '';
-        }
-        lastScroll = y;
+        nav.classList.toggle('scrolled', window.scrollY > 60);
     });
 
     // ── Hamburger menu ──
