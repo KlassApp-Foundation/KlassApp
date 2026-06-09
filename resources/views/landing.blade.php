@@ -534,23 +534,27 @@
                 <div class="accent-bar bg-brand-amber"></div>
 
                 <!-- Audience Selector Tabs -->
-                <div class="flex gap-2 mb-5 flex-wrap" role="tablist" aria-label="Audience selector" style="min-height: 2.5rem;">
-                    <button class="audience-tab active px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border-2 text-brand-green bg-white shadow-sm" style="border-color: #22C55E;" data-audience="admin">Administrators &amp; Principals</button>
-                    <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="teacher">Teachers</button>
-                    <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="parent">Parents</button>
+                <div class="mt-4" style="min-height: 2.5rem;">
+                    <div class="flex gap-2 mb-2 flex-wrap" role="tablist" aria-label="Audience selector">
+                        <button class="audience-tab active px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border-2 text-brand-green bg-white shadow-sm" style="border-color: #22C55E;" data-audience="admin">Administrators &amp; Principals</button>
+                        <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="teacher">Teachers</button>
+                        <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="parent">Parents</button>
+                    </div>
                 </div>
 
-                <h1 class="font-display font-extrabold text-slate-900 leading-[1.08] tracking-[-0.02em]"
-                    style="font-size: clamp(2.5rem, 5vw, 4.5rem); min-height: 1.2em;">
-                    <span id="typewriter-text"></span><span id="typewriter-cursor" class="text-brand-amber">|</span>
-                </h1>
-                <div id="admin-tagline" class="font-display font-semibold text-slate-500 text-xl sm:text-2xl mt-2 mb-5 opacity-0 transition-opacity duration-700" style="letter-spacing: -0.01em; min-height: 1.5em;">
+                <div style="min-height: 5rem;">
+                    <h1 class="font-display font-extrabold text-slate-900 leading-[1.08] tracking-[-0.02em]"
+                        style="font-size: clamp(2.5rem, 5vw, 4.5rem); min-height: 1.2em;">
+                        <span id="typewriter-text"></span><span id="typewriter-cursor" class="text-brand-amber">|</span>
+                    </h1>
+                    <div id="admin-tagline" class="font-display font-semibold text-slate-500 text-xl sm:text-2xl mt-2 mb-5 opacity-0 transition-opacity duration-700" style="letter-spacing: -0.01em; min-height: 1.5em;">
+                    </div>
                 </div>
                 <p class="text-lg leading-relaxed text-slate-600 mb-8 max-w-lg">
                     <span id="hero-keyword-box" class="inline-block text-brand-green font-semibold" style="min-width: 7em; min-height: 1.5em;">
-                        <span id="hero-typelist" style="white-space: nowrap;"></span><span id="hero-typelist-cursor">|</span>
+                        <span id="hero-typelist" style="white-space: nowrap;">Grades</span><span id="hero-typelist-cursor">|</span>
                     </span>
-                    <span class="hero-static-rest"> delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators, dashboards that make running a school feel effortless.</span>
+                    <span class="hero-static-rest">, delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators, dashboards that make running a school feel effortless.</span>
                 </p>
                 <div class="flex flex-wrap gap-4">
                     <a href="{{ url('/register') }}"
@@ -1595,11 +1599,29 @@
         animateHeroCopy(aud);
     }
 
-    document.querySelectorAll('.audience-tab').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            setAudience(this.getAttribute('data-audience'));
+    // ── Auto-rotating audience tabs every 3 seconds ──
+    (function startAudienceLoop() {
+        const tabs = ['admin', 'teacher', 'parent'];
+        let idx = 0;
+        let timer = setInterval(function() {
+            idx = (idx + 1) % tabs.length;
+            setAudience(tabs[idx]);
+        }, 3000);
+        // Pause on hover
+        document.querySelectorAll('.audience-tab').forEach(function(btn) {
+            btn.addEventListener('mouseenter', function() { clearInterval(timer); });
+            btn.addEventListener('mouseleave', function() {
+                timer = setInterval(function() {
+                    idx = (idx + 1) % tabs.length;
+                    setAudience(tabs[idx]);
+                }, 3000);
+            });
+            btn.addEventListener('click', function() {
+                clearInterval(timer);
+                setAudience(this.getAttribute('data-audience'));
+            });
         });
-    });
+    })();
 
     // ── Typewriter effect initial run + admin tagline ──
     const typewriterText = audienceCopy.admin.title;
