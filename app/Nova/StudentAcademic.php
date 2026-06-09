@@ -62,7 +62,7 @@ class StudentAcademic extends Resource
 
             BelongsTo::make('StandardLink','standardLink',\App\Nova\StandardLink::class),
 
-            Number::make('Roll Number','roll_number')->rules('required','numeric'),
+            Number::make('Student School Pay Number','std_school_pay_number')->rules('required','numeric'),
 
             Number::make('Id Card Number','id_card_number')->rules('required','numeric')->hideFromIndex(),
 

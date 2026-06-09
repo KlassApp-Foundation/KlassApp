@@ -35,7 +35,7 @@ flowchart TD
 | Factor | What Changed | Why It Matters |
 |---|---|---|
 | **WhatsApp reach** | Uganda has one of Africa's highest WhatsApp engagement rates; businesses can conversationally engage parents without per-message overhead | Every parent is already on WhatsApp, no app to install, no friction |
-| **EMIS mandate** | Ministry of Education requires all students to have a LIN | Every student is already in a national database. We just connect the parent |
+| **LIN mandate** | Ministry of Education requires all students to have a LIN | Every student is already in a national database. We just connect the parent |
 | **Smartphone adoption** | $40 smartphones now common; data costs at all-time low | WhatsApp is the de facto OS for most Ugandans |
 | **Mobile money** | 70%+ of school fees paid via mobile money | Parents already transact on their phones. Notifications drive action |
 
@@ -67,13 +67,13 @@ flowchart LR
 
 ---
 
-## The EMIS / LIN Advantage
+## The LIN Advantage
 
-Most edtech companies in Africa build features on top of school data. KlassApp built the **parent connection layer**, and the EMIS/LIN system is the key that unlocks it at national scale.
+Most edtech companies in Africa build features on top of school data. KlassApp built the **parent connection layer**, and the LIN system is the key that unlocks it at national scale.
 
 ```mermaid
 flowchart TB
-    subgraph EMIS["Ministry of Education — EMIS Database"]
+    subgraph LIN["Ministry of Education — LIN Database"]
         L["Every student has a 12-digit LIN"]
         R["Every school is registered"]
         S["Standardized student records"]
@@ -92,8 +92,8 @@ flowchart TB
         R4["Govt & NGO partners can reach verified parents"]
     end
 
-    EMIS --> P2
-    EMIS --> P3
+    LIN --> P2
+    LIN --> P3
     P2 --> Result
     P3 --> Result
     P1 --> Result
@@ -101,7 +101,7 @@ flowchart TB
 
 ### Path 2: CSV Import (Now)
 
-Schools upload their EMIS export. Parents are linked in bulk. No data entry. No manual matching.
+Schools upload their LIN export. Parents are linked in bulk. No data entry. No manual matching.
 
 ### Path 3: Self-Registration (Next)
 
@@ -179,7 +179,7 @@ flowchart LR
 
 **Phase 2 — Engage** (Complete): Smart message delivery, notification queue, delivery dashboard, multi-child parent flow, delivery failure escalation.
 
-**Phase 3 — Scale** (In progress): EMIS/LIN integration with CSV bulk import (Path 2), parent self-registration (Path 3), nationwide parent network, and potential government and NGO partnerships.
+**Phase 3 — Scale** (In progress): LIN/LIN integration with CSV bulk import (Path 2), parent self-registration (Path 3), nationwide parent network, and potential government and NGO partnerships.
 
 ---
 

@@ -327,10 +327,10 @@ SPDX-License-Identifier: MIT
         <div class="w-full lg:w-1/2">
         <div class="lg:mr-8 md:mr-8 mb-2">
         <div class="mb-2">
-        <label for="" class="tw-form-label">EMIS Number<span class="text-red-500">*</span></label>
+        <label for="" class="tw-form-label">LIN Number<span class="text-red-500">*</span></label>
         </div>
-          <input name="emis_number" value="" type="text" placeholder="EMIS Number" class="tw-form-control w-full" wire:model.live="emis_number">
-          @error('emis_number')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
+          <input name="LIN" value="" type="text" placeholder="LIN Number" class="tw-form-control w-full" wire:model.live="LIN">
+          @error('LIN')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
         </div>
       </div>

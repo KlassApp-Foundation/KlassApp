@@ -103,7 +103,7 @@
                                </table>
                               </td>
                               <td style="width:20%;">
-                                    <p style="padding-bottom: 4px;color: #000;text-align: center;font-size: 13px;"><b>ID : </b>{{optional($student->studentAcademicLatest)->roll_number}}</p>
+                                    <p style="padding-bottom: 4px;color: #000;text-align: center;font-size: 13px;"><b>ID : </b>{{optional($student->studentAcademicLatest)->std_school_pay_number}}</p>
                                     <span><img src="{{ $student->userprofile->AvatarPath }}" style="width: 100px;height: 100px;border-radius: 10px;"></span>
                                     <!-- <span><img src="{{url('images/dm-logo.png')}}" style="width: 100px;height: 100px;border-radius: 10px;"></span> -->
                                 </td>

@@ -120,7 +120,7 @@ flowchart LR
 
 ### Batch Student Import
 
-Onboard your entire school at once. Export your student records from EMIS and upload as a CSV:
+Onboard your entire school at once. Export your student records from LIN and upload as a CSV:
 
 ```csv
 student_lin,parent_phone,parent_nin
@@ -303,7 +303,7 @@ The school admin links their own WhatsApp number through the admin panel. This i
 
 ### Step 2: Import Parents
 
-Upload your student roster (CSV from your EMIS export or school records) to link parents to their children in bulk. A school of 500 students typically completes this step in under 10 minutes.
+Upload your student roster (CSV from your LIN export or school records) to link parents to their children in bulk. A school of 500 students typically completes this step in under 10 minutes.
 
 ### Step 3: Configure Roles
 

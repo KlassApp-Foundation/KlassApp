@@ -148,7 +148,7 @@ trait RegisterUser
             $academic->academic_year_id             = $academic_year_id;
             $academic->user_id                      = $user->id;
             $academic->standardLink_id              = $data->standard;
-            $academic->roll_number                  = $data->roll_number;
+            $academic->std_school_pay_number                  = $data->std_school_pay_number;
             $academic->id_card_number               = $data->id_card_number;
             $academic->board_registration_number    = $data->board_registration_number;
             $academic->mode_of_transport            = $data->mode_of_transport;
@@ -302,7 +302,7 @@ trait RegisterUser
             $academic->academic_year_id             = $academic_year_id;
             $academic->user_id                      = $user_id;
             $academic->standardLink_id              = $data->standard;
-            $academic->roll_number                  = $data->roll_number;
+            $academic->std_school_pay_number                  = $data->std_school_pay_number;
             $academic->id_card_number               = $data->id_card_number;
             $academic->board_registration_number    = $data->board_registration_number;
             $academic->mode_of_transport            = $data->mode_of_transport;

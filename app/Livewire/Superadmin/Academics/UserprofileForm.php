@@ -53,7 +53,7 @@ class UserprofileForm extends Component
 	#[Rule('required')] 
 	public $registration_number;
 	#[Rule('required')] 
-	public $emis_number;
+	public $LIN;
 	#[Rule('required')] 
 	public $joining_date;
 	public $notes;
@@ -93,7 +93,7 @@ class UserprofileForm extends Component
 			$this->pincode = $userprofile->pincode;
 			$this->aadhar_number = $userprofile->aadhar_number;
 			$this->registration_number = $userprofile->registration_number;
-			$this->emis_number = $userprofile->EMIS_number;
+			$this->LIN = $userprofile->LIN;
 			$this->joining_date = $userprofile->joining_date;
 			$this->notes = $userprofile->notes;
 			$this->status = $userprofile->status;
@@ -125,7 +125,7 @@ class UserprofileForm extends Component
 			'pincode' => $this->pincode,
 			'aadhar_number' => $this->aadhar_number,
 			'registration_number' => $this->registration_number,
-			'EMIS_number' => $this->emis_number,
+			'LIN' => $this->LIN,
 			'joining_date' => $this->joining_date,
 			'notes' => $this->notes,
 			'status' => $this->status,
