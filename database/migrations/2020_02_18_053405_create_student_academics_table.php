@@ -23,6 +23,7 @@ class CreateStudentAcademicsTable extends Migration
             $table->foreign('user_id')->references('id')->on('users');
             $table->integer('standardLink_id')->unsigned()->nullable();
             $table->foreign('standardLink_id')->references('id')->on('standards_link');
+            $table->string('LIN')->nullable()->unique();
             $table->string('std_school_pay_number')->nullable();
             $table->string('id_card_number')->nullable();
             $table->string('board_registration_number')->nullable();
@@ -41,8 +42,10 @@ class CreateStudentAcademicsTable extends Migration
             $table->longText('other_medical_information')->nullable();
             $table->enum('academic_status',['pass','fail'])->nullable();
             $table->enum('bus_pass',['yes','no'])->nullable();
+
             $table->timestamps();
             $table->softDeletes();
+            $table->unique(["school_id", "std_school_pay_number"]);
         });
     }
 
