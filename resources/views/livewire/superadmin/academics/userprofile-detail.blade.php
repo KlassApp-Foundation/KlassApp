@@ -227,7 +227,7 @@
                 <p>LIN Number</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $userprofileDetail->LIN }}</p>
+                <p class="leading-loose txt-gray-light">{{ $userprofileDetail->lin }}</p>
             </div>
         </div>
 

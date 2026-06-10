@@ -38,9 +38,10 @@ class UsersImport implements ToCollection, WithHeadingRow
             $insertedcount = 0;
 
             foreach ($rows as $row) {
-                $row = collect($row)->filter(function ($value, $key) {
-                    return is_string($key); // removes numeric keys like 11 => 11
-                });
+                $row = collect($row)->filter(fn($value, $key) => is_string($key))->map(fn($v) => is_string($v) ? trim($v) : $v);
+                // $row = collect($row)->filter(function ($value, $key) {
+                //     return is_string($key); // removes numeric keys like 11 => 11
+                // });
             // dd(array_keys($row->toArray()));
                 // ✅ Minimal required fields
                 if (empty($row['firstname']) || empty($row['class'])) {
@@ -59,7 +60,8 @@ class UsersImport implements ToCollection, WithHeadingRow
                 */
                 $student->firstname     = $row['firstname'] ?? null;
                 $student->lastname      = $row['lastname'] ?? null;
-                $student->mobile_no    = !preg_replace('/[^0-9]/', '', $row['mobile_no']) ?? null;
+                $student->mobile_no = !empty($row['mobile_no']) ? 
+                preg_replace('/[^0-9]/', '', $row['mobile_no']) : null;
                 $student->email        = !empty($row['email']) ? strtolower($row['email']) : null;
                 $student->gender       = !empty($row['gender']) ? strtolower($row['gender']) : null;
 
@@ -135,7 +137,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                     : null;
 
                 $student->registration_number = $row['admission_number'] ?? null;
-                $student->LIN         = $row['LIN'] ?? null;
+                $student->lin         = $row['lin'] ?? $row['LIN'] ?? null;
                 $student->std_school_pay_number         = $row['std_school_pay_number'] ?? null;
                 $student->notes               = $row['notes'] ?? null;
 

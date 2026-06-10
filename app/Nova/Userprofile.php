@@ -122,7 +122,7 @@ class Userprofile extends Resource
 
             Text::make('Registration Number','registration_number')->rules('required', 'numeric')->hideFromIndex(),
 
-            Text::make('LIN Number','LIN')->rules('required', 'numeric')->hideFromIndex(),
+            Text::make('LIN Number','lin')->rules('required', 'numeric')->hideFromIndex(),
 
             Date::make('Joining Date','joining_date')->format('Y-M-D')->rules('required','before_or_equal:today','after:2000-01-01')->hideFromIndex(),
 

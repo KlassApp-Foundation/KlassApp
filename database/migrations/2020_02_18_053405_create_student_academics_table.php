@@ -23,7 +23,7 @@ class CreateStudentAcademicsTable extends Migration
             $table->foreign('user_id')->references('id')->on('users');
             $table->integer('standardLink_id')->unsigned()->nullable();
             $table->foreign('standardLink_id')->references('id')->on('standards_link');
-            $table->string('LIN')->nullable()->unique();
+            $table->string('lin')->nullable()->unique();
             $table->string('std_school_pay_number')->nullable();
             $table->string('id_card_number')->nullable();
             $table->string('board_registration_number')->nullable();

@@ -98,9 +98,9 @@ trait AdmissionUser
             
             $userprofile->registration_number = $user->registration_number;
             
-            if(!is_null($data->LIN))
+            if(!is_null($data->lin))
             {
-                $userprofile->LIN = $data->LIN;
+                $userprofile->lin = $data->lin;
             }
             if(!is_null($data->notes))
             {
