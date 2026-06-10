@@ -885,24 +885,24 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="LIN" class="tw-form-label"
+                        <label for="lin" class="tw-form-label"
                             >LIN Number</label
                         >
                     </div>
                     <div class="mb-2">
                         <input
                             type="text"
-                            v-model="LIN"
-                            name="LIN"
-                            id="LIN"
+                            v-model="lin"
+                            name="lin"
+                            id="lin"
                             class="tw-form-control w-full"
                             placeholder="LIN Number"
                         />
                     </div>
                     <span
-                        v-if="errors.LIN"
+                        v-if="errors.lin"
                         class="text-red-500 text-xs font-semibold"
-                        >{{ errors.LIN[0] }}</span
+                        >{{ errors.lin[0] }}</span
                     >
                 </div>
             </div>
@@ -1096,7 +1096,7 @@ export default {
             aadhar_number: "",
             joining_date: "",
             registration_number: "",
-            LIN: "",
+            lin: "",
             std_school_pay_number: "",
             id_card_number: "",
             board_registration_number: "",
@@ -1168,7 +1168,7 @@ export default {
                 this.avatar_display = this.user.avatar;
                 this.notes = this.user.notes;
                 this.registration_number = this.user.registration_number;
-                this.LIN = this.user.LIN;
+                this.lin = this.user.lin;
                 this.joining_date = this.user.joining_date;
 
                 this.standard = this.user.standardLink_id;
@@ -1220,7 +1220,7 @@ export default {
             formData.append("aadhar_number", this.aadhar_number);
             formData.append("joining_date", this.joining_date);
             formData.append("registration_number", this.registration_number);
-            formData.append("LIN", this.LIN);
+            formData.append("lin", this.lin);
             formData.append(
                 "std_school_pay_number",
                 this.std_school_pay_number

@@ -170,7 +170,7 @@
                         </span>
                     </div>
                     <div>
-                        <p>{{ user.LIN }}</p>
+                        <p>{{ user.lin }}</p>
                     </div>
                 </li>
                 <li class="flex py-1">

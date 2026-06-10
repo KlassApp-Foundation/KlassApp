@@ -373,17 +373,17 @@
                     <div class="mb-2">
                         <input
                             type="text"
-                            v-model="LIN"
-                            name="LIN"
-                            id="LIN"
+                            v-model="lin"
+                            name="lin"
+                            id="lin"
                             class="tw-form-control w-full"
-                            placeholder="LIN"
+                            placeholder="lin"
                         />
                     </div>
                     <span
-                        v-if="errors.LIN"
+                        v-if="errors.lin"
                         class="text-red-500 text-xs font-semibold"
-                        >{{ errors.LIN[0] }}</span
+                        >{{ errors.lin[0] }}</span
                     >
                 </div>
             </div>
@@ -550,7 +550,7 @@ export default {
             aadhar_number: "",
             joining_date: "",
             // registration_number: "", // commented
-            LIN: "",
+            lin: "",
             std_school_pay_number: "",
             id_card_number: "",
             board_registration_number: "",

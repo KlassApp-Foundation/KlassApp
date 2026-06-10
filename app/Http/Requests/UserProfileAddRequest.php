@@ -149,7 +149,7 @@ class UserProfileAddRequest extends FormRequest
             'avatar'                    => 'nullable|mimes:jpg,jpeg,png',
             'notes'                     => 'nullable|string|checknotes',
             'registration_number'       => 'nullable|numeric',
-            'LIN'               => 'nullable|alpha_num|min:14|max:14',
+            'lin'               => 'nullable|alpha_num|min:14|max:14',
             'joining_date'              => 'required|date|check_joining_date',
             'standard'                  => 'required',
             'std_school_pay_number'               => 'nullable|numeric',
@@ -266,7 +266,7 @@ class UserProfileAddRequest extends FormRequest
             'registration_number.required'                      => 'Registration Number Is Required',
             'registration_number.numeric'                       => 'Registration Number Should Be Numeric',
 
-            'LIN.required'                              => 'LIN Number Is Required',
+            'lin.required'                              => 'LIN Number Is Required',
             // 'LIN.numeric'                               => 'LIN Number Should Be Numeric',
 
             'joining_date.required'                             => 'Joining Date Is Required',

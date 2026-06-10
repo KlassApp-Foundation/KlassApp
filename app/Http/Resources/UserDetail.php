@@ -58,7 +58,7 @@ class UserDetail extends JsonResource
             'driver_name'               => $this->studentAcademicLatest->transport_details['driver_name'],
             'driver_number'             => $this->studentAcademicLatest->transport_details['driver_contact_number'],
             'registration_number'       => $this->registration_number == null ? $this->userprofile->registration_number:$this->registration_number,
-            'LIN'               => $this->userprofile->LIN,
+            'lin'               => $this->userprofile->lin,
             'joining_date'           => date('d-m-Y',strtotime($this->userprofile->joining_date)),
             'std_school_pay_number'               => $this->studentAcademicLatest->std_school_pay_number,
             'id_card_number'            => $this->studentAcademicLatest->id_card_number,

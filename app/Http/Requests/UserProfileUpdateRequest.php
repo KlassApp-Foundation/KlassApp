@@ -119,7 +119,7 @@ class UserProfileUpdateRequest extends FormRequest
             'caste'                     => 'nullable',
             'notes'                     => 'nullable|string|checknotes',
             'registration_number'       => 'nullable|numeric',
-            'LIN'               => 'nullable|numeric',
+            'lin'               => 'nullable|numeric',
             'joining_date'              => 'required|date|check_joining_date',
             'standard'                  => 'required',
             'std_school_pay_number'               => 'nullable|numeric',
@@ -230,8 +230,8 @@ class UserProfileUpdateRequest extends FormRequest
             'registration_number.required'                      => 'Registration Number Is Required',
             'registration_number.numeric'                       => 'Registration Number Should Be Numeric',
 
-            'LIN.required'                              => 'LIN Number Is Required',
-            'LIN.numeric'                               => 'LIN Number Should Be Numeric',
+            'lin.required'                              => 'LIN Number Is Required',
+            'lin.numeric'                               => 'LIN Number Should Be Numeric',
 
             'joining_date.required'                             => 'Joining Date Is Required',
             'joining_date.check_joining_date'                   => 'Select A Valid Joining Date',

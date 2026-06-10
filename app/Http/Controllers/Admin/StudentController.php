@@ -217,7 +217,7 @@ class StudentController extends Controller
       $array['avatar']                    = $userprofile->AvatarPath;
       $array['notes']                     = $userprofile->notes;
       $array['registration_number']       = $user->registration_number==NULL ? $userprofile->registration_number:$user->registration_number;
-      $array['LIN']               = $userprofile->LIN==NULL ? '':$userprofile->LIN;
+      $array['lin']               = $userprofile->lin==NULL ? '':$userprofile->lin;
       $array['joining_date']              = $userprofile->joining_date==NULL ? '':date('Y-m-d',strtotime($userprofile->joining_date));
 
       $array['standardLink_id']           = $studentAcademic->standardLink_id;

@@ -329,8 +329,8 @@ SPDX-License-Identifier: MIT
         <div class="mb-2">
         <label for="" class="tw-form-label">LIN Number<span class="text-red-500">*</span></label>
         </div>
-          <input name="LIN" value="" type="text" placeholder="LIN Number" class="tw-form-control w-full" wire:model.live="LIN">
-          @error('LIN')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
+          <input name="lin" value="" type="text" placeholder="LIN Number" class="tw-form-control w-full" wire:model.live="lin">
+          @error('lin')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
         </div>
       </div>
