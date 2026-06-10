@@ -357,7 +357,7 @@
       <div class="klass-intro-divider"></div>
     </div>
 
-    @if(\Config::get('settings.login_status')==0)
+    @if(\Config::get('settings.login_status', 1) == 0)
       <div class="klass-maintenance">
         Login page is under maintenance
       </div>

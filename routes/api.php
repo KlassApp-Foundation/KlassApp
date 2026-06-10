@@ -291,6 +291,9 @@ Route::prefix('whatsapp')->group(function () {
     // Inbound webhook (Evolution API → Laravel, outside Sanctum)
     Route::post('/inbound', 'Api\WhatsAppController@handleInbound');
 
+    // Delivery status webhook (Evolution API → Laravel)
+    Route::post('/delivery', 'Api\WhatsAppController@deliveryWebhook');
+
     // Identify user by phone number
     Route::post('/identify-user', 'Api\WhatsAppController@identify');
 
