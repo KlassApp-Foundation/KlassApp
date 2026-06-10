@@ -2,11 +2,27 @@
 <nav class="navbar dashboard-themed-header w-full flex lg:flex-row px-4 lg:px-8 py-2 justify-between items-center" style="background:#FFFFFF;border-bottom:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
     <div class="nav-brand flex items-center">
         @if(\Auth::user())
-            <button class="block lg:hidden md:hidden mr-3" onclick="showsidebar('res_sidebar')">
+            <button class="mr-3" style="display:none;" id="mobile-menu-trigger" aria-label="Toggle sidebar">
                 <span class="navbar-toggler-icon">
                     <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path class="heroicon-ui" d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z" fill="currentColor"/></svg>
                 </span>
             </button>
+            <script>
+            (function() {
+                var btn = document.getElementById('mobile-menu-trigger');
+                if (window.innerWidth < 1024) { btn.style.display = 'block'; }
+                btn.addEventListener('click', function() {
+                    var sidebar = document.getElementById('res_sidebar');
+                    if (sidebar) {
+                        sidebar.classList.toggle('hidden');
+                        sidebar.classList.toggle('block');
+                    }
+                });
+                window.addEventListener('resize', function() {
+                    btn.style.display = window.innerWidth < 1024 ? 'block' : 'none';
+                });
+            })();
+            </script>
 
             <a class="h-10 object-contain" href="{{ route('dashboard') }}">
                 <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="h-10 w-auto object-contain mr-3" alt="KlassApp Logo">
