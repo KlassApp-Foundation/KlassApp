@@ -44,7 +44,8 @@ class EmailVerification extends Mailable
         $mail_content=str_replace(":url",$url,$mail_content);
         $mail_content = str_replace(":name",$this->user->name,$mail_content);
 
-        return $this->markdown('emails.mailcontent')
+        return $this->from(config('mail.from.address'), config('mail.from.name'))
+                    ->markdown('emails.mailcontent')
                     ->subject($subject)
                     ->with([
                         'content' => $mail_content,

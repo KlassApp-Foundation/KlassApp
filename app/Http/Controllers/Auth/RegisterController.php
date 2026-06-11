@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use App\Mail\EmailVerification;
+// EmailVerification mailable removed from registration — OTP is the sole verification channel
 use App\Models\AcademicYear;
 use App\Models\Subscription;
 use App\Models\Plan;
@@ -513,23 +513,6 @@ class RegisterController extends Controller
         }
     }
 
-    private function sendEmailVerification(User $user)
-    {
-        try
-        {
-            if (env('MAIL_STATUS') == 'on')
-            {
-                Mail::to($user->email)->queue(new EmailVerification($user));
-
-                Log::info('Verification Email Sent');
-            }
-        }
-        catch(Throwable $e)
-        {
-            $this->safeLogWarning('Email verification queue failed', ['message' => $e->getMessage()]);
-        }
-    }
-
     private function sendAdminNotifyMail(User $user)
     {
         try
@@ -568,7 +551,7 @@ class RegisterController extends Controller
     private function dispatchRegistrationSideEffects(User $user)
     {
         try {
-            $this->sendEmailVerification($user);
+            // EmailVerification (magic link) removed — OTP via RegistrationOtpMail is the sole verification channel
             $this->sendAdminNotifyMail($user);
             $this->logNewRegistrationToSlack($user);
         } catch (Throwable $e) {
