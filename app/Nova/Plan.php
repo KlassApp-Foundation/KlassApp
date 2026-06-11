@@ -62,7 +62,7 @@ class Plan extends Resource
 
             Number::make('Amount','amount')->rules('required'),
 
-            Number::make('Number Of Members','no_of_members')->rules('required')->hideFromIndex(),
+            Number::make('Number Of Members','no_of_users')->rules('required')->hideFromIndex(),
 
             Number::make('Number Of Events','no_of_events')->rules('required')->hideFromIndex(),
 

@@ -277,7 +277,7 @@ class RegisterController extends Controller
                 'order' => 1,
                 'is_active' => 1,
                 'amount' => 0,
-                'no_of_members' => 50,
+                'no_of_users' => 50,
                 'no_of_events' => 5,
                 'no_of_folders' => 5,
                 'no_of_files' => 50,

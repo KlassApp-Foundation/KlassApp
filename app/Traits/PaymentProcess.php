@@ -41,7 +41,7 @@ trait PaymentProcess
                                                     'addedon'       =>  $data->addedon , 
                                                     'phone'         =>  $data->phone
                                                 );
-                $payment->plan_details = array( 'no_of_members'     =>  $plan->no_of_members , 
+                $payment->plan_details = array( 'no_of_users'     =>  $plan->no_of_users , 
                                                 'no_of_events'      =>  $plan->no_of_events , 
                                                 'no_of_folders'     =>  $plan->no_of_folders , 
                                                 'no_of_files'       =>  $plan->no_of_files , 
@@ -83,7 +83,7 @@ trait PaymentProcess
                                                     'addedon'       =>  $data->addedon , 
                                                     'phone'         =>  $data->phone
                                                 );
-                $payment->plan_details = array( 'no_of_members'     =>  $plan->no_of_members , 
+                $payment->plan_details = array( 'no_of_users'     =>  $plan->no_of_users , 
                                                 'no_of_events'      =>  $plan->no_of_events , 
                                                 'no_of_folders'     =>  $plan->no_of_folders , 
                                                 'no_of_files'       =>  $plan->no_of_files , 

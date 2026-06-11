@@ -10,7 +10,7 @@
         <span class="mx-3"> Add Student</span>
     </h1>
     @include('partials.message')
-    @if($count < $subscription->plan->no_of_members)
+    @if($count < $subscription->plan->no_of_students)
         <form method="POST" action="" enctype="multipart/form-data">
             @csrf
 

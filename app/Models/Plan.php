@@ -5,10 +5,13 @@
  */
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Plan extends Model
 {
+    use HasFactory, SoftDeletes;
     //
      /**
      * The table associated with the model.
@@ -23,7 +26,7 @@ class Plan extends Model
      * @var array
      */
     protected $fillable = [
-        'cycle' , 'name' , 'order' , 'active' , 'amount' , 'no_of_members' , 'no_of_events' , 'no_of_folders' , 'no_of_files' , 'no_of_bulletins', 'no_of_videos', 'no_of_audios', 'no_of_groups'
+        'cycle' , 'name' , 'order' , 'active' , 'amount' , 'no_of_users', 'no_of_students', 'no_of_events' , 'no_of_folders' , 'no_of_files' , 'no_of_bulletins', 'no_of_videos', 'no_of_audios', 'no_of_groups'
     ];
 
     protected $dates=['created_at' , 'updated_at' , 'deleted_at'];

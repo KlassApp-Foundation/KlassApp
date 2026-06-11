@@ -95,7 +95,7 @@ class StudentController extends Controller
       //
       $count    = User::where('school_id',Auth::user()->school_id)->where('usergroup_id',6)->count();
       $subscription = Subscription::where('school_id',Auth::user()->school_id)->first();
-
+dd($subscription);
       return view('/admin/member/create',['count'=>$count , 'subscription'=>$subscription]);
     }
 

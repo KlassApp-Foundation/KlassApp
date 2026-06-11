@@ -830,6 +830,13 @@ Route::delete("/grades/{grade}", "Academics\SchoolGradingSystemController@destro
 Route::get("/grades/{grade}/edit", "Academics\SchoolGradingSystemController@edit")->name("admin.grades.edit");
 Route::put("/grades/{grade}/", "Academics\SchoolGradingSystemController@update")->name("admin.grades.update");
 
+// subscriptions
+Route::get('/subscriptions', "SubscriptionController@index")->name('admin.subscriptions');
+Route::post('/subscriptions', "SubscriptionController@store")->name('admin.subscriptions.store');
+Route::get('/subscriptions/submit', "SubscriptionController@create")->name('admin.subscriptions.create');
+Route::get('/subscriptions/{subscription}', "SubscriptionController@show")->name('admin.subscriptions.show');
+Route::put('/subscriptions/{subscription}', "SubscriptionController@update")->name('admin.subscriptions.update');
+
 //Addons
 
 Route::get('/addon', function () {

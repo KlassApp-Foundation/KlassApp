@@ -16,12 +16,13 @@ class CreatePlansTable extends Migration
         Schema::create('plans', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('cycle')->comment('Do not change');
-            $table->text('name');
+            $table->text('name')->unique();
             $table->text('display_name');
             $table->integer('order')->default(1);
             $table->boolean('is_active')->default(1);
             $table->double('amount',10,2)->default(0);
-            $table->integer('no_of_members')->nullable();
+            $table->integer('no_of_users')->nullable();
+            $table->integer('no_of_students')->nullable();
             $table->integer('no_of_events')->nullable();
             $table->integer('no_of_folders')->nullable()->comment('Gallery');
             $table->integer('no_of_files')->nullable();
