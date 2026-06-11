@@ -16,8 +16,8 @@ class CreatePlansTable extends Migration
         Schema::create('plans', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('cycle')->comment('Do not change');
-            $table->text('name')->unique();
-            $table->text('display_name');
+            $table->string('name')->unique();
+            $table->string('display_name');
             $table->integer('order')->default(1);
             $table->boolean('is_active')->default(1);
             $table->double('amount',10,2)->default(0);

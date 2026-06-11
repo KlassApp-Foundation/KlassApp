@@ -831,10 +831,11 @@ Route::get("/grades/{grade}/edit", "Academics\SchoolGradingSystemController@edit
 Route::put("/grades/{grade}/", "Academics\SchoolGradingSystemController@update")->name("admin.grades.update");
 
 // subscriptions
-Route::get('/subscriptions', "SubscriptionController@index")->name('admin.subscriptions');
+Route::get('/subscriptions', "SubscriptionController@index")->name('admin.subscriptions.index');
 Route::post('/subscriptions', "SubscriptionController@store")->name('admin.subscriptions.store');
 Route::get('/subscriptions/submit', "SubscriptionController@create")->name('admin.subscriptions.create');
 Route::get('/subscriptions/{subscription}', "SubscriptionController@show")->name('admin.subscriptions.show');
+Route::get('/subscriptions/{subscription}', "SubscriptionController@edit")->name('admin.subscriptions.edit');
 Route::put('/subscriptions/{subscription}', "SubscriptionController@update")->name('admin.subscriptions.update');
 
 //Addons

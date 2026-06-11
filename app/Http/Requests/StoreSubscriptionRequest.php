@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Plan;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
@@ -21,11 +22,14 @@ class StoreSubscriptionRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $user = Auth::user();
+        $plan = Plan::where("id", $this->plan_id)->first();
         $this->merge([
             'payment_details' => $this->payment_details ? json_encode($this->payment_details) : null,
             'plan_details'    => $this->plan_details ? json_encode($this->plan_details) : null,
             'school_id'  => $user->school_id,
-            'user_id'  => $user->id
+            'user_id'  => $user->id,
+            'plan_id' => $plan->id,
+            'amount_paid' => $plan->amount,
         ]);
     }
 
@@ -35,16 +39,16 @@ class StoreSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'school_id'         => 'nullable|integer|exists:schools,id',
+            'school_id'         => 'required|integer|exists:schools,id',
             'user_id'           => 'required|integer|exists:users,id',
-            'plan_id'           => 'nullable|integer|exists:plans,id',
+            'plan_id'           => 'required|integer|exists:plans,id',
             
-            'status'            => 'nullable|in:pending,approve,cancel,expired',
+            'status'            => 'nullable|in:pending,approved,canceled,expired',
             
             'start_date'        => 'nullable|date',
             'end_date'          => 'nullable|date|after_or_equal:start_date',
             
-            'amount_paid'       => 'nullable|numeric|min:0|max:9999999999.99',
+            'amount_paid'       => 'required|numeric|min:0|max:9999999999.99',
             'payment_reference' => 'nullable|string|max:255',
             'payment_method'    => 'nullable|string|max:100',
             
@@ -64,6 +68,7 @@ class StoreSubscriptionRequest extends FormRequest
             'school_id.exists'      => 'Selected school does not exist.',
             'plan_id.exists'        => 'Selected plan does not exist.',
             'end_date.after_or_equal' => 'End date must be after or equal to start date.',
+            'amount_paid.required'   => 'Amount paid is required',
             'amount_paid.min'       => 'Amount paid cannot be negative.',
         ];
     }
