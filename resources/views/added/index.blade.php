@@ -1,53 +1,55 @@
-@extends('layouts.admin.layout')
+{{-- @extends('layouts.admin.layout')
 
 @section('content')
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Subscriptions</h1>
-            <p class="text-gray-600 mt-1">Manage all subscription records across the school</p>
+            <p class="text-gray-600 mt-1">Manage all subscription records across the platform</p>
         </div>
-@if (in_array($subscriptions->first()?->status, ['canceled','expired']) )
-<a href="{{ route('admin.subscriptions.create') }}" 
+
+        <a href="{{ route('admin.subscriptions.create') }}" 
            class="mt-4 sm:mt-0 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl font-medium transition-all shadow-sm">
             <i class="fas fa-plus"></i>
             New Subscription
         </a>
-@endif
-        
     </div>
 
     <!-- Success Alert -->
-    @include("partials.message")
+    @if(session('success'))
+        <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-2xl flex items-center gap-3">
+            <i class="fas fa-check-circle text-xl"></i>
+            {{ session('success') }}
+        </div>
+    @endif
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-
-        <div class="bg-white rounded shadow-md p-2 border border-gray-100">
+        <div class="bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
             <p class="text-sm text-gray-500">Total Subscriptions</p>
-            <p class="text-2xl font-bold text-gray-900 mt-2">{{ $subscriptions->total() }}</p>
+            <p class="text-4xl font-bold text-gray-900 mt-2">{{ $subscriptions->total() }}</p>
         </div>
         
-        <div class="bg-white rounded shadow-sm p-2 border border-gray-100">
+        <div class="bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
             <p class="text-sm text-gray-500">Active</p>
-            <p class="text-2xl font-bold text-emerald-600 mt-2">
+            <p class="text-4xl font-bold text-emerald-600 mt-2">
                 {{ $subscriptions->where('status', 'approve')->count() }}
             </p>
         </div>
 
-        <div class="bg-white rounded shadow-sm p-2 border border-gray-100">
+        <div class="bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
             <p class="text-sm text-gray-500">Pending</p>
-            <p class="text-2xl font-bold text-amber-600 mt-2">
+            <p class="text-4xl font-bold text-amber-600 mt-2">
                 {{ $subscriptions->where('status', 'pending')->count() }}
             </p>
         </div>
 
-        <div class="bg-white rounded shadow-sm p-2 border border-gray-100">
+        <div class="bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
             <p class="text-sm text-gray-500">This Month</p>
-            <p class="text-2xl font-bold text-gray-900 mt-2">28</p>
+            <p class="text-4xl font-bold text-gray-900 mt-2">28</p>
         </div>
     </div>
 
@@ -65,12 +67,14 @@
             <table class="w-full">
                 <thead>
                     <tr class="border-b bg-gray-50">
-                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">ID</th>
-                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Plan</th>
-                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Amount(UGX)</th>
-                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Period</th>
-                        <th class="px-6 py-4 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Action</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">School</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                        <th class="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -78,7 +82,7 @@
                         @php
                             $statusClass = match($subscription->status) {
                                 'approve' => 'bg-emerald-100 text-emerald-700',
-                                'pending' => 'bg-amber-100 text-yellow-700',
+                                'pending' => 'bg-amber-100 text-amber-700',
                                 'cancel'  => 'bg-red-100 text-red-700',
                                 'expired' => 'bg-gray-100 text-gray-600',
                                 default   => 'bg-gray-100 text-gray-600'
@@ -89,29 +93,28 @@
                             <td class="px-6 py-5">
                                 <span class="font-mono text-sm font-medium text-gray-700">#{{ $subscription->id }}</span>
                             </td>
-                            {{-- <td class="px-6 py-5">
+                            <td class="px-6 py-5">
                                 <div class="font-medium">{{ $subscription->user->name ?? 'N/A' }}</div>
                                 <div class="text-xs text-gray-500">{{ $subscription->user->email ?? '' }}</div>
-                            </td> --}}
-                            {{-- <td class="px-6 py-5 text-gray-700">
+                            </td>
+                            <td class="px-6 py-5 text-gray-700">
                                 {{ $subscription->school->name ?? 'N/A' }}
-                            </td> --}}
+                            </td>
                             <td class="px-6 py-5">
                                 <span class="inline-flex items-center px-3 py-1 rounded-2xl bg-blue-50 text-blue-700 text-sm font-medium">
                                     {{ $subscription->plan->name ?? 'N/A' }}
                                 </span>
                             </td>
                             <td class="px-6 py-5">
-                                <span class="inline-flex items-center px-4 py-1.5 text-xs rounded-2xl {{ $statusClass }}">
+                                <span class="inline-flex items-center px-4 py-1.5 text-xs font-semibold rounded-2xl {{ $statusClass }}">
                                     {{ ucfirst($subscription->status) }}
                                 </span>
                             </td>
-                             
-                            <td class="px-6 py-5 text-gray-700">
+                            <td class="px-6 py-5 font-semibold text-gray-800">
                                 @if($subscription->amount_paid)
-                                    {{ number_format($subscription->amount_paid, 2) }}
+                                    ₦{{ number_format($subscription->amount_paid, 2) }}
                                 @else
-                                    <span class="text-gray-400">0</span>
+                                    <span class="text-gray-400">-</span>
                                 @endif
                             </td>
                             <td class="px-6 py-5 text-sm">
@@ -120,30 +123,14 @@
                                     → {{ $subscription->end_date ? \Carbon\Carbon::parse($subscription->end_date)->format('d M Y') : 'No expiry' }}
                                 </div>
                             </td>
-                            <td class="px-6 py-5 text-center flex items-center justify-center gap-4">
-                                    @if (!in_array($subscription->status, ['approved','canceled','expired']) )
-                                    
-                                     <a href="{{ route('admin.subscriptions.edit', $subscription) }}"
+                            <td class="px-6 py-5 text-center">
+                                <a href="{{ route('admin.subscriptions.edit', $subscription) }}"
                                    class="inline-flex items-center justify-center w-9 h-9 text-amber-600 hover:bg-amber-50 rounded-2xl transition-colors">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                @endif
-                                
-                               
-                                {{-- ====== update --}}
-                                <form action="{{ route("admin.subscriptions.update", $subscription->id) }}" method='POST'>
-                                    @csrf
-                                    @method("PUT")
-                                    <button type="button">
-                                        <i class="fas fa-ban"></i>
-                                    </button> 
-                                </form>
-
-                                {{--  --}}
                             </td>
                         </tr>
                     @empty
-                    
                         <tr>
                             <td colspan="8" class="px-6 py-16 text-center">
                                 <i class="fas fa-folder-open text-6xl text-gray-200 mb-4"></i>
@@ -165,4 +152,4 @@
     </div>
 </div>
 
-@endsection
+@endsection --}}

@@ -21,11 +21,11 @@ class CreateSubscriptionsTable extends Migration
             $table->foreign('user_id')->references('id')->on('users');
             $table->integer('plan_id')->unsigned()->nullable();
             $table->foreign('plan_id')->references('id')->on('plans');
-            $table->enum('status',['pending','approve','cancel','expired'])->default("pending");
+            $table->enum('status',['pending','approved','canceled','expired'])->default("pending");
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
 
-            $table->decimal('amount_paid', 12, 2)->nullable();
+            $table->decimal('amount_paid', 12, 2)->nullable()->default(0);
             $table->string('payment_reference')->nullable();
             $table->string('payment_method')->nullable();
 

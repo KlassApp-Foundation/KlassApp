@@ -5,8 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSubscriptionRequest;
 use App\Http\Requests\UpdateSubscriptionRequest;
+use App\Models\Plan;
+use App\Models\School;
 use App\Models\Subscription;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SubscriptionController extends Controller
 {
@@ -15,24 +19,15 @@ class SubscriptionController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
         $subscriptions = Subscription::with(['user', 'school', 'plan'])
-            ->latest()
-            ->paginate(15);
-
-        return view("admin.subscription.index", compact("subscriptions"));
-    }
-
-    /**
-     * Show the form for creating a new subscription.
-     */
-    public function create()
-    {
-        // Pass necessary data for dropdowns
-        $users = \App\Models\User::all();           // or scope to relevant users
-        $schools = \App\Models\School::all();
-        $plans = \App\Models\Plan::all();
-
-        return view("admin.subscription.create", compact('users', 'schools', 'plans'));
+                         ->where("school_id", $user->school_id)
+                         ->latest()
+                         ->paginate(15);
+                        //  ->get();
+         $staticStatuses = ['approved','canceled','expired'];   
+        //  dd($subscriptions);             
+        return view("admin.subscription.index", compact("subscriptions", "staticStatuses"));
     }
 
     /**
@@ -40,13 +35,12 @@ class SubscriptionController extends Controller
      */
     public function store(StoreSubscriptionRequest $request)
     {
-        $subscription = Subscription::create($request->validated());
-
-        // Optional: handle any extra logic (e.g., calculate end_date based on plan, send email, etc.)
-
+        $validated = $request->validated();
+        // dd($validated);
+        Subscription::create($validated);
         return redirect()
             ->route('admin.subscriptions.index')
-            ->with('success', 'Subscription created successfully.');
+            ->with('successmessage', 'Subscription created successfully!');
     }
 
     /**
@@ -62,25 +56,50 @@ class SubscriptionController extends Controller
     /**
      * Show the form for editing the specified subscription.
      */
-    public function edit(Subscription $subscription)
-    {
-        $users = \App\Models\User::all();
-        $schools = \App\Models\School::all();
-        $plans = \App\Models\Plan::class::all();
+    public function create()
+{
+    $user = Auth::user();
+    $plans = Plan::all();
+    $subscriptions = Subscription::with(['user', 'school', 'plan'])
+                         ->where("school_id", $user->school_id)
+                         ->latest()
+                         ->first();
+    //  if(in_array($subscriptions->status, ["pending", "approved"])) {
+    //      return;
+    //  }                   
+    return view("admin.subscription.create", compact('plans'));
+}
 
-        return view("admin.subscription.edit", compact('subscription', 'users', 'schools', 'plans'));
+public function edit(Subscription $subscription)
+{
+    if($subscription->status === "approved"){
+        return null;
     }
+    if($subscription->status === "canceled"){
+        return null;
+    }
+    if($subscription->status === "expired"){
+        return null;
+    }
+    // $users = User::all();
+    // $schools = School::all();
+    $plans = Plan::all();
+
+    return view("admin.subscription.create", compact('subscription', 'plans'));
+}
 
     /**
      * Update the specified subscription.
      */
     public function update(UpdateSubscriptionRequest $request, Subscription $subscription)
     {
-        $subscription->update($request->validated());
+        $validated = $request->validated();
+        // dd($validated);
+        $subscription->update($validated);
 
         return redirect()
             ->route('admin.subscriptions.index')
-            ->with('success', 'Subscription updated successfully.');
+            ->with('successmessage', 'Subscription updated successfully!');
     }
 
     /**
@@ -92,7 +111,7 @@ class SubscriptionController extends Controller
 
         return redirect()
             ->route('admin.subscriptions.index')
-            ->with('success', 'Subscription deleted successfully.');
+            ->with('successmessage', 'Subscription deleted successfully.');
     }
 
     /**
@@ -104,6 +123,6 @@ class SubscriptionController extends Controller
 
         return redirect()
             ->route('admin.subscriptions.index')
-            ->with('success', 'Subscription permanently deleted.');
+            ->with('successmessage', 'Subscription permanently deleted.');
     }
 }

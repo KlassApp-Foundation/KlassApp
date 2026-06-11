@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Plan;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class UpdateSubscriptionRequest extends FormRequest
 {
@@ -19,9 +21,15 @@ class UpdateSubscriptionRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        $user = Auth::user();
+         $plan = Plan::where("id", $this->plan_id)->first();
         $this->merge([
             'payment_details' => $this->payment_details ? json_encode($this->payment_details) : null,
             'plan_details'    => $this->plan_details ? json_encode($this->plan_details) : null,
+            'school_id'  => $user->school_id,
+            'user_id'  => $user->id,
+            'plan_id' => $plan->id,
+            'amount_paid' => $plan->amount,
         ]);
     }
 
@@ -31,11 +39,10 @@ class UpdateSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'school_id'         => 'nullable|integer|exists:schools,id',
-            'user_id'           => 'nullable|integer|exists:users,id',           // Allow changing user if needed
-            'plan_id'           => 'nullable|integer|exists:plans,id',
-            
-            'status'            => 'nullable|in:pending,approve,cancel,expired',
+            'school_id'         => 'required|integer|exists:schools,id',
+            'user_id'           => 'required|integer|exists:users,id',           // Allow changing user if needed
+            'plan_id'           => 'required|integer|exists:plans,id',
+            'status'            => 'nullable|in:pending,approved,canceled,expired',
             
             'start_date'        => 'nullable|date',
             'end_date'          => 'nullable|date|after_or_equal:start_date',
