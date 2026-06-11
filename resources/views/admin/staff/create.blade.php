@@ -10,7 +10,7 @@
         <span class="mx-3">Add Support Staff</span>
     </h1>
     @include('partials.message')
-    @if($count < $subscription->plan->no_of_members)
+    @if($count < $subscription->plan->no_of_users)
         <form method="POST" action="" enctype="multipart/form-data">
             @csrf
             <add-tab-teacher url="{{ url('/') }}" staff="non_teaching" teacher_name=null type="add"></add-tab-teacher>

@@ -27,7 +27,7 @@ class PlanForm extends Component
 	public $amount;
 
 	#[Rule('required')]
-	public $no_of_members;
+	public $no_of_users;
 
 	#[Rule('required')]
 	public $no_of_events;
@@ -64,7 +64,7 @@ class PlanForm extends Component
 			$this->order = $planEdit->order;
 			$this->status = $planEdit->is_active;
 			$this->amount = $planEdit->amount;
-			$this->no_of_members = $planEdit->no_of_members;
+			$this->no_of_users = $planEdit->no_of_users;
 			$this->no_of_events = $planEdit->no_of_events;
 			$this->no_of_folders = $planEdit->no_of_folders;
 			$this->no_of_files = $planEdit->no_of_files;
@@ -85,7 +85,7 @@ class PlanForm extends Component
 			'order' => $this->order,
 			'is_active' => $this->status,
 			'amount' => $this->amount,
-			'no_of_members' => $this->no_of_members,
+			'no_of_users' => $this->no_of_users,
 			'no_of_events' => $this->no_of_events,
 			'no_of_folders' => $this->no_of_folders,
 			'no_of_files' => $this->no_of_files,

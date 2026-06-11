@@ -104,8 +104,8 @@
         <div class="mb-2">
         <label for="" class="tw-form-label">Number of Members<span class="text-red-500">*</span></label>
         </div>
-          <input name="no_of_members" value="" type="number" placeholder="Number of Members" class="tw-form-control w-full" wire:model.live="no_of_members">
-          @error('no_of_members')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
+          <input name="no_of_users" value="" type="number" placeholder="Number of Members" class="tw-form-control w-full" wire:model.live="no_of_users">
+          @error('no_of_users')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
         </div>
       </div>

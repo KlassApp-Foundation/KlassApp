@@ -81,7 +81,7 @@
           <div class="flex justify-between flex-col py-2">
             <div class=" leading-relaxed flex justify-between"> 
               <p class="text-xs text-black font-semibold">Students</p>
-              <p class="text-xs text-gray-500">{{ $subscription->plan->no_of_members-$memberCount }}/{{ $subscription->plan->no_of_members }}</p>
+              <p class="text-xs text-gray-500">{{ $subscription->plan->no_of_users-$memberCount }}/{{ $subscription->plan->no_of_users }}</p>
             </div>
             <div class="progress w-1/2 my-1">
               <div class="bar" style="width:{{ $memberCount }}%">

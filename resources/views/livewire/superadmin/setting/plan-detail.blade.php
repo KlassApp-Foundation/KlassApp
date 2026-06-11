@@ -92,7 +92,7 @@
                 <p>No of Members</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $planDetail->no_of_members }}</p>
+                <p class="leading-loose txt-gray-light">{{ $planDetail->no_of_users }}</p>
             </div>
         </div>
 
