@@ -23,6 +23,7 @@ class CreatePlansTable extends Migration
             $table->double('amount',10,2)->default(0);
             $table->integer('no_of_users')->nullable();
             $table->integer('no_of_students')->nullable();
+            $table->string('whatsapp_services')->nullable();
             $table->integer('no_of_events')->nullable();
             $table->integer('no_of_folders')->nullable()->comment('Gallery');
             $table->integer('no_of_files')->nullable();
