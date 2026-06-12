@@ -1190,6 +1190,7 @@
     </div>
 </section>
 
+
 <!-- ═══════════════════════════════════════════════════
      PRICING (Freemium)
      ═══════════════════════════════════════════════════ -->
@@ -1204,7 +1205,10 @@
             Start for free. Upgrade when you need more.
         </p>
 
-        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
+        {{-- ============== TO BE CHANGED TO USE REAL PRICING (quit hardcoded ones)=========== --}}
+        @include("pricing")
+
+        {{-- <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
             <!-- Free / Starter -->
             <div class="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm reveal">
                 <h3 class="font-display font-bold text-xl text-gray-900 mb-2">Free</h3>
@@ -1320,7 +1324,7 @@
                    class="block text-center border-2 border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:border-gray-300 transition btn-scale">
                     Talk to Sales
                 </a>
-            </div>
+            </div> --}}
         </div>
     </div>
 </section>

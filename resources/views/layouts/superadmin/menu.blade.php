@@ -117,7 +117,7 @@
             
             <li class="py-3 px-3 hover:font-semibold{{Request::segment ('2') == 'plans' ? 'active':''}} && {{Request::segment ('2') == 'plan' ? 'active':''}}">
                 <a href="{{ url('/superadmin/setting/plans') }}" class="flex items-center">
-                    <img src="{{ url('uploads/superadmin/plan.png') }}" class="w-5 h-5">
+                    <i class="fa-brands fa-fonticons"></i> 
                     <span class="mx-3 whitespace-no-wrap">Plans</span>
                 </a>
             </li>

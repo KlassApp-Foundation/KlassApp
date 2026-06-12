@@ -5,6 +5,7 @@
  */
 namespace App\Http\Controllers;
 
+use App\Models\Plan;
 use Illuminate\Http\Request;
 
 class WelcomeController extends Controller
@@ -14,7 +15,13 @@ class WelcomeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function __invoke(){
-        return view('landing');
-    }
+    public function __invoke()
+{
+    $plans = Plan::query()
+        ->where('is_active', true)
+        ->orderBy('amount')
+        ->get();
+
+    return view('landing', compact('plans'));
+}
 }

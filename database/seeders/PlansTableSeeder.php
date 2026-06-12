@@ -24,7 +24,7 @@ class PlansTableSeeder extends Seeder
                 'display_name'    => 'Free',
                 'cycle'           => 30,          // 30 days trial/forever free tier
                 'amount'          => 0,
-                'no_of_users'   => 10,
+                'no_of_users'   => 5,
                 'no_of_students'  => 10,
                 'no_of_events'    => 5,
                 'no_of_folders'   => 1,
@@ -39,7 +39,7 @@ class PlansTableSeeder extends Seeder
                 'name'            => 'standard',
                 'display_name'    => 'Standard',
                 'cycle'           => 30,          // monthly
-                'amount'          => 45000,       // ~35k UGX/month (~9-10 USD)
+                'amount'          => 45000,       
                 'no_of_users'   => 50,
                 'no_of_students'  => 300,
                 'no_of_events'    => 20,
@@ -72,7 +72,7 @@ class PlansTableSeeder extends Seeder
                 'display_name'    => 'Premium',
                 'cycle'           => 30,         // annual
                 'amount'          => 150000,      // ~300k UGX/year (~80 USD)
-                'no_of_users'   => 5000,
+                'no_of_users'   => 500,
                 'no_of_students'  => 10000,
                 'no_of_events'    => 200,
                 'no_of_folders'   => 200,
@@ -82,8 +82,8 @@ class PlansTableSeeder extends Seeder
                 'no_of_groups'    => 100,
             ],
         ];
-
         foreach ($plans as $plan) {
+            $whatsappService = "WhatsApp notifications to parents and teachers";
            Plan::updateOrCreate(
                 ['name' => $plan['name']],  // unique by plan name
                 [
@@ -91,6 +91,8 @@ class PlansTableSeeder extends Seeder
                     'cycle'           => $plan['cycle'],
                     'amount'          => $plan['amount'],
                     'no_of_users'   => $plan['no_of_users'],
+                    'no_of_students'   => $plan['no_of_students'],
+                    'whatsapp_services'   => $plan['name'] !== "free" ? $whatsappService : null,
                     'no_of_events'    => $plan['no_of_events'],
                     'no_of_folders'   => $plan['no_of_folders'],
                     'no_of_files'     => $plan['no_of_files'],
