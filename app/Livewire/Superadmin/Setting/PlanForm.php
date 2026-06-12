@@ -17,10 +17,10 @@ class PlanForm extends Component
 	#[Rule('required')]
 	public $name;
 
-	#[Rule('required')]
+	#[Rule('nullable')]
 	public $order;
 
-	#[Rule('required')]
+	#[Rule('nullable')]
 	public $status = 1;
 
 	#[Rule('required')]
@@ -30,24 +30,30 @@ class PlanForm extends Component
 	public $no_of_users;
 
 	#[Rule('required')]
+	public $no_of_students;
+
+	#[Rule('nullable')]
+	public $whatsapp_services;
+
+	#[Rule('nullable')]
 	public $no_of_events;
 
-	#[Rule('required')]
+	#[Rule('nullable')]
 	public $no_of_folders;
 
-	#[Rule('required')]
+	#[Rule('nullable')]
 	public $no_of_files;
 
-	#[Rule('required')]
+	#[Rule('nullable')]
 	public $no_of_videos;
 
-	#[Rule('required')]
+	#[Rule('nullable')]
 	public $no_of_audios;
 
-	#[Rule('required')]
+	#[Rule('nullable')]
 	public $no_of_bulletins;
 
-	#[Rule('required')]
+	#[Rule('nullable')]
 	public $no_of_groups;
 
 	public $planEditId;
@@ -55,6 +61,14 @@ class PlanForm extends Component
 	public function mount($id)
 	{
 		$this->planEditId = $id;
+		if ($this->planEditId) {
+        $planEdit = Plan::findOrFail($this->planEditId);
+
+        $this->order = $planEdit->order;
+        // other fields...
+    } else {
+        $this->order = Plan::max('order') + 1;
+    }
 
 		if($this->planEditId != '')
 		{
@@ -65,6 +79,8 @@ class PlanForm extends Component
 			$this->status = $planEdit->is_active;
 			$this->amount = $planEdit->amount;
 			$this->no_of_users = $planEdit->no_of_users;
+			$this->no_of_students = $planEdit->no_of_students;
+			$this->whatsapp_services = $planEdit->whatsapp_services;
 			$this->no_of_events = $planEdit->no_of_events;
 			$this->no_of_folders = $planEdit->no_of_folders;
 			$this->no_of_files = $planEdit->no_of_files;
@@ -86,6 +102,8 @@ class PlanForm extends Component
 			'is_active' => $this->status,
 			'amount' => $this->amount,
 			'no_of_users' => $this->no_of_users,
+			'no_of_students' => $this->no_of_students,
+			'whatsapp_services' => $this->whatsapp_services,
 			'no_of_events' => $this->no_of_events,
 			'no_of_folders' => $this->no_of_folders,
 			'no_of_files' => $this->no_of_files,
@@ -112,7 +130,8 @@ class PlanForm extends Component
 			$this->alert('success', 'Plan updated successfully');
 		}
 
-		return redirect(url('/superadmin/setting/plan/detail/'.$this->planEditId));
+		// return redirect(url('/superadmin/setting/plan/detail/'.$this->planEditId));
+		return redirect(url('/superadmin/setting/plans'.$this->planEditId));
 	}
 
     public function render()
