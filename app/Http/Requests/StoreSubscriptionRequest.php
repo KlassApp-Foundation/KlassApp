@@ -49,8 +49,8 @@ class StoreSubscriptionRequest extends FormRequest
             'end_date'          => 'nullable|date|after_or_equal:start_date',
             
             'amount_paid'       => 'required|numeric|min:0|max:9999999999.99',
-            'payment_reference' => 'nullable|string|max:255',
-            'payment_method'    => 'nullable|string|max:100',
+            'payment_reference' => 'required|string|max:255',
+            'payment_method'    => 'required|string|max:100',
             
             'payment_details'   => 'nullable|json',
             'plan_details'      => 'nullable|json',

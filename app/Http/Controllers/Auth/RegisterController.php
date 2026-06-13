@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use App\Mail\EmailVerification;
 use App\Models\AcademicYear;
+use App\Models\CurrentPlan;
 use App\Models\Subscription;
 use App\Models\Plan;
 use App\Models\SchoolDetail;
@@ -29,6 +30,7 @@ use App\Models\School;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
 use Throwable;
 
 class RegisterController extends Controller
@@ -73,7 +75,17 @@ class RegisterController extends Controller
     {
         return DB::transaction(function () use ($data) {
             $school = $this->createSchool($data);
+            $planName = $data['plan'] ?? session('selected_plan');
+            if ($planName) {
+            $planId = Plan::where("name", $planName)->value("id");
 
+            if ($planId) {
+                CurrentPlan::create([
+                    "school_id" => $school->id, 
+                    "plan_id"   => $planId, 
+                ]);
+            }
+        }
             //$this->createSchoolDetails($school); //added in observer
 
             $user = $this->createSchoolAdmin($school, $data);
@@ -88,14 +100,19 @@ class RegisterController extends Controller
         });
     }
 
-    public function showRegistrationForm()
+    public function showRegistrationForm(Request $request)
     {
+        if ($request->has('plan')) {
+        session(['selected_plan' => $request->plan]);
+    }
         return view('auth.register');
     }
 
-    public function register(RegisterRequest $request)
+    public function register( RegisterRequest $request)
     {
-        $registrationData = $this->prepareRegistrationData($request->all());
+        $input = $request->all();
+        $registrationData = $this->prepareRegistrationData($input);
+        $registrationData['plan'] = $request->plan ?? session('selected_plan');
 
         try {
             event(new Registered($user = $this->create($registrationData)));
@@ -131,7 +148,7 @@ class RegisterController extends Controller
         return Auth::guard();
     }
 
-    private function createSchool($data)
+    private function createSchool( $data)
     {
         try
         {
@@ -154,7 +171,7 @@ class RegisterController extends Controller
             }
 
             $school = School::create($schoolData);
-
+            
             Log::info('New School Created. School Id : '. $school->id. ' Name : '. $school->name );
 
             return $school;

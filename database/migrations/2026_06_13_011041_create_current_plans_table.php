@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger("school_id");
             $table->unsignedInteger("plan_id");
-            $table->enum("status", ["pending", "running", "expired"]);
+            $table->enum("status", ["pending", "running", "expired"])->default("pending");
             $table->foreign("school_id")->references("id")->on("schools")->cascadeOnDelete();
             $table->foreign("plan_id")->references("id")->on("plans")->cascadeOnDelete();
 

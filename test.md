@@ -50,7 +50,7 @@ Report card re-design
 -   Teachers' images/avatars
 
 ## Next
-
+- Redirecting user after section creation
 -   Holidays
 -   Librarian cleanup
 -   Calendar

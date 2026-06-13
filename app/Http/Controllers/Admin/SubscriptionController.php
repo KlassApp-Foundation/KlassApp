@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSubscriptionRequest;
 use App\Http\Requests\UpdateSubscriptionRequest;
+use App\Models\CurrentPlan;
 use App\Models\Plan;
 use App\Models\School;
 use App\Models\Subscription;
@@ -26,8 +27,12 @@ class SubscriptionController extends Controller
                          ->paginate(15);
                         //  ->get();
          $staticStatuses = ['approved','canceled','expired'];   
-        //  dd($subscriptions);             
-        return view("admin.subscription.index", compact("subscriptions", "staticStatuses"));
+         $currentPlan = CurrentPlan::query()
+            ->with(['school', 'plan'])
+            ->where("status", "!=", "running")
+            ->latest()
+            ->first();
+        return view("admin.subscription.index", compact("subscriptions", "staticStatuses", "currentPlan"));
     }
 
     /**
