@@ -407,6 +407,10 @@
           @csrf
 
           <div class="klass-field">
+               <input type="hidden" name="plan" value="{{ session('selected_plan') }}">
+          </div>
+
+          <div class="klass-field">
             <label class="klass-label" for="school_name">School Name</label>
             <input id="school_name" type="text" class="klass-input" name="school_name" value="{{ old('school_name') }}" placeholder="name of the school" required>
             @if ($errors->has('school_name'))

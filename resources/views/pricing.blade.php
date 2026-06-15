@@ -108,7 +108,7 @@
                 {{-- CTA --}}
                 <div class="mt-10">
                     <a
-                        href="{{ route('register') }}"
+                        href="{{ route('register', ["plan" => $plan->name]) }}"
                         class="block w-full text-center bg-gray-900 hover:bg-black text-white font-semibold py-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl"
                     >
                         {{ $plan->amount == 0 ? 'Get Started Free' : 'Choose Plan' }}

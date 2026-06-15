@@ -50,7 +50,8 @@ Report card re-design
 -   Teachers' images/avatars
 
 ## Next
-
+- Redirecting user after section creation
+- Validating (payment reference, payment method)
 -   Holidays
 -   Librarian cleanup
 -   Calendar

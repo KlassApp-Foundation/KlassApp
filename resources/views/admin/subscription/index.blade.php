@@ -10,9 +10,10 @@
             <h1 class="text-3xl font-bold text-gray-900">Subscriptions</h1>
             <p class="text-gray-600 mt-1">Manage all subscription records across the school</p>
         </div>
-@if (in_array($subscriptions->first()?->status, ['canceled','expired']) )
+        {{-- {{ dd($subscriptions->first()->plan->name) }} --}}
+@if (in_array($subscriptions->first()?->status, ['canceled','expired']) || $subscriptions->first()?->plan->name === "free" )
 <a href="{{ route('admin.subscriptions.create') }}" 
-           class="mt-4 sm:mt-0 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl font-medium transition-all shadow-sm">
+           class="mt-4 sm:mt-0 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded font-medium transition-all shadow-sm">
             <i class="fas fa-plus"></i>
             New Subscription
         </a>
@@ -53,12 +54,16 @@
 
     <!-- Main Card -->
     <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
-
+        <div class="p-2 text-xs">
+            <span>Your current plan is {{ $currentPlan->plan->name }}</span>
+            <a class="text-green-500" href="#">continue to subscription</a>
+        </div>
         <div class="px-6 py-5 border-b flex items-center justify-between bg-gray-50">
             <h5 class="font-semibold text-lg text-gray-800">All Subscriptions</h5>
             <span class="px-4 py-1.5 bg-blue-100 text-blue-700 text-sm font-medium rounded-2xl">
                 {{ $subscriptions->total() }} Total
             </span>
+           
         </div>
 
         <div class="overflow-x-auto">
@@ -120,16 +125,17 @@
                                     → {{ $subscription->end_date ? \Carbon\Carbon::parse($subscription->end_date)->format('d M Y') : 'No expiry' }}
                                 </div>
                             </td>
+                            {{-- {{ dd($subscription) }} --}}
                             <td class="px-6 py-5 text-center flex items-center justify-center gap-4">
-                                    @if (!in_array($subscription->status, ['approved','canceled','expired']) )
+                                @if ($subscription->plan->name !== "free")
+
+                                @if (!in_array($subscription->status, ['approved','canceled','expired']) )
                                     
                                      <a href="{{ route('admin.subscriptions.edit', $subscription) }}"
                                    class="inline-flex items-center justify-center w-9 h-9 text-amber-600 hover:bg-amber-50 rounded-2xl transition-colors">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 @endif
-                                
-                               
                                 {{-- ====== update --}}
                                 <form action="{{ route("admin.subscriptions.update", $subscription->id) }}" method='POST'>
                                     @csrf
@@ -140,6 +146,9 @@
                                 </form>
 
                                 {{--  --}}
+                                    
+                                @endif
+                                    
                             </td>
                         </tr>
                     @empty
