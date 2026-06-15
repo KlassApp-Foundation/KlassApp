@@ -352,21 +352,7 @@
             flex-shrink: 0;
         }
 
-        /* ── Typewriter cursor ── */
-        #typewriter-cursor {
-            animation: blink 0.8s step-end infinite;
-            font-weight: 100;
-        }
-        #typewriter-text.is-typing + #typewriter-cursor {
-            animation: none;
-        }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-        #typewriter-text {
-            border-right: 2px solid transparent;
-        }
+
 
         /* ── CTA section pattern ── */
         .cta-pattern {
@@ -416,12 +402,6 @@
                 repeating-linear-gradient(45deg, rgba(217,119,6,0.04) 0px, rgba(217,119,6,0.04) 1px, transparent 1px, transparent 12px),
                 repeating-linear-gradient(-45deg, rgba(217,119,6,0.04) 0px, rgba(217,119,6,0.04) 1px, transparent 1px, transparent 12px);
         }
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
         /* ── Decorative section number ── */
         .section-number {
             font-family: 'Sora', sans-serif;
@@ -535,19 +515,17 @@
                     </div>
                 </div>
 
-                <div style="min-height: 20rem;">
-                    <h1 class="font-display font-extrabold leading-[1.08] tracking-[-0.02em]"
-                        style="font-size: clamp(2.5rem, 5vw, 4.5rem); min-height: 3.3em; background: linear-gradient(135deg, #1E6FD9 0%, #22C55E 35%, #D97706 70%, #1E6FD9 100%); background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: gradientShift 6s ease infinite;">
-                        <span id="typewriter-text"></span><span id="typewriter-cursor" style="background: linear-gradient(135deg, #D97706 0%, #D97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">|</span>
+                <div>
+                    <h1 class="font-display font-extrabold leading-[1.08] tracking-[-0.02em] text-[#0F172A]"
+                        style="font-size: clamp(2.5rem, 5vw, 4.5rem);">
+                        The school in every parent's pocket.
                     </h1>
-                    <div id="admin-tagline" class="font-display font-semibold text-slate-500 text-xl sm:text-2xl mt-2 mb-5 opacity-0 transition-opacity duration-700" style="letter-spacing: -0.01em; min-height: 1.5em;">
+                    <div id="admin-tagline" class="font-display font-semibold text-slate-600 text-xl sm:text-2xl mt-2 mb-5" style="letter-spacing: -0.01em; min-height: 1.5em;">
+                        <span class="text-brand-amber">✦</span> And the system your admin team operates on.
                     </div>
                 </div>
                 <p class="text-lg leading-relaxed text-slate-600 mb-8 max-w-lg">
-                    <span id="hero-keyword-box" class="inline-block text-brand-green font-semibold" style="min-width: 7em; min-height: 1.5em;">
-                        <span id="hero-typelist" style="white-space: nowrap;">Grades</span><span id="hero-typelist-cursor">|</span>
-                    </span>
-                    <span class="hero-static-rest">, delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators, dashboards that make running a school feel effortless.</span>
+                    <span class="font-semibold text-brand-green">Grades, fees, attendance, health, and more</span>, delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators, dashboards that make running a school feel effortless.
                 </p>
                 <div class="flex flex-wrap gap-4">
                     <a href="{{ url('/register') }}"
@@ -1510,172 +1488,37 @@
         });
     }
 
-    // ── Audience tabs ──
-    const audienceCopy = {
-        admin: {
-            title: "The school in every parent's pocket.",
-            subtitle: 'And the system your admin team operates on.'
-        },
-        teacher: {
-            title: 'Spend less time on admin. More time doing what you love.',
-            subtitle: 'KlassApp handles the noise so you can focus on what actually matters: teaching.'
-        },
-        parent: {
-            title: "Always in the loop. Never in the dark.",
-            subtitle: 'Real-time updates on attendance, grades, and school communications — all in one place, built for busy parents.'
-        }
+    // ── Audience tabs (tagline switching only) ──
+    const audienceSubtitles = {
+        admin: '✦ And the system your admin team operates on.',
+        teacher: '✦ KlassApp handles the noise so you can focus on what actually matters: teaching.',
+        parent: '✦ Real-time updates on attendance, grades, and school communications — all in one place, built for busy parents.'
     };
-
-    const titleEl = document.getElementById('typewriter-text');
-    const cursorEl = document.getElementById('typewriter-cursor');
     const taglineEl = document.getElementById('admin-tagline');
-    let heroAnimationToken = 0;
-    let currentAudience = 'admin';
 
-    function typeWriter(element, text, speed, token, callback) {
-        element.textContent = '';
-        element.classList.add('is-typing');
-        let i = 0;
-        function type() {
-            if (token !== heroAnimationToken) return;
-            if (i < text.length) {
-                element.textContent += text.charAt(i);
-                i++;
-                const delay = text.charAt(i - 1) === '.' ? 180 : speed;
-                setTimeout(type, delay);
-                return;
-            }
-            setTimeout(function() {
-                if (token !== heroAnimationToken) return;
-                element.classList.remove('is-typing');
-                if (callback) callback();
-            }, 500);
-        }
-        type();
-    }
-
-    function animateHeroCopy(aud) {
-        if (!titleEl || !taglineEl || !audienceCopy[aud]) return;
-        heroAnimationToken += 1;
-        const token = heroAnimationToken;
-
-        titleEl.classList.remove('hero-reveal', 'is-typing');
-        taglineEl.classList.remove('hero-reveal');
-        // Keep opacity 1 and set min-height so H1 never collapses
-        titleEl.style.opacity = '1';
-        titleEl.style.transform = 'translateY(0)';
-        taglineEl.style.opacity = '0';
-        taglineEl.style.transform = 'translateY(16px)';
-
-        requestAnimationFrame(function() {
-            titleEl.textContent = '';
-            titleEl.classList.add('hero-reveal');
-            typeWriter(titleEl, audienceCopy[aud].title, 45 + Math.random() * 35, token, function() {
-                taglineEl.innerHTML = '<span class="text-brand-amber/60">✦</span> ' + audienceCopy[aud].subtitle;
-                taglineEl.classList.add('hero-reveal');
-                taglineEl.classList.remove('opacity-0');
+    document.querySelectorAll('.audience-tab').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const aud = this.getAttribute('data-audience');
+            document.querySelectorAll('.audience-tab').forEach(function(b) {
+                const isActive = b.getAttribute('data-audience') === aud;
+                b.classList.toggle('active', isActive);
+                if (isActive) {
+                    b.classList.add('bg-white', 'text-brand-green', 'shadow-sm');
+                    b.classList.remove('bg-white/70', 'text-slate-600', 'hover:bg-white');
+                    b.style.borderColor = '#22C55E';
+                    b.style.borderWidth = '2px';
+                } else {
+                    b.classList.remove('bg-white', 'text-brand-green', 'shadow-sm');
+                    b.classList.add('bg-white/70', 'text-slate-600', 'hover:bg-white');
+                    b.style.borderColor = '';
+                    b.style.borderWidth = '';
+                }
             });
-        });
-    }
-
-    function setAudience(aud) {
-        currentAudience = aud;
-        document.querySelectorAll('.audience-tab').forEach(function(btn) {
-            const isActive = btn.getAttribute('data-audience') === aud;
-            btn.classList.toggle('active', isActive);
-            if (isActive) {
-                btn.classList.add('bg-white', 'text-brand-green', 'shadow-sm');
-                btn.classList.remove('bg-white/70', 'text-slate-600', 'hover:bg-white');
-                btn.style.borderColor = '#22C55E';
-                btn.style.borderWidth = '2px';
-            } else {
-                btn.classList.remove('bg-white', 'text-brand-green', 'shadow-sm');
-                btn.classList.add('bg-white/70', 'text-slate-600', 'hover:bg-white');
-                btn.style.borderColor = '';
-                btn.style.borderWidth = '';
+            if (taglineEl && audienceSubtitles[aud]) {
+                taglineEl.innerHTML = '<span class="text-brand-amber">' + audienceSubtitles[aud];
             }
         });
-        animateHeroCopy(aud);
-    }
-
-    // ── Auto-rotating audience tabs every 3 seconds ──
-    (function startAudienceLoop() {
-        const tabs = ['admin', 'teacher', 'parent'];
-        let idx = 0;
-        let timer = setInterval(function() {
-            idx = (idx + 1) % tabs.length;
-            setAudience(tabs[idx]);
-        }, 3000);
-        // Pause on hover
-        document.querySelectorAll('.audience-tab').forEach(function(btn) {
-            btn.addEventListener('mouseenter', function() { clearInterval(timer); });
-            btn.addEventListener('mouseleave', function() {
-                timer = setInterval(function() {
-                    idx = (idx + 1) % tabs.length;
-                    setAudience(tabs[idx]);
-                }, 3000);
-            });
-            btn.addEventListener('click', function() {
-                clearInterval(timer);
-                setAudience(this.getAttribute('data-audience'));
-            });
-        });
-    })();
-
-    // ── Typewriter effect initial run + admin tagline ──
-    const typewriterText = audienceCopy.admin.title;
-    const el = titleEl;
-    const cursor = cursorEl;
-    let idx = 0;
-    function revealAdminTagline() {
-        if (taglineEl) taglineEl.classList.remove('opacity-0');
-    }
-    function typeNext() {
-        if (idx < typewriterText.length) {
-            el.textContent += typewriterText.charAt(idx);
-            idx++;
-            const delay = typewriterText.charAt(idx - 1) === '.' ? 180 : 45 + Math.random() * 35;
-            setTimeout(typeNext, delay);
-        } else {
-            cursor.style.animation = 'blink 0.8s step-end infinite';
-            setTimeout(revealAdminTagline, 400);
-        }
-    }
-    setTimeout(typeNext, 600);
-
-    // ── Hero Typelist Effect (looping keywords) ──
-    const heroTypelistWords = ['Grades', 'fees', 'attendance', 'health', 'canteen', 'discipline', 'notifications', 'timetables', 'exams', 'reports'];
-    const heroTypelistEl = document.getElementById('hero-typelist');
-    const heroTypelistCursor = document.getElementById('hero-typelist-cursor');
-    let currentWordIndex = 0;
-    let currentCharIndex = 0;
-    let isDeleting = false;
-    let heroTypeSpeed = 120;
-
-    function heroTypeTick() {
-        const word = heroTypelistWords[currentWordIndex];
-        if (isDeleting) {
-            heroTypelistEl.textContent = word.substring(0, currentCharIndex - 1);
-            currentCharIndex--;
-            heroTypeSpeed = 60;
-        } else {
-            heroTypelistEl.textContent = word.substring(0, currentCharIndex + 1);
-            currentCharIndex++;
-            heroTypeSpeed = 140;
-        }
-
-        if (!isDeleting && currentCharIndex === word.length) {
-            isDeleting = true;
-            heroTypeSpeed = 1800; // pause at full word
-        } else if (isDeleting && currentCharIndex === 0) {
-            isDeleting = false;
-            currentWordIndex = (currentWordIndex + 1) % heroTypelistWords.length;
-            heroTypeSpeed = 400; // pause before next word
-        }
-
-        setTimeout(heroTypeTick, heroTypeSpeed);
-    }
-    if (heroTypelistEl) setTimeout(heroTypeTick, 2200);
+    });
 
     // ── WhatsApp time ──
     const now = new Date();

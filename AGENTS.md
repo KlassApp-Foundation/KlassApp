@@ -1,6 +1,57 @@
 # KlassApp — Session Memory & Project Context
 
-## Active Branch: `whatsapp`
+## Active Branch: `main`
+
+---
+
+## DASHBOARD REDESIGN (COMPLETED — June 2026)
+
+- Sora + DM Sans fonts aligned with landing page
+- Brand colors: Blue #1E6FD9, Green #22C55E, Dark #0F172A, Amber #D97706
+- White navbar with subtle border and shadow
+- Dark sidebar (#0F172A) with green active accent
+- KPI cards with colored icon circles, hover lift effect
+- Chart.js 2.6 — do NOT upgrade (breaking API changes)
+- Vanilla JS hamburger (replaced Tailwind + jQuery dependency)
+- Dashboard at `/admin/dashboard`
+
+### Files Modified
+- `public/css/dashboard-refresh.css` — full rewrite
+- `resources/views/layouts/app.blade.php` — fonts
+- `resources/views/admin/dashboard/dashboard.blade.php`
+- `resources/views/layouts/admin/sidebar.blade.php`
+- `resources/views/layouts/partials/navigation.blade.php`
+- `resources/views/auth/login.blade.php` — fixed false maintenance banner
+- `app/Http/Kernel.php` — removed Sanctum from API middleware (fixes webhook 302)
+- `routes/api.php` — added delivery webhook route
+
+---
+
+## WHATSAPP INTEGRATION (ACTIVE — June 2026)
+
+### Production
+- Evolution API: 46.101.130.70:8081 (Docker, evoapicloud/evolution-api:latest)
+- API Key: 78E5A6FF-BA89-45C6-987C-C31407BD22B4
+- Instance: klassapp
+- Webhook: https://klassapp.xyz/api/whatsapp/inbound
+- Business Number: +256765275289
+
+### Deploy Command
+```bash
+ssh -i ~/.ssh/id_ed25519_do root@165.245.250.16 \
+  "cd /var/www/klassapp && git pull origin main && php artisan optimize:clear && systemctl restart php8.3-fpm"
+```
+
+### Local Dev
+```bash
+colima start                    # Docker
+brew services start mysql       # MySQL
+php artisan serve               # Laravel on :8000
+```
+
+### Test Credentials
+- Super Admin: siteadmin@gmail.com / password
+- School Admin: admin@testschoolone.sch.ug / password123
 
 ---
 
@@ -80,41 +131,22 @@ Returns `view('landing')` instead of `view('welcome')`.
 
 ## PENDING WORK
 
-### 1. Navbar Scroll Direction (CRITICAL FIX NEEDED)
-Current behavior: Navbar compacts when scrollY > 60 (position-based)
-**Required behavior**: 
-- Scroll DOWN → compact (shrink)
-- Scroll UP → restore (expand)
+### 1. WhatsApp Cloud API Migration
+Current: Evolution API + Baileys (unofficial WhatsApp Web)
+Target: Official Meta WhatsApp Business API
+- Need Meta Business Account, Phone Number ID, WABA ID, Permanent Access Token
 
-Implementation in `landing.blade.php` and `landing2.blade.php`:
-```javascript
-let lastScroll = 0;
-window.addEventListener('scroll', () => {
-    const y = window.scrollY;
-    const goingDown = y > lastScroll;
-    if (y > 60) {
-        if (goingDown) { /* compact */ }
-        else { /* restore */ }
-    }
-    lastScroll = y;
-});
-```
+### 2. Incomplete Dashboards
+- Accountant dashboard (no main view)
+- Receptionist dashboard (partial)
+- Librarian dashboard (no view)
+- Superadmin dashboard (controller exists, no dedicated view)
 
-### 2. Typewriter Cursor
-- Should NOT blink while typing (`animation: none` during type)
-- Should resume blinking after typing complete
+### 3. Bar Chart Data
+Admin dashboard bar chart uses hardcoded placeholder data. Needs real attendance or revenue data wiring.
 
-### 3. Dashboard Redesign (NEXT MAJOR TASK)
-User explicitly asked: "we have to work on dashboards too"
-- Admin dashboard
-- Teacher dashboard
-- Accountant dashboard
-- Parent portal (WhatsApp is primary, but web view exists)
-
-### 4. Mobile Testing
-- Verify all animations on actual mobile devices
-- Touch targets for audience tabs
-- WhatsApp mockup responsive sizing
+### 4. Landing Page v1 ↔ v2
+v2 (`/landing2`) has different navbar JS (direction-aware). Not aligned with v1 style. Consider merging into single canonical landing.
 
 ---
 
