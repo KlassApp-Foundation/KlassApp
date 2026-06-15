@@ -1,4 +1,4 @@
-{{-- SPDX-License-Identifier: MIT --}}
+SPDX-License-Identifier: MIT
 <div class="">
     <div class="flex flex-row items-center justify-between">
         <div class="flex items-center">
@@ -86,10 +86,10 @@
         <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
             <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
                 <p>Status</p>
-            </div>
+            </div>  
             <div class="text-sm lg:w-3/4 md:w-3/4">
                 @if($subscriptionDetail->status=='pending')
-                 <span class="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded-full dark:bg-orange-900 dark:text-orange-300">Pending</span>
+                 <span class="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded-full dark:bg-orange-900 dark:text-orange-300">{{$subscriptionDetail->status}}</span>
                 @elseif($subscriptionDetail->status=='approve')
                    <span class="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full dark:bg-green-900 dark:text-green-300">Approve</span>
                 @elseif($subscriptionDetail->status=='cancel')
