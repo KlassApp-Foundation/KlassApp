@@ -41,6 +41,15 @@ Route::get('/emailverification/{token}', 'Auth\EmailVerificationController@email
 Route::get('/checksms', 'TestController@checksms');
 Route::get('/verifyotp', 'OTPController@create');
 Route::post('/verifyotp', 'OTPController@store');
+
+// Google OAuth
+Route::get('/auth/google', 'Auth\GoogleAuthController@redirect');
+Route::get('/auth/google/callback', 'Auth\GoogleAuthController@callback');
+
+// Google Onboarding (interstitial after first Google sign-in)
+Route::get('/welcome', 'Auth\GoogleAuthController@showOnboarding')->middleware('auth');
+Route::post('/welcome', 'Auth\GoogleAuthController@storeOnboarding')->middleware('auth');
+
 //siteadmin
 Route::group(['middleware' => ['siteadmin'], 'namespace' => 'Admin'], function () {
     Route::get('/payment/subscription', 'PaymentController@Subscription');
