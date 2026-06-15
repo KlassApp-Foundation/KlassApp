@@ -25,6 +25,7 @@
         "laravel/legacy-factories": "1.x-dev",
         "laravel/sanctum": "^3.2",
         "laravel/scout": "*",
+        "laravel/socialite": "^5.27",
         "laravel/tinker": "^2.0",
         "laravel/ui": "4.x-dev",
         "laravel/vapor-cli": "2.0.x-dev",
