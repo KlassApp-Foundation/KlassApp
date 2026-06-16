@@ -124,8 +124,33 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 | API Key | `68ca94ce...` | `78E5A6FF...` |
 | Instance | `klassapp` | `klassapp` |
 
+### Meta WhatsApp Business Cloud API (Active — June 2026 +)
+
+**Critical ID hierarchy:**
+- **Business Portfolio ID** (business.facebook.com): `856846937044672` — the Meta Business Account
+- **WABA ID** (WhatsApp Business Account): `1709193870117417` — owns the phone number, receives messages
+- **App ID** (developers.facebook.com): `1674033610469729` — the developer app with webhook callback URL
+- **Phone Number ID**: `1192586767270209` — `+256 765 275289`, verified name "KlassApp", mode LIVE
+
+**The WABA ID and Business Portfolio ID are DIFFERENT.** Using the wrong WABA ID was the root cause of webhook delivery failure.
+
+**Webhook flow:**
+1. App-level: Callback URL + Verify Token configured in App Dashboard ✓
+2. App-level: Webhook field `messages` subscribed in WhatsApp → API Setup ✓
+3. **WABA-level** (the missing step): `POST /{waba-id}/subscribed_apps` — subscribes the app to receive webhooks from the WABA. Requires the CORRECT WABA ID.
+4. Once subscribed, Meta sends POST webhooks to the callback URL for each message the WABA receives.
+
+**Outbound messaging** uses `phone_number_id` + token — works independently of WABA ID correctness.
+**Inbound webhook delivery** requires both (2) the field subscription AND (3) the correct WABA subscription.
+
+**Config:**
+- `.env`: `WHATSAPP_BUSINESS_WABA_ID=1709193870117417`
+- `config/services.php`: reads via `env()` — no code change needed
+- Cache cleared: `php artisan optimize:clear`
+
 ### Webhook
 - **Inbound**: `POST /api/whatsapp/inbound` → `WhatsAppController@handleInbound`
+  - Handles both Evolution API (old) and Meta Cloud API (new) payloads — auto-detected via `object: "whatsapp_business_account"`
 - **Delivery**: `POST /api/whatsapp/delivery` → `WhatsAppController@deliveryWebhook`
 - **Critical fix**: Removed `EnsureFrontendRequestsAreStateful` from API middleware group (was causing 302 redirects)
 
@@ -133,7 +158,8 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 | File | Purpose |
 |---|---|
 | `app/Services/WhatsAppService.php` | Evolution API client — sendText, sendList, sendTemplate |
-| `app/Services/OutboundWhatsAppService.php` | Proactive notifications — grades, fees, attendance |
+| `app/Services/WhatsAppBusinessService.php` | Meta Cloud API client — sendText, sendTemplate, isConfigured |
+| `app/Services/OutboundWhatsAppService.php` | Dual-transport router — tries Business API first, falls back to Evolution |
 | `app/Http/Controllers/Api/WhatsAppController.php` | Webhook handlers, user identification |
 | `app/Http/Controllers/Admin/WhatsAppDashboardController.php` | Delivery dashboard |
 | `app/Models/WhatsAppUser.php` | Phone→user linking |
@@ -155,13 +181,20 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 
 1. **Chart.js 2.6** — Do NOT upgrade to v4. API has breaking changes (legend→plugins.legend, tooltips→plugins.tooltip, scale→scales)
 2. **Bar chart hardcoded** — Admin dashboard bar chart uses fake data (January-July). Needs real data wiring.
-3. **WhatsApp Cloud API** — Currently using Evolution API with Baileys (unofficial). User wants to switch to official Meta WhatsApp Business API.
+3. **WhatsApp Cloud API** — Meta WhatsApp Business API is now active and working. Dual-transport: OutboundWhatsAppService tries Business API first, falls back to Evolution. Webhooks from both transports coexist at `/api/whatsapp/inbound`.
 4. **Incomplete dashboards** — Accountant, Receptionist, Librarian have no full dashboard views.
 5. **Landing v2** — Has different navbar JS (direction-aware). Not aligned with v1 style.
 
 ---
 
 ## Session Log
+
+### 2026-06-17: Meta WhatsApp Business API — webhook delivery fix
+- **Work done**: Fixed inbound webhook delivery for Meta Cloud API. Root cause: config had the **Business Portfolio ID** (`856846937044672`) as `WHATSAPP_BUSINESS_WABA_ID` instead of the actual **WABA ID** (`1709193870117417`). App → WABA subscription (`POST /{waba-id}/subscribed_apps`) was silently failing because it was pointing at the wrong object. Also fixed flock() cache error by switching `CACHE_DRIVER` from `file` to `database`. Fixed PHP `parse_str()` dot-to-underscore bug in webhook verification handler. Added `WhatsAppBusinessService` and dual-transport `OutboundWhatsAppService`. Added full reply flow in `handleMetaInbound()`.
+- **Files modified**: `.env` (WABA ID, CACHE_DRIVER), `app/Http/Controllers/Api/WhatsAppController.php`, `app/Services/OutboundWhatsAppService.php`, `app/Services/WhatsAppBusinessService.php`
+- **Key decisions**: Separate `WhatsAppBusinessService` from `WhatsAppService` — both transports coexist during migration. Dual-transport in OutboundWhatsAppService (Business API first, Evolution fallback). Webhook endpoint auto-detects payload format via `object: "whatsapp_business_account"`. Used database cache instead of file to resolve persistent flock() errors.
+- **Status**: ✅ Done — inbound and outbound both working
+- **Edge cases flagged**: Meta has THREE separate IDs (Business Portfolio, WABA, App) and they are NOT interchangeable. The WABA subscription endpoint returns `{"success": true}` only when called with the correct WABA ID. Webhook verification GETs send query params with dots (PHP's `$_GET` converts dots to underscores — fixed by parsing raw `QUERY_STRING`).
 
 ### 2026-06-10: Dashboard redesign, WhatsApp webhook fix, production deploy
 - **Work done**: Redesigned admin dashboard (CSS + Blade), fixed WhatsApp webhook 302 redirect, fixed login maintenance banner, deployed to production (165.245.250.16), provisioned Evolution API on 46.101.130.70, connected WhatsApp instance
