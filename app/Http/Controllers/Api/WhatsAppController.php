@@ -7,7 +7,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Helpers\WhatsAppPhoneHelper;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\WhatsApp\StoreWhatsAppWebhookRequest;
 use App\Models\WhatsAppUser;
 use App\Models\MessageDeliveryLog;
 use App\Models\User;
@@ -20,6 +19,7 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
 use App\Services\OutboundWhatsAppService;
 use App\Services\WhatsAppService;
+use App\Services\WhatsAppBusinessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -553,31 +553,153 @@ class WhatsAppController extends Controller
     }
 
     // =====================================================================
-    // INBOUND WEBHOOK HANDLERS (Evolution API → Laravel, no HMAC)
+    // INBOUND WEBHOOK HANDLERS (Meta Cloud API + Evolution API)
     // =====================================================================
 
     /**
-     * Handle inbound WhatsApp messages from Evolution API webhook.
+     * Handle Meta Cloud API webhook verification (GET) and inbound messages (POST).
      *
-     * POST /api/whatsapp/inbound
-     * Evolution API sends this when a user sends a message.
-     * This route is OUTSIDE HMAC middleware since Evolution does not send HMAC headers.
-     *
-     * Expected Evolution payload:
-     * {
-     *   "instance": { "instanceName": "klassapp" },
-     *   "data": {
-     *     "remoteJid": "256701234567@s.whatsapp.net",
-     *     "pushName": "John Doe",
-     *     "message": { "conversation": "grades" }
-     *   }
-     * }
+     * - GET:  Meta sends ?hub.mode=subscribe&hub.verify_token=...&hub.challenge=...
+     *        Respond with hub.challenge if verify_token matches.
+     * - POST: Incoming messages/statuses from either Meta Cloud API or Evolution API.
+     *        Payload format is auto-detected and routed to the correct parser.
      */
-    public function handleInbound(StoreWhatsAppWebhookRequest $request, WhatsAppService $whatsAppService)
+    public function handleInbound(Request $request, WhatsAppService $whatsAppService)
     {
-        $payload = $request->validated();
+        // ── Meta Cloud API webhook verification (GET) ──
+        if ($request->isMethod('get')) {
+            $mode = $request->query('hub.mode');
+            $token = $request->query('hub.verify_token');
+            $challenge = $request->query('hub.challenge');
+
+            $expectedToken = config('services.whatsapp.business_verify_token', env('WHATSAPP_BUSINESS_VERIFY_TOKEN', 'klassapp_verify_2026'));
+
+            if ($mode === 'subscribe' && $token === $expectedToken && $challenge) {
+                Log::info('WhatsApp Business API: webhook verified');
+                return response($challenge, 200)->header('Content-Type', 'text/plain');
+            }
+
+            Log::warning('WhatsApp Business API: webhook verification failed', [
+                'mode'  => $mode,
+                'token' => $token ? '(provided)' : '(empty)',
+            ]);
+            return response('Forbidden', 403);
+        }
+
+        // ── POST: incoming message or status update ──
         $allData = $request->all();
-        \Log::info('WhatsApp inbound received', ['event' => $payload['event'] ?? 'unknown']);
+
+        // Detect payload source
+        $isMetaPayload = isset($allData['object']) && $allData['object'] === 'whatsapp_business_account';
+
+        if ($isMetaPayload) {
+            return $this->handleMetaInbound($allData);
+        }
+
+        return $this->handleEvolutionInbound($request, $allData, $whatsAppService);
+    }
+
+    /**
+     * Parse an inbound message or status from the Meta Cloud API.
+     */
+    protected function handleMetaInbound(array $payload)
+    {
+        $entries = $payload['entry'] ?? [];
+
+        foreach ($entries as $entry) {
+            $changes = $entry['changes'] ?? [];
+
+            foreach ($changes as $change) {
+                $value = $change['value'] ?? [];
+
+                // ── Incoming messages ──
+                $messages = $value['messages'] ?? [];
+                foreach ($messages as $msg) {
+                    $phone = WhatsAppPhoneHelper::normalise($msg['from'] ?? '');
+                    $messageId = $msg['id'] ?? '';
+                    $msgType = $msg['type'] ?? '';
+                    $body = '';
+
+                    if ($msgType === 'text') {
+                        $body = $msg['text']['body'] ?? '';
+                    } elseif ($msgType === 'interactive') {
+                        $body = $msg['interactive']['button_reply']['id']
+                            ?? $msg['interactive']['list_reply']['id']
+                            ?? '';
+                    }
+
+                    if (empty($phone) || empty($body)) {
+                        continue;
+                    }
+
+                    // Log inbound message
+                    MessageDeliveryLog::create([
+                        'whatsapp_message_id' => $messageId,
+                        'phone'               => $phone,
+                        'direction'           => 'inbound',
+                        'status'              => 'received',
+                        'content_preview'     => \Illuminate\Support\Str::limit($body, 200),
+                    ]);
+
+                    // Track last inbound activity (24hr service window)
+                    WhatsAppUser::where('phone', $phone)->update(['last_inbound_at' => now()]);
+                }
+
+                // ── Delivery status updates ──
+                $statuses = $value['statuses'] ?? [];
+                foreach ($statuses as $status) {
+                    $this->processMetaStatusUpdate($status);
+                }
+            }
+        }
+
+        // Meta expects 200 OK within 20 seconds
+        return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Process a delivery status update from Meta Cloud API.
+     */
+    protected function processMetaStatusUpdate(array $status): void
+    {
+        $messageId = $status['id'] ?? '';
+        $statusName = $status['status'] ?? '';
+        $recipientId = $status['recipient_id'] ?? '';
+
+        if (empty($messageId)) {
+            return;
+        }
+
+        $log = MessageDeliveryLog::where('whatsapp_message_id', $messageId)->first();
+
+        if (!$log) {
+            Log::info('WhatsApp Business: status for unknown message', [
+                'message_id' => $messageId,
+                'status'     => $statusName,
+            ]);
+            return;
+        }
+
+        match ($statusName) {
+            'sent'      => $log->update(['status' => 'sent']),
+            'delivered' => $log->markDelivered(),
+            'read'      => $log->markRead(),
+            'failed'    => $log->markFailed($status['errors'][0]['title'] ?? 'Unknown error'),
+            default     => $log->update(['status' => $statusName]),
+        };
+
+        Log::info('WhatsApp Business: status updated', [
+            'message_id' => $messageId,
+            'status'     => $statusName,
+        ]);
+    }
+
+    /**
+     * Parse an inbound message from Evolution API webhook.
+     */
+    protected function handleEvolutionInbound(Request $request, array $allData, WhatsAppService $whatsAppService)
+    {
+        Log::info('WhatsApp Evolution inbound received');
 
         $remoteJid = data_get($allData, 'data.key.remoteJid')
             ?? data_get($allData, 'key.remoteJid')
