@@ -569,6 +569,8 @@ class WhatsAppController extends Controller
      */
     public function handleInbound(Request $request, WhatsAppService $whatsAppService)
     {
+        Log::info('WhatsApp inbound handler called', ['method' => $request->method()]);
+
         // ── Meta Cloud API webhook verification (GET) ──
         if ($request->isMethod('get')) {
             // Parse raw query string manually — PHP's $_GET and parse_str()
