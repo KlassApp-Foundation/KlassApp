@@ -33,6 +33,9 @@ use Carbon\Carbon;
  */
 class WhatsAppController extends Controller
 {
+    public function __construct(
+        protected WhatsAppBusinessService $businessApi,
+    ) {}
     /**
      * Identify a WhatsApp user by phone number.
      *
@@ -655,6 +658,9 @@ class WhatsAppController extends Controller
 
                     // Track last inbound activity (24hr service window)
                     WhatsAppUser::where('phone', $phone)->update(['last_inbound_at' => now()]);
+
+                    // ── Full reply flow (same as Evolution handler) ──
+                    $this->processMetaMessage($phone, $body, $messageId);
                 }
 
                 // ── Delivery status updates ──
@@ -667,6 +673,103 @@ class WhatsAppController extends Controller
 
         // Meta expects 200 OK within 20 seconds
         return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Process a single Meta inbound message: identify user, route, flush queue.
+     */
+    protected function processMetaMessage(string $phone, string $body, string $messageId)
+    {
+        $whatsappUser = WhatsAppUser::with(['user.userprofile', 'user.school'])
+            ->where('phone', $phone)
+            ->first();
+
+        if (!$whatsappUser) {
+            // Use Business API if configured, otherwise Evolution
+            if ($this->businessApi->isConfigured()) {
+                $this->businessApi->sendText(
+                    $phone,
+                    "👋 Welcome to KlassApp!\n\nYour phone number is not linked to any school account. Please contact your school office to link your WhatsApp number.",
+                    'unrecognized',
+                );
+            } else {
+                app(WhatsAppService::class)->sendText(
+                    $phone,
+                    "👋 Welcome to KlassApp!\n\nYour phone number is not linked to any school account. Please contact your school office to link your WhatsApp number.",
+                    'unrecognized',
+                );
+            }
+            return;
+        }
+
+        if (!$whatsappUser->opted_in) {
+            if ($this->businessApi->isConfigured()) {
+                $this->businessApi->sendText(
+                    $phone,
+                    "You have opted out of WhatsApp notifications.\n\nReply *OPTIN* to re-enable.",
+                    'opted_out',
+                );
+            } else {
+                app(WhatsAppService::class)->sendText(
+                    $phone,
+                    "You have opted out of WhatsApp notifications.\n\nReply *OPTIN* to re-enable.",
+                    'opted_out',
+                );
+            }
+            return;
+        }
+
+        // Handle OPTIN/OPTOUT keywords
+        $trimmedBody = strtolower(trim($body));
+        if ($trimmedBody === 'optin') {
+            $whatsappUser->update(['opted_in' => true]);
+            if ($this->businessApi->isConfigured()) {
+                $this->businessApi->sendText(
+                    $phone,
+                    "✅ You have opted in to WhatsApp notifications.\n\nSend *MENU* to see available options.",
+                    'optin',
+                    $whatsappUser->user_id,
+                );
+            } else {
+                app(WhatsAppService::class)->sendText(
+                    $phone,
+                    "✅ You have opted in to WhatsApp notifications.\n\nSend *MENU* to see available options.",
+                    'optin',
+                    $whatsappUser->user_id,
+                );
+            }
+            return;
+        }
+
+        if ($trimmedBody === 'optout') {
+            $whatsappUser->update(['opted_in' => false]);
+            if ($this->businessApi->isConfigured()) {
+                $this->businessApi->sendText(
+                    $phone,
+                    "❌ You have opted out of WhatsApp notifications.\n\nReply *OPTIN* to re-enable.",
+                    'optout',
+                    $whatsappUser->user_id,
+                );
+            } else {
+                app(WhatsAppService::class)->sendText(
+                    $phone,
+                    "❌ You have opted out of WhatsApp notifications.\n\nReply *OPTIN* to re-enable.",
+                    'optout',
+                    $whatsappUser->user_id,
+                );
+            }
+            return;
+        }
+
+        // Route to appropriate handler
+        $this->routeInbound($whatsappUser, $phone, $body, app(WhatsAppService::class));
+
+        // Flush any queued notifications — parent's inbound just opened a free window
+        $outboundService = app(OutboundWhatsAppService::class);
+        $flushed = $outboundService->flushPending($whatsappUser);
+        if ($flushed > 0) {
+            Log::info("handleMetaInbound: flushed {$flushed} pending notifications for {$phone}");
+        }
     }
 
     /**
