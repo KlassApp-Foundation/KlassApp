@@ -648,6 +648,8 @@ class WhatsAppController extends Controller
                             ?? '';
                     }
 
+                    Log::info('Meta message parsed', ['phone' => $phone, 'body' => $body, 'type' => $msgType]);
+
                     if (empty($phone) || empty($body)) {
                         continue;
                     }
