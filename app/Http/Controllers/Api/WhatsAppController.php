@@ -605,9 +605,11 @@ class WhatsAppController extends Controller
 
         // ── POST: incoming message or status update ──
         $allData = $request->all();
+        Log::info('WhatsApp inbound POST data', ['keys' => array_keys($allData)]);
 
         // Detect payload source
         $isMetaPayload = isset($allData['object']) && $allData['object'] === 'whatsapp_business_account';
+        Log::info('WhatsApp payload detection', ['isMeta' => $isMetaPayload]);
 
         if ($isMetaPayload) {
             return $this->handleMetaInbound($allData);
