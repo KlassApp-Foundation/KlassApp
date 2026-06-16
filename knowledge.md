@@ -124,6 +124,91 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 | API Key | `68ca94ce...` | `78E5A6FF...` |
 | Instance | `klassapp` | `klassapp` |
 
+### Flow Architecture
+
+```
+                    ┌──────────────────────────────────────────┐
+                    │            Inbound Flow                   │
+                    │  User sends WhatsApp → +256 765 275289    │
+                    │         ↓                                 │
+                    │  Meta Cloud API (WABA) receives message    │
+                    │         ↓                                 │
+                    │  POST https://klassapp.xyz/.../inbound     │
+                    │         ↓                                 │
+                    │  WhatsAppController@handleInbound()        │
+                    │  ├─ GET?  → webhook verification           │
+                    │  └─ POST? → detect payload:                │
+                    │      ├─ object: whatsapp_business_account  │
+                    │      │  → handleMetaInbound()              │
+                    │      └─ Evolution API format               │
+                    │         → handleEvolutionInbound()         │
+                    └──────────────────────────────────────────┘
+                              ↓
+                    processMetaMessage() / routeInbound()
+                    ├─ Not identified? → "not linked" reply
+                    ├─ Opted out? → optout reply
+                    ├─ "optin"/"optout" → toggle, confirm
+                    └─ Keyword match → data query → reply
+                         ↓
+                    flushPending() → drain queued notifications
+                                      into free service window
+
+                    ┌──────────────────────────────────────────┐
+                    │           Outbound Flow                   │
+                    │  Trigger events:                          │
+                    │  ├─ Grades published → sendGradeNotification()
+                    │  ├─ Fee reminder    → sendFeeReminder()
+                    │  ├─ Cron: flushAllOpenWindows() (free)    │
+                    │  └─ Cron: sendExpiredQueue() (cold, $)    │
+                    │         ↓                                 │
+                    │  OutboundWhatsAppService@queueOrSend()     │
+                    │         ↓                                 │
+                    │  ┌─ 24hr window open? ─┐                  │
+                    │  │    yes          no   │                  │
+                    │  ↓                    ↓                    │
+                    │  sendTextDual()    queueNotification()     │
+                    │  ↓                    ↓                    │
+                    │  ┌─ Business API configured? ─┐            │
+                    │  │  yes          no          │            │
+                    │  ↓              ↓            │            │
+                    │ WhatsAppBiz    WhatsAppSvc   │            │
+                    │ (Meta Graph)   (Evolution)   │            │
+                    │  ↓              ↓            │            │
+                    │ POST /messages  POST /sendText            │
+                    │ Logged to message_delivery_log             │
+                    └──────────────────────────────────────────┘
+```
+
+### Dual-Transport Priority (OutboundWhatsAppService)
+1. Try `WhatsAppBusinessService` (Meta Cloud API) first
+2. If fails or not configured → fall back to `WhatsAppService` (Evolution API)
+3. All callers (`MarksController`, `SendGradesToWhatsApp`, console commands) work unchanged via Laravel auto-resolution
+
+### Cost Optimisation
+- **Free window**: When a parent sends a message, a 24hr customer service window opens. Replies sent within this window are FREE (up to 1000/month).
+- **Queued delivery**: If the window is closed, notifications are queued in `whatsapp_pending_notifications` and sent when the parent next messages (`flushPending()` drains queue into the free window).
+- **Cold sends**: Cron `sendExpiredQueue()` sends notifications whose `send_after` deadline has passed — costs ~$0.004 each.
+
+### Inbound Feature Matrix (by role via WhatsApp keywords)
+
+| Role | Keywords | Response |
+|---|---|---|
+| **Parent** (7) | GRADES, FEES, ATTENDANCE, EVENTS | Grades by exam, fee balance, attendance %, upcoming events |
+| **Student** (6) | GRADES, ATTENDANCE, FEES, TIMETABLE, HOMEWORK | Personal results, attendance, schedule, assignments |
+| **Teacher** (5) | MARKS, ATTENDANCE, TIMETABLE, ASSIGNMENTS | Enter/view marks, mark attendance, schedule, homework |
+| **SchoolAdmin** (3) | STUDENTS, STAFF, EXAMS, FEES, REPORTS, NOTICES | Student/staff lists, exam overview, fee reports, analytics |
+| **Receptionist** (10) | NOTICES, CALLS | Announcements, call logs |
+| **Accountant** (11) | FEES, REPORTS | Fee collections, financial summaries |
+| **Staff w/ children** (any) | MY CHILDREN | Parent features for their own kids |
+| **Unidentified** | anything | "Not linked" message → contact school |
+
+### n8n / RAG / External Bot Integration
+- Laravel handles keyword routing **inline** — no RAG, no LLM, no vector store.
+- n8n was designed as the **conversation orchestrator** bridging WhatsApp → external services (Typebot/Flowise).
+- Flow: `WhatsApp → Laravel webhook → HTTP call to n8n → Typebot/Flowise (conversation AI) → Laravel data API (identify, marks, attendance, fees)`
+- The `/api/whatsapp/identify-user` endpoint is the data-only API n8n calls to resolve a phone number to a user, roles, and linked students.
+- If integrating with external school ERPs, n8n is the right integration layer — Laravel stays as the data provider.
+
 ### Meta WhatsApp Business Cloud API (Active — June 2026 +)
 
 **Critical ID hierarchy:**
