@@ -623,6 +623,7 @@ class WhatsAppController extends Controller
      */
     protected function handleMetaInbound(array $payload)
     {
+        Log::info('handleMetaInbound called', ['payload_keys' => array_keys($payload)]);
         $entries = $payload['entry'] ?? [];
 
         foreach ($entries as $entry) {
