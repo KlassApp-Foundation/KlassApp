@@ -148,9 +148,9 @@ slide3.background = { color: C.white };
 addSectionTitle(slide3, "Meet KlassApp", "The platform that makes every school a WhatsApp contact.");
 
 slide3.addText([
-  { text: "Parents get grades, fees, and attendance via WhatsApp. No app. No login. Just a message.", options: { bullet: true, breakLine: true } },
+  { text: "Parents get grades, fees, child's health updates, attendance, and more via WhatsApp. No app. No login. Just a message.", options: { bullet: true, breakLine: true } },
   { text: "Schools get dashboards, automated campaigns, and delivery tracking.", options: { bullet: true, breakLine: true } },
-  { text: "Works on top of existing school systems — no rip-and-replace.", options: { bullet: true, breakLine: true } },
+  { text: "Works on top of existing school systems — no rip-and-replace. Just plug and connect.", options: { bullet: true, breakLine: true } },
   { text: "Two-way: parents can check balances, report absences, and request results.", options: { bullet: true, breakLine: true } },
   { text: "Free to receive. WhatsApp is zero-rated on MTN and Airtel in Uganda.", options: { bullet: true } },
 ], {
@@ -267,7 +267,8 @@ slide4.addText([
   { text: "Parents reply with keywords (\"grades\", \"fees\", \"absent\") → instant AI response.", options: { bullet: true, breakLine: true } },
   { text: "Multi-child support: one parent, multiple students, separate notification streams.", options: { bullet: true, breakLine: true } },
   { text: "AI-powered import: Excel/CSV parsing, smart delivery routing, failure escalation.", options: { bullet: true, breakLine: true } },
-  { text: "LIN integration: connects to Uganda's national Learner Identification Number system.", options: { bullet: true } },
+  { text: "LIN integration: connects to Uganda's national Learner Identification Number system.", options: { bullet: true, breakLine: true } },
+  { text: "SchoolPay integration: automated fee status, payment confirmations, balance checks.", options: { bullet: true } },
 ], {
   x: 0.5, y: 3.5, w: 9, h: 1.6,
   fontSize: 11.5, fontFace: FONT_BODY, color: C.textDark, margin: 0,
@@ -510,9 +511,10 @@ const finHeader = [
 const finData = [finHeader];
 const finRows = [
   ["Gross Revenue (USD/yr)", "$6,689", "$13,378", "$26,757", "$53,514"],
-  ["Infra & AI Costs (~12%)", "$803", "$1,605", "$3,211", "$6,422"],
-  ["Net Revenue (USD/yr)", "$5,886", "$11,773", "$23,546", "$47,092"],
-  ["Gross Margin", "88%", "88%", "88%", "88%"],
+  ["Infra & AI Costs (~17%)", "$1,137", "$2,274", "$4,549", "$9,097"],
+  ["VAT (18%)", "$1,204", "$2,408", "$4,816", "$9,632"],
+  ["Net Revenue (USD/yr)", "$4,348", "$8,696", "$17,392", "$34,785"],
+  ["Gross Margin", "65%", "65%", "65%", "65%"],
 ];
 
 finRows.forEach((row, ri) => {
@@ -586,7 +588,7 @@ slide9.addText([
   { text: "Expand: Schools upgrade as they grow. Pro and Enterprise tiers add AI, analytics, custom branding.", options: { bullet: true, breakLine: true } },
   { text: "Network effects: Every parent onboarded is a referral. Parents with children at multiple schools demand KlassApp.", options: { bullet: true, breakLine: true } },
   { text: "LIN integration: Government mandate means every student has an ID. We connect it to WhatsApp — at national scale.", options: { bullet: true, breakLine: true } },
-  { text: "Partnerships: Ministry of Education, school associations, education NGOs, mobile money providers.", options: { bullet: true, breakLine: true } },
+  { text: "Partnerships: Ministry of Education, school associations, education NGOs, mobile money providers, School ERPs, and SchoolPay.", options: { bullet: true, breakLine: true } },
   { text: "Low CAC: Word-of-mouth through teachers and parents. WhatsApp groups are organic distribution channels.", options: { bullet: true } },
 ], {
   x: 0.5, y: 1.4, w: 5.5, h: 3.5,
@@ -643,7 +645,7 @@ slide9.addText("200 schools", {
   x: 6.5, y: 3.8, w: 3.2, h: 0.25,
   fontSize: 18, fontFace: FONT_TITLE, color: C.white, bold: true, align: "center", margin: 0,
 });
-slide9.addText("$53K ARR  ·  $47K net", {
+slide9.addText("$53K ARR  ·  $35K net", {
   x: 6.5, y: 4.1, w: 3.2, h: 0.25,
   fontSize: 10, fontFace: FONT_BODY, color: C.green, align: "center", margin: 0,
 });
@@ -667,11 +669,11 @@ slide10.addShape(pres.shapes.ROUNDED_RECTANGLE, {
   x: 0.5, y: 1.75, w: 4.5, h: 1.3,
   fill: { color: C.offWhite }, rectRadius: 0.08,
 });
-slide10.addText("Elijah (Rasta) — Founder & CEO", {
+slide10.addText("Mucunguzi Moses — Founder", {
   x: 0.7, y: 1.85, w: 4.1, h: 0.3,
   fontSize: 13, fontFace: FONT_TITLE, color: C.dark, bold: true, margin: 0,
 });
-slide10.addText("Full-stack engineer. Built KlassApp from scratch. Deep understanding of Uganda's education ecosystem.", {
+slide10.addText("2x Founder. 5 years engineering experience. Deep understanding of Uganda's education and payments ecosystem.", {
   x: 0.7, y: 2.15, w: 4.1, h: 0.4,
   fontSize: 10, fontFace: FONT_BODY, color: C.textGray, margin: 0,
 });
@@ -680,11 +682,11 @@ slide10.addShape(pres.shapes.ROUNDED_RECTANGLE, {
   x: 0.5, y: 3.2, w: 4.5, h: 0.8,
   fill: { color: C.offWhite }, rectRadius: 0.08,
 });
-slide10.addText("Co-founder — Technical & Operations Lead", {
+slide10.addText("Mugisha Elijah — Co-founder & CTO", {
   x: 0.7, y: 3.3, w: 4.1, h: 0.3,
   fontSize: 12, fontFace: FONT_TITLE, color: C.dark, bold: true, margin: 0,
 });
-slide10.addText("Technical architecture and operational leadership.", {
+slide10.addText("Fullstack engineer. Built the KlassApp platform from the ground up. Leads technical architecture and product.", {
   x: 0.7, y: 3.6, w: 4.1, h: 0.3,
   fontSize: 10, fontFace: FONT_BODY, color: C.textGray, margin: 0,
 });
@@ -699,7 +701,7 @@ slide10.addShape(pres.shapes.ROUNDED_RECTANGLE, {
   x: 5.5, y: 1.75, w: 4.0, h: 0.55,
   fill: { color: C.dark }, rectRadius: 0.08,
 });
-slide10.addText("Raising a Pre-Seed Round", {
+slide10.addText("Raising $30K (UGX 100M) — Pre-Seed", {
   x: 5.5, y: 1.75, w: 4.0, h: 0.55,
   fontSize: 14, fontFace: FONT_TITLE, color: C.white, bold: true, align: "center", valign: "middle", margin: 0,
 });
@@ -710,10 +712,10 @@ slide10.addText("Use of Funds", {
 });
 
 const alloc = [
-  ["40%", "Engineering & AI — LIN integration, self-registration, analytics"],
-  ["30%", "Sales & School Onboarding — dedicated onboarding team"],
-  ["20%", "Infrastructure & WhatsApp API — scale to 200+ schools"],
-  ["10%", "Legal, compliance, and operations"],
+  ["50%", "Sales & School Onboarding — dedicated onboarding team"],
+  ["20%", "AI, Infra, Integrations & Security"],
+  ["20%", "Legal, Compliance & Operations"],
+  ["10%", "Operations & Working Capital"],
 ];
 
 alloc.forEach((a, i) => {
@@ -739,7 +741,7 @@ slide10.addShape(pres.shapes.ROUNDED_RECTANGLE, {
   fill: { color: C.offWhite }, rectRadius: 0.06,
   line: { color: C.green, width: 1 },
 });
-slide10.addText("Target: 200 schools in 18 months  →  $53K ARR  →  $47K net  →  Path to Series A", {
+slide10.addText("Target: 200 schools in 18 months  →  $53K ARR  →  $35K net  →  Path to Series A", {
   x: 0.5, y: 4.6, w: 9.0, h: 0.45,
   fontSize: 11, fontFace: FONT_BODY, color: C.dark, align: "center", valign: "middle", margin: 0, bold: true,
 });
@@ -777,7 +779,7 @@ slide11.addText("Let's put a school in every parent's pocket.", {
 slide11.addText([
   { text: "KlassApp — Smarter schools start here.", options: { breakLine: true, fontSize: 13 } },
   { text: "", options: { breakLine: true, fontSize: 8 } },
-  { text: "ugasch.com  ·  WhatsApp: +256 767 538805", options: { fontSize: 11, color: C.textGray } },
+  { text: "klassapp.xyz  ·  hello@klassapp.xyz  ·  WhatsApp: +256 767 538805", options: { fontSize: 11, color: C.textGray } },
 ], {
   x: 0.8, y: 3.8, w: 8.4, h: 1.0,
   fontSize: 11, fontFace: FONT_BODY, color: C.midGray, margin: 0,

@@ -568,9 +568,21 @@ class WhatsAppController extends Controller
     {
         // ── Meta Cloud API webhook verification (GET) ──
         if ($request->isMethod('get')) {
-            $mode = $request->query('hub.mode');
-            $token = $request->query('hub.verify_token');
-            $challenge = $request->query('hub.challenge');
+            // Parse raw query string manually — PHP's $_GET and parse_str()
+            // both convert dots in param names to underscores (hub.mode →
+            // hub_mode), which breaks Meta's hub.verify_token etc.
+            $raw = $request->server('QUERY_STRING', '');
+            $params = [];
+            foreach (explode('&', $raw) as $pair) {
+                $parts = explode('=', $pair, 2);
+                if (count($parts) === 2) {
+                    $params[urldecode($parts[0])] = urldecode($parts[1]);
+                }
+            }
+
+            $mode = $params['hub.mode'] ?? null;
+            $token = $params['hub.verify_token'] ?? null;
+            $challenge = $params['hub.challenge'] ?? null;
 
             $expectedToken = config('services.whatsapp.business_verify_token', env('WHATSAPP_BUSINESS_VERIFY_TOKEN', 'klassapp_verify_2026'));
 
