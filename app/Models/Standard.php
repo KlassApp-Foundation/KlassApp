@@ -59,7 +59,7 @@ public function schoolGradingSystem(){
 
     public function subject()
     {
-        return $this->hasMany('\App\Models\Subject','school_id','id');
+        return $this->hasMany('\App\Models\Subject','standard_id','id');
     }
     
     public function standardLink()

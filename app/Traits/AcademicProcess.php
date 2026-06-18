@@ -420,7 +420,7 @@ trait AcademicProcess
         catch(Exception $e)
         {
             \DB::rollBack();
-            //dd($e->getMessage());
+            throw $e;
         } 
     }
 

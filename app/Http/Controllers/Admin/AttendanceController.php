@@ -84,12 +84,15 @@ class AttendanceController extends Controller
      */
     public function store(AttendanceAddRequest $request)
     { 
-        //
         try
         {
             $school_id      = Auth::user()->school_id;
             $academic_year  = SiteHelper::getAcademicYear($school_id);
             $admin          = Auth::id();
+
+            if (!$academic_year) {
+                return response()->json(['error' => 'Academic year not set'], 422);
+            }
 
             $attendance = $this->createAttendance($school_id , $academic_year->id , $admin , $request);
 
@@ -104,14 +107,17 @@ class AttendanceController extends Controller
                 $message
             );
 
-            $res['success'] = $message;
-
-            return $res;
+            return response()->json([
+                'success' => $message
+            ]);
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error($e->getMessage());
+            return response()->json([
+                'error' => 'Something went wrong',
+                'message' => $e->getMessage()
+            ], 422);
         }
     }
 

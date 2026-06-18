@@ -55,3 +55,4 @@ Report card re-design
 -   Holidays
 -   Librarian cleanup
 -   Calendar
+- Check the student academic year on promotion
