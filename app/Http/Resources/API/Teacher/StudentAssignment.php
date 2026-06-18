@@ -32,7 +32,7 @@ class StudentAssignment extends JsonResource
             'user_id'           =>  $this->user_id,
             'user_name'         =>  $this->student->FullName,
             'user_avatar'       =>  $this->student->userprofile->AvatarPath,
-            'roll_number'       =>  $this->student->studentAcademicLatest->roll_number,
+            'std_school_pay_number'       =>  $this->student->studentAcademicLatest->std_school_pay_number,
             'assignment_file'   =>  $this->assignment_file == null ? '':$this->AssignmentFilePath,
             'submitted_on'      =>  $this->submitted_on==null ? '':date('d M Y',strtotime($this->submitted_on)),
             'total_marks'       =>  $this->assignment->marks == null ? null:$this->assignment->marks,

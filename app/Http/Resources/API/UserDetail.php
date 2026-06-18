@@ -48,7 +48,7 @@ class UserDetail extends JsonResource
 
             'aadharNumber'              =>  $this->aadhar_number,
 
-            'EMISNumber'                =>  $this->EMIS_number,
+            'lin'                =>  $this->lin,
 
             'emailId'                   =>  $this->email,
 
@@ -68,7 +68,7 @@ class UserDetail extends JsonResource
 
             'academicYear'              =>  $this->studentAcademicLatest->academicYear->name,
 
-            'rollNumber'                =>  $this->studentAcademicLatest->roll_number,
+            'StdSchoolPayNumber'                =>  $this->studentAcademicLatest->std_school_pay_number,
 
             'idCardNumber'              =>  $this->studentAcademicLatest->id_card_number,
 

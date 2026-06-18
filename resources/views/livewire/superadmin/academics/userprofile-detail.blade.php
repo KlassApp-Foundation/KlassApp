@@ -224,10 +224,10 @@
 
         <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
             <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
-                <p>EMIS Number</p>
+                <p>LIN Number</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $userprofileDetail->EMIS_number }}</p>
+                <p class="leading-loose txt-gray-light">{{ $userprofileDetail->lin }}</p>
             </div>
         </div>
 

@@ -150,6 +150,7 @@ return [
         /*
          * Package Service Providers...
          */
+        Laravel\Socialite\SocialiteServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
 
         /*
@@ -229,6 +230,7 @@ return [
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'Laratrust'   => Laratrust\LaratrustFacade::class,
         'Purify'   => Stevebauman\Purify\PurifyServiceProvider::class,
+        'Socialite' => Laravel\Socialite\Facades\Socialite::class,
         'PDF' => Barryvdh\DomPDF\Facade::class,
         'FCM'      => LaravelFCM\Facades\FCM::class,
         'Conference'=> App\Conference\ConferenceFacade::class,

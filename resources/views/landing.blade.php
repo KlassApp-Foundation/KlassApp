@@ -74,9 +74,99 @@
         .reveal-delay-3 { transition-delay: 0.3s; }
         .reveal-delay-4 { transition-delay: 0.4s; }
 
-        /* ── Navigation ── */
-        .navbar { transition: background 0.3s, box-shadow 0.3s; }
-        .navbar.scrolled { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); box-shadow: 0 1px 0 rgba(0,0,0,0.06); }
+        /* ── Navbar (spec: transparent expanded default → compact filled on scroll) ── */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            padding: 20px 40px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.25s ease;
+        }
+        .site-header.scrolled {
+            padding: 10px 40px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo-img {
+            height: 40px;
+            width: auto;
+            border-radius: 10px;
+            transition: all 0.25s ease;
+        }
+        .site-header.scrolled .nav-logo-img {
+            height: 28px;
+            border-radius: 7px;
+        }
+
+        .logo-text {
+            font-family: 'Sora', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: #0F172A;
+            transition: all 0.25s ease;
+        }
+        .site-header.scrolled .logo-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+        }
+        .nav-links a {
+            color: #475569;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .nav-links a:hover { color: #1E6FD9; }
+
+        .nav-cta {
+            padding: 10px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            border-radius: 9999px;
+            background: #1E6FD9;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+        .nav-cta:hover { background: #22C55E; }
+        .site-header.scrolled .nav-cta {
+            padding: 7px 18px;
+            font-size: 13px;
+        }
+
+        /* ── Mobile hamburger ── */
+        .mobile-menu { display: none; }
+        .mobile-menu.open { display: flex; }
 
         /* ── Hero dot-grid ── */
         .dot-grid {
@@ -326,7 +416,6 @@
                 repeating-linear-gradient(45deg, rgba(217,119,6,0.04) 0px, rgba(217,119,6,0.04) 1px, transparent 1px, transparent 12px),
                 repeating-linear-gradient(-45deg, rgba(217,119,6,0.04) 0px, rgba(217,119,6,0.04) 1px, transparent 1px, transparent 12px);
         }
-
         /* ── Decorative section number ── */
         .section-number {
             font-family: 'Sora', sans-serif;
@@ -365,30 +454,34 @@
 <!-- ═══════════════════════════════════════════════════
      NAVIGATION
      ═══════════════════════════════════════════════════ -->
-<nav id="mainNav" class="navbar fixed top-0 left-0 right-0 z-50 py-5 px-6 lg:px-12 transition-all duration-300">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-        <a href="#" class="flex-shrink-0">
-             <img id="navLogo" src="{{ asset('images/klassapp-logo-primary.svg') }}"
-                  alt="KlassApp"
-                  class="h-14 w-auto transition-all duration-300" />
+<!-- ═══════════════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════════════ -->
+<header id="mainNav" class="site-header">
+    <div class="nav-container">
+        <!-- Logo -->
+        <a href="#" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+            <img src="{{ asset('images/klassapp-logo-primary.svg') }}"
+                 alt="KlassApp"
+                 class="nav-logo-img" />
+            <span class="logo-text">KlassApp</span>
         </a>
+        <!-- Nav Links + CTA (desktop) -->
+        <div class="nav-links hidden md:flex">
 
-        <div class="hidden md:flex items-center gap-8">
-            <a href="#features" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Features</a>
-            <a href="#pricing" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Pricing</a>
-            <a href="#schools" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Schools</a>
-            <a href="#contact" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Contact</a>
-            <a href="#demo"
-               class="bg-brand-blue text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition btn-scale">
-                Get Started
-            </a>
-            <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
-               target="_blank"
-               class="text-slate-500 hover:text-slate-900 transition text-sm font-medium flex items-center gap-1.5"
-               aria-label="Chat on WhatsApp">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.272-.198z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.977.546 3.826 1.494 5.404L2 22l4.667-1.463A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.182c-1.736 0-3.37-.535-4.738-1.528l-.339-.234-2.77.868.918-2.686-.22-.352A8.164 8.164 0 013.818 12c0-4.509 3.673-8.182 8.182-8.182s8.182 3.673 8.182 8.182-3.673 8.182-8.182 8.182z"/></svg>
-                WhatsApp
-            </a>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#schools">Schools</a>
+        <a href="#contact">Contact</a>
+        <a href="#demo" class="nav-cta">Get Started</a>
+        <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
+           target="_blank"
+           style="display: flex; align-items: center; gap: 6px; color: #475569; text-decoration: none; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: color 0.2s ease;"
+           onmouseover="this.style.color='#1E6FD9'" onmouseout="this.style.color='#475569'"
+           aria-label="Chat on WhatsApp">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.272-.198z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.977.546 3.826 1.494 5.404L2 22l4.667-1.463A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.182c-1.736 0-3.37-.535-4.738-1.528l-.339-.234-2.77.868.918-2.686-.22-.352A8.164 8.164 0 013.818 12c0-4.509 3.673-8.182 8.182-8.182s8.182 3.673 8.182 8.182-3.673 8.182-8.182 8.182z"/></svg>
+            WhatsApp
+        </a>
         </div>
 
         <button id="hamburger" class="md:hidden text-slate-700 p-3" aria-label="Menu">
@@ -397,6 +490,7 @@
             </svg>
         </button>
     </div>
+</header>
 
     <div id="mobileMenu" class="mobile-menu absolute top-full left-0 right-0 bg-white flex-col py-6 px-6 gap-4 border-t border-slate-200 shadow-lg">
         <a href="#features" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Features</a>
@@ -408,12 +502,16 @@
             Get Started
         </a>
     </div>
-</nav>
+</nav>assApp" target="_blank" style="font-size:20px;font-weight:600;color:#22C55E;text-decoration:none;display:flex;align-items:center;gap:8px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.272-.198z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.977.546 3.826 1.494 5.404L2 22l4.667-1.463A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.182c-1.736 0-3.37-.535-4.738-1.528l-.339-.234-2.77.868.918-2.686-.22-.352A8.164 8.164 0 013.818 12c0-4.509 3.673-8.182 8.182-8.182s8.182 3.673 8.182 8.182-3.673 8.182-8.182 8.182z"/></svg>
+        WhatsApp
+    </a>
+</div>
 
 <!-- ═══════════════════════════════════════════════════
      HERO
      ═══════════════════════════════════════════════════ -->
-<section class="min-h-screen bg-warm-glow flex items-center relative overflow-hidden pt-20">
+<section class="min-h-screen bg-warm-glow flex items-center relative overflow-hidden pt-20 lg:pt-24">
     <div class="absolute inset-0 bg-slate-50">
         <div class="absolute inset-0 opacity-[0.08]" style="background-image: url('data:image/svg+xml,%3Csvg width=\u002260\u0022 height=\u002260\u0022 viewBox=\u00220 0 60 60\u0022 xmlns=\u0022http://www.w3.org/2000/svg\u0022%3E%3Cg fill=\u0022none\u0022 fill-rule=\u0022evenodd\u0022%3E%3Cg fill=\u0022%231E6FD9\u0022 fill-opacity=\u00220.3\u0022%3E%3Cpath d=\u0022M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\u0022/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); background-size: 60px 60px;"></div>
     </div>
@@ -424,26 +522,29 @@
 
     <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 w-full">
         <div class="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-            <div class="max-w-xl">
+            <div class="lg:max-w-2xl">
                 <div class="accent-bar bg-brand-amber"></div>
 
                 <!-- Audience Selector Tabs -->
-                <div class="flex gap-2 mb-5 flex-wrap" role="tablist" aria-label="Audience selector">
-                    <button class="audience-tab active px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border-2 text-brand-green bg-white shadow-sm" style="border-color: #22C55E;" data-audience="admin">Administrators &amp; Principals</button>
-                    <button class="audience-tab px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="teacher">Teachers</button>
-                    <button class="audience-tab px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="parent">Parents</button>
+                <div class="mt-4" style="min-height: 3rem;">
+                    <div class="flex gap-2 mb-2 flex-wrap" role="tablist" aria-label="Audience selector">
+                        <button class="audience-tab active px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border-2 text-brand-green bg-white shadow-sm" style="border-color: #22C55E;" data-audience="admin">Administrators &amp; Principals</button>
+                        <button class="audience-tab px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="teacher">Teachers</button>
+                        <button class="audience-tab px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="parent">Parents</button>
+                    </div>
                 </div>
 
-                <h1 class="font-display font-extrabold text-slate-900 leading-[1.08] tracking-[-0.02em]"
-                    style="font-size: clamp(2.5rem, 5vw, 4.5rem); min-height: 1.2em;">
-                    <span id="typewriter-text"></span><span id="typewriter-cursor" class="text-brand-amber">|</span>
-                </h1>
-                <div id="admin-tagline" class="font-display font-semibold text-slate-500 text-xl sm:text-2xl mt-2 mb-5 opacity-0 transition-opacity duration-700" style="letter-spacing: -0.01em;">
-                    <span class="text-brand-amber/60">✦</span> And the command centre your admin team runs on.
+                <div>
+                    <h1 class="font-display font-extrabold leading-[1.08] tracking-[-0.02em] text-[#0F172A]"
+                        style="font-size: clamp(2.5rem, 5vw, 4.5rem);">
+                        The school in every parent's pocket.
+                    </h1>
+                    <div id="admin-tagline" class="font-display font-semibold text-slate-600 text-xl sm:text-2xl mt-2 mb-5" style="letter-spacing: -0.01em; min-height: 1.5em;">
+                        <span class="text-brand-amber">✦</span> And the system your admin team operates on.
+                    </div>
                 </div>
                 <p class="text-lg leading-relaxed text-slate-600 mb-8 max-w-lg">
-                    <span class="text-brand-green font-semibold"><span id="hero-typelist" class="text-brand-green font-semibold"></span><span id="hero-typelist-cursor" class="text-brand-green">|</span></span>
-                    <span class="hero-static-rest"> delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators, dashboards that make running a school feel effortless.</span>
+                    <span class="font-semibold text-brand-green">Grades, fees, attendance, health, and more</span>, delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators, dashboards that make running a school feel effortless.
                 </p>
                 <div class="flex flex-wrap gap-4">
                     <a href="{{ url('/register') }}"
@@ -1086,6 +1187,7 @@
     </div>
 </section>
 
+
 <!-- ═══════════════════════════════════════════════════
      PRICING (Freemium)
      ═══════════════════════════════════════════════════ -->
@@ -1100,7 +1202,10 @@
             Start for free. Upgrade when you need more.
         </p>
 
-        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
+        {{-- ============== TO BE CHANGED TO USE REAL PRICING (quit hardcoded ones)=========== --}}
+        @include("pricing")
+
+        {{-- <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
             <!-- Free / Starter -->
             <div class="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm reveal">
                 <h3 class="font-display font-bold text-xl text-gray-900 mb-2">Free</h3>
@@ -1216,7 +1321,7 @@
                    class="block text-center border-2 border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:border-gray-300 transition btn-scale">
                     Talk to Sales
                 </a>
-            </div>
+            </div> --}}
         </div>
     </div>
 </section>
@@ -1371,30 +1476,20 @@
     }, { threshold: 0.1 });
     reveals.forEach(el => observer.observe(el));
 
-    // ── Nav scroll effect (compact on scroll down, full on scroll up) ──
+    // ── Nav scroll effect (Flare-style toggle .scrolled class) ──
+    const nav = document.querySelector('.site-header');
     let lastScroll = 0;
-    const nav = document.querySelector('.navbar');
-    const navLogo = document.getElementById('navLogo');
     window.addEventListener('scroll', () => {
         const y = window.scrollY;
         const goingDown = y > lastScroll;
         if (y > 60) {
             if (goingDown) {
                 nav.classList.add('scrolled');
-                nav.style.paddingTop = '0.75rem';
-                nav.style.paddingBottom = '0.75rem';
-                if (navLogo) navLogo.style.height = '2.5rem';
             } else {
                 nav.classList.remove('scrolled');
-                nav.style.paddingTop = '';
-                nav.style.paddingBottom = '';
-                if (navLogo) navLogo.style.height = '';
             }
         } else {
             nav.classList.remove('scrolled');
-            nav.style.paddingTop = '';
-            nav.style.paddingBottom = '';
-            if (navLogo) navLogo.style.height = '';
         }
         lastScroll = y;
     });
@@ -1402,14 +1497,16 @@
     // ── Hamburger menu ──
     const hamburger = document.getElementById('hamburger');
     const mobileMenu = document.getElementById('mobileMenu');
-    hamburger.addEventListener('click', () => {
-        mobileMenu.classList.toggle('open');
-    });
-    mobileMenu.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-            mobileMenu.classList.remove('open');
+    if (hamburger && mobileMenu) {
+        hamburger.addEventListener('click', () => {
+            mobileMenu.classList.toggle('open');
         });
-    });
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('open');
+            });
+        });
+    }
 
     // ── Demo form — inline success ──
     const demoForm = document.getElementById('demoForm');
@@ -1422,24 +1519,12 @@
         });
     }
 
-    // ── Audience tabs ──
-    const audienceCopy = {
-        admin: {
-            title: "The school in every parent's pocket.",
-            subtitle: 'And the system your admin team operates on.'
-        },
-        teacher: {
-            title: 'Spend less time on admin. More time doing what you love.',
-            subtitle: 'KlassApp handles the noise so you can focus on what actually matters: teaching.'
-        },
-        parent: {
-            title: "Always in the loop. Never in the dark.",
-            subtitle: 'Real-time updates on attendance, grades, and school communications — all in one place, built for busy parents.'
-        }
+    // ── Audience tabs (tagline switching only) ──
+    const audienceSubtitles = {
+        admin: '✦ And the system your admin team operates on.',
+        teacher: '✦ KlassApp handles the noise so you can focus on what actually matters: teaching.',
+        parent: '✦ Real-time updates on attendance, grades, and school communications — all in one place, built for busy parents.'
     };
-
-    const titleEl = document.getElementById('typewriter-text');
-    const cursorEl = document.getElementById('typewriter-cursor');
     const taglineEl = document.getElementById('admin-tagline');
     let heroAnimationToken = 0;
     let currentAudience = 'admin';
@@ -1514,7 +1599,25 @@
 
     document.querySelectorAll('.audience-tab').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            setAudience(this.getAttribute('data-audience'));
+            const aud = this.getAttribute('data-audience');
+            document.querySelectorAll('.audience-tab').forEach(function(b) {
+                const isActive = b.getAttribute('data-audience') === aud;
+                b.classList.toggle('active', isActive);
+                if (isActive) {
+                    b.classList.add('bg-white', 'text-brand-green', 'shadow-sm');
+                    b.classList.remove('bg-white/70', 'text-slate-600', 'hover:bg-white');
+                    b.style.borderColor = '#22C55E';
+                    b.style.borderWidth = '2px';
+                } else {
+                    b.classList.remove('bg-white', 'text-brand-green', 'shadow-sm');
+                    b.classList.add('bg-white/70', 'text-slate-600', 'hover:bg-white');
+                    b.style.borderColor = '';
+                    b.style.borderWidth = '';
+                }
+            });
+            if (taglineEl && audienceSubtitles[aud]) {
+                taglineEl.innerHTML = '<span class="text-brand-amber">' + audienceSubtitles[aud];
+            }
         });
     });
 
@@ -1573,7 +1676,6 @@
         setTimeout(heroTypeTick, heroTypeSpeed);
     }
     if (heroTypelistEl) setTimeout(heroTypeTick, 2200);
-
     // ── WhatsApp time ──
     const now = new Date();
     const hours = now.getHours();

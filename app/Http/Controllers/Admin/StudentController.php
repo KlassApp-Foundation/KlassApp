@@ -95,7 +95,7 @@ class StudentController extends Controller
       //
       $count    = User::where('school_id',Auth::user()->school_id)->where('usergroup_id',6)->count();
       $subscription = Subscription::where('school_id',Auth::user()->school_id)->first();
-
+dd($subscription);
       return view('/admin/member/create',['count'=>$count , 'subscription'=>$subscription]);
     }
 
@@ -217,11 +217,11 @@ class StudentController extends Controller
       $array['avatar']                    = $userprofile->AvatarPath;
       $array['notes']                     = $userprofile->notes;
       $array['registration_number']       = $user->registration_number==NULL ? $userprofile->registration_number:$user->registration_number;
-      $array['EMIS_number']               = $userprofile->EMIS_number==NULL ? '':$userprofile->EMIS_number;
+      $array['lin']               = $userprofile->lin==NULL ? '':$userprofile->lin;
       $array['joining_date']              = $userprofile->joining_date==NULL ? '':date('Y-m-d',strtotime($userprofile->joining_date));
 
       $array['standardLink_id']           = $studentAcademic->standardLink_id;
-      $array['roll_number']               = $studentAcademic->roll_number==NULL ? '':$studentAcademic->roll_number;
+      $array['std_school_pay_number']               = $studentAcademic->std_school_pay_number==NULL ? '':$studentAcademic->std_school_pay_number;
       $array['id_card_number']            = $studentAcademic->id_card_number==NULL ? '':$studentAcademic->id_card_number;
       $array['board_registration_number'] = $studentAcademic->board_registration_number==NULL ? '':$studentAcademic->board_registration_number;
       $array['mode_of_transport']         = $studentAcademic->mode_of_transport;

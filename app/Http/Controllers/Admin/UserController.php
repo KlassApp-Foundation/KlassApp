@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\EmailVerification;
 use Illuminate\Http\Request;
 use App\Helpers\SiteHelper;
 use App\Traits\LogActivity;

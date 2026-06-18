@@ -1,16 +1,16 @@
-# EMIS / LIN Integration Strategy
+# LIN / LIN Integration Strategy
 
-The Education Management Information System (EMIS) is Uganda's national database for schools, students, and staff. The **Learner Identification Number (LIN)** is a unique 12-digit identifier assigned to every student. The **National Identification Number (NIN)** links parents/guardians to their children.
+The Education Management Information System (LIN) is Uganda's national database for schools, students, and staff. The **Learner Identification Number (LIN)** is a unique 12-digit identifier assigned to every student. The **National Identification Number (NIN)** links parents/guardians to their children.
 
-This document describes the strategy for integrating KlassApp with EMIS/LIN to onboard parents and verify identities.
+This document describes the strategy for integrating KlassApp with LIN to onboard parents and verify identities.
 
 ---
 
 ## Overview
 
-### What is EMIS?
+### What is LIN?
 
-EMIS (Education Management Information System) is managed by Uganda's Ministry of Education and Sports. It contains:
+LIN (Education Management Information System) is managed by Uganda's Ministry of Education and Sports. It contains:
 - All registered schools in Uganda
 - All enrolled students with their unique LIN
 - Teacher and staff records
@@ -41,11 +41,11 @@ Three parallel paths are planned, ranked by speed to value:
 
 ### Purpose
 
-Allow school admins to mass-onboard parents by uploading a CSV file exported from the school's EMIS records.
+Allow school admins to mass-onboard parents by uploading a CSV file exported from the school's LIN records.
 
 ### Trigger
 
-Admin panel → Students → Import from EMIS
+Admin panel → Students → Import from LIN
 
 ### CSV Schema
 
@@ -158,7 +158,7 @@ Schema::table('student_records', function (Blueprint $table) {
 });
 ```
 
-Both columns are nullable initially — existing students won't have them. A migration should populate them from EMIS import data.
+Both columns are nullable initially — existing students won't have them. A migration should populate them from LIN import data.
 
 ### Multi-Child Scenario
 
@@ -204,7 +204,7 @@ After registration, the school has 24 hours to send proactive notifications at *
 
 ### Vision
 
-A direct API integration with the Ministry of Education's EMIS database for real-time verification.
+A direct API integration with the Ministry of Education's LIN database for real-time verification.
 
 ### Requirements
 

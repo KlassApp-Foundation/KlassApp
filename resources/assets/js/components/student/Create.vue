@@ -373,17 +373,17 @@
                     <div class="mb-2">
                         <input
                             type="text"
-                            v-model="LIN"
-                            name="LIN"
-                            id="LIN"
+                            v-model="lin"
+                            name="lin"
+                            id="lin"
                             class="tw-form-control w-full"
-                            placeholder="LIN"
+                            placeholder="lin"
                         />
                     </div>
                     <span
-                        v-if="errors.LIN"
+                        v-if="errors.lin"
                         class="text-red-500 text-xs font-semibold"
-                        >{{ errors.LIN[0] }}</span
+                        >{{ errors.lin[0] }}</span
                     >
                 </div>
             </div>
@@ -454,24 +454,24 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="roll_number" class="tw-form-label"
-                            >Roll Number
+                        <label for="std_school_pay_number" class="tw-form-label"
+                            >Student School Pay Number
                         </label>
                     </div>
                     <div class="mb-2">
                         <input
                             type="text"
-                            v-model="roll_number"
-                            name="roll_number"
-                            id="roll_number"
+                            v-model="std_school_pay_number"
+                            name="std_school_pay_number"
+                            id="std_school_pay_number"
                             class="tw-form-control w-full"
-                            placeholder="Roll Number"
+                            placeholder="Student School Pay Number"
                         />
                     </div>
                     <span
-                        v-if="errors.roll_number"
+                        v-if="errors.std_school_pay_number"
                         class="text-red-500 text-xs font-semibold"
-                        >{{ errors.roll_number[0] }}</span
+                        >{{ errors.std_school_pay_number[0] }}</span
                     >
                 </div>
             </div>
@@ -550,8 +550,8 @@ export default {
             aadhar_number: "",
             joining_date: "",
             // registration_number: "", // commented
-            LIN: "",
-            roll_number: "",
+            lin: "",
+            std_school_pay_number: "",
             id_card_number: "",
             board_registration_number: "",
             mode_of_transport: "",

@@ -23,7 +23,7 @@
                      <td class="py-3 px-2">{{ $books->book_code}}</td>
                      <td class="py-3 px-2">{{ $books->category->category }}</td>
                      <td class="py-3 px-2">{{ $books->author }}</td>
-                     <td class="py-3 px-2">{{ $books->availability }}</td>
+                     <td class="py-3 px-2">{{ $books->quantity }}</td>
 
                       <td class="py-3 px-2">
                       <div class="flex items-center">

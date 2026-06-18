@@ -66,7 +66,7 @@ No. KlassApp adds a parent-facing communication layer on top of whatever you alr
 
 ### What data do we need to provide?
 
-Your student roster: student names, their LINs (if available), and parent phone numbers. A CSV export from your EMIS system or school records is all it takes.
+Your student roster: student names, their LINs (if available), and parent phone numbers. A CSV export from your LIN system or school records is all it takes.
 
 ### How long does setup take?
 
@@ -121,10 +121,10 @@ Parent messages queue up and are delivered once service resumes. The school's ow
 
 Yes. KlassApp's custom WhatsApp extension layer bridges any school ERP to WhatsApp, whether it's a local system, an international platform, or a custom-built solution.
 
-### What about EMIS/LIN integration?
+### What about LIN integration?
 
-KlassApp connects to Uganda's EMIS database via three paths:
-1. **CSV import** (available now): upload your EMIS export
+KlassApp connects to Uganda's LIN database via three paths:
+1. **CSV import** (available now): upload your LIN export
 2. **Self-registration** (coming soon): parents link using their child's LIN
 3. **Ministry API** (long-term): real-time verification
 

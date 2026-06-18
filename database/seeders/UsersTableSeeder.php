@@ -31,7 +31,7 @@ class UsersTableSeeder extends Seeder
                 'firstname'     =>  'siteadmin',
                 'lastname'      =>  'siteadmin',
                 'profession'    =>  'admin',
-                'address'       =>  'Madurai,Tamilnadu,India',
+                'address'       =>  'Kabale Town',
                 'country_id'    =>  '7',
                 'city_id'       =>  '31',
                 'state_id'      =>  '24',
@@ -41,7 +41,7 @@ class UsersTableSeeder extends Seeder
         factory(App\Models\User::class, 1)->create([
             'school_id'    =>   '1',
             'name'         =>   'schooladmin',
-            'email'        =>   'admin@gegok12.com',
+            'email'        =>   'admin@klassapp.com',
             'mobile_no'    =>   '2230456789',
             'usergroup_id' =>   "3"
           ]);
@@ -53,7 +53,7 @@ class UsersTableSeeder extends Seeder
                 'firstname'     =>  'schooladmin',
                 'lastname'      =>  'schooladmin',
                 'profession'    =>  'admin',
-                'address'       =>  'Madurai,Tamilnadu,India',
+                'address'       =>  'Kabale Town',
                 'country_id'    =>  '7',
                 'city_id'       =>  '31',
                 'state_id'      =>  '24',
@@ -81,7 +81,7 @@ class UsersTableSeeder extends Seeder
                     'school_id'     =>  $student->school_id,
                     'user_id'       =>  $father->id,
                     'usergroup_id'  =>  $father->usergroup_id,
-                    'address'       =>  'Madurai,Tamilnadu,India',
+                    'address'       =>  'Kabale Town',
                     'pincode'       =>  '625001',
                     'gender'        =>  'male',
                     'date_of_birth' =>  Carbon::now()->subYears(rand(25, 45))
@@ -107,7 +107,7 @@ class UsersTableSeeder extends Seeder
                     'school_id'     =>  $student->school_id,
                     'user_id'       =>  $mother->id,
                     'usergroup_id'  =>  $mother->usergroup_id,
-                    'address'       =>  'Madurai,Tamilnadu,India',
+                    'address'       =>  'Kabale Town',
                     'pincode'       =>  '625001',
                     'gender'        =>  'female',
                     'date_of_birth' =>  Carbon::now()->subYears(rand(25, 40)),
@@ -141,7 +141,7 @@ class UsersTableSeeder extends Seeder
                     'school_id'    =>'1',
                     'user_id'=>$teacher->id,
                     'usergroup_id' => $teacher->usergroup_id,
-                    'address'=>'Madurai,Tamilnadu,India',
+                    'address'=>'Kabale Town',
                     'pincode'=>'625001',
                     'date_of_birth' =>  Carbon::now()->subYears(rand(35, 45)),
             ]);

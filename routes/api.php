@@ -288,8 +288,13 @@ Route::get('/events/show/details/{id}','Api\EventsController@showdetails');
 // WhatsApp API — REST endpoints for n8n/Typebot integration
 // =====================================================================
 Route::prefix('whatsapp')->group(function () {
-    // Inbound webhook (Evolution API → Laravel, outside Sanctum)
-    Route::post('/inbound', 'Api\WhatsAppController@handleInbound');
+    // Meta Cloud API webhook verification (GET) + inbound messages (POST)
+    // Meta sends GET to verify the webhook URL, POST for actual messages/statuses
+    Route::match(['get', 'post'], '/inbound', 'Api\WhatsAppController@handleInbound')
+        ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+
+    // Delivery status webhook (Evolution API → Laravel)
+    Route::post('/delivery', 'Api\WhatsAppController@deliveryWebhook');
 
     // Identify user by phone number
     Route::post('/identify-user', 'Api\WhatsAppController@identify');

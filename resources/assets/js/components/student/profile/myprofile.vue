@@ -166,11 +166,11 @@
                             </g>
                         </svg>
                         <span class="text-gray-700 font-medium mx-2"
-                            >EMIS Number :
+                            >LIN Number :
                         </span>
                     </div>
                     <div>
-                        <p>{{ user.EMIS_number }}</p>
+                        <p>{{ user.lin }}</p>
                     </div>
                 </li>
                 <li class="flex py-1">
@@ -300,11 +300,11 @@
                             </g>
                         </svg>
                         <span class="text-gray-700 font-medium mx-2"
-                            >Roll Number :
+                            >Student School Pay Number :
                         </span>
                     </div>
                     <div>
-                        <p>{{ user.roll_number }}</p>
+                        <p>{{ user.std_school_pay_number }}</p>
                     </div>
                 </li>
                 <li class="flex py-1">

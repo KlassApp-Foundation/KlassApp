@@ -83,11 +83,11 @@ class ImportMemberController extends Controller
 
     // ✅ SIMPLE, SCHOOL-FRIENDLY HEADERS @Ugandan schools
     $csv->insertOne([
- 'firstname', 'lastname', 'gender', 'date_of_birth', 'class', 'address', 'region', 'district', 'country', 'joining_date', "LIN"
+ 'firstname', 'lastname', 'gender', 'date_of_birth', 'class', 'address', 'region', 'district', 'country', 'joining_date', "lin", "std_school_pay_number"
     ]);
     // ✅ REALISTIC UGANDA SAMPLE @Ugandan schools
     $csv->insertOne([
-        'Bukayo', 'Saka', 'male', '2012-05-14', 'Primary One', 'Kekuubo', 'Western', 'Kabale', 'Uganda', '2025-01-10', "U12F0521A33556"
+        'Bukayo', 'Saka', 'male', '2012-05-14', 'Primary One', 'Kekuubo', 'Western', 'Kabale', 'Uganda', '2025-01-10', "U12F0521A33556", "654321"
     ]);
 
     // Headers (EXACTLY your system format)
@@ -95,7 +95,7 @@ class ImportMemberController extends Controller
     //     'firstname','lastname','mobile_no','email','gender','date_of_birth','blood_group',
     //     'class','section','address','city','state','country','pincode','birth_place',
     //     'native_place','mother_tongue','caste','sub_caste','aadhar_number','joining_date',
-    //     'admission_number','EMIS_number','roll_number','id_card_number','board_registration_number',
+    //     'admission_number','LIN','std_school_pay_number','id_card_number','board_registration_number',
     //     'mode_of_transport','driver_name','driver_contact_number','siblings','siblings_count',
     //     'sibling_relation','sibling_name','sibling_date_of_birth','sibling_class','notes',
     //     'parent_firstname','parent_lastname','parent_mobile_no','parent_alternate_no','parent_email',
@@ -108,7 +108,7 @@ class ImportMemberController extends Controller
     //     'John','Mugisha','256700000000','john@example.com','male','2012-05-14','O+',
     //     'Primary One','A','Kampala Central','Kampala','Central','Uganda','','Kampala',
     //     'Kampala','Luganda','','','','2025-01-10',
-    //     'ADM001','EMIS001','1','','','school_bus','Driver Name','256700000001',
+    //     'ADM001','XXXXXXXXXXX','1','','','school_bus','Driver Name','256700000001',
     //     'no','','','','','',
     //     'Peter','Mugisha','256700000002','','father@example.com',
     //     'degree','business','retail','manager','Mugisha Ltd','Kampala','500000','father'

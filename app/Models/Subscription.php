@@ -26,7 +26,7 @@ class Subscription extends Model
      * @var array
      */
     protected $fillable = [
-        'school_id' , 'user_id' , 'plan_id' ,'end_date', 'status', 'payment_details', 'plan_details'
+        'school_id' , 'user_id' , 'plan_id', 'start_date', 'end_date', 'status', 'payment_details', 'plan_details', 'amount_paid', 'payment_reference', 'payment_method'
     ];
 
     /**
@@ -36,7 +36,13 @@ class Subscription extends Model
      */
     protected $dates = ['deleted_at'];
 
-    protected $casts=['payment_details'=>'array' , 'card_details'=>'array' , 'plan_details'=>'array'];
+    protected $casts=[
+        'payment_details'=>'array',
+        'card_details'=>'array',
+        'plan_details'=>'array',
+        'start_date' => 'date',
+        'end_date' => 'date'
+        ];
 
     public function school()
     {

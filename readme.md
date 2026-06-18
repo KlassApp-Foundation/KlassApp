@@ -2,6 +2,7 @@
 
 ## Flow of setting the system up to start working for a school
 
+# ADMIN SETUP
 ## **1. Signu**
 
 The school admin signs up by providing the School Name, Name Of The Admin(eg HM, Secretary or any other assigned person), Country, Mobile number, Approximate number of students, Email Address, Password
@@ -110,6 +111,25 @@ You can view student's marks in a report format or download the reports for each
 **Note:** If it's the end of year exam, you'll first download marks sheet and reports before proceeding to promote students
 After everything, you can proceed to finalize student promotion just below the marks table
 
+# TEACHER SETUP
+The teacher automates his tasks to by accessing his dashboard. 
+**Classes:** A teacher sees the classes he teaches by navigating to Classes menu on the side bar, all the classes and subjects assigned to him live here
+
+**Student Attendance:** This is where the teacher carries out roll calls. To record an attendance, the teacher navigates to this page, then he's required to select class, date (this is usually auto selected) and the session.
+
+# LIBRARIAN SETUP
+This' the easiest dashboard to onboard users(Librarians)
+**Enter Book Categories** This' seen on the librarian dashboard side menu. On this page, the librarian can view and add book categories. To add a book category, click "Add Book Category" on the top right corner. Here you'll enter a correct name of the book category and save by hitting the submit button
+
+**Books** The same idea for book categories, the librarian can view and add books. To add a book, you'll Click add book on the top right corner
+
+**Book Lending** The librarian can view book lending records and add also lend a book . To add a new record, you'll Click add on the top right corner, and provide Library Card No, Book Code and Issue Date
+
+**Todo List** The librarian can take notes of todos, to help him keep track of his tasks. To add a new task, click Add on the top right corner and enter the task.
+
+**Holidays** Holidays are automatically updated on this page so that the librarian can know when he's off duty
+
+**Activity Logs** On this page, the librarian views all activities he has done
 ## Upcoming modules
 
 -   Student and teacher Attendance
@@ -117,4 +137,4 @@ After everything, you can proceed to finalize student promotion just below the m
 -   Bulk messaging
 
 https://klassapp.xyz/
-0779412269
+✅

@@ -12,3 +12,8 @@ Then add other required files on resources/views/admin/staff_attendance like cre
 ✅ Work as a senior engineer
 ✅ Keep things simple and scalable
 ✅ Do NOT hallucinate
+
+
+To add
+pa-code
+is border/dayscholar

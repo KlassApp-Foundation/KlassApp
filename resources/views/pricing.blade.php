@@ -1,47 +1,120 @@
-{{-- SPDX-License-Identifier: MIT --}}
-@extends('layouts.main')
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-16 ">
+    @foreach($plans as $plan)
+        <div
+            class="relative bg-white/80 backdrop-blur-sm rounded-3xl border border-green-300 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden max-w-xs"
+        >
 
-@section('content')
-<div class="bg-red-600">
-	<div class="container mx-auto py-24">
-		<div class="text-center leading-loose tracking-wider">
-			<h1 class="text-white text-2xl lg:text-5xl uppercase font-bold tracking-widest">try free for 180 days</h1>
-			<h3 class="text-white text-lg lg:text-2xl font-medium ">Flexible pricing plans to best fit your school.</h3>
-			<div class="pt-12 lg:pb-10">
-				<a href="{{ url('/register') }}" class="uppercase text-white border-2 font-semibold px-4 lg:px-8 py-2 lg:py-4 hover:bg-white hover:text-black">start a free trail</a>
-			</div>
-		</div>
-	</div>
+            {{-- Popular Badge --}}
+            @if($loop->index == 2)
+                <div class="absolute top-1 right-2">
+                    <span class="bg-gradient-to-r from-green-400 to-blue-500 text-white text-xs px-3 py- rounded-full font-semibold">
+                        MOST POPULAR
+                    </span>
+                </div>
+            @endif
+
+            {{-- Header --}}
+            <div class="bg-gradient-to-br from-yellow-500 via-red-400 to-pink-500 p-6 text-center">
+                <h3 class="text-2xl font-bold text-white">
+                    {{ $plan->display_name }}
+                </h3>
+
+                <div class="mt-6">
+                    @if($plan->amount > 0)
+                        <div class="flex justify-center items-center">
+                            <span class="text-white text-lg font-semibold">UGX</span>
+                            <span class="text-3xl font-extrabold text-white">
+                                {{ number_format($plan->amount) }}
+                            </span>
+                        </div>
+
+                        <p class="text-red-100 mt-2">
+                            Every {{ $plan->cycle }} days
+                        </p>
+                    @else
+                        <span class="text-5xl font-extrabold text-white">
+                            Free
+                        </span>
+                        <p class="text-red-100 mt-2">
+                            Forever
+                        </p>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Features --}}
+            <div class="p-8">
+                <ul class="space-y-4 text-gray-700">
+                    <li class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                        <span>{{ $plan->no_of_users }} Users</span>
+                    </li>
+
+                    @if($plan->no_of_students)
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                            <span>{{ $plan->no_of_students }} Students</span>
+                        </li>
+                    @endif
+
+                    <li class="flex items-center gap-3">
+                        <span class="text-green-500">✓</span>
+                        {{ $plan->no_of_events }} Events
+                    </li>
+
+                    <li class="flex items-center gap-3">
+                        <span class="text-green-500">✓</span>
+                        {{ $plan->no_of_folders }} Folders
+                    </li>
+
+                    <li class="flex items-center gap-3">
+                        <span class="text-green-500">✓</span>
+                        {{ $plan->no_of_files }} Files
+                    </li>
+
+                    @if($plan->no_of_videos)
+                        <li class="flex items-center gap-3">
+                            <span class="text-green-500">✓</span>
+                            {{ $plan->no_of_videos }} Videos
+                        </li>
+                    @endif
+
+                    @if($plan->no_of_audios)
+                        <li class="flex items-center gap-3">
+                            <span class="text-green-500">✓</span>
+                            {{ $plan->no_of_audios }} Audios
+                        </li>
+                    @endif
+
+                    <li class="flex items-center gap-3">
+                        <span class="text-green-500">✓</span>
+                        {{ $plan->no_of_bulletins }} Bulletins
+                    </li>
+
+                    <li class="flex items-center gap-3">
+                        <span class="text-green-500">✓</span>
+                        {{ $plan->no_of_groups }} Groups
+                    </li>
+                </ul>
+
+                {{-- CTA --}}
+                <div class="mt-10">
+                    <a
+                        href="{{ route('register', ["plan" => $plan->name]) }}"
+                        class="block w-full text-center bg-gray-900 hover:bg-black text-white font-semibold py-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl"
+                    >
+                        {{ $plan->amount == 0 ? 'Get Started Free' : 'Choose Plan' }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    @endforeach
 </div>
-
-<div class="container-wrapper">
-	<div class="container mx-auto py-8">
-		<div class="flex flex-col">
-			<h1 class="font-plex text-3xl font-bold my-8 text-center">Simplified Pricing</h1>
-			<p class="w-full lg:w-2/3 mx-auto text-center font-exo">KlassApp is completly cloud based solution and you pay to use all modules based on your student strength. No additional cost or setup cost.</p>
-			<div class="w-full lg:w-1/2 mx-auto flex flex-col lg:flex-row md:flex-row mt-8 items-center px-3 lg:p-0 md:px-0">
-				<div class="w-full lg:w-1/2 md:w-1/2 bg-red-500 p-4 rounded-lg">
-					<ul class="list-outside list-disc px-8">
-						<li class="my-4 text-white font-medium">Web app for School Admin, Teachers, Staffs, Librarian & Students.</li>
-						<li class="my-4 text-white font-medium">Mobile Apps for Parents</li>
-						<li class="my-4 text-white font-medium">Unlimited Bandwidth</li>
-						<li class="my-4 text-white font-medium">Unlimited Messaging</li>
-						<li class="my-4 text-white font-medium">Unlimited Storage</li>
-					</ul>
-				</div>
-				<div class="w-full lg:w-1/2 md:w-1/2 my-3 lg:my-0 md:my-0 bg-red-600 p-8 lg:rounded-r-lg md:rounded-r-lg">
-					<div class="text-4xl text-white font-exo font-extrabold">INR 500</div>
-					<div class="text-xl text-white font-exo">Per Student / Per Year</div>
-					<p class="mt-2 text-sm text-white font-exo">* 50% Off for Non-profit schools.</p>
-					<p class="mt-2 text-xs text-white font-exo">** Local taxes (VAT, GST, etc.) will be charged in addition to the prices mentioned.</p>
-				</div>
-			</div>
-			<div class="w-full lg:w-2/3 mx-auto flex  justify-center my-6 lg:my-24 md:my-24">
-				<a href="{{ url('/register') }}" class="mx-8 bg-blue-600 text-white px-3 py-2 rounded tracking-wider">TRY NOW</a>
-				<a href="{{ url('/subscription') }}" class="mx-8 bg-blue-600 text-white px-3 py-2 rounded tracking-wider">BUY NOW</a>
-			</div>
-		</div>
-	</div>
-</div>
-
-@endsection 

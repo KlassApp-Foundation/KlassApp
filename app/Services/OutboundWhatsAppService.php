@@ -19,13 +19,87 @@ use Illuminate\Support\Facades\Log;
  *   - Grade/results published
  *   - Fee reminders
  *
- * Relies on WhatsAppService for actual HTTP delivery.
+ * Dual-transport: tries WhatsAppBusinessService (Meta Cloud API) first,
+ * falls back to WhatsAppService (Evolution API) if Business API fails
+ * or isn't configured.
  */
 class OutboundWhatsAppService
 {
     public function __construct(
         protected WhatsAppService $whatsApp,
+        protected WhatsAppBusinessService $businessApi,
     ) {}
+
+    // =====================================================================
+    // Dual-transport helpers: Business API first, Evolution fallback
+    // =====================================================================
+
+    /**
+     * Send text via Business API if configured, fall back to Evolution.
+     */
+    protected function sendTextDual(
+        string $phone,
+        string $message,
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        if ($this->businessApi->isConfigured()) {
+            $result = $this->businessApi->sendText($phone, $message, $flowType, $userId);
+            if ($result['success']) {
+                return $result;
+            }
+            Log::warning("Business API send failed, falling back to Evolution", [
+                'phone' => $phone,
+                'error' => $result['error'] ?? 'unknown',
+            ]);
+        }
+
+        return $this->whatsApp->sendText($phone, $message, $flowType, $userId);
+    }
+
+    /**
+     * Send template via Business API if configured, fall back to Evolution.
+     */
+    protected function sendTemplateDual(
+        string $phone,
+        string $templateName,
+        array $variables = [],
+        string $category = 'utility',
+        ?int $userId = null,
+    ): array {
+        if ($this->businessApi->isConfigured()) {
+            // Business API: sendTemplate($phone, $name, $vars, $language, $flowType)
+            $result = $this->businessApi->sendTemplate(
+                $phone,
+                $templateName,
+                $variables,
+                null, // language — uses config default
+                $category,
+            );
+            if ($result['success']) {
+                return $result;
+            }
+            Log::warning("Business API template send failed, falling back to Evolution", [
+                'phone'    => $phone,
+                'template' => $templateName,
+                'error'    => $result['error'] ?? 'unknown',
+            ]);
+        }
+
+        // Evolution: sendTemplate($phone, $name, $vars, $category, $userId)
+        return $this->whatsApp->sendTemplate($phone, $templateName, $variables, $category, $userId);
+    }
+
+    /**
+     * Check service window — Business API if configured, Evolution otherwise.
+     */
+    protected function isWithinServiceWindow(string $phone): bool
+    {
+        if ($this->businessApi->isConfigured()) {
+            return $this->businessApi->isWithinServiceWindow($phone);
+        }
+        return $this->whatsApp->isWithinServiceWindow($phone);
+    }
 
     // =====================================================================
     // Cost-optimised queue: send free within window, queue for later if cold
@@ -68,10 +142,10 @@ class OutboundWhatsAppService
     ): int {
         $whatsappUser = WhatsAppUser::findByPhone($phone);
 
-        if ($whatsappUser && $this->whatsApp->isWithinServiceWindow($phone)) {
+        if ($whatsappUser && $this->isWithinServiceWindow($phone)) {
             // Window is open — send immediately (FREE)
             try {
-                $this->whatsApp->sendText($phone, $message, $flowType, $userId);
+                $this->sendTextDual($phone, $message, $flowType, $userId);
                 return 1;
             } catch (\Throwable $e) {
                 Log::error("queueOrSend: immediate send failed for {$phone}", [
@@ -125,7 +199,7 @@ class OutboundWhatsAppService
         foreach ($pending as $notification) {
             try {
                 if ($notification->template_name) {
-                    $this->whatsApp->sendTemplate(
+                    $this->sendTemplateDual(
                         $user->phone,
                         $notification->template_name,
                         $notification->template_variables ?? [],
@@ -133,7 +207,7 @@ class OutboundWhatsAppService
                         $user->user_id,
                     );
                 } elseif ($notification->message) {
-                    $this->whatsApp->sendText(
+                    $this->sendTextDual(
                         $user->phone,
                         $notification->message,
                         $notification->flow_type,
@@ -207,7 +281,7 @@ class OutboundWhatsAppService
 
             try {
                 if ($notification->template_name) {
-                    $this->whatsApp->sendTemplate(
+                    $this->sendTemplateDual(
                         $user->phone,
                         $notification->template_name,
                         $notification->template_variables ?? [],
@@ -215,7 +289,7 @@ class OutboundWhatsAppService
                         $user->user_id,
                     );
                 } elseif ($notification->message) {
-                    $this->whatsApp->sendText(
+                    $this->sendTextDual(
                         $user->phone,
                         $notification->message,
                         $notification->flow_type,

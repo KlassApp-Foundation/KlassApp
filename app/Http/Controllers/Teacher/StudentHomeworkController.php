@@ -44,7 +44,7 @@ class StudentHomeworkController extends Controller
                         $q->where('firstname','LIKE','%'.$request->search.'%')->orWhere('lastname','LIKE','%'.$request->search.'%'); 
                     })->orWhereHas('studentAcademicLatest', function($que) use($request)
                     {
-                        $que->where('roll_number','LIKE','%'.$request->search.'%');
+                        $que->where('std_school_pay_number','LIKE','%'.$request->search.'%');
                     });
                 });
             }

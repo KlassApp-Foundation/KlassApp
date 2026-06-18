@@ -27,7 +27,7 @@ class StudentAcademic extends Model
      * @var array
      */
     protected $fillable = [
-        'school_id' , 'academic_year_id' , 'user_id' , 'standardLink_id' , 'roll_number' , 'id_card_number' , 'board_registration_number' , 'mode_of_transport' , 'transport_details' , 'siblings' , 'siblings_count' , 'sibling_details' , 'height' , 'weight' , 'medication_problems' , 'medication_needs' , 'medication_allergies' , 'food_allergies' , 'other_allergies' , 'other_medical_information' , 'academic_status','bus_pass'
+        'school_id' , 'academic_year_id' , 'user_id' , 'standardLink_id' , 'lin', 'std_school_pay_number' , 'id_card_number' , 'board_registration_number' , 'mode_of_transport' , 'transport_details' , 'siblings' , 'siblings_count' , 'sibling_details' , 'height' , 'weight' , 'medication_problems' , 'medication_needs' , 'medication_allergies' , 'food_allergies' , 'other_allergies' , 'other_medical_information' , 'academic_status','bus_pass'
     ];
 
     /**

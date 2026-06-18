@@ -125,17 +125,17 @@ flowchart LR
 
 Uganda has **74,000+ schools** (primary, secondary, and tertiary). Over **90% use WhatsApp informally** (class groups, parent-teacher chats) but none have a structured, integrated system.
 
-The **EMIS / LIN** (Learner Identification Number) system, mandated by the Ministry of Education, gives every Ugandan student a unique 12-digit identifier. KlassApp uses this to solve the hardest problem in edtech: **connecting the right parent to the right student at national scale**.
+The **LIN** (Learner Identification Number) system, mandated by the Ministry of Education, gives every Ugandan student a unique 12-digit identifier. KlassApp uses this to solve the hardest problem in edtech: **connecting the right parent to the right student at national scale**.
 
-- **Path 1 — CSV Import**: Schools upload their EMIS data. Parents are linked in bulk. Days to deploy.
+- **Path 1 — CSV Import**: Schools upload their LIN data. Parents are linked in bulk. Days to deploy.
 - **Path 2 — Self-Registration**: Parents register themselves by sending their child's LIN via WhatsApp. No admin effort. National reach.
-- **Path 3 — Ministry API**: Direct integration with the Ministry's EMIS database for real-time verification. (Long-term.)
+- **Path 3 — Ministry API**: Direct integration with the Ministry's LIN database for real-time verification. (Long-term.)
 
 This isn't a school management system. It's a **parent engagement network**, and every Ugandan student is a node waiting to be connected.
 
 No other school communication platform in East Africa has built this connection. KlassApp isn't just a tool. It's the infrastructure layer that connects every school, every student, and every parent in the national education system.
 
-The same gap exists across **Kenya (35,000+ schools)**, **Tanzania (20,000+ schools)**, and **Rwanda (4,000+ schools)**. Every market has the same profile: high WhatsApp penetration, low parent digital engagement, and school systems that communicate by paper. KlassApp's architecture works identically across all four countries. The EMIS/LIN integration is Uganda-specific today, but every East African country has an equivalent national student ID system we are mapping.
+The same gap exists across **Kenya (35,000+ schools)**, **Tanzania (20,000+ schools)**, and **Rwanda (4,000+ schools)**. Every market has the same profile: high WhatsApp penetration, low parent digital engagement, and school systems that communicate by paper. KlassApp's architecture works identically across all four countries. The LIN integration is Uganda-specific today, but every East African country has an equivalent national student ID system we are mapping.
 
 ---
 

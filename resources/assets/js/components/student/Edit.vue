@@ -166,8 +166,7 @@
                         <label for="blood_group" class="tw-form-label">
                             Blood Group
                             <!-- <span class="text-red-500" >*</span> -->
-                            </label
-                        >
+                        </label>
                     </div>
                     <div class="mb-2">
                         <select
@@ -863,8 +862,7 @@
                         <label for="registration_number" class="tw-form-label">
                             Admission Number
                             <!-- <span class="text-red-500">*</span> -->
-                            </label
-                        >
+                        </label>
                     </div>
                     <div class="mb-2">
                         <input
@@ -887,24 +885,24 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="EMIS_number" class="tw-form-label"
-                            >EMIS Number</label
+                        <label for="lin" class="tw-form-label"
+                            >LIN Number</label
                         >
                     </div>
                     <div class="mb-2">
                         <input
                             type="text"
-                            v-model="EMIS_number"
-                            name="EMIS_number"
-                            id="EMIS_number"
+                            v-model="lin"
+                            name="lin"
+                            id="lin"
                             class="tw-form-control w-full"
-                            placeholder="EMIS Number"
+                            placeholder="LIN Number"
                         />
                     </div>
                     <span
-                        v-if="errors.EMIS_number"
+                        v-if="errors.lin"
                         class="text-red-500 text-xs font-semibold"
-                        >{{ errors.EMIS_number[0] }}</span
+                        >{{ errors.lin[0] }}</span
                     >
                 </div>
             </div>
@@ -971,8 +969,8 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="roll_number" class="tw-form-label"
-                            >Roll Number<span class="text-red-500"
+                        <label for="std_school_pay_number" class="tw-form-label"
+                            >Student School Pay Number<span class="text-red-500"
                                 >*</span
                             ></label
                         >
@@ -980,17 +978,17 @@
                     <div class="mb-2">
                         <input
                             type="text"
-                            v-model="roll_number"
-                            name="roll_number"
-                            id="roll_number"
+                            v-model="std_school_pay_number"
+                            name="std_school_pay_number"
+                            id="std_school_pay_number"
                             class="tw-form-control w-full"
-                            placeholder="Roll Number"
+                            placeholder="Student School Pay Number"
                         />
                     </div>
                     <span
-                        v-if="errors.roll_number"
+                        v-if="errors.std_school_pay_number"
                         class="text-red-500 text-xs font-semibold"
-                        >{{ errors.roll_number[0] }}</span
+                        >{{ errors.std_school_pay_number[0] }}</span
                     >
                 </div>
             </div>
@@ -1098,8 +1096,8 @@ export default {
             aadhar_number: "",
             joining_date: "",
             registration_number: "",
-            EMIS_number: "",
-            roll_number: "",
+            lin: "",
+            std_school_pay_number: "",
             id_card_number: "",
             board_registration_number: "",
             mode_of_transport: "",
@@ -1170,11 +1168,11 @@ export default {
                 this.avatar_display = this.user.avatar;
                 this.notes = this.user.notes;
                 this.registration_number = this.user.registration_number;
-                this.EMIS_number = this.user.EMIS_number;
+                this.lin = this.user.lin;
                 this.joining_date = this.user.joining_date;
 
                 this.standard = this.user.standardLink_id;
-                this.roll_number = this.user.roll_number;
+                this.std_school_pay_number = this.user.std_school_pay_number;
                 this.id_card_number = this.user.id_card_number;
                 this.board_registration_number =
                     this.user.board_registration_number;
@@ -1222,8 +1220,11 @@ export default {
             formData.append("aadhar_number", this.aadhar_number);
             formData.append("joining_date", this.joining_date);
             formData.append("registration_number", this.registration_number);
-            formData.append("EMIS_number", this.EMIS_number);
-            formData.append("roll_number", this.roll_number);
+            formData.append("lin", this.lin);
+            formData.append(
+                "std_school_pay_number",
+                this.std_school_pay_number
+            );
             formData.append("id_card_number", this.id_card_number);
             formData.append(
                 "board_registration_number",

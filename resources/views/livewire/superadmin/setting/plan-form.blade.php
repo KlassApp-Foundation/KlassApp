@@ -51,7 +51,7 @@
         </div>
       </div>
 
-      <div class="flex flex-col lg:flex-row">
+      {{-- <div class="flex flex-col lg:flex-row">
         <div class="w-full lg:w-1/2">
         <div class="lg:mr-8 md:mr-8 mb-2">
         <div class="mb-2">
@@ -61,7 +61,7 @@
           @error('order')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
         </div>
-      </div>
+      </div> --}}
 
       <div class="tw-form-group w-full lg:w-1/2">
        <div class="lg:mr-8 md:mr-8 ">
@@ -104,8 +104,8 @@
         <div class="mb-2">
         <label for="" class="tw-form-label">Number of Members<span class="text-red-500">*</span></label>
         </div>
-          <input name="no_of_members" value="" type="number" placeholder="Number of Members" class="tw-form-control w-full" wire:model.live="no_of_members">
-          @error('no_of_members')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
+          <input name="no_of_users" value="" type="number" placeholder="Number of Members" class="tw-form-control w-full" wire:model.live="no_of_users">
+          @error('no_of_users')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
         </div>
       </div>
@@ -190,6 +190,31 @@
         </div>
           <input name="no_of_groups" value="" type="number" placeholder="Number of Groups" class="tw-form-control w-full" wire:model.live="no_of_groups">
           @error('no_of_groups')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
+        </div>
+        </div>
+      </div>
+
+      {{-- ============= added no of students and whatsApp= ========== --}}
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label for="" class="tw-form-label">Number of Students<span class="text-red-500">*</span></label>
+        </div>
+          <input name="no_of_students" value="" type="number" placeholder="Number of Students" class="tw-form-control w-full" wire:model.live="no_of_students">
+          @error('no_of_students')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
+        </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label for="" class="tw-form-label">Whatsapp Services<span class="text-red-500">*</span></label>
+        </div>
+          <input name="whatsapp_services" value="" type="text" placeholder="Whatsapp Services" class="tw-form-control w-full" wire:model.live="whatsapp_services">
+          @error('whatsapp_services')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
         </div>
       </div>

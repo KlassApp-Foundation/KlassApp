@@ -526,6 +526,14 @@
                     <span class="mx-3 whitespace-no-wrap">Disciplinary Records</span>
                 </a>
             </li>
+
+            {{-- ============ added payment records --}}
+            <li class="py-3 px-3 hover:font-semibold {{Request::segment ('2') == 'subscriptions' ? 'active':''}} || {{Request::segment ('2') == 'subscriptions' ? 'active':''}}">
+                <a href="{{ url('/admin/subscriptions') }}" class="flex  items-center">
+                    💳
+                    <span class="mx-3 whitespace-no-wrap">Subscriptions</span>
+                </a>
+            </li>
         </ul>
     </li>
     <!-- end -->

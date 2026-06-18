@@ -16,6 +16,13 @@
         @include('partials.message')
     </div>
 
+    {{-- test --}}
+    <div class="">
+        @foreach ($standards as $standard)
+        {{-- {{ dd($standard) }} --}}
+            <p>{{ $standard->subject }}</p>
+        @endforeach
+    </div>
     {{-- Terms table --}}
     <div class="overflow-x-auto">
         @if($terms->isEmpty())
@@ -62,5 +69,6 @@
             </table>
         @endif
     </div>
+    
 </div>
 @endsection

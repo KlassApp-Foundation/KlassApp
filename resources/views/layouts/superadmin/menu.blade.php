@@ -67,12 +67,15 @@
                 </a>
             </li>
 
-            {{-- <li class="py-3 px-3 hover:font-semibold{{Request::segment ('3') == 'subscriptions' ? 'active':''}} && {{Request::segment ('3') == 'subscription' ? 'active':''}}">
+            <li class="py-3 px-3 hover:font-semibold{{Request::segment ('3') == 'subscriptions' ? 'active':''}} && {{Request::segment ('3') == 'subscription' ? 'active':''}}">
                 <a href="{{ url('/superadmin/reports/subscriptions') }}" class="flex items-center">
-                  <img src="{{ url('uploads/superadmin/subscription.png') }}" class="w-5 h-5">
+                    {{-- <i class="fa-solid fa-bell"></i> --}}
+                    <i class="fa-solid fa-rss"></i>   
+                    {{-- <i class="fa-brands fa-fonticons"></i>    --}}
+                  {{-- <img src="{{ url('uploads/superadmin/subscription.png') }}" class="w-5 h-5"> --}}
                     <span class="mx-3 whitespace-no-wrap">Subscriptions</span>
                 </a>
-            </li> --}}
+            </li>
         </ul>
     </li>
 
@@ -114,7 +117,7 @@
             
             <li class="py-3 px-3 hover:font-semibold{{Request::segment ('2') == 'plans' ? 'active':''}} && {{Request::segment ('2') == 'plan' ? 'active':''}}">
                 <a href="{{ url('/superadmin/setting/plans') }}" class="flex items-center">
-                    <img src="{{ url('uploads/superadmin/plan.png') }}" class="w-5 h-5">
+                    <i class="fa-brands fa-fonticons"></i> 
                     <span class="mx-3 whitespace-no-wrap">Plans</span>
                 </a>
             </li>

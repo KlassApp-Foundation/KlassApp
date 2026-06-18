@@ -16,7 +16,7 @@ $factory->define(StudentAcademic::class, function (Faker $faker) {
 
 	$selected_standardLink = StandardLink::where([['academic_year_id',$academicYear->id],['id',$standardLink_id],['status',1]])->first();
 
-	$roll_number = $faker->numberBetween($min=1,$max=25);
+	$std_school_pay_number = $faker->numberBetween($min=1,$max=25);
 
 	$id_card_number = $faker->numberBetween($min=1,$max=25);
 
@@ -55,7 +55,7 @@ $factory->define(StudentAcademic::class, function (Faker $faker) {
         //
 	    //'academic_year_id'			=>	$academicYear->id,
 	    //'standardLink_id'			=>	$standardLink_id,
-	    'roll_number'				=>	$roll_number,
+	    'std_school_pay_number'				=>	$std_school_pay_number,
 	    'id_card_number'			=>  $id_card_number,
 	    'board_registration_number'	=>	$board_registration_number,
 	    'mode_of_transport'			=>	$mode_of_transport,

@@ -98,9 +98,9 @@ trait AdmissionUser
             
             $userprofile->registration_number = $user->registration_number;
             
-            if(!is_null($data->EMIS_number))
+            if(!is_null($data->lin))
             {
-                $userprofile->EMIS_number = $data->EMIS_number;
+                $userprofile->lin = $data->lin;
             }
             if(!is_null($data->notes))
             {
@@ -135,7 +135,7 @@ trait AdmissionUser
             $academic->academic_year_id             = $data->academic_year_id;
             $academic->user_id                      = $user->id;
             $academic->standardLink_id              = $standardLink_id;
-            $academic->roll_number                  = $user->registration_number;
+            $academic->std_school_pay_number                  = $user->registration_number;
             $academic->id_card_number               = $user->registration_number;
             $academic->board_registration_number    = $data->board_registration_number;
             $academic->mode_of_transport            = $data->mode_of_transport;

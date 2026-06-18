@@ -16,7 +16,6 @@ use App\Models\StandardLink;
 use App\Models\AbsentReason;
 use App\Traits\LogActivity;
 use App\Helpers\SiteHelper;
-use App\Models\AcademicYear;
 use App\Models\Attendance;
 use Illuminate\Support\Facades\Log;
 use League\Csv\Writer;
@@ -39,23 +38,26 @@ class AttendanceController extends Controller
     public function list()
 {
     $school_id = Auth::user()->school_id;
-    // $academic_year = SiteHelper::getAcademicYear($school_id);
-    $academic_year_id = AcademicYear::where("school_id", $school_id)
-                                     ->where("description", "Current Academic Year")
-                                     ->value("id");
-    
+    $academic_year = SiteHelper::getAcademicYear($school_id);
+
+    if (!$academic_year) {
+        return [
+            'standardlist'     => [],
+            'studentlist'      => [],
+            'absentReasonlist' => [],
+        ];
+    }
+
     $standardLinklist = SiteHelper::getStandardLinkList($school_id);
-    // $testacademy = StudentAcademic::with('user')->get();
     $studentAcademic = StudentAcademic::with('user')
         ->where('school_id', $school_id)
-        ->where('academic_year_id', $academic_year_id)
+        ->where('academic_year_id', $academic_year->id)
         ->whereHas('user', function($q) {
             $q->where('status', 'active')
               ->whereNull('deleted_at');
         })
         ->get();
 
-    // Group students manually and format properly
     $studentlist = [];
 
     foreach ($studentAcademic as $student) {
@@ -63,12 +65,14 @@ class AttendanceController extends Controller
         if (!isset($studentlist[$std_id])) {
             $studentlist[$std_id] = [];
         }
-     $name = optional($student->user)->userprofile;
+        $profile = optional(optional($student->user)->userprofile);
         $studentlist[$std_id][] = [
             'user_id'        => $student->user_id,
             'id'             => $student->id,
-            'name'           => $name->firstname . " " . $name->lastname  ?? 'No Name',
-            'avatar'         => optional($student->user)->avatar ?? null,
+            'name'           => $profile->firstname && $profile->lastname
+                                    ? $profile->firstname . ' ' . $profile->lastname
+                                    : ($student->user->name ?? 'No Name'),
+            'avatar'         => $profile->AvatarPath ?? null,
             'standardLink_id'=> $student->standardLink_id,
         ];
     }
@@ -79,7 +83,8 @@ class AttendanceController extends Controller
         'standardlist'     => $standardLinklist,
         'studentlist'      => $studentlist,
         'absentReasonlist' => $absentReasonlist,
-        // "test" => $testacademy
+        'std_id' => $std_id,
+        'studentAcademic' => $studentAcademic
     ];
 }
 
@@ -101,14 +106,18 @@ class AttendanceController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(AttendanceAddRequest $request)
 { 
     try
     {
         $school_id      = Auth::user()->school_id;
         $academic_year  = SiteHelper::getAcademicYear($school_id);
         $admin          = Auth::id();
-       
+
+        if (!$academic_year) {
+            return response()->json(['error' => 'Academic year not set'], 422);
+        }
+
         $attendance = $this->createAttendance($school_id , $academic_year->id , $admin , $request);
 
         $message = trans('messages.add_success_msg',['module' => 'Attendance']);

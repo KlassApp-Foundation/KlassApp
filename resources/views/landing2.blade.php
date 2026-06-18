@@ -75,11 +75,111 @@
         .reveal-delay-4 { transition-delay: 0.4s; }
 
         /* ── Navigation ── */
-        .navbar { transition: background 0.3s, box-shadow 0.3s; }
-        .navbar.scrolled { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); box-shadow: 0 1px 0 rgba(0,0,0,0.06); }
-        /* ── Left/right compact scroll (Flare-style) ── */
-        .navbar { transition: background 0.3s, box-shadow 0.3s, padding 0.3s; background: transparent; box-shadow: none; }
-        .navbar.scrolled { background: rgba(255,255,255,0.92) !important; backdrop-filter: blur(12px) saturate(180%); -webkit-backdrop-filter: blur(12px) saturate(180%); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        /* ── Navbar (Flare-style 3-layer: header > nav-container > nav-pill) ── */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            height: 88px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .site-header.scrolled { height: 104px; }
+
+        .nav-container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0;
+            transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .site-header.scrolled .nav-container {
+            max-width: 1024px;
+            margin: 0 104px;
+        }
+
+        .nav-pill {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 40px;
+            padding: 0;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        height 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        background 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+        }
+        .site-header.scrolled .nav-pill {
+            padding: 8px 8px 8px 20px;
+            height: 56px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .nav-pill .logo-text {
+            font-family: 'Sora', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            color: #0D1526;
+            transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        font-weight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .site-header.scrolled .nav-pill .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .nav-pill .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+            transition: gap 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .site-header.scrolled .nav-pill .nav-links { gap: 24px; }
+
+        .nav-pill .nav-links a {
+            color: #475569;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .nav-pill .nav-links a:hover { color: #1E6FD9; }
+
+        .nav-pill .nav-cta {
+            padding: 7px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            border-radius: 9999px;
+            background: #1E6FD9;
+            color: #fff;
+            text-decoration: none;
+            transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
+                        background 0.2s ease;
+        }
+        .nav-pill .nav-cta:hover { background: #22C55E; }
+        .site-header.scrolled .nav-pill .nav-cta {
+            padding: 10px 24px;
+            font-size: 15px;
+        }
+
+        /* ── Hero dot-grid ── */
+        .dot-grid {
 
         /* ── Hero dot-grid ── */
         .dot-grid {
@@ -357,13 +457,38 @@
 <!-- ═══════════════════════════════════════════════════
      NAVIGATION
      ═══════════════════════════════════════════════════ -->
-<nav id="mainNav" class="navbar fixed top-0 left-0 right-0 z-50 py-5 px-6 lg:px-12 transition-all duration-300">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-        <a href="#" class="flex-shrink-0">
-             <img id="navLogo" src="{{ asset('images/klassapp-logo-primary.svg') }}"
-                  alt="KlassApp"
-                  class="h-14 w-auto transition-all duration-300" />
-        </a>
+<!-- ═══════════════════════════════════════════════════
+     NAVIGATION (Flare-style: header > nav-container > nav-pill)
+     ═══════════════════════════════════════════════════ -->
+<header id="mainNav" class="site-header">
+    <div class="nav-container">
+        <div class="nav-pill">
+            <!-- Logo -->
+            <a href="#" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+                <img src="{{ asset('images/klassapp-logo-primary.svg') }}"
+                     alt="KlassApp"
+                     style="height: 32px; width: auto;" />
+                <span class="logo-text">KlassApp</span>
+            </a>
+            <!-- Nav Links + CTA -->
+            <div class="nav-links hidden md:flex" style="align-items: center;">
+                <a href="#features">Features</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#schools">Schools</a>
+                <a href="#contact">Contact</a>
+                <a href="#demo" class="nav-cta">Get Started</a>
+                <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
+                   target="_blank"
+                   style="display: flex; align-items: center; gap: 6px; color: #475569; text-decoration: none; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: color 0.2s ease;"
+                   onmouseover="this.style.color='#1E6FD9'" onmouseout="this.style.color='#475569'"
+                   aria-label="Chat on WhatsApp">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.272-.198z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.977.546 3.826 1.494 5.404L2 22l4.667-1.463A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.182c-1.736 0-3.37-.535-4.738-1.528l-.339-.234-2.77.868.918-2.686-.22-.352A8.164 8.164 0 013.818 12c0-4.509 3.673-8.182 8.182-8.182s8.182 3.673 8.182 8.182-3.673 8.182-8.182 8.182z"/></svg>
+                    WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
 
         <div class="hidden md:flex items-center gap-8">
             <a href="#features" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Features</a>
@@ -377,7 +502,9 @@
             <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
                target="_blank"
                class="text-slate-500 hover:text-slate-900 transition text-sm font-medium flex items-center gap-1.5"
-               aria-label="Chat on WhatsApp">
+               aria-label="Chat on WhatsApp"
+               style="display: flex; align-items: center; gap: 6px; color: #475569; text-decoration: none; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: color 0.2s ease;"
+               onmouseover="this.style.color='#1E6FD9'" onmouseout="this.style.color='#475569'">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.272-.198z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.977.546 3.826 1.494 5.404L2 22l4.667-1.463A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.182c-1.736 0-3.37-.535-4.738-1.528l-.339-.234-2.77.868.918-2.686-.22-.352A8.164 8.164 0 013.818 12c0-4.509 3.673-8.182 8.182-8.182s8.182 3.673 8.182 8.182-3.673 8.182-8.182 8.182z"/></svg>
                 WhatsApp
             </a>
@@ -405,7 +532,7 @@
 <!-- ═══════════════════════════════════════════════════
      HERO
      ═══════════════════════════════════════════════════ -->
-<section class="min-h-screen bg-warm-glow flex items-center relative overflow-hidden pt-20">
+<section class="min-h-screen bg-warm-glow flex items-center relative overflow-hidden pt-32">
     <div class="absolute inset-0 bg-white">
         <div class="absolute inset-0 opacity-[0.08]" style="background-image: url('data:image/svg+xml,%3Csvg width=\u002260\u0022 height=\u002260\u0022 viewBox=\u00220 0 60 60\u0022 xmlns=\u0022http://www.w3.org/2000/svg\u0022%3E%3Cg fill=\u0022none\u0022 fill-rule=\u0022evenodd\u0022%3E%3Cg fill=\u0022%231E6FD9\u0022 fill-opacity=\u00220.3\u0022%3E%3Cpath d=\u0022M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\u0022/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); background-size: 60px 60px;"></div>
     </div>
@@ -1362,10 +1489,8 @@
     }, { threshold: 0.1 });
     reveals.forEach(el => observer.observe(el));
 
-    // ── Nav scroll effect (left-right compact, Flare-style) ──
-    let lastScroll = 0;
-    const nav = document.querySelector('.navbar');
-    const navLogo = document.getElementById('navLogo');
+    // ── Nav scroll effect (Flare-style toggle .scrolled class) ──
+    const header = document.querySelector('.site-header');
     window.addEventListener('scroll', () => {
         const y = window.scrollY;
         const goingDown = y > lastScroll;

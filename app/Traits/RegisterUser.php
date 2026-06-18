@@ -111,10 +111,10 @@ trait RegisterUser
            /* $userprofile->registration_number   = $data->registration_number;*/
             
             
-            if(!is_null($data->lin))
-            {
-                $userprofile->lin = $data->lin;
-            }
+            // if(!is_null($data->lin))
+            // {
+            //     $userprofile->lin = $data->lin;
+            // }
             if(!is_null($data->notes))
             {
                 $userprofile->notes = $data->notes;
@@ -139,6 +139,7 @@ trait RegisterUser
                     $userprofile->avatar = "uploads/images.jpg";
                 }
             }
+           
             
             $userprofile->save();
 
@@ -148,10 +149,12 @@ trait RegisterUser
             $academic->academic_year_id             = $academic_year_id;
             $academic->user_id                      = $user->id;
             $academic->standardLink_id              = $data->standard;
-            $academic->roll_number                  = $data->roll_number;
+            $academic->std_school_pay_number                  = $data->std_school_pay_number;
+            $academic->lin = $data->lin;
             $academic->id_card_number               = $data->id_card_number;
             $academic->board_registration_number    = $data->board_registration_number;
             $academic->mode_of_transport            = $data->mode_of_transport;
+
             if( ($data->mode_of_transport == 'auto') || ($data->mode_of_transport == 'rickshaw') || ($data->mode_of_transport == 'taxi') )
             {
                 $array['driver_name']           = $data->driver_name; 
@@ -302,7 +305,7 @@ trait RegisterUser
             $academic->academic_year_id             = $academic_year_id;
             $academic->user_id                      = $user_id;
             $academic->standardLink_id              = $data->standard;
-            $academic->roll_number                  = $data->roll_number;
+            $academic->std_school_pay_number                  = $data->std_school_pay_number;
             $academic->id_card_number               = $data->id_card_number;
             $academic->board_registration_number    = $data->board_registration_number;
             $academic->mode_of_transport            = $data->mode_of_transport;
