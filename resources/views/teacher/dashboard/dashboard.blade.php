@@ -49,19 +49,19 @@
                     <div class="w-full lg:w-1/2 my-3 lg:my-0 md:my-0 px-1">
                         <div class="bg-white custom-shadow px-3 py-2 border dashboard-panel-card">
                             <div>
-                                <h1 class="text-gray-800 font-semibold text-lg border-b mx-2 py-1 pb-3">Notice Board</h1>
+                                <h1 class="dashboard-panel-title border-b mx-2 py-1 pb-3">Notice Board</h1>
                             </div>
                             <div class="notice-box">
                                 @if(count($dashboard['noticeboard']) > 0)
                                     @foreach($dashboard['noticeboard'] as $noticeboard)
                                         <div class="notice-box-list py-3 mx-3 border-b">
-                                            <div class="bg-teal-500 text-x rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
+                                            <div class="bg-green-600 text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
                                                 <p>{{ $noticeboard->title }}</p>
                                             </div>
-                                            <div class="bg-purple-500 text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
+                                            <div class="text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2" style="background:#1E6FD9;">
                                                 <p>{{ date('d M Y',strtotime($noticeboard->publish_date)) }}</p>
                                             </div>
-                                            <div class="bg-orange-500 text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
+                                            <div class="text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2" style="background:#D97706;">
                                                 <p>{{ ucwords($noticeboard->type) }}</p>
                                             </div>
                                             <div class="my-1">
@@ -83,7 +83,7 @@
                                     @endforeach
                                 @else
                                     <div class="notice-box-list py-3 mx-3 border-b">
-                                        <p class="text-sm text-gray-900 font-semibold" style="text-align: center;">No Notice Found</p>
+                                        <p class="text-sm text-gray-400 text-center">No notices available</p>
                                     </div>
                                 @endif
                             </div>
@@ -93,7 +93,7 @@
                     <div class="w-full lg:w-1/2 my-3 lg:my-0 md:my-2 px-1">
                         <div class="bg-white custom-shadow px-3 py-2 border dashboard-panel-card">
                             <div>
-                                <h1 class="text-gray-800 font-semibold text-lg border-b mx-2 py-1 pb-3">Subjects</h1>
+                                <h1 class="dashboard-panel-title border-b mx-2 py-1 pb-3">Subjects</h1>
                             </div>
                             <div class="notice-box flex flex-wrap lg:flex-row items-center">
                                 @foreach($dashboard['subject'] as $subject)

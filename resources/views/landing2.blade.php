@@ -270,6 +270,9 @@
             animation: blink 0.8s step-end infinite;
             font-weight: 100;
         }
+        #typewriter-cursor.paused {
+            animation: none;
+        }
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
@@ -380,7 +383,7 @@
             </a>
         </div>
 
-        <button id="hamburger" class="md:hidden text-slate-700 p-2" aria-label="Menu">
+        <button id="hamburger" class="md:hidden text-slate-700 p-3" aria-label="Menu">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 12h18M3 6h18M3 18h18"/>
             </svg>
@@ -388,10 +391,10 @@
     </div>
 
     <div id="mobileMenu" class="mobile-menu absolute top-full left-0 right-0 bg-white flex-col py-6 px-6 gap-4 border-t border-slate-200 shadow-lg">
-        <a href="#features" class="text-slate-600 hover:text-slate-900 text-base font-medium">Features</a>
-        <a href="#pricing" class="text-slate-600 hover:text-slate-900 text-base font-medium">Pricing</a>
-        <a href="#schools" class="text-slate-600 hover:text-slate-900 text-base font-medium">Schools</a>
-        <a href="#contact" class="text-slate-600 hover:text-slate-900 text-base font-medium">Contact</a>
+        <a href="#features" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Features</a>
+        <a href="#pricing" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Pricing</a>
+        <a href="#schools" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Schools</a>
+        <a href="#contact" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Contact</a>
         <a href="#demo"
            class="bg-brand-blue text-white px-5 py-3 rounded-lg text-sm font-semibold text-center">
             Get Started
@@ -418,9 +421,9 @@
 
                 <!-- Audience Selector Tabs -->
                 <div class="flex gap-2 mb-5 flex-wrap" role="tablist" aria-label="Audience selector">
-                    <button class="audience-tab active px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-900 bg-white shadow-sm" data-audience="admin">Administrators &amp; Principals</button>
-                    <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white hover:shadow-sm" data-audience="teacher">Teachers</button>
-                    <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white hover:shadow-sm" data-audience="parent">Parents</button>
+                    <button class="audience-tab active px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-900 bg-white shadow-sm" data-audience="admin">Administrators &amp; Principals</button>
+                    <button class="audience-tab px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white hover:shadow-sm" data-audience="teacher">Teachers</button>
+                    <button class="audience-tab px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white hover:shadow-sm" data-audience="parent">Parents</button>
                 </div>
 
                 <h1 class="font-display font-extrabold leading-[1.08] tracking-[-0.02em]"
@@ -1367,13 +1370,16 @@
         const y = window.scrollY;
         const goingDown = y > lastScroll;
         if (y > 60) {
-            nav.classList.add('scrolled');
-            // Shrink padding from full to compact
-            nav.style.paddingTop = goingDown ? '0.75rem' : '';
-            nav.style.paddingBottom = goingDown ? '0.75rem' : '';
-            // Logo shrinks east-west (width transform)
-            if (navLogo) {
-                navLogo.style.transform = goingDown ? 'scaleX(0.85)' : 'scaleX(1)';
+            if (goingDown) {
+                nav.classList.add('scrolled');
+                nav.style.paddingTop = '0.75rem';
+                nav.style.paddingBottom = '0.75rem';
+                if (navLogo) navLogo.style.transform = 'scaleX(0.85)';
+            } else {
+                nav.classList.remove('scrolled');
+                nav.style.paddingTop = '';
+                nav.style.paddingBottom = '';
+                if (navLogo) navLogo.style.transform = 'scaleX(1)';
             }
         } else {
             nav.classList.remove('scrolled');
@@ -1432,6 +1438,7 @@
     function typeWriter(element, text, speed, token, callback) {
         element.textContent = '';
         element.classList.add('is-typing');
+        cursorEl.classList.add('paused');
         let i = 0;
         function type() {
             if (token !== heroAnimationToken) return;
@@ -1445,6 +1452,7 @@
             setTimeout(function() {
                 if (token !== heroAnimationToken) return;
                 element.classList.remove('is-typing');
+                cursorEl.classList.remove('paused');
                 if (callback) callback();
             }, 500);
         }
@@ -1505,12 +1513,13 @@
     }
     function typeNext() {
         if (idx < typewriterText.length) {
+            if (idx === 0) cursor.classList.add('paused');
             el.textContent += typewriterText.charAt(idx);
             idx++;
             const delay = typewriterText.charAt(idx - 1) === '.' ? 180 : 45 + Math.random() * 35;
             setTimeout(typeNext, delay);
         } else {
-            cursor.style.animation = 'blink 0.8s step-end infinite';
+            cursor.classList.remove('paused');
             setTimeout(revealAdminTagline, 400);
         }
     }
