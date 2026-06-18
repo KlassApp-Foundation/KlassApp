@@ -17,23 +17,23 @@
         <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500&family=IBM+Plex+Sans:wght@500;600;700&family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
         <link rel="stylesheet" href="https://unpkg.com/@themesberg/flowbite@1.2.0/dist/flowbite.min.css" />
-
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">   
          <script>
         window.User = {!! json_encode(optional(auth()->user())->only('id')) !!}
     </script>
 
-    <!-- <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
  <livewire:styles>
     </head>
-    <body class="font-primary antialiased min-h-screen overflow-x-hidden">
+    <body class="font-primary antialiased min-h-screen overflow-x-hidden" id="superadmin-body">
         <div id="app">
             @yield('base-navigation')
             <main class="flex w-full h-full min-h-screen">
                 <div class="sidebar min-h-full">
                     @yield('base-sidebar')
                 </div>
-                <div class="bg-gray-200 flex-grow w-full px-4" style="width: calc(100vw - 195px);">
+                <div class="bg-gray-200 flex-grow w-full px-4 superadmin-content" style="width: calc(100vw - 195px); transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
                     @yield('base-content')
                 </div>
             </main>
@@ -73,6 +73,53 @@
 
             }
     });
+</script>
+
+<script>
+    (function () {
+        const body = document.getElementById('superadmin-body');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('superadmin-sidebar');
+        const storageKey = 'superadmin_sidebar_collapsed';
+
+        function setCollapsed(collapsed) {
+            body.classList.toggle('sidebar-collapsed', collapsed);
+            if (sidebar) {
+                sidebar.setAttribute('data-collapsed', collapsed ? 'true' : 'false');
+            }
+            try {
+                localStorage.setItem(storageKey, collapsed ? '1' : '0');
+            } catch (e) {}
+        }
+
+        // Ensure top-level menu items have title attributes for collapsed tooltips.
+        if (sidebar) {
+            sidebar.querySelectorAll('li > a').forEach(function (link) {
+                const span = link.querySelector('span');
+                if (span && !link.parentElement.hasAttribute('title')) {
+                    const text = span.textContent.trim().split('\n')[0].trim();
+                    if (text) {
+                        link.parentElement.setAttribute('title', text);
+                    }
+                }
+            });
+        }
+
+        // Restore preference on load
+        try {
+            const stored = localStorage.getItem(storageKey);
+            if (stored === '1') {
+                setCollapsed(true);
+            }
+        } catch (e) {}
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function () {
+                const isCollapsed = body.classList.contains('sidebar-collapsed');
+                setCollapsed(!isCollapsed);
+            });
+        }
+    })();
 </script>
 
     </body>

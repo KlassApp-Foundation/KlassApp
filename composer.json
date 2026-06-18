@@ -25,6 +25,7 @@
         "laravel/legacy-factories": "1.x-dev",
         "laravel/sanctum": "^3.2",
         "laravel/scout": "*",
+        "laravel/socialite": "^5.27",
         "laravel/tinker": "^2.0",
         "laravel/ui": "4.x-dev",
         "laravel/vapor-cli": "2.0.x-dev",
@@ -52,6 +53,7 @@
         "barryvdh/laravel-debugbar": "^3.2",
         "beyondcode/laravel-dump-server": "^1.9.0",
         "fakerphp/faker": "^1.9.1",
+        "larastan/larastan": "^2.11",
         "nunomaduro/collision": "^7.0",
         "phpunit/phpunit": "^10.0",
         "spatie/laravel-web-tinker": "^1.8.4"

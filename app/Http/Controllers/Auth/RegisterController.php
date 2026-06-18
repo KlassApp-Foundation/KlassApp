@@ -17,8 +17,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use App\Mail\EmailVerification;
+// EmailVerification mailable removed from registration — OTP is the sole verification channel
 use App\Models\AcademicYear;
+use App\Models\CurrentPlan;
 use App\Models\Subscription;
 use App\Models\Plan;
 use App\Models\SchoolDetail;
@@ -29,6 +30,7 @@ use App\Models\School;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
 use Throwable;
 
 class RegisterController extends Controller
@@ -73,7 +75,17 @@ class RegisterController extends Controller
     {
         return DB::transaction(function () use ($data) {
             $school = $this->createSchool($data);
+            $planName = $data['plan'] ?? session('selected_plan');
+            if ($planName) {
+            $planId = Plan::where("name", $planName)->value("id");
 
+            if ($planId) {
+                CurrentPlan::create([
+                    "school_id" => $school->id, 
+                    "plan_id"   => $planId, 
+                ]);
+            }
+        }
             //$this->createSchoolDetails($school); //added in observer
 
             $user = $this->createSchoolAdmin($school, $data);
@@ -88,14 +100,19 @@ class RegisterController extends Controller
         });
     }
 
-    public function showRegistrationForm()
+    public function showRegistrationForm(Request $request)
     {
+        if ($request->has('plan')) {
+        session(['selected_plan' => $request->plan]);
+    }
         return view('auth.register');
     }
 
-    public function register(RegisterRequest $request)
+    public function register( RegisterRequest $request)
     {
-        $registrationData = $this->prepareRegistrationData($request->all());
+        $input = $request->all();
+        $registrationData = $this->prepareRegistrationData($input);
+        $registrationData['plan'] = $request->plan ?? session('selected_plan');
 
         try {
             event(new Registered($user = $this->create($registrationData)));
@@ -131,7 +148,7 @@ class RegisterController extends Controller
         return Auth::guard();
     }
 
-    private function createSchool($data)
+    private function createSchool( $data)
     {
         try
         {
@@ -154,7 +171,7 @@ class RegisterController extends Controller
             }
 
             $school = School::create($schoolData);
-
+            
             Log::info('New School Created. School Id : '. $school->id. ' Name : '. $school->name );
 
             return $school;
@@ -272,12 +289,12 @@ class RegisterController extends Controller
 
             $defaults = [
                 'cycle' => 30,
-                'name' => 'free',
-                'display_name' => 'Free',
+                'name' => 'freemium',
+                'display_name' => 'Freemium',
                 'order' => 1,
                 'is_active' => 1,
                 'amount' => 0,
-                'no_of_members' => 50,
+                'no_of_users' => 50,
                 'no_of_events' => 5,
                 'no_of_folders' => 5,
                 'no_of_files' => 50,
@@ -297,7 +314,7 @@ class RegisterController extends Controller
 
             $fallbackPlanId = DB::table('plans')->insertGetId($payload);
 
-            $this->safeLogWarning('Created fallback free plan for registration flow', [
+            $this->safeLogWarning('Created fallback Freemium plan for registration flow', [
                 'plan_id' => $fallbackPlanId,
             ]);
 
@@ -513,23 +530,6 @@ class RegisterController extends Controller
         }
     }
 
-    private function sendEmailVerification(User $user)
-    {
-        try
-        {
-            if (env('MAIL_STATUS') == 'on')
-            {
-                Mail::to($user->email)->queue(new EmailVerification($user));
-
-                Log::info('Verification Email Sent');
-            }
-        }
-        catch(Throwable $e)
-        {
-            $this->safeLogWarning('Email verification queue failed', ['message' => $e->getMessage()]);
-        }
-    }
-
     private function sendAdminNotifyMail(User $user)
     {
         try
@@ -568,7 +568,7 @@ class RegisterController extends Controller
     private function dispatchRegistrationSideEffects(User $user)
     {
         try {
-            $this->sendEmailVerification($user);
+            // EmailVerification (magic link) removed — OTP via RegistrationOtpMail is the sole verification channel
             $this->sendAdminNotifyMail($user);
             $this->logNewRegistrationToSlack($user);
         } catch (Throwable $e) {

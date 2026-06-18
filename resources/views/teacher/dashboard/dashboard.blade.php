@@ -3,11 +3,44 @@
 
 @section('content')
     <div class="dashboard-shell dashboard-shell--teacher">
-        <div class="dashboard-live-badge dashboard-live-badge--teacher">
-            <span class="dashboard-live-dot"></span>
-            The Teaching Command Center
+        <div class="dashboard-heading">
+            <div>
+                <h1 class="dashboard-section-title" style="font-size: 1.25rem;">Teacher</h1>
+                <p class="dashboard-subtitle" style="margin-top: 4px;">Stay on top of notice updates, subjects, exams, and day-to-day class rhythm.</p>
+            </div>
         </div>
-        <p class="dashboard-subtitle font-semibold">Stay on top of notice updates, subjects, exams, and day-to-day class rhythm.</p>
+
+        <!-- Teaching KPIs -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card text-center">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-green-500" style="background: rgba(34,197,94,0.10);">
+                    <i class="fa-solid fa-user-graduate text-2xl"></i>
+                </div>
+                <p class="text-xl font-semibold text-gray-800 dashboard-kpi-value mt-2">{{ $dashboard['myStudents'] }}</p>
+                <p class="text-xs item-title dashboard-kpi-label">My Students</p>
+            </div>
+            <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card text-center">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-blue-500" style="background: rgba(30,111,217,0.10);">
+                    <i class="fa-solid fa-door-open text-2xl"></i>
+                </div>
+                <p class="text-xl font-semibold text-gray-800 dashboard-kpi-value mt-2">{{ $dashboard['myClasses'] }}</p>
+                <p class="text-xs item-title dashboard-kpi-label">My Classes</p>
+            </div>
+            <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card text-center">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-amber-500" style="background: rgba(217,119,6,0.10);">
+                    <i class="fa-solid fa-calendar-check text-2xl"></i>
+                </div>
+                <p class="text-xl font-semibold text-gray-800 dashboard-kpi-value mt-2">{{ count($dashboard['upcomingExam']) }}</p>
+                <p class="text-xs item-title dashboard-kpi-label">Upcoming Exams</p>
+            </div>
+            <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card text-center">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-green-600" style="background: rgba(34,197,94,0.10);">
+                    <i class="fa-brands fa-whatsapp text-2xl"></i>
+                </div>
+                <p class="text-xl font-semibold text-gray-800 dashboard-kpi-value mt-2">{{ $dashboard['whatsapp']['totalLinked'] }}</p>
+                <p class="text-xs item-title dashboard-kpi-label">WhatsApp Linked</p>
+            </div>
+        </div>
 
         <!-- start -->
         <div class="flex flex-col lg:flex-row my-2 dashboard-topfold dashboard-topfold--teacher">

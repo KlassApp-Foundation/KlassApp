@@ -76,5 +76,16 @@ Two versions live at http://localhost:8000/
 
 ### Next Session Priority
 1. Fix navbar scroll direction logic (up = restore, down = compact)
-2. Start dashboard redesign work
+2. Finalize dashboard redesign for all roles (teacher, accountant, parent)
 3. Test all animations on mobile
+
+---
+
+## Session Log
+
+### 2026-06-18: Toshi onboarding agent fixes (textarea, Livewire/Vue/Alpine conflict)
+- **Work done**: Fixed Toshi AI onboarding agent — three compounding issues: (1) Missing `</textarea>` in maximize modal caused the browser to treat the voice button, form, messages area, and submit button as raw textarea content. (2) Duplicate Alpine instances (manual CDN Alpine + Livewire v3 bundled Alpine) caused `Livewire.all()` to return 0 components, breaking all Livewire interactions (maximize, close, restore, send). (3) Vue 2 mounted on `#app` wrapping the Livewire component compiled Alpine's `@keydown.enter.prevent` as Vue template expressions, breaking Enter-to-send with `"$wire is not defined"`.
+- **Files modified**: `resources/views/livewire/onboarding-agent.blade.php` (new — added `</textarea>`, replaced Alpine `@keydown` with vanilla JS `onkeydown`), `app/Livewire/OnboardingAgent.php` (new), `resources/views/layouts/app.blade.php` (removed duplicate Alpine CDN, added `@yield('outside-app')` after `#app` closes), `resources/views/admin/dashboard/dashboard.blade.php` (moved `@livewire` to `@section('outside-app')` outside Vue's `#app`)
+- **Key decisions**: Livewire component rendered outside `#app` via new `@yield('outside-app')` section to avoid Vue template compilation conflicts. Removed manual Alpine CDN — Livewire v3 bundles its own Alpine. Used vanilla JS `onkeydown` dispatching form submit events / `Livewire.find()` directly instead of Alpine's `@keydown.enter.prevent` syntax that Vue intercepts.
+- **Status**: ✅ Done — collapse/expand, maximize/restore, Enter-to-send all verified working
+- **Edge cases flagged**: Livewire v3 auto-injects Alpine, so manual Alpine CDN causes `"Detected multiple instances of Alpine"` warning and breaks component registration. Vue 2's `el: '#app'` recompiles the entire DOM tree inside `#app`, which conflicts with any non-Vue framework directives in that subtree.

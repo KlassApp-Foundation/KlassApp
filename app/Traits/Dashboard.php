@@ -25,6 +25,9 @@ use App\Models\Feedback;
 use App\Models\Product;
 use App\Models\Events;
 use App\Models\Video;
+use App\Models\WhatsAppUser;
+use App\Models\MessageDeliveryLog;
+use App\Models\WhatsAppPendingNotification;
 use App\Models\Mark;
 use App\Models\User;
 use App\Models\Task;
@@ -135,6 +138,13 @@ trait Dashboard
 
         $array['standardLinks']  = SiteHelper::getStandardLinkList($school_id);
 
+        $array['standardStudentCounts'] = collect($array['standardLinks'])->map(function ($link) {
+            $link->studentCount = \App\Models\User::whereHas('studentAcademic', function ($q) use ($link) {
+                $q->where('standardLink_id', $link->id)->where('status', '!=', 'exit');
+            })->count();
+            return $link;
+        });
+
         $array['teachers']  = SiteHelper::getTeachingStaffList($school_id,$academic_year->id);
 
         //working
@@ -171,6 +181,22 @@ trait Dashboard
             }
             $i++;
         }*/ //working
+
+        // WhatsApp integration stats (per-school)
+        $array['whatsapp'] = [
+            'parentsOptedIn' => WhatsAppUser::whereHas('user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id)->ByRole(7);
+            })->where('opted_in', true)->count(),
+            'totalLinked'    => WhatsAppUser::whereHas('user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id);
+            })->count(),
+            'messagesThisMonth' => MessageDeliveryLog::whereHas('user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id);
+            })->whereDate('sent_at', '>=', now()->startOfMonth())->whereDate('sent_at', '<=', now()->endOfMonth())->count(),
+            'pendingNotifications' => WhatsAppPendingNotification::whereHas('whatsappUser.user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id);
+            })->count(),
+        ];
 
         return $array;
     }
@@ -295,6 +321,23 @@ trait Dashboard
             $query->where('academic_year_id',$academic_year->id);
         })->where('start_time','>=',date('Y-m-d H:i:s'))->orderBy('start_time','DESC')->take(10)->get()->groupBy('start_time');
     }
+
+        // WhatsApp stats for this school
+        $array['whatsapp'] = [
+            'totalLinked'    => WhatsAppUser::whereHas('user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id);
+            })->count(),
+            'messagesThisMonth' => MessageDeliveryLog::whereHas('user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id);
+            })->whereDate('sent_at', '>=', now()->startOfMonth())->whereDate('sent_at', '<=', now()->endOfMonth())->count(),
+        ];
+
+        // Students under this teacher's classes
+        $array['myStudents'] = User::BySchool($school_id)->ByRole(6)
+            ->whereHas('studentAcademic', function ($q) use ($standardLinks) {
+                $q->whereIn('standardLink_id', $standardLinks);
+            })->count();
+        $array['myClasses'] = count($standardLinks);
 
         return $array;
     }

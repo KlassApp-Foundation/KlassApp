@@ -3,8 +3,11 @@
 
 @section('content')
     <div class="dashboard-shell dashboard-shell--accountant">
-        <div>
-            <p class="dashboard-subtitle">Review finance-related events, notices, reminders, and unpaid fee signals at a glance.</p>
+        <div class="dashboard-heading">
+            <div>
+                <h1 class="dashboard-section-title" style="font-size: 1.25rem;">Accountant</h1>
+                <p class="dashboard-subtitle" style="margin-top: 4px;">Review finance-related events, notices, reminders, and unpaid fee signals at a glance.</p>
+            </div>
         </div>
         @include('partials.message')
         <!-- start -->

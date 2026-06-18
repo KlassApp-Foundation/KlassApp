@@ -4,8 +4,11 @@
 @section('content')
 
     <div class="dashboard-shell dashboard-shell--reception">
-        <div>
-            <p class="dashboard-subtitle">Manage front-desk operations, events, notices, and day-to-day tasks with clarity.</p>
+        <div class="dashboard-heading">
+            <div>
+                <h1 class="dashboard-section-title" style="font-size: 1.25rem;">Reception</h1>
+                <p class="dashboard-subtitle" style="margin-top: 4px;">Manage front-desk operations, events, notices, and day-to-day tasks with clarity.</p>
+            </div>
         </div>
         @include('partials.message')
         <!-- start -->

@@ -5,19 +5,16 @@
     <div class="dashboard-shell dashboard-shell--admin">
         <div class="dashboard-heading">
             <div>
-                <div class="dashboard-live-badge">
-                    <span class="dashboard-live-dot"></span>
-                    The Admin Command Center
-                </div>
-                <p class="dashboard-subtitle font-semibold">Live school activity, enrollment pulse, and updates in one place.</p>
+                <h1 class="dashboard-section-title" style="font-size: 1.25rem;">Admin</h1>
+                <p class="dashboard-subtitle" style="margin-top: 4px;">Live school activity, enrollment pulse, and updates in one place.</p>
             </div>
         </div>
         @include('partials.message')
-        <!-- start -->
+
         <div class="flex flex-wrap my-2 dashboard-topfold">
             <div class="w-full xl:w-1/3 lg:w-2/3 my-2">
                 <div class="flex flex-wrap lg:flex-row">
-                    <div class=" w-full lg:w-1/2 md:w-1/2 px-1 my-1">
+                    <div class="w-full lg:w-1/2 md:w-1/2 px-1 my-1">
                         <a href="{{ url('/admin/students') }}">
                             <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card">
                                 <div class="w-20 h-20 rounded-full bg-light-green flex items-center justify-center mx-auto text-green-500 dashboard-kpi-icon">
@@ -32,7 +29,7 @@
                     </div>
                     <div class="w-full lg:w-1/2 md:w-1/2 px-1 my-1">
                         <a href="{{ url('/admin/teachers') }}">
-                            <div class="bg-white custom-shadow px-3 py-3 border dashboard-kpi-card">
+                            <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card">
                                 <div class="w-20 h-20 rounded-full bg-light-blue flex items-center justify-center mx-auto text-blue-500 dashboard-kpi-icon">
                                     <svg class="w-10 h-10 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><g id="Outline"><path d="M228,136a12,12,0,1,0,12,12A12.013,12.013,0,0,0,228,136Z"/><path d="M300,136a12,12,0,1,0,12,12A12.013,12.013,0,0,0,300,136Z"/><path d="M264,184a8.009,8.009,0,0,1-8-8H240a24,24,0,0,0,48,0H272A8.009,8.009,0,0,1,264,184Z"/><path d="M493.171,305.9a8.011,8.011,0,0,0-6.486-1.788l-72.327,12.055a36.4,36.4,0,0,0-13.4,5.078l-5.513-13.92a53.285,53.285,0,0,0-9.18-15.327l2.087-18.917a138.572,138.572,0,0,0,.844-14.517,130.564,130.564,0,0,0-10.645-51.547,115.553,115.553,0,0,1-9.125-51.1l1.361-27.691c.083-1.745.169-3.55.169-5.341A107.041,107.041,0,0,0,264,16,106.941,106.941,0,0,0,157.21,128.232l1.356,27.6c.08,2.061.154,4.007.154,5.933a114.046,114.046,0,0,1-9.273,45.249,130.724,130.724,0,0,0-9.8,66.118l2.081,18.656a54.31,54.31,0,0,0-6.336,9.162l-10.921-27.3a23.563,23.563,0,1,0-42.952,19.289L83.056,296H67.331a40.2,40.2,0,0,1-17.888-4.223l-7.972-3.986A17.6,17.6,0,0,0,16,303.533v22.578a23.868,23.868,0,0,0,13.267,21.466l13.021,6.511A56.284,56.284,0,0,0,67.331,360H72v23.691L66.253,458.4A34.925,34.925,0,0,0,101.075,496q.888,0,1.766-.045c.51.024,1.019.044,1.526.044a32.2,32.2,0,0,0,30.25-21.151l36.519-67.9A69.974,69.974,0,0,0,184,434.8V496h16V432a8,8,0,0,0-1.854-5.121,54.544,54.544,0,0,1,6.976-76.733l-10.244-12.292A70.515,70.515,0,0,0,184.939,348a8.225,8.225,0,0,0-.827,1l-.018-.01-.142.249c-.036.056-.065.118-.1.175a70.053,70.053,0,0,0-10.4,19.443L136,438.5V341.307L147.368,313a38.344,38.344,0,0,1,8.419-12.912A40.489,40.489,0,0,1,184.48,288h26.771l45.726,83.831a8,8,0,0,0,14.046,0L288,340.707V448a8,8,0,0,0,6.431,7.845L328,462.559V496h16V465.758l30.608,6.113c.2.035,1.127.129,1.392.129h15.135l1.536,2.862A32.409,32.409,0,0,0,423.04,496a30.12,30.12,0,0,0,5.273-.436,32.423,32.423,0,0,0,25.041-20.889l21.276-3.546h0a15.934,15.934,0,0,0,13.333-14.963l1.6-.321A8,8,0,0,0,496,448V312A8,8,0,0,0,493.171,305.9Zm-264.6-19.555A19.216,19.216,0,0,0,240,268.8V244.317a80.039,80.039,0,0,0,48,0V268.8a19.216,19.216,0,0,0,11.428,17.541L289.8,304H238.2ZM264,232a64.072,64.072,0,0,1-64-64V132.184a116.869,116.869,0,0,0,34.624-39.637A207.224,207.224,0,0,0,328,134.82V168A64.072,64.072,0,0,1,264,232Zm108.115,68.225.148.152a37.073,37.073,0,0,1,8.3,12.81L384,321.864a36.387,36.387,0,0,0-14.357-5.7l-62.567-10.428L316.749,288H343.44A39.635,39.635,0,0,1,372.115,300.225ZM376.792,344l-36.4-7.279-36.4-7.28v-8l63.012,10.5A20.263,20.263,0,0,1,382.376,344Zm40.2-12.054L480,321.443v8l-37.627,7.526L407.208,344h-5.584A20.263,20.263,0,0,1,416.989,331.946ZM49.443,339.777l-13.021-6.51A7.958,7.958,0,0,1,32,326.111V303.533a1.534,1.534,0,0,1,.759-1.361,1.526,1.526,0,0,1,1.556-.07l7.973,3.986A56.284,56.284,0,0,0,67.331,312H96a8,8,0,0,0,7.155-11.578l-7.323-14.648a7.56,7.56,0,0,1,4.929-10.717h0a7.589,7.589,0,0,1,8.855,4.527L120,305.541V344H67.331A40.2,40.2,0,0,1,49.443,339.777ZM120,360v16H88V360ZM82.207,459.624,87.408,392H120v69.075a18.936,18.936,0,0,1-17.555,18.856,8.169,8.169,0,0,0-.9.045c-.158,0-.311.024-.47.024a18.922,18.922,0,0,1-18.868-20.376ZM184.128,349.01a8,8,0,0,1,.509-.618c-.164.209-.323.421-.485.631Zm-27.662-69.452-.917-8.221a114.7,114.7,0,0,1,8.6-58.021A129.949,129.949,0,0,0,174.72,161.76c0-2.235-.084-4.427-.17-6.633l-1.36-27.684a90.941,90.941,0,1,1,181.77-4.563c0,1.41-.073,2.949-.15,4.567l-1.359,27.662A131.612,131.612,0,0,0,363.843,213.3,114.657,114.657,0,0,1,373.2,258.56a122.558,122.558,0,0,1-.752,12.8l-.909,8.244A55.951,55.951,0,0,0,343.44,272H307.2a3.243,3.243,0,0,1-3.2-3.2V237.237A80.026,80.026,0,0,0,344,168V128a8,8,0,0,0-6.869-7.92,191.273,191.273,0,0,1-95.466-42.439l-4.543-3.787a8,8,0,0,0-12.277,2.568l-3.1,6.2a100.785,100.785,0,0,1-34.182,38.721A8,8,0,0,0,184,128v40a80.026,80.026,0,0,0,40,69.237V268.8a3.243,3.243,0,0,1-3.2,3.2H184.48A56.358,56.358,0,0,0,156.466,279.558ZM264,351.293,246.931,320h34.138Zm40-5.534,64,12.8v95.682l-64-12.8ZM384,360h16v96H384Zm41.568,119.8a14.308,14.308,0,0,1-2.528.2,16.39,16.39,0,0,1-14.1-8.061c.151-.017.3-.042.449-.068.059-.011.118-.015.177-.026l.013,0,.055-.011,16.445-3.289a15.791,15.791,0,0,0,8.056,7.015A16.678,16.678,0,0,1,425.568,479.8ZM472,455.346h0l-32,5.334V430.945a2.408,2.408,0,0,1,2.017-2.381l27.173-4.529A2.621,2.621,0,0,1,469.6,424a2.416,2.416,0,0,1,2.4,2.416l.006,28.928Zm-5.442-47.093-27.172,4.528A18.357,18.357,0,0,0,424,430.945v21.7l-8,1.6V358.559l64-12.8v65.479A18.361,18.361,0,0,0,466.559,408.253Z"/></g></svg>
                                 </div>
@@ -45,7 +42,7 @@
                     </div>
                     <div class="w-full lg:w-1/2 md:w-1/2 px-1 my-1">
                         <a href="{{ url('/admin/parents') }}">
-                            <div class="bg-white custom-shadow px-3 py-3 border dashboard-kpi-card">
+                            <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card">
                                 <div class="w-20 h-20 rounded-full bg-light-orange flex items-center justify-center mx-auto text-orange-500 dashboard-kpi-icon">
                                     <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve" class="w-10 h-10 fill-current"><g><g><path d="M71.069,354.63c-1.859-1.86-4.439-2.92-7.069-2.92s-5.21,1.06-7.07,2.92c-1.86,1.86-2.93,4.439-2.93,7.08 c0,2.63,1.069,5.2,2.93,7.06c1.86,1.87,4.44,2.94,7.07,2.94s5.21-1.07,7.069-2.94c1.861-1.86,2.931-4.44,2.931-7.06 C74,359.08,72.93,356.5,71.069,354.63z"></path></g></g><g><g><path d="M484.095,282.754l-0.716-0.743c-3.845-3.965-10.177-4.063-14.141-0.217c-3.965,3.845-4.062,10.176-0.217,14.141 l0.594,0.616c1.966,2.063,4.602,3.102,7.242,3.102c2.478,0,4.96-0.916,6.896-2.76 C487.751,293.083,487.904,286.753,484.095,282.754z"></path></g></g><g><g><path d="M505.89,317.818c-1.895-5.188-7.635-7.857-12.823-5.964c-5.188,1.895-7.858,7.636-5.964,12.823 c3.25,8.899,4.897,18.265,4.897,27.835V465h-34V361.705c0-5.522-4.478-10-10-10c-5.522,0-10,4.478-10,10V465h-79.464v-77.749 c0-33.581-22.735-62.688-55.289-70.781c-0.137-0.034-0.273-0.065-0.411-0.094l-0.786-0.161 c8.261-8.487,14.198-19.236,16.772-31.222l34.632,55.38c1.828,2.923,5.032,4.698,8.479,4.698c3.447,0,6.651-1.776,8.479-4.699 l43.097-68.946c8.763,0.281,17.332,1.934,25.502,4.957c1.145,0.423,2.316,0.624,3.469,0.624c4.065,0,7.887-2.498,9.38-6.533 c1.916-5.181-0.729-10.933-5.909-12.849c-9.599-3.551-19.628-5.592-29.877-6.112c18.239-15.421,29.85-38.448,29.85-64.146v-31.431 v-17.814V133c0-0.933-0.137-1.832-0.376-2.688c-3.955-42.668-39.941-76.189-83.624-76.189h-0.001 c-43.683,0-79.668,33.521-83.623,76.189c-0.239,0.856-0.376,1.755-0.376,2.688v5.123v17.814v31.431 c0,4.391,0.342,8.702,0.994,12.913c-5.805-2.224-12.01-3.625-18.478-4.069v-58.468C260.44,76.679,210.762,27,149.697,27 S38.953,76.679,38.953,137.744v135.059C15.259,291.331,0,320.172,0,352.513V475c0,5.522,4.478,10,10,10h492 c5.522,0,10-4.478,10-10V352.513C512,340.595,509.944,328.922,505.89,317.818z M361.931,316.208l-32.013-51.191 c9.871,4.084,20.677,6.351,32.006,6.351h28.036L361.931,316.208z M297.925,138.123c-0.001-35.29,28.709-64,63.999-64 c35.29,0,64,28.71,64,64v0.341l-34.438-20.232c-4.211-2.475-9.593-1.544-12.73,2.199c-13.583,16.209-33.502,25.506-54.65,25.506 h-26.181V138.123z M297.924,165.937h26.181c24.218,0,47.177-9.521,64.2-26.378l37.619,22.101v25.708c0,35.29-28.711,64-64.001,64 c-35.289,0-63.999-28.71-63.999-64V165.937z M150.076,251.368c-35.29,0-64-28.71-64-64v-21.431h26.182 c24.218,0,47.177-9.521,64.2-26.378l37.618,22.101v25.708C214.076,222.658,185.366,251.368,150.076,251.368z M181.578,265.216 l-31.874,50.992l-28.041-44.84h28.413C161.215,271.368,171.843,269.17,181.578,265.216z M211.742,261.333H243.6 c6.688,0,13.166-1.783,18.829-4.999l17.178,4.652c0.853,0.231,1.731,0.349,2.614,0.349h18.037v10.19 c0,24.356-19.854,44.172-44.258,44.172s-44.258-19.815-44.258-44.172V261.333z M295.98,241.334h-12.429l-5.961-1.614 c0.94-4.127-0.824-8.56-4.663-10.828c-4.755-2.809-10.886-1.232-13.696,3.522c-3.251,5.502-9.24,8.92-15.631,8.92h-27.58 c7.116-14.941,22.359-25.293,39.98-25.293C273.621,216.041,288.864,226.394,295.98,241.334z M58.953,137.744 C58.953,87.708,99.661,47,149.697,47s90.743,40.708,90.743,90.744v60.212c-2.515,0.628-4.969,1.409-7.358,2.325 c0.652-4.21,0.994-8.522,0.994-12.913v-31.431c0-3.497-1.92-6.851-4.935-8.622l-49.503-29.083 c-4.211-2.474-9.592-1.544-12.73,2.199c-13.583,16.209-33.502,25.506-54.65,25.506H76.076c-5.522,0-10,4.477-10,10v31.431 c0,25.692,11.606,48.714,29.837,64.135c-13.133,0.672-25.609,3.866-36.96,9.098V137.744z M153.464,465H74v-59.333 c0-5.522-4.478-10-10-10c-5.522,0-10,4.478-10,10V465H20V352.513c0-43.73,34.776-79.471,78.123-81.068l43.104,68.928 c1.828,2.923,5.032,4.698,8.479,4.698c3.447,0,6.651-1.776,8.479-4.699l34.891-55.818c2.522,12.161,8.509,23.064,16.868,31.655 l-0.86,0.183c-0.111,0.024-0.222,0.05-0.331,0.077c-32.554,8.094-55.289,37.2-55.289,70.781V465z M338.536,465h-29.229v-62 c0-5.522-4.478-10-10-10c-5.522,0-10,4.478-10,10v62h-76v-62c0-5.522-4.478-10-10-10c-5.522,0-10,4.478-10,10v62h-19.844v-77.749 c0-24.319,16.423-45.404,39.957-51.333l20.106-4.281c6.999,2.618,14.57,4.059,22.473,4.059c7.793,0,15.266-1.395,22.183-3.945 l20.433,4.176c23.517,5.94,39.921,27.016,39.921,51.324V465z"></path></g></g><g><g><path d="M337.16,175.83c-1.86-1.86-4.44-2.93-7.07-2.93c-2.64,0-5.21,1.07-7.07,2.93c-1.87,1.86-2.93,4.44-2.93,7.07 c0,2.64,1.06,5.21,2.93,7.07c1.86,1.87,4.431,2.93,7.07,2.93c2.63,0,5.21-1.06,7.07-2.93c1.859-1.86,2.93-4.43,2.93-7.07 C340.09,180.27,339.02,177.69,337.16,175.83z"></path></g></g><g><g><path d="M400.83,175.83c-1.86-1.86-4.44-2.93-7.07-2.93s-5.21,1.07-7.07,2.93c-1.859,1.86-2.93,4.44-2.93,7.07 c0,2.64,1.07,5.21,2.93,7.07c1.86,1.87,4.44,2.93,7.07,2.93s5.21-1.06,7.07-2.93c1.859-1.86,2.93-4.44,2.93-7.07 S402.69,177.69,400.83,175.83z"></path></g></g><g><g><path d="M380.686,207.885c-3.906-3.905-10.236-3.905-14.142,0c-2.629,2.63-6.908,2.63-9.537,0c-3.906-3.905-10.236-3.905-14.143,0 c-3.905,3.905-3.905,10.237,0,14.143c5.214,5.213,12.063,7.82,18.911,7.82s13.697-2.607,18.911-7.82 C384.591,218.123,384.591,211.791,380.686,207.885z"></path></g></g><g><g><path d="M125.309,175.83c-1.859-1.86-4.439-2.93-7.069-2.93c-2.631,0-5.21,1.07-7.07,2.93c-1.86,1.86-2.93,4.44-2.93,7.07 s1.069,5.21,2.93,7.07c1.86,1.87,4.439,2.93,7.07,2.93c2.63,0,5.21-1.06,7.069-2.93c1.86-1.86,2.931-4.44,2.931-7.07 S127.17,177.69,125.309,175.83z"></path></g></g><g><g><path d="M188.979,175.83c-1.859-1.86-4.43-2.93-7.069-2.93c-2.63,0-5.21,1.07-7.07,2.93c-1.86,1.86-2.93,4.44-2.93,7.07 s1.069,5.21,2.93,7.07c1.861,1.86,4.44,2.93,7.07,2.93c2.64,0,5.21-1.07,7.069-2.93c1.87-1.86,2.931-4.44,2.931-7.07 S190.849,177.69,188.979,175.83z"></path></g></g><g><g><path d="M168.84,207.885c-3.906-3.905-10.236-3.905-14.143,0c-2.629,2.63-6.908,2.63-9.537,0c-3.906-3.905-10.236-3.905-14.143,0 c-3.905,3.906-3.905,10.238,0.001,14.143c5.214,5.213,12.063,7.82,18.911,7.82c6.848,0,13.697-2.607,18.911-7.82 C172.745,218.123,172.745,211.791,168.84,207.885z"></path></g></g><g><g><path d="M274.911,282.7c-3.906-3.904-10.236-3.904-14.143,0c-2.629,2.631-6.908,2.631-9.537,0c-3.906-3.904-10.236-3.904-14.143,0 c-3.905,3.905-3.905,10.237,0,14.143c5.215,5.214,12.063,7.82,18.912,7.82s13.697-2.606,18.911-7.82 C278.816,292.938,278.816,286.606,274.911,282.7z"></path></g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g></svg>
                                 </div>
@@ -68,6 +65,32 @@
                                 </div>
                             </div>
                         </a>
+                    </div>
+                </div>
+
+                <!-- WhatsApp Row -->
+                <div class="flex flex-row w-full gap-2">
+                    <div class="w-1/2 px-1 my-1">
+                        <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card h-full">
+                            <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto text-green-500 dashboard-kpi-icon" style="background: rgba(34,197,94,0.10);">
+                                <i class="fa-brands fa-whatsapp text-3xl"></i>
+                            </div>
+                            <div class="text-center py-1">
+                                <p class="text-2xl font-semibold text-gray-800 dashboard-kpi-value">{{ $dashboard['whatsapp']['parentsOptedIn'] }}</p>
+                                <p class="text-base item-title dashboard-kpi-label">WhatsApp Parents</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-1/2 px-1 my-1">
+                        <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card h-full">
+                            <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto text-blue-500 dashboard-kpi-icon" style="background: rgba(30,111,217,0.10);">
+                                <i class="fa-solid fa-paper-plane text-3xl"></i>
+                            </div>
+                            <div class="text-center py-1">
+                                <p class="text-2xl font-semibold text-gray-800 dashboard-kpi-value">{{ $dashboard['whatsapp']['messagesThisMonth'] }}</p>
+                                <p class="text-base item-title dashboard-kpi-label">Messages This Month</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -102,20 +125,14 @@
                         @if(count($dashboard['noticeboard']) > 0)
                             @foreach($dashboard['noticeboard'] as $noticeboard)
                                 <div class="notice-box-list py-3 mx-3 border-b">
-                                    <div class="bg-teal-500 text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
+                                    <div class="bg-teal-500 text-x rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
                                         <p>{{ $noticeboard->title }}</p>
                                     </div>
                                     <div class="bg-purple-500 text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
                                         <p>{{ date('d M Y',strtotime($noticeboard->publish_date)) }}</p>
                                     </div>
                                     <div class="bg-orange-500 text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
-                                        <p>
-                                            @if($noticeboard->type == 'class')
-                                                {{ $noticeboard->standardLink->StandardSection }}
-                                            @else
-                                                {{ ucwords($noticeboard->type) }}
-                                            @endif
-                                        </p>
+                                        <p>{{ ucwords($noticeboard->type) }}</p>
                                     </div>
                                     <div class="my-1">
                                         <p class="text-sm text-gray-900 font-semibold">{!! $noticeboard->description !!}</p>
@@ -124,135 +141,17 @@
                                         <p class="text-gray-500">
                                             <span class="text-gray-500">{{ $noticeboard->created_at->diffForHumans() }}</span>
                                         </p>
-                                        @if($noticeboard->attachment_file > '')
-                                            <div class="flex justify-end">
-                                                <a href="{{ $noticeboard->AttachmentPath }}" target="_blank">
-                                                    <svg class="w-5 h-5 fill-current mr-1 text-gray-600" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve"><g><g><path d="M472,313v139c0,11.028-8.972,20-20,20H60c-11.028,0-20-8.972-20-20V313H0v139c0,33.084,26.916,60,60,60h392 c33.084,0,60-26.916,60-60V313H472z"/></g></g><g><g><polygon points="352,235.716 276,311.716 276,0 236,0 236,311.716 160,235.716 131.716,264 256,388.284 380.284,264"/></g></g></svg>
-                                                </a>
-                                            </div>
-                                        @endif
                                     </div>
                                 </div>
                             @endforeach
                         @else
-                            <div class="notice-box-list py-3 mx-3 border-b">
-                                <p class="text-sm text-gray-900 font-semibold" style="text-align: center;">No Notice Found</p>
-                            </div>
+                            <div class="my-4 text-center text-gray-400">No notices available</div>
                         @endif
                     </div>
                 </div>
             </div>
         </div>
-        <!-- end -->
 
-        <!-- start -->
-        <!--<div class="flex flex-col lg:flex-row my-2">
-            <div class="w-full lg:w-1/2 md:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow py-1 border dashboard-panel-card">
-                    <div>
-                        <h1 class="text-gray-800 px-4 font-semibold text-lg py-2 pb-3">Exam Toppers</h1>
-                    </div>
-                    <div class="mt-3">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th class="font-normal item-title text-left px-3 py-2">NO.</th>
-                                    <th class="font-normal item-title text-left px-3 py-2">NAME</th>
-                                    <th class="font-normal item-title text-left px-3 py-2">MARKS</th>
-                                    <th class="font-normal item-title text-left px-3 py-2">%AVG</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="bg-gray-100 border-t">
-                                    <td class="py-2 px-3">28</td>
-                                        <td class="py-2 px-3">
-                                            <div class="flex items-center">
-                                                <img src="{{url('uploads/Images/avatar.jpeg')}}" class="w-10 h-10 rounded-full">
-                                                <div class="mx-4">
-                                                    <p class="text-sm">Sara Hopkins</p>
-                                                    <p class="text-sm text-gray-500">Science</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="py-2 px-3">199</td>
-                                        <td class="py-2 px-3">99.00</td>
-                                </tr>
-                                <tr class="border-t">
-                                    <td class="py-2 px-3">67</td>
-                                    <td class="py-2 px-3">
-                                        <div class="flex items-center">
-                                            <img src="{{url('uploads/Images/avatar.jpeg')}}" class="w-10 h-10 rounded-full">
-                                            <div class="mx-4">
-                                                <p class="text-sm">Allen Collins</p>
-                                                <p class="text-sm text-gray-500">Mathematics</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="py-2 px-3">197</td>
-                                    <td class="py-2 px-3">97.00</td>
-                                </tr>
-                                <tr class="bg-gray-100 border-t">
-                                    <td class="py-2 px-3">12</td>
-                                    <td class="py-2 px-3">
-                                        <div class="flex items-center">
-                                            <img src="{{url('uploads/Images/avatar.jpeg')}}" class="w-10 h-10 rounded-full">
-                                            <div class="mx-4">
-                                                <p class="text-sm">Erin Gonzales</p>
-                                                <p class="text-sm text-gray-500">Physics</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="py-2 px-3">194</td>
-                                    <td class="py-2 px-3">97.00</td>
-                                </tr>
-                                <tr class="border-t">
-                                    <td class="py-2 px-3">45</td>
-                                    <td class="py-2 px-3">
-                                        <div class="flex items-center">
-                                            <img src="{{url('uploads/Images/avatar.jpeg')}}" class="w-10 h-10 rounded-full">
-                                            <div class="mx-4">
-                                                <p class="text-sm">Merri Diamond</p>
-                                                <p class="text-sm text-gray-500">Biology</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="py-2 px-3">198</td>
-                                    <td class="py-2 px-3">98.00</td>
-                                </tr>
-                                <tr class="bg-gray-100 border-t">
-                                    <td class="py-2 px-3">78</td>
-                                    <td class="py-2 px-3">
-                                        <div class="flex items-center">
-                                            <img src="{{url('uploads/Images/avatar.jpeg')}}" class="w-10 h-10 rounded-full">
-                                            <div class="mx-4">
-                                                <p class="text-sm">Allen Collins</p>
-                                                <p class="text-sm text-gray-500">Mathematics</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="py-2 px-3">197</td>
-                                    <td class="py-2 px-3">97.00</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="w-full lg:w-1/2 md:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow px-4 py-3 border dashboard-panel-card">
-                    <div>
-                        <h1 class="text-gray-800 font-semibold text-xl">Student Passing</h1>
-                    </div>
-                    <div class="mt-3">
-                        <canvas id="barChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div> -->
-        <!-- end -->
-
-
-        <!-- start -->
         <div class="flex flex-col lg:flex-row my-2">
             @if(config('gexam.enabled', false))
             <div class="w-full lg:w-2/3 px-1 my-2">
@@ -270,7 +169,7 @@
                                     <th class="font-semibold text-left px-3 pt-2 pb-3 text-base">Time</th>
                                 </tr>
                             </thead>
-                            @if(count($dashboard['upcomingExam']) > 0)
+                            @if(!empty($dashboard['upcomingExam']) && count($dashboard['upcomingExam']) > 0)
                                 <tbody>
                                     @foreach($dashboard['upcomingExam'] as $key => $upcomingExams)
                                         <tr>
@@ -279,21 +178,19 @@
                                             </td>
                                         </tr>
                                         @foreach($upcomingExams as $upcomingExam)
-                                            <tr class=" border-t align-baseline">
-                                                <td class="py-3 px-3 w-64">{{ $upcomingExam->exam->name }}</td>
-                                                <td class="py-3 px-3">{{ $upcomingExam->subject->name }}</td>
-                                                <td class="py-3 px-3">{{ $upcomingExam->standardLink->StandardSection }}</td>
-                                                <td class="py-3 px-3">{{ date('H:i A',strtotime($upcomingExam->start_time)) }}</td>
+                                            <tr>
+                                                <td class="text-left px-3 pt-2 pb-3 text-base">{{ $upcomingExam->exam->name }}</td>
+                                                <td class="text-left px-3 pt-2 pb-3 text-base">{{ $upcomingExam->subject->name }}</td>
+                                                <td class="text-left px-3 pt-2 pb-3 text-base">{{ $upcomingExam->standardLink->StandardSection }}</td>
+                                                <td class="text-left px-3 pt-2 pb-3 text-base">{{ date('H:i:s',strtotime($key)) }}</td>
                                             </tr>
                                         @endforeach
                                     @endforeach
                                 </tbody>
                             @else
                                 <tbody>
-                                    <tr class="border-t py-2">
-                                        <td colspan="4" class="text-center py-2">
-                                            No Records found
-                                        </td>
+                                    <tr>
+                                        <td colspan="4" class="text-center py-6 text-gray-400">No upcoming exams</td>
                                     </tr>
                                 </tbody>
                             @endif
@@ -302,130 +199,95 @@
                 </div>
             </div>
             @endif
+
             <div class="w-full lg:w-1/3 px-1 my-2">
-                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
-                    <view-birthday url="{{ url('/') }}"></view-birthday>
-                    <view-birthday-teacher url="{{ url('/') }}" mode="admin"></view-birthday-teacher>
-                    <view-work-anniversary url="{{ url('/') }}" mode="admin"></view-work-anniversary>
+                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border dashboard-panel-card">
+                    <div>
+                        <h1 class="text-gray-800 px-3 font-semibold text-xl py-2 pb-3">Feedbacks</h1>
+                    </div>
+                    <div class="mt-2">
+                        @if(count($dashboard['feedbacks']) != 0)
+                            @foreach($dashboard['feedbacks'] as $feedback)
+                                <div class="border-b pb-3 mb-3 last:border-0 last:pb-0 last:mb-0">
+                                    <div class="text-sm">
+                                        <span class="font-semibold text-gray-800">{{ $feedback->parent->name ?? 'Parent' }}</span>
+                                        <span class="text-gray-500"> - {{ $feedback->feedbackMessage->message ?? '' }}</span>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">{{ $feedback->created_at->diffForHumans() }}</p>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="my-4 text-center text-gray-400">No feedbacks available</div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
 
-
-             {{-- <livewire:timetable.dashboard-class />
-              <livewire:timetable.dashboard-teacher />
-              <livewire:timetable.day-time-table />--}}
-
-        <div>
-            <div class="w-full px-1 my-2 bg-white dashboard-panel-card">
-                <div class="pt-2 pb-6">
+        <div class="flex flex-col lg:flex-row my-2">
+            <div class="w-full lg:w-1/2 px-1 my-2">
+                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border dashboard-panel-card">
                     <div>
-                        <h1 class="text-gray-800 font-semibold text-xl">
-                            <a href="{{ url('/admin/feedbacks') }}">Parent's Feedback</a>
-                        </h1>
+                        <h1 class="text-gray-800 px-3 font-semibold text-xl py-2 pb-3">Events</h1>
                     </div>
-                    <div class="pt-3 overflow-x-auto">
-                        <table class="table table-bordered messageTable w-full text-sm custom-table" id="messagelist">
-                            <thead class="bg-grey-light">
+                    <div class="mt-2 overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
                                 <tr>
-                                    <th>From</th>
-                                    <th>Category</th>
-                                    <th>Message</th>
-                                    <th>Sent On</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            @if(count($dashboard['feedbacks']) != 0)
-                                @foreach($dashboard['feedbacks'] as $feedback)
-                                    <tbody>
-                                        <td>
-                                            <a href="{{ url('/admin/parent/show/'.$feedback->parent->name) }}">{{ ucfirst($feedback->parent->FullName) }}</a>
-                                        </td>
-                                        <td>{{ ucwords(str_replace('_', ' ', (str_replace('/', ' / ',$feedback->latestMessage->category)))) }}</td>
-                                        <td>
-                                            <p> {!! str_limit($feedback->feedbackMessage->first()->message,50,'...') !!}
-                                                @if( $feedback->latestMessage->is_seen == '0' )
-                                                    <span class="bg-red-300 rounded-full text-white inline-block px-2 my-1 mb-2"> New </span>
-                                                @endif
-                                            </p>
-                                        </td>
-                                        <td>{{ date('d-m-Y H:i:s',strtotime($feedback->created_at)) }}</td>
-                                        <td>
-                                            <div class="flex items-center">
-                                                <a href="{{ url('admin/feedback/edit/'.$feedback->id) }}" title="Show">
-                                                    <svg class="w-4 h-4 fill-current text-gray-500 mx-1" height="512pt" viewBox="-27 0 512 512" width="512pt" xmlns="http://www.w3.org/2000/svg"><path d="m188 492c0 11.046875-8.953125 20-20 20h-88c-44.113281 0-80-35.886719-80-80v-352c0-44.113281 35.886719-80 80-80h245.890625c44.109375 0 80 35.886719 80 80v191c0 11.046875-8.957031 20-20 20-11.046875 0-20-8.953125-20-20v-191c0-22.054688-17.945313-40-40-40h-245.890625c-22.054688 0-40 17.945312-40 40v352c0 22.054688 17.945312 40 40 40h88c11.046875 0 20 8.953125 20 20zm117.890625-372h-206c-11.046875 0-20 8.953125-20 20s8.953125 20 20 20h206c11.042969 0 20-8.953125 20-20s-8.957031-20-20-20zm20 100c0-11.046875-8.957031-20-20-20h-206c-11.046875 0-20 8.953125-20 20s8.953125 20 20 20h206c11.042969 0 20-8.953125 20-20zm-226 60c-11.046875 0-20 8.953125-20 20s8.953125 20 20 20h105.109375c11.046875 0 20-8.953125 20-20s-8.953125-20-20-20zm355.472656 146.496094c-.703125 1.003906-3.113281 4.414062-4.609375 6.300781-6.699218 8.425781-22.378906 28.148437-44.195312 45.558594-27.972656 22.324219-56.757813 33.644531-85.558594 33.644531s-57.585938-11.320312-85.558594-33.644531c-21.816406-17.410157-37.496094-37.136719-44.191406-45.558594-1.5-1.886719-3.910156-5.300781-4.613281-6.300781-4.847657-6.898438-4.847657-16.097656 0-22.996094.703125-1 3.113281-4.414062 4.613281-6.300781 6.695312-8.421875 22.375-28.144531 44.191406-45.554688 27.972656-22.324219 56.757813-33.644531 85.558594-33.644531s57.585938 11.320312 85.558594 33.644531c21.816406 17.410157 37.496094 37.136719 44.191406 45.558594 1.5 1.886719 3.910156 5.300781 4.613281 6.300781 4.847657 6.898438 4.847657 16.09375 0 22.992188zm-41.71875-11.496094c-31.800781-37.832031-62.9375-57-92.644531-57-29.703125 0-60.84375 19.164062-92.644531 57 31.800781 37.832031 62.9375 57 92.644531 57s60.84375-19.164062 92.644531-57zm-91.644531-38c-20.988281 0-38 17.011719-38 38s17.011719 38 38 38 38-17.011719 38-38-17.011719-38-38-38zm0 0"/></svg>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tbody>
-                                @endforeach
-                            @else
-                                <tbody>
-                                    <td colspan="5" style="text-align: center;"> No Records found</td>
-                                </tbody>
-                            @endif
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--feedback-->
-
-
-         <!--feedback-->
-        <div>
-            <div class="w-full px-1 my-2 bg-white dashboard-panel-card">
-                <div class="pt-2 pb-6">
-                    <div>
-                        <h1 class="text-gray-800 font-semibold text-xl">
-                            <a href="{{ url('/admin/feedbacks') }}">Pending Event</a>
-                        </h1>
-                    </div>
-                    <div class="pt-3 overflow-x-auto">
-                        <table class="table table-bordered messageTable w-full text-sm custom-table" id="messagelist">
-                            <thead class="bg-grey-light">
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Description</th>
-                                    <th>Category</th>
-                                    <th>Location</th>
-                                     <th>Date</th>
-                                    <th>Organised By</th>
-                                    <th>Action</th>
+                                    <th class="font-semibold text-left px-3 pt-2 pb-3 text-base">Event Name</th>
+                                    <th class="font-semibold text-left px-3 pt-2 pb-3 text-base">Date</th>
                                 </tr>
                             </thead>
                             @if(count($dashboard['events']) != 0)
-                                @foreach($dashboard['events'] as $events)
-                                    <tbody>
-                                        <td>
-
-                                        {{ ucfirst($events->title) }}
-                                        </td>
-                                        <td>{{ ucfirst($events->description) }}</td>
-                                        <td>
-                                           {{ ucfirst($events->category) }}
-                                        </td>
-                                         <td>
-                                           {{ ucfirst($events->location) }}
-                                        </td>
-
-                                        <td>{{ date('d-m-Y H:i:s',strtotime($events->start_date)) }} - {{ date('d-m-Y H:i:s',strtotime($events->end_date)) }}</td>
-                                        <td>
-
-                                            {{$events->organised_by}}
-
-                                        </td>
-
-                                        <td>
-
-                                        <a href="{{ url('admin/event/approve/'.$events->id) }}" title="Show" class="bg-blue-500 px-2 py-2 text-white ">Waiting for Approve
-                                        </a>
-                                    </td>
-                                    </tbody>
-                                @endforeach
+                                <tbody>
+                                    @foreach($dashboard['events'] as $event)
+                                        <tr>
+                                            <td class="text-left px-3 pt-2 pb-3 text-base">{{ $event->name }}</td>
+                                            <td class="text-left px-3 pt-2 pb-3 text-base">{{ date('d M Y',strtotime($event->event_date)) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
                             @else
                                 <tbody>
-                                    <td colspan="7" style="text-align: center;"> No Records found</td>
+                                    <tr>
+                                        <td colspan="2" class="text-center py-6 text-gray-400">No events available</td>
+                                    </tr>
+                                </tbody>
+                            @endif
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full lg:w-1/2 px-1 my-2">
+                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border dashboard-panel-card">
+                    <div>
+                        <h1 class="text-gray-800 px-3 font-semibold text-xl py-2 pb-3">Products</h1>
+                    </div>
+                    <div class="mt-2 overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr>
+                                    <th class="font-semibold text-left px-3 pt-2 pb-3 text-base">Product</th>
+                                    <th class="font-semibold text-left px-3 pt-2 pb-3 text-base">Price</th>
+                                    <th class="font-semibold text-left px-3 pt-2 pb-3 text-base">Stock</th>
+                                </tr>
+                            </thead>
+                            @if(count($dashboard['products']) > 0)
+                                <tbody>
+                                    @foreach($dashboard['products'] as $product)
+                                        <tr>
+                                            <td class="text-left px-3 pt-2 pb-3 text-base">{{ $product->name }}</td>
+                                            <td class="text-left px-3 pt-2 pb-3 text-base">{{ $product->price }}</td>
+                                            <td class="text-left px-3 pt-2 pb-3 text-base">{{ $product->stock }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            @else
+                                <tbody>
+                                    <tr>
+                                        <td colspan="3" class="text-center py-6 text-gray-400">No products available</td>
+                                    </tr>
                                 </tbody>
                             @endif
                         </table>
@@ -434,114 +296,56 @@
             </div>
         </div>
 
-        {{-- <!-- Document Expire -->
-        <div class="w-full px-1 my-2">
-            <div class="pt-2 pb-6">
-                <div>
-                    <h1 class="text-gray-800 font-semibold text-xl">Expire Documents</h1>
-                </div>
-                <div class="pt-3 overflow-scroll">
-                    <table class="table table-bordered messageTable w-full text-sm custom-table" id="messagelist">
-                        <thead class="bg-grey-light">
-                            <tr>
-                                <th>Type</th>
-                                <th>Start date</th>
-                                <th>Valid upto</th>
-                                <th>Vehicle</th>
-                            </tr>
-                        </thead>
-                        @if(count($dashboard['expire_document']) > 0)
-                            @foreach($dashboard['expire_document'] as $key => $document)
-                                <tbody>
-                                    <td>{{ ucfirst($document->document_type) }}</td>
-                                    <td>{{ $document->start_date }}</td>
-                                    <td>{{ $document->end_date }}</td>
-                                    <td>
-                                        <a href="{{ url('transport/vehicle/'.$document->vehicle_id.'/show') }}">{{ $document->vehicle->name }}</a>
-                                    </td>
-                                </tbody>
-                            @endforeach
-                        @else
-                            <tbody>
-                                <td colspan="6" style="text-align: center;"> No Records found</td>
-                            </tbody>
-                        @endif
-                    </table>
+        <div class="flex flex-col lg:flex-row my-2 gap-4">
+            <div class="w-full lg:w-1/2">
+                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
+                    <h3 class="text-gray-800 font-semibold text-lg mb-3">Today's Absentees — Students</h3>
+                    <absentees-student url="{{ url('/') }}"></absentees-student>
                 </div>
             </div>
-        </div>
-        <!-- Document Expire --> --}}
-
-        <div class="flex flex-col lg:flex-row my-2">
-            <div class="w-full xl:w-1/3 lg:w-1/2 px-1 my-2">
+            <div class="w-full lg:w-1/2">
                 <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
-                    <absentees-student url="{{ url('/') }}"></absentees-student>
+                    <h3 class="text-gray-800 font-semibold text-lg mb-3">Today's Absentees — Staff</h3>
                     <absentees-staff url="{{ url('/') }}"></absentees-staff>
                 </div>
             </div>
-            <!-- <div class="w-full lg:w-1/3 md:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
-                    <absentees-teacher url="{{ url('/') }}"></absentees-teacher>
-                    Today's Absentees(Teachers)
-                </div>
-            </div> -->
-            {{--<div class="w-full lg:w-1/3 md:w-full px-1 my-2">
+            @if(count($dashboard['products']) > 0)
+            <div class="w-full xl:w-2/3 lg:w-1/2 px-1 my-2">
                 <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
                     <div>
-                        <h1 class="text-gray-800 font-semibold text-xl">Unpaid Fees List</h1>
+                        <h1 class="text-gray-800 px-3 font-semibold text-xl py-2 pb-3">Latest Products</h1>
                     </div>
-                    <unpaid-fees url="{{ url('/') }}" mode="admin"></unpaid-fees>
-                </div>
-            </div>--}}
-
-            <!--Stock Details-->
-            @if(config('ginventory.enabled', false))
-            <div class="w-full xl:w-1/3 lg:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow px-4 pt-3 pb-6 border h-full dashboard-panel-card">
-                    <div>
-                        <h1 class="text-gray-800 font-semibold text-xl">Stock Details</h1>
-                    </div>
-                    <div class="pt-3">
-                        <table class="table table-bordered messageTable w-full text-sm custom-table">
-                            <thead class="bg-grey-light">
-                                <tr>
-                                    <th>Product Name</th>
-                                    <th>Quantity</th>
+                    <div class="mt-2">
+                        <table class="w-full text-sm">
+                            @foreach($dashboard['products'] as $product)
+                                <tr class="border-b">
+                                    <td class="py-2 px-3 text-base font-semibold text-gray-800">{{ $product->name }}</td>
+                                    <td class="py-2 px-3 text-base text-gray-600">{{ $product->price }}</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @if(count($dashboard['products']) > 0)
-                                    @foreach($dashboard['products'] as $product)
-                                        <tr>
-                                            <td><a href="{{ url('/admin/sales/show/') }}">{{ $product->name }}</a></td>
-                                            <td>{{ $product->quantity}}</td>
-                                        </tr>
-                                    @endforeach
-                                @else
-                                    <tr>
-                                        <td colspan="6" style="text-align: center;"> No Records found</td>
-                                    </tr>
-                                @endif
-                            </tbody>
+                            @endforeach
                         </table>
                     </div>
                 </div>
             </div>
             @endif
-            <!--Stock Details-->
         </div>
 
-        <!-- start -->
-        <div class="flex flex-wrap">
-            <!--Task Module-->
-            <div class="w-full lg:w-1/3 md:w-1/2 px-1">
-                <div class="bg-white custom-shadow px-3 py-2 border dashboard-panel-card h-full">
-                    <dashboard-task url="{{ url('/') }}" mode="admin"></dashboard-task>
+        <div class="flex my-2">
+            <div class="w-full px-1 my-2">
+                <div class="bg-white custom-shadow px-5 py-4 border dashboard-chart-card">
+                    <div>
+                        <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Student Distribution</h1>
+                    </div>
+                    <canvas id="barChart" class="dashboard-chart-canvas"></canvas>
                 </div>
             </div>
         </div>
-        <!--end-->
     </div>
+
+@endsection
+
+@section('outside-app')
+    @livewire('onboarding-agent')
 @endsection
 
 @push('scripts')
@@ -550,10 +354,29 @@
         var ctx = document.getElementById('graph').getContext('2d');
         var femaleCount = {!! trans($dashboard['femaleCount']) !!};
         var maleCount = {!! trans($dashboard['maleCount']) !!};
+        var totalStudents = femaleCount + maleCount;
+
+        Chart.pluginService.register({
+            beforeDraw: function(chart) {
+                if (chart.config.type !== 'doughnut') return;
+                var width = chart.chart.width,
+                    height = chart.chart.height,
+                    ctx = chart.chart.ctx;
+                ctx.restore();
+                var fontSize = (height / 140).toFixed(2);
+                ctx.font = "700 " + fontSize + "em 'Sora', sans-serif";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = "#0F172A";
+                var text = totalStudents,
+                    textX = Math.round((width - ctx.measureText(text).width) / 2),
+                    textY = height / 2;
+                ctx.fillText(text, textX, textY);
+                ctx.save();
+            }
+        });
+
         var chart = new Chart(ctx, {
-            // The type of chart we want to create
             type: 'doughnut',
-            // The data for our dataset
             data: {
                 labels: ["Male Students", "Female Students"],
                 datasets: [{
@@ -564,7 +387,6 @@
                     data: [maleCount,femaleCount],
                 }]
             },
-            // Configuration options go here
             options: {
                 legend: {
                     display: false,
@@ -585,116 +407,39 @@
             }
         });
 
-        var ctx = document.getElementById("barChart").getContext('2d');
-        var barChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ["January", "February", "March", "April", "May", "June", "July"],
-                datasets: [{
-                    label: 'Term-1',
-                    data: [12, 19, 3, 17, 28, 24, 7],
-                    backgroundColor: "#dd5e89"
-                }, {
-                    label: 'Term-2',
-                    data: [30, 29, 5, 5, 20, 3, 10],
-                    backgroundColor: "#f7bb97"
-                }]
-            }
-        });
+        var ctx = document.getElementById("barChart");
+        if (ctx) {
+            var standardData = {!! json_encode(($dashboard['standardStudentCounts'] ?? collect())->map(fn($l) => [
+                'label' => $l->StandardSection ?? ('Standard ' . $l->id),
+                'count' => $l->studentCount ?? 0,
+            ])->values()) !!};
+            var barChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: standardData.map(function(d) { return d.label; }),
+                    datasets: [{
+                        label: 'Students',
+                        data: standardData.map(function(d) { return d.count; }),
+                        backgroundColor: '#1E6FD9',
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                stepSize: 1,
+                                precision: 0,
+                            }
+                        }]
+                    },
+                    legend: { display: false },
+                }
+            });
+        }
 
         $(document).ready(function(){
-            //  $('messageTable').messageTable();
         });
     </script>
-
-    <style>
-        /* messagetable */
-        table.messageTable tbody th, table.messageTable tbody td {
-            /*    padding: 1rem 1.5rem;*/
-        }
-        table.messageTable thead th, table.messageTable thead td {
-            /*padding: 1rem;*/
-            border-bottom: 1px solid #1110;
-        }
-        table.messageTable {
-            width: 100%;
-            margin: 0 auto;
-            clear: both;
-            border-collapse: collapse;
-            border-spacing: 0;
-        }
-
-        /* @media only screen and (max-width: 760px), (max-device-width: 1024px) and (min-device-width: 768px)
-        {
-            td {
-                border: none;
-                border-bottom: 1px solid #eee;
-                position: relative;
-                padding-left:50%;
-                padding-top:5%;
-                padding-bottom:5%;
-            }*/
-        .messageTables_wrapper .messageTables_length, .messageTables_wrapper .messageTables_filter {
-            float: none;
-            text-align: left;
-        }
-        }
-        @media only screen and (max-width: 760px), (min-device-width: 768px)
-        and (max-device-width: 1024px)  {
-
-    /* Force table to not be like tables anymore */
-    table, thead, tbody, th, td, tr {
-      display: block;
-      font-size:15px;
-    }
-
-    /* Hide table headers (but not display: none;, for accessibility) */
-    thead tr {
-      position: absolute;
-      top: -9999px;
-      left: -9999px;
-    }
-
-    tr {
-      margin: 0 0 1rem 0;
-    }
-
-    tr:nth-child(odd) {
-      background: #ccc! important;
-    }
-
-    td {
-      /* Behave  like a "row" */
-      border: none;
-      border-bottom: 1px solid #eee;
-      position: relative;
-      padding-left:60%! important;
-
-    }
-
-    td:before {
-      /* Now like a table header */
-      position: absolute;
-      /* Top/left values mimic padding */
-      top: 0;
-      left: 6px;
-      width: 45%;
-      padding-right: 10px;
-      white-space: nowrap;
-      padding-top: 5%;
-    }
-
-
-    td:nth-of-type(1):before { content: "{{ trans('forms.from') }}"; }
-    td:nth-of-type(2):before { content: "{{ trans('forms.to') }}"; }
-    td:nth-of-type(3):before { content: "{{ trans('forms.message') }}"; }
-    td:nth-of-type(4):before { content: "{{ trans('forms.createdon') }}"; }
-    td:nth-of-type(5):before { content: "{{ trans('forms.lastreplyby') }}"; }
-    td:nth-of-type(6):before { content: "{{ trans('forms.lastreplyon') }}"; }
-  }
-.t-dropdown.t-dropdown-size-sm button
-{
-    border:none! important;
-}
-</style>
 @endpush
