@@ -110,15 +110,24 @@ class SiteHelper
     public static function getStandardLinkList($school_id)
     {
         $academic_year = SiteHelper::getAcademicYear($school_id);
-        $standardLinkCacheKey = 'standardLink'.$school_id;
+        $academic_year_id = $academic_year ? $academic_year->id : 'none';
+        $standardLinkCacheKey = 'standardLink'.$school_id.'_'.$academic_year_id;
         return Cache::remember( $standardLinkCacheKey, env('CACHE_TIME'), function () use ($school_id,$academic_year)  {
+            if (!$academic_year) return collect();
             $standards = Standard::where('school_id',$school_id)->orderBy('order')->pluck('id')->toArray();
             if(count($standards) > 0)
             {
                 $standard = implode(' ,',$standards);
-                $standardLink = StandardLink::where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->orderByRaw('FIELD(standard_id,'.$standard.')')->orderBy('section_id')->groupBy(['standard_id','section_id'])->get();
+                $standardLink = StandardLink::where([['school_id',$school_id],['academic_year_id',$academic_year->id]])
+                    ->orderByRaw('FIELD(standard_id,'.$standard.')')
+                    ->orderBy('section_id')
+                    ->get()
+                    ->unique(function($item) {
+                        return $item->standard_id.'-'.$item->section_id;
+                    });
                 return StandardLinkResource::collection($standardLink);
             }
+            return collect();
         });
     }
 

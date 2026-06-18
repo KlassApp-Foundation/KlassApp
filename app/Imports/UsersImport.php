@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Helpers\SiteHelper;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -31,9 +32,7 @@ class UsersImport implements ToCollection, WithHeadingRow
     {
         try {
             $school_id     = Auth::user()->school_id;
-            $academic_year = AcademicYear::where('school_id', $school_id)
-                                ->where('status', 1)
-                                ->first();
+            $academic_year = SiteHelper::getAcademicYear($school_id);
 
             $insertedcount = 0;
 

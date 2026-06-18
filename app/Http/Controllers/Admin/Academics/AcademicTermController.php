@@ -7,6 +7,7 @@ use App\Http\Requests\AcademicTermRequest;
 use App\Http\Requests\UpdateAcademicTermRequest;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
+use App\Models\Standard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -29,9 +30,11 @@ class AcademicTermController extends Controller
         $academic_year = AcademicYear::where("school_id", $school_id)->where("description", "Current Academic Year")->first();
         
         $terms = AcademicTerm::where("school_id", $school_id)->where("academic_year_id", $academic_year->id)->get();
-        // dd($academic_year);
+
+        $standards = Standard::with("subject")->where("name", "primary")->first();
+        dd($standards);
         return view("admin.school.term.index", compact(
-            "academic_year", "terms"
+            "academic_year", "terms", "standards"
         ) );
         
     }

@@ -23,7 +23,7 @@ class AttendanceAddRequest extends FormRequest
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
 
             $start_date = Carbon::parse($academic_year->start_date);
-            $input_date = Carbon::createFromFormat('m/d/Y', $value); // US format
+            $input_date = Carbon::createFromFormat('Y-m-d', $value);
             $today = Carbon::today();
 
             return $input_date->between($start_date, $today);
@@ -33,7 +33,7 @@ class AttendanceAddRequest extends FormRequest
         Validator::extend('check_session', function ($attribute, $value, $parameters, $validator) {
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
 
-            $date = Carbon::createFromFormat('m/d/Y', request('date'))->format('Y-m-d'); // normalize for DB
+            $date = Carbon::createFromFormat('Y-m-d', request('date'))->format('Y-m-d'); // normalize for DB
             $standardLink_id = (int) request('standardLink_id');
 
             $attendance = Attendance::where([
@@ -60,7 +60,7 @@ class AttendanceAddRequest extends FormRequest
 
         $rules = [
             'standardLink_id' => 'required',
-            'date'            => 'required|date_format:m/d/Y|check_date',
+            'date'            => 'required|date_format:Y-m-d|check_date',
             'session'         => 'required|check_session',
         ];
 
@@ -83,7 +83,7 @@ class AttendanceAddRequest extends FormRequest
         $messages = [
             'standardLink_id.required' => 'Class is required',
             'date.required'            => 'Date is required',
-            'date.date_format'         => 'Date must be in mm/dd/yyyy format',
+            'date.date_format'         => 'Date must be in yyyy-mm-dd format',
             'date.check_date'          => 'Enter valid Date',
             'session.required'         => 'Session is required',
             'session.check_session'    => 'Attendance already updated',

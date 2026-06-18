@@ -124,6 +124,7 @@ $promote =  "";
 
         if ($student && $nextStandardLink) {
             $student->standardLink_id = $nextStandardLink->id;
+            $student->academic_year_id = $promotion->next_academic_year_id;
             $student->save();
         }
         

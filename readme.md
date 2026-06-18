@@ -111,6 +111,11 @@ You can view student's marks in a report format or download the reports for each
 **Note:** If it's the end of year exam, you'll first download marks sheet and reports before proceeding to promote students
 After everything, you can proceed to finalize student promotion just below the marks table
 
+# TEACHER SETUP
+The teacher automates his tasks to by accessing his dashboard. 
+**Classes:** A teacher sees the classes he teaches by navigating to Classes menu on the side bar, all the classes and subjects assigned to him live here
+
+**Student Attendance:** This is where the teacher carries out roll calls. To record an attendance, the teacher navigates to this page, then he's required to select class, date (this is usually auto selected) and the session.
 
 # LIBRARIAN SETUP
 This' the easiest dashboard to onboard users(Librarians)

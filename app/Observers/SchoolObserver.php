@@ -71,16 +71,16 @@ class SchoolObserver
             // ]);
 
              // Upcoming Academic Year
-            AcademicYear::create([
-                'school_id'   => $school->id,
-                'name'        => $nextYear,
-                'description' => 'Upcoming Academic Year',
-                'start_date'  => Carbon::create($nextYear, 2, 1),
-                'end_date'    => Carbon::create($nextYear, 12, 15),
-                'status'      => 1,
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ]);
+            // AcademicYear::create([
+            //     'school_id'   => $school->id,
+            //     'name'        => $nextYear,
+            //     'description' => 'Upcoming Academic Year',
+            //     'start_date'  => Carbon::create($nextYear, 2, 1),
+            //     'end_date'    => Carbon::create($nextYear, 12, 15),
+            //     'status'      => 1,
+            //     'created_at'  => now(),
+            //     'updated_at'  => now(),
+            // ]);
         }
         catch(Exception $e)
         {

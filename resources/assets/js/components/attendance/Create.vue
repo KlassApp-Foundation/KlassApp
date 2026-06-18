@@ -265,6 +265,9 @@ export default {
                 this.studentlist = data.studentlist || [];
                 this.absentReasonlist = data.absentReasonlist || [];
                 this.standardlist = data.standardlist || [];
+                console.log("student data=>", data);
+                console.log("student list==>", data?.studentlist);
+                console.log("standardlist ==>", data?.standardlist);
             } catch (error) {
                 console.error("Failed to load data", error);
             }
@@ -329,8 +332,13 @@ export default {
                 );
                 this.success = res.data.success;
             } catch (error) {
-                if (error.response?.data?.errors) {
-                    this.errors = error.response.data.errors;
+                const data = error.response?.data;
+                if (data?.errors) {
+                    this.errors = data.errors;
+                } else if (data?.error) {
+                    alert(data.error);
+                } else if (data?.message) {
+                    alert(data.message);
                 } else {
                     console.error(error);
                 }
