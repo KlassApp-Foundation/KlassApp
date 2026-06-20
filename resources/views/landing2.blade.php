@@ -1169,7 +1169,7 @@
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-12 h-12 rounded-xl bg-brand-blue flex items-center justify-center text-white font-bold text-lg">KH</div>
                         <div>
-                            <div class="font-semibold text-gray-900">Kampala High School</div>
+                            <div class="font-semibold text-gray-900">Kabale Junior School</div>
                             <div class="text-xs text-gray-500">Kampala, Uganda · Est. 1998</div>
                         </div>
                         <a href="#" class="ml-auto bg-brand-green text-white text-xs font-semibold px-4 py-2 rounded-full whitespace-nowrap">Chat on WhatsApp</a>
