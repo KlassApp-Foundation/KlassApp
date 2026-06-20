@@ -10,6 +10,8 @@
             </div>
         </div>
         @include('partials.message')
+        @include('partials.onboarding-reminder')
+        @include('partials.plan-banner')
 
         <div class="flex flex-wrap my-2 dashboard-topfold">
             <div class="w-full xl:w-1/3 lg:w-2/3 my-2">
@@ -334,7 +336,7 @@
             <div class="w-full px-1 my-2">
                 <div class="bg-white custom-shadow px-5 py-4 border dashboard-chart-card">
                     <div>
-                        <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Student Distribution</h1>
+                        <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Students Per Class</h1>
                     </div>
                     <canvas id="barChart" class="dashboard-chart-canvas"></canvas>
                 </div>
@@ -345,7 +347,7 @@
 @endsection
 
 @section('outside-app')
-    @livewire('onboarding-agent')
+    @livewire('agent-toshi')
 @endsection
 
 @push('scripts')

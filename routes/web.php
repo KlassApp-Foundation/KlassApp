@@ -31,6 +31,12 @@ Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class,
 Auth::routes();
 
 
+// Dismiss onboarding reminder (sets session flag to hide the setup banner)
+Route::get('/dismiss-onboarding', function () {
+    session(['onboarding_reminder_dismissed' => true]);
+    return redirect()->back();
+})->name('dismiss.onboarding.reminder')->middleware('auth');
+
 //Impersonate as teacher
 Route::get('/teacher/{id}/impersonate', 'Auth\ImpersonateController@impersonate')->middleware('auth', 'schooladmin');
 Route::get('/library/{id}/impersonate', 'Auth\ImpersonateController@librarianimpersonate')->middleware('auth', 'schooladmin');

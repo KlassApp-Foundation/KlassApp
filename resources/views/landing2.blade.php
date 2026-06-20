@@ -5,9 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KlassApp — The School in Every Parent's Pocket</title>
     <meta name="description" content="KlassApp is a WhatsApp-first school management platform. Parents check grades, fees and attendance with a single message. No app. No login. Just WhatsApp." />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
     <meta property="og:title" content="KlassApp — The School in Every Parent's Pocket" />
     <meta property="og:description" content="Grades, fees, and attendance delivered to parents on WhatsApp. Built for African schools." />
     <meta property="og:image" content="{{ asset('images/klassapp-logo-stacked.svg') }}" />
+    <meta property="og:url" content="{{ url()->current() }}" />
+    <meta property="og:site_name" content="KlassApp" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="KlassApp — The School in Every Parent's Pocket" />
+    <meta name="twitter:description" content="Grades, fees, and attendance delivered to parents on WhatsApp. Built for African schools." />
+    <meta name="twitter:image" content="{{ asset('images/klassapp-logo-stacked.svg') }}" />
+
+    <link rel="canonical" href="{{ url()->current() }}" />
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/klassapp-logo.svg') }}" />
 
     <!-- Google Fonts: Sora + DM Sans -->
@@ -189,8 +203,8 @@
 
         /* ── WhatsApp Phone Mockup ── */
         .phone-frame {
-            width: 340px;
-            height: 660px;
+            width: min(340px, calc(100vw - 48px));
+            height: min(660px, calc(100vw * 1.94));
             background: #fff;
             border-radius: 36px;
             box-shadow: 0 0 0 6px #1a1a2e, 0 0 0 8px #2a2a3e, 0 24px 80px rgba(0,0,0,0.5);
@@ -445,8 +459,8 @@
 
         @media (max-width: 768px) {
             .phone-frame {
-                width: 280px;
-                height: 540px;
+                width: min(280px, calc(100vw - 48px));
+                height: min(540px, calc(100vw * 1.94));
             }
             .pricing-popular { transform: none; }
         }
@@ -548,9 +562,9 @@
 
                 <!-- Audience Selector Tabs -->
                 <div class="flex gap-2 mb-5 flex-wrap" role="tablist" aria-label="Audience selector">
-                    <button class="audience-tab active px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-900 bg-white shadow-sm" data-audience="admin">Administrators &amp; Principals</button>
-                    <button class="audience-tab px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white hover:shadow-sm" data-audience="teacher">Teachers</button>
-                    <button class="audience-tab px-4 py-3 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white hover:shadow-sm" data-audience="parent">Parents</button>
+                    <button role="tab" aria-selected="true" class="audience-tab active px-3 sm:px-4 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-900 bg-white shadow-sm" data-audience="admin">Administrators &amp; Principals</button>
+                    <button role="tab" aria-selected="false" class="audience-tab px-3 sm:px-4 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white hover:shadow-sm" data-audience="teacher">Teachers</button>
+                    <button role="tab" aria-selected="false" class="audience-tab px-3 sm:px-4 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white hover:shadow-sm" data-audience="parent">Parents</button>
                 </div>
 
                 <h1 class="font-display font-extrabold leading-[1.08] tracking-[-0.02em]"
@@ -709,21 +723,19 @@
         </p>
         <div class="relative overflow-hidden">
             <div class="flex gap-8 marquee-track w-max">
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kampala High School</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">📚 St. Mary's College</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🌍 Light Academy</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">📖 Jinja College</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🎓 Mbarara High</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🇰🇪 Nairobi Prep</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🇹🇿 Dar es Salaam Academy</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kabale Junior School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Victorious Preparatory School, Kabale</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kabale Universal Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kengoma Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 New Foundation Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Hope High School</span>
                 <!-- Duplicate for seamless scroll -->
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kampala High School</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">📚 St. Mary's College</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🌍 Light Academy</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">📖 Jinja College</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🎓 Mbarara High</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🇰🇪 Nairobi Prep</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🇹🇿 Dar es Salaam Academy</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kabale Junior School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Victorious Preparatory School, Kabale</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kabale Universal Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kengoma Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 New Foundation Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Hope High School</span>
             </div>
         </div>
     </div>
@@ -1355,10 +1367,10 @@
                     "Since we started using KlassApp, parent inquiries about results dropped by 80%. They just tap GRADES and get everything."
                 </p>
                 <div class="flex items-center gap-3">
-                    <div class="avatar-circle" style="background: #1E6FD9;">JM</div>
+                    <div class="avatar-circle" style="background: #1E6FD9;">SJ</div>
                     <div>
-                        <div class="font-semibold text-sm text-gray-900">Joyce Mwangi</div>
-                        <div class="text-xs text-gray-500">Head Teacher, Kampala High School</div>
+                        <div class="font-semibold text-sm text-gray-900">Sunday John Bosco</div>
+                        <div class="text-xs text-gray-500">Headteacher, Kabale Junior School</div>
                     </div>
                 </div>
             </div>
@@ -1368,10 +1380,10 @@
                     "Our fee collection improved 40% in one term. Parents appreciate getting their balance in a single message instead of chasing the office."
                 </p>
                 <div class="flex items-center gap-3">
-                    <div class="avatar-circle" style="background: #22C55E;">SO</div>
+                    <div class="avatar-circle" style="background: #22C55E;">KH</div>
                     <div>
-                        <div class="font-semibold text-sm text-gray-900">Samuel Okello</div>
-                        <div class="text-xs text-gray-500">Bursar, Light Academy</div>
+                        <div class="font-semibold text-sm text-gray-900">Karungi Hellen</div>
+                        <div class="text-xs text-gray-500">Bursar, Victorious Preparatory School</div>
                     </div>
                 </div>
             </div>
@@ -1381,10 +1393,10 @@
                     "The WhatsApp feature is a game-changer. Parents who never used our portal are now actively engaged — all through an app they already have."
                 </p>
                 <div class="flex items-center gap-3">
-                    <div class="avatar-circle" style="background: #8B5CF6;">PN</div>
+                    <div class="avatar-circle" style="background: #8B5CF6;">AJ</div>
                     <div>
-                        <div class="font-semibold text-sm text-gray-900">Peter Nsubuga</div>
-                        <div class="text-xs text-gray-500">Director, St. Mary's College</div>
+                        <div class="font-semibold text-sm text-gray-900">Ainomugisha Jonnie</div>
+                        <div class="text-xs text-gray-500">Parent</div>
                     </div>
                 </div>
             </div>
@@ -1611,6 +1623,7 @@
         document.querySelectorAll('.audience-tab').forEach(function(btn) {
             const isActive = btn.getAttribute('data-audience') === aud;
             btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
             if (isActive) {
                 btn.classList.add('bg-white', 'text-slate-900', 'shadow-sm');
                 btn.classList.remove('bg-white/70', 'text-slate-600', 'hover:bg-white');

@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use App\Traits\LogActivity;
 use App\Helpers\SiteHelper;
 use App\Models\FeePayment;
+use App\Models\CurrentPlan;
 use App\Traits\Dashboard;
 use App\Models\FeeGroup;
 use App\Models\Events;
@@ -57,7 +58,36 @@ class DashboardController extends Controller
         
         $selected_teacher = User::where('id',$request->teacher_id)->first();
 
-        return view( '/admin/dashboard/dashboard', ['dashboard' => $dashboard , 'standardLink' => $standardLink , 'selected_teacher' => $selected_teacher ] );
+        // ── Plan usage data for banner ──
+        $plan = null;
+        $planUsage = [];
+        if ($school_id) {
+            $currentPlan = CurrentPlan::with('plan')->where('school_id', $school_id)->first();
+            if ($currentPlan && $currentPlan->plan) {
+                $studentCount = User::where('school_id', $school_id)->where('usergroup_id', 6)->count();
+                $teacherCount = User::where('school_id', $school_id)->where('usergroup_id', 5)->count();
+                $plan = $currentPlan->plan;
+                $planUsage = [
+                    'students' => ['used' => $studentCount, 'limit' => $plan->no_of_students],
+                    'teachers' => ['used' => $teacherCount, 'limit' => $plan->no_of_users],
+                ];
+            }
+        }
+
+        // ── Onboarding reminder for school admins ──
+        $onboardingMissing = [];
+        if (Auth::user()->usergroup_id === 3 && $school_id) {
+            $onboardingMissing = \App\Helpers\OnboardingHelper::getMissingSteps($school_id, Auth::id());
+        }
+
+        return view( '/admin/dashboard/dashboard', [
+            'dashboard' => $dashboard,
+            'standardLink' => $standardLink,
+            'selected_teacher' => $selected_teacher,
+            'plan' => $plan,
+            'planUsage' => $planUsage,
+            'onboardingMissing' => $onboardingMissing,
+        ] );
     }
 
     public function list(Request $request,$task_flag)

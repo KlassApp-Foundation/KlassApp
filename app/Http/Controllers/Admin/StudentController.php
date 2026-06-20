@@ -94,8 +94,7 @@ class StudentController extends Controller
     {
       //
       $count    = User::where('school_id',Auth::user()->school_id)->where('usergroup_id',6)->count();
-      $subscription = Subscription::where('school_id',Auth::user()->school_id)->first();
-dd($subscription);
+      $subscription = Subscription::with('plan')->where('school_id',Auth::user()->school_id)->first();
       return view('/admin/member/create',['count'=>$count , 'subscription'=>$subscription]);
     }
 
@@ -141,8 +140,18 @@ dd($subscription);
       //
       try
       {
-        
         $school_id = Auth::user()->school_id;
+
+        // ── Plan limit check ──
+        $subscription = Subscription::with('plan')->where('school_id', $school_id)->first();
+        if ($subscription && $subscription->plan) {
+            $studentCount = User::where('school_id', $school_id)->where('usergroup_id', 6)->count();
+            if ($studentCount >= $subscription->plan->no_of_students) {
+                return redirect()->back()->withErrors([
+                    'plan_limit' => "Your {$subscription->plan->name} plan allows a maximum of {$subscription->plan->no_of_students} students. Please upgrade to add more."
+                ]);
+            }
+        }
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
