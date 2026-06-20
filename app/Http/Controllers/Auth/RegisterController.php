@@ -289,8 +289,8 @@ class RegisterController extends Controller
 
             $defaults = [
                 'cycle' => 30,
-                'name' => 'free',
-                'display_name' => 'Free',
+                'name' => 'freemium',
+                'display_name' => 'Freemium',
                 'order' => 1,
                 'is_active' => 1,
                 'amount' => 0,
@@ -314,7 +314,7 @@ class RegisterController extends Controller
 
             $fallbackPlanId = DB::table('plans')->insertGetId($payload);
 
-            $this->safeLogWarning('Created fallback free plan for registration flow', [
+            $this->safeLogWarning('Created fallback Freemium plan for registration flow', [
                 'plan_id' => $fallbackPlanId,
             ]);
 

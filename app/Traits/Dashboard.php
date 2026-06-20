@@ -25,6 +25,9 @@ use App\Models\Feedback;
 use App\Models\Product;
 use App\Models\Events;
 use App\Models\Video;
+use App\Models\WhatsAppUser;
+use App\Models\MessageDeliveryLog;
+use App\Models\WhatsAppPendingNotification;
 use App\Models\Mark;
 use App\Models\User;
 use App\Models\Task;
@@ -135,6 +138,13 @@ trait Dashboard
 
         $array['standardLinks']  = SiteHelper::getStandardLinkList($school_id);
 
+        $array['standardStudentCounts'] = collect($array['standardLinks'])->map(function ($link) {
+            $link->studentCount = \App\Models\User::whereHas('studentAcademic', function ($q) use ($link) {
+                $q->where('standardLink_id', $link->id)->where('status', '!=', 'exit');
+            })->count();
+            return $link;
+        });
+
         $array['teachers']  = SiteHelper::getTeachingStaffList($school_id,$academic_year->id);
 
         //working
@@ -171,6 +181,22 @@ trait Dashboard
             }
             $i++;
         }*/ //working
+
+        // WhatsApp integration stats (per-school)
+        $array['whatsapp'] = [
+            'parentsOptedIn' => WhatsAppUser::whereHas('user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id)->ByRole(7);
+            })->where('opted_in', true)->count(),
+            'totalLinked'    => WhatsAppUser::whereHas('user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id);
+            })->count(),
+            'messagesThisMonth' => MessageDeliveryLog::whereHas('user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id);
+            })->whereDate('sent_at', '>=', now()->startOfMonth())->whereDate('sent_at', '<=', now()->endOfMonth())->count(),
+            'pendingNotifications' => WhatsAppPendingNotification::whereHas('whatsappUser.user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id);
+            })->count(),
+        ];
 
         return $array;
     }
@@ -296,6 +322,23 @@ trait Dashboard
         })->where('start_time','>=',date('Y-m-d H:i:s'))->orderBy('start_time','DESC')->take(10)->get()->groupBy('start_time');
     }
 
+        // WhatsApp stats for this school
+        $array['whatsapp'] = [
+            'totalLinked'    => WhatsAppUser::whereHas('user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id);
+            })->count(),
+            'messagesThisMonth' => MessageDeliveryLog::whereHas('user', function ($q) use ($school_id) {
+                $q->where('school_id', $school_id);
+            })->whereDate('sent_at', '>=', now()->startOfMonth())->whereDate('sent_at', '<=', now()->endOfMonth())->count(),
+        ];
+
+        // Students under this teacher's classes
+        $array['myStudents'] = User::BySchool($school_id)->ByRole(6)
+            ->whereHas('studentAcademic', function ($q) use ($standardLinks) {
+                $q->whereIn('standardLink_id', $standardLinks);
+            })->count();
+        $array['myClasses'] = count($standardLinks);
+
         return $array;
     }
 
@@ -368,34 +411,35 @@ trait Dashboard
 
     public function accountantDashboard($school_id,$accountant_id)
     {
-        $seconds = 300;
         $array = [];
 
-        $date=date('Y-m-d H:i:s');
-
+        $date = date('Y-m-d H:i:s');
         $academic_year = SiteHelper::getAcademicYear($school_id);
-    
-        $array['bookCount'] =  Cache::remember('bookCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
-                                  return Book::where('school_id',$school_id)->count();
-                                });
 
-        $array['booklendingCount']    =  Cache::remember('booklendingCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
-                                  return BookLending::whereHas('book' , function ($query) use($school_id) {
-                                    $query->where('school_id',$school_id);
-                                })->count();
-                              });
+        $array['feeCategoryCount'] = \App\Models\FeesCategories::where('school_id', $school_id)->count();
 
-        $array['cardHolderCount']   = Cache::remember('cardHolderCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
-                                  return LibraryCard::where('school_id',$school_id)->count();
-                                });
+        $array['totalFeesAmount'] = \App\Models\FeesCategories::where('school_id', $school_id)->sum('amount');
 
-        $array['categoryCount']      = Cache::remember('categoryCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
-                                  return BookCategory::where('school_id',$school_id)->count();
-                                   });
-  
-        $array['noticeboard']    = NoticeBoard::where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->orderBy('created_at','DESC')->take(5)->get();
+        $array['totalStudents'] = Cache::remember('studentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id) {
+            return User::BySchool($school_id)->ByRole(6)->count();
+        });
 
-        $array['events']    = Events::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['category','!=','holidays'],['end_date','>',$date]])->orderBy('created_at','DESC')->take(5)->get();
+        $array['pendingTasks'] = Task::where([['school_id', $school_id], ['task_status', 0]])->count();
+
+        $array['events'] = Events::where([
+            ['school_id', $school_id],
+            ['academic_year_id', $academic_year->id],
+            ['category', '!=', 'holidays'],
+            ['end_date', '>', $date],
+        ])->orderBy('created_at', 'DESC')->take(5)->get();
+
+        $array['noticeboard'] = NoticeBoard::where([
+            ['school_id', $school_id],
+            ['academic_year_id', $academic_year->id],
+        ])->orderBy('created_at', 'DESC')->take(5)->get();
+
+        $array['feeCategories'] = \App\Models\FeesCategories::where('school_id', $school_id)
+            ->orderBy('created_at', 'DESC')->take(5)->get();
 
         return $array;
     }

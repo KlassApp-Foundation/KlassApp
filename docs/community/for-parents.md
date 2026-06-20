@@ -229,7 +229,7 @@ If your children attend different schools that both use KlassApp, everything com
 
 ## Still Have Questions?
 
-See the [FAQ](faq.md) for common questions, or contact your school directly.
+See the [FAQ](faq) for common questions, or contact your school directly.
 
 ---
 

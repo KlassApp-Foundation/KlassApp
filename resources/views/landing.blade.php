@@ -5,9 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KlassApp — The School in Every Parent's Pocket</title>
     <meta name="description" content="KlassApp is a WhatsApp-first school management platform. Parents check grades, fees and attendance with a single message. No app. No login. Just WhatsApp." />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
     <meta property="og:title" content="KlassApp — The School in Every Parent's Pocket" />
     <meta property="og:description" content="Grades, fees, and attendance delivered to parents on WhatsApp. Built for African schools." />
     <meta property="og:image" content="{{ asset('images/klassapp-logo-stacked.svg') }}" />
+    <meta property="og:url" content="{{ url()->current() }}" />
+    <meta property="og:site_name" content="KlassApp" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="KlassApp — The School in Every Parent's Pocket" />
+    <meta name="twitter:description" content="Grades, fees, and attendance delivered to parents on WhatsApp. Built for African schools." />
+    <meta name="twitter:image" content="{{ asset('images/klassapp-logo-stacked.svg') }}" />
+
+    <link rel="canonical" href="{{ url()->current() }}" />
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/klassapp-logo.svg') }}" />
 
     <!-- Google Fonts: Sora + DM Sans -->
@@ -176,8 +190,8 @@
 
         /* ── WhatsApp Phone Mockup ── */
         .phone-frame {
-            width: 340px;
-            height: 660px;
+            width: min(340px, calc(100vw - 48px));
+            height: min(660px, calc(100vw * 1.94));
             background: #fff;
             border-radius: 36px;
             box-shadow: 0 0 0 6px #1a1a2e, 0 0 0 8px #2a2a3e, 0 24px 80px rgba(0,0,0,0.5);
@@ -352,7 +366,21 @@
             flex-shrink: 0;
         }
 
-
+        /* ── Typewriter cursor ── */
+        #typewriter-cursor {
+            animation: blink 0.8s step-end infinite;
+            font-weight: 100;
+        }
+        #typewriter-cursor.paused {
+            animation: none;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        #typewriter-text {
+            border-right: 2px solid transparent;
+        }
 
         /* ── CTA section pattern ── */
         .cta-pattern {
@@ -428,8 +456,8 @@
 
         @media (max-width: 768px) {
             .phone-frame {
-                width: 280px;
-                height: 540px;
+                width: min(280px, calc(100vw - 48px));
+                height: min(540px, calc(100vw * 1.94));
             }
             .pricing-popular { transform: none; }
         }
@@ -469,21 +497,26 @@
             WhatsApp
         </a>
         </div>
-        <!-- Hamburger (mobile) -->
-        <button id="hamburger" class="md:hidden" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;color:#475569;" aria-label="Toggle menu">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+
+        <button id="hamburger" class="md:hidden text-slate-700 p-3" aria-label="Menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12h18M3 6h18M3 18h18"/>
+            </svg>
         </button>
     </div>
 </header>
 
-<!-- Mobile Menu Overlay -->
-<div id="mobileMenu" class="mobile-menu" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.98);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:40;flex-direction:column;align-items:center;justify-content:center;gap:32px;display:none;font-family:'DM Sans',sans-serif;">
-    <a href="#features" style="font-size:20px;font-weight:600;color:#0F172A;text-decoration:none;">Features</a>
-    <a href="#pricing" style="font-size:20px;font-weight:600;color:#0F172A;text-decoration:none;">Pricing</a>
-    <a href="#schools" style="font-size:20px;font-weight:600;color:#0F172A;text-decoration:none;">Schools</a>
-    <a href="#contact" style="font-size:20px;font-weight:600;color:#0F172A;text-decoration:none;">Contact</a>
-    <a href="#demo" style="font-size:20px;font-weight:600;color:#1E6FD9;text-decoration:none;">Get Started</a>
-    <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp" target="_blank" style="font-size:20px;font-weight:600;color:#22C55E;text-decoration:none;display:flex;align-items:center;gap:8px;">
+    <div id="mobileMenu" class="mobile-menu absolute top-full left-0 right-0 bg-white flex-col py-6 px-6 gap-4 border-t border-slate-200 shadow-lg">
+        <a href="#features" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Features</a>
+        <a href="#pricing" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Pricing</a>
+        <a href="#schools" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Schools</a>
+        <a href="#contact" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Contact</a>
+        <a href="#demo"
+           class="bg-brand-blue text-white px-5 py-3 rounded-lg text-sm font-semibold text-center">
+            Get Started
+        </a>
+    </div>
+</nav>assApp" target="_blank" style="font-size:20px;font-weight:600;color:#22C55E;text-decoration:none;display:flex;align-items:center;gap:8px;">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.272-.198z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.977.546 3.826 1.494 5.404L2 22l4.667-1.463A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.182c-1.736 0-3.37-.535-4.738-1.528l-.339-.234-2.77.868.918-2.686-.22-.352A8.164 8.164 0 013.818 12c0-4.509 3.673-8.182 8.182-8.182s8.182 3.673 8.182 8.182-3.673 8.182-8.182 8.182z"/></svg>
         WhatsApp
     </a>
@@ -509,9 +542,9 @@
                 <!-- Audience Selector Tabs -->
                 <div class="mt-4" style="min-height: 3rem;">
                     <div class="flex gap-2 mb-2 flex-wrap" role="tablist" aria-label="Audience selector">
-                        <button class="audience-tab active px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border-2 text-brand-green bg-white shadow-sm" style="border-color: #22C55E;" data-audience="admin">Administrators &amp; Principals</button>
-                        <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="teacher">Teachers</button>
-                        <button class="audience-tab px-4 py-2 rounded-full text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="parent">Parents</button>
+                        <button role="tab" aria-selected="true" class="audience-tab active px-3 sm:px-4 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition cursor-pointer border-2 text-brand-green bg-white shadow-sm" style="border-color: #22C55E;" data-audience="admin">Administrators &amp; Principals</button>
+                        <button role="tab" aria-selected="false" class="audience-tab px-3 sm:px-4 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="teacher">Teachers</button>
+                        <button role="tab" aria-selected="false" class="audience-tab px-3 sm:px-4 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition cursor-pointer border border-slate-300 text-slate-600 bg-white/70 hover:bg-white" data-audience="parent">Parents</button>
                     </div>
                 </div>
 
@@ -673,21 +706,19 @@
         </p>
         <div class="relative overflow-hidden">
             <div class="flex gap-8 marquee-track w-max">
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kampala High School</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">📚 St. Mary's College</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🌍 Light Academy</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">📖 Jinja College</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🎓 Mbarara High</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🇰🇪 Nairobi Prep</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🇹🇿 Dar es Salaam Academy</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kabale Junior School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Victorious Preparatory School, Kabale</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kabale Universal Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kengoma Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 New Foundation Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Hope High School</span>
                 <!-- Duplicate for seamless scroll -->
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kampala High School</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">📚 St. Mary's College</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🌍 Light Academy</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">📖 Jinja College</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🎓 Mbarara High</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🇰🇪 Nairobi Prep</span>
-                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🇹🇿 Dar es Salaam Academy</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kabale Junior School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Victorious Preparatory School, Kabale</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kabale Universal Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Kengoma Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 New Foundation Primary School</span>
+                <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-gray-200 text-sm font-medium text-gray-700 shadow-sm">🏫 Hope High School</span>
             </div>
         </div>
     </div>
@@ -1183,13 +1214,10 @@
             Start for free. Upgrade when you need more.
         </p>
 
-        {{-- ============== TO BE CHANGED TO USE REAL PRICING (quit hardcoded ones)=========== --}}
-        @include("pricing")
-
-        {{-- <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
+        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
             <!-- Free / Starter -->
             <div class="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm reveal">
-                <h3 class="font-display font-bold text-xl text-gray-900 mb-2">Free</h3>
+                <h3 class="font-display font-bold text-xl text-gray-900 mb-2">Freemium</h3>
                 <p class="text-gray-500 text-sm mb-6">Get started</p>
                 <p class="text-5xl font-display font-bold text-gray-900 mb-6">
                     $0
@@ -1197,7 +1225,7 @@
                 <ul class="space-y-3 mb-8 text-sm text-gray-600">
                     <li class="flex gap-2.5">
                         <span class="text-brand-green shrink-0">✓</span>
-                        Up to <strong>200</strong> students
+                        Up to <strong>100</strong> students
                     </li>
                     <li class="flex gap-2.5">
                         <span class="text-brand-green shrink-0">✓</span>
@@ -1302,7 +1330,8 @@
                    class="block text-center border-2 border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:border-gray-300 transition btn-scale">
                     Talk to Sales
                 </a>
-            </div> --}}
+            </div>
+        </div>
         </div>
     </div>
 </section>
@@ -1323,10 +1352,10 @@
                     "Since we started using KlassApp, parent inquiries about results dropped by 80%. They just tap GRADES and get everything."
                 </p>
                 <div class="flex items-center gap-3">
-                    <div class="avatar-circle" style="background: #1E6FD9;">JM</div>
+                    <div class="avatar-circle" style="background: #1E6FD9;">SJ</div>
                     <div>
-                        <div class="font-semibold text-sm text-gray-900">Joyce Mwangi</div>
-                        <div class="text-xs text-gray-500">Head Teacher, Kampala High School</div>
+                        <div class="font-semibold text-sm text-gray-900">Sunday John Bosco</div>
+                        <div class="text-xs text-gray-500">Headteacher, Kabale Junior School</div>
                     </div>
                 </div>
             </div>
@@ -1336,10 +1365,10 @@
                     "Our fee collection improved 40% in one term. Parents appreciate getting their balance in a single message instead of chasing the office."
                 </p>
                 <div class="flex items-center gap-3">
-                    <div class="avatar-circle" style="background: #22C55E;">SO</div>
+                    <div class="avatar-circle" style="background: #22C55E;">KH</div>
                     <div>
-                        <div class="font-semibold text-sm text-gray-900">Samuel Okello</div>
-                        <div class="text-xs text-gray-500">Bursar, Light Academy</div>
+                        <div class="font-semibold text-sm text-gray-900">Karungi Hellen</div>
+                        <div class="text-xs text-gray-500">Bursar, Victorious Preparatory School</div>
                     </div>
                 </div>
             </div>
@@ -1349,10 +1378,10 @@
                     "The WhatsApp feature is a game-changer. Parents who never used our portal are now actively engaged — all through an app they already have."
                 </p>
                 <div class="flex items-center gap-3">
-                    <div class="avatar-circle" style="background: #8B5CF6;">PN</div>
+                    <div class="avatar-circle" style="background: #8B5CF6;">AJ</div>
                     <div>
-                        <div class="font-semibold text-sm text-gray-900">Peter Nsubuga</div>
-                        <div class="text-xs text-gray-500">Director, St. Mary's College</div>
+                        <div class="font-semibold text-sm text-gray-900">Ainomugisha Jonnie</div>
+                        <div class="text-xs text-gray-500">Parent</div>
                     </div>
                 </div>
             </div>
@@ -1459,8 +1488,20 @@
 
     // ── Nav scroll effect (Flare-style toggle .scrolled class) ──
     const nav = document.querySelector('.site-header');
+    let lastScroll = 0;
     window.addEventListener('scroll', () => {
-        nav.classList.toggle('scrolled', window.scrollY > 60);
+        const y = window.scrollY;
+        const goingDown = y > lastScroll;
+        if (y > 60) {
+            if (goingDown) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        } else {
+            nav.classList.remove('scrolled');
+        }
+        lastScroll = y;
     });
 
     // ── Hamburger menu ──
@@ -1495,31 +1536,139 @@
         parent: '✦ Real-time updates on attendance, grades, and school communications — all in one place, built for busy parents.'
     };
     const taglineEl = document.getElementById('admin-tagline');
+    let heroAnimationToken = 0;
+    let currentAudience = 'admin';
+
+    function typeWriter(element, text, speed, token, callback) {
+        element.textContent = '';
+        element.classList.add('is-typing');
+        cursorEl.classList.add('paused');
+        let i = 0;
+        function type() {
+            if (token !== heroAnimationToken) return;
+            if (i < text.length) {
+                element.textContent += text.charAt(i);
+                i++;
+                const delay = text.charAt(i - 1) === '.' ? 180 : speed;
+                setTimeout(type, delay);
+                return;
+            }
+            setTimeout(function() {
+                if (token !== heroAnimationToken) return;
+                element.classList.remove('is-typing');
+                cursorEl.classList.remove('paused');
+                if (callback) callback();
+            }, 500);
+        }
+        type();
+    }
+
+    function animateHeroCopy(aud) {
+        if (!titleEl || !taglineEl || !audienceCopy[aud]) return;
+        heroAnimationToken += 1;
+        const token = heroAnimationToken;
+
+        titleEl.classList.remove('hero-reveal', 'is-typing');
+        taglineEl.classList.remove('hero-reveal');
+        // Keep opacity 1 and set min-height so H1 never collapses
+        titleEl.style.opacity = '1';
+        titleEl.style.transform = 'translateY(0)';
+        taglineEl.style.opacity = '0';
+        taglineEl.style.transform = 'translateY(16px)';
+
+        requestAnimationFrame(function() {
+            titleEl.textContent = '';
+            titleEl.classList.add('hero-reveal');
+            typeWriter(titleEl, audienceCopy[aud].title, 45 + Math.random() * 35, token, function() {
+                taglineEl.innerHTML = '<span class="text-brand-amber/60">✦</span> ' + audienceCopy[aud].subtitle;
+                taglineEl.classList.add('hero-reveal');
+                taglineEl.classList.remove('opacity-0');
+            });
+        });
+    }
+
+    function setAudience(aud) {
+        currentAudience = aud;
+        document.querySelectorAll('.audience-tab').forEach(function(btn) {
+            const isActive = btn.getAttribute('data-audience') === aud;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            if (isActive) {
+                btn.classList.add('bg-white', 'text-brand-green', 'shadow-sm');
+                btn.classList.remove('bg-white/70', 'text-slate-600', 'hover:bg-white');
+                btn.style.borderColor = '#22C55E';
+                btn.style.borderWidth = '2px';
+            } else {
+                btn.classList.remove('bg-white', 'text-brand-green', 'shadow-sm');
+                btn.classList.add('bg-white/70', 'text-slate-600', 'hover:bg-white');
+                btn.style.borderColor = '';
+                btn.style.borderWidth = '';
+            }
+        });
+        animateHeroCopy(aud);
+    }
 
     document.querySelectorAll('.audience-tab').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            const aud = this.getAttribute('data-audience');
-            document.querySelectorAll('.audience-tab').forEach(function(b) {
-                const isActive = b.getAttribute('data-audience') === aud;
-                b.classList.toggle('active', isActive);
-                if (isActive) {
-                    b.classList.add('bg-white', 'text-brand-green', 'shadow-sm');
-                    b.classList.remove('bg-white/70', 'text-slate-600', 'hover:bg-white');
-                    b.style.borderColor = '#22C55E';
-                    b.style.borderWidth = '2px';
-                } else {
-                    b.classList.remove('bg-white', 'text-brand-green', 'shadow-sm');
-                    b.classList.add('bg-white/70', 'text-slate-600', 'hover:bg-white');
-                    b.style.borderColor = '';
-                    b.style.borderWidth = '';
-                }
-            });
-            if (taglineEl && audienceSubtitles[aud]) {
-                taglineEl.innerHTML = '<span class="text-brand-amber">' + audienceSubtitles[aud];
-            }
+            setAudience(this.getAttribute('data-audience'));
         });
     });
 
+    // ── Typewriter effect initial run + admin tagline ──
+    const typewriterText = audienceCopy.admin.title;
+    const el = titleEl;
+    const cursor = cursorEl;
+    let idx = 0;
+    function revealAdminTagline() {
+        if (taglineEl) taglineEl.classList.remove('opacity-0');
+    }
+    function typeNext() {
+        if (idx < typewriterText.length) {
+            if (idx === 0) cursor.classList.add('paused');
+            el.textContent += typewriterText.charAt(idx);
+            idx++;
+            const delay = typewriterText.charAt(idx - 1) === '.' ? 180 : 45 + Math.random() * 35;
+            setTimeout(typeNext, delay);
+        } else {
+            cursor.classList.remove('paused');
+            setTimeout(revealAdminTagline, 400);
+        }
+    }
+    setTimeout(typeNext, 600);
+
+    // ── Hero Typelist Effect (looping keywords) ──
+    const heroTypelistWords = ['Grades', 'fees', 'attendance', 'health', 'canteen', 'discipline', 'notifications', 'timetables', 'exams', 'reports'];
+    const heroTypelistEl = document.getElementById('hero-typelist');
+    const heroTypelistCursor = document.getElementById('hero-typelist-cursor');
+    let currentWordIndex = 0;
+    let currentCharIndex = 0;
+    let isDeleting = false;
+    let heroTypeSpeed = 120;
+
+    function heroTypeTick() {
+        const word = heroTypelistWords[currentWordIndex];
+        if (isDeleting) {
+            heroTypelistEl.textContent = word.substring(0, currentCharIndex - 1);
+            currentCharIndex--;
+            heroTypeSpeed = 60;
+        } else {
+            heroTypelistEl.textContent = word.substring(0, currentCharIndex + 1);
+            currentCharIndex++;
+            heroTypeSpeed = 140;
+        }
+
+        if (!isDeleting && currentCharIndex === word.length) {
+            isDeleting = true;
+            heroTypeSpeed = 1800; // pause at full word
+        } else if (isDeleting && currentCharIndex === 0) {
+            isDeleting = false;
+            currentWordIndex = (currentWordIndex + 1) % heroTypelistWords.length;
+            heroTypeSpeed = 400; // pause before next word
+        }
+
+        setTimeout(heroTypeTick, heroTypeSpeed);
+    }
+    if (heroTypelistEl) setTimeout(heroTypeTick, 2200);
     // ── WhatsApp time ──
     const now = new Date();
     const hours = now.getHours();

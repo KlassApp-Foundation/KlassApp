@@ -279,4 +279,4 @@ This means KlassApp works with **any** school ERP, whether it's a local develope
 
 ---
 
-*See the [roadmap](roadmap.md) for what's coming next.*
+*See the [roadmap](roadmap) for what's coming next.*

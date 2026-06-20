@@ -1,6 +1,6 @@
 # KlassApp — Session Memory & Project Context
 
-## Active Branch: `main`
+## Active Branch: `whatsapp`
 
 ---
 
@@ -191,11 +191,20 @@ Files: +3,648 lines, -310 lines
 
 ---
 
+## TOSHI 2.0 STATUS (June 19)
+
+Items 1-11: ✅ Complete
+- Critical fixes, plan selection, confirm/edit flow, input validation, review card, error handling, WhatsApp verification, dual-mode detection, progress persistence
+- See `knowledge.md` for full spec and implementation details
+
 ## NEXT SESSION CHECKLIST
 
+- [ ] Item 14 — Persistent reminders (post-onboarding)
+- [ ] Item 12 — Mandatory/optional step enforcement  
+- [ ] Item 15 — XLSX file parsing for bulk uploads
+- [ ] Item 16 — Add school_id to whatsapp_users table
+- [ ] Item 17 — Co-admin invite step in Toshi
 - [ ] Fix navbar scroll direction (up=restore, down=compact)
-- [ ] Verify typewriter cursor blink behavior
-- [ ] Start dashboard redesign
 - [ ] Mobile responsive audit
 - [ ] Performance: lazy load dashboard mockups
 - [ ] Accessibility: aria-labels on audience tabs
@@ -203,5 +212,5 @@ Files: +3,648 lines, -310 lines
 
 ---
 
-*Last updated: June 2026*
-*Next: Dashboard redesign + navbar direction fix*
+*Last updated: June 19, 2026*
+*Next: Persistent reminders (Item 14)*

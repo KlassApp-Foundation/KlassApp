@@ -15,6 +15,7 @@ class WhatsAppUser extends Model
     protected $fillable = [
         'phone',
         'user_id',
+        'school_id',
         'verified_at',
         'opted_in',
         'last_inbound_at',
@@ -32,6 +33,14 @@ class WhatsAppUser extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * The school this WhatsApp user is associated with.
+     */
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class, 'school_id');
     }
 
     /**

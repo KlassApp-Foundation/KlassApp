@@ -293,8 +293,9 @@ class UserProfileController extends Controller
         $waUser = WhatsAppUser::updateOrCreate(
             ['user_id' => $user->id],
             [
-                'phone'    => $request->phone,
-                'opted_in' => true,
+                'phone'     => $request->phone,
+                'school_id' => $user->school_id,
+                'opted_in'  => true,
             ]
         );
 

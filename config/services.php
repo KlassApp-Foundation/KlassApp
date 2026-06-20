@@ -42,7 +42,7 @@ return [
       ],
 
     'whatsapp' => [
-        'business_number' => env('WHATSAPP_BUSINESS_NUMBER', '+256767538805'),
+        'business_number' => env('WHATSAPP_BUSINESS_NUMBER', '+256765275289'),
         'business_name' => env('WHATSAPP_BUSINESS_NAME', 'KlassApp'),
 
         // Evolution API (current transport)

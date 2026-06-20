@@ -3,11 +3,44 @@
 
 @section('content')
     <div class="dashboard-shell dashboard-shell--teacher">
-        <div class="dashboard-live-badge dashboard-live-badge--teacher">
-            <span class="dashboard-live-dot"></span>
-            The Teaching Command Center
+        <div class="dashboard-heading">
+            <div>
+                <h1 class="dashboard-section-title" style="font-size: 1.25rem;">Teacher</h1>
+                <p class="dashboard-subtitle" style="margin-top: 4px;">Stay on top of notice updates, subjects, exams, and day-to-day class rhythm.</p>
+            </div>
         </div>
-        <p class="dashboard-subtitle font-semibold">Stay on top of notice updates, subjects, exams, and day-to-day class rhythm.</p>
+
+        <!-- Teaching KPIs -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card text-center">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-green-500" style="background: rgba(34,197,94,0.10);">
+                    <i class="fa-solid fa-user-graduate text-2xl"></i>
+                </div>
+                <p class="text-xl font-semibold text-gray-800 dashboard-kpi-value mt-2">{{ $dashboard['myStudents'] }}</p>
+                <p class="text-xs item-title dashboard-kpi-label">My Students</p>
+            </div>
+            <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card text-center">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-blue-500" style="background: rgba(30,111,217,0.10);">
+                    <i class="fa-solid fa-door-open text-2xl"></i>
+                </div>
+                <p class="text-xl font-semibold text-gray-800 dashboard-kpi-value mt-2">{{ $dashboard['myClasses'] }}</p>
+                <p class="text-xs item-title dashboard-kpi-label">My Classes</p>
+            </div>
+            <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card text-center">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-amber-500" style="background: rgba(217,119,6,0.10);">
+                    <i class="fa-solid fa-calendar-check text-2xl"></i>
+                </div>
+                <p class="text-xl font-semibold text-gray-800 dashboard-kpi-value mt-2">{{ count($dashboard['upcomingExam']) }}</p>
+                <p class="text-xs item-title dashboard-kpi-label">Upcoming Exams</p>
+            </div>
+            <div class="bg-white custom-shadow px-4 py-3 border dashboard-kpi-card text-center">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-green-600" style="background: rgba(34,197,94,0.10);">
+                    <i class="fa-brands fa-whatsapp text-2xl"></i>
+                </div>
+                <p class="text-xl font-semibold text-gray-800 dashboard-kpi-value mt-2">{{ $dashboard['whatsapp']['totalLinked'] }}</p>
+                <p class="text-xs item-title dashboard-kpi-label">WhatsApp Linked</p>
+            </div>
+        </div>
 
         <!-- start -->
         <div class="flex flex-col lg:flex-row my-2 dashboard-topfold dashboard-topfold--teacher">
@@ -16,19 +49,19 @@
                     <div class="w-full lg:w-1/2 my-3 lg:my-0 md:my-0 px-1">
                         <div class="bg-white custom-shadow px-3 py-2 border dashboard-panel-card">
                             <div>
-                                <h1 class="text-gray-800 font-semibold text-lg border-b mx-2 py-1 pb-3">Notice Board</h1>
+                                <h1 class="dashboard-panel-title border-b mx-2 py-1 pb-3">Notice Board</h1>
                             </div>
                             <div class="notice-box">
                                 @if(count($dashboard['noticeboard']) > 0)
                                     @foreach($dashboard['noticeboard'] as $noticeboard)
                                         <div class="notice-box-list py-3 mx-3 border-b">
-                                            <div class="bg-teal-500 text-x rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
+                                            <div class="bg-green-600 text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
                                                 <p>{{ $noticeboard->title }}</p>
                                             </div>
-                                            <div class="bg-purple-500 text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
+                                            <div class="text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2" style="background:#1E6FD9;">
                                                 <p>{{ date('d M Y',strtotime($noticeboard->publish_date)) }}</p>
                                             </div>
-                                            <div class="bg-orange-500 text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
+                                            <div class="text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2" style="background:#D97706;">
                                                 <p>{{ ucwords($noticeboard->type) }}</p>
                                             </div>
                                             <div class="my-1">
@@ -50,7 +83,7 @@
                                     @endforeach
                                 @else
                                     <div class="notice-box-list py-3 mx-3 border-b">
-                                        <p class="text-sm text-gray-900 font-semibold" style="text-align: center;">No Notice Found</p>
+                                        <p class="text-sm text-gray-400 text-center">No notices available</p>
                                     </div>
                                 @endif
                             </div>
@@ -60,7 +93,7 @@
                     <div class="w-full lg:w-1/2 my-3 lg:my-0 md:my-2 px-1">
                         <div class="bg-white custom-shadow px-3 py-2 border dashboard-panel-card">
                             <div>
-                                <h1 class="text-gray-800 font-semibold text-lg border-b mx-2 py-1 pb-3">Subjects</h1>
+                                <h1 class="dashboard-panel-title border-b mx-2 py-1 pb-3">Subjects</h1>
                             </div>
                             <div class="notice-box flex flex-wrap lg:flex-row items-center">
                                 @foreach($dashboard['subject'] as $subject)

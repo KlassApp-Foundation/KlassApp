@@ -1,5 +1,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap");
 
+/* ── Dashboard Refresh — Design Tokens ──
+   Brand palette: Blue #1E6FD9, Green #22C55E, Dark #0F172A, Amber #D97706
+   Surface: #FAFAF5, Border: #E2E8F0, Muted text: #64748B
+   Fonts: Sora (headings/values), DM Sans (body/labels)
+   ── */
+
 :root {
     --d-blue: #1E6FD9;
     --d-green: #22C55E;
@@ -42,6 +48,34 @@
     background:
         radial-gradient(120% 140% at 0% 0%, rgba(217, 119, 6, 0.08) 0%, rgba(217, 119, 6, 0) 44%),
         radial-gradient(120% 140% at 100% 100%, rgba(30, 111, 217, 0.10) 0%, rgba(30, 111, 217, 0) 48%),
+        var(--d-shell);
+}
+
+.dashboard-shell--student {
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgba(30, 111, 217, 0.10) 0%, rgba(30, 111, 217, 0) 44%),
+        radial-gradient(120% 140% at 100% 100%, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0) 48%),
+        var(--d-shell);
+}
+
+.dashboard-shell--reception {
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0) 44%),
+        radial-gradient(120% 140% at 100% 100%, rgba(217, 119, 6, 0.10) 0%, rgba(217, 119, 6, 0) 48%),
+        var(--d-shell);
+}
+
+.dashboard-shell--library {
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgba(30, 111, 217, 0.08) 0%, rgba(30, 111, 217, 0) 44%),
+        radial-gradient(120% 140% at 100% 100%, rgba(217, 119, 6, 0.10) 0%, rgba(217, 119, 6, 0) 48%),
+        var(--d-shell);
+}
+
+.dashboard-shell--accountant {
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgba(217, 119, 6, 0.10) 0%, rgba(217, 119, 6, 0) 44%),
+        radial-gradient(120% 140% at 100% 100%, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0) 48%),
         var(--d-shell);
 }
 
@@ -244,35 +278,243 @@
     letter-spacing: -0.01em;
 }
 
+/* ── Superadmin Sidebar (Light Theme) ── */
 .dashboard-themed-sidebar {
     font-family: "DM Sans", sans-serif;
+    background: var(--d-white) !important;
+    border-right: 1px solid var(--d-border);
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .dashboard-themed-sidebar .dashboard-menu-item {
-    transition: background 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease;
     border-radius: 8px;
     margin: 2px 8px;
+    color: var(--d-text);
 }
 
 .dashboard-themed-sidebar .dashboard-menu-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(30, 111, 217, 0.06);
+    color: var(--d-blue);
 }
 
 .dashboard-themed-sidebar .dashboard-menu-item.dashboard-active {
-    background: rgba(34, 197, 94, 0.18);
+    background: rgba(34, 197, 94, 0.10);
     border-radius: 8px;
+    color: var(--d-green);
 }
 
+/* Sidebar link colors — light theme */
+.dashboard-themed-sidebar a {
+    color: var(--d-text) !important;
+    transition: color 0.15s ease;
+}
+.dashboard-themed-sidebar a:hover {
+    color: var(--d-blue) !important;
+}
+.dashboard-themed-sidebar .active > a,
+.dashboard-themed-sidebar li.active > a {
+    color: var(--d-green) !important;
+}
+
+/* Sidebar SVG icons — dark fill by default */
+.dashboard-themed-sidebar svg,
+.dashboard-themed-sidebar svg path,
+.dashboard-themed-sidebar svg g {
+    fill: var(--d-text) !important;
+    color: var(--d-text) !important;
+    transition: fill 0.15s ease, color 0.15s ease;
+}
+.dashboard-themed-sidebar .active svg,
+.dashboard-themed-sidebar .active svg path,
+.dashboard-themed-sidebar .active svg g,
+.dashboard-themed-sidebar li.active svg,
+.dashboard-themed-sidebar li.active svg path,
+.dashboard-themed-sidebar li.active svg g {
+    fill: var(--d-green) !important;
+    color: var(--d-green) !important;
+}
+.dashboard-themed-sidebar a:hover svg,
+.dashboard-themed-sidebar a:hover svg path,
+.dashboard-themed-sidebar a:hover svg g {
+    fill: var(--d-blue) !important;
+    color: var(--d-blue) !important;
+}
+
+/* Sidebar text labels — used for collapse toggle */
+.dashboard-themed-sidebar li > a > span {
+    transition: opacity 0.2s ease, width 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Active item — green left border accent */
+.dashboard-themed-sidebar li.active {
+    background: rgba(34, 197, 94, 0.10) !important;
+    border-left: 3px solid var(--d-green) !important;
+    border-radius: 0 8px 8px 0;
+    margin-left: 0;
+    padding-left: calc(0.75rem + 3px);
+}
+
+/* Hover — subtle blue tint */
+.dashboard-themed-sidebar li:hover,
+.dashboard-themed-sidebar li.hover\:bg-red-900:hover {
+    background: rgba(30, 111, 217, 0.06) !important;
+}
+
+/* Sub-menus (sites-sidebar) — light theme */
+.dashboard-themed-sidebar .sites-sidebar {
+    background: var(--d-white) !important;
+    border: 1px solid var(--d-border);
+    box-shadow: var(--shadow-md);
+    border-radius: 8px;
+}
+.dashboard-themed-sidebar .sites-sidebar li:hover {
+    background: rgba(30, 111, 217, 0.06) !important;
+    border-left-color: var(--d-blue) !important;
+}
+.dashboard-themed-sidebar .sites-sidebar li.active {
+    background: rgba(34, 197, 94, 0.10) !important;
+    border-left: 3px solid var(--d-green) !important;
+}
+.dashboard-themed-sidebar .sites-sidebar li.active a {
+    color: var(--d-green) !important;
+    background: transparent !important;
+}
+
+/* ── Collapsed Sidebar State ── */
+.sidebar-collapsed .dashboard-themed-sidebar {
+    width: 64px !important;
+    min-width: 64px !important;
+}
+.sidebar-collapsed .dashboard-themed-sidebar li > a > span {
+    opacity: 0;
+    width: 0;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+}
+.sidebar-collapsed .dashboard-themed-sidebar li {
+    justify-content: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+.sidebar-collapsed .dashboard-themed-sidebar li a {
+    justify-content: center;
+}
+.sidebar-collapsed .dashboard-themed-sidebar .sites-sidebar {
+    display: none !important;
+}
+.sidebar-collapsed .dashboard-themed-sidebar .sidebar-menu-arrow {
+    display: none;
+}
+.sidebar-collapsed .superadmin-content,
+.sidebar-collapsed .role-content {
+    width: calc(100vw - 64px) !important;
+}
+
+/* Tooltip for collapsed sidebar items */
+.dashboard-themed-sidebar[data-collapsed="true"] li[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 68px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--d-dark);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* ── Superadmin Header (Light Theme) ── */
 .dashboard-themed-header {
-    background: var(--d-white);
+    background: var(--d-white) !important;
     border-bottom: 1px solid var(--d-border);
     box-shadow: var(--shadow-sm);
+}
+
+.dashboard-themed-header .tw-form-label {
+    color: var(--d-text) !important;
+    font-weight: 700;
+}
+
+/* Header text/links — dark */
+.dashboard-themed-header,
+.dashboard-themed-header a,
+.dashboard-themed-header span,
+.dashboard-themed-header .nav-link {
+    color: var(--d-text) !important;
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--d-border);
+    background: var(--d-white);
+    color: var(--d-text);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    margin-right: 12px;
+}
+.sidebar-toggle-btn:hover {
+    background: var(--d-blue);
+    color: #fff;
+    border-color: var(--d-blue);
+}
+.sidebar-toggle-btn svg {
+    transition: transform 0.25s ease;
+}
+.sidebar-collapsed .sidebar-toggle-btn svg {
+    transform: rotate(180deg);
+}
+
+.dashboard-themed-header .user-dtl,
+.dashboard-themed-header .user-dtl .list-reset {
+    background: var(--d-white) !important;
+    background-color: var(--d-white) !important;
+    border: 1px solid var(--d-border) !important;
+    border-color: var(--d-border) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+.dashboard-themed-header .user-dtl .list-reset .border-b {
+    border-color: var(--d-border) !important;
+}
+.dashboard-themed-header .user-dtl .list-reset li:hover {
+    background: #F1F5F9 !important;
+    background-image: none !important;
+    border-left: none !important;
+}
+.dashboard-themed-header .user-dtl a,
+.dashboard-themed-header .user-dtl .list-reset li a {
+    color: var(--d-text) !important;
+}
+.dashboard-themed-header .user-dtl a:hover {
+    color: var(--d-blue) !important;
+    background: rgba(30, 111, 217, 0.06);
 }
 
 .custom-shadow {
     box-shadow: var(--shadow-sm);
 }
 
+/* Override legacy .item-title color to use brand muted token */
+.item-title {
+    color: var(--d-muted) !important;
+}
+
+/* Responsive: reduce shell padding and border-radius on smaller screens */
 @media (max-width: 1024px) {
     .dashboard-shell {
         border-radius: 14px;
@@ -282,5 +524,15 @@
     .dashboard-topfold--superadmin {
         padding: 14px;
         border-radius: 14px;
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-kpi-value {
+        font-size: 1.5rem;
+    }
+    .dashboard-kpi-icon {
+        width: 44px;
+        height: 44px;
     }
 }

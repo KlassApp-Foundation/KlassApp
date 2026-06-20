@@ -61,6 +61,7 @@
             @yield('base-footer')
         </div>
 
+        @yield('outside-app')
 
         <!-- Scripts -->
 

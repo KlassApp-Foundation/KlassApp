@@ -18,11 +18,24 @@ Route::get('/landing', function () {
     return view('landing');
 });
 
+// Clean landing section URLs (no more hash anchors)
+Route::get('/features', fn() => view('landing', ['scrollTo' => 'features']));
+Route::get('/pricing', fn() => view('landing', ['scrollTo' => 'pricing']));
+Route::get('/schools', fn() => view('landing', ['scrollTo' => 'schools']));
+Route::get('/contact', fn() => view('landing', ['scrollTo' => 'demo']));
+Route::get('/demo', fn() => view('landing', ['scrollTo' => 'demo']));
+
 // Premium School Pages (public)
 Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class, 'show']);
 
 Auth::routes();
 
+
+// Dismiss onboarding reminder (sets session flag to hide the setup banner)
+Route::get('/dismiss-onboarding', function () {
+    session(['onboarding_reminder_dismissed' => true]);
+    return redirect()->back();
+})->name('dismiss.onboarding.reminder')->middleware('auth');
 
 //Impersonate as teacher
 Route::get('/teacher/{id}/impersonate', 'Auth\ImpersonateController@impersonate')->middleware('auth', 'schooladmin');

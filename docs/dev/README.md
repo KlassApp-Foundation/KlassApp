@@ -37,7 +37,7 @@ The WhatsApp layer connects KlassApp to parents and staff via the WhatsApp Busin
    EVOLUTION_API_URL=http://localhost:8081
    EVOLUTION_API_KEY=your-evolution-api-key
    WHATSAPP_HMAC_SECRET=your-hmac-secret
-   WHATSAPP_BUSINESS_NUMBER=+256767538805
+   WHATSAPP_BUSINESS_NUMBER=+256765275289
    ```
 
 2. **Run migrations**:
@@ -100,7 +100,7 @@ The WhatsApp layer connects KlassApp to parents and staff via the WhatsApp Busin
 | `EVOLUTION_API_KEY` | — | Yes | API key for Evolution API authentication |
 | `EVOLUTION_INSTANCE_NAME` | `klassapp` | No | Evolution API instance name |
 | `WHATSAPP_HMAC_SECRET` | — | Yes | Secret key for HMAC-signing webhook payloads |
-| `WHATSAPP_BUSINESS_NUMBER` | `+256767538805` | Yes | Business WhatsApp number in E.164 format |
+| `WHATSAPP_BUSINESS_NUMBER` | `+256765275289` | Yes | Business WhatsApp number in E.164 format |
 | `WHATSAPP_BUSINESS_NAME` | `KlassApp` | No | Display name for the business |
 
 ---
