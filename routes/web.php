@@ -31,6 +31,9 @@ Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class,
 Auth::routes();
 
 
+// Onboarding booking form (from docs)
+Route::post('/api/onboarding/book', [App\Http\Controllers\OnboardingBookingController::class, 'store']);
+
 // Dismiss onboarding reminder (sets session flag to hide the setup banner)
 Route::get('/dismiss-onboarding', function () {
     session(['onboarding_reminder_dismissed' => true]);

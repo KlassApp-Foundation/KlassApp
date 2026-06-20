@@ -6,6 +6,39 @@ How to set up your school on KlassApp — either manually through the admin pane
 
 ---
 
+## Pre-Onboarding Checklist
+
+Share this with the school before starting so the setup goes smoothly.
+
+### Essential (must have ready)
+
+| Item | Details needed |
+|---|---|
+| **School name** | Full official name |
+| **School type** | Primary / Secondary / Primary & Secondary (Mixed) |
+| **Levels** (if Secondary) | O-Level only, A-Level only, or Both |
+| **Gender** | Boys, Girls, or Mixed (Co-ed) |
+| **School email** | Active email address |
+| **School phone** | Ugandan number (+256 format) |
+| **Admin name** | Full name of the person managing the system |
+| **Admin email** | Their email address |
+| **Admin phone** | Their WhatsApp number (+256) |
+| **Academic year** | e.g. 2025 or 2025/2026 |
+| **Teacher names** | List of all teachers (can upload via spreadsheet) |
+| **Class list** | Names of all classes — can upload via spreadsheet (e.g. Primary 1–7, Senior 1–6) |
+
+### Nice to have (prepared in advance)
+
+| Item | Why it helps |
+|---|---|
+| **Student names** | Bulk upload via spreadsheet or document (CSV, XLSX, PDF, DOCX) |
+| **Subject per class** | Custom subjects beyond NCDC defaults |
+| **Term dates** | Custom start/end dates per term |
+| **Fee categories** | Names and amounts (e.g. Tuition $50, Lunch $20) |
+| **Exam names** | e.g. End of Term, Mid Term, Mock |
+
+---
+
 ## Paths
 
 | Path | Best for | Time |
@@ -253,7 +286,7 @@ Continue to the admin dashboard to:
 
 ## AI Agent Path
 
-The Onboarding Agent is a Livewire component (`@livewire('onboarding-agent')`) embedded in both the superadmin and school admin dashboards. It follows an AWS-style interactive Q&A pattern: one question at a time, recommended defaults, confirm before committing. The agent uses the same curriculum defaults as the manual seeder (NCDC Uganda), auto-detects school type from natural language, and writes all records in a single database transaction.
+Toshi is a Livewire component (`@livewire('agent-toshi')`) embedded in both the superadmin and school admin dashboards. It follows an AWS-style interactive Q&A pattern: one question at a time, recommended defaults, confirm before committing. Toshi uses the same curriculum defaults as the manual seeder (NCDC Uganda), auto-detects school type from natural language, and writes all records in a single database transaction.
 
 **1. Open the agent** — it appears at the top of the superadmin or school admin dashboard.
 

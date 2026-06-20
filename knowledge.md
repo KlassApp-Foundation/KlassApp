@@ -334,10 +334,17 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 1. **Chart.js 2.6** — Do NOT upgrade to v4. API has breaking changes (legend→plugins.legend, tooltips→plugins.tooltip, scale→scales)
 2. **Landing v2** — Has different navbar JS (direction-aware). Not aligned with v1 style.
 3. **Toshi assistant mode** — Placeholder only. No handleGeneralQuery() yet. Cannot answer questions or run reports.
+4. **Landing pages** — Both have broken HTML artifacts from previous merges (stray `</nav>` tags, duplicate mobile menus, garbled WhatsApp link fragments). Have been cleaned up but v2 navbar scroll direction still differs from v1.
 
 ---
 
 ## Session Log
+
+### 2026-06-20: Favicon fix, nav cleanup, landing HTML repair
+- **Work done**: Fixed favicon to use SVG as primary with proper cross-browser fallback. Removed "KlassApp" wordmark from nav headers, enlarged logo (52px/44px). Repaired broken HTML on both landing pages — stray `</nav>` tags, duplicate mobile menus, garbled WhatsApp link fragment that rendered as visible text.
+- **Files modified**: `resources/views/layouts/partials/favicon.blade.php`, `resources/views/landing.blade.php`, `resources/views/landing2.blade.php`, `knowledge.md`
+- **Key decisions**: SVG favicon as single source of truth with `type="image/svg+xml"`. PNG fallback for older browsers. Apple touch icon unchanged.
+- **Status**: ✅ Favicon fixed, nav cleaned up. Landing v1/v2 alignment still outstanding.
 
 ### 2026-06-20: Dashboard refresh, Toshi evolution — rename, assistant mode, maximize redesign
 - **Work done**: Refreshed all 7 role dashboards to use dashboard-refresh.css (Accountant, Receptionist, Librarian, Student — Superadmin/Admin/Teacher already done). Fixed accountantDashboard() trait (was returning book data instead of fee data). Fixed plans table data (growth $30, premium contact sales). Renamed OnboardingAgent → AgentToshi across all files. Implemented post-onboarding assistant mode transition. Redesigned maximize modal with Claude-inspired two-column layout. Added session persistence (messages survive page refresh). Added co-admin email notification. Added chart title + timezone fixes. Maximized modal buttons were missing — fixed.

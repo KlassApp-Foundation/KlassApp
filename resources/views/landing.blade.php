@@ -468,11 +468,12 @@
         <!-- Nav Links + CTA (desktop) -->
         <div class="nav-links hidden md:flex">
 
-        <a href="#features">Features</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#schools">Schools</a>
-        <a href="#contact">Contact</a>
-        <a href="#demo" class="nav-cta">Get Started</a>
+        <a href="/features">Features</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/schools">Schools</a>
+        <a href="/contact">Contact</a>
+        <a href="/docs/community/">Docs</a>
+        <a href="/demo" class="nav-cta">Get Started</a>
         <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
            target="_blank"
            style="display: flex; align-items: center; gap: 6px; color: #475569; text-decoration: none; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: color 0.2s ease;"
@@ -491,11 +492,12 @@
     </div>
 
     <div id="mobileMenu" class="mobile-menu absolute top-full right-0 w-1/2 bg-white flex-col py-6 px-6 gap-4 border-l border-slate-200 shadow-2xl z-50">
-        <a href="#features" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Features</a>
-        <a href="#pricing" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Pricing</a>
-        <a href="#schools" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Schools</a>
-        <a href="#contact" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Contact</a>
-        <a href="#demo"
+        <a href="/features" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Features</a>
+        <a href="/pricing" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Pricing</a>
+        <a href="/schools" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Schools</a>
+        <a href="/contact" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Contact</a>
+        <a href="/docs/community/" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Docs</a>
+        <a href="/demo"
            class="bg-brand-blue text-white px-5 py-3 rounded-lg text-sm font-semibold text-center">
             Get Started
         </a>
@@ -987,7 +989,7 @@
         </div>
 
         <div class="text-center mt-12 reveal">
-            <a href="#demo" class="inline-flex items-center gap-2 text-brand-blue font-semibold hover:gap-3 transition-all">
+            <a href="/demo" class="inline-flex items-center gap-2 text-brand-blue font-semibold hover:gap-3 transition-all">
                 See all features →
             </a>
         </div>
@@ -1172,7 +1174,7 @@
         </div>
 
         <div class="text-center mt-12 reveal">
-            <a href="#pricing" class="text-brand-blue font-semibold hover:underline inline-flex items-center gap-2">
+            <a href="/pricing" class="text-brand-blue font-semibold hover:underline inline-flex items-center gap-2">
                 See plans &amp; pricing →
             </a>
         </div>
@@ -1224,7 +1226,7 @@
                         1 school
                     </li>
                 </ul>
-                <a href="#demo"
+                <a href="/demo"
                    class="block text-center border-2 border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:border-gray-300 transition btn-scale">
                     Get Started Free
                 </a>
@@ -1267,7 +1269,7 @@
                         Priority support
                     </li>
                 </ul>
-                <a href="#demo"
+                <a href="/demo"
                    class="block text-center bg-brand-blue text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition btn-scale">
                     Request Pricing
                 </a>
@@ -1306,7 +1308,7 @@
                         Dedicated onboarding support
                     </li>
                 </ul>
-                <a href="#demo"
+                <a href="/demo"
                    class="block text-center border-2 border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:border-gray-300 transition btn-scale">
                     Talk to Sales
                 </a>
@@ -1433,6 +1435,7 @@
             <div class="flex items-center gap-8">
                 <a href="#" class="text-slate-500 hover:text-slate-900 text-sm transition">Terms</a>
                 <a href="#" class="text-slate-500 hover:text-slate-900 text-sm transition">Privacy</a>
+                <a href="/docs/community/" class="text-slate-500 hover:text-slate-900 text-sm transition">Docs</a>
                 <a href="#" class="text-slate-500 hover:text-slate-900 text-sm transition">Contact</a>
             </div>
 
