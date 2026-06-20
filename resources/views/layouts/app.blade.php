@@ -50,11 +50,11 @@
     <body class="font-primary antialiased min-h-screen overflow-x-hidden">
         <div id="app">
             @yield('base-navigation')
-            <main class="flex w-full h-full min-h-screen">
+            <main class="flex w-full h-full min-h-screen relative">
                 <div class="sidebar min-h-full">
                     @yield('base-sidebar')
                 </div>
-                <div class="bg-gray-200 flex-grow w-full px-4" style="width: calc(100vw - 195px);">
+                <div class="bg-gray-200 flex-grow w-full px-4 md:w-auto" style="width: calc(100vw - 195px);">
                     @yield('base-content')
                 </div>
             </main>

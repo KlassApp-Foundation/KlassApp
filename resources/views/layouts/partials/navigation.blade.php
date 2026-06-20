@@ -2,26 +2,22 @@
 <nav class="navbar dashboard-themed-header w-full flex lg:flex-row px-4 lg:px-8 py-2 justify-between items-center" style="background:#FFFFFF;border-bottom:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
     <div class="nav-brand flex items-center">
         @if(\Auth::user())
-            <button class="mr-3" style="display:none;" id="mobile-menu-trigger" aria-label="Toggle sidebar">
+            <button class="mr-3 lg:hidden" id="mobile-menu-trigger" aria-label="Toggle sidebar">
                 <span class="navbar-toggler-icon">
                     <svg class="w-6 h-6 text-gray-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path class="heroicon-ui" d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z" fill="currentColor"/></svg>
                 </span>
             </button>
             <script>
-            (function() {
+            document.addEventListener('DOMContentLoaded', function() {
                 var btn = document.getElementById('mobile-menu-trigger');
-                if (window.innerWidth < 1024) { btn.style.display = 'block'; }
+                if (!btn) return;
                 btn.addEventListener('click', function() {
-                    var sidebar = document.getElementById('res_sidebar');
-                    if (sidebar) {
-                        sidebar.classList.toggle('hidden');
-                        sidebar.classList.toggle('block');
+                    var resSidebar = document.getElementById('res_sidebar');
+                    if (resSidebar) {
+                        resSidebar.classList.toggle('hidden');
                     }
                 });
-                window.addEventListener('resize', function() {
-                    btn.style.display = window.innerWidth < 1024 ? 'block' : 'none';
-                });
-            })();
+            });
             </script>
 
             <a class="h-10 object-contain" href="{{ route('dashboard') }}">

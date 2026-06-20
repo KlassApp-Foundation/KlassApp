@@ -13,13 +13,14 @@
 
 | Component | Server | URL |
 |---|---|---|
-| KlassApp App | 165.245.250.16 | https://klassapp.xyz |
-| Evolution API | 46.101.130.70 | http://46.101.130.70:8081 |
+| KlassApp App | 46.101.111.131 | https://klassapp.xyz |
+| KlassApp (WABA) | 46.101.111.131 | https://klassapp.xyz |
+| ~~Evolution API~~ | ~~decommissioned~~ | ~~Replaced by Meta WABA~~ |
 | Deploy key | `~/.ssh/id_ed25519_do` | |
 
 ### Deploy Command
 ```bash
-ssh -i ~/.ssh/id_ed25519_do root@165.245.250.16 \
+ssh -i ~/.ssh/id_ed25519_do root@46.101.111.131 \
   "cd /var/www/klassapp && git pull origin main && php artisan optimize:clear && systemctl restart php8.3-fpm"
 ```
 

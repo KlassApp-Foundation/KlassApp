@@ -123,26 +123,12 @@
         }
 
         .nav-logo-img {
-            height: 40px;
+            height: 52px;
             width: auto;
-            border-radius: 10px;
             transition: all 0.25s ease;
         }
         .site-header.scrolled .nav-logo-img {
-            height: 28px;
-            border-radius: 7px;
-        }
-
-        .logo-text {
-            font-family: 'Sora', sans-serif;
-            font-size: 20px;
-            font-weight: 600;
-            color: #0F172A;
-            transition: all 0.25s ease;
-        }
-        .site-header.scrolled .logo-text {
-            font-size: 16px;
-            font-weight: 500;
+            height: 36px;
         }
 
         .nav-links {
@@ -179,8 +165,8 @@
         }
 
         /* ── Mobile hamburger ── */
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
+        .mobile-menu { display: none; transform: translateX(100%); transition: transform 0.3s ease; }
+        .mobile-menu.open { display: flex; transform: translateX(0); }
 
         /* ── Hero dot-grid ── */
         .dot-grid {
@@ -451,8 +437,8 @@
         }
 
         /* ── Mobile hamburger ── */
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
+        .mobile-menu { display: none; transform: translateX(100%); transition: transform 0.3s ease; }
+        .mobile-menu.open { display: flex; transform: translateX(0); }
 
         @media (max-width: 768px) {
             .phone-frame {
@@ -474,11 +460,10 @@
 <header id="mainNav" class="site-header">
     <div class="nav-container">
         <!-- Logo -->
-        <a href="#" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+        <a href="#" style="display: flex; align-items: center; text-decoration: none;">
             <img src="{{ asset('images/klassapp-logo-primary.svg') }}"
                  alt="KlassApp"
                  class="nav-logo-img" />
-            <span class="logo-text">KlassApp</span>
         </a>
         <!-- Nav Links + CTA (desktop) -->
         <div class="nav-links hidden md:flex">
@@ -504,9 +489,8 @@
             </svg>
         </button>
     </div>
-</header>
 
-    <div id="mobileMenu" class="mobile-menu absolute top-full left-0 right-0 bg-white flex-col py-6 px-6 gap-4 border-t border-slate-200 shadow-lg">
+    <div id="mobileMenu" class="mobile-menu absolute top-full right-0 w-1/2 bg-white flex-col py-6 px-6 gap-4 border-l border-slate-200 shadow-2xl z-50">
         <a href="#features" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Features</a>
         <a href="#pricing" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Pricing</a>
         <a href="#schools" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Schools</a>
@@ -516,11 +500,7 @@
             Get Started
         </a>
     </div>
-</nav>assApp" target="_blank" style="font-size:20px;font-weight:600;color:#22C55E;text-decoration:none;display:flex;align-items:center;gap:8px;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.272-.198z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.977.546 3.826 1.494 5.404L2 22l4.667-1.463A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.182c-1.736 0-3.37-.535-4.738-1.528l-.339-.234-2.77.868.918-2.686-.22-.352A8.164 8.164 0 013.818 12c0-4.509 3.673-8.182 8.182-8.182s8.182 3.673 8.182 8.182-3.673 8.182-8.182 8.182z"/></svg>
-        WhatsApp
-    </a>
-</div>
+</header>
 
 <!-- ═══════════════════════════════════════════════════
      HERO

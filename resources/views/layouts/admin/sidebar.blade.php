@@ -1,11 +1,13 @@
 {{-- SPDX-License-Identifier: MIT --}}
-<div id="admin-sidebar" class="w-full h-full lg:w-48 md:w-48 text-white dashboard-themed-sidebar admin-sidebar" data-collapsed="false" style="background-color: #0F172A;">
-  <div class="min-h-full header-wrapper-b hidden lg:block md:block">
+{{-- Desktop sidebar — visible md+ --}}
+<div id="admin-sidebar" class="hidden md:block lg:w-48 md:w-48 text-white dashboard-themed-sidebar admin-sidebar" data-collapsed="false" style="background-color: #0F172A;">
+  <div class="min-h-full header-wrapper-b">
    @include('layouts.admin.menu')
   </div>
 </div>
-<div id="res_sidebar" class="w-full lg:w-48 md:w-48 admin-sidebar dashboard-themed-sidebar hidden lg:hidden md:hidden res_sidebar">
-  <div class="min-h-full header-wrapper-b lg:hidden md:hidden" style="background-color: #0F172A;">
+{{-- Mobile sidebar — toggleable via hamburger --}}
+<div id="res_sidebar" class="block md:hidden admin-sidebar dashboard-themed-sidebar hidden" style="background-color: #0F172A; position: absolute; z-index: 50; width: 100%;">
+  <div class="min-h-full header-wrapper-b">
    @include('layouts.admin.menu')
   </div>
 </div>

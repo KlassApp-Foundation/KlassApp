@@ -141,19 +141,6 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         }
 
-        .nav-pill .logo-text {
-            font-family: 'Sora', sans-serif;
-            font-size: 16px;
-            font-weight: 500;
-            color: #0D1526;
-            transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                        font-weight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .site-header.scrolled .nav-pill .logo-text {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
         .nav-pill .nav-links {
             display: flex;
             align-items: center;
@@ -454,8 +441,9 @@
         }
 
         /* ── Mobile hamburger ── */
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
+        .mobile-menu { display: none; transform: translateX(100%); transition: transform 0.3s ease; }
+        .mobile-menu.open { display: flex; transform: translateX(0); }
+        .nav-right-row { display: flex; align-items: center; gap: 0.75rem; }
 
         @media (max-width: 768px) {
             .phone-frame {
@@ -478,11 +466,10 @@
     <div class="nav-container">
         <div class="nav-pill">
             <!-- Logo -->
-            <a href="#" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+            <a href="#" style="display: flex; align-items: center; text-decoration: none;">
                 <img src="{{ asset('images/klassapp-logo-primary.svg') }}"
                      alt="KlassApp"
-                     style="height: 32px; width: auto;" />
-                <span class="logo-text">KlassApp</span>
+                     style="height: 44px; width: auto;" />
             </a>
             <!-- Nav Links + CTA -->
             <div class="nav-links hidden md:flex" style="align-items: center;">
@@ -502,8 +489,7 @@
             </div>
         </div>
     </div>
-</header>
-
+    <div class="nav-right-row">
         <div class="hidden md:flex items-center gap-8">
             <a href="#features" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Features</a>
             <a href="#pricing" class="text-slate-600 hover:text-slate-900 transition text-sm font-medium">Pricing</a>
@@ -515,10 +501,9 @@
             </a>
             <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
                target="_blank"
-               class="text-slate-500 hover:text-slate-900 transition text-sm font-medium flex items-center gap-1.5"
-               aria-label="Chat on WhatsApp"
                style="display: flex; align-items: center; gap: 6px; color: #475569; text-decoration: none; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: color 0.2s ease;"
-               onmouseover="this.style.color='#1E6FD9'" onmouseout="this.style.color='#475569'">
+               onmouseover="this.style.color='#1E6FD9'" onmouseout="this.style.color='#475569'"
+               aria-label="Chat on WhatsApp">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.272-.198z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.977.546 3.826 1.494 5.404L2 22l4.667-1.463A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.182c-1.736 0-3.37-.535-4.738-1.528l-.339-.234-2.77.868.918-2.686-.22-.352A8.164 8.164 0 013.818 12c0-4.509 3.673-8.182 8.182-8.182s8.182 3.673 8.182 8.182-3.673 8.182-8.182 8.182z"/></svg>
                 WhatsApp
             </a>
@@ -531,7 +516,7 @@
         </button>
     </div>
 
-    <div id="mobileMenu" class="mobile-menu absolute top-full left-0 right-0 bg-white flex-col py-6 px-6 gap-4 border-t border-slate-200 shadow-lg">
+    <div id="mobileMenu" class="mobile-menu absolute top-full right-0 w-1/2 bg-white flex-col py-6 px-6 gap-4 border-l border-slate-200 shadow-2xl z-50">
         <a href="#features" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Features</a>
         <a href="#pricing" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Pricing</a>
         <a href="#schools" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Schools</a>
@@ -541,7 +526,9 @@
             Get Started
         </a>
     </div>
-</nav>
+</header>
+    </div>
+
 
 <!-- ═══════════════════════════════════════════════════
      HERO
