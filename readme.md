@@ -115,7 +115,17 @@ After everything, you can proceed to finalize student promotion just below the m
 The teacher automates his tasks to by accessing his dashboard. 
 **Classes:** A teacher sees the classes he teaches by navigating to Classes menu on the side bar, all the classes and subjects assigned to him live here
 
+**Lesson Plans** On this page, the teacher sets up his/her lesson plans which are later verified by the system admin. It's found just after classes
+
 **Student Attendance:** This is where the teacher carries out roll calls. To record an attendance, the teacher navigates to this page, then he's required to select class, date (this is usually auto selected) and the session.
+
+**Homeworks:** On this page, the teacher notes the homeworks given to students of a specific class. After ading the homework, the admin approves it. This enables teachers to track students who haven't submitted in time or who missed
+
+**Assignments:** The same idea as homeworks
+
+**Exam & Marks:** Student's performance is recorded here, forexample after the end of Term exams, the teacher navigates to this page and enters student marks, then after all marks are entered, he submits by clicking the submit button. To enter students marks, navigate to Exams on the side menu
+
+**Todo List:** This is the second last on the teacher's menu. It enables the teacher to note and track tasks he'll do on the desired date and time. This boosts his performance
 
 # LIBRARIAN SETUP
 This' the easiest dashboard to onboard users(Librarians)
