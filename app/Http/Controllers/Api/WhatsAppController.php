@@ -645,8 +645,10 @@ class WhatsAppController extends Controller
                     if ($msgType === 'text') {
                         $body = $msg['text']['body'] ?? '';
                     } elseif ($msgType === 'interactive') {
-                        $body = $msg['interactive']['button_reply']['id']
-                            ?? $msg['interactive']['list_reply']['id']
+                        // Try ID first (preferred), fall back to title (Evolution lists don't set IDs)
+                        $ir = $msg['interactive'] ?? [];
+                        $body = $ir['button_reply']['id'] ?? $ir['list_reply']['id']
+                            ?? $ir['button_reply']['title'] ?? $ir['list_reply']['title']
                             ?? '';
                     }
 
@@ -694,20 +696,7 @@ class WhatsAppController extends Controller
             ->first();
 
         if (!$whatsappUser) {
-            // Use Business API if configured, otherwise Evolution
-            if ($this->businessApi->isConfigured()) {
-                $this->businessApi->sendText(
-                    $phone,
-                    "👋 Welcome to KlassApp!\n\nYour phone number is not linked to any school account. Please contact your school office to link your WhatsApp number.",
-                    'unrecognized',
-                );
-            } else {
-                app(WhatsAppService::class)->sendText(
-                    $phone,
-                    "👋 Welcome to KlassApp!\n\nYour phone number is not linked to any school account. Please contact your school office to link your WhatsApp number.",
-                    'unrecognized',
-                );
-            }
+            $this->handleUnrecognizedUserMeta($phone, $body);
             return;
         }
 
@@ -784,6 +773,169 @@ class WhatsAppController extends Controller
     /**
      * Process a delivery status update from Meta Cloud API.
      */
+    /**
+     * Handle an unrecognized user on the Meta WABA path.
+     * Supports School Pay code verification, exit, and link_help flows.
+     */
+    protected function handleUnrecognizedUserMeta(string $phone, string $body): void
+    {
+        $trimmed = trim($body);
+
+        $sendText = function (string $message, ?string $flowType = null, ?int $userId = null) use ($phone) {
+            if ($this->businessApi->isConfigured()) {
+                return $this->businessApi->sendText($phone, $message, $flowType, $userId);
+            }
+            return app(WhatsAppService::class)->sendText($phone, $message, $flowType, $userId);
+        };
+
+        // ── Handle button replies ──
+        if ($trimmed === 'exit') {
+            $sendText(
+                "No problem! If you change your mind, just text us anytime.\n\n"
+                . "Have your child's School Pay payment code ready — "
+                . "it's the 10-digit number you use when paying school fees.",
+                'exit_prompt'
+            );
+            return;
+        }
+
+        if ($trimmed === 'link_help') {
+            $sendText(
+                "To find your child's School Pay payment code:\n\n"
+                . "1. Check your most recent school fees payment SMS or receipt\n"
+                . "2. Look for a 10-digit number (e.g. 1005416321) — that's the payment code\n"
+                . "3. Reply with that number here\n\n"
+                . "Still can't find it? Contact the school office — they can give it to you.",
+                'link_help'
+            );
+            return;
+        }
+
+        // ── Is this a School Pay payment code? (10 digits) ──
+        if (preg_match('/^\d{10}$/', $trimmed)) {
+            $this->processCodeVerificationForMeta($phone, $trimmed, $sendText);
+            return;
+        }
+
+        // ── Default: unrecognized ──
+        $sendText(
+            "👋 Welcome to KlassApp!\n\n"
+            . "Your phone number is not linked to any school account yet.\n\n"
+            . "To link your account, reply with your child's 10-digit School Pay payment code.\n"
+            . "Reply *LINK_HELP* if you need help finding the code.",
+            'unrecognized'
+        );
+    }
+
+    /**
+     * Verify a School Pay payment code and link the parent (Meta WABA path).
+     */
+    protected function processCodeVerificationForMeta(string $phone, string $code, callable $sendText): void
+    {
+        $studentAcademic = StudentAcademic::where('std_school_pay_number', $code)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$studentAcademic) {
+            $sendText(
+                "We couldn't find a student with payment code *{$code}*.\n\n"
+                . "Either the code was entered incorrectly, or your child's school "
+                . "may not use School Pay.\n\n"
+                . "To help us find you:\n"
+                . "• Check the code and reply with it again\n"
+                . "• Or reply with your child's *SCHOOL NAME* so we can look it up",
+                'code_not_found'
+            );
+            return;
+        }
+
+        // Find the parent linked to this student
+        $parentLink = DB::table('student_parent_links')
+            ->where('student_id', $studentAcademic->user_id)
+            ->where('status', 1)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$parentLink) {
+            // No parent linked — link directly via payment code
+            $studentName = optional($studentAcademic->user)->name ?? 'your child';
+            $className = optional($studentAcademic->standardLink)->StandardSection ?? '';
+
+            WhatsAppUser::create([
+                'phone'                  => $phone,
+                'school_id'              => $studentAcademic->school_id,
+                'student_payment_code'   => $code,
+                'verified_via_schoolpay' => true,
+                'verified_at'            => now(),
+                'opted_in'               => true,
+                'last_inbound_at'        => now(),
+            ]);
+
+            $classLine = $className ? " ({$className})" : '';
+            $school = DB::table('schools')->find($studentAcademic->school_id);
+
+            $sendText(
+                "✅ *Welcome to KlassApp!*\n\n"
+                . "Your number has been linked to *{$studentName}{$classLine}* at {$school->name}.\n\n"
+                . "Send *FEES* for fee balance\n"
+                . "Send *GRADES* for exam results\n"
+                . "Send *ATTENDANCE* for attendance\n"
+                . "Send *MENU* for all options",
+                'code_linked_direct'
+            );
+            return;
+        }
+
+        // Parent exists — check if already linked to another WhatsApp
+        $existing = WhatsAppUser::where('user_id', $parentLink->parent_id)->first();
+
+        if ($existing) {
+            $sendText(
+                "This student payment code is already linked to another WhatsApp number.\n\n"
+                . "If you've changed your number, please contact the school office to update your details.\n\n"
+                . "Send *HELP* for more options.",
+                'code_already_linked'
+            );
+            return;
+        }
+
+        // Create the WhatsApp user record
+        $school = DB::table('schools')->find($studentAcademic->school_id);
+        $studentName = optional($studentAcademic->user)->name ?? 'your child';
+        $className = optional($studentAcademic->standardLink)->StandardSection ?? '';
+
+        WhatsAppUser::create([
+            'phone'                  => $phone,
+            'user_id'                => $parentLink->parent_id,
+            'school_id'              => $studentAcademic->school_id,
+            'student_payment_code'   => $code,
+            'verified_via_schoolpay' => true,
+            'verified_at'            => now(),
+            'opted_in'               => true,
+            'last_inbound_at'        => now(),
+        ]);
+
+        $classLine = $className ? " ({$className})" : '';
+        $sendText(
+            "✅ *Welcome to KlassApp!*\n\n"
+            . "Your number has been linked successfully.\n"
+            . "School: {$school->name}\n"
+            . "Student: {$studentName}{$classLine}\n\n"
+            . "Send *FEES* for fee balance\n"
+            . "Send *GRADES* for exam results\n"
+            . "Send *ATTENDANCE* for attendance\n"
+            . "Send *MENU* for all options",
+            'code_verified'
+        );
+
+        // Flush any queued notifications
+        $whatsappUser = WhatsAppUser::findByPhone($phone);
+        if ($whatsappUser) {
+            $outboundService = app(OutboundWhatsAppService::class);
+            $outboundService->flushPending($whatsappUser);
+        }
+    }
+
     protected function processMetaStatusUpdate(array $status): void
     {
         $messageId = $status['id'] ?? '';
