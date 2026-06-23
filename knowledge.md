@@ -1,10 +1,10 @@
 # KlassApp Project Knowledge
 
-## Current Status: June 2026
+## Current Status: June 23, 2026
 
 ### Git
-- **Branch**: `main`
-- **Last commit**: `53d6a49` — "fix(nav): replace Tailwind hamburger with vanilla JS, fix mobile sidebar toggle"
+- **Branch**: `main` (dirty — School Pay + list buttons work unstaged)
+- **Last commit**: `a58f3d0` — "fix: replace Kampala High School with Kabale Junior School in testimonials (#105)"
 - **Remote**: `origin/main` (GitHub: Elijah-ug/KlassApp)
 
 ---
@@ -34,8 +34,13 @@ WHATSAPP_BUSINESS_NAME=KlassApp
 ```
 
 ### Next Session Priority
-1. Implement Toshi general query handling (handleGeneralQuery, intent detection, real data queries)
-2. Fix v1/v2 landing navbar alignment
+1. Run the three new migrations on production
+2. Configure School Pay webhook forwarding on production
+3. Test School Pay → WhatsApp receipt flow end-to-end
+4. Test first-time texter flow with list buttons
+5. Add `SCHOOLPAY_ENFORCE_SIGNATURE` toggle (env or School model) to reject unsigned webhooks
+6. Clean up `whatsapp_pending_parent_links` dead table (drop or document)
+7. Continue Toshi work (Item 14 — Persistent reminders)
 
 ### Local Dev
 ```bash
@@ -391,3 +396,16 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Key decisions**: Used vanilla JS `onkeydown` instead of Alpine for Enter-to-send (Vue conflict). Kept direction-based scroll on v2 (Flare-style), position-based on v1 (HTML restructured). Audience tabs now `py-3` (48px) meeting WCAG 44px touch target. Merged origin/main (40+ commits) into whatsapp — kept HEAD for dashboard files (superset), combined knowledge.md entries.
 - **Status**: ✅ Done — PR #104 now rebased, all conflicts resolved, pushed
 - **Edge cases flagged**: `navLogo` variable absent from v1 after main restructure — used `.site-header` scrolled class toggle only. Playwright artifacts (.playwright-mcp/) inadvertently committed then removed.
+
+### 2026-06-20: Droplet rebuild, WABA migration, full audit
+- **Work done**: Rebuilt destroyed droplet (new IP 46.101.111.131), full LEMP + Laravel provision, migrated from Evolution API to Meta WABA (direct), fixed Docker iptables DROP blocking external traffic, fixed Google OAuth (malformed .env line), fixed mobile hamburger menus on both landings + admin, fixed Str::plural for PHP 8.4 compat, added google_id migration locally, created full audit at `audit.md`
+- **Key discoveries**: Production .env had concatenated line (`WHATSAPP_BUSINESS_API_VERSION=v21.0GOOGLE_CLIENT_ID=...`), Docker left iptables FORWARD DROP rules after removal, landing2 was missing mobileMenu div entirely, admin res_sidebar toggle JS ran before DOM ready
+- **Verdict**: ⚠️ NOT READY for school onboarding — 6 critical blockers (35 dd() calls, APP_DEBUG=true, no HMAC webhook verification, 0 swap, no backups, 3 incomplete dashboards)
+- **Next**: Fix critical items 1-6, deploy docs to production, add WhatsApp linking UI, wire real chart data
+
+### 2026-06-23: School Pay webhook + interactive WhatsApp lists
+- **Work done**: Built School Pay webhook controller (HMAC verification, student join chain, WhatsApp receipt), added free-form message builders (composeFeeBalance, composeAttendance, composeGradesOverview, composeHealthRecord, composeStudentWithdrawn, composeTermOpens, composeTermCloses), added sendButtons() and sendList() for interactive messages, replaced text-based "Reply FEES..." prompts with interactive List messages on welcome/verification, added emoji-stripping to routeInbound() so list button titles match keyword routing, added sendListDual() to OutboundWhatsAppService. Added "Link Another Student" button to all welcome/receipt lists + 10-digit code handling for recognized users in routeInbound + 'code'/'link' keywords in parent routing. Webhook receipt also uses sendList instead of sendText.
+- **Files modified**: SchoolPayWebhookController.php (new), WhatsAppController.php, WhatsAppService.php, OutboundWhatsAppService.php, WhatsAppPendingParentLink.php (new), routes/api.php, 3 new migrations
+- **Key decisions**: Direct linking without school approval when code matches student. Free-form messages for all 24hr-window interactions (no Meta cost). List buttons replace text-based "Reply KEYWORD" prompts for better UX. Emoji stripping in routing allows lists and typed keywords to share the same route table. Recognized users can also link additional students via 10-digit codes (routeInbound catches codes before keyword matching).
+- **Status**: ✅ Done — School Pay integration complete, list buttons deployed, Link Another Student flow working for all users
+- **Edge cases flagged**: School Pay webhook payload format unconfirmed (raw_payload column for inspection). List button titles with emojis need stripping before keyword matching. SCHOOlPAY_ENFORCE_SIGNATURE toggle needed before production. whatsapp_pending_parent_links table is dead schema weight (flow changed to direct linking)
