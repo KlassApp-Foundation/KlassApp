@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\StudentAcademic;
 use App\Models\Attendance;
 use App\Models\FeesCategories;
+use App\Models\WhatsAppPendingParentLink;
 use App\Models\Events;
 use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
@@ -21,6 +22,7 @@ use App\Services\OutboundWhatsAppService;
 use App\Services\WhatsAppService;
 use App\Services\WhatsAppBusinessService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
@@ -879,12 +881,208 @@ class WhatsAppController extends Controller
             ->first();
 
         if (!$whatsappUser) {
-            $whatsAppService->sendText(
-                $phone,
-                "👋 Welcome to KlassApp!\n\nYour phone number is not linked to any school account. Please contact your school office to link your WhatsApp number.",
-                'unrecognized',
+            $trimmed = trim($body);
+
+            // ── Handle button replies from the welcome prompt ──
+            if ($trimmed === 'exit') {
+                $whatsAppService->sendText($phone,
+                    "No problem! If you change your mind, just text us anytime.\n\n"
+                    . "Have your child's School Pay payment code ready — "
+                    . "it's the 10-digit number you use when paying school fees.",
+                    'exit_prompt'
+                );
+                return response()->json(['status' => 'exit']);
+            }
+
+            if ($trimmed === 'link_help') {
+                $whatsAppService->sendText($phone,
+                    "To find your child's School Pay payment code:\n\n"
+                    . "1. Check your most recent school fees payment SMS or receipt\n"
+                    . "2. Look for a 10-digit number (e.g. 1005416321) — that's the payment code\n"
+                    . "3. Reply with that number here\n\n"
+                    . "Still can't find it? Contact the school office — they can give it to you.",
+                    'link_help'
+                );
+                return response()->json(['status' => 'link_help']);
+            }
+
+            // ── Is this a School Pay payment code? (10 digits) ──
+            if (preg_match('/^\d{10}$/', $trimmed)) {
+                // Look up the student by payment code
+                $studentAcademic = StudentAcademic::where('std_school_pay_number', $trimmed)
+                    ->whereNull('deleted_at')
+                    ->first();
+
+                if (!$studentAcademic) {
+                    // Code not found — two possibilities:
+                    // 1. School isn't on KlassApp 2. School doesn't use School Pay / code wrong
+                    $whatsAppService->sendText($phone,
+                        "We couldn't find a student with payment code *{$trimmed}*.\n\n"
+                        . "Either the code was entered incorrectly, or your child's school "
+                        . "may not use School Pay.\n\n"
+                        . "To help us find you:\n"
+                        . "• Check the code and reply with it again\n"
+                        . "• Or reply with your child's *SCHOOL NAME* so we can look it up",
+                        'code_not_found'
+                    );
+                    return response()->json(['status' => 'code_not_found']);
+                }
+
+                // Find the parent linked to this student
+                $parentLink = DB::table('student_parent_links')
+                    ->where('student_id', $studentAcademic->user_id)
+                    ->where('status', 1)
+                    ->whereNull('deleted_at')
+                    ->first();
+
+                if (!$parentLink) {
+                    // No parent linked yet — link directly via payment code
+                    $studentName = optional($studentAcademic->user)->name ?? 'your child';
+                    $className = optional($studentAcademic->standardLink)->StandardSection ?? '';
+
+                    WhatsAppUser::create([
+                        'phone'                  => $phone,
+                        'school_id'              => $studentAcademic->school_id,
+                        'student_payment_code'   => $trimmed,
+                        'verified_via_schoolpay' => true,
+                        'verified_at'            => now(),
+                        'opted_in'               => true,
+                        'last_inbound_at'        => now(),
+                    ]);
+
+                    $classLine = $className ? " ({$className})" : '';
+                    $school = DB::table('schools')->find($studentAcademic->school_id);
+                    $whatsAppService->sendList(
+                        phone: $phone,
+                        title: '✅ Welcome to KlassApp!',
+                        sections: [
+                            [
+                                'title' => 'Quick Actions',
+                                'rows' => [
+                                    ['title' => '💰 Fee Balance', 'description' => 'Check what you owe and what\'s paid'],
+                                    ['title' => '📊 Exam Results', 'description' => 'View latest grades and reports'],
+                                    ['title' => '📋 Attendance', 'description' => 'See attendance records'],
+                                    ['title' => '🔗 Link Another Student', 'description' => 'Add another child using payment code'],
+                                    ['title' => '❓ Help & Options', 'description' => 'Full menu and support'],
+                                ],
+                            ],
+                        ],
+                        description: "Your number has been linked to {$studentName}{$classLine} at {$school->name}.",
+                        footerText: 'Tap an option to get started',
+                        flowType: 'code_linked_direct',
+                    );
+                    return response()->json(['status' => 'code_linked_direct']);
+                }
+
+                // Check if this parent already has a WhatsApp number linked
+                $existing = WhatsAppUser::where('user_id', $parentLink->parent_id)->first();
+
+                if ($existing) {
+                    $whatsAppService->sendText($phone,
+                        "This student payment code is already linked to another WhatsApp number.\n\n"
+                        . "If you've changed your number, please contact the school office to update your details.\n\n"
+                        . "Reply *HELP* for more options.",
+                        'code_already_linked'
+                    );
+                    return response()->json(['status' => 'code_already_linked']);
+                }
+
+                // Look up the school for the welcome message
+                $school = DB::table('schools')->find($studentAcademic->school_id);
+                $studentName = optional($studentAcademic->user)->name ?? 'your child';
+                $className = optional($studentAcademic->standardLink)->StandardSection ?? '';
+
+                // Create the WhatsApp user record
+                WhatsAppUser::create([
+                    'phone'                  => $phone,
+                    'user_id'                => $parentLink->parent_id,
+                    'school_id'              => $studentAcademic->school_id,
+                    'student_payment_code'   => $trimmed,
+                    'verified_via_schoolpay' => true,
+                    'verified_at'            => now(),
+                    'opted_in'               => true,
+                    'last_inbound_at'        => now(),
+                ]);
+
+                // Welcome the parent
+                $classLine = $className ? " ({$className})" : '';
+                $whatsAppService->sendList(
+                    phone: $phone,
+                    title: '✅ Welcome to KlassApp!',
+                    sections: [
+                        [
+                            'title' => 'Quick Actions',
+                            'rows' => [
+                                ['title' => '💰 Fee Balance', 'description' => 'Check what you owe and what\'s paid'],
+                                ['title' => '📊 Exam Results', 'description' => 'View latest grades and reports'],
+                                ['title' => '📋 Attendance', 'description' => 'See attendance records'],
+                                ['title' => '🔗 Link Another Student', 'description' => 'Add another child using payment code'],
+                                ['title' => '❓ Help & Options', 'description' => 'Full menu and support'],
+                            ],
+                        ],
+                    ],
+                    description: "School: {$school->name}\nStudent: {$studentName}{$classLine}",
+                    footerText: 'Tap an option to get started',
+                    flowType: 'code_verified',
+                );
+
+                // Flush any queued notifications
+                $newUser = WhatsAppUser::findByPhone($phone);
+                if ($newUser) {
+                    $outboundService = app(OutboundWhatsAppService::class);
+                    $outboundService->flushPending($newUser);
+                }
+
+                return response()->json(['status' => 'linked_via_code']);
+            }
+
+            // ── Check if this looks like a school name (after code-not-found) ──
+            // If the message is longer than 3 chars and not a button reply,
+            // try matching it to a school name so unlinked parents can self-identify.
+            if (strlen($trimmed) > 3 && !in_array($trimmed, ['exit', 'link_help', 'help', 'menu'])) {
+                $matchingSchools = DB::table('schools')
+                    ->where('name', 'LIKE', '%' . $trimmed . '%')
+                    ->limit(5)
+                    ->get(['id', 'name']);
+
+                if ($matchingSchools->isNotEmpty()) {
+                    $schoolList = $matchingSchools->pluck('name')->implode("\n• ");
+                    $whatsAppService->sendText($phone,
+                        "We found these schools in our system:\n\n"
+                        . "• {$schoolList}\n\n"
+                        . "Your child's school *is* on KlassApp! But the payment code "
+                        . "you entered wasn't found.",
+                        'school_found_no_code'
+                    );
+                    return response()->json(['status' => 'school_found_no_code']);
+                }
+
+                // School not found in KlassApp at all
+                $whatsAppService->sendText($phone,
+                    "It looks like *{$trimmed}* isn't registered on KlassApp yet.\n\n"
+                    . "We're expanding to more schools every week. "
+                    . "Ask the school office to sign up at klassapp.xyz",
+                    'school_not_found'
+                );
+                return response()->json(['status' => 'school_not_found']);
+            }
+
+            // ── Not a code — prompt the parent to link via School Pay ──
+            $whatsAppService->sendButtons(
+                phone: $phone,
+                message: "Your WhatsApp number isn't linked yet.\n\n"
+                    . "To connect instantly, reply with your child's School Pay payment code — "
+                    . "the 10-digit number you use when paying school fees.\n\n"
+                    . "Example: *1005416321*",
+                buttons: [
+                    ['title' => 'Exit', 'id' => 'exit'],
+                    ['title' => 'Link', 'id' => 'link_help'],
+                ],
+                title: '👋 Welcome to KlassApp!',
+                footer: 'Don\'t know the code? Tap Link for help.',
+                flowType: 'unrecognized_prompt',
             );
-            return response()->json(['status' => 'sent_unrecognized']);
+            return response()->json(['status' => 'prompted_for_code']);
         }
 
         if (!$whatsappUser->opted_in) {
@@ -943,12 +1141,24 @@ class WhatsAppController extends Controller
      */
     private function routeInbound(WhatsAppUser $user, string $phone, string $body, WhatsAppService $whatsAppService): void
     {
+        // Strip emoji characters so list button titles (e.g. "💰 Fee Balance") match keywords
+        $clean = preg_replace('/[\\x{1F600}-\\x{1F64F}\\x{1F300}-\\x{1F5FF}\\x{1F680}-\\x{1F6FF}\\x{1F1E0}-\\x{1F1FF}\\x{2600}-\\x{26FF}\\x{2700}-\\x{27BF}]/u', '', $body);
         $trimmed = strtolower(trim($body));
+        $normalised = strtolower(trim($clean));
         $role = $user->user->usergroup_id;
         $hasChildren = $user->user->children()->exists();
 
+        // Match against both raw input and emoji-stripped version
+        $match = fn(array $keywords) => in_array($trimmed, $keywords) || in_array($normalised, $keywords);
+
+        // Recognized user texting a 10-digit code → link another student
+        if (preg_match('/^\d{10}$/', $normalised)) {
+            $this->handleCodeForExistingUser($user, $phone, $normalised, $whatsAppService);
+            return;
+        }
+
         // Universal: menu/help
-        if (in_array($trimmed, ['menu', 'help', 'start', 'options'])) {
+        if ($match(['menu', 'help', 'start', 'options', '❓ help & options'])) {
             $this->sendMenu($user, $phone, $whatsAppService);
             return;
         }
@@ -966,7 +1176,7 @@ class WhatsAppController extends Controller
             return;
         }
 
-        if (in_array($trimmed, ['optout', 'stop', 'unsubscribe'])) {
+        if ($match(['optout', 'stop', 'unsubscribe'])) {
             $user->update(['opted_in' => false]);
             $whatsAppService->sendText(
                 $phone,
@@ -979,7 +1189,7 @@ class WhatsAppController extends Controller
         }
 
         // Universal: events (any role)
-        if (in_array($trimmed, ['events', 'event', 'calendar', 'news'])) {
+        if ($match(['events', 'event', 'calendar', 'news'])) {
             $this->sendEvents($user, $phone, $whatsAppService);
             return;
         }
@@ -988,27 +1198,27 @@ class WhatsAppController extends Controller
 
         // SchoolAdmin (3)
         if ($role === 3) {
-            if (in_array($trimmed, ['students', 'student', 'learner'])) {
+            if ($match(['students', 'student', 'learner'])) {
                 $this->sendStudentList($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['staff', 'teacher', 'employees'])) {
+            if ($match(['staff', 'teacher', 'employees'])) {
                 $this->sendStaffList($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['exams', 'exam', 'marks', 'results', 'report'])) {
+            if ($match(['exams', 'exam', 'marks', 'results', 'report'])) {
                 $this->sendAdminExams($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['fees', 'fee', 'balance', 'payment', 'pay'])) {
+            if ($match(['fees', 'fee', 'balance', 'payment', 'pay'])) {
                 $this->sendAdminFees($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['reports', 'analytics', 'stats'])) {
+            if ($match(['reports', 'analytics', 'stats'])) {
                 $this->sendAdminReports($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['notices', 'announcements', 'bulletin'])) {
+            if ($match(['notices', 'announcements', 'bulletin'])) {
                 $this->sendNotices($user, $phone, $whatsAppService);
                 return;
             }
@@ -1016,19 +1226,19 @@ class WhatsAppController extends Controller
 
         // Teacher (5)
         if ($role === 5) {
-            if (in_array($trimmed, ['marks', 'exam', 'results', 'grades'])) {
+            if ($match(['marks', 'exam', 'results', 'grades'])) {
                 $this->sendTeacherMarks($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['attendance', 'absent', 'present', 'late'])) {
+            if ($match(['attendance', 'absent', 'present', 'late'])) {
                 $this->sendAttendance($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['timetable', 'schedule', 'periods'])) {
+            if ($match(['timetable', 'schedule', 'periods'])) {
                 $this->sendTimetable($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['assignments', 'homework', 'tasks'])) {
+            if ($match(['assignments', 'homework', 'tasks'])) {
                 $this->sendAssignments($user, $phone, $whatsAppService);
                 return;
             }
@@ -1036,23 +1246,23 @@ class WhatsAppController extends Controller
 
         // Student (6)
         if ($role === 6) {
-            if (in_array($trimmed, ['grades', 'results', 'marks', 'exam'])) {
+            if ($match(['grades', 'results', 'marks', 'exam'])) {
                 $this->sendStudentGrades($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['attendance', 'absent', 'present', 'late'])) {
+            if ($match(['attendance', 'absent', 'present', 'late'])) {
                 $this->sendStudentAttendance($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['fees', 'fee', 'balance', 'payment'])) {
+            if ($match(['fees', 'fee', 'balance', 'payment'])) {
                 $this->sendStudentFees($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['timetable', 'schedule', 'periods'])) {
+            if ($match(['timetable', 'schedule', 'periods'])) {
                 $this->sendTimetable($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['homework', 'hw', 'assignment'])) {
+            if ($match(['homework', 'hw', 'assignment'])) {
                 $this->sendHomework($user, $phone, $whatsAppService);
                 return;
             }
@@ -1060,27 +1270,36 @@ class WhatsAppController extends Controller
 
         // Parent (7)
         if ($role === 7) {
-            if (in_array($trimmed, ['grades', 'results', 'marks', 'report', 'exams'])) {
+            if ($match(['grades', 'results', 'marks', 'report', 'exams'])) {
                 $this->sendGrades($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['fees', 'fee', 'balance', 'payment', 'pay'])) {
+            if ($match(['fees', 'fee', 'balance', 'payment', 'pay'])) {
                 $this->sendFees($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['attendance', 'absent', 'present', 'late'])) {
+            if ($match(['attendance', 'absent', 'present', 'late'])) {
                 $this->sendAttendance($user, $phone, $whatsAppService);
+                return;
+            }
+            if ($match(['code', 'link', 'link another student'])) {
+                $whatsAppService->sendText(
+                    $phone,
+                    "To link another student, reply with their 10-digit School Pay payment code.",
+                    'link_prompt',
+                    $user->user_id,
+                );
                 return;
             }
         }
 
         // Receptionist/Secretary (10)
         if ($role === 10) {
-            if (in_array($trimmed, ['notices', 'announcements', 'bulletin'])) {
+            if ($match(['notices', 'announcements', 'bulletin'])) {
                 $this->sendNotices($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['calls', 'call', 'phone', 'visitor'])) {
+            if ($match(['calls', 'call', 'phone', 'visitor'])) {
                 $this->sendCallLog($user, $phone, $whatsAppService);
                 return;
             }
@@ -1088,11 +1307,11 @@ class WhatsAppController extends Controller
 
         // Accountant/Bursar (11)
         if ($role === 11) {
-            if (in_array($trimmed, ['fees', 'fee', 'balance', 'payment', 'pay', 'collections'])) {
+            if ($match(['fees', 'fee', 'balance', 'payment', 'pay', 'collections'])) {
                 $this->sendAccountantFees($user, $phone, $whatsAppService);
                 return;
             }
-            if (in_array($trimmed, ['reports', 'analytics', 'financial', 'summary'])) {
+            if ($match(['reports', 'analytics', 'financial', 'summary'])) {
                 $this->sendAccountantReports($user, $phone, $whatsAppService);
                 return;
             }
@@ -1100,7 +1319,7 @@ class WhatsAppController extends Controller
 
         // Dual-role: any staff member with children can access parent features
         if ($hasChildren && !in_array($role, [6, 7])) {
-            if (in_array($trimmed, ['my children', 'children', 'kids', 'my kids'])) {
+            if ($match(['my children', 'children', 'kids', 'my kids'])) {
                 $this->sendGrades($user, $phone, $whatsAppService);
                 return;
             }
@@ -1919,5 +2138,84 @@ class WhatsAppController extends Controller
             11 => 'accountant',
             default => 'unknown',
         };
+    }
+
+    /**
+     * Handle a 10-digit payment code from an already-recognized user
+     * wanting to link another student.
+     */
+    private function handleCodeForExistingUser(
+        WhatsAppUser $user,
+        string $phone,
+        string $code,
+        WhatsAppService $whatsAppService,
+    ): void {
+        $studentAcademic = StudentAcademic::where('std_school_pay_number', $code)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$studentAcademic) {
+            $whatsAppService->sendText(
+                $phone,
+                "We couldn't find a student with payment code *{$code}*.\n\n"
+                . "Check the code and try again, or contact the school office for help.",
+                'link_code_not_found',
+                $user->user_id,
+            );
+            return;
+        }
+
+        // Check if this student is already linked to this parent
+        $alreadyLinked = DB::table('student_parent_links')
+            ->where('student_id', $studentAcademic->user_id)
+            ->where('parent_id', $user->user_id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($alreadyLinked) {
+            $whatsAppService->sendText(
+                $phone,
+                "This student is already linked to your account.",
+                'link_already_linked',
+                $user->user_id,
+            );
+            return;
+        }
+
+        // Link the student to this parent
+        DB::table('student_parent_links')->insert([
+            'student_id' => $studentAcademic->user_id,
+            'parent_id'  => $user->user_id,
+            'status'     => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Update the existing whatsapp_user record with this code too
+        WhatsAppUser::where('id', $user->id)->update([
+            'student_payment_code'   => $code,
+            'verified_via_schoolpay' => true,
+            'verified_at'            => now(),
+        ]);
+
+        $whatsAppService->sendList(
+            phone: $phone,
+            title: '✅ Another student linked!',
+            sections: [
+                [
+                    'title' => 'Quick Actions',
+                    'rows' => [
+                        ['title' => '💰 Fee Balance', 'description' => 'Check fees for this student'],
+                        ['title' => '📊 Exam Results', 'description' => 'View grades and reports'],
+                        ['title' => '📋 Attendance', 'description' => 'See attendance records'],
+                        ['title' => '❓ Help & Options', 'description' => 'Full menu and support'],
+                    ],
+                ],
+            ],
+            description: "Student: {$studentAcademic->user->name}",
+            footerText: 'Tap an option to get started',
+            flowType: 'link_another_student',
+            userId: $user->user_id,
+        );
     }
 }

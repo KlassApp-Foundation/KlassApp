@@ -148,7 +148,17 @@ Admin dashboard bar chart uses hardcoded placeholder data. Needs real attendance
 ### 4. Landing Page v1 ↔ v2
 v2 (`/landing2`) has different navbar JS (direction-aware). Not aligned with v1 style. Consider merging into single canonical landing.
 
+### 5. School Pay Signature Enforcement
+SchoolPayWebhookController silently accepts unsigned webhooks during pilot. Add `SCHOOLPAY_ENFORCE_SIGNATURE=true` env flag or `school_pay_enforce_signature` toggle on School model to reject unsigned webhooks with 403 once payload format is confirmed.
+
+### 6. WhatsAppPendingParentLink Table
+`whatsapp_pending_parent_links` table and model exist but flow was changed to direct linking. Table is dead schema weight — either drop migration or keep as note.
+
 ---
+
+## TECHNICAL NOTES
+
+- **Evolution API sendList row limit**: Max 10 rows across all sections. Not enforced in code since Evolution is being phased out in favor of Meta WABA.
 
 ## BRAND ASSETS
 
@@ -179,14 +189,53 @@ v2 (`/landing2`) has different navbar JS (direction-aware). Not aligned with v1 
 
 ---
 
+---
+
+## WHATSAPP SCHOOL PAY INTEGRATION (COMPLETED — June 23)
+
+### Self-Verification Flow
+- Parents verify by texting their School Pay payment code to the KlassApp WhatsApp number
+- Code matched against `student_academics.std_school_pay_number` → joins through `student_parent_links` → `whatsapp_users`
+- No school approval needed — code match = sufficient proof of parent relationship
+- First-time texter flow: button message → code entry → auto-linked
+
+### Interactive List Messages
+- Welcome messages now use `sendList()` with tap-able buttons instead of "Reply FEES..." text prompts
+- List buttons: Fee Balance, Exam Results, Attendance, Help & Options
+- `routeInbound()` strips emojis from incoming messages so list button titles match keyword routing
+- `sendListDual()` added to `OutboundWhatsAppService` for Business API fallback
+
+### School Pay Webhook
+- `SchoolPayWebhookController.php` — SHA256 HMAC verification, student join chain, WhatsApp receipt
+- `schoolpay_transactions` table: dedup by receipt_no, raw_payload capture
+- Route: `POST /api/schoolpay/webhook` (CSRF exempt)
+- Message types: fee receipt, attendance, grades, health, student withdrawn, term opens/closes
+
+### Free-Form Messages
+- `OutboundWhatsAppService`: composeFeeBalance, composeAttendance, composeGradesOverview, composeHealthRecord, composeStudentWithdrawn, composeTermOpens, composeTermCloses
+- Public notify methods: notifyFeeBalance, notifyAttendance, notifyStudentWithdrawn
+- `sendButtons()` / `sendButtonsDual()` for interactive button messages via Evolution API
+
+### Files Added/Modified
+- `app/Http/Controllers/Api/SchoolPayWebhookController.php` — new
+- `app/Http/Controllers/Api/WhatsAppController.php` — interactive lists, emoji matching, code verification flow
+- `app/Services/WhatsAppService.php` — sendList() method
+- `app/Services/OutboundWhatsAppService.php` — free-form builders + notify methods + sendListDual
+- `app/Models/WhatsAppPendingParentLink.php` — new (created but flow changed to direct linking)
+- `database/migrations/2026_06_23_000001_add_schoolpay_integration.php` — new
+- `database/migrations/2026_06_23_074056_create_whatsapp_pending_parent_links_table.php` — new
+- `database/migrations/2026_06_23_074057_make_user_id_nullable_on_whatsapp_users.php` — new
+- `routes/api.php` — webhook route
+
+---
+
 ## GITHUB STATUS
 
 ```bash
-Branch: whatsapp
-Commit: d752d9c
-Message: feat(landing): Unified landing page v1 and v2
-Status: Pushed to origin/whatsapp
-Files: +3,648 lines, -310 lines
+Branch: main
+Commit: a58f3d0
+Message: fix: replace Kampala High School with Kabale Junior School in testimonials (#105)
+Status: Ahead of origin/main
 ```
 
 ---
@@ -200,17 +249,18 @@ Items 1-11: ✅ Complete
 ## NEXT SESSION CHECKLIST
 
 - [ ] Item 14 — Persistent reminders (post-onboarding)
-- [ ] Item 12 — Mandatory/optional step enforcement  
+- [ ] Item 12 — Mandatory/optional step enforcement
 - [ ] Item 15 — XLSX file parsing for bulk uploads
 - [ ] Item 16 — Add school_id to whatsapp_users table
 - [ ] Item 17 — Co-admin invite step in Toshi
-- [ ] Fix navbar scroll direction (up=restore, down=compact)
-- [ ] Mobile responsive audit
-- [ ] Performance: lazy load dashboard mockups
-- [ ] Accessibility: aria-labels on audience tabs
-- [ ] SEO: verify meta tags, Open Graph
+- [ ] Configure School Pay webhook on server (set up forwarding from School Pay to KlassApp endpoint)
+- [ ] Run the three new migrations on production
+- [ ] Test full School Pay → WhatsApp receipt flow end-to-end
+- [ ] Test first-time texter flow with list buttons end-to-end
+- [ ] Add `SCHOOLPAY_ENFORCE_SIGNATURE` toggle (env or School model) to reject unsigned webhooks
+- [ ] Clean up `whatsapp_pending_parent_links` dead table (drop or document)
 
 ---
 
-*Last updated: June 19, 2026*
-*Next: Persistent reminders (Item 14)*
+*Last updated: June 23, 2026*
+*Next: School Pay webhook configuration and testing*

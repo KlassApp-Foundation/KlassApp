@@ -58,6 +58,61 @@ class OutboundWhatsAppService
     }
 
     /**
+     * Send interactive buttons via Business API if configured, fall back to Evolution.
+     */
+    protected function sendButtonsDual(
+        string $phone,
+        string $message,
+        array $buttons,
+        ?string $title = null,
+        ?string $footer = null,
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        if ($this->businessApi->isConfigured()) {
+            // Business API uses interactive reply buttons
+            $result = $this->businessApi->sendInteractiveButtons(
+                $phone, $message, $buttons, $title, $footer, $flowType, $userId
+            );
+            if ($result['success']) {
+                return $result;
+            }
+            Log::warning("Business API buttons send failed, falling back to Evolution", [
+                'phone' => $phone,
+                'error' => $result['error'] ?? 'unknown',
+            ]);
+        }
+
+        return $this->whatsApp->sendButtons($phone, $message, $buttons, $title, $footer, $flowType, $userId);
+    }
+
+    /**
+     * Send interactive List Message via Evolution API (Business API not yet supported).
+     */
+    public function sendListDual(
+        string $phone,
+        string $title,
+        array $sections,
+        ?string $description = null,
+        ?string $footerText = null,
+        string $buttonText = 'View Options',
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        // Business API does not yet support list messages; route directly to Evolution.
+        return $this->whatsApp->sendList(
+            phone: $phone,
+            title: $title,
+            sections: $sections,
+            description: $description,
+            footerText: $footerText,
+            buttonText: $buttonText,
+            flowType: $flowType,
+            userId: $userId,
+        );
+    }
+
+    /**
      * Send template via Business API if configured, fall back to Evolution.
      */
     protected function sendTemplateDual(
@@ -518,8 +573,8 @@ class OutboundWhatsAppService
     protected function composeFeeMessage(User $student, iterable $fees, string $type): string
     {
         $title = $type === 'overdue'
-            ? '⚠️ Fee Payment Overdue'
-            : '📋 Fee Payment Reminder';
+            ? 'Fee Payment Overdue'
+            : 'Fee Payment Reminder';
 
         $rows = [];
         $total = 0;
@@ -538,5 +593,253 @@ class OutboundWhatsAppService
             $rows,
             'Contact the school finance office for payment details.'
         );
+    }
+
+    // =====================================================================
+    //  Free-form message builders (no Meta approval required, zero cost)
+    //  These are used within the 24hr customer service window.
+    // =====================================================================
+
+    /**
+     * Fee balance snapshot — parent texts FEES.
+     */
+    public function composeFeeBalance(User $student, array $categories, float $totalPaid, float $totalBalance): string
+    {
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $rows = [];
+
+        foreach ($categories as $cat) {
+            $status = ($cat['balance'] ?? 0) <= 0 ? 'Paid' : 'Outstanding';
+            $rows[] = "• {$cat['name']}: UGX " . number_format($cat['amount'] ?? 0, 0)
+                    . " — {$status}";
+        }
+
+        $rows[] = '';
+        $rows[] = "*Total Paid:* UGX " . number_format($totalPaid, 0);
+        $rows[] = "*Balance:* UGX " . number_format($totalBalance, 0);
+
+        return WhatsAppPhoneHelper::formatMessage(
+            $student->name,
+            "Fee Balance — {$className}",
+            $rows,
+            'Reply PAY to pay via Mobile Money.'
+        );
+    }
+
+    /**
+     * Attendance summary — parent texts ATTENDANCE.
+     */
+    public function composeAttendance(User $student, int $present, int $absent, int $total, array $recentAbsences = []): string
+    {
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+
+        $lines = [];
+        $lines[] = "This term: {$present} present, {$absent} absent out of {$total} days";
+        $lines[] = "Attendance rate: " . ($total > 0 ? round(($present / $total) * 100) : 100) . "%";
+
+        if (!empty($recentAbsences)) {
+            $lines[] = '';
+            $lines[] = '*Recent Absences:*';
+            foreach (array_slice($recentAbsences, 0, 5) as $a) {
+                $lines[] = "• {$a['date']}" . ($a['reason'] ? " — {$a['reason']}" : '');
+            }
+        }
+
+        return WhatsAppPhoneHelper::formatMessage(
+            $student->name,
+            "Attendance — {$className}",
+            $lines,
+            'Contact the school to report a reason.'
+        );
+    }
+
+    /**
+     * Grades overview — parent texts GRADES.
+     * Shows latest exam results across all subjects.
+     */
+    public function composeGradesOverview(User $student, string $examName, array $subjects): string
+    {
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $rows = [];
+
+        foreach ($subjects as $sub) {
+            $rows[] = "• {$sub['name']}: {$sub['score']}/{$sub['total']} ({$sub['grade']})";
+        }
+
+        return WhatsAppPhoneHelper::formatMessage(
+            $student->name,
+            "{$examName} — {$className}",
+            $rows,
+            'Reply REPORT for the full report card.'
+        );
+    }
+
+    /**
+     * Health record — parent texts HEALTH.
+     */
+    public function composeHealthRecord(User $student, array $records): string
+    {
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $rows = [];
+
+        foreach (array_slice($records, 0, 5) as $r) {
+            $rows[] = "• {$r['date']}: {$r['type']}";
+            if (!empty($r['details'])) {
+                $rows[] = "  {$r['details']}";
+            }
+        }
+
+        if (empty($records)) {
+            $rows[] = 'No health records on file.';
+        }
+
+        $footer = count($records) > 5
+            ? 'Showing last 5 records. Reply ALLHEALTH for the full history.'
+            : 'Reply ALLHEALTH for the full history.';
+
+        return WhatsAppPhoneHelper::formatMessage(
+            $student->name,
+            "Health Records — {$className}",
+            $rows,
+            $footer
+        );
+    }
+
+    /**
+     * Student withdrawal notification — student leaves/transfers mid-term.
+     */
+    public function composeStudentWithdrawn(User $student, string $withdrawalDate, string $reason = '', string $destination = ''): string
+    {
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $rows = [];
+
+        $rows[] = "Date of departure: {$withdrawalDate}";
+        if ($reason) {
+            $rows[] = "Reason: {$reason}";
+        }
+        if ($destination) {
+            $rows[] = "Destination: {$destination}";
+        }
+        $rows[] = '';
+        $rows[] = 'Academic records and transfer documents are available on KlassApp.';
+
+        return WhatsAppPhoneHelper::formatMessage(
+            $student->name,
+            "Student Withdrawn — {$className}",
+            $rows,
+            'Reply RECORDS to request official documents.'
+        );
+    }
+
+    /**
+     * Term opens — beginning of term notification.
+     */
+    public function composeTermOpens(string $schoolName, string $term, string $openingDate, string $reportingTime = '', string $requirements = ''): string
+    {
+        $rows = [];
+        $rows[] = "Opening date: {$openingDate}";
+        if ($reportingTime) {
+            $rows[] = "Reporting time: {$reportingTime}";
+        }
+        if ($requirements) {
+            $rows[] = "Requirements: {$requirements}";
+        }
+        $rows[] = '';
+        $rows[] = 'Please ensure your child reports on time.';
+
+        return WhatsAppPhoneHelper::formatMessage(
+            $schoolName,
+            "{$term} Begins",
+            $rows,
+            'Reply TERMDATES for the full academic calendar.'
+        );
+    }
+
+    /**
+     * Term closes — end of term notification.
+     */
+    public function composeTermCloses(string $schoolName, string $term, string $closingDate, string $closingTime = '', string $reopeningDate = ''): string
+    {
+        $rows = [];
+        $rows[] = "Closing date: {$closingDate}";
+        if ($closingTime) {
+            $rows[] = "Closing time: {$closingTime}";
+        }
+        if ($reopeningDate) {
+            $rows[] = "School reopens: {$reopeningDate}";
+        }
+        $rows[] = '';
+        $rows[] = 'Report cards will be available via KlassApp.';
+
+        return WhatsAppPhoneHelper::formatMessage(
+            $schoolName,
+            "{$term} Closes",
+            $rows,
+            'Reply REPORT to view results early.'
+        );
+    }
+
+    // =====================================================================
+    //  Public notify methods using free-form messages
+    // =====================================================================
+
+    /**
+     * Send fee balance to a parent's WhatsApp.
+     */
+    public function notifyFeeBalance(int $studentId, array $categories, float $totalPaid, float $totalBalance): int
+    {
+        $student = User::with(['studentAcademic.standard'])->find($studentId);
+        if (!$student) {
+            return 0;
+        }
+
+        $message = $this->composeFeeBalance($student, $categories, $totalPaid, $totalBalance);
+        $sent = 0;
+
+        foreach ($this->getParentPhones($student) as $phone) {
+            $sent += $this->queueOrSend($phone, $studentId, $message, 'fee_balance');
+        }
+
+        return $sent;
+    }
+
+    /**
+     * Send attendance summary to a parent's WhatsApp.
+     */
+    public function notifyAttendance(int $studentId, int $present, int $absent, int $total, array $recentAbsences = []): int
+    {
+        $student = User::with(['studentAcademic.standard'])->find($studentId);
+        if (!$student) {
+            return 0;
+        }
+
+        $message = $this->composeAttendance($student, $present, $absent, $total, $recentAbsences);
+        $sent = 0;
+
+        foreach ($this->getParentPhones($student) as $phone) {
+            $sent += $this->queueOrSend($phone, $studentId, $message, 'attendance');
+        }
+
+        return $sent;
+    }
+
+    /**
+     * Send student withdrawal notification to parents.
+     */
+    public function notifyStudentWithdrawn(int $studentId, string $withdrawalDate, string $reason = '', string $destination = ''): int
+    {
+        $student = User::with(['studentAcademic.standard'])->find($studentId);
+        if (!$student) {
+            return 0;
+        }
+
+        $message = $this->composeStudentWithdrawn($student, $withdrawalDate, $reason, $destination);
+        $sent = 0;
+
+        foreach ($this->getParentPhones($student) as $phone) {
+            $sent += $this->queueOrSend($phone, $studentId, $message, 'student_withdrawn');
+        }
+
+        return $sent;
     }
 }

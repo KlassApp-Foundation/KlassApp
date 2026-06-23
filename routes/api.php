@@ -285,6 +285,12 @@ Route::get('/events/show/details/{id}','Api\EventsController@showdetails');
 //Route::get('/events','Api\TestController@events');
 
 // =====================================================================
+// School Pay Webhook — real-time payment notifications
+// =====================================================================
+Route::post('/schoolpay/webhook', 'Api\SchoolPayWebhookController@handle')
+    ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+
+// =====================================================================
 // WhatsApp API — REST endpoints for n8n/Typebot integration
 // =====================================================================
 Route::prefix('whatsapp')->group(function () {

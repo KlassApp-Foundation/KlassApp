@@ -277,6 +277,77 @@ class WhatsAppService
     }
 
     /**
+     * Send an interactive Button Message via Evolution API.
+     *
+     * WhatsApp button messages present 1-3 reply buttons beneath the text.
+     * The buttons are labelled actions (not URLs); tapping one sends the
+     * button ID back as the user's reply.
+     *
+     * @param string $phone E.164 format
+     * @param string $message Body text above the buttons
+     * @param array $buttons Array of ['title' => 'Button', 'id' => 'button_id']
+     *                       Max 3 buttons. 'id' is sent back when tapped.
+     * @param string|null $title Optional header text (bold, single line)
+     * @param string|null $footer Optional footer text (small, dimmed)
+     * @param string|null $flowType Category for analytics
+     * @param int|null $userId KlassApp user ID
+     */
+    public function sendButtons(
+        string $phone,
+        string $message,
+        array $buttons,
+        ?string $title = null,
+        ?string $footer = null,
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        $response = Http::withHeaders([
+            'apikey' => $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->post("{$this->baseUrl}/message/sendButtons/{$this->instanceName}", [
+            'number' => $this->cleanPhone($phone),
+            'title'  => $title ?? '',
+            'text'   => $message,
+            'footer' => $footer ?? '',
+            'button' => array_map(fn($b) => [
+                'type'  => 'replyButton',
+                'title' => $b['title'] ?? 'Button',
+                'id'    => $b['id'] ?? 'button',
+            ], $buttons),
+        ]);
+
+        $messageId = $response->json('key.id') ?? Str::uuid()->toString();
+        $status = $response->successful() ? 'sent' : 'failed';
+
+        $log = MessageDeliveryLog::create([
+            'whatsapp_message_id' => $messageId,
+            'phone'               => $phone,
+            'category'            => 'interactive',
+            'status'              => $status,
+            'content_preview'     => 'Buttons: ' . collect($buttons)->pluck('title')->implode(', '),
+            'user_id'             => $userId,
+            'flow_type'           => $flowType ?? 'interactive',
+        ]);
+
+        if (!$response->successful()) {
+            Log::error('WhatsApp sendButtons failed', [
+                'phone'    => $phone,
+                'title'    => $title,
+                'status'   => $response->status(),
+                'body'     => $response->body(),
+            ]);
+            $log->markFailed("HTTP {$response->status()}: {$response->body()}");
+        }
+
+        return [
+            'success'    => $response->successful(),
+            'message_id' => $messageId,
+            'log_id'     => $log->id,
+            'status'     => $status,
+        ];
+    }
+
+    /**
      * Send a message to a WhatsApp user by KlassApp user ID.
      *
      * Convenience method that resolves the user's WhatsApp phone number.
