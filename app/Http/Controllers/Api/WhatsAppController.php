@@ -820,6 +820,31 @@ class WhatsAppController extends Controller
             return;
         }
 
+        // ── DEMO: auto-link to demo parent ──
+        if (strtolower($trimmed) === 'demo') {
+            $demoParent = User::find(104);
+            if (!$demoParent) {
+                $sendText("Demo account not available. Please contact support.");
+                return;
+            }
+
+            $whatsappUser = WhatsAppUser::firstOrCreate(
+                ['phone' => $phone],
+                [
+                    'user_id'                => 104,
+                    'school_id'              => 1,
+                    'opted_in'               => true,
+                    'verified_via_schoolpay' => true,
+                    'verified_at'            => now(),
+                ],
+            );
+            $whatsappUser->load(['user.userprofile', 'user.school']);
+            Log::info("WhatsApp DEMO (Meta): created user for {$phone}");
+
+            $this->sendMenu($whatsappUser, $phone, $whatsAppService = app(WhatsAppService::class));
+            return;
+        }
+
         // ── Is this a School Pay payment code? (10 digits) ──
         if (preg_match('/^\d{10}$/', $trimmed)) {
             $this->processCodeVerificationForMeta($phone, $trimmed, $sendText, $sendButtons);
@@ -1067,6 +1092,25 @@ class WhatsAppController extends Controller
                     'link_help'
                 );
                 return response()->json(['status' => 'link_help']);
+            }
+
+            // ── DEMO: auto-link to demo parent ──
+            if (strtolower($trimmed) === 'demo') {
+                $whatsappUser = WhatsAppUser::firstOrCreate(
+                    ['phone' => $phone],
+                    [
+                        'user_id'                => 104,
+                        'school_id'              => 1,
+                        'opted_in'               => true,
+                        'verified_via_schoolpay' => true,
+                        'verified_at'            => now(),
+                    ],
+                );
+                $whatsappUser->load(['user.userprofile', 'user.school']);
+                Log::info("WhatsApp DEMO: created/returned user for {$phone}", ['whatsapp_user_id' => $whatsappUser->id]);
+
+                $this->sendMenu($whatsappUser, $phone, $whatsAppService);
+                return response()->json(['status' => 'demo_linked']);
             }
 
             // ── Is this a School Pay payment code? (10 digits) ──
@@ -1321,7 +1365,7 @@ class WhatsAppController extends Controller
         }
 
         // Universal: menu/help
-        if ($match(['menu', 'help', 'start', 'options', '❓ help & options'])) {
+        if ($match(['menu', 'help', 'start', 'options', 'demo', '❓ help & options'])) {
             $this->sendMenu($user, $phone, $whatsAppService);
             return;
         }
