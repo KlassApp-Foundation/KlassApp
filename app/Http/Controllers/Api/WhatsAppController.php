@@ -731,21 +731,7 @@ class WhatsAppController extends Controller
         $trimmedBody = strtolower(trim($body));
         if ($trimmedBody === 'optin') {
             $whatsappUser->update(['opted_in' => true]);
-            if ($this->businessApi->isConfigured()) {
-                $this->businessApi->sendText(
-                    $phone,
-                    "✅ You have opted in to WhatsApp notifications.\n\nSend *MENU* to see available options.",
-                    'optin',
-                    $whatsappUser->user_id,
-                );
-            } else {
-                app(WhatsAppService::class)->sendText(
-                    $phone,
-                    "✅ You have opted in to WhatsApp notifications.\n\nSend *MENU* to see available options.",
-                    'optin',
-                    $whatsappUser->user_id,
-                );
-            }
+            $this->sendMenu($whatsappUser, $phone, app(WhatsAppService::class));
             return;
         }
 
@@ -1337,12 +1323,7 @@ class WhatsAppController extends Controller
         $trimmedBody = strtolower(trim($body));
         if ($trimmedBody === 'optin') {
             $whatsappUser->update(['opted_in' => true]);
-            $whatsAppService->sendText(
-                $phone,
-                "✅ You have opted in to WhatsApp notifications.\n\nSend *MENU* to see available options.",
-                'optin',
-                $whatsappUser->user_id,
-            );
+            $this->sendMenu($whatsappUser, $phone, $whatsAppService);
             return response()->json(['status' => 'opted_in']);
         }
 
@@ -1405,13 +1386,8 @@ class WhatsAppController extends Controller
         // Universal: optin / optout
         if ($trimmed === 'optin') {
             $user->update(['opted_in' => true]);
-            $whatsAppService->sendText(
-                $phone,
-                "✅ You have re-enabled WhatsApp notifications.\n\nSend *MENU* to see available options.",
-                'opted_in',
-                $user->user_id,
-            );
             Log::info("WhatsApp opt-in: user {$user->user_id}");
+            $this->sendMenu($user, $phone, $whatsAppService);
             return;
         }
 
@@ -1564,13 +1540,28 @@ class WhatsAppController extends Controller
             }
         }
 
-        // Unknown keyword — send menu
-        $whatsAppService->sendText(
-            $phone,
-            "🤔 I didn't understand that.\n\nSend *MENU* to see available options.",
-            'unknown_keyword',
-            $user->user_id,
-        );
+        // Unknown keyword — send the actual menu with buttons
+        if ($this->businessApi->isConfigured()) {
+            $whatsAppService->sendText(
+                $phone,
+                "🤔 Sorry, I didn't understand \"{$body}\".",
+                'unknown_keyword',
+                $user->user_id,
+            );
+            $this->sendMenuButtons($phone, $role, $user->user_id);
+        } else {
+            $sections = $this->buildMenuSections($role, $hasChildren);
+            $whatsAppService->sendList(
+                phone: $phone,
+                title: '🤔 Didn\'t catch that',
+                sections: $sections,
+                description: "I didn't understand \"{$body}\". Tap an option below or type it:",
+                footerText: 'Reply MENU anytime',
+                buttonText: 'View Options',
+                flowType: 'unknown_keyword',
+                userId: $user->user_id,
+            );
+        }
     }
 
     /**
