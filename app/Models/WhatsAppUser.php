@@ -19,6 +19,7 @@ class WhatsAppUser extends Model
         'verified_at',
         'opted_in',
         'last_inbound_at',
+        'demo_name',
     ];
 
     protected $casts = [

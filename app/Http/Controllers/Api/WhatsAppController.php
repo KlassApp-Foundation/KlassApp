@@ -635,6 +635,16 @@ class WhatsAppController extends Controller
             foreach ($changes as $change) {
                 $value = $change['value'] ?? [];
 
+                // Extract sender's profile name from contacts array
+                $senderName = 'Demo User';
+                $contacts = $value['contacts'] ?? [];
+                foreach ($contacts as $c) {
+                    if (isset($c['profile']['name'])) {
+                        $senderName = $c['profile']['name'];
+                        break;
+                    }
+                }
+
                 // ── Incoming messages ──
                 $messages = $value['messages'] ?? [];
                 foreach ($messages as $msg) {
@@ -646,7 +656,6 @@ class WhatsAppController extends Controller
                     if ($msgType === 'text') {
                         $body = $msg['text']['body'] ?? '';
                     } elseif ($msgType === 'interactive') {
-                        // Try ID first (preferred), fall back to title (Evolution lists don't set IDs)
                         $ir = $msg['interactive'] ?? [];
                         $body = $ir['button_reply']['id'] ?? $ir['list_reply']['id']
                             ?? $ir['button_reply']['title'] ?? $ir['list_reply']['title']
@@ -672,7 +681,7 @@ class WhatsAppController extends Controller
                     WhatsAppUser::where('phone', $phone)->update(['last_inbound_at' => now()]);
 
                     // ── Full reply flow (same as Evolution handler) ──
-                    $this->processMetaMessage($phone, $body, $messageId);
+                    $this->processMetaMessage($phone, $body, $messageId, $senderName);
                 }
 
                 // ── Delivery status updates ──
@@ -690,14 +699,14 @@ class WhatsAppController extends Controller
     /**
      * Process a single Meta inbound message: identify user, route, flush queue.
      */
-    protected function processMetaMessage(string $phone, string $body, string $messageId)
+    protected function processMetaMessage(string $phone, string $body, string $messageId, string $senderName = 'Demo User')
     {
         $whatsappUser = WhatsAppUser::with(['user.userprofile', 'user.school'])
             ->where('phone', $phone)
             ->first();
 
         if (!$whatsappUser) {
-            $this->handleUnrecognizedUserMeta($phone, $body);
+            $this->handleUnrecognizedUserMeta($phone, $body, $senderName);
             return;
         }
 
@@ -779,7 +788,7 @@ class WhatsAppController extends Controller
      * Handle an unrecognized user on the Meta WABA path.
      * Supports School Pay code verification, exit, and link_help flows.
      */
-    protected function handleUnrecognizedUserMeta(string $phone, string $body): void
+    protected function handleUnrecognizedUserMeta(string $phone, string $body, string $senderName = 'Demo User'): void
     {
         $trimmed = trim($body);
 
@@ -843,10 +852,14 @@ class WhatsAppController extends Controller
                     'opted_in'               => true,
                     'verified_via_schoolpay' => true,
                     'verified_at'            => now(),
+                    'demo_name'              => $senderName,
                 ],
             );
+            if (!$whatsappUser->wasRecentlyCreated) {
+                $whatsappUser->update(['demo_name' => $senderName]);
+            }
             $whatsappUser->load(['user.userprofile', 'user.school']);
-            Log::info("WhatsApp DEMO (Meta): created user for {$phone}");
+            Log::info("WhatsApp DEMO (Meta): {$senderName} ({$phone})");
 
             $this->sendMenu($whatsappUser, $phone, $whatsAppService = app(WhatsAppService::class));
             return;
@@ -1106,6 +1119,10 @@ class WhatsAppController extends Controller
 
             // ── DEMO: auto-link to demo parent ──
             if (strtolower($trimmed) === 'demo') {
+                $demoName = data_get($allData, 'data.pushName') ??
+                    data_get($allData, 'pushName') ??
+                    'Demo User';
+
                 $whatsappUser = WhatsAppUser::firstOrCreate(
                     ['phone' => $phone],
                     [
@@ -1114,10 +1131,15 @@ class WhatsAppController extends Controller
                         'opted_in'               => true,
                         'verified_via_schoolpay' => true,
                         'verified_at'            => now(),
+                        'demo_name'              => $demoName,
                     ],
                 );
+                if ($whatsappUser->wasRecentlyCreated) {
+                    Log::info("WhatsApp DEMO: new user {$demoName} ({$phone})");
+                } else {
+                    $whatsappUser->update(['demo_name' => $demoName]);
+                }
                 $whatsappUser->load(['user.userprofile', 'user.school']);
-                Log::info("WhatsApp DEMO: created/returned user for {$phone}", ['whatsapp_user_id' => $whatsappUser->id]);
 
                 $this->sendMenu($whatsappUser, $phone, $whatsAppService);
                 return response()->json(['status' => 'demo_linked']);
@@ -1560,7 +1582,7 @@ class WhatsAppController extends Controller
      */
     private function sendMenu(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
-        $name = $user->user->name ?? 'User';
+        $name = $user->demo_name ?? $user->user->name ?? 'User';
         $role = $user->user->usergroup_id;
         $hasChildren = $user->user->children()->exists();
 
@@ -1833,7 +1855,7 @@ class WhatsAppController extends Controller
 
         foreach ($children as $link) {
             $student = $link->userStudent;
-            $studentName = $student?->name ?? 'Unknown Student';
+            $studentName = $user->demo_name ? "{$user->demo_name} Demo" : ($student?->name ?? 'Unknown Student');
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
 
@@ -1928,7 +1950,7 @@ class WhatsAppController extends Controller
 
         foreach ($children as $link) {
             $student = $link->userStudent;
-            $studentName = $student?->name ?? 'Unknown Student';
+            $studentName = $user->demo_name ? "{$user->demo_name} Demo" : ($student?->name ?? 'Unknown Student');
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
 
@@ -2005,7 +2027,7 @@ class WhatsAppController extends Controller
 
         foreach ($children as $link) {
             $student = $link->userStudent;
-            $studentName = $student?->name ?? 'Unknown Student';
+            $studentName = $user->demo_name ? "{$user->demo_name} Demo" : ($student?->name ?? 'Unknown Student');
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
 
