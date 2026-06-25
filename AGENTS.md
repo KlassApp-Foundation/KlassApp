@@ -38,7 +38,7 @@
 
 ### Deploy Command
 ```bash
-ssh -i ~/.ssh/id_ed25519_do root@165.245.250.16 \
+ssh -i ~/.ssh/id_ed25519_do root@46.101.111.131 \
   "cd /var/www/klassapp && git pull origin main && php artisan optimize:clear && systemctl restart php8.3-fpm"
 ```
 

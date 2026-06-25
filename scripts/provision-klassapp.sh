@@ -3,7 +3,7 @@ set -e
 
 # ====================================
 # KlassApp App Server Provisioning Script
-# Droplet: klassapp — 165.245.250.16 (2 GB / 50 GB)
+# Droplet: klassapp — 46.101.111.131 (2 GB / 50 GB)
 # ====================================
 
 # ── Config ──────────────────

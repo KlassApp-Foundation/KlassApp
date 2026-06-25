@@ -9,7 +9,7 @@ set -e
 EVOLUTION_AUTH_KEY=$(openssl rand -hex 32)
 INSTANCE_NAME="klassapp"
 APP_DOMAIN="klassapp.xyz"
-APP_PUBLIC_IP="165.245.250.16"
+APP_PUBLIC_IP="46.101.111.131"
 
 echo "========================================"
 echo " KlassApp Evolution API Provisioning"

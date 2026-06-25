@@ -3,11 +3,11 @@ set -e
 
 # ====================================
 # KlassApp Deploy Script (No SSH Key)
-# Server: root@165.245.250.16
+# Server: root@46.101.111.131
 # Use SSH password or add key via DigitalOcean panel
 # ====================================
 
-APP_SERVER="root@165.245.250.16"
+APP_SERVER="root@46.101.111.131"
 APP_DIR="/var/www/klassapp"
 GIT_BRANCH="main"
 
