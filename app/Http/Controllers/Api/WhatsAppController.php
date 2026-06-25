@@ -1737,7 +1737,7 @@ class WhatsAppController extends Controller
     private function sendFees(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
     {
         $children = $user->user->children()
-            ->with(['studentAcademic.standardLink.standard'])
+            ->with(['userStudent.studentAcademicLatest.standardLink.standard'])
             ->get();
 
         if ($children->isEmpty()) {
@@ -1752,12 +1752,13 @@ class WhatsAppController extends Controller
 
         $sentAny = false;
 
-        foreach ($children as $student) {
-            $studentName = $student->name;
-            $className = $student->studentAcademic?->standardLink?->StandardSection ?? 'N/A';
+        foreach ($children as $link) {
+            $student = $link->userStudent;
+            $studentName = $student?->name ?? 'Unknown Student';
+            $academic = $student?->studentAcademicLatest;
+            $className = $academic?->standardLink?->StandardSection ?? 'N/A';
 
-            $standardLink = $student->studentAcademic?->standardLink;
-            $standardId = $standardLink?->standard_id;
+            $standardId = $academic?->standardLink?->standard_id;
 
             $feeCategories = collect();
             if ($standardId) {
