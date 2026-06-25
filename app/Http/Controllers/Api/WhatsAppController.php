@@ -1513,10 +1513,14 @@ class WhatsAppController extends Controller
         $greeting = "👋 Hello, *{$name}*! What would you like to do?";
         $whatsAppService->sendText($phone, $greeting, 'menu_greeting', $user->user_id);
 
-        // Build interactive list sections per role
-        $sections = $this->buildMenuSections($role, $hasChildren);
+        // Use interactive buttons when Business API is available (Evolution is decommissioned)
+        if ($this->businessApi->isConfigured()) {
+            $this->sendMenuButtons($phone, $role, $user->user_id);
+            return;
+        }
 
-        // Send the interactive list
+        // Legacy: send interactive list via Evolution
+        $sections = $this->buildMenuSections($role, $hasChildren);
         $whatsAppService->sendList(
             phone: $phone,
             title: '🏫 KlassApp Menu',
@@ -1526,6 +1530,107 @@ class WhatsAppController extends Controller
             buttonText: 'View Options',
             flowType: 'menu',
             userId: $user->user_id,
+        );
+    }
+
+    /**
+     * Send interactive menu buttons based on user role (Meta Cloud API).
+     * Max 3 buttons per message — shows primary actions for the role.
+     */
+    private function sendMenuButtons(string $phone, int $role, ?int $userId): void
+    {
+        $buttons = match ($role) {
+            3 => [ // SchoolAdmin
+                ['id' => 'STUDENTS',  'title' => '👥 Students'],
+                ['id' => 'STAFF',     'title' => '👤 Staff'],
+                ['id' => 'FEES',      'title' => '💰 Fees'],
+            ],
+            5 => [ // Teacher
+                ['id' => 'MARKS',       'title' => '📝 Marks'],
+                ['id' => 'ATTENDANCE',  'title' => '✅ Attendance'],
+                ['id' => 'TIMETABLE',   'title' => '🗓️ Timetable'],
+            ],
+            6 => [ // Student
+                ['id' => 'GRADES',      'title' => '📊 Results'],
+                ['id' => 'ATTENDANCE',  'title' => '✅ Attendance'],
+                ['id' => 'FEES',        'title' => '💰 Fees'],
+            ],
+            7 => [ // Parent
+                ['id' => 'FEES',        'title' => '💰 Fee Balance'],
+                ['id' => 'GRADES',      'title' => '📊 Exam Results'],
+                ['id' => 'ATTENDANCE',  'title' => '📋 Attendance'],
+            ],
+            10 => [ // Receptionist
+                ['id' => 'CALLS',   'title' => '📞 Call Log'],
+                ['id' => 'NOTICES', 'title' => '📢 Notices'],
+                ['id' => 'EVENTS',  'title' => '🎉 Events'],
+            ],
+            11 => [ // Accountant
+                ['id' => 'FEES',    'title' => '💰 Fees'],
+                ['id' => 'REPORTS', 'title' => '📊 Reports'],
+                ['id' => 'EVENTS',  'title' => '🎉 Events'],
+            ],
+            default => [
+                ['id' => 'MENU', 'title' => '🏠 Menu'],
+                ['id' => 'HELP', 'title' => '❓ Help'],
+            ],
+        };
+
+        $label = match ($role) {
+            3 => 'School Admin',
+            5 => 'Teacher',
+            6 => 'Student',
+            7 => 'Parent',
+            10 => 'Receptionist',
+            11 => 'Accountant',
+            default => 'User',
+        };
+
+        $this->businessApi->sendInteractiveButtons(
+            $phone,
+            "🏫 *KlassApp Menu* — {$label}\n\nTap a button below or type any option keyword.",
+            $buttons,
+            'menu',
+            $userId,
+        );
+    }
+
+    /**
+     * Send follow-up action buttons after a response (fees, grades, attendance).
+     */
+    private function sendActionButtons(string $phone, ?int $userId, string $context = 'fees'): void
+    {
+        if (!$this->businessApi->isConfigured()) {
+            return;
+        }
+
+        $buttons = match ($context) {
+            'fees' => [
+                ['id' => 'GRADES',      'title' => '📊 Exam Results'],
+                ['id' => 'ATTENDANCE',  'title' => '📋 Attendance'],
+                ['id' => 'MENU',        'title' => '🏠 Main Menu'],
+            ],
+            'grades' => [
+                ['id' => 'FEES',        'title' => '💰 Fee Balance'],
+                ['id' => 'ATTENDANCE',  'title' => '📋 Attendance'],
+                ['id' => 'MENU',        'title' => '🏠 Main Menu'],
+            ],
+            'attendance' => [
+                ['id' => 'FEES',        'title' => '💰 Fee Balance'],
+                ['id' => 'GRADES',      'title' => '📊 Exam Results'],
+                ['id' => 'MENU',        'title' => '🏠 Main Menu'],
+            ],
+            default => [
+                ['id' => 'MENU', 'title' => '🏠 Main Menu'],
+            ],
+        };
+
+        $this->businessApi->sendInteractiveButtons(
+            $phone,
+            "What would you like to do next?",
+            $buttons,
+            "{$context}_followup",
+            $userId,
         );
     }
 
@@ -1656,7 +1761,7 @@ class WhatsAppController extends Controller
     private function sendGrades(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $children = $user->user->children()
-            ->with(['studentAcademic.standard', 'studentAcademic.section'])
+            ->with(['userStudent.studentAcademicLatest.standardLink.standard'])
             ->get();
 
         if ($children->isEmpty()) {
@@ -1671,9 +1776,11 @@ class WhatsAppController extends Controller
 
         $sentAny = false;
 
-        foreach ($children as $student) {
-            $studentName = $student->name;
-            $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        foreach ($children as $link) {
+            $student = $link->userStudent;
+            $studentName = $student?->name ?? 'Unknown Student';
+            $academic = $student?->studentAcademicLatest;
+            $className = $academic?->standardLink?->StandardSection ?? 'N/A';
 
             $examQuery = Exam::where('student_id', $student->id);
             $academicYear = \App\Helpers\SiteHelper::getAcademicYear($user->user->school_id);
@@ -1729,6 +1836,8 @@ class WhatsAppController extends Controller
                 $user->user_id,
             );
         }
+
+        $this->sendActionButtons($phone, $user->user_id, 'grades');
     }
 
     /**
@@ -1796,6 +1905,9 @@ class WhatsAppController extends Controller
                 $user->user_id,
             );
         }
+
+        // Follow-up action buttons
+        $this->sendActionButtons($phone, $user->user_id, 'fees');
     }
 
     /**
@@ -1812,7 +1924,7 @@ class WhatsAppController extends Controller
     private function sendAttendance(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $children = $user->user->children()
-            ->with(['studentAcademic.standard'])
+            ->with(['userStudent.studentAcademicLatest.standardLink.standard'])
             ->get();
 
         if ($children->isEmpty()) {
@@ -1827,9 +1939,11 @@ class WhatsAppController extends Controller
 
         $sentAny = false;
 
-        foreach ($children as $student) {
-            $studentName = $student->name;
-            $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        foreach ($children as $link) {
+            $student = $link->userStudent;
+            $studentName = $student?->name ?? 'Unknown Student';
+            $academic = $student?->studentAcademicLatest;
+            $className = $academic?->standardLink?->StandardSection ?? 'N/A';
 
             $records = Attendance::where('student_id', $student->id)
                 ->where('date', '>=', Carbon::now()->subMonth())
@@ -1882,10 +1996,12 @@ class WhatsAppController extends Controller
                 $user->user_id,
             );
         }
+
+        $this->sendActionButtons($phone, $user->user_id, 'attendance');
     }
 
     /**
-     * Send upcoming school events.
+     * Send events list (upcoming school events).
      *
      * @param WhatsAppUser $user
      * @param string $phone
