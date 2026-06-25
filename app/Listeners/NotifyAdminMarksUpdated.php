@@ -4,13 +4,13 @@ namespace App\Listeners;
 
 use App\Events\MarksUpdated;
 use App\Models\User;
-use App\Services\WhatsAppService;
+use App\Services\WhatsAppBusinessService;
 use Illuminate\Support\Facades\Log;
 
 class NotifyAdminMarksUpdated
 {
     public function __construct(
-        protected WhatsAppService $whatsApp,
+        protected WhatsAppBusinessService $whatsApp,
     ) {}
 
     public function handle(MarksUpdated $event): void

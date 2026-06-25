@@ -281,7 +281,8 @@ class WhatsAppBusinessService
     /**
      * Send a list message via Meta Cloud API interactive list.
      *
-     * Falls back to text if sections are too complex.
+     * Uses native WhatsApp interactive list messages when possible.
+     * Falls back to well-formatted text for larger lists (Meta limit: 10 rows).
      *
      * @param string $phone E.164 format
      * @param string $title Header text
@@ -303,7 +304,74 @@ class WhatsAppBusinessService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
-        // Build text fallback from sections
+        $cleanPhone = $this->cleanPhone($phone);
+
+        // Count total rows across all sections (Meta limit: 10)
+        $totalRows = collect($sections)->sum(fn ($s) => count($s['rows'] ?? []));
+
+        if ($totalRows <= 10 && $totalRows > 0) {
+            // Send as native interactive list message
+            $metaSections = array_map(function ($section) {
+                return [
+                    'title' => mb_substr($section['title'] ?? '', 0, 24),
+                    'rows'  => array_map(function ($row) {
+                        return [
+                            'id'          => $row['id'] ?? Str::uuid()->toString(),
+                            'title'       => mb_substr($row['title'] ?? '', 0, 24),
+                            'description' => isset($row['description'])
+                                ? mb_substr($row['description'], 0, 72) : '',
+                        ];
+                    }, array_slice($section['rows'] ?? [], 0, 10)),
+                ];
+            }, array_slice($sections, 0, 10)); // Max 10 sections
+
+            $response = Http::withToken($this->token)
+                ->withHeaders(['Content-Type' => 'application/json'])
+                ->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", [
+                    'messaging_product' => 'whatsapp',
+                    'recipient_type'    => 'individual',
+                    'to'                => $cleanPhone,
+                    'type'              => 'interactive',
+                    'interactive'       => [
+                        'type'   => 'list',
+                        'header' => ['type' => 'text', 'text' => mb_substr($title, 0, 60)],
+                        'body'   => ['text' => mb_substr($description ?: $title, 0, 1024)],
+                        'footer' => ['text' => mb_substr($footerText, 0, 60)],
+                        'action' => [
+                            'button'   => mb_substr($buttonText, 0, 20),
+                            'sections' => $metaSections,
+                        ],
+                    ],
+                ]);
+
+            $result = $response->json();
+            $messageId = $result['messages'][0]['id'] ?? Str::uuid()->toString();
+            $success = $response->successful();
+
+            MessageDeliveryLog::create([
+                'whatsapp_message_id' => $messageId,
+                'phone'               => $phone,
+                'direction'           => 'outbound',
+                'category'            => 'interactive',
+                'status'              => $success ? 'sent' : 'failed',
+                'content_preview'     => "Native List: {$title}",
+                'user_id'             => $userId,
+                'flow_type'           => $flowType ?? 'menu',
+            ]);
+
+            if (!$success) {
+                Log::error('WhatsApp Business API: sendList failed', [
+                    'phone'  => $phone,
+                    'title'  => $title,
+                    'error'  => $result['error']['message'] ?? 'Unknown',
+                ]);
+                return ['success' => false, 'message_id' => $messageId, 'error' => $result['error']['message'] ?? 'Unknown'];
+            }
+
+            return ['success' => true, 'message_id' => $messageId];
+        }
+
+        // Fallback: render as well-formatted text
         $text = "*{$title}*\n\n{$description}\n";
         foreach ($sections as $section) {
             $secTitle = $section['title'] ?? '';
@@ -341,6 +409,68 @@ class WhatsAppBusinessService
             $body .= "\n\n_{$footer}_";
         }
         return $this->sendInteractiveButtons($phone, $body, $buttons, $flowType, $userId);
+    }
+
+    /**
+     * Send a text message with automatic 24hr window fallback.
+     *
+     * If the service window is open, sends free-form text (free).
+     * If closed and a fallback template is provided, sends the template instead.
+     *
+     * @param string $phone E.164 format
+     * @param string $message Free-form text (used when window is open)
+     * @param string|null $fallbackTemplate Template name if window is closed
+     * @param array $templateVariables Variables for the fallback template
+     * @param string|null $flowType Category for analytics
+     * @param int|null $userId KlassApp user ID
+     */
+    public function sendTextSafe(
+        string $phone,
+        string $message,
+        ?string $fallbackTemplate = null,
+        array $templateVariables = [],
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        if ($this->isWithinServiceWindow($phone)) {
+            return $this->sendText($phone, $message, $flowType, $userId);
+        }
+
+        if ($fallbackTemplate) {
+            Log::info('WhatsApp Business: window closed, using template fallback', [
+                'phone'     => $phone,
+                'template'  => $fallbackTemplate,
+            ]);
+            return $this->sendTemplate($phone, $fallbackTemplate, $templateVariables, $flowType);
+        }
+
+        // Window closed but no fallback template — send free-form anyway
+        Log::warning('WhatsApp Business: window closed, sending free-form outside window', [
+            'phone' => $phone,
+        ]);
+        return $this->sendText($phone, $message, $flowType, $userId);
+    }
+
+    /**
+     * Send a message to a WhatsApp user by KlassApp user ID.
+     *
+     * Convenience method that resolves the user's WhatsApp phone number.
+     */
+    public function sendToUser(int $userId, string $message, ?string $flowType = null): array
+    {
+        $whatsappUser = WhatsAppUser::where('user_id', $userId)
+            ->optedIn()
+            ->first();
+
+        if (!$whatsappUser) {
+            Log::warning('WhatsApp Business: user has no linked WhatsApp number', ['user_id' => $userId]);
+            return [
+                'success' => false,
+                'error'   => 'User has no linked WhatsApp number',
+            ];
+        }
+
+        return $this->sendText($whatsappUser->phone, $message, $flowType, $userId);
     }
 
     /**

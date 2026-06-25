@@ -29,12 +29,10 @@
 
 ## WHATSAPP INTEGRATION (ACTIVE — June 2026)
 
-### Production
-- Evolution API: 46.101.130.70:8081 (Docker, evoapicloud/evolution-api:latest)
-- API Key: 78E5A6FF-BA89-45C6-987C-C31407BD22B4
-- Instance: klassapp
+### Production (Meta Cloud API only — Evolution removed)
 - Webhook: https://klassapp.xyz/api/whatsapp/inbound
 - Business Number: +256765275289
+- Meta WABA fully active, Evolution API decommissioned
 
 ### Deploy Command
 ```bash
@@ -131,10 +129,8 @@ Returns `view('landing')` instead of `view('welcome')`.
 
 ## PENDING WORK
 
-### 1. WhatsApp Cloud API Migration
-Current: Evolution API + Baileys (unofficial WhatsApp Web)
-Target: Official Meta WhatsApp Business API
-- Need Meta Business Account, Phone Number ID, WABA ID, Permanent Access Token
+### 1. WhatsApp Cloud API Migration ✅
+- Evolution API (Baileys) fully removed. Meta Cloud API is the sole transport.
 
 ### 2. Incomplete Dashboards
 - Accountant dashboard (no main view)
@@ -158,7 +154,7 @@ SchoolPayWebhookController silently accepts unsigned webhooks during pilot. Add 
 
 ## TECHNICAL NOTES
 
-- **Evolution API sendList row limit**: Max 10 rows across all sections. Not enforced in code since Evolution is being phased out in favor of Meta WABA.
+- **Native interactive list messages**: Max 10 rows across all sections. Meta Cloud API enforces this natively.
 
 ## BRAND ASSETS
 

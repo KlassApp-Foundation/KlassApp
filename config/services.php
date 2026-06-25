@@ -45,18 +45,13 @@ return [
         'business_number' => env('WHATSAPP_BUSINESS_NUMBER', '+256765275289'),
         'business_name' => env('WHATSAPP_BUSINESS_NAME', 'KlassApp'),
 
-        // Evolution API (current transport)
-        'evolution_url' => env('EVOLUTION_API_URL'),
-        'evolution_api_key' => env('EVOLUTION_API_KEY'),
-        'instance_name' => env('EVOLUTION_INSTANCE_NAME', 'klassapp'),
-        'send_delay' => env('WHATSAPP_SEND_DELAY', 1200),
-
-        // WhatsApp Business Cloud API (new transport)
+        // WhatsApp Business Cloud API (only transport)
         'business_api_token' => env('WHATSAPP_BUSINESS_API_TOKEN'),
         'business_phone_number_id' => env('WHATSAPP_BUSINESS_PHONE_NUMBER_ID'),
         'business_waba_id' => env('WHATSAPP_BUSINESS_WABA_ID'),
         'business_verify_token' => env('WHATSAPP_BUSINESS_VERIFY_TOKEN', 'klassapp_verify_2026'),
         'business_api_version' => env('WHATSAPP_BUSINESS_API_VERSION', 'v21.0'),
+        'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
     ],
 
     'google' => [

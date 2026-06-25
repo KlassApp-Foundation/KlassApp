@@ -46,7 +46,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MessageDeliveryLog;
 use App\Models\School;
 use App\Models\WhatsAppUser;
-use App\Services\WhatsAppService;
+use App\Services\WhatsAppBusinessService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -60,7 +60,7 @@ class SchoolPayWebhookController extends Controller
      *
      * POST /api/schoolpay/webhook
      */
-    public function handle(Request $request, WhatsAppService $whatsAppService): Response
+    public function handle(Request $request, WhatsAppBusinessService $whatsAppService): Response
     {
         // ── Parse the payload ──────────────────
         // School Pay webhook sends:

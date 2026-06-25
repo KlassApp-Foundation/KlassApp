@@ -19,48 +19,34 @@ use Illuminate\Support\Facades\Log;
  *   - Grade/results published
  *   - Fee reminders
  *
- * Dual-transport: tries WhatsAppBusinessService (Meta Cloud API) first,
- * falls back to WhatsAppService (Evolution API) if Business API fails
- * or isn't configured.
+ * Uses WhatsAppBusinessService (Meta Cloud API) exclusively.
  */
 class OutboundWhatsAppService
 {
     public function __construct(
-        protected WhatsAppService $whatsApp,
         protected WhatsAppBusinessService $businessApi,
     ) {}
 
     // =====================================================================
-    // Dual-transport helpers: Business API first, Evolution fallback
+    //  Direct sends via Business API
     // =====================================================================
 
     /**
-     * Send text via Business API if configured, fall back to Evolution.
+     * Send text via Business API.
      */
-    protected function sendTextDual(
+    protected function sendText(
         string $phone,
         string $message,
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
-        if ($this->businessApi->isConfigured()) {
-            $result = $this->businessApi->sendText($phone, $message, $flowType, $userId);
-            if ($result['success']) {
-                return $result;
-            }
-            Log::warning("Business API send failed, falling back to Evolution", [
-                'phone' => $phone,
-                'error' => $result['error'] ?? 'unknown',
-            ]);
-        }
-
-        return $this->whatsApp->sendText($phone, $message, $flowType, $userId);
+        return $this->businessApi->sendText($phone, $message, $flowType, $userId);
     }
 
     /**
-     * Send interactive buttons via Business API if configured, fall back to Evolution.
+     * Send interactive buttons via Business API.
      */
-    protected function sendButtonsDual(
+    protected function sendButtons(
         string $phone,
         string $message,
         array $buttons,
@@ -69,27 +55,15 @@ class OutboundWhatsAppService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
-        if ($this->businessApi->isConfigured()) {
-            // Business API uses interactive reply buttons
-            $result = $this->businessApi->sendInteractiveButtons(
-                $phone, $message, $buttons, $title, $footer, $flowType, $userId
-            );
-            if ($result['success']) {
-                return $result;
-            }
-            Log::warning("Business API buttons send failed, falling back to Evolution", [
-                'phone' => $phone,
-                'error' => $result['error'] ?? 'unknown',
-            ]);
-        }
-
-        return $this->whatsApp->sendButtons($phone, $message, $buttons, $title, $footer, $flowType, $userId);
+        return $this->businessApi->sendInteractiveButtons(
+            $phone, $message, $buttons, $flowType, $userId
+        );
     }
 
     /**
-     * Send interactive List Message via Evolution API (Business API not yet supported).
+     * Send interactive list via Business API (native list message).
      */
-    public function sendListDual(
+    public function sendList(
         string $phone,
         string $title,
         array $sections,
@@ -99,13 +73,12 @@ class OutboundWhatsAppService
         ?string $flowType = null,
         ?int $userId = null,
     ): array {
-        // Business API does not yet support list messages; route directly to Evolution.
-        return $this->whatsApp->sendList(
+        return $this->businessApi->sendList(
             phone: $phone,
             title: $title,
             sections: $sections,
-            description: $description,
-            footerText: $footerText,
+            description: $description ?? '',
+            footerText: $footerText ?? '',
             buttonText: $buttonText,
             flowType: $flowType,
             userId: $userId,
@@ -113,51 +86,33 @@ class OutboundWhatsAppService
     }
 
     /**
-     * Send template via Business API if configured, fall back to Evolution.
+     * Send template via Business API.
      */
-    protected function sendTemplateDual(
+    protected function sendTemplate(
         string $phone,
         string $templateName,
         array $variables = [],
         string $category = 'utility',
-        ?int $userId = null,
     ): array {
-        if ($this->businessApi->isConfigured()) {
-            // Business API: sendTemplate($phone, $name, $vars, $language, $flowType)
-            $result = $this->businessApi->sendTemplate(
-                $phone,
-                $templateName,
-                $variables,
-                null, // language — uses config default
-                $category,
-            );
-            if ($result['success']) {
-                return $result;
-            }
-            Log::warning("Business API template send failed, falling back to Evolution", [
-                'phone'    => $phone,
-                'template' => $templateName,
-                'error'    => $result['error'] ?? 'unknown',
-            ]);
-        }
-
-        // Evolution: sendTemplate($phone, $name, $vars, $category, $userId)
-        return $this->whatsApp->sendTemplate($phone, $templateName, $variables, $category, $userId);
+        return $this->businessApi->sendTemplate(
+            $phone,
+            $templateName,
+            $variables,
+            null, // language — uses config default
+            $category,
+        );
     }
 
     /**
-     * Check service window — Business API if configured, Evolution otherwise.
+     * Check service window via Business API.
      */
     protected function isWithinServiceWindow(string $phone): bool
     {
-        if ($this->businessApi->isConfigured()) {
-            return $this->businessApi->isWithinServiceWindow($phone);
-        }
-        return $this->whatsApp->isWithinServiceWindow($phone);
+        return $this->businessApi->isWithinServiceWindow($phone);
     }
 
     // =====================================================================
-    // Cost-optimised queue: send free within window, queue for later if cold
+    //  Cost-optimised queue: send free within window, queue for later if cold
     // =====================================================================
 
     /**
@@ -200,7 +155,7 @@ class OutboundWhatsAppService
         if ($whatsappUser && $this->isWithinServiceWindow($phone)) {
             // Window is open — send immediately (FREE)
             try {
-                $this->sendTextDual($phone, $message, $flowType, $userId);
+                $this->sendText($phone, $message, $flowType, $userId);
                 return 1;
             } catch (\Throwable $e) {
                 Log::error("queueOrSend: immediate send failed for {$phone}", [
@@ -254,15 +209,14 @@ class OutboundWhatsAppService
         foreach ($pending as $notification) {
             try {
                 if ($notification->template_name) {
-                    $this->sendTemplateDual(
+                    $this->sendTemplate(
                         $user->phone,
                         $notification->template_name,
                         $notification->template_variables ?? [],
                         'utility',
-                        $user->user_id,
                     );
                 } elseif ($notification->message) {
-                    $this->sendTextDual(
+                    $this->sendText(
                         $user->phone,
                         $notification->message,
                         $notification->flow_type,
@@ -336,15 +290,14 @@ class OutboundWhatsAppService
 
             try {
                 if ($notification->template_name) {
-                    $this->sendTemplateDual(
+                    $this->sendTemplate(
                         $user->phone,
                         $notification->template_name,
                         $notification->template_variables ?? [],
                         'utility',
-                        $user->user_id,
                     );
                 } elseif ($notification->message) {
-                    $this->sendTextDual(
+                    $this->sendText(
                         $user->phone,
                         $notification->message,
                         $notification->flow_type,
@@ -519,325 +472,22 @@ class OutboundWhatsAppService
             if ($mark) {
                 $grade = $mark->grade ?? 'N/A';
                 $score = $mark->marks ?? 'N/A';
-                $rows[] = "• {$subjectName}: {$score} ({$grade})";
+                $remark = $mark->remarks ?? '';
+                $rows[] = "{$subjectName}: {$score} ({$grade})" . ($remark ? " — {$remark}" : '');
             } else {
-                $rows[] = "• {$subjectName}: —";
+                $rows[] = "{$subjectName}: Not yet available";
             }
         }
 
-        $examTypeName = $triggerExam->examType?->name ?? 'Exam';
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-
-        $message = WhatsAppPhoneHelper::formatMessage(
-            $student->name,
-            "{$examTypeName} Results — {$className}",
-            $rows,
-            'All subjects completed! Check the KlassApp portal for details.'
-        );
+        $message = "📊 *Results Published*\n\n"
+            . "Student: *{$student->name}*\n"
+            . "Class: *{($student->studentAcademic?->standard?->name) ?? 'N/A'}*\n"
+            . "Exam: *{$triggerExam->name}*\n\n"
+            . implode("\n", $rows);
 
         $sent = 0;
         foreach ($this->getParentPhones($student) as $phone) {
-            $sent += $this->queueOrSend($phone, $studentId, $message, 'grades');
-        }
-
-        return $sent;
-    }
-
-    /**
-     * Compose a formatted grades message for WhatsApp.
-     */
-    protected function composeGradesMessage(User $student, Exam $exam): string
-    {
-        $rows = [];
-        foreach ($exam->marks as $mark) {
-            $grade = $mark->grade ?? 'N/A';
-            $score = $mark->marks_obtained ?? 0;
-            $total = $mark->marks_total ?? 100;
-            $rows[] = "• {$mark->subject_name}: {$score}/{$total} ({$grade})";
-        }
-
-        $examName = $exam->name ?? $exam->examType?->name ?? 'Exam';
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-
-        return WhatsAppPhoneHelper::formatMessage(
-            $student->name,
-            "{$examName} Results — {$className}",
-            $rows,
-            'Check the KlassApp parent portal for full details.'
-        );
-    }
-
-    /**
-     * Compose a formatted fee reminder message for WhatsApp.
-     */
-    protected function composeFeeMessage(User $student, iterable $fees, string $type): string
-    {
-        $title = $type === 'overdue'
-            ? 'Fee Payment Overdue'
-            : 'Fee Payment Reminder';
-
-        $rows = [];
-        $total = 0;
-        foreach ($fees as $fee) {
-            $rows[] = "• {$fee->name}: UGX " . number_format($fee->amount, 0) . ($fee->due_date ? " (due: {$fee->due_date})" : '');
-            $total += $fee->amount;
-        }
-        $rows[] = '';
-        $rows[] = "*Total: UGX " . number_format($total, 0) . "*";
-
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-
-        return WhatsAppPhoneHelper::formatMessage(
-            $student->name,
-            "{$title} — {$className}",
-            $rows,
-            'Contact the school finance office for payment details.'
-        );
-    }
-
-    // =====================================================================
-    //  Free-form message builders (no Meta approval required, zero cost)
-    //  These are used within the 24hr customer service window.
-    // =====================================================================
-
-    /**
-     * Fee balance snapshot — parent texts FEES.
-     */
-    public function composeFeeBalance(User $student, array $categories, float $totalPaid, float $totalBalance): string
-    {
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-        $rows = [];
-
-        foreach ($categories as $cat) {
-            $status = ($cat['balance'] ?? 0) <= 0 ? 'Paid' : 'Outstanding';
-            $rows[] = "• {$cat['name']}: UGX " . number_format($cat['amount'] ?? 0, 0)
-                    . " — {$status}";
-        }
-
-        $rows[] = '';
-        $rows[] = "*Total Paid:* UGX " . number_format($totalPaid, 0);
-        $rows[] = "*Balance:* UGX " . number_format($totalBalance, 0);
-
-        return WhatsAppPhoneHelper::formatMessage(
-            $student->name,
-            "Fee Balance — {$className}",
-            $rows,
-            'Reply PAY to pay via Mobile Money.'
-        );
-    }
-
-    /**
-     * Attendance summary — parent texts ATTENDANCE.
-     */
-    public function composeAttendance(User $student, int $present, int $absent, int $total, array $recentAbsences = []): string
-    {
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-
-        $lines = [];
-        $lines[] = "This term: {$present} present, {$absent} absent out of {$total} days";
-        $lines[] = "Attendance rate: " . ($total > 0 ? round(($present / $total) * 100) : 100) . "%";
-
-        if (!empty($recentAbsences)) {
-            $lines[] = '';
-            $lines[] = '*Recent Absences:*';
-            foreach (array_slice($recentAbsences, 0, 5) as $a) {
-                $lines[] = "• {$a['date']}" . ($a['reason'] ? " — {$a['reason']}" : '');
-            }
-        }
-
-        return WhatsAppPhoneHelper::formatMessage(
-            $student->name,
-            "Attendance — {$className}",
-            $lines,
-            'Contact the school to report a reason.'
-        );
-    }
-
-    /**
-     * Grades overview — parent texts GRADES.
-     * Shows latest exam results across all subjects.
-     */
-    public function composeGradesOverview(User $student, string $examName, array $subjects): string
-    {
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-        $rows = [];
-
-        foreach ($subjects as $sub) {
-            $rows[] = "• {$sub['name']}: {$sub['score']}/{$sub['total']} ({$sub['grade']})";
-        }
-
-        return WhatsAppPhoneHelper::formatMessage(
-            $student->name,
-            "{$examName} — {$className}",
-            $rows,
-            'Reply REPORT for the full report card.'
-        );
-    }
-
-    /**
-     * Health record — parent texts HEALTH.
-     */
-    public function composeHealthRecord(User $student, array $records): string
-    {
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-        $rows = [];
-
-        foreach (array_slice($records, 0, 5) as $r) {
-            $rows[] = "• {$r['date']}: {$r['type']}";
-            if (!empty($r['details'])) {
-                $rows[] = "  {$r['details']}";
-            }
-        }
-
-        if (empty($records)) {
-            $rows[] = 'No health records on file.';
-        }
-
-        $footer = count($records) > 5
-            ? 'Showing last 5 records. Reply ALLHEALTH for the full history.'
-            : 'Reply ALLHEALTH for the full history.';
-
-        return WhatsAppPhoneHelper::formatMessage(
-            $student->name,
-            "Health Records — {$className}",
-            $rows,
-            $footer
-        );
-    }
-
-    /**
-     * Student withdrawal notification — student leaves/transfers mid-term.
-     */
-    public function composeStudentWithdrawn(User $student, string $withdrawalDate, string $reason = '', string $destination = ''): string
-    {
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-        $rows = [];
-
-        $rows[] = "Date of departure: {$withdrawalDate}";
-        if ($reason) {
-            $rows[] = "Reason: {$reason}";
-        }
-        if ($destination) {
-            $rows[] = "Destination: {$destination}";
-        }
-        $rows[] = '';
-        $rows[] = 'Academic records and transfer documents are available on KlassApp.';
-
-        return WhatsAppPhoneHelper::formatMessage(
-            $student->name,
-            "Student Withdrawn — {$className}",
-            $rows,
-            'Reply RECORDS to request official documents.'
-        );
-    }
-
-    /**
-     * Term opens — beginning of term notification.
-     */
-    public function composeTermOpens(string $schoolName, string $term, string $openingDate, string $reportingTime = '', string $requirements = ''): string
-    {
-        $rows = [];
-        $rows[] = "Opening date: {$openingDate}";
-        if ($reportingTime) {
-            $rows[] = "Reporting time: {$reportingTime}";
-        }
-        if ($requirements) {
-            $rows[] = "Requirements: {$requirements}";
-        }
-        $rows[] = '';
-        $rows[] = 'Please ensure your child reports on time.';
-
-        return WhatsAppPhoneHelper::formatMessage(
-            $schoolName,
-            "{$term} Begins",
-            $rows,
-            'Reply TERMDATES for the full academic calendar.'
-        );
-    }
-
-    /**
-     * Term closes — end of term notification.
-     */
-    public function composeTermCloses(string $schoolName, string $term, string $closingDate, string $closingTime = '', string $reopeningDate = ''): string
-    {
-        $rows = [];
-        $rows[] = "Closing date: {$closingDate}";
-        if ($closingTime) {
-            $rows[] = "Closing time: {$closingTime}";
-        }
-        if ($reopeningDate) {
-            $rows[] = "School reopens: {$reopeningDate}";
-        }
-        $rows[] = '';
-        $rows[] = 'Report cards will be available via KlassApp.';
-
-        return WhatsAppPhoneHelper::formatMessage(
-            $schoolName,
-            "{$term} Closes",
-            $rows,
-            'Reply REPORT to view results early.'
-        );
-    }
-
-    // =====================================================================
-    //  Public notify methods using free-form messages
-    // =====================================================================
-
-    /**
-     * Send fee balance to a parent's WhatsApp.
-     */
-    public function notifyFeeBalance(int $studentId, array $categories, float $totalPaid, float $totalBalance): int
-    {
-        $student = User::with(['studentAcademic.standard'])->find($studentId);
-        if (!$student) {
-            return 0;
-        }
-
-        $message = $this->composeFeeBalance($student, $categories, $totalPaid, $totalBalance);
-        $sent = 0;
-
-        foreach ($this->getParentPhones($student) as $phone) {
-            $sent += $this->queueOrSend($phone, $studentId, $message, 'fee_balance');
-        }
-
-        return $sent;
-    }
-
-    /**
-     * Send attendance summary to a parent's WhatsApp.
-     */
-    public function notifyAttendance(int $studentId, int $present, int $absent, int $total, array $recentAbsences = []): int
-    {
-        $student = User::with(['studentAcademic.standard'])->find($studentId);
-        if (!$student) {
-            return 0;
-        }
-
-        $message = $this->composeAttendance($student, $present, $absent, $total, $recentAbsences);
-        $sent = 0;
-
-        foreach ($this->getParentPhones($student) as $phone) {
-            $sent += $this->queueOrSend($phone, $studentId, $message, 'attendance');
-        }
-
-        return $sent;
-    }
-
-    /**
-     * Send student withdrawal notification to parents.
-     */
-    public function notifyStudentWithdrawn(int $studentId, string $withdrawalDate, string $reason = '', string $destination = ''): int
-    {
-        $student = User::with(['studentAcademic.standard'])->find($studentId);
-        if (!$student) {
-            return 0;
-        }
-
-        $message = $this->composeStudentWithdrawn($student, $withdrawalDate, $reason, $destination);
-        $sent = 0;
-
-        foreach ($this->getParentPhones($student) as $phone) {
-            $sent += $this->queueOrSend($phone, $studentId, $message, 'student_withdrawn');
+            $sent += $this->queueOrSend($phone, $studentId, $message, 'comprehensive_grades');
         }
 
         return $sent;

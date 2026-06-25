@@ -1505,12 +1505,9 @@ class AgentToshi extends Component
 
         try {
             if ($this->whatsappPhone) {
-                // Try template first, fall back to text
-                $sent = app(\App\Services\WhatsAppService::class)->sendTextSafe(
+                $sent = app(\App\Services\WhatsAppBusinessService::class)->sendTextSafe(
                     $this->whatsappPhone,
                     "Your KlassApp verification code is: {$otp}. It expires in 5 minutes.",
-                    'utility',
-                    null
                 );
                 if (($sent['status'] ?? '') === 'success' || ($sent['success'] ?? false)) {
                     $this->botSay("📱 Verification code sent! Check WhatsApp on **{$this->whatsappPhone}**.");
