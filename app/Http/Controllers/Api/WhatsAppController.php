@@ -1301,7 +1301,7 @@ class WhatsAppController extends Controller
      * @param string $body Raw message body
      * @param WhatsAppService $whatsAppService
      */
-    private function routeInbound(WhatsAppUser $user, string $phone, string $body, WhatsAppService $whatsAppService): void
+    private function routeInbound(WhatsAppUser $user, string $phone, string $body, $whatsAppService): void
     {
         // Strip emoji characters so list button titles (e.g. "💰 Fee Balance") match keywords
         $clean = preg_replace('/[\\x{1F600}-\\x{1F64F}\\x{1F300}-\\x{1F5FF}\\x{1F680}-\\x{1F6FF}\\x{1F1E0}-\\x{1F1FF}\\x{2600}-\\x{26FF}\\x{2700}-\\x{27BF}]/u', '', $body);
@@ -1503,7 +1503,7 @@ class WhatsAppController extends Controller
      * @param string $phone
      * @param WhatsAppService $whatsAppService
      */
-    private function sendMenu(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendMenu(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $name = $user->user->name ?? 'User';
         $role = $user->user->usergroup_id;
@@ -1653,7 +1653,7 @@ class WhatsAppController extends Controller
      * Send grades/results to a parent for ALL their children.
      * Sends one message per child to keep each message focused.
      */
-    private function sendGrades(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendGrades(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $children = $user->user->children()
             ->with(['studentAcademic.standard', 'studentAcademic.section'])
@@ -1735,7 +1735,7 @@ class WhatsAppController extends Controller
      * Send fee balance to a parent for ALL their children.
      * Sends one message per child.
      */
-    private function sendFees(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendFees(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $children = $user->user->children()
             ->with(['userStudent.studentAcademicLatest.standardLink.standard'])
@@ -1809,7 +1809,7 @@ class WhatsAppController extends Controller
      * Send attendance summary to a parent for ALL their children.
      * Sends one message per child.
      */
-    private function sendAttendance(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendAttendance(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $children = $user->user->children()
             ->with(['studentAcademic.standard'])
@@ -1891,7 +1891,7 @@ class WhatsAppController extends Controller
      * @param string $phone
      * @param WhatsAppService $whatsAppService
      */
-    private function sendEvents(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendEvents(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $schoolId = $user->user->school_id;
 
@@ -1939,7 +1939,7 @@ class WhatsAppController extends Controller
     /**
      * Send grades/results to a student for their own record.
      */
-    private function sendStudentGrades(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendStudentGrades(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $student = $user->user;
         $studentName = $student->name;
@@ -1983,7 +1983,7 @@ class WhatsAppController extends Controller
     /**
      * Send attendance summary to a student for their own record.
      */
-    private function sendStudentAttendance(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendStudentAttendance(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $student = $user->user;
         $academicYear = \App\Helpers\SiteHelper::getAcademicYear($student->school_id);
@@ -2020,7 +2020,7 @@ class WhatsAppController extends Controller
     /**
      * Send fee balance to a student for their own record.
      */
-    private function sendStudentFees(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendStudentFees(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $student = $user->user;
 
@@ -2059,7 +2059,7 @@ class WhatsAppController extends Controller
     /**
      * Send marks overview for the teacher's subjects.
      */
-    private function sendTeacherMarks(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendTeacherMarks(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $teacher = $user->user;
 
@@ -2095,7 +2095,7 @@ class WhatsAppController extends Controller
     /**
      * Send timetable for a teacher or student.
      */
-    private function sendTimetable(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendTimetable(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $message = "📋 *My Timetable*\n\n";
         $message .= "Timetable is available on the KlassApp portal.\n\n";
@@ -2107,7 +2107,7 @@ class WhatsAppController extends Controller
     /**
      * Send assignments overview for a teacher.
      */
-    private function sendAssignments(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendAssignments(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $message = "📖 *My Assignments*\n\n";
         $message .= "Assignments can be managed via the KlassApp portal.\n\n";
@@ -2119,7 +2119,7 @@ class WhatsAppController extends Controller
     /**
      * Send homework overview for a student.
      */
-    private function sendHomework(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendHomework(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $message = "📝 *Pending Homework*\n\n";
         $message .= "Homework can be viewed on the KlassApp portal.\n\n";
@@ -2135,7 +2135,7 @@ class WhatsAppController extends Controller
     /**
      * Send student list summary to admin.
      */
-    private function sendStudentList(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendStudentList(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $schoolId = $user->user->school_id;
         $totalStudents = User::where('school_id', $schoolId)->where('usergroup_id', 6)->count();
@@ -2152,7 +2152,7 @@ class WhatsAppController extends Controller
     /**
      * Send staff list summary to admin.
      */
-    private function sendStaffList(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendStaffList(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $schoolId = $user->user->school_id;
         $teachers = User::where('school_id', $schoolId)->where('usergroup_id', 5)->count();
@@ -2171,7 +2171,7 @@ class WhatsAppController extends Controller
     /**
      * Send exam overview to admin.
      */
-    private function sendAdminExams(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendAdminExams(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $schoolId = $user->user->school_id;
 
@@ -2194,7 +2194,7 @@ class WhatsAppController extends Controller
     /**
      * Send fee report to admin.
      */
-    private function sendAdminFees(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendAdminFees(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $schoolId = $user->user->school_id;
         $totalCategories = FeesCategories::where('school_id', $schoolId)->count();
@@ -2211,7 +2211,7 @@ class WhatsAppController extends Controller
     /**
      * Send reports summary to admin.
      */
-    private function sendAdminReports(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendAdminReports(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $message = "📊 *School Reports*\n\n";
         $message .= "Reports are available on the KlassApp portal:\n\n";
@@ -2230,7 +2230,7 @@ class WhatsAppController extends Controller
     /**
      * Send notices/announcements.
      */
-    private function sendNotices(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendNotices(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $message = "📢 *School Announcements*\n\n";
         $message .= "Notices are available on the KlassApp portal.\n\n";
@@ -2242,7 +2242,7 @@ class WhatsAppController extends Controller
     /**
      * Send call log summary to receptionist.
      */
-    private function sendCallLog(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendCallLog(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $message = "📞 *Call Log*\n\n";
         $message .= "Call logs can be managed via the KlassApp portal.\n\n";
@@ -2258,7 +2258,7 @@ class WhatsAppController extends Controller
     /**
      * Send fee collection summary for accountant.
      */
-    private function sendAccountantFees(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendAccountantFees(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $schoolId = $user->user->school_id;
         $categories = FeesCategories::where('school_id', $schoolId)->count();
@@ -2275,7 +2275,7 @@ class WhatsAppController extends Controller
     /**
      * Send financial reports summary for accountant.
      */
-    private function sendAccountantReports(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
+    private function sendAccountantReports(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $message = "📊 *Financial Reports*\n\n";
         $message .= "Reports available on the KlassApp portal:\n\n";
@@ -2311,7 +2311,7 @@ class WhatsAppController extends Controller
         WhatsAppUser $user,
         string $phone,
         string $code,
-        WhatsAppService $whatsAppService,
+        $whatsAppService,
     ): void {
         $studentAcademic = StudentAcademic::where('std_school_pay_number', $code)
             ->whereNull('deleted_at')

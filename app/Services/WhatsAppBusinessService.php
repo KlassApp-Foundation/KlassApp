@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
  *
  * Meta API docs: https://developers.facebook.com/docs/whatsapp/cloud-api
  */
-class WhatsAppBusinessService extends WhatsAppService
+class WhatsAppBusinessService
 {
     protected string $token;
     protected string $phoneNumberId;
