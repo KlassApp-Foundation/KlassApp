@@ -151,7 +151,8 @@ class WhatsAppController extends Controller
         $term = $request->query('term', 'current');
 
         // Resolve academic term
-        $examQuery = Exam::where('student_id', $studentId);
+        $examQuery = Exam::whereHas('marks', fn($q) => $q->where('student_id', $studentId))
+            ->with(['marks' => fn($q) => $q->where('student_id', $studentId), 'examType', 'subject']);
 
         if ($term === 'current') {
             // Get current academic year's latest exam
@@ -161,7 +162,7 @@ class WhatsAppController extends Controller
             }
         }
 
-        $exams = $examQuery->with(['marks', 'examType'])->latest()->take(5)->get();
+        $exams = $examQuery->latest('id')->take(5)->get();
 
         if ($exams->isEmpty()) {
             return response()->json([
@@ -175,17 +176,17 @@ class WhatsAppController extends Controller
         $formattedExams = $exams->map(function ($exam) {
             $marks = $exam->marks->map(function ($mark) {
                 return [
-                    'subject' => $mark->subject_name ?? 'Unknown',
-                    'score'   => $mark->marks_obtained,
-                    'total'   => $mark->marks_total ?? 100,
+                    'subject' => $mark->subject?->name ?? 'Unknown',
+                    'score'   => $mark->marks,
+                    'total'   => 100,
                     'grade'   => $mark->grade,
-                    'remark'  => $mark->remark,
+                    'remark'  => $mark->remark ?? '',
                 ];
             });
 
             return [
-                'exam_name' => $exam->name ?? $exam->examType?->name ?? 'Exam',
-                'term'      => $exam->term ?? 'N/A',
+                'exam_name' => $exam->subject?->name ?? $exam->examType?->name ?? 'Exam',
+                'term'      => $exam->academicTerm?->name ?? 'N/A',
                 'marks'     => $marks,
                 'total'     => $marks->sum('score'),
                 'average'   => $marks->avg('score') ? round($marks->avg('score'), 1) : 0,
@@ -218,7 +219,7 @@ class WhatsAppController extends Controller
 
         $period = $request->query('period', 'week');
 
-        $query = Attendance::where('student_id', $studentId);
+        $query = Attendance::where('user_id', $studentId);
 
         switch ($period) {
             case 'week':
@@ -241,17 +242,17 @@ class WhatsAppController extends Controller
         $records = $query->orderBy('date', 'desc')->get();
 
         $totalDays = $records->count();
-        $presentDays = $records->where('status', 'present')->count();
-        $absentDays = $records->where('status', 'absent')->count();
-        $lateDays = $records->where('status', 'late')->count();
+        $presentDays = $records->where('status', 1)->count();
+        $absentDays = $records->where('status', 0)->count();
+        $lateDays = $records->where('status', 2)->count();
         $attendanceRate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
 
-        $recentAbsent = $records->where('status', '!=', 'present')
+        $recentAbsent = $records->where('status', '!=', 1)
             ->take(5)
             ->map(function ($record) {
                 return [
                     'date'   => Carbon::parse($record->date)->format('D d M Y'),
-                    'status' => ucfirst($record->status),
+                    'status' => $record->status == 1 ? 'Present' : ($record->status == 2 ? 'Late' : 'Absent'),
                     'remark' => $record->remark ?? '',
                 ];
             });
@@ -1782,13 +1783,15 @@ class WhatsAppController extends Controller
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
 
-            $examQuery = Exam::where('student_id', $student->id);
+            // Find exams that have marks for this student
             $academicYear = \App\Helpers\SiteHelper::getAcademicYear($user->user->school_id);
+            $examQuery = Exam::whereHas('marks', fn($q) => $q->where('student_id', $student->id))
+                ->with(['marks' => fn($q) => $q->where('student_id', $student->id), 'examType', 'subject'])
+                ->latest('id');
             if ($academicYear) {
                 $examQuery->where('academic_year_id', $academicYear->id);
             }
-
-            $exams = $examQuery->with(['marks', 'examType'])->latest()->take(3)->get();
+            $exams = $examQuery->take(3)->get();
 
             if ($exams->isEmpty()) {
                 $whatsAppService->sendText(
@@ -1803,20 +1806,20 @@ class WhatsAppController extends Controller
             $message = "📊 *Results for {$studentName}*\n_{$className}_\n\n";
 
             foreach ($exams as $exam) {
-                $examName = $exam->name ?? $exam->examType?->name ?? 'Exam';
-                $term = $exam->term ?? 'N/A';
-                $message .= "📝 *{$examName}* ({$term})\n";
+                $examName = $exam->subject?->name ?? $exam->examType?->name ?? 'Exam';
+                $examType = $exam->examType?->name ?? '';
+                $term = $exam->academicTerm?->name ?? 'Term';
+                $message .= "📝 *{$examName}* ({$examType} — {$term})\n";
 
                 $marks = $exam->marks->take(5);
                 foreach ($marks as $mark) {
-                    $subject = $mark->subject_name ?? 'Unknown';
-                    $score = $mark->marks_obtained ?? '-';
-                    $total = $mark->marks_total ?? 100;
+                    $subject = $mark->subject?->name ?? 'Subject';
+                    $score = $mark->marks ?? 0;
                     $grade = $mark->grade ?? '-';
-                    $message .= "• {$subject}: {$score}/{$total} ({$grade})\n";
+                    $message .= "• {$subject}: {$score}/100 ({$grade})\n";
                 }
 
-                $avg = $marks->avg('marks_obtained');
+                $avg = $marks->avg('marks');
                 if ($avg) {
                     $message .= "_Average: " . round($avg, 1) . "%_\n";
                 }
@@ -1945,7 +1948,7 @@ class WhatsAppController extends Controller
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
 
-            $records = Attendance::where('student_id', $student->id)
+            $records = Attendance::where('user_id', $student->id)
                 ->where('date', '>=', Carbon::now()->subMonth())
                 ->orderBy('date', 'desc')
                 ->get();
@@ -1961,26 +1964,24 @@ class WhatsAppController extends Controller
             }
 
             $totalDays = $records->count();
-            $presentDays = $records->where('status', 'present')->count();
-            $absentDays = $records->where('status', 'absent')->count();
-            $lateDays = $records->where('status', 'late')->count();
-            $attendanceRate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
+        $presentDays = $records->where('status', 1)->count();
+        $absentDays = $records->where('status', 0)->count();
+        $lateDays = $records->where('status', 2)->count();
+        $rate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
 
-            $message = "📅 *Attendance for {$studentName}*\n_{$className}_\n_This month_\n\n";
-            $message .= "✅ Present: {$presentDays} days\n";
-            $message .= "❌ Absent: {$absentDays} days\n";
-            $message .= "⏰ Late: {$lateDays} days\n";
-            $message .= "📊 Rate: {$attendanceRate}%\n";
+        $message = "📅 *Attendance for {$studentName}*\n_{$className}_\n_This month_\n\n";
+        $message .= "✅ Present: {$presentDays}\n";
+        $message .= "❌ Absent: {$absentDays}\n";
+        $message .= "⏰ Late: {$lateDays}\n";
+        $message .= "📊 Rate: {$rate}%\n\n";
 
-            $recentAbsent = $records->where('status', '!=', 'present')->take(3);
-            if ($recentAbsent->isNotEmpty()) {
-                $message .= "\n📌 *Recent absences:*\n";
-                foreach ($recentAbsent as $record) {
-                    $date = Carbon::parse($record->date)->format('D d M Y');
-                    $status = ucfirst($record->status);
-                    $remark = $record->remark ? " ({$record->remark})" : '';
-                    $message .= "• {$date}: {$status}{$remark}\n";
-                }
+        $recentAbsent = $records->where('status', '!=', 1)->take(3);
+        if ($recentAbsent->isNotEmpty()) {
+            $message .= "Recent non-attendance:\n";
+            foreach ($recentAbsent as $record) {
+                $status = $record->status == 2 ? 'Late' : 'Absent';
+                $message .= "  • " . Carbon::parse($record->date)->format('d M Y') . " ({$status})\n";
+            }
             }
 
             $message .= "\n_Send ATTENDANCE for updated record._";
@@ -2061,13 +2062,15 @@ class WhatsAppController extends Controller
         $studentName = $student->name;
         $className = $student->studentAcademic?->standard?->name ?? 'N/A';
 
-        $examQuery = Exam::where('student_id', $student->id);
+        // Find exams that have marks for this student
         $academicYear = \App\Helpers\SiteHelper::getAcademicYear($student->school_id);
+        $examQuery = Exam::whereHas('marks', fn($q) => $q->where('student_id', $student->id))
+            ->with(['marks' => fn($q) => $q->where('student_id', $student->id), 'examType', 'subject']);
         if ($academicYear) {
             $examQuery->where('academic_year_id', $academicYear->id);
         }
 
-        $exams = $examQuery->with(['marks', 'examType'])->latest()->take(5)->get();
+        $exams = $examQuery->latest('id')->take(5)->get();
 
         if ($exams->isEmpty()) {
             $whatsAppService->sendText(
@@ -2081,14 +2084,13 @@ class WhatsAppController extends Controller
 
         $message = "📊 *My Results — {$studentName}*\n_{$className}_\n\n";
         foreach ($exams as $exam) {
-            $examName = $exam->name ?? $exam->examType?->name ?? 'Exam';
+            $examName = $exam->subject?->name ?? $exam->examType?->name ?? 'Exam';
             $message .= "📝 *{$examName}*\n";
             foreach ($exam->marks as $mark) {
-                $subject = $mark->subject_name ?? 'Unknown';
-                $score = $mark->marks_obtained ?? '-';
-                $total = $mark->marks_total ?? 100;
+                $subject = $mark->subject?->name ?? 'Subject';
+                $score = $mark->marks ?? 0;
                 $grade = $mark->grade ?? '';
-                $message .= "  • {$subject}: {$score}/{$total} {$grade}\n";
+                $message .= "  • {$subject}: {$score}/100 {$grade}\n";
             }
             $message .= "\n";
         }
@@ -2104,7 +2106,7 @@ class WhatsAppController extends Controller
         $student = $user->user;
         $academicYear = \App\Helpers\SiteHelper::getAcademicYear($student->school_id);
 
-        $records = Attendance::where('student_id', $student->id)
+        $records = Attendance::where('user_id', $student->id)
             ->when($academicYear, fn ($q) => $q->whereBetween('date', [
                 $academicYear->start_date ?? Carbon::now()->startOfYear(),
                 $academicYear->end_date ?? Carbon::now()->endOfYear(),
@@ -2113,8 +2115,8 @@ class WhatsAppController extends Controller
             ->get();
 
         $totalDays = $records->count();
-        $presentDays = $records->where('status', 'present')->count();
-        $absentDays = $records->where('status', 'absent')->count();
+        $presentDays = $records->where('status', 1)->count();
+        $absentDays = $records->where('status', 0)->count();
         $rate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
 
         $message = "📅 *My Attendance*\n_{$student->name}_\n\n";
@@ -2122,7 +2124,7 @@ class WhatsAppController extends Controller
         $message .= "❌ Absent: {$absentDays}\n";
         $message .= "📊 Rate: {$rate}%\n\n";
 
-        $recentAbsent = $records->where('status', '!=', 'present')->take(3);
+        $recentAbsent = $records->where('status', '!=', 1)->take(3);
         if ($recentAbsent->isNotEmpty()) {
             $message .= "Recent absences:\n";
             foreach ($recentAbsent as $record) {
