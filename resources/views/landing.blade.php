@@ -474,7 +474,7 @@
         <a href="/contact">Contact</a>
         <a href="/docs/community/">Docs</a>
         <a href="/demo" class="nav-cta">Get Started</a>
-        <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
+        <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%20KlassApp"
            target="_blank"
            style="display: flex; align-items: center; gap: 6px; color: #475569; text-decoration: none; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: color 0.2s ease;"
            onmouseover="this.style.color='#1E6FD9'" onmouseout="this.style.color='#475569'"
@@ -562,7 +562,7 @@
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         Book a demo
                     </a>
-                    <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
+                    <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%20KlassApp"
                        target="_blank"
                        class="inline-flex items-center gap-2 bg-[#25D366] text-white font-medium px-6 py-3 rounded-xl hover:bg-[#20BD5A] transition btn-scale"
                        aria-label="Chat on WhatsApp">
@@ -1403,7 +1403,7 @@
             </a>
         </div>
         <p class="text-slate-600 text-sm mt-6 reveal">or
-            <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20request%20a%20demo"
+            <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%20KlassApp"
                target="_blank" class="text-slate-900 font-semibold hover:underline">
                 chat with us on WhatsApp →
             </a>
@@ -1663,7 +1663,7 @@
 </script>
 
 {{-- Floating WhatsApp button --}}
-<a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp"
+<a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%20KlassApp"
    target="_blank"
    class="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#25D366] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center"
    aria-label="Chat on WhatsApp">
