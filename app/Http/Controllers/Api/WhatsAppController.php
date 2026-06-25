@@ -759,8 +759,9 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // Route to appropriate handler
-        $this->routeInbound($whatsappUser, $phone, $body, app(WhatsAppService::class));
+        // Route to appropriate handler — use Business API when available (Evolution is decommissioned)
+        $sender = $this->businessApi->isConfigured() ? $this->businessApi : app(WhatsAppService::class);
+        $this->routeInbound($whatsappUser, $phone, $body, $sender);
 
         // Flush any queued notifications — parent's inbound just opened a free window
         $outboundService = app(OutboundWhatsAppService::class);
