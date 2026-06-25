@@ -1791,7 +1791,7 @@ class WhatsAppController extends Controller
             if ($academicYear) {
                 $examQuery->where('academic_year_id', $academicYear->id);
             }
-            $exams = $examQuery->take(3)->get();
+            $exams = $examQuery->take(15)->get();
 
             if ($exams->isEmpty()) {
                 $whatsAppService->sendText(
@@ -1805,21 +1805,28 @@ class WhatsAppController extends Controller
 
             $message = "📊 *Results for {$studentName}*\n_{$className}_\n\n";
 
-            foreach ($exams as $exam) {
-                $examName = $exam->subject?->name ?? $exam->examType?->name ?? 'Exam';
-                $examType = $exam->examType?->name ?? '';
-                $term = $exam->academicTerm?->name ?? 'Term';
-                $message .= "📝 *{$examName}* ({$examType} — {$term})\n";
+            // Group exams by exam type for cleaner display
+            $grouped = $exams->groupBy(fn($e) => $e->examType?->name ?? 'Exam');
+            foreach ($grouped as $typeName => $typeExams) {
+                $term = $typeExams->first()->academicTerm?->name ?? 'Term';
+                $message .= "📝 *{$typeName}* — {$term}\n";
 
-                $marks = $exam->marks->take(5);
-                foreach ($marks as $mark) {
+                $allMarks = collect();
+                foreach ($typeExams as $exam) {
+                    foreach ($exam->marks as $mark) {
+                        $allMarks->push($mark);
+                    }
+                }
+
+                $sorted = $allMarks->sortByDesc('marks')->take(10);
+                foreach ($sorted as $mark) {
                     $subject = $mark->subject?->name ?? 'Subject';
                     $score = $mark->marks ?? 0;
                     $grade = $mark->grade ?? '-';
                     $message .= "• {$subject}: {$score}/100 ({$grade})\n";
                 }
 
-                $avg = $marks->avg('marks');
+                $avg = $allMarks->avg('marks');
                 if ($avg) {
                     $message .= "_Average: " . round($avg, 1) . "%_\n";
                 }
@@ -2070,7 +2077,7 @@ class WhatsAppController extends Controller
             $examQuery->where('academic_year_id', $academicYear->id);
         }
 
-        $exams = $examQuery->latest('id')->take(5)->get();
+        $exams = $examQuery->latest('id')->take(15)->get();
 
         if ($exams->isEmpty()) {
             $whatsAppService->sendText(
@@ -2083,14 +2090,29 @@ class WhatsAppController extends Controller
         }
 
         $message = "📊 *My Results — {$studentName}*\n_{$className}_\n\n";
-        foreach ($exams as $exam) {
-            $examName = $exam->subject?->name ?? $exam->examType?->name ?? 'Exam';
-            $message .= "📝 *{$examName}*\n";
-            foreach ($exam->marks as $mark) {
+        $grouped = $exams->groupBy(fn($e) => $e->examType?->name ?? 'Exam');
+        foreach ($grouped as $typeName => $typeExams) {
+            $term = $typeExams->first()->academicTerm?->name ?? 'Term';
+            $message .= "📝 *{$typeName}* — {$term}\n";
+
+            $allMarks = collect();
+            foreach ($typeExams as $exam) {
+                foreach ($exam->marks as $mark) {
+                    $allMarks->push($mark);
+                }
+            }
+
+            $sorted = $allMarks->sortByDesc('marks')->take(10);
+            foreach ($sorted as $mark) {
                 $subject = $mark->subject?->name ?? 'Subject';
                 $score = $mark->marks ?? 0;
-                $grade = $mark->grade ?? '';
-                $message .= "  • {$subject}: {$score}/100 {$grade}\n";
+                $grade = $mark->grade ?? '-';
+                $message .= "• {$subject}: {$score}/100 ({$grade})\n";
+            }
+
+            $avg = $allMarks->avg('marks');
+            if ($avg) {
+                $message .= "_Average: " . round($avg, 1) . "%_\n";
             }
             $message .= "\n";
         }
