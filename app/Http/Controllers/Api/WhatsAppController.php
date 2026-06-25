@@ -1540,6 +1540,15 @@ class WhatsAppController extends Controller
             }
         }
 
+        // Greetings — acknowledge and show menu
+        $greetings = ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening'];
+        foreach ($greetings as $greeting) {
+            if (str_starts_with($trimmed, $greeting) || str_starts_with($normalised, $greeting)) {
+                $this->sendMenu($user, $phone, $whatsAppService);
+                return;
+            }
+        }
+
         // Unknown keyword — send the actual menu with buttons
         if ($this->businessApi->isConfigured()) {
             $whatsAppService->sendText(
