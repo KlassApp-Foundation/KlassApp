@@ -1,6 +1,6 @@
 # KlassApp — Session Memory & Project Context
 
-## Active Branch: `whatsapp`
+## Active Branch: `main`
 
 ---
 
@@ -33,6 +33,8 @@
 - Webhook: https://klassapp.xyz/api/whatsapp/inbound
 - Business Number: +256765275289
 - Meta WABA fully active, Evolution API decommissioned
+- ⚠️ Facebook Business Account banned (June 26). Need new number + fresh Meta account.
+- Pending: Replace business number once new WABA is set up
 
 ### Deploy Command
 ```bash
