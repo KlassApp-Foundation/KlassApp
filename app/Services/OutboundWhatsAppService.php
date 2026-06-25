@@ -492,4 +492,276 @@ class OutboundWhatsAppService
 
         return $sent;
     }
+
+    // =====================================================================
+    //  Message composers — each produces a distinct, scannable format
+    // =====================================================================
+
+    /**
+     * Compose a grade results message with celebration and class rank.
+     */
+    protected function composeGradesMessage(User $student, Exam $exam): string
+    {
+        $rows = [];
+        $totalScore = 0;
+        $subjectCount = 0;
+        foreach ($exam->marks as $mark) {
+            $grade = $mark->grade ?? 'N/A';
+            $score = $mark->marks_obtained ?? 0;
+            $totalScore += $score;
+            $subjectCount++;
+            $total = $mark->marks_total ?? 100;
+            $rows[] = "• {$mark->subject_name}: {$score}/{$total} ({$grade})";
+        }
+
+        $examName = $exam->name ?? $exam->examType?->name ?? 'Exam';
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $avg = $subjectCount > 0 ? round($totalScore / $subjectCount, 1) : 0;
+
+        // Class rank calculation
+        $rank = null;
+        $totalStudents = null;
+        if ($exam->id) {
+            $allScores = \Illuminate\Support\Facades\DB::table('marks')
+                ->where('exam_id', $exam->id)
+                ->where('student_id', '!=', $student->id)
+                ->select('student_id', \Illuminate\Support\Facades\DB::raw('SUM(marks_obtained) as total'))
+                ->groupBy('student_id')
+                ->get()
+                ->pluck('total');
+            $totalStudents = $allScores->count() + 1;
+            $rank = $allScores->filter(fn($s) => $s > $totalScore)->count() + 1;
+        }
+
+        $message = "📊 *{$examName} — {$className}*\n";
+        $message .= "_{$student->name}_\n\n";
+        $message .= implode("\n", $rows);
+
+        if ($subjectCount > 0) {
+            $message .= "\n· · · · · · · · · · · · · · · ·\n";
+            $message .= "_Average: {$avg}%_";
+            if ($rank && $totalStudents) {
+                $ordinal = match ($rank) {1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'};
+                $message .= " | #{$rank}{$ordinal} of {$totalStudents}";
+            }
+            $message .= "\n";
+
+            if ($avg >= 80) {
+                $message .= "🎉 *Well done, {$student->name}!* ";
+                $message .= "{$avg}% average is a strong performance";
+                if ($rank && $totalStudents) {
+                    $message .= " — ranked {$rank}{$ordinal} out of {$totalStudents}";
+                }
+                $message .= ".\n";
+            }
+        }
+
+        $message .= "\n_Check the KlassApp parent portal for full details._";
+        return $message;
+    }
+
+    /**
+     * Compose a fee reminder with visual separators.
+     */
+    protected function composeFeeMessage(User $student, iterable $fees, string $type): string
+    {
+        $title = $type === 'overdue'
+            ? '⚠️ Fee Payment Overdue'
+            : '💰 Fee Payment Reminder';
+
+        $rows = [];
+        $total = 0;
+        foreach ($fees as $fee) {
+            $rows[] = "• {$fee->name}: UGX " . number_format($fee->amount, 0) . ($fee->due_date ? " (due: {$fee->due_date})" : '');
+            $total += $fee->amount;
+        }
+
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+
+        $message = "{$title}\n";
+        $message .= "_{$student->name} — {$className}_\n\n";
+        $message .= implode("\n", $rows);
+        $message .= "\n· · · · · · · · · · · · · · · ·\n";
+        $message .= "*Total: UGX " . number_format($total, 0) . "*\n";
+        $message .= "\n_Contact the school finance office for payment details._";
+        return $message;
+    }
+
+    /**
+     * Fee balance snapshot with paid/outstanding grouping.
+     */
+    public function composeFeeBalance(User $student, array $categories, float $totalPaid, float $totalBalance): string
+    {
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $paidLines = [];
+        $outstandingLines = [];
+
+        foreach ($categories as $cat) {
+            $line = "• {$cat['name']}: UGX " . number_format($cat['amount'] ?? 0, 0);
+            if (($cat['balance'] ?? 0) <= 0) {
+                $paidLines[] = $line;
+            } else {
+                $outstandingLines[] = $line;
+            }
+        }
+
+        $message = "💰 *Fee Balance — {$className}*\n_{$student->name}_\n\n";
+
+        if (!empty($paidLines)) {
+            $message .= "✅ *PAID*\n" . implode("\n", $paidLines) . "\n\n";
+        }
+
+        if (!empty($outstandingLines)) {
+            $message .= "❌ *OUTSTANDING*\n" . implode("\n", $outstandingLines) . "\n\n";
+        }
+
+        $message .= "· · · · · · · · · · · · · · · ·\n";
+        $message .= "💵 *Total Paid:* UGX " . number_format($totalPaid, 0) . "\n";
+        $message .= "💰 *Balance:* UGX " . number_format($totalBalance, 0) . "\n";
+        $message .= "\n_Reply PAY to pay via Mobile Money._";
+        return $message;
+    }
+
+    /**
+     * Attendance summary with contextual tone.
+     */
+    public function composeAttendance(User $student, int $present, int $absent, int $total, array $recentAbsences = []): string
+    {
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $rate = $total > 0 ? round(($present / $total) * 100) : 100;
+
+        $message = "📅 *Attendance — {$className}*\n_{$student->name}_\n\n";
+
+        if ($rate < 80) {
+            $message .= "⚠️ *{$student->name} has missed {$absent} school day(s)* — ";
+            $message .= "that's " . (100 - $rate) . "% of learning time lost.\n\n";
+        } elseif ($rate > 90) {
+            $message .= "✅ *Great attendance!* {$present} out of {$total} days present.\n\n";
+        }
+
+        $message .= "✅ Present: {$present}\n";
+        $message .= "❌ Absent: {$absent}\n";
+        $message .= "📊 Rate: {$rate}%\n";
+
+        if (!empty($recentAbsences)) {
+            $message .= "\n· · · · · · · · · · · · · · · ·\n";
+            $message .= "Recent absences:\n";
+            foreach (array_slice($recentAbsences, 0, 5) as $a) {
+                $message .= "  • {$a['date']}" . ($a['reason'] ? " — {$a['reason']}" : '') . "\n";
+            }
+        }
+
+        $message .= "\n_Contact the school to report a reason._";
+        return $message;
+    }
+
+    /**
+     * Grades overview with celebration for strong performance.
+     */
+    public function composeGradesOverview(User $student, string $examName, array $subjects): string
+    {
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $rows = [];
+        $totalScore = 0;
+
+        foreach ($subjects as $sub) {
+            $rows[] = "• {$sub['name']}: {$sub['score']}/{$sub['total']} ({$sub['grade']})";
+            $totalScore += $sub['score'] ?? 0;
+        }
+
+        $avg = count($subjects) > 0 ? round($totalScore / count($subjects), 1) : 0;
+
+        $message = "📊 *{$examName} — {$className}*\n_{$student->name}_\n\n";
+        $message .= implode("\n", $rows);
+        $message .= "\n· · · · · · · · · · · · · · · ·\n";
+        $message .= "_Average: {$avg}%_\n";
+
+        if ($avg >= 80) {
+            $message .= "🎉 *Well done, {$student->name}!* Strong results across the board.\n";
+        }
+
+        $message .= "\n_Reply REPORT for the full report card._";
+        return $message;
+    }
+
+    /**
+     * Health record with structured formatting.
+     */
+    public function composeHealthRecord(User $student, array $records): string
+    {
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $rows = [];
+
+        foreach (array_slice($records, 0, 5) as $record) {
+            $date = $record['date'] ?? 'N/A';
+            $type = $record['type'] ?? 'Checkup';
+            $notes = $record['notes'] ?? '';
+            $rows[] = "• {$date} — {$type}" . ($notes ? "\n  " . $notes : '');
+        }
+
+        $message = "🏥 *Health Records — {$className}*\n_{$student->name}_\n\n";
+        $message .= implode("\n", $rows);
+
+        $footer = count($records) > 5
+            ? "\n\n_Showing last 5 records. Reply ALLHEALTH for full history._"
+            : "\n\n_Reply ALLHEALTH for full history._";
+        $message .= $footer;
+        return $message;
+    }
+
+    /**
+     * Student withdrawal notification.
+     */
+    public function composeStudentWithdrawn(User $student, string $withdrawalDate, string $reason = '', string $destination = ''): string
+    {
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $message = "📋 *Record Update — Student Withdrawn*\n_{$student->name} — {$className}_\n\n";
+        $message .= "• Date of departure: {$withdrawalDate}\n";
+        if ($reason) {
+            $message .= "• Reason: {$reason}\n";
+        }
+        if ($destination) {
+            $message .= "• Destination: {$destination}\n";
+        }
+        $message .= "\n· · · · · · · · · · · · · · · ·\n";
+        $message .= "Academic records and transfer documents are available on KlassApp.\n";
+        $message .= "\n_Reply RECORDS to request official documents._";
+        return $message;
+    }
+
+    /**
+     * Term opening notification.
+     */
+    public function composeTermOpens(string $schoolName, string $term, string $openingDate, string $reportingTime = '', string $requirements = ''): string
+    {
+        $message = "📅 *{$term} Begins*\n_{$schoolName}_\n\n";
+        $message .= "• Opening date: {$openingDate}\n";
+        if ($reportingTime) {
+            $message .= "• Reporting time: {$reportingTime}\n";
+        }
+        if ($requirements) {
+            $message .= "• Requirements: {$requirements}\n";
+        }
+        $message .= "\nPlease ensure your child reports on time.\n";
+        $message .= "\n_Reply TERMDATES for the full academic calendar._";
+        return $message;
+    }
+
+    /**
+     * Term closing notification.
+     */
+    public function composeTermCloses(string $schoolName, string $term, string $closingDate, string $closingTime = '', string $reopeningDate = ''): string
+    {
+        $message = "📅 *{$term} Closes*\n_{$schoolName}_\n\n";
+        $message .= "• Closing date: {$closingDate}\n";
+        if ($closingTime) {
+            $message .= "• Closing time: {$closingTime}\n";
+        }
+        if ($reopeningDate) {
+            $message .= "• School reopens: {$reopeningDate}\n";
+        }
+        $message .= "\nReport cards will be available via KlassApp.\n";
+        $message .= "\n_Reply REPORT to view results early._";
+        return $message;
+    }
 }

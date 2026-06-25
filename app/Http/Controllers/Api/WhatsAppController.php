@@ -1335,7 +1335,7 @@ class WhatsAppController extends Controller
             if ($exams->isEmpty()) {
                 $whatsAppService->sendText(
                     $phone,
-                    "📊 *Results for {$studentName}*\n_{$className}_\n\nNo results available yet.\n\nResults will be sent here once published by the school.",
+                    "📊 *{$studentName}* — _{$className}_\n\nNo results published yet.\n\nResults will appear here automatically once the school releases them.",
                     'grades_none',
                     $user->user_id,
                 );
@@ -1367,7 +1367,43 @@ class WhatsAppController extends Controller
 
                 $avg = $allMarks->avg('marks');
                 if ($avg) {
-                    $message .= "_Average: " . round($avg, 1) . "%_\n";
+                    // Class rank: count students with higher total in same exams
+                    $totalScore = $allMarks->sum('marks');
+                    $rank = null;
+                    $totalStudents = null;
+                    $examIds = $typeExams->pluck('id');
+                    if ($examIds->isNotEmpty()) {
+                        $allStudentsScores = \Illuminate\Support\Facades\DB::table('marks')
+                            ->whereIn('exam_id', $examIds)
+                            ->where('student_id', '!=', $student->id)
+                            ->select('student_id', \Illuminate\Support\Facades\DB::raw('SUM(marks) as total'))
+                            ->groupBy('student_id')
+                            ->get()
+                            ->pluck('total');
+                        $totalStudents = $allStudentsScores->count() + 1;
+                        $rank = $allStudentsScores->filter(fn($s) => $s > $totalScore)->count() + 1;
+                    }
+
+                    $avgRounded = round($avg, 1);
+                    $celebration = '';
+                    if ($avg >= 80) {
+                        $celebration = "🎉 *Well done, {$studentName}!* ";
+                        $celebration .= "{$avgRounded}% average is a strong performance";
+                        if ($rank && $totalStudents) {
+                            $celebration .= " — ranked {$rank}" . match ($rank) {1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'} . " out of {$totalStudents}";
+                        }
+                        $celebration .= ".\n";
+                    }
+
+                    $message .= "· · · · · · · · · · · · · · · ·\n";
+                    $message .= "_Average: {$avgRounded}%_";
+                    if ($rank && $totalStudents) {
+                        $message .= " | #{$rank} of {$totalStudents}";
+                    }
+                    $message .= "\n";
+                    if ($celebration) {
+                        $message .= "{$celebration}";
+                    }
                 }
                 $message .= "\n";
             }
@@ -1428,7 +1464,7 @@ class WhatsAppController extends Controller
 
             $totalFees = $feeCategories->sum('amount');
 
-            $message = "💰 *Fee Balance for {$studentName}*\n_{$className}_\n\n";
+            $message = "💰 *Fee Balance — {$studentName}*\n_{$className}_\n\n";
 
             if ($feeCategories->isEmpty()) {
                 $message .= "No fee structure found.\n\nContact the school office for details.";
@@ -1436,9 +1472,10 @@ class WhatsAppController extends Controller
                 foreach ($feeCategories as $category) {
                     $dueDate = $category->due_date ? date('d M Y', strtotime($category->due_date)) : 'N/A';
                     $message .= "• {$category->name}: UGX " . number_format($category->amount, 0) . "\n";
-                    $message .= "  Due: {$dueDate}\n";
+                    $message .= "  \xE2\x97\x8F Due: {$dueDate}\n";
                 }
-                $message .= "\n💵 *Total: UGX " . number_format($totalFees, 0) . "*\n";
+                $message .= "\n· · · · · · · · · · · · · · · ·\n";
+                $message .= "💵 *Total fees: UGX " . number_format($totalFees, 0) . "*\n";
                 $message .= "\n_Contact school office for payment status._";
             }
 
@@ -1515,14 +1552,26 @@ class WhatsAppController extends Controller
         $lateDays = $records->where('status', 2)->count();
         $rate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
 
-        $message = "📅 *Attendance for {$studentName}*\n_{$className}_\n_This month_\n\n";
+        $tone = '';
+        if ($rate < 80) {
+            $tone = "⚠️ *{$studentName} has missed {$absentDays} school day(s)* this month.\nThat's " . (100 - $rate) . "% of learning time lost.\n\n";
+        } elseif ($rate > 90) {
+            $tone = "✅ *Great attendance!* {$studentName} has been in class {$presentDays} out of {$totalDays} days.\n\n";
+        }
+
+        $message = "📅 *Attendance — {$studentName}*\n_{$className}_\n_This month_\n\n";
         $message .= "✅ Present: {$presentDays}\n";
         $message .= "❌ Absent: {$absentDays}\n";
         $message .= "⏰ Late: {$lateDays}\n";
-        $message .= "📊 Rate: {$rate}%\n\n";
+        $message .= "📊 Rate: {$rate}%\n";
+
+        if ($tone) {
+            $message .= "\n{$tone}";
+        }
 
         $recentAbsent = $records->where('status', '!=', 1)->take(3);
         if ($recentAbsent->isNotEmpty()) {
+            $message .= "· · · · · · · · · · · · · · · ·\n";
             $message .= "Recent non-attendance:\n";
             foreach ($recentAbsent as $record) {
                 $status = $record->status == 2 ? 'Late' : 'Absent';
