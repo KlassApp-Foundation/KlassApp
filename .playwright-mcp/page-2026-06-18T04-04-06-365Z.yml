@@ -1,0 +1,518 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "KlassApp" [ref=e4] [cursor=pointer]:
+        - /url: "#"
+        - img "KlassApp" [ref=e5]
+      - button "Menu" [ref=e6] [cursor=pointer]:
+        - img [ref=e7]
+  - generic [ref=e13]:
+    - generic [ref=e14]:
+      - tablist "Audience selector" [ref=e16]:
+        - button "Administrators & Principals" [ref=e17] [cursor=pointer]
+        - button "Teachers" [ref=e18] [cursor=pointer]
+        - button "Parents" [ref=e19] [cursor=pointer]
+      - heading "|" [level=1] [ref=e20]: "|"
+      - generic [ref=e22]: ✦ And the system your admin team operates on.
+      - paragraph [ref=e23]: "|, delivered directly to parents on WhatsApp. No app. No login. Just a message. And for administrators, dashboards that make running a school feel effortless."
+      - generic [ref=e24]:
+        - link "Join" [ref=e25] [cursor=pointer]:
+          - /url: http://localhost:8000/register
+          - text: Join
+          - img [ref=e26]
+        - link "Portal" [ref=e28] [cursor=pointer]:
+          - /url: http://localhost:8000/login
+          - text: Portal
+          - img [ref=e29]
+        - link "Book a demo" [ref=e31] [cursor=pointer]:
+          - /url: https://calendly.com/moemucu/talk-to-mucu
+          - img [ref=e32]
+          - text: Book a demo
+        - link "Chat on WhatsApp" [ref=e34] [cursor=pointer]:
+          - /url: https://wa.me/256765275289?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp
+          - img [ref=e35]
+          - text: Chat on WhatsApp
+        - link "See How It Works" [ref=e38] [cursor=pointer]:
+          - /url: "#how-it-works"
+          - img [ref=e39]
+          - text: See How It Works
+    - generic [ref=e42]:
+      - generic [ref=e44]:
+        - generic [ref=e45]: 7:04 AM
+        - img [ref=e47]
+      - generic [ref=e49]:
+        - img "K" [ref=e51]
+        - generic [ref=e52]:
+          - generic [ref=e53]: KlassApp
+          - generic [ref=e54]: Typically responds instantly
+        - img [ref=e55]
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - text: 👋 Welcome to KlassApp!
+          - text: Tap an option below to get started.
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - generic [ref=e61]: 📋 What would you like to view?
+            - generic [ref=e62]: Tap any option for instant results
+          - generic [ref=e63]:
+            - generic [ref=e64] [cursor=pointer]:
+              - generic [ref=e65]: 📊 GRADES
+              - generic [ref=e66]: Exam scores, term results & class position
+            - generic [ref=e67] [cursor=pointer]:
+              - generic [ref=e68]: 💰 FEES
+              - generic [ref=e69]: Real-time fee balance & payment history
+            - generic [ref=e70] [cursor=pointer]:
+              - generic [ref=e71]: 📅 ATTENDANCE
+              - generic [ref=e72]: Daily & term attendance summary
+            - generic [ref=e73] [cursor=pointer]:
+              - generic [ref=e74]: 📋 TIMETABLE
+              - generic [ref=e75]: Class schedule & upcoming periods
+          - generic [ref=e76]: Tap to select • Powered by KlassApp
+        - generic [ref=e81]:
+          - generic [ref=e82]: 📊 GRADES — Term 1 2026
+          - generic [ref=e83]:
+            - generic [ref=e84]:
+              - generic [ref=e85]: Mathematics
+              - generic [ref=e86]: A
+            - generic [ref=e87]:
+              - generic [ref=e88]: English
+              - generic [ref=e89]: A-
+            - generic [ref=e90]:
+              - generic [ref=e91]: Science
+              - generic [ref=e92]: B+
+            - generic [ref=e93]:
+              - generic [ref=e94]: Social Studies
+              - generic [ref=e95]: A
+          - generic [ref=e96]:
+            - text: "Position:"
+            - strong [ref=e97]: 3rd
+            - text: "out of 42 • Overall:"
+            - strong [ref=e98]: A-
+        - generic [ref=e99]: ✅ You're all set! Reply any time or tap the menu again.
+      - generic [ref=e100]:
+        - generic [ref=e101]: Tap a menu option above...
+        - img [ref=e103]
+  - generic [ref=e106]:
+    - paragraph [ref=e107]: Trusted by schools across Africa
+    - generic [ref=e109]:
+      - generic [ref=e110]: 🏫 Kampala High School
+      - generic [ref=e111]: 📚 St. Mary's College
+      - generic [ref=e112]: 🌍 Light Academy
+      - generic [ref=e113]: 📖 Jinja College
+      - generic [ref=e114]: 🎓 Mbarara High
+      - generic [ref=e115]: 🇰🇪 Nairobi Prep
+      - generic [ref=e116]: 🇹🇿 Dar es Salaam Academy
+      - generic [ref=e117]: 🏫 Kampala High School
+      - generic [ref=e118]: 📚 St. Mary's College
+      - generic [ref=e119]: 🌍 Light Academy
+      - generic [ref=e120]: 📖 Jinja College
+      - generic [ref=e121]: 🎓 Mbarara High
+      - generic [ref=e122]: 🇰🇪 Nairobi Prep
+      - generic [ref=e123]: 🇹🇿 Dar es Salaam Academy
+  - generic [ref=e125]:
+    - paragraph [ref=e127]: Why KlassApp
+    - heading "School software has forgotten the most important person." [level=2] [ref=e128]
+    - generic [ref=e129]:
+      - generic [ref=e130]:
+        - heading "✕ The old way" [level=3] [ref=e131]:
+          - generic [ref=e132]: ✕
+          - text: The old way
+        - list [ref=e133]:
+          - listitem [ref=e134]:
+            - generic [ref=e135]: ✕
+            - generic [ref=e136]: Parents find out about exam results at the end of term — weeks after they're published.
+          - listitem [ref=e137]:
+            - generic [ref=e138]: ✕
+            - generic [ref=e139]: Fee reminders get lost in WhatsApp group noise, buried under hundreds of messages.
+          - listitem [ref=e140]:
+            - generic [ref=e141]: ✕
+            - generic [ref=e142]: Absence notifications never reach home — parents discover their child skipped school weeks later.
+          - listitem [ref=e143]:
+            - generic [ref=e144]: ✕
+            - generic [ref=e145]: School portals require data-heavy browsers that don't work on basic phones or slow networks.
+      - generic [ref=e146]:
+        - heading "✓ With KlassApp" [level=3] [ref=e147]:
+          - generic [ref=e148]: ✓
+          - text: With KlassApp
+        - list [ref=e149]:
+          - listitem [ref=e150]:
+            - generic [ref=e151]: ✓
+            - generic [ref=e152]: Grades delivered to WhatsApp the moment results are published — real-time, no waiting.
+          - listitem [ref=e153]:
+            - generic [ref=e154]: ✓
+            - generic [ref=e155]: Personalised fee balance — one message away. Every parent gets their own data, not a group broadcast.
+          - listitem [ref=e156]:
+            - generic [ref=e157]: ✓
+            - generic [ref=e158]: Absence detected by the school → parent notified in minutes via WhatsApp, directly.
+          - listitem [ref=e159]:
+            - generic [ref=e160]: ✓
+            - generic [ref=e161]: Works on any phone, any network, no app required. Just WhatsApp — which parents already use every day.
+  - generic [ref=e163]:
+    - paragraph [ref=e165]: How It Works
+    - heading "Tap. See. Done." [level=2] [ref=e166]
+    - paragraph [ref=e167]: Parents interact with KlassApp on WhatsApp just like chatting with a friend. No keywords to remember. No portals to learn.
+    - generic [ref=e168]:
+      - generic [ref=e169]:
+        - generic [ref=e170]: "1"
+        - generic [ref=e171]: 💬
+        - heading "Parent Messages" [level=3] [ref=e172]
+        - paragraph [ref=e173]: A parent sends any message to the school's KlassApp WhatsApp number — a greeting, a question, anything.
+      - generic [ref=e174]:
+        - generic [ref=e175]: "2"
+        - generic [ref=e176]: 📋
+        - heading "Instant Interactive Menu" [level=3] [ref=e177]
+        - paragraph [ref=e178]:
+          - text: KlassApp responds with a rich list menu — tap
+          - strong [ref=e179]: GRADES
+          - text: ","
+          - strong [ref=e180]: FEES
+          - text: ", or"
+          - strong [ref=e181]: ATTENDANCE
+          - text: to get your data instantly.
+      - generic [ref=e182]:
+        - generic [ref=e183]: "3"
+        - generic [ref=e184]: ✅
+        - heading "Personalised Response" [level=3] [ref=e185]
+        - paragraph [ref=e186]: Fees, results, timetable — all formatted and delivered in seconds. Each parent sees only their own child's information.
+  - generic [ref=e188]:
+    - paragraph [ref=e190]: For Every Role
+    - heading "Dashboards built for how your team works." [level=2] [ref=e191]
+    - paragraph [ref=e192]: Separate, role-specific dashboards for admin, teachers, accountants, receptionists, and librarians — each with the tools they need and nothing they don't.
+    - generic [ref=e193]:
+      - generic [ref=e194]:
+        - generic [ref=e199]: ADMIN DASHBOARD
+        - generic [ref=e200]:
+          - generic [ref=e201]:
+            - generic [ref=e202]:
+              - generic [ref=e203]: "846"
+              - generic [ref=e204]: Students
+            - generic [ref=e205]:
+              - generic [ref=e206]: "42"
+              - generic [ref=e207]: Staff
+            - generic [ref=e208]:
+              - generic [ref=e209]: 96%
+              - generic [ref=e210]: Attendance
+          - generic [ref=e211]:
+            - generic [ref=e212]:
+              - generic [ref=e214]: Fee collection this term
+              - generic [ref=e215]: $12.4K
+            - generic [ref=e216]:
+              - generic [ref=e218]: Pending approvals
+              - generic [ref=e219]: "8"
+            - generic [ref=e220]:
+              - generic [ref=e222]: Upcoming exams
+              - generic [ref=e223]: "3"
+      - generic [ref=e224]:
+        - generic [ref=e229]: TEACHER DASHBOARD
+        - generic [ref=e230]:
+          - generic [ref=e231]:
+            - generic [ref=e232]: JM
+            - generic [ref=e233]:
+              - generic [ref=e234]: Mathematics — S.3
+              - generic [ref=e235]: 42 students · 6 periods/week
+          - generic [ref=e236]:
+            - generic [ref=e237]:
+              - generic [ref=e238]: ✓
+              - generic [ref=e239]: Lesson plans this week
+              - generic [ref=e240]: 5/5
+            - generic [ref=e241]:
+              - generic [ref=e242]: ◷
+              - generic [ref=e243]: Marks to submit
+              - generic [ref=e244]: "12"
+            - generic [ref=e245]:
+              - generic [ref=e246]: "!"
+              - generic [ref=e247]: Homework pending review
+              - generic [ref=e248]: "4"
+      - generic [ref=e249]:
+        - generic [ref=e254]: ACCOUNTANT DASHBOARD
+        - generic [ref=e255]:
+          - generic [ref=e256]:
+            - generic [ref=e257]:
+              - generic [ref=e258]: $8.2K
+              - generic [ref=e259]: Collected
+            - generic [ref=e260]:
+              - generic [ref=e261]: $3.1K
+              - generic [ref=e262]: Outstanding
+          - generic [ref=e263]:
+            - generic [ref=e264]:
+              - generic [ref=e266]: Payment rate
+              - generic [ref=e267]: 72%
+            - generic [ref=e268]:
+              - generic [ref=e270]: Pending payroll
+              - generic [ref=e271]: 18 staff
+      - generic [ref=e272]:
+        - generic [ref=e277]: WHATSAPP ANALYTICS
+        - generic [ref=e278]:
+          - generic [ref=e279]:
+            - generic [ref=e280]:
+              - generic [ref=e281]: 1,247
+              - generic [ref=e282]: Sent
+            - generic [ref=e283]:
+              - generic [ref=e284]: 98.2%
+              - generic [ref=e285]: Delivered
+          - generic [ref=e286]:
+            - generic [ref=e287]:
+              - generic [ref=e289]: Messages this month
+              - generic [ref=e290]: 3,842
+            - generic [ref=e291]:
+              - generic [ref=e293]: Active parents linked
+              - generic [ref=e294]: "312"
+            - generic [ref=e295]:
+              - generic [ref=e296]: 📊
+              - generic [ref=e297]: Delivery rate
+              - generic [ref=e298]: 98.2%
+    - link "See all features →" [ref=e300] [cursor=pointer]:
+      - /url: "#demo"
+  - generic [ref=e302]:
+    - heading "Everything your school needs, all in one place." [level=2] [ref=e304]:
+      - text: Everything your school needs,
+      - text: all in one place.
+    - paragraph [ref=e305]: From academics to accounting, KlassApp covers the full picture — with WhatsApp at the centre.
+    - generic [ref=e306]:
+      - generic [ref=e307]:
+        - generic [ref=e308]: 📊
+        - generic [ref=e309]: Exams & Marks
+      - generic [ref=e310]:
+        - generic [ref=e311]: 💰
+        - generic [ref=e312]: Fees & Payments
+      - generic [ref=e313]:
+        - generic [ref=e314]: 📅
+        - generic [ref=e315]: Attendance
+      - generic [ref=e316]:
+        - generic [ref=e317]: 📋
+        - generic [ref=e318]: Timetables
+      - generic [ref=e319]:
+        - generic [ref=e320]: 📚
+        - generic [ref=e321]: Homework
+      - generic [ref=e322]:
+        - generic [ref=e323]: 📝
+        - generic [ref=e324]: Lesson Plans
+      - generic [ref=e325]:
+        - generic [ref=e326]: 🏛️
+        - generic [ref=e327]: Library
+      - generic [ref=e328]:
+        - generic [ref=e329]: 💳
+        - generic [ref=e330]: Payroll
+      - generic [ref=e331]:
+        - generic [ref=e332]: 📈
+        - generic [ref=e333]: Reports
+      - generic [ref=e334]:
+        - generic [ref=e335]: 📢
+        - generic [ref=e336]: Events
+      - generic [ref=e337]:
+        - generic [ref=e338]: 💬
+        - generic [ref=e339]: WhatsApp
+      - generic [ref=e340]:
+        - generic [ref=e341]: 🏫
+        - generic [ref=e342]: Multi-School
+  - generic [ref=e344]:
+    - heading "A complete school management platform — with parents built in." [level=2] [ref=e346]
+    - paragraph [ref=e347]: "KlassApp isn't just WhatsApp. It's a full school management system with admin, teacher, and bursar dashboards — and every feature is designed to keep parents informed. For parents, it's the simplest way to stay connected: no app, no login, just a familiar chat interface they already use every day."
+    - generic [ref=e348]:
+      - generic [ref=e349]:
+        - heading "🏫 Admin Dashboard" [level=3] [ref=e350]
+        - paragraph [ref=e351]: Manage students, staff, timetables and finances from one place. Multi-school support with granular permissions.
+      - generic [ref=e352]:
+        - heading "💬 WhatsApp Notifications" [level=3] [ref=e353]
+        - paragraph [ref=e354]: Broadcast fee reminders, exam results and school events to every parent automatically — no app needed.
+      - generic [ref=e355]:
+        - heading "🌐 Premium School Pages" [level=3] [ref=e356]
+        - paragraph [ref=e357]: Every school gets a beautiful public page on KlassApp — choose from 5 templates, customise colours and branding, and publish instantly. A professional digital presence at no extra development cost.
+      - generic [ref=e358]:
+        - heading "👥 Multi-Role Access" [level=3] [ref=e359]
+        - paragraph [ref=e360]: Admins, teachers, accountants, receptionists and librarians — each with their own dashboard and role-specific permissions.
+      - generic [ref=e361]:
+        - heading "📊 Role Dashboards" [level=3] [ref=e362]
+        - paragraph [ref=e363]: Dedicated dashboards for every role — teacher lesson plans & marks, accountant fee tracking & payroll, librarian books & lending.
+      - generic [ref=e364]:
+        - heading "📈 Analytics & Reports" [level=3] [ref=e365]
+        - paragraph [ref=e366]: Track attendance trends, fee collection rates, exam performance, and WhatsApp delivery metrics — all from one dashboard.
+    - generic [ref=e367]:
+      - generic [ref=e368]:
+        - generic [ref=e369]: Premium Feature
+        - heading "Your school's public face on KlassApp" [level=3] [ref=e370]
+        - paragraph [ref=e371]: Premium schools get a custom page with their branding, contact info, and messaging — ready in minutes.
+      - generic [ref=e372]:
+        - generic [ref=e378]: https://klassapp.com/school/kampala-high
+        - generic [ref=e379]:
+          - generic [ref=e380]:
+            - generic [ref=e381]: KH
+            - generic [ref=e382]:
+              - generic [ref=e383]: Kampala High School
+              - generic [ref=e384]: Kampala, Uganda · Est. 1998
+            - link "Chat on WhatsApp" [ref=e385] [cursor=pointer]:
+              - /url: "#"
+          - generic [ref=e386]:
+            - generic [ref=e387]:
+              - generic [ref=e388]: "846"
+              - generic [ref=e389]: Students
+            - generic [ref=e390]:
+              - generic [ref=e391]: "42"
+              - generic [ref=e392]: Teachers
+            - generic [ref=e393]:
+              - generic [ref=e394]: 98%
+              - generic [ref=e395]: Pass Rate
+          - generic [ref=e396]:
+            - generic [ref=e397]: National Curriculum
+            - generic [ref=e398]: Day & Boarding
+            - generic [ref=e399]: STEM Focus
+      - paragraph [ref=e400]: Choose from 5 templates · Custom colours · Instant publish
+    - link "See plans & pricing →" [ref=e402] [cursor=pointer]:
+      - /url: "#pricing"
+  - generic [ref=e404]:
+    - heading "Simple pricing. No surprises." [level=2] [ref=e406]:
+      - text: Simple pricing.
+      - text: No surprises.
+    - paragraph [ref=e407]: Start for free. Upgrade when you need more.
+    - generic [ref=e408]:
+      - generic [ref=e409]:
+        - heading "Free" [level=3] [ref=e410]
+        - paragraph [ref=e411]: Get started
+        - paragraph [ref=e412]: $0
+        - list [ref=e413]:
+          - listitem [ref=e414]:
+            - generic [ref=e415]: ✓
+            - text: Up to
+            - strong [ref=e416]: "200"
+            - text: students
+          - listitem [ref=e417]:
+            - generic [ref=e418]: ✓
+            - text: WhatsApp parent notifications
+          - listitem [ref=e419]:
+            - generic [ref=e420]: ✓
+            - text: Grades, fees, attendance on WhatsApp
+          - listitem [ref=e421]:
+            - generic [ref=e422]: ✓
+            - text: Basic admin dashboard
+          - listitem [ref=e423]:
+            - generic [ref=e424]: ✓
+            - text: 1 school
+        - link "Get Started Free" [ref=e425] [cursor=pointer]:
+          - /url: "#demo"
+      - generic [ref=e426]:
+        - generic [ref=e427]: Most Popular
+        - heading "Growth" [level=3] [ref=e428]
+        - paragraph [ref=e429]: For growing schools
+        - paragraph [ref=e430]: —
+        - list [ref=e431]:
+          - listitem [ref=e432]:
+            - generic [ref=e433]: ✓
+            - text: Up to
+            - strong [ref=e434]: 1,000
+            - text: students
+          - listitem [ref=e435]:
+            - generic [ref=e436]: ✓
+            - text: Everything in Free
+          - listitem [ref=e437]:
+            - generic [ref=e438]: ✓
+            - text: Bulk parent onboarding
+          - listitem [ref=e439]:
+            - generic [ref=e440]: ✓
+            - text: Custom school announcements
+          - listitem [ref=e441]:
+            - generic [ref=e442]: ✓
+            - text: Teacher & accountant dashboards
+          - listitem [ref=e443]:
+            - generic [ref=e444]: ✓
+            - text: Priority support
+        - link "Request Pricing" [ref=e445] [cursor=pointer]:
+          - /url: "#demo"
+      - generic [ref=e446]:
+        - heading "Premium" [level=3] [ref=e447]
+        - paragraph [ref=e448]: Unlimited potential
+        - paragraph [ref=e449]: —
+        - list [ref=e450]:
+          - listitem [ref=e451]:
+            - generic [ref=e452]: ✓
+            - text: Unlimited students
+          - listitem [ref=e453]:
+            - generic [ref=e454]: ✓
+            - text: Everything in Growth
+          - listitem [ref=e455]:
+            - generic [ref=e456]: ✓
+            - text: Premium school page (5 templates)
+          - listitem [ref=e457]:
+            - generic [ref=e458]: ✓
+            - text: Multi-school support
+          - listitem [ref=e459]:
+            - generic [ref=e460]: ✓
+            - text: Custom WhatsApp number
+          - listitem [ref=e461]:
+            - generic [ref=e462]: ✓
+            - text: Dedicated onboarding support
+        - link "Talk to Sales" [ref=e463] [cursor=pointer]:
+          - /url: "#demo"
+  - generic [ref=e465]:
+    - heading "What schools are saying" [level=2] [ref=e467]
+    - generic [ref=e468]:
+      - generic [ref=e469]:
+        - paragraph [ref=e470]: "\"Since we started using KlassApp, parent inquiries about results dropped by 80%. They just tap GRADES and get everything.\""
+        - generic [ref=e471]:
+          - generic [ref=e472]: JM
+          - generic [ref=e473]:
+            - generic [ref=e474]: Joyce Mwangi
+            - generic [ref=e475]: Head Teacher, Kampala High School
+      - generic [ref=e476]:
+        - paragraph [ref=e477]: "\"Our fee collection improved 40% in one term. Parents appreciate getting their balance in a single message instead of chasing the office.\""
+        - generic [ref=e478]:
+          - generic [ref=e479]: SO
+          - generic [ref=e480]:
+            - generic [ref=e481]: Samuel Okello
+            - generic [ref=e482]: Bursar, Light Academy
+      - generic [ref=e483]:
+        - paragraph [ref=e484]: "\"The WhatsApp feature is a game-changer. Parents who never used our portal are now actively engaged — all through an app they already have.\""
+        - generic [ref=e485]:
+          - generic [ref=e486]: PN
+          - generic [ref=e487]:
+            - generic [ref=e488]: Peter Nsubuga
+            - generic [ref=e489]: Director, St. Mary's College
+  - generic [ref=e491]:
+    - heading "Ready to bring parents closer to school?" [level=2] [ref=e492]
+    - paragraph [ref=e493]: Join schools across Africa using KlassApp to keep every parent informed.
+    - generic [ref=e494]:
+      - link "Join" [ref=e495] [cursor=pointer]:
+        - /url: http://localhost:8000/register
+        - text: Join
+        - img [ref=e496]
+      - link "Portal" [ref=e498] [cursor=pointer]:
+        - /url: http://localhost:8000/login
+        - text: Portal
+        - img [ref=e499]
+      - link "Book a demo" [ref=e501] [cursor=pointer]:
+        - /url: https://calendly.com/moemucu/talk-to-mucu
+    - paragraph [ref=e502]:
+      - text: or
+      - link "chat with us on WhatsApp →" [ref=e503] [cursor=pointer]:
+        - /url: https://wa.me/256765275289?text=Hello%2C%20I'd%20like%20to%20request%20a%20demo
+  - contentinfo [ref=e504]:
+    - generic:
+      - generic: KlassApp
+    - generic [ref=e505]:
+      - generic [ref=e506]:
+        - generic [ref=e507]:
+          - img "KlassApp" [ref=e508]
+          - paragraph [ref=e509]: Smarter schools start here.
+        - generic [ref=e510]:
+          - link "Terms" [ref=e511] [cursor=pointer]:
+            - /url: "#"
+          - link "Privacy" [ref=e512] [cursor=pointer]:
+            - /url: "#"
+          - link "Contact" [ref=e513] [cursor=pointer]:
+            - /url: "#"
+        - generic [ref=e514]:
+          - link "Facebook" [ref=e515] [cursor=pointer]:
+            - /url: "#"
+            - text: f
+          - link "X" [ref=e516] [cursor=pointer]:
+            - /url: "#"
+            - text: 𝕏
+          - link "Instagram" [ref=e517] [cursor=pointer]:
+            - /url: "#"
+            - text: ◉
+          - link "LinkedIn" [ref=e518] [cursor=pointer]:
+            - /url: "#"
+            - text: in
+      - generic [ref=e519]: © 2026 KlassApp. All rights reserved.
+  - link "Chat on WhatsApp" [ref=e520] [cursor=pointer]:
+    - /url: https://wa.me/256765275289?text=Hello%2C%20I'd%20like%20to%20learn%20about%20KlassApp
+    - img [ref=e521]

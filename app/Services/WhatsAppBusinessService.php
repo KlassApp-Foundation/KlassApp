@@ -198,6 +198,87 @@ class WhatsAppBusinessService
     }
 
     /**
+     * Send interactive reply buttons via Meta Cloud API.
+     *
+     * Max 3 buttons, each title max 20 characters.
+     * Body text max 1024 characters.
+     *
+     * @param string $phone E.164 format
+     * @param string $body Plain text body above the buttons
+     * @param array $buttons Array of ['id' => 'keyword', 'title' => 'Label']
+     * @param string|null $flowType Category for analytics
+     * @param int|null $userId KlassApp user ID
+     * @return array{success: bool, message_id: string, error?: string}
+     */
+    public function sendInteractiveButtons(
+        string $phone,
+        string $body,
+        array $buttons,
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        $cleanPhone = $this->cleanPhone($phone);
+
+        $metaButtons = array_map(fn ($btn) => [
+            'type' => 'reply',
+            'reply' => [
+                'id'    => $btn['id'] ?? Str::uuid()->toString(),
+                'title' => mb_substr($btn['title'] ?? 'Option', 0, 20),
+            ],
+        ], array_slice($buttons, 0, 3));
+
+        $response = Http::withToken($this->token)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", [
+                'messaging_product' => 'whatsapp',
+                'recipient_type'    => 'individual',
+                'to'                => $cleanPhone,
+                'type'              => 'interactive',
+                'interactive'       => [
+                    'type'   => 'button',
+                    'body'   => ['text' => mb_substr($body, 0, 1024)],
+                    'action' => ['buttons' => $metaButtons],
+                ],
+            ]);
+
+        $result = $response->json();
+        $messageId = $result['messages'][0]['id'] ?? Str::uuid()->toString();
+        $success = $response->successful();
+
+        $preview = collect($buttons)->pluck('title')->implode(', ');
+
+        MessageDeliveryLog::create([
+            'whatsapp_message_id' => $messageId,
+            'phone'               => $phone,
+            'direction'           => 'outbound',
+            'category'            => 'interactive',
+            'status'              => $success ? 'sent' : 'failed',
+            'content_preview'     => "Buttons: {$body} — [{$preview}]",
+            'user_id'             => $userId,
+            'flow_type'           => $flowType ?? 'interactive',
+        ]);
+
+        if (!$success) {
+            $error = $result['error']['message'] ?? 'Unknown error';
+            Log::error('WhatsApp Business API: sendInteractiveButtons failed', [
+                'phone'  => $phone,
+                'body'   => $body,
+                'error'  => $error,
+                'status' => $response->status(),
+            ]);
+            return ['success' => false, 'message_id' => $messageId, 'error' => $error];
+        }
+
+        Log::info('WhatsApp Business API: interactive buttons sent', [
+            'phone'  => $phone,
+            'body'   => $body,
+            'buttons' => $preview,
+        ]);
+
+        return ['success' => true, 'message_id' => $messageId];
+    }
+
+    /**
      * Strip the + prefix for Meta API (Meta expects just the digit string).
      */
     protected function cleanPhone(string $phone): string

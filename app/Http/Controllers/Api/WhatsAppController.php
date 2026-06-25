@@ -788,6 +788,13 @@ class WhatsAppController extends Controller
             return app(WhatsAppService::class)->sendText($phone, $message, $flowType, $userId);
         };
 
+        $sendButtons = function (string $body, array $buttons, ?string $flowType = null, ?int $userId = null) use ($phone) {
+            if ($this->businessApi->isConfigured()) {
+                return $this->businessApi->sendInteractiveButtons($phone, $body, $buttons, $flowType, $userId);
+            }
+            return app(WhatsAppService::class)->sendText($phone, $body . ' [buttons not supported]', $flowType, $userId);
+        };
+
         // ── Handle button replies ──
         if ($trimmed === 'exit') {
             $sendText(
@@ -813,7 +820,7 @@ class WhatsAppController extends Controller
 
         // ── Is this a School Pay payment code? (10 digits) ──
         if (preg_match('/^\d{10}$/', $trimmed)) {
-            $this->processCodeVerificationForMeta($phone, $trimmed, $sendText);
+            $this->processCodeVerificationForMeta($phone, $trimmed, $sendText, $sendButtons);
             return;
         }
 
@@ -830,7 +837,7 @@ class WhatsAppController extends Controller
     /**
      * Verify a School Pay payment code and link the parent (Meta WABA path).
      */
-    protected function processCodeVerificationForMeta(string $phone, string $code, callable $sendText): void
+    protected function processCodeVerificationForMeta(string $phone, string $code, callable $sendText, callable $sendButtons): void
     {
         $studentAcademic = StudentAcademic::where('std_school_pay_number', $code)
             ->whereNull('deleted_at')
@@ -874,13 +881,14 @@ class WhatsAppController extends Controller
             $classLine = $className ? " ({$className})" : '';
             $school = DB::table('schools')->find($studentAcademic->school_id);
 
-            $sendText(
+            $sendButtons(
                 "✅ *Welcome to KlassApp!*\n\n"
-                . "Your number has been linked to *{$studentName}{$classLine}* at {$school->name}.\n\n"
-                . "Send *FEES* for fee balance\n"
-                . "Send *GRADES* for exam results\n"
-                . "Send *ATTENDANCE* for attendance\n"
-                . "Send *MENU* for all options",
+                . "Your number has been linked to *{$studentName}{$classLine}* at {$school->name}.",
+                [
+                    ['id' => 'FEES',        'title' => '💰 Fee Balance'],
+                    ['id' => 'GRADES',      'title' => '📊 Exam Results'],
+                    ['id' => 'ATTENDANCE',  'title' => '📋 Attendance'],
+                ],
                 'code_linked_direct'
             );
             return;
@@ -916,15 +924,16 @@ class WhatsAppController extends Controller
         ]);
 
         $classLine = $className ? " ({$className})" : '';
-        $sendText(
+        $sendButtons(
             "✅ *Welcome to KlassApp!*\n\n"
             . "Your number has been linked successfully.\n"
             . "School: {$school->name}\n"
-            . "Student: {$studentName}{$classLine}\n\n"
-            . "Send *FEES* for fee balance\n"
-            . "Send *GRADES* for exam results\n"
-            . "Send *ATTENDANCE* for attendance\n"
-            . "Send *MENU* for all options",
+            . "Student: {$studentName}{$classLine}",
+            [
+                ['id' => 'FEES',        'title' => '💰 Fee Balance'],
+                ['id' => 'GRADES',      'title' => '📊 Exam Results'],
+                ['id' => 'ATTENDANCE',  'title' => '📋 Attendance'],
+            ],
             'code_verified'
         );
 
@@ -1728,7 +1737,7 @@ class WhatsAppController extends Controller
     private function sendFees(WhatsAppUser $user, string $phone, WhatsAppService $whatsAppService): void
     {
         $children = $user->user->children()
-            ->with(['studentAcademic.standard'])
+            ->with(['studentAcademic.standardLink.standard'])
             ->get();
 
         if ($children->isEmpty()) {
@@ -1745,17 +1754,17 @@ class WhatsAppController extends Controller
 
         foreach ($children as $student) {
             $studentName = $student->name;
-            $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+            $className = $student->studentAcademic?->standardLink?->StandardSection ?? 'N/A';
 
-            $feeCategories = FeesCategories::where('school_id', $user->user->school_id)
-                ->where('standard_id', function ($q) use ($student) {
-                    $q->select('standard_id')
-                        ->from('student_academics')
-                        ->where('student_id', $student->id)
-                        ->latest()
-                        ->limit(1);
-                })
-                ->get();
+            $standardLink = $student->studentAcademic?->standardLink;
+            $standardId = $standardLink?->standard_id;
+
+            $feeCategories = collect();
+            if ($standardId) {
+                $feeCategories = FeesCategories::where('school_id', $user->user->school_id)
+                    ->where('standard_id', $standardId)
+                    ->get();
+            }
 
             $totalFees = $feeCategories->sum('amount');
 
