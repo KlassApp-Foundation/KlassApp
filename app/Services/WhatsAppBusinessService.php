@@ -279,6 +279,71 @@ class WhatsAppBusinessService
     }
 
     /**
+     * Send a list message via Meta Cloud API interactive list.
+     *
+     * Falls back to text if sections are too complex.
+     *
+     * @param string $phone E.164 format
+     * @param string $title Header text
+     * @param array $sections Array of ['title' => string, 'rows' => [['id' => string, 'title' => string]]]
+     * @param string $description Body text
+     * @param string $footerText Footer text
+     * @param string $buttonText CTA button label
+     * @param string|null $flowType
+     * @param int|null $userId
+     * @return array
+     */
+    public function sendList(
+        string $phone,
+        string $title,
+        array $sections,
+        string $description = '',
+        string $footerText = '',
+        string $buttonText = 'View Options',
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        // Build text fallback from sections
+        $text = "*{$title}*\n\n{$description}\n";
+        foreach ($sections as $section) {
+            $secTitle = $section['title'] ?? '';
+            if ($secTitle) {
+                $text .= "\n*{$secTitle}*\n";
+            }
+            foreach ($section['rows'] ?? [] as $row) {
+                $rowTitle = $row['title'] ?? '';
+                $rowDesc = $row['description'] ?? '';
+                $text .= "• {$rowTitle}" . ($rowDesc ? " — {$rowDesc}" : '') . "\n";
+            }
+        }
+        if ($footerText) {
+            $text .= "\n_{$footerText}_";
+        }
+
+        return $this->sendText($phone, $text, $flowType ?? 'menu', $userId);
+    }
+
+    /**
+     * Send interactive reply buttons via Meta Cloud API.
+     * Alias for sendInteractiveButtons with (buttons, title) parameter order.
+     */
+    public function sendButtons(
+        string $phone,
+        string $message,
+        array $buttons,
+        string $title = '',
+        string $footer = '',
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        $body = $title ? "*{$title}*\n\n{$message}" : $message;
+        if ($footer) {
+            $body .= "\n\n_{$footer}_";
+        }
+        return $this->sendInteractiveButtons($phone, $body, $buttons, $flowType, $userId);
+    }
+
+    /**
      * Strip the + prefix for Meta API (Meta expects just the digit string).
      */
     protected function cleanPhone(string $phone): string
