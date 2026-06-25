@@ -794,7 +794,14 @@ class WhatsAppController extends Controller
             if ($this->businessApi->isConfigured()) {
                 return $this->businessApi->sendInteractiveButtons($phone, $body, $buttons, $flowType, $userId);
             }
-            return app(WhatsAppService::class)->sendText($phone, $body . ' [buttons not supported]', $flowType, $userId);
+            // Fallback: list keywords so the user knows what to type
+            $keywords = collect($buttons)->pluck('id')->map(fn($id) => strtoupper($id))->implode(', ');
+            return app(WhatsAppService::class)->sendText(
+                $phone,
+                $body . "\n\nReply with: {$keywords}",
+                $flowType,
+                $userId,
+            );
         };
 
         // ── Handle button replies ──
@@ -851,13 +858,16 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // ── Default: unrecognized ──
-        $sendText(
-            "👋 Welcome to KlassApp!\n\n"
-            . "Your phone number is not linked to any school account yet.\n\n"
-            . "To link your account, reply with your child's 10-digit School Pay payment code.\n"
-            . "Reply *LINK_HELP* if you need help finding the code.",
-            'unrecognized'
+        // ── Default: unrecognized — offer DEMO or link ──
+        $sendButtons(
+            "👋 *Welcome to KlassApp!* 🎓\n\n"
+            . "Tap *Try Demo* to explore KlassApp right now with live sample data.\n"
+            . "Or tap *Link My Number* if you're a parent wanting to connect to your child's school.",
+            [
+                ['title' => '🎯 Try Demo', 'id' => 'demo'],
+                ['title' => '🔗 Link My Number', 'id' => 'link_help'],
+            ],
+            'unrecognized_prompt',
         );
     }
 
@@ -1274,22 +1284,22 @@ class WhatsAppController extends Controller
                 return response()->json(['status' => 'school_not_found']);
             }
 
-            // ── Not a code — prompt the parent to link via School Pay ──
+            // ── Not a code — offer DEMO or link ──
             $whatsAppService->sendButtons(
                 phone: $phone,
-                message: "Your WhatsApp number isn't linked yet.\n\n"
-                    . "To connect instantly, reply with your child's School Pay payment code — "
-                    . "the 10-digit number you use when paying school fees.\n\n"
-                    . "Example: *1005416321*",
+                message: "Welcome to *KlassApp* 🎓\n\n"
+                    . "Tap *Try Demo* to explore KlassApp with live sample data right now.\n\n"
+                    . "Or tap *Link My Number* if you're a parent wanting to connect to your child's school.",
                 buttons: [
+                    ['title' => '🎯 Try Demo', 'id' => 'demo'],
+                    ['title' => '🔗 Link My Number', 'id' => 'link_help'],
                     ['title' => 'Exit', 'id' => 'exit'],
-                    ['title' => 'Link', 'id' => 'link_help'],
                 ],
                 title: '👋 Welcome to KlassApp!',
-                footer: 'Don\'t know the code? Tap Link for help.',
+                footer: 'No account needed for the demo.',
                 flowType: 'unrecognized_prompt',
             );
-            return response()->json(['status' => 'prompted_for_code']);
+            return response()->json(['status' => 'prompted_for_demo_or_link']);
         }
 
         if (!$whatsappUser->opted_in) {
