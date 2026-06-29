@@ -8,6 +8,25 @@ use App\Http\Controllers\Superadmin\DashboardController;
 });*/
 Route::get('/', 'WelcomeController');
 
+// Community documentation (docsify-based site)
+Route::get('/docs/community/{path?}', function ($path = '') {
+    $base = base_path('docs/community');
+    $file = $path ? "{$base}/{$path}" : "{$base}/index.html";
+
+    if (is_file($file)) {
+        $ext = pathinfo($file, PATHINFO_EXTENSION);
+        $mimes = [
+            'md' => 'text/markdown', 'svg' => 'image/svg+xml',
+            'css' => 'text/css', 'js' => 'application/javascript',
+            'png' => 'image/png', 'jpg' => 'image/jpeg', 'html' => 'text/html',
+        ];
+        return response(file_get_contents($file), 200, ['Content-Type' => $mimes[$ext] ?? 'text/plain']);
+    }
+
+    // SPA fallback — docsify handles client-side routing
+    return response(file_get_contents("{$base}/index.html"), 200, ['Content-Type' => 'text/html']);
+})->where('path', '.*');
+
 // Landing page v2 (Flare-style)
 Route::get('/landing2', function () {
     return view('landing2');
