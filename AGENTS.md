@@ -262,19 +262,8 @@ Items 1-11: ✅ Complete
 
 ## NEXT SESSION CHECKLIST
 
-- [ ] Item 14 — Persistent reminders (post-onboarding)
-- [ ] Item 12 — Mandatory/optional step enforcement
-- [ ] Item 15 — XLSX file parsing for bulk uploads
-- [ ] Item 16 — Add school_id to whatsapp_users table
-- [ ] Item 17 — Co-admin invite step in Toshi
-- [ ] Configure School Pay webhook on server (set up forwarding from School Pay to KlassApp endpoint)
-- [ ] Run the three new migrations on production
-- [ ] Test full School Pay → WhatsApp receipt flow end-to-end
-- [ ] Test first-time texter flow with list buttons end-to-end
-- [ ] Add `SCHOOLPAY_ENFORCE_SIGNATURE` toggle (env or School model) to reject unsigned webhooks
-- [ ] Clean up `whatsapp_pending_parent_links` dead table (drop or document)
-
----
-
-*Last updated: June 23, 2026*
-*Next: School Pay webhook configuration and testing*
+- [ ] Create new Meta Business Account with fresh email + new WhatsApp number
+- [ ] Update .env with new WABA credentials (token, phone number ID, WABA ID)
+- [ ] Run any new migrations on production
+- [ ] Test end-to-end WhatsApp flow with new business number
+- [ ] Schedule school onboarding demo with founding team
