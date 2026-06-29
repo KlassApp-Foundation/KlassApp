@@ -21,6 +21,13 @@ Route::get( '/dashboard/task/count','DashboardController@listCount' );
 Route::get( '/whatsapp/phone', 'UserProfileController@phoneLink' )->name( 'whatsapp.phone' );
 Route::post( '/whatsapp/phone', 'UserProfileController@linkWhatsApp' );
 Route::get( '/whatsapp/dashboard', 'WhatsAppDashboardController@index' )->name( 'whatsapp.dashboard' );
+Route::get( '/whatsapp/parents', 'WhatsAppParentController@index' )->name( 'whatsapp.parents' );
+Route::post( '/whatsapp/parents/unlink/{id}', 'WhatsAppParentController@unlink' );
+
+// Bulk teacher-subject-class links
+Route::get( '/teacher-links', 'TeacherLinkImportController@index' )->name( 'teacher-links.index' );
+Route::post( '/teacher-links/import', 'TeacherLinkImportController@import' );
+Route::post( '/teacher-links/delete/{id}', 'TeacherLinkImportController@destroy' );
 
 //admission
 Route::get(	'/admissionlist','AdmissionController@admissionlist' );
