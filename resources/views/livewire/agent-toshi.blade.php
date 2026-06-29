@@ -205,6 +205,20 @@
             </div>
             @endif
 
+            {{-- Step progress indicator --}}
+            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] !== 'review')
+            <div style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; margin: 0 10px; background: #F8FAFC; border-radius: 8px; font-size: 11px; color: #64748B;">
+                <span style="font-weight: 600; color: #0F172A;">{{ $step + 1 }}/{{ count($steps) }}</span>
+                <span style="color: #94A3B8;">·</span>
+                <span>{{ ucfirst(str_replace('_', ' ', $steps[$step] ?? '')) }}</span>
+                @if(in_array($steps[$step] ?? '', $mandatorySteps ?? []))
+                <span style="background: #FEF2F2; color: #DC2626; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 600;">Required</span>
+                @else
+                <span style="background: #F0FDF4; color: #16A34A; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 600;">Optional</span>
+                @endif
+            </div>
+            @endif
+
             {{-- Review Card (shown on review step) --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'review' && !empty($reviewData) && empty($reviewData['committed']))
             <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0;">

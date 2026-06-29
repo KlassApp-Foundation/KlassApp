@@ -879,8 +879,8 @@ class AgentToshi extends Component
             return;
         }
         $this->schoolType = $type;
-        $this->botSay("Updated to **{$type}**. | What email should we use for this school?");
-        $this->step = 1;
+        $this->botSay("Updated to **{$type}**. Now let's set up the admin account.");
+        $this->advance();
     }
 
     // ════════════════════════════════════════════════
@@ -948,12 +948,31 @@ class AgentToshi extends Component
         if ($this->substep === 5) {
             $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
             if ($yes) {
-                $this->substep = 0;
-                $this->advance();
+                $this->botSay("Phone confirmed. | Set a password for the admin account (min 6 characters), or type 'default' to use the default password.");
+                $this->substep = 6;
                 return;
             }
             $this->botSay("No problem. Please enter the correct phone number:");
             $this->substep = 4;
+            return;
+        }
+
+        // substep 6: collect password
+        if ($this->substep === 6) {
+            if (strtolower(trim($text)) === 'default') {
+                $this->adminPassword = 'password';
+                $this->botSay("Using default password. The admin can change this later.");
+            } else {
+                $pw = trim($text);
+                if (strlen($pw) < 6) {
+                    $this->botSay("Password must be at least 6 characters. Try again, or type 'default'.");
+                    return;
+                }
+                $this->adminPassword = $pw;
+                $this->botSay("✅ Password set.");
+            }
+            $this->substep = 0;
+            $this->advance();
             return;
         }
     }
