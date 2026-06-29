@@ -403,17 +403,25 @@ class AgentToshi extends Component
         $parsable = in_array($ext, ['csv', 'txt', 'xlsx', 'xls', 'pdf', 'docx']);
 
         if ($parsable) {
+            $stepName = $this->steps[$this->step] ?? '';
             $names = $this->extractNamesFromFile($this->attachment->getRealPath(), $ext);
-            if (count($names) > 0) {
-                $stepName = $this->steps[$this->step];
-                if (in_array($stepName, ['teachers', 'students'])) {
-                    if ($stepName === 'teachers') $this->teacherList = $names;
-                    else $this->studentList = $names;
-                    $this->userSay("📎 Uploaded " . count($names) . " names from file");
-                    $this->botSay("Parsed **" . count($names) . "** names from your file. Continue?");
+
+            if ($stepName === 'teacher_links') {
+                $links = $this->extractTeacherLinksFromFile($this->attachment->getRealPath(), $ext);
+                if (count($links) > 0) {
+                    $this->teacherLinks = $links;
+                    $this->userSay("📎 Uploaded " . count($links) . " teacher link(s) from file");
+                    $this->botSay("Parsed **" . count($links) . "** teacher link(s) from your file.");
                 } else {
-                    $this->botSay("File received with " . count($names) . " names. We'll use this when we get to the teachers/students step.");
+                    $this->botSay("I couldn't find any valid teacher links. Make sure your file has columns: Teacher, Subject, Class.");
                 }
+            } elseif (in_array($stepName, ['teachers', 'students']) && count($names) > 0) {
+                if ($stepName === 'teachers') $this->teacherList = $names;
+                else $this->studentList = $names;
+                $this->userSay("📎 Uploaded " . count($names) . " names from file");
+                $this->botSay("Parsed **" . count($names) . "** names from your file. Continue?");
+            } elseif (count($names) > 0) {
+                $this->botSay("File received with " . count($names) . " names. We'll use this when we get to the teachers/students step.");
             } else {
                 $this->botSay("I couldn't find any names in that file. Make sure it contains a list of names (one per line).");
             }
@@ -532,6 +540,86 @@ class AgentToshi extends Component
         }
 
         return $names;
+    }
+
+    /**
+     * Extract teacher-subject-class links from a spreadsheet (CSV/XLSX).
+     * Expects columns: Teacher, Subject, Class, Phone (optional).
+     */
+    private function extractTeacherLinksFromFile(string $path, string $ext): array
+    {
+        $rows = [];
+
+        try {
+            if (in_array($ext, ['xlsx', 'xls'])) {
+                $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($path);
+                $reader->setReadDataOnly(true);
+                $spreadsheet = $reader->load($path);
+                $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+            } elseif ($ext === 'csv' || $ext === 'txt') {
+                $handle = fopen($path, 'r');
+                while (($line = fgetcsv($handle)) !== false) {
+                    $rows[] = $line;
+                }
+                fclose($handle);
+            } else {
+                return [];
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Teacher links file parse error: ' . $e->getMessage());
+            return [];
+        }
+
+        if (empty($rows)) return [];
+
+        // Find column indices from header row
+        $header = array_map('strtolower', array_map('trim', $rows[0]));
+        $colMap = ['teacher' => null, 'subject' => null, 'class' => null, 'phone' => null];
+        foreach ($header as $i => $h) {
+            if (str_contains($h, 'teacher') || str_contains($h, 'name')) $colMap['teacher'] = $i;
+            if (str_contains($h, 'subject')) $colMap['subject'] = $i;
+            if (str_contains($h, 'class') || str_contains($h, 'grade')) $colMap['class'] = $i;
+            if (str_contains($h, 'phone') || str_contains($h, 'mobile') || str_contains($h, 'tel')) $colMap['phone'] = $i;
+        }
+
+        // If no header match, assume column order: Teacher, Subject, Class, Phone
+        if ($colMap['teacher'] === null && count($rows[0]) >= 3) {
+            $colMap = ['teacher' => 0, 'subject' => 1, 'class' => 2, 'phone' => 3];
+        }
+
+        if ($colMap['teacher'] === null || $colMap['subject'] === null || $colMap['class'] === null) {
+            return [];
+        }
+
+        $parsed = [];
+        $dataRows = array_slice($rows, 1); // skip header
+
+        foreach ($dataRows as $row) {
+            $teacher = trim($row[$colMap['teacher']] ?? '');
+            $subject = trim($row[$colMap['subject']] ?? '');
+            $class = trim($row[$colMap['class']] ?? '');
+            $phone = $colMap['phone'] !== null ? trim($row[$colMap['phone']] ?? '') : '';
+
+            if ($teacher && $subject && $class) {
+                // Validate against existing teacher list and standards
+                $teacherExists = in_array($teacher, $this->teacherList);
+                $classExists = collect($this->standards)->pluck('name')->contains($class);
+
+                if ($teacherExists && $classExists) {
+                    $parsed[] = [
+                        'teacher' => $teacher,
+                        'subject' => $subject,
+                        'class'   => $class,
+                        'phone'   => $phone,
+                    ];
+                    if ($phone) {
+                        $this->teacherPhones[$teacher] = $phone;
+                    }
+                }
+            }
+        }
+
+        return $parsed;
     }
 
     public function render()
@@ -842,7 +930,7 @@ class AgentToshi extends Component
 
         $this->userSay("School type: {$label}");
         $this->botSay("**{$label}** — got it!");
-        $this->botSay("What email should we use for this school?");
+        $this->botSay("Now let's set up the admin account. | What is the admin's email address?");
         $this->substep = 0;
         $this->advance();
     }
@@ -863,7 +951,7 @@ class AgentToshi extends Component
     public function confirmSchoolType(bool $yes)
     {
         if ($yes) {
-            $this->botSay("Great. What email should we use for this school?");
+            $this->botSay("Great. Now let's set up the admin account. | What is the admin's email address?");
             $this->advance(1);
         } else {
             $this->botSay("No problem — what type of school is it? (Nursery, Primary, Secondary, O-Level, A-Level, Mixed)");
@@ -925,7 +1013,7 @@ class AgentToshi extends Component
         if ($this->substep === 3) {
             $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
             if ($yes) {
-                $this->botSay("Name confirmed. | What is the admin's phone number? (format: +256XXXXXXXXX)");
+                $this->botSay("Name confirmed. | What is the admin's WhatsApp phone number? This will be used for school notifications. (format: +256XXXXXXXXX)");
                 $this->substep = 4;
                 return;
             }
@@ -1682,7 +1770,7 @@ class AgentToshi extends Component
                 'teacherLinkCount' => count($this->teacherLinks),
                 'studentCount' => count($this->studentList),
                 'studentIds'   => count($this->studentList) > 0
-                    ? "KLS0010001 through KLS" . str_pad($schoolId ?? 0, 3, '0', STR_PAD_LEFT) . str_pad(count($this->studentList), 4, '0', STR_PAD_LEFT)
+                    ? count($this->studentList) . " students — each gets a unique KlassApp ID"
                     : '—',
                 'termCount'    => count($this->terms),
                 'feeCount'     => count($this->fees),
