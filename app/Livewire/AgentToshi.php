@@ -122,6 +122,7 @@ class AgentToshi extends Component
             $missing = \App\Helpers\OnboardingHelper::getMissingSteps($user->school_id, $user->id);
             if (empty($missing)) {
                 $this->mode = 'assistant';
+                $this->step = 99;
                 $this->schoolId = $user->school_id;
                 $school = \App\Models\School::find($this->schoolId);
                 $this->botSay("Hi! I'm Toshi. Ask me anything about **{$school->name}** — I can help with reports, stats, and school management.");
@@ -859,6 +860,66 @@ class AgentToshi extends Component
         return \App\Models\School::where('name', trim($name))->exists();
     }
 
+    // ── Assistant mode — handle school admin queries ──
+    private function handleAssistantQuery(string $text): void
+    {
+        $lower = strtolower($text);
+
+        if (in_array($lower, ['hi', 'hello', 'hey', 'help', 'what can you do'])) {
+            $this->botSay("Hi! I'm Toshi, your school assistant. I can help you with:\n\n"
+                . "• 📊 *Reports* — say \"show me reports\"\n"
+                . "• 📝 *Marks* — say \"view marks\"\n"
+                . "• 👥 *Students* — say \"student list\"\n"
+                . "• 📅 *Attendance* — say \"attendance\"\n"
+                . "• 💰 *Fees* — say \"fee balances\"\n\n"
+                . "Use the admin sidebar for full management tools.");
+            return;
+        }
+
+        if (in_array($lower, ['reports', 'dashboard', 'stats'])) {
+            $this->botSay("📊 Your dashboard is ready. Check the main admin dashboard for charts and stats on grades, attendance, and fees.");
+            return;
+        }
+
+        if (in_array($lower, ['students', 'student list', 'learners'])) {
+            $this->botSay("👥 Go to *Students* in the sidebar to view, add, or manage students. Each student has a unique KlassApp ID printed on their report card.");
+            return;
+        }
+
+        if (in_array($lower, ['attendance'])) {
+            $this->botSay("📅 Attendance tracking is in the sidebar under *Attendance*. You can mark daily attendance and view reports.");
+            return;
+        }
+
+        if (in_array($lower, ['fees', 'fee balance', 'payments'])) {
+            $this->botSay("💰 Fee management is under *Fees* in the sidebar. Parents can check their balance via WhatsApp.");
+            return;
+        }
+
+        if (in_array($lower, ['marks', 'grades', 'exams'])) {
+            $this->botSay("📝 Exam management is under *Exams* in the sidebar. Teachers enter marks, and parents receive results on WhatsApp.");
+            return;
+        }
+
+        if (in_array($lower, ['whatsapp', 'wa', 'parent'])) {
+            $this->botSay("📱 WhatsApp is live! Parents can text your school's WhatsApp number to check fees, grades, and attendance. See *WhatsApp Dashboard* in the sidebar.");
+            return;
+        }
+
+        // Re-launch onboarding (super admin only)
+        if (in_array($lower, ['setup', 'onboard', 'add school', 'new school'])) {
+            if (auth()->user()?->usergroup_id === 1) {
+                $this->resetOnboarding();
+                return;
+            }
+            $this->botSay("Only super admins can onboard new schools. Ask your system administrator.");
+            return;
+        }
+
+        // Fallback
+        $this->botSay("I'm not sure about that yet. Try asking me about: reports, students, attendance, fees, marks, or WhatsApp. Or use the sidebar to manage your school.");
+    }
+
     // ── Handle user input ──
     public function send()
     {
@@ -867,6 +928,12 @@ class AgentToshi extends Component
 
         $this->userSay($text);
         $this->input = '';
+
+        // Assistant mode — school is set up, Toshi can answer questions
+        if ($this->mode === 'assistant') {
+            $this->handleAssistantQuery($text);
+            return;
+        }
 
         // Handle draft resume commands
         if ($this->draftSessionId && in_array(strtolower($text), ['reset', 'restart', 'start over'])) {
