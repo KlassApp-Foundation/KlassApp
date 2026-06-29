@@ -771,11 +771,48 @@ class WhatsAppController extends Controller
         if ($trimmed === 'link_help') {
             $sendText(
                 "🔗 *Link to your child — 3 ways:*\n\n"
-                . "1️⃣ *KlassApp ID* — Type the student ID from your child's report card (e.g., KLS-001-0427)\n\n"
+                . "1️⃣ *KlassApp ID* — Type the student ID from your child's report card (e.g., KLS0010427)\n\n"
                 . "2️⃣ *Full name* — Type your child's name (e.g., Amope Nandawula)\n\n"
-                . "3️⃣ *School name* — Type your school name and I'll find your child\n\n"
+                . "3️⃣ *School name* — Type your school name first to narrow the search\n\n"
                 . "No code needed if you know your child's name or school.",
                 'link_help'
+            );
+            return;
+        }
+
+        // ── Handle "link_school_{schoolId}" button — school selected, show link options ──
+        if (str_starts_with($trimmed, 'link_school_')) {
+            $schoolId = (int) substr($trimmed, 12);
+            $school = \App\Models\School::find($schoolId);
+            $schoolName = $school?->name ?? 'your child\'s school';
+
+            $sendButtons(
+                "📚 *{$schoolName}*\n\nHow would you like to link?",
+                [
+                    ['title' => '🔑 KlassApp ID', 'id' => "linktype_klassapp_{$schoolId}"],
+                    ['title' => '📝 Search by name', 'id' => "linktype_name_{$schoolId}"],
+                ],
+                'link_type_choice',
+            );
+            return;
+        }
+
+        // ── Handle "linktype_klassapp_{schoolId}" — prompt for KlassApp ID ──
+        if (str_starts_with($trimmed, 'linktype_klassapp_')) {
+            $sendText(
+                "Type the *KlassApp Student ID* from your child's report card.\n\n"
+                . "It looks like: KLS0010427 (no dashes, no spaces).",
+                'prompt_klassapp_id'
+            );
+            return;
+        }
+
+        // ── Handle "linktype_name_{schoolId}" — prompt for student name ──
+        if (str_starts_with($trimmed, 'linktype_name_')) {
+            $sendText(
+                "Type your child's *full name* and I'll search for them.\n\n"
+                . "For example: Amope Nandawula",
+                'prompt_student_name'
             );
             return;
         }
@@ -841,8 +878,8 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // ── Priority 1: KlassApp Student ID (KLS-xxx-xxxx) ──
-        if (preg_match('/^KLS-\d{3}-\d{4}$/i', $trimmed)) {
+        // ── Priority 1: KlassApp Student ID (KLS0010427 — no dashes) ──
+        if (preg_match('/^KLS\d{7}$/i', $trimmed)) {
             $academic = \App\Models\StudentAcademic::where('klassapp_student_id', strtoupper($trimmed))
                 ->with(['user', 'standardLink.standard', 'school'])
                 ->first();
@@ -945,6 +982,40 @@ class WhatsAppController extends Controller
                 ],
                 'student_search_results',
             );
+            return;
+        }
+
+        // ── Priority 6: Try matching as a school name ──
+        $matchedSchools = \App\Models\School::where('name', 'LIKE', "%{$trimmed}%")
+            ->orWhere('ministry_code', $trimmed)
+            ->limit(5)
+            ->get(['id', 'name']);
+
+        if ($matchedSchools->isNotEmpty()) {
+            $schoolList = $matchedSchools->map(fn($s) => "• {$s->name}")->implode("\n");
+            $hint = $matchedSchools->count() === 1
+                ? "Tap below to link to *{$matchedSchools->first()->name}*"
+                : "Which school? Tap or type the full name.";
+
+            if ($matchedSchools->count() === 1) {
+                $school = $matchedSchools->first();
+                $sendButtons(
+                    "🏫 *{$school->name}*\n\nHow would you like to link?",
+                    [
+                        ['title' => '🔑 KlassApp ID', 'id' => "linktype_klassapp_{$school->id}"],
+                        ['title' => '📝 Search by name', 'id' => "linktype_name_{$school->id}"],
+                    ],
+                    'link_type_choice',
+                );
+            } else {
+                $sendButtons(
+                    "We found {$matchedSchools->count()} schools matching \"{$trimmed}\":\n\n{$schoolList}\n\n{$hint}",
+                    [
+                        ['title' => '🔍 Search again', 'id' => 'link_help'],
+                    ],
+                    'school_search_results',
+                );
+            }
             return;
         }
     }

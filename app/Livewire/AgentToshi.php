@@ -1552,7 +1552,7 @@ class AgentToshi extends Component
                 'teacherCount' => count($this->teacherList),
                 'studentCount' => count($this->studentList),
                 'studentIds'   => count($this->studentList) > 0
-                    ? "KLS-XXX-0001 through KLS-XXX-" . str_pad(count($this->studentList), 4, '0', STR_PAD_LEFT)
+                    ? "KLS0010001 through KLS" . str_pad($schoolId ?? 0, 3, '0', STR_PAD_LEFT) . str_pad(count($this->studentList), 4, '0', STR_PAD_LEFT)
                     : '—',
                 'termCount'    => count($this->terms),
                 'feeCount'     => count($this->fees),
@@ -1723,10 +1723,10 @@ class AgentToshi extends Component
                         'firstname' => trim($studentName), 'lastname' => '', 'status' => 'active',
                     ]);
                     if ($firstStandardLink) {
-                        // Generate KlassApp Student ID: KLS-{school}-{sequential}
+                        // Generate KlassApp Student ID: KLS{school}{sequential}
                         $schoolCode = str_pad($school->id, 3, '0', STR_PAD_LEFT);
                         $seq = str_pad($index + 1, 4, '0', STR_PAD_LEFT);
-                        $klassappId = "KLS-{$schoolCode}-{$seq}";
+                        $klassappId = "KLS{$schoolCode}{$seq}";
 
                         StudentAcademic::create([
                             'school_id' => $school->id,

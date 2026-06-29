@@ -160,12 +160,19 @@ SchoolPayWebhookController silently accepts unsigned webhooks during pilot. Add 
 
 ## KLASSAPP STUDENT ID SYSTEM
 
-- Format: `KLS-{school_code_3}-{sequential_4}` (e.g., KLS-001-0427)
+- Format: `KLS{school_code_3}{sequential_4}` (e.g., KLS0010427 — no dashes)
 - Auto-generated during Toshi onboarding for each student
 - Stored in `student_academics.klassapp_student_id` (unique, indexed)
 - Primary identifier for WhatsApp parent linking (no School Pay code needed)
 - School's own IDs supported via `id_card_number` / `board_registration_number`
 - School admin responsible for distributing KlassApp IDs to parents (report cards, SMS)
+
+## MINISTRY SCHOOL CODES
+
+- `schools.ministry_code` — 4-digit Ministry of Education code (Uganda)
+- Added migration June 29, 2026
+- Used in KlassApp ID and WhatsApp school lookup
+- Optional — schools without MoE codes use auto-generated codes
 
 ## BRAND ASSETS
 
