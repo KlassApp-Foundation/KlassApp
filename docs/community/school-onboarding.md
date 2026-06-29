@@ -32,8 +32,7 @@ Share this with the school before starting so the setup goes smoothly.
 
 | Item | Why it helps |
 |---|---|
-| **Teacher names** | So teachers can start entering marks and taking attendance |
-| **Teacher-subject-class assignments** | One line per teacher: `Teacher Name \| Subject \| Class` (e.g. `John Ssali \| Mathematics \| Primary 5`). Links them all at once. |
+| **Teacher-subject-class assignments** | One line per teacher: `Teacher Name | Subject | Class | Phone`. Phone is optional (WhatsApp preferred). Example: `John Ssali | Mathematics | Primary 5 | +256701234567`. This creates the teacher account, links them to subjects & classes, and stores their contact. |
 | **Student names** | So parents can link via WhatsApp and see their child's data |
 | **Term dates** | Start/end dates for each term (defaults: 3 terms) |
 | **Fee categories** | Names + amounts for parent fee inquiries on WhatsApp |

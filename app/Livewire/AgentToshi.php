@@ -56,6 +56,7 @@ class AgentToshi extends Component
     public $subjects = [];
     public $teacherList = [];
     public $teacherLinks = [];
+    public $teacherPhones = [];
     public $studentList = [];
     public $terms = [];
     public $fees = [];
@@ -186,6 +187,7 @@ class AgentToshi extends Component
         $this->subjects = $data['subjects'] ?? [];
         $this->teacherList = $data['teacherList'] ?? [];
         $this->teacherLinks = $data['teacherLinks'] ?? [];
+        $this->teacherPhones = $data['teacherPhones'] ?? [];
         $this->studentList = $data['studentList'] ?? [];
         $this->terms = $data['terms'] ?? [];
         $this->fees = $data['fees'] ?? [];
@@ -221,6 +223,7 @@ class AgentToshi extends Component
             'subjects'          => $this->subjects,
             'teacherList'       => $this->teacherList,
             'teacherLinks'      => $this->teacherLinks,
+            'teacherPhones'     => $this->teacherPhones,
             'studentList'       => $this->studentList,
             'terms'             => $this->terms,
             'fees'              => $this->fees,
@@ -579,6 +582,7 @@ class AgentToshi extends Component
             'subjects'          => $this->subjects,
             'teacherList'       => $this->teacherList,
             'teacherLinks'      => $this->teacherLinks,
+            'teacherPhones'     => $this->teacherPhones,
             'studentList'       => $this->studentList,
             'terms'             => $this->terms,
             'fees'              => $this->fees,
@@ -1269,12 +1273,13 @@ class AgentToshi extends Component
                 "Now let's link each teacher to their subjects and classes.\n\n"
                 . "Your classes: *{$classNames}*\n"
                 . "Your teachers: *" . implode(', ', $this->teacherList) . "*\n\n"
-                . "Enter one line per teacher in this format:\n"
-                . "`Teacher Name | Subject | Class`\n\n"
+                . "Enter one line per teacher:\n"
+                . "`Teacher Name | Subject | Class | Phone`\n\n"
+                . "Phone is optional — use the teacher's WhatsApp number if known.\n\n"
                 . "Example:\n"
-                . "John Ssali | Mathematics | P.5\n"
+                . "John Ssali | Mathematics | P.5 | +256701234567\n"
                 . "Jane Okello | English | P.5\n"
-                . "John Ssali | Science | P.6\n\n"
+                . "John Ssali | Science | P.6 | +256701234567\n\n"
                 . "Type the full list, or type 'skip' to do this later."
             );
             $this->substep = 1;
@@ -1285,6 +1290,7 @@ class AgentToshi extends Component
         if ($this->substep === 1) {
             $lines = array_filter(explode("\n", $text), fn($l) => trim($l) !== '');
             $parsed = [];
+            $phones = [];
 
             foreach ($lines as $line) {
                 $parts = array_map('trim', explode('|', $line));
@@ -1293,6 +1299,7 @@ class AgentToshi extends Component
                 $teacherName = $parts[0];
                 $subjectName = $parts[1];
                 $className = $parts[2];
+                $phone = $parts[3] ?? '';
 
                 // Validate teacher exists in teacherList
                 $teacherExists = in_array($teacherName, $this->teacherList);
@@ -1304,27 +1311,36 @@ class AgentToshi extends Component
                         'teacher' => $teacherName,
                         'subject' => $subjectName,
                         'class'   => $className,
+                        'phone'   => $phone,
                     ];
+                    // Store phone for teacher if provided
+                    if ($phone) {
+                        $phones[$teacherName] = $phone;
+                    }
                 }
             }
 
             if (empty($parsed)) {
                 $this->botSay(
                     "I couldn't parse any valid entries. Make sure each line uses:\n"
-                    . "`Teacher Name | Subject | Class`\n\n"
-                    . "Example: John Ssali | Mathematics | P.5\n\n"
+                    . "`Teacher Name | Subject | Class | Phone`\n\n"
+                    . "Example: John Ssali | Mathematics | P.5 | +256701234567\n\n"
                     . "Type your list again, or type 'skip'."
                 );
                 return;
             }
 
             $this->teacherLinks = $parsed;
+            $this->teacherPhones = $phones;
             $preview = collect($parsed)->take(3)->map(
-                fn($l) => "• {$l['teacher']} → {$l['subject']} ({$l['class']})"
+                fn($l) => "• {$l['teacher']} → {$l['subject']} ({$l['class']})" . ($l['phone'] ? " 📱{$l['phone']}" : '')
             )->implode("\n");
 
+            $phoneCount = count($phones);
+            $phoneNote = $phoneCount > 0 ? "\n📱 Phone numbers saved for {$phoneCount} teacher(s)." : '';
+
             $this->botSay(
-                "Parsed **" . count($parsed) . "** teacher link(s):\n{$preview}"
+                "Parsed **" . count($parsed) . "** teacher link(s):\n{$preview}{$phoneNote}"
                 . (count($parsed) > 3 ? "\n...and " . (count($parsed) - 3) . " more" : '')
                 . "\n\nIs this correct? (yes / no)"
             );
@@ -1339,7 +1355,7 @@ class AgentToshi extends Component
                 $this->advance();
                 return;
             }
-            $this->botSay("Let's try again. Enter the teacher links one per line:\n`Teacher Name | Subject | Class`");
+            $this->botSay("Let's try again. Enter the teacher links one per line:\n`Teacher Name | Subject | Class | Phone`");
             $this->substep = 0;
             return;
         }
@@ -1792,9 +1808,11 @@ class AgentToshi extends Component
 
                 foreach ($this->teacherList as $name) {
                     $tEmail = Str::slug($name) . '@' . Str::slug($this->schoolName) . '.edu';
+                    $phone = $this->teacherPhones[$name] ?? null;
                     $teacher = User::create([
                         'school_id' => $school->id, 'usergroup_id' => 5, 'name' => $name,
                         'email' => $tEmail, 'password' => $password, 'status' => 'active', 'email_verified' => 1,
+                        'mobile_no' => $phone,
                     ]);
                     Userprofile::create([
                         'school_id' => $school->id, 'user_id' => $teacher->id, 'usergroup_id' => 5,
@@ -1914,9 +1932,11 @@ class AgentToshi extends Component
                     $tEmail = Str::slug($name) . '@school.edu';
                     $exists = User::where('school_id', $schoolId)->where('name', $name)->exists();
                     if (!$exists) {
+                        $phone = $this->teacherPhones[$name] ?? null;
                         $teacher = User::create([
                             'school_id' => $schoolId, 'usergroup_id' => 5, 'name' => $name,
                             'email' => $tEmail, 'password' => bcrypt('password'), 'status' => 'active', 'email_verified' => 1,
+                            'mobile_no' => $phone,
                         ]);
                         Userprofile::create([
                             'school_id' => $schoolId, 'user_id' => $teacher->id, 'usergroup_id' => 5,
