@@ -17,6 +17,7 @@ use App\Models\Subscription;
 use App\Models\CurrentPlan;
 use App\Models\FeesCategories;
 use App\Models\AcademicTerm;
+use App\Models\StudentAcademic;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -1668,15 +1669,20 @@ class AgentToshi extends Component
 
                 $phase = Standard::create(['school_id' => $school->id, 'name' => $this->schoolType, 'order' => 1, 'status' => '1']);
 
+                $firstStandardLink = null;
+
                 foreach ($this->standards as $class) {
                     $section = Section::firstOrCreate(
                         ['school_id' => $school->id, 'name' => $class['name']],
                         ['value' => $class['name'], 'status' => '1']
                     );
-                    StandardLink::create([
+                    $standardLink = StandardLink::create([
                         'school_id' => $school->id, 'academic_year_id' => $academicYear->id,
                         'standard_id' => $phase->id, 'section_id' => $section->id, 'status' => '1',
                     ]);
+                    if (!$firstStandardLink) {
+                        $firstStandardLink = $standardLink;
+                    }
                     $classSubjects = $this->subjects[$class['name']] ?? [];
                     foreach ($classSubjects as $subjectName) {
                         Subject::firstOrCreate(
@@ -1696,6 +1702,31 @@ class AgentToshi extends Component
                         'school_id' => $school->id, 'user_id' => $teacher->id, 'usergroup_id' => 5,
                         'firstname' => $name, 'lastname' => '', 'profession' => 'teacher', 'status' => 'active',
                     ]);
+                }
+
+                // Create students from onboarding list
+                foreach ($this->studentList as $index => $studentName) {
+                    if (!trim($studentName)) continue;
+
+                    $sEmail = 'student.' . ($index + 1) . '@' . Str::slug($this->schoolName) . '.sch.ug';
+                    $studentUser = User::create([
+                        'school_id' => $school->id, 'usergroup_id' => 6,
+                        'name' => trim($studentName),
+                        'email' => $sEmail, 'password' => $password,
+                        'status' => 'active', 'email_verified' => 1,
+                    ]);
+                    Userprofile::create([
+                        'school_id' => $school->id, 'user_id' => $studentUser->id, 'usergroup_id' => 6,
+                        'firstname' => trim($studentName), 'lastname' => '', 'status' => 'active',
+                    ]);
+                    if ($firstStandardLink) {
+                        StudentAcademic::create([
+                            'school_id' => $school->id,
+                            'academic_year_id' => $academicYear->id,
+                            'user_id' => $studentUser->id,
+                            'standardLink_id' => $firstStandardLink->id,
+                        ]);
+                    }
                 }
 
                 foreach ($this->terms as $term) {

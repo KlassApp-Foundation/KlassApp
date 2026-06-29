@@ -770,14 +770,23 @@ class WhatsAppController extends Controller
 
         if ($trimmed === 'link_help') {
             $sendText(
-                "To find your child's School Pay payment code:\n\n"
-                . "1. Check your most recent school fees payment SMS or receipt\n"
-                . "2. Look for a 10-digit number (e.g. 1005416321) — that's the payment code\n"
-                . "3. Reply with that number here\n\n"
-                . "Still can't find it? Contact the school office — they can give it to you.",
+                "To link to your child:\n\n"
+                . "1. Type your child's *full name* (e.g., Amope Nandawula)\n"
+                . "2. We'll search for them in our system\n"
+                . "3. Confirm and you're linked!\n\n"
+                . "Still can't find them? Contact the school office.",
                 'link_help'
             );
             return;
+        }
+
+        // ── Handle "link_{studentId}" confirmation button ──
+        if (str_starts_with($trimmed, 'link_')) {
+            $studentId = (int) substr($trimmed, 5);
+            if ($studentId > 0) {
+                $this->linkParentToStudent($phone, $studentId, $sendText, $sendButtons, $senderName);
+                return;
+            }
         }
 
         // ── DEMO: auto-link to demo parent ──
@@ -815,6 +824,63 @@ class WhatsAppController extends Controller
             return;
         }
 
+        // ── Try to find a student by name — no School Pay code needed ──
+        if (strlen($trimmed) >= 2 && !in_array($trimmed, ['exit', 'link_help', 'demo', 'menu', 'help'])) {
+            // First check if this is an exact name match from a previous search (link them)
+            $exactMatch = \App\Models\User::where('usergroup_id', 6)
+                ->where('name', $trimmed)
+                ->with(['studentAcademicLatest.standardLink.standard', 'school'])
+                ->first();
+
+            if ($exactMatch) {
+                $studentName = $exactMatch->name;
+                $className = $exactMatch->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A';
+                $schoolName = $exactMatch->school?->name ?? 'the school';
+                $studentId = $exactMatch->id;
+
+                $sendButtons(
+                    "Link to *{$studentName}* ({$className}) at {$schoolName}?",
+                    [
+                        ['title' => '✅ Yes, link me', 'id' => "link_{$studentId}"],
+                        ['title' => '🔍 Search again', 'id' => 'link_help'],
+                    ],
+                    'confirm_student_link',
+                );
+                return;
+            }
+
+            // Broad search — show matching students
+            $possibleStudents = \App\Models\User::where('usergroup_id', 6)
+                ->where(function ($q) use ($trimmed) {
+                    $q->where('name', 'LIKE', "%{$trimmed}%")
+                      ->orWhere('name', 'LIKE', "%" . str_replace(' ', '%', $trimmed) . "%");
+                })
+                ->with(['studentAcademicLatest.standardLink.standard', 'school'])
+                ->limit(5)
+                ->get();
+
+            if ($possibleStudents->isNotEmpty()) {
+                $studentLines = [];
+                foreach ($possibleStudents as $student) {
+                    $className = $student->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A';
+                    $schoolName = $student->school?->name ?? 'Unknown School';
+                    $studentLines[] = "• {$student->name} — {$className} ({$schoolName})";
+                }
+
+                $sendButtons(
+                    "We found " . $possibleStudents->count() . " student(s) matching \"{$trimmed}\":\n\n"
+                    . implode("\n", $studentLines)
+                    . "\n\nReply with the *full student name* to link, or tap below:",
+                    [
+                        ['title' => '🔗 Link My Number', 'id' => 'link_help'],
+                        ['title' => '🎯 Try Demo', 'id' => 'demo'],
+                    ],
+                    'student_search_results',
+                );
+                return;
+            }
+        }
+
         // ── Default: unrecognized — offer DEMO or link ──
         $sendButtons(
             "👋 *Welcome to KlassApp!* 🎓\n\n"
@@ -825,6 +891,126 @@ class WhatsAppController extends Controller
                 ['title' => '🔗 Link My Number', 'id' => 'link_help'],
             ],
             'unrecognized_prompt',
+        );
+    }
+
+    /**
+     * Link a parent's WhatsApp number to a student by system user ID.
+     * Used for name-based linking (no School Pay code required).
+     */
+    protected function linkParentToStudent(string $phone, int $studentId, callable $sendText, callable $sendButtons, string $senderName = 'Parent'): void
+    {
+        $student = \App\Models\User::with(['studentAcademicLatest.standardLink.standard', 'school'])->find($studentId);
+
+        if (!$student) {
+            $sendText("Student not found. Please try again or contact the school office.", 'link_error');
+            return;
+        }
+
+        $studentName = $student->name;
+        $className = $student->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A';
+        $schoolName = $student->school?->name ?? 'the school';
+        $schoolId = $student->school_id;
+
+        // Check if this parent is already linked
+        $existingLink = \Illuminate\Support\Facades\DB::table('student_parent_links')
+            ->where('student_id', $studentId)
+            ->where('school_id', $schoolId)
+            ->first();
+
+        if ($existingLink) {
+            // Parent exists — link this WhatsApp number to them
+            $parentId = $existingLink->parent_id;
+            $whatsappUser = WhatsAppUser::where('phone', $phone)->first();
+
+            if ($whatsappUser) {
+                if ($whatsappUser->user_id && $whatsappUser->user_id !== $parentId) {
+                    $sendText(
+                        "This phone number is already linked to a different parent account.\n\n"
+                        . "Contact the school office to update your details.",
+                        'already_linked'
+                    );
+                    return;
+                }
+                $whatsappUser->update([
+                    'user_id' => $parentId,
+                    'school_id' => $schoolId,
+                    'opted_in' => true,
+                    'verified_at' => now(),
+                    'verified_via_schoolpay' => false,
+                ]);
+            } else {
+                WhatsAppUser::create([
+                    'phone' => $phone,
+                    'user_id' => $parentId,
+                    'school_id' => $schoolId,
+                    'opted_in' => true,
+                    'verified_at' => now(),
+                    'verified_via_schoolpay' => false,
+                ]);
+            }
+
+            $sendButtons(
+                "✅ Linked to *{$studentName}* ({$className})!\n\n"
+                . "You can now check fees, grades, and attendance — tap an option below.",
+                [
+                    ['title' => '💰 Fee Balance', 'id' => 'FEES'],
+                    ['title' => '📊 Exam Results', 'id' => 'GRADES'],
+                    ['title' => '📋 Attendance', 'id' => 'ATTENDANCE'],
+                ],
+                'linked_welcome',
+            );
+            return;
+        }
+
+        // No parent link exists yet — create parent + link
+        $parentUser = \App\Models\User::create([
+            'school_id' => $schoolId,
+            'usergroup_id' => 7, // Parent role
+            'name' => $senderName ?: 'Parent',
+            'email' => 'parent_' . $studentId . '_' . time() . '@klassapp.sch.ug',
+            'password' => bcrypt(\Illuminate\Support\Str::random(12)),
+            'status' => 'active',
+            'email_verified' => 1,
+        ]);
+
+        \App\Models\Userprofile::create([
+            'school_id' => $schoolId,
+            'user_id' => $parentUser->id,
+            'usergroup_id' => 7,
+            'firstname' => $senderName ?: 'Parent',
+            'lastname' => '',
+            'status' => 'active',
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('student_parent_links')->insert([
+            'student_id' => $studentId,
+            'parent_id' => $parentUser->id,
+            'school_id' => $schoolId,
+            'relationship' => 'parent',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        WhatsAppUser::create([
+            'phone' => $phone,
+            'user_id' => $parentUser->id,
+            'school_id' => $schoolId,
+            'opted_in' => true,
+            'verified_at' => now(),
+            'verified_via_schoolpay' => false,
+        ]);
+
+        $sendButtons(
+            "✅ Welcome to KlassApp, *{$senderName}*!\n\n"
+            . "You're now linked to *{$studentName}* ({$className}) at {$schoolName}.\n\n"
+            . "Tap an option to get started:",
+            [
+                ['title' => '💰 Fee Balance', 'id' => 'FEES'],
+                ['title' => '📊 Exam Results', 'id' => 'GRADES'],
+                ['title' => '📋 Attendance', 'id' => 'ATTENDANCE'],
+            ],
+            'linked_welcome_new',
         );
     }
 
