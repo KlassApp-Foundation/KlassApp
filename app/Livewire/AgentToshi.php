@@ -425,6 +425,60 @@ class AgentToshi extends Component
                 else $this->studentList = $names;
                 $this->userSay("📎 Uploaded " . count($names) . " names from file");
                 $this->botSay("Parsed **" . count($names) . "** names from your file. Continue?");
+            } elseif ($stepName === 'standards' && count($names) > 0) {
+                $this->standards = array_map(fn($n) => ['name' => $n], $names);
+                $this->userSay("📎 Uploaded " . count($names) . " class(es) from file");
+                $this->botSay("Parsed **" . count($names) . "** class(es) from your file. Continue?");
+            } elseif ($stepName === 'subjects' && count($names) > 0) {
+                // For subjects, if file has 2+ columns, assume [class, subject] format
+                $headers = [];
+                $dataRows = [];
+                try {
+                    if (in_array($ext, ['xlsx', 'xls'])) {
+                        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($this->attachment->getRealPath());
+                        $reader->setReadDataOnly(true);
+                        $spreadsheet = $reader->load($this->attachment->getRealPath());
+                        $allRows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+                        $headers = array_map('trim', $allRows[0] ?? []);
+                        $dataRows = array_slice($allRows, 1);
+                    } elseif ($ext === 'csv' || $ext === 'txt') {
+                        $handle = fopen($this->attachment->getRealPath(), 'r');
+                        $first = true;
+                        while (($line = fgetcsv($handle)) !== false) {
+                            if ($first) { $headers = array_map('trim', $line); $first = false; continue; }
+                            $dataRows[] = $line;
+                        }
+                        fclose($handle);
+                    }
+                } catch (\Exception $e) {}
+
+                if (!empty($headers) && count($headers) >= 2) {
+                    $subjectsByClass = [];
+                    foreach ($dataRows as $row) {
+                        $className = trim($row[0] ?? '');
+                        $subjectName = trim($row[1] ?? '');
+                        if ($className && $subjectName) {
+                            $subjectsByClass[$className][] = $subjectName;
+                        }
+                    }
+                    if (!empty($subjectsByClass)) {
+                        $this->subjects = $subjectsByClass;
+                        $total = collect($subjectsByClass)->flatten()->count();
+                        $this->userSay("📎 Uploaded subjects from file");
+                        $this->botSay("Parsed **{$total}** subject(s) across **" . count($subjectsByClass) . "** class(es). Continue?");
+                    } else {
+                        $this->botSay("Couldn't parse subjects. Make sure your file has columns: Class, Subject.");
+                    }
+                } else {
+                    // Single column — apply to all classes
+                    if (!empty($this->standards)) {
+                        $firstClass = $this->standards[0]['name'] ?? 'default';
+                        $this->subjects = [$firstClass => $names];
+                        $this->botSay("Parsed **" . count($names) . "** subject(s). Continue?");
+                    } else {
+                        $this->botSay("Please set up classes first, then upload subjects.");
+                    }
+                }
             } elseif (count($names) > 0) {
                 $this->botSay("File received with " . count($names) . " names. We'll use this when we get to the teachers/students step.");
             } else {
