@@ -231,6 +231,7 @@ class StudentController extends Controller
 
       $array['standardLink_id']           = $studentAcademic->standardLink_id;
       $array['std_school_pay_number']               = $studentAcademic->std_school_pay_number==NULL ? '':$studentAcademic->std_school_pay_number;
+      $array['klassapp_student_id']                 = $studentAcademic->klassapp_student_id==NULL ? '':$studentAcademic->klassapp_student_id;
       $array['id_card_number']            = $studentAcademic->id_card_number==NULL ? '':$studentAcademic->id_card_number;
       $array['board_registration_number'] = $studentAcademic->board_registration_number==NULL ? '':$studentAcademic->board_registration_number;
       $array['mode_of_transport']         = $studentAcademic->mode_of_transport;

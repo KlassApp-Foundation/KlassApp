@@ -411,7 +411,12 @@ class AgentToshi extends Component
                 if (count($links) > 0) {
                     $this->teacherLinks = $links;
                     $this->userSay("📎 Uploaded " . count($links) . " teacher link(s) from file");
-                    $this->botSay("Parsed **" . count($links) . "** teacher link(s) from your file.");
+                    $this->botSay("Parsed **" . count($links) . "** teacher link(s) from your file. Continuing...");
+                    // Auto-advance — file upload is explicit confirmation
+                    $this->substep = 2;
+                    $this->input = 'yes';
+                    $this->send();
+                    return;
                 } else {
                     $this->botSay("I couldn't find any valid teacher links. Make sure your file has columns: Teacher, Subject, Class.");
                 }
@@ -932,42 +937,6 @@ class AgentToshi extends Component
         $this->botSay("**{$label}** — got it!");
         $this->botSay("Now let's set up the admin account. | What is the admin's email address?");
         $this->substep = 0;
-        $this->advance();
-    }
-
-    private function detectSchoolType(string $text): string
-    {
-        $text = strtolower($text);
-        if (str_contains($text, 'primary') || str_contains($text, 'p.')) return 'primary';
-        if (str_contains($text, 'secondary') || str_contains($text, 's.')) return 'secondary';
-        if (str_contains($text, 'nursery')) return 'nursery';
-        if (str_contains($text, 'mixed') || str_contains($text, 'both')) return 'mixed';
-        if (str_contains($text, 'o-level') || str_contains($text, 'olevel')) return 'o-level';
-        if (str_contains($text, 'a-level') || str_contains($text, 'alevel')) return 'a-level';
-        return 'primary';
-    }
-
-    // ── Step 1 continued (confirmation) ──
-    public function confirmSchoolType(bool $yes)
-    {
-        if ($yes) {
-            $this->botSay("Great. Now let's set up the admin account. | What is the admin's email address?");
-            $this->advance(1);
-        } else {
-            $this->botSay("No problem — what type of school is it? (Nursery, Primary, Secondary, O-Level, A-Level, Mixed)");
-        }
-    }
-
-    public function sendSchoolType(string $type)
-    {
-        $valid = ['nursery', 'primary', 'secondary', 'o-level', 'a-level', 'mixed'];
-        $type = strtolower(trim($type));
-        if (!in_array($type, $valid)) {
-            $this->botSay("I didn't recognize that. Please pick: Nursery, Primary, Secondary, O-Level, A-Level, Mixed.");
-            return;
-        }
-        $this->schoolType = $type;
-        $this->botSay("Updated to **{$type}**. Now let's set up the admin account.");
         $this->advance();
     }
 
