@@ -770,11 +770,11 @@ class WhatsAppController extends Controller
 
         if ($trimmed === 'link_help') {
             $sendText(
-                "To link to your child:\n\n"
-                . "1. Type your child's *full name* (e.g., Amope Nandawula)\n"
-                . "2. We'll search for them in our system\n"
-                . "3. Confirm and you're linked!\n\n"
-                . "Still can't find them? Contact the school office.",
+                "🔗 *Link to your child — 3 ways:*\n\n"
+                . "1️⃣ *KlassApp ID* — Type the student ID from your child's report card (e.g., KLS-001-0427)\n\n"
+                . "2️⃣ *Full name* — Type your child's name (e.g., Amope Nandawula)\n\n"
+                . "3️⃣ *School name* — Type your school name and I'll find your child\n\n"
+                . "No code needed if you know your child's name or school.",
                 'link_help'
             );
             return;
@@ -824,74 +824,129 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // ── Try to find a student by name — no School Pay code needed ──
-        if (strlen($trimmed) >= 2 && !in_array($trimmed, ['exit', 'link_help', 'demo', 'menu', 'help'])) {
-            // First check if this is an exact name match from a previous search (link them)
-            $exactMatch = \App\Models\User::where('usergroup_id', 6)
-                ->where('name', $trimmed)
-                ->with(['studentAcademicLatest.standardLink.standard', 'school'])
-                ->first();
-
-            if ($exactMatch) {
-                $studentName = $exactMatch->name;
-                $className = $exactMatch->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A';
-                $schoolName = $exactMatch->school?->name ?? 'the school';
-                $studentId = $exactMatch->id;
-
-                $sendButtons(
-                    "Link to *{$studentName}* ({$className}) at {$schoolName}?",
-                    [
-                        ['title' => '✅ Yes, link me', 'id' => "link_{$studentId}"],
-                        ['title' => '🔍 Search again', 'id' => 'link_help'],
-                    ],
-                    'confirm_student_link',
-                );
-                return;
-            }
-
-            // Broad search — show matching students
-            $possibleStudents = \App\Models\User::where('usergroup_id', 6)
-                ->where(function ($q) use ($trimmed) {
-                    $q->where('name', 'LIKE', "%{$trimmed}%")
-                      ->orWhere('name', 'LIKE', "%" . str_replace(' ', '%', $trimmed) . "%");
-                })
-                ->with(['studentAcademicLatest.standardLink.standard', 'school'])
-                ->limit(5)
-                ->get();
-
-            if ($possibleStudents->isNotEmpty()) {
-                $studentLines = [];
-                foreach ($possibleStudents as $student) {
-                    $className = $student->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A';
-                    $schoolName = $student->school?->name ?? 'Unknown School';
-                    $studentLines[] = "• {$student->name} — {$className} ({$schoolName})";
-                }
-
-                $sendButtons(
-                    "We found " . $possibleStudents->count() . " student(s) matching \"{$trimmed}\":\n\n"
-                    . implode("\n", $studentLines)
-                    . "\n\nReply with the *full student name* to link, or tap below:",
-                    [
-                        ['title' => '🔗 Link My Number', 'id' => 'link_help'],
-                        ['title' => '🎯 Try Demo', 'id' => 'demo'],
-                    ],
-                    'student_search_results',
-                );
-                return;
-            }
+        // ── Try to find a student by ID or name ──
+        $searchable = strlen($trimmed) >= 2 && !in_array($trimmed, ['exit', 'link_help', 'demo', 'menu', 'help']);
+        if (!$searchable) {
+            // ── Default: unrecognized — offer DEMO or link ──
+            $sendButtons(
+                "👋 *Welcome to KlassApp!* 🎓\n\n"
+                . "Tap *Try Demo* to explore KlassApp right now with live sample data.\n"
+                . "Or tap *Link My Number* if you're a parent wanting to connect to your child's school.",
+                [
+                    ['title' => '🎯 Try Demo', 'id' => 'demo'],
+                    ['title' => '🔗 Link My Number', 'id' => 'link_help'],
+                ],
+                'unrecognized_prompt',
+            );
+            return;
         }
 
-        // ── Default: unrecognized — offer DEMO or link ──
-        $sendButtons(
-            "👋 *Welcome to KlassApp!* 🎓\n\n"
-            . "Tap *Try Demo* to explore KlassApp right now with live sample data.\n"
-            . "Or tap *Link My Number* if you're a parent wanting to connect to your child's school.",
-            [
-                ['title' => '🎯 Try Demo', 'id' => 'demo'],
-                ['title' => '🔗 Link My Number', 'id' => 'link_help'],
-            ],
-            'unrecognized_prompt',
-        );
+        // ── Priority 1: KlassApp Student ID (KLS-xxx-xxxx) ──
+        if (preg_match('/^KLS-\d{3}-\d{4}$/i', $trimmed)) {
+            $academic = \App\Models\StudentAcademic::where('klassapp_student_id', strtoupper($trimmed))
+                ->with(['user', 'standardLink.standard', 'school'])
+                ->first();
+            if ($academic && $academic->user) {
+                $this->linkParentToStudent($phone, $academic->user->id, $sendText, $sendButtons, $senderName);
+                return;
+            }
+            $sendText(
+                "We couldn't find a student with KlassApp ID *{$trimmed}*.\n\n"
+                . "Check the ID on your child's report card or type their name to search.",
+                'klassapp_id_not_found'
+            );
+            return;
+        }
+
+        // ── Priority 2: School's own student ID (id_card_number) ──
+        $schoolIdMatch = \App\Models\StudentAcademic::where('id_card_number', $trimmed)
+            ->orWhere('board_registration_number', $trimmed)
+            ->with(['user', 'standardLink.standard', 'school'])
+            ->first();
+        if ($schoolIdMatch && $schoolIdMatch->user) {
+            $this->linkParentToStudent($phone, $schoolIdMatch->user->id, $sendText, $sendButtons, $senderName);
+            return;
+        }
+
+        // ── Priority 3: Check if this is a school name — scope subsequent search ──
+        $matchingSchool = null;
+        $schools = \App\Models\School::where('name', 'LIKE', "%{$trimmed}%")->limit(3)->get();
+        if ($schools->count() === 1) {
+            $matchingSchool = $schools->first();
+        } elseif ($schools->count() > 1) {
+            $sendButtons(
+                "Which school? We found " . $schools->count() . " matching \"{$trimmed}\":\n\n"
+                . $schools->take(5)->map(fn($s) => "• {$s->name}")->implode("\n")
+                . "\n\nType the full school name to narrow results.",
+                [
+                    ['title' => '🔍 Search by name', 'id' => 'link_help'],
+                ],
+                'school_search_results',
+            );
+            return;
+        }
+
+        // ── Priority 4: Exact name match (with school scope if known) ──
+        $exactQuery = \App\Models\User::where('usergroup_id', 6)->where('name', $trimmed);
+        if ($matchingSchool) {
+            $exactQuery->where('school_id', $matchingSchool->id);
+        }
+        $exactMatch = $exactQuery->with(['studentAcademicLatest.standardLink.standard', 'school'])->first();
+
+        if ($exactMatch) {
+            $studentName = $exactMatch->name;
+            $className = $exactMatch->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A';
+            $schoolName = $exactMatch->school?->name ?? 'the school';
+            $studentId = $exactMatch->id;
+
+            $sendButtons(
+                "Link to *{$studentName}* ({$className}) at {$schoolName}?",
+                [
+                    ['title' => '✅ Yes, link me', 'id' => "link_{$studentId}"],
+                    ['title' => '🔍 Search again', 'id' => 'link_help'],
+                ],
+                'confirm_student_link',
+            );
+            return;
+        }
+
+        // ── Priority 5: Broad name search (scoped by school if known) ──
+        $possibleQuery = \App\Models\User::where('usergroup_id', 6)
+            ->where(function ($q) use ($trimmed) {
+                $q->where('name', 'LIKE', "%{$trimmed}%")
+                  ->orWhere('name', 'LIKE', "%" . str_replace(' ', '%', $trimmed) . "%");
+            });
+        if ($matchingSchool) {
+            $possibleQuery->where('school_id', $matchingSchool->id);
+        }
+        $possibleStudents = $possibleQuery->with(['studentAcademicLatest.standardLink.standard', 'school'])
+            ->limit(8)
+            ->get();
+
+        if ($possibleStudents->isNotEmpty()) {
+            $studentLines = [];
+            foreach ($possibleStudents as $student) {
+                $className = $student->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A';
+                $schoolName = $student->school?->name ?? 'Unknown School';
+                $studentLines[] = "• {$student->name} — {$className} ({$schoolName})";
+            }
+
+            $hint = $matchingSchool
+                ? "Reply with the *full name* to link."
+                : "Reply with the *full name* to link, or type the school name to narrow results.";
+
+            $sendButtons(
+                "We found " . $possibleStudents->count() . " student(s) matching \"{$trimmed}\":\n\n"
+                . implode("\n", $studentLines)
+                . "\n\n{$hint}",
+                [
+                    ['title' => '🔗 Link My Number', 'id' => 'link_help'],
+                    ['title' => '🎯 Try Demo', 'id' => 'demo'],
+                ],
+                'student_search_results',
+            );
+            return;
+        }
     }
 
     /**

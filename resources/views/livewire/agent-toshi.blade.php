@@ -266,6 +266,9 @@
                         <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
                             <div style="font-size: 18px; font-weight: 700; color: #D97706;">{{ $reviewData['studentCount'] }}</div>
                             <div style="font-size: 10px; color: #64748B; font-weight: 500;">Students</div>
+                            @if(!empty($reviewData['studentIds']) && $reviewData['studentIds'] !== '—')
+                            <div style="font-size: 8px; color: #94A3B8; margin-top: 2px;">{{ $reviewData['studentIds'] }}</div>
+                            @endif
                         </div>
                         <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
                             <div style="font-size: 18px; font-weight: 700; color: #8B5CF6;">{{ $reviewData['termCount'] }}</div>
