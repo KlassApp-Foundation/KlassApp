@@ -10,32 +10,44 @@ How to set up your school on KlassApp — either manually through the admin pane
 
 Share this with the school before starting so the setup goes smoothly.
 
-### Essential (must have ready)
+### Essential (required — needed immediately for the school to function)
 
-| Item | Details needed |
-|---|---|
-| **School name** | Full official name |
-| **School type** | Primary / Secondary / Primary & Secondary (Mixed) |
-| **Levels** (if Secondary) | O-Level only, A-Level only, or Both |
-| **Gender** | Boys, Girls, or Mixed (Co-ed) |
-| **School email** | Active email address |
-| **School phone** | Ugandan number (+256 format) |
-| **Admin name** | Full name of the person managing the system |
-| **Admin email** | Their email address |
-| **Admin phone** | Their WhatsApp number (+256) |
-| **Academic year** | e.g. 2025 or 2025/2026 |
-| **Teacher names** | List of all teachers (can upload via spreadsheet) |
-| **Class list** | Names of all classes — can upload via spreadsheet (e.g. Primary 1–7, Senior 1–6) |
+| Item | Details needed | Used in |
+|---|---|---|
+| **Plan** | Freemium, Growth ($30/mo), or Premium (contact sales) | Billing |
+| **School name** | Full official name | Everywhere |
+| **School type** | Primary / Secondary / Both | Curriculum setup |
+| **Levels** (if Secondary) | O-Level only, A-Level only, or Both | Subject selection |
+| **Gender** | Boys, Girls, or Mixed (Co-ed) | Reports |
+| **School email** | Active email address | Notifications |
+| **School phone** | Ugandan number (+256 format) | Contact |
+| **Admin name** | Full name of the person managing the system | Account |
+| **Admin email** | Their email address | Login |
+| **Admin phone** | Their WhatsApp number (+256) | WhatsApp OTP verification |
+| **Academic year** | e.g. 2025 or 2025/2026 | All academic records |
+| **Class list** | All class names (e.g. Primary 1–7, Senior 1–6) | Student placement |
+| **Subjects per class** | Which subjects each class studies | Marks, reports |
 
-### Nice to have (prepared in advance)
+### Recommended (makes the school functional faster — optional, can skip & add later)
 
 | Item | Why it helps |
 |---|---|
-| **Student names** | Bulk upload via spreadsheet or document (CSV, XLSX, PDF, DOCX) |
-| **Subject per class** | Custom subjects beyond NCDC defaults |
-| **Term dates** | Custom start/end dates per term |
-| **Fee categories** | Names and amounts (e.g. Tuition $50, Lunch $20) |
+| **Teacher names** | So teachers can start entering marks and taking attendance |
+| **Teacher-subject-class assignments** | One line per teacher: `Teacher Name \| Subject \| Class` (e.g. `John Ssali \| Mathematics \| Primary 5`). Links them all at once. |
+| **Student names** | So parents can link via WhatsApp and see their child's data |
+| **Term dates** | Start/end dates for each term (defaults: 3 terms) |
+| **Fee categories** | Names + amounts for parent fee inquiries on WhatsApp |
 | **Exam names** | e.g. End of Term, Mid Term, Mock |
+
+### Nice to have (for a richer experience — can add post-launch)
+
+| Item | Why it helps |
+|---|---|
+| **Ministry of Education code** | 4-digit MoE school code (Uganda). Used in KlassApp Student IDs for government alignment. |
+| **School's own student IDs** | If your school already has admission/ID numbers, we can use them alongside KlassApp IDs |
+| **Teacher-subject-class links** | Which teacher teaches which subject in which class |
+| **Student-to-class assignments** | Which student belongs to which class (if you have a class list) |
+| **WhatsApp business number** | The number parents will message (default: KlassApp's number) |
 
 ---
 

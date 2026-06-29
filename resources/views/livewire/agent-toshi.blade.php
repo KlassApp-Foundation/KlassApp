@@ -262,6 +262,9 @@
                         <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
                             <div style="font-size: 18px; font-weight: 700; color: #22C55E;">{{ $reviewData['teacherCount'] }}</div>
                             <div style="font-size: 10px; color: #64748B; font-weight: 500;">Teachers</div>
+                            @if(!empty($reviewData['teacherLinkCount']) && $reviewData['teacherLinkCount'] > 0)
+                            <div style="font-size: 8px; color: #94A3B8; margin-top: 2px;">{{ $reviewData['teacherLinkCount'] }} subject links</div>
+                            @endif
                         </div>
                         <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
                             <div style="font-size: 18px; font-weight: 700; color: #D97706;">{{ $reviewData['studentCount'] }}</div>

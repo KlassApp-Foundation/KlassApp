@@ -1246,9 +1246,103 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     private function handleTeacherLinks(string $text)
     {
-        $this->botSay("Teacher-class-subject linking can be set up later in the admin panel.");
-        $this->substep = 0;
-        $this->advance();
+        // substep 0: explain format, collect input
+        if ($this->substep === 0) {
+            $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
+            if ($skip) {
+                $this->botSay("Skipped. You can assign teachers to subjects later in the admin panel (Classes → select class → assign teachers).");
+                $this->substep = 0;
+                $this->advance();
+                return;
+            }
+
+            // If teacher list is empty, skip automatically
+            if (empty($this->teacherList)) {
+                $this->botSay("No teachers to link. Moving on.");
+                $this->substep = 0;
+                $this->advance();
+                return;
+            }
+
+            $classNames = collect($this->standards)->pluck('name')->implode(', ');
+            $this->botSay(
+                "Now let's link each teacher to their subjects and classes.\n\n"
+                . "Your classes: *{$classNames}*\n"
+                . "Your teachers: *" . implode(', ', $this->teacherList) . "*\n\n"
+                . "Enter one line per teacher in this format:\n"
+                . "`Teacher Name | Subject | Class`\n\n"
+                . "Example:\n"
+                . "John Ssali | Mathematics | P.5\n"
+                . "Jane Okello | English | P.5\n"
+                . "John Ssali | Science | P.6\n\n"
+                . "Type the full list, or type 'skip' to do this later."
+            );
+            $this->substep = 1;
+            return;
+        }
+
+        // substep 1: parse the list
+        if ($this->substep === 1) {
+            $lines = array_filter(explode("\n", $text), fn($l) => trim($l) !== '');
+            $parsed = [];
+
+            foreach ($lines as $line) {
+                $parts = array_map('trim', explode('|', $line));
+                if (count($parts) < 3) continue;
+
+                $teacherName = $parts[0];
+                $subjectName = $parts[1];
+                $className = $parts[2];
+
+                // Validate teacher exists in teacherList
+                $teacherExists = in_array($teacherName, $this->teacherList);
+                // Validate class exists in standards
+                $classExists = collect($this->standards)->pluck('name')->contains($className);
+
+                if ($teacherExists && $classExists) {
+                    $parsed[] = [
+                        'teacher' => $teacherName,
+                        'subject' => $subjectName,
+                        'class'   => $className,
+                    ];
+                }
+            }
+
+            if (empty($parsed)) {
+                $this->botSay(
+                    "I couldn't parse any valid entries. Make sure each line uses:\n"
+                    . "`Teacher Name | Subject | Class`\n\n"
+                    . "Example: John Ssali | Mathematics | P.5\n\n"
+                    . "Type your list again, or type 'skip'."
+                );
+                return;
+            }
+
+            $this->teacherLinks = $parsed;
+            $preview = collect($parsed)->take(3)->map(
+                fn($l) => "• {$l['teacher']} → {$l['subject']} ({$l['class']})"
+            )->implode("\n");
+
+            $this->botSay(
+                "Parsed **" . count($parsed) . "** teacher link(s):\n{$preview}"
+                . (count($parsed) > 3 ? "\n...and " . (count($parsed) - 3) . " more" : '')
+                . "\n\nIs this correct? (yes / no)"
+            );
+            $this->substep = 2;
+            return;
+        }
+
+        // substep 2: confirmation
+        if ($this->substep === 2) {
+            if (in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok'])) {
+                $this->substep = 0;
+                $this->advance();
+                return;
+            }
+            $this->botSay("Let's try again. Enter the teacher links one per line:\n`Teacher Name | Subject | Class`");
+            $this->substep = 0;
+            return;
+        }
     }
 
     // ════════════════════════════════════════════════
@@ -1550,6 +1644,7 @@ class AgentToshi extends Component
                 'classCount'   => count($this->standards),
                 'classList'    => implode(', ', array_column($this->standards, 'name')),
                 'teacherCount' => count($this->teacherList),
+                'teacherLinkCount' => count($this->teacherLinks),
                 'studentCount' => count($this->studentList),
                 'studentIds'   => count($this->studentList) > 0
                     ? "KLS0010001 through KLS" . str_pad($schoolId ?? 0, 3, '0', STR_PAD_LEFT) . str_pad(count($this->studentList), 4, '0', STR_PAD_LEFT)
@@ -1707,6 +1802,28 @@ class AgentToshi extends Component
                     ]);
                 }
 
+                // Create teacher-class-subject links from parsed data
+                foreach ($this->teacherLinks as $link) {
+                    $teacherUser = User::where('school_id', $school->id)->where('name', $link['teacher'])->first();
+                    $linkSection = Section::where('school_id', $school->id)->where('name', $link['class'])->first();
+                    $linkStandardLink = $linkSection
+                        ? StandardLink::where('school_id', $school->id)->where('section_id', $linkSection->id)->where('academic_year_id', $academicYear->id)->first()
+                        : null;
+                    $linkSubject = $linkSection
+                        ? Subject::where('school_id', $school->id)->where('section_id', $linkSection->id)->where('name', $link['subject'])->first()
+                        : null;
+
+                    if ($teacherUser && $linkStandardLink && $linkSubject) {
+                        Teacherlink::firstOrCreate([
+                            'school_id' => $school->id,
+                            'academic_year_id' => $academicYear->id,
+                            'standardLink_id' => $linkStandardLink->id,
+                            'subject_id' => $linkSubject->id,
+                            'teacher_id' => $teacherUser->id,
+                        ]);
+                    }
+                }
+
                 // Create students from onboarding list
                 foreach ($this->studentList as $index => $studentName) {
                     if (!trim($studentName)) continue;
@@ -1804,6 +1921,30 @@ class AgentToshi extends Component
                         Userprofile::create([
                             'school_id' => $schoolId, 'user_id' => $teacher->id, 'usergroup_id' => 5,
                             'firstname' => $name, 'lastname' => '', 'profession' => 'teacher', 'status' => 'active',
+                        ]);
+                    }
+                }
+
+                // Create teacher-class-subject links from parsed data
+                foreach ($this->teacherLinks as $link) {
+                    $teacherUser = User::where('school_id', $schoolId)->where('name', $link['teacher'])->first();
+                    $linkSection = Section::where('school_id', $schoolId)->where('name', $link['class'])->first();
+                    $linkStandardLink = $linkSection
+                        ? StandardLink::where('school_id', $schoolId)->where('section_id', $linkSection->id)
+                            ->where('academic_year_id', $academicYear->id)->first()
+                        : null;
+                    $linkSubject = $linkSection
+                        ? Subject::where('school_id', $schoolId)->where('section_id', $linkSection->id)
+                            ->where('name', $link['subject'])->first()
+                        : null;
+
+                    if ($teacherUser && $linkStandardLink && $linkSubject) {
+                        Teacherlink::firstOrCreate([
+                            'school_id' => $schoolId,
+                            'academic_year_id' => $academicYear->id,
+                            'standardLink_id' => $linkStandardLink->id,
+                            'subject_id' => $linkSubject->id,
+                            'teacher_id' => $teacherUser->id,
                         ]);
                     }
                 }
