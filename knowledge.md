@@ -417,3 +417,12 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Key decisions**: Direct linking without school approval when code matches student. Free-form messages for all 24hr-window interactions (no Meta cost). List buttons replace text-based "Reply KEYWORD" prompts for better UX. Emoji stripping in routing allows lists and typed keywords to share the same route table. Recognized users can also link additional students via 10-digit codes (routeInbound catches codes before keyword matching).
 - **Status**: ✅ Done — School Pay integration complete, list buttons deployed, Link Another Student flow working for all users
 - **Edge cases flagged**: School Pay webhook payload format unconfirmed (raw_payload column for inspection). List button titles with emojis need stripping before keyword matching. SCHOOlPAY_ENFORCE_SIGNATURE toggle needed before production. whatsapp_pending_parent_links table is dead schema weight (flow changed to direct linking)
+
+### 2026-06-29: WABA migration complete + WhatsApp UI upgrades + name-based linking + Toshi fix
+- **Work done**: Greeting handler (Hello, Hi, Hey → menu buttons), wa.me links simplified to "Hello KlassApp", production IP updated, full WABA migration (WhatsAppService.php deleted, Evolution removed, all isConfigured() checks stripped, handleEvolutionInbound/buildMenuSections/processCodeVerificationForEvolution deleted). WhatsApp UI upgrades: fee separators, attendance tonal warnings, grades celebration + class rank, message type differentiation. Student name-based WhatsApp linking (replaced School Pay code dependency). AI integration roadmap at docs/ai-integration-roadmap.md. Fixed Toshi commitAll() to persist students. Facebook Business Account banned — switching to new number.
+- **Files modified**: WhatsAppController.php, WhatsAppBusinessService.php, OutboundWhatsAppService.php, AgentToshi.php, config/services.php, NotifyAdminMarksUpdated.php, SchoolPayWebhookController.php, landing.blade.php, landing2.blade.php, AGENTS.md, scripts/*
+- **Deleted**: app/Services/WhatsAppService.php (Evolution)
+- **New**: docs/ai-integration-roadmap.md
+- **Key decisions**: Name search replaces School Pay for WhatsApp linking. Stripped Evolution entirely instead of fallback. Toshi now creates students during onboarding.
+- **Status**: ✅ Ready for Wednesday demo. WhatsApp name linking, Toshi onboarding, and parent messaging flow all functional.
+- **Next**: Wednesday — onboard real school, demo to founding team. Then: new Meta account + WhatsApp number.
