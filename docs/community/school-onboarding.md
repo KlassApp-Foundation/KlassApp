@@ -342,3 +342,60 @@ Agent: "Done. Login sent to admin@kabalejunior.sch.ug."
 - Custom school details (address, motto)
 
 ---
+
+## AI Agent Walkthrough (Toshi — 15 Steps)
+
+This is the actual interactive flow the onboarding agent follows.
+
+| Step | Name | What you provide | Format |
+|---|---|---|---|
+| 0 | Plan Selection | Tap a plan button | Free / Growth / Premium |
+| 1 | School Info | Name → confirm → type/level/gender | Type the name, tap buttons |
+| 2 | Admin Account | Email → name → phone → password | Each value + confirm |
+| 3 | Co-Admin Invite | Skip or add co-admin email/name | Optional |
+| 4 | Academic Year | Label (e.g. "2025") | Text |
+| 5 | Classes | One class name per line | Primary 1, Primary 2... |
+| 6 | Subjects | Default NCDC curriculum or custom | "yes" to accept |
+| 7 | Teachers | One teacher name per line | John Ssali, Jane Okello... |
+| 8 | Teacher Links | Teacher | Subject | Class | Phone | One per assignment |
+| 9 | Students | One student name per line | Auto-generates KlassApp IDs |
+| 10 | Terms | Default Term I-III or custom | Accept or modify |
+| 11 | Fees | Comma-separated names | Tuition, Lunch, Transport |
+| 12 | Exams | Comma-separated names | End of Term, Mid Term |
+| 13 | WhatsApp Verify | OTP sent to admin phone | Code shown in chat (API down) |
+| 14 | Review | Summary card → tap Confirm | All data created in one transaction |
+
+### What gets created on Confirm
+
+| Entity | Details |
+|---|---|
+| School | Name, email, phone, type, country |
+| Admin user | Email, name, phone, password — School Admin role |
+| Academic Year | Current year |
+| Classes | Standard (phase) + Section (class) + StandardLink |
+| Subjects | Per class, linked to section |
+| Teachers | User accounts with phone numbers |
+| Teacher-Subject-Class links | One record per Teacher | Subject | Class line |
+| Students | User accounts with KlassApp Student IDs (KLS0010001...) |
+| Terms | 3 terms with start/end dates |
+| Fees | Fee categories (amounts default to 0) |
+| WhatsApp user | Admin number linked for notifications |
+
+### Data format for demo prep
+
+**Teacher links (paste at step 8):**
+```
+John Ssali | Mathematics | Primary 5 | +256701234567
+Jane Okello | English | Primary 5 | +256765432109
+John Ssali | Science | Primary 6 | +256701234567
+```
+
+**Students (paste at step 9):**
+```
+Amope Nandawula
+John Okello
+Sarah Wasswa
+James Ssali
+```
+
+Each student gets a KlassApp ID like KLS0010001. School admin distributes these to parents via report cards.
