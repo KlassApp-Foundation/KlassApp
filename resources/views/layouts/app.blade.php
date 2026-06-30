@@ -61,6 +61,10 @@
             @yield('base-footer')
         </div>
 
+        @auth
+            @livewire('agent-toshi')
+        @endauth
+
         @yield('outside-app')
 
         <!-- Scripts -->

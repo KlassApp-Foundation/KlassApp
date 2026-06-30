@@ -226,7 +226,3 @@
                 </div>
     </div>
 @endsection
-
-@section('outside-app')
-    @livewire('agent-toshi')
-@endsection

@@ -42,6 +42,10 @@
 
         @yield('outside-app')
 
+        @auth
+            @livewire('agent-toshi')
+        @endauth
+
         <!-- Scripts -->
         @filamentScripts
 
