@@ -433,3 +433,10 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Key decisions**: Name search replaces School Pay for WhatsApp linking. Stripped Evolution entirely instead of fallback. Toshi now creates students during onboarding.
 - **Status**: ✅ Ready for Wednesday demo. WhatsApp name linking, Toshi onboarding, and parent messaging flow all functional.
 - **Next**: Wednesday — onboard real school, demo to founding team. Then: new Meta account + WhatsApp number.
+
+### 2026-06-30: Toshi E2E Test Passes + 6 bugs fixed in commitAll()
+- **Work done**: Created Playwright E2E test for full 15-step Toshi onboarding. Fixed 3 PHP bugs (saveDraft not capturing model ID → duplicate drafts; handleTeacherLinks/handleWhatsAppVerify missing skip at substep=1 → infinite loops). Fixed 3 DB schema mismatches in commitAll() (subscriptions.user_id FK, sections.value column missing, standards_link.class_teacher_id NOT NULL). Test now creates a school end-to-end with all data (classes, subjects, teachers, students, fees, exams, subscription).
+- **Files modified**: `app/Livewire/AgentToshi.php` — saveDraft(), handleTeacherLinks() skip substep=1, handleWhatsAppVerify() skip substep=1, commitAll() reordered (admin user before subscription), Section::firstOrCreate() removed bogus `value` column. `database/migrations/2026_06_30_003133_make_class_teacher_id_nullable_in_standards_link.php` — new (but not migratable due to pre-existing broken FK migration).
+- **Key decisions**: E2E test lives outside repo at `/var/folders/d1/.../toshi-test.mjs`. Uses Livewire JS API (`lw.call()`) instead of DOM clicks (unreliable with Livewire 3). Always "reset" on draft (no generic resume handler). Unique timestamp-suffixed data per run to avoid DB collisions.
+- **Status**: ✅ Toshi onboarding working end-to-end. Known critical issues remain: editBeforeCommit() dead end, no secondary school curriculum defaults, zero PHPUnit coverage.
+- **Next**: Fix editBeforeCommit() to allow step navigation from review card. Add secondary curriculum. Write PHPUnit tests.

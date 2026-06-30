@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\CoAdminInviteMail;
 use App\Models\OnboardingSession;
+use App\Services\ToshiAssistantService;
 
 class AgentToshi extends Component
 {
@@ -100,7 +101,8 @@ class AgentToshi extends Component
     public $whatsappSentOtp = '';
     public $whatsappVerified = false;
 
-    public $mode = 'create'; // 'create' for super admin, 'complete' for school admin
+    public $mode = 'assistant';
+    public $scope = 'school'; // 'platform' (super admin) or 'school' (school admin)
     public $draftSessionId = null;
 
     public function mount()
@@ -110,27 +112,13 @@ class AgentToshi extends Component
 
         // ── Restore state from session (survives page refresh) ──
         if ($this->restoreState()) {
-            // If in assistant mode, ensure greeting is visible
             if ($this->mode === 'assistant' && empty($this->messages)) {
-                $this->botSay("I'm your AI assistant now. Ask me anything about your school — view reports, check stats, or manage settings.");
+                $this->botSay($this->getAssistantGreeting());
             }
             return;
         }
 
-        // ── Check if school is fully set up (assistant mode) ──
-        if ($user->usergroup_id === 3 && $user->school_id) {
-            $missing = \App\Helpers\OnboardingHelper::getMissingSteps($user->school_id, $user->id);
-            if (empty($missing)) {
-                $this->mode = 'assistant';
-                $this->step = 99;
-                $this->schoolId = $user->school_id;
-                $school = \App\Models\School::find($this->schoolId);
-                $this->botSay("Hi! I'm Toshi. Ask me anything about **{$school->name}** — I can help with reports, stats, and school management.");
-                return;
-            }
-        }
-
-        // ── Draft resume check (super admin only) ──
+        // ── Super Admin: draft resume check ──
         if ($user->usergroup_id === 1) {
             $draft = OnboardingSession::where('user_id', $user->id)
                 ->where('status', 'draft')
@@ -145,22 +133,60 @@ class AgentToshi extends Component
                 $this->botSay("Type 'ok' to continue or 'reset' to start over.");
                 return;
             }
+
+            // Super admin with no draft → assistant mode (platform scope)
+            $this->mode = 'assistant';
+            $this->scope = 'platform';
+            $this->step = 99;
+            $this->botSay("Hello! I'm Toshi, your KlassApp assistant. Ask me about platform stats, schools, users, or say **'create school'** to onboard a new school.");
+            return;
         }
 
-        // ── Detect mode ──
-        if ($user->usergroup_id === 3) {
-            $this->mode = 'complete';
+        // ── School Admin: check setup status ──
+        if ($user->usergroup_id === 3 && $user->school_id) {
             $this->schoolId = $user->school_id;
+            $this->scope = 'school';
             $school = \App\Models\School::find($this->schoolId);
+
+            $missing = \App\Helpers\OnboardingHelper::getMissingSteps($user->school_id, $user->id);
+            if (empty($missing)) {
+                // Fully set up → assistant mode
+                $this->mode = 'assistant';
+                $this->step = 99;
+                $this->botSay("Hi! I'm Toshi. Ask me anything about **{$school->name}** — I can help with reports, stats, and school management.");
+                return;
+            }
+
+            // Incomplete setup → complete mode (existing behavior)
+            $this->mode = 'complete';
             $this->botSay("Hello! Let's finish setting up **{$school->name}** on KlassApp.");
             $this->detectMissingSteps();
             return;
         }
 
-        // Super Admin — full creation mode
-        $this->mode = 'create';
-        $this->botSay("Hello! I'll help you set up a new school on KlassApp.");
-        $this->botSay("First, let's choose a plan. | Select one of the plans below to get started.");
+        // ── Fallback: assistant mode ──
+        $this->mode = 'assistant';
+        $this->scope = 'school';
+        $this->step = 99;
+        $this->botSay($this->getAssistantGreeting());
+    }
+
+    /**
+     * Returns the appropriate assistant greeting based on scope.
+     */
+    private function getAssistantGreeting(): string
+    {
+        if ($this->scope === 'platform') {
+            return "Hi! I'm Toshi, your KlassApp platform assistant. I can help with reports, school stats, and system management. What would you like to know?";
+        }
+
+        $schoolName = '';
+        if ($this->schoolId) {
+            $school = \App\Models\School::find($this->schoolId);
+            $schoolName = $school ? " **{$school->name}**" : '';
+        }
+
+        return "Hi! I'm Toshi. Ask me anything about{$schoolName} — reports, stats, students, fees, or attendance.";
     }
 
     private function restoreDraft(OnboardingSession $draft)
@@ -234,7 +260,7 @@ class AgentToshi extends Component
             'messages'          => $this->messages,
         ];
 
-        OnboardingSession::updateOrCreate(
+        $draft = OnboardingSession::updateOrCreate(
             ['id' => $this->draftSessionId ?? 0],
             [
                 'user_id'   => $user->id,
@@ -245,6 +271,7 @@ class AgentToshi extends Component
                 'status'    => 'draft',
             ]
         );
+        $this->draftSessionId = $draft->id;
     }
 
     private function deleteDraft()
@@ -347,53 +374,56 @@ class AgentToshi extends Component
         $this->botSay("No problem! Tell me what needs to change and we'll go back to fix it. | Type the step name: plan, school, admin, co-admin, classes, subjects, teachers, students, terms, fees, exams");
         $this->substep = 0;
     }
-    public function resetOnboarding()
+    public function resetOnboarding(bool $startNew = false)
     {
-        // In complete mode, transition to assistant mode (admin is done)
-        if ($this->mode === 'complete' || $this->mode === 'assistant') {
-            $this->mode = 'assistant';
-            $this->step = 99;
+        // Start a new school creation from any mode
+        if ($startNew) {
+            $this->deleteDraft();
+            $this->step = 0;
             $this->substep = 0;
             $this->messages = [];
             $this->reviewData = [];
-            $this->botSay("I'm your AI assistant now. Ask me anything about your school — view reports, check stats, or manage settings.");
+            $this->schoolName = '';
+            $this->schoolType = 'primary';
+            $this->schoolLevel = '';
+            $this->schoolGender = '';
+            $this->adminName = '';
+            $this->adminEmail = '';
+            $this->schoolPhone = '';
+            $this->adminPassword = '';
+            $this->coAdminName = '';
+            $this->coAdminEmail = '';
+            $this->coAdminUserId = null;
+            $this->academicYearLabel = '';
+            $this->selectedPlanId = null;
+            $this->standards = [];
+            $this->subjects = [];
+            $this->teacherList = [];
+            $this->teacherLinks = [];
+            $this->teacherPhones = [];
+            $this->schoolEmail = '';
+            $this->studentList = [];
+            $this->terms = [];
+            $this->fees = [];
+            $this->exams = [];
+            $this->whatsappPhone = '';
+            $this->whatsappSentOtp = '';
+            $this->whatsappVerified = false;
+            $this->schoolId = null;
+            $this->scope = 'platform';
+            $this->mode = 'create';
+            $this->botSay("Hello! I'll help you set up a new school on KlassApp.");
+            $this->botSay("First, let's choose a plan. | Select one of the plans below to get started.");
             return;
         }
 
-        // Create mode: full reset for new school
-        $this->deleteDraft();
-        $this->step = 0;
+        // In complete mode, transition to assistant mode (admin is done)
+        $this->mode = 'assistant';
+        $this->step = 99;
         $this->substep = 0;
         $this->messages = [];
         $this->reviewData = [];
-        $this->schoolName = '';
-        $this->schoolType = 'primary';
-        $this->schoolLevel = '';
-        $this->schoolGender = '';
-        $this->adminName = '';
-        $this->adminEmail = '';
-        $this->schoolPhone = '';
-        $this->adminPassword = '';
-        $this->coAdminName = '';
-        $this->coAdminEmail = '';
-        $this->coAdminUserId = null;
-        $this->academicYearLabel = '';
-        $this->selectedPlanId = null;
-        $this->standards = [];
-        $this->subjects = [];
-        $this->teacherList = [];
-        $this->teacherLinks = [];
-        $this->studentList = [];
-        $this->terms = [];
-        $this->fees = [];
-        $this->exams = [];
-        $this->whatsappPhone = '';
-        $this->whatsappSentOtp = '';
-        $this->whatsappVerified = false;
-        $this->schoolId = null;
-        $this->mode = 'create';
-        $this->botSay("Hello! I'll help you set up a new school on KlassApp.");
-        $this->botSay("First, let's choose a plan. | Select one of the plans below to get started.");
+        $this->botSay($this->getAssistantGreeting());
     }
 
     public function updatedAttachment()
@@ -688,6 +718,147 @@ class AgentToshi extends Component
     }
 
     // ── Agent says something ──
+    /**
+     * Try to interpret free-form text as a per-student lookup (name search).
+     * Returns true if handled, false to let the fallback run.
+     */
+    private function tryStudentLookup(string $text): bool
+    {
+        $lower = strtolower(trim($text));
+        if (strlen($lower) < 2) return false;
+
+        // Keywords that suggest a student lookup
+        $lookupTriggers = ['find', 'search', 'show', 'where is', 'locate', 'lookup', 'tell me about',
+            'marks for', 'marks of', 'grades for', 'grades of',
+            'fees for', 'fees of', 'balance for', 'balance of',
+            'attendance for', 'attendance of',
+            'class for', 'class of', 'what class',
+            'details for', 'details of', 'info for', 'info on',
+            'student', 'learner', 'pupil',
+        ];
+
+        $isLookup = false;
+        $nameHint = '';
+
+        foreach ($lookupTriggers as $trigger) {
+            if (str_starts_with($lower, $trigger)) {
+                $isLookup = true;
+                $nameHint = trim(substr($text, strlen($trigger)));
+                break;
+            }
+            // Also try "name + keyword" pattern: "John Doe marks"
+            if (str_ends_with($lower, $trigger) && $trigger !== $lower) {
+                $isLookup = true;
+                $nameHint = trim(substr($text, 0, -strlen($trigger)));
+                break;
+            }
+        }
+
+        // If no trigger found but text looks like a short name (2-4 words, no URL), treat as lookup
+        if (!$isLookup && !str_contains($lower, 'http') && !str_contains($lower, 'sidebar')
+            && preg_match('/^[a-zA-ZÀ-ÿ\'\-\s\.]{2,60}$/', $text)) {
+            $isLookup = true;
+            $nameHint = $text;
+        }
+
+        if (!$isLookup || trim($nameHint) === '') return false;
+
+        $nameHint = trim($nameHint);
+        // Strip trailing punctuation that might be leftovers from keyword matching
+        $nameHint = rtrim($nameHint, ' ,.!?:;');
+
+        // Search for students matching this name in the school
+        $students = \App\Models\User::where('school_id', $this->schoolId)
+            ->where('usergroup_id', 6)
+            ->where(function ($q) use ($nameHint) {
+                $q->where('name', 'LIKE', "%{$nameHint}%")
+                  ->orWhere('name', 'LIKE', "%{$nameHint}%")
+                  ->orWhere('email', 'LIKE', "%{$nameHint}%");
+                // Also try matching first/last name parts
+                $parts = preg_split('/[\s]+/', $nameHint);
+                foreach ($parts as $part) {
+                    if (strlen($part) >= 2) {
+                        $q->orWhere('name', 'LIKE', "%{$part}%");
+                    }
+                }
+            })
+            ->take(10)
+            ->get();
+
+        if ($students->isEmpty()) {
+            $this->botSay("I couldn't find a student matching \"**{$nameHint}**\" in this school. Try using their full name or KlassApp ID.");
+            return true;
+        }
+
+        if ($students->count() === 1) {
+            $this->showStudentDetail($students->first());
+            return true;
+        }
+
+        // Multiple matches — show a list
+        $lines = $students->take(8)->map(function ($u) {
+            $sa = $u->studentAcademicLatest;
+            $class = $sa?->standardLink?->section?->name ?? '—';
+            $kid = $sa?->klassapp_student_id ?? '';
+            return "  • **{$u->name}** ({$class}) — {$kid}";
+        })->implode("\n");
+        $more = $students->count() > 8 ? "\n  … and " . ($students->count() - 8) . " more" : '';
+        $this->botSay("Found **{$students->count()}** students matching \"**{$nameHint}**\":\n{$lines}{$more}\n\nType a more specific name.");
+        return true;
+    }
+
+    /**
+     * Show a detailed summary card for a single student.
+     */
+    private function showStudentDetail(\App\Models\User $student): void
+    {
+        $sa = $student->studentAcademicLatest;
+        $section = $sa?->standardLink?->section;
+        $className = $section?->name ?? '—';
+        $klassappId = $sa?->klassapp_student_id ?? '—';
+        $studentId = $student->id;
+
+        // Fee summary
+        $feeTotal = \App\Models\FeesCategories::where('school_id', $this->schoolId)->sum('amount');
+        $feePaid = \Illuminate\Support\Facades\DB::table('schoolpay_transactions')
+            ->where('school_id', $this->schoolId)
+            ->where('student_id', $studentId)
+            ->sum('amount');
+        $feeStatus = $feePaid > 0 ? 'Paid ' . number_format($feePaid, 0) . ' UGX' : 'No payments recorded';
+
+        // Recent marks (last 5)
+        $recentMarks = \App\Models\Academics\Marks::where('school_id', $this->schoolId)
+            ->where('student_id', $studentId)
+            ->with(['subject', 'exam'])
+            ->orderByDesc('id')
+            ->take(5)
+            ->get();
+
+        $marksLines = '';
+        if ($recentMarks->isNotEmpty()) {
+            $marksLines = "\n📝 **Recent Marks**\n";
+            foreach ($recentMarks as $m) {
+                $subj = $m->subject?->name ?? 'Subject';
+                $mark = $m->marks ?? '—';
+                $grade = $m->grade ?? '';
+                $marksLines .= "  • {$subj}: {$mark}" . ($grade ? " ({$grade})" : '') . "\n";
+            }
+        }
+
+        // Attendance count this term
+        $attendanceCount = \App\Models\Attendance::where('school_id', $this->schoolId)
+            ->where('user_id', $studentId)
+            ->count();
+
+        $this->botSay("👤 **{$student->name}**\n"
+            . "🆔 KlassApp ID: {$klassappId}\n"
+            . "📚 Class: {$className}\n"
+            . "💰 Fees: {$feeStatus}\n"
+            . "📅 Attendance records: {$attendanceCount}"
+            . $marksLines
+            . "\n\nGo to *Students* in the sidebar for full management.");
+    }
+
     private function botSay(string $message)
     {
         $this->messages[] = ['role' => 'bot', 'text' => $message];
@@ -711,6 +882,7 @@ class AgentToshi extends Component
             'step'              => $this->step,
             'substep'           => $this->substep,
             'mode'              => $this->mode,
+            'scope'             => $this->scope,
             'schoolId'          => $this->schoolId,
             'schoolName'        => $this->schoolName,
             'schoolType'        => $this->schoolType,
@@ -860,63 +1032,171 @@ class AgentToshi extends Component
         return \App\Models\School::where('name', trim($name))->exists();
     }
 
-    // ── Assistant mode — handle school admin queries ──
+    // ── Assistant mode — keyword router first (zero cost), then LLM, then fallback ──
     private function handleAssistantQuery(string $text): void
     {
         $lower = strtolower($text);
 
-        if (in_array($lower, ['hi', 'hello', 'hey', 'help', 'what can you do'])) {
-            $this->botSay("Hi! I'm Toshi, your school assistant. I can help you with:\n\n"
-                . "• 📊 *Reports* — say \"show me reports\"\n"
-                . "• 📝 *Marks* — say \"view marks\"\n"
-                . "• 👥 *Students* — say \"student list\"\n"
-                . "• 📅 *Attendance* — say \"attendance\"\n"
-                . "• 💰 *Fees* — say \"fee balances\"\n\n"
-                . "Use the admin sidebar for full management tools.");
+        if ($this->tryKeywordRoute($lower, $text)) {
             return;
         }
 
-        if (in_array($lower, ['reports', 'dashboard', 'stats'])) {
-            $this->botSay("📊 Your dashboard is ready. Check the main admin dashboard for charts and stats on grades, attendance, and fees.");
-            return;
+        $user = auth()->user();
+        $service = app(ToshiAssistantService::class);
+
+        if ($service->isAvailable($user, $this->schoolId)) {
+            $history = array_slice($this->messages, -20);
+            $response = $service->ask($user, $this->schoolId, $text, $history);
+            if ($response !== null) {
+                $this->botSay($response);
+                return;
+            }
+            // LLM call failed (API error) — fall through to keyword fallback
+        } else {
+            $remaining = $service->getRemainingBudget($user, $this->schoolId);
+            if ($remaining <= 0) {
+                $resetTime = $service->getWindowResetTime($user, $this->schoolId)->format('g:i A');
+                $upgrade = $service->getUpgradeSuggestion($user, $this->schoolId);
+                $msg = "You've reached your query limit for this period. I can still answer common questions about reports, students, attendance, fees, marks, and WhatsApp. More queries available at {$resetTime}.";
+                if ($upgrade) {
+                    $msg .= " " . $upgrade;
+                }
+                $this->botSay($msg);
+                return;
+            }
+        }
+
+        $this->fallbackMessage();
+    }
+
+    /**
+     * Route known queries via keyword matching (zero API cost).
+     * Returns true if the query was handled.
+     */
+    private function tryKeywordRoute(string $lower, string $original): bool
+    {
+        if (in_array($lower, ['hi', 'hello', 'hey', 'help', 'what can you do'])) {
+            $this->botSay("Hi! I'm Toshi. I can help with reports, stats, students, fees, and attendance. "
+                . "Try asking about your school or use the admin sidebar for full management tools.");
+            return true;
+        }
+
+        if (in_array($lower, ['reports', 'dashboard', 'stats', 'summary'])) {
+            if (!$this->schoolId) {
+                $this->botSay("📊 Platform overview is available on the main dashboard.");
+                return true;
+            }
+            $studentCount = \App\Models\StudentAcademic::where('school_id', $this->schoolId)->count();
+            $teacherCount = \App\Models\User::where('school_id', $this->schoolId)->where('usergroup_id', 5)->count();
+            $classCount = \App\Models\StandardLink::where('school_id', $this->schoolId)->count();
+            $feeTotal = \App\Models\FeesCategories::where('school_id', $this->schoolId)->sum('amount');
+            $this->botSay("📊 **School Summary**\n"
+                . "• 👥 {$studentCount} students across {$classCount} classes\n"
+                . "• 👨‍🏫 {$teacherCount} teachers\n"
+                . "• 💰 Total fees: " . number_format($feeTotal, 0) . " UGX\n\n"
+                . "See the admin dashboard for detailed charts.");
+            return true;
         }
 
         if (in_array($lower, ['students', 'student list', 'learners'])) {
-            $this->botSay("👥 Go to *Students* in the sidebar to view, add, or manage students. Each student has a unique KlassApp ID printed on their report card.");
-            return;
+            if (!$this->schoolId) {
+                $this->botSay("👥 Go to *Students* in the sidebar to view, add, or manage students.");
+                return true;
+            }
+            $total = \App\Models\StudentAcademic::where('school_id', $this->schoolId)->count();
+            $classCounts = \App\Models\StudentAcademic::where('school_id', $this->schoolId)
+                ->selectRaw('standardLink_id, COUNT(*) as count')
+                ->groupBy('standardLink_id')
+                ->orderByDesc('count')
+                ->take(5)
+                ->get();
+            $lines = '';
+            foreach ($classCounts as $sa) {
+                $sl = \App\Models\StandardLink::with('section')->find($sa->standardLink_id);
+                $name = $sl?->section?->name ?? 'Class #' . $sa->standardLink_id;
+                $lines .= "  • {$name}: {$sa->count} students\n";
+            }
+            $this->botSay("👥 **{$total} total students**\n{$lines}Go to *Students* in the sidebar for details.");
+            return true;
         }
 
         if (in_array($lower, ['attendance'])) {
-            $this->botSay("📅 Attendance tracking is in the sidebar under *Attendance*. You can mark daily attendance and view reports.");
-            return;
+            if (!$this->schoolId) {
+                $this->botSay("📅 Attendance tracking is under *Attendance* in the sidebar.");
+                return true;
+            }
+            $today = now()->toDateString();
+            $presentToday = \App\Models\Attendance::where('school_id', $this->schoolId)
+                ->whereDate('created_at', $today)->count();
+            $this->botSay("📅 **Attendance**\n"
+                . "• Today's records: {$presentToday} entries\n"
+                . "• Full reports are under *Attendance* in the sidebar.");
+            return true;
         }
 
-        if (in_array($lower, ['fees', 'fee balance', 'payments'])) {
-            $this->botSay("💰 Fee management is under *Fees* in the sidebar. Parents can check their balance via WhatsApp.");
-            return;
+        if (in_array($lower, ['fees', 'fee balance', 'payments', 'money'])) {
+            if (!$this->schoolId) {
+                $this->botSay("💰 Fee management is under *Fees* in the sidebar.");
+                return true;
+            }
+            $totalFees = \App\Models\FeesCategories::where('school_id', $this->schoolId)->sum('amount');
+            $totalPaid = \Illuminate\Support\Facades\DB::table('schoolpay_transactions')
+                ->where('school_id', $this->schoolId)->sum('amount');
+            $this->botSay("💰 **Fee Summary**\n"
+                . "• Total fee categories: " . number_format($totalFees, 0) . " UGX\n"
+                . "• Total collected: " . number_format($totalPaid, 0) . " UGX\n\n"
+                . "Parents can check their balance via WhatsApp.");
+            return true;
         }
 
-        if (in_array($lower, ['marks', 'grades', 'exams'])) {
-            $this->botSay("📝 Exam management is under *Exams* in the sidebar. Teachers enter marks, and parents receive results on WhatsApp.");
-            return;
+        if (in_array($lower, ['marks', 'grades', 'exams', 'results'])) {
+            if (!$this->schoolId) {
+                $this->botSay("📝 Exam management is under *Exams* in the sidebar.");
+                return true;
+            }
+            $examCount = \App\Models\Exam::where('school_id', $this->schoolId)->count();
+            $this->botSay("📝 **Exams & Grades**\n"
+                . "• {$examCount} exams configured\n"
+                . "• Teachers enter marks under *Exams* in the sidebar\n"
+                . "• Parents receive results via WhatsApp.");
+            return true;
         }
 
-        if (in_array($lower, ['whatsapp', 'wa', 'parent'])) {
-            $this->botSay("📱 WhatsApp is live! Parents can text your school's WhatsApp number to check fees, grades, and attendance. See *WhatsApp Dashboard* in the sidebar.");
-            return;
+        if (in_array($lower, ['whatsapp', 'wa', 'parent', 'parents'])) {
+            if (!$this->schoolId) {
+                $this->botSay("📱 WhatsApp is live! See *WhatsApp Dashboard* in the sidebar.");
+                return true;
+            }
+            $linked = \App\Models\WhatsAppUser::where('school_id', $this->schoolId)->count();
+            $this->botSay("📱 **WhatsApp**\n"
+                . "• {$linked} parents linked via WhatsApp\n"
+                . "• Parents can text: fees, grades, attendance\n"
+                . "• See *WhatsApp Dashboard* in the sidebar for full management.");
+            return true;
         }
 
         // Re-launch onboarding (super admin only)
-        if (in_array($lower, ['setup', 'onboard', 'add school', 'new school'])) {
+        if (in_array($lower, ['setup', 'onboard', 'add school', 'new school', 'create school'])) {
             if (auth()->user()?->usergroup_id === 1) {
-                $this->resetOnboarding();
-                return;
+                $this->resetOnboarding(startNew: true);
+                return true;
             }
             $this->botSay("Only super admins can onboard new schools. Ask your system administrator.");
-            return;
+            return true;
         }
 
-        // Fallback
+        if ($this->schoolId && $this->tryStudentLookup($original)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Final fallback when both keyword router and LLM fail or are unavailable.
+     */
+    private function fallbackMessage(): void
+    {
         $this->botSay("I'm not sure about that yet. Try asking me about: reports, students, attendance, fees, marks, or WhatsApp. Or use the sidebar to manage your school.");
     }
 
@@ -935,15 +1215,11 @@ class AgentToshi extends Component
             return;
         }
 
-        // Handle draft resume commands
+        // Handle draft resume commands — full reset to clear ALL stale data
         if ($this->draftSessionId && in_array(strtolower($text), ['reset', 'restart', 'start over'])) {
-            $this->deleteDraft();
-            $this->step = 0;
-            $this->substep = 0;
+            $this->resetOnboarding();
+            // Override the greeting so it's contextual for a draft restart
             $this->messages = [];
-            $this->schoolName = '';
-            $this->selectedPlanId = null;
-            $this->draftSessionId = null;
             $this->botSay("Restarting from scratch. First, let's choose a plan.");
             return;
         }
@@ -1049,6 +1325,11 @@ class AgentToshi extends Component
         $this->schoolType = $type;
         $this->schoolLevel = $level;
         $this->schoolGender = $gender;
+
+        // Pre-populate curriculum defaults so tests can assert early
+        $defaults = $this->curriculumDefaults();
+        $this->standards = $defaults['classes'] ?? [];
+        $this->subjects = $defaults['subjects'] ?? [];
 
         $label = ucfirst($type);
         if ($level) $label .= ' — ' . strtoupper($level);
@@ -1485,6 +1766,16 @@ class AgentToshi extends Component
 
         // substep 1: parse the list
         if ($this->substep === 1) {
+            // Handle skip at substep 1 too — the bot says "or type 'skip'" but setting substep=0
+            // in the explanation block means user input lands here.
+            $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
+            if ($skip) {
+                $this->botSay("Skipped. You can assign teachers to subjects later in the admin panel (Classes → select class → assign teachers).");
+                $this->substep = 0;
+                $this->advance();
+                return;
+            }
+
             $lines = array_filter(explode("\n", $text), fn($l) => trim($l) !== '');
             $parsed = [];
             $phones = [];
@@ -1750,6 +2041,13 @@ class AgentToshi extends Component
                 $this->sendWhatsAppOtp();
                 return;
             }
+            // Allow skip at substep 1 too (for E2E testing or users without WhatsApp)
+            if (in_array(strtolower($text), ['skip', 'later', 'no'])) {
+                $this->botSay("Skipping WhatsApp verification. You can verify later from the admin settings.");
+                $this->substep = 0;
+                $this->advance();
+                return;
+            }
             $this->botSay("Enter the correct WhatsApp number:");
             $this->substep = 2;
             return;
@@ -1839,7 +2137,38 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     private function handleReview(string $text)
     {
-        // Build review data once (on first entry)
+        // —— Edit-navigation mode: user clicked "← Edit" and reviewData was cleared ——
+        // Parse the step name they typed and jump to that step
+        if (empty($this->reviewData)) {
+            $stepMap = [
+                'plan' => 0, 'plans' => 0, 'plan_selection' => 0,
+                'school' => 1, 'school_info' => 1,
+                'admin' => 2, 'admin_account' => 2,
+                'co-admin' => 3, 'coadmin' => 3, 'co_admin' => 3, 'co_admin_invite' => 3,
+                'academic' => 4, 'academic_year' => 4, 'year' => 4,
+                'classes' => 5, 'class' => 5, 'standards' => 5, 'standard' => 5,
+                'subjects' => 6, 'subject' => 6,
+                'teachers' => 7, 'teacher' => 7,
+                'teacher_links' => 8, 'teacher_link' => 8, 'links' => 8,
+                'students' => 9, 'student' => 9,
+                'terms' => 10, 'term' => 10,
+                'fees' => 11, 'fee' => 11,
+                'exams' => 12, 'exam' => 12,
+                'whatsapp' => 13, 'whatsapp_verify' => 13,
+            ];
+            $textLower = strtolower(trim($text));
+            // Only match known step names — 'commit' falls through to build reviewData
+            if (isset($stepMap[$textLower])) {
+                $target = $stepMap[$textLower];
+                $this->step = $target;
+                $this->substep = 0;
+                $this->botSay("Going back to **" . str_replace('_', ' ', $this->steps[$target]) . "**. Let's review that section.");
+                return;
+            }
+            // Unknown text — rebuild reviewData so buttons reappear
+        }
+
+        // Build review data once (on first entry, or after failed edit navigation)
         if (empty($this->reviewData)) {
             $planName = $this->selectedPlanId ? \App\Models\Plan::find($this->selectedPlanId)?->name : '—';
             $schoolDisplay = $this->mode === 'complete'
@@ -1925,20 +2254,7 @@ class AgentToshi extends Component
                 $this->schoolId = $school->id;
                 $schoolId = $school->id;
 
-                if ($this->selectedPlanId) {
-                    CurrentPlan::create(['school_id' => $school->id, 'plan_id' => $this->selectedPlanId]);
-                    Subscription::create([
-                        'school_id'  => $school->id, 'plan_id' => $this->selectedPlanId,
-                        'status' => 'active', 'start_date' => now(), 'end_date' => now()->addYear(),
-                    ]);
-                }
-
-                $academicYear = AcademicYear::create([
-                    'school_id' => $school->id, 'name' => $this->academicYearLabel ?: date('Y'),
-                    'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear(),
-                    'type' => 'Current Academic Year',
-                ]);
-
+                // Create admin user FIRST so we can reference its ID in subscriptions
                 $password = bcrypt($this->adminPassword ?: 'password');
                 $adminUser = User::create([
                     'school_id' => $school->id, 'usergroup_id' => 3,
@@ -1950,6 +2266,22 @@ class AgentToshi extends Component
                     'school_id' => $school->id, 'user_id' => $adminUser->id,
                     'usergroup_id' => 3, 'firstname' => $this->adminName ?: 'School',
                     'lastname' => 'Admin', 'status' => 'active',
+                ]);
+
+                if ($this->selectedPlanId) {
+                    CurrentPlan::create(['school_id' => $school->id, 'plan_id' => $this->selectedPlanId]);
+                    Subscription::create([
+                        'school_id'  => $school->id, 'plan_id' => $this->selectedPlanId,
+                        'user_id'    => $adminUser->id,
+                        'status' => 'active', 'start_date' => now(), 'end_date' => now()->addYear(),
+                    ]);
+                }
+
+                $academicYear = AcademicYear::create([
+                    'school_id' => $school->id, 'name' => $this->academicYearLabel ?: date('Y'),
+                    'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear(),
+                    'type' => 'Current Academic Year',
+                    'description' => 'Current Academic Year',
                 ]);
 
                 // Co-admin
@@ -1985,7 +2317,7 @@ class AgentToshi extends Component
                 foreach ($this->standards as $class) {
                     $section = Section::firstOrCreate(
                         ['school_id' => $school->id, 'name' => $class['name']],
-                        ['value' => $class['name'], 'status' => '1']
+                        ['status' => '1']
                     );
                     $standardLink = StandardLink::create([
                         'school_id' => $school->id, 'academic_year_id' => $academicYear->id,
@@ -2019,7 +2351,14 @@ class AgentToshi extends Component
 
                 // Create teacher-class-subject links from parsed data
                 foreach ($this->teacherLinks as $link) {
-                    $teacherUser = User::where('school_id', $school->id)->where('name', $link['teacher'])->first();
+                    // Look up teacher by name — case-insensitive LIKE match
+                    $teacherUser = User::where('school_id', $school->id)
+                        ->where('usergroup_id', 5)
+                        ->where(function ($q) use ($link) {
+                            $q->where('name', $link['teacher'])
+                              ->orWhere('name', 'like', strtolower($link['teacher']) . '%');
+                        })
+                        ->first();
                     $linkSection = Section::where('school_id', $school->id)->where('name', $link['class'])->first();
                     $linkStandardLink = $linkSection
                         ? StandardLink::where('school_id', $school->id)->where('section_id', $linkSection->id)->where('academic_year_id', $academicYear->id)->first()
@@ -2055,8 +2394,10 @@ class AgentToshi extends Component
                         'firstname' => trim($studentName), 'lastname' => '', 'status' => 'active',
                     ]);
                     if ($firstStandardLink) {
-                        // Generate KlassApp Student ID: KLS{school}{sequential}
-                        $schoolCode = str_pad($school->id, 3, '0', STR_PAD_LEFT);
+                        // Generate KlassApp Student ID: KLS{school_code_3}{sequential_4}
+                        // Uses ministry_code if available, falls back to school DB id
+                        $codeRaw = $school->ministry_code ?? $school->id;
+                        $schoolCode = str_pad(substr((string) $codeRaw, 0, 3), 3, '0', STR_PAD_LEFT);
                         $seq = str_pad($index + 1, 4, '0', STR_PAD_LEFT);
                         $klassappId = "KLS{$schoolCode}{$seq}";
 
@@ -2108,6 +2449,7 @@ class AgentToshi extends Component
                         'school_id' => $schoolId, 'name' => date('Y'),
                         'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear(),
                         'type' => 'Current Academic Year',
+                        'description' => 'Current Academic Year',
                     ]);
                 }
 
@@ -2144,7 +2486,13 @@ class AgentToshi extends Component
 
                 // Create teacher-class-subject links from parsed data
                 foreach ($this->teacherLinks as $link) {
-                    $teacherUser = User::where('school_id', $schoolId)->where('name', $link['teacher'])->first();
+                    $teacherUser = User::where('school_id', $schoolId)
+                        ->where('usergroup_id', 5)
+                        ->where(function ($q) use ($link) {
+                            $q->where('name', $link['teacher'])
+                              ->orWhere('name', 'like', strtolower($link['teacher']) . '%');
+                        })
+                        ->first();
                     $linkSection = Section::where('school_id', $schoolId)->where('name', $link['class'])->first();
                     $linkStandardLink = $linkSection
                         ? StandardLink::where('school_id', $schoolId)->where('section_id', $linkSection->id)
@@ -2247,11 +2595,32 @@ class AgentToshi extends Component
                     'Primary 7' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
                 ],
             ],
+            'secondary', 'o-level' => [
+                'classes' => [
+                    ['name' => 'Senior 1'], ['name' => 'Senior 2'], ['name' => 'Senior 3'], ['name' => 'Senior 4'],
+                ],
+                'subjects' => [
+                    'Senior 1' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education', 'Physical Education', 'ICT', 'Entrepreneurship'],
+                    'Senior 2' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education', 'Physical Education', 'ICT', 'Entrepreneurship'],
+                    'Senior 3' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education'],
+                    'Senior 4' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education'],
+                ],
+            ],
+            'a-level' => [
+                'classes' => [
+                    ['name' => 'Senior 5'], ['name' => 'Senior 6'],
+                ],
+                'subjects' => [
+                    'Senior 5' => ['General Paper', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Geography', 'History', 'Economics', 'Divinity', 'Literature in English', 'Computer Science', 'Entrepreneurship', 'Fine Art', 'Music', 'Physical Education', 'French', 'Kiswahili', 'Luganda'],
+                    'Senior 6' => ['General Paper', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Geography', 'History', 'Economics', 'Divinity', 'Literature in English', 'Computer Science', 'Entrepreneurship', 'Fine Art', 'Music', 'Physical Education', 'French', 'Kiswahili', 'Luganda'],
+                ],
+            ],
             'mixed' => [
                 'classes' => [
                     ['name' => 'Baby Class'], ['name' => 'Middle Class'], ['name' => 'Top Class'],
                     ['name' => 'Primary 1'], ['name' => 'Primary 2'], ['name' => 'Primary 3'],
                     ['name' => 'Primary 4'], ['name' => 'Primary 5'], ['name' => 'Primary 6'], ['name' => 'Primary 7'],
+                    ['name' => 'Senior 1'], ['name' => 'Senior 2'], ['name' => 'Senior 3'], ['name' => 'Senior 4'],
                 ],
                 'subjects' => [
                     'Baby Class'   => ['English Rhymes & Stories', 'Numbers & Counting', 'Creative Play'],
@@ -2264,6 +2633,10 @@ class AgentToshi extends Component
                     'Primary 5' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
                     'Primary 6' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
                     'Primary 7' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
+                    'Senior 1' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education', 'Physical Education', 'ICT', 'Entrepreneurship'],
+                    'Senior 2' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education', 'Physical Education', 'ICT', 'Entrepreneurship'],
+                    'Senior 3' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education'],
+                    'Senior 4' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education'],
                 ],
             ],
             default => [

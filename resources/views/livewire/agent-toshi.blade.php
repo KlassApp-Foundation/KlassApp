@@ -96,9 +96,10 @@
             <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
                 <div style="font-size: 12px; font-weight: 600; color: #64748B; margin-bottom: 4px;">→ Category</div>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button wire:click="setSchoolType('nursery')" class="toshi-btn">Nursery</button>
                     <button wire:click="setSchoolType('primary','','mixed')" class="toshi-btn">Primary</button>
                     <button wire:click="setSchoolType('secondary','o-level','mixed')" class="toshi-btn">Secondary</button>
-                    <button wire:click="setSchoolType('mixed','both','mixed')" class="toshi-btn">Primary &amp; Secondary (Mixed)</button>
+                    <button wire:click="setSchoolType('mixed','both','mixed')" class="toshi-btn">All Levels</button>
                 </div>
             </div>
             @endif
@@ -205,16 +206,23 @@
             </div>
             @endif
 
-            {{-- Step progress indicator --}}
+            {{-- Step progress bar — dots for all 15 steps --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] !== 'review')
-            <div style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; margin: 0 10px; background: #F8FAFC; border-radius: 8px; font-size: 11px; color: #64748B;">
-                <span style="font-weight: 600; color: #0F172A;">{{ $step + 1 }}/{{ count($steps) }}</span>
-                <span style="color: #94A3B8;">·</span>
-                <span>{{ ucfirst(str_replace('_', ' ', $steps[$step] ?? '')) }}</span>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin: 0 10px; background: #F8FAFC; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 3px; flex: 1;">
+                    @foreach($steps as $i => $name)
+                        @php
+                            $isDone = $i < $step;
+                            $isCurrent = $i === $step;
+                        @endphp
+                        <div style="flex: 1; height: 4px; border-radius: 2px; background: {{ $isDone ? '#22C55E' : ($isCurrent ? '#0F172A' : '#E2E8F0') }};{{ $isCurrent ? ' box-shadow: 0 0 0 2px rgba(15,23,42,0.15);' : '' }}"></div>
+                    @endforeach
+                </div>
+                <span style="font-size: 10px; font-weight: 600; color: #64748B; white-space: nowrap;">{{ $step + 1 }}/{{ count($steps) }}</span>
                 @if(in_array($steps[$step] ?? '', $mandatorySteps ?? []))
-                <span style="background: #FEF2F2; color: #DC2626; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 600;">Required</span>
+                <span style="background: #FEF2F2; color: #DC2626; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap;">Required</span>
                 @else
-                <span style="background: #F0FDF4; color: #16A34A; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 600;">Optional</span>
+                <span style="background: #F0FDF4; color: #16A34A; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap;">Optional</span>
                 @endif
             </div>
             @endif
@@ -442,9 +450,10 @@
                         <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;">
                             <div style="font-size: 12px; font-weight: 600; color: #64748B; margin-bottom: 4px;">→ Category</div>
                             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                <button wire:click="setSchoolType('nursery')" class="toshi-btn">Nursery</button>
                                 <button wire:click="setSchoolType('primary','','mixed')" class="toshi-btn">Primary</button>
                                 <button wire:click="setSchoolType('secondary','o-level','mixed')" class="toshi-btn">Secondary</button>
-                                <button wire:click="setSchoolType('mixed','both','mixed')" class="toshi-btn">Primary &amp; Secondary (Mixed)</button>
+                                <button wire:click="setSchoolType('mixed','both','mixed')" class="toshi-btn">All Levels</button>
                             </div>
                         </div>
                         @endif
