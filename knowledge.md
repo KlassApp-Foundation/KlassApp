@@ -1,10 +1,10 @@
 # KlassApp Project Knowledge
 
-## Current Status: June 23, 2026
+## Current Status: June 30, 2026
 
 ### Git
-- **Branch**: `main` (dirty — School Pay + list buttons work unstaged)
-- **Last commit**: `a58f3d0` — "fix: replace Kampala High School with Kabale Junior School in testimonials (#105)"
+- **Branch**: `main`
+- **HEAD**: `b0ef137` — "fix: include site subadmin (usergroup 2) in Toshi access"
 - **Remote**: `origin/main` (GitHub: Elijah-ug/KlassApp)
 
 ---
@@ -440,3 +440,11 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Key decisions**: E2E test lives outside repo at `/var/folders/d1/.../toshi-test.mjs`. Uses Livewire JS API (`lw.call()`) instead of DOM clicks (unreliable with Livewire 3). Always "reset" on draft (no generic resume handler). Unique timestamp-suffixed data per run to avoid DB collisions.
 - **Status**: ✅ Toshi onboarding working end-to-end. Known critical issues remain: editBeforeCommit() dead end, no secondary school curriculum defaults, zero PHPUnit coverage.
 - **Next**: Fix editBeforeCommit() to allow step navigation from review card. Add secondary curriculum. Write PHPUnit tests.
+
+### 2026-06-30: Toshi architecture audit, universal layout refactor, LLM activation
+- **Work done**: Full Toshi UI audit across admin and superadmin dashboards. Found Vue 2 strips `<style>` tags inside `#app` — Toshi was inside `#app` on superadmin (styles deleted), outside `#app` on admin (styles survived). Refactored Toshi from per-dashboard inclusion to universal layout-level component. Added `defer` to `app.js` on both main layouts. Fixed superadmin layout missing `@yield('outside-app')`. Gated Toshi to usergroups 1, 2, 3 at both view and component levels. Activated LLM with Nvidia NIM key across local and production. Fixed auth page styles being stripped by Vue (moved `<style>` to `@push('styles')` outside `#app`). Fixed Google Fonts `@import` inside body `<style>` by converting to `<link>` in layout `<head>`. Production asset rebuild (JS 35MB→4.5MB, CSS 1.6MB→66KB, sourcemaps removed). Added gzip + 1-year cache headers for static assets. Set session cookie Secure flag for HTTPS. Created mucu super admin on production DB.
+- **Files modified**: `resources/views/layouts/app.blade.php` (add Toshi + defer), `resources/views/layouts/superadmin-app.blade.php` (add Toshi + `@yield('outside-app')` + defer), `resources/views/superadmin/dashboard.blade.php` (remove per-dashboard Toshi), `resources/views/admin/dashboard/dashboard.blade.php` (remove per-dashboard Toshi), `app/Livewire/AgentToshi.php` (usergroup gate), `resources/views/auth/login.blade.php`, `resources/views/auth/register.blade.php`, `resources/views/auth/passwords/reset.blade.php`, `resources/views/auth/passwords/email.blade.php`, `resources/views/auth/verify.blade.php` (move styles outside Vue `#app`), `resources/views/layouts/empty.blade.php` (fonts to `<link>`), `webpack.mix.js` (conditional sourcemaps), `public/` (production rebuild), `.env.example`
+- **Key decisions**: Toshi lives at layout level, not per-dashboard — any authenticated page using `layouts/app.blade.php` or `layouts/superadmin-app.blade.php` gets it automatically. LLM base URL is `https://integrate.api.nvidia.com/v1` (not `api.nvcf.nvidia.com`). Toshi access gated to usergroups 1, 2, 3 — expands later. Draft resume via `OnboardingSession` DB table is superadmin-only.
+- **Status**: ✅ Done
+- **Edge cases flagged**: Shell env vars override `.env` because `phpdotenv` doesn't overwrite existing environment variables. NIM base URL changed from `api.nvcf.nvidia.com` to `integrate.api.nvidia.com`.
+
