@@ -1,8 +1,7 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @extends('layouts.empty')
 
-@section('content')
-
+@push('styles')
 <style>
   .klass-register-page {
     width: 100%;
@@ -431,6 +430,9 @@
     }
   }
 </style>
+@endpush
+
+@section('content')
 
 <div class="klass-register-page">
   <div class="klass-register-card">

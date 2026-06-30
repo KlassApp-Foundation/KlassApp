@@ -1,8 +1,7 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @extends('layouts.empty')
 
-@section('content')
-
+@push('styles')
 <style>
   .klass-login-page {
     width: 100%;
@@ -390,6 +389,9 @@
     }
   }
 </style>
+@endpush
+
+@section('content')
 
 <div class="klass-login-page">
   <div class="klass-login-card">

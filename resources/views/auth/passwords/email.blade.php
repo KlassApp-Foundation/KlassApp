@@ -1,7 +1,7 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @extends('layouts.empty')
 
-@section('content')
+@push('styles')
 <style>
 
     .klass-auth-page {
@@ -135,6 +135,9 @@
         .klass-auth-card { padding: 24px; }
     }
 </style>
+@endpush
+
+@section('content')
 
 <div class="klass-auth-page">
     <div class="klass-auth-card">
