@@ -110,8 +110,8 @@ class AgentToshi extends Component
         $user = auth()->user();
         if (!$user) return;
 
-        // Only super admin (1) and school admin (3) can use Toshi
-        if (!in_array($user->usergroup_id, [1, 3])) return;
+        // Only super admin (1), site subadmin (2), and school admin (3) can use Toshi
+        if (!in_array($user->usergroup_id, [1, 2, 3])) return;
 
         // ── Restore state from session (survives page refresh) ──
         if ($this->restoreState()) {
