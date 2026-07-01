@@ -894,10 +894,11 @@ class AgentToshi extends Component
         // Spreadsheet/CSV path — try column-based extraction
         if (empty($dataRows)) return [];
 
-        // Find the name column index
+        // Find the name column index (case-insensitive)
         $nameIdx = null;
-        foreach (['firstname', 'name', 'First Name', 'Name', 'student_name', 'teacher_name', 'full_name'] as $col) {
-            $idx = array_search($col, $headers);
+        $lowerHeaders = array_map('strtolower', $headers);
+        foreach (['firstname', 'name', 'first_name', 'student_name', 'teacher_name', 'full_name'] as $col) {
+            $idx = array_search($col, $lowerHeaders);
             if ($idx !== false) { $nameIdx = $idx; break; }
         }
 
