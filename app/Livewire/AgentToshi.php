@@ -83,10 +83,9 @@ class AgentToshi extends Component
     public $showFeeForm = false;
     public $feeFormName = '';
     public $feeFormAmount = '';
-    public $feeFormMethod = '';
-    public $feeFormReference = '';
-    public $feeFormDate = '';
-    public $feeFormNotes = '';
+    public $feeFormLevel = '';
+    public $feeFormClass = '';
+    public $feeFormTerm = '';
     public $terms = [];
     public $fees = [];
     public $exams = [];
@@ -694,10 +693,9 @@ class AgentToshi extends Component
         $this->showFeeForm = true;
         $this->feeFormName = '';
         $this->feeFormAmount = '';
-        $this->feeFormMethod = '';
-        $this->feeFormReference = '';
-        $this->feeFormDate = now()->toDateString();
-        $this->feeFormNotes = '';
+        $this->feeFormLevel = '';
+        $this->feeFormClass = '';
+        $this->feeFormTerm = '';
         $this->substep = 6;
         $this->botSay("Let's add fee categories. Use the form below to add each fee.");
     }
@@ -706,38 +704,27 @@ class AgentToshi extends Component
     {
         $name = trim($this->feeFormName);
         $amount = trim($this->feeFormAmount);
-        $method = trim($this->feeFormMethod);
-        $ref = trim($this->feeFormReference);
         if ($name === '') return;
         if ($amount === '' || !is_numeric($amount) || (float)$amount <= 0) {
             $this->botSay("Please enter a valid amount for **{$name}**.");
-            return;
-        }
-        if ($method === '') {
-            $this->botSay("Please select a payment method for **{$name}**.");
-            return;
-        }
-        if ($ref === '') {
-            $this->botSay("Please enter a reference for **{$name}**.");
             return;
         }
 
         $this->actionData['fees'][] = [
             'name' => $name,
             'amount' => $amount,
-            'method' => $method,
-            'reference' => $ref,
-            'date' => $this->feeFormDate ?: now()->toDateString(),
-            'notes' => $this->feeFormNotes,
+            'level' => $this->feeFormLevel,
+            'class' => $this->feeFormClass,
+            'term' => $this->feeFormTerm,
         ];
         $this->feeFormName = '';
         $this->feeFormAmount = '';
-        $this->feeFormMethod = '';
-        $this->feeFormReference = '';
-        $this->feeFormNotes = '';
+        $this->feeFormLevel = '';
+        $this->feeFormClass = '';
+        $this->feeFormTerm = '';
 
         $count = count($this->actionData['fees']);
-        $this->botSay("Added **{$name}** ({$count} so far). Add another or click **Continue**.");
+        $this->botSay("Added **{$name}** at " . number_format((float)$amount, 0) . " UGX ({$count} so far). Add another or click **Continue**.");
     }
 
     public function removeFee(int $index): void

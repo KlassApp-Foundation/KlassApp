@@ -287,32 +287,32 @@
                 </div>
                 @endif
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <input type="text" wire:model="feeFormName" placeholder="Fee category name *"
+                    <input type="text" wire:model="feeFormName" placeholder="Fee name *"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                    <select wire:model="feeFormMethod"
+                    <select wire:model="feeFormLevel"
                             style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
-                        <option value="">Payment method *</option>
-                        <option value="cash">Cash</option>
-                        <option value="cheque">Cheque</option>
-                        <option value="mobile_money">Mobile Money</option>
-                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="">Level (optional)</option>
+                        <option value="nursery">Nursery</option>
+                        <option value="primary">Primary</option>
+                        <option value="secondary">Secondary</option>
+                        <option value="all">All Levels</option>
                     </select>
-                    <input type="text" wire:model="feeFormReference" placeholder="Reference *"
+                    <input type="text" wire:model="feeFormClass" placeholder="Class (optional)" list="fee-class-list"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                    <div style="display: flex; gap: 8px;">
-                        <div style="flex: 1;">
-                            <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Date</div>
-                            <input type="date" wire:model="feeFormDate"
-                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                        </div>
-                        <div style="flex: 1;">
-                            <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Notes</div>
-                            <input type="text" wire:model="feeFormNotes" placeholder="Optional"
-                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                        </div>
-                    </div>
+                    <datalist id="fee-class-list">
+                        @foreach($this->standards ?? [] as $std)
+                        <option value="{{ $std['name'] }}">
+                        @endforeach
+                    </datalist>
+                    <select wire:model="feeFormTerm"
+                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                        <option value="">Term (optional)</option>
+                        <option value="Term I">Term I</option>
+                        <option value="Term II">Term II</option>
+                        <option value="Term III">Term III</option>
+                    </select>
                     <div style="display: flex; gap: 8px;">
                         <button wire:click="saveFee" type="button"
                                 style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
