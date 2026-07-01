@@ -72,6 +72,33 @@
                     </div>
                 </div>
             @endforeach
+            {{-- Subject inline form --}}
+            @if($showSubjectForm)
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 10px;">Add Subject</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" wire:model="subjectFormName" placeholder="Subject name *"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <input type="text" wire:model="subjectFormCode" placeholder="Subject code (optional)"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <select wire:model="subjectFormType"
+                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; background: white; font-family: 'DM Sans', sans-serif;">
+                        <option value="core">Core</option>
+                        <option value="elective">Elective</option>
+                    </select>
+                    <div style="display: flex; gap: 8px;">
+                        <button wire:click="saveSubject" type="button"
+                                style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                            + Add Subject
+                        </button>
+                        <button wire:click="doneSubjects" type="button"
+                                style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                            Done ({{ count($this->actionData['subjects'] ?? []) }})
+                        </button>
+                    </div>
+                </div>
+            </div>
+            @endif
 
             {{-- Plan Selection Buttons --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection' && !$selectedPlanId)
@@ -583,7 +610,34 @@
                                 </div>
                             @endif
                         @endforeach
-
+                                    {{-- Subject inline form --}}
+                                    @if($showSubjectForm)
+                                    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 10px;">Add Subject</div>
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <input type="text" wire:model="subjectFormName" placeholder="Subject name *"
+                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                            <input type="text" wire:model="subjectFormCode" placeholder="Subject code (optional)"
+                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                            <select wire:model="subjectFormType"
+                                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; background: white; font-family: 'DM Sans', sans-serif;">
+                                                <option value="core">Core</option>
+                                                <option value="elective">Elective</option>
+                                            </select>
+                                            <div style="display: flex; gap: 8px;">
+                                                <button wire:click="saveSubject" type="button"
+                                                        style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                    + Add Subject
+                                                </button>
+                                                <button wire:click="doneSubjects" type="button"
+                                                        style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                                    Done ({{ count($this->actionData['subjects'] ?? []) }})
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
+                        
                         {{-- Buttons inside maximize modal --}}
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection' && !$selectedPlanId)
                         <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;">

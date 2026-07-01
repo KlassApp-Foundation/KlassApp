@@ -62,6 +62,11 @@ class AgentToshi extends Component
     public $studentList = [];
     public $hasNursery = null; // null = not asked, true/false for primary schools
     public $streamClassIndex = 0; // tracks which class we're adding streams for
+    public $showSubjectForm = false;
+    public $subjectFormName = '';
+    public $subjectFormCode = '';
+    public $subjectFormType = 'core';
+    public $subjectFormClass = '';
     public $terms = [];
     public $fees = [];
     public $exams = [];
@@ -457,7 +462,45 @@ class AgentToshi extends Component
      */
     public function confirmCustom()
     {
-        $this->confirmNo();
+        $this->awaitingConfirm = false;
+        $this->actionData['subjects'] = $this->actionData['subjects'] ?? [];
+        $this->showSubjectForm = true;
+        $this->substep = 6;
+    }
+
+    /**
+     * Save a subject from the inline form and add it to the list.
+     */
+    public function saveSubject()
+    {
+        $name = trim($this->subjectFormName);
+        if ($name === '') return;
+
+        $this->actionData['subjects'][] = $name;
+        $this->subjectFormName = '';
+        $this->subjectFormCode = '';
+        $this->subjectFormType = 'core';
+
+        $count = count($this->actionData['subjects']);
+        $this->botSay("Added **{$name}** ({$count} so far). Add another or click **Done**.");
+    }
+
+    /**
+     * Finish subject entry.
+     */
+    public function doneSubjects()
+    {
+        if (empty($this->actionData['subjects'])) {
+            $this->botSay("Add at least one subject first.");
+            return;
+        }
+        $this->showSubjectForm = false;
+        $this->subjects = [
+            ($this->standards[0]['name'] ?? 'default') => $this->actionData['subjects'],
+        ];
+        $this->botSay("Subjects saved: **" . implode(', ', $this->actionData['subjects']) . "**.");
+        $this->substep = 0;
+        $this->advance();
     }
 
     public function commit()
