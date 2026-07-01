@@ -73,6 +73,11 @@ class AgentToshi extends Component
     public $teacherFormSubjects = '';
     public $teacherFormClasses = '';
     public $teacherFormPhone = '';
+    public $showStudentForm = false;
+    public $studentFormName = '';
+    public $studentFormClass = '';
+    public $studentFormParent = '';
+    public $studentFormParentPhone = '';
     public $terms = [];
     public $fees = [];
     public $exams = [];
@@ -607,6 +612,67 @@ class AgentToshi extends Component
 
         $preview = implode(', ', array_slice($this->teacherList, 0, 3));
         $this->botSay("**" . count($this->teacherList) . "** teacher(s) added: {$preview}" . (count($this->teacherList) > 3 ? '...' : '') . ".");
+        $this->substep = 0;
+        $this->advance();
+    }
+
+    // ── Student Form ──
+
+    public function showStudentFormFn()
+    {
+        $this->awaitingConfirm = false;
+        $this->actionData['students'] = $this->actionData['students'] ?? [];
+        $this->showStudentForm = true;
+        $this->studentFormName = '';
+        $this->studentFormClass = '';
+        $this->studentFormParent = '';
+        $this->studentFormParentPhone = '';
+        $this->substep = 6;
+        $this->botSay("Let's add students. Use the form below to add each student.");
+    }
+
+    public function saveStudent()
+    {
+        $name = trim($this->studentFormName);
+        if ($name === '') return;
+
+        $entry = ['name' => $name, 'class' => $this->studentFormClass];
+        if ($this->studentFormParent) $entry['parent'] = trim($this->studentFormParent);
+        if ($this->studentFormParentPhone) $entry['parent_phone'] = trim($this->studentFormParentPhone);
+
+        $this->actionData['students'][] = $entry;
+        $this->studentFormName = '';
+        $this->studentFormClass = '';
+        $this->studentFormParent = '';
+        $this->studentFormParentPhone = '';
+
+        $count = count($this->actionData['students']);
+        $this->botSay("Added **{$name}** ({$count} so far). Add another or click **Continue**.");
+    }
+
+    public function removeStudent(int $index): void
+    {
+        if (isset($this->actionData['students'][$index])) {
+            unset($this->actionData['students'][$index]);
+            $this->actionData['students'] = array_values($this->actionData['students']);
+        }
+    }
+
+    public function doneStudents()
+    {
+        if (empty($this->actionData['students']) && empty($this->studentList)) {
+            $this->showStudentForm = false;
+            $this->botSay("No students added. You can add them later from the admin panel.");
+            $this->substep = 0;
+            $this->advance();
+            return;
+        }
+        $this->showStudentForm = false;
+        $this->studentList = !empty($this->actionData['students'])
+            ? collect($this->actionData['students'])->pluck('name')->values()->toArray()
+            : $this->studentList;
+        $count = count($this->studentList);
+        $this->botSay("**{$count}** student(s) added.");
         $this->substep = 0;
         $this->advance();
     }
@@ -2823,6 +2889,10 @@ class AgentToshi extends Component
     {
         // substep 0: collect names or skip
         if ($this->substep === 0) {
+            if (trim($text) === '') {
+                $this->showStudentFormFn();
+                return;
+            }
             $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
             if ($skip) {
                 $this->botSay("Skipped. You can add students later in the admin panel.");
