@@ -86,6 +86,14 @@ class AgentToshi extends Component
     public $feeFormLevel = '';
     public $feeFormClass = '';
     public $feeFormTerm = '';
+    public $showExamForm = false;
+    public $examFormTerm = '';
+    public $examFormType = '';
+    public $examFormStatus = '';
+    public $examFormLevel = '';
+    public $examFormClass = '';
+    public $examFormSubject = '';
+    public $examFormTeacher = '';
     public $terms = [];
     public $fees = [];
     public $exams = [];
@@ -751,6 +759,76 @@ class AgentToshi extends Component
         $this->advance();
     }
 
+    // ── Exam Form ──
+
+    public function showExamFormFn()
+    {
+        $this->awaitingConfirm = false;
+        $this->actionData['exams'] = $this->actionData['exams'] ?? [];
+        $this->showExamForm = true;
+        $this->examFormTerm = '';
+        $this->examFormType = '';
+        $this->examFormStatus = '';
+        $this->examFormLevel = '';
+        $this->examFormClass = '';
+        $this->examFormSubject = '';
+        $this->examFormTeacher = '';
+        $this->substep = 6;
+        $this->botSay("Let's add exams. Use the form below to add each exam.");
+    }
+
+    public function saveExam()
+    {
+        $term = trim($this->examFormTerm);
+        $type = trim($this->examFormType);
+        if ($term === '' || $type === '') return;
+
+        $this->actionData['exams'][] = [
+            'term' => $term,
+            'type' => $type,
+            'status' => $this->examFormStatus,
+            'level' => $this->examFormLevel,
+            'class' => $this->examFormClass,
+            'subject' => $this->examFormSubject,
+            'teacher' => $this->examFormTeacher,
+        ];
+        $this->examFormTerm = '';
+        $this->examFormType = '';
+        $this->examFormStatus = '';
+        $this->examFormLevel = '';
+        $this->examFormClass = '';
+        $this->examFormSubject = '';
+        $this->examFormTeacher = '';
+
+        $count = count($this->actionData['exams']);
+        $this->botSay("Added **{$type}** for **{$term}** ({$count} so far). Add another or click **Continue**.");
+    }
+
+    public function removeExam(int $index): void
+    {
+        if (isset($this->actionData['exams'][$index])) {
+            unset($this->actionData['exams'][$index]);
+            $this->actionData['exams'] = array_values($this->actionData['exams']);
+        }
+    }
+
+    public function doneExams()
+    {
+        if (empty($this->actionData['exams'])) {
+            $this->showExamForm = false;
+            $this->botSay("No exams added. You can add them later from the admin panel.");
+            $this->substep = 0;
+            $this->advance();
+            return;
+        }
+        $this->showExamForm = false;
+        $this->exams = collect($this->actionData['exams'])->pluck('type')->values()->toArray();
+        $count = count($this->exams);
+        $this->botSay("**{$count}** exam(s) saved.");
+        $this->substep = 0;
+        $this->advance();
+    }
+
     public function editBeforeCommit()
     {
         $this->reviewData = [];
@@ -971,6 +1049,14 @@ class AgentToshi extends Component
                 $this->userSay("📎 Uploaded " . count($names) . " fees from file");
                 $preview = implode(', ', array_slice($names, 0, 5));
                 $this->botSay("Parsed **" . count($names) . "** fees: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
+                $this->awaitingConfirm = true;
+                $this->substep = 1;
+            } elseif ($stepName === 'exams' && count($names) > 0) {
+                $this->actionData['exams'] = array_map(fn($n) => ['term' => '', 'type' => $n, 'status' => '', 'level' => '', 'class' => '', 'subject' => '', 'teacher' => ''], $names);
+                $this->showExamForm = false;
+                $this->userSay("📎 Uploaded " . count($names) . " exams from file");
+                $preview = implode(', ', array_slice($names, 0, 5));
+                $this->botSay("Parsed **" . count($names) . "** exams: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
                 $this->awaitingConfirm = true;
                 $this->substep = 1;
             } elseif (count($names) > 0) {
@@ -3121,8 +3207,22 @@ class AgentToshi extends Component
             return;
         }
 
-        // substep 1: add more fees or finish
+        // substep 1: confirm uploaded fees or add more
         if ($this->substep === 1) {
+            // If fees were uploaded via file, confirm or reject
+            if (!empty($this->actionData['fees'])) {
+                $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
+                if ($yes) {
+                    $this->fees = collect($this->actionData['fees'])->pluck('name')->values()->toArray();
+                    $this->botSay("**" . count($this->fees) . "** fee categor" . (count($this->fees) === 1 ? 'y' : 'ies') . " saved.");
+                    $this->substep = 0;
+                    $this->advance();
+                    return;
+                }
+                $this->showFeeFormFn();
+                return;
+            }
+            // Manual entry flow
             $done = in_array(strtolower($text), ['done', 'no', 'skip', 'later', 'none']);
             if ($done) {
                 $count = count($this->fees);
@@ -3144,8 +3244,12 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     private function handleExams(string $text)
     {
-        // substep 0: collect first exam or skip
+        // substep 0: auto-show form
         if ($this->substep === 0) {
+            if (trim($text) === '') {
+                $this->showExamFormFn();
+                return;
+            }
             $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
             if ($skip) {
                 $this->botSay("Skipped. You can create exams later in the admin panel.");
@@ -3161,8 +3265,20 @@ class AgentToshi extends Component
             return;
         }
 
-        // substep 1: add more exams or finish
+        // substep 1: confirm uploaded exams or add more
         if ($this->substep === 1) {
+            if (!empty($this->actionData['exams'])) {
+                $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
+                if ($yes) {
+                    $this->exams = collect($this->actionData['exams'])->pluck('type')->values()->toArray();
+                    $this->botSay("**" . count($this->exams) . "** exam(s) saved.");
+                    $this->substep = 0;
+                    $this->advance();
+                    return;
+                }
+                $this->showExamFormFn();
+                return;
+            }
             $done = in_array(strtolower($text), ['done', 'no', 'skip', 'later', 'none']);
             if ($done) {
                 $this->substep = 0;

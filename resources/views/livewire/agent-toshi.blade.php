@@ -327,6 +327,100 @@
             </div>
             @endif
 
+            {{-- Exam inline form --}}
+            @if($showExamForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams')
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                    <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Exam</span>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                        <a href="{{ asset('templates/exam-upload-template.xlsx') }}" download
+                           style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                        <label class="flex items-center gap-1 cursor-pointer"
+                               style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                            Upload File
+                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
+                        </label>
+                    </div>
+                </div>
+                @php $exams = $this->actionData['exams'] ?? []; @endphp
+                @if(count($exams) > 0)
+                <div style="margin-bottom: 8px;">
+                    @foreach($exams as $ei => $e)
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                        <span style="flex: 1;">{{ $e['type'] }} — {{ $e['term'] }}</span>
+                        <button wire:click="removeExam({{ $ei }})" type="button"
+                                style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <select wire:model="examFormTerm"
+                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                        <option value="">Term *</option>
+                        <option value="Term I">Term I</option>
+                        <option value="Term II">Term II</option>
+                        <option value="Term III">Term III</option>
+                    </select>
+                    <input type="text" wire:model="examFormType" placeholder="Exam type * (e.g. Midterm, Final)"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <select wire:model="examFormStatus"
+                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                        <option value="">Status</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <select wire:model="examFormLevel"
+                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                        <option value="">Level</option>
+                        <option value="nursery">Nursery</option>
+                        <option value="primary">Primary</option>
+                        <option value="secondary">Secondary</option>
+                        <option value="all">All Levels</option>
+                    </select>
+                    <input type="text" wire:model="examFormClass" placeholder="Class" list="exam-class-list"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <datalist id="exam-class-list">
+                        @foreach($this->standards ?? [] as $std)
+                        <option value="{{ $std['name'] }}">
+                        @endforeach
+                    </datalist>
+                    <input type="text" wire:model="examFormSubject" placeholder="Subject" list="exam-subject-list"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <datalist id="exam-subject-list">
+                        @php
+                            $allSubs = [];
+                            foreach (($this->subjects ?? []) as $cls => $subs) {
+                                $allSubs = array_merge($allSubs, $subs);
+                            }
+                            $allSubs = array_unique($allSubs ?? []);
+                        @endphp
+                        @foreach($allSubs as $s)
+                        <option value="{{ $s }}">
+                        @endforeach
+                    </datalist>
+                    <input type="text" wire:model="examFormTeacher" placeholder="Teacher" list="exam-teacher-list"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <datalist id="exam-teacher-list">
+                        @foreach($this->teacherList ?? [] as $t)
+                        <option value="{{ $t }}">
+                        @endforeach
+                    </datalist>
+                    <div style="display: flex; gap: 8px;">
+                        <button wire:click="saveExam" type="button"
+                                style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                            + Add Exam
+                        </button>
+                        <button wire:click="doneExams" type="button"
+                                style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                            Continue ({{ count($this->actionData['exams'] ?? []) }})
+                        </button>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             {{-- Plan Selection Buttons --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection' && !$selectedPlanId)
             <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
@@ -670,6 +764,14 @@
                     onmouseover="this.style.background='#1557B3'"
                     onmouseout="this.style.background='#1E6FD9'">
                 + Add Fee
+            </button>
+            @endif
+            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams' && $substep === 0)
+            <button wire:click="showExamFormFn" type="button"
+                    style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#1557B3'"
+                    onmouseout="this.style.background='#1E6FD9'">
+                + Add Exam
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
@@ -1107,6 +1209,100 @@
                                     </div>
                                     @endif
 
+                                                {{-- Exam inline form --}}
+                                                @if($showExamForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams')
+                                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                                        <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Exam</span>
+                                                        <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                                                            <a href="{{ asset('templates/exam-upload-template.xlsx') }}" download
+                                                               style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                                                            <label class="flex items-center gap-1 cursor-pointer"
+                                                                   style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                                                                Upload File
+                                                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    @php $exams = $this->actionData['exams'] ?? []; @endphp
+                                                    @if(count($exams) > 0)
+                                                    <div style="margin-bottom: 8px;">
+                                                        @foreach($exams as $ei => $e)
+                                                        <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                                                            <span style="flex: 1;">{{ $e['type'] }} — {{ $e['term'] }}</span>
+                                                            <button wire:click="removeExam({{ $ei }})" type="button"
+                                                                    style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                                        </div>
+                                                        @endforeach
+                                                    </div>
+                                                    @endif
+                                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                        <select wire:model="examFormTerm"
+                                                                style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                            <option value="">Term *</option>
+                                                            <option value="Term I">Term I</option>
+                                                            <option value="Term II">Term II</option>
+                                                            <option value="Term III">Term III</option>
+                                                        </select>
+                                                        <input type="text" wire:model="examFormType" placeholder="Exam type * (e.g. Midterm, Final)"
+                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                        <select wire:model="examFormStatus"
+                                                                style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                            <option value="">Status</option>
+                                                            <option value="active">Active</option>
+                                                            <option value="completed">Completed</option>
+                                                            <option value="cancelled">Cancelled</option>
+                                                        </select>
+                                                        <select wire:model="examFormLevel"
+                                                                style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                            <option value="">Level</option>
+                                                            <option value="nursery">Nursery</option>
+                                                            <option value="primary">Primary</option>
+                                                            <option value="secondary">Secondary</option>
+                                                            <option value="all">All Levels</option>
+                                                        </select>
+                                                        <input type="text" wire:model="examFormClass" placeholder="Class" list="exam-class-list"
+                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                        <datalist id="exam-class-list">
+                                                            @foreach($this->standards ?? [] as $std)
+                                                            <option value="{{ $std['name'] }}">
+                                                            @endforeach
+                                                        </datalist>
+                                                        <input type="text" wire:model="examFormSubject" placeholder="Subject" list="exam-subject-list"
+                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                        <datalist id="exam-subject-list">
+                                                            @php
+                                                                $allSubs = [];
+                                                                foreach (($this->subjects ?? []) as $cls => $subs) {
+                                                                    $allSubs = array_merge($allSubs, $subs);
+                                                                }
+                                                                $allSubs = array_unique($allSubs ?? []);
+                                                            @endphp
+                                                            @foreach($allSubs as $s)
+                                                            <option value="{{ $s }}">
+                                                            @endforeach
+                                                        </datalist>
+                                                        <input type="text" wire:model="examFormTeacher" placeholder="Teacher" list="exam-teacher-list"
+                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                        <datalist id="exam-teacher-list">
+                                                            @foreach($this->teacherList ?? [] as $t)
+                                                            <option value="{{ $t }}">
+                                                            @endforeach
+                                                        </datalist>
+                                                        <div style="display: flex; gap: 8px;">
+                                                            <button wire:click="saveExam" type="button"
+                                                                    style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                                + Add Exam
+                                                            </button>
+                                                            <button wire:click="doneExams" type="button"
+                                                                    style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                                                Continue ({{ count($this->actionData['exams'] ?? []) }})
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @endif
+                                    
                         {{-- Buttons inside maximize modal --}}
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection' && !$selectedPlanId)
                         <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;">
@@ -1276,6 +1472,14 @@
                                 onmouseover="this.style.background='#1557B3'"
                                 onmouseout="this.style.background='#1E6FD9'">
                             + Add Fee
+                        </button>
+                        @endif
+                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams' && $substep === 0)
+                        <button wire:click="showExamFormFn" type="button"
+                                style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#1557B3'"
+                                onmouseout="this.style.background='#1E6FD9'">
+                            + Add Exam
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
