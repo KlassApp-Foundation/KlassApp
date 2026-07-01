@@ -2735,7 +2735,7 @@ class AgentToshi extends Component
         // substep 0: collect names or skip
         if ($this->substep === 0) {
             if (trim($text) === '') {
-                $this->botSay("Let's add teachers. Paste a list of names (one per line), upload a file, or type **skip** to do this later.");
+                $this->showTeacherFormFn();
                 return;
             }
             $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
