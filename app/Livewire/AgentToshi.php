@@ -2515,7 +2515,7 @@ class AgentToshi extends Component
             return;
         }
 
-        // substep 1: confirm or enter custom subjects (mandatory step)
+        // substep 1: confirm or enter custom subjects
         if ($this->substep === 1) {
             $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
             if ($yes) {
@@ -2523,13 +2523,36 @@ class AgentToshi extends Component
                 $this->advance();
                 return;
             }
-            $firstClass = $this->standards[0]['name'] ?? 'the first class';
-            $this->botSay("Please enter subjects separated by commas (e.g. Mathematics, English, Science):");
-            $this->substep = 2;
+            $this->botSay("Enter a subject name (e.g. Mathematics, English, or say 'done' when finished):");
+            $this->actionData = ['subjects' => [], 'current_class' => 0];
+            $this->substep = 6;
             return;
         }
 
-        // substep 2: parse custom subjects (mandatory — cannot skip)
+        // substep 6: collect custom subjects one at a time
+        if ($this->substep === 6) {
+            $lower = strtolower(trim($text));
+            if (in_array($lower, ['done', 'finish', 'stop', 'no', 'none', ''])) {
+                if (empty($this->actionData['subjects'])) {
+                    $this->botSay("I need at least one subject. Type a subject name:");
+                    return;
+                }
+                $this->subjects = [
+                    ($this->standards[0]['name'] ?? 'default') => $this->actionData['subjects'],
+                ];
+                $this->botSay("Subjects saved: **" . implode(', ', $this->actionData['subjects']) . "**. You can customize per-class from the admin panel.");
+                $this->substep = 0;
+                $this->advance();
+                return;
+            }
+            // Add subject name
+            $this->actionData['subjects'][] = trim($text);
+            $count = count($this->actionData['subjects']);
+            $this->botSay("Added **" . trim($text) . "** ({$count} so far). Type another or say **done**.");
+            return;
+        }
+
+        // substep 2: (legacy - kept for backward compatibility)
         if ($this->substep === 2) {
             $names = array_map('trim', explode(',', $text));
             $names = array_filter($names, fn($n) => strlen($n) > 1);
