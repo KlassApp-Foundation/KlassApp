@@ -1,6 +1,6 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @php
-    $svgPath = 'images/klassapp-logo-primary.svg';
+    $svgPath = 'images/klassapp-logo.svg';
     $pngPath = file_exists(public_path('favicon/favicon-32x32.png')) ? 'favicon/favicon-32x32.png' : null;
     $version = @filemtime(public_path($svgPath)) ?: time();
 @endphp

@@ -2,12 +2,17 @@
 @extends('layouts.admin.layout')
 
 @section('content')
+<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+
+@include('layouts.partials.page-header', [
+    'title' => 'Classes',
+    'subtitle' => 'Manage class sections, streams, and class-teacher assignments.',
+    'actions' => '<a href="' . url('/admin/school/standardlinks/create') . '" class="px-3 py-1.5 rounded text-xs text-white bg-green-600 hover:bg-green-700 flex items-center gap-1"><i class="fa-solid fa-plus text-xs"></i> Add Class</a>'
+])
+
+<div class="relative mt-4">
     <div class="">
-        <div class="flex flex-row justify-between">
-            <div class="">
-                <h1 class="admin-h1 my-3">Class Details</h1>
-            </div>
-            <div class="flex items-center gap-8">
+        <div class="flex items-center gap-8">
                 @if($teacher_count > 0)
                 <div class="">
                     <div class="flex items-center">

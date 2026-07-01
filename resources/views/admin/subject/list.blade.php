@@ -1,8 +1,15 @@
 {{-- SPDX-License-Identifier: MIT --}}
-<div class="relative">
-   <div class="flex flex-row justify-between px-8">
+<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+
+@include('layouts.partials.page-header', [
+    'title' => 'Subjects',
+    'subtitle' => 'Browse and manage all subjects across classes.',
+    'actions' => '<a href="' . url('/admin/subjects/create') . '" class="px-3 py-1.5 rounded text-xs text-white bg-green-600 hover:bg-green-700 flex items-center gap-1"><i class="fa-solid fa-plus text-xs"></i> Add Subject</a>'
+])
+
+<div class="relative mt-4">
+   <div class="overflow-x-auto bg-white rounded-lg shadow">
       <table class="w-full">
-         <caption><h1 class="admin-h1 mb-6">Subject Details</h1></caption>
          <thead class="bg-grey-light">
             <tr class="border-t-2 border-b-2">
                <th class="text-left text-sm px-2 py-2 text-grey-darker border border-gray-400">Subject Name</th>
