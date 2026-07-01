@@ -752,10 +752,17 @@ class AgentToshi extends Component
                     $this->botSay("I couldn't find any valid teacher links. Make sure your file has columns: Teacher, Subject, Class.");
                 }
             } elseif (in_array($stepName, ['teachers', 'students']) && count($names) > 0) {
-                if ($stepName === 'teachers') $this->teacherList = $names;
-                else $this->studentList = $names;
+                if ($stepName === 'teachers') {
+                    $this->teacherList = $names;
+                    $this->actionData['teachers'] = $names;
+                    $this->showTeacherForm = false;
+                } else {
+                    $this->studentList = $names;
+                }
                 $this->userSay("📎 Uploaded " . count($names) . " names from file");
-                $this->botSay("Parsed **" . count($names) . "** names from your file. Continue?");
+                $this->botSay("Parsed **" . count($names) . "** names from your file. | Is this correct? (yes / no)");
+                $this->awaitingConfirm = true;
+                $this->substep = 1;
             } elseif ($stepName === 'standards' && count($names) > 0) {
                 $this->standards = array_map(fn($n) => ['name' => $n], $names);
                 $this->userSay("📎 Uploaded " . count($names) . " class(es) from file");
