@@ -844,10 +844,11 @@ class AgentToshi extends Component
                     $this->actionData['students'] = array_map(fn($n) => ['name' => $n, 'class' => '', 'stream' => '', 'parent' => '', 'parent_phone' => ''], $names);
                     $this->showStudentForm = false;
                 }
-                $this->userSay("📎 Uploaded " . count($names) . " names from file");
+                $label = $stepName === 'teachers' ? 'teachers' : 'students';
+                $this->userSay("📎 Uploaded " . count($names) . " {$label} from file");
                 $linked = !empty($this->teacherLinks) ? " with **" . count($this->teacherLinks) . "** subject/class assignments" : "";
                 $preview = implode(', ', array_slice($names, 0, 5));
-                $this->botSay("Parsed **" . count($names) . "** names{$linked}: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
+                $this->botSay("Parsed **" . count($names) . "** {$label}{$linked}: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
                 $this->awaitingConfirm = true;
                 $this->substep = 1;
             } elseif ($stepName === 'standards' && count($names) > 0) {
