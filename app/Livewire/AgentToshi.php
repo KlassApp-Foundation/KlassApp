@@ -503,6 +503,17 @@ class AgentToshi extends Component
         $this->advance();
     }
 
+    /**
+     * Remove a subject from the list by index.
+     */
+    public function removeSubject(int $index): void
+    {
+        if (isset($this->actionData['subjects'][$index])) {
+            unset($this->actionData['subjects'][$index]);
+            $this->actionData['subjects'] = array_values($this->actionData['subjects']);
+        }
+    }
+
     public function commit()
     {
         $this->input = 'commit';

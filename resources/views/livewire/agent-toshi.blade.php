@@ -76,6 +76,18 @@
             @if($showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
             <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
                 <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 10px;">Add Subject</div>
+                @php $subjects = $this->actionData['subjects'] ?? []; @endphp
+                @if(count($subjects) > 0)
+                <div style="margin-bottom: 8px;">
+                    @foreach($subjects as $si => $s)
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                        <span style="flex: 1;">{{ $s }}</span>
+                        <button wire:click="removeSubject({{ $si }})" type="button"
+                                style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <input type="text" wire:model="subjectFormName" placeholder="Subject name *"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
@@ -614,6 +626,18 @@
                                     @if($showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
                                     <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
                                         <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 10px;">Add Subject</div>
+                                        @php $subjects = $this->actionData['subjects'] ?? []; @endphp
+                                        @if(count($subjects) > 0)
+                                        <div style="margin-bottom: 8px;">
+                                            @foreach($subjects as $si => $s)
+                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                                                <span style="flex: 1;">{{ $s }}</span>
+                                                <button wire:click="removeSubject({{ $si }})" type="button"
+                                                        style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                        @endif
                                         <div style="display: flex; flex-direction: column; gap: 8px;">
                                             <input type="text" wire:model="subjectFormName" placeholder="Subject name *"
                                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
