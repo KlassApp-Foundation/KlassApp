@@ -105,7 +105,7 @@
                         </button>
                         <button wire:click="doneSubjects" type="button"
                                 style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
-                            Done ({{ count($this->actionData['subjects'] ?? []) }})
+                            Continue ({{ count($this->actionData['subjects'] ?? []) }})
                         </button>
                     </div>
                 </div>
@@ -183,7 +183,7 @@
                         </button>
                         <button wire:click="doneTeachers" type="button"
                                 style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
-                            Done ({{ count($this->actionData['teachers'] ?? []) }})
+                            Continue ({{ count($this->actionData['teachers'] ?? []) }})
                         </button>
                     </div>
                 </div>
@@ -741,7 +741,7 @@
                                                 </button>
                                                 <button wire:click="doneSubjects" type="button"
                                                         style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
-                                                    Done ({{ count($this->actionData['subjects'] ?? []) }})
+                                                    Continue ({{ count($this->actionData['subjects'] ?? []) }})
                                                 </button>
                                             </div>
                                         </div>
@@ -819,7 +819,7 @@
                                                 </button>
                                                 <button wire:click="doneTeachers" type="button"
                                                         style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
-                                                    Done ({{ count($this->actionData['teachers'] ?? []) }})
+                                                    Continue ({{ count($this->actionData['teachers'] ?? []) }})
                                                 </button>
                                             </div>
                                         </div>

@@ -594,16 +594,19 @@ class AgentToshi extends Component
      */
     public function doneTeachers()
     {
-        if (empty($this->actionData['teachers'])) {
-            $this->botSay("Add at least one teacher first.");
+        if (empty($this->actionData['teachers']) && empty($this->teacherList)) {
+            $this->showTeacherForm = false;
+            $this->botSay("No teachers added. You can add them later from the admin panel.");
+            $this->substep = 0;
+            $this->advance();
             return;
         }
         $this->showTeacherForm = false;
-        $this->teacherList = $this->actionData['teachers'];
+        $this->teacherList = !empty($this->actionData['teachers']) ? $this->actionData['teachers'] : $this->teacherList;
         $this->teacherPhones = $this->actionData['teacherPhones'] ?? [];
 
         $preview = implode(', ', array_slice($this->teacherList, 0, 3));
-        $this->botSay("**" . count($this->teacherList) . "** teacher(s) added: {$preview}" . (count($this->teacherList) > 3 ? '...' : '') . ". They'll get auto-generated emails and default passwords.");
+        $this->botSay("**" . count($this->teacherList) . "** teacher(s) added: {$preview}" . (count($this->teacherList) > 3 ? '...' : '') . ".");
         $this->substep = 0;
         $this->advance();
     }
