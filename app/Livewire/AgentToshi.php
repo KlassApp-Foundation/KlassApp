@@ -763,7 +763,8 @@ class AgentToshi extends Component
                     $this->studentList = $names;
                 }
                 $this->userSay("📎 Uploaded " . count($names) . " names from file");
-                $this->botSay("Parsed **" . count($names) . "** names from your file. | Is this correct? (yes / no)");
+                $preview = implode(', ', array_slice($names, 0, 5));
+                $this->botSay("Parsed **" . count($names) . "** names: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
                 $this->awaitingConfirm = true;
                 $this->substep = 1;
             } elseif ($stepName === 'standards' && count($names) > 0) {
