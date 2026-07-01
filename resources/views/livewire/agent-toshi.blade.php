@@ -120,7 +120,7 @@
                     <label class="flex items-center gap-1 cursor-pointer"
                            style="margin-left: auto; padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
                         Upload File
-                        <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt">
+                        <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx,.pdf,.png,.jpg">
                     </label>
                 </div>
                 @php $teachers = $this->actionData['teachers'] ?? []; @endphp
@@ -734,7 +734,7 @@
                                             <label class="flex items-center gap-1 cursor-pointer"
                                                    style="margin-left: auto; padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
                                                 Upload File
-                                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt">
+                                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx,.pdf,.png,.jpg">
                                             </label>
                                         </div>
                                         @php $teachers = $this->actionData['teachers'] ?? []; @endphp
