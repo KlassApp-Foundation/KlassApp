@@ -227,7 +227,7 @@
                                                 <option value="boarding">Boarding</option>
                                                 <option value="day">Day Scholar</option>
                                             </select>
-                    <input type="text" wire:model="studentFormClass" placeholder="Class (optional)" list="student-class-list"
+                    <input type="text" wire:model="studentFormClass" placeholder="Class *" list="student-class-list"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <datalist id="student-class-list">
                         @foreach($this->standards ?? [] as $std)
@@ -924,7 +924,7 @@
 
                     <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                    <input type="text" wire:model="studentFormClass" placeholder="Class (optional)" list="student-class-list"
+                    <input type="text" wire:model="studentFormClass" placeholder="Class *" list="student-class-list"
                                                                style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                         <datalist id="student-class-list">
                                                             @foreach($this->standards ?? [] as $std)

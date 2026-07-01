@@ -638,9 +638,14 @@ class AgentToshi extends Component
     public function saveStudent()
     {
         $name = trim($this->studentFormName);
+        $class = trim($this->studentFormClass);
         if ($name === '') return;
+        if ($class === '') {
+            $this->botSay("Please select a class for **{$name}**.");
+            return;
+        }
 
-        $entry = ['name' => $name, 'class' => $this->studentFormClass, 'stream' => $this->studentFormStream, 'type' => $this->studentFormType];
+        $entry = ['name' => $name, 'class' => $class, 'stream' => $this->studentFormStream, 'type' => $this->studentFormType];
         if ($this->studentFormParent) $entry['parent'] = trim($this->studentFormParent);
         if ($this->studentFormParentPhone) $entry['parent_phone'] = trim($this->studentFormParentPhone);
 
