@@ -80,6 +80,13 @@ class AgentToshi extends Component
     public $studentFormType = '';
     public $studentFormParent = '';
     public $studentFormParentPhone = '';
+    public $showFeeForm = false;
+    public $feeFormName = '';
+    public $feeFormAmount = '';
+    public $feeFormMethod = '';
+    public $feeFormReference = '';
+    public $feeFormDate = '';
+    public $feeFormNotes = '';
     public $terms = [];
     public $fees = [];
     public $exams = [];
@@ -659,15 +666,7 @@ class AgentToshi extends Component
         $this->botSay("Added **{$name}** ({$count} so far). Add another or click **Continue**.");
     }
 
-    public function removeStudent(int $index): void
-    {
-        if (isset($this->actionData['students'][$index])) {
-            unset($this->actionData['students'][$index]);
-            $this->actionData['students'] = array_values($this->actionData['students']);
-        }
-    }
-
-    public function doneStudents()
+    function doneStudents()
     {
         if (empty($this->actionData['students']) && empty($this->studentList)) {
             $this->showStudentForm = false;
@@ -686,11 +685,85 @@ class AgentToshi extends Component
         $this->advance();
     }
 
-    public function commit()
+    // ── Fee Form ──
+
+    public function showFeeFormFn()
     {
-        $this->input = 'commit';
-        $this->send();
+        $this->awaitingConfirm = false;
+        $this->actionData['fees'] = $this->actionData['fees'] ?? [];
+        $this->showFeeForm = true;
+        $this->feeFormName = '';
+        $this->feeFormAmount = '';
+        $this->feeFormMethod = '';
+        $this->feeFormReference = '';
+        $this->feeFormDate = now()->toDateString();
+        $this->feeFormNotes = '';
+        $this->substep = 6;
+        $this->botSay("Let's add fee categories. Use the form below to add each fee.");
     }
+
+    public function saveFee()
+    {
+        $name = trim($this->feeFormName);
+        $amount = trim($this->feeFormAmount);
+        $method = trim($this->feeFormMethod);
+        $ref = trim($this->feeFormReference);
+        if ($name === '') return;
+        if ($amount === '' || !is_numeric($amount) || (float)$amount <= 0) {
+            $this->botSay("Please enter a valid amount for **{$name}**.");
+            return;
+        }
+        if ($method === '') {
+            $this->botSay("Please select a payment method for **{$name}**.");
+            return;
+        }
+        if ($ref === '') {
+            $this->botSay("Please enter a reference for **{$name}**.");
+            return;
+        }
+
+        $this->actionData['fees'][] = [
+            'name' => $name,
+            'amount' => $amount,
+            'method' => $method,
+            'reference' => $ref,
+            'date' => $this->feeFormDate ?: now()->toDateString(),
+            'notes' => $this->feeFormNotes,
+        ];
+        $this->feeFormName = '';
+        $this->feeFormAmount = '';
+        $this->feeFormMethod = '';
+        $this->feeFormReference = '';
+        $this->feeFormNotes = '';
+
+        $count = count($this->actionData['fees']);
+        $this->botSay("Added **{$name}** ({$count} so far). Add another or click **Continue**.");
+    }
+
+    public function removeFee(int $index): void
+    {
+        if (isset($this->actionData['fees'][$index])) {
+            unset($this->actionData['fees'][$index]);
+            $this->actionData['fees'] = array_values($this->actionData['fees']);
+        }
+    }
+
+    public function doneFees()
+    {
+        if (empty($this->actionData['fees'])) {
+            $this->showFeeForm = false;
+            $this->botSay("No fees added. You can add them later from the admin panel.");
+            $this->substep = 0;
+            $this->advance();
+            return;
+        }
+        $this->showFeeForm = false;
+        $this->fees = collect($this->actionData['fees'])->pluck('name')->values()->toArray();
+        $this->botSay("**" . count($this->fees) . "** fee categor" . (count($this->fees) === 1 ? 'y' : 'ies') . " saved.");
+        $this->substep = 0;
+        $this->advance();
+    }
+
     public function editBeforeCommit()
     {
         $this->reviewData = [];
@@ -3032,8 +3105,12 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     private function handleFees(string $text)
     {
-        // substep 0: collect first fee or skip
+        // substep 0: auto-show form
         if ($this->substep === 0) {
+            if (trim($text) === '') {
+                $this->showFeeFormFn();
+                return;
+            }
             $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
             if ($skip) {
                 $this->botSay("Skipped. You can set up fees later in the admin panel.");

@@ -259,6 +259,74 @@
             </div>
             @endif
 
+            {{-- Fee inline form --}}
+            @if($showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                    <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Fee</span>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                        <a href="{{ asset('templates/fee-upload-template.xlsx') }}" download
+                           style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                        <label class="flex items-center gap-1 cursor-pointer"
+                               style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                            Upload File
+                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
+                        </label>
+                    </div>
+                </div>
+                @php $fees = $this->actionData['fees'] ?? []; @endphp
+                @if(count($fees) > 0)
+                <div style="margin-bottom: 8px;">
+                    @foreach($fees as $fi => $f)
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                        <span style="flex: 1;">{{ $f['name'] }} — {{ number_format($f['amount'], 0) }} UGX</span>
+                        <button wire:click="removeFee({{ $fi }})" type="button"
+                                style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" wire:model="feeFormName" placeholder="Fee category name *"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <select wire:model="feeFormMethod"
+                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                        <option value="">Payment method *</option>
+                        <option value="cash">Cash</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="mobile_money">Mobile Money</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                    </select>
+                    <input type="text" wire:model="feeFormReference" placeholder="Reference *"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <div style="display: flex; gap: 8px;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Date</div>
+                            <input type="date" wire:model="feeFormDate"
+                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Notes</div>
+                            <input type="text" wire:model="feeFormNotes" placeholder="Optional"
+                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button wire:click="saveFee" type="button"
+                                style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                            + Add Fee
+                        </button>
+                        <button wire:click="doneFees" type="button"
+                                style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                            Continue ({{ count($this->actionData['fees'] ?? []) }})
+                        </button>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             {{-- Plan Selection Buttons --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection' && !$selectedPlanId)
             <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
@@ -594,6 +662,14 @@
                     onmouseover="this.style.background='#1557B3'"
                     onmouseout="this.style.background='#1E6FD9'">
                 + Add Student
+            </button>
+            @endif
+            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees' && $substep === 0)
+            <button wire:click="showFeeFormFn" type="button"
+                    style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#1557B3'"
+                    onmouseout="this.style.background='#1E6FD9'">
+                + Add Fee
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
@@ -1124,6 +1200,14 @@
                                 onmouseover="this.style.background='#1557B3'"
                                 onmouseout="this.style.background='#1E6FD9'">
                             + Add Student
+                        </button>
+                        @endif
+                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees' && $substep === 0)
+                        <button wire:click="showFeeFormFn" type="button"
+                                style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#1557B3'"
+                                onmouseout="this.style.background='#1E6FD9'">
+                            + Add Fee
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
