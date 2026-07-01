@@ -537,6 +537,7 @@ class AgentToshi extends Component
         $this->teacherFormClasses = '';
         $this->teacherFormPhone = '';
         $this->substep = 6;
+        $this->botSay("Let's add teachers. Use the form below to add each teacher.");
     }
 
     /**
@@ -2792,6 +2793,9 @@ class AgentToshi extends Component
     {
         // substep 0: explain format, collect input
         if ($this->substep === 0) {
+            if (trim($text) === '') {
+                // show prompt below
+            }
             $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
             if ($skip) {
                 $this->botSay("Skipped. You can assign teachers to subjects later in the admin panel (Classes → select class → assign teachers).");
