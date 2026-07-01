@@ -60,6 +60,8 @@ class AgentToshi extends Component
     public $teacherLinks = [];
     public $teacherPhones = [];
     public $studentList = [];
+    public $hasNursery = null; // null = not asked, true/false for primary schools
+    public $streamClassIndex = 0; // tracks which class we're adding streams for
     public $terms = [];
     public $fees = [];
     public $exams = [];
@@ -232,6 +234,7 @@ class AgentToshi extends Component
             'create_subject'     => 'create subjects',
             'list_classes'       => 'view classes',
             'list_teachers'      => 'view teachers',
+            'list_sections'      => 'view class streams',
             'generate_report'    => 'reports and stats',
         ];
 
@@ -329,6 +332,7 @@ class AgentToshi extends Component
             'studentList'       => $this->studentList,
             'terms'             => $this->terms,
             'fees'              => $this->fees,
+            'hasNursery'        => $this->hasNursery,
             'exams'             => $this->exams,
             'whatsappPhone'     => $this->whatsappPhone,
             'whatsappVerified'  => $this->whatsappVerified,
@@ -432,6 +436,22 @@ class AgentToshi extends Component
         $this->send();
     }
 
+    /**
+     * Skip adding streams for all remaining classes and advance.
+     */
+    public function confirmSkipAll()
+    {
+        $stepName = $this->steps[$this->step] ?? '';
+        if ($stepName !== 'standards' || empty($this->standards)) {
+            $this->confirmNo();
+            return;
+        }
+        $this->awaitingConfirm = false;
+        $this->streamClassIndex = count($this->standards);
+        $this->substep = 0;
+        $this->advance();
+    }
+
     public function commit()
     {
         $this->input = 'commit';
@@ -444,22 +464,37 @@ class AgentToshi extends Component
         $this->substep = 0;
     }
     public function resumeDraft()
-{
-    $user = auth()->user();
-    if (!$user) return;
-    $draft = \App\Models\OnboardingSession::where('user_id', $user->id)
-        ->where('status', 'draft')
-        ->latest()
-        ->first();
-    if ($draft) {
-        $this->restoreDraft($draft);
+    {
+        $user = auth()->user();
+        if (!$user) return;
+        $draft = \App\Models\OnboardingSession::where('user_id', $user->id)
+            ->where('status', 'draft')
+            ->latest()
+            ->first();
+        if ($draft) {
+            $this->restoreDraft($draft);
+        }
     }
-}
 
-public function resetOnboarding(bool $startNew = false)
+    /**
+     * Jump to a specific step in the onboarding flow (clickable progress bar).
+     */
+    public function jumpToStep(int $step): void
+    {
+        if ($step < 0 || $step >= count($this->steps) || $step > $this->step) {
+            return; // can only go back, not skip forward
+        }
+        $this->step = $step;
+        $this->substep = 0;
+        $this->saveDraft();
+        $this->callStepHandler('');
+    }
+
+    public function resetOnboarding(bool $startNew = false)
     {
         // Start a new school creation from any mode
         if ($startNew) {
+            $this->mode = 'create';
             $this->deleteDraft();
             $this->step = 0;
             $this->substep = 0;
@@ -485,6 +520,7 @@ public function resetOnboarding(bool $startNew = false)
             $this->teacherPhones = [];
             $this->schoolEmail = '';
             $this->studentList = [];
+            $this->hasNursery = null;
             $this->terms = [];
             $this->fees = [];
             $this->exams = [];
@@ -1023,7 +1059,43 @@ public function resetOnboarding(bool $startNew = false)
     private function advance(?int $to = null)
     {
         $this->step = $to ?? $this->step + 1;
+        $this->substep = 0;
         $this->saveDraft();
+        // Immediately trigger the step handler to show its prompt
+        $this->callStepHandler('');
+    }
+
+    /**
+     * Call the current step's handler to initialize its prompt.
+     * Passes an empty string so substep=0 fires the introductory message.
+     */
+    private function callStepHandler(string $text): void
+    {
+        $stepName = $this->steps[$this->step] ?? null;
+        if (!$stepName) return;
+
+        $handler = match ($stepName) {
+            'plan_selection'  => 'handlePlanSelection',
+            'school_info'     => 'handleSchoolInfo',
+            'admin_account'   => 'handleAdminAccount',
+            'co_admin_invite' => null, // buttons only, no text handler on entry
+            'academic_year'   => 'handleAcademicYear',
+            'standards'       => 'handleStandards',
+            'subjects'        => 'handleSubjects',
+            'teachers'        => 'handleTeachers',
+            'teacher_links'   => 'handleTeacherLinks',
+            'students'        => 'handleStudents',
+            'terms'           => 'handleTerms',
+            'fees'            => 'handleFees',
+            'exams'           => 'handleExams',
+            'whatsapp_verify' => 'handleWhatsAppVerify',
+            'review'          => 'handleReview',
+            default           => null,
+        };
+
+        if ($handler && method_exists($this, $handler)) {
+            $this->$handler($text);
+        }
     }
 
     /**
@@ -1295,6 +1367,17 @@ public function resetOnboarding(bool $startNew = false)
             return true;
         }
 
+        // One-shot: list sections / streams
+        if (in_array($lower, ['list sections', 'sections', 'streams', 'list streams', 'class streams'])) {
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $result = ToshiActionService::listSections(auth()->user());
+            $this->botSay($result['message']);
+            return true;
+        }
+
         // One-shot: mark attendance (text: "mark John present" or "mark 123 absent 2024-01-15")
         if (preg_match('/^(mark|record)\s+(.+?)\s+(present|absent|late|half-day)(?:\s+(.+))?$/i', $text, $m)) {
             if (!$this->schoolId) {
@@ -1412,6 +1495,21 @@ public function resetOnboarding(bool $startNew = false)
                 return true;
             }
             $this->botSay("Only admins can onboard new schools. Ask your system administrator.");
+            return true;
+        }
+
+        // Resume draft onboarding
+        if (in_array($lower, ['resume', 'continue', 'continue setup', 'go back', 'resume school'])) {
+            $user = auth()->user();
+            $draft = \App\Models\OnboardingSession::where('user_id', $user->id)
+                ->where('status', 'draft')
+                ->latest()
+                ->first();
+            if ($draft) {
+                $this->resumeDraft();
+                return true;
+            }
+            $this->botSay("I couldn't find an unfinished school setup. Say **'create school'** to start a new one.");
             return true;
         }
 
@@ -1788,6 +1886,7 @@ public function resetOnboarding(bool $startNew = false)
             if (in_array('generate_report', $infoActions) || in_array('platform_reports', $infoActions)) $items[] = '"show report"';
             if (in_array('list_classes', $infoActions)) $items[] = '"list classes"';
             if (in_array('list_teachers', $infoActions)) $items[] = '"list teachers"';
+            if (in_array('list_sections', $infoActions)) $items[] = '"list sections"';
             $groups[] = '**📊 Info** — ' . implode(', ', $items);
         }
 
@@ -1872,11 +1971,11 @@ public function resetOnboarding(bool $startNew = false)
             $isQuestion = (bool) preg_match('/^(what|how|why|when|where|who|which|can|could|would|will|do|does|did|is|are|has|have|show|tell|list|find|give)\b/i', $text);
             $hasQueryVerb = (bool) preg_match('/\b(show|list|tell|find|give|add|create|record|mark|assign|report|how many|what is|who is|i want|i need|can you)\b/i', $lower);
             $isMultiWord = str_word_count($text) >= 3;
-            $isSetupAnswer = in_array($lower, ['yes', 'y', 'no', 'n', 'correct', 'right', 'ok', 'default', 'skip', 'later', 'cash', 'cheque', 'mobile_money', 'bank_transfer'])
+            $isSetupAnswer = in_array($lower, ['yes', 'y', 'no', 'n', 'correct', 'right', 'ok', 'default', 'skip', 'later', 'cash', 'cheque', 'mobile_money', 'bank_transfer', 'can we go on', 'go on', 'continue', 'proceed', 'next', 'lets go', 'move on'])
                 || preg_match('/^\+?256\d{9,12}$/', $text)
                 || preg_match('/^[\w\.\-]+@[\w\.\-]+\.\w+$/', $text);
 
-            if (($isQuestion || ($hasQueryVerb && $isMultiWord)) && !$isSetupAnswer) {
+            if ($this->mode !== 'create' && ($isQuestion || ($hasQueryVerb && $isMultiWord)) && !$isSetupAnswer) {
                 $this->mode = 'assistant';
                 $this->step = 99;
                 $this->saveDraft();
@@ -1904,22 +2003,22 @@ public function resetOnboarding(bool $startNew = false)
         }
 
         match ($stepName) {
-            'plan_selection' => $this->handlePlanSelection($text),
-            'school_info'    => $this->handleSchoolInfo($text),
-            'admin_account'  => $this->handleAdminAccount($text),
-            'co_admin_invite'=> $this->handleCoAdminInvite($text),
-            'academic_year'  => $this->handleAcademicYear($text),
-            'standards'      => $this->handleStandards($text),
-            'subjects'       => $this->handleSubjects($text),
-            'teachers'       => $this->handleTeachers($text),
-            'teacher_links'  => $this->handleTeacherLinks($text),
-            'students'       => $this->handleStudents($text),
-            'terms'          => $this->handleTerms($text),
-            'fees'           => $this->handleFees($text),
-            'exams'          => $this->handleExams($text),
-            'whatsapp_verify'=> $this->handleWhatsAppVerify($text),
-            'review'         => $this->handleReview($text),
-            default          => $this->advance(),
+            'plan_selection'  => $this->handlePlanSelection($text),
+            'school_info'     => $this->handleSchoolInfo($text),
+            'admin_account'   => $this->handleAdminAccount($text),
+            'co_admin_invite' => $this->handleCoAdminInvite($text),
+            'academic_year'   => $this->handleAcademicYear($text),
+            'standards'       => $this->handleStandards($text),
+            'subjects'        => $this->handleSubjects($text),
+            'teachers'        => $this->handleTeachers($text),
+            'teacher_links'   => $this->handleTeacherLinks($text),
+            'students'        => $this->handleStudents($text),
+            'terms'           => $this->handleTerms($text),
+            'fees'            => $this->handleFees($text),
+            'exams'           => $this->handleExams($text),
+            'whatsapp_verify' => $this->handleWhatsAppVerify($text),
+            'review'          => $this->handleReview($text),
+            default           => $this->callStepHandler($text),
         };
     }
 
@@ -2256,12 +2355,28 @@ public function resetOnboarding(bool $startNew = false)
     // ════════════════════════════════════════════════
     private function handleStandards(string $text)
     {
+        // substep -1: ask about nursery for primary schools
+        if ($this->substep === -1) {
+            $yes = in_array(strtolower(trim($text)), ['yes', 'y', 'correct', 'right', 'ok', 'true', 'yeah']);
+            $this->hasNursery = $yes;
+            $this->substep = 0;
+            $this->handleStandards('');
+            return;
+        }
+
         // substep 0: load defaults, show list, ask if correct
         if ($this->substep === 0) {
+            // Ask about nursery first if primary and hasn't been asked yet
+            if ($this->schoolType === 'primary' && $this->hasNursery === null) {
+                $this->botSay("Does your school have a nursery section? (Baby Class, Middle Class, Top Class)");
+                $this->awaitingConfirm = true;
+                $this->substep = -1;
+                return;
+            }
             $defaults = $this->curriculumDefaults();
             $this->standards = $defaults['classes'] ?? [];
             $classList = implode(', ', array_column($this->standards, 'name'));
-            $this->botSay("I'll create these classes: **{$classList}** | Is this list correct? (yes / no)");
+            $this->botSay("I'll create these classes: **{$classList}**. You can add more classes later from the admin panel. | Is this correct? (yes / no)");
             $this->awaitingConfirm = true;
             $this->substep = 1;
             return;
@@ -2271,8 +2386,17 @@ public function resetOnboarding(bool $startNew = false)
         if ($this->substep === 1) {
             $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
             if ($yes) {
+                $this->streamClassIndex = 0;
+                $this->substep = 3;
+                $this->handleStandards('');
+                return;
+            }
+            // Detect nursery request in natural language
+            $lower = strtolower($text);
+            if (($this->schoolType === 'primary' && !$this->hasNursery) && preg_match('/nursery|baby class|pre.?primary|kindergarten/', $lower)) {
+                $this->hasNursery = true;
                 $this->substep = 0;
-                $this->advance();
+                $this->handleStandards('');
                 return;
             }
             $this->botSay("Please enter the class names separated by commas (e.g. Primary 1, Primary 2, Primary 3):");
@@ -2291,8 +2415,57 @@ public function resetOnboarding(bool $startNew = false)
             }
             $classList = implode(', ', array_column($this->standards, 'name'));
             $this->botSay("Classes set to: **{$classList}**.");
-            $this->substep = 0;
-            $this->advance();
+            $this->streamClassIndex = 0;
+            $this->substep = 3;
+            $this->handleStandards('');
+            return;
+        }
+
+        // substep 3: ask about streams class by class
+        if ($this->substep === 3) {
+            if ($this->streamClassIndex >= count($this->standards)) {
+                $this->streamClassIndex = 0;
+                $this->substep = 0;
+                $this->advance();
+                return;
+            }
+            $className = $this->standards[$this->streamClassIndex]['name'];
+            $this->botSay("Does **{$className}** have class streams? (yes / no)");
+            $this->awaitingConfirm = true;
+            $this->substep = 5;
+            return;
+        }
+
+        // substep 5: yes/no for current class streams
+        if ($this->substep === 5) {
+            $yes = in_array(strtolower(trim($text)), ['yes', 'y', 'correct', 'right', 'ok', 'yeah']);
+            if ($yes) {
+                $className = $this->standards[$this->streamClassIndex]['name'];
+                $this->botSay("Type stream names for **{$className}** separated by commas (e.g. A, B, C):");
+                $this->substep = 4;
+                return;
+            }
+            $this->standards[$this->streamClassIndex]['streams'] = [];
+            $this->streamClassIndex++;
+            $this->substep = 3;
+            $this->handleStandards('');
+            return;
+        }
+
+        // substep 4: collect stream names for current class, move to next
+        if ($this->substep === 4) {
+            $className = $this->standards[$this->streamClassIndex]['name'];
+            $lower = strtolower(trim($text));
+            if (in_array($lower, ['skip', 'none', 'no', 'n', '', 'later'])) {
+                $this->standards[$this->streamClassIndex]['streams'] = [];
+            } else {
+                $names = array_map('trim', explode(',', $text));
+                $names = array_filter($names, fn($n) => strlen($n) > 0);
+                $this->standards[$this->streamClassIndex]['streams'] = array_values($names);
+            }
+            $this->streamClassIndex++;
+            $this->substep = 3;
+            $this->handleStandards('');
             return;
         }
     }
@@ -2324,7 +2497,8 @@ public function resetOnboarding(bool $startNew = false)
                 $this->advance();
                 return;
             }
-            $this->botSay("Please enter the subjects separated by commas (e.g. Mathematics, English, Science):");
+            $firstClass = $this->standards[0]['name'] ?? 'the first class';
+            $this->botSay("Please enter subjects separated by commas (e.g. Mathematics, English, Science):");
             $this->substep = 2;
             return;
         }
@@ -3270,13 +3444,22 @@ public function resetOnboarding(bool $startNew = false)
                 ],
             ],
             'primary' => [
-                'classes' => [
-                    ['name' => 'Primary 1'], ['name' => 'Primary 2'], ['name' => 'Primary 3'],
-                    ['name' => 'Primary 4'], ['name' => 'Primary 5'], ['name' => 'Primary 6'], ['name' => 'Primary 7'],
-                ],
-                'subjects' => [
-                    'Primary 1' => ['English Language', 'Mathematics', 'Literacy I', 'Numeracy I', 'Religious Education'],
-                    'Primary 2' => ['English Language', 'Mathematics', 'Literacy II', 'Numeracy II', 'Religious Education'],
+                'classes' => $this->hasNursery
+                    ? [['name' => 'Baby Class'], ['name' => 'Middle Class'], ['name' => 'Top Class'],
+                       ['name' => 'Primary 1'], ['name' => 'Primary 2'], ['name' => 'Primary 3'],
+                       ['name' => 'Primary 4'], ['name' => 'Primary 5'], ['name' => 'Primary 6'], ['name' => 'Primary 7']]
+                    : [['name' => 'Primary 1'], ['name' => 'Primary 2'], ['name' => 'Primary 3'],
+                       ['name' => 'Primary 4'], ['name' => 'Primary 5'], ['name' => 'Primary 6'], ['name' => 'Primary 7']],
+                'subjects' => $this->hasNursery
+                    ? [
+                        'Baby Class'   => ['English Rhymes & Stories', 'Numbers & Counting', 'Colour & Shapes', 'Creative Play'],
+                        'Middle Class' => ['English Language Basics', 'Numeracy', 'Environmental Awareness', 'Art & Craft'],
+                        'Top Class'    => ['Pre-Literacy (English)', 'Pre-Numeracy', 'Social Habits', 'Creative Arts', 'Religious Education'],
+                        'Primary 1' => ['English Language', 'Mathematics', 'Literacy I', 'Numeracy I', 'Religious Education'],
+                    ]
+                    : [
+                        'Primary 1' => ['English Language', 'Mathematics', 'Literacy I', 'Numeracy I', 'Religious Education'],
+                        'Primary 2' => ['English Language', 'Mathematics', 'Literacy II', 'Numeracy II', 'Religious Education'],
                     'Primary 3' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education'],
                     'Primary 4' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
                     'Primary 5' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],

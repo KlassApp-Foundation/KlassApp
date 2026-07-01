@@ -257,7 +257,7 @@ class ToshiAssistantService
 
         // If the user has 'create_school' in their allowed actions, tell them the trigger phrase
         if (str_contains($context['data']['Allowed actions'] ?? '', 'create school')) {
-            $prompt .= "\n\nIf the user wants to create a new school, tell them to say **\"create school\"** to start the school onboarding wizard.";
+            $prompt .= "\n\nIf the user wants to create, set up, or onboard a new school, just tell them to say the word and Toshi will handle it. Any sentence mentioning creating/starting/setting up a school will work. If they have an unfinished school setup, saying 'continue' or 'resume' will pick up where they left off.";
         }
 
         return $prompt;

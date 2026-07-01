@@ -63,7 +63,7 @@ class ToshiActionService
                     'create_fee', 'create_term', 'record_attendance',
                     'record_payment',
                     'assign_teacher', 'create_subject',
-                    'list_classes', 'list_teachers', 'generate_report',
+                    'list_classes', 'list_teachers', 'list_sections', 'generate_report',
                 ],
             ],
             4 => [ // SchoolSubadmin
@@ -927,6 +927,28 @@ class ToshiActionService
         if ($user) return $user;
 
         return null;
+    }
+
+    /**
+     * List all sections (streams) for the school.
+     */
+    public static function listSections(User $admin): array
+    {
+        if (!self::can($admin, 'list_classes')) {
+            return self::result(false, 'You do not have permission to view classes.');
+        }
+        $schoolId = $admin->school_id;
+        if (!$schoolId) {
+            return self::result(false, 'No school assigned.');
+        }
+
+        $sections = Section::where('school_id', $schoolId)->where('status', 1)->get();
+        if ($sections->isEmpty()) {
+            return self::result(false, 'No sections found. Add streams (A, B, C...) from the Classes section in the admin panel.');
+        }
+
+        $lines = $sections->pluck('name')->map(fn($n) => "• {$n}")->implode("\n");
+        return self::result(true, "**Sections/Streams:**\n{$lines}");
     }
 
     /**

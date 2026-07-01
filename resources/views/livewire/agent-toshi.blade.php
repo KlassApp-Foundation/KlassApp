@@ -452,6 +452,16 @@
                 <button wire:click="resumeDraft" style="width: 100%; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #1E293B; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s;" onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#E2E8F0'">
                     {{ $schoolName ?: ($reviewData['schoolName'] ?? 'New School') }}
                 </button>
+                @if($scope === 'platform' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm)
+                <div style="margin-top: 8px;">
+                    <button wire:click="resetOnboarding(true)" type="button"
+                            style="width: 100%; padding: 8px 12px; background: #0F172A; color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s; font-family: 'DM Sans', sans-serif;"
+                            onmouseover="this.style.background='#1E6FD9'"
+                            onmouseout="this.style.background='#0F172A'">
+                        + Create School
+                    </button>
+                </div>
+                @endif
                 <div style="margin-top: auto; padding-top: 16px;">
                     <button wire:click="hide" style="font-size: 12px; color: #94A3B8; background: none; border: none; cursor: pointer; padding: 4px 0; font-family: 'DM Sans', sans-serif;" onmouseover="this.style.color='#64748B'" onmouseout="this.style.color='#94A3B8'">Close</button>
                 </div>
@@ -654,8 +664,6 @@
                     </button>
                 </div>
                 @endif
-            </div>
-
             {{-- Composer: maximized modal — single rounded shell with bottom action row --}}
                 <form wire:submit.prevent="send" class="shrink-0" style="padding: 0 24px 16px; background: #FFFFFF;">
                     <div style="border: 1px solid rgba(0,0,0,0.08); border-radius: 18px; background: #FFFFFF;">
