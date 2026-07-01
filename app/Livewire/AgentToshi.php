@@ -936,8 +936,21 @@ class AgentToshi extends Component
                 $spreadsheet = $reader->load($path);
                 $allRows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
                 if (empty($allRows)) return [];
-                $headers = array_map('trim', $allRows[0]);
-                $dataRows = array_slice($allRows, 1);
+
+                // Find the actual header row by looking for known column names
+                $headerRowIdx = 0;
+                $knownColumns = ['name', 'firstname', 'student_name', 'teacher_name', 'class', 'stream', 'subject', 'email', 'phone'];
+                foreach ($allRows as $ri => $row) {
+                    $rowLower = array_map('strtolower', array_map('trim', $row ?? []));
+                    $matchCount = 0;
+                    foreach ($knownColumns as $kc) {
+                        if (in_array($kc, $rowLower)) $matchCount++;
+                    }
+                    if ($matchCount >= 2) { $headerRowIdx = $ri; break; }
+                }
+
+                $headers = array_map('trim', $allRows[$headerRowIdx]);
+                $dataRows = array_slice($allRows, $headerRowIdx + 1);
             } catch (\Exception $e) {
                 \Log::warning('XLSX parse failed: ' . $e->getMessage());
                 return [];
