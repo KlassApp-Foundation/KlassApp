@@ -117,11 +117,14 @@
             <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
                     <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Teacher</span>
-                    <label class="flex items-center gap-1 cursor-pointer"
-                           style="margin-left: auto; padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
-                        Upload File
-                        <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx,.pdf,.png,.jpg">
-                    </label>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                        <span style="font-size: 10px; color: #94A3B8; cursor: help;" title="CSV/XLSX: columns Name, Email, Subjects, Classes. TXT: one name per line.">ⓘ</span>
+                        <label class="flex items-center gap-1 cursor-pointer"
+                               style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                            Upload File
+                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt">
+                        </label>
+                    </div>
                 </div>
                 @php $teachers = $this->actionData['teachers'] ?? []; @endphp
                 @if(count($teachers) > 0)
@@ -731,11 +734,14 @@
                                     <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
                                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
                                             <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Teacher</span>
-                                            <label class="flex items-center gap-1 cursor-pointer"
-                                                   style="margin-left: auto; padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
-                                                Upload File
-                                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx,.pdf,.png,.jpg">
-                                            </label>
+                                            <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                                                <span style="font-size: 10px; color: #94A3B8; cursor: help;" title="CSV/XLSX: columns Name, Email, Subjects, Classes. TXT: one name per line.">ⓘ</span>
+                                                <label class="flex items-center gap-1 cursor-pointer"
+                                                       style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                                                    Upload File
+                                                    <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt">
+                                                </label>
+                                            </div>
                                         </div>
                                         @php $teachers = $this->actionData['teachers'] ?? []; @endphp
                                         @if(count($teachers) > 0)

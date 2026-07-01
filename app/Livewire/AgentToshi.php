@@ -730,7 +730,7 @@ class AgentToshi extends Component
 
     public function updatedAttachment()
     {
-        $this->validate(['attachment' => 'file|mimes:csv,txt,xlsx,xls,pdf,png,jpg,jpeg,docx|max:5120']);
+        $this->validate(['attachment' => 'file|mimes:csv,txt,xlsx,xls|max:5120']);
 
         $ext = strtolower($this->attachment->getClientOriginalExtension());
         $parsable = in_array($ext, ['csv', 'txt', 'xlsx', 'xls', 'pdf', 'docx']);
