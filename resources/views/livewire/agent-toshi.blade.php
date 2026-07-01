@@ -279,7 +279,7 @@
                 <div style="margin-bottom: 8px;">
                     @foreach($fees as $fi => $f)
                     <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
-                        <span style="flex: 1;">{{ $f['name'] }} — {{ number_format($f['amount'], 0) }} UGX</span>
+                        <span style="flex: 1;">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif</span>
                         <button wire:click="removeFee({{ $fi }})" type="button"
                                 style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
                     </div>
@@ -1161,7 +1161,7 @@
                                         <div style="margin-bottom: 8px;">
                                             @foreach($fees as $fi => $f)
                                             <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
-                                                <span style="flex: 1;">{{ $f['name'] }} — {{ number_format($f['amount'], 0) }} UGX</span>
+                        <span style="flex: 1;">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif</span>
                                                 <button wire:click="removeFee({{ $fi }})" type="button"
                                                         style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
                                             </div>
