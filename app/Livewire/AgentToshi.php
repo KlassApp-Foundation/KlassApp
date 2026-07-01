@@ -2805,143 +2805,20 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     //  Step 9: Teacher-Class-Subject Linking
     // ════════════════════════════════════════════════
-    private function handleTeacherLinks(string $text)
+        private function handleTeacherLinks(string $text)
     {
-        // substep 0: explain format, collect input
-        if ($this->substep === 0) {
-            // If links already extracted from file upload, skip this step
-            if (!empty($this->teacherLinks)) {
-                $this->botSay("Teacher-subject-class links already assigned from your uploaded file (**" . count($this->teacherLinks) . "** links). Moving on.");
-                $this->substep = 0;
-                $this->advance();
-                return;
-            }
-            if (trim($text) === '') {
-                // show prompt below
-            }
-            $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
-            if ($skip) {
-                $this->botSay("Skipped. You can assign teachers to subjects later in the admin panel (Classes → select class → assign teachers).");
-                $this->substep = 0;
-                $this->advance();
-                return;
-            }
-
-            // If teacher list is empty, skip automatically
-            if (empty($this->teacherList)) {
-                $this->botSay("No teachers to link. Moving on.");
-                $this->substep = 0;
-                $this->advance();
-                return;
-            }
-
-            $classNames = collect($this->standards)->pluck('name')->implode(', ');
-            $this->botSay(
-                "Now let's link each teacher to their subjects and classes.\n\n"
-                . "Your classes: *{$classNames}*\n"
-                . "Your teachers: *" . implode(', ', $this->teacherList) . "*\n\n"
-                . "Enter one line per teacher:\n"
-                . "`Teacher Name | Subject | Class | Phone`\n\n"
-                . "Phone is optional — use the teacher's WhatsApp number if known.\n\n"
-                . "Example:\n"
-                . "John Ssali | Mathematics | P.5 | +256701234567\n"
-                . "Jane Okello | English | P.5\n"
-                . "John Ssali | Science | P.6 | +256701234567\n\n"
-                . "Type the full list, or type 'skip' to do this later."
-            );
-            $this->substep = 1;
-            return;
+        // Now handled during teacher upload — links extracted from file.
+        if (!empty($this->teacherLinks)) {
+            $this->botSay("Teacher-subject links already assigned from uploaded file. Moving on.");
+        } elseif (!empty($this->teacherList)) {
+            $this->botSay("Teachers added. You can assign subjects and classes from the admin panel later. Moving on.");
+        } else {
+            $this->botSay("Moving to the next step.");
         }
-
-        // substep 1: parse the list
-        if ($this->substep === 1) {
-            // Handle skip at substep 1 too — the bot says "or type 'skip'" but setting substep=0
-            // in the explanation block means user input lands here.
-            $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
-            if ($skip) {
-                $this->botSay("Skipped. You can assign teachers to subjects later in the admin panel (Classes → select class → assign teachers).");
-                $this->substep = 0;
-                $this->advance();
-                return;
-            }
-
-            $lines = array_filter(explode("\n", $text), fn($l) => trim($l) !== '');
-            $parsed = [];
-            $phones = [];
-
-            foreach ($lines as $line) {
-                $parts = array_map('trim', explode('|', $line));
-                if (count($parts) < 3) continue;
-
-                $teacherName = $parts[0];
-                $subjectName = $parts[1];
-                $className = $parts[2];
-                $phone = $parts[3] ?? '';
-
-                // Validate teacher exists in teacherList
-                $teacherExists = in_array($teacherName, $this->teacherList);
-                // Validate class exists in standards
-                $classExists = collect($this->standards)->pluck('name')->contains($className);
-
-                if ($teacherExists && $classExists) {
-                    $parsed[] = [
-                        'teacher' => $teacherName,
-                        'subject' => $subjectName,
-                        'class'   => $className,
-                        'phone'   => $phone,
-                    ];
-                    // Store phone for teacher if provided
-                    if ($phone) {
-                        $phones[$teacherName] = $phone;
-                    }
-                }
-            }
-
-            if (empty($parsed)) {
-                $this->botSay(
-                    "I couldn't parse any valid entries. Make sure each line uses:\n"
-                    . "`Teacher Name | Subject | Class | Phone`\n\n"
-                    . "Example: John Ssali | Mathematics | P.5 | +256701234567\n\n"
-                    . "Type your list again, or type 'skip'."
-                );
-                return;
-            }
-
-            $this->teacherLinks = $parsed;
-            $this->teacherPhones = $phones;
-            $preview = collect($parsed)->take(3)->map(
-                fn($l) => "• {$l['teacher']} → {$l['subject']} ({$l['class']})" . ($l['phone'] ? " 📱{$l['phone']}" : '')
-            )->implode("\n");
-
-            $phoneCount = count($phones);
-            $phoneNote = $phoneCount > 0 ? "\n📱 Phone numbers saved for {$phoneCount} teacher(s)." : '';
-
-            $this->botSay(
-                "Parsed **" . count($parsed) . "** teacher link(s):\n{$preview}{$phoneNote}"
-                . (count($parsed) > 3 ? "\n...and " . (count($parsed) - 3) . " more" : '')
-                . "\n\nIs this correct? (yes / no)"
-            );
-            $this->awaitingConfirm = true;
-            $this->substep = 2;
-            return;
-        }
-
-        // substep 2: confirmation
-        if ($this->substep === 2) {
-            if (in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok'])) {
-                $this->substep = 0;
-                $this->advance();
-                return;
-            }
-            $this->botSay("Let's try again. Enter the teacher links one per line:\n`Teacher Name | Subject | Class | Phone`");
-            $this->substep = 0;
-            return;
-        }
+        $this->substep = 0;
+        $this->advance();
     }
 
-    // ════════════════════════════════════════════════
-    //  Step 10: Students (confirm/edit substeps)
-    // ════════════════════════════════════════════════
     private function handleStudents(string $text)
     {
         // substep 0: collect names or skip
