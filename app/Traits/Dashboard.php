@@ -53,7 +53,7 @@ trait Dashboard
                               });
 
         $array['parentCount']    =  Cache::remember('parentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
-                                  return User::BySchool($school_id)->ByRole(7)->whereHas('children', function($q) use ($search){
+                                  return User::BySchool($school_id)->ByRole(7)->whereHas('children', function($q) {
     
                 $q->whereHas('userStudent', function($q) 
                 {
@@ -250,6 +250,7 @@ trait Dashboard
         {
             $array['absentPercentage']  = number_format((float)( $absent / $total )*100);
         }
+        // Attendance has AM+PM entries per day — divide by 2 for calendar day count
         $array['presentDay']        = $present/2;
         $array['absentDay']         = $absent/2;
         $array['noticeboard']       = NoticeBoard::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['type','!=','teacher']])->orWhere('standardLink_id',$standardLink_id)->orderBy('created_at','DESC')->take(5)->get();

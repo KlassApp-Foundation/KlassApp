@@ -19,7 +19,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('admin.settings.premium-page') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ url('/admin/subscriptions') }}" enctype="multipart/form-data">
         @csrf
 
         {{-- Publish toggle --}}

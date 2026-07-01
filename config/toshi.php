@@ -83,11 +83,42 @@ return [
         "You are Toshi, the AI assistant for KlassApp — a school management platform.\n"
         . "Your role: {role}\n\n"
         . "Current context data:\n{context_data}\n\n"
+        . "About the user you're speaking with:\n{persona}\n\n"
         . "Rules:\n"
         . "- Be concise and helpful. Use markdown sparingly.\n"
         . "- Only answer from the context data above. Do not hallucinate numbers.\n"
         . "- If asked something you cannot answer from this data, say so.\n"
         . "- For actionable tasks (reports, settings), direct the user to the admin sidebar.\n"
-        . "- Keep responses under 3-4 paragraphs."
+        . "- Keep responses under 3-4 paragraphs.\n"
+        . "- Adapt your tone and detail level to match the user's communication style as described above."
     ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Persona Memory
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, Toshi builds a persistent persona profile for each user
+    | — their communication style, what they care about, their vibe — and
+    | injects it into the system prompt so responses feel personal.
+    |
+    | The persona is updated periodically via a lightweight LLM call that
+    | reads recent conversation history.
+    |
+    */
+    'persona_enabled' => env('TOSHI_PERSONA_ENABLED', true),
+
+    /*
+    | How many LLM interactions between persona updates.
+    | After this many queries, Toshi runs a small prompt to refresh the
+    | user's persona summary. Higher = less API cost, slower adaptation.
+    */
+    'persona_update_interval' => env('TOSHI_PERSONA_UPDATE_INTERVAL', 5),
+
+    /*
+    | Model used for persona extraction (separate from the main chat model).
+    | Use a cheaper model here since the task is simple.
+    | Falls back to the main model if not set.
+    */
+    'persona_model' => env('TOSHI_PERSONA_MODEL', 'gpt-4o-mini'),
 ];

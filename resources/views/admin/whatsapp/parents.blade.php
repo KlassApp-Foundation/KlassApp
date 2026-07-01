@@ -76,7 +76,7 @@
                                 <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs">Opted Out</span>
                             @endif
                         </td>
-                        <td class="p-3 text-xs">{{ $wa->verified_at ? $wa->verified_at->format('d M Y') : '—' }}</td>
+                        <td class="p-3 text-xs">{{ $wa->verified_at ? \Carbon\Carbon::parse($wa->verified_at)->format('d M Y') : '—' }}</td>
                         <td class="p-3">
                             @if($wa->user_id)
                             <form method="POST" action="{{ url('/admin/whatsapp/parents/unlink/' . $wa->id) }}" onsubmit="return confirm('Unlink this parent?')">

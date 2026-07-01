@@ -171,7 +171,7 @@
                         @foreach($recentActivity as $log)
                             <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                                 <td class="py-2.5 pr-3 text-gray-600 whitespace-nowrap">
-                                    {{ $log->sent_at ? $log->sent_at->format('H:i') : '-' }}
+                                    {{ $log->sent_at ? \Carbon\Carbon::parse($log->sent_at)->format('H:i') : '-' }}
                                 </td>
                                 <td class="py-2.5 pr-3 text-gray-800 font-medium font-mono text-xs">
                                     {{ $log->phone }}

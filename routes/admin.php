@@ -828,6 +828,11 @@ Route::delete("/fees-categories/{fee}/destroy", "Academics\FeesCategoryControlle
 Route::get("/fees-categories/{fee}/edit", "Academics\FeesCategoryController@edit")->name("admin.fees-categories.edit");
 Route::patch("/fees-categories/{fee}/update", "Academics\FeesCategoryController@update")->name("admin.fees-categories.update");
 
+// Fee payment records
+Route::get("/fees/payments", "FeePaymentController@index")->name("admin.fee-payments");
+Route::get("/fees/payments/create", "FeePaymentController@create")->name("admin.fee-payments.create");
+Route::post("/fees/payments/store", "FeePaymentController@store")->name("admin.fee-payments.store");
+
 // grading system @UG
 Route::get("/grades", "Academics\SchoolGradingSystemController@index")->name("admin.grades");
 Route::get("/grades/create", "Academics\SchoolGradingSystemController@create")->name("admin.grades.create");

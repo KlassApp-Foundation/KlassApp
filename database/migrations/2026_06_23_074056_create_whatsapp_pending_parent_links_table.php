@@ -19,7 +19,7 @@ return new class extends Migration
             $table->id();
             $table->string('phone', 20);                          // Parent's WhatsApp number
             $table->unsignedBigInteger('school_id');               // School from matched student
-            $table->unsignedBigInteger('student_id')->nullable();  // Student user ID
+            $table->unsignedInteger('student_id')->nullable();   // Student user ID (matches users.id type)
             $table->string('student_payment_code', 50);            // The code they entered
             $table->string('student_name')->nullable();            // For display in admin panel
             $table->string('status', 20)->default('pending');      // pending | approved | rejected

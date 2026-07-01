@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\CoAdminInviteMail;
 use App\Models\OnboardingSession;
+use App\Services\ToshiActionService;
 use App\Services\ToshiAssistantService;
 
 class AgentToshi extends Component
@@ -105,13 +106,25 @@ class AgentToshi extends Component
     public $scope = 'school'; // 'platform' (super admin) or 'school' (school admin)
     public $draftSessionId = null;
 
+    // Assistant-mode action flows (multi-step operations)
+    public $actionStep = null;    // 'add_student', 'add_teacher', 'enter_marks', etc.
+    public $actionSubstep = 0;
+    public $actionData = [];
+
+    /** Capabilities for the current user, loaded from ToshiActionService. */
+    public array $capabilities = [];
+
     public function mount()
     {
         $user = auth()->user();
         if (!$user) return;
 
-        // Only super admin (1), site subadmin (2), and school admin (3) can use Toshi
-        if (!in_array($user->usergroup_id, [1, 2, 3])) return;
+        $this->capabilities = ToshiActionService::getRoleCapabilities($user->usergroup_id);
+
+        // Gate: block roles with no allowed actions or no scope
+        if (empty($this->capabilities['actions']) || $this->capabilities['scope'] === 'none') return;
+
+        $this->scope = $this->capabilities['scope'];
 
         // ── Restore state from session (survives page refresh) ──
         if ($this->restoreState()) {
@@ -121,46 +134,44 @@ class AgentToshi extends Component
             return;
         }
 
-        // ── Super Admin: draft resume check ──
-        if ($user->usergroup_id === 1) {
+        // ── Platform scope (super admin) ──
+        if ($this->scope === 'platform') {
+            $this->mode = 'assistant';
+            $this->step = 99;
+
+            $greeting = $this->getAssistantGreeting();
+
             $draft = OnboardingSession::where('user_id', $user->id)
                 ->where('status', 'draft')
                 ->latest()
                 ->first();
             if ($draft) {
+                $stepName = $this->steps[$draft->step] ?? 'setup';
+                $greeting .= " By the way, you have an unfinished school setup on the **" . ucfirst(str_replace('_', ' ', $stepName)) . "** step. Say **'create school'** to start fresh or continue where you left off.";
                 $this->draftSessionId = $draft->id;
-                $this->restoreDraft($draft);
-                $this->botSay("👋 Welcome back! I've restored your progress from last time.");
-                $stepName = $this->steps[$this->step] ?? '';
-                $this->botSay("You were on step: **" . ucfirst(str_replace('_', ' ', $stepName)) . "**.");
-                $this->botSay("Type 'ok' to continue or 'reset' to start over.");
-                return;
             }
 
-            // Super admin with no draft → assistant mode (platform scope)
-            $this->mode = 'assistant';
-            $this->scope = 'platform';
-            $this->step = 99;
-            $this->botSay("Hello! I'm Toshi, your KlassApp assistant. Ask me about platform stats, schools, users, or say **'create school'** to onboard a new school.");
+            $this->botSay($greeting);
             return;
         }
 
-        // ── School Admin: check setup status ──
-        if ($user->usergroup_id === 3 && $user->school_id) {
+        // ── School scope (school roles with school_id) ──
+        if ($this->scope === 'school' && $user->school_id) {
             $this->schoolId = $user->school_id;
-            $this->scope = 'school';
             $school = \App\Models\School::find($this->schoolId);
 
-            $missing = \App\Helpers\OnboardingHelper::getMissingSteps($user->school_id, $user->id);
+            // Only school admins (usergroup_id 3) get the setup completion check
+            $missing = $user->usergroup_id === 3
+                ? \App\Helpers\OnboardingHelper::getMissingSteps($user->school_id, $user->id)
+                : [];
+
             if (empty($missing)) {
-                // Fully set up → assistant mode
                 $this->mode = 'assistant';
                 $this->step = 99;
-                $this->botSay("Hi! I'm Toshi. Ask me anything about **{$school->name}** — I can help with reports, stats, and school management.");
+                $this->botSay($this->getAssistantGreeting());
                 return;
             }
 
-            // Incomplete setup → complete mode (existing behavior)
             $this->mode = 'complete';
             $this->botSay("Hello! Let's finish setting up **{$school->name}** on KlassApp.");
             $this->detectMissingSteps();
@@ -175,12 +186,14 @@ class AgentToshi extends Component
     }
 
     /**
-     * Returns the appropriate assistant greeting based on scope.
+     * Returns the appropriate assistant greeting based on the user's capabilities.
      */
     private function getAssistantGreeting(): string
     {
+        $label = $this->capabilities['label'] ?? 'user';
+
         if ($this->scope === 'platform') {
-            return "Hi! I'm Toshi, your KlassApp platform assistant. I can help with reports, school stats, and system management. What would you like to know?";
+            return "Hi! I'm Toshi, your KlassApp {$label} assistant. I can help with platform stats, schools, users, and system management. What would you like to know?";
         }
 
         $schoolName = '';
@@ -189,7 +202,63 @@ class AgentToshi extends Component
             $schoolName = $school ? " **{$school->name}**" : '';
         }
 
-        return "Hi! I'm Toshi. Ask me anything about{$schoolName} — reports, stats, students, fees, or attendance.";
+        $actionHints = $this->getActionHints();
+
+        return "Hi! I'm Toshi. Ask me about{$schoolName} — {$actionHints}";
+    }
+
+    /**
+     * Get a human-readable list of action hints from the user's capabilities.
+     */
+    private function getActionHints(): string
+    {
+        $actions = $this->capabilities['actions'] ?? [];
+        if (empty($actions)) {
+            return 'reports, stats, and school information';
+        }
+
+        $hints = [
+            'add_student'        => 'add students',
+            'add_teacher'        => 'add teachers',
+            'add_coadmin'        => 'add co-admins',
+            'create_fee'         => 'manage fees',
+            'create_term'        => 'create terms',
+            'record_attendance'  => 'record attendance',
+            'record_payment'     => 'record fee payments',
+            'assign_teacher'     => 'assign teachers to classes',
+            'create_subject'     => 'create subjects',
+            'list_classes'       => 'view classes',
+            'list_teachers'      => 'view teachers',
+            'generate_report'    => 'reports and stats',
+        ];
+
+        $matched = [];
+        foreach ($actions as $action) {
+            if (isset($hints[$action])) {
+                $matched[] = $hints[$action];
+            }
+        }
+
+        if (empty($matched)) {
+            return 'reports, stats, and school information';
+        }
+
+        // Combine with unique, natural phrasing
+        $matched = array_unique($matched);
+        if (count($matched) === 1) {
+            return $matched[0];
+        }
+
+        $last = array_pop($matched);
+        return implode(', ', $matched) . ', and ' . $last;
+    }
+
+    /**
+     * Check if the current user can perform a given action.
+     */
+    private function can(string $action): bool
+    {
+        return in_array($action, $this->capabilities['actions'] ?? [], true);
     }
 
     private function restoreDraft(OnboardingSession $draft)
@@ -914,6 +983,9 @@ class AgentToshi extends Component
             'whatsappVerified'  => $this->whatsappVerified,
             'reviewData'        => $this->reviewData,
             'draftSessionId'    => $this->draftSessionId,
+            'actionStep'        => $this->actionStep,
+            'actionSubstep'     => $this->actionSubstep,
+            'actionData'        => $this->actionData,
         ]]);
     }
 
@@ -1178,13 +1250,158 @@ class AgentToshi extends Component
             return true;
         }
 
+        // ── School Admin Actions ──
+
+        // One-shot: generate school report
+        if (in_array($lower, ['school report', 'report', 'summary report', 'school summary'])) {
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard to get a report.");
+                return true;
+            }
+            $result = ToshiActionService::generateReport(auth()->user());
+            $this->botSay($result['message']);
+            return true;
+        }
+
+        // One-shot: list classes
+        if (in_array($lower, ['list classes', 'classes', 'my classes', 'class list'])) {
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $result = ToshiActionService::listClasses(auth()->user());
+            $this->botSay($result['message']);
+            return true;
+        }
+
+        // One-shot: list teachers
+        if (in_array($lower, ['list teachers', 'teachers', 'teacher list', 'staff'])) {
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $result = ToshiActionService::listTeachers(auth()->user());
+            $this->botSay($result['message']);
+            return true;
+        }
+
+        // One-shot: mark attendance (text: "mark John present" or "mark 123 absent 2024-01-15")
+        if (preg_match('/^(mark|record)\s+(.+?)\s+(present|absent|late|half-day)(?:\s+(.+))?$/i', $text, $m)) {
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $result = ToshiActionService::recordAttendance(auth()->user(), [
+                'student' => $m[2], 'status' => $m[3], 'date' => trim($m[4] ?? now()->toDateString()),
+            ]);
+            $this->botSay($result['message']);
+            return true;
+        }
+
+        // One-shot: create term ("create term Term 1 2024-01-15 2024-04-15")
+        if (preg_match('/^(?:create|add)\s+term\s+(.+?)\s+(\d{4}[\-\/]\d{1,2}[\-\/]\d{1,2})\s+(\d{4}[\-\/]\d{1,2}[\-\/]\d{1,2})$/i', $text, $m)) {
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $result = ToshiActionService::createTerm(auth()->user(), [
+                'name' => $m[1], 'start_date' => $m[2], 'end_date' => $m[3],
+            ]);
+            $this->botSay($result['message']);
+            return true;
+        }
+
+        // One-shot: add co-admin ("add co-admin Name email@example.com")
+        if (preg_match('/^(?:add|create)\s+co-admin\s+(.+?)\s+([\w\.\-]+@[\w\.\-]+\.\w+)$/i', $text, $m)) {
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $result = ToshiActionService::addCoAdmin(auth()->user(), [
+                'name' => $m[1], 'email' => $m[2],
+            ]);
+            $this->botSay($result['message']);
+            return true;
+        }
+
+        // Multi-step: add student
+        if (preg_match('/^(?:add|create|register)\s+(?:a\s+)?student(?:\s+(.+))?$/i', $text, $m)) {
+            if (!$this->can('add_student')) { $this->botSay('You do not have permission to add students.'); return true; }
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $this->actionStep = 'add_student';
+            $this->actionSubstep = 0;
+            $this->actionData = [];
+            $this->botSay("Let's add a student. What is the student's full name?");
+            return true;
+        }
+
+        // Multi-step: add teacher
+        if (preg_match('/^(?:add|create)\s+(?:a\s+)?teacher(?:\s+(.+))?$/i', $text, $m)) {
+            if (!$this->can('add_teacher')) { $this->botSay('You do not have permission to add teachers.'); return true; }
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $this->actionStep = 'add_teacher';
+            $this->actionSubstep = 0;
+            $this->actionData = [];
+            $this->botSay("Let's add a teacher. What is the teacher's full name?");
+            return true;
+        }
+
+        // Multi-step: record fee payment
+        if (preg_match('/^(?:record|add|create)\s+(?:a\s+)?(?:fee\s+)?payment/i', $text)) {
+            if (!$this->can('record_payment')) { $this->botSay('You do not have permission to record payments.'); return true; }
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $this->actionStep = 'record_payment';
+            $this->actionSubstep = 0;
+            $this->actionData = [];
+            $this->botSay("Let's record a fee payment. What is the student's name or ID?");
+            return true;
+        }
+
+        // Multi-step: assign teacher to class
+        if (preg_match('/^(?:assign|link)\s+teacher/i', $text)) {
+            if (!$this->can('assign_teacher')) { $this->botSay('You do not have permission to assign teachers.'); return true; }
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $this->actionStep = 'assign_teacher';
+            $this->actionSubstep = 0;
+            $this->actionData = [];
+            $this->botSay("Let's assign a teacher. What is the teacher's email address?");
+            return true;
+        }
+
+        // Multi-step: create fee category
+        if (preg_match('/^(?:create|add)\s+(?:a\s+)?fee\s+(?:category\s+)?(?:\s+(.+))?$/i', $text, $m)) {
+            if (!$this->can('create_fee')) { $this->botSay('You do not have permission to manage fees.'); return true; }
+            if (!$this->schoolId) {
+                $this->botSay("Open Toshi from your school dashboard.");
+                return true;
+            }
+            $this->actionStep = 'create_fee';
+            $this->actionSubstep = 0;
+            $this->actionData = [];
+            $this->botSay("Let's create a fee. What is the fee name (e.g. 'Tuition')?");
+            return true;
+        }
+
         // Re-launch onboarding (super admin only)
-        if (in_array($lower, ['setup', 'onboard', 'add school', 'new school', 'create school'])) {
-            if (auth()->user()?->usergroup_id === 1) {
+        if (preg_match('/\b(?:create|add|start|new|setup|onboard)\b.*\b(?:school|onboarding)\b/i', $text)
+            || in_array($lower, ['setup', 'onboard', 'add school', 'new school', 'create school'])) {
+            if (auth()->user()?->usergroup_id === 1 || auth()->user()?->usergroup_id === 2) {
                 $this->resetOnboarding(startNew: true);
                 return true;
             }
-            $this->botSay("Only super admins can onboard new schools. Ask your system administrator.");
+            $this->botSay("Only admins can onboard new schools. Ask your system administrator.");
             return true;
         }
 
@@ -1195,12 +1412,411 @@ class AgentToshi extends Component
         return false;
     }
 
+    // ── Action Flow Handler (multi-step assistant actions) ──
+
+    /**
+     * Route input to the active multi-step action handler.
+     */
+    private function handleActionFlow(string $text): void
+    {
+        if (!$this->can($this->actionStep)) {
+            $this->actionStep = null;
+            $this->botSay("You don't have permission to do that. Let me know if you need something else.");
+            return;
+        }
+
+        $methodName = 'action' . str_replace(' ', '', ucwords(str_replace('_', ' ', $this->actionStep)));
+        if (method_exists($this, $methodName)) {
+            $this->$methodName($text);
+        } else {
+            $this->actionStep = null;
+            $this->botSay("Action cancelled. How else can I help you?");
+        }
+    }
+
+    /**
+     * Cancel the current action flow.
+     */
+    private function cancelAction(): void
+    {
+        $this->actionStep = null;
+        $this->actionSubstep = 0;
+        $this->actionData = [];
+        $this->botSay('Cancelled. What would you like to do?');
+    }
+
+    // ── Action: Add Student ──
+
+    private function actionAddStudent(string $text): void
+    {
+        $lower = strtolower(trim($text));
+        if (in_array($lower, ['cancel', 'stop', 'never mind', 'forget it'])) {
+            $this->cancelAction(); return;
+        }
+
+        if ($this->actionSubstep === 0) {
+            // Collect name
+            if (strlen(trim($text)) < 3) {
+                $this->botSay('Please enter a valid name (at least 3 characters).');
+                return;
+            }
+            $this->actionData['name'] = trim($text);
+            $this->actionSubstep = 1;
+            $this->botSay("Name: **{$this->actionData['name']}**. | What class should they join? (type the class name, or **skip** to assign later)");
+            return;
+        }
+
+        if ($this->actionSubstep === 1) {
+            if (!in_array($lower, ['skip', 'none', '', 'later'])) {
+                $this->actionData['class_name'] = trim($text);
+                $this->botSay("Class: **{$this->actionData['class_name']}**. | Any section? (type section name, or **skip**)");
+                $this->actionSubstep = 2;
+                return;
+            }
+            // Skip class → go straight to confirm
+            $this->actionSubstep = 3;
+            $this->confirmAddStudent();
+            return;
+        }
+
+        if ($this->actionSubstep === 2) {
+            if (!in_array($lower, ['skip', 'none', '', 'later'])) {
+                $this->actionData['section_name'] = trim($text);
+            }
+            $this->actionSubstep = 3;
+            $this->confirmAddStudent();
+            return;
+        }
+
+        if ($this->actionSubstep === 3) {
+            if (in_array($lower, ['yes', 'y', 'ok', 'confirm', 'done'])) {
+                $result = ToshiActionService::addStudent(auth()->user(), $this->actionData);
+                $this->botSay($result['message']);
+                if ($result['success']) {
+                    $this->actionData = [];
+                    $this->actionData['last_created_email'] = $result['email'] ?? '';
+                }
+                $this->botSay("Add another student? Say **add student** or ask me something else.");
+                $this->actionStep = null;
+                $this->actionSubstep = 0;
+            } elseif (in_array($lower, ['no', 'n', 'edit', 'change'])) {
+                $this->actionSubstep = 0;
+                $this->actionData = [];
+                $this->botSay("Let's start over. What is the student's full name?");
+            } else {
+                $this->botSay("Type **yes** to confirm or **no** to restart.");
+            }
+            return;
+        }
+    }
+
+    private function confirmAddStudent(): void
+    {
+        $parts = [];
+        if (!empty($this->actionData['name'])) $parts[] = "Name: **{$this->actionData['name']}**";
+        if (!empty($this->actionData['class_name'])) $parts[] = "Class: **{$this->actionData['class_name']}**";
+        if (!empty($this->actionData['section_name'])) $parts[] = "Section: **{$this->actionData['section_name']}**";
+        $this->botSay(implode(' | ', $parts) . "\n\nType **yes** to confirm, **no** to restart, or **cancel** to stop.");
+    }
+
+    // ── Action: Add Teacher ──
+
+    private function actionAddTeacher(string $text): void
+    {
+        $lower = strtolower(trim($text));
+        if (in_array($lower, ['cancel', 'stop'])) { $this->cancelAction(); return; }
+
+        if ($this->actionSubstep === 0) {
+            if (strlen(trim($text)) < 3) {
+                $this->botSay('Please enter a valid name (at least 3 characters).'); return;
+            }
+            $this->actionData['name'] = trim($text);
+            $this->actionSubstep = 1;
+            $this->botSay("Name: **{$this->actionData['name']}**. | What is the teacher's email address?");
+            return;
+        }
+
+        if ($this->actionSubstep === 1) {
+            $email = trim($text);
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $this->botSay('Please enter a valid email address.'); return;
+            }
+            $this->actionData['email'] = $email;
+            $this->actionSubstep = 2;
+            $this->botSay("Email: **{$email}**. | What is their phone number? (type **skip** to omit)");
+            return;
+        }
+
+        if ($this->actionSubstep === 2) {
+            if (!in_array($lower, ['skip', 'none', '', 'later'])) {
+                $this->actionData['phone'] = trim($text);
+            }
+            $parts = [];
+            $parts[] = "Name: **{$this->actionData['name']}**";
+            $parts[] = "Email: **{$this->actionData['email']}**";
+            if (!empty($this->actionData['phone'])) $parts[] = "Phone: **{$this->actionData['phone']}**";
+            $this->botSay(implode(' | ', $parts) . "\n\nType **yes** to confirm, **no** to restart.");
+            $this->actionSubstep = 3;
+            return;
+        }
+
+        if ($this->actionSubstep === 3) {
+            if (in_array($lower, ['yes', 'y', 'ok', 'confirm'])) {
+                $result = ToshiActionService::addTeacher(auth()->user(), $this->actionData);
+                $this->botSay($result['message']);
+                $this->actionStep = null; $this->actionSubstep = 0;
+            } elseif (in_array($lower, ['no', 'n', 'edit', 'change'])) {
+                $this->actionSubstep = 0; $this->actionData = [];
+                $this->botSay("Let's start over. What is the teacher's full name?");
+            } else {
+                $this->botSay("Type **yes** to confirm or **no** to restart.");
+            }
+            return;
+        }
+    }
+
+    // ── Action: Record Payment ──
+
+    private function actionRecordPayment(string $text): void
+    {
+        $lower = strtolower(trim($text));
+        if (in_array($lower, ['cancel', 'stop'])) { $this->cancelAction(); return; }
+
+        if ($this->actionSubstep === 0) {
+            // Find student by name
+            $student = ToshiActionService::findStudentSimple(auth()->user(), trim($text));
+            if (!$student) {
+                $this->botSay("Student not found. Try the full name, email, or KlassApp ID.");
+                return;
+            }
+            $this->actionData['student_id'] = $student->id;
+            $this->actionData['student_name'] = $student->name;
+            $this->actionSubstep = 1;
+            $this->botSay("Student: **{$student->name}**. | What is the payment amount in UGX?");
+            return;
+        }
+
+        if ($this->actionSubstep === 1) {
+            $amount = str_replace([',', ' ', 'UGX', 'ugx', '='], '', trim($text));
+            if (!is_numeric($amount) || (float)$amount <= 0) {
+                $this->botSay('Please enter a valid positive amount (e.g. 150000).'); return;
+            }
+            $this->actionData['amount'] = (float)$amount;
+            $this->actionSubstep = 2;
+            $this->botSay("Amount: " . number_format($this->actionData['amount'], 0) . " UGX. | Payment method? (e.g. **cash**, **cheque**, **mobile money**, **bank transfer**, or **skip**)");
+            return;
+        }
+
+        if ($this->actionSubstep === 2) {
+            if (!in_array($lower, ['skip', 'none', '', 'later'])) {
+                $this->actionData['payment_method'] = trim($text);
+            }
+            $this->actionSubstep = 3;
+            $this->botSay("Payment method: **" . ($this->actionData['payment_method'] ?? 'not specified') . "**. | Any reference number? (e.g. cheque number, transaction ID, or **skip**)");
+            return;
+        }
+
+        if ($this->actionSubstep === 3) {
+            if (!in_array($lower, ['skip', 'none', '', 'later', 'no'])) {
+                $this->actionData['reference'] = trim($text);
+            }
+            // Confirm and record
+            $parts = [
+                "Student: **{$this->actionData['student_name']}**",
+                "Amount: " . number_format($this->actionData['amount'], 0) . " UGX",
+            ];
+            if (!empty($this->actionData['payment_method'])) $parts[] = "Method: **{$this->actionData['payment_method']}**";
+            if (!empty($this->actionData['reference'])) $parts[] = "Ref: **{$this->actionData['reference']}**";
+
+            $result = ToshiActionService::recordPayment(auth()->user(), [
+                'student_id'      => $this->actionData['student_id'],
+                'amount'          => $this->actionData['amount'],
+                'payment_method'  => $this->actionData['payment_method'] ?? null,
+                'reference'       => $this->actionData['reference'] ?? null,
+            ]);
+
+            if ($result['success']) {
+                $this->botSay("✅ {$result['message']}");
+            } else {
+                $this->botSay("❌ {$result['message']}");
+            }
+            $this->actionStep = null; $this->actionSubstep = 0;
+            return;
+        }
+    }
+
+    // ── Action: Assign Teacher ──
+
+    private function actionAssignTeacher(string $text): void
+    {
+        $lower = strtolower(trim($text));
+        if (in_array($lower, ['cancel', 'stop'])) { $this->cancelAction(); return; }
+
+        if ($this->actionSubstep === 0) {
+            $this->actionData['teacher_email'] = trim($text);
+            $this->actionSubstep = 1;
+            $this->botSay("Teacher email: **{$this->actionData['teacher_email']}**. | What class? (e.g. **Primary 5**)");
+            return;
+        }
+
+        if ($this->actionSubstep === 1) {
+            $this->actionData['class_name'] = trim($text);
+            $this->actionSubstep = 2;
+            $this->botSay("Class: **{$this->actionData['class_name']}**. | What subject? (e.g. **Mathematics**)");
+            return;
+        }
+
+        if ($this->actionSubstep === 2) {
+            $this->actionData['subject_name'] = trim($text);
+            $this->actionData['_create_subject'] = false;
+            $result = ToshiActionService::assignTeacher(auth()->user(), $this->actionData);
+            if ($result['success']) {
+                $this->botSay($result['message']);
+                $this->actionStep = null; $this->actionSubstep = 0;
+                return;
+            }
+            // Subject not found — offer to create it
+            if (str_starts_with($result['message'], 'Subject not found:')) {
+                $this->actionSubstep = 3;
+                $this->botSay("**{$this->actionData['subject_name']}** doesn't exist yet. Shall I create it now? (yes/no)");
+                return;
+            }
+            // Other failure
+            $this->botSay($result['message']);
+            $this->actionStep = null; $this->actionSubstep = 0;
+            return;
+        }
+
+        // substep 3 — confirm subject creation
+        if ($this->actionSubstep === 3) {
+            $lower = strtolower(trim($text));
+            if (in_array($lower, ['yes', 'y', 'ok', 'sure', 'create', 'yeah'])) {
+                $createResult = ToshiActionService::createSubject(auth()->user(), [
+                    'name'       => $this->actionData['subject_name'],
+                    'class_name' => $this->actionData['class_name'],
+                ]);
+                if ($createResult['success']) {
+                    $retry = ToshiActionService::assignTeacher(auth()->user(), $this->actionData);
+                    $this->botSay($retry['message']);
+                } else {
+                    $this->botSay($createResult['message'] . ' Try a different subject name.');
+                }
+            } else {
+                $this->botSay("OK, cancelled. Try a subject that already exists.");
+            }
+            $this->actionStep = null; $this->actionSubstep = 0;
+        }
+    }
+
+    // ── Action: Create Fee ──
+
+    private function actionCreateFee(string $text): void
+    {
+        $lower = strtolower(trim($text));
+        if (in_array($lower, ['cancel', 'stop'])) { $this->cancelAction(); return; }
+
+        if ($this->actionSubstep === 0) {
+            if (strlen(trim($text)) < 2) {
+                $this->botSay('Please enter a fee name (e.g. "Tuition" or "Sports Fee").'); return;
+            }
+            $this->actionData['name'] = trim($text);
+            $this->actionSubstep = 1;
+            $this->botSay("Fee: **{$this->actionData['name']}**. | What is the amount in UGX?");
+            return;
+        }
+
+        if ($this->actionSubstep === 1) {
+            $amount = str_replace([',', ' ', 'UGX', 'ugx'], '', trim($text));
+            if (!is_numeric($amount) || (float)$amount <= 0) {
+                $this->botSay('Please enter a valid amount (e.g. 500000).'); return;
+            }
+            $this->actionData['amount'] = (float)$amount;
+            $this->actionSubstep = 2;
+            $this->botSay("Amount: " . number_format($this->actionData['amount'], 0) . " UGX. | Which term? (e.g. **Term 1** or **skip**)");
+            return;
+        }
+
+        if ($this->actionSubstep === 2) {
+            if (!in_array($lower, ['skip', 'none', '', 'later'])) {
+                $this->actionData['term_name'] = trim($text);
+            }
+            $parts = ["Fee: **{$this->actionData['name']}**", "Amount: " . number_format($this->actionData['amount'], 0) . " UGX"];
+            if (!empty($this->actionData['term_name'])) $parts[] = "Term: **{$this->actionData['term_name']}**";
+            $this->botSay(implode(' | ', $parts) . "\n\nType **yes** to confirm or **no** to restart.");
+            $this->actionSubstep = 3;
+            return;
+        }
+
+        if ($this->actionSubstep === 3) {
+            if (in_array($lower, ['yes', 'y', 'ok', 'confirm'])) {
+                $result = ToshiActionService::createFee(auth()->user(), $this->actionData);
+                $this->botSay($result['message']);
+                $this->actionStep = null; $this->actionSubstep = 0;
+            } elseif (in_array($lower, ['no', 'n', 'edit', 'change'])) {
+                $this->actionSubstep = 0; $this->actionData = [];
+                $this->botSay("Let's start over. What is the fee name?");
+            } else {
+                $this->botSay("Type **yes** to confirm or **no** to restart.");
+            }
+            return;
+        }
+    }
+
     /**
      * Final fallback when both keyword router and LLM fail or are unavailable.
      */
     private function fallbackMessage(): void
     {
-        $this->botSay("I'm not sure about that yet. Try asking me about: reports, students, attendance, fees, marks, or WhatsApp. Or use the sidebar to manage your school.");
+        $actions = $this->capabilities['actions'] ?? [];
+
+        // Build dynamic capability list
+        $groups = [];
+
+        $infoActions = array_intersect($actions, ['list_classes', 'list_teachers', 'generate_report', 'list_schools', 'platform_reports']);
+        if ($infoActions) {
+            $items = [];
+            if (in_array('generate_report', $infoActions) || in_array('platform_reports', $infoActions)) $items[] = '"show report"';
+            if (in_array('list_classes', $infoActions)) $items[] = '"list classes"';
+            if (in_array('list_teachers', $infoActions)) $items[] = '"list teachers"';
+            $groups[] = '**📊 Info** — ' . implode(', ', $items);
+        }
+
+        $addActions = array_intersect($actions, ['add_student', 'add_teacher', 'add_coadmin']);
+        if ($addActions) {
+            $items = [];
+            if (in_array('add_student', $addActions)) $items[] = '"add student [name]"';
+            if (in_array('add_teacher', $addActions)) $items[] = '"add teacher [name]"';
+            if (in_array('add_coadmin', $addActions)) $items[] = '"add co-admin"';
+            $groups[] = '**👥 Add** — ' . implode(', ', $items);
+        }
+
+        $recordActions = array_intersect($actions, ['record_attendance', 'create_term', 'create_fee', 'record_payment']);
+        if ($recordActions) {
+            $items = [];
+            if (in_array('record_attendance', $recordActions)) $items[] = '"mark [student] present/absent"';
+            if (in_array('create_term', $recordActions)) $items[] = '"create term"';
+            if (in_array('create_fee', $recordActions)) $items[] = '"create fee"';
+            if (in_array('record_payment', $recordActions)) $items[] = '"record payment"';
+            $groups[] = '**📝 Record** — ' . implode(', ', $items);
+        }
+
+        $actionItems = array_intersect($actions, ['assign_teacher', 'create_subject']);
+        if ($actionItems) {
+            $items = [];
+            if (in_array('assign_teacher', $actionItems)) $items[] = '"assign teacher"';
+            if (in_array('create_subject', $actionItems)) $items[] = '"create subject"';
+            $groups[] = '**⚙️ Actions** — ' . implode(', ', $items);
+        }
+
+        if (empty($groups)) {
+            $this->botSay("I'm not sure about that yet. Try asking about your school, or use the sidebar for full management tools.");
+            return;
+        }
+
+        $msg = "I'm not sure about that yet. Here's what I can do:\n\n" . implode("\n", $groups);
+        $msg .= "\n\nTip: For multi-step actions like adding a student, just say the action name and I'll guide you through it!";
+
+        $this->botSay($msg);
     }
 
     // ── Handle user input ──
@@ -1212,8 +1828,40 @@ class AgentToshi extends Component
         $this->userSay($text);
         $this->input = '';
 
+        // Active action flow (multi-step, e.g. add student, enter marks)
+        if ($this->actionStep) {
+            $this->handleActionFlow($text);
+            return;
+        }
+
         // Assistant mode — school is set up, Toshi can answer questions
         if ($this->mode === 'assistant') {
+            $this->handleAssistantQuery($text);
+            return;
+        }
+
+        // ── Setup mode: auto-detect if user wants assistant instead ──
+        // Try the keyword router first (zero-cost). If it matches, switch to assistant.
+        if ($this->tryKeywordRoute(strtolower($text), $text)) {
+            $this->mode = 'assistant';
+            $this->step = 99;
+            $this->saveDraft();
+            return;
+        }
+
+        // Heuristic: detect natural language queries vs. setup answers.
+        $lower = strtolower($text);
+        $isQuestion = (bool) preg_match('/^(what|how|why|when|where|who|which|can|could|would|will|do|does|did|is|are|has|have|show|tell|list|find|give)\b/i', $text);
+        $hasQueryVerb = (bool) preg_match('/\b(show|list|tell|find|give|add|create|record|mark|assign|report|how many|what is|who is|i want|i need|can you)\b/i', $lower);
+        $isMultiWord = str_word_count($text) >= 3;
+        $isSetupAnswer = in_array($lower, ['yes', 'y', 'no', 'n', 'correct', 'right', 'ok', 'default', 'skip', 'later', 'cash', 'cheque', 'mobile_money', 'bank_transfer'])
+            || preg_match('/^\+?256\d{9,12}$/', $text)      // Ugandan phone number
+            || preg_match('/^[\w\.\-]+@[\w\.\-]+\.\w+$/', $text); // email address
+
+        if (($isQuestion || ($hasQueryVerb && $isMultiWord)) && !$isSetupAnswer) {
+            $this->mode = 'assistant';
+            $this->step = 99;
+            $this->saveDraft();
             $this->handleAssistantQuery($text);
             return;
         }
@@ -2121,14 +2769,21 @@ class AgentToshi extends Component
                 if (($sent['status'] ?? '') === 'success' || ($sent['success'] ?? false)) {
                     $this->botSay("📱 Verification code sent! Check WhatsApp on **{$this->whatsappPhone}**.");
                 } else {
-                    // Log the attempt but still show the code for demo/testing
                     \Log::info('WhatsApp OTP send result', $sent);
-                    $this->botSay("📱 In production, a code would be sent via WhatsApp. For testing, use code: **{$otp}**");
+                    if (!app()->environment('production')) {
+                        $this->botSay("📱 In production, a code would be sent via WhatsApp. For testing, use code: **{$otp}**");
+                    } else {
+                        $this->botSay("📱 Could not send the verification code via WhatsApp right now. Type **resend** to try again or **skip** to do this later.");
+                    }
                 }
             }
         } catch (\Exception $e) {
             \Log::warning('WhatsApp OTP send failed: ' . $e->getMessage());
-            $this->botSay("📱 Could not send via WhatsApp right now. For testing, use code: **{$otp}**");
+            if (!app()->environment('production')) {
+                $this->botSay("📱 Could not send via WhatsApp right now. For testing, use code: **{$otp}**");
+            } else {
+                $this->botSay("📱 Could not send the verification code via WhatsApp right now. Type **resend** to try again or **skip** to do this later.");
+            }
         }
 
         $this->botSay("Enter the 6-digit code you received:");

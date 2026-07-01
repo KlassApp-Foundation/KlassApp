@@ -14,6 +14,13 @@
             border-color: #22C55E; background: #F0FDF4;
             box-shadow: 0 2px 8px rgba(34,197,94,0.12);
         }
+        /* Kill all browser/Tailwind focus rings inside Toshi panels */
+        #toshi-panel *:focus, #toshi-modal *:focus,
+        #toshi-panel *:focus-visible, #toshi-modal *:focus-visible {
+            outline: none !important;
+            outline-offset: 0 !important;
+            box-shadow: none !important;
+        }
     </style>
     <div id="toshi-pill"
          wire:click="show" onclick="this.style.display='none'; document.getElementById('toshi-panel').style.display='flex';"
@@ -51,13 +58,15 @@
                 </button>
             </div>
         </div>
-        <div class="flex-1 overflow-y-auto" style="background: #F8FAFC; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0;">
+        <div class="flex-1 overflow-y-auto"
+             x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight); $wire.$watch('messages', () => $nextTick(() => $el.scrollTop = $el.scrollHeight))"
+             style="background: #F8FAFC; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0;">
             @foreach($messages as $msg)
                 @php $isUser = $msg['role'] === 'user'; @endphp
                 <div style="display: flex; justify-content: {{ $isUser ? 'flex-end' : 'flex-start' }};">
                     <div style="max-width: 80%;">
                         <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94A3B8; margin-bottom: 4px; padding: 0 4px;">{{ $isUser ? 'You' : 'Toshi' }}</div>
-                        <div style="border-radius: 12px; padding: 10px 14px; font-size: 13px; line-height: 1.5; {{ $isUser ? 'background: #0F172A; color: #FFFFFF;' : 'background: #FFFFFF; color: #1E293B; border: 1px solid #E2E8F0;' }}">
+                        <div style="border-radius: 12px; padding: 10px 14px; font-size: 13px; line-height: 1.5; {{ $isUser ? 'background: #F8FAFC; color: #1E293B; border: 1px solid #E2E8F0;' : 'background: #FFFFFF; color: #1E293B; border: 1px solid #E2E8F0;' }}">
                             @if(!$isUser){!! preg_replace('/\*\*(.+?)\*\*/','<strong>$1</strong>',nl2br(e($msg['text']))) !!}@else{!! nl2br(e($msg['text'])) !!}@endif
                         </div>
                     </div>
@@ -326,36 +335,75 @@
             </div>
             @endif
         </div>
-        <form wire:submit.prevent="send" class="shrink-0 flex items-center gap-2" style="border-top: 1px solid #E2E8F0; background: #FFFFFF; padding: 10px 12px;">
-            <label class="flex items-center justify-center shrink-0 cursor-pointer" style="width: 36px; height: 36px; color: #9CA3AF; font-size: 20px; font-weight: 400; transition: color 0.15s;" onmouseover="this.style.color='#1E6FD9'" onmouseout="this.style.color='#9CA3AF'" title="Upload file">
-                +
-                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
-            </label>
-            <textarea rows="1" wire:model.defer="input" placeholder="Type your message…" id="toshi-input-panel" @input="hasText = $el.value.trim().length > 0; $el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();Livewire.find('{{ $__livewire->id() }}').send()}" class="flex-1 resize-none" style="border: none; outline: none; font-size: 14px; background: transparent; color: #1E293B; height: 24px; max-height: 120px; line-height: 1.5; overflow-y: auto;"></textarea>
-            <button type="button" x-data="{ listening: false }" @click="
-                if (!listening) {
-                    listening = true; hasText = true;
-                    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    if (!SpeechRecognition) { listening = false; alert('Voice input not supported in this browser'); return; }
-                    var recognition = new SpeechRecognition();
-                    recognition.lang = 'en-US';
-                    recognition.interimResults = false;
-                    recognition.onresult = function(event) {
-                        var text = event.results[0][0].transcript;
-                        var input = document.getElementById('toshi-input-panel');
-                        input.value = text; input.dispatchEvent(new Event('input', {bubbles: true}));
-                        input.closest('form').querySelector('button[type=submit]').click();
-                        listening = false;
-                    };
-                    recognition.onerror = function() { listening = false; };
-                    recognition.onend = function() { listening = false; };
-                    recognition.start();
-                }
-            " class="flex items-center justify-center shrink-0 relative" style="width: 40px; height: 40px; border-radius: 50%; background: #0F172A; border: none; cursor: pointer;">
-                <span x-show="listening" class="absolute w-3 h-3 rounded-full" style="background: #22C55E; animation: toshi-pulse 1.4s ease-in-out infinite; top: 4px; right: 4px;"></span>
-                <svg x-show="!hasText || listening" class="w-5 h-5" style="color: #FFFFFF;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                <svg x-show="hasText && !listening" class="w-5 h-5" style="color: #FFFFFF;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-            </button>
+        {{-- Composer: compact panel — single rounded shell with bottom action row --}}
+        <form wire:submit.prevent="send" class="shrink-0" style="background: #FFFFFF;">
+            <div style="margin: 0 10px 12px; border: 1px solid rgba(0,0,0,0.08); border-radius: 18px; background: #FFFFFF;">
+                {{-- Textarea --}}
+                <div style="padding: 12px 14px 0;">
+                    <textarea rows="1" wire:model.defer="input"
+                              placeholder="Message Toshi…"
+                              id="toshi-input-panel"
+                              @input="
+                                  hasText = $el.value.trim().length > 0;
+                                  $el.style.height = 'auto';
+                                  $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
+                              "
+                               @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
+                               class="resize-none w-full"
+                               style="border: none; outline: none; background: transparent; font-size: 15px; color: #0F172A; font-family: 'DM Sans', sans-serif; width: 100%; min-height: 24px; max-height: 320px; line-height: 1.5; padding: 0; box-sizing: border-box; transition: height 0.15s ease;"></textarea>
+                </div>
+                {{-- Bottom action row --}}
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 10px;">
+                    {{-- Voice (left) --}}
+                    <button type="button" x-data="{ listening: false }"
+                            @click="
+                                if (!listening) {
+                                    listening = true; hasText = true;
+                                    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                                    if (!SpeechRecognition) { listening = false; alert('Voice input not supported in this browser'); return; }
+                                    var recognition = new SpeechRecognition();
+                                    recognition.lang = 'en-US';
+                                    recognition.interimResults = false;
+                                    recognition.onresult = function(event) {
+                                        var text = event.results[0][0].transcript;
+                                        var input = document.getElementById('toshi-input-panel');
+                                        input.value = text; input.dispatchEvent(new Event('input', {bubbles: true}));
+                                        input.closest('form').querySelector('button[type=submit]').click();
+                                        listening = false;
+                                    };
+                                    recognition.onerror = function() { listening = false; };
+                                    recognition.onend = function() { listening = false; };
+                                    recognition.start();
+                                }
+                            "
+                            class="relative"
+                            style="width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #94A3B8; transition: color 0.15s;"
+                            onmouseover="this.style.color='#1E6FD9'"
+                            onmouseout="this.style.color='#94A3B8'">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                        <span x-show="listening" class="absolute" style="width: 8px; height: 8px; border-radius: 50%; background: #22C55E; animation: toshi-pulse 1.4s ease-in-out infinite; top: 2px; right: 2px;"></span>
+                    </button>
+                    {{-- Right cluster: attach + send --}}
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <label class="flex items-center justify-center cursor-pointer"
+                               style="width: 30px; height: 30px; color: #94A3B8; transition: color 0.15s; font-size: 20px; font-weight: 300;"
+                               onmouseover="this.style.color='#1E6FD9'"
+                               onmouseout="this.style.color='#94A3B8'"
+                               title="Upload file">
+                            +
+                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
+                        </label>
+                        {{-- Send --}}
+                        <button type="submit"
+                                :disabled="!hasText"
+                                :style="hasText ? 'color: #0F172A; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
+                                style="width: 30px; height: 30px; background: none; border: none; display: flex; align-items: center; justify-content: center; transition: color 0.15s;"
+                                class="active:scale-95">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </form>
     </div>
 
@@ -397,13 +445,15 @@
                 </div>
 
                 {{-- Chat Area --}}
-                <div class="flex-1 overflow-y-auto" style="background: #FFFFFF; padding: 32px 24px; min-height: 0;">
+                <div class="flex-1 overflow-y-auto"
+                     x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight); $wire.$watch('messages', () => $nextTick(() => $el.scrollTop = $el.scrollHeight))"
+                     style="background: #FFFFFF; padding: 32px 24px; min-height: 0;">
                     <div style="max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
                         @foreach($messages as $msg)
                             @php $isUser = $msg['role'] === 'user'; @endphp
                             @if($isUser)
                                 <div style="display: flex; justify-content: flex-end;">
-                                    <div style="background: #0F172A; color: #FFFFFF; border-radius: 12px 0 12px 12px; padding: 12px 16px; font-size: 14px; line-height: 1.6; max-width: 75%;">
+                                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; color: #1E293B; border-radius: 12px 0 12px 12px; padding: 12px 16px; font-size: 14px; line-height: 1.6; max-width: 75%;">
                                         {!! nl2br(e($msg['text'])) !!}
                                     </div>
                                 </div>
@@ -558,18 +608,74 @@
                     </div>
                 </div>
 
-                {{-- Composer --}}
-                <form wire:submit.prevent="send" class="shrink-0" style="border-top: 1px solid #E2E8F0; padding: 16px 24px; background: #FFFFFF;">
-                    <div style="max-width: 680px; margin: 0 auto; display: flex; align-items: flex-end; gap: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 10px 14px;">
-                        <label class="flex items-center justify-center shrink-0 cursor-pointer" style="color: #9CA3AF; font-size: 20px; font-weight: 300; transition: color 0.15s; padding-bottom: 2px;" onmouseover="this.style.color='#1E6FD9'" onmouseout="this.style.color='#9CA3AF'" title="Upload file">
-                            +
-                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
-                        </label>
-                        <textarea rows="1" wire:model.defer="input" placeholder="Message Toshi..." @input="hasText = $el.value.trim().length > 0; $el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.form.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}))}" class="flex-1 resize-none" style="border: none; outline: none; background: transparent; font-size: 14px; color: #1E293B; font-family: 'DM Sans', sans-serif; min-height: 24px; max-height: 120px; line-height: 1.5;"></textarea>
-                        <button type="submit" class="flex items-center justify-center shrink-0 relative" style="width: 44px; height: 44px; border-radius: 50%; background: #0F172A; border: none; cursor: pointer;">
-                            <svg x-show="!hasText" class="w-5 h-5" style="color: #FFFFFF;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                            <svg x-show="hasText" class="w-5 h-5" style="color: #FFFFFF;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m-7 7l7-7 7 7"/></svg>
-                        </button>
+                {{-- Composer: maximized modal — single rounded shell with bottom action row --}}
+                <form wire:submit.prevent="send" class="shrink-0" style="padding: 0 24px 16px; background: #FFFFFF;">
+                    <div style="border: 1px solid rgba(0,0,0,0.08); border-radius: 18px; background: #FFFFFF;">
+                        {{-- Textarea --}}
+                        <div style="padding: 14px 16px 0;">
+                            <textarea rows="1" wire:model.defer="input"
+                                      placeholder="Message Toshi..."
+                                      id="toshi-input-modal"
+                                      @input="
+                                          hasText = $el.value.trim().length > 0;
+                                          $el.style.height = 'auto';
+                                          $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
+                                      "
+                                      @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
+                                      class="resize-none w-full"
+                                      style="border: none; outline: none; background: transparent; font-size: 15px; color: #0F172A; font-family: 'DM Sans', sans-serif; width: 100%; min-height: 24px; max-height: 320px; line-height: 1.5; padding: 0; box-sizing: border-box; transition: height 0.15s ease;"></textarea>
+                        </div>
+                        {{-- Bottom action row --}}
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px 12px;">
+                            {{-- Voice (left) --}}
+                            <button type="button" x-data="{ listening: false }"
+                                    @click="
+                                        if (!listening) {
+                                            listening = true; hasText = true;
+                                            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                                            if (!SpeechRecognition) { listening = false; alert('Voice input not supported in this browser'); return; }
+                                            var recognition = new SpeechRecognition();
+                                            recognition.lang = 'en-US';
+                                            recognition.interimResults = false;
+                                            recognition.onresult = function(event) {
+                                                var text = event.results[0][0].transcript;
+                                                var input = document.getElementById('toshi-input-modal');
+                                                input.value = text; input.dispatchEvent(new Event('input', {bubbles: true}));
+                                                input.closest('form').querySelector('button[type=submit]').click();
+                                                listening = false;
+                                            };
+                                            recognition.onerror = function() { listening = false; };
+                                            recognition.onend = function() { listening = false; };
+                                            recognition.start();
+                                        }
+                                    "
+                                    class="relative"
+                                    style="width: 30px; height: 30px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #94A3B8; transition: color 0.15s;"
+                                    onmouseover="this.style.color='#1E6FD9'"
+                                    onmouseout="this.style.color='#94A3B8'">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                                <span x-show="listening" class="absolute" style="width: 8px; height: 8px; border-radius: 50%; background: #22C55E; animation: toshi-pulse 1.4s ease-in-out infinite; top: 2px; right: 2px;"></span>
+                            </button>
+                            {{-- Right cluster: attach + send --}}
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <label class="flex items-center justify-center cursor-pointer"
+                                       style="width: 30px; height: 30px; color: #94A3B8; transition: color 0.15s; font-size: 20px; font-weight: 300;"
+                                       onmouseover="this.style.color='#1E6FD9'"
+                                       onmouseout="this.style.color='#94A3B8'"
+                                       title="Upload file">
+                                    +
+                                    <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
+                                </label>
+                                {{-- Send --}}
+                                <button type="submit"
+                                        :disabled="!hasText"
+                                        :style="hasText ? 'color: #0F172A; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
+                                        style="width: 30px; height: 30px; background: none; border: none; display: flex; align-items: center; justify-content: center; transition: color 0.15s;"
+                                        class="active:scale-95">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>

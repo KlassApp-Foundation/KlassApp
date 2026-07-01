@@ -34,13 +34,12 @@ WHATSAPP_BUSINESS_NAME=KlassApp
 ```
 
 ### Next Session Priority
-1. Run the three new migrations on production
+1. Run the three new migrations on production (toshi_personas, any pending)
 2. Configure School Pay webhook forwarding on production
 3. Test School Pay → WhatsApp receipt flow end-to-end
-4. Test first-time texter flow with list buttons
-5. Add `SCHOOLPAY_ENFORCE_SIGNATURE` toggle (env or School model) to reject unsigned webhooks
-6. Clean up `whatsapp_pending_parent_links` dead table (drop or document)
-7. Continue Toshi work (Item 14 — Persistent reminders)
+4. Add `SCHOOLPAY_ENFORCE_SIGNATURE` toggle (env or School model) to reject unsigned webhooks
+5. Clean up `whatsapp_pending_parent_links` dead table (drop or document)
+6. Toshi: personalize greeting with persona on mount
 
 ### Local Dev
 ```bash
@@ -447,4 +446,16 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Key decisions**: Toshi lives at layout level, not per-dashboard — any authenticated page using `layouts/app.blade.php` or `layouts/superadmin-app.blade.php` gets it automatically. LLM base URL is `https://integrate.api.nvidia.com/v1` (not `api.nvcf.nvidia.com`). Toshi access gated to usergroups 1, 2, 3 — expands later. Draft resume via `OnboardingSession` DB table is superadmin-only.
 - **Status**: ✅ Done
 - **Edge cases flagged**: Shell env vars override `.env` because `phpdotenv` doesn't overwrite existing environment variables. NIM base URL changed from `api.nvcf.nvidia.com` to `integrate.api.nvidia.com`.
+
+### 2026-07-01: Toshi persona memory system
+- **Work done**: Built persistent persona memory for Toshi. Each user gets a `toshi_personas` row that stores a one-paragraph summary of their communication style, what they care about, and their general vibe. The summary is injected into the LLM system prompt as `{persona}` so Toshi adapts tone and depth to each user. After every LLM interaction, a counter increments; every 5th interaction (configurable via `TOSHI_PERSONA_UPDATE_INTERVAL`), a lightweight extraction LLM call (gpt-4o-mini, 200 max tokens) reads the conversation and updates the persona. Also: user chat bubbles changed from black to off-white (`#F8FAFC`) to match Toshi's style; three composer icons stripped of backgrounds/borders per user request.
+- **Files modified**:
+  - `database/migrations/2026_07_01_000001_create_toshi_personas_table.php` — new
+  - `app/Models/ToshiPersona.php` — new
+  - `app/Services/ToshiAssistantService.php` — `getPersonaSummary()`, `learnFromInteraction()`, `buildSystemPrompt()` persona injection, `callLLM()` maxTokens param
+  - `config/toshi.php` — added `persona_enabled`, `persona_update_interval`, `persona_model`
+  - `resources/views/livewire/agent-toshi.blade.php` — user msg bg `#F8FAFC`, icon cleanup
+- **Key decisions**: Persona learning happens inside `ToshiAssistantService::ask()`/`askStreamed()`, not in Livewire — zero changes needed in AgentToshi controller. Persona extraction uses a separate model config (defaults to same as main). Disabled via `TOSHI_PERSONA_ENABLED=false` with no cost impact. Extraction LLM call is wrapped in try-catch — API failures degrade silently, existing persona survives.
+- **Status**: ✅ Done
+- **Edge cases flagged**: `users.id` is `INT UNSIGNED` (not `BIGINT`) — `foreignId()` creates `BIGINT UNSIGNED` causing FK constraint failure; fixed by using `integer('user_id')->unsigned()` manually. All DB data was wiped during migration testing via `php artisan db:wipe` — required re-seeding.
 

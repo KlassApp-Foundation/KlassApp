@@ -16,7 +16,7 @@
                 </span>
             </button>
 
-            <a class="h-10 object-contain" href="{{ route('dashboard') }}">
+            <a class="h-10 object-contain" href="{{ route('superadmin.dashboard') }}">
                 <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="h-10 w-auto object-contain mr-3" alt="KlassApp Logo">
             </a>
 
@@ -62,7 +62,7 @@
                                             @endif
                                             <div>
                                                 <div>
-                                                    <a id="navbarDropdown" class="nav-link dropdown-toggle text-sm no-underline px-2" href="{{url('/admin/dashboard')}}" style="color: #0F172A;">
+                                                    <a id="navbarDropdown" class="nav-link dropdown-toggle text-sm no-underline px-2" href="{{ route('superadmin.dashboard') }}" style="color: #0F172A;">
                                                         @if(Auth::user()->userprofile->firstname != null)
                                                             {{ Auth::user()->FullName }} <span class="caret"></span>
                                                         @else

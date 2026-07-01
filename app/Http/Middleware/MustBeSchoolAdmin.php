@@ -27,6 +27,11 @@ class MustBeSchoolAdmin
             return redirect('/superadmin/dashboard');
         }
 
+        if(\Auth::user()->usergroup_id==2)
+        {
+            return redirect('/superadmin/dashboard');
+        }
+
         if(\Auth::user()->usergroup_id==5)
         {
             return redirect('/teacher/dashboard');

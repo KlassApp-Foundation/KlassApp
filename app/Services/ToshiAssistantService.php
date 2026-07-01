@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\School;
+use App\Models\ToshiPersona;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -46,7 +47,8 @@ class ToshiAssistantService
         }
 
         $context = $this->buildContext($user, $schoolId);
-        $systemPrompt = $this->buildSystemPrompt($context);
+        $persona = $this->getPersonaSummary($user);
+        $systemPrompt = $this->buildSystemPrompt($context, $persona);
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
@@ -59,7 +61,13 @@ class ToshiAssistantService
 
         $messages[] = ['role' => 'user', 'content' => $query];
 
-        return $this->callLLM($messages);
+        $response = $this->callLLM($messages);
+
+        if ($response !== null) {
+            $this->learnFromInteraction($user, $query, $response, $history);
+        }
+
+        return $response;
     }
 
     /**
@@ -79,7 +87,8 @@ class ToshiAssistantService
         }
 
         $context = $this->buildContext($user, $schoolId);
-        $systemPrompt = $this->buildSystemPrompt($context);
+        $persona = $this->getPersonaSummary($user);
+        $systemPrompt = $this->buildSystemPrompt($context, $persona);
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
@@ -92,17 +101,24 @@ class ToshiAssistantService
 
         $messages[] = ['role' => 'user', 'content' => $query];
 
+        $fullResponse = '';
         $yieldedAny = false;
         foreach ($this->streamLLM($messages) as $chunk) {
             $yieldedAny = true;
+            $fullResponse .= $chunk;
             yield $chunk;
         }
 
         if (!$yieldedAny) {
             $full = $this->callLLM($messages);
             if ($full !== null) {
+                $fullResponse = $full;
                 yield $full;
             }
+        }
+
+        if ($fullResponse !== '') {
+            $this->learnFromInteraction($user, $query, $fullResponse, $history);
         }
     }
 
@@ -111,7 +127,15 @@ class ToshiAssistantService
      */
     public function buildContext(User $user, ?int $schoolId): array
     {
-        $isSuperAdmin = $user->usergroup_id === 1;
+        $caps = \App\Services\ToshiActionService::getRoleCapabilities($user->usergroup_id);
+        $roleLabel = $caps['label'] ?? 'user';
+        $allowedActions = $caps['actions'] ?? [];
+
+        $actionNames = array_map(function ($a) {
+            return str_replace('_', ' ', $a);
+        }, $allowedActions);
+
+        $isSuperAdmin = $user->usergroup_id === 1 || $user->usergroup_id === 2;
 
         if ($isSuperAdmin) {
             $totalSchools = School::count();
@@ -133,6 +157,8 @@ class ToshiAssistantService
             return [
                 'role' => 'platform',
                 'data' => [
+                    'Your role' => ucfirst($roleLabel),
+                    'Allowed actions' => implode(', ', $actionNames) ?: 'view information only',
                     'Total schools' => "{$totalSchools} ({$activeSchools} active, {$inactiveSchools} inactive)",
                     'Total users' => number_format($totalUsers),
                     'School admins' => number_format($schoolAdmins),
@@ -147,7 +173,11 @@ class ToshiAssistantService
             if (!$school) {
                 return [
                     'role' => 'school',
-                    'data' => ['Note' => 'School data not available.'],
+                    'data' => [
+                        'Your role' => ucfirst($roleLabel),
+                        'Allowed actions' => implode(', ', $actionNames) ?: 'view information only',
+                        'Note' => 'School data not available.',
+                    ],
                 ];
             }
 
@@ -172,6 +202,8 @@ class ToshiAssistantService
             return [
                 'role' => 'school',
                 'data' => [
+                    'Your role' => ucfirst($roleLabel),
+                    'Allowed actions' => implode(', ', $actionNames) ?: 'view information only',
                     'School' => $school->name,
                     'Students' => (string) $studentCount,
                     'Teachers' => (string) $teacherCount,
@@ -185,14 +217,18 @@ class ToshiAssistantService
 
         return [
             'role' => 'school',
-            'data' => ['Note' => 'No school context available.'],
+            'data' => [
+                'Your role' => ucfirst($roleLabel),
+                'Allowed actions' => implode(', ', $actionNames) ?: 'view information only',
+                'Note' => 'No school context available.',
+            ],
         ];
     }
 
     /**
-     * Build the system prompt with injected context data.
+     * Build the system prompt with injected context data and persona.
      */
-    public function buildSystemPrompt(array $context): string
+    public function buildSystemPrompt(array $context, string $persona = ''): string
     {
         $template = config('toshi.system_prompt_template', '');
 
@@ -205,13 +241,110 @@ class ToshiAssistantService
             $dataLines .= "- {$label}: {$value}\n";
         }
 
+        $personaBlock = $persona ?: 'New user — no persona established yet. Adapt naturally.';
+
         $prompt = str_replace(
-            ['{role}', '{context_data}'],
-            [$roleLabel, trim($dataLines)],
+            ['{role}', '{context_data}', '{persona}'],
+            [$roleLabel, trim($dataLines), $personaBlock],
             $template
         );
 
+        // Append a role-awareness rule — the context data includes "Your role" and "Allowed actions"
+        $prompt .= "\n\nIMPORTANT: The user has the role and permissions listed under 'Your role' and 'Allowed actions' above. Only perform actions that are in the 'Allowed actions' list. If the user asks to do something outside their Allowed actions, politely explain they don't have permission and suggest alternatives they can do.";
+
+        // If the user has 'create_school' in their allowed actions, tell them the trigger phrase
+        if (str_contains($context['data']['Allowed actions'] ?? '', 'create school')) {
+            $prompt .= "\n\nIf the user wants to create a new school, tell them to say **\"create school\"** to start the school onboarding wizard.";
+        }
+
         return $prompt;
+    }
+
+    // ── Persona Memory ──
+
+    /**
+     * Get the persona summary string for a user, formatted for prompt injection.
+     * Returns empty string if persona is disabled or doesn't exist yet.
+     */
+    public function getPersonaSummary(User $user): string
+    {
+        if (!config('toshi.persona_enabled', true)) {
+            return '';
+        }
+
+        $persona = ToshiPersona::where('user_id', $user->id)->first();
+        if (!$persona || !$persona->summary) {
+            return '';
+        }
+
+        return $persona->summary;
+    }
+
+    /**
+     * Learn from an interaction and update the user's persona if conditions are met.
+     * Runs a lightweight LLM call every N interactions to refine the persona summary.
+     */
+    public function learnFromInteraction(User $user, string $query, string $response, array $history = []): void
+    {
+        if (!config('toshi.persona_enabled', true)) {
+            return;
+        }
+
+        $updateInterval = (int) config('toshi.persona_update_interval', 5);
+        if ($updateInterval < 1) {
+            return;
+        }
+
+        $persona = ToshiPersona::firstOrCreate(
+            ['user_id' => $user->id],
+            ['interaction_count' => 0]
+        );
+
+        $persona->increment('interaction_count');
+        $persona->last_interaction_at = now();
+        $persona->save();
+
+        // Only run extraction every N interactions
+        if ($persona->interaction_count % $updateInterval !== 0) {
+            return;
+        }
+
+        // Build a lightweight extraction prompt
+        $currentSummary = $persona->summary ?? 'No persona yet.';
+        $model = $this->getPersonaModel();
+
+        $extractionMessages = [
+            [
+                'role' => 'system',
+                'content' => 'You are a persona profiler. Given a user message, the assistant reply, '
+                    . 'and the current persona, produce an updated persona summary in exactly one paragraph. '
+                    . 'Capture the user\'s communication style (formal/casual/terse/detailed), '
+                    . 'what topics they seem to care about, and their general attitude. '
+                    . 'Output ONLY the paragraph — no labels, no prefixes, no markdown.',
+            ],
+            [
+                'role' => 'user',
+                'content' => "Current persona: {$currentSummary}\n\nLatest user message: {$query}\n\nAssistant reply: {$response}",
+            ],
+        ];
+
+        try {
+            $result = $this->callLLM($extractionMessages, retryModel: $model, maxTokens: 200);
+            if ($result !== null && trim($result) !== '') {
+                $persona->summary = trim($result);
+                $persona->save();
+            }
+        } catch (\Exception $e) {
+            Log::warning('Toshi persona extraction failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get the model to use for persona extraction.
+     */
+    private function getPersonaModel(): string
+    {
+        return config('toshi.persona_model', '') ?: $this->model;
     }
 
     /**
@@ -460,9 +593,10 @@ class ToshiAssistantService
     /**
      * Call the LLM API (non-streaming).
      */
-    private function callLLM(array $messages, ?string $retryModel = null): ?string
+    private function callLLM(array $messages, ?string $retryModel = null, ?int $maxTokens = null): ?string
     {
         $model = $retryModel ?? $this->model;
+        $maxTokens = $maxTokens ?? $this->maxTokens;
 
         try {
             $response = Http::timeout($this->timeout)
@@ -473,7 +607,7 @@ class ToshiAssistantService
                 ->post("{$this->baseUrl}/chat/completions", [
                     'model' => $model,
                     'messages' => $messages,
-                    'max_tokens' => $this->maxTokens,
+                    'max_tokens' => $maxTokens,
                     'temperature' => 0.7,
                 ]);
 
@@ -485,7 +619,7 @@ class ToshiAssistantService
                         'fallback' => $this->fallbackModel,
                         'status' => $response->status(),
                     ]);
-                    return $this->callLLM($messages, retryModel: $this->fallbackModel);
+                    return $this->callLLM($messages, retryModel: $this->fallbackModel, maxTokens: $maxTokens);
                 }
 
                 Log::warning('Toshi LLM API error', [
@@ -509,13 +643,13 @@ class ToshiAssistantService
         } catch (\Exception $e) {
             // Primary model threw exception and we have a fallback — retry once
             if ($retryModel === null && $this->fallbackModel) {
-                Log::info('Toshi LLM primary model exception, trying fallback', [
-                    'primary' => $this->model,
-                    'fallback' => $this->fallbackModel,
-                    'error' => $e->getMessage(),
-                ]);
-                return $this->callLLM($messages, retryModel: $this->fallbackModel);
-            }
+                    Log::info('Toshi LLM primary model exception, trying fallback', [
+                        'primary' => $this->model,
+                        'fallback' => $this->fallbackModel,
+                        'error' => $e->getMessage(),
+                    ]);
+                    return $this->callLLM($messages, retryModel: $this->fallbackModel, maxTokens: $maxTokens);
+                }
 
             Log::error('Toshi LLM request failed', [
                 'model' => $model,
