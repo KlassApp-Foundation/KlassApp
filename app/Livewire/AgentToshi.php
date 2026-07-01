@@ -965,6 +965,14 @@ class AgentToshi extends Component
                         $this->botSay("Please set up classes first, then upload subjects.");
                     }
                 }
+            } elseif ($stepName === 'fees' && count($names) > 0) {
+                $this->actionData['fees'] = array_map(fn($n) => ['name' => $n, 'amount' => '', 'level' => '', 'class' => '', 'term' => ''], $names);
+                $this->showFeeForm = false;
+                $this->userSay("📎 Uploaded " . count($names) . " fees from file");
+                $preview = implode(', ', array_slice($names, 0, 5));
+                $this->botSay("Parsed **" . count($names) . "** fees: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
+                $this->awaitingConfirm = true;
+                $this->substep = 1;
             } elseif (count($names) > 0) {
                 $this->botSay("File received with " . count($names) . " names. We'll use this when we get to the teachers/students step.");
             } else {
