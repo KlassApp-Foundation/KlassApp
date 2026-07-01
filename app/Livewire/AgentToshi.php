@@ -473,7 +473,33 @@ class AgentToshi extends Component
             ->first();
         if ($draft) {
             $this->restoreDraft($draft);
+            $this->substep = 0;
+            $this->callStepHandler('');
         }
+    }
+
+    /**
+     * Get the user's draft onboarding sessions for display.
+     */
+    public function getDrafts(): array
+    {
+        $user = auth()->user();
+        if (!$user) return [];
+        return \App\Models\OnboardingSession::where('user_id', $user->id)
+            ->where('status', 'draft')
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map(function ($draft) {
+                $data = is_string($draft->data) ? json_decode($draft->data, true) : ($draft->data ?? []);
+                return [
+                    'id'          => $draft->id,
+                    'school_name' => $data['schoolName'] ?? 'Unnamed School',
+                    'step'        => $draft->step,
+                    'updated_at'  => $draft->updated_at,
+                ];
+            })
+            ->values()
+            ->toArray();
     }
 
     /**
@@ -2483,7 +2509,7 @@ class AgentToshi extends Component
             if (is_array($subjectList)) {
                 $subjectList = implode(', ', array_slice($subjectList, 0, 5)) . '...';
             }
-            $this->botSay("Default subjects assigned per class (NCDC curriculum), e.g. {$subjectList} | Is this fine? (yes / no)");
+            $this->botSay("Default subjects assigned per class (NCDC curriculum), e.g. {$subjectList} | Accept or customize? (yes / no)");
             $this->awaitingConfirm = true;
             $this->substep = 1;
             return;

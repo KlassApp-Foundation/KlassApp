@@ -149,21 +149,6 @@
             @endif
 
             {{-- Confirmation Buttons (shown when substep indicates awaiting yes/no) --}}
-            @if($substep % 2 === 1 && $step > 0 && isset($steps[$step]) && !in_array($steps[$step], ['school_info', 'plan_selection', 'co_admin_invite']))
-            <div style="display: flex; gap: 8px; padding: 4px 0;">
-                <button wire:click="confirmYes"
-                        style="flex: 1; padding: 10px; background: #22C55E; color: #FFFFFF; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
-                        onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'">
-                    ✅ Looks good
-                </button>
-                <button wire:click="confirmNo"
-                        style="flex: 1; padding: 10px; background: #FFFFFF; color: #64748B; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;"
-                        onmouseover="this.style.borderColor='#EF4444';this.style.color='#EF4444'" onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#64748B'">
-                    ✏️ No, edit
-                </button>
-            </div>
-            @endif
-
             {{-- Success Card (shown after commit) --}}
             @if($step === 99 && !empty($reviewData['committed']))
             @php $isComplete = ($reviewData['mode'] ?? 'create') === 'complete'; @endphp
@@ -337,13 +322,52 @@
         </div>
         {{-- Quick action chips --}}
         @if($scope === 'platform' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm)
-        <div class="shrink-0" style="display: flex; gap: 8px; padding: 4px 16px 8px; flex-wrap: wrap; background: #FFFFFF;">
+        <div class="shrink-0" style="display: flex; flex-direction: column; gap: 6px; padding: 4px 16px 8px; background: #FFFFFF;">
+            @php $drafts = $this->getDrafts(); @endphp
+            @if(count($drafts) > 0)
+            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.04em;">Continue Setup</div>
+            @foreach($drafts as $draft)
+            <button wire:click="resumeDraft" type="button"
+                    style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; cursor: pointer; text-align: left; font-size: 12px; color: #1E293B; font-weight: 500; transition: all 0.15s; width: 100%;"
+                    onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#E2E8F0'">
+                <span style="width: 24px; height: 24px; border-radius: 6px; background: #22C55E; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px;">↻</span>
+                <span style="flex: 1;">{{ $draft['school_name'] }}</span>
+                <span style="font-size: 10px; color: #94A3B8;">Step {{ $draft['step'] + 1 }}</span>
+            </button>
+            @endforeach
+            @endif
             <button wire:click="resetOnboarding(true)" type="button"
-                    style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: #0F172A; color: white; border: none; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;"
+                    style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: #0F172A; color: white; border: none; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; align-self: flex-start;"
                     onmouseover="this.style.background='#1E6FD9'"
                     onmouseout="this.style.background='#0F172A'">
-                <span style="font-size: 16px; line-height: 1;">+</span> Create School
+                <span style="font-size: 16px; line-height: 1;">+</span> New School
             </button>
+        </div>
+        @endif
+
+        {{-- School admin quick actions --}}
+        @if($scope === 'school' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm && $schoolId)
+        <div class="shrink-0" style="display: flex; flex-direction: column; gap: 6px; padding: 4px 16px 8px; background: #FFFFFF;">
+            @php
+                $school = \App\Models\School::find($schoolId);
+                $schoolName = $school ? $school->name : 'School';
+                $actions = $this->capabilities['actions'] ?? [];
+                $quickActions = [
+                    'add_student'  => ['label' => '+ Student', 'hint' => '"add student"'],
+                    'record_payment' => ['label' => '💳 Payment', 'hint' => '"record payment"'],
+                    'record_attendance' => ['label' => '📋 Attendance', 'hint' => '"mark present"'],
+                    'generate_report' => ['label' => '📊 Report', 'hint' => '"show report"'],
+                ];
+            @endphp
+            <div style="font-size: 12px; font-weight: 600; color: #0F172A;">{{ $schoolName }}</div>
+            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.04em;">Quick Actions</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                @foreach($quickActions as $action => $def)
+                    @if(in_array($action, $actions))
+                    <span style="padding: 4px 10px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: default;" title="{{ $def['hint'] }}">{{ $def['label'] }}</span>
+                    @endif
+                @endforeach
+            </div>
         </div>
         @endif
 
@@ -360,8 +384,16 @@
                     style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
                     onmouseover="this.style.background='#E2E8F0'"
                     onmouseout="this.style.background='#F1F5F9'">
-                No ✗
+                No / Skip
             </button>
+            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
+            <button wire:click="confirmSkipAll" type="button"
+                    style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#E2E8F0'"
+                    onmouseout="this.style.background='#F1F5F9'">
+                Skip All
+            </button>
+            @endif
         </div>
         @endif
         {{-- Composer: compact panel — single rounded shell with bottom action row --}}
@@ -453,13 +485,49 @@
                     {{ $schoolName ?: ($reviewData['schoolName'] ?? 'New School') }}
                 </button>
                 @if($scope === 'platform' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm)
+                @php $drafts = $this->getDrafts(); @endphp
+                @if(count($drafts) > 0)
+                <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 4px;">
+                    <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.04em;">Continue Setup</div>
+                    @foreach($drafts as $draft)
+                    <button wire:click="resumeDraft" type="button"
+                            style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; cursor: pointer; text-align: left; font-size: 12px; color: #1E293B; font-weight: 500; transition: all 0.15s; width: 100%; font-family: 'DM Sans', sans-serif;"
+                            onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#E2E8F0'">
+                        <span style="width: 20px; height: 20px; border-radius: 5px; background: #22C55E; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px;">↻</span>
+                        <span style="flex: 1;">{{ $draft['school_name'] }}</span>
+                        <span style="font-size: 9px; color: #94A3B8;">Step {{ $draft['step'] + 1 }}</span>
+                    </button>
+                    @endforeach
+                </div>
+                @endif
                 <div style="margin-top: 8px;">
                     <button wire:click="resetOnboarding(true)" type="button"
                             style="width: 100%; padding: 8px 12px; background: #0F172A; color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s; font-family: 'DM Sans', sans-serif;"
                             onmouseover="this.style.background='#1E6FD9'"
                             onmouseout="this.style.background='#0F172A'">
-                        + Create School
+                        + New School
                     </button>
+                </div>
+                @endif
+                {{-- Step progress in sidebar --}}
+                @if(!empty($steps) && isset($steps[$step]) && $mode !== 'assistant')
+                <div style="margin-top: 12px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 6px;">Progress — {{ $step + 1 }}/{{ count($steps) }}</div>
+                    <div style="display: flex; flex-direction: column; gap: 3px;">
+                        @foreach($steps as $i => $name)
+                            @php
+                                $isDone = $i < $step;
+                                $isCurrent = $i === $step;
+                                $label = ucfirst(str_replace('_', ' ', $name));
+                            @endphp
+                            <button wire:click="jumpToStep({{ $i }})" type="button"
+                                    style="display: flex; align-items: center; gap: 6px; padding: 4px 6px; border: none; border-radius: 4px; background: {{ $isCurrent ? '#FFFFFF' : 'transparent' }}; cursor: {{ $isDone || $isCurrent ? 'pointer' : 'default' }}; text-align: left; font-size: 10px; color: {{ $isDone ? '#22C55E' : ($isCurrent ? '#0F172A' : '#CBD5E1') }}; font-weight: {{ $isCurrent ? '600' : '400' }}; transition: all 0.15s; font-family: 'DM Sans', sans-serif;"
+                                    onmouseover="this.style.background='#FFFFFF'" onmouseout="this.style.background='{{ $isCurrent ? '#FFFFFF' : 'transparent' }}'">
+                                <span style="width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700; flex-shrink: 0; background: {{ $isDone ? '#22C55E' : ($isCurrent ? '#0F172A' : '#E2E8F0') }}; color: white;">{{ $isDone ? '✓' : $i + 1 }}</span>
+                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $label }}</span>
+                            </button>
+                        @endforeach
+                    </div>
                 </div>
                 @endif
                 <div style="margin-top: auto; padding-top: 16px;">
@@ -580,21 +648,6 @@
                         </div>
                         @endif
 
-                        @if($substep % 2 === 1 && $step > 0 && isset($steps[$step]) && !in_array($steps[$step], ['school_info', 'plan_selection', 'co_admin_invite']))
-                        <div style="display: flex; gap: 8px; padding: 4px 0;">
-                            <button wire:click="confirmYes"
-                                    style="flex: 1; padding: 10px; background: #22C55E; color: #FFFFFF; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; font-family: 'DM Sans', sans-serif;"
-                                    onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'">
-                                ✅ Looks good
-                            </button>
-                            <button wire:click="confirmNo"
-                                    style="flex: 1; padding: 10px; background: #FFFFFF; color: #64748B; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;"
-                                    onmouseover="this.style.borderColor='#EF4444';this.style.color='#EF4444'" onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#64748B'">
-                                ✏️ No, edit
-                            </button>
-                        </div>
-                        @endif
-
                         @if($step === 99 && !empty($reviewData['committed']))
                         @php $isComplete = ($reviewData['mode'] ?? 'create') === 'complete'; @endphp
                         <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0; text-align: center;">
@@ -660,8 +713,16 @@
                                 style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
                                 onmouseover="this.style.background='#E2E8F0'"
                                 onmouseout="this.style.background='#F1F5F9'">
-                        No ✗
+                        No / Skip
                     </button>
+                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
+                        <button wire:click="confirmSkipAll" type="button"
+                                style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#E2E8F0'"
+                                onmouseout="this.style.background='#F1F5F9'">
+                            Skip All
+                        </button>
+                        @endif
                 </div>
                 @endif
             {{-- Composer: maximized modal — single rounded shell with bottom action row --}}
