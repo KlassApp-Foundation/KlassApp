@@ -141,7 +141,7 @@
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <input type="text" wire:model="teacherFormName" placeholder="Teacher name *"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                    <input type="email" wire:model="teacherFormEmail" placeholder="Email *"
+                    <input type="email" wire:model="teacherFormEmail" placeholder="Email (optional)"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <input type="text" wire:model="teacherFormPhone" placeholder="WhatsApp number (optional)"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
@@ -775,7 +775,7 @@
                                         <div style="display: flex; flex-direction: column; gap: 8px;">
                                             <input type="text" wire:model="teacherFormName" placeholder="Teacher name *"
                                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                                            <input type="email" wire:model="teacherFormEmail" placeholder="Email *"
+                                            <input type="email" wire:model="teacherFormEmail" placeholder="Email (optional)"
                                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                             <input type="text" wire:model="teacherFormPhone" placeholder="WhatsApp number (optional)"
                                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">

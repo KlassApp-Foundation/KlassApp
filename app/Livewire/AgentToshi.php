@@ -548,13 +548,11 @@ class AgentToshi extends Component
         $name = trim($this->teacherFormName);
         $email = trim($this->teacherFormEmail);
         if ($name === '') return;
-        if ($email === '') {
-            $this->botSay("Email is required for **{$name}**. Enter the teacher's email address.");
-            return;
-        }
 
         $this->actionData['teachers'][] = $name;
-        $this->actionData['teacherEmails'][$name] = $email;
+        if ($email) {
+            $this->actionData['teacherEmails'][$name] = $email;
+        }
         if ($this->teacherFormPhone) {
             $this->actionData['teacherPhones'][$name] = trim($this->teacherFormPhone);
         }
