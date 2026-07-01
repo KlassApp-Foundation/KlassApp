@@ -115,7 +115,14 @@
             {{-- Teacher inline form --}}
             @if($showTeacherForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers')
             <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 10px;">Add Teacher</div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                    <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Teacher</span>
+                    <label class="flex items-center gap-1 cursor-pointer"
+                           style="margin-left: auto; padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                        Upload File
+                        <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt">
+                    </label>
+                </div>
                 @php $teachers = $this->actionData['teachers'] ?? []; @endphp
                 @if(count($teachers) > 0)
                 <div style="margin-bottom: 8px;">
@@ -718,7 +725,63 @@
                                         </div>
                                     </div>
                                     @endif
-                        
+
+                                    {{-- Teacher inline form (maximized) --}}
+                                    @if($showTeacherForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers')
+                                    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                            <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Teacher</span>
+                                            <label class="flex items-center gap-1 cursor-pointer"
+                                                   style="margin-left: auto; padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                                                Upload File
+                                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt">
+                                            </label>
+                                        </div>
+                                        @php $teachers = $this->actionData['teachers'] ?? []; @endphp
+                                        @if(count($teachers) > 0)
+                                        <div style="margin-bottom: 8px;">
+                                            @foreach($teachers as $ti => $t)
+                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                                                <span style="flex: 1;">{{ $t }}</span>
+                                                <button wire:click="removeTeacher({{ $ti }})" type="button"
+                                                        style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                        @endif
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <input type="text" wire:model="teacherFormName" placeholder="Teacher name *"
+                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                            <input type="email" wire:model="teacherFormEmail" placeholder="Email *"
+                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                            <input type="text" wire:model="teacherFormPhone" placeholder="WhatsApp number (optional)"
+                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                            <div style="display: flex; gap: 8px;">
+                                                <div style="flex: 1;">
+                                                    <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Subject(s)</div>
+                                                    <input type="text" wire:model="teacherFormSubjects" placeholder="e.g. Math, English"
+                                                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                </div>
+                                                <div style="flex: 1;">
+                                                    <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Class(es)</div>
+                                                    <input type="text" wire:model="teacherFormClasses" placeholder="e.g. P1, P2"
+                                                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; gap: 8px;">
+                                                <button wire:click="saveTeacher" type="button"
+                                                        style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                    + Add Teacher
+                                                </button>
+                                                <button wire:click="doneTeachers" type="button"
+                                                        style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                                    Done ({{ count($this->actionData['teachers'] ?? []) }})
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
+
                         {{-- Buttons inside maximize modal --}}
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection' && !$selectedPlanId)
                         <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;">
