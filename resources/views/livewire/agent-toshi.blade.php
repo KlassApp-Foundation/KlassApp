@@ -122,7 +122,7 @@
                         <label class="flex items-center gap-1 cursor-pointer"
                                style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
                             Upload File
-                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt">
+                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
                     </div>
                 </div>
@@ -148,13 +148,30 @@
                     <div style="display: flex; gap: 8px;">
                         <div style="flex: 1;">
                             <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Subject(s)</div>
-                            <input type="text" wire:model="teacherFormSubjects" placeholder="e.g. Math, English"
+                            <input type="text" wire:model="teacherFormSubjects" placeholder="e.g. Math, English" list="subject-list"
                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                            <datalist id="subject-list">
+                                @php
+                                    $allSubjects = [];
+                                    foreach (($this->subjects ?? []) as $class => $subs) {
+                                        $allSubjects = array_merge($allSubjects, $subs);
+                                    }
+                                    $allSubjects = array_unique($allSubjects ?? []);
+                                @endphp
+                                @foreach($allSubjects as $s)
+                                <option value="{{ $s }}">
+                                @endforeach
+                            </datalist>
                         </div>
                         <div style="flex: 1;">
                             <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Class(es)</div>
-                            <input type="text" wire:model="teacherFormClasses" placeholder="e.g. P1, P2"
+                            <input type="text" wire:model="teacherFormClasses" placeholder="e.g. P1, P2" list="class-list"
                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                            <datalist id="class-list">
+                                @foreach($this->standards ?? [] as $std)
+                                <option value="{{ $std['name'] }}">
+                                @endforeach
+                            </datalist>
                         </div>
                     </div>
                     <div style="display: flex; gap: 8px;">
@@ -739,7 +756,7 @@
                                                 <label class="flex items-center gap-1 cursor-pointer"
                                                        style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
                                                     Upload File
-                                                    <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt">
+                                                    <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                                                 </label>
                                             </div>
                                         </div>
@@ -765,13 +782,30 @@
                                             <div style="display: flex; gap: 8px;">
                                                 <div style="flex: 1;">
                                                     <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Subject(s)</div>
-                                                    <input type="text" wire:model="teacherFormSubjects" placeholder="e.g. Math, English"
+                                                    <input type="text" wire:model="teacherFormSubjects" placeholder="e.g. Math, English" list="subject-list-modal"
                                                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                    <datalist id="subject-list-modal">
+                                                        @php
+                                                            $allSubjects = [];
+                                                            foreach (($this->subjects ?? []) as $class => $subs) {
+                                                                $allSubjects = array_merge($allSubjects, $subs);
+                                                            }
+                                                            $allSubjects = array_unique($allSubjects ?? []);
+                                                        @endphp
+                                                        @foreach($allSubjects as $s)
+                                                        <option value="{{ $s }}">
+                                                        @endforeach
+                                                    </datalist>
                                                 </div>
                                                 <div style="flex: 1;">
                                                     <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Class(es)</div>
-                                                    <input type="text" wire:model="teacherFormClasses" placeholder="e.g. P1, P2"
+                                                    <input type="text" wire:model="teacherFormClasses" placeholder="e.g. P1, P2" list="class-list-modal"
                                                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                    <datalist id="class-list-modal">
+                                                        @foreach($this->standards ?? [] as $std)
+                                                        <option value="{{ $std['name'] }}">
+                                                        @endforeach
+                                                    </datalist>
                                                 </div>
                                             </div>
                                             <div style="display: flex; gap: 8px;">
