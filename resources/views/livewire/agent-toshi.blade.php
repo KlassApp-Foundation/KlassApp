@@ -335,6 +335,35 @@
             </div>
             @endif
         </div>
+        {{-- Quick action chips --}}
+        @if($scope === 'platform' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm)
+        <div class="shrink-0" style="display: flex; gap: 8px; padding: 4px 16px 8px; flex-wrap: wrap; background: #FFFFFF;">
+            <button wire:click="resetOnboarding(true)" type="button"
+                    style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: #0F172A; color: white; border: none; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#1E6FD9'"
+                    onmouseout="this.style.background='#0F172A'">
+                <span style="font-size: 16px; line-height: 1;">+</span> Create School
+            </button>
+        </div>
+        @endif
+
+        {{-- Confirmation buttons --}}
+        @if($awaitingConfirm)
+        <div class="shrink-0" style="display: flex; gap: 10px; padding: 8px 16px 8px; background: #FFFFFF; border-top: 1px solid #F1F5F9;">
+            <button wire:click="confirmYes" type="button"
+                    style="flex: 1; padding: 10px; background: #22C55E; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#16A34A'"
+                    onmouseout="this.style.background='#22C55E'">
+                Yes ✓
+            </button>
+            <button wire:click="confirmNo" type="button"
+                    style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#E2E8F0'"
+                    onmouseout="this.style.background='#F1F5F9'">
+                No ✗
+            </button>
+        </div>
+        @endif
         {{-- Composer: compact panel — single rounded shell with bottom action row --}}
         <form wire:submit.prevent="send" class="shrink-0" style="background: #FFFFFF;">
             <div style="margin: 0 10px 12px; border: 1px solid rgba(0,0,0,0.08); border-radius: 18px; background: #FFFFFF;">
@@ -420,9 +449,9 @@
                     <span style="font-size: 16px; font-weight: 700; color: #0F172A; font-family: 'Sora', sans-serif;">Toshi</span>
                 </div>
                 <div style="font-size: 11px; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.04em; font-weight: 600; margin: 16px 0 8px;">Onboarding Session</div>
-                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #1E293B; font-weight: 500;">
+                <button wire:click="resumeDraft" style="width: 100%; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #1E293B; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s;" onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#E2E8F0'">
                     {{ $schoolName ?: ($reviewData['schoolName'] ?? 'New School') }}
-                </div>
+                </button>
                 <div style="margin-top: auto; padding-top: 16px;">
                     <button wire:click="hide" style="font-size: 12px; color: #94A3B8; background: none; border: none; cursor: pointer; padding: 4px 0; font-family: 'DM Sans', sans-serif;" onmouseover="this.style.color='#64748B'" onmouseout="this.style.color='#94A3B8'">Close</button>
                 </div>
@@ -608,7 +637,26 @@
                     </div>
                 </div>
 
-                {{-- Composer: maximized modal — single rounded shell with bottom action row --}}
+                    {{-- Confirmation buttons (inside right area) --}}
+                    @if($awaitingConfirm)
+                    <div class="shrink-0" style="display: flex; gap: 10px; padding: 8px 24px 12px; background: #FFFFFF;">
+                        <button wire:click="confirmYes" type="button"
+                                style="flex: 1; padding: 10px; background: #22C55E; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#16A34A'"
+                                onmouseout="this.style.background='#22C55E'">
+                            Yes ✓
+                        </button>
+                        <button wire:click="confirmNo" type="button"
+                                style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#E2E8F0'"
+                                onmouseout="this.style.background='#F1F5F9'">
+                        No ✗
+                    </button>
+                </div>
+                @endif
+            </div>
+
+            {{-- Composer: maximized modal — single rounded shell with bottom action row --}}
                 <form wire:submit.prevent="send" class="shrink-0" style="padding: 0 24px 16px; background: #FFFFFF;">
                     <div style="border: 1px solid rgba(0,0,0,0.08); border-radius: 18px; background: #FFFFFF;">
                         {{-- Textarea --}}

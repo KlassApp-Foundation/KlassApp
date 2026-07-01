@@ -114,6 +114,9 @@ class AgentToshi extends Component
     /** Capabilities for the current user, loaded from ToshiActionService. */
     public array $capabilities = [];
 
+    /** When true, the UI shows Yes/No buttons instead of requiring text input. */
+    public bool $awaitingConfirm = false;
+
     public function mount()
     {
         $user = auth()->user();
@@ -410,31 +413,25 @@ class AgentToshi extends Component
         $this->botSay($labels[$current] ?? "Let's continue setting up.");
     }
 
-    public function show() { $this->visible = true; }
+    public function show() { $this->visible = true; $this->maximized = false; }
     public function hide() { $this->visible = false; $this->maximized = false; }
-    public function maximize() { $this->maximized = true; }
-    public function restore() { $this->maximized = false; }
+    public function maximize() { $this->maximized = true; $this->visible = false; }
+    public function restore() { $this->maximized = false; $this->visible = true; }
 
     // ── Button-driven confirm/edit ──
     public function confirmYes()
     {
+        $this->awaitingConfirm = false;
         $this->input = 'yes';
         $this->send();
     }
     public function confirmNo()
     {
-        $stepName = $this->steps[$this->step] ?? '';
-        if ($this->substep >= 2) {
-            $this->substep -= 2; // go back to data entry
-        } else {
-            $this->substep = 0;
-        }
-        if ($stepName === 'admin_account') {
-            $this->botSay("Let's fix that. Type the correct value:");
-        } else {
-            $this->botSay("No problem — let's try again.");
-        }
+        $this->awaitingConfirm = false;
+        $this->input = 'no';
+        $this->send();
     }
+
     public function commit()
     {
         $this->input = 'commit';
@@ -446,7 +443,20 @@ class AgentToshi extends Component
         $this->botSay("No problem! Tell me what needs to change and we'll go back to fix it. | Type the step name: plan, school, admin, co-admin, classes, subjects, teachers, students, terms, fees, exams");
         $this->substep = 0;
     }
-    public function resetOnboarding(bool $startNew = false)
+    public function resumeDraft()
+{
+    $user = auth()->user();
+    if (!$user) return;
+    $draft = \App\Models\OnboardingSession::where('user_id', $user->id)
+        ->where('status', 'draft')
+        ->latest()
+        ->first();
+    if ($draft) {
+        $this->restoreDraft($draft);
+    }
+}
+
+public function resetOnboarding(bool $startNew = false)
     {
         // Start a new school creation from any mode
         if ($startNew) {
@@ -1841,29 +1851,38 @@ class AgentToshi extends Component
         }
 
         // ── Setup mode: auto-detect if user wants assistant instead ──
-        // Try the keyword router first (zero-cost). If it matches, switch to assistant.
-        if ($this->tryKeywordRoute(strtolower($text), $text)) {
-            $this->mode = 'assistant';
-            $this->step = 99;
-            $this->saveDraft();
-            return;
-        }
+        // Skip heuristic if awaiting a yes/no confirmation
+        if ($this->awaitingConfirm) {
+            // Treat affirmative continuations as "yes"
+            if (in_array($lower, ['can we go on', 'go on', 'continue', 'proceed', 'next', 'lets go', 'move on', 'yes continue', 'yeah continue'])) {
+                $this->confirmYes();
+                return;
+            }
+            // Fall through to step handler normally
+        } else {
+            // Try the keyword router first (zero-cost). If it matches, switch to assistant.
+            if ($this->tryKeywordRoute(strtolower($text), $text)) {
+                $this->mode = 'assistant';
+                $this->step = 99;
+                $this->saveDraft();
+                return;
+            }
 
-        // Heuristic: detect natural language queries vs. setup answers.
-        $lower = strtolower($text);
-        $isQuestion = (bool) preg_match('/^(what|how|why|when|where|who|which|can|could|would|will|do|does|did|is|are|has|have|show|tell|list|find|give)\b/i', $text);
-        $hasQueryVerb = (bool) preg_match('/\b(show|list|tell|find|give|add|create|record|mark|assign|report|how many|what is|who is|i want|i need|can you)\b/i', $lower);
-        $isMultiWord = str_word_count($text) >= 3;
-        $isSetupAnswer = in_array($lower, ['yes', 'y', 'no', 'n', 'correct', 'right', 'ok', 'default', 'skip', 'later', 'cash', 'cheque', 'mobile_money', 'bank_transfer'])
-            || preg_match('/^\+?256\d{9,12}$/', $text)      // Ugandan phone number
-            || preg_match('/^[\w\.\-]+@[\w\.\-]+\.\w+$/', $text); // email address
+            // Heuristic: detect natural language queries vs. setup answers.
+            $isQuestion = (bool) preg_match('/^(what|how|why|when|where|who|which|can|could|would|will|do|does|did|is|are|has|have|show|tell|list|find|give)\b/i', $text);
+            $hasQueryVerb = (bool) preg_match('/\b(show|list|tell|find|give|add|create|record|mark|assign|report|how many|what is|who is|i want|i need|can you)\b/i', $lower);
+            $isMultiWord = str_word_count($text) >= 3;
+            $isSetupAnswer = in_array($lower, ['yes', 'y', 'no', 'n', 'correct', 'right', 'ok', 'default', 'skip', 'later', 'cash', 'cheque', 'mobile_money', 'bank_transfer'])
+                || preg_match('/^\+?256\d{9,12}$/', $text)
+                || preg_match('/^[\w\.\-]+@[\w\.\-]+\.\w+$/', $text);
 
-        if (($isQuestion || ($hasQueryVerb && $isMultiWord)) && !$isSetupAnswer) {
-            $this->mode = 'assistant';
-            $this->step = 99;
-            $this->saveDraft();
-            $this->handleAssistantQuery($text);
-            return;
+            if (($isQuestion || ($hasQueryVerb && $isMultiWord)) && !$isSetupAnswer) {
+                $this->mode = 'assistant';
+                $this->step = 99;
+                $this->saveDraft();
+                $this->handleAssistantQuery($text);
+                return;
+            }
         }
 
         // Handle draft resume commands — full reset to clear ALL stale data
@@ -1948,6 +1967,7 @@ class AgentToshi extends Component
             $this->schoolName = $name;
             $this->botSay("🏫 **{$this->schoolName}**");
             $this->botSay("Is the name correct? (yes / no)");
+            $this->awaitingConfirm = true;
             $this->substep = 1; // awaiting name confirmation
             return;
         }
@@ -2004,6 +2024,7 @@ class AgentToshi extends Component
             if ($email === null) return;
             $this->adminEmail = $email;
             $this->botSay("You entered: **{$this->adminEmail}** | Is this correct? (yes / no)");
+            $this->awaitingConfirm = true;
             $this->substep = 1;
             return;
         }
@@ -2027,6 +2048,7 @@ class AgentToshi extends Component
             if ($name === null) return;
             $this->adminName = $name;
             $this->botSay("You entered: **{$this->adminName}** | Is this correct? (yes / no)");
+            $this->awaitingConfirm = true;
             $this->substep = 3;
             return;
         }
@@ -2050,6 +2072,7 @@ class AgentToshi extends Component
             if ($phone === null) return;
             $this->schoolPhone = $phone;
             $this->botSay("You entered: **{$phone}** | Is this correct? (yes / no)");
+            $this->awaitingConfirm = true;
             $this->substep = 5;
             return;
         }
@@ -2200,6 +2223,7 @@ class AgentToshi extends Component
             $year = date('Y');
             $this->academicYearLabel = (string) $year;
             $this->botSay("Academic year: **{$year}** | Is that correct? (yes / no)");
+            $this->awaitingConfirm = true;
             $this->substep = 1;
             return;
         }
@@ -2238,6 +2262,7 @@ class AgentToshi extends Component
             $this->standards = $defaults['classes'] ?? [];
             $classList = implode(', ', array_column($this->standards, 'name'));
             $this->botSay("I'll create these classes: **{$classList}** | Is this list correct? (yes / no)");
+            $this->awaitingConfirm = true;
             $this->substep = 1;
             return;
         }
@@ -2286,6 +2311,7 @@ class AgentToshi extends Component
                 $subjectList = implode(', ', array_slice($subjectList, 0, 5)) . '...';
             }
             $this->botSay("Default subjects assigned per class (NCDC curriculum), e.g. {$subjectList} | Is this fine? (yes / no)");
+            $this->awaitingConfirm = true;
             $this->substep = 1;
             return;
         }
@@ -2340,6 +2366,7 @@ class AgentToshi extends Component
                 $this->teacherList = $names;
                 $preview = implode(', ', array_slice($this->teacherList, 0, 3));
                 $this->botSay("Parsed **" . count($this->teacherList) . "** teachers: {$preview}" . (count($this->teacherList) > 3 ? '...' : '') . " | Is this correct? (yes / no)");
+                $this->awaitingConfirm = true;
                 $this->substep = 1;
                 return;
             }
@@ -2483,6 +2510,7 @@ class AgentToshi extends Component
                 . (count($parsed) > 3 ? "\n...and " . (count($parsed) - 3) . " more" : '')
                 . "\n\nIs this correct? (yes / no)"
             );
+            $this->awaitingConfirm = true;
             $this->substep = 2;
             return;
         }
@@ -2519,6 +2547,7 @@ class AgentToshi extends Component
                 $this->studentList = $names;
                 $preview = implode(', ', array_slice($this->studentList, 0, 3));
                 $this->botSay("Parsed **" . count($this->studentList) . "** students: {$preview}" . (count($this->studentList) > 3 ? '...' : '') . " | Is this correct? (yes / no)");
+                $this->awaitingConfirm = true;
                 $this->substep = 1;
                 return;
             }
@@ -2553,6 +2582,7 @@ class AgentToshi extends Component
                 ['name' => 'Term III', 'start' => date('Y') . '-09-01', 'end' => date('Y') . '-12-31'],
             ];
             $this->botSay("Default Ugandan terms set: Term I (Feb-Apr), Term II (May-Aug), Term III (Sep-Dec). | Is this correct? (yes / no)");
+            $this->awaitingConfirm = true;
             $this->substep = 1;
             return;
         }
@@ -2676,6 +2706,7 @@ class AgentToshi extends Component
             if ($phone) {
                 $this->botSay("📱 We'll verify the admin's WhatsApp number: **{$phone}**");
                 $this->botSay("Is this the right number? (yes / no)");
+                $this->awaitingConfirm = true;
                 $this->substep = 1;
                 return;
             }

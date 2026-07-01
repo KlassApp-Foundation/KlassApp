@@ -159,6 +159,7 @@ class ToshiAssistantService
                 'data' => [
                     'Your role' => ucfirst($roleLabel),
                     'Allowed actions' => implode(', ', $actionNames) ?: 'view information only',
+                    'Your name' => $user->name,
                     'Total schools' => "{$totalSchools} ({$activeSchools} active, {$inactiveSchools} inactive)",
                     'Total users' => number_format($totalUsers),
                     'School admins' => number_format($schoolAdmins),
@@ -204,6 +205,7 @@ class ToshiAssistantService
                 'data' => [
                     'Your role' => ucfirst($roleLabel),
                     'Allowed actions' => implode(', ', $actionNames) ?: 'view information only',
+                    'Your name' => $user->name,
                     'School' => $school->name,
                     'Students' => (string) $studentCount,
                     'Teachers' => (string) $teacherCount,
@@ -220,6 +222,7 @@ class ToshiAssistantService
             'data' => [
                 'Your role' => ucfirst($roleLabel),
                 'Allowed actions' => implode(', ', $actionNames) ?: 'view information only',
+                'Your name' => $user->name,
                 'Note' => 'No school context available.',
             ],
         ];

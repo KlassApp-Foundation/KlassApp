@@ -1,13 +1,16 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-<div class="container mx-auto p-2">
-    <div class="flex items-center justify-between mb-4 p-2 bg-gray-100 rounded shadow">
-        <h2 class="text-lg font-semibold">Payment Records</h2>
-        <div class="flex gap-2">
-            <a href="{{ route('admin.fee-payments.create') }}"
-               class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600">
-                + Record Payment
+<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+
+@include('layouts.partials.page-header', [
+    'title' => 'Payments',
+    'subtitle' => 'Track all fee payments and financial transactions.',
+    'actions' => '<a href="' . route('admin.fee-payments.create') . '" class="px-3 py-1.5 rounded text-xs text-white bg-green-600 hover:bg-green-700 flex items-center gap-1"><i class="fa-solid fa-plus text-xs"></i> Record Payment</a>'
+])
+
+<div class="relative mt-4">
+    <div class="bg-white rounded-lg shadow p-4">
             </a>
         </div>
     </div>
