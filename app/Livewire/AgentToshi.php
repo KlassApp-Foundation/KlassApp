@@ -759,12 +759,18 @@ class AgentToshi extends Component
                     $this->teacherList = $names;
                     $this->actionData['teachers'] = $names;
                     $this->showTeacherForm = false;
+                    // Also try extracting teacher-subject-class links from the same file
+                    $links = $this->extractTeacherLinksFromFile($this->attachment->getRealPath(), $ext);
+                    if (count($links) > 0) {
+                        $this->teacherLinks = $links;
+                    }
                 } else {
                     $this->studentList = $names;
                 }
                 $this->userSay("📎 Uploaded " . count($names) . " names from file");
+                $linked = !empty($this->teacherLinks) ? " with **" . count($this->teacherLinks) . "** subject/class assignments" : "";
                 $preview = implode(', ', array_slice($names, 0, 5));
-                $this->botSay("Parsed **" . count($names) . "** names: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
+                $this->botSay("Parsed **" . count($names) . "** names{$linked}: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
                 $this->awaitingConfirm = true;
                 $this->substep = 1;
             } elseif ($stepName === 'standards' && count($names) > 0) {
@@ -2803,6 +2809,13 @@ class AgentToshi extends Component
     {
         // substep 0: explain format, collect input
         if ($this->substep === 0) {
+            // If links already extracted from file upload, skip this step
+            if (!empty($this->teacherLinks)) {
+                $this->botSay("Teacher-subject-class links already assigned from your uploaded file (**" . count($this->teacherLinks) . "** links). Moving on.");
+                $this->substep = 0;
+                $this->advance();
+                return;
+            }
             if (trim($text) === '') {
                 // show prompt below
             }
