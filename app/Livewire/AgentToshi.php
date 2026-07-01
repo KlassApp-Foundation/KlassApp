@@ -76,6 +76,8 @@ class AgentToshi extends Component
     public $showStudentForm = false;
     public $studentFormName = '';
     public $studentFormClass = '';
+    public $studentFormStream = '';
+    public $studentFormType = '';
     public $studentFormParent = '';
     public $studentFormParentPhone = '';
     public $terms = [];
@@ -625,6 +627,8 @@ class AgentToshi extends Component
         $this->showStudentForm = true;
         $this->studentFormName = '';
         $this->studentFormClass = '';
+        $this->studentFormStream = '';
+        $this->studentFormType = '';
         $this->studentFormParent = '';
         $this->studentFormParentPhone = '';
         $this->substep = 6;
@@ -636,7 +640,7 @@ class AgentToshi extends Component
         $name = trim($this->studentFormName);
         if ($name === '') return;
 
-        $entry = ['name' => $name, 'class' => $this->studentFormClass];
+        $entry = ['name' => $name, 'class' => $this->studentFormClass, 'stream' => $this->studentFormStream, 'type' => $this->studentFormType];
         if ($this->studentFormParent) $entry['parent'] = trim($this->studentFormParent);
         if ($this->studentFormParentPhone) $entry['parent_phone'] = trim($this->studentFormParentPhone);
 
@@ -832,6 +836,8 @@ class AgentToshi extends Component
                     }
                 } else {
                     $this->studentList = $names;
+                    $this->actionData['students'] = array_map(fn($n) => ['name' => $n, 'class' => '', 'stream' => '', 'parent' => '', 'parent_phone' => ''], $names);
+                    $this->showStudentForm = false;
                 }
                 $this->userSay("📎 Uploaded " . count($names) . " names from file");
                 $linked = !empty($this->teacherLinks) ? " with **" . count($this->teacherLinks) . "** subject/class assignments" : "";

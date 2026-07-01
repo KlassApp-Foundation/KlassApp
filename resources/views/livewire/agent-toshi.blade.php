@@ -195,6 +195,8 @@
             <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
                     <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Student</span>
+                    <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
+                       style="margin-left: auto; font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
                 </div>
                 @php $students = $this->actionData['students'] ?? []; @endphp
                 @if(count($students) > 0)
@@ -211,6 +213,20 @@
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <input type="text" wire:model="studentFormName" placeholder="Student name *"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+<select wire:model="studentFormType"
+        style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+    <option value="">Type (optional)</option>
+    <option value="boarding">Boarding</option>
+    <option value="day">Day Scholar</option>
+</select>
+<select wire:model="studentFormType"
+                                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                <option value="">Type (optional)</option>
+                                                <option value="boarding">Boarding</option>
+                                                <option value="day">Day Scholar</option>
+                                            </select>
                     <input type="text" wire:model="studentFormClass" placeholder="Class (optional)" list="student-class-list"
                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <datalist id="student-class-list">
@@ -885,6 +901,8 @@
                                                 <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
                                                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
                                                         <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Student</span>
+                    <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
+                       style="margin-left: auto; font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
                                                     </div>
                                                     @php $students = $this->actionData['students'] ?? []; @endphp
                                                     @if(count($students) > 0)
@@ -901,7 +919,12 @@
                                                     <div style="display: flex; flex-direction: column; gap: 8px;">
                                                         <input type="text" wire:model="studentFormName" placeholder="Student name *"
                                                                style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                                                        <input type="text" wire:model="studentFormClass" placeholder="Class (optional)" list="student-class-list"
+                                                        <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+
+                    <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
+                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                    <input type="text" wire:model="studentFormClass" placeholder="Class (optional)" list="student-class-list"
                                                                style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                         <datalist id="student-class-list">
                                                             @foreach($this->standards ?? [] as $std)
