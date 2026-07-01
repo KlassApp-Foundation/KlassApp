@@ -67,6 +67,12 @@ class AgentToshi extends Component
     public $subjectFormCode = '';
     public $subjectFormType = 'core';
     public $subjectFormClass = '';
+    public $showTeacherForm = false;
+    public $teacherFormName = '';
+    public $teacherFormEmail = '';
+    public $teacherFormSubjects = '';
+    public $teacherFormClasses = '';
+    public $teacherFormPhone = '';
     public $terms = [];
     public $fees = [];
     public $exams = [];
@@ -512,6 +518,92 @@ class AgentToshi extends Component
             unset($this->actionData['subjects'][$index]);
             $this->actionData['subjects'] = array_values($this->actionData['subjects']);
         }
+    }
+
+    // ── Teacher Form ──
+
+    /**
+     * Show the inline teacher form.
+     */
+    public function showTeacherFormFn()
+    {
+        $this->awaitingConfirm = false;
+        $this->actionData['teachers'] = $this->actionData['teachers'] ?? [];
+        $this->actionData['teacherLinks'] = $this->actionData['teacherLinks'] ?? [];
+        $this->showTeacherForm = true;
+        $this->teacherFormName = '';
+        $this->teacherFormEmail = '';
+        $this->teacherFormSubjects = '';
+        $this->teacherFormClasses = '';
+        $this->teacherFormPhone = '';
+        $this->substep = 6;
+    }
+
+    /**
+     * Save a teacher from the inline form.
+     */
+    public function saveTeacher()
+    {
+        $name = trim($this->teacherFormName);
+        if ($name === '') return;
+
+        $this->actionData['teachers'][] = $name;
+        if ($this->teacherFormEmail) {
+            $this->actionData['teacherEmails'][$name] = trim($this->teacherFormEmail);
+        }
+        if ($this->teacherFormPhone) {
+            $this->actionData['teacherPhones'][$name] = trim($this->teacherFormPhone);
+        }
+        if ($this->teacherFormSubjects) {
+            $this->actionData['teacherSubjects'][$name] = array_map('trim', explode(',', $this->teacherFormSubjects));
+        }
+        if ($this->teacherFormClasses) {
+            $this->actionData['teacherClasses'][$name] = array_map('trim', explode(',', $this->teacherFormClasses));
+        }
+
+        $this->teacherFormName = '';
+        $this->teacherFormEmail = '';
+        $this->teacherFormSubjects = '';
+        $this->teacherFormClasses = '';
+        $this->teacherFormPhone = '';
+
+        $count = count($this->actionData['teachers']);
+        $this->botSay("Added **{$name}** ({$count} so far). Add another or click **Done**.");
+    }
+
+    /**
+     * Remove a teacher from the list.
+     */
+    public function removeTeacher(int $index): void
+    {
+        if (isset($this->actionData['teachers'][$index])) {
+            $name = $this->actionData['teachers'][$index];
+            unset($this->actionData['teachers'][$index]);
+            unset($this->actionData['teacherEmails'][$name]);
+            unset($this->actionData['teacherPhones'][$name]);
+            unset($this->actionData['teacherSubjects'][$name]);
+            unset($this->actionData['teacherClasses'][$name]);
+            $this->actionData['teachers'] = array_values($this->actionData['teachers']);
+        }
+    }
+
+    /**
+     * Finish teacher entry.
+     */
+    public function doneTeachers()
+    {
+        if (empty($this->actionData['teachers'])) {
+            $this->botSay("Add at least one teacher first.");
+            return;
+        }
+        $this->showTeacherForm = false;
+        $this->teacherList = $this->actionData['teachers'];
+        $this->teacherPhones = $this->actionData['teacherPhones'] ?? [];
+
+        $preview = implode(', ', array_slice($this->teacherList, 0, 3));
+        $this->botSay("**" . count($this->teacherList) . "** teacher(s) added: {$preview}" . (count($this->teacherList) > 3 ? '...' : '') . ". They'll get auto-generated emails and default passwords.");
+        $this->substep = 0;
+        $this->advance();
     }
 
     public function commit()
