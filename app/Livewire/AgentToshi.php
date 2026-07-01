@@ -452,6 +452,14 @@ class AgentToshi extends Component
         $this->advance();
     }
 
+    /**
+     * Custom action button — routes to the "no" path of the current step.
+     */
+    public function confirmCustom()
+    {
+        $this->confirmNo();
+    }
+
     public function commit()
     {
         $this->input = 'commit';

@@ -384,8 +384,16 @@
                     style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
                     onmouseover="this.style.background='#E2E8F0'"
                     onmouseout="this.style.background='#F1F5F9'">
-                No / Skip
+                No
             </button>
+            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects' && $substep === 1)
+            <button wire:click="confirmCustom" type="button"
+                    style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#1557B3'"
+                    onmouseout="this.style.background='#1E6FD9'">
+                + Customize
+            </button>
+            @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
             <button wire:click="confirmSkipAll" type="button"
                     style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
@@ -713,8 +721,16 @@
                                 style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
                                 onmouseover="this.style.background='#E2E8F0'"
                                 onmouseout="this.style.background='#F1F5F9'">
-                        No / Skip
+                        No
                     </button>
+                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects' && $substep === 1)
+                        <button wire:click="confirmCustom" type="button"
+                                style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#1557B3'"
+                                onmouseout="this.style.background='#1E6FD9'">
+                            + Customize
+                        </button>
+                        @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
                         <button wire:click="confirmSkipAll" type="button"
                                 style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
