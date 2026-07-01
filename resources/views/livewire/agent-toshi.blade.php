@@ -413,7 +413,11 @@
                             + Add Exam
                         </button>
                         <button wire:click="doneExams" type="button"
-                                style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                style="flex: 1; padding: 8px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">
+                            Skip
+                        </button>
+                        <button wire:click="doneExams" type="button"
+                                style="flex: 1; padding: 8px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                             Continue ({{ count($this->actionData['exams'] ?? []) }})
                         </button>
                     </div>
@@ -1295,7 +1299,11 @@
                                                                 + Add Exam
                                                             </button>
                                                             <button wire:click="doneExams" type="button"
-                                                                    style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                                                    style="flex: 1; padding: 8px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">
+                                                                Skip
+                                                            </button>
+                                                            <button wire:click="doneExams" type="button"
+                                                                    style="flex: 1; padding: 8px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                                                                 Continue ({{ count($this->actionData['exams'] ?? []) }})
                                                             </button>
                                                         </div>
