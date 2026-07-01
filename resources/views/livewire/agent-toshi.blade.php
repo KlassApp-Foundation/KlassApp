@@ -195,8 +195,15 @@
             <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
                     <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Student</span>
-                    <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
-                       style="margin-left: auto; font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                        <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
+                           style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                        <label class="flex items-center gap-1 cursor-pointer"
+                               style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                            Upload File
+                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
+                        </label>
+                    </div>
                 </div>
                 @php $students = $this->actionData['students'] ?? []; @endphp
                 @if(count($students) > 0)
@@ -901,8 +908,15 @@
                                                 <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
                                                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
                                                         <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Student</span>
-                    <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
-                       style="margin-left: auto; font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                        <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
+                           style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                        <label class="flex items-center gap-1 cursor-pointer"
+                               style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                            Upload File
+                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
+                        </label>
+                    </div>
                                                     </div>
                                                     @php $students = $this->actionData['students'] ?? []; @endphp
                                                     @if(count($students) > 0)
