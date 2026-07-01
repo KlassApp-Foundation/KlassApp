@@ -73,7 +73,7 @@
                 </div>
             @endforeach
             {{-- Subject inline form --}}
-            @if($showSubjectForm)
+            @if($showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
             <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
                 <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 10px;">Add Subject</div>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -611,7 +611,7 @@
                             @endif
                         @endforeach
                                     {{-- Subject inline form --}}
-                                    @if($showSubjectForm)
+                                    @if($showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
                                     <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
                                         <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 10px;">Add Subject</div>
                                         <div style="display: flex; flex-direction: column; gap: 8px;">
