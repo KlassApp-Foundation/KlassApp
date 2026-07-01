@@ -1004,17 +1004,42 @@ class AgentToshi extends Component
         }
 
         $names = [];
+        $prevColB = '';
         foreach ($dataRows as $row) {
             if (!is_array($row) || count($row) === 0) continue;
             $row = array_map('trim', $row);
+
+            // Detect merged cell artifacts: skip rows where col A repeats prev row's col B
+            if ($prevColB !== '' && count($row) > 1 && $row[0] === $prevColB) {
+                $prevColB = $row[1] ?? '';
+                continue;
+            }
 
             // Determine name value
             if ($nameIdx !== null && !empty($row[$nameIdx] ?? '')) {
                 $name = $row[$nameIdx];
             } elseif (count($row) > 0 && !empty($row[0])) {
-                $name = $row[0]; // fallback to first column
+                $name = $row[0];
+            } elseif (count($row) > 1 && !empty($row[1])) {
+                $name = $row[1];
             } else {
                 continue;
+            }
+
+            $prevColB = $row[1] ?? '';
+
+            // Skip labels
+            $upper = strtoupper($name);
+            if (in_array($upper, ['BOARDERS', 'DAY SCHOLAR', 'BOARDING', 'DAY', 'STAFF', 'TEACHERS', 'STUDENTS', 'CLASS', 'NAME', 'NAMES'])
+                || preg_match('/^\d+$/', $name)) continue;
+
+            // Try second column if first looks like a label
+            if ($nameIdx === null && count($row) > 1 && !empty($row[1]) && $row[0] !== $row[1]) {
+                $candidate = $row[1];
+                $upper2 = strtoupper($candidate);
+                if (!in_array($upper2, ['BOARDERS', 'DAY SCHOLAR', 'BOARDING', 'DAY'])) {
+                    $name = $candidate;
+                }
             }
 
             // Append lastname if available
