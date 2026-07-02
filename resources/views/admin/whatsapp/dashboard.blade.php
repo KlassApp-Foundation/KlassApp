@@ -9,7 +9,7 @@
             <p class="text-gray-600 text-sm">Message delivery stats, failure monitoring, and activity log</p>
         </div>
 
-        {{-- Period filter —}}
+        {{-- Period filter --}}
         <div class="flex gap-1 bg-gray-100 rounded-lg p-1">
             @foreach(['24h' => '24H', '7d' => '7 Days', '30d' => '30 Days', '90d' => '90 Days'] as $val => $label)
                 <a href="{{ request()->fullUrlWithQuery(['period' => $val]) }}"
@@ -21,7 +21,7 @@
         </div>
     </div>
 
-    {{-- KPI Cards —}}
+    {{-- KPI Cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white rounded-lg shadow border border-gray-100 p-5">
             <div class="flex items-center gap-3">
@@ -73,7 +73,7 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {{-- Daily Trend Chart —}}
+        {{-- Daily Trend Chart --}}
         <div class="lg:col-span-2 bg-white rounded-lg shadow border border-gray-100 p-5">
             <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Daily Trend</h2>
             <div class="space-y-2">
@@ -111,7 +111,7 @@
             </div>
         </div>
 
-        {{-- Flow Breakdown —}}
+        {{-- Flow Breakdown --}}
         <div class="bg-white rounded-lg shadow border border-gray-100 p-5">
             <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">By Flow Type</h2>
             @if($flowBreakdown->isEmpty())
@@ -142,7 +142,7 @@
         </div>
     </div>
 
-    {{-- Recent Activity —}}
+    {{-- Recent Activity --}}
     <div class="bg-white rounded-lg shadow border border-gray-100 p-5 mb-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Recent Activity</h2>

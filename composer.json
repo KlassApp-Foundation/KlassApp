@@ -34,6 +34,7 @@
         "league/flysystem-aws-s3-v3": "^3.24.0",
         "livewire/livewire": "^3.4",
         "maatwebsite/excel": "3.1.x-dev",
+        "maestroerror/laragent": "^0.3.1",
         "nckg/laravel-impersonate": "4.0.1",
         "openai-php/laravel": "^0.11.0",
         "phpoffice/phpword": "^1.4",

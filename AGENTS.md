@@ -260,8 +260,38 @@ Items 1-11: ✅ Complete
 - Critical fixes, plan selection, confirm/edit flow, input validation, review card, error handling, WhatsApp verification, dual-mode detection, progress persistence
 - See `knowledge.md` for full spec and implementation details
 
+## CURRENT STATUS (July 2, 2026)
+
+### Onboarding Fixes
+- WhatsApp TypeError fixed (nullable token, non-blocking OTP)
+- `commit()` public method created + pre-flight duplicate checks
+- Student class assignment fixed (was dumping all into P1)
+- Edit flow gets fuzzy step matching
+- Teachers/students deduplicated from file uploads
+
+### LarAgent Migration (assistant mode, feature-flagged)
+- `ToshiAssistantAgent` with 18 #[Tool] methods, Nvidia NIM provider
+- Complexity-based model routing (cheap vs escalated)
+- Response caching + static context caching
+- Feature flag: `TOSHI_LARAGENT_ENABLED` (default false)
+- 9 new tests passing, 17 total
+
+### Design Overhaul
+- **Sidebar**: 171 inline SVGs replaced with `<x-icons.sidebar>` component across all 9 role menus. Centralized active state helper.
+- **Dashboard**: KPI padding unified (px-5 py-4), icon sizes reduced (w-14)
+- **Internal pages**: Students + standardlinks wrapped in dashboard card pattern
+- **Toshi UI**: Navy header (#0D1526) with green status dot, 20+ CSS classes extracted, message animations, safe-area positioning, composer matched to chat area
+
+### Key Files
+- `app/AiAgents/ToshiAssistantAgent.php` — NEW
+- `config/laragent.php` — NEW
+- `resources/views/components/icons/sidebar.blade.php` — NEW (17 icons)
+- `tests/Feature/Toshi/ToshiAssistantAgentTest.php` — NEW (9 tests)
+
 ## NEXT SESSION CHECKLIST
 
+- [ ] Enable `TOSHI_LARAGENT_ENABLED` for test user after review
+- [ ] Monitor `Assistant path:` logs for LarAgent vs legacy distribution
 - [ ] Create new Meta Business Account with fresh email + new WhatsApp number
 - [ ] Update .env with new WABA credentials (token, phone number ID, WABA ID)
 - [ ] Run any new migrations on production

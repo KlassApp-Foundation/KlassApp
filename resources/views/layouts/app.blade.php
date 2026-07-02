@@ -52,7 +52,7 @@
         <div id="app">
             @yield('base-navigation')
             <main class="flex w-full h-full min-h-screen relative">
-                <div class="sidebar min-h-full">
+                <div class="sidebar self-start">
                     @yield('base-sidebar')
                 </div>
                 <div class="bg-gray-200 flex-grow w-full px-4 md:w-auto" style="width: calc(100vw - 195px);">

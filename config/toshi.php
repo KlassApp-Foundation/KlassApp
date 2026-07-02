@@ -20,6 +20,20 @@ return [
     'llm_enabled' => env('TOSHI_LLM_ENABLED', false),
 
     /*
+    |--------------------------------------------------------------------------
+    | LarAgent Assistant Mode (parallel implementation)
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, assistant-mode queries are routed to the new LarAgent agent
+    | class instead of the legacy ToshiAssistantService. Both paths coexist.
+    | Enable for a subset of users by setting to true per-user via a toggle or
+    | globally via env for testing.
+    |
+    | Logs which path handled each query (laragent vs legacy).
+    */
+    'laragent_enabled' => env('TOSHI_LARAGENT_ENABLED', false),
+
+    /*
     | The OpenAI-compatible API endpoint.
     | OpenAI:      https://api.openai.com/v1
     | DeepSeek:    https://api.deepseek.com

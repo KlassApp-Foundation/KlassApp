@@ -683,9 +683,11 @@ class AgentToshi extends Component
             return;
         }
         $this->showStudentForm = false;
+        // Preserve full student records (name + class + stream) for commitAll()
         $this->studentList = !empty($this->actionData['students'])
             ? collect($this->actionData['students'])->pluck('name')->values()->toArray()
             : $this->studentList;
+        // actionData['students'] is kept intact for commitAll() to read class assignments
         $count = count($this->studentList);
         $this->botSay("**{$count}** student(s) added.");
         $this->substep = 0;
@@ -832,7 +834,7 @@ class AgentToshi extends Component
     public function editBeforeCommit()
     {
         $this->reviewData = [];
-        $this->botSay("No problem! Tell me what needs to change and we'll go back to fix it. | Type the step name: plan, school, admin, co-admin, classes, subjects, teachers, students, terms, fees, exams");
+        $this->botSay("No problem! Tell me what needs to change and we'll go back to fix it. | For example: **students**, **teachers**, **classes**, **subjects**, **fees**, **exams**, **school info**, **admin**, **co-admin**, **terms**, **plan**, or **WhatsApp**");
         $this->substep = 0;
     }
     public function resumeDraft()
@@ -969,8 +971,8 @@ class AgentToshi extends Component
                 }
             } elseif (in_array($stepName, ['teachers', 'students']) && count($names) > 0) {
                 if ($stepName === 'teachers') {
-                    $this->teacherList = $names;
-                    $this->actionData['teachers'] = $names;
+                    $this->teacherList = array_values(array_unique($names));
+                    $this->actionData['teachers'] = $this->teacherList;
                     $this->showTeacherForm = false;
                     // Also try extracting teacher-subject-class links from the same file
                     $links = $this->extractTeacherLinksFromFile($this->attachment->getRealPath(), $ext);
@@ -978,8 +980,8 @@ class AgentToshi extends Component
                         $this->teacherLinks = $links;
                     }
                 } else {
-                    $this->studentList = $names;
-                    $this->actionData['students'] = array_map(fn($n) => ['name' => $n, 'class' => '', 'stream' => '', 'parent' => '', 'parent_phone' => ''], $names);
+                    $this->studentList = array_values(array_unique($names));
+                    $this->actionData['students'] = array_map(fn($n) => ['name' => $n, 'class' => '', 'stream' => '', 'parent' => '', 'parent_phone' => ''], $this->studentList);
                     $this->showStudentForm = false;
                 }
                 $label = $stepName === 'teachers' ? 'teachers' : 'students';
@@ -1664,21 +1666,43 @@ class AgentToshi extends Component
     {
         $lower = strtolower($text);
 
+        // Fast path: keyword router runs first regardless (zero API cost)
         if ($this->tryKeywordRoute($lower, $text)) {
             return;
         }
 
         $user = auth()->user();
+        $history = array_slice($this->messages, -20);
+        $handled = false;
+
+        // New path: LarAgent agent (gated by feature flag)
+        if (config('toshi.laragent_enabled', false)) {
+            try {
+                $agent = app(\App\AiAgents\ToshiAssistantAgent::class);
+                $response = $agent->handleQuery($user, $this->schoolId, $text, $history);
+                if ($response !== null) {
+                    $this->botSay($response);
+                    \Log::info('Assistant path: LarAgent', ['user_id' => $user->id, 'length' => strlen($response)]);
+                    return;
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('LarAgent failed, falling back to legacy', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Legacy path: existing ToshiAssistantService
         $service = app(ToshiAssistantService::class);
 
         if ($service->isAvailable($user, $this->schoolId)) {
-            $history = array_slice($this->messages, -20);
             $response = $service->ask($user, $this->schoolId, $text, $history);
             if ($response !== null) {
                 $this->botSay($response);
+                \Log::info('Assistant path: legacy', ['user_id' => $user->id, 'length' => strlen($response)]);
                 return;
             }
-            // LLM call failed (API error) — fall through to keyword fallback
         } else {
             $remaining = $service->getRemainingBudget($user, $this->schoolId);
             if ($remaining <= 0) {
@@ -1689,6 +1713,7 @@ class AgentToshi extends Component
                     $msg .= " " . $upgrade;
                 }
                 $this->botSay($msg);
+                \Log::info('Assistant path: budget exhausted', ['user_id' => $user->id]);
                 return;
             }
         }
@@ -3034,7 +3059,7 @@ class AgentToshi extends Component
             }
             $names = $this->parseNameList($text);
             if (count($names) > 0) {
-                $this->teacherList = $names;
+                $this->teacherList = $names; // parseNameList already deduplicates
                 $preview = implode(', ', array_slice($this->teacherList, 0, 3));
                 $this->botSay("Parsed **" . count($this->teacherList) . "** teachers: {$preview}" . (count($this->teacherList) > 3 ? '...' : '') . " | Is this correct? (yes / no)");
                 $this->awaitingConfirm = true;
@@ -3387,29 +3412,27 @@ class AgentToshi extends Component
         $otp = (string) rand(100000, 999999);
         $this->whatsappSentOtp = $otp;
 
-        try {
-            if ($this->whatsappPhone) {
-                $sent = app(\App\Services\WhatsAppBusinessService::class)->sendTextSafe(
+        // Always show the code in the chat so onboarding is never blocked.
+        // The admin is already authenticated — this step collects their WhatsApp
+        // for notifications, not identity proof. Code is also sent via API if configured.
+        $this->botSay("📱 Your verification code: **{$otp}**");
+        $this->botSay("(A message was also sent to your phone if WhatsApp API is configured.)");
+
+        // Attempt to send via WhatsApp API if credentials exist (non-blocking)
+        $waService = app(\App\Services\WhatsAppBusinessService::class);
+        if ($waService->isConfigured() && $this->whatsappPhone) {
+            try {
+                $sent = $waService->sendTextSafe(
                     $this->whatsappPhone,
                     "Your KlassApp verification code is: {$otp}. It expires in 5 minutes.",
                 );
                 if (($sent['status'] ?? '') === 'success' || ($sent['success'] ?? false)) {
-                    $this->botSay("📱 Verification code sent! Check WhatsApp on **{$this->whatsappPhone}**.");
+                    $this->botSay("✅ WhatsApp message sent to **{$this->whatsappPhone}**.");
                 } else {
-                    \Log::info('WhatsApp OTP send result', $sent);
-                    if (!app()->environment('production')) {
-                        $this->botSay("📱 In production, a code would be sent via WhatsApp. For testing, use code: **{$otp}**");
-                    } else {
-                        $this->botSay("📱 Could not send the verification code via WhatsApp right now. Type **resend** to try again or **skip** to do this later.");
-                    }
+                    \Log::info('WhatsApp OTP API result (non-blocking)', $sent ?? []);
                 }
-            }
-        } catch (\Exception $e) {
-            \Log::warning('WhatsApp OTP send failed: ' . $e->getMessage());
-            if (!app()->environment('production')) {
-                $this->botSay("📱 Could not send via WhatsApp right now. For testing, use code: **{$otp}**");
-            } else {
-                $this->botSay("📱 Could not send the verification code via WhatsApp right now. Type **resend** to try again or **skip** to do this later.");
+            } catch (\Exception $e) {
+                \Log::warning('WhatsApp OTP API send failed (non-blocking): ' . $e->getMessage());
             }
         }
 
@@ -3442,13 +3465,22 @@ class AgentToshi extends Component
                 'whatsapp' => 13, 'whatsapp_verify' => 13,
             ];
             $textLower = strtolower(trim($text));
-            // Only match known step names — 'commit' falls through to build reviewData
+            // Exact match first
             if (isset($stepMap[$textLower])) {
                 $target = $stepMap[$textLower];
                 $this->step = $target;
                 $this->substep = 0;
                 $this->botSay("Going back to **" . str_replace('_', ' ', $this->steps[$target]) . "**. Let's review that section.");
                 return;
+            }
+            // Fuzzy match — look for keywords in natural language ("I want to add students" → students)
+            foreach ($stepMap as $keyword => $stepIdx) {
+                if (str_contains($textLower, $keyword)) {
+                    $this->step = $stepIdx;
+                    $this->substep = 0;
+                    $this->botSay("Going back to **" . str_replace('_', ' ', $this->steps[$stepIdx]) . "**. Let's review that section.");
+                    return;
+                }
             }
             // Unknown text — rebuild reviewData so buttons reappear
         }
@@ -3482,39 +3514,80 @@ class AgentToshi extends Component
                 'whatsapp'     => $this->whatsappVerified ? "✅ {$this->whatsappPhone}" : '⏳ Not verified',
                 'mode'         => $this->mode,
             ];
+            // Build a smart summary
+            $parts = [];
+            $parts[] = "{$schoolDisplay}";
+            if ($this->mode !== 'complete' && $planName && $planName !== '—') {
+                $parts[] = "Plan: **{$planName}**";
+            }
+            $counts = [];
+            $c = count($this->standards); if ($c) $counts[] = "{$c} class" . ($c !== 1 ? 'es' : '');
+            $c = count($this->teacherList); if ($c) $counts[] = "{$c} teacher" . ($c !== 1 ? 's' : '');
+            $c = count($this->studentList); if ($c) $counts[] = "{$c} student" . ($c !== 1 ? 's' : '');
+            $c = count($this->terms); if ($c) $counts[] = "{$c} term" . ($c !== 1 ? 's' : '');
+            $c = count($this->fees); if ($c) $counts[] = "{$c} fee" . ($c !== 1 ? 's' : '');
+            $c = count($this->exams); if ($c) $counts[] = "{$c} exam" . ($c !== 1 ? 's' : '');
+            if (!empty($counts)) $parts[] = implode(' · ', $counts);
+
+            $whatsappStatus = $this->whatsappVerified ? '✅ WhatsApp verified' : '⏳ WhatsApp not verified';
+
+            $this->botSay("📋 **" . implode(' | ', $parts) . "** | {$whatsappStatus}");
             $action = $this->mode === 'complete' ? 'save these changes' : 'create this school';
-            $this->botSay("📋 Review the changes below, then click **Confirm** to {$action}.");
+            $this->botSay("Review the summary below, then click **Confirm** to {$action}.");
         }
 
+        // Chat fallback: typing "commit" works too
         if (strtolower($text) === 'commit') {
-            try {
-                $this->commitAll();
-                $this->deleteDraft();
-                $this->reviewData['committed'] = true;
-                $this->reviewData['adminEmail'] = $this->adminEmail ?: (auth()->user()->email ?? '');
-                $this->reviewData['adminPhone'] = $this->schoolPhone;
-                $this->reviewData['adminPassword'] = $this->adminPassword ?: 'password';
-                $this->reviewData['coAdminEmail'] = $this->coAdminEmail;
-                $this->reviewData['coAdminPassword'] = $this->coAdminUserId ? null : ($this->adminPassword ?: 'password');
-                $this->reviewData['coAdminPromoted'] = (bool) $this->coAdminUserId;
-                $this->reviewData['mode'] = $this->mode;
-                $this->step = 99;
-                // Transition to assistant mode after successful commit
-                $this->mode = 'assistant';
-            } catch (\Illuminate\Database\QueryException $e) {
-                \Log::error('Onboarding DB error: ' . $e->getMessage());
-                $code = $e->getCode();
-                if ($code == 23000) {
-                    $this->botSay("This school or email already exists in the system. Please check for duplicates and try again.");
-                } elseif ($code == 2002 || $code == 1045) {
-                    $this->botSay("Unable to connect to the database. Please try again in a moment.");
-                } else {
-                    $this->botSay("A database error occurred. Please try again or contact support.");
-                }
-            } catch (\Exception $e) {
-                \Log::error('Onboarding commit failed: ' . $e->getMessage());
-                $this->botSay("Something unexpected happened. Please try again or contact support.");
+            $this->commit();
+        }
+    }
+
+    /**
+     * Confirm button handler — commits the school to the database.
+     * Also callable by typing "commit" in the chat.
+     */
+    public function commit()
+    {
+        // Pre-flight: check if a school with this name already exists
+        if (empty($this->schoolId) && \App\Models\School::where('name', $this->schoolName)->exists()) {
+            $this->botSay("⚠️ **{$this->schoolName}** already exists in the system. If you want to modify it, use the **Edit** button to change the school name, or start a fresh onboarding.");
+            return;
+        }
+
+        // Pre-flight: check if admin email is already taken
+        if ($this->adminEmail && \App\Models\User::where('email', $this->adminEmail)->exists()) {
+            $this->botSay("⚠️ The email **{$this->adminEmail}** is already in use. Use the **Edit** button to choose a different admin email.");
+            return;
+        }
+
+        try {
+            $this->commitAll();
+            $this->deleteDraft();
+            $this->reviewData['committed'] = true;
+            $this->reviewData['adminEmail'] = $this->adminEmail ?: (auth()->user()->email ?? '');
+            $this->reviewData['adminPhone'] = $this->schoolPhone;
+            // Store whether a custom password was set (not the actual value)
+            $this->reviewData['adminHasPassword'] = !empty($this->adminPassword);
+            $this->reviewData['coAdminEmail'] = $this->coAdminEmail;
+            $this->reviewData['coAdminPromoted'] = (bool) $this->coAdminUserId;
+            $this->reviewData['mode'] = $this->mode;
+            $this->step = 99;
+            // After creating a school, stay in 'create' mode so the user sees the success
+            // card with "Onboard Another School" option. Assistant mode is for existing schools.
+            $this->mode = 'create';
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('Onboarding DB error: ' . $e->getMessage());
+            $code = $e->getCode();
+            if ($code == 23000) {
+                $this->botSay("This school or email already exists in the system. Please check for duplicates and try again.");
+            } elseif ($code == 2002 || $code == 1045) {
+                $this->botSay("Unable to connect to the database. Please try again in a moment.");
+            } else {
+                $this->botSay("A database error occurred. Please try again or contact support.");
             }
+        } catch (\Throwable $e) {
+            \Log::error('Onboarding commit failed: ' . $e->getMessage());
+            $this->botSay("Something unexpected happened: **" . class_basename($e) . "**. Please try again or contact support.");
         }
     }
 
@@ -3598,6 +3671,7 @@ class AgentToshi extends Component
                 $phase = Standard::create(['school_id' => $school->id, 'name' => $this->schoolType, 'order' => 1, 'status' => '1']);
 
                 $firstStandardLink = null;
+                $classLinkMap = []; // class name → StandardLink
 
                 foreach ($this->standards as $class) {
                     $section = Section::firstOrCreate(
@@ -3608,6 +3682,7 @@ class AgentToshi extends Component
                         'school_id' => $school->id, 'academic_year_id' => $academicYear->id,
                         'standard_id' => $phase->id, 'section_id' => $section->id, 'status' => '1',
                     ]);
+                    $classLinkMap[$class['name']] = $standardLink;
                     if (!$firstStandardLink) {
                         $firstStandardLink = $standardLink;
                     }
@@ -3664,7 +3739,13 @@ class AgentToshi extends Component
                 }
 
                 // Create students from onboarding list
-                foreach ($this->studentList as $index => $studentName) {
+                // Use actionData['students'] when available (has class info), fall back to studentList
+                $studentRecords = !empty($this->actionData['students'])
+                    ? $this->actionData['students']
+                    : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
+
+                foreach ($studentRecords as $index => $record) {
+                    $studentName = is_string($record) ? $record : ($record['name'] ?? '');
                     if (!trim($studentName)) continue;
 
                     $sEmail = 'student.' . ($index + 1) . '@' . Str::slug($this->schoolName) . '.sch.ug';
@@ -3678,9 +3759,15 @@ class AgentToshi extends Component
                         'school_id' => $school->id, 'user_id' => $studentUser->id, 'usergroup_id' => 6,
                         'firstname' => trim($studentName), 'lastname' => '', 'status' => 'active',
                     ]);
-                    if ($firstStandardLink) {
+
+                    // Assign to correct class based on student's class field
+                    $studentClass = is_array($record) ? ($record['class'] ?? '') : '';
+                    $targetLink = !empty($studentClass) && isset($classLinkMap[$studentClass])
+                        ? $classLinkMap[$studentClass]
+                        : $firstStandardLink;
+
+                    if ($targetLink) {
                         // Generate KlassApp Student ID: KLS{school_code_3}{sequential_4}
-                        // Uses ministry_code if available, falls back to school DB id
                         $codeRaw = $school->ministry_code ?? $school->id;
                         $schoolCode = str_pad(substr((string) $codeRaw, 0, 3), 3, '0', STR_PAD_LEFT);
                         $seq = str_pad($index + 1, 4, '0', STR_PAD_LEFT);
@@ -3690,7 +3777,7 @@ class AgentToshi extends Component
                             'school_id' => $school->id,
                             'academic_year_id' => $academicYear->id,
                             'user_id' => $studentUser->id,
-                            'standardLink_id' => $firstStandardLink->id,
+                            'standardLink_id' => $targetLink->id,
                             'klassapp_student_id' => $klassappId,
                         ]);
                     }

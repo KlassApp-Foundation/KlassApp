@@ -459,3 +459,39 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Status**: ✅ Done
 - **Edge cases flagged**: `users.id` is `INT UNSIGNED` (not `BIGINT`) — `foreignId()` creates `BIGINT UNSIGNED` causing FK constraint failure; fixed by using `integer('user_id')->unsigned()` manually. All DB data was wiped during migration testing via `php artisan db:wipe` — required re-seeding.
 
+### 2026-07-02: Onboarding fixes, student class assignment bug, LarAgent migration, design overhaul
+- **Work done**: Fixed WhatsApp TypeError (nullable token properties + non-blocking OTP). Created `commit()` public method for Confirm button. Added pre-flight duplicate checks (school name + admin email). Fixed critical student class assignment bug (all students were dumped into P1 regardless of class field). Fixed edit flow with fuzzy step matching. Deduplicated teachers/students from file uploads. Created missing userprofile for mucu super admin. Reset Kabale Junior School admin password. Phase 2 design implementation: fixed Toshi pill color (H2), applied DM Sans to dashboard body (M1), CSS consolidation plan documented. Admin dashboard: unified KPI card padding (M2), reduced icon sizes, standardized empty states. Toshi widget: extracted 6 CSS classes (pill/panel/modal), fixed state-transition bugs (removed inline JS pill onclick, fixed modal overlay close, added mobile responsive widths with dvh units, touch targets 44px min). LarAgent migration (Steps 1-7): installed LarAgent, created `ToshiAssistantAgent` with 18 #[Tool]-annotated action methods, Nvidia NIM provider config, feature flag (`TOSHI_LARAGENT_ENABLED`), parallel routing with path logging. Steps 8-11: complexity-based model routing, response caching, batched persona extraction, static context caching. 17 tests passing. Sidebar overhaul: replaced 171 inline SVGs with Blade component (`<x-icons.sidebar>`), centralized active state helper across all 9 role menus. Internal pages: wrapped students list and standardlinks views in dashboard card pattern. Toshi CSS: 20+ new classes for messages, composer, buttons, progress, badges. Open Design audit applied: Navy header (#0D1526) with green pulsing status dot, message animations (fade+slide), three-axis bubble differentiation (alignment + background tone + green left border accent), composer surface matching chat area, safe-area-aware pill positioning (`env(safe-area-inset-bottom)`).
+- **Files modified**:
+  - `app/Livewire/AgentToshi.php` — commit(), pre-flight checks, student class fix, edit flow fuzzy match, handleAssistantQuery LarAgent routing
+  - `app/Services/WhatsAppBusinessService.php` — nullable token properties
+  - `app/Services/ToshiAssistantService.php` — unchanged (legacy path preserved)
+  - `app/Services/ToshiActionService.php` — unchanged
+  - `app/AiAgents/ToshiAssistantAgent.php` — NEW (LarAgent agent with tools, budget, context caching, complexity routing, response caching)
+  - `config/toshi.php` — added `laragent_enabled` flag
+  - `config/laragent.php` — NEW (Nvidia NIM provider config)
+  - `resources/views/livewire/agent-toshi.blade.php` — button bindings, Navy header, message CSS classes, composer classes, progress bar classes, modal overlay fix, remove pill inline onclick
+  - `resources/views/layouts/admin/menu.blade.php` — rewritten with icon component
+  - `resources/views/layouts/superadmin/menu.blade.php` — rewritten with icon component
+  - `resources/views/layouts/teacher/menu.blade.php` — rewritten
+  - `resources/views/layouts/student/menu.blade.php` — rewritten
+  - `resources/views/layouts/accountant/menu.blade.php` — rewritten
+  - `resources/views/layouts/reception/menu.blade.php` — rewritten
+  - `resources/views/layouts/library/menu.blade.php` — rewritten
+  - `resources/views/layouts/stock/menu.blade.php` — rewritten
+  - `resources/views/layouts/alumni/menu.blade.php` — rewritten
+  - `resources/views/components/icons/sidebar.blade.php` — NEW (17 SVG icons for sidebar)
+  - `resources/views/admin/dashboard/dashboard.blade.php` — KPI card padding unified, icon size reduced
+  - `resources/views/admin/member/index.blade.php` — dashboard card wrapper, page-header
+  - `resources/views/admin/school/standardlinks/index.blade.php` — card wrapper, button styles
+  - `resources/views/layouts/partials/navigation.blade.php` — removed inline script
+  - `resources/views/layouts/superadmin/menu.blade.php` — removed inline script
+  - `public/css/dashboard-refresh.css` — body DM Sans, Toshi CSS classes (pill/panel/modal/header/messages/composer/buttons/progress/badges), Navy header, safe-area, animations
+  - `public/js/custom.js` — mobile menu toggle, sidebar accordion from moved scripts
+  - `tests/Feature/Toshi/ToshiAssistantAgentTest.php` — NEW (9 tests)
+  - `resources/views/layouts/superadmin-app.blade.php` — removed sidebar `<script>` (moved to custom.js)
+  - `.env` — added `TOSHI_LARAGENT_ENABLED=false`
+  - `composer.json` — added `maestroerror/laragent`
+- **Key decisions**: Student class assignment now reads `actionData['students']` class field and maps to correct StandardLink via `$classLinkMap`. Confirm button uses `wire:click="commit"` (direct Livewire call, proven working via server logs). LarAgent gated behind `TOSHI_LARAGENT_ENABLED` (default false) — legacy path untouched. Keyword router runs before both LLM paths (shared, zero API cost). Nvidia NIM maintained as sole provider (no Groq/Claude switch). Sidebar icons extracted to Blade component for DRY maintenance across 9 role menus. Navy header replaces green per Open Design recommendation.
+- **Status**: ✅ Done
+- **Edge cases flagged**: `Log::` needs `\Log::` prefix (global namespace) in AgentToshi.php. LarAgent requires PHP ^8.3 (composer installs with `--ignore-platform-req=php`). `extractNamesFromFile()` doesn't deduplicate — `array_unique()` added at assignment points. `doneStudents()` strips class field via `->pluck('name')` — `actionData['students']` preserved for commitAll(). `env(safe-area-inset-*)` may not be supported on all Android browsers — `max()` fallback ensures minimum 32px.
+

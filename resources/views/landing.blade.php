@@ -544,21 +544,24 @@
                 </p>
                 <div class="flex flex-wrap gap-4">
                     <a href="{{ url('/register') }}"
-                       class="bg-brand-green text-white font-semibold px-7 py-3.5 rounded-lg text-base hover:bg-green-600 transition btn-scale inline-flex items-center gap-2">
+                       class="bg-brand-green text-white font-semibold px-7 py-3.5 rounded-lg text-base hover:bg-green-600 transition btn-scale inline-flex items-center gap-2"
+                       aria-label="Join KlassApp">
                         Join
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M5 12h14M13 5l7 7-7 7"/>
                         </svg>
                     </a>
                     <a href="{{ route('login') }}"
-                       class="bg-brand-blue text-white font-semibold px-7 py-3.5 rounded-lg text-base hover:bg-blue-700 transition btn-scale inline-flex items-center gap-2">
+                       class="bg-brand-blue text-white font-semibold px-7 py-3.5 rounded-lg text-base hover:bg-blue-700 transition btn-scale inline-flex items-center gap-2"
+                       aria-label="School Portal Login">
                         Portal
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13 12H3"/>
                         </svg>
                     </a>
                     <a href="https://calendly.com/moemucu/talk-to-mucu" target="_blank" rel="noopener noreferrer"
-                       class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 border border-slate-200 font-medium px-6 py-3 rounded-xl hover:bg-slate-200 transition btn-scale">
+                       class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 border border-slate-200 font-medium px-6 py-3 rounded-xl hover:bg-slate-200 transition btn-scale"
+                       aria-label="Book a demo with KlassApp">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         Book a demo
                     </a>
@@ -1598,6 +1601,7 @@
     });
 
     // ── Typewriter effect initial run + admin tagline ──
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const typewriterText = audienceCopy.admin.title;
     const el = titleEl;
     const cursor = cursorEl;
@@ -1605,19 +1609,25 @@
     function revealAdminTagline() {
         if (taglineEl) taglineEl.classList.remove('opacity-0');
     }
-    function typeNext() {
-        if (idx < typewriterText.length) {
-            if (idx === 0) cursor.classList.add('paused');
-            el.textContent += typewriterText.charAt(idx);
-            idx++;
-            const delay = typewriterText.charAt(idx - 1) === '.' ? 180 : 45 + Math.random() * 35;
-            setTimeout(typeNext, delay);
-        } else {
-            cursor.classList.remove('paused');
-            setTimeout(revealAdminTagline, 400);
+    if (prefersReduced) {
+        el.textContent = typewriterText;
+        cursor.classList.add('paused');
+        setTimeout(revealAdminTagline, 100);
+    } else {
+        function typeNext() {
+            if (idx < typewriterText.length) {
+                if (idx === 0) cursor.classList.add('paused');
+                el.textContent += typewriterText.charAt(idx);
+                idx++;
+                const delay = typewriterText.charAt(idx - 1) === '.' ? 180 : 45 + Math.random() * 35;
+                setTimeout(typeNext, delay);
+            } else {
+                cursor.classList.remove('paused');
+                setTimeout(revealAdminTagline, 400);
+            }
         }
+        setTimeout(typeNext, 600);
     }
-    setTimeout(typeNext, 600);
 
     // ── Hero Typelist Effect (looping keywords) ──
     const heroTypelistWords = ['Grades', 'fees', 'attendance', 'health', 'canteen', 'discipline', 'notifications', 'timetables', 'exams', 'reports'];
@@ -1628,30 +1638,34 @@
     let isDeleting = false;
     let heroTypeSpeed = 120;
 
-    function heroTypeTick() {
-        const word = heroTypelistWords[currentWordIndex];
-        if (isDeleting) {
-            heroTypelistEl.textContent = word.substring(0, currentCharIndex - 1);
-            currentCharIndex--;
-            heroTypeSpeed = 60;
-        } else {
-            heroTypelistEl.textContent = word.substring(0, currentCharIndex + 1);
-            currentCharIndex++;
-            heroTypeSpeed = 140;
-        }
+    if (prefersReduced && heroTypelistEl) {
+        heroTypelistEl.textContent = heroTypelistWords.join(', ') + '.';
+    } else {
+        function heroTypeTick() {
+            const word = heroTypelistWords[currentWordIndex];
+            if (isDeleting) {
+                heroTypelistEl.textContent = word.substring(0, currentCharIndex - 1);
+                currentCharIndex--;
+                heroTypeSpeed = 60;
+            } else {
+                heroTypelistEl.textContent = word.substring(0, currentCharIndex + 1);
+                currentCharIndex++;
+                heroTypeSpeed = 140;
+            }
 
-        if (!isDeleting && currentCharIndex === word.length) {
-            isDeleting = true;
-            heroTypeSpeed = 1800; // pause at full word
-        } else if (isDeleting && currentCharIndex === 0) {
-            isDeleting = false;
-            currentWordIndex = (currentWordIndex + 1) % heroTypelistWords.length;
-            heroTypeSpeed = 400; // pause before next word
-        }
+            if (!isDeleting && currentCharIndex === word.length) {
+                isDeleting = true;
+                heroTypeSpeed = 1800;
+            } else if (isDeleting && currentCharIndex === 0) {
+                isDeleting = false;
+                currentWordIndex = (currentWordIndex + 1) % heroTypelistWords.length;
+                heroTypeSpeed = 400;
+            }
 
-        setTimeout(heroTypeTick, heroTypeSpeed);
+            setTimeout(heroTypeTick, heroTypeSpeed);
+        }
+        if (heroTypelistEl) setTimeout(heroTypeTick, 2200);
     }
-    if (heroTypelistEl) setTimeout(heroTypeTick, 2200);
     // ── WhatsApp time ──
     const now = new Date();
     const hours = now.getHours();

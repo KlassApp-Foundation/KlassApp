@@ -31,7 +31,7 @@
         <div id="app">
             @yield('base-navigation')
             <main class="flex w-full h-full min-h-screen">
-                <div class="sidebar min-h-full">
+                <div class="sidebar self-start">
                     @yield('base-sidebar')
                 </div>
                 <div class="bg-gray-200 flex-grow w-full px-4 superadmin-content" style="width: calc(100vw - 195px); transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);">

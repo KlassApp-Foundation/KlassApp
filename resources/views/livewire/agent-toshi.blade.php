@@ -23,50 +23,53 @@
         }
     </style>
     <div id="toshi-pill"
-         wire:click="show" onclick="this.style.display='none'; document.getElementById('toshi-panel').style.display='flex';"
-         class="fixed flex items-center cursor-pointer"
-         style="{{ $visible ? 'display: none;' : '' }} bottom: 24px; right: 24px; height: 56px; width: 280px; background: #FFFFFF; border-radius: 28px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); padding: 0 8px 0 8px; gap: 10px; z-index: 9999;">
+         wire:click="show"
+         class="fixed flex items-center cursor-pointer toshi-pill"
+         style="{{ $visible || $maximized ? 'display: none;' : '' }} background: #FFFFFF; padding: 0 8px; gap: 10px; z-index: 9999;">
         <div class="flex items-center justify-center shrink-0" style="width: 38px; height: 38px; border-radius: 50%; background: #0F172A; overflow: hidden;">
             <img src="{{ asset('images/klassapp-logo.svg') }}" style="width: 24px; height: 24px;" alt="KlassApp">
         </div>
         <span style="flex: 1; font-size: 13px; color: #64748B; font-weight: 400; white-space: nowrap;">Ask Toshi anything</span>
-        <div class="flex items-center shrink-0" style="height: 38px; padding: 0 14px; background: #0075e3; border-radius: 20px; gap: 6px; color: #FFFFFF; font-size: 13px; font-weight: 600;">
+        <div class="flex items-center shrink-0 toshi-pill-talk" style="height: 38px; padding: 0 14px; gap: 6px; color: #FFFFFF; font-size: 13px; font-weight: 600;">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="white"><rect x="1" y="4" width="3" height="6" rx="1"/><rect x="5.5" y="1" width="3" height="12" rx="1"/><rect x="10" y="3" width="3" height="8" rx="1"/></svg> Talk
         </div>
     </div>
 
     <div id="toshi-panel"
-         class="flex flex-col overflow-hidden"
-         style="{{ $visible ? 'display: flex;' : 'display: none;' }} position: fixed; z-index: 9999; bottom: 0; right: 24px; width: 373px; height: 457px; border-radius: 16px 16px 0 0; box-shadow: 0 -8px 40px rgba(0,0,0,0.18); background: #FFFFFF; border: 1px solid #E2E8F0; border-bottom: none;">
-        <div class="flex items-center shrink-0" style="height: 48px; padding: 0 12px; background: #22C55E; gap: 10px;">
+         class="flex flex-col overflow-hidden toshi-panel"
+         style="{{ $visible ? 'display: flex;' : 'display: none;' }} background: #FFFFFF; border: 1px solid #E2E8F0; border-bottom: none; z-index: 9999;">
+        <div class="toshi-panel-header">
             <div class="flex items-center gap-2.5">
                 <div class="flex items-center justify-center shrink-0" style="width: 32px; height: 32px; border-radius: 50%; background: #FFFFFF; overflow: hidden;">
                     <img src="{{ asset('images/klassapp-logo.svg') }}" style="width: 22px; height: 22px;" alt="KlassApp">
                 </div>
-                <div style="color: #FFFFFF; font-size: 14px; font-weight: 800; line-height: 1.2; font-family: 'Sora', sans-serif; letter-spacing: -0.01em;">Toshi</div>
+                <div class="flex items-center gap-2">
+                    <span class="toshi-header-dot"></span>
+                    <span class="toshi-header-name">Toshi</span>
+                </div>
             </div>
             <div class="flex items-center gap-2" style="margin-left: auto;">
                 <button wire:click="maximize"
                         class="flex items-center justify-center"
-                        style="width: 28px; height: 28px; border-radius: 6px; background: rgba(255,255,255,0.15); border: none; cursor: pointer;" title="Expand">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        style="border-radius: 6px; background: rgba(0,0,0,0.06); border: none; cursor: pointer; padding: 8px;" title="Expand">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
                 <button wire:click="hide"
                         class="flex items-center justify-center"
-                        style="width: 28px; height: 28px; border-radius: 6px; background: rgba(255,255,255,0.15); border: none; cursor: pointer;" title="Close">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        style="border-radius: 6px; background: rgba(0,0,0,0.06); border: none; cursor: pointer; padding: 8px;" title="Close">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </button>
             </div>
         </div>
         <div class="flex-1 overflow-y-auto"
              x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight); $wire.$watch('messages', () => $nextTick(() => $el.scrollTop = $el.scrollHeight))"
-             style="background: #F8FAFC; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0;">
+              style="background: var(--d-shell); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0;">
             @foreach($messages as $msg)
                 @php $isUser = $msg['role'] === 'user'; @endphp
-                <div style="display: flex; justify-content: {{ $isUser ? 'flex-end' : 'flex-start' }};">
-                    <div style="max-width: 80%;">
-                        <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94A3B8; margin-bottom: 4px; padding: 0 4px;">{{ $isUser ? 'You' : 'Toshi' }}</div>
-                        <div style="border-radius: 12px; padding: 10px 14px; font-size: 13px; line-height: 1.5; {{ $isUser ? 'background: #F8FAFC; color: #1E293B; border: 1px solid #E2E8F0;' : 'background: #FFFFFF; color: #1E293B; border: 1px solid #E2E8F0;' }}">
+                <div class="{{ $isUser ? 'toshi-msg-row-end' : 'toshi-msg-row' }}">
+                    <div>
+                        <div class="toshi-msg-label">{{ $isUser ? 'You' : 'Toshi' }}</div>
+                        <div class="{{ $isUser ? 'toshi-msg-user' : 'toshi-msg-bot' }}">
                             @if(!$isUser){!! preg_replace('/\*\*(.+?)\*\*/','<strong>$1</strong>',nl2br(e($msg['text']))) !!}@else{!! nl2br(e($msg['text'])) !!}@endif
                         </div>
                     </div>
@@ -561,14 +564,14 @@
                             $isDone = $i < $step;
                             $isCurrent = $i === $step;
                         @endphp
-                        <div style="flex: 1; height: 4px; border-radius: 2px; background: {{ $isDone ? '#22C55E' : ($isCurrent ? '#0F172A' : '#E2E8F0') }};{{ $isCurrent ? ' box-shadow: 0 0 0 2px rgba(15,23,42,0.15);' : '' }}"></div>
+                        <div class="toshi-progress-dot {{ $isDone ? 'toshi-progress-dot-done' : ($isCurrent ? 'toshi-progress-dot-current' : 'toshi-progress-dot-pending') }}"></div>
                     @endforeach
                 </div>
                 <span style="font-size: 10px; font-weight: 600; color: #64748B; white-space: nowrap;">{{ $step + 1 }}/{{ count($steps) }}</span>
                 @if(in_array($steps[$step] ?? '', $mandatorySteps ?? []))
-                <span style="background: #FEF2F2; color: #DC2626; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap;">Required</span>
+                <span class="toshi-badge-required">Required</span>
                 @else
-                <span style="background: #F0FDF4; color: #16A34A; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap;">Optional</span>
+                <span class="toshi-badge-optional">Optional</span>
                 @endif
             </div>
             @endif
@@ -658,17 +661,25 @@
 
                 {{-- Actions --}}
                 <div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #E2E8F0; background: #FAFAFA;">
-                    <button wire:click="commit"
-                            style="flex: 1; padding: 11px; background: #22C55E; color: #FFFFFF; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Sora', sans-serif;"
-                            onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'">
-                        🎉 Confirm &amp; Create School
-                    </button>
-                    <button wire:click="editBeforeCommit"
-                            style="padding: 11px 14px; background: #FFFFFF; color: #64748B; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;"
-                            onmouseover="this.style.borderColor='#1E6FD9';this.style.color='#1E6FD9'" onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#64748B'">
-                        ← Edit
-                    </button>
                 </div>
+            </div>
+            @endif
+            {{-- Review actions outside the card to avoid CSS interference --}}
+            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'review' && !empty($reviewData) && empty($reviewData['committed']))
+            <div style="display: flex; gap: 8px; padding: 4px 0;">
+                <button type="button" wire:click="commit"
+                        style="flex: 1; padding: 11px; font-family: 'Sora', sans-serif;"
+                        class="toshi-btn-confirm"
+                        onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'"
+                        id="confirm-btn">
+                    🎉 Confirm &amp; Create School
+                </button>
+                <button type="button" wire:click="editBeforeCommit"
+                        style="padding: 11px 14px;"
+                        class="toshi-btn-secondary"
+                        onmouseover="this.style.borderColor='#1E6FD9';this.style.color='#1E6FD9'" onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#64748B'">
+                    ← Edit
+                </button>
             </div>
             @endif
         </div>
@@ -790,9 +801,9 @@
         @endif
         {{-- Composer: compact panel — single rounded shell with bottom action row --}}
         <form wire:submit.prevent="send" class="shrink-0" style="background: #FFFFFF;">
-            <div style="margin: 0 10px 12px; border: 1px solid rgba(0,0,0,0.08); border-radius: 18px; background: #FFFFFF;">
+            <div class="toshi-composer-box" style="margin: 0 10px 12px;">
                 {{-- Textarea --}}
-                <div style="padding: 12px 14px 0;">
+                <div class="toshi-composer-inner">
                     <textarea rows="1" wire:model.defer="input"
                               placeholder="Message Toshi…"
                               id="toshi-input-panel"
@@ -802,8 +813,8 @@
                                   $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
                               "
                                @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
-                               class="resize-none w-full"
-                               style="border: none; outline: none; background: transparent; font-size: 15px; color: #0F172A; font-family: 'DM Sans', sans-serif; width: 100%; min-height: 24px; max-height: 320px; line-height: 1.5; padding: 0; box-sizing: border-box; transition: height 0.15s ease;"></textarea>
+                               class="toshi-composer-textarea resize-none"
+                               style="transition: height 0.15s ease;"></textarea>
                 </div>
                 {{-- Bottom action row --}}
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 10px;">
@@ -861,9 +872,12 @@
     </div>
 
     {{-- ===== MAXIMIZED MODAL — Claude-inspired two-column layout ===== --}}
-    <div id="toshi-modal" onclick="if(event.target===this){this.style.display='none'}"
-         style="{{ $maximized ? 'display: flex;' : 'display: none;' }} position: fixed; inset: 0; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); z-index: 99999;">
-        <div style="width: 900px; max-width: 92vw; height: 85vh; background: #FFFFFF; border-radius: 16px; display: flex; overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.25);"
+    <div id="toshi-modal"
+         class="toshi-modal-overlay"
+         style="{{ $maximized ? 'display: flex;' : 'display: none;' }} align-items: center; justify-content: center;"
+         @click.self="$wire.call('hide')">
+        <div class="toshi-modal-box"
+             style="background: #FFFFFF; display: flex; overflow: hidden;"
              onclick="event.stopPropagation()">
 
             {{-- Left Sidebar --}}
@@ -931,14 +945,19 @@
             <div style="flex: 1; display: flex; flex-direction: column; background: #FFFFFF; min-width: 0;">
 
                 {{-- Header --}}
-                <div style="height: 48px; border-bottom: 1px solid #E2E8F0; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; background: #FFFFFF; flex-shrink: 0;">
-                    <span style="font-size: 14px; font-weight: 600; color: #0F172A; font-family: 'DM Sans', sans-serif;">Toshi</span>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <button wire:click="restore" style="width: 28px; height: 28px; border-radius: 6px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #94A3B8;" onmouseover="this.style.color='#64748B'" onmouseout="this.style.color='#94A3B8'" title="Restore">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 1H1v3M10 1h3v3M10 13h3v-3M4 13H1v-3"/></svg>
+                <div class="toshi-panel-header" style="justify-content: space-between; padding: 0 20px;">
+                    <div class="flex items-center gap-2">
+                        <span class="toshi-header-dot"></span>
+                        <span class="toshi-header-name">Toshi</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <button wire:click="restore"
+                                style="border-radius: 6px; background: rgba(0,0,0,0.06); border: none; cursor: pointer; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" title="Restore">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 1H1v3M10 1h3v3M10 13h3v-3M4 13H1v-3"/></svg>
                         </button>
-                        <button wire:click="hide" style="width: 28px; height: 28px; border-radius: 6px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #94A3B8;" onmouseover="this.style.color='#64748B'" onmouseout="this.style.color='#94A3B8'" title="Close">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg>
+                        <button wire:click="hide"
+                                style="border-radius: 6px; background: rgba(0,0,0,0.06); border: none; cursor: pointer; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" title="Close">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg>
                         </button>
                     </div>
                 </div>
@@ -951,17 +970,17 @@
                         @foreach($messages as $msg)
                             @php $isUser = $msg['role'] === 'user'; @endphp
                             @if($isUser)
-                                <div style="display: flex; justify-content: flex-end;">
-                                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; color: #1E293B; border-radius: 12px 0 12px 12px; padding: 12px 16px; font-size: 14px; line-height: 1.6; max-width: 75%;">
+                                <div class="toshi-msg-row-end">
+                                    <div class="toshi-msg-user" style="padding: 12px 16px; font-size: 14px; line-height: 1.6; max-width: 75%;">
                                         {!! nl2br(e($msg['text'])) !!}
                                     </div>
                                 </div>
                             @else
-                                <div style="display: flex; gap: 12px; align-items: flex-start;">
-                                    <div style="width: 28px; height: 28px; border-radius: 50%; background: #22C55E; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <div class="toshi-msg-row">
+                                    <div class="toshi-avatar">
                                         <img src="{{ asset('images/klassapp-logo.svg') }}" style="width: 18px; height: 18px;" alt="Toshi">
                                     </div>
-                                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 0 12px 12px 12px; padding: 12px 16px; font-size: 14px; line-height: 1.6; color: #1E293B; max-width: 85%;">
+                                    <div class="toshi-msg-bot" style="padding: 12px 16px; font-size: 14px; line-height: 1.6; max-width: 85%;">
                                         {!! preg_replace('/\*\*(.+?)\*\*/','<strong>$1</strong>',nl2br(e($msg['text']))) !!}
                                     </div>
                                 </div>
@@ -1383,6 +1402,96 @@
                         </div>
                         @endif
 
+                        {{-- Review Card (maximized modal) --}}
+                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'review' && !empty($reviewData) && empty($reviewData['committed']))
+                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0;">
+                            {{-- Header --}}
+                            <div style="background: #0F172A; color: #FFFFFF; padding: 14px 16px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px;">
+                                <span>📋 Review &amp; Confirm</span>
+                            </div>
+                            {{-- Body --}}
+                            <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; gap: 10px;">
+                                    <div style="flex: 1; background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
+                                        <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Plan</div>
+                                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['plan'] }}</div>
+                                    </div>
+                                    <div style="flex: 1; background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
+                                        <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">School</div>
+                                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['schoolName'] }}</div>
+                                        <div style="font-size: 11px; color: #64748B;">{{ ucfirst($reviewData['schoolType']) }}</div>
+                                    </div>
+                                </div>
+                                <div style="background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
+                                    <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Admin Account</div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['adminName'] }}</div>
+                                    <div style="font-size: 11px; color: #64748B;">{{ $reviewData['adminEmail'] }} · {{ $reviewData['adminPhone'] }}</div>
+                                </div>
+                                @if(!empty($reviewData['coAdminName']))
+                                <div style="background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
+                                    <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['coAdminName'] }}</div>
+                                    <div style="font-size: 11px; color: #64748B;">{{ $reviewData['coAdminEmail'] }}</div>
+                                </div>
+                                @endif
+                                <div style="background: {{ !empty($reviewData['whatsapp']) && str_contains($reviewData['whatsapp'], '✅') ? '#F0FDF4' : '#FEF2F2' }}; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 16px;">📱</span>
+                                    <div>
+                                        <div style="font-size: 12px; font-weight: 600; color: #0F172A;">WhatsApp</div>
+                                        <div style="font-size: 11px; color: #64748B;">{{ $reviewData['whatsapp'] ?? 'Not set up' }}</div>
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                        <div style="font-size: 18px; font-weight: 700; color: #1E6FD9;">{{ $reviewData['classCount'] }}</div>
+                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Classes</div>
+                                    </div>
+                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                        <div style="font-size: 18px; font-weight: 700; color: #22C55E;">{{ $reviewData['teacherCount'] }}</div>
+                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Teachers</div>
+                                        @if(!empty($reviewData['teacherLinkCount']) && $reviewData['teacherLinkCount'] > 0)
+                                        <div style="font-size: 8px; color: #94A3B8; margin-top: 2px;">{{ $reviewData['teacherLinkCount'] }} subject links</div>
+                                        @endif
+                                    </div>
+                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                        <div style="font-size: 18px; font-weight: 700; color: #D97706;">{{ $reviewData['studentCount'] }}</div>
+                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Students</div>
+                                        @if(!empty($reviewData['studentIds']) && $reviewData['studentIds'] !== '—')
+                                        <div style="font-size: 8px; color: #94A3B8; margin-top: 2px;">{{ $reviewData['studentIds'] }}</div>
+                                        @endif
+                                    </div>
+                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                        <div style="font-size: 18px; font-weight: 700; color: #8B5CF6;">{{ $reviewData['termCount'] }}</div>
+                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Terms</div>
+                                    </div>
+                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                        <div style="font-size: 18px; font-weight: 700; color: #EC4899;">{{ $reviewData['feeCount'] }}</div>
+                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Fees</div>
+                                    </div>
+                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                        <div style="font-size: 18px; font-weight: 700; color: #14B8A6;">{{ $reviewData['examCount'] }}</div>
+                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Exams</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {{-- Actions --}}
+                            <div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #E2E8F0; background: #FAFAFA;">
+                                <button type="button" wire:click="commit"
+                                        style="flex: 1; padding: 11px; font-family: 'Sora', sans-serif;"
+                                        class="toshi-btn-confirm"
+                                        onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'">
+                                    🎉 Confirm &amp; Create School
+                                </button>
+                                <button type="button" wire:click="editBeforeCommit"
+                                        style="padding: 11px 14px;"
+                                        class="toshi-btn-secondary"
+                                        onmouseover="this.style.borderColor='#1E6FD9';this.style.color='#1E6FD9'" onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#64748B'">
+                                    ← Edit
+                                </button>
+                            </div>
+                        </div>
+                        @endif
+
                         @if($step === 99 && !empty($reviewData['committed']))
                         @php $isComplete = ($reviewData['mode'] ?? 'create') === 'complete'; @endphp
                         <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0; text-align: center;">
@@ -1502,9 +1611,9 @@
                 @endif
             {{-- Composer: maximized modal — single rounded shell with bottom action row --}}
                 <form wire:submit.prevent="send" class="shrink-0" style="padding: 0 24px 16px; background: #FFFFFF;">
-                    <div style="border: 1px solid rgba(0,0,0,0.08); border-radius: 18px; background: #FFFFFF;">
+                    <div class="toshi-composer-box">
                         {{-- Textarea --}}
-                        <div style="padding: 14px 16px 0;">
+                        <div class="toshi-composer-inner" style="padding: 14px 16px 0;">
                             <textarea rows="1" wire:model.defer="input"
                                       placeholder="Message Toshi..."
                                       id="toshi-input-modal"
@@ -1514,8 +1623,8 @@
                                           $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
                                       "
                                       @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
-                                      class="resize-none w-full"
-                                      style="border: none; outline: none; background: transparent; font-size: 15px; color: #0F172A; font-family: 'DM Sans', sans-serif; width: 100%; min-height: 24px; max-height: 320px; line-height: 1.5; padding: 0; box-sizing: border-box; transition: height 0.15s ease;"></textarea>
+                                      class="toshi-composer-textarea resize-none"
+                                      style="transition: height 0.15s ease;"></textarea>
                         </div>
                         {{-- Bottom action row --}}
                         <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px 12px;">
@@ -1574,3 +1683,14 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('confirm-btn');
+    if (btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('raw click works');
+        });
+    }
+});
+</script>

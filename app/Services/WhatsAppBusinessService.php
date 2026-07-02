@@ -19,9 +19,9 @@ use Illuminate\Support\Str;
  */
 class WhatsAppBusinessService
 {
-    protected string $token;
-    protected string $phoneNumberId;
-    protected string $apiVersion;
+    protected ?string $token;
+    protected ?string $phoneNumberId;
+    protected ?string $apiVersion;
 
     public function __construct()
     {
