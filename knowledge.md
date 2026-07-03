@@ -495,3 +495,19 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Status**: ✅ Done
 - **Edge cases flagged**: `Log::` needs `\Log::` prefix (global namespace) in AgentToshi.php. LarAgent requires PHP ^8.3 (composer installs with `--ignore-platform-req=php`). `extractNamesFromFile()` doesn't deduplicate — `array_unique()` added at assignment points. `doneStudents()` strips class field via `->pluck('name')` — `actionData['students']` preserved for commitAll(). `env(safe-area-inset-*)` may not be supported on all Android browsers — `max()` fallback ensures minimum 32px.
 
+### 2026-07-03: Three-fix pass + payroll batch E2E verification
+- **Work done**: Fixed 3 code bugs (noticeboard 500 crash, StudentDetailsController unscoped latest, Feedback unscoped latest), fixed 2 fillable omissions (Salary.gross_salary, Payroll.percentage/leave/late/leave_deduction), fixed payslip view unquoted array keys (PHP 8.3 fatal), removed DOMPDF-incompatible CSS. Created DemoPayrollSeeder + PayrollBatchEndToEndTest (19 assertions). Batch preview/confirm/payslip download verified end-to-end. 34/37 feature tests pass (3 LoginRegressionTest failures are pre-existing — missing RefreshDatabase).
+- **Files modified**:
+  - `app/Traits/Dashboard.php` — default empty collections for noticeboard/events/booklendings
+  - `app/Http/Controllers/Admin/StudentDetailsController.php` — academic-year scoped query
+  - `app/Models/Feedback.php` — subquery instead of orderByDesc()->limit(1)
+  - `app/Models/Salary.php` — added gross_salary to fillable
+  - `app/Models/Payroll.php` — added percentage/leave/late/leave_deduction to fillable
+  - `resources/views/accountant/payroll/payslip/payslip.blade.php` — quoted employee_id and designation keys, removed DOMPDF-incompatible CSS
+  - `database/seeders/DemoPayrollSeeder.php` — NEW
+  - `tests/Feature/PayrollBatchEndToEndTest.php` — NEW (2 tests, 19 assertions)
+  - `knowledge.md` — session log
+- **Key decisions**: Fillable fixes are genuine omissions (batch feature added recently, original code always used property assignment). Payslip view unquoted keys confirmed fatal on PHP 8.3. LoginRegressionTest not our bug — missing RefreshDatabase. Payroll batch is now verified end-to-end with assertions on computed gross/net, DB records, and PDF download.
+- **Status**: ✅ Done
+- **Edge cases flagged**: payslip view also had DOMPDF-incompatible `:not(:first-child):before` CSS (removed). LoginRegressionTest needs RefreshDatabase to run on SQLite. Admin dashboard content below KPIs is still raw/inconsistent — flagged for follow-up.
+

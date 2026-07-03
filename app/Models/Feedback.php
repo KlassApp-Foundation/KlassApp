@@ -42,7 +42,13 @@ class Feedback extends Model
 
     public function latestMessage()
     {
-        return $this->hasOne('App\Models\FeedbackMessage','feedback_id','id')->orderByDesc('id')->limit(1);
+        return $this->hasOne('App\Models\FeedbackMessage','feedback_id','id')
+            ->whereIn('feedback_messages.id', function ($query) {
+                $query->selectRaw('MAX(id)')
+                    ->from('feedback_messages')
+                    ->whereColumn('feedback_id', 'feedback_messages.feedback_id')
+                    ->groupBy('feedback_id');
+            });
     }
 
     public function parent() 

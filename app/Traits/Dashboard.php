@@ -44,7 +44,11 @@ trait Dashboard
     public function adminDashboard($school_id,$admin_id)
     {
         $seconds = 300;
-        $array = [];
+        $array = [
+            'noticeboard' => collect(),
+            'events'      => collect(),
+            'booklendings'=> collect(),
+        ];
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
     
