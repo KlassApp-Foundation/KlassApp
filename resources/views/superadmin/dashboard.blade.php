@@ -45,7 +45,7 @@
         </a>
 
         {{-- Users --}}
-        <a href="{{ url('/superadmin/users') }}" class="dashboard-kpi-card superadmin-kpi-link">
+        <a href="{{ url('/superadmin/academics/schools') }}" class="dashboard-kpi-card superadmin-kpi-link">
             <div class="dashboard-kpi-icon" style="background: rgba(15,23,42,0.08); color: #0F172A;">
                 <i class="fa-solid fa-users"></i>
             </div>
@@ -57,7 +57,7 @@
                 @endphp
                 @if($userDelta !== 0)
                     <span class="{{ $userDelta > 0 ? 'text-green-600' : 'text-red-500' }}">
-                        {{ $userDelta > 0 ? '+' : '' }}{ number_format($userDelta) }} this month
+                        {{ $userDelta > 0 ? '+' : '' }}{{ number_format($userDelta) }} this month
                     </span>
                 @else
                     <span class="text-gray-400">No change this month</span>
@@ -118,7 +118,7 @@
                 @endphp
                 @if($msgDelta !== 0)
                     <span class="{{ $msgDelta > 0 ? 'text-green-600' : 'text-red-500' }}">
-                        {{ $msgDelta > 0 ? '+' : '' }}{ number_format($msgDelta) }} vs last month
+                        {{ $msgDelta > 0 ? '+' : '' }}{{ number_format($msgDelta) }} vs last month
                     </span>
                 @else
                     <span class="text-gray-400">This month</span>
@@ -311,7 +311,7 @@
             </div>
             <div class="space-y-2">
                 @forelse($stats['recentSchools'] as $school)
-                    <a href="{{ url('/superadmin/academics/school/' . $school->id) }}"
+                    <a href="{{ url('/superadmin/academics/school/detail/' . $school->id) }}"
                        class="superadmin-activity-row">
                         <div class="flex items-center gap-3 flex-1">
                             <div class="superadmin-avatar" style="background: {{ $school->status == 1 ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.10)' }}; color: {{ $school->status == 1 ? '#22C55E' : '#EF4444' }};">

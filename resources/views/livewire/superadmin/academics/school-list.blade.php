@@ -192,7 +192,7 @@
                             {{-- Plan --}}
                             <td class="px-3 py-2.5 text-center">
                                 @php
-                                    $currentPlan = $school->subscription()->with('plan')->latest()->first();
+                                    $currentPlan = $school->subscription()->with('plan')->where('status', 'active')->latest()->first();
                                 @endphp
                                 @if($currentPlan && $currentPlan->plan)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium

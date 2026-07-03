@@ -177,11 +177,11 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
     })->name('superadmin.academics.school.admindetail');
 
    Route::get('academics/school/admin/list/{id}', function ($id) {
-        return view('superadmin.academics.adminlist', compact($id));
+        return view('superadmin.academics.adminlist', compact('id'));
     })->name('superadmin.academics.school.adminlist');
 
    Route::get('academics/school/user/list/{id}', function ($id) {
-        return view('superadmin.academics.userlist', compact($id));
+        return view('superadmin.academics.userlist', compact('id'));
     })->name('superadmin.academics.school.userlist');
 
    Route::get('academics/school/user/detail/{id}', function ($id) {

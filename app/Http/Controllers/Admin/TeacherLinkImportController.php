@@ -9,6 +9,7 @@ use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
+use App\Models\Userprofile;
 use App\Traits\LogActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -102,6 +103,14 @@ class TeacherLinkImportController extends Controller
                         'status' => 'active',
                         'email_verified' => 1,
                         'mobile_no' => $phone ?: null,
+                    ]);
+
+                    Userprofile::create([
+                        'school_id'    => $schoolId,
+                        'user_id'      => $teacher->id,
+                        'usergroup_id' => 5,
+                        'firstname'    => $teacherName,
+                        'lastname'     => '',
                     ]);
                 } elseif ($phone && empty($teacher->mobile_no)) {
                     $teacher->update(['mobile_no' => $phone]);

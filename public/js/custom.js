@@ -1,8 +1,33 @@
 
 
 $(document).ready(function(){
-  $(".profile-click").click(function(){
-    $(".user-dtl").toggle();
+  // Profile dropdown toggle
+  $(document).on('click', '.profile-click', function(e) {
+    if ($(e.target).closest('.user-dtl').length) return; // ignore clicks inside dropdown
+    var $parent = $(this);
+    var wasOpen = $parent.hasClass('open');
+    
+    // Close all other open dropdowns
+    $('.profile-click').removeClass('open');
+    
+    if (!wasOpen) {
+      $parent.addClass('open');
+      e.stopPropagation();
+    }
+  });
+
+  // Close on outside click
+  $(document).on('click', function(e) {
+    if (!$(e.target).closest('.profile-click.open').length) {
+      $('.profile-click').removeClass('open');
+    }
+  });
+
+  // Close on Escape
+  $(document).on('keydown', function(e) {
+    if (e.key === 'Escape') {
+      $('.profile-click').removeClass('open');
+    }
   });
 });
 

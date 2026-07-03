@@ -38,14 +38,6 @@ if (!function_exists('superadminActive')) {
         </ul>
     </li>
 
-    {{-- Users --}}
-    <li class="py-3 px-3 {{ superadminActive(['users','admins']) }}">
-        <a href="{{ url('/superadmin/academics/schools') }}" class="flex items-center">
-            <x-icons.sidebar name="settings"/>
-            <span class="mx-3 whitespace-no-wrap">Users</span>
-        </a>
-    </li>
-
     {{-- Subscriptions --}}
     <li class="py-3 px-3 {{ superadminActive('subscriptions') }}">
         <a href="{{ route('superadmin.reports.subscriptionlist') }}" class="flex items-center">

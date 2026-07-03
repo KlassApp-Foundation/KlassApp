@@ -1,10 +1,10 @@
 # KlassApp Project Knowledge
 
-## Current Status: June 30, 2026
+## Current Status: July 3, 2026
 
 ### Git
 - **Branch**: `main`
-- **HEAD**: `b0ef137` — "fix: include site subadmin (usergroup 2) in Toshi access"
+- **HEAD**: `b0ef137` — "fix: include site subadmin (usergroup 2) in Toshi access" (Super Admin bugfixes pending commit)
 - **Remote**: `origin/main` (GitHub: Elijah-ug/KlassApp)
 
 ---
@@ -34,12 +34,13 @@ WHATSAPP_BUSINESS_NAME=KlassApp
 ```
 
 ### Next Session Priority
-1. Run the three new migrations on production (toshi_personas, any pending)
-2. Configure School Pay webhook forwarding on production
-3. Test School Pay → WhatsApp receipt flow end-to-end
-4. Add `SCHOOLPAY_ENFORCE_SIGNATURE` toggle (env or School model) to reject unsigned webhooks
-5. Clean up `whatsapp_pending_parent_links` dead table (drop or document)
-6. Toshi: personalize greeting with persona on mount
+1. **Role 2 — School Admin full audit**: student/parent management, class/subject setup, reports, messaging, library, health modules. Check for same bug classes (compact($id), unguarded ->first(), Blade syntax, unscoped latest()).
+2. Run the three new migrations on production (toshi_personas, any pending)
+3. Configure School Pay webhook forwarding on production
+4. Test School Pay → WhatsApp receipt flow end-to-end
+5. Add `SCHOOLPAY_ENFORCE_SIGNATURE` toggle (env or School model) to reject unsigned webhooks
+6. Clean up `whatsapp_pending_parent_links` dead table (drop or document)
+7. Toshi: personalize greeting with persona on mount
 
 ### Local Dev
 ```bash
@@ -510,4 +511,26 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Key decisions**: Fillable fixes are genuine omissions (batch feature added recently, original code always used property assignment). Payslip view unquoted keys confirmed fatal on PHP 8.3. LoginRegressionTest not our bug — missing RefreshDatabase. Payroll batch is now verified end-to-end with assertions on computed gross/net, DB records, and PDF download.
 - **Status**: ✅ Done
 - **Edge cases flagged**: payslip view also had DOMPDF-incompatible `:not(:first-child):before` CSS (removed). LoginRegressionTest needs RefreshDatabase to run on SQLite. Admin dashboard content below KPIs is still raw/inconsistent — flagged for follow-up.
+
+### July 3, 2026: Super Admin Full Audit + Bugfixes
+- **Work done**: Systematic functional and UI audit of the Super Admin role (35 routes checked). Found 4 HIGH, 4 MEDIUM, 5 LOW issues. Fixed all HIGH and MEDIUM bugs.
+- **Files modified**:
+  - `routes/web.php` — fixed `compact($id)` → `compact('id')` on lines 180, 184
+  - `resources/views/superadmin/dashboard.blade.php` — fixed Blade syntax errors (lines 60, 121), fixed Users KPI link (was 404), fixed Recent Schools link (was 404)
+  - `resources/views/livewire/superadmin/academics/school-list.blade.php` — scoped `->latest()->first()` with `where('status', 'active')`
+  - `resources/views/layouts/superadmin/menu.blade.php` — removed redundant/mislabeled "Users" nav item
+- **Key decisions**: Removed sidebar "Users" item since it linked to the same URL as "Schools > All Schools" with no dedicated users page. Fixed KPI links to working routes instead of creating new routes. Scoped subscription query by `active` status rather than removing `->latest()` entirely.
+- **Status**: ✅ Done (fixes applied, not yet committed)
+- **Laravel Boost**: Not compatible with Laravel 10 (requires ^11.45.3). Context7 provides equivalent docs lookup.
+
+## NEXT SESSION: Role 2 — School Admin (remaining surface)
+
+Audit the School Admin role's modules NOT yet covered by prior audits:
+- Student/parent management (CRUD, search, profile)
+- Class/subject setup (classes, sections, subjects, timetable)
+- Reports (academic reports, fee reports, custom reports)
+- Messaging (bulk SMS/WhatsApp, notices, bulletins)
+- Library module (books, issue/return, fines)
+- Health module (records, immunizations, checkups — confirm the underlying module exists, not just the WhatsApp notification trigger)
+- Check for same bug classes found this session: `compact($id)` pattern, unguarded `->first()` calls, Blade syntax errors, unscoped `->latest()` calls
 
