@@ -682,8 +682,7 @@
                         style="flex: 1; padding: 11px; font-family: 'Sora', sans-serif;"
                         class="toshi-btn-confirm"
                         onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'"
-                        id="confirm-btn"
-                        onclick="var all=window.Livewire.all();if(all.length){all[0].call('commit')}return false;">
+                        id="confirm-btn">
                     🎉 Confirm &amp; Create School
                 </button>
                 <button type="button" wire:click="editBeforeCommit"
@@ -1491,8 +1490,7 @@
                                 <button type="button" wire:click="commit"
                                         style="flex: 1; padding: 11px; font-family: 'Sora', sans-serif;"
                                         class="toshi-btn-confirm"
-                                        onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'"
-                                        onclick="var all=window.Livewire.all();if(all.length){all[0].call('commit')}return false;">
+                                        onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'">
                                     🎉 Confirm &amp; Create School
                                 </button>
                                 <button type="button" wire:click="editBeforeCommit"
