@@ -6,17 +6,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\ImportMemberRequest;
+use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
-use App\Models\Subscription;
 use App\Imports\UsersImport;
 use App\Traits\LogActivity;
 use App\Traits\Common;
 use League\Csv\Writer;
 use App\Models\User;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class ImportMemberController extends Controller
 {
@@ -39,7 +40,15 @@ class ImportMemberController extends Controller
     */
     public function importUsers(ImportMemberRequest $request)
     {
-      // 
+      //
+      $school_id = Auth::user()->school_id;
+
+      // ── Plan limit check — reject whole batch upfront if at/over limit ──
+      $limit = ToshiActionService::enforcePlanLimit($school_id, 'students');
+      if (!$limit['success']) {
+          return back()->with('failmessage', $limit['message']);
+      }
+
       try
       {
         Excel::import(new UsersImport,$request->file('import_file'));
@@ -73,7 +82,8 @@ class ImportMemberController extends Controller
       }
       catch(Exception $e)
       {
-        dd($e->getMessage());
+        Log::error('ImportMemberController@importUsers failed: ' . $e->getMessage());
+        return back()->with('failmessage', 'Import failed due to an error. Please check your file format and try again.');
       }
     }
 

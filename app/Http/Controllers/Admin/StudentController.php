@@ -8,6 +8,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\UserProfileUpdateRequest;
 use App\Http\Requests\UserProfileAddRequest;
 use App\Http\Controllers\Controller;
+use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use App\Models\StudentParentLink;
@@ -15,7 +16,6 @@ use App\Traits\MemberProcess;
 use App\Traits\RegisterUser;
 use App\Models\StudentAcademic;
 use App\Models\StandardLink;
-use App\Models\Subscription;
 use Illuminate\Http\Request;
 use App\Helpers\SiteHelper;
 use App\Traits\LogActivity;
@@ -142,15 +142,10 @@ class StudentController extends Controller
       {
         $school_id = Auth::user()->school_id;
 
-        // ── Plan limit check ──
-        $subscription = Subscription::with('plan')->where('school_id', $school_id)->first();
-        if ($subscription && $subscription->plan) {
-            $studentCount = User::where('school_id', $school_id)->where('usergroup_id', 6)->count();
-            if ($studentCount >= $subscription->plan->no_of_students) {
-                return redirect()->back()->withErrors([
-                    'plan_limit' => "Your {$subscription->plan->name} plan allows a maximum of {$subscription->plan->no_of_students} students. Please upgrade to add more."
-                ]);
-            }
+        // ── Plan limit check (uses shared enforcePlanLimit on CurrentPlan) ──
+        $limit = ToshiActionService::enforcePlanLimit($school_id, 'students');
+        if (!$limit['success']) {
+            return redirect()->back()->withErrors(['plan_limit' => $limit['message']]);
         }
 
         $academic_year = SiteHelper::getAcademicYear($school_id);

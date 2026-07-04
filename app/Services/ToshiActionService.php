@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Attendance;
+use App\Models\CurrentPlan;
 use App\Models\FeesCategories;
 use App\Models\FeePayment;
 use App\Models\School;
@@ -30,6 +31,64 @@ class ToshiActionService
     public static function result(bool $success, string $message, array $data = []): array
     {
         return array_merge(['success' => $success, 'message' => $message], $data);
+    }
+
+    /**
+     * Type map for plan-limit enforcement.
+     *
+     * Maps a human-readable type to the usergroup_id to count and the
+     * plan column that stores the limit for that type.
+     */
+    private const PLAN_TYPES = [
+        'students'  => ['usergroup_id' => 6, 'plan_column' => 'no_of_students', 'label' => 'students'],
+        'teachers'  => ['usergroup_id' => 5, 'plan_column' => 'no_of_users',    'label' => 'teachers'],
+        'admins'    => ['usergroup_id' => 3, 'plan_column' => 'no_of_users',    'label' => 'administrators'],
+    ];
+
+    /**
+     * Enforce school plan limits for a given record type.
+     *
+     * Reads from CurrentPlan (the canonical runtime source — survives admin plan
+     * changes and is already used by DashboardController and ToshiAssistantService).
+     *
+     * Returns a standard result array:
+     *   ['success' => true,  'message' => '']            → under limit, proceed
+     *   ['success' => false, 'message' => '...upgrade...'] → over limit, blocked
+     *
+     * The message is plain-text safe for both HTTP flash contexts and Toshi/WhatsApp
+     * conversational use (no HTML, no route-dependent phrasing).
+     */
+    public static function enforcePlanLimit(int $schoolId, string $type): array
+    {
+        if (!isset(self::PLAN_TYPES[$type])) {
+            return self::result(true, '');
+        }
+
+        $cfg = self::PLAN_TYPES[$type];
+
+        $currentPlan = CurrentPlan::with('plan')->where('school_id', $schoolId)->first();
+        if (!$currentPlan || !$currentPlan->plan) {
+            return self::result(true, ''); // No plan configured → no limit
+        }
+
+        $plan   = $currentPlan->plan;
+        $limit  = $plan->{$cfg['plan_column']} ?? 0;
+        if ($limit <= 0) {
+            return self::result(true, ''); // Unlimited
+        }
+
+        $count = User::where('school_id', $schoolId)
+            ->where('usergroup_id', $cfg['usergroup_id'])
+            ->count();
+
+        if ($count >= $limit) {
+            return self::result(
+                false,
+                "Your {$plan->name} plan allows a maximum of {$limit} {$cfg['label']}. Please upgrade to add more."
+            );
+        }
+
+        return self::result(true, '');
     }
 
     // ── Role Capabilities ──
@@ -156,6 +215,11 @@ class ToshiActionService
             return self::result(false, 'You are not assigned to a school.');
         }
 
+        $limit = self::enforcePlanLimit($schoolId, 'students');
+        if (!$limit['success']) {
+            return $limit;
+        }
+
         $name = trim($data['name'] ?? '');
         if ($name === '' || strlen($name) < 3) {
             return self::result(false, 'Student name must be at least 3 characters.');
@@ -246,6 +310,11 @@ class ToshiActionService
             return self::result(false, 'You are not assigned to a school.');
         }
 
+        $limit = self::enforcePlanLimit($schoolId, 'teachers');
+        if (!$limit['success']) {
+            return $limit;
+        }
+
         $name = trim($data['name'] ?? '');
         if ($name === '' || strlen($name) < 3) {
             return self::result(false, 'Teacher name must be at least 3 characters.');
@@ -313,6 +382,11 @@ class ToshiActionService
         $schoolId = $admin->school_id;
         if (!$schoolId) {
             return self::result(false, 'You are not assigned to a school.');
+        }
+
+        $limit = self::enforcePlanLimit($schoolId, 'admins');
+        if (!$limit['success']) {
+            return $limit;
         }
 
         $name = trim($data['name'] ?? '');
