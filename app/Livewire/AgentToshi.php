@@ -3652,6 +3652,16 @@ class AgentToshi extends Component
     }
 
     /**
+     * Confirm button handler — aliased from "commit" to avoid Alpine.js
+     * which intercepts "commit" as a store mutation keyword and prevents
+     * Livewire from dispatching it from the frontend.
+     */
+    public function confirmOnboarding(): void
+    {
+        $this->commit();
+    }
+
+    /**
      * Confirm button handler — commits the school to the database.
      * Also callable by typing "commit" in the chat.
      */

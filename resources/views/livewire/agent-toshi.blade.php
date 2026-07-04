@@ -678,7 +678,7 @@
             {{-- Review actions outside the card to avoid CSS interference --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'review' && !empty($reviewData) && empty($reviewData['committed']))
             <div style="display: flex; gap: 8px; padding: 4px 0;">
-                <button type="button" wire:click="commit"
+                <button type="button" wire:click="confirmOnboarding"
                         style="flex: 1; padding: 11px; font-family: 'Sora', sans-serif;"
                         class="toshi-btn-confirm"
                         onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'"
@@ -1487,7 +1487,7 @@
                             </div>
                             {{-- Actions --}}
                             <div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #E2E8F0; background: #FAFAFA;">
-                                <button type="button" wire:click="commit"
+                                <button type="button" wire:click="confirmOnboarding"
                                         style="flex: 1; padding: 11px; font-family: 'Sora', sans-serif;"
                                         class="toshi-btn-confirm"
                                         onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'">
