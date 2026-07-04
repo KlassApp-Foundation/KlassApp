@@ -66,21 +66,15 @@ class ToshiActionService
                     'list_classes', 'list_teachers', 'list_sections', 'generate_report',
                 ],
             ],
-            4 => [ // SchoolSubadmin
+             4 => [ // SchoolSubadmin
                 'scope'   => 'school',
                 'label'   => 'school administrator',
-                'actions' => [
-                    'list_classes', 'list_teachers', 'generate_report',
-                    'record_attendance',
-                ],
+                'actions' => [],
             ],
             5 => [ // Teacher
                 'scope'   => 'school',
                 'label'   => 'teacher',
-                'actions' => [
-                    'record_attendance',
-                    'list_classes', 'list_teachers', 'generate_report',
-                ],
+                'actions' => [],
             ],
             6 => [ // Student
                 'scope'   => 'self',
@@ -95,9 +89,7 @@ class ToshiActionService
             8 => [ // Librarian
                 'scope'   => 'school',
                 'label'   => 'librarian',
-                'actions' => [
-                    'list_classes', 'list_teachers', 'generate_report',
-                ],
+                'actions' => [],
             ],
             9 => [ // OldStudent
                 'scope'   => 'none',
@@ -107,32 +99,22 @@ class ToshiActionService
             10 => [ // Receptionist
                 'scope'   => 'school',
                 'label'   => 'receptionist',
-                'actions' => [
-                    'add_student', 'record_attendance',
-                    'list_classes', 'list_teachers', 'generate_report',
-                ],
+                'actions' => [],
             ],
             11 => [ // Accountant
                 'scope'   => 'school',
                 'label'   => 'accountant',
-                'actions' => [
-                    'record_payment',
-                    'list_classes', 'list_teachers', 'generate_report',
-                ],
+                'actions' => [],
             ],
             12 => [ // Stock Keeper
                 'scope'   => 'school',
                 'label'   => 'stock keeper',
-                'actions' => [
-                    'list_classes', 'list_teachers', 'generate_report',
-                ],
+                'actions' => [],
             ],
             13 => [ // Non Teaching
                 'scope'   => 'school',
                 'label'   => 'staff',
-                'actions' => [
-                    'list_classes', 'list_teachers', 'generate_report',
-                ],
+                'actions' => [],
             ],
         ];
 
@@ -917,7 +899,7 @@ class ToshiActionService
         $acad = StudentAcademic::where('school_id', $schoolId)
             ->where('klassapp_student_id', $identifier)
             ->first();
-        if ($acad) return User::find($acad->user_id);
+        if ($acad) return User::where('id', $acad->user_id)->where('school_id', $schoolId)->first();
 
         // Try by name (partial match)
         $user = User::where('school_id', $schoolId)
@@ -934,8 +916,8 @@ class ToshiActionService
      */
     public static function listSections(User $admin): array
     {
-        if (!self::can($admin, 'list_classes')) {
-            return self::result(false, 'You do not have permission to view classes.');
+        if (!self::can($admin, 'list_sections')) {
+            return self::result(false, 'You do not have permission to view sections.');
         }
         $schoolId = $admin->school_id;
         if (!$schoolId) {
