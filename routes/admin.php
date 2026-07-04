@@ -229,8 +229,15 @@ Route::get( '/activity', 'ActivityLogController@index' );
 	Route::get( '/student/show/fees/{name}', 'StudentDetailsController@showFees' );
 	Route::get( '/student/show/medicalHistory/{name}', 'StudentDetailsController@showMedicalHistory' );
 	Route::get( '/student/add/medicalHistory/{name}', 'StudentDetailsController@createMedicalHistory' );
-	Route::post( '/student/add/medicalHistory/{name}', 'StudentDetailsController@addMedicalHistory' );
-	//edit
+ 	Route::post( '/student/add/medicalHistory/{name}', 'StudentDetailsController@addMedicalHistory' );
+ 	// Health Records (Module 3)
+ 	Route::get( '/student/health/{userId}', 'StudentHealthController@index' );
+ 	Route::post( '/student/health/profile/{userId}', 'StudentHealthController@updateProfile' );
+ 	Route::post( '/student/health/immunizations/{userId}', 'StudentHealthController@storeImmunization' );
+ 	Route::delete( '/student/health/immunizations/{id}', 'StudentHealthController@destroyImmunization' );
+ 	Route::post( '/student/health/incidents/{userId}', 'StudentHealthController@storeIncident' );
+ 	Route::delete( '/student/health/incidents/{id}', 'StudentHealthController@destroyIncident' );
+ 	//edit
 	Route::get( '/student/editStudent/{name}', 'StudentController@editStudent' );
 	Route::get( '/student/edit/{name}', 'StudentController@edit' );
 	Route::post( '/student/edit/validationUser/{name}', 'StudentController@editValidationUser' );
@@ -849,6 +856,15 @@ Route::get('/subscriptions/submit', "SubscriptionController@create")->name('admi
 Route::get('/subscriptions/{subscription}', "SubscriptionController@show")->name('admin.subscriptions.show');
 Route::get('/subscriptions/{subscription}', "SubscriptionController@edit")->name('admin.subscriptions.edit');
 Route::put('/subscriptions/{subscription}', "SubscriptionController@update")->name('admin.subscriptions.update');
+
+// Approvals
+Route::get('/approvals', 'ApprovalController@inbox')->name('admin.approvals.inbox');
+Route::post('/approvals/{approval}/approve', 'ApprovalController@approve')->name('admin.approvals.approve');
+Route::post('/approvals/{approval}/reject', 'ApprovalController@reject')->name('admin.approvals.reject');
+
+// Fee reconciliation
+Route::get('/fees/payments/unmatched', 'FeePaymentController@unmatched')->name('admin.fee-payments.unmatched');
+Route::post('/fees/payments/unmatched/{transaction}/match', 'FeePaymentController@matchTransaction')->name('admin.fee-payments.match');
 
 //Addons
 
