@@ -595,7 +595,8 @@
                         <div style="flex: 1; background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
                             <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">School</div>
                             <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['schoolName'] }}</div>
-                            <div style="font-size: 11px; color: #64748B;">{{ ucfirst($reviewData['schoolType']) }}</div>
+                            <div style="font-size: 11px; color: #64748B;">{{ ucfirst($reviewData['schoolType']) }} · {{ $reviewData['curriculum'] ?? 'UNEB' }}</div>
+                            <div style="font-size: 10px; color: #94A3B8; margin-top: 2px;">EMIS: {{ $reviewData['ministryCode'] ?? '—' }}</div>
                         </div>
                     </div>
 
@@ -621,6 +622,16 @@
                         <div>
                             <div style="font-size: 12px; font-weight: 600; color: #0F172A;">WhatsApp</div>
                             <div style="font-size: 11px; color: #64748B;">{{ $reviewData['whatsapp'] ?? 'Not set up' }}</div>
+                        </div>
+                    </div>
+
+                    {{-- School Pay (optional) --}}
+                    <div style="background: #FFFBEB; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; border: 1px solid #FDE68A;">
+                        <span style="font-size: 16px;">💳</span>
+                        <div>
+                            <div style="font-size: 12px; font-weight: 600; color: #92400E;">School Pay Integration</div>
+                            <div style="font-size: 11px; color: #B45309;">{{ $reviewData['schoolPay'] ?? '⏳ Optional — configure after onboarding' }}</div>
+                            <div style="font-size: 10px; color: #A16207; margin-top: 2px;">Set up in School Pay portal → get API password → enable webhooks</div>
                         </div>
                     </div>
 
@@ -1684,13 +1695,4 @@
     </div>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var btn = document.getElementById('confirm-btn');
-    if (btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('raw click works');
-        });
-    }
-});
 </script>
