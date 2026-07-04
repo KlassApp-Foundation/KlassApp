@@ -353,7 +353,14 @@ public function scopeStudents($query)
 
     public function studentAcademicLatest()
     {
-        return $this->hasOne('App\Models\StudentAcademic','user_id','id')->orderByDesc('id')->limit(1);
+        return $this->hasOne('App\Models\StudentAcademic', 'user_id', 'id')
+            ->whereIn('student_academics.academic_year_id', function ($query) {
+                $query->select('id')
+                    ->from('academic_years')
+                    ->where('status', 1);
+            })
+            ->orderByDesc('student_academics.id')
+            ->limit(1);
     }
 
     // public function marks()
