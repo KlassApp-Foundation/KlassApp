@@ -47,6 +47,9 @@ class AgentToshi extends Component
     public $schoolGender = '';  // boys, girls, mixed
     public $schoolEmail = '';
     public $schoolPhone = '';
+    public $ministryCode = '';
+    public $curriculum = 'uneb';
+    public $schoolPayPassword = '';
     public $adminName = '';
     public $adminEmail = '';
     public $adminPassword = '';
@@ -59,6 +62,8 @@ class AgentToshi extends Component
     public $teacherList = [];
     public $teacherLinks = [];
     public $teacherPhones = [];
+    /** @var string Conversational message when plan limit truncates onboarding lists. */
+    public string $onboardingLimitNote = '';
     public $studentList = [];
     public $hasNursery = null; // null = not asked, true/false for primary schools
     public $streamClassIndex = 0; // tracks which class we're adding streams for
@@ -109,12 +114,12 @@ class AgentToshi extends Component
         'standards',
         'subjects',
         'teachers',
-        'teacher_links',
         'students',
         'terms',
         'fees',
         'exams',
         'whatsapp_verify',
+        'school_pay',
         'review',
     ];
 
@@ -312,6 +317,9 @@ class AgentToshi extends Component
         $this->schoolGender = $data['schoolGender'] ?? '';
         $this->schoolEmail = $data['schoolEmail'] ?? '';
         $this->schoolPhone = $data['schoolPhone'] ?? '';
+        $this->ministryCode = $data['ministryCode'] ?? '';
+        $this->curriculum = $data['curriculum'] ?? 'uneb';
+        $this->schoolPayPassword = $data['schoolPayPassword'] ?? '';
         $this->adminName = $data['adminName'] ?? '';
         $this->adminEmail = $data['adminEmail'] ?? '';
         $this->adminPassword = $data['adminPassword'] ?? '';
@@ -348,6 +356,9 @@ class AgentToshi extends Component
             'schoolGender'      => $this->schoolGender,
             'schoolEmail'       => $this->schoolEmail,
             'schoolPhone'       => $this->schoolPhone,
+            'ministryCode'      => $this->ministryCode,
+            'curriculum'        => $this->curriculum,
+            'schoolPayPassword' => $this->schoolPayPassword,
             'adminName'         => $this->adminName,
             'adminEmail'        => $this->adminEmail,
             'adminPassword'     => $this->adminPassword,
@@ -955,21 +966,7 @@ class AgentToshi extends Component
             $stepName = $this->steps[$this->step] ?? '';
             $names = $this->extractNamesFromFile($this->attachment->getRealPath(), $ext);
 
-            if ($stepName === 'teacher_links') {
-                $links = $this->extractTeacherLinksFromFile($this->attachment->getRealPath(), $ext);
-                if (count($links) > 0) {
-                    $this->teacherLinks = $links;
-                    $this->userSay("📎 Uploaded " . count($links) . " teacher link(s) from file");
-                    $this->botSay("Parsed **" . count($links) . "** teacher link(s) from your file. Continuing...");
-                    // Auto-advance — file upload is explicit confirmation
-                    $this->substep = 2;
-                    $this->input = 'yes';
-                    $this->send();
-                    return;
-                } else {
-                    $this->botSay("I couldn't find any valid teacher links. Make sure your file has columns: Teacher, Subject, Class.");
-                }
-            } elseif (in_array($stepName, ['teachers', 'students']) && count($names) > 0) {
+            if (in_array($stepName, ['teachers', 'students']) && count($names) > 0) {
                 if ($stepName === 'teachers') {
                     $this->teacherList = array_values(array_unique($names));
                     $this->actionData['teachers'] = $this->teacherList;
@@ -981,7 +978,16 @@ class AgentToshi extends Component
                     }
                 } else {
                     $this->studentList = array_values(array_unique($names));
-                    $this->actionData['students'] = array_map(fn($n) => ['name' => $n, 'class' => '', 'stream' => '', 'parent' => '', 'parent_phone' => ''], $this->studentList);
+                    // Try to extract optional LIN (Learner Identification Number) from the file
+                    $linValues = $this->extractColumnFromFile($this->attachment->getRealPath(), $ext, ['lin', 'learner_id', 'learner_identification_number', 'emis_lin']);
+                    $this->actionData['students'] = array_map(fn($i, $n) => [
+                        'name' => $n,
+                        'class' => '',
+                        'stream' => '',
+                        'parent' => '',
+                        'parent_phone' => '',
+                        'lin' => $linValues[$i] ?? '',
+                    ], array_keys($names), $names);
                     $this->showStudentForm = false;
                 }
                 $label = $stepName === 'teachers' ? 'teachers' : 'students';
@@ -1220,6 +1226,82 @@ class AgentToshi extends Component
         }
 
         return $names;
+    }
+
+    /**
+     * Extract a single optional column (e.g. LIN) from a spreadsheet/CSV.
+     * Returns an array of values indexed by row, or empty array if column not found.
+     */
+    private function extractColumnFromFile(string $path, string $ext, array $aliases): array
+    {
+        $headers = [];
+        $dataRows = [];
+
+        if (in_array($ext, ['xlsx', 'xls'])) {
+            try {
+                $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($path);
+                $reader->setReadDataOnly(true);
+                $spreadsheet = $reader->load($path);
+                $allRows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+                if (empty($allRows)) return [];
+                $knownColumns = array_merge(['name', 'firstname', 'student_name'], $aliases);
+                $headerRowIdx = 0;
+                foreach ($allRows as $ri => $row) {
+                    $rowLower = array_map('strtolower', array_map('trim', $row ?? []));
+                    $matchCount = 0;
+                    foreach ($knownColumns as $kc) {
+                        if (in_array($kc, $rowLower)) $matchCount++;
+                    }
+                    if ($matchCount >= 2) { $headerRowIdx = $ri; break; }
+                }
+                $headers = array_map('trim', $allRows[$headerRowIdx]);
+                $dataRows = array_slice($allRows, $headerRowIdx + 1);
+            } catch (\Exception $e) {
+                \Log::warning('XLSX column extraction failed: ' . $e->getMessage());
+                return [];
+            }
+        } elseif ($ext === 'csv' || $ext === 'txt') {
+            $handle = fopen($path, 'r');
+            if (!$handle) return [];
+            $headerLine = fgetcsv($handle);
+            if ($headerLine === false) { fclose($handle); return []; }
+            $headers = array_map('trim', $headerLine);
+            while (($row = fgetcsv($handle)) !== false) {
+                $dataRows[] = $row;
+            }
+            fclose($handle);
+        } else {
+            return []; // PDF/DOCX cannot extract structured columns
+        }
+
+        if (empty($headers) || empty($dataRows)) return [];
+
+        // Find the column index by alias
+        $lowerHeaders = array_map('strtolower', $headers);
+        $colIdx = null;
+        foreach ($aliases as $alias) {
+            $idx = array_search($alias, $lowerHeaders);
+            if ($idx !== false) { $colIdx = $idx; break; }
+        }
+        if ($colIdx === null) return [];
+
+        // Extract values, skipping header-like rows
+        $values = [];
+        foreach ($dataRows as $row) {
+            if (!is_array($row) || count($row) <= $colIdx) {
+                $values[] = '';
+                continue;
+            }
+            $val = trim((string) ($row[$colIdx] ?? ''));
+            $upper = strtoupper($val);
+            if (in_array($upper, ['LIN', 'LEARNER ID', 'LEARNER IDENTIFICATION NUMBER', 'EMIS LIN', ''])) {
+                $values[] = '';
+                continue;
+            }
+            $values[] = $val;
+        }
+
+        return $values;
     }
 
     /**
@@ -1555,12 +1637,12 @@ class AgentToshi extends Component
             'standards'       => 'handleStandards',
             'subjects'        => 'handleSubjects',
             'teachers'        => 'handleTeachers',
-            'teacher_links'   => 'handleTeacherLinks',
             'students'        => 'handleStudents',
             'terms'           => 'handleTerms',
             'fees'            => 'handleFees',
             'exams'           => 'handleExams',
             'whatsapp_verify' => 'handleWhatsAppVerify',
+            'school_pay'      => 'handleSchoolPay',
             'review'          => 'handleReview',
             default           => null,
         };
@@ -2506,12 +2588,12 @@ class AgentToshi extends Component
             'standards'       => $this->handleStandards($text),
             'subjects'        => $this->handleSubjects($text),
             'teachers'        => $this->handleTeachers($text),
-            'teacher_links'   => $this->handleTeacherLinks($text),
             'students'        => $this->handleStudents($text),
             'terms'           => $this->handleTerms($text),
             'fees'            => $this->handleFees($text),
             'exams'           => $this->handleExams($text),
             'whatsapp_verify' => $this->handleWhatsAppVerify($text),
+            'school_pay'      => $this->handleSchoolPay($text),
             'review'          => $this->handleReview($text),
             default           => $this->callStepHandler($text),
         };
@@ -3100,20 +3182,6 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     //  Step 9: Teacher-Class-Subject Linking
     // ════════════════════════════════════════════════
-        private function handleTeacherLinks(string $text)
-    {
-        // Now handled during teacher upload — links extracted from file.
-        if (!empty($this->teacherLinks)) {
-            $this->botSay("Teacher-subject links already assigned from uploaded file. Moving on.");
-        } elseif (!empty($this->teacherList)) {
-            $this->botSay("Teachers added. You can assign subjects and classes from the admin panel later. Moving on.");
-        } else {
-            $this->botSay("Moving to the next step.");
-        }
-        $this->substep = 0;
-        $this->advance();
-    }
-
     private function handleStudents(string $text)
     {
         // substep 0: collect names or skip
@@ -3441,6 +3509,44 @@ class AgentToshi extends Component
     }
 
     // ════════════════════════════════════════════════
+    //  Step 14: School Pay (optional)
+    // ════════════════════════════════════════════════
+    private function handleSchoolPay(string $text)
+    {
+        // substep 0: ask if they want to configure School Pay now
+        if ($this->substep === 0) {
+            $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none', '']);
+            if ($skip || $text === '') {
+                $this->botSay("School Pay integration skipped. You can configure it later from the school settings.\n\n> **What is School Pay?** It automatically links parent fee payments to student accounts and sends WhatsApp receipts when a payment is made.");
+                $this->substep = 0;
+                $this->advance();
+                return;
+            }
+            // They said yes — ask for the API password
+            $this->botSay("Great! Enter the **School Pay API password** for this school.\n\nYou can find this in your School Pay school portal at schoolpay.co.ug.");
+            $this->substep = 1;
+            return;
+        }
+
+        if ($this->substep === 1) {
+            // Collecting API password
+            $password = trim($text);
+            if (strlen($password) < 4) {
+                $this->botSay("Please enter a valid API password (at least 4 characters).");
+                return;
+            }
+            $this->schoolPayPassword = $password;
+            $this->botSay("✅ School Pay API password saved.");
+            $this->botSay("Make sure your webhook URL is set in the School Pay portal to:\n`https://klassapp.xyz/api/schoolpay/webhook`\n\nYou can also do this later. Moving to review.");
+            $this->substep = 0;
+            $this->advance();
+            return;
+        }
+
+        $this->botSay("Type 'skip' to skip, or enter the API password to configure School Pay.");
+    }
+
+    // ════════════════════════════════════════════════
     //  Step 15: Review & Commit
     // ════════════════════════════════════════════════
     private function handleReview(string $text)
@@ -3457,12 +3563,12 @@ class AgentToshi extends Component
                 'classes' => 5, 'class' => 5, 'standards' => 5, 'standard' => 5,
                 'subjects' => 6, 'subject' => 6,
                 'teachers' => 7, 'teacher' => 7,
-                'teacher_links' => 8, 'teacher_link' => 8, 'links' => 8,
-                'students' => 9, 'student' => 9,
-                'terms' => 10, 'term' => 10,
-                'fees' => 11, 'fee' => 11,
-                'exams' => 12, 'exam' => 12,
-                'whatsapp' => 13, 'whatsapp_verify' => 13,
+                'students' => 8, 'student' => 8,
+                'terms' => 9, 'term' => 9,
+                'fees' => 10, 'fee' => 10,
+                'exams' => 11, 'exam' => 11,
+                'whatsapp' => 12, 'whatsapp_verify' => 12,
+                'school_pay' => 13, 'payment' => 13,
             ];
             $textLower = strtolower(trim($text));
             // Exact match first
@@ -3495,6 +3601,8 @@ class AgentToshi extends Component
                 'plan'         => $this->mode === 'create' ? ucfirst($planName ?: '—') : 'Already assigned',
                 'schoolName'   => $schoolDisplay,
                 'schoolType'   => $this->schoolType,
+                'ministryCode' => $this->ministryCode ?: '—',
+                'curriculum'   => strtoupper($this->curriculum ?: 'UNEB'),
                 'adminName'    => $this->adminName ?: (auth()->user()->name ?? '—'),
                 'adminEmail'   => $this->adminEmail ?: (auth()->user()->email ?? '—'),
                 'adminPhone'   => $this->schoolPhone,
@@ -3512,6 +3620,7 @@ class AgentToshi extends Component
                 'feeCount'     => count($this->fees),
                 'examCount'    => count($this->exams),
                 'whatsapp'     => $this->whatsappVerified ? "✅ {$this->whatsappPhone}" : '⏳ Not verified',
+                'schoolPay'    => '⏳ Optional — configure after onboarding',
                 'mode'         => $this->mode,
             ];
             // Build a smart summary
@@ -3572,6 +3681,11 @@ class AgentToshi extends Component
             $this->reviewData['coAdminPromoted'] = (bool) $this->coAdminUserId;
             $this->reviewData['mode'] = $this->mode;
             $this->step = 99;
+            // ── Plan limit: conversational note (only shown if list was truncated) ──
+            if ($this->onboardingLimitNote !== '') {
+                $this->botSay($this->onboardingLimitNote);
+                $this->botSay('You can **upgrade your plan** anytime from the admin panel to add the remaining members.');
+            }
             // After creating a school, stay in 'create' mode so the user sees the success
             // card with "Onboard Another School" option. Assistant mode is for existing schools.
             $this->mode = 'create';
@@ -3605,6 +3719,10 @@ class AgentToshi extends Component
                     'name'    => $this->schoolName,
                     'email'   => $this->schoolEmail ?: Str::slug($this->schoolName) . '@klassapp.sch.ug',
                     'phone'   => $this->schoolPhone ?: '0700000000',
+                    'ministry_code' => $this->ministryCode ?: null,
+                    'curriculum'    => $this->curriculum ?: 'uneb',
+                    'school_pay_api_password' => $this->schoolPayPassword ?: null,
+                    'school_pay_webhook_enabled' => $this->schoolPayPassword ? true : false,
                     'status'  => 1,
                     'slug'    => Str::slug($this->schoolName),
                     'registration_country' => 'Uganda',
@@ -3631,7 +3749,7 @@ class AgentToshi extends Component
                     Subscription::create([
                         'school_id'  => $school->id, 'plan_id' => $this->selectedPlanId,
                         'user_id'    => $adminUser->id,
-                        'status' => 'active', 'start_date' => now(), 'end_date' => now()->addYear(),
+                        'status' => 'approved', 'start_date' => now(), 'end_date' => now()->addYear(),
                     ]);
                 }
 
@@ -3695,6 +3813,17 @@ class AgentToshi extends Component
                     }
                 }
 
+                // ── Plan limit: teachers ──
+                $teacherSkipped = 0;
+                $studentSkipped = 0;
+                if ($this->selectedPlanId && count($this->teacherList) > 0) {
+                    $plan = optional(\App\Models\CurrentPlan::with('plan')->where('school_id', $schoolId)->first())->plan;
+                    if ($plan && ($plan->no_of_users ?? 0) > 0 && count($this->teacherList) > $plan->no_of_users) {
+                        $teacherSkipped = count($this->teacherList) - $plan->no_of_users;
+                        $this->teacherList = array_slice($this->teacherList, 0, $plan->no_of_users);
+                    }
+                }
+
                 foreach ($this->teacherList as $name) {
                     $tEmail = Str::slug($name) . '@' . Str::slug($this->schoolName) . '.edu';
                     $phone = $this->teacherPhones[$name] ?? null;
@@ -3738,6 +3867,22 @@ class AgentToshi extends Component
                     }
                 }
 
+                // ── Plan limit: students ──
+                if ($this->selectedPlanId) {
+                    $plan = optional(\App\Models\CurrentPlan::with('plan')->where('school_id', $schoolId)->first())->plan;
+                    if ($plan && ($plan->no_of_students ?? 0) > 0) {
+                        $totalStudents = count($this->actionData['students'] ?? $this->studentList);
+                        if ($totalStudents > $plan->no_of_students) {
+                            $studentSkipped = $totalStudents - $plan->no_of_students;
+                            if (!empty($this->actionData['students'])) {
+                                $this->actionData['students'] = array_slice($this->actionData['students'], 0, $plan->no_of_students);
+                            } else {
+                                $this->studentList = array_slice($this->studentList, 0, $plan->no_of_students);
+                            }
+                        }
+                    }
+                }
+
                 // Create students from onboarding list
                 // Use actionData['students'] when available (has class info), fall back to studentList
                 $studentRecords = !empty($this->actionData['students'])
@@ -3773,20 +3918,44 @@ class AgentToshi extends Component
                         $seq = str_pad($index + 1, 4, '0', STR_PAD_LEFT);
                         $klassappId = "KLS{$schoolCode}{$seq}";
 
+                        $lin = is_array($record) ? ($record['lin'] ?? '') : '';
                         StudentAcademic::create([
                             'school_id' => $school->id,
                             'academic_year_id' => $academicYear->id,
                             'user_id' => $studentUser->id,
                             'standardLink_id' => $targetLink->id,
                             'klassapp_student_id' => $klassappId,
+                            'lin' => $lin ?: null,
                         ]);
                     }
+                }
+
+                // ── Plan limit: post-commit note ──
+                if ($teacherSkipped > 0 || $studentSkipped > 0) {
+                    $planName = optional(\App\Models\CurrentPlan::with('plan')->where('school_id', $schoolId)->first())->plan->name ?? 'current';
+                    $parts = [];
+                    if ($teacherSkipped > 0) {
+                        $max = count($this->teacherList);
+                        $parts[] = "We added **{$max}** teachers. Your **{$planName}** plan allows {$max} teachers. Upgrade anytime to add the remaining {$teacherSkipped}.";
+                    }
+                    if ($studentSkipped > 0) {
+                        $max = count($this->actionData['students'] ?? $this->studentList);
+                        $parts[] = "We added **{$max}** students. Your **{$planName}** plan allows {$max} students. Upgrade anytime to add the remaining {$studentSkipped}.";
+                    }
+                    $this->onboardingLimitNote = implode("\n\n", $parts);
+                    // Update reviewData so the success card shows actual committed counts
+                    $this->reviewData['teacherCount'] = count($this->teacherList);
+                    $this->reviewData['studentCount'] = count($this->studentList);
+                    $this->reviewData['studentIds'] = count($this->studentList) > 0
+                        ? count($this->studentList) . " students — each gets a unique KlassApp ID"
+                        : '—';
                 }
 
                 foreach ($this->terms as $term) {
                     AcademicTerm::create([
                         'school_id' => $school->id, 'academic_year_id' => $academicYear->id,
-                        'name' => $term['name'], 'start_date' => $term['start'], 'end_date' => $term['end'],
+                        'name' => $term['name'], 'starts_on' => $term['start'], 'ends_on' => $term['end'],
+                        'status' => 'current',
                     ]);
                 }
 
@@ -3890,7 +4059,7 @@ class AgentToshi extends Component
                 foreach ($this->terms as $term) {
                     AcademicTerm::firstOrCreate(
                         ['school_id' => $schoolId, 'name' => $term['name']],
-                        ['academic_year_id' => $academicYear->id, 'start_date' => $term['start'], 'end_date' => $term['end']]
+                        ['academic_year_id' => $academicYear->id, 'starts_on' => $term['start'], 'ends_on' => $term['end'], 'status' => 'current']
                     );
                 }
 
@@ -3938,6 +4107,12 @@ class AgentToshi extends Component
 
     // ════════════════════════════════════════════════
     //  Curriculum Defaults (NCDC Uganda)
+    //  Only UNEB is shipped. When adding Cambridge, Edexcel, IB, KCPE/KCSE,
+    //  Rwanda, Tanzania, or South Sudan curricula:
+    //    1. Add the value to schools.curriculum enum (migration)
+    //    2. Branch this method by $this->curriculum
+    //    3. Define class names + subject lists per curriculum
+    //    4. Update the setCurriculum() message in handleSchoolInfo
     // ════════════════════════════════════════════════
     private function curriculumDefaults(): array
     {
