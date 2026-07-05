@@ -1,5 +1,5 @@
 {{-- SPDX-License-Identifier: MIT --}}
-@php function rActive($p) { $s=Request()->segment('2'); foreach((array)$p as $v) if($s===$v) return 'active'; return ''; } @endphp
+@php if(!function_exists('rActive')){function rActive($p){ $s=Request()->segment('2'); foreach((array)$p as $v) if($s===$v) return 'active'; return ''; }} @endphp
 <ul class="list-reset text-sm">
     <li class="py-3 px-3 hover:bg-green-100 {{ rActive('dashboard') }}">
         <a href="{{ url('reception/dashboard') }}" class="flex items-center"><x-icons.sidebar name="dashboard"/><span class="mx-3 whitespace-no-wrap">Dashboard</span></a>
