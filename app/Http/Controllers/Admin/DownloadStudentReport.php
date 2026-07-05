@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Academics\Exam;
+use App\Models\Academics\NurseryAssessment;
 use App\Models\Academics\SchoolGradingSystem;
 use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
@@ -59,6 +60,21 @@ class DownloadStudentReport extends Controller
             // dd($promotion);                  
             $class_name = Section::find($section)->name;
             $grading_system = SchoolGradingSystem::where("school_id", $schoolId)->get();
+
+            // Detect nursery level for descriptive assessment rendering
+            $isNursery = false;
+            $nurseryAssessments = collect();
+            $standard = $learner->studentAcademicLatest?->standardLink?->standard;
+            if ($standard) {
+                $levelType = \App\Helpers\GradingHelper::levelTypeForStandard($standard);
+                $isNursery = ($levelType === 'nursery');
+                if ($isNursery) {
+                    $nurseryAssessments = NurseryAssessment::where('student_id', $learner->id)
+                        ->where('academic_term_id', $exam->academic_term_id)
+                        ->get()
+                        ->keyBy('domain');
+                }
+            }
             
             // added to get fees
             $fees = $studentHelper->fees($admin, $section);  
@@ -82,7 +98,7 @@ class DownloadStudentReport extends Controller
         $myPos = $learners->where("id", $learner->id)->value("position");
         $learner = $learner->where("id", $learner->id)->first();
         $pdf = Pdf::loadView("admin.marks.student-report", compact(
-            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade", "promotion", "school"
+            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade", "promotion", "school", "isNursery", "nurseryAssessments"
             ));     
         $pdf->setPaper("a4", "portrait");    
         $pdf->setOptions([

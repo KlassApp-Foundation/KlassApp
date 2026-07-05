@@ -152,9 +152,9 @@
                 <td>{{ $class_name }}</td>
                 {{-- <td>{{ $learner->stream ?? "A" }}</td> --}}
                 <td>{{ $learner->marks->first()->exam->academicTerm->name ?? "-" }}</td>
-                <th>{{$grade["agg"] ?? "-" }}</th>
-                <td>{{ $myPos ?? "-" }}</td>
-                <td>{{ $totalLearners ?? "-" }}</td>
+                <th>@if(!empty($isNursery)) — @else {{$grade["agg"] ?? "-" }} @endif</th>
+                <td>@if(!empty($isNursery)) — @else {{ $myPos ?? "-" }} @endif</td>
+                <td>@if(!empty($isNursery)) — @else {{ $totalLearners ?? "-" }} @endif</td>
             </tr>
         </tbody>
     </table>
@@ -176,63 +176,94 @@
     </div>
 
     <!-- ================= Main Marks Table ===================== -->
-    <table>
-        <thead>
-            <tr>
-                @foreach ($controls as $control)
-                    <th>{{ $control }}</th>
-                @endforeach
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($subjects as $subject)
-                @php
-                 $score = $subject->mark->first()->marks;
-                 $average = $subject->mark->average("marks");
-                @endphp
+    @if(!empty($isNursery))
+        {{-- Nursery: descriptive domain assessment table --}}
+        <table>
+            <thead>
                 <tr>
-                    <td>{{ $subject->name }}</td>
-                    <td>100</td>
-                    @foreach ($marksFromSubject as $subje)
-                      <td>
-                          {{$score ? floor($score) : "-"}}
-                      </td>                 
-                    @endforeach
-                        @if ($uniqueExamTypes > 1)
-                             <td>
-                            {{ $score ? floor($score) : "-" }}
-                        </td>
-                        @endif
-                    {{-- ============ grade ========= --}}
-                    <td>{{ $subject->mark->first()->grade }}</td>
-                     @php
-                       $subjectGrade = $subject->mark->first()->grade;
-                       $remark = collect($grade['remark'])->firstWhere('grade', $subjectGrade);
-                     @endphp
-                    {{-- ============ Remark ========= --}}
-                          <td>{{ $remark->remark ?? '-' }}</td>
-                    
-                    <td>{{ $learner->marks->where("subject_id", $subject->id)->first()?->teacher->name ?? "N/A" }}</td>
+                    <th>Domain</th>
+                    <th>Rating</th>
+                    <th>Remarks</th>
                 </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            @php
-            $span = count($controls) - 3
-        @endphp
-            <tr class="total-row">
-                <th>TOTAL</th>
-                <th>400</th>
-                <th>{{ $total }}</th>
-                @if ($uniqueExamTypes > 1)
-                    <td>
-                    {{floor($average) * $examsDone ?? "-" }}
-                </td>     
-                @endif     
-                <th colspan="{{$span}}"></th>
-            </tr>
-        </tfoot>
-    </table>
+            </thead>
+            <tbody>
+                @php
+                    $domains = ['Literacy', 'Numeracy', 'Motor Skills', 'Social/Emotional'];
+                @endphp
+                @foreach ($domains as $domain)
+                    @php
+                        $assessment = $nurseryAssessments->get($domain);
+                        $rating = $assessment?->rating ?? '—';
+                        $remarks = $assessment?->remarks ?? '—';
+                    @endphp
+                    <tr>
+                        <td>{{ $domain }}</td>
+                        <td><strong>{{ $rating }}</strong></td>
+                        <td>{{ $remarks }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @else
+        {{-- Standard marks table for Primary, O-Level, A-Level --}}
+        <table>
+            <thead>
+                <tr>
+                    @foreach ($controls as $control)
+                        <th>{{ $control }}</th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($subjects as $subject)
+                    @php
+                     $score = $subject->mark->first()->marks;
+                     $average = $subject->mark->average("marks");
+                    @endphp
+                    <tr>
+                        <td>{{ $subject->name }}</td>
+                        <td>100</td>
+                        @foreach ($marksFromSubject as $subje)
+                          <td>
+                              {{$score ? floor($score) : "-"}}
+                          </td>                 
+                        @endforeach
+                            @if ($uniqueExamTypes > 1)
+                                 <td>
+                                {{ $score ? floor($score) : "-" }}
+                            </td>
+                            @endif
+                        {{-- ============ grade ========= --}}
+                        <td>{{ $subject->mark->first()->grade }}</td>
+                         @php
+                           $subjectGrade = $subject->mark->first()->grade;
+                           $remark = collect($grade['remark'])->firstWhere('grade', $subjectGrade);
+                         @endphp
+                        {{-- ============ Remark ========= --}}
+                              <td>{{ $remark->remark ?? '-' }}</td>
+                        
+                        <td>{{ $learner->marks->where("subject_id", $subject->id)->first()?->teacher->name ?? "N/A" }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                @php
+                $span = count($controls) - 3
+            @endphp
+                <tr class="total-row">
+                    <th>TOTAL</th>
+                    <th>400</th>
+                    <th>{{ $total }}</th>
+                    @if ($uniqueExamTypes > 1)
+                        <td>
+                        {{floor($average) * $examsDone ?? "-" }}
+                    </td>     
+                    @endif     
+                    <th colspan="{{$span}}"></th>
+                </tr>
+            </tfoot>
+        </table>
+    @endif
    </div>
 
     <!-- Remarks -->
@@ -299,9 +330,13 @@
         </thead>
         <tbody>
             <tr>
-                <td><strong>Range</strong></td>
+                <td><strong>@if(!empty($isNursery)) Descriptor @else Range @endif</strong></td>
                 @foreach ($grading_system as $grade)
-                    <td>{{ $grade->min_score . "-" . $grade->max_score }}</td>
+                    @if(!empty($isNursery))
+                        <td>{{ $grade->remark }}</td>
+                    @else
+                        <td>{{ $grade->min_score . "-" . $grade->max_score }}</td>
+                    @endif
                 @endforeach
             </tr>
         </tbody>

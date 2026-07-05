@@ -103,6 +103,8 @@ public/uploads/reports/*
 !public/uploads/reports/index.html.vapor/
 TODO.md
 .sisyphus/
+.playwright-mcp/
+.gemini/
 .env.production
 .env.staging
 /.vapor

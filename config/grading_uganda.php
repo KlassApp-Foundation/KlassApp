@@ -82,18 +82,23 @@ return [
     |--------------------------------------------------------------------------
     | NURSERY — Descriptive/Developmental Assessment
     |--------------------------------------------------------------------------
-    | PROPOSAL: Use a descriptive 3-tier scale per developmental domain.
-    | Percentage-based grading is NOT appropriate for nursery level.
-    | Awaiting confirmation — see proposal in task description.
+    | No percentage marks, no points. Each developmental domain is rated on a
+    | 4-level descriptive scale. The 'grade' here is the rating label; the
+    | 'remark' is a brief descriptor shown alongside it on the report card.
     |
-    | If confirmed, each "grade" maps to a developmental descriptor:
-    |   Excellent        — Consistently exceeds expectations
-    |   Good             — Meets expectations appropriately
-    |   Satisfactory     — Developing with support
-    |   Needs Improvement — Requires significant support
+    | NOTE: The 4 domain types (Literacy, Numeracy, Motor Skills, Social/Emotional)
+    | are NOT stored here — they are the "subjects" of nursery assessment,
+    | stored in the nursery_assessments table keyed per-student per-term.
+    |
+    | These rows are seeded into SchoolGradingSystem for nursery standards
+    | (Baby Class, Middle Class, Top Class) so the grading lookup infrastructure
+    | is consistent across all level types.
     */
     'nursery' => [
-        // TBD — awaiting product decision on approach
+        ['grade' => 'Excellent',        'points' => null, 'min_score' => null, 'max_score' => null, 'remark' => 'Consistently exceeds expectations'],
+        ['grade' => 'Good',             'points' => null, 'min_score' => null, 'max_score' => null, 'remark' => 'Meets expectations appropriately'],
+        ['grade' => 'Satisfactory',     'points' => null, 'min_score' => null, 'max_score' => null, 'remark' => 'Developing with support'],
+        ['grade' => 'Needs Improvement','points' => null, 'min_score' => null, 'max_score' => null, 'remark' => 'Requires significant support'],
     ],
 
 ];
