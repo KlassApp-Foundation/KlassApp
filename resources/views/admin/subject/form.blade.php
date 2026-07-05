@@ -24,40 +24,40 @@
             </ul>
         </div>
     @endif
-                <!-- Class -->
-                {{-- standard and section --}}
+                <!-- Class — selects section_id and auto-fills standard_id -->
+                <input type="hidden" name="standard_id" id="standard_id" value="{{ old('standard_id', $subject?->standard_id) }}">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                    <label for="standard_id" class="block text-gray-700 font-medium mb-1">Level</label>
-                    <select name="standard_id" id="standard_id"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 "
-                        required>
-                        <option value="">Select Level</option>
-                        @foreach($standards as $std)
-                            <option value="{{ $std->id }}" 
-                                {{ old("standard_id", $subject?->standard_id) == $std->id ? "selected" : "" }}
-                                 >
-                                {{ $std->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-{{-- section --}}
-                <div>
-                    <label for="section_id" class="block text-gray-700 font-medium mb-1">Select Class</label>
-                    <select name="section_id" id="section_id"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 "
-                        required>
-                        <option value="_______" disabled>Select Class</option>
-                         @foreach($sections as $section)
-                            <option value="{{ $section->id }}"
-                                {{ old("section_id", $subject?->section_id) == $section->id ? "selected" : "" }}
-                                 >
-                                {{ $section->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                        <label for="section_id" class="block text-gray-700 font-medium mb-1">Class<span class="text-red-500">*</span></label>
+                        <select name="section_id" id="section_id"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            required>
+                            <option value="">Select Class</option>
+                            @foreach($sections as $section)
+                                <option value="{{ $section->id }}"
+                                    {{ old("section_id", $subject?->section_id) == $section->id ? "selected" : "" }}>
+                                    {{ $section->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @push('scripts')
+                    <script>
+                        var sectionStandardMap = @json($sectionStandardMap ?? []);
+                        document.getElementById('section_id').addEventListener('change', function() {
+                            var stdId = sectionStandardMap[this.value] || '';
+                            document.getElementById('standard_id').value = stdId;
+                        });
+                        // Initialize on page load if editing
+                        (function() {
+                            var sel = document.getElementById('section_id');
+                            if (sel.value) {
+                                var stdId = sectionStandardMap[sel.value] || '';
+                                document.getElementById('standard_id').value = stdId;
+                            }
+                        })();
+                    </script>
+                    @endpush
 
                  <!-- Subject Name -->
                 <div>

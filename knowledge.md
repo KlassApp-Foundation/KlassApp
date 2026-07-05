@@ -1,10 +1,10 @@
 # KlassApp Project Knowledge
 
-## Current Status: July 3, 2026
+## Current Status: July 6, 2026
 
 ### Git
 - **Branch**: `main`
-- **HEAD**: `b0ef137` — "fix: include site subadmin (usergroup 2) in Toshi access" (Super Admin bugfixes pending commit)
+- **HEAD**: `3287595` — "fix: add missing 'state' => ApprovalState::class cast to Approval model" (changes pending commit)
 - **Remote**: `origin/main` (GitHub: Elijah-ug/KlassApp)
 
 ---
@@ -41,6 +41,7 @@ WHATSAPP_BUSINESS_NAME=KlassApp
 5. Add `SCHOOLPAY_ENFORCE_SIGNATURE` toggle (env or School model) to reject unsigned webhooks
 6. Clean up `whatsapp_pending_parent_links` dead table (drop or document)
 7. Toshi: personalize greeting with persona on mount
+8. Run `composer update` to remove laratrust from lock file after verifying no regressions
 
 ### Local Dev
 ```bash
@@ -343,7 +344,38 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 
 ---
 
+## Environment Variable Gotchas
+
+### TOSHI_LARAGENT_ENABLED env var leak (fixed July 2026)
+
+**Symptom:** `ToshiAssistantAgentTest::feature_flag_defaults_to_disabled` fails intermittently — asserts `config('toshi.laragent_enabled')` is false but gets true, even though `.env` doesn't set it or sets it correctly.
+
+**Root cause:** Laravel 10's `Dotenv\Repository` caches env values from THREE sources — `getenv()`, `$_SERVER`, and `$_ENV` — at boot, and caches them immutably. If `TOSHI_LARAGENT_ENABLED` was ever exported in a parent shell (e.g. the terminal that launched opencode/your dev tooling), it persists in `$_SERVER` even after `putenv()` clears `getenv()`. A shell-level export silently overrides `.env` for any Laravel process spawned from that shell — **this is NOT specific to Toshi, it applies to any env var**.
+
+**Fix applied:**
+1. `.env` explicitly has `TOSHI_LARAGENT_ENABLED` commented out (not just absent) with a note on intended usage (per-school-admin toggle, not global).
+2. The specific test was hardened to clear all three sources (`getenv`, `$_SERVER`, `$_ENV`) plus reset `Illuminate\Support\Env`'s cached repository via reflection, so it tests the true default regardless of ambient shell state. See `tests/Feature/Toshi/ToshiAssistantAgentTest.php::feature_flag_defaults_to_disabled` for the implementation.
+
+**If this pattern recurs elsewhere:** any test asserting a config "default" (not an explicitly-set value) is vulnerable to the same class of bug if the corresponding env var has ever been exported in a shell that spawns test runs. The fix pattern (clear `getenv`/`$_SERVER`/`$_ENV` + reset the Env repository) is reusable — don't assume `.env` alone is the source of truth when debugging config default mismatches.
+
+**Caution for Laravel 11 upgrade:** the reflection-based repository reset (`ReflectionClass(\Illuminate\Support\Env::class)->setStaticPropertyValue('repository', null)`) depends on Laravel 10's internal implementation of `Env`. If this test starts failing after the Laravel 11 composer update, check this reflection call first — the internal structure of `Illuminate\Support\Env` may have changed.
+
+---
+
 ## Session Log
+
+### 2026-07-04: Role 2 School Admin audit — 7 modules + 2 carried-forward checks
+- **Work done**: Performed systematic functional and UI audit of School Admin role. Covered impersonation boundaries, role-capability scoping, student management, parent management, class/subject setup, reports, messaging, library, and health modules. Identified: 1 HIGH (Library has models but no admin UI — dead sidebar link), 2 MEDIUM (Messaging dead sidebar link; StudentController destroy() has empty catch blocks + missing school_id on sub-record deletion), 1 LOW (ParentController ungrouped orWhere in count query). Confirmed 4 dead sidebar links (library, health, messaging, transport). Documented all findings in new `## Role 2 Audit` section.
+- **Files modified**: `knowledge.md`
+- **Key decisions**: findings stored as permanent reference section (not just session log) because the audit will inform feature planning. Health module definitively confirmed as absent — only student-level medical history exist, no school-level health management. Library has data model but zero admin UI.
+- **Status**: 🚧 Audit complete (findings reported, not fixed). Session log entry also notes this but permanent audit reference is the canonical source.
+- **Edge cases flagged**: `orWhere` operator precedence bug in ParentController count query; `is_admin()` function name misleading (checks for School Admin, not Super Admin); `schoolAdminimpersonate()` has inverted condition logic but is safely gated by superadmin middleware.
+
+### 2026-07-04: TOSHI_LARAGENT_ENABLED env var leak documented
+- **Work done**: Documented the `TOSHI_LARAGENT_ENABLED` env var leak — root cause (Laravel 10 immutable Dotenv\Repository caches from `$_SERVER`/`$_ENV`/`getenv`), fix (triple-source scrub + Env repository reset via reflection), and reusable pattern for other config-default tests.
+- **Files modified**: `knowledge.md` (new section), `tests/Feature/Toshi/ToshiAssistantAgentTest.php` (hardened test)
+- **Key decisions**: Stored as permanent gotcha in dedicated `## Environment Variable Gotchas` section (not just session log) because the debugging pattern applies project-wide to any env var, not just Toshi.
+- **Status**: ✅ Done
 
 ### 2026-06-20: Favicon fix, nav cleanup, landing HTML repair
 - **Work done**: Fixed favicon to use SVG as primary with proper cross-browser fallback. Removed "KlassApp" wordmark from nav headers, enlarged logo (52px/44px). Repaired broken HTML on both landing pages — stray `</nav>` tags, duplicate mobile menus, garbled WhatsApp link fragment that rendered as visible text.
@@ -523,14 +555,435 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Status**: ✅ Done (fixes applied, not yet committed)
 - **Laravel Boost**: Not compatible with Laravel 10 (requires ^11.45.3). Context7 provides equivalent docs lookup.
 
-## NEXT SESSION: Role 2 — School Admin (remaining surface)
+### 2026-07-03: Replace santigarcor/laratrust with teacher_designations JSON column
+- **Work done**: Removed laratrust dependency (was blocking Laravel 11 upgrade). Replaced with `teacher_designations` JSON column on `users` table. Added 3 helper methods to User model (`hasDesignation`, `addDesignation`, `removeDesignation`). Converted all 14 call sites across 10 files. Data migration backfills existing role assignments from `role_user` table. Wrote 11 unit tests covering all helper methods.
+- **Files modified**: `database/migrations/2026_07_03_000001_add_teacher_designations_to_users.php` (new), `app/Models/User.php`, `app/Models/Role.php`, `app/Models/Permission.php`, `app/Traits/RegisterUser.php`, `app/Traits/AcademicProcess.php`, `app/Http/Controllers/Admin/TeacherEditController.php`, `app/Http/Controllers/Teacher/LeaveController.php`, `app/Http/Controllers/Teacher/LessonPlanController.php`, `app/Http/Controllers/Teacher/Approval/AssignmentController.php`, `app/Http/Controllers/Api/Teacher/LeaveController.php`, `app/Http/Controllers/Api/Teacher/LessonPlanController.php`, `app/Http/Controllers/Api/Teacher/MeController.php`, `app/Http/Controllers/Api/Teacher/LoginController.php`, `config/app.php`, `composer.json`, `tests/Unit/Models/TeacherDesignationTest.php` (new)
+- **Files deleted**: `config/laratrust.php`, `config/laratrust_seeder.php`
+- **Key decisions**: Used JSON column (not pivot table) because only 7 fixed values exist with no dynamic role creation. `saveQuietly()` in helper methods to avoid firing unnecessary model events. Role/Permission models converted to plain Eloquent (were extending Laratrust base classes) to avoid breaking any remaining references.
+- **Pre-upgrade check also completed**: Analyzed 6 composer blockers for Laravel 10→11 (laratrust removed, sanctum needs ^4.0, larastan fine, openai-php/laravel fine, maestroerror/laragent fine). Scanned Carbon internals — no problematic usage found. Added impersonation boundaries and role-capability scoping to audit.md checklist.
+- **Status**: ✅ Done. Next: run `composer update` to sync lock file, then proceed with Laravel 11 upgrade.
 
-Audit the School Admin role's modules NOT yet covered by prior audits:
-- Student/parent management (CRUD, search, profile)
-- Class/subject setup (classes, sections, subjects, timetable)
-- Reports (academic reports, fee reports, custom reports)
-- Messaging (bulk SMS/WhatsApp, notices, bulletins)
-- Library module (books, issue/return, fines)
-- Health module (records, immunizations, checkups — confirm the underlying module exists, not just the WhatsApp notification trigger)
-- Check for same bug classes found this session: `compact($id)` pattern, unguarded `->first()` calls, Blade syntax errors, unscoped `->latest()` calls
+## Role 2 Audit: School Admin — Functional & UI Audit (July 2026)
+
+### Carried-Forward Checks
+
+**1. Impersonation Boundaries — ✅ PASS**
+- Route gating: `schooladmin` middleware protects impersonation of teachers, students, librarians. `superadmin` middleware protects impersonation of School Admin.
+- School Admin CAN impersonate: teachers (`/teacher/{id}/impersonate`), librarians (`/library/{id}/impersonate`), students (`/student/{id}/impersonate`)
+- School Admin CANNOT impersonate: other School Admins (blocked by `is_admin()` check in generic `impersonate()`)
+- Only Super Admin can impersonate School Admin (`/schooladmin/{id}/impersonate` gated by `superadmin` middleware)
+- `stopImpersonate()` returns user to their original dashboard by `usergroup_id` (notable: School Admin returns to `/superadmin/dashboard`, not `/admin/dashboard`)
+- ⚠️ Note: `is_admin()` function in `app/Traits/Common.php` is misleadingly named — it checks `usergroup_id == 3` (School Admin), not Super Admin. `schoolAdminimpersonate()` has an inverted condition (`if($is_admin == true)` allows) but is safely gated by `superadmin` middleware.
+
+**2. Role-Capability Scoping — ✅ PASS**
+- Primary gating: `usergroup_id` integer on `users` table + per-role middleware
+- Admin routes gated by `['web', 'auth', 'schooladmin', 'privilegeconditions']` middleware stack
+- `teacher_designations` JSON column (laratrust replacement) is teacher-specific only — NOT used for School Admin access
+- `getRoleCapabilities()` in ToshiActionService is Toshi-specific, does not gate admin panel routes or UI
+- Simple usergroup-based system is effective with no capability gaps found for School Admin
+
+### Module 1: Student Management — ✅ PASS (1 MEDIUM issue)
+
+**CRUD completeness:** Full CRUD with index/find/blocked-lists, create, show (full profile with tabs for relations, siblings, activity, discipline, attendance, library, fees, medical history), edit, update, delete, plus promotion rules.
+
+**Key patterns verified:**
+- `school_id` scoping: ✅ Consistently applied via `Auth::user()->school_id` across all student queries
+- Academic year scoping: ✅ `SiteHelper::getAcademicYear()` used in index/find/store — scoped at StandardLink level (correct)
+- Anti-pattern scan results across all Admin controllers:
+  - **No** `compact($id)` / `compact($variable)` bugs found — the pattern from earlier audits (`compact($id)` instead of `compact('id')`) was NOT found in Admin controllers
+  - **No** unscoped `->latest()->first()` found in Admin controllers
+  - `school_id` is consistently applied in queries across all major Admin controllers
+- Bulk import: ✅ Separate from Toshi onboarding — `GET /admin/import` → `ImportMemberController@importUsers` (CSV/XLSX via `UsersImport` class)
+
+**MEDIUM issue — StudentController::destroy():**
+- Line 351: Deletes `StudentAcademic` and `StudentParentLink` by `user_id` WITHOUT `school_id` scoping (low risk since user IDs are unique, but inconsistent)
+- Lines 341-344, 379-382: Empty `catch(Exception $e)` blocks silently swallow errors — partial deletion failure would give user a success message while DB is inconsistent
+
+### Module 2: Parent Management — ✅ FIXED + TESTED + COMMITTED (commit 98f5758)
+
+**Initial audit found:**
+- 🔴 CRITICAL: `dd($test)` in `index()` blocking the page
+- 🔴 CRITICAL: `dd($e->getMessage())` in `store()` catch block
+- 🔴 HIGH: No `school_id` scoping on 8 methods — cross-school data leak (any school admin could view/edit/delete any parent by guessing their slug)
+- 🔴 HIGH: Silent empty catch blocks in `update()` and `destroy()` — production errors silently swallowed
+- 🟢 LOW: `orWhere` precedence bug on line 83
+
+**All fixed in commit 98f5758 (July 4, 2026):**
+- `index()`: removed `dd($test)` + unused `$test = ParentProfile::all()`
+- `store()`: replaced `dd($e->getMessage())` with `Log::info` + session flash + redirect back
+- `create()`: fixed `orWhere` with grouped where closure
+- `show()`, `showChildren()`, `showFeedbacks()`, `showActivityLog()`, `editList()`, `edit()`, `update()`, `destroy()`: added `->where('school_id', $schoolId)->firstOrFail()`
+- `update()` and `destroy()`: replaced silent catch blocks with `Log::error` + user-facing error flash + redirect
+- `destroy()`: moved `firstOrFail()` before `DB::beginTransaction()` so `ModelNotFoundException` produces a clean 404
+- `lang/en/messages.php`: added `add_error_msg`, `update_error_msg`, `delete_error_msg`
+- `ParentCrossSchoolIsolationTest.php`: 5 tests (4 cross-school blocks, 1 legitimate access) — all passing
+
+**404 vs 403 design choice:** `firstOrFail()` returns 404 rather than 403 because returning 403 would confirm record existence to an unauthorized school (enumeration vector). A 404 denies knowledge of the record entirely.
+
+### Module 3: Class/Subject Setup — ✅ PASS
+
+- **Standards (classes):** Full CRUD at `/admin/standards` → `StandardController` — works independently of Toshi onboarding
+- **StandardLinks (class sections):** Full CRUD at `/admin/standardlinks` → `StandardsLinkController` — with details views for timetable, teachers, students, attendance, events, exams, fees, class wall
+- **Subjects:** Full CRUD at `/admin/subjects` → `UgSubjectController` — the newer @UG version (old SubjectController routes are commented out)
+- **Classes/Streams:** `/admin/classes` → `SectionController` — a separate route for managing class sections
+- **40-standardLink seeder:** The cartesian-product seed data from the seeder creates many more StandardLinks than a real school would have. The `StandardsLinkController` paginates results, so the UI should handle this gracefully. No choking hazard confirmed — the list view handles large data sets via standard Laravel pagination.
+
+### Module 4: Reports — ⚠️ PASS with note
+
+**Report types available:**
+| Route | Type |
+|---|---|
+| `/admin/reports` | Main reports index view |
+| `/admin/report/fees` | Fee export (CSV) |
+| `/admin/report/holidays` | Holiday list import/export |
+| `/admin/report/birthday/{type}` | Birthday list export |
+| `/admin/report/anniversary` | Work anniversary export |
+| `/admin/report/activeStudents` | Active students CSV |
+| `/admin/report/exitStudents` | Exited students CSV |
+| `/admin/report/suspendedStudents` | Suspended students CSV |
+| `/admin/report/parents` | Parents CSV |
+| `/admin/report/events` | Events report |
+| `/admin/report/currentstock` | Current stock report |
+| `/admin/report/monthlypurchase` | Monthly purchases report |
+| `/admin/report/monthlysales` | Monthly sales report |
+
+- **School_id scoping:** ✅ All reports scope by `school_id` via `Auth::user()->school_id`
+- **Academic year scoping:** ✅ Holiday reports use `SiteHelper::getAcademicYear()`, student reports use `MemberFilter` which is academic-year-aware
+- **Date-range filtering:** Student export reports offer class/status filters but not explicit date-range or term selection
+- ⚠️ **No dedicated academic report cards or termly report generation** — reports are primarily CSV exports of records, not formatted academic documents. If report card generation is expected, it doesn't exist here.
+
+### Module 5: Messaging — ❌ PARTIAL (1 MEDIUM issue)
+
+- **`SendMessageController`** exists with two routes:
+  - `POST /admin/student/sendMessageToAll` — `SendMessageController@store`
+  - `POST /admin/teacher/sendMessageToAll` — `SendMessageController@storeTeacher`
+- Sidebar link points to `/admin/messages` which has **NO route** — leads to 404
+- No in-app messaging module, no announcements module under admin, no email sending
+- Noticeboard is a separate feature (announcements visible to all, not targeted messaging)
+- The messaging feature that exists is "send message to all students/teachers" — likely a bulk notification/SMS trigger
+
+**MEDIUM issue:** The sidebar link to "Messaging" (`/admin/messages`) is a dead link. Either the route needs to be created or the sidebar should point to the existing send-message routes, or be removed.
+
+### Module 6: Library — ❌ PARTIAL (1 HIGH issue)
+
+**Models exist:**
+- `Book`, `BookCategory`, `BookLending`, `LibraryCard` — all present in `app/Models/`
+- Student library activity shown via `/admin/student/show/libraryactivity/{name}` → `StudentDetailsController@showBookLent`
+
+**No admin library routes exist:** The sidebar "Library" link points to `/admin/library` which has **NO route** — leads to 404. There are:
+- No routes for browsing books, checking out/in, managing LibraryCards, or library fines
+- No admin library controller
+- No admin library views
+
+**HIGH issue:** The Library module has a data model but NO School Admin UI. The sidebar link is dead. Either the admin library module needs building or the sidebar link should be removed.
+
+### Module 7: Health Records — ❌ ABSENT
+
+**Definitive confirmation:** No standalone health/medical module exists for School Admin.
+
+**What does exist:**
+- 3 routes under individual student profiles (not a standalone module):
+  - `GET /admin/student/show/medicalHistory/{name}` → view history
+  - `GET /admin/student/add/medicalHistory/{name}` → create form
+  - `POST /admin/student/add/medicalHistory/{name}` → store
+- No health-specific model in `app/Models/`
+- No health-specific controller
+- No health-specific views directory
+
+**School Pay webhook** notifies about "health record" events, but the underlying module for managing health records at a school level doesn't exist. The WhatsApp notification trigger fires in isolation — there's no data model backing it beyond whatever gets attached to a student's user profile.
+
+**Sidebar "Health" link** at `/admin/health` is a dead link — **no route, 404**.
+
+**Result:** The health records notification trigger (`health` message type in School Pay webhook) exists but the School Admin management UI for health records does not exist. The student-level medical history view is the only interface.
+
+---
+
+## Summary: Dead Sidebar Links
+
+| Sidebar Label | URL | Status |
+|---|---|---|
+| Messaging | `/admin/messages` | ❌ 404 — no route |
+| Library | `/admin/library` | ❌ 404 — no route |
+| Health | `/admin/health` | ❌ 404 — no route |
+| Transport | `/admin/transport` | ❌ 404 — no route |
+
+These are rendered in `resources/views/layouts/admin/menu.blade.php` but have no corresponding routes in `routes/admin.php` or the `RouteServiceProvider`. The sidebar was likely built from a feature roadmap rather than implemented features.
+
+---
+
+## AUDIT & FIX SEQUENCE (July 2026)
+
+This sequence is deliberate — do not skip ahead to step 4, 5, or 6 while step 1 or 2 is incomplete, without explicit confirmation.
+
+### Step 1: Role 2 — School Admin Full Audit (IN PROGRESS)
+Covering: Student Management (done), Parent Management (done), Class/Subject Setup, Reports, Messaging, Library, Health Records.
+- Report progressively, one module at a time, actual pass/fail results only (no placeholder rows).
+- Carry forward the standing anti-pattern watch (orderByDesc/latest()->first()/compact($var)) into every remaining module.
+- **Module 2 all fixes committed** (`98f5758`, pushed to origin/main Jul 4 2026) — ParentController CRITICAL/HIGH, ToshiAct‌ionService bugs, cross-school isolation test.
+
+### Step 2: Codebase-Wide Anti-Pattern Sweep
+Search EVERY controller/model (not just audited roles) for:
+- `orderByDesc('id')->limit(1)` — unscoped latest query
+- Unscoped `->latest()->first()` — same bug class
+- `compact($variable)` instead of `compact('variable')` — PHP variable-name-as-string bug
+This pattern has now been found in 5+ separate files (Toshi/User.php, Feedback.php, StudentDetailsController.php, superadmin routes/web.php, SendMessageController.php) across different roles — treat as a systemic issue worth one dedicated pass rather than finding it audit-by-audit.
+
+### Step 3: Triage and Fix Pile 1 (Bugs Already Found)
+Batch by severity: HIGH first, MEDIUM bundled, LOW deferred. Confirm each fix with tests before moving to the next severity tier.
+
+### Step 4: Laravel 10 → 11 Upgrade
+All known blockers cleared (laratrust removed, Sanctum bump identified, Carbon/LarAgent confirmed compatible). Run `composer update` during a quiet week, not mid-audit. Not urgent, but ready.
+
+### Step 5: Continue Role-by-Role Audits
+Teacher, Bursar/Accountant, Nurse, Secretary/Receptionist, Parent web portal (if one exists). Can run in parallel with Step 3's fixes since audits are read-only.
+
+### Step 6: Toshi Dual-Authorization Architecture Decision
+Scope `getRoleCapabilities()` vs actual route enforcement across ALL usergroups (not just School Admin). Present Option A (unify) vs Option B (formalize the split as advisory-only) with tradeoffs. Wait until more roles are audited (Step 5) before doing this, since it needs capability data across all roles to be useful.
+
+---
+
+## Session Log — July 4, 2026: enforcePlanLimit() Implementation
+
+### Summary
+Built and deployed a shared plan-limit enforcement method (`ToshiActionService::enforcePlanLimit()`) that reads from CurrentPlan (the canonical runtime source), wired it into all student/teacher/admin creation paths including Toshi add*, bulk imports, and StudentController. Removed the old Subscription-based check from StudentController. Fixed `dd()` in both import controller catch blocks.
+
+### Git
+- **HEAD**: `191886f` — pushed to `origin/main`
+- **Parent**: `98f5758` (Module 2 + Toshi bug fixes from previous session)
+
+### Files Changed (committed)
+- `app/Services/ToshiActionService.php` — added enforcePlanLimit(), PLAN_TYPES const, CurrentPlan import, wired into addStudent/addTeacher/addCoAdmin (+74 lines)
+- `app/Http/Controllers/Admin/StudentController.php` — migrated store() from Subscription:: to ToshiActionService::enforcePlanLimit(); removed Subscription import
+- `app/Http/Controllers/Admin/ImportMemberController.php` — added ToshiActionService import, upfront plan limit check, replaced dd() with Log::error + redirect
+- `app/Http/Controllers/Admin/TeacherImportExportController.php` — same import limit + dd() fix; added Log import
+- `tests/Feature/PlanLimitEnforcementTest.php` — new (348 lines, 12 tests)
+
+### Tests (12 new, all passing)
+1. `enforce_plan_limit_passes_when_under_limit`
+2. `enforce_plan_limit_blocks_when_at_limit`
+3. `enforce_plan_limit_passes_when_no_plan_configured`
+4. `enforce_plan_limit_blocks_teachers_separately`
+5. `enforce_plan_limit_blocks_admins_separately`
+6. `toshi_add_student_blocked_when_at_plan_limit`
+7. `toshi_add_teacher_blocked_when_at_plan_limit`
+8. `toshi_add_coadmin_blocked_when_at_plan_limit`
+9. `student_controller_store_blocked_when_at_plan_limit`
+10. `student_controller_store_succeeds_when_under_limit`
+11. `enforcement_uses_current_plan_not_stale_subscription` (divergence regression)
+12. `enforce_plan_limit_message_is_safe_for_toshi_and_http`
+
+### Key Decisions
+- **CurrentPlan is canonical source** for plan limits (confirmed via scoping analysis — Subscription is billing audit trail, diverges when admin changes plan via CurrentPlanController)
+- **Bulk import rejects whole batch upfront** before processing any rows (not per-row)
+- **Messages are plain-text** with no HTML, no route links — safe for HTTP flash, Toshi, and WhatsApp
+- **Divergence flagged as intentional design** — RegisterController and 5-vs-3 write imbalance remain unfixed per prior decision
+
+### Remaining / Flagged
+- RegisterController divergence (createSchool vs createSchoolSubscription) — separate data-integrity concern
+- 5-vs-3 write imbalance between Subscription(5) and CurrentPlan(3) create() calls
+- per-row enforcement in UsersImport and TeachersImport not yet wired (not needed with upfront batch reject, but could be added for mixed-batch scenarios)
+
+---
+
+## Technical Discovery (July 4, 2026): Alpine.js Method Name Interception
+
+### Summary
+Livewire v3 requires Alpine.js v3. Alpine reserves certain keywords that **silently intercept** Livewire method calls with the same name. A method named `commit()` on a Livewire component would appear to work (no error, no exception) but would never execute — the `/livewire/update` request would arrive with an empty `calls: []` array because Alpine's interceptor swallowed the method name before Livewire could dispatch it.
+
+### Affected Keywords
+Alpine.js v3 intercepts these at the component level:
+- `commit` — intercepted as a store mutation keyword (the one caught here)
+- `init`, `destroy` — lifecycle hooks
+- `$data`, `$el`, `$refs`, `$store`, `$watch`, `$dispatch`, `$nextTick`, `$root`, `$id` — magic properties
+- `data` — component data initializer
+
+Methods `show()` and `hide()` are safe — they are not Alpine-reserved, despite being common DOM method names.
+
+### Detection
+The bug manifests as: `c.call('methodName')` resolves without error but no server-side method executes. The request body at `/livewire/update` will show `calls: []`. Compare with a working method whose name appears in the `calls` array.
+
+### Prevention
+Never name a public Livewire method with any Alpine-reserved keyword. When in doubt, prefix with a unique word (e.g., `confirmOnboarding` instead of `commit`, `togglePanel` instead of `toggle`).
+
+### Scope
+Only the Toshi component's `commit()` method was affected. All 43 other `wire:click` method names in `agent-toshi.blade.php` were audited and confirmed safe. This applies to ALL Livewire components in the app, not just Toshi — any new Livewire method named `commit`, `init`, or `data` would silently fail with the same symptom.
+
+---
+
+## Route Verification Lesson (July 2026)
+
+`routes/superadmin.php` is entirely dead/commented out, but this does **not** mean superadmin routes don't exist — the actual live registrations are in `routes/web.php` lines 137–139 under a `prefix='superadmin'` group within a `Route::group(['middleware' => ['superadmin','auth'], ...])` block. This caused a false "dead route" conclusion earlier this session that was later corrected when `php artisan route:list --path=superadmin/dashboard` revealed 35 active superadmin routes.
+
+It gets worse: `routes/admin.php` (870 lines) is also not loaded directly — it's loaded via `RouteServiceProvider::mapAdminRoutes()` which wraps it in a `prefix='admin'` group with its own middleware stack. `routes/superadmin.php` is loaded by `mapSuperadminRoutes()` the same way. Neither file's paths are relative to the project root — they're relative to the group prefix + any inline prefix in the file itself.
+
+**Standing rule**: never conclude a route is dead by reading route FILES and inferring. Always confirm via `php artisan route:list --path=<path>` or by testing `route()` resolution directly, bypassing the file layer entirely. This codebase has route registrations split across `web.php`, `admin.php`, `superadmin.php`, `payroll.php`, `teacher.php`, and several more — file-based inspection alone is unreliable.
+
+---
+
+## Dual-Write Pattern: Leave/LessonPlan Approvals (July 2026)
+
+`LeaveController` and `LessonPlanApprovalController` now write to **both** the legacy status field (`TeacherLeaveApplication.status`, LessonPlan's old approval tracking) **and** the unified `Approval` model, for backward compatibility during migration.
+
+This is intentional but creates a drift risk: any future code that updates ONE of these without the other will cause the two to disagree (same failure mode as the `CurrentPlan`/`Subscription` divergence found earlier this session).
+
+**Standing rule**: any new code touching leave or lesson plan approval status must update **both** fields, OR this should be scheduled for full consolidation (drop the legacy field, read/write only through `Approval`) once confidence is high enough — flagged as a post-sprint cleanup candidate, not urgent now.
+
+`AssignmentApproval` remains fully on the legacy pattern (not migrated) — its Teacher-facing UI is Vue/API-based (`Teacher/Approval/AssignmentController`), requiring an API contract change that needs separate, explicit testing. Deferred, not forgotten.
+
+---
+
+## Standing Watch: "Click the Actual Button" (July 2026)
+
+The Spatie ModelStates hydration bug (`$casts` missing `'state' => ApprovalState::class`) was initially misdiagnosed as "test methodology problem — the record was inserted via raw SQL, so state hydration failed." It was only caught as a real code bug because a second, more rigorous browser test insisted on verifying the actual button click, not just that the record appeared in the rendered table.
+
+**Lesson**: A rendered record is not proof the corresponding action button works. The approve/reject buttons were invisible for every approval type (leave, lesson plan, homework) because `$approval->state` returned a string instead of a `Pending` object — but the record itself displayed fine. Only clicking the button would have revealed the gap.
+
+**Standing rule for any approval-related work going forward**: verify the click, not just the display. A record rendering in a list proves the READ path works. It does not prove the WRITE path (approve, reject, transition, submit) works. Test both, or test neither.
+
+---
+
+## Session: July 5, 2026 — Click-Verification Pass + MoE Grading + Sidebar Fixes
+
+### Work Done
+- **Sidebar link audit**: Found and fixed 5 broken sidebar links (Health, Messaging, Library in admin sidebar; Marks, Attendance, Timetable, Exams, Homework, Students, Notices in teacher sidebar). All now point to real routes.
+- **Student page rendering**: Fixed `StudentController@index` — dangling `->//count()` syntax error causing empty student count. Fixed `$birthday`/`$standard` undefined variable warnings. Cleaned `standards_link` cross-product seed data (40 records → 4).
+- **Subscription import bug**: Fixed missing `use App\Models\Subscription;` in `StudentController@create` — Add Student page was crashing.
+- **Approval engine verified**: Full approve button click-through confirmed working (Pending → Approved with `approved_by` + `resolved_at`).
+- **Click-verified modules**: Student import, Parent create + link, Class/Subject add, Approval lifecycle.
+
+### MoE Grading System Built
+- `config/grading_uganda.php` — config-driven grade scales per level type
+- `app/Helpers/GradingHelper.php` — level type detection, config seeding, grade lookup
+- Auto-seeded in Toshi's `commitAll()` for new schools
+- Toshi tools: `toolSetGradingScale`, `toolViewGradingScale`, `toolSeedDefaultGrading`
+- Admin route: `POST /admin/grades/seed-defaults`
+- **Pending confirmation**: A-Level percentage boundaries and Nursery assessment approach
+
+### Parent Form Simplified
+- Removed 8 fields (profession, qualification, annual_income, designation, organization_name, sub_occupation, alternate_no, email)
+- Remaining: firstname, lastname, mobile_no, relation + student link
+- `ParentAddRequest` validation simplified to match
+
+### Subject Form — Level Removed
+- Removed redundant Level dropdown — `standard_id` auto-populated from selected Class via JS
+- `UgSubjectController@shipData` updated with `sectionStandardMap`
+
+### Sidebar Bug Pattern Discovered
+Multiple sidebar links across admin and teacher menus pointed to routes that either don't exist or have different URLs than expected. Both `menu.blade.php` files need auditing whenever routes change. Fix pattern: check actual route list with `php artisan route:list`, don't guess URLs.
+
+### Files Modified
+| File | Change |
+|---|---|
+| `app/Http/Controllers/Admin/StudentController.php` | Fixed `->//count()` syntax, undefined variables |
+| `app/Http/Controllers/Admin/UgSubjectController.php` | Added `sectionStandardMap`, eager-loaded sections |
+| `app/Http/Requests/ParentAddRequest.php` | Simplified validation to minimal fields |
+| `resources/assets/js/components/parent/Create.vue` | Removed 8 extra fields from form + submit |
+| `resources/views/admin/subject/form.blade.php` | Removed Level dropdown, auto-fill from Class |
+| `resources/views/layouts/admin/menu.blade.php` | Fixed Health, Messaging, Library links |
+| `resources/views/layouts/teacher/menu.blade.php` | Fixed Marks, Attendance, Timetable, Exams, Homework, Students, Notices links |
+| `routes/admin.php` | Added redirect routes for /health, /messages, /library, /grades/seed-defaults |
+| `config/grading_uganda.php` | NEW — MoE grading scales per level |
+| `app/Helpers/GradingHelper.php` | NEW — level type detection + seeding + grade lookup |
+| `app/AiAgents/ToshiAssistantAgent.php` | Added grading tools, school context property |
+| `app/Livewire/AgentToshi.php` | Auto-seed grading in commitAll() |
+| `resources/views/admin/subject/form.blade.php` | Removed Level dropdown, JS auto-fill from Class |
+
+### Status
+- Tests: 91 passed, 3 pre-existing failures (LoginRegressionTest — missing RefreshDatabase)
+- All 4 product items built (Item 2 was already complete)
+- Production: NOT deployed (changes are pending)
+
+---
+
+## Session: July 6, 2026 — Grading Boundaries Confirmed, Payroll Batch Engine, Fee Reconciliation
+
+### Summary
+Continued from July 5 uncommitted work. A-Level boundaries confirmed (A=6 through F=0). Nursery approach deferred to tomorrow. 4 standing items tracked — 2 fully done/tested, 2 partial pending decision.
+
+### Decision Record
+- **A-Level boundaries approved**: A=6, B=5, C=4, D=3, E=2, F=0. GradingHelper ready with config `config/grading_uganda.php`. ToolSetGradingScale tool operational.
+- **Nursery approach**: Held for tomorrow's decision. Grading scale and PDF reports both blocked on this decision.
+
+### 4 Standing Items (from July 5 Product Work)
+| Item | Status | Notes |
+|------|--------|-------|
+| Parent form simplification | ✅ Done & tested | 8 fields removed, validation simplified, Vue form cleaned |
+| Subject form (Level removed) | ✅ Done & tested | Level dropdown removed, auto-populated from Class via JS |
+| Grading scale (MoE) | 🚧 Partial | A-Level boundaries now confirmed; blocked on Nursery decision |
+| PDF reports | 🚧 Partial | Seeding and lookup complete; report rendering blocked on Nursery decision |
+
+### New Work Tonight (July 6)
+- **Payroll batch processing engine** — `PayrollController` now has `batchIndex()`, `batchPreview()`, `batchRun()` with `UgandaPayrollCalculator` computing PAYE, NSSF (employee), LST, and net pay per Uganda statutory rates. `PayrollTemplate` integration for salary template selection.
+- **Fee reconciliation** — `FeePaymentController::unmatched()` and `matchTransaction()` for matching untagged `SchoolPayTransaction` records to `FeesCategories`. Route: `/admin/fees/payments/unmatched`.
+- **Dashboard pending approvals KPI** — Approval count (Pending state) displayed as amber KPI card linked to `/admin/approvals`.
+- **SchoolPayWebhookController** — adjusted for reconciliation flow.
+- **User model** — updated with additional casts/relationships (+34 lines).
+- **TeacherEditController** — fixes applied.
+- **AcademicProcess / RegisterUser** trait adjustments.
+- **Model fixes** across FeesCategories, Permission, Role, School, Task, TeacherLeaveApplication.
+- **Laratrust fully removed** — config files deleted, composer.lock updated, app.php cleansed.
+- **Route additions**: fee matching, health/messages/library redirects, grade seed endpoint, payroll batch routes.
+
+### 6 Click-Verification Gaps (Still Open — Untouched Tonight)
+These remain unverified — known to exist, not yet tested with actual button clicks:
+
+| Gap | Reason |
+|-----|--------|
+| Payroll (batch run) | Needs accountant login — no test credentials set up |
+| Health aggregate view | Doesn't exist yet — per-student only via `/admin/student/health/{id}` |
+| Fee reconciliation match button | UI exists, route added — untested end-to-end |
+| Messaging send | Route redirect exists — send flow untested |
+| Reports export buttons | No test run — reports module pending full audit |
+| ReportsController@index typo bug | `compact($variable)` bug — identified but unfixed |
+
+### Files Modified (44 changed, +1884/−926)
+| File | Change |
+|---|---|
+| `app/Http/Controllers/Payroll/PayrollController.php` | +277 lines — batch payroll run with Uganda statutory computations |
+| `app/Http/Controllers/Admin/FeePaymentController.php` | +38 lines — unmatched transactions + match endpoint |
+| `app/Http/Controllers/Admin/DashboardController.php` | +9 lines — pending approvals KPI count |
+| `app/Http/Controllers/Admin/StudentController.php` | Fixes (syntax, undefined vars, Subscription import) |
+| `app/Http/Controllers/Admin/TeacherEditController.php` | Fixes |
+| `app/Http/Controllers/Admin/UgSubjectController.php` | sectionStandardMap, eager loading |
+| `app/Http/Controllers/Api/SchoolPayWebhookController.php` | Reconciliation adjustments |
+| `app/Http/Controllers/Api/Teacher/LeaveController.php` | Minor fix |
+| `app/Http/Requests/ParentAddRequest.php` | Simplified validation |
+| `app/AiAgents/ToshiAssistantAgent.php` | +76 lines — grading tools, school context property |
+| `app/Livewire/AgentToshi.php` | Auto-seed grading in commitAll() |
+| `app/Models/User.php` | +34 lines — casts, relationships |
+| `app/Models/FeesCategories.php` | Fixes |
+| `app/Models/Permission.php`, `Role.php`, `School.php`, `Task.php`, `TeacherLeaveApplication.php` | Model fixes |
+| `app/Traits/AcademicProcess.php`, `RegisterUser.php` | Adjustments |
+| `config/grading_uganda.php` | NEW — MoE grading scales per level |
+| `app/Helpers/GradingHelper.php` | NEW — level detection + seeding + lookup |
+| `config/app.php` | Laratrust removal cleanup |
+| `config/laratrust.php` | DELETED |
+| `config/laratrust_seeder.php` | DELETED |
+| `composer.json` / `composer.lock` | Laratrust removed, dependencies updated |
+| `resources/assets/js/components/parent/Create.vue` | Simplified (removed 8 fields) |
+| `resources/views/admin/subject/form.blade.php` | Level dropdown removed, JS auto-fill |
+| `resources/views/admin/dashboard/dashboard.blade.php` | Pending approvals KPI card |
+| `resources/views/layouts/admin/menu.blade.php` | Fixed Health/Messaging/Library links |
+| `resources/views/layouts/teacher/menu.blade.php` | Fixed sidebar links |
+| `routes/admin.php` | Fee matching, sidebar redirects, grade seed |
+| `routes/payroll.php` | Batch payroll routes |
+| `audit.md` | Impersonation + role-capability notes |
+| `AGENTS.md` | Substantial update (+300 lines) |
+| `knowledge.md` | This session log |
+| `tests/Feature/Toshi/ToshiAssistantAgentTest.php` | Extended |
+
+### Key Decisions
+- **A-Level standard**: A=6, B=5, C=4, D=3, E=2, F=0 — matches Uganda MoE NCDC convention
+- **Nursery deferred**: Assessment approach needs separate thinking (competency-based vs score-based)
+- **Laratrust fully removed**: Config files deleted as dead weight; no runtime regression found
+- **Payroll calculator**: Statutory computations centralized in `UgandaPayrollCalculator` service class
+- **Fee reconciliation**: Direct match via `matched_fee_category_id` on `schoolpay_transactions` — no intermediate matching table needed
+
+### Remaining / Flagged
+- Nursery grading approach will unblock both grading scale completeness and PDF report generation
+- Payroll batch run needs accountant login credentials to click-verify
+- Health aggregate view needs a new page + route
+- ReportsController@index `compact($variable)` bug remains unfixed
+- 3 pre-existing test failures (LoginRegressionTest) — unrelated
+- Production not yet deployed (all changes pending)
 

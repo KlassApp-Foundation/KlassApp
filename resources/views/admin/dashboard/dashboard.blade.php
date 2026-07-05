@@ -142,6 +142,19 @@
             </div>
         </div>
 
+        {{-- Pending Approvals KPI --}}
+        <div class="mb-4">
+            <a href="{{ url('admin/approvals') }}" class="bg-white custom-shadow px-5 py-4 border dashboard-kpi-card inline-flex items-center gap-4 hover:shadow-md transition" style="max-width:280px;">
+                <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background:#FEF3C7;">
+                    <svg class="w-7 h-7" style="color:#D97706;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-800">{{ $pendingApprovals }}</p>
+                    <p class="text-sm text-gray-500">Pending Approvals</p>
+                </div>
+            </a>
+        </div>
+
         <div class="flex flex-col lg:flex-row my-2 gap-4">
             @if(config('gexam.enabled', false))
             <div class="w-full lg:w-2/3">

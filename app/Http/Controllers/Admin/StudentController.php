@@ -12,6 +12,7 @@ use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use App\Models\StudentParentLink;
+use App\Models\Subscription;
 use App\Traits\MemberProcess;
 use App\Traits\RegisterUser;
 use App\Models\StudentAcademic;
@@ -58,31 +59,33 @@ class StudentController extends Controller
     {
         $school_id = Auth::user()->school_id;
         $academic_year = SiteHelper::getAcademicYear($school_id);
-        $count    = User::ByRole(6)->where('school_id',$school_id)->where('deleted_at',NULL)->//count();dd($count);
+        $count    = User::ByRole(6)->where('school_id',$school_id)->where('deleted_at',NULL)->count();
         $alphabet = request('alphabet')?request('alphabet'):'';
         $query    = \Request::getQueryString();
         $standardLink = SiteHelper::getStandardLinkList($school_id);
 
         $lowest_standard = Standard::where('school_id',$school_id)->orderBy('order')->first();
 
-        if(count((array)\Request::getQueryString()) == 0)
-        {
-            $standard = StandardLink::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['standard_id',$lowest_standard->id]])->first();
-        }
-        if(request('date_of_birth') != null)
-        {
-            $birthday = 'true';
-        }
+        $standard = StandardLink::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['standard_id',$lowest_standard->id]])->first();
         if(request('standard') != null)
         {
             $selected_standard = request('standard');
         }
         else
         {
-            $selected_standard = $standard->id;
+            $selected_standard = $standard?->id;
         }
-
-        return view('/admin/member/index',[ 'alphabet' => $alphabet , 'query' => $query , 'count' => $count , 'standardLinks' => $standardLink , 'standard' => $standard->id , 'birthday' => $birthday , 'selected_standard' => $selected_standard ]);
+        $birthday = request('date_of_birth') != null ? 'true' : null;
+        
+        return view('/admin/member/index',[
+            'alphabet' => $alphabet,
+            'query' => $query,
+            'count' => $count,
+            'standardLinks' => $standardLink,
+            'standard' => $standard?->id,
+            'birthday' => $birthday,
+            'selected_standard' => $selected_standard,
+        ]);
     }
 
     /**

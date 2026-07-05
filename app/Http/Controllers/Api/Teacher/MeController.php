@@ -54,7 +54,7 @@ class MeController extends Controller
         
         $myInfo['age']                          = date('Y')-date('Y',strtotime(optional($user->userprofile)->date_of_birth));
         $myInfo['classTeacher']                 = $user->standardLink->StandardSection;
-        $myInfo['permissions']                  = Auth::user()->getRoles();
+        $myInfo['permissions']                  = Auth::user()->teacher_designations ?? [];
 
         return response()->json([
             'success'   =>  true,

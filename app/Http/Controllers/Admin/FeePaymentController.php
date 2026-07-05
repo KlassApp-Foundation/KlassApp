@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FeePayment;
 use App\Models\FeesCategories;
 use App\Models\Standard;
+use App\Models\SchoolPayTransaction;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -65,5 +66,42 @@ class FeePaymentController extends Controller
         ]);
 
         return redirect()->route('admin.fee-payments')->with('successmessage', 'Payment recorded successfully!');
+    }
+
+    public function unmatched()
+    {
+        $schoolId = Auth::user()->school_id;
+
+        $transactions = SchoolPayTransaction::with(['student', 'matchedFeeCategory'])
+            ->where('school_id', $schoolId)
+            ->whereNull('matched_fee_category_id')
+            ->orderByDesc('paid_at')
+            ->paginate(25);
+
+        $feeCategories = FeesCategories::where('school_id', $schoolId)
+            ->orderBy('name')
+            ->get(['id', 'name', 'amount']);
+
+        return view('admin.fees.unmatched', compact('transactions', 'feeCategories'));
+    }
+
+    public function matchTransaction(Request $request, $transactionId)
+    {
+        $schoolId = Auth::user()->school_id;
+
+        $validated = $request->validate([
+            'fee_category_id' => 'required|exists:fees_categories,id',
+        ]);
+
+        $transaction = SchoolPayTransaction::where('school_id', $schoolId)
+            ->whereNull('matched_fee_category_id')
+            ->findOrFail($transactionId);
+
+        $transaction->update([
+            'matched_fee_category_id' => $validated['fee_category_id'],
+            'reconciled_at'           => now(),
+        ]);
+
+        return back()->with('successmessage', 'Payment matched to fee category.');
     }
 }

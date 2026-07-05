@@ -3823,6 +3823,13 @@ class AgentToshi extends Component
                     }
                 }
 
+                // ── Seed MoE default grading scales ──
+                try {
+                    \App\Helpers\GradingHelper::seedAllGradingForSchool($school->id);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to seed grading scales: ' . $e->getMessage());
+                }
+
                 // ── Plan limit: teachers ──
                 $teacherSkipped = 0;
                 $studentSkipped = 0;

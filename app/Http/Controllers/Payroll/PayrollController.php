@@ -19,6 +19,8 @@ use App\Models\Payroll;
 use App\Models\Salary;
 use App\Models\PayslipItem;
 use App\Models\TeacherLeaveApplication;
+use App\Models\PayrollTemplate;
+use App\Services\UgandaPayrollCalculator;
 use Carbon\Carbon;
 use Exception;
 use PDF;
@@ -269,6 +271,281 @@ class PayrollController extends Controller
           eval('$amount_tot ='.$total_amount.";");
           return "$amount_tot";
 
+    }
+
+    /**
+     * Show the batch payroll run page.
+     *
+     * GET /accountant/payroll/batch
+     */
+    public function batchIndex()
+    {
+        $templates = PayrollTemplate::where([
+            ['school_id', Auth::user()->school_id],
+            ['status', 1],
+        ])->get();
+
+        return view('accountant/payroll/batch/index', [
+            'templates' => $templates,
+        ]);
+    }
+
+    /**
+     * Preview computed payrolls for a batch run.
+     *
+     * POST /accountant/payroll/batch/preview
+     *
+     * For each active salary on the selected template, compute
+     * PAYE, NSSF (employee), LST, and net pay using UgandaPayrollCalculator.
+     * Returns JSON with per-row data and totals.
+     */
+    public function batchPreview(Request $request)
+    {
+        $request->validate([
+            'template_id' => 'required|exists:payroll_templates,id',
+            'start_date'  => 'required|date',
+            'end_date'    => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $schoolId = Auth::user()->school_id;
+        $templateId = $request->input('template_id');
+        $startDate = Carbon::parse($request->input('start_date'));
+        $endDate = Carbon::parse($request->input('end_date'));
+
+        $salaries = Salary::with(['user.userprofile', 'salaryitems.templateitem.payrollitem'])
+            ->where([
+                ['school_id', $schoolId],
+                ['template_id', $templateId],
+                ['effective_date', '<=', $endDate->format('Y-m-d')],
+            ])
+            ->get();
+
+        if ($salaries->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No active salaries found for this template.',
+            ]);
+        }
+
+        $rows = [];
+        $totals = ['gross' => 0, 'paye' => 0, 'nssf' => 0, 'lst' => 0, 'net' => 0, 'earnings' => 0, 'deductions' => 0];
+
+        foreach ($salaries as $salary) {
+            $gross = (float) $salary->gross_salary;
+            $payPeriod = $startDate->copy();
+
+            $statutory = UgandaPayrollCalculator::computeAll($gross, $payPeriod);
+
+            // Check for existing leave deductions
+            $leaveDays = (new Payroll)->getLeaveDays(
+                $salary->staff_id,
+                $startDate->format('Y-m-d'),
+                $endDate->format('Y-m-d')
+            );
+            $perDaySalary = $gross / 30;
+            $leaveDeduction = round($leaveDays * $perDaySalary);
+
+            // Sum earnings and deductions from salary items
+            $itemEarnings = (float) $salary->totalearnings();
+            $itemDeductions = (float) $salary->totaldeductions();
+
+            $grossPay = $gross + $itemEarnings;
+            $statDeductions = $statutory['total_deductions'];
+            $otherDeductions = $itemDeductions + $leaveDeduction;
+            $netPay = $grossPay - $statDeductions - $otherDeductions;
+
+            $rows[] = [
+                'staff_id'       => $salary->staff_id,
+                'staff_name'     => $salary->user?->userprofile?->firstname . ' ' . $salary->user?->userprofile?->lastname,
+                'salary_id'      => $salary->id,
+                'gross'          => round($grossPay),
+                'paye'           => $statutory['paye'],
+                'nssf'           => $statutory['nssf_employee'],
+                'lst'            => $statutory['lst'],
+                'leave_deduction'=> $leaveDeduction,
+                'item_earnings'  => round($itemEarnings),
+                'item_deductions'=> round($itemDeductions),
+                'net_pay'        => max(0, round($netPay)),
+            ];
+
+            $totals['gross']       += $grossPay;
+            $totals['paye']        += $statutory['paye'];
+            $totals['nssf']        += $statutory['nssf_employee'];
+            $totals['lst']         += $statutory['lst'];
+            $totals['earnings']    += $itemEarnings;
+            $totals['deductions']  += $itemDeductions + $leaveDeduction;
+            $totals['net']         += max(0, $netPay);
+        }
+
+        return response()->json([
+            'success'           => true,
+            'rows'              => $rows,
+            'totals'            => $totals,
+            'row_count'         => count($rows),
+            'template_id'       => $templateId,
+            'start_date'        => $startDate->format('Y-m-d'),
+            'end_date'          => $endDate->format('Y-m-d'),
+        ]);
+    }
+
+    /**
+     * Confirm and execute a batch payroll run.
+     *
+     * POST /accountant/payroll/batch/confirm
+     *
+     * Creates payroll + payslip_items records in a single transaction.
+     * For large batches (> 20 staff), dispatches a queue job.
+     */
+    public function batchConfirm(Request $request)
+    {
+        $request->validate([
+            'template_id' => 'required|exists:payroll_templates,id',
+            'start_date'  => 'required|date',
+            'end_date'    => 'required|date|after_or_equal:start_date',
+            'rows'        => 'required|array|min:1',
+            'rows.*.staff_id'        => 'required|exists:users,id',
+            'rows.*.salary_id'       => 'required|exists:salaries,id',
+            'rows.*.gross'           => 'required|numeric|min:0',
+            'rows.*.paye'            => 'required|numeric|min:0',
+            'rows.*.nssf'            => 'required|numeric|min:0',
+            'rows.*.lst'             => 'required|numeric|min:0',
+            'rows.*.leave_deduction' => 'nullable|numeric|min:0',
+            'rows.*.net_pay'         => 'required|numeric|min:0',
+        ]);
+
+        $schoolId = Auth::user()->school_id;
+        $staffCount = count($request->input('rows'));
+
+        if ($staffCount > 20) {
+            // Dispatch to queue for large batches
+            \App\Jobs\ProcessBatchPayroll::dispatch(
+                $schoolId,
+                Auth::id(),
+                $request->input('template_id'),
+                $request->input('start_date'),
+                $request->input('end_date'),
+                $request->input('rows')
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Batch payroll for {$staffCount} staff has been queued for processing.",
+                'queued'  => true,
+            ]);
+        }
+
+        // Process inline for small batches
+        $payrollNumbers = $this->processBatchRows(
+            $schoolId,
+            Auth::id(),
+            $request->input('template_id'),
+            $request->input('start_date'),
+            $request->input('end_date'),
+            $request->input('rows')
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Payroll created for {$staffCount} staff.",
+            'payroll_numbers' => $payrollNumbers,
+            'queued'  => false,
+        ]);
+    }
+
+    /**
+     * Process batch payroll rows — creates payroll + payslip_items.
+     */
+    private function processBatchRows(int $schoolId, int $userId, int $templateId, string $startDate, string $endDate, array $rows): array
+    {
+        $payrollNumbers = [];
+
+        \DB::beginTransaction();
+        try {
+            foreach ($rows as $row) {
+                // Generate payroll number
+                $payrollNo = $this->getNextPayrollNumber($schoolId);
+
+                $payroll = Payroll::create([
+                    'school_id'      => $schoolId,
+                    'payrollno'      => $payrollNo,
+                    'staff_id'       => $row['staff_id'],
+                    'salary_id'      => $row['salary_id'],
+                    'start_date'     => $startDate,
+                    'end_date'       => $endDate,
+                    'percentage'     => 100,
+                    'leave'          => 0,
+                    'leave_deduction'=> $row['leave_deduction'] ?? 0,
+                    'status'         => 'unpaid',
+                    'comments'       => "Batch run from template #{$templateId}",
+                ]);
+
+                // Create payslip items for statutory deductions
+                $salary = Salary::with('salaryitems')->find($row['salary_id']);
+                if ($salary && $salary->salaryitems->isNotEmpty()) {
+                    foreach ($salary->salaryitems as $item) {
+                        PayslipItem::create([
+                            'payroll_id'     => $payroll->id,
+                            'salary_item_id' => $item->id,
+                            'amount'         => $item->amount,
+                        ]);
+                    }
+                }
+
+                $payrollNumbers[] = $payrollNo;
+            }
+
+            \DB::commit();
+        } catch (Exception $e) {
+            \DB::rollBack();
+            Log::error('Batch payroll failed: ' . $e->getMessage());
+
+            throw $e;
+        }
+
+        return $payrollNumbers;
+    }
+
+    /**
+     * Generate the next payroll number for a school.
+     */
+    private function getNextPayrollNumber(int $schoolId): string
+    {
+        $last = Payroll::where('school_id', $schoolId)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if (!$last) {
+            return '#_' . str_pad('1', 3, '0', STR_PAD_LEFT);
+        }
+
+        $parts = explode('_', $last->payrollno);
+        $num = isset($parts[1]) ? (int) $parts[1] + 1 : 1;
+
+        return '#_' . str_pad((string) $num, 3, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    /**
+     * Display a printable branded payslip (HTML, print-styled).
+     */
+    public function printPayslip($id)
+    {
+        $payroll = Payroll::with(['user.school', 'user.userprofile', 'user.teacherprofile', 'payslipitems.salaryitem.templateitem.payrollitem'])->findOrFail($id);
+
+        $logo = null;
+        if (Auth::user()->SchoolLogo['meta_value'] != '-') {
+            $logo = Auth::user()->SchoolLogoPath;
+        }
+
+        return view('accountant.payroll.payslip.payslip-branded', [
+            'payroll' => $payroll,
+            'logo'    => $logo,
+        ]);
     }
 
     /**

@@ -28,11 +28,17 @@ class ToshiAssistantAgent extends Agent
     private string $lastQueryTier = 'unknown';
 
     private bool $lastQueryCached = false;
+    private ?int $currentSchoolId = null;
 
     public function __construct()
     {
         parent::__construct('toshi-assistant');
         $this->laragentEnabled = config('toshi.laragent_enabled', false);
+    }
+
+    private function getSchoolId(): ?int
+    {
+        return $this->currentSchoolId;
     }
 
     public function instructions(): string
@@ -46,6 +52,8 @@ class ToshiAssistantAgent extends Agent
 
     public function handleQuery(User $user, ?int $schoolId, string $query, array $history = []): ?string
     {
+        $this->currentSchoolId = $schoolId;
+
         if (!$this->laragentEnabled) {
             return null;
         }
@@ -498,4 +506,72 @@ class ToshiAssistantAgent extends Agent
         $balance = $totalFees - $paid;
         return ['success' => true, 'message' => "Balance: " . number_format(max(0, $balance), 0) . " UGX", 'data' => ['balance' => max(0, $balance)]];
     }
+
+    // ══════════════════════════════════════════════════
+    //  Grading system tools
+    // ══════════════════════════════════════════════════
+
+    #[Tool('Set the grading scale for a class/standard. Provide standard name, and array of grade definitions with grade label, min_score, max_score, points (optional), remark (optional). Example: [{"grade":"A","min_score":80,"max_score":100,"points":1,"remark":"Excellent"},...]. Returns the new grade rules.')]
+    public function toolSetGradingScale(string $standardName, array $gradeDefinitions): array
+    {
+        $schoolId = $this->getSchoolId();
+        if (!$schoolId) {
+            return ['success' => false, 'message' => 'No school context.'];
+        }
+        $standard = \App\Models\Standard::where('school_id', $schoolId)->where('name', $standardName)->first();
+        if (!$standard) {
+            return ['success' => false, 'message' => "Standard '{$standardName}' not found."];
+        }
+
+        // Remove existing rules for this standard
+        \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)
+            ->where('standard_id', $standard->id)->delete();
+
+        foreach ($gradeDefinitions as $def) {
+            \App\Models\Academics\SchoolGradingSystem::create([
+                'school_id'   => $schoolId,
+                'standard_id' => $standard->id,
+                'grade'       => $def['grade'],
+                'min_score'   => (int) ($def['min_score'] ?? 0),
+                'max_score'   => (int) ($def['max_score'] ?? 100),
+                'points'      => isset($def['points']) ? (int) $def['points'] : null,
+                'remark'      => $def['remark'] ?? '',
+            ]);
+        }
+
+        \Illuminate\Support\Facades\Cache::forget("school_grading_{$schoolId}");
+
+        return ['success' => true, 'message' => "Grading scale updated for {$standardName}."];
+    }
+
+    #[Tool('View the current grading scale for a class/standard. Provide the standard name (e.g. "Primary One", "Senior Three"). Returns grade rules.')]
+    public function toolViewGradingScale(string $standardName): array
+    {
+        $schoolId = $this->getSchoolId();
+        if (!$schoolId) {
+            return ['success' => false, 'message' => 'No school context.'];
+        }
+        $standard = \App\Models\Standard::where('school_id', $schoolId)->where('name', $standardName)->first();
+        if (!$standard) {
+            return ['success' => false, 'message' => "Standard '{$standardName}' not found."];
+        }
+        $rules = \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)
+            ->where('standard_id', $standard->id)
+            ->orderByDesc('max_score')
+            ->get(['grade', 'min_score', 'max_score', 'points', 'remark']);
+
+        return ['success' => true, 'message' => "Grading scale for {$standardName}", 'data' => ['grades' => $rules->toArray()]];
+    }
+
+    #[Tool('Seed default MoE Uganda grading scales for all standards in the school. Uses the Ministry of Education recommended grade boundaries per level (primary/o-level/a-level/nursery).')]
+    public function toolSeedDefaultGrading(): array
+    {
+        $schoolId = $this->getSchoolId();
+        if (!$schoolId) {
+            return ['success' => false, 'message' => 'No school context.'];
+        }
+        \App\Helpers\GradingHelper::seedAllGradingForSchool($schoolId);
+        return ['success' => true, 'message' => 'Default MoE grading scales seeded for all standards.'];
+    }
+
 }

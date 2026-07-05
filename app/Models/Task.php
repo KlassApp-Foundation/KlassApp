@@ -5,14 +5,16 @@
  */
 namespace App\Models;
 
+use App\Models\Concerns\HasApprovals;
+use App\Models\Contracts\Approvable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
-class Task extends Model
+class Task extends Model implements Approvable
 {
-    //
     use SoftDeletes;
+    use HasApprovals;
 
     /**
      * The table associated with the model.

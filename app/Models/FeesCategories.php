@@ -8,10 +8,25 @@ use Illuminate\Database\Eloquent\Model;
 class FeesCategories extends Model
 {
     use HasFactory;
-    protected $fillable = ["school_id", "standard_id", "section_id", "academic_term_id", "name", "amount" ];
+    protected $fillable = [
+        "school_id", "standard_id", "section_id", "academic_term_id", "name", "amount",
+        "due_date", "enable_installments", "max_installments", "deposit_required",
+        "late_fee_percent", "late_fee_flat", "grace_days",
+        "discount_percent", "discount_flat", "discount_until",
+        "fee_type",
+    ];
 
-    // for laravel to return 1.50 instead of 1.5
-    protected $casts = ["amount" => "decimal:2"];
+    protected $casts = [
+        "amount"              => "decimal:2",
+        "due_date"            => "date",
+        "enable_installments" => "boolean",
+        "deposit_required"    => "decimal:2",
+        "late_fee_percent"    => "decimal:2",
+        "late_fee_flat"       => "decimal:2",
+        "discount_percent"    => "decimal:2",
+        "discount_flat"       => "decimal:2",
+        "discount_until"      => "date",
+    ];
 
     public function school(){
         return $this->belongsTo(School::class, "school_id");

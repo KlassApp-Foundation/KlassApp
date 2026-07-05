@@ -25,6 +25,8 @@
 | Email verification | ⚠️ | OTP is primary channel; email verification flow needs end-to-end testing |
 | Password reset | ✅ | `ForgotPasswordController` exists |
 | Impersonation | ✅ | `ImpersonateController` for superadmin support |
+| Impersonation boundaries | ❓ | Can School Admin impersonate teacher/librarian/student? Confirm which roles, and confirm reverse (teacher→admin) is impossible. |
+| Role-capability scoping | ❓ | If any module uses a capability/permission system similar to Toshi's `getRoleCapabilities()`, verify School Admin's actual allowed actions match documented expectations — not just that routes are gated, but the capability list itself is correct. |
 | Multi-role routing | ✅ | `MustBeSchoolAdmin` middleware correctly routes usergroup_id → dashboard |
 
 ### Recommendation

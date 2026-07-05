@@ -18,10 +18,18 @@ class UgSubjectController extends Controller
      */
     protected function shipData(){
          $school_id = Auth::user()->school_id;
+         $sections = Section::where("school_id", $school_id)->with('standardLink')->get();
+         // Map section_id -> standard_id for the auto-populating JS in the form
+         $sectionStandardMap = [];
+         foreach ($sections as $section) {
+             $firstLink = $section->standardLink->first();
+             $sectionStandardMap[$section->id] = $firstLink?->standard_id ?? '';
+         }
          return [
-            "sections" => Section::where("school_id", $school_id)->get(),
+            "sections" => $sections,
         "standards" => Standard::where("school_id", $school_id)->get(),
-        "types" => ["Core", "Elective"]
+        "types" => ["Core", "Elective"],
+        "sectionStandardMap" => $sectionStandardMap,
          ];
     }
     public function index()

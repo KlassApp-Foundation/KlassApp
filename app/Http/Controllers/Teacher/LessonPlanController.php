@@ -31,7 +31,7 @@ class LessonPlanController extends Controller
     {
         //
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-        if(Auth::user()->hasRole('principal'))
+        if(Auth::user()->hasDesignation('principal'))
         {
             $lessonplan = LessonPlan::with('teacherlink')->whereHas('teacherlink' , function ($query) use($academic_year)
             { 
@@ -74,7 +74,7 @@ class LessonPlanController extends Controller
     public function index()
     {
         //
-        if(Auth::user()->hasRole('principal'))
+        if(Auth::user()->hasDesignation('principal'))
         {
             $role = 'principal';
         }

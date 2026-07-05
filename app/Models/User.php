@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Laracasts\Presenter\PresentableTrait;
 use Illuminate\Notifications\Notifiable;
-use Laratrust\Traits\LaratrustUserTrait;
+
 use Spatie\MediaLibrary\Models\Media;
 use Laravel\Sanctum\HasApiTokens;
 use App\Presenters\UserPresenter;
@@ -26,7 +26,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class User extends Authenticatable implements HasMedia
 {
     use \Nckg\Impersonate\Traits\CanImpersonate;
-    use LaratrustUserTrait;
     use PresentableTrait;
    // use HasMediaTrait;
     use InteractsWithMedia;
@@ -49,7 +48,11 @@ class User extends Authenticatable implements HasMedia
      * @var array
      */
     protected $fillable = [
-        'school_id' , 'usergroup_id' , 'ref_id' ,'name', 'email', 'password','mobile_no','is_activated', 'email_verification_code' , 'email_verified' , 'email_verified_at' , 'platform_token' , 'remember_token', 'registration_role'
+        'school_id' , 'usergroup_id' , 'ref_id' ,'name', 'email', 'password','mobile_no','is_activated', 'email_verification_code' , 'email_verified' , 'email_verified_at' , 'platform_token' , 'remember_token', 'registration_role', 'teacher_designations'
+    ];
+
+    protected $casts = [
+        'teacher_designations' => 'array',
     ];
 
     /**
@@ -134,6 +137,31 @@ class User extends Authenticatable implements HasMedia
 
 
         return $query;
+    }
+
+    public function hasDesignation(string $role): bool
+    {
+        return in_array($role, $this->teacher_designations ?? []);
+    }
+
+    public function addDesignation(string $role): void
+    {
+        $designations = $this->teacher_designations ?? [];
+        if (!in_array($role, $designations)) {
+            $designations[] = $role;
+            $this->teacher_designations = $designations;
+            $this->saveQuietly();
+        }
+    }
+
+    public function removeDesignation(string $role): void
+    {
+        $designations = $this->teacher_designations ?? [];
+        $filtered = array_values(array_filter($designations, fn($r) => $r !== $role));
+        if ($filtered !== $designations) {
+            $this->teacher_designations = $filtered;
+            $this->saveQuietly();
+        }
     }
 
     public function children()

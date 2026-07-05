@@ -109,7 +109,15 @@ class ToshiAssistantAgentTest extends TestCase
     /** @test */
     public function feature_flag_defaults_to_disabled()
     {
-        $this->assertFalse(config('toshi.laragent_enabled'));
+        // Scrub env var from all three PHP sources (getenv, $_SERVER, $_ENV),
+        // then clear Laravel's immutable Env repository so it re-reads fresh.
+        // Without all three, the var leaks from $_SERVER into the rebuilt repo.
+        putenv('TOSHI_LARAGENT_ENABLED');
+        unset($_SERVER['TOSHI_LARAGENT_ENABLED'], $_ENV['TOSHI_LARAGENT_ENABLED']);
+        $reflection = new \ReflectionClass(\Illuminate\Support\Env::class);
+        $reflection->setStaticPropertyValue('repository', null);
+
+        $this->assertFalse(env('TOSHI_LARAGENT_ENABLED', false));
     }
 
     /** @test */

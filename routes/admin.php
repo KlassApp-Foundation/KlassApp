@@ -868,6 +868,25 @@ Route::post('/fees/payments/unmatched/{transaction}/match', 'FeePaymentControlle
 
 //Addons
 
+// Health records are per-student under admin/student/health/{userId}
+Route::get('/health', function () {
+    return redirect('/admin/students');
+})->name('admin.health');
+
+Route::get('/messages', function () {
+    return redirect('/admin/sentmessages');
+})->name('admin.messages.redirect');
+
+Route::get('/library', function () {
+    return redirect('/library/books/index');
+})->name('admin.library.redirect');
+
+// Seed MoE default grading scales for the school
+Route::post('/grades/seed-defaults', function (\Illuminate\Http\Request $req) {
+    \App\Helpers\GradingHelper::seedAllGradingForSchool(\Illuminate\Support\Facades\Auth::user()->school_id);
+    return redirect()->route('admin.grades')->with('successmessage', 'Default MoE grading scales seeded.');
+})->name('admin.grades.seed');
+
 Route::get('/addon', function () {
     return view('admin.addon.index');
 });
