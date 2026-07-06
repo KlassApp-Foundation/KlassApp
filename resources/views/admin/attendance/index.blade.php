@@ -1,12 +1,16 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div class="px-4 md:px-6 py-4">
 
-    <h1 class="text-3xl font-bold mb-6">Student Attendance</h1>
+    <div class="ds-page-head">
+        <div>
+            <h1 class="ds-page-head-title">Student Attendance</h1>
+        </div>
+    </div>
 
     <!-- Filters -->
-    <form method="GET" class="bg-white p-5 shadow rounded-lg mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+    <form method="GET" class="ds-card ds-card-padding-default ds-card-shadow-sm mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
             <label class="block text-sm mb-1">Date</label>
             <input type="date" name="date" value="{{ $date }}" class="tw-form-control w-full">

@@ -48,7 +48,7 @@ Route::group([ 'namespace' =>'Approval' ], function () {
          Route::get( '/assignment/viewers/{id}', 'AssignmentController@view' );
 
         //assignment-approval
-        Route::group(['middleware' => ['role:principal']], function () {
+        Route::group(['middleware' => ['designation:principal']], function () {
             //approve
             Route::post('/assignment/approve/{id}', 'AssignmentApprovalController@approve');
 
@@ -134,7 +134,7 @@ Route::get( '/conversations', 'ConversationController@index' )->name( 'teacher.c
 Route::get( '/conversations/create', 'ConversationController@create' )->name( 'teacher.conversations.create' );
 Route::get( '/conversations/{conversation}', 'ConversationController@show' )->name( 'teacher.conversations.show' );
 
-Route::group(['middleware' => ['role:leave_checker']], function () {
+Route::group(['middleware' => ['designation:leave_checker']], function () {
     //my leaves
     Route::get('/leave/mylist', 'LeaveController@myList');
     Route::get('/myleaves', 'LeaveController@myIndex');
@@ -182,7 +182,7 @@ Route::post('/lessonplan/edit/stepThree/{id}', 'LessonPlanEditController@stepThr
 Route::post('/lessonplan/edit/stepFour/{id}', 'LessonPlanEditController@stepFour');
 
 //lesson-plan-approval
-Route::group(['middleware' => ['role:principal']], function () {
+Route::group(['middleware' => ['designation:principal']], function () {
     //approve
     Route::post('/lessonplan/approve/{id}', 'LessonPlanApprovalController@approve');
 
@@ -414,7 +414,7 @@ Route::post('/notification/read', 'NotificationController@store');
 Route::get('/notification/showList', 'NotificationController@showList');
 
 //student leave
-Route::group(['middleware' => ['role:student_leave_checker']], function () {
+Route::group(['middleware' => ['designation:student_leave_checker']], function () {
     Route::get('/studentLeave/list/{status}','StudentLeaveController@indexList');
     Route::get('/studentLeaves','StudentLeaveController@index');
 

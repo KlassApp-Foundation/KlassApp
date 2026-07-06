@@ -2,25 +2,25 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-    <div class="">
+    <div class="px-4 md:px-6 py-4">
         @include('partials.message')
-        <div>
-            <h1 class="admin-h1 my-3 flex items-center">
-                <a href="{{ url('/admin/parents') }}" class="rounded-full bg-gray-100 p-2" title="Back">
-                    <svg class="w-3 h-3 fill-current text-gray-700" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 492 492" style="enable-background:new 0 0 492 492;" xml:space="preserve" width="512px" height="512px"><g><g><g><path d="M464.344,207.418l0.768,0.168H135.888l103.496-103.724c5.068-5.064,7.848-11.924,7.848-19.124 c0-7.2-2.78-14.012-7.848-19.088L223.28,49.538c-5.064-5.064-11.812-7.864-19.008-7.864c-7.2,0-13.952,2.78-19.016,7.844 L7.844,226.914C2.76,231.998-0.02,238.77,0,245.974c-0.02,7.244,2.76,14.02,7.844,19.096l177.412,177.412 c5.064,5.06,11.812,7.844,19.016,7.844c7.196,0,13.944-2.788,19.008-7.844l16.104-16.112c5.068-5.056,7.848-11.808,7.848-19.008 c0-7.196-2.78-13.592-7.848-18.652L134.72,284.406h329.992c14.828,0,27.288-12.78,27.288-27.6v-22.788 C492,219.198,479.172,207.418,464.344,207.418z" data-original="#000000" class="active-path" fill=""/></g></g></g> </svg>
-                </a>
-                <span class="mx-3">Parent Profile</span>
-            </h1>
+        <div class="ds-page-head">
+            <div class="flex items-center gap-3">
+                <x-button href="{{ url('/admin/parents') }}" variant="ghost" size="sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </x-button>
+                <h1 class="ds-page-head-title">Parent Profile</h1>
+            </div>
         </div>
         <div class="flex lg:items-center lg:justify-between flex-col lg:flex-row mx-5">
             <h3 class="font-semibold text-3xl text-gray-700">{{ ucwords($user->FullName) }}</h3>
-            <div class="my-3 flex flex-wrap text-xs"> 
-                <a href="{{url('/admin/parent/edit/'.$user->name)}}" title="Edit Member" class="capitalize text-white blue-bg rounded px-2 py-1 font-medium text-xs my-1 lg:my-0 md:my-0 flex items-center mr-2" id="edit">
-                    <svg class="w-3 h-3 fill-current text-white" id="Capa_1" enable-background="new 0 0 512 512" height="512" viewBox="0 0 512 512" width="512" xmlns="http://www.w3.org/2000/svg"><g><path d="m128.285 260.925h319.073v75h-319.073z" transform="matrix(.707 -.707 .707 .707 -126.717 290.929)"/><path d="m29.021 422.521-29.021 89.479 89.481-29.02z"/><path d="m54.039 186.679h319.073v75h-319.073z" transform="matrix(.707 -.707 .707 .707 -95.964 216.682)"/><path d="m371.541 5.46h90v180h-90z" transform="matrix(.707 -.707 .707 .707 54.502 322.498)"/><path d="m57.148 335.796-17.737 54.689 82.106 82.105 54.689-17.737z"/></g></svg>
-                    <span class="mx-1">Edit</span>
-                </a>
+            <div class="flex items-center gap-2"> 
+                <x-button href="{{ url('/admin/parent/edit/'.$user->name) }}" variant="primary" size="sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit
+                </x-button>
 
-                <form id="parent_delete" action="{{ url('/admin/parent/delete', ['name'=>$user->name]) }}" method="POST" class="capitalize text-white blue-bg rounded px-2 py-1 font-medium text-xs my-1 lg:my-0 md:my-0 flex items-center mr-2" id="delete">
+                <form id="parent_delete" action="{{ url('/admin/parent/delete', ['name'=>$user->name]) }}" method="POST" class="inline">x items-center mr-2" id="delete">
                     @csrf
                     @method('delete')
                                    

@@ -3,13 +3,13 @@
     <div v-show="this.formshow==1">
 	   
       <div class="flex flex-col lg:flex-row md:flex-row">
-        <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+        <div class="w-full lg:w-1/2 md:w-1/2">
           <div class="lg:mr-8 md:mr-8">
             <div class="mb-2">
-              <label  class="tw-form-label">Staff<span class="text-red-500">*</span></label>
+              <label  class="text-sm font-medium text-gray-700">Staff<span class="text-red-500">*</span></label>
             </div>
             <div class="mb-2">
-               <select name="staff_id"  v-model="staff_id" class="tw-form-control w-full">
+               <select name="staff_id"  v-model="staff_id" class="text-sm border rounded px-3 py-2 w-full">
                 <option value="" disabled>Select staff</option>
                 <option v-for="staff in staffs" v-bind:value="staff.id">{{staff.name}}</option>
               </select><br>
@@ -20,13 +20,13 @@
         </div>
       </div>
       <div class="flex flex-col lg:flex-row md:flex-row">
-        <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+        <div class="w-full lg:w-1/2 md:w-1/2">
           <div class="lg:mr-8 md:mr-8">
             <div class="mb-2">
-              <label for="type" class="tw-form-label">Start date<span class="text-red-500">*</span></label>
+              <label for="type" class="text-sm font-medium text-gray-700">Start date<span class="text-red-500">*</span></label>
             </div>
             <div class="mb-2">
-             <input v-model="start_date" name="start_date"  value="start_date" type="date" class="tw-form-control w-full"><br>
+             <input v-model="start_date" name="start_date"  value="start_date" type="date" class="text-sm border rounded px-3 py-2 w-full"><br>
               <span v-if="errors.start_date" class="text-red-500 text-xs font-semibold">{{errors.start_date[0]}}</span>
             </div>
             </div>
@@ -36,13 +36,13 @@
       
             
      <div class="flex flex-col lg:flex-row md:flex-row">
-        <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+        <div class="w-full lg:w-1/2 md:w-1/2">
           <div class="lg:mr-8 md:mr-8">
             <div class="mb-2">
-              <label for="type" class="tw-form-label">End date<span class="text-red-500">*</span></label>
+              <label for="type" class="text-sm font-medium text-gray-700">End date<span class="text-red-500">*</span></label>
             </div>
             <div class="mb-2">
-             <input v-model="end_date" name="end_date"  value="end_date" type="date" class="tw-form-control w-full">
+             <input v-model="end_date" name="end_date"  value="end_date" type="date" class="text-sm border rounded px-3 py-2 w-full">
             </div>
           </div>
            <span v-if="errors.end_date" class="text-red-500 text-xs font-semibold">{{errors.end_date[0]}}</span>
@@ -51,7 +51,7 @@
         
      
       <div class="my-6">
-        <a href="#" id="submit-btn" class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="getdetails()">Submit</a>  
+        <a href="#" id="submit-btn" class="btn btn-submit bg-blue-600 text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="getdetails()">Submit</a>  
       </div>  
 </div>
      
@@ -122,13 +122,13 @@
             
            <div  class="w-full lg:w-2/3 px-2">
              <div v-show="payroll.category_id!=4" class="">
-              <input  type="text"  v-model="payroll.amount" class="tw-form-control w-full ml-2" > <br>
+              <input  type="text"  v-model="payroll.amount" class="text-sm border rounded px-3 py-2 w-full ml-2" > <br>
                <span v-if="errors['amount'+k1]" class="text-red-500 text-xs font-semibold ml-2">{{errors['amount'+k1][0]}}</span> 
              </div>
             
             <div v-show="payroll.category_id==4" class="flex-col w-1/2">
-               <!-- <label for="title" class="tw-form-label">{{payroll.amount}}</label> -->
-              <label for="title" class="tw-form-label text-blue-500">{{payroll.category_value}}</label>
+               <!-- <label for="title" class="text-sm font-medium text-gray-700">{{payroll.amount}}</label> -->
+              <label for="title" class="text-sm font-medium text-gray-700 text-blue-500">{{payroll.category_value}}</label>
             </div>
              </div> 
         </div>
@@ -154,13 +154,13 @@
             </div> -->
             
              <div class="flex flex-col lg:flex-row md:flex-row">
-        <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+        <div class="w-full lg:w-1/2 md:w-1/2">
           <div class="lg:mr-8 md:mr-8">
             <div class="mb-2">
-              <label for="type" class="tw-form-label">Comments</label>
+              <label for="type" class="text-sm font-medium text-gray-700">Comments</label>
             </div>
             <div class="mb-2">
-             <input v-model="comments" name="comments"  value="comments" type="text" class="tw-form-control w-full">
+             <input v-model="comments" name="comments"  value="comments" type="text" class="text-sm border rounded px-3 py-2 w-full">
             </div>
           </div>
            <span v-if="errors.comments" class="text-red-500 text-xs font-semibold">{{errors.comments[0]}}</span>
@@ -168,7 +168,7 @@
         </div>
 
       <div class="my-6"  v-show="this.payrolls!=''" >
-        <a href="#" id="submit-btn" class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="check()">Save</a>
+        <a href="#" id="submit-btn" class="btn btn-submit bg-blue-600 text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="check()">Save</a>
         <a href="#" class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 mr-3 text-sm font-medium" @click="resetform()">Reset</a>  
       </div>
 

@@ -3,53 +3,45 @@
 @section('content')
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
 
-@include('layouts.partials.page-header', [
-    'title' => 'Payments',
-    'subtitle' => 'Track all fee payments and financial transactions.',
-    'actions' => '<a href="' . route('admin.fee-payments.create') . '" class="px-3 py-1.5 rounded text-xs text-white bg-green-600 hover:bg-green-700 flex items-center gap-1"><i class="fa-solid fa-plus text-xs"></i> Record Payment</a>'
-])
-
-<div class="relative mt-4">
-    <div class="bg-white rounded-lg shadow p-4">
-            </a>
-        </div>
+<div class="ds-page-head">
+    <div>
+        <h1 class="ds-page-head-title">Payments</h1>
+        <p class="ds-page-head-sub">Track all fee payments and financial transactions.</p>
     </div>
-
-    @include('partials.message')
-
-    <div class="overflow-x-auto">
-        @if($payments->isEmpty())
-            <p class="text-gray-500">No payments recorded yet. Use Toshi or the "Record Payment" button above.</p>
-        @else
-            <table class="min-w-full bg-white border border-gray-400 rounded">
-                <thead class="bg-gray-200 text-left">
-                    <tr>
-                        <th class="py-2 px-4 border border-gray-400">#</th>
-                        <th class="py-2 px-4 border border-gray-400">Student</th>
-                        <th class="py-2 px-4 border border-gray-400">Amount</th>
-                        <th class="py-2 px-4 border border-gray-400">Method</th>
-                        <th class="py-2 px-4 border border-gray-400">Reference</th>
-                        <th class="py-2 px-4 border border-gray-400">Fee Category</th>
-                        <th class="py-2 px-4 border border-gray-400">Paid On</th>
-                        <th class="py-2 px-4 border border-gray-400">Recorded By</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($payments as $payment)
-                        <tr class="hover:bg-gray-50">
-                            <td class="py-2 px-4 border border-gray-400">{{ $loop->iteration }}</td>
-                            <td class="py-2 px-4 border border-gray-400">{{ $payment->student->name ?? 'Deleted' }}</td>
-                            <td class="py-2 px-4 border border-gray-400">{{ number_format($payment->amount, 0) }} UGX</td>
-                            <td class="py-2 px-4 border border-gray-400">{{ $payment->payment_method ?? '-' }}</td>
-                            <td class="py-2 px-4 border border-gray-400">{{ $payment->reference ?? '-' }}</td>
-                            <td class="py-2 px-4 border border-gray-400">{{ $payment->feeCategory->name ?? '-' }}</td>
-                            <td class="py-2 px-4 border border-gray-400">{{ \Carbon\Carbon::parse($payment->paid_on)->format('d M Y') }}</td>
-                            <td class="py-2 px-4 border border-gray-400">{{ $payment->recorder->name ?? '-' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @endif
+    <div class="flex items-center gap-2">
+        <x-button href="{{ route('admin.fee-payments.create') }}" variant="success" size="sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Record Payment
+        </x-button>
     </div>
+</div>
+
+@include('partials.message')
+
+@if($payments->isEmpty())
+    <x-card padding="lg" class="text-center">
+        <p class="text-gray-400 text-sm">No payments recorded yet. Use Toshi or the "Record Payment" button above.</p>
+    </x-card>
+@else
+    <x-table :headers="['#', 'Student', 'Amount', 'Method', 'Reference', 'Fee Category', 'Paid On', 'Recorded By']" striped hover class="mt-4">
+        @foreach($payments as $payment)
+        <tr>
+            <td>{{ $loop->iteration }}</td>
+            <td class="font-medium">{{ $payment->student->name ?? 'Deleted' }}</td>
+            <td>{{ number_format($payment->amount, 0) }} UGX</td>
+            <td>{{ $payment->payment_method ?? '-' }}</td>
+            <td><code>{{ $payment->reference ?? '-' }}</code></td>
+            <td>{{ $payment->feeCategory->name ?? '-' }}</td>
+            <td>{{ \Carbon\Carbon::parse($payment->paid_on)->format('d M Y') }}</td>
+            <td>{{ $payment->recordedBy->name ?? '—' }}</td>
+        </tr>
+        @endforeach
+    </x-table>
+
+    <div class="mt-4">
+        {{ $payments->links() }}
+    </div>
+@endif
+
 </div>
 @endsection

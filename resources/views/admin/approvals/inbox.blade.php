@@ -16,7 +16,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="bg-white rounded-lg shadow border border-gray-100 p-4 dashboard-kpi-card">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:#FEF3C7;color:#D97706;">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-amber-100 text-amber-600">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
                 <div>
@@ -28,7 +28,7 @@
 
         <div class="bg-white rounded-lg shadow border border-gray-100 p-4 dashboard-kpi-card">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:#DCFCE7;color:#22C55E;">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-100 text-green-600">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
                 <div>
@@ -40,7 +40,7 @@
 
         <div class="bg-white rounded-lg shadow border border-gray-100 p-4 dashboard-kpi-card">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:#FEE2E2;color:#EF4444;">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-red-100 text-red-500">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
                 <div>
@@ -116,16 +116,14 @@
                                                 @csrf
                                                 <input type="hidden" name="comments" value="">
                                                 <button type="submit"
-                                                        class="px-3 py-1 text-xs font-medium rounded text-white border-0"
-                                                        style="background:#22C55E;"
-                                                        onclick="return confirm('Approve this request?')">
+                                                         class="px-3 py-1 text-xs font-medium rounded text-white border-0 bg-green-600 hover:bg-green-500"
+                                                         onclick="return confirm('Approve this request?')">
                                                     Approve
                                                 </button>
                                             </form>
                                             <button type="button"
-                                                    class="px-3 py-1 text-xs font-medium rounded text-white border-0"
-                                                    style="background:#EF4444;"
-                                                    onclick="document.getElementById('reject-form-{{ $approval->id }}').classList.toggle('hidden')">
+                                                     class="px-3 py-1 text-xs font-medium rounded text-white border-0 bg-red-500 hover:bg-red-400"
+                                                     onclick="document.getElementById('reject-form-{{ $approval->id }}').classList.toggle('hidden')">
                                                 Reject
                                             </button>
                                             <form id="reject-form-{{ $approval->id }}"
@@ -135,8 +133,7 @@
                                                 <input type="text" name="comments" placeholder="Reason required..."
                                                        class="text-xs border rounded px-2 py-1 w-32" required>
                                                 <button type="submit"
-                                                        class="px-2 py-1 text-xs font-medium rounded text-white border-0"
-                                                        style="background:#EF4444;">
+                                                         class="px-2 py-1 text-xs font-medium rounded text-white border-0 bg-red-500 hover:bg-red-400">
                                                     Confirm
                                                 </button>
                                             </form>

@@ -126,7 +126,7 @@ class DownloadStudentReport extends Controller
                 mkdir(storage_path("app/dompdf/fonts"), 0775, true);
             }
             if (!$learner) {
-          abort(404, "Student not found or has no marks.");
+          return redirect()->back()->with('error', 'This student has no marks recorded for this exam yet.');
              }
             $first_name = $learner->userprofile->firstname ?? "student";
             $last_name = $learner->userprofile->lastname ?? "unknown";

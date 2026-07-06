@@ -3,13 +3,13 @@
     <div>
 	    <div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{this.success}}</div>
       <div class="flex flex-wrap">
-        <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+        <div class="w-full lg:w-1/2 md:w-1/2">
           <div class="lg:mr-6 md:mr-6">
             <div class="mb-2">
-              <label  class="tw-form-label">Staff<span class="text-red-500">*</span></label>
+              <label  class="text-sm font-medium text-gray-700">Staff<span class="text-red-500">*</span></label>
             </div>
             <div class="mb-2">
-               <select name="staff_id"  v-model="staff_id" class="tw-form-control w-full">
+               <select name="staff_id"  v-model="staff_id" class="text-sm border rounded px-3 py-2 w-full">
                 <option value="" disabled>Select staff</option>
                 <option v-for="staff in staffs" v-bind:value="staff.id">{{staff.name}}</option>
               </select>
@@ -19,13 +19,13 @@
         </div>
       
       
-        <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+        <div class="w-full lg:w-1/2 md:w-1/2">
           <div class="lg:mr-6 md:mr-6">
             <div class="mb-2">
-              <label for="type" class="tw-form-label">Salary Template<span class="text-red-500">*</span></label>
+              <label for="type" class="text-sm font-medium text-gray-700">Salary Template<span class="text-red-500">*</span></label>
             </div>
             <div class="mb-2">
-              <select name="template_id"  v-model="template_id" class="tw-form-control w-full" @change="typechange()">
+              <select name="template_id"  v-model="template_id" class="text-sm border rounded px-3 py-2 w-full" @change="typechange()">
                 <option value="" disabled>Select template</option>
                 <option v-for="template in templates" v-bind:value="template.id">{{template.name}}</option>
               </select>
@@ -36,20 +36,20 @@
         
       
  
-            <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+            <div class="w-full lg:w-1/2 md:w-1/2">
               <div class="lg:mr-6 md:mr-6">
-              <label class="tw-form-label">Gross salary</label>
+              <label class="text-sm font-medium text-gray-700">Gross salary</label>
               <div class="my-1">
-                      <input v-model="gross_salary" name="gross_salary"  value="gross_salary" type="text" class="tw-form-control w-full" @change="basicsalary" ><span v-if="errors.gross_salary" class="text-red-500 text-xs font-semibold">{{errors.gross_salary[0]}}</span>
+                      <input v-model="gross_salary" name="gross_salary"  value="gross_salary" type="text" class="text-sm border rounded px-3 py-2 w-full" @change="basicsalary" ><span v-if="errors.gross_salary" class="text-red-500 text-xs font-semibold">{{errors.gross_salary[0]}}</span>
               </div>
               </div>
               </div>
 
-            <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+            <div class="w-full lg:w-1/2 md:w-1/2">
               <div class="lg:mr-6 md:mr-6">
-              <label class="tw-form-label">Effective date</label>
+              <label class="text-sm font-medium text-gray-700">Effective date</label>
               <div class="my-1">
-                      <input v-model="effective_date" name="effective_date"  value="effective_date" type="date" class="tw-form-control w-full"><span v-if="errors.effective_date" class="text-red-500 text-xs font-semibold">{{errors.effective_date[0]}}</span>
+                      <input v-model="effective_date" name="effective_date"  value="effective_date" type="date" class="text-sm border rounded px-3 py-2 w-full"><span v-if="errors.effective_date" class="text-red-500 text-xs font-semibold">{{errors.effective_date[0]}}</span>
               </div>
               </div>
               </div>
@@ -57,16 +57,16 @@
      
 
       <!-- <div class="mb-2">
-        <label for="title" class="tw-form-label">Option<span class="text-red-500">*</span></label>
+        <label for="title" class="text-sm font-medium text-gray-700">Option<span class="text-red-500">*</span></label>
       </div>  -->
       <div class="w-full">
         
         <div class="flex flex-col lg:flex-row md:flex-row">
-            <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+            <div class="w-full lg:w-1/2 md:w-1/2">
               <div class="lg:mr-6 md:mr-6">
-              <label class="tw-form-label">Basic  Percentage</label>
+              <label class="text-sm font-medium text-gray-700">Basic  Percentage</label>
               <div class="my-1">
-                      <input v-model="basic_percentage" name="basic_percentage"  value="basic_percentage" type="text" class="tw-form-control w-full" @change="basicsalary" ><span v-if="errors.basic_percentage" class="text-red-500 text-xs font-semibold">{{errors.basic_percentage[0]}}</span>
+                      <input v-model="basic_percentage" name="basic_percentage"  value="basic_percentage" type="text" class="text-sm border rounded px-3 py-2 w-full" @change="basicsalary" ><span v-if="errors.basic_percentage" class="text-red-500 text-xs font-semibold">{{errors.basic_percentage[0]}}</span>
               </div>
               </div>
               </div>
@@ -77,12 +77,12 @@
  <label for="title" :class="[payroll.head_type=='earning' ? 'text-green-700' : 'text-red-700']" class="w-full lg:w-1/3 mb-1 text-sm font-semibold">{{payroll.head}}({{payroll.category}})<span class="text-red-500">*</span></label>
              <div class="w-full lg:w-2/3">
            <div v-show="payroll.category_id!=4" class="">
-              <input  type="text"  v-model="payroll.amount" class="tw-form-control w-full ml-2" > <br>
+              <input  type="text"  v-model="payroll.amount" class="text-sm border rounded px-3 py-2 w-full ml-2" > <br>
                <span v-if="errors['amount'+k1]" class="text-red-500 text-xs font-semibold ml-2">{{errors['amount'+k1][0]}}</span> 
             </div>  
             
             <div v-show="payroll.category_id==4" class="flex-col w-1/2 px-2">
-              <label for="title" class="tw-form-label">{{payroll.category_value}}</label>
+              <label for="title" class="text-sm font-medium text-gray-700">{{payroll.category_value}}</label>
                <span v-if="errors['category_value'+k1]" class="text-red-500 text-xs font-semibold ml-2">{{errors['category_value'+k1][0]}}</span>
             </div>
             </div>
@@ -90,7 +90,7 @@
       </div>
       
       <div class="my-6"  v-show="this.payrolls!=''" >
-        <a href="#" id="submit-btn" class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="check()">Submit</a>
+        <a href="#" id="submit-btn" class="btn btn-submit bg-blue-600 text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="check()">Submit</a>
     		<a href="#" class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 mr-3 text-sm font-medium" @click="reset()">Reset</a>	
       </div>
 	  </div>

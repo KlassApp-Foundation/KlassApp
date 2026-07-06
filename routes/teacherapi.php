@@ -289,7 +289,7 @@ Route::group([ 'prefix' => 'teacher' , 'middleware'=>['auth:sanctum'] , 'namespa
         
 });
 
-Route::group(['prefix' => 'teacher' , 'middleware' => ['auth:sanctum','role:leave_checker'] , 'namespace' =>'Api\Teacher' ], function() {
+Route::group(['prefix' => 'teacher' , 'middleware' => ['auth:sanctum','designation:leave_checker'] , 'namespace' =>'Api\Teacher' ], function() {
 
     //leave application
 
@@ -305,7 +305,7 @@ Route::group(['prefix' => 'teacher' , 'middleware' => ['auth:sanctum','role:leav
         Route::post('/checkleave/reject/{id}','LeaveController@rejectStore');
 });
 
-Route::group(['prefix' => 'teacher' , 'middleware' => ['auth:sanctum','role:student_leave_checker'] , 'namespace' =>'Api\Teacher' ], function() {
+Route::group(['prefix' => 'teacher' , 'middleware' => ['auth:sanctum','designation:student_leave_checker'] , 'namespace' =>'Api\Teacher' ], function() {
 
     //leave application
 
@@ -323,7 +323,7 @@ Route::group(['prefix' => 'teacher' , 'middleware' => ['auth:sanctum','role:stud
 });
 
 //assignment-approval
-Route::group(['prefix' => 'teacher' , 'middleware' => ['auth:sanctum','role:principal'] , 'namespace' =>'Api\Teacher\Approval' ], function () {
+Route::group(['prefix' => 'teacher' , 'middleware' => ['auth:sanctum','designation:principal'] , 'namespace' =>'Api\Teacher\Approval' ], function () {
     //approve
     Route::post('/assignment/approve/{id}', 'AssignmentApprovalController@approve');
 

@@ -1,142 +1,116 @@
 {{-- SPDX-License-Identifier: MIT --}}
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
 
-@include('layouts.partials.page-header', [
-    'title' => 'Subjects',
-    'subtitle' => 'Browse and manage all subjects across classes.',
-    'actions' => '<a href="' . url('/admin/subjects/create') . '" class="px-3 py-1.5 rounded text-xs text-white bg-green-600 hover:bg-green-700 flex items-center gap-1"><i class="fa-solid fa-plus text-xs"></i> Add Subject</a>'
-])
-
-<div class="relative mt-4">
-   <div class="overflow-x-auto bg-white rounded-lg shadow">
-      <table class="w-full">
-         <thead class="bg-grey-light">
-            <tr class="border-t-2 border-b-2">
-               <th class="text-left text-sm px-2 py-2 text-grey-darker border border-gray-400">Subject Name</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker border border-gray-400">Class</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker border border-gray-400">Subject Code</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker border border-gray-400">Type</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker border border-gray-400">Actions</th>
-            </tr>
-         </thead>
-         @if(count($subject) != 0)
-            <tbody class="bg-grey-light">
-               
-               @foreach($subject as $subjects)
-                  <tr class="border-t-2 border-b-2">    
-                     <td class="py-3 px-2 border border-gray-400">{{ $subjects->name }}</td>
-                     <td class="py-3 px-2 border border-gray-400">{{$subjects->section->name}}</td>
-                     <td class="py-3 px-2 border border-gray-400">{{ $subjects->code }}</td>
-                     <td class="py-3 px-2 border border-gray-400">
-                        {{ $subjects->type ? $subjects->type : "-" }}
-                     </td>
-
-                      <td class="py-3 px-2 flex items-center justify-center gap-4 border border-gray-400">
-                        <a href="{{route('admin.subjects.edit', $subjects)}}" class="capitalize text-white blue-bg rounded px-2 py-1 ml-2 font-medium">Edit</a>
-                        <form action="{{route("admin.subject.destroy", $subjects->id)}}" method='POST' class='inline'>
-                           @csrf
-                           @method("DELETE")
-                           <button type="submit"
-                             class="capitalize text-white bg-red-600 rounded px-2 py-1 font-medium">
-                                 Delete
-                             </button>
-                        </form>
-                     </td>
-                  </tr>
-               @endforeach
-            </tbody>
-
-            {{-- test deleted subjects --}}
-            <thead>
-               <tr>
-                  <th class='py-4 text-lg text-gray-700 font-semibold text-center'>Archieved subjects</th>
-               </tr>
-            </thead>
-             <tbody class="bg-grey-light text-gray-500">
-               @foreach($archievedSubjects as $subjects)
-                  <tr class="border-t-2 border-b-2">    
-                     {{-- {{ dd($subjects->standardlink) }} --}}
-                     <td class="py-3 px-2 bg-gray-300 border border-gray-400">{{ $subjects->name }}</td>
-                     <td class="py-3 px-2 bg-gray-300 border border-gray-400 ">{{ $subjects->standardlink->standard->name}} - {{$subjects->standardlink->section->name  }}</td>
-                     <td class="py-3 px-2 bg-gray-300 border border-gray-400">{{ $subjects->code }}</td>
-                     <td class="py-3 px-2 bg-gray-300 border border-gray-400">
-                        {{ $subjects->type ? $subjects->type : "-" }}
-                     </td>
-
-                      <td class="py-3 px-2 flex items-center justify-center gap-4 bg-gray-300 border border-gray-400">
-                        <form action="{{route("admin.subject.restore", $subjects->id)}}" method='POST'>
-                           @csrf
-                           <button class="capitalize text-white blue-bg rounded px-2 py-1 font-medium">
-                           Restore
-                        </button>
-                        </form>
-                        <form action="{{route("admin.subject.force-delete", $subjects->id)}}" method='POST' class='inline'>
-                           @csrf
-                           @method("DELETE")
-                           <button type="submit"
-                             class="capitalize text-white bg-red-600 rounded px-2 py-1 font-medium">
-                                 Delete Completely
-                             </button>
-                        </form>
-                     </td>
-                  </tr>
-               @endforeach
-            </tbody>
-         @else
-            <tbody class="bg-grey-light">
-               <tr class="border-t-2 border-b-2">    
-                  <td colspan="5" class="py-3 px-2"><p class="font-semibold text-s" style="text-align: center">No Records Found</p></td>
-               </tr>
-            </tbody>
-         @endif
-      </table>      
-   </div>
+<div class="ds-page-head">
+    <div>
+        <h1 class="ds-page-head-title">Subjects</h1>
+        <p class="ds-page-head-sub">Browse and manage all subjects across classes.</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <x-button href="{{ url('/admin/subjects/create') }}" variant="success" size="sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Add Subject
+        </x-button>
+    </div>
 </div>
 
+<div class="relative mt-4">
+   @if(count($subject) != 0)
+   <div class="ds-table-wrap">
+      <table class="ds-table w-full">
+         <thead>
+            <tr>
+               <th>Subject Name</th>
+               <th>Class</th>
+               <th>Subject Code</th>
+               <th>Type</th>
+               <th>Actions</th>
+            </tr>
+         </thead>
+         <tbody>
+            @foreach($subject as $subjects)
+               <tr>
+                  <td class="font-medium">{{ $subjects->name }}</td>
+                  <td>{{ $subjects->section->name ?? '-' }}</td>
+                  <td><code>{{ $subjects->code }}</code></td>
+                  <td>{{ $subjects->type ? $subjects->type : "-" }}</td>
+                  <td class="flex items-center gap-2">
+                     <x-button href="{{ route('admin.subjects.edit', $subjects) }}" variant="ghost" size="sm">Edit</x-button>
+                     <form action="{{ route('admin.subject.destroy', $subjects->id) }}" method='POST' class='inline'>
+                        @csrf
+                        @method("DELETE")
+                        <x-button type="submit" variant="danger" size="sm">Delete</x-button>
+                     </form>
+                  </td>
+               </tr>
+            @endforeach
+         </tbody>
+      </table>
+   </div>
+   @else
+      <x-card padding="lg" class="text-center">
+         <p class="text-gray-400 text-sm">No subjects created yet.</p>
+      </x-card>
+   @endif
 
+   {{-- Archived subjects --}}
+   @if(isset($archievedSubjects) && count($archievedSubjects) > 0)
+   <div class="mt-6">
+      <h3 class="ds-card-title">Archived Subjects</h3>
+      <div class="ds-table-wrap">
+         <table class="ds-table w-full opacity-75">
+            <thead>
+               <tr>
+                  <th>Subject Name</th>
+                  <th>Class</th>
+                  <th>Subject Code</th>
+                  <th>Type</th>
+                  <th>Actions</th>
+               </tr>
+            </thead>
+            <tbody>
+               @foreach($archievedSubjects as $subjects)
+                  <tr class="bg-gray-100">
+                     <td>{{ $subjects->name }}</td>
+                     <td>{{ $subjects->standardlink->standard->name ?? '-' }} - {{ $subjects->standardlink->section->name ?? '' }}</td>
+                     <td><code>{{ $subjects->code }}</code></td>
+                     <td>{{ $subjects->type ? $subjects->type : "-" }}</td>
+                     <td class="flex items-center gap-2">
+                        <form action="{{ route('admin.subject.restore', $subjects->id) }}" method='POST' class='inline'>
+                           @csrf
+                           <x-button type="submit" variant="outline" size="sm">Restore</x-button>
+                        </form>
+                        <form action="{{ route('admin.subject.force-delete', $subjects->id) }}" method='POST' class='inline'>
+                           @csrf
+                           @method("DELETE")
+                           <x-button type="submit" variant="danger" size="sm">Delete Completely</x-button>
+                        </form>
+                     </td>
+                  </tr>
+               @endforeach
+            </tbody>
+         </table>
+      </div>
+   </div>
+   @endif
+</div>
 
 @push('scripts')
-
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 <script type="text/javascript">
-
-
    $(document).ready(function(){
       $('.delete').on('click', function(){
          var link = $(this).attr('rel');
          swal({
             icon: "info",
-            text: "Do you want to delete this Exam ?",
-            buttons: {
-               cancel: true,
-               confirm: true,
-            },
-            allowOutsideClick: false,
-         }).then((willChange) => {
-            if (willChange) 
-            {
-               $.ajax({
-                  url: link,
-                  type: "GET",
-                  headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
-                  success:function(data)
-                  {
-                     swal({
-                        icon: "success",
-                        text: "Exam Deleted Successfully",
-                     }).then(function(){
-                        window.location.reload();
-                     });
-                  }
-               })
-            }
-            else 
-            {
-               swal("Cancelled");
-            } 
+            title: "Are you sure you want to delete subject?",
+            buttons: ["Cancel", "Yes"],
+            dangerMode: true,
+         }).then((willDelete) => {
+            if(willDelete){ window.location = link; }
          });
       });
    });
 </script>
-
-@endpush 
+@endpush
+</div>

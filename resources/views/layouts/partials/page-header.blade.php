@@ -1,8 +1,10 @@
-{{-- Shared page header matching dashboard design --}}
-<div class="dashboard-heading">
+{{-- Shared page header matching design system --}}
+<div class="ds-page-head">
     <div>
-        <h1 class="dashboard-section-title" style="font-size: 1.25rem;">{{ $title }}</h1>
-        <p class="dashboard-subtitle" style="margin-top: 4px;">{{ $subtitle ?? '' }}</p>
+        <h1 class="ds-page-head-title">{{ $title }}</h1>
+        @if(!empty($subtitle))
+            <p class="ds-page-head-sub">{{ $subtitle }}</p>
+        @endif
     </div>
     @if(!empty($actions))
         <div class="flex items-center gap-2">

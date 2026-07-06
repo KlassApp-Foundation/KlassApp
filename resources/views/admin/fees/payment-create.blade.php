@@ -1,91 +1,54 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-<div class="container mx-auto p-2">
-    <div class="flex items-center justify-between mb-4 p-2 bg-gray-100 rounded shadow">
-        <h2 class="text-lg font-semibold">Record Payment</h2>
-        <a href="{{ route('admin.fee-payments') }}"
-           class="bg-gray-500 text-white py-1 px-3 rounded hover:bg-gray-600">
-            &larr; Back
-        </a>
+<div class="dashboard-shell px-4 md:px-6 py-4">
+
+<div class="ds-page-head">
+    <div>
+        <h1 class="ds-page-head-title">Record Payment</h1>
     </div>
+    <div class="flex items-center gap-2">
+        <x-button href="{{ route('admin.fee-payments') }}" variant="ghost" size="sm">
+            &larr; Back
+        </x-button>
+    </div>
+</div>
 
-    @include('partials.message')
-    @if($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            <ul class="list-disc pl-5">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+@include('partials.message')
 
-    <form method="POST" action="{{ route('admin.fee-payments.store') }}" class="bg-white p-6 rounded shadow max-w-lg">
+<x-card shadow="md" class="max-w-lg">
+    <form method="POST" action="{{ route('admin.fee-payments.store') }}">
         @csrf
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Student *</label>
-            <select name="user_id" required
-                    class="w-full border border-gray-400 rounded px-3 py-2">
-                <option value="">Select student...</option>
-                @foreach($students as $student)
-                    <option value="{{ $student->id }}">{{ $student->name }} ({{ $student->email }})</option>
-                @endforeach
-            </select>
-        </div>
+        <x-form-group label="Student" name="user_id" type="select" required
+            :options="$students->pluck('name', 'id')->prepend('Select student...', '')->toArray()"
+            :error="$errors->first('user_id') ?? null" />
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Amount (UGX) *</label>
-            <input type="number" name="amount" min="1" step="0.01" required
-                   class="w-full border border-gray-400 rounded px-3 py-2" placeholder="e.g. 250000">
-        </div>
+        <x-form-group label="Amount (UGX)" name="amount" type="number" required
+            placeholder="e.g. 250000"
+            :error="$errors->first('amount') ?? null" />
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Fee Category</label>
-            <select name="fee_category_id"
-                    class="w-full border border-gray-400 rounded px-3 py-2">
-                <option value="">-- None (general payment) --</option>
-                @foreach($feeCategories as $fee)
-                    <option value="{{ $fee->id }}">{{ $fee->name }} ({{ number_format($fee->amount, 0) }} UGX)</option>
-                @endforeach
-            </select>
-        </div>
+        <x-form-group label="Fee Category" name="fee_category_id" type="select"
+            :options="[ '' => '-- None (general payment) --'] + $feeCategories->pluck('name', 'id')->toArray()"
+            :error="$errors->first('fee_category_id') ?? null" />
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Payment Method</label>
-            <select name="payment_method"
-                    class="w-full border border-gray-400 rounded px-3 py-2">
-                <option value="">-- Select --</option>
-                <option value="cash">Cash</option>
-                <option value="cheque">Cheque</option>
-                <option value="mobile_money">Mobile Money</option>
-                <option value="bank_transfer">Bank Transfer</option>
-            </select>
-        </div>
+        <x-form-group label="Payment Method" name="payment_method" type="select"
+            :options="['' => '-- Select --', 'cash' => 'Cash', 'cheque' => 'Cheque', 'bank_transfer' => 'Bank Transfer', 'mobile_money' => 'Mobile Money']"
+            :error="$errors->first('payment_method') ?? null" />
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Reference (cheque number, transaction ID)</label>
-            <input type="text" name="reference" maxlength="255"
-                   class="w-full border border-gray-400 rounded px-3 py-2" placeholder="Optional">
-        </div>
+        <x-form-group label="Reference" name="reference" type="text"
+            placeholder="Optional reference number"
+            :error="$errors->first('reference') ?? null" />
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Paid On</label>
-            <input type="date" name="paid_on" value="{{ date('Y-m-d') }}"
-                   class="w-full border border-gray-400 rounded px-3 py-2">
-        </div>
+        <x-form-group label="Paid On" name="paid_on" type="date"
+            :value="date('Y-m-d')"
+            :error="$errors->first('paid_on') ?? null" />
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Notes</label>
-            <textarea name="notes" rows="2" maxlength="1000"
-                      class="w-full border border-gray-400 rounded px-3 py-2" placeholder="Optional"></textarea>
+        <div class="flex justify-end mt-6">
+            <x-button type="submit" variant="primary">Record Payment</x-button>
         </div>
-
-        <button type="submit"
-                class="bg-green-500 text-white py-2 px-6 rounded hover:bg-green-600 font-medium">
-            Record Payment
-        </button>
     </form>
+</x-card>
+
 </div>
 @endsection
