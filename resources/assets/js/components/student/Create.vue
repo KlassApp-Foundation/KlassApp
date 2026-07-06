@@ -180,69 +180,6 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-2/5">
-                <div class="lg:mr-8 md:mr-8">
-                    <div class="mb-2">
-                        <label for="blood_group" class="tw-form-label">
-                            Blood Group
-                        </label>
-                    </div>
-                    <div class="mb-2">
-                        <select
-                            class="tw-form-control w-full"
-                            id="blood_group"
-                            v-model="blood_group"
-                            name="blood_group"
-                        >
-                            <option value="" disabled>
-                                Select Blood Group
-                            </option>
-                            <option
-                                value=""
-                                v-for="blood_group in blood_groups"
-                                v-bind:value="blood_group.num"
-                            >
-                                {{ blood_group.name }}
-                            </option>
-                        </select>
-                    </div>
-                    <span
-                        v-if="errors.blood_group"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.blood_group[0] }}</span
-                    >
-                </div>
-            </div>
-        </div>
-
-        <!-- Mother Tongue - Commented Out -->
-        <!-- 
-        <div class="tw-form-group w-full lg:w-1/4 lg:mr-8 md:mr-8">
-            <div class="mb-2">
-                <label for="mother_tongue" class="tw-form-label"
-                    >Mother Tongue<span class="text-red-500"
-                        >*</span
-                    ></label
-                >
-            </div>
-            <div class="mb-2">
-                <input
-                    type="text"
-                    class="tw-form-control w-full"
-                    id="mother_tongue"
-                    v-model="mother_tongue"
-                    name="mother_tongue"
-                    placeholder="Mother Tongue"
-                />
-            </div>
-            <span
-                v-if="errors.mother_tongue"
-                class="text-red-500 text-xs font-semibold"
-                >{{ errors.mother_tongue[0] }}</span
-            >
-        </div>
-        -->
-
         <portal-target name="address"></portal-target>
 
         <div class="tw-form-group">
