@@ -9,7 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('whatsapp_users', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
+            // SQLite doesn't support dropForeign — only run on non-SQLite
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropForeign(['user_id']);
+            }
         });
 
         Schema::table('whatsapp_users', function (Blueprint $table) {
@@ -24,7 +27,9 @@ return new class extends Migration
         });
 
         Schema::table('whatsapp_users', function (Blueprint $table) {
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            }
         });
     }
 };

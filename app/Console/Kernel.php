@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         //
+            \App\Console\Commands\DowngradeExpiredTrials::class,
 
         //Test
             \App\Console\Commands\Test\CheckEnv::class,
@@ -102,6 +103,10 @@ class Kernel extends ConsoleKernel
                  ->withoutOverlapping();
 
         $schedule->command('whatsapp:send-fee-reminders --type=overdue')
+                 ->daily()
+                 ->withoutOverlapping();
+
+        $schedule->command('trial:downgrade-expired')
                  ->daily()
                  ->withoutOverlapping();
 

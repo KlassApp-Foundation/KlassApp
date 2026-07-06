@@ -60,7 +60,7 @@
                                         <div>
                                             <p class="text-sm font-semibold text-gray-900">{{ $lending->book->name ?? 'Unknown' }}</p>
                                             <p class="text-xs text-gray-500 mt-1">
-                                                Borrowed: {{ $lending->created_at->format('d M Y') }}
+                                                Borrowed: {{ \Carbon\Carbon::parse($lending->created_at)->format('d M Y') }}
                                                 @if($lending->member)
                                                     · {{ $lending->member->name ?? '' }}
                                                 @endif

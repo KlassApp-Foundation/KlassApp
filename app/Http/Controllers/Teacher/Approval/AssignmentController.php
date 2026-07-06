@@ -42,7 +42,7 @@ class AssignmentController extends Controller
     {
         //
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-        if(Auth::user()->hasRole('principal'))
+        if(Auth::user()->hasDesignation('principal'))
         {
             $assignment = Assignment::where([
                     ['school_id',Auth::user()->school_id],
@@ -90,7 +90,7 @@ class AssignmentController extends Controller
     public function index()
     {
         //
-        if(Auth::user()->hasRole('principal'))
+        if(Auth::user()->hasDesignation('principal'))
         {
             $role = 'principal';
         }

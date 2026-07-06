@@ -1,9 +1,8 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @extends('layouts.empty')
 
-@section('content')
+@push('styles')
 <style>
-    @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 
     .klass-auth-page {
         width: 100%;
@@ -136,6 +135,9 @@
         .klass-auth-card { padding: 24px; }
     }
 </style>
+@endpush
+
+@section('content')
 
 <div class="klass-auth-page">
     <div class="klass-auth-card">

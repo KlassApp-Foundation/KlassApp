@@ -2,12 +2,17 @@
 @extends('layouts.admin.layout') 
 
 @section('content')
+<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+
+@include('layouts.partials.page-header', [
+    'title' => 'Records',
+    'subtitle' => 'Track disciplinary cases and student conduct records.',
+    'actions' => '<a href="' . url('/admin/discipline/create') . '" class="px-3 py-1.5 rounded text-xs text-white bg-green-600 hover:bg-green-700 flex items-center gap-1"><i class="fa-solid fa-plus text-xs"></i> New Record</a>'
+])
+
+<div class="relative mt-4">
 <section class="section">
     <div class="w-full">
-    <div class="flex items-center justify-between">
-        <div class="">
-            <h1 class="admin-h1 my-3">Disciplinary Records</h1>
-        </div>
         <!-- <div class="flex justify-between mb-2 mt-2 lg:mt-0">
             <a href="{{url('/admin/discipline/add/')}}" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">
                 <span class="mx-1 text-sm font-semibold">Add</span>

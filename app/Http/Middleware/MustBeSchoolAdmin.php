@@ -22,9 +22,15 @@ class MustBeSchoolAdmin
         }
           
         if(\Auth::user()->usergroup_id==1)
-        {//dd('schooladmin');
-            //return redirect('/portal');
-            return redirect('/superadmin/dashboard');
+        {
+            // Superadmins pass through to admin routes (they handle null school_id gracefully).
+            return $next($request);
+        }
+
+        if(\Auth::user()->usergroup_id==2)
+        {
+            // Site subadmins also pass through (same reasoning as superadmins).
+            return $next($request);
         }
 
         if(\Auth::user()->usergroup_id==5)

@@ -282,22 +282,22 @@ class TeacherEditController extends Controller
           $roleUser->delete();
         }*/
 
-        $user->roles()->detach(); 
+        $user->teacher_designations = [];
 
 
         if($request->designation == 'principal')
         {
-          $user->attachRole('principal');
+          $user->addDesignation('principal');
         }
 
         if( ($request->designation == 'principal') || ($request->designation == 'vice_principal') || ($request->designation == 'head_of_the_department') )
         {
-          $user->attachRole('leave_checker');
-          $user->attachRole('class_coordinator');
+          $user->addDesignation('leave_checker');
+          $user->addDesignation('class_coordinator');
         }
         else
         {
-          $user->attachRole('leave_applier');
+          $user->addDesignation('leave_applier');
         }
 
         $message=trans('messages.update_success_msg',['module' => 'Teacher']);

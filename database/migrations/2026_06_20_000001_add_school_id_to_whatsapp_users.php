@@ -17,7 +17,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('whatsapp_users', function (Blueprint $table) {
-            $table->dropForeign(['school_id']);
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropForeign(['school_id']);
+            }
             $table->dropColumn('school_id');
         });
     }

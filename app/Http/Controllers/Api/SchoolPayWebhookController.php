@@ -172,6 +172,25 @@ class SchoolPayWebhookController extends Controller
             'updated_at'            => now(),
         ]);
 
+        // ── Auto-reconciliation: try to match payment to a fee category ──
+        if ($studentUserId && $schoolId && ($amount ?? 0) > 0) {
+            $matchedCategory = DB::table('fees_categories')
+                ->where('school_id', $schoolId)
+                ->where('amount', (float) ($amount ?? 0))
+                ->whereNull('deleted_at')
+                ->orderBy('due_date', 'desc')
+                ->first();
+
+            if ($matchedCategory) {
+                DB::table('schoolpay_transactions')
+                    ->where('id', $transactionId)
+                    ->update([
+                        'matched_fee_category_id' => $matchedCategory->id,
+                        'reconciled_at'           => now(),
+                    ]);
+            }
+        }
+
         // ── No KlassApp student match — still save, just can't send WhatsApp ──
         if (!$studentUserId) {
             DB::table('schoolpay_transactions')

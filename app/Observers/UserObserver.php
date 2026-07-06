@@ -19,8 +19,10 @@ class UserObserver
         //
         Cache::forget('parent_list'.$user->school_id);
         Cache::forget('standardLink'.$user->school_id);
-        Cache::forget('class_students_'.$user->studentAcademicLatest->standardLink_id);
-        Cache::forget('class_student_count'.$user->studentAcademicLatest->standardLink_id);
+        if ($user->studentAcademicLatest) {
+            Cache::forget('class_students_'.$user->studentAcademicLatest->standardLink_id);
+            Cache::forget('class_student_count'.$user->studentAcademicLatest->standardLink_id);
+        }
     }
 
     /**
@@ -34,8 +36,10 @@ class UserObserver
         //
         Cache::forget('parent_list'.$user->school_id);
         Cache::forget('standardLink'.$user->school_id); 
-        Cache::forget('class_students_'.$user->studentAcademicLatest->standardLink_id); 
-        Cache::forget('class_student_count'.$user->studentAcademicLatest->standardLink_id); 
+        if ($user->studentAcademicLatest) {
+            Cache::forget('class_students_'.$user->studentAcademicLatest->standardLink_id); 
+            Cache::forget('class_student_count'.$user->studentAcademicLatest->standardLink_id); 
+        }
     }
 
     /**

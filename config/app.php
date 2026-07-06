@@ -166,7 +166,7 @@ return [
         //   MaddHatter\LaravelFullcalendar\ServiceProvider::class,//Have to do
 
         Maatwebsite\Excel\ExcelServiceProvider::class,
-        Laratrust\LaratrustServiceProvider::class,
+        // Laratrust\LaratrustServiceProvider::class,
         Stevebauman\Purify\PurifyServiceProvider::class,
         //LaravelFCM\FCMServiceProvider::class,
 
@@ -228,7 +228,7 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         //'Calendar' => MaddHatter\LaravelFullcalendar\Facades\Calendar::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
-        'Laratrust'   => Laratrust\LaratrustFacade::class,
+        // 'Laratrust'   => Laratrust\LaratrustFacade::class,
         'Purify'   => Stevebauman\Purify\PurifyServiceProvider::class,
         'Socialite' => Laravel\Socialite\Facades\Socialite::class,
         'PDF' => Barryvdh\DomPDF\Facade::class,

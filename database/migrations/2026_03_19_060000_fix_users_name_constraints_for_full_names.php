@@ -14,7 +14,12 @@ return new class extends Migration
         if (Schema::hasColumn('users', 'name')) {
             // Ensure no null values remain before enforcing NOT NULL.
             DB::statement("UPDATE users SET name = CONCAT('user-', id) WHERE name IS NULL OR TRIM(name) = ''");
-            DB::statement('ALTER TABLE users MODIFY name VARCHAR(100) NOT NULL');
+            try {
+                DB::statement('ALTER TABLE users MODIFY name VARCHAR(100) NOT NULL');
+            } catch (\Exception $e) {
+                // SQLite does not support MODIFY — Laravel's Schema::change() would also fail here.
+                // The column is already NOT NULL in the base migration, so this is only needed for MySQL.
+            }
         }
 
         if (Schema::hasTable('users') && $this->hasIndex('users', 'users_name_unique')) {
@@ -42,6 +47,18 @@ return new class extends Migration
 
     private function hasIndex(string $table, string $indexName): bool
     {
+        // SQLite doesn't have information_schema — use PRAGMA instead
+        $driver = DB::getDriverName();
+        if ($driver === 'sqlite') {
+            $indexes = DB::select("PRAGMA index_list('{$table}')");
+            foreach ($indexes as $index) {
+                if ($index->name === $indexName) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         $database = DB::getDatabaseName();
 
         $result = DB::selectOne(

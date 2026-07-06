@@ -61,7 +61,7 @@ class LoginController extends Controller
                     'id'            =>  $user->id,
                     'user_email'    =>  $user->email == null ? '':$user->email,
                     'user_name'     =>  $user->name,
-                    'permissions'   =>  Auth::user()->getRoles(),
+                    'permissions'   =>  Auth::user()->teacher_designations ?? [],
                     'designation'   =>  $user->getTeacherDetails()['designation'] == 'others' ? $user->getTeacherDetails()['sub_designation']:$user->getTeacherDetails()['designation'],
                 ], $this->successStatus);
             }

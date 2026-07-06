@@ -173,7 +173,14 @@ class StudentDetailsController extends Controller
         //
         $student = User::where('name', $name)->first();
 
-        $studentacademic = StudentAcademic::where('user_id',$student->id)->latest()->first();
+        $studentacademic = StudentAcademic::where('user_id', $student->id)
+            ->whereIn('academic_year_id', function ($query) {
+                $query->select('id')
+                    ->from('academic_years')
+                    ->where('status', 1);
+            })
+            ->orderByDesc('id')
+            ->first();
 
         $medicals = [];
         

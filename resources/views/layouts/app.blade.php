@@ -13,6 +13,7 @@
         <!-- Styles -->
 
         <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+        <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
         <link href="{{ asset('css/dashboard-refresh.css') }}" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
         {{-- ===== added fontawesome icons --}}
@@ -51,7 +52,7 @@
         <div id="app">
             @yield('base-navigation')
             <main class="flex w-full h-full min-h-screen relative">
-                <div class="sidebar min-h-full">
+                <div class="sidebar self-start">
                     @yield('base-sidebar')
                 </div>
                 <div class="bg-gray-200 flex-grow w-full px-4 md:w-auto" style="width: calc(100vw - 195px);">
@@ -61,12 +62,18 @@
             @yield('base-footer')
         </div>
 
+        @auth
+            @if(in_array(auth()->user()->usergroup_id, [1, 2, 3]))
+                @livewire('agent-toshi')
+            @endif
+        @endauth
+
         @yield('outside-app')
 
         <!-- Scripts -->
 
-        <script src="{{ asset('js/app.js') }}"></script>
-        <script src="{{ asset('js/custom.js') }}" ></script>
+        <script src="{{ asset('js/app.js') }}" defer></script>
+        <script src="{{ asset('js/custom.js') }}" defer></script>
         @stack('scripts')
 
         <livewire:scripts>

@@ -2,47 +2,26 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-<div class="relative">
+<div class="relative px-4 md:px-6 py-4">
 
-<div class="flex flex-wrap lg:flex-row justify-between my-3">
-<div class="">
-   <h1 class="admin-h1 my-3">Support Staff ( {{ $count }} )</h1>
-</div>
-
-   <div class="w-full lg:w-2/4">
-   	 <portal-target name="search" ></portal-target>
-   	 <portal-target name="teacherfilter" ></portal-target>
-   </div>
-
-
-    <div class="relative flex items-center w-1/4 lg:justify-end">
-    <div class="flex items-center" dusk="add-button">
-   <a href="{{url('/admin/staff/add/')}}" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">
-   <span class="mx-1 text-sm font-semibold">Add</span>
-   <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 409.6 409.6" xml:space="preserve" class="w-3 h-3 fill-current text-white"><g><g><path d="M392.533,187.733H221.867V17.067C221.867,7.641,214.226,0,204.8,0s-17.067,7.641-17.067,17.067v170.667H17.067
-         C7.641,187.733,0,195.374,0,204.8s7.641,17.067,17.067,17.067h170.667v170.667c0,9.426,7.641,17.067,17.067,17.067
-         s17.067-7.641,17.067-17.067V221.867h170.667c9.426,0,17.067-7.641,17.067-17.067S401.959,187.733,392.533,187.733z"></path></g></g></svg>
-   </a> 
-   </div>
-  <!--  <div class="">
-   <a href="{{ url('/admin/exportStaff/?'.$query) }}" id="export-button" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1">
-   <span class="mx-1 text-sm font-semibold">Export</span>
-   </a> 
-   </div> -->
-   <staff-export url="{{ url('/') }}" searchquery="{{ $query }}"></staff-export>
-   <!-- <div class="">
-   <a href="{{ url('/admin/import/teacher') }}" id="import-button" class="no-underline text-white  px-4 my-3 mx-1 flex items-center custom-green py-1">
-   <span class="mx-1 text-sm font-semibold">Import</span>
-   </a> 
-   </div> -->
-   </div>
+<div class="ds-page-head">
+    <div>
+        <h1 class="ds-page-head-title">Support Staff ({{ $count }})</h1>
+    </div>
+    <div class="flex items-center gap-2">
+        <portal-target name="search"></portal-target>
+        <portal-target name="teacherfilter"></portal-target>
+        <x-button href="{{ url('/admin/staff/add/') }}" variant="success" size="sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Add
+        </x-button>
+        <staff-export url="{{ url('/') }}" searchquery="{{ $query }}"></staff-export>
+    </div>
 </div>
 
 @include('partials.message')
-<staff-list url="{{url('/')}}"  searchquery="{{$query}}" birthday="{{ $birthday }}" letter="{{ $alphabet }}"></staff-list>
+<staff-list url="{{ url('/') }}" searchquery="{{ $query }}" birthday="{{ $birthday }}" letter="{{ $alphabet }}"></staff-list>
+<staff-filter url="{{ url('/') }}" searchquery="{{ $query }}"></staff-filter>
 
-<staff-filter url="{{url('/')}}" searchquery="{{$query}}"></staff-filter>
-   
 </div>
-
- @endsection
+@endsection

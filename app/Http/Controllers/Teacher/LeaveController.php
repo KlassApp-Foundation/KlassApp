@@ -22,6 +22,9 @@ use App\Helpers\SiteHelper;
 use App\Models\LeaveType;
 use App\Traits\Common;
 use App\Models\User;
+use App\Models\Approval;
+use App\States\Approval\Approved;
+use App\States\Approval\Pending;
 use Carbon\Carbon;
 use Exception;
 use Log;
@@ -42,7 +45,7 @@ class LeaveController extends Controller
         $school_id = Auth::user()->school_id;
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
-        if(Auth::user()->hasRole('leave_applier'))
+        if(Auth::user()->hasDesignation('leave_applier'))
         {
             $application = TeacherLeaveApplication::where([
                             ['user_id',Auth::id()],
@@ -50,7 +53,7 @@ class LeaveController extends Controller
                             ['academic_year_id',$academic_year->id]
                         ])->orderBy('id','DESC')->paginate(10);
         }
-        elseif(Auth::user()->hasRole('leave_checker'))
+        elseif(Auth::user()->hasDesignation('leave_checker'))
         {
             $teacherprofiles = TeacherProfile::where([
                     ['school_id',$school_id],
@@ -120,11 +123,11 @@ class LeaveController extends Controller
         $query = \Request::getQueryString();
         $pending_count = SiteHelper::getPendingLeaveCount($school_id,$academic_year->id,Auth::id());
 
-        if(Auth::user()->hasRole('leave_applier'))
+        if(Auth::user()->hasDesignation('leave_applier'))
         {
             $user_type = 'apply';
         }
-        elseif(Auth::user()->hasRole('leave_checker'))
+        elseif(Auth::user()->hasDesignation('leave_checker'))
         {
             $user_type = 'check';
         }
@@ -221,6 +224,14 @@ class LeaveController extends Controller
             $leave->status              = "pending";
 
             $leave->save();
+
+            // Create unified Approval record so it appears in the admin approval inbox
+            Approval::create([
+                'approvable_type' => TeacherLeaveApplication::class,
+                'approvable_id'   => $leave->id,
+                'state'           => Pending::class,
+                'requested_by'    => Auth::id(),
+            ]);
 
             $this->LeaveApplyNotification($leave->user_id,'add');
 
@@ -461,7 +472,6 @@ class LeaveController extends Controller
      */
     public function approveStore(LeaveApproveRequest $request, $id)
     {
-        //
         try
         {
             $leave = TeacherLeaveApplication::where('id',$id)->first();
@@ -470,8 +480,18 @@ class LeaveController extends Controller
             $leave->approved_by =   Auth::id();
             $leave->approved_on =   date('Y-m-d');
             $leave->status      =   "approved";
-
             $leave->save();
+
+            // Transition the unified Approval record (creates one if missing)
+            $approval = $leave->pendingApproval ?? $leave->approvals()->create([
+                'state'        => Pending::class,
+                'requested_by' => $leave->user_id,
+            ]);
+            $approval->state->transitionTo(Approved::class);
+            $approval->approved_by = Auth::id();
+            $approval->comments = $request->comments ?? $approval->comments;
+            $approval->resolved_at = now();
+            $approval->save();
 
             $message=trans('messages.approve_success_msg',['module' => 'Leave Application']);
 

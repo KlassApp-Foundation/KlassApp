@@ -139,9 +139,7 @@ class ImpersonateController extends Controller
             } 
             elseif ($user->usergroup_id == 3)
             {
-                return redirect('/superadmin/dashboard');
-
-                //return redirect('/admin/dashboard');
+                return redirect('/admin/dashboard');
             }
             elseif ($user->usergroup_id == 6)   
             {

@@ -710,6 +710,35 @@ class OutboundWhatsAppService
     }
 
     /**
+     * Send WhatsApp notification to a student's parent(s) about a health incident.
+     */
+    public function notifyHealthIncident(User $student, \App\Models\StudentHealthIncident $incident): int
+    {
+        $severityLabel = match ($incident->severity) {
+            'serious' => '🚨 SERIOUS',
+            'moderate' => '⚠️ Moderate',
+            default => 'Minor',
+        };
+
+        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $message = "🏥 *Health Incident — {$student->name}*\n";
+        $message .= "_{$className}_\n\n";
+        $message .= "• Date: {$incident->incident_date->format('d M Y')}\n";
+        $message .= "• Severity: {$severityLabel}\n";
+        $message .= "• Description: {$incident->description}\n";
+        if ($incident->action_taken) {
+            $message .= "• Action taken: {$incident->action_taken}\n";
+        }
+        $message .= "\n_Please contact the school for more information._\n";
+
+        $sent = 0;
+        foreach ($this->getParentPhones($student) as $phone) {
+            $sent += $this->queueOrSend($phone, $student->id, $message, 'health_incident');
+        }
+        return $sent;
+    }
+
+    /**
      * Student withdrawal notification.
      */
     public function composeStudentWithdrawn(User $student, string $withdrawalDate, string $reason = '', string $destination = ''): string

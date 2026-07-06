@@ -229,8 +229,15 @@ Route::get( '/activity', 'ActivityLogController@index' );
 	Route::get( '/student/show/fees/{name}', 'StudentDetailsController@showFees' );
 	Route::get( '/student/show/medicalHistory/{name}', 'StudentDetailsController@showMedicalHistory' );
 	Route::get( '/student/add/medicalHistory/{name}', 'StudentDetailsController@createMedicalHistory' );
-	Route::post( '/student/add/medicalHistory/{name}', 'StudentDetailsController@addMedicalHistory' );
-	//edit
+ 	Route::post( '/student/add/medicalHistory/{name}', 'StudentDetailsController@addMedicalHistory' );
+ 	// Health Records (Module 3)
+ 	Route::get( '/student/health/{userId}', 'StudentHealthController@index' );
+ 	Route::post( '/student/health/profile/{userId}', 'StudentHealthController@updateProfile' );
+ 	Route::post( '/student/health/immunizations/{userId}', 'StudentHealthController@storeImmunization' );
+ 	Route::delete( '/student/health/immunizations/{id}', 'StudentHealthController@destroyImmunization' );
+ 	Route::post( '/student/health/incidents/{userId}', 'StudentHealthController@storeIncident' );
+ 	Route::delete( '/student/health/incidents/{id}', 'StudentHealthController@destroyIncident' );
+ 	//edit
 	Route::get( '/student/editStudent/{name}', 'StudentController@editStudent' );
 	Route::get( '/student/edit/{name}', 'StudentController@edit' );
 	Route::post( '/student/edit/validationUser/{name}', 'StudentController@editValidationUser' );
@@ -828,6 +835,11 @@ Route::delete("/fees-categories/{fee}/destroy", "Academics\FeesCategoryControlle
 Route::get("/fees-categories/{fee}/edit", "Academics\FeesCategoryController@edit")->name("admin.fees-categories.edit");
 Route::patch("/fees-categories/{fee}/update", "Academics\FeesCategoryController@update")->name("admin.fees-categories.update");
 
+// Fee payment records
+Route::get("/fees/payments", "FeePaymentController@index")->name("admin.fee-payments");
+Route::get("/fees/payments/create", "FeePaymentController@create")->name("admin.fee-payments.create");
+Route::post("/fees/payments/store", "FeePaymentController@store")->name("admin.fee-payments.store");
+
 // grading system @UG
 Route::get("/grades", "Academics\SchoolGradingSystemController@index")->name("admin.grades");
 Route::get("/grades/create", "Academics\SchoolGradingSystemController@create")->name("admin.grades.create");
@@ -845,7 +857,35 @@ Route::get('/subscriptions/{subscription}', "SubscriptionController@show")->name
 Route::get('/subscriptions/{subscription}', "SubscriptionController@edit")->name('admin.subscriptions.edit');
 Route::put('/subscriptions/{subscription}', "SubscriptionController@update")->name('admin.subscriptions.update');
 
+// Approvals
+Route::get('/approvals', 'ApprovalController@inbox')->name('admin.approvals.inbox');
+Route::post('/approvals/{approval}/approve', 'ApprovalController@approve')->name('admin.approvals.approve');
+Route::post('/approvals/{approval}/reject', 'ApprovalController@reject')->name('admin.approvals.reject');
+
+// Fee reconciliation
+Route::get('/fees/payments/unmatched', 'FeePaymentController@unmatched')->name('admin.fee-payments.unmatched');
+Route::post('/fees/payments/unmatched/{transaction}/match', 'FeePaymentController@matchTransaction')->name('admin.fee-payments.match');
+
 //Addons
+
+// Health records are per-student under admin/student/health/{userId}
+Route::get('/health', function () {
+    return redirect('/admin/students');
+})->name('admin.health');
+
+Route::get('/messages', function () {
+    return redirect('/admin/sentmessages');
+})->name('admin.messages.redirect');
+
+Route::get('/library', function () {
+    return redirect('/library/books/index');
+})->name('admin.library.redirect');
+
+// Seed MoE default grading scales for the school
+Route::post('/grades/seed-defaults', function (\Illuminate\Http\Request $req) {
+    \App\Helpers\GradingHelper::seedAllGradingForSchool(\Illuminate\Support\Facades\Auth::user()->school_id);
+    return redirect()->route('admin.grades')->with('successmessage', 'Default MoE grading scales seeded.');
+})->name('admin.grades.seed');
 
 Route::get('/addon', function () {
     return view('admin.addon.index');

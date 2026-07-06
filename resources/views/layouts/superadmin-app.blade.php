@@ -13,6 +13,7 @@
 
          @filamentStyles
         <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+        <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
         <link href="{{ asset('css/dashboard-refresh.css') }}" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500&family=IBM+Plex+Sans:wght@500;600;700&family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
@@ -30,7 +31,7 @@
         <div id="app">
             @yield('base-navigation')
             <main class="flex w-full h-full min-h-screen">
-                <div class="sidebar min-h-full">
+                <div class="sidebar self-start">
                     @yield('base-sidebar')
                 </div>
                 <div class="bg-gray-200 flex-grow w-full px-4 superadmin-content" style="width: calc(100vw - 195px); transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
@@ -40,12 +41,19 @@
             @yield('base-footer')
         </div>
 
+        @yield('outside-app')
+
+        @auth
+            @if(in_array(auth()->user()->usergroup_id, [1, 2, 3]))
+                @livewire('agent-toshi')
+            @endif
+        @endauth
 
         <!-- Scripts -->
         @filamentScripts
 
-        <script src="{{ asset('js/app.js') }}"></script>
-        <script src="{{ asset('js/custom.js') }}" ></script>
+        <script src="{{ asset('js/app.js') }}" defer></script>
+        <script src="{{ asset('js/custom.js') }}" defer></script>
         @stack('scripts')
 
         <livewire:scripts>

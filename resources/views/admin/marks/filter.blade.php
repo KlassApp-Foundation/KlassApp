@@ -2,12 +2,16 @@
 
 @section('content')
 
-<div class="container-fluid w-full lg:mx-2">
+<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
 
-    {{-- Sticky Filter Bar --}}
-    <div class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b flex items-center justify-end">
-        <div class="flex items-center justify-end">
-            @include('admin.marks.filter-form')  
+@include('layouts.partials.page-header', [
+    'title' => 'Marks',
+    'subtitle' => 'View and filter student marks across exams and subjects.',
+])
+
+<div class="relative mt-4">
+    <div class="bg-white rounded-lg shadow p-4">
+        @include('admin.marks.filter-form')  
         </div>
     </div>
 

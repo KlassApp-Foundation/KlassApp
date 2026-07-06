@@ -65,8 +65,6 @@ class ParentController extends Controller
     {
         //
         $query = \Request::getQueryString();
-        $test = ParentProfile::all();
-        dd($test);
 
         return view('/admin/parent/index',[ 'query' => $query ]);
     }
@@ -80,7 +78,7 @@ class ParentController extends Controller
     {
         //
         $ref_name = Request('ref_name')?Request('ref_name'):'';
-        $count    = User::where('school_id',Auth::user()->school_id)->where('usergroup_id',6)->orWhere('usergroup_id',7)->count();
+        $count    = User::where('school_id',Auth::user()->school_id)->where(function ($q) { $q->where('usergroup_id',6)->orWhere('usergroup_id',7); })->count();
         $subscription = Subscription::where('school_id',Auth::user()->school_id)->first();
 
         return view('admin/parent/create' , [ 'ref_name' => $ref_name , 'count' => $count , 'subscription' => $subscription ]);
@@ -157,7 +155,8 @@ class ParentController extends Controller
         catch(Exception $e)
         {
             Log::info($e->getMessage());
-            dd($e->getMessage());
+            \Session::put('errormessage', trans('messages.add_error_msg',['module'=>'Parent']));
+            return redirect()->back();
         }
     }
 
@@ -170,7 +169,8 @@ class ParentController extends Controller
     public function show($name)
     {
         //
-        $user = User::where('name',$name)->first();
+        $schoolId = Auth::user()->school_id;
+        $user = User::where('name',$name)->where('school_id', $schoolId)->firstOrFail();
         $userprofile = Userprofile::where('user_id',$user->id)->first();
         $parentprofile = $user->getParentDetails();
 
@@ -186,7 +186,8 @@ class ParentController extends Controller
     public function showChildren($name)
     {
         //
-        $parent = User::where('name', $name)->first();
+        $schoolId = Auth::user()->school_id;
+        $parent = User::where('name', $name)->where('school_id', $schoolId)->firstOrFail();
       
         $children = ChildrenResource::collection($parent->children);
          
@@ -202,7 +203,8 @@ class ParentController extends Controller
     public function showFeedbacks($name)
     {
         //
-        $parent = User::where('name', $name)->first();
+        $schoolId = Auth::user()->school_id;
+        $parent = User::where('name', $name)->where('school_id', $schoolId)->firstOrFail();
 
         $conversation = Feedback::where('parent_id',$parent->id)->get();
 
@@ -214,7 +216,8 @@ class ParentController extends Controller
     public function showActivityLog($name)
     {
         //
-        $user = User::with('userprofile')->where('name', $name)->first();
+        $schoolId = Auth::user()->school_id;
+        $user = User::with('userprofile')->where('name', $name)->where('school_id', $schoolId)->firstOrFail();
         if(Gate::allows('member',$user))
         {
             $activitylog = ActivityLog::where('subject_id',$user->id)->paginate(5);
@@ -237,7 +240,8 @@ class ParentController extends Controller
     public function editList($name)
     {
         //
-        $user = User::where('name',$name)->first();
+        $schoolId = Auth::user()->school_id;
+        $user = User::where('name',$name)->where('school_id', $schoolId)->firstOrFail();
         $userprofile = Userprofile::where('user_id',$user->id)->first();
         $parentprofile = $user->getParentDetails();
         
@@ -270,7 +274,8 @@ class ParentController extends Controller
     {
         //
         $ref_name = Request('ref_name')?Request('ref_name'):'';
-        $user = User::where('name',$name)->first();
+        $schoolId = Auth::user()->school_id;
+        $user = User::where('name',$name)->where('school_id', $schoolId)->firstOrFail();
         $userprofile = Userprofile::where('user_id',$user->id)->first();
         $parentprofile = $user->getParentDetails();
         
@@ -292,12 +297,11 @@ class ParentController extends Controller
     public function update(ParentUpdateRequest $request, $name)
     {
         //
+        $school_id = Auth::user()->school_id;
+        $user = User::where('name',$name)->where('school_id', $school_id)->firstOrFail();
+
         try
         { 
-            $user = User::where('name',$name)->first();
-
-            $school_id = Auth::user()->school_id;
-
             $userprofile = $this->UpdateParent($student_id = '' , $request , $school_id , $user->id);
 
             $ip= $this->getRequestIP();
@@ -314,17 +318,20 @@ class ParentController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('ParentController@update failed: ' . $e->getMessage());
+            \Session::put('errormessage', trans('messages.update_error_msg',['module'=>'Parent']));
+            return redirect()->back();
         }
     }
 
     public function destroy($name)
     {
+        $schoolId = Auth::user()->school_id;
+        $user = User::where('name',$name)->where('school_id', $schoolId)->firstOrFail();
+
         \DB::beginTransaction();
         try
         {
-            $user = User::where('name',$name)->first();
             
             // $studentparentlink = StudentParentLink::where('parent_id',$user->id);
              $studentparentlink = StudentParentLink::where('parent_id',$user->id)->first();
@@ -342,6 +349,8 @@ class ParentController extends Controller
 
             $user->delete();
 
+            \DB::commit();
+
             $message=trans('messages.delete_success_msg',['module' => 'Parent']);
 
             $ip= $this->getRequestIP();
@@ -353,13 +362,14 @@ class ParentController extends Controller
                 $message
             ); 
             \Session::put('successmessage',$message);
-            \DB::commit();
             return redirect('/admin/parents');
         }
         catch(Exception $e)
         {
             \DB::rollBack();
-            //dd($e->getMessage());
+            Log::error('ParentController@destroy failed: ' . $e->getMessage());
+            \Session::put('errormessage', trans('messages.delete_error_msg',['module'=>'Parent']));
+            return redirect()->back();
         } 
     }
 

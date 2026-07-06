@@ -5,13 +5,15 @@
  */
 namespace App\Models;
 
+use App\Models\Concerns\HasApprovals;
+use App\Models\Contracts\Approvable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class TeacherLeaveApplication extends Model
+class TeacherLeaveApplication extends Model implements Approvable
 {
-    //
     use SoftDeletes;
+    use HasApprovals;
 
     /**
      * The table associated with the model.

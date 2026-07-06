@@ -2,11 +2,15 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-    <div class="relative">
+<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+
+@include('layouts.partials.page-header', [
+    'title' => 'Reports',
+    'subtitle' => 'Generate and view school performance, attendance, and financial reports.',
+])
+
+<div class="relative mt-4">
         <div class="flex flex-wrap lg:flex-row justify-between my-3">
-            <div class="">
-                <h1 class="admin-h1 my-3">Reports</h1>
-            </div>
             <div class="relative flex items-center w-1/4 lg:justify-end">
                 <div class="flex items-center" dusk="add-button">
                     <a href="{{ url('/admin/reports') }}" class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 ml-3 text-sm font-medium">Reset Filters</a>

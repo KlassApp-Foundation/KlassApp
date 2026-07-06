@@ -1,0 +1,37 @@
+- main [ref=f2e3]:
+  - generic [ref=f2e6]:
+    - generic [ref=f2e7]:
+      - img "KlassApp" [ref=f2e9]
+      - paragraph [ref=f2e10]: Welcome back
+      - paragraph [ref=f2e11]: Sign in to your school dashboard.
+    - form "Login" [ref=f2e12]:
+      - generic [ref=f2e13]:
+        - text: Email, Phone, Name, or Registration Number
+        - textbox "Email, Phone, Name, or Registration Number" [ref=f2e14]:
+          - /placeholder: your@school.edu, phone, name, or registration number
+      - generic [ref=f2e15]:
+        - text: Password
+        - generic [ref=f2e16]:
+          - textbox "Password" [ref=f2e17]
+          - button "Show or hide password":
+            - img
+      - generic [ref=f2e20]:
+        - generic [ref=f2e21]:
+          - checkbox "Remember me" [ref=f2e22]
+          - text: Remember me
+        - link "Forgot your password?" [ref=f2e23] [cursor=pointer]:
+          - /url: https://klassapp.xyz/password/reset
+      - button "Sign in to KlassApp" [ref=f2e24] [cursor=pointer]
+      - generic [ref=f2e25]: or
+      - link "Continue with Google" [ref=f2e26] [cursor=pointer]:
+        - /url: https://klassapp.xyz/auth/google
+        - img [ref=f2e27]
+        - text: Continue with Google
+      - generic [ref=f2e32]:
+        - paragraph [ref=f2e33]:
+          - img [ref=f2e34]
+          - text: Your data is encrypted and secure.
+        - paragraph [ref=f2e37]:
+          - text: New to KlassApp?
+          - link "Register your school for free." [ref=f2e38] [cursor=pointer]:
+            - /url: https://klassapp.xyz/register

@@ -5,15 +5,15 @@
  */
 namespace App\Models;
 
+use App\Models\Concerns\HasApprovals;
+use App\Models\Contracts\Approvable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
-//use Laravel\Scout\Searchable;
 
-class LessonPlan extends Model
+class LessonPlan extends Model implements Approvable
 {
-    //
     use SoftDeletes;
-    //use Searchable;
+    use HasApprovals;
 
     /**
      * The table associated with the model.
@@ -28,7 +28,7 @@ class LessonPlan extends Model
      * @var array
      */
     protected $fillable = [
-        'teacher_link_id' , 'unit_no' , 'unit_name' , 'description' , 'title' , 'duration' , 'objective' , 'materials_required' , 'introduction' , 'procedure' , 'conclusion' , 'notes' , 'assessment' , 'modification' , 'status'    
+        'school_id' , 'teacher_link_id' , 'unit_no' , 'unit_name' , 'description' , 'title' , 'duration' , 'objective' , 'materials_required' , 'introduction' , 'procedure' , 'conclusion' , 'notes' , 'assessment' , 'modification' , 'status'    
     ];
 
     /**

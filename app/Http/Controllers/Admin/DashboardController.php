@@ -28,6 +28,8 @@ use App\Traits\Common;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Fee;
+use App\Models\Approval;
+use App\States\Approval\Pending as PendingState;
 use Exception;
 use Log;
 
@@ -45,9 +47,6 @@ class DashboardController extends Controller
     public function index(Request $request) 
     {
 
-        \Artisan::call('cache:clear');
-        \Artisan::call('view:clear');
-        \Artisan::call('config:clear');
         
         $admin_id  =   Auth::id();
         $school_id =   Auth::user()->school_id;
@@ -80,10 +79,17 @@ class DashboardController extends Controller
             $onboardingMissing = \App\Helpers\OnboardingHelper::getMissingSteps($school_id, Auth::id());
         }
 
+        $pendingApprovals = $school_id
+            ? Approval::where('state', PendingState::class)
+                ->whereHas('approvable', fn($q) => $q->where('school_id', $school_id))
+                ->count()
+            : 0;
+
         return view( '/admin/dashboard/dashboard', [
             'dashboard' => $dashboard,
             'standardLink' => $standardLink,
             'selected_teacher' => $selected_teacher,
+            'pendingApprovals' => $pendingApprovals,
             'plan' => $plan,
             'planUsage' => $planUsage,
             'onboardingMissing' => $onboardingMissing,

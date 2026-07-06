@@ -3,11 +3,9 @@
 
 @section('content')
     <div class="dashboard-shell dashboard-shell--accountant">
-        <div class="dashboard-heading">
-            <div>
-                <h1 class="dashboard-section-title" style="font-size: 1.25rem;">Accountant</h1>
-                <p class="dashboard-subtitle" style="margin-top: 4px;">Review fee structures, pending tasks, and school finance at a glance.</p>
-            </div>
+        <div class="ds-page-head">
+            <h1 class="ds-page-head-title">Accountant</h1>
+            <p class="ds-page-head-sub">Review fee structures, pending tasks, and school finance at a glance.</p>
         </div>
         @include('partials.message')
 

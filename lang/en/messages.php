@@ -4,11 +4,15 @@ return [
 
     'add_success_msg'               => ':module Added Successfully',
 
+    'add_error_msg'                 => 'Failed to add :module',
+
     'save_success_msg'              => ':module Saved Successfully',
 
     'print_success_msg' 		    => ':module Printed Successfully',
 
     'update_success_msg'    		=> ':module Updated Successfully',
+
+    'update_error_msg'              => 'Failed to update :module',
 
     'approve_success_msg'           => ':module Approved Successfully',
 
@@ -17,6 +21,8 @@ return [
     'update_status_success_msg'		=> ':module Status Updated Successfully',
 
     'delete_success_msg' 			=> ':module Deleted Successfully',
+
+    'delete_error_msg'              => 'Failed to delete :module',
 
     'download_success_msg' 			=> ':module Downloaded Successfully',
 

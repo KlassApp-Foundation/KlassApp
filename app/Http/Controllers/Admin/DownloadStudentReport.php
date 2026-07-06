@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Academics\Exam;
+use App\Models\Academics\NurseryAssessment;
 use App\Models\Academics\SchoolGradingSystem;
 use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
@@ -47,10 +48,34 @@ class DownloadStudentReport extends Controller
              $next = ["DIVISION", "TEACHER", "REMARK"];
            $controls= array_merge($controls, $next);
 
-           $marks = $exam->marks->where("student_id", $learner->id);
-            $total = $learner->marks->sum("marks");
-            $examsDone = $studentHelper->examsDone($schoolId, $exam);
-            $grade = $studentHelper->grade($learner, $exam);
+           // Detect nursery level BEFORE marks calculations
+           $isNursery = false;
+           $nurseryAssessments = collect();
+           $standard = $learner->studentAcademicLatest?->standardLink?->standard;
+           if ($standard) {
+               $levelType = \App\Helpers\GradingHelper::levelTypeForStandard($standard);
+               $isNursery = ($levelType === 'nursery');
+               if ($isNursery) {
+                   $nurseryAssessments = NurseryAssessment::where('student_id', $learner->id)
+                       ->where('academic_term_id', $exam->academic_term_id)
+                       ->get()
+                       ->keyBy('domain');
+               }
+           }
+
+           // Marks calculations — skip for nursery (no numeric marks)
+           $marks = collect();
+           $total = 0;
+           $examsDone = 0;
+           $grade = null;
+
+           if (!$isNursery) {
+               $marks = $exam->marks->where("student_id", $learner->id);
+               $total = $learner->marks ? $learner->marks->sum("marks") : 0;
+               $examsDone = $studentHelper->examsDone($schoolId, $exam);
+               $grade = $studentHelper->grade($learner, $exam);
+           }
+
             // promotion
              $promotion = Promotion::where("school_id", $schoolId)
                               ->where("user_id", $learner->id)
@@ -80,9 +105,9 @@ class DownloadStudentReport extends Controller
         $school = Auth::user()->school;
         
         $myPos = $learners->where("id", $learner->id)->value("position");
-        $learner = $learner->where("id", $learner->id)->first();
+        // $learner is already a valid User model from route binding — no need to re-query
         $pdf = Pdf::loadView("admin.marks.student-report", compact(
-            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade", "promotion", "school"
+            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade", "promotion", "school", "isNursery", "nurseryAssessments"
             ));     
         $pdf->setPaper("a4", "portrait");    
         $pdf->setOptions([
@@ -101,7 +126,7 @@ class DownloadStudentReport extends Controller
                 mkdir(storage_path("app/dompdf/fonts"), 0775, true);
             }
             if (!$learner) {
-          abort(404, "Student not found or has no marks.");
+          return redirect()->back()->with('error', 'This student has no marks recorded for this exam yet.');
              }
             $first_name = $learner->userprofile->firstname ?? "student";
             $last_name = $learner->userprofile->lastname ?? "unknown";

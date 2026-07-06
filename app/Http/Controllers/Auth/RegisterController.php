@@ -76,16 +76,19 @@ class RegisterController extends Controller
         return DB::transaction(function () use ($data) {
             $school = $this->createSchool($data);
             $planName = $data['plan'] ?? session('selected_plan');
-            if ($planName) {
-            $planId = Plan::where("name", $planName)->value("id");
+            $planId = $planName ? Plan::where("name", $planName)->value("id") : null;
 
             if ($planId) {
-                CurrentPlan::create([
-                    "school_id" => $school->id, 
-                    "plan_id"   => $planId, 
-                ]);
+                $plan = Plan::find($planId);
+                if ($plan && $plan->amount > 0) {
+                    \App\Services\TrialService::startTrial($school->id, $planId);
+                } else {
+                    CurrentPlan::create([
+                        "school_id" => $school->id,
+                        "plan_id"   => $planId,
+                    ]);
+                }
             }
-        }
             //$this->createSchoolDetails($school); //added in observer
 
             $user = $this->createSchoolAdmin($school, $data);

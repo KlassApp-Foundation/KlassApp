@@ -707,30 +707,30 @@ trait RegisterUser
             if($data->designation == 'principal')
             {
                 // $user->addRole('principal');
-                $user->attachRole("principal");
+                $user->addDesignation("principal");
                 
                 
             }
 
             if($data->designation == 'transport_coordinator')
             {
-                $user->attachRole('transport_coordinator');
+                $user->addDesignation('transport_coordinator');
             }
 
             if($data->designation == 'driver')
             {
-                $user->attachRole('transport_driver');
+                $user->addDesignation('transport_driver');
             }
 
             if( ($data->designation == 'principal') || ($data->designation == 'vice_principal') || ($data->designation == 'head_of_the_department') )
             {
-                $user->attachRole('leave_checker');
-                $user->attachRole('class_coordinator');
+                $user->addDesignation('leave_checker');
+                $user->addDesignation('class_coordinator');
 
             }
             else
             {
-                $user->attachRole('leave_applier');
+                $user->addDesignation('leave_applier');
             }
 
             \DB::commit();

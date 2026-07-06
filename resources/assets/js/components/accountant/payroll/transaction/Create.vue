@@ -3,13 +3,13 @@
     <div>
 	    <div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{this.success}}</div>
       <div class="flex flex-wrap">
-        <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+        <div class="w-full lg:w-1/2 md:w-1/2">
           <div class="lg:mr-6 md:mr-6">
             <div class="mb-2">
-              <label for="type" class="tw-form-label">Pay Head<span class="text-red-500">*</span></label>
+              <label for="type" class="text-sm font-medium text-gray-700">Pay Head<span class="text-red-500">*</span></label>
             </div>
             <div class="mb-2">
-              <select name="paytype_id"  v-model="paytype_id" class="tw-form-control w-full" @change="typechange()">
+              <select name="paytype_id"  v-model="paytype_id" class="text-sm border rounded px-3 py-2 w-full" @change="typechange()">
                 <option value="" disabled>Select paytype</option>
                 <option v-for="paytype in paytypes" v-bind:value="paytype.id" >{{paytype.name}}</option>
               </select>
@@ -19,13 +19,13 @@
           </div>
       
       
-        <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+        <div class="w-full lg:w-1/2 md:w-1/2">
           <div class="lg:mr-6 md:mr-6">
             <div class="mb-2">
-              <label  class="tw-form-label">Staff<span class="text-red-500">*</span></label>
+              <label  class="text-sm font-medium text-gray-700">Staff<span class="text-red-500">*</span></label>
             </div>
             <div class="mb-2">
-               <select name="staff_id"  v-model="staff_id" class="tw-form-control w-full" @change="typechange()">
+               <select name="staff_id"  v-model="staff_id" class="text-sm border rounded px-3 py-2 w-full" @change="typechange()">
                 <option value="" disabled>Select staff</option>
                 <option v-for="staff in staffs" v-bind:value="staff.id">{{staff.name}}</option>
               </select>
@@ -38,11 +38,11 @@
       </div>
 
       <div class="flex flex-wrap">
-            <div class="tw-form-group w-full lg:w-1/2 md:w-1/2" v-if="this.payrollitems!='' && this.paytype_id==1" >
+            <div class="w-full lg:w-1/2 md:w-1/2" v-if="this.payrollitems!='' && this.paytype_id==1" >
               <div class="lg:mr-6 md:mr-6">
-              <label class="tw-form-label">Payroll </label>
+              <label class="text-sm font-medium text-gray-700">Payroll </label>
               <div class="my-1">
-                      <select name="payroll_id"  v-model="payroll_id" class="tw-form-control w-full" @change="payrollamount()">
+                      <select name="payroll_id"  v-model="payroll_id" class="text-sm border rounded px-3 py-2 w-full" @change="payrollamount()">
                 <option value="" disabled>Select Payroll</option>
                 <option v-for="(payroll,index) in payrollitems" v-bind:value="payroll.id">{{payroll.payrollno}} Amount:{{payroll.total}}</option>
               </select>
@@ -51,11 +51,11 @@
               </div>
               </div>
      
-            <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+            <div class="w-full lg:w-1/2 md:w-1/2">
               <div class="lg:mr-6 md:mr-6">
-              <label class="tw-form-label">Account</label>
+              <label class="text-sm font-medium text-gray-700">Account</label>
               <div class="my-1">
-              <select name="account_id"  v-model="account_id" disabled="" class="tw-form-control w-full">
+              <select name="account_id"  v-model="account_id" disabled="" class="text-sm border rounded px-3 py-2 w-full">
                 <option value="" disabled>Select Account</option>
                 <option v-for="account in accounts" v-bind:value="account.id">{{account.name}} {{account.account_number}} </option>
               </select>
@@ -67,31 +67,31 @@
        
 
     
-            <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+            <div class="w-full lg:w-1/2 md:w-1/2">
               <div class="lg:mr-6 md:mr-6">
-              <label class="tw-form-label">Transaction date</label>
+              <label class="text-sm font-medium text-gray-700">Transaction date</label>
               <div class="my-1">
-                      <input v-model="transaction_date" name="transaction_date"  type="date" class="tw-form-control w-full"><span v-if="errors.transaction_date" class="text-red-500 text-xs font-semibold">{{errors.transaction_date[0]}}</span>
+                      <input v-model="transaction_date" name="transaction_date"  type="date" class="text-sm border rounded px-3 py-2 w-full"><span v-if="errors.transaction_date" class="text-red-500 text-xs font-semibold">{{errors.transaction_date[0]}}</span>
               </div>
               </div>
               </div>
           
       
 
-            <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+            <div class="w-full lg:w-1/2 md:w-1/2">
               <div class="lg:mr-6 md:mr-6">
-              <label class="tw-form-label">Amount </label>
+              <label class="text-sm font-medium text-gray-700">Amount </label>
               <div class="my-1">
-                      <input v-model="amount" name="amount"  type="text" class="tw-form-control w-full"><span v-if="errors.amount" class="text-red-500 text-xs font-semibold">{{errors.amount[0]}}</span>
+                      <input v-model="amount" name="amount"  type="text" class="text-sm border rounded px-3 py-2 w-full"><span v-if="errors.amount" class="text-red-500 text-xs font-semibold">{{errors.amount[0]}}</span>
               </div>
               </div>
               </div>
             
-            <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+            <div class="w-full lg:w-1/2 md:w-1/2">
               <div class="lg:mr-6 md:mr-6">
-              <label class="tw-form-label">Payment method </label>
+              <label class="text-sm font-medium text-gray-700">Payment method </label>
               <div class="my-1">
-                      <select name="payment_method"  v-model="payment_method" class="tw-form-control w-full" >
+                      <select name="payment_method"  v-model="payment_method" class="text-sm border rounded px-3 py-2 w-full" >
                 <option value="" disabled>Select Payment method</option>
                 <option v-for="method in payment_methods" v-bind:value="method">{{method}}</option>
               </select>
@@ -108,17 +108,17 @@
                     <div class="w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8 mb-2">
                     <div class="mb-2">
-                    <label for="" class="tw-form-label">Cheque Number</label>
+                    <label for="" class="text-sm font-medium text-gray-700">Cheque Number</label>
                     </div>
-                      <input v-model="cheque_number" name="cheque_number"  value="cheque_number" type="text" placeholder="Cheque Number" class="tw-form-control w-full"><span v-if="errors.cheque_number" class="text-red-500 text-xs font-semibold">{{errors.cheque_number[0]}}</span>
+                      <input v-model="cheque_number" name="cheque_number"  value="cheque_number" type="text" placeholder="Cheque Number" class="text-sm border rounded px-3 py-2 w-full"><span v-if="errors.cheque_number" class="text-red-500 text-xs font-semibold">{{errors.cheque_number[0]}}</span>
                     </div>
                    </div>
                     <div class="w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8 mb-2">
                     <div class="mb-2">
-                    <label for="" class="tw-form-label">Cheque Date</label>
+                    <label for="" class="text-sm font-medium text-gray-700">Cheque Date</label>
                     </div>
-                      <input v-model="cheque_date" name="cheque_date"  value="cheque_date" type="date"  class="tw-form-control w-full"><span v-if="errors.cheque_date" class="text-red-500 text-xs font-semibold">{{errors.cheque_date[0]}}</span>
+                      <input v-model="cheque_date" name="cheque_date"  value="cheque_date" type="date"  class="text-sm border rounded px-3 py-2 w-full"><span v-if="errors.cheque_date" class="text-red-500 text-xs font-semibold">{{errors.cheque_date[0]}}</span>
                     </div>
                     </div>
                     </div>
@@ -129,17 +129,17 @@
                     <div class="w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8 mb-2">
                     <div class="mb-2">
-                    <label for="" class="tw-form-label">Cheque Bank detail</label>
+                    <label for="" class="text-sm font-medium text-gray-700">Cheque Bank detail</label>
                     </div>
-                      <input v-model="cheque_bank" name="cheque_bank"  value="cheque_bank" type="text" placeholder="Bank detail" class="tw-form-control w-full"><span v-if="errors.cheque_bank" class="text-red-500 text-xs font-semibold">{{errors.cheque_bank[0]}}</span>
+                      <input v-model="cheque_bank" name="cheque_bank"  value="cheque_bank" type="text" placeholder="Bank detail" class="text-sm border rounded px-3 py-2 w-full"><span v-if="errors.cheque_bank" class="text-red-500 text-xs font-semibold">{{errors.cheque_bank[0]}}</span>
                     </div>
                    </div>
                     <div class="w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8 mb-2">
                     <div class="mb-2">
-                    <label for="" class="tw-form-label">Cheque Clearing date</label>
+                    <label for="" class="text-sm font-medium text-gray-700">Cheque Clearing date</label>
                     </div>
-                      <input v-model="clearnig_date" name="clearnig_date"  value="clearnig_date" type="date"  class="tw-form-control w-full"><span v-if="errors.clearnig_date" class="text-red-500 text-xs font-semibold">{{errors.clearnig_date[0]}}</span>
+                      <input v-model="clearnig_date" name="clearnig_date"  value="clearnig_date" type="date"  class="text-sm border rounded px-3 py-2 w-full"><span v-if="errors.clearnig_date" class="text-red-500 text-xs font-semibold">{{errors.clearnig_date[0]}}</span>
                     </div>
                     </div>
                     </div>
@@ -149,18 +149,18 @@
       <div v-if="this.payment_method=='Bank'" class="w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8 mb-2">
                     <div class="mb-2">
-                    <label for="" class="tw-form-label">Reference Number</label>
+                    <label for="" class="text-sm font-medium text-gray-700">Reference Number</label>
                     </div>
-                      <input v-model="reference_number" name="reference_number"  value="reference_number" type="text"  class="tw-form-control w-full"><span v-if="errors.reference_number" class="text-red-500 text-xs font-semibold">{{errors.reference_number[0]}}</span>
+                      <input v-model="reference_number" name="reference_number"  value="reference_number" type="text"  class="text-sm border rounded px-3 py-2 w-full"><span v-if="errors.reference_number" class="text-red-500 text-xs font-semibold">{{errors.reference_number[0]}}</span>
                     </div>
                     </div>
 
        <div class="flex flex-col lg:flex-row md:flex-row">
-            <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+            <div class="w-full lg:w-1/2 md:w-1/2">
               <div class="lg:mr-6 md:mr-6">
-               <label for="attachment" v-model="attachment" class="tw-form-label">Attachment</label>
+               <label for="attachment" v-model="attachment" class="text-sm font-medium text-gray-700">Attachment</label>
               <div class="my-1">
-                      <input type="file" name="attachment" @change="OnFileSelected" id="attachment" class="tw-form-control w-full">
+                      <input type="file" name="attachment" @change="OnFileSelected" id="attachment" class="text-sm border rounded px-3 py-2 w-full">
                       <span v-if="errors.attachment" class="text-red-500 text-xs font-semibold">{{errors.attachment[0]}}</span>
               </div>
               </div>
@@ -168,11 +168,11 @@
       </div>  
 
          <div class="flex flex-col lg:flex-row md:flex-row">
-            <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+            <div class="w-full lg:w-1/2 md:w-1/2">
               <div class="lg:mr-6 md:mr-6">
-              <label class="tw-form-label">Remarks </label>
+              <label class="text-sm font-medium text-gray-700">Remarks </label>
               <div class="my-1">
-                      <input v-model="remark" name="remark"  type="text" class="tw-form-control w-full"><span v-if="errors.remark" class="text-red-500 text-xs font-semibold">{{errors.remark[0]}}</span>
+                      <input v-model="remark" name="remark"  type="text" class="text-sm border rounded px-3 py-2 w-full"><span v-if="errors.remark" class="text-red-500 text-xs font-semibold">{{errors.remark[0]}}</span>
               </div>
               </div>
               </div>
@@ -181,7 +181,7 @@
         
       
       <div class="my-6">
-        <a href="#" id="submit-btn" class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="check()">Submit</a>
+        <a href="#" id="submit-btn" class="btn btn-submit bg-blue-600 text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="check()">Submit</a>
     		<a href="#" class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 mr-3 text-sm font-medium" @click="reset()">Reset</a>	
       </div>
       </div>

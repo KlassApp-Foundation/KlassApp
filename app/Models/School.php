@@ -24,7 +24,7 @@ class School extends Model
      * @var array
      */
     protected $fillable = [
-        'name' , 'email' , 'phone' , 'address' , 'country_id' , 'state_id' , 'city_id' , 'pincode' , 'slug' , 'ministry_code', 'status', 'registration_country', 'student_size',
+        'name' , 'email' , 'phone' , 'address' , 'country_id' , 'state_id' , 'city_id' , 'pincode' , 'slug' , 'ministry_code', 'curriculum', 'status', 'registration_country', 'student_size',
         'school_pay_code', 'school_pay_api_password', 'school_pay_webhook_enabled',
     ];
 

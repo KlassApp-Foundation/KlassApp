@@ -169,14 +169,8 @@ class ReportsController extends Controller
      */
     public function index()
     {
-        //
-        $subscription = Subscription::where('school_id',Auth::user()->school_id)->get();
-        foreach($subscriptions as $subscription)
-        {
-            $plan = Plan::where('id',$subscription->plan_id)->get();
-        }
-         
-        return view("/admin/reports/index",['subscriptions'=>$subscription , 'plan'=>$plan]);
+        $subscriptions = Subscription::where('school_id', Auth::user()->school_id)->get();
+        return view("/admin/reports/index", compact('subscriptions'));
     }
 
     /**

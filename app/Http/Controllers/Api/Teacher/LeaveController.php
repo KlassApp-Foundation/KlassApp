@@ -326,7 +326,7 @@ class LeaveController extends Controller
         $school_id = Auth::user()->school_id;
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
-        if(Auth::user()->hasRole('leave_checker'))
+        if(Auth::user()->hasDesignation('leave_checker'))
         {
             $teacherprofiles = TeacherProfile::where([
                     ['school_id',$school_id],
@@ -361,7 +361,7 @@ class LeaveController extends Controller
         $school_id = Auth::user()->school_id;
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
-        if(Auth::user()->hasRole('leave_checker'))
+        if(Auth::user()->hasDesignation('leave_checker'))
         {
             $teacherprofiles = TeacherProfile::where([
                     ['school_id',$school_id],
@@ -396,7 +396,7 @@ class LeaveController extends Controller
         $school_id = Auth::user()->school_id;
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
-        if(Auth::user()->hasRole('leave_checker'))
+        if(Auth::user()->hasDesignation('leave_checker'))
         {
             $teacherprofiles = TeacherProfile::where([
                     ['school_id',$school_id],

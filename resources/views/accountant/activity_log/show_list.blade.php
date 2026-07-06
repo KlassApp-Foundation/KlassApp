@@ -20,7 +20,7 @@
                     <tr> 
                         <td>{{$activity->log_name}}</td>
                         <td>{{$activity->description}}</td>
-                        <td>{{$activity->created_at->format(' d-m-Y  H:i:s')}}</td>
+                        <td>{{ \Carbon\Carbon::parse($activity->created_at)->format(' d-m-Y  H:i:s') }}</td>
                         <td>  
                             @if(asset($activity->properties['ip']) !='')
                                 {{ $activity->properties['ip'] }}

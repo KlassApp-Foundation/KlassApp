@@ -4,23 +4,23 @@
     <div>
 	    <div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{this.success}}</div>
       <div class="flex flex-col lg:flex-row md:flex-row">
-        <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
+        <div class="w-full lg:w-1/2 md:w-1/2">
           <div class="lg:mr-8 md:mr-8">
             <div class="mb-2">
-              <label  class="tw-form-label">Name<span class="text-red-500">*</span></label>
+              <label  class="text-sm font-medium text-gray-700">Name<span class="text-red-500">*</span></label>
             </div>
             <div class="mb-2">
-              <input v-model="name" name="name"  value="name" type="text" placeholder="Template Name" class="tw-form-control w-full">
+              <input v-model="name" name="name"  value="name" type="text" placeholder="Template Name" class="text-sm border rounded px-3 py-2 w-full">
             </div>
             <span v-if="errors.name" class="text-red-500 text-xs font-semibold">{{errors.name[0]}}</span>
           </div> 
         </div>
       </div>
       <div class="flex flex-col lg:flex-row md:flex-row">
-        <div class="tw-form-group w-full">
+        <div class="w-full">
           <div class="lg:mr-8 md:mr-8">
             <div class="mb-2">
-              <label for="type" class="tw-form-label">Status<span class="text-red-500">*</span></label>
+              <label for="type" class="text-sm font-medium text-gray-700">Status<span class="text-red-500">*</span></label>
             </div>
              <input type="checkbox" v-model="status" v-bind:true-value="1" v-bind:false-value="0" name="status"><span class="mx-2 text-sm">Active</span>
             </div>
@@ -31,7 +31,7 @@
 
      
 <!-- <div class="mb-2">
-        <label for="title" class="tw-form-label">Option<span class="text-red-500">*</span></label>
+        <label for="title" class="text-sm font-medium text-gray-700">Option<span class="text-red-500">*</span></label>
       </div>  -->
       <div class="w-full">
         <div v-for="(payroll,k1) in payrolls" :key="k1" class="w-full lg:w-1/2 lg:pr-8 md:pr-8 py-3">
@@ -40,14 +40,14 @@
  <div class="lg:w-2/3 flex">
             <div class="w-full">
             
-               <select  v-model="payroll.category_id"   class="tw-form-control w-full" :disabled="payroll.head_key=='BA'" @change="typechange(k1)">
+               <select  v-model="payroll.category_id"   class="text-sm border rounded px-3 py-2 w-full" :disabled="payroll.head_key=='BA'" @change="typechange(k1)">
                 <option value="" disabled>Select one</option>
                 <option v-for="category in category" v-bind:value="category.id">{{category.name}}</option>
               </select>  <br>
               <span v-if="errors['category_id'+k1]" class="text-red-500 text-xs font-semibold">{{errors['category_id'+k1][0]}}</span>
             </div>      
            <div v-show="payroll.category_id==4" class="w-full pl-1">
-              <input  type="text"  v-model="payroll.category_value" class="tw-form-control w-full "> <br>
+              <input  type="text"  v-model="payroll.category_value" class="text-sm border rounded px-3 py-2 w-full "> <br>
                <span v-if="errors['category_value'+k1]" class="text-red-500 text-xs font-semibold whitespace-no-wrap">{{errors['category_value'+k1][0]}}</span> 
             </div>  
             </div>
@@ -55,7 +55,7 @@
       </div>
       
       <div class="my-6"  v-show="this.payrolls!=''" >
-        <a href="#" id="submit-btn" class="btn btn-submit blue-bg text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="check()">Submit</a>
+        <a href="#" id="submit-btn" class="btn btn-submit bg-blue-600 text-white rounded px-3 py-1 mr-3 text-sm font-medium" @click="check()">Submit</a>
     		<a href="#" class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 mr-3 text-sm font-medium" @click="reset()">Reset</a>	
       </div>
 	  </div>

@@ -56,11 +56,11 @@
            <td><strong>Name</strong></td>
            <td>{{$payroll->user->userprofile->firstname}} {{$payroll->user->userprofile->lastname}}</td>
            <td><strong>Employee Id</strong></td>
-           <td>{{$payroll->user->teacherprofile[0][employee_id]}}</td>
+           <td>{{$payroll->user->teacherprofile[0]['employee_id']}}</td>
          </tr>
          <tr>
            <td><strong>Designation</strong></td>
-           <td>{{ucfirst($payroll->user->teacherprofile[0][designation])}}</td>
+           <td>{{ucfirst($payroll->user->teacherprofile[0]['designation'])}}</td>
            <td><strong>Contact Number</strong></td>
            <td>{{$payroll->user->mobile_no}}</td>
          </tr>
@@ -197,15 +197,6 @@
             display: table-row;
             vertical-align: inherit;
             border-color: inherit;
-        }
-        .comma:not(:first-child) {
-        margin-left: -.3em;  
-        }
-        .comma:empty {
-        display: none;
-        }
-        .comma:not(:first-child):before {
-        content: ", ";
         }
         .table-padded-lg td {
             padding: 0.8em;

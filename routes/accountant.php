@@ -86,3 +86,8 @@ Route::get('/notification/list', 'NotificationController@indexList');
 Route::get('/notifications', 'NotificationController@index');
 Route::post('/notification/read', 'NotificationController@store');
 Route::get('/notification/showList', 'NotificationController@showList');
+
+// Fee payment records
+Route::get('/fees/payments', 'FeePaymentController@index')->name('accountant.fee-payments');
+Route::get('/fees/payments/create', 'FeePaymentController@create')->name('accountant.fee-payments.create');
+Route::post('/fees/payments/store', 'FeePaymentController@store')->name('accountant.fee-payments.store');

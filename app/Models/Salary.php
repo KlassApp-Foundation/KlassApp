@@ -13,7 +13,7 @@ class Salary extends Model
     //
   use SoftDeletes;
 
-  protected $fillable = ['school_id' , 'staff_id','template_id','effective_date','comments'];
+  protected $fillable = ['school_id' , 'staff_id','template_id','gross_salary','effective_date','comments'];
 
   public function payrolltemplate()
     {

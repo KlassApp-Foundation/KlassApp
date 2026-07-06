@@ -2,12 +2,15 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-<div class="relative">
+<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
 
-<div class="flex flex-wrap lg:flex-row justify-between my-3">
-<div class="">
-   <h1 class="admin-h1 my-3">Teaching Staff ( {{ $count }} )</h1>
-</div>
+@include('layouts.partials.page-header', [
+    'title' => 'Users',
+    'subtitle' => 'Manage all school staff, teachers, and support personnel.',
+    'actions' => '<span class="text-sm text-gray-500 font-medium">Total: ' . $count . '</span>'
+])
+
+<div class="relative mt-4">
 
    <div class="w-full lg:w-2/4">
    	 <portal-target name="search" ></portal-target>
