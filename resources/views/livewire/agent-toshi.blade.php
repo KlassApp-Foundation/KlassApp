@@ -55,7 +55,7 @@
                 @if(count($subjects) > 0)
                 <div style="margin-bottom: 8px;">
                     @foreach($subjects as $si => $s)
-                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                    <div class="toshi-row" style="padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
                         <span style="flex: 1;">{{ $s }}</span>
                         <button wire:click="removeSubject({{ $si }})" type="button"
                                 style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>

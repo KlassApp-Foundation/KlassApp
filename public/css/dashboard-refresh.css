@@ -1911,3 +1911,8 @@ body {
     outline-offset: 0 !important;
     box-shadow: none !important;
 }
+
+/* Toshi row — flex row with center alignment and gap */
+.toshi-row { display: flex; align-items: center; gap: 6px; }
+.toshi-row-gap8 { display: flex; align-items: center; gap: 8px; }
+.toshi-row-between { display: flex; align-items: center; justify-content: space-between; }
