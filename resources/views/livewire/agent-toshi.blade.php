@@ -24,34 +24,29 @@
     </style>
     <div id="toshi-pill"
          wire:click="show"
-         class="fixed flex items-center cursor-pointer toshi-pill"
-         style="{{ $visible || $maximized ? 'display: none;' : '' }} background: #FFFFFF; padding: 0 8px; gap: 10px; z-index: 9999;">
-        <div class="flex items-center justify-center shrink-0" style="width: 38px; height: 38px; border-radius: 50%; background: #0F172A; overflow: hidden;">
+         class="toshi-pill"
+         style="{{ $visible || $maximized ? 'display: none;' : '' }}">
+        <div class="flex items-center justify-center shrink-0" style="width: 38px; height: 38px; border-radius: 50%; background: var(--d-dark); overflow: hidden;">
             <img src="{{ asset('images/klassapp-logo.svg') }}" style="width: 24px; height: 24px;" alt="KlassApp">
         </div>
-        <span style="flex: 1; font-size: 13px; color: #64748B; font-weight: 400; white-space: nowrap;">Ask Toshi anything</span>
-        <div class="flex items-center shrink-0 toshi-pill-talk" style="height: 38px; padding: 0 14px; gap: 6px; color: #FFFFFF; font-size: 13px; font-weight: 600;">
+        <span style="flex: 1; font-size: 13px; color: var(--d-muted); font-weight: 400; white-space: nowrap;">Ask Toshi anything</span>
+        <div class="flex items-center shrink-0" style="height: 38px; padding: 0 14px; gap: 6px; color: #fff; font-size: 13px; font-weight: 600;">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="white"><rect x="1" y="4" width="3" height="6" rx="1"/><rect x="5.5" y="1" width="3" height="12" rx="1"/><rect x="10" y="3" width="3" height="8" rx="1"/></svg> Talk
         </div>
     </div>
 
     <div id="toshi-panel"
-         class="flex flex-col overflow-hidden toshi-panel"
-         style="{{ $visible ? 'display: flex;' : 'display: none;' }} background: #FFFFFF; border: 1px solid #E2E8F0; border-bottom: none; z-index: 9999;">
-        <div class="toshi-panel-header">
-            <div class="flex items-center gap-2.5">
-                <div class="flex items-center justify-center shrink-0" style="width: 32px; height: 32px; border-radius: 50%; background: #FFFFFF; overflow: hidden;">
-                    <img src="{{ asset('images/klassapp-logo.svg') }}" style="width: 22px; height: 22px;" alt="KlassApp">
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="toshi-header-dot"></span>
-                    <span class="toshi-header-name">Toshi</span>
-                </div>
+         class="toshi-panel"
+         style="{{ $visible ? 'display: flex;' : 'display: none;' }}">
+        <div class="toshi-header">
+            <div class="flex items-center gap-2">
+                <span class="toshi-status-dot"></span>
+                <h3>Toshi</h3>
             </div>
             <div class="flex items-center gap-2" style="margin-left: auto;">
                 <button wire:click="maximize"
-                        class="flex items-center justify-center"
-                        style="border-radius: 6px; background: rgba(0,0,0,0.06); border: none; cursor: pointer; padding: 8px;" title="Expand">
+                        class="toshi-header-close"
+                        title="Expand">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
                 <button wire:click="hide"
@@ -810,34 +805,22 @@
             @endif
         </div>
         @endif
-        {{-- Composer: compact panel — single rounded shell with bottom action row --}}
-        <form wire:submit.prevent="send" class="shrink-0" style="background: #FFFFFF;">
-            <div class="toshi-composer-box" style="margin: 0 10px 12px;">
-                {{-- Textarea --}}
-                <div class="toshi-composer-inner">
-                    <textarea rows="1" wire:model.defer="input"
-                              placeholder="Message Toshi…"
-                              id="toshi-input-panel"
-                              @input="
-                                  hasText = $el.value.trim().length > 0;
-                                  $el.style.height = 'auto';
-                                  $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
-                              "
-                               @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
-                               class="toshi-composer-textarea resize-none"
-                               style="transition: height 0.15s ease;"></textarea>
-                </div>
-                {{-- Bottom action row --}}
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 10px;">
-                    {{-- Voice (left) --}}
-                    <button type="button" x-data="{ listening: false }"
-                            @click="
-                                if (!listening) {
-                                    listening = true; hasText = true;
-                                    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                                    if (!SpeechRecognition) { listening = false; alert('Voice input not supported in this browser'); return; }
-                                    var recognition = new SpeechRecognition();
-                                    recognition.lang = 'en-US';
+        {{-- Composer --}}
+        <form wire:submit.prevent="send" class="toshi-composer">
+            <div class="toshi-composer-inner">
+                <textarea rows="1" wire:model.defer="input"
+                          placeholder="Message Toshi…"
+                          id="toshi-input-panel"
+                          @input="
+                              hasText = $el.value.trim().length > 0;
+                              $el.style.height = 'auto';
+                              $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
+                          "
+                           @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
+                           class="toshi-composer-input"></textarea>
+                <button type="submit" class="toshi-composer-btn">Send</button>
+            </div>
+        </form>
                                     recognition.interimResults = false;
                                     recognition.onresult = function(event) {
                                         var text = event.results[0][0].transcript;
