@@ -20,10 +20,10 @@ php artisan migrate --force --no-interaction || true
 # php artisan migrate:fresh --seed
 
 # clear caches on startup (helps after permission fixes)
-php artisan config:clear
-php artisan cache:clear
-php artisan view:clear
-php artisan route:clear
+php artisan config:clear || true
+php artisan cache:clear || true
+php artisan view:clear || true
+php artisan route:clear || true
 
 echo "starting PHP-FPM"
 exec php-fpm -F
