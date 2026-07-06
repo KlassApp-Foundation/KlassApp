@@ -19,6 +19,9 @@ services:
       DB_DATABASE: ${DB_DATABASE}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT: 6379
       USER_ID: 1000
       GROUP_ID: 1000
       PHP_FPM_LISTEN: "0.0.0.0:9000"
@@ -27,6 +30,7 @@ services:
     #   - klassapp_vendor:/var/www/vendor
     depends_on:
       - database
+      - redis
     networks:
       - laravel
 
@@ -69,9 +73,29 @@ services:
     depends_on:
       - app
 
+# redis service
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - laravel
+    restart: unless-stopped
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+
 networks:
   laravel:
 
 volumes:
   db-data:
+  redis-data:
   # klassapp_vendor:
