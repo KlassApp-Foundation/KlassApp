@@ -27,60 +27,70 @@ class DashboardSuperController extends Controller
     public function index(Request $request)
     {
         $admin_id  = Auth::id();
+        $testSchoolIds = School::where('is_test', true)->pluck('id');
 
-        $stats = Cache::remember('superadmin_dashboard_stats', 300, function () {
+        $stats = Cache::remember('superadmin_dashboard_stats', 300, function () use ($testSchoolIds) {
             $now = now();
 
+            $schoolBase   = School::whereNotIn('id', $testSchoolIds);
+            $userBase     = User::whereNotIn('school_id', $testSchoolIds);
+
             // ── School metrics ──
-            $totalSchools     = School::count();
-            $activeSchools    = School::where('status', 1)->count();
+            $totalSchools     = (clone $schoolBase)->count();
+            $activeSchools    = (clone $schoolBase)->where('status', 1)->count();
             $inactiveSchools  = $totalSchools - $activeSchools;
-            $schoolsThisMonth = School::where('created_at', '>=', $now->copy()->startOfMonth())->count();
-            $schoolsLastMonth = School::whereBetween('created_at', [
+            $schoolsThisMonth = (clone $schoolBase)->where('created_at', '>=', $now->copy()->startOfMonth())->count();
+            $schoolsLastMonth = (clone $schoolBase)->whereBetween('created_at', [
                 $now->copy()->subMonth()->startOfMonth(),
                 $now->copy()->subMonth()->endOfMonth(),
             ])->count();
 
             // ── User metrics ──
-            $totalUsers       = User::count();
-            $schoolAdmins     = User::where('usergroup_id', 3)->count();
-            $teachers         = User::where('usergroup_id', 5)->count();
-            $students         = User::where('usergroup_id', 6)->count();
-            $parents          = User::where('usergroup_id', 7)->count();
-            $usersThisMonth   = User::where('created_at', '>=', $now->copy()->startOfMonth())->count();
-            $usersLastMonth   = User::whereBetween('created_at', [
+            $totalUsers       = (clone $userBase)->count();
+            $schoolAdmins     = (clone $userBase)->where('usergroup_id', 3)->count();
+            $teachers         = (clone $userBase)->where('usergroup_id', 5)->count();
+            $students         = (clone $userBase)->where('usergroup_id', 6)->count();
+            $parents          = (clone $userBase)->where('usergroup_id', 7)->count();
+            $usersThisMonth   = (clone $userBase)->where('created_at', '>=', $now->copy()->startOfMonth())->count();
+            $usersLastMonth   = (clone $userBase)->whereBetween('created_at', [
                 $now->copy()->subMonth()->startOfMonth(),
                 $now->copy()->subMonth()->endOfMonth(),
             ])->count();
 
             // ── Subscription metrics ──
-            $subscriptionsTotal = Subscription::count();
-            $activeSubs = Subscription::where('status', 'active')->count();
-            $expiredSubs = Subscription::where('status', 'expired')->count();
-            $cancelledSubs = Subscription::where('status', 'cancelled')->count();
+            $subscriptionBase = Subscription::whereNotIn('school_id', $testSchoolIds);
+            $subscriptionsTotal = (clone $subscriptionBase)->count();
+            $activeSubs    = (clone $subscriptionBase)->where('status', 'active')->count();
+            $expiredSubs   = (clone $subscriptionBase)->where('status', 'expired')->count();
+            $cancelledSubs = (clone $subscriptionBase)->where('status', 'cancelled')->count();
 
             // Revenue: sum of plan amounts for active subscriptions
             $estimatedMRR = DB::table('subscriptions')
                 ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
+                ->whereNotIn('subscriptions.school_id', $testSchoolIds)
                 ->where('subscriptions.status', 'active')
                 ->sum('plans.amount');
 
             // ── WhatsApp metrics ──
-            $whatsappUsers     = WhatsAppUser::count();
-            $whatsappMessages  = MessageDeliveryLog::whereDate('sent_at', '>=', $now->copy()->startOfMonth())
+            $whatsappUsers     = WhatsAppUser::whereNotIn('school_id', $testSchoolIds)->count();
+            $whatsappMessages  = MessageDeliveryLog::whereNotIn('school_id', $testSchoolIds)
+                ->whereDate('sent_at', '>=', $now->copy()->startOfMonth())
                 ->whereDate('sent_at', '<=', $now->copy()->endOfMonth())
                 ->count();
-            $whatsappLastMonth = MessageDeliveryLog::whereDate('sent_at', '>=', $now->copy()->subMonth()->startOfMonth())
+            $whatsappLastMonth = MessageDeliveryLog::whereNotIn('school_id', $testSchoolIds)
+                ->whereDate('sent_at', '>=', $now->copy()->subMonth()->startOfMonth())
                 ->whereDate('sent_at', '<=', $now->copy()->subMonth()->endOfMonth())
                 ->count();
             $whatsappSuccessRate = $whatsappMessages > 0
-                ? round(MessageDeliveryLog::whereDate('sent_at', '>=', $now->copy()->startOfMonth())
+                ? round(MessageDeliveryLog::whereNotIn('school_id', $testSchoolIds)
+                    ->whereDate('sent_at', '>=', $now->copy()->startOfMonth())
                     ->whereDate('sent_at', '<=', $now->copy()->endOfMonth())
                     ->where('status', 'delivered')->count() / max($whatsappMessages, 1) * 100)
                 : 0;
 
             // ── Plans with subscriber counts and revenue ──
-            $subscriptionCounts = Subscription::selectRaw('plan_id, count(*) as count')
+            $subscriptionCounts = (clone $subscriptionBase)
+                ->selectRaw('plan_id, count(*) as count')
                 ->groupBy('plan_id')
                 ->pluck('count', 'plan_id');
 
@@ -100,9 +110,9 @@ class DashboardSuperController extends Controller
                 $month = $now->copy()->subMonths($i);
                 $monthlyTrends[] = [
                     'label' => $month->format('M'),
-                    'schools' => School::whereYear('created_at', $month->year)
+                    'schools' => (clone $schoolBase)->whereYear('created_at', $month->year)
                         ->whereMonth('created_at', $month->month)->count(),
-                    'users' => User::whereYear('created_at', $month->year)
+                    'users' => (clone $userBase)->whereYear('created_at', $month->year)
                         ->whereMonth('created_at', $month->month)->count(),
                 ];
             }
@@ -127,8 +137,8 @@ class DashboardSuperController extends Controller
         });
 
         // ── Recent activity (not cached — always fresh) ──
-        $recentSchools = School::latest()->take(5)->get();
-        $recentUsers   = User::with('school')->latest()->take(5)->get();
+        $recentSchools = School::where('is_test', false)->latest()->take(5)->get();
+        $recentUsers   = User::whereNotIn('school_id', $testSchoolIds)->with('school')->latest()->take(5)->get();
 
         $stats['recentSchools'] = $recentSchools;
         $stats['recentUsers']   = $recentUsers;

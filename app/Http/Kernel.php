@@ -68,9 +68,7 @@ class Kernel extends HttpKernel
          'superadmin'            =>  \App\Http\Middleware\MustBeSuperadmin::class,
         'siteadmin'             =>  \App\Http\Middleware\MustBeSiteAdmin::class,
         'sitesubadmin'          =>  \App\Http\Middleware\MustBeSiteSubAdmin::class,
-        'role'                  =>  \Laratrust\Middleware\LaratrustRole::class,
-        'permission'            =>  \Laratrust\Middleware\LaratrustPermission::class,
-        'ability'               =>  \Laratrust\Middleware\LaratrustAbility::class,
+        'designation'           =>  \App\Http\Middleware\MustHaveDesignation::class,
 
         'schooladmin'           =>  \App\Http\Middleware\MustBeSchoolAdmin::class,
         'schoolsubadmin'        =>  \App\Http\Middleware\MustBeSchoolSubAdmin::class,

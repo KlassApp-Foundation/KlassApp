@@ -987,11 +987,127 @@ These remain unverified — known to exist, not yet tested with actual button cl
 - **Payroll calculator**: Statutory computations centralized in `UgandaPayrollCalculator` service class
 - **Fee reconciliation**: Direct match via `matched_fee_category_id` on `schoolpay_transactions` — no intermediate matching table needed
 
+### 2026-07-06: PDF report debugging + O-Level/A-Level seed data
+- **Work done**: Fixed `DownloadStudentReport@download` 404 bug (root cause), created O-Level/A-Level seed data
+- **Files created**: `database/seed-test-marks.php` — seeds O-Level (Senior One) and A-Level (Senior Five) test data for PDF report testing
+- **Files modified**: `app/Http/Controllers/Admin/DownloadStudentReport.php` — replaced `abort(404)` with flash redirect
+- **Key decisions**: 
+  - 404 root cause: `$studentHelper->learner()` returns null when student has no marks in the given exam context → controller calls `abort(404)`. Fixed by redirecting back with error flash.
+  - School admin (`admin@testschoolone.sch.ug`) must be used for report tests, not super admin (super admin has `school_id=null`, causing `forSchool(null)` scope to match nothing)
+- **Edge cases flagged**:
+  - `subjects` table requires `academic_year_id` FK — seed script initially failed without it
+  - `exams` table requires `teacher_id` FK (not nullable)
+  - `standards_link` table requires `school_id`, `academic_year_id` FKs
+  - Super admin (siteadmin@gmail.com) cannot access school-specific PDF reports due to null school_id
+- **Status**: ✅ Completed
+
 ### Remaining / Flagged
-- Nursery grading approach will unblock both grading scale completeness and PDF report generation
+- Nursery grading approach resolved (descriptive 4-level scale implemented)
+- PDF reports for all 4 levels (Nursery, Primary, O-Level, A-Level) now generate successfully with test data
+- Seed script `database/seed-test-marks.php` available for future testing — run via `php database/seed-test-marks.php`
 - Payroll batch run needs accountant login credentials to click-verify
 - Health aggregate view needs a new page + route
 - ReportsController@index `compact($variable)` bug remains unfixed
 - 3 pre-existing test failures (LoginRegressionTest) — unrelated
 - Production not yet deployed (all changes pending)
+
+## Q1 2027 Roadmap
+
+### Design System (July 2026 — Current)
+- **Blade components built**: `<x-button>` (6 variants), `<x-card>` (4 padding + 4 shadow options), `<x-badge>` (9 status variants), `<x-table>` (striped/hover), `<x-form-group>` (text/select/textarea)
+- **CSS backed**: `ds-*` class namespace in `dashboard-refresh.css` (~250 lines), all mapped to `--d-*` CSS custom properties
+- **Migrated views**: subject CRUD (index/list/form), fees (payments/unmatched/create), classes/create, staff/index, parent (show/create), attendance/index, member/show, promotion/create, page-header shared partial
+- **Documentation**: `resources/views/components/DESIGN_SYSTEM.md`
+- **Constraint**: Tailwind v1.4.6 — no JIT, no `@apply`, no arbitrary values, no DaisyUI
+
+### Remaining Frontend Work Before Click-Verification
+- Views still on old patterns (`admin-h1`, `custom-green`, `blue-bg`, `tw-form-control`): ~30+ admin views across attendance, bulletins, leavetypes, visitorlog, settings, classwall, member (CRUD), notification, calllog
+- Student management views (member/show/create/edit) — most are Vue-driven, header-only migration done
+- Reports module views (index, filter, show) — partially cleaned
+
+### Post-Sprint: Framework Modernization
+1. **Laravel sequential upgrade**: 10 → 11 → 12 → 13
+   - Blockers cleared: laratrust removed, Sanctum bump identified, Carbon/LarAgent confirmed compatible
+   - Each major version needs `php artisan upgrade --dry-run` + composer dep updates + config review
+2. **Tailwind CSS v1.4.6 → v3/v4 migration**
+   - Requires: JIT mode enable, `@apply` migration, class string rewriting across all Blade files
+   - Breaking changes each hop (v1→v2: remove `@tailwind preflight`, v2→v3: JIT + `content` config, v3→v4: CSS-first config)
+   - Best done after the component system is proven (so migration targets `ds-*` classes rather than raw Tailwind strings)
+3. **DaisyUI or component library evaluation**
+   - Only once Tailwind is current (v3+)
+   - KlassApp's `ds-*` component primitives should inform the real redesign — not start from zero
+4. **Design engine options**
+   - `open-design` skill available for external design consultation
+   - A genuinely new visual language makes sense only once the underlying CSS framework can support it (Tailwind v3+)
+
+### Architecture Decisions
+- **Component system must coexist with Tailwind v1**: all `ds-*` classes are plain CSS, no `@apply` dependency
+- **No `app/View/Components/`**: anonymous Blade components auto-discover from `resources/views/components/` — zero registration needed
+- **Migration path**: views use `ds-*` components now; when Tailwind upgrades, the CSS behind `ds-*` can be rewritten without touching Blade templates
+
+### Testing Gotchas
+
+- **Super Admin `school_id=null`**: `siteadmin@gmail.com` (user id=1) has `school_id=null`. Any school-scoped query using `forSchool()` or `where('school_id', $admin->school_id)` silently returns zero results when called from a Super Admin context — not just PDF reports but every feature scoped to a school. **Default to a real School Admin account** (e.g. `admin@testschoolone.sch.ug` / `password123`) for testing school-scoped features. Reserve Super Admin for platform-level tests only.
+- **Alpine keyword collision**: Alpine.js `x-data`, `x-show`, etc. directives collide with any PHP variable named `$x`. If a Blade view silently fails to render with a parse error, check for variables prefixed with `x-`.
+- **Route verification pitfall**: A route returning 200 from `php artisan serve` or curl does not mean the view rendered successfully — the controller may have returned a redirect that the browser follows silently. Always check the `Content-Type` header (expect `text/html` or `application/pdf`, not an empty redirect).
+- **Click vs render gap**: A view that compiles via `view('name')` in tinker may still fail at runtime due to missing data (null relationship, missing `compact()` variable, undefined array key). Compilation is not verification — test with real data.
+
+### Click-Verification Status (July 6, 2026)
+
+Admin role click-verification is **complete** — all three remaining gap items have been E2E tested through the browser, with DB state verified before/after each action.
+
+| Item | Method | Evidence |
+|---|---|---|
+| Fee Reconciliation Match | POST `admin/fees/payments/unmatched/{txn}/match` with category select | SchoolPayTransaction id=1: `matched_fee_category_id` set from null→1, `reconciled_at` set. No `fee_payment` record created (by design — match only assigns category, does not create a payment). |
+| Messaging Send | POST `admin/student/sendMessageToAll` with selected parent+student | `send_mail` record created: subject="Test Subject", message="Test message content", status="delivered", user_id=parent, student_id=student, fired_at set, is_executed=1. |
+| Payroll Run | POST `accountant/payroll/batch/confirm` with preview-computed rows | Payroll record created: id=1, staff_id=30, payrollno=#_001, status="unpaid", start_date=2026-06-01, end_date=2026-06-30. Batch preview correctly computed PAYE/NSSF/net before confirm. Payslip_items created only when salary has template items (test salary had none). |
+
+**Prerequisite data created during testing**: 1 fee category, 1 SchoolPayTransaction, 1 parent user with student link, 1 payroll template, 1 salary record, 1 accountant user. These remain in the database for re-testing.
+
+**Key findings**:
+- The "Match" action does not create a `fee_payment` record — it only reconciles the SchoolPayTransaction. This is the correct behavior (the actual payment entry is done separately via `FeePaymentController@store`).
+- The messaging flow creates a `send_mail` record but does not guarantee WhatsApp delivery — it stores the message and fires `SinglePushEvent` for in-app notification.
+- Payroll batch workflow has three steps (index → preview → confirm) and supports both inline processing (&le;20 staff) and queue dispatch (>20 staff).
+- The `adminaccountant` middleware allows both accountant (usergroup_id=11) and school admin (usergroup_id=3) — payroll can be tested without a dedicated accountant login.
+
+---
+
+### Teacher Role Click-Verification (July 6, 2026)
+
+Teacher click-verification is **complete** — all 5 modules E2E tested with DB state verified before/after each action.
+
+| Module | Method | Evidence | Status |
+|---|---|---|---|
+| **Attendance Marking** | POST `api/teacher/attendance/add` with Standardlinkid, Date, Session, AbsentList | Attendance record created: id=1, user_id=35, date=2026-07-06, status=present. System auto-creates present records for students not in AbsentList. | ✅ PASS |
+| **Numeric Marks Entry** | POST `teacher/exam/2/marks/save` with `marks[studentId]` | Marks records created for Primary (78/C3), O-Level (65/C), A-Level (82/A). `changeExamStatus()` transition works after fix. | ✅ PASS |
+| **Nursery Domain Ratings** | POST `teacher/exam/1/marks/save` with `assessments[studentId][domain]` | 4 NurseryAssessment records created: Literacy=Good, Numeracy=Excellent, Motor Skills=Satisfactory, Social/Emotional=Good. Branch detection via `GradingHelper::levelTypeForStandard()` works. | ✅ PASS |
+| **Lesson Plan Creation** | 4-step POST flow: stepOne → stepTwo → stepThree → stepFour | LessonPlan id=1: status=draft→pending, title="Introduction to Numbers", all fields saved. Step 3 triggers notification to principal. | ✅ PASS |
+| **Lesson Plan Approval** | POST `teacher/lessonplan/approve/{id}` with `comments` | ✅ **FIXED** — was broken by dead Laratrust middleware. Now uses new `designation:principal` middleware. Teacher with `principal` designation approves successfully: HTTP 200, status=approved, Approval state=Approved. | ✅ PASS |
+| **Leave Application** | POST `teacher/leave/add` with from_date, to_date, reason_id, leave_type_id, session | TeacherLeaveApplication id=1: user=30, status=pending, type=Sick Leave. Approval record created automatically via unified Approval engine with state=Pending. | ✅ PASS |
+| **Leave Approval** | POST `teacher/leave/approve/{id}` with `status=approved` | ✅ **FIXED** — was broken by dead Laratrust middleware. Now uses `designation:leave_checker`. Teacher with `leave_checker` designation approves successfully: HTTP 200, status=approved. | ✅ PASS |
+| **Homework/Assignment Approval** | POST `admin/homework/approve/{id}` with `principal_comments` | HomeworkApproval id=1: status=pending→approved, approved_by=5 (admin). Admin route works correctly (not behind Laratrust middleware). AssignmentApproval is a separate model (no state machine) — also fixed for teacher routes. | ✅ PASS |
+| **Assignment Approval (Teacher)** | POST `teacher/assignment/approve/{id}` with `principal_comments` | ✅ **FIXED** — was broken by same Laratrust middleware. Now uses `designation:principal`. Teacher with `principal` designation approves: HTTP 200, AssignmentApproval status=approved. | ✅ PASS |
+
+**Critical finding: Laratrust middleware gap — FIXED (July 6, 2026)**
+- **Root cause**: `app/Http/Kernel.php` registered `role` middleware pointing to `\Laratrust\Middleware\LaratrustRole::class`, a package **never installed** in composer dependencies. Every route using `role:principal`, `role:leave_checker`, or `role:student_leave_checker` returned HTTP 500.
+- **Fix**: Removed 3 dead Laratrust middleware registrations (`role`, `permission`, `ability`). Created new `MustHaveDesignation` middleware (`app/Http/Middleware/MustHaveDesignation.php`) registered as `designation` — checks `$request->user()->hasDesignation($designation)` against the `teacher_designations` JSON column. Replaced all 7 `role:X` usages in `routes/teacher.php` and `routes/teacherapi.php` with `designation:X`.
+- **Affected routes fixed** (7 locations):
+  - `teacher.php:51` — assignment approval (designation:principal)
+  - `teacher.php:137` — leave approval (designation:leave_checker)
+  - `teacher.php:185` — lesson plan approval (designation:principal)
+  - `teacher.php:417` — student leave (designation:student_leave_checker)
+  - `teacherapi.php:292` — API leave check (designation:leave_checker)
+  - `teacherapi.php:308` — API student leave (designation:student_leave_checker)
+  - `teacherapi.php:326` — API assignment approval (designation:principal)
+- **No role: middleware remains** in any route file — verified by `test_no_role_middleware_remains_in_any_route()` (1334 assertions).
+
+**Bug fixed during testing**: `Exam::changeExamStatus()` (app/Models/Academics/Exam.php:58) had `UnhandledMatchError` for the `submitted` status. Added `"submitted" => "submitted"` case — `saveExamMarks` calls this after saving marks, and existing exams may already be in `submitted` state.
+
+**Exam status lifecycle**: `undone` → (marks entered) → `done` → (teacher confirms) → `submitted`
+
+**Test accounts**:
+- Teacher: `teacher_test_school_one@testschoolone.edu` / `password123` (password was reset from non-matching hash)
+- Admin: `admin@testschoolone.sch.ug` / `password123`
+- Teacher has `leave_applier` designation and `reporting_to=5` set in TeacherProfile
+- Admin has `leave_checker` designation
 

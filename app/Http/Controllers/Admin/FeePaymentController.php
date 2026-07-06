@@ -19,7 +19,7 @@ class FeePaymentController extends Controller
         $payments = FeePayment::with(['student', 'feeCategory', 'recorder'])
             ->where('school_id', $schoolId)
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(50);
 
         return view('admin.fees.payments', compact('payments'));
     }

@@ -17,7 +17,7 @@ class FeePaymentController extends Controller
         $payments = FeePayment::with(['student', 'feeCategory', 'recorder'])
             ->where('school_id', $schoolId)
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(50);
 
         return view('accountant.fees.payments', compact('payments'));
     }
@@ -25,8 +25,8 @@ class FeePaymentController extends Controller
     public function create()
     {
         $schoolId = Auth::user()->school_id;
-        $students = User::where('school_id', $schoolId)->where('usergroup_id', 6)->orderBy('name')->get();
-        $feeCategories = FeesCategories::where('school_id', $schoolId)->orderBy('name')->get();
+        $students = User::where('school_id', $schoolId)->where('usergroup_id', 6)->orderBy('name')->paginate(50);
+        $feeCategories = FeesCategories::where('school_id', $schoolId)->orderBy('name')->paginate(50);
 
         return view('accountant.fees.payment-create', compact('students', 'feeCategories'));
     }

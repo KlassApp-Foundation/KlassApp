@@ -36,7 +36,8 @@ class BulletinsController extends Controller
 
     public function __construct()
     {
-        $this->academic_year=SiteHelper::getAcademicYear(Auth::user()->school_id);
+        $user = Auth::user();
+        $this->academic_year = $user ? SiteHelper::getAcademicYear($user->school_id) : null;
     }
 
     public function index(Request $request)

@@ -44,10 +44,10 @@ class EventsController extends Controller
     use LogActivity;
     use Common;
 
-     public function __construct()
+      public function __construct()
     {
-        $this->academic_year=SiteHelper::getAcademicYear(Auth::user()->school_id);
-        //$this->academic_year=$this->academic_year->id;
+        $user = Auth::user();
+        $this->academic_year = $user ? SiteHelper::getAcademicYear($user->school_id) : null;
     }
 
     function index()
