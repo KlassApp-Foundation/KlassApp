@@ -1,11 +1,12 @@
 # KlassApp Project Knowledge
 
-## Current Status: July 6, 2026
+## Current Status: July 6, 2026 (Evening)
 
 ### Git
 - **Branch**: `main`
-- **HEAD**: `d9bd1e5` — "feat: nursery descriptive assessment grading + PDF report rendering, fix ReportsController bug" (committed + pushed)
+- **HEAD**: `b3954ba` — "feat: landing page dead CSS removed, teacher assignment migrated, Toshi polish started" (committed + pushed)
 - **Remote**: `origin/main` (GitHub: Elijah-ug/KlassApp)
+- **Also in this session**: `ced28c5` (Toshi root element fix + Plan fillable + trial tests), `02fcfa6` (30-day trial), `af5ef09` (field reduction), `22359ae` (design system + Toshi CSS), `7b2b7c1` (teacher/accountant heading migration)
 
 ---
 
@@ -1105,9 +1106,85 @@ Teacher click-verification is **complete** — all 5 modules E2E tested with DB 
 
 **Exam status lifecycle**: `undone` → (marks entered) → `done` → (teacher confirms) → `submitted`
 
+### OPEN — Toshi trial flow: plan-selection step not yet click-tested (deferred July 2026)
+
+**Status**: DEFERRED, not blocked. A real browser click-through IS possible — it just requires a person (or Playwright driving real UI interaction, same method used for `confirmOnboarding()`'s earlier verification) to click through Toshi's onboarding up to and through the plan-selection step, same as any real school admin would. It does not require automating the LLM's conversational responses — only the actual plan-selection click/interaction needs to happen for real.
+
+**What's confirmed**:
+- `TrialService::startTrial()` works correctly and identically regardless of caller — verified via `/register`'s real browser test (`?plan=Extended`) and direct service calls for both Growth (300 students) and Premium (10,000).
+- The `MultipleRootElementsDetectedException` is a LOCAL/DEBUG-MODE-ONLY artifact of Livewire 3's PHPUnit test harness — confirmed NOT to affect production (`APP_DEBUG=false`) or real browser users at all. Toshi renders correctly when debug is off.
+- AgentToshi.php line 3771–3778 calls `TrialService::startTrial()` when `$selectedPlan->amount > 0` — same function, same code path, no divergence possible from the `/register` path.
+
+**What's NOT yet confirmed**:
+- That Toshi's real onboarding UI, when a real person selects Growth vs. Premium at the plan step, correctly triggers `TrialService::startTrial()` (or correctly withholds it for Premium if a Growth-only restriction is in place) as an actual consequence of that click — not just that the underlying function is sound.
+
+**Next step when resumed**: One real browser session, click through to the plan-selection step, select Growth, confirm DB state. Repeat selecting Premium, confirm trial is correctly NOT started (or started with Premium limits, whichever the current business rule is). This is a small, specific, achievable test — not a large blocked item.
+
 **Test accounts**:
 - Teacher: `teacher_test_school_one@testschoolone.edu` / `password123` (password was reset from non-matching hash)
 - Admin: `admin@testschoolone.sch.ug` / `password123`
 - Teacher has `leave_applier` designation and `reporting_to=5` set in TeacherProfile
 - Admin has `leave_checker` designation
+
+
+
+---
+
+### July 6, 2026 — Evening session: Design system, trials, Toshi fixes, Two large reference schools
+
+**Summary**: 13 commits, 58+ files changed. Major deliverables in parallel tracks.
+
+#### 30-Day No-Card Trial (commits: 02fcfa6, 7b2b7c1)
+- `TrialService` — shared service for `startTrial()`, `isActiveTrial()`, `downgradeToFreemium()`, `getExpiredTrials()`
+- RegisterController + AgentToshi both call `TrialService::startTrial()` when paid plan selected
+- `current_plans` migration: `is_trial`, `trial_started_at`, `trial_ends_at`
+- `trial:downgrade-expired` Artisan command, daily schedule
+- Browser-verified via `/register?plan=Extended` — `is_trial=true`, `plan_id=3`, `trial_ends_at=+30d`
+- Toshi path code-verified (same `TrialService::startTrial()` call at AgentToshi.php:3772)
+- **Deferred**: Toshi UI button click through plan selection step (needs real browser session)
+
+#### Design System Phase 2 (commits: 22359ae, 7b2b7c1, b3954ba)
+- Legacy bridge approach attempted then reverted — replaced with real ds-* component migration
+- Teacher dashboard: `dashboard-section-title` → `ds-page-head` ✅
+- Teacher leave, lessonplan, homework, attendance, events: `admin-h1` → `ds-page-head` ✅
+- Accountant dashboard: `dashboard-section-title` → `ds-page-head` ✅
+- Teacher assignment create: 512-byte inline SVG back button + `admin-h1` replaced with `<x-button variant="ghost">` + `ds-page-head` ✅
+- All 5 verified Teacher views return HTTP 200, 0 legacy classes, ds-* components present
+- Landing page: removed `landing.css` (80KB, Bricolage Grotesque + Inter fonts) from minimal layout — dead weight. Verified: page loads at ~100KB, brand fonts only, WhatsApp mockup intact.
+
+#### Toshi Redesign (commits: 22359ae, ced28c5, b3954ba)
+- CSS classes: `toshi-panel`, `toshi-pill`, `toshi-modal`, `toshi-header`, `toshi-status-dot`, `toshi-msg-bot`, `toshi-msg-user`, `toshi-composer`, `toshi-composer-input`, `toshi-confirm-btn`, `toshi-review`, `toshi-row`
+- Inline `<style>` block extracted to `dashboard-refresh.css` (fixes Livewire multiple-root-element issue)
+- Empty `<script>` tag removed from component (second root element cause)
+- 3 `toshi-row` utility classes added, first inline flex style converted
+- `MultipleRootElementsDetectedException` is a `APP_DEBUG=true` only artifact — production (`APP_DEBUG=false`) unaffected. Shell env var `APP_DEBUG=true` was overriding `.env`.
+
+#### Laratrust Middleware Fix (commit: 7b2b7c1)
+- Replaced dead `role:principal`/`role:leave_checker` middleware with `designation:principal`/`designation:leave_checker`
+- Created `MustHaveDesignation` middleware — checks `hasDesignation()` on User model
+- All 7 route groups in `teacher.php` and `teacherapi.php` updated
+- Route-health smoke test added: `RouteHealthSmokeTest.php` — 7 tests, no-500 assertions per role prefix
+
+#### Two Large Reference Schools (commits: 02fcfa6, ce5b91e)
+- School A (Manual, id=8): `[TEST] Manual Large-Scale School` — 1000 students, 20 teachers, all levels
+- School B (Toshi-simulated, id=9): `[TEST] Toshi Large-Scale School` — 1000 students, 20 teachers
+- Both have full term scenario: 12 exams, 1020 marks, 20000 attendance records, fees, leaves, lesson plans
+- Fixed UsersImport class matching to handle `S.1`-`S.6` + `s1`-`s6` for O-Level/A-Level
+- Parity comparison: both schools are **identical** across all 11 metrics.
+- **Honest reframe**: Data was DB-seeded, not browser-clicked. Valid for volume/parity testing only.
+
+#### Bug fixes
+- `Exam::changeExamStatus()` — added `"submitted" => "submitted"` case for UnhandledMatchError
+- `Auth::user()` null crash in 5 Events/Bulletins controllers (BulletinsController, Teacher/Accountant/Student/Receptionist EventsController)
+- `FeePaymentController` — `->get()` → `->paginate(50)` to fix `->links()` call on Collection
+- `DashboardSuperController` — all aggregate queries now exclude `is_test` schools
+- `LessonPlan` model — added `school_id` column + fillable (was missing, causing DashboardController 500)
+- `Plan` model — fixed `active` → `is_active` in fillable, added `display_name`
+- `is_test` boolean column added to `schools` table — schools 6-9 marked as test
+
+#### Standing Watches (maintained)
+- Alpine/Livewire keyword collision: No new issues
+- Route verification via `route:list`: Used throughout
+- "Rendered ≠ verified" standard: Applied to all view migrations
+- Plan-limit enforcement: Verified during trial flow
 
