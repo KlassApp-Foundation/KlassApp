@@ -24,6 +24,7 @@ services:
       # PHP_FPM_LISTEN: "0.0.0.0:9000"
     volumes:
       - .:/var/www
+      - klassapp_vendor:/var/www/vendor
     depends_on:
       - database
     networks:
@@ -73,3 +74,4 @@ networks:
 
 volumes:
   db-data:
+  klassapp_vendor:
