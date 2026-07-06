@@ -1,27 +1,4 @@
-<div x-data="{ hasText: false }">
-    <style>
-        @keyframes toshi-pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.3); }
-        }
-        .toshi-btn {
-            padding: 10px 18px; background: #FFFFFF; border: 1px solid #E2E8F0;
-            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500;
-            color: #1E293B; transition: all 0.2s; text-align: center; flex: 1;
-            min-width: 80px;
-        }
-        .toshi-btn:hover {
-            border-color: #22C55E; background: #F0FDF4;
-            box-shadow: 0 2px 8px rgba(34,197,94,0.12);
-        }
-        /* Kill all browser/Tailwind focus rings inside Toshi panels */
-        #toshi-panel *:focus, #toshi-modal *:focus,
-        #toshi-panel *:focus-visible, #toshi-modal *:focus-visible {
-            outline: none !important;
-            outline-offset: 0 !important;
-            box-shadow: none !important;
-        }
-    </style>
+<div x-data="{ hasText: false }" class="toshi-root">
     <div id="toshi-pill"
          wire:click="show"
          class="toshi-pill"
@@ -1677,5 +1654,3 @@
         </div>
     </div>
 </div>
-<script>
-</script>
