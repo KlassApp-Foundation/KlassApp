@@ -10,12 +10,15 @@
 
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            Enter Marks
+            {{ $isNursery ? 'Enter Assessments' : 'Enter Marks' }}
         </h1>
 
         <p class="mt-1  text-gray-600 dark:text-gray-400">
-            {{-- {{ dd($exam) }} --}}
-            {{ $exam->subject->name }} • {{ $exam->academicTerm->name }}
+            @if($isNursery)
+                {{ $exam->standard->name ?? 'Nursery' }} &bull; {{ $exam->academicTerm->name }}
+            @else
+                {{ $exam->subject->name }} &bull; {{ $exam->academicTerm->name }}
+            @endif
         </p>
     </div>
     <form action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">
@@ -25,13 +28,59 @@
 
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    Exam Marks for {{ $subject->name }} 
+                    @if($isNursery)
+                        Nursery Domain Assessments
+                    @else
+                        Exam Marks for {{ $exam->subject->name }}
+                    @endif
                 </h2>
                 <p>{{ $total }} students</p>
             </div>
 
             <div class="p-6 overflow-x-auto text-sm">
 
+                @if($isNursery)
+                {{-- ============ NURSERY DOMAIN ASSESSMENT TABLE ============ --}}
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                        <tr class="text-left uppercase font-semibold text-gray-700 dark:text-gray-300">
+                            <th class="py-3 px-2">Student</th>
+                            @foreach($domains as $domain)
+                                <th class="py-3 px-2">{{ $domain }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        @foreach($allStudents as $student)
+                        <tr>
+                            <td class="py-3 px-2 text-gray-900 dark:text-white whitespace-nowrap">
+                                <span>{{ $student->userprofile->firstname }}</span>
+                                <span>{{ $student->userprofile->lastname }}</span>
+                            </td>
+                            @foreach($domains as $domain)
+                                @php
+                                    $existing = $existingAssessments->get($student->id)?->get($domain);
+                                    $currentRating = $existing?->rating;
+                                @endphp
+                                <td class="py-3 px-2">
+                                    <select name="assessments[{{ $student->id }}][{{ $domain }}]"
+                                            class="tw-form-control w-44 text-sm">
+                                        <option value="">-- Select --</option>
+                                        @foreach($ratings as $rating)
+                                            <option value="{{ $rating }}"
+                                                {{ $currentRating === $rating ? 'selected' : '' }}>
+                                                {{ $rating }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                            @endforeach
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @else
+                {{-- ============ STANDARD NUMERIC MARKS TABLE ============ --}}
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
 
                     <thead>
@@ -44,7 +93,6 @@
 
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($allStudents as $student)
-                       {{-- {{ dd($student) }} --}}
 
                         <tr>
                             <td class="py-3 text-gray-900 dark:text-white flex items-center gap-2">
@@ -74,6 +122,7 @@
                     </tbody>
 
                 </table>
+                @endif
 
             </div>
 
@@ -82,7 +131,7 @@
 
                 <button type="submit"
                         class="py-2 px-5 rounded text-white bg-green-500 hover:bg-green-600">
-                    Save Marks
+                    {{ $isNursery ? 'Save Assessments' : 'Save Marks' }}
                 </button>
 
             </div>

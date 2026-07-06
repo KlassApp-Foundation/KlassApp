@@ -247,9 +247,9 @@ SchoolPayWebhookController silently accepts unsigned webhooks during pilot. Add 
 
 ```bash
 Branch: main
-Commit: a58f3d0
-Message: fix: replace Kampala High School with Kabale Junior School in testimonials (#105)
-Status: Ahead of origin/main
+Commit: d9bd1e5
+Message: feat: nursery descriptive assessment grading + PDF report rendering, fix ReportsController bug
+Status: Synced with origin/main
 ```
 
 ---
@@ -260,9 +260,18 @@ Items 1-11: ✅ Complete
 - Critical fixes, plan selection, confirm/edit flow, input validation, review card, error handling, WhatsApp verification, dual-mode detection, progress persistence
 - See `knowledge.md` for full spec and implementation details
 
-## CURRENT STATUS (July 2, 2026)
+## CURRENT STATUS (July 6, 2026)
 
-### Onboarding Fixes
+### ✅ Completed Today
+- **Nursery descriptive assessment grading**: 4-level scale (Excellent/Good/Satisfactory/Needs Improvement) in `config/grading_uganda.php` — no points, no percentages. GradingHelper seeds all 4 levels including nursery.
+- **NurseryAssessment model + migration**: Per-student per-term domain assessments (Literacy, Numeracy, Motor Skills, Social/Emotional). Separate table from exam_marks for clean separation.
+- **Nullable grading columns**: Migration making `points`, `min_score`, `max_score` nullable in `school_grading_systems` to support descriptive grading.
+- **PDF report nursery rendering**: DownloadStudentReport controller detects nursery level via `GradingHelper::levelTypeForStandard()`. The student-report Blade view has an `@if(!empty($isNursery))` block showing domain/rating/remarks table instead of marks.
+- **ReportsController@index fix**: Undefined `$subscriptions` variable and unused `$plan` bug fixed (route is commented out but fix prevents crash when re-enabled).
+- **Browser-verified**: Reports page loads without crash, CSV Active Students export downloads correctly, Fee reconciliation page renders, Messaging sentmessages page loads.
+- **Health aggregate dashboard**: Explicitly deferred — sidebar Health link redirects to per-student records via `/admin/students`.
+
+### Onboarding Fixes (carried forward)
 - WhatsApp TypeError fixed (nullable token, non-blocking OTP)
 - `commit()` public method created + pre-flight duplicate checks
 - Student class assignment fixed (was dumping all into P1)
@@ -276,17 +285,20 @@ Items 1-11: ✅ Complete
 - Feature flag: `TOSHI_LARAGENT_ENABLED` (default false)
 - 9 new tests passing, 17 total
 
-### Design Overhaul
+### Design Overhaul (carried forward)
 - **Sidebar**: 171 inline SVGs replaced with `<x-icons.sidebar>` component across all 9 role menus. Centralized active state helper.
 - **Dashboard**: KPI padding unified (px-5 py-4), icon sizes reduced (w-14)
 - **Internal pages**: Students + standardlinks wrapped in dashboard card pattern
 - **Toshi UI**: Navy header (#0D1526) with green status dot, 20+ CSS classes extracted, message animations, safe-area positioning, composer matched to chat area
 
-### Key Files
-- `app/AiAgents/ToshiAssistantAgent.php` — NEW
-- `config/laragent.php` — NEW
-- `resources/views/components/icons/sidebar.blade.php` — NEW (17 icons)
-- `tests/Feature/Toshi/ToshiAssistantAgentTest.php` — NEW (9 tests)
+### Key Files (new this session)
+- `app/Models/Academics/NurseryAssessment.php` — NEW
+- `database/migrations/2026_07_06_022733_make_points_nullable_in_school_grading_systems.php` — NEW
+- `database/migrations/2026_07_06_030000_create_nursery_assessments_table.php` — NEW
+- `config/grading_uganda.php` — MODIFIED (nursery scale)
+- `app/Http/Controllers/Admin/DownloadStudentReport.php` — MODIFIED (nursery detection)
+- `app/Http/Controllers/Admin/ReportsController.php` — MODIFIED (bug fix)
+- `resources/views/admin/marks/student-report.blade.php` — MODIFIED (nursery conditional)
 
 ## NEXT SESSION CHECKLIST
 
@@ -294,9 +306,15 @@ Items 1-11: ✅ Complete
 - [ ] Monitor `Assistant path:` logs for LarAgent vs legacy distribution
 - [ ] Create new Meta Business Account with fresh email + new WhatsApp number
 - [ ] Update .env with new WABA credentials (token, phone number ID, WABA ID)
-- [ ] Run any new migrations on production
+- [ ] Run any new migrations on production (`php artisan migrate`)
 - [ ] Test end-to-end WhatsApp flow with new business number
 - [ ] Schedule school onboarding demo with founding team
+- [ ] Build/nursery assessment entry UI so admin can enter domain ratings per student
+- [ ] Full PDF click-test: nursery + Primary/O-Level/A-Level report cards with real data
+- [ ] Click-test fee reconciliation match button (needs SchoolPayTransaction records)
+- [ ] Click-test Messaging Send action end-to-end
+- [ ] Click-test Payroll Run (needs accountant credentials — usergroup_id=11)
+- [ ] Check LSP for PHP diagnostics (intelephense not installed)
 
 ===
 

@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Teacher;
 
+use App\Helpers\GradingHelper;
 use App\Helpers\SiteHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
-
 use App\Models\Academics\Marks;
+use App\Models\Academics\NurseryAssessment;
 use App\Models\AcademicYear;
 use App\Models\Standard;
 use App\Models\StandardLink;
@@ -99,10 +100,32 @@ public function enterExamMarks(Exam $exam)
                   ->get();
      $total = $allStudents->count();             
 
-    $exam = $exam->load("academicTerm", "section", "subject", "teacher");
-    // dd($allStudents);
+    $exam = $exam->load("academicTerm", "section", "subject", "teacher", "standard");
 
-    return view('teacher.marks.enter', compact( "allStudents", "exam", "total"));
+    // Detect nursery level for conditional rendering
+    $isNursery = false;
+    $domains = [];
+    $ratings = [];
+    $existingAssessments = collect();
+
+    if ($exam->standard) {
+        $levelType = GradingHelper::levelTypeForStandard($exam->standard);
+        if ($levelType === 'nursery') {
+            $isNursery = true;
+            $domains = ['Literacy', 'Numeracy', 'Motor Skills', 'Social/Emotional'];
+            $ratings = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
+            $existingAssessments = NurseryAssessment::where('exam_id', $exam->id)
+                ->where('academic_term_id', $exam->academic_term_id)
+                ->get()
+                ->groupBy('student_id')
+                ->map(fn($group) => $group->keyBy('domain'));
+        }
+    }
+
+    return view('teacher.marks.enter', compact(
+        "allStudents", "exam", "total",
+        "isNursery", "domains", "ratings", "existingAssessments"
+    ));
 }
 
 public function saveExamMarks(Request $request, Exam $exam, GradingSystemService $gradingSystem)
@@ -112,6 +135,45 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
     if ($exam->school_id !== $schoolId) {
         abort(403, "Not Authorized");
     }
+
+    // ===== Nursery branch: save domain ratings instead of numeric marks =====
+    $exam->load('standard');
+    $isNursery = $exam->standard
+        && GradingHelper::levelTypeForStandard($exam->standard) === 'nursery';
+
+    if ($isNursery) {
+        $validRatings = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
+
+        foreach ($request->input('assessments', []) as $studentId => $domainRatings) {
+            foreach ($domainRatings as $domain => $rating) {
+                if ($rating === null || trim($rating) === '') {
+                    continue;
+                }
+                if (!in_array($rating, $validRatings, true)) {
+                    continue;
+                }
+                NurseryAssessment::updateOrCreate(
+                    [
+                        'student_id'       => $studentId,
+                        'academic_term_id' => $exam->academic_term_id,
+                        'exam_id'          => $exam->id,
+                        'domain'           => $domain,
+                    ],
+                    [
+                        'rating'  => $rating,
+                        'remarks' => null,
+                    ]
+                );
+            }
+        }
+
+        $exam->changeExamStatus();
+        return redirect()
+            ->route('teacher.exam.marks')
+            ->with('successmessage', 'Nursery assessments saved!');
+    }
+
+    // ===== Standard branch: numeric marks =====
     foreach ($request->marks as $studentId => $mark) {
         if ($mark === null || trim($mark) === '') continue;
         $grade = $gradingSystem->grade($mark,$schoolId, $exam);

@@ -48,10 +48,34 @@ class DownloadStudentReport extends Controller
              $next = ["DIVISION", "TEACHER", "REMARK"];
            $controls= array_merge($controls, $next);
 
-           $marks = $exam->marks->where("student_id", $learner->id);
-            $total = $learner->marks->sum("marks");
-            $examsDone = $studentHelper->examsDone($schoolId, $exam);
-            $grade = $studentHelper->grade($learner, $exam);
+           // Detect nursery level BEFORE marks calculations
+           $isNursery = false;
+           $nurseryAssessments = collect();
+           $standard = $learner->studentAcademicLatest?->standardLink?->standard;
+           if ($standard) {
+               $levelType = \App\Helpers\GradingHelper::levelTypeForStandard($standard);
+               $isNursery = ($levelType === 'nursery');
+               if ($isNursery) {
+                   $nurseryAssessments = NurseryAssessment::where('student_id', $learner->id)
+                       ->where('academic_term_id', $exam->academic_term_id)
+                       ->get()
+                       ->keyBy('domain');
+               }
+           }
+
+           // Marks calculations — skip for nursery (no numeric marks)
+           $marks = collect();
+           $total = 0;
+           $examsDone = 0;
+           $grade = null;
+
+           if (!$isNursery) {
+               $marks = $exam->marks->where("student_id", $learner->id);
+               $total = $learner->marks ? $learner->marks->sum("marks") : 0;
+               $examsDone = $studentHelper->examsDone($schoolId, $exam);
+               $grade = $studentHelper->grade($learner, $exam);
+           }
+
             // promotion
              $promotion = Promotion::where("school_id", $schoolId)
                               ->where("user_id", $learner->id)
@@ -60,21 +84,6 @@ class DownloadStudentReport extends Controller
             // dd($promotion);                  
             $class_name = Section::find($section)->name;
             $grading_system = SchoolGradingSystem::where("school_id", $schoolId)->get();
-
-            // Detect nursery level for descriptive assessment rendering
-            $isNursery = false;
-            $nurseryAssessments = collect();
-            $standard = $learner->studentAcademicLatest?->standardLink?->standard;
-            if ($standard) {
-                $levelType = \App\Helpers\GradingHelper::levelTypeForStandard($standard);
-                $isNursery = ($levelType === 'nursery');
-                if ($isNursery) {
-                    $nurseryAssessments = NurseryAssessment::where('student_id', $learner->id)
-                        ->where('academic_term_id', $exam->academic_term_id)
-                        ->get()
-                        ->keyBy('domain');
-                }
-            }
             
             // added to get fees
             $fees = $studentHelper->fees($admin, $section);  
@@ -96,7 +105,7 @@ class DownloadStudentReport extends Controller
         $school = Auth::user()->school;
         
         $myPos = $learners->where("id", $learner->id)->value("position");
-        $learner = $learner->where("id", $learner->id)->first();
+        // $learner is already a valid User model from route binding — no need to re-query
         $pdf = Pdf::loadView("admin.marks.student-report", compact(
             "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade", "promotion", "school", "isNursery", "nurseryAssessments"
             ));     
