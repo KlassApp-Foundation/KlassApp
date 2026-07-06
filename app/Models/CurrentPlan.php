@@ -9,7 +9,7 @@ class CurrentPlan extends Model
 {
     use HasFactory;
     
-    protected $fillable = ["school_id", "plan_id", "status", ];
+    protected $fillable = ["school_id", "plan_id", "status", "is_trial", "trial_started_at", "trial_ends_at"];
 
     public function school(){
         return $this->belongsTo(School::class);

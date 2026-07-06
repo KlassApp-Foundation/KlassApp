@@ -3769,11 +3769,16 @@ class AgentToshi extends Component
                 ]);
 
                 if ($this->selectedPlanId) {
-                    CurrentPlan::create(['school_id' => $school->id, 'plan_id' => $this->selectedPlanId]);
+                    $selectedPlan = \App\Models\Plan::find($this->selectedPlanId);
+                    if ($selectedPlan && $selectedPlan->amount > 0) {
+                        \App\Services\TrialService::startTrial($school->id, $this->selectedPlanId);
+                    } else {
+                        CurrentPlan::create(['school_id' => $school->id, 'plan_id' => $this->selectedPlanId]);
+                    }
                     Subscription::create([
                         'school_id'  => $school->id, 'plan_id' => $this->selectedPlanId,
                         'user_id'    => $adminUser->id,
-                        'status' => 'approved', 'start_date' => now(), 'end_date' => now()->addYear(),
+                        'status' => 'pending', 'start_date' => now(), 'end_date' => now()->addYear(),
                     ]);
                 }
 
