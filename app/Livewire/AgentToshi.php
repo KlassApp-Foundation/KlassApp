@@ -3956,9 +3956,9 @@ class AgentToshi extends Component
                                     $stdName = 'primary';
                                 } elseif (in_array($lowerClass[0] ?? '', ['b', 'm', 't'])) {
                                     $stdName = 'nursery';
-                                } elseif (in_array($lowerClass, ['senior five', 'senior six', 's.5', 's.6', 's5', 's6'])) {
+                                } elseif (in_array($lowerClass, ['senior five', 'senior six', 's.5', 's.6', 's5', 's6', 'a-level', 'a level'])) {
                                     $stdName = 'a-level';
-                                } elseif (in_array($lowerClass, ['senior one', 'senior two', 'senior three', 'senior four', 's.1', 's.2', 's.3', 's.4', 's1', 's2', 's3', 's4'])) {
+                                } elseif (in_array($lowerClass, ['senior one', 'senior two', 'senior three', 'senior four', 's.1', 's.2', 's.3', 's.4', 's1', 's2', 's3', 's4', 'o-level', 'o level'])) {
                                     $stdName = 'o-level';
                                 }
                                 if ($stdName) {

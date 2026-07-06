@@ -103,8 +103,8 @@ class UsersImport implements ToCollection, WithHeadingRow
                     if (collect($prefixes)->contains(fn($p) => str_starts_with($sectionVal, $p))) {
                         $standard = Standard::where('school_id', $school_id)->where('name', 'nursery')->first();
                     }
-                    $alevel = ['Senior Five', 'Senior Six'];
-                    $olevel =  ['Senior One', 'Senior Two', 'Senior Three', 'Senior Four'];
+                    $alevel = ['Senior Five', 'Senior Six', 's.5', 's.6', 's5', 's6'];
+                    $olevel =  ['Senior One', 'Senior Two', 'Senior Three', 'Senior Four', 's.1', 's.2', 's.3', 's.4', 's1', 's2', 's3', 's4'];
                     if(in_array($sectionVal, $alevel)){
                     $standard = Standard::where('school_id', $school_id)->where( 'name', 'a-level')->first();
                     }
