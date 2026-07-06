@@ -3,11 +3,9 @@
 
 @section('content')
     <div class="dashboard-shell dashboard-shell--teacher">
-        <div class="dashboard-heading">
-            <div>
-                <h1 class="dashboard-section-title" style="font-size: 1.25rem;">Teacher</h1>
-                <p class="dashboard-subtitle" style="margin-top: 4px;">Stay on top of notice updates, subjects, exams, and day-to-day class rhythm.</p>
-            </div>
+        <div class="ds-page-head">
+            <h1 class="ds-page-head-title">Teacher</h1>
+            <p class="ds-page-head-sub">Stay on top of notice updates, subjects, exams, and day-to-day class rhythm.</p>
         </div>
 
         <!-- Teaching KPIs -->

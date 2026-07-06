@@ -185,3 +185,37 @@ When migrating a view to the design system:
 6. Replace raw `<input>/<select>` with `<x-form-group>`
 7. Replace `.custom-green` / `.blue-bg` with `<x-button variant="success/primary">`
 8. Replace `.tw-form-control` / `.tw-form-label` with `ds-form-input` / `ds-form-label`
+
+## Migration Status (July 6, 2026)
+
+### Fully Migrated (14 Admin views)
+Subject CRUD (index, list, form, edit), Fee payments/unmatched/create, Staff index,
+Parent show/create, Classes create, Attendance index, Member show, Promotion create
+Page header partial — all use `ds-page-head`, `x-button`, `x-card`, `x-table`, `x-form-group`.
+
+### Partially Migrated (headings only)
+Teacher dashboard, leave views, lesson plan create, homework create,
+attendance create, events index — headings migrated to `ds-page-head` / `ds-page-head-title`.
+Buttons, cards, tables still use legacy classes in most views.
+
+### Legacy Classes Still in Use
+The following views across Admin, Teacher, Accountant, and Library roles still use
+`admin-h1`, `tw-form-control`, `custom-green`, `dashboard-section-title`, or `tw-form-label`:
+- Teacher: 52/83 views
+- Accountant: 21/43 views
+- Library: 17/19 views
+- Admin: 129/221 views (14 already migrated)
+- Student: most views
+
+### Migration Priority
+1. High-traffic teacher surfaces (leave, lesson plan, homework, assignment)
+2. Accountant payroll/fee views (most used by that role)
+3. Remaining admin views
+4. Library and student views (lowest priority)
+
+### Toshi
+AgentToshi's panel/pill/header/composer/message-bubbles now use dedicated
+`toshi-*` CSS classes defined in dashboard-refresh.css. ~473 inline `style=`
+attributes remain on smaller elements (icons, spacing tweaks). These are
+lower priority — the structural redesign is complete; remaining inline
+styles are cosmetic polish on top of the class-based layout.
