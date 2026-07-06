@@ -964,11 +964,12 @@ class AgentToshi extends Component
 
         if ($parsable) {
             $stepName = $this->steps[$this->step] ?? '';
-            $names = $this->extractNamesFromFile($this->attachment->getRealPath(), $ext);
+            $nameRows = $this->extractNamesFromFile($this->attachment->getRealPath(), $ext);
+            $plainNames = array_map(fn($r) => $r['name'], $nameRows);
 
-            if (in_array($stepName, ['teachers', 'students']) && count($names) > 0) {
+            if (in_array($stepName, ['teachers', 'students']) && count($nameRows) > 0) {
                 if ($stepName === 'teachers') {
-                    $this->teacherList = array_values(array_unique($names));
+                    $this->teacherList = array_values(array_unique($plainNames));
                     $this->actionData['teachers'] = $this->teacherList;
                     $this->showTeacherForm = false;
                     // Also try extracting teacher-subject-class links from the same file
@@ -977,31 +978,31 @@ class AgentToshi extends Component
                         $this->teacherLinks = $links;
                     }
                 } else {
-                    $this->studentList = array_values(array_unique($names));
+                    $this->studentList = array_values(array_unique($plainNames));
                     // Try to extract optional LIN (Learner Identification Number) from the file
                     $linValues = $this->extractColumnFromFile($this->attachment->getRealPath(), $ext, ['lin', 'learner_id', 'learner_identification_number', 'emis_lin']);
-                    $this->actionData['students'] = array_map(fn($i, $n) => [
-                        'name' => $n,
-                        'class' => '',
+                    $this->actionData['students'] = array_map(fn($i, $r) => [
+                        'name' => $r['name'],
+                        'class' => $r['class'],
                         'stream' => '',
                         'parent' => '',
                         'parent_phone' => '',
                         'lin' => $linValues[$i] ?? '',
-                    ], array_keys($names), $names);
+                    ], array_keys($nameRows), $nameRows);
                     $this->showStudentForm = false;
                 }
                 $label = $stepName === 'teachers' ? 'teachers' : 'students';
-                $this->userSay("📎 Uploaded " . count($names) . " {$label} from file");
+                $this->userSay("📎 Uploaded " . count($nameRows) . " {$label} from file");
                 $linked = !empty($this->teacherLinks) ? " with **" . count($this->teacherLinks) . "** subject/class assignments" : "";
-                $preview = implode(', ', array_slice($names, 0, 5));
-                $this->botSay("Parsed **" . count($names) . "** {$label}{$linked}: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
+                $preview = implode(', ', array_slice($plainNames, 0, 5));
+                $this->botSay("Parsed **" . count($nameRows) . "** {$label}{$linked}: {$preview}" . (count($nameRows) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
                 $this->awaitingConfirm = true;
                 $this->substep = 1;
-            } elseif ($stepName === 'standards' && count($names) > 0) {
-                $this->standards = array_map(fn($n) => ['name' => $n], $names);
-                $this->userSay("📎 Uploaded " . count($names) . " class(es) from file");
-                $this->botSay("Parsed **" . count($names) . "** class(es) from your file. Continue?");
-            } elseif ($stepName === 'subjects' && count($names) > 0) {
+            } elseif ($stepName === 'standards' && count($nameRows) > 0) {
+                $this->standards = array_map(fn($r) => ['name' => $r['name']], $nameRows);
+                $this->userSay("📎 Uploaded " . count($nameRows) . " class(es) from file");
+                $this->botSay("Parsed **" . count($nameRows) . "** class(es) from your file. Continue?");
+            } elseif ($stepName === 'subjects' && count($nameRows) > 0) {
                 // For subjects, if file has 2+ columns, assume [class, subject] format
                 $headers = [];
                 $dataRows = [];
@@ -1178,6 +1179,13 @@ class AgentToshi extends Component
             $lastIdx = array_search('last_name', array_map('strtolower', $headers));
         }
 
+        // Find class/section column index
+        $classIdx = null;
+        foreach (['class', 'section', 'grade', 'form', 'standard', 'class_name'] as $col) {
+            $idx = array_search($col, $lowerHeaders);
+            if ($idx !== false) { $classIdx = $idx; break; }
+        }
+
         $names = [];
         $prevColB = '';
         foreach ($dataRows as $row) {
@@ -1222,7 +1230,13 @@ class AgentToshi extends Component
                 $name .= ' ' . $row[$lastIdx];
             }
 
-            $names[] = $name;
+            // Capture class value if available
+            $classVal = '';
+            if ($classIdx !== null && !empty($row[$classIdx] ?? '')) {
+                $classVal = $row[$classIdx];
+            }
+
+            $names[] = ['name' => $name, 'class' => $classVal];
         }
 
         return $names;
@@ -3924,9 +3938,47 @@ class AgentToshi extends Component
 
                     // Assign to correct class based on student's class field
                     $studentClass = is_array($record) ? ($record['class'] ?? '') : '';
-                    $targetLink = !empty($studentClass) && isset($classLinkMap[$studentClass])
-                        ? $classLinkMap[$studentClass]
-                        : $firstStandardLink;
+                    $targetLink = null;
+                    if (!empty($studentClass)) {
+                        // 1. Exact match against onboarding's own classLinkMap
+                        if (isset($classLinkMap[$studentClass])) {
+                            $targetLink = $classLinkMap[$studentClass];
+                        } else {
+                            // 2. Fuzzy match: find section by name, then derive standard (same logic as UsersImport)
+                            $lowerClass = strtolower(trim($studentClass));
+                            $section = \App\Models\Section::where('school_id', $school->id)
+                                ->whereRaw('LOWER(name) = ?', [$lowerClass])
+                                ->orWhereRaw('LOWER(name) LIKE ?', ["%{$lowerClass}%"])
+                                ->first();
+                            if ($section) {
+                                $stdName = null;
+                                if (str_starts_with($lowerClass, 'p')) {
+                                    $stdName = 'primary';
+                                } elseif (in_array($lowerClass[0] ?? '', ['b', 'm', 't'])) {
+                                    $stdName = 'nursery';
+                                } elseif (in_array($lowerClass, ['senior five', 'senior six', 's.5', 's.6', 's5', 's6'])) {
+                                    $stdName = 'a-level';
+                                } elseif (in_array($lowerClass, ['senior one', 'senior two', 'senior three', 'senior four', 's.1', 's.2', 's.3', 's.4', 's1', 's2', 's3', 's4'])) {
+                                    $stdName = 'o-level';
+                                }
+                                if ($stdName) {
+                                    $standard = \App\Models\Standard::where(['school_id' => $school->id, 'name' => $stdName])->first();
+                                    if ($standard) {
+                                        $foundLink = \App\Models\StandardLink::where([
+                                            'school_id' => $school->id, 'standard_id' => $standard->id, 'section_id' => $section->id,
+                                        ])->first();
+                                        if ($foundLink) $targetLink = $foundLink;
+                                    }
+                                }
+                            }
+                            if (!$targetLink) {
+                                \Log::warning("Toshi onboarding: unmapped class '{$studentClass}' for school {$school->id}, falling back to first class");
+                            }
+                        }
+                    }
+                    if (!$targetLink) {
+                        $targetLink = $firstStandardLink;
+                    }
 
                     if ($targetLink) {
                         // Generate KlassApp Student ID: KLS{school_code_3}{sequential_4}
