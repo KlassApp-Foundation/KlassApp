@@ -40,7 +40,7 @@
                         body: ['DM Sans', 'system-ui', 'sans-serif'],
                     },
                     colors: {
-                        navy: { DEFAULT: '#0D1526', light: '#141E36', dark: '#070C16' },
+                        navy: { DEFAULT: '#141413', light: '#30302e', dark: '#0a0a0a' },
                         brand: { blue: '#1E6FD9', green: '#22C55E', amber: '#D97706' },
                         surface: '#FAFAF5',
                         warm: { 50: '#FFFCF5', 100: '#FEF7ED', 200: '#FDF0DB', 800: '#78350F' },
@@ -52,12 +52,13 @@
 
     <style>
         :root {
-            --navy: #0D1526;
+            --navy: #141413;
             --blue: #1E6FD9;
             --green: #22C55E;
             --amber: #D97706;
-            --surface: #FAFAF5;
-            --white: #FFFFFF;
+            --accent: #22C55E;
+            --surface: #f5f4ed;
+            --white: #faf9f5;
             --wa-header: #075E54;
             --wa-bg: #E5DDD5;
             --wa-sent: #D9FDD3;
@@ -68,7 +69,7 @@
         html { scroll-behavior: smooth; }
         body {
             font-family: 'DM Sans', system-ui, sans-serif;
-            color: #1F2937;
+            color: #4d4c48;
             overflow-x: hidden;
             background: var(--surface);
         }
@@ -153,12 +154,12 @@
             font-weight: 600;
             font-family: 'Sora', sans-serif;
             border-radius: 9999px;
-            background: #1E6FD9;
+            background: #22C55E;
             color: #fff;
             text-decoration: none;
             transition: all 0.25s ease;
         }
-        .nav-cta:hover { background: #22C55E; }
+        .nav-cta:hover { background: #16A34A; }
         .site-header.scrolled .nav-cta {
             padding: 7px 18px;
             font-size: 13px;
@@ -322,7 +323,7 @@
             opacity: 1;
         }
         .dash-header {
-            background: #0D1526;
+            background: #141413;
             padding: 10px 14px;
             display: flex;
             align-items: center;
@@ -473,7 +474,7 @@
         <a href="/schools">Schools</a>
         <a href="/contact">Contact</a>
         <a href="/docs/community/">Docs</a>
-        <a href="/demo" class="nav-cta">Get Started</a>
+        <a href="{{ url('/register') }}" class="nav-cta">Get Started</a>
         <a href="https://wa.me/{{ str_replace('+', '', config('services.whatsapp.business_number')) }}?text=Hello%20KlassApp"
            target="_blank"
            style="display: flex; align-items: center; gap: 6px; color: #475569; text-decoration: none; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: color 0.2s ease;"
@@ -497,7 +498,7 @@
         <a href="/schools" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Schools</a>
         <a href="/contact" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Contact</a>
         <a href="/docs/community/" class="text-slate-600 hover:text-slate-900 text-base font-medium py-3">Docs</a>
-        <a href="/demo"
+        <a href="{{ url('/register') }}"
            class="bg-brand-blue text-white px-5 py-3 rounded-lg text-sm font-semibold text-center">
             Get Started
         </a>

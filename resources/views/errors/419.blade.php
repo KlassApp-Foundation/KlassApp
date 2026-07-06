@@ -1,12 +1,13 @@
 {{-- SPDX-License-Identifier: MIT --}}
-@extends('errors::illustrated-layout')
+@extends('errors.illustrated-layout')
 
 @section('code', '419')
 @section('title', __('Page Expired'))
+@section('message', __('Your session has expired. Please refresh the page and try again. Your data is safe — no changes have been lost.'))
 
-@section('image')
-    <div style="background-image: url({{ asset('/svg/403.svg') }});" class="absolute pin bg-cover bg-no-repeat md:bg-left lg:bg-center">
-    </div>
+@section('icon')
+<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <polyline points="12 6 12 12 16 14"></polyline>
+</svg>
 @endsection
-
-@section('message', __('Sorry, your session has expired. Please refresh and try again.'))

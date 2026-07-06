@@ -455,6 +455,7 @@
                 <input type="submit" class="hidden" id="submit-btn" />
             </div>
         </portal>
+        </div>
     </div>
 </template>
 

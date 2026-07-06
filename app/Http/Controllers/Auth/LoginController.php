@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 //use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use App\Traits\AuthenticatesUsers;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller implements ShouldQueue
 {
@@ -43,8 +44,20 @@ class LoginController extends Controller implements ShouldQueue
     }
 
     public function showLoginForm()
-    {//dd('tfttfy');
+    {
         return view('auth.login');
+    }
+
+    /**
+     * Where to redirect users after login.
+     * Customize based on user role.
+     */
+    public function redirectTo()
+    {
+        if (auth()->check() && auth()->user()->usergroup_id == 1) {
+            return '/superadmin/dashboard';
+        }
+        return '/admin/dashboard';
     }
 }
 

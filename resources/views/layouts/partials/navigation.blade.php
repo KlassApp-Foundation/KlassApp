@@ -1,5 +1,5 @@
 {{-- SPDX-License-Identifier: MIT --}}
-<nav class="navbar dashboard-themed-header w-full flex lg:flex-row px-4 lg:px-8 py-2 justify-between items-center" style="background:#FFFFFF;border-bottom:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+<nav class="navbar dashboard-themed-header w-full flex lg:flex-row px-4 lg:px-8 py-2 justify-between items-center" style="background:#FAFAF5;border-bottom:1px solid #E2E8F0;">
     <div class="nav-brand flex items-center">
         @if(\Auth::user())
             <button class="mr-3 lg:hidden" id="mobile-menu-trigger" aria-label="Toggle sidebar">
@@ -10,7 +10,7 @@
             <a class="h-10 object-contain" href="{{ route('dashboard') }}">
                 <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="h-10 w-auto object-contain mr-3" alt="KlassApp Logo">
             </a>
-            <a class="text-lg lg:text-3xl font-semibold text-gray-900" href="{{ route('dashboard') }}" style="font-family: 'Sora', sans-serif;">
+            <a class="text-lg lg:text-3xl font-semibold" href="{{ route('dashboard') }}" style="font-family: 'Sora', sans-serif; color: #2d2d2a;">
                 <strong>{{ ucwords(Auth::user()->school->name) }}</strong>
             </a>
         @else
@@ -45,18 +45,20 @@
                         <li>
                             <div class="profile-click user-dtl-dark" dusk="profile-menu">
                                 @if(Auth::user()->userprofile && Auth::user()->userprofile->avatar != null)
-                                    <img src="{{ url(Auth::user()->userprofile->AvatarPath) }}" class="w-8 h-8 rounded-full cursor-pointer" style="border: 2px solid rgba(255,255,255,0.1);">
+                                    <img src="{{ url(Auth::user()->userprofile->AvatarPath) }}" class="w-8 h-8 rounded-full cursor-pointer" style="border: 2px solid rgba(34,197,94,0.3);">
                                 @else 
-                                    <img src="{{ asset('uploads/user/avatar/default-user.jpg') }}" class="w-8 h-8 rounded-full cursor-pointer" style="border: 2px solid rgba(255,255,255,0.1);">
+                                    <img src="{{ asset('uploads/user/avatar/default-user.jpg') }}" class="w-8 h-8 rounded-full cursor-pointer" style="border: 2px solid rgba(34,197,94,0.3);">
                                 @endif
                                 <div class="user-dtl">
                                     <ul class="list-reset">
                                         <li class="user-dtl-header">
-                                            @if(Auth::user()->userprofile && Auth::user()->userprofile->avatar != null)
-                                                <img src="{{ url(Auth::user()->userprofile->AvatarPath) }}" class="user-avatar">
-                                            @else
-                                                <img src="{{asset('uploads/user/avatar/default-user.jpg')}}" class="user-avatar">
-                                            @endif
+                                            <a href="{{url('/admin/changeavatar')}}" style="display:flex;align-items:center;text-decoration:none;">
+                                                @if(Auth::user()->userprofile && Auth::user()->userprofile->avatar != null)
+                                                    <img src="{{ url(Auth::user()->userprofile->AvatarPath) }}" class="user-avatar" style="cursor:pointer;">
+                                                @else
+                                                    <img src="{{asset('uploads/user/avatar/default-user.jpg')}}" class="user-avatar" style="cursor:pointer;">
+                                                @endif
+                                            </a>
                                             <div class="user-info">
                                                 <div class="user-name">
                                                     {{ Auth::user()->userprofile && Auth::user()->userprofile->firstname ? Auth::user()->FullName : Auth::user()->name }}
@@ -84,11 +86,11 @@
                                         </li>
 
                                         <li class="user-dtl-item">
-                                            <a href="{{url('/admin/changeavatar')}}">
+                                            <a href="{{url('/admin/settings')}}">
                                                 <span class="dtl-icon">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                                                 </span>
-                                                Change Avatar
+                                                Settings
                                             </a>
                                         </li>
 

@@ -114,6 +114,7 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 	Route::post( '/standardLink/add', 'StandardsLinkController@store' );
 	//show
 	Route::get( '/standardLink/show/{id}', 'StandardsLinkDetailsController@show' );
+	Route::get( '/timetable', 'StandardsLinkDetailsController@timetableIndex' );
 	Route::get( '/standardLink/show/timetable/{id}', 'StandardsLinkDetailsController@showTimetable' );
 	Route::get( '/standardLink/show/teachers/{id}', 'StandardsLinkDetailsController@showTeachers' );
 	Route::get( '/standardLink/show/students/{id}', 'StandardsLinkDetailsController@showStudents' );
@@ -886,6 +887,21 @@ Route::post('/grades/seed-defaults', function (\Illuminate\Http\Request $req) {
     \App\Helpers\GradingHelper::seedAllGradingForSchool(\Illuminate\Support\Facades\Auth::user()->school_id);
     return redirect()->route('admin.grades')->with('successmessage', 'Default MoE grading scales seeded.');
 })->name('admin.grades.seed');
+
+// Calendar — redirect to events
+Route::get('/calendar', function () {
+    return redirect('/admin/events');
+});
+
+// Settings index — redirect to general settings
+Route::get('/settings', function () {
+    return redirect('/admin/settings/generalsettings');
+});
+
+// Transport placeholder
+Route::get('/transport', function () {
+    return view('admin.transport.index');
+});
 
 Route::get('/addon', function () {
     return view('admin.addon.index');

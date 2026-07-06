@@ -118,7 +118,7 @@
                                     <div class="bg-green-600 text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2">
                                         <p>{{ $noticeboard->title }}</p>
                                     </div>
-                                    <div class="text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2" style="background:#1E6FD9;">
+                                    <div class="text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2" style="background:#c96442;">
                                         <p>{{ date('d M Y',strtotime($noticeboard->publish_date)) }}</p>
                                     </div>
                                     <div class="text-xs rounded-full inline-block text-white px-2 py-1 my-1 mb-2" style="background:#D97706;">
@@ -365,7 +365,7 @@
                 var fontSize = (height / 140).toFixed(2);
                 ctx.font = "700 " + fontSize + "em 'Sora', sans-serif";
                 ctx.textBaseline = "middle";
-                ctx.fillStyle = "#0F172A";
+                ctx.fillStyle = "#4d4c48";
                 var text = totalStudents,
                     textX = Math.round((width - ctx.measureText(text).width) / 2),
                     textY = height / 2;
@@ -419,7 +419,7 @@
                     datasets: [{
                         label: 'Students',
                         data: standardData.map(function(d) { return d.count; }),
-                        backgroundColor: '#1E6FD9',
+                        backgroundColor: '#c96442',
                         borderRadius: 6,
                     }]
                 },
