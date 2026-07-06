@@ -109,3 +109,5 @@ TODO.md
 .env.staging
 /.vapor
 .vapor/*
+.mcp.json
+.phpunit.cache/
