@@ -67,6 +67,10 @@ Route::post('/contact', function (Illuminate\Http\Request $request) {
 })->name('contact.send');
 Route::get('/demo', fn() => view('landing', ['scrollTo' => 'demo']));
 
+// Terms of Service and Privacy Policy
+Route::get('/terms-of-service', [App\Http\Controllers\AboutController::class, 'terms']);
+Route::get('/privacy-policy', [App\Http\Controllers\AboutController::class, 'create']);
+
 // Premium School Pages (public)
 Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class, 'show']);
 

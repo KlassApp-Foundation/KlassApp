@@ -56,3 +56,5 @@ Report card re-design
 -   Librarian cleanup
 -   Calendar
 - Check the student academic year on promotion
+
+openrouter=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
