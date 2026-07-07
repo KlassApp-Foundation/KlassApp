@@ -305,35 +305,33 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
         return view('superadmin.changeavatar');
     })->name('superadmin.changeavatar');
 
+    // Settings pages
+    Route::get('/settings', function () {
+        return view('superadmin.settings.index');
+    })->name('superadmin.settings');
+
+    Route::get('/settings/system', function () {
+        return view('superadmin.settings.system-settings');
+    })->name('superadmin.settings.system');
+
+    Route::get('/settings/co-admins', function () {
+        return view('superadmin.settings.co-admins');
+    })->name('superadmin.settings.co-admins');
+
+    Route::get('/settings/features', function () {
+        return view('superadmin.settings.features');
+    })->name('superadmin.settings.features');
+
+    Route::get('/settings/locations', function () {
+        return view('superadmin.settings.locations');
+    })->name('superadmin.settings.locations');
+
+    Route::get('/settings/emis', function () {
+        return view('superadmin.settings.emis-schools');
+    })->name('superadmin.settings.emis');
 });
 
 
-
-
-// Super admin settings pages
-Route::get('/superadmin/settings', function () {
-    return view('superadmin.settings.index');
-})->name('superadmin.settings')->middleware(['web', 'auth', 'superadmin']);
-
-Route::get('/superadmin/settings/system', function () {
-    return view('superadmin.settings.system-settings');
-})->name('superadmin.settings.system')->middleware(['web', 'auth', 'superadmin']);
-
-Route::get('/superadmin/settings/co-admins', function () {
-    return view('superadmin.settings.co-admins');
-})->name('superadmin.settings.co-admins')->middleware(['web', 'auth', 'superadmin']);
-
-Route::get('/superadmin/settings/features', function () {
-    return view('superadmin.settings.features');
-})->name('superadmin.settings.features')->middleware(['web', 'auth', 'superadmin']);
-
-Route::get('/superadmin/settings/locations', function () {
-    return view('superadmin.settings.locations');
-})->name('superadmin.settings.locations')->middleware(['web', 'auth', 'superadmin']);
-
-Route::get('/superadmin/settings/emis', function () {
-    return view('superadmin.settings.emis-schools');
-})->name('superadmin.settings.emis')->middleware(['web', 'auth', 'superadmin']);
 
 // Mail list subscription
 Route::post('/subscribe', function (Illuminate\Http\Request $request) {
