@@ -56,7 +56,11 @@
   <div class="klass-otp-page">
     <div class="klass-otp-shell">
       <a href="{{ url('/') }}" class="klass-otp-logo-wrap" aria-label="KlassApp Home">
+<<<<<<< Updated upstream
         <img src="{{ asset('images/klassapp-logo-dark.svg') }}" class="klass-otp-logo" alt="KlassApp Logo">
+=======
+        <img src="{{ asset('images/klassapplogo-dark.png') }}" class="klass-otp-logo" alt="KlassApp Logo">
+>>>>>>> Stashed changes
       </a>
       <div class="klass-otp-card">
         @include('admin.otp.create_form')
