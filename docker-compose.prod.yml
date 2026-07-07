@@ -45,6 +45,7 @@ services:
     restart: unless-stopped
     networks:
       - klassapp
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
 
   # ==================== KLASSAPP: APP ====================
   app:
@@ -70,8 +71,9 @@ services:
       EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
       EVOLUTION_INSTANCE_NAME: ${EVOLUTION_INSTANCE_NAME:-klassapp}
       WHATSAPP_HMAC_SECRET: ${WHATSAPP_HMAC_SECRET}
-    volumes:
-      - .:/var/www
+      PHP_FPM_LISTEN: "0.0.0.0:9000"
+    # volumes:
+    #   - .:/var/www
     depends_on:
       database:
         condition: service_healthy
