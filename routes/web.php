@@ -44,6 +44,10 @@ Route::get('/schools', fn() => view('landing', ['scrollTo' => 'schools']));
 Route::get('/contact', fn() => view('landing', ['scrollTo' => 'demo']));
 Route::get('/demo', fn() => view('landing', ['scrollTo' => 'demo']));
 
+// Terms of Service and Privacy Policy
+Route::get('/terms-of-service', [App\Http\Controllers\AboutController::class, 'terms']);
+Route::get('/privacy-policy', [App\Http\Controllers\AboutController::class, 'create']);
+
 // Premium School Pages (public)
 Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class, 'show']);
 
