@@ -39,6 +39,10 @@ class CreateSchool extends Component
 	#[Rule('required|numeric')]
 	public $pincode;
 
+	public $registration_country;
+	public $student_size;
+	public $ministry_code;
+	public $curriculum = 'uneb';
 	public $status = 1;
 
 	public $schoolId;
@@ -62,6 +66,10 @@ class CreateSchool extends Component
 			$this->state = $school->state_id;
 			$this->country = $school->country_id;
 			$this->pincode = $school->pincode;
+			$this->registration_country = $school->registration_country;
+			$this->student_size = $school->student_size;
+			$this->ministry_code = $school->ministry_code;
+			$this->curriculum = $school->curriculum ?? 'uneb';
 			$this->status = $school->status;
 
 			if($school->country_id != '')
@@ -91,6 +99,10 @@ class CreateSchool extends Component
 			'state_id' => $this->state,
 			'country_id' => $this->country,
 			'pincode' => $this->pincode,
+			'registration_country' => $this->registration_country,
+			'student_size' => $this->student_size,
+			'ministry_code' => $this->ministry_code,
+			'curriculum' => $this->curriculum,
 			'status' => $this->status,
 		];
 

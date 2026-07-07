@@ -13,10 +13,10 @@
             </p>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{{ url('/superadmin/academics/schools') }}" class="superadmin-header-btn superadmin-header-btn--blue">
+            <a href="{{ url('/superadmin/academics/schools') }}" class="ds-btn ds-btn-outline ds-btn-sm">
                 <i class="fa-solid fa-school"></i> Schools
             </a>
-            <a href="{{ url('/superadmin/reports/subscriptions') }}" class="superadmin-header-btn superadmin-header-btn--amber">
+            <a href="{{ url('/superadmin/reports/subscriptions') }}" class="ds-btn ds-btn-outline ds-btn-sm">
                 <i class="fa-solid fa-credit-card"></i> Plans
             </a>
         </div>
@@ -29,29 +29,29 @@
           ════════════════════════════════════════════════ --}}
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         {{-- Schools --}}
-        <a href="{{ url('/superadmin/academics/schools') }}" class="dashboard-kpi-card superadmin-kpi-link">
+        <a href="{{ url('/superadmin/academics/schools') }}" class="dashboard-kpi-card">
             <div class="dashboard-kpi-icon" style="background: rgba(30,111,217,0.10); color: #1E6FD9;">
                 <i class="fa-solid fa-school"></i>
             </div>
             <div class="dashboard-kpi-value">{{ number_format($stats['totalSchools']) }}</div>
             <div class="dashboard-kpi-label">Schools</div>
-            <div class="superadmin-kpi-sub">
-                <span class="text-green-600">{{ $stats['activeSchools'] }} active</span>
+            <div class="text-xs text-gray-500 mt-1">
+                <span style="color:#22C55E;">{{ $stats['activeSchools'] }} active</span>
                 @if($stats['inactiveSchools'] > 0)
-                    <span class="text-gray-300 mx-1">|</span>
-                    <span class="text-red-500">{{ $stats['inactiveSchools'] }} inactive</span>
+                    <span class="mx-1 text-gray-300">|</span>
+                    <span style="color:#DC2626;">{{ $stats['inactiveSchools'] }} inactive</span>
                 @endif
             </div>
         </a>
 
         {{-- Users --}}
-        <a href="{{ url('/superadmin/academics/schools') }}" class="dashboard-kpi-card superadmin-kpi-link">
+        <a href="{{ url('/superadmin/academics/schools') }}" class="dashboard-kpi-card">
             <div class="dashboard-kpi-icon" style="background: rgba(15,23,42,0.08); color: #0F172A;">
                 <i class="fa-solid fa-users"></i>
             </div>
             <div class="dashboard-kpi-value">{{ number_format($stats['totalUsers']) }}</div>
             <div class="dashboard-kpi-label">Users</div>
-            <div class="superadmin-kpi-sub">
+            <div class="text-xs text-gray-500 mt-1">
                 @php
                     $userDelta = $stats['usersThisMonth'] - ($stats['usersLastMonth'] ?? 0);
                 @endphp
@@ -66,13 +66,13 @@
         </a>
 
         {{-- Subscriptions --}}
-        <a href="{{ url('/superadmin/reports/subscriptions') }}" class="dashboard-kpi-card superadmin-kpi-link">
+        <a href="{{ url('/superadmin/reports/subscriptions') }}" class="dashboard-kpi-card">
             <div class="dashboard-kpi-icon" style="background: rgba(217,119,6,0.10); color: #D97706;">
                 <i class="fa-solid fa-credit-card"></i>
             </div>
             <div class="dashboard-kpi-value">{{ number_format($stats['subscriptionsTotal']) }}</div>
             <div class="dashboard-kpi-label">Subscriptions</div>
-            <div class="superadmin-kpi-sub">
+            <div class="text-xs text-gray-500 mt-1">
                 <span class="text-green-600">{{ $stats['activeSubs'] }} active</span>
                 @if($stats['expiredSubs'] > 0)
                     <span class="text-gray-300 mx-1">|</span>
@@ -88,7 +88,7 @@
             </div>
             <div class="dashboard-kpi-value">${{ number_format($stats['estimatedMRR'], 0) }}</div>
             <div class="dashboard-kpi-label">Est. MRR</div>
-            <div class="superadmin-kpi-sub">
+            <div class="text-xs text-gray-500 mt-1">
                 <span class="text-gray-400">Based on active plans</span>
             </div>
         </div>
@@ -100,7 +100,7 @@
             </div>
             <div class="dashboard-kpi-value">{{ number_format($stats['whatsappUsers']) }}</div>
             <div class="dashboard-kpi-label">WhatsApp</div>
-            <div class="superadmin-kpi-sub">
+            <div class="text-xs text-gray-500 mt-1">
                 <span class="text-gray-400">{{ $stats['whatsappSuccessRate'] }}% delivered</span>
             </div>
         </div>
@@ -112,7 +112,7 @@
             </div>
             <div class="dashboard-kpi-value">{{ number_format($stats['whatsappMessages']) }}</div>
             <div class="dashboard-kpi-label">Messages</div>
-            <div class="superadmin-kpi-sub">
+            <div class="text-xs text-gray-500 mt-1">
                 @php
                     $msgDelta = $stats['whatsappMessages'] - ($stats['whatsappLastMonth'] ?? 0);
                 @endphp
@@ -134,7 +134,7 @@
         {{-- Growth Chart --}}
         <div class="lg:col-span-2 dashboard-panel-card p-5">
             <h3 class="dashboard-section-title mb-4">Growth Trends (6 Months)</h3>
-            <canvas id="growthChart" class="superadmin-chart"></canvas>
+            <canvas id="growthChart" style="max-width:100%;height:260px;"></canvas>
         </div>
 
         {{-- Users by Role --}}
@@ -151,9 +151,9 @@
                     $maxRole = max(collect($roles)->max('count'), 1);
                 @endphp
                 @foreach($roles as $role)
-                    <div class="superadmin-role-row">
+                    <div class="flex items-center gap-3 py-1">
                         <div class="flex items-center gap-3 mb-1">
-                            <div class="superadmin-role-icon" style="background: {{ $role['color'] }}20; color: {{ $role['color'] }};">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0" style="background: {{ $role['color'] }}20; color: {{ $role['color'] }};">
                                 <i class="fa-solid {{ $role['icon'] }}"></i>
                             </div>
                             <span class="text-sm font-semibold text-gray-800 flex-1">{{ $role['label'] }}</span>
@@ -161,8 +161,8 @@
                                 {{ number_format($role['count']) }}
                             </span>
                         </div>
-                        <div class="superadmin-bar-track">
-                            <div class="superadmin-bar-fill" style="width: {{ round(($role['count'] / $maxRole) * 100) }}%; background: {{ $role['color'] }};"></div>
+                        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full" style="width: {{ round(($role['count'] / $maxRole) * 100) }}%; background: {{ $role['color'] }};"></div>
                         </div>
                     </div>
                 @endforeach
@@ -205,15 +205,15 @@
                             default => '#0F172A',
                         };
                     @endphp
-                    <div class="superadmin-plan-row">
+                    <div class="flex items-center gap-3 py-1.5">
                         <div class="flex items-center gap-3">
-                            <div class="superadmin-plan-icon" style="background: {{ $accent }}15; color: {{ $accent }};">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0" style="background: {{ $accent }}15; color: {{ $accent }};">
                                 <i class="fa-solid {{ $icon }}"></i>
                             </div>
                             <div class="flex-1">
                                 <p class="text-sm font-semibold text-gray-800">{{ $name }}</p>
                                 <p class="text-xs text-gray-500">
-                                    {{ $plan->amount > 0 ? '$' . number_format($plan->amount) . ' / cycle' : 'Free' }}
+                                    {{ $plan->is_custom_pricing ? 'Contact Us' : ($plan->amount > 0 ? '$' . number_format($plan->amount) . ' / mo' : 'Free') }}
                                 </p>
                             </div>
                             <div class="text-right">
@@ -247,7 +247,7 @@
                     @php
                         $statuses = [
                             ['label' => 'Active',    'count' => $stats['activeSubs'],    'color' => '#22C55E'],
-                            ['label' => 'Expired',   'count' => $stats['expiredSubs'],   'color' => '#EF4444'],
+                            ['label' => 'Expired',   'count' => $stats['expiredSubs'],   'color' => '#DC2626'],
                             ['label' => 'Cancelled', 'count' => $stats['cancelledSubs'], 'color' => '#64748B'],
                         ];
                     @endphp
@@ -257,8 +257,8 @@
                                 <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">{{ $s['label'] }}</span>
                                 <span class="text-xs font-bold" style="color: {{ $s['color'] }};">{{ $s['count'] }}</span>
                             </div>
-                            <div class="superadmin-bar-track">
-                                <div class="superadmin-bar-fill" style="width: {{ $stats['subscriptionsTotal'] > 0 ? round(($s['count'] / $stats['subscriptionsTotal']) * 100) : 0 }}%; background: {{ $s['color'] }};"></div>
+                            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full" style="width: {{ $stats['subscriptionsTotal'] > 0 ? round(($s['count'] / $stats['subscriptionsTotal']) * 100) : 0 }}%; background: {{ $s['color'] }};"></div>
                             </div>
                         </div>
                     @endforeach
@@ -269,7 +269,7 @@
                         $healthPct = $stats['subscriptionsTotal'] > 0
                             ? round(($stats['activeSubs'] / $stats['subscriptionsTotal']) * 100)
                             : 0;
-                        $healthColor = $healthPct >= 80 ? '#22C55E' : ($healthPct >= 50 ? '#D97706' : '#EF4444');
+                        $healthColor = $healthPct >= 80 ? '#22C55E' : ($healthPct >= 50 ? '#D97706' : '#DC2626');
                     @endphp
                     <div class="superadmin-health-ring" style="--health-pct: {{ $healthPct }}; --health-color: {{ $healthColor }};">
                         <svg viewBox="0 0 36 36">
@@ -312,9 +312,9 @@
             <div class="space-y-2">
                 @forelse($stats['recentSchools'] as $school)
                     <a href="{{ url('/superadmin/academics/school/detail/' . $school->id) }}"
-                       class="superadmin-activity-row">
+                       class="flex items-start gap-3 py-3 border-b border-gray-100">
                         <div class="flex items-center gap-3 flex-1">
-                            <div class="superadmin-avatar" style="background: {{ $school->status == 1 ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.10)' }}; color: {{ $school->status == 1 ? '#22C55E' : '#EF4444' }};">
+                            <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style="background: {{ $school->status == 1 ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.10)' }}; color: {{ $school->status == 1 ? '#22C55E' : '#DC2626' }};">
                                 {{ strtoupper(substr($school->name, 0, 2)) }}
                             </div>
                             <div>
@@ -340,9 +340,9 @@
             </div>
             <div class="space-y-2">
                 @forelse($stats['recentUsers'] as $user)
-                    <div class="superadmin-activity-row">
+                    <div class="flex items-start gap-3 py-3 border-b border-gray-100">
                         <div class="flex items-center gap-3 flex-1">
-                            <div class="superadmin-avatar" style="background: rgba(30,111,217,0.08); color: #1E6FD9;">
+                            <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style="background: rgba(30,111,217,0.08); color: #1E6FD9;">
                                 {{ strtoupper(substr($user->name, 0, 2)) }}
                             </div>
                             <div>

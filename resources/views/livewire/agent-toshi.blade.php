@@ -413,8 +413,8 @@
                     <div style="flex: 1;">
                         <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
                         <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
-                            @if(strtolower($plan->name) === 'premium')
-                                Contact sales
+                            @if($plan->is_custom_pricing)
+                                Contact Us
                             @elseif($plan->amount > 0)
                                 ${{ number_format($plan->amount) }} / {{ $plan->cycle }} days
                             @else

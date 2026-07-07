@@ -1416,8 +1416,56 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════
-     FOOTER
+     CONTACT FORM
      ═══════════════════════════════════════════════════ -->
+<section id="contact" class="py-20 bg-white border-t border-gray-200">
+    <div class="max-w-xl mx-auto px-6 text-center">
+        <h2 class="font-display font-bold text-3xl text-gray-900 mb-2">Contact us</h2>
+        <p class="text-gray-500 text-sm mb-8">Have a question? We'd love to hear from you.</p>
+        <form method="POST" action="/contact" class="text-left space-y-4">
+            @csrf
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Name</label>
+                    <input type="text" name="fullname" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-400 focus:border-green-400 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                    <input type="email" name="emailid" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-400 focus:border-green-400 outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">School Name</label>
+                <input type="text" name="school_name" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-400 focus:border-green-400 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Message</label>
+                <textarea name="message" rows="4" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-400 focus:border-green-400 outline-none"></textarea>
+            </div>
+            <button type="submit" class="w-full py-2.5 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition">Send message</button>
+        </form>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     NEWSLETTER + FOOTER
+     ═══════════════════════════════════════════════════ -->
+<section class="py-16 bg-gradient-to-b from-white to-slate-50 border-t border-gray-200">
+    <div class="max-w-xl mx-auto px-6 text-center">
+        <h3 class="font-display font-bold text-xl text-gray-900">Stay in the loop</h3>
+        <p class="text-gray-500 text-sm mt-2 mb-6">Get product updates, tips, and KlassApp news delivered to your inbox.</p>
+        <form method="POST" action="{{ route('subscribe') }}" class="flex gap-3 max-w-md mx-auto">
+            @csrf
+            <input type="email" name="email" placeholder="your@email.com" required
+                class="flex-1 min-w-0 px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-400 focus:border-green-400 outline-none">
+            <button type="submit" class="px-5 py-2.5 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition whitespace-nowrap">Subscribe</button>
+        </form>
+        @if(session('subscribed'))
+            <p class="text-green-600 text-sm mt-3">Thanks for subscribing!</p>
+        @endif
+    </div>
+</section>
+
 <footer class="relative py-20 bg-slate-50 border-t border-slate-200 overflow-hidden">
     <!-- Oversized decorative wordmark -->
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
@@ -1440,7 +1488,7 @@
                 <a href="#" class="text-slate-500 hover:text-slate-900 text-sm transition">Terms</a>
                 <a href="#" class="text-slate-500 hover:text-slate-900 text-sm transition">Privacy</a>
                 <a href="/docs/community/" class="text-slate-500 hover:text-slate-900 text-sm transition">Docs</a>
-                <a href="#" class="text-slate-500 hover:text-slate-900 text-sm transition">Contact</a>
+                <a href="/contact" class="text-slate-500 hover:text-slate-900 text-sm transition">Contact</a>
             </div>
 
             <div class="flex gap-3">
@@ -1685,5 +1733,10 @@
     <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.272-.198z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.977.546 3.826 1.494 5.404L2 22l4.667-1.463A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.182c-1.736 0-3.37-.535-4.738-1.528l-.339-.234-2.77.868.918-2.686-.22-.352A8.164 8.164 0 013.818 12c0-4.509 3.673-8.182 8.182-8.182s8.182 3.673 8.182 8.182-3.673 8.182-8.182 8.182z"/></svg>
 </a>
 
+<script>
+@if(isset($scrollTo) && $scrollTo)
+(function(){var el=document.getElementById('{{ $scrollTo }}');if(el)setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'})},300);})();
+@endif
+</script>
 </body>
 </html>

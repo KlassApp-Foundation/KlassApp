@@ -20,7 +20,7 @@ class SchoolList extends Component
 
     // Filters
     public $filterPlan = '';
-    public $filterCountry = '1'; // Default: Uganda
+    public $filterCountry = ''; // Default: all countries
     public $filterCity = '';
     public $filterStatus = '';
     public $filterMinStudents = null;
@@ -31,7 +31,7 @@ class SchoolList extends Component
         'sortField' => ['except' => 'created_at'],
         'sortDirection' => ['except' => 'desc'],
         'filterPlan' => ['except' => ''],
-        'filterCountry' => ['except' => '1'],
+        'filterCountry' => ['except' => ''],
         'filterCity' => ['except' => ''],
         'filterStatus' => ['except' => ''],
     ];
@@ -116,7 +116,7 @@ class SchoolList extends Component
                     $uq->where('usergroup_id', 6)->where('status', '!=', 'exit');
                 });
             })
-            ->with(['city', 'country'])
+            ->with(['city', 'country', 'subscription.plan'])
             ->withCount(['user as student_count' => function ($q) {
                 $q->where('usergroup_id', 6)->where('status', '!=', 'exit');
             }])

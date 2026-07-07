@@ -138,6 +138,63 @@
         </div>
       </div>
 
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label class="tw-form-label">Registration Country</label>
+        </div>
+          <input name="registration_country" type="text" placeholder="e.g. Uganda" class="tw-form-control w-full" wire:model="registration_country">
+        </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label class="tw-form-label">Student Size</label>
+        </div>
+          <select class="tw-form-control w-full" wire:model="student_size">
+            <option value="">Select school size</option>
+            <option value="Under 100 students">Under 100 students</option>
+            <option value="100 to 500 students">100 to 500 students</option>
+            <option value="500 to 1,000 students">500 to 1,000 students</option>
+            <option value="1,000 to 3,000 students">1,000 to 3,000 students</option>
+            <option value="Over 3,000 students">Over 3,000 students</option>
+          </select>
+        </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label class="tw-form-label">Ministry Code</label>
+        </div>
+          <input name="ministry_code" type="text" placeholder="e.g. 1234" class="tw-form-control w-full" wire:model="ministry_code">
+        </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label class="tw-form-label">Curriculum</label>
+        </div>
+          <select class="tw-form-control w-full" wire:model="curriculum">
+            <option value="uneb">UNEB</option>
+            <option value="uk">UK Curriculum</option>
+            <option value="us">US Curriculum</option>
+            <option value="ib">IB</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        </div>
+      </div>
+
       <div class="tw-form-group w-full lg:w-1/2">
         <div class="lg:mr-8 md:mr-8 ">
         <div>

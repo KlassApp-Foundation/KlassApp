@@ -41,7 +41,30 @@ Route::get('/landing', function () {
 Route::get('/features', fn() => view('landing', ['scrollTo' => 'features']));
 Route::get('/pricing', fn() => view('landing', ['scrollTo' => 'pricing']));
 Route::get('/schools', fn() => view('landing', ['scrollTo' => 'schools']));
-Route::get('/contact', fn() => view('landing', ['scrollTo' => 'demo']));
+Route::get('/contact', fn() => view('landing', ['scrollTo' => 'contact']));
+
+Route::post('/contact', function (Illuminate\Http\Request $request) {
+    $request->validate([
+        'fullname' => 'required|string|max:255',
+        'emailid' => 'required|email|max:255',
+        'school_name' => 'nullable|string|max:255',
+        'message' => 'required|string',
+    ]);
+
+    $contact = new App\Models\Contact();
+    $contact->fullname = $request->fullname;
+    $contact->email = $request->emailid;
+    $contact->school_name = $request->school_name ?? '';
+    $contact->message = $request->message;
+    $contact->contact_no = $request->contact_no ?? '';
+    $contact->save();
+
+    if (env('MAIL_STATUS') == 'on') {
+        Mail::to('team@klassapp.xyz')->send(new App\Mail\ContactMail($contact));
+    }
+
+    return redirect('/contact?sent=true#contact');
+})->name('contact.send');
 Route::get('/demo', fn() => view('landing', ['scrollTo' => 'demo']));
 
 // Premium School Pages (public)
@@ -299,3 +322,29 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
 
 
 
+
+// Super admin settings pages
+Route::get('/superadmin/settings', function () {
+    return view('superadmin.settings.index');
+})->name('superadmin.settings')->middleware(['web', 'auth', 'superadmin']);
+
+Route::get('/superadmin/settings/system', function () {
+    return view('superadmin.settings.system-settings');
+})->name('superadmin.settings.system')->middleware(['web', 'auth', 'superadmin']);
+
+Route::get('/superadmin/settings/co-admins', function () {
+    return view('superadmin.settings.co-admins');
+})->name('superadmin.settings.co-admins')->middleware(['web', 'auth', 'superadmin']);
+
+// Mail list subscription
+Route::post('/subscribe', function (Illuminate\Http\Request $request) {
+    $request->validate(['email' => 'required|email|unique:mail_list,email']);
+    App\Models\MailList::create(['email' => $request->email, 'name' => $request->name ?? '']);
+    return back()->with('subscribed', true);
+})->name('subscribe');
+
+// Super admin mail list view
+Route::get('/superadmin/mail-list', function () {
+    $subscribers = App\Models\MailList::where('subscribed', true)->latest()->paginate(50);
+    return view('superadmin.mail-list', compact('subscribers'));
+})->name('superadmin.mail-list')->middleware(['web', 'auth', 'superadmin']);

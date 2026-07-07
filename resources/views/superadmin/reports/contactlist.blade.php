@@ -2,8 +2,9 @@
 @extends('layouts.superadmin.layout')
 @section('content')
     <div class="relative">
-        <div class="flex items-center justify-between my-3">
-            <h1 class="admin-h1">Contacts</h1>
+        <div class="ds-page-head">
+            <h1 class="ds-page-head-title">Contact Inquiries</h1>
+            <p class="ds-page-head-sub">Form submissions from the public landing page — sent to team@klassapp.xyz</p>
         </div>
         <livewire:superadmin.reports.contact />
     </div>

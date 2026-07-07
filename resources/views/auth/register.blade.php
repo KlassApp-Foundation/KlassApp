@@ -493,8 +493,28 @@
       <form method="POST" action="{{ route('register') }}" aria-label="{{ __('Register') }}" class="klass-form">
         @csrf
 
-        <div class="klass-field">
-          <input type="hidden" name="plan" value="{{ session('selected_plan') }}">
+        <div class="klass-field klass-field-full">
+          <label class="klass-label">Choose your plan</label>
+          <div class="flex flex-wrap gap-3 mt-1">
+            @php
+              $plans = \App\Models\Plan::orderBy('id')->get();
+              $selectedPlan = session('selected_plan', 'growth');
+            @endphp
+            @foreach($plans as $plan)
+              @php
+                $val = $plan->name;
+                $checked = $selectedPlan === $val ? 'checked' : '';
+                $price = $plan->is_custom_pricing ? 'Contact Us' : ($plan->amount > 0 ? '$' . $plan->amount . '/mo' : 'Free');
+                $badge = $plan->is_custom_pricing ? 'bg-amber-100 text-amber-800 border-amber-300' : ($plan->amount > 0 ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-100 text-gray-700 border-gray-300');
+              @endphp
+              <label class="plan-option flex-1 min-w-[120px] cursor-pointer rounded-lg border-2 p-3 text-center transition {{ $checked ? ($plan->is_custom_pricing ? 'border-amber-500 bg-amber-50' : ($plan->amount > 0 ? 'border-green-500 bg-green-50' : 'border-gray-400 bg-gray-50')) : 'border-gray-200 hover:border-gray-300' }}">
+                <input type="radio" name="plan" value="{{ $val }}" class="hidden" {{ $checked }}>
+                <div class="font-semibold text-sm {{ $plan->is_custom_pricing ? 'text-amber-800' : ($plan->amount > 0 ? 'text-green-700' : 'text-gray-700') }}">{{ $plan->display_name }}</div>
+                <div class="text-lg font-bold mt-1 {{ $plan->is_custom_pricing ? 'text-amber-700' : ($plan->amount > 0 ? 'text-green-600' : 'text-gray-600') }}">{{ $price }}</div>
+              </label>
+            @endforeach
+          </div>
+          <input type="hidden" name="plan_hidden" value="{{ session('selected_plan', 'growth') }}">
         </div>
 
         <div class="klass-field klass-field-full">

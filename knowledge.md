@@ -87,19 +87,25 @@ colima start
 | `resources/views/layouts/partials/navigation.blade.php` | White bg, dark text, Sora font, vanilla JS hamburger |
 | `resources/views/auth/login.blade.php` | Fixed false maintenance banner (default login_status to 1) |
 
-### Design Tokens
-| Token | Value |
-|---|---|
-| Display font | Sora |
-| Body font | DM Sans |
-| Blue | `#1E6FD9` |
-| Green | `#22C55E` |
-| Dark | `#0F172A` |
-| Amber | `#D97706` |
-| Card shadow | `0 1px 3px rgba(0,0,0,0.06)` |
-| Card radius | 14px |
-| Sidebar bg | `#0F172A` |
-| Navbar bg | `#FFFFFF` |
+### Design Tokens (Current — July 6, 2026 Flare-inspired redesign)
+| Token | Value | Usage |
+|---|---|---|
+| Primary accent | `#22C55E` (green) | CTAs, buttons, active states, toggles |
+| Secondary brand | `#1E6FD9` (blue) | Links, info badges, secondary elements |
+| Amber | `#D97706` | Warnings, amber glow effect |
+| Canvas | `#FAFAF5` | Page background (light cream) |
+| Surface | `#FAFAF5` | Shells, containers |
+| Card/white | `#FFFFFF` | Card backgrounds |
+| Text | `#1E293B` | Body text (slate gray) |
+| Text secondary | `#64748B` | Labels, meta, subtitles |
+| Muted | `#94A3B8` | Placeholders, footnotes |
+| Dark/navy | `#0F172A` | Dark accent (sidebar text, headings) |
+| Border | `#E2E8F0` | Borders, dividers, rings |
+| Sidebar/navbar bg | `#FFFCF5` + amber glow + diamond pattern | Matching landing page feature section |
+| Display font | Sora | Headings, KPIs |
+| Body font | DM Sans | Body, labels, tables |
+| Card radius | 14px | Cards, dropdowns |
+| Shadow system | Ring-based `0 0 0 1px var(--d-border)` | Replaced box-shadows |
 
 ### Admin Dashboard Analytics
 | Metric | Type | Data |
@@ -1194,4 +1200,15 @@ Teacher click-verification is **complete** — all 5 modules E2E tested with DB 
 - **Key decisions**: Green #22C55E as primary brand accent (not blue). Light #FAFAF5 unified background across all pages. Amber glow + diamond pattern from landing page applied to sidebar and navbar. Claude terracotta palette fully reverted in favor of KlassApp brand colors. Profile dropdown: click avatar to change photo (not separate menu item). Added Settings link. Password toggle uses inline onclick (avoids Vue script stripping).
 - **Status**: ✅ Phase 0-8 complete (CSS foundation, components, auth pages, sidebars, layouts, landing, dashboards, Toshi colors)
 - **Edge cases flagged**: APP_DEBUG=true in shell env overrides .env file. Google migration was empty (needed column definitions filled in). Login page scripts stripped by Vue when inside #app div — must use inline onclick or @push('scripts') outside content section. Playwright browser context resets between calls causing session issues.
+- **Deferred**: Profile picture upload (/admin/changeavatar) — Vue component exists and storage symlink created, but upload flow needs debugging. User reported it didn't work. Investigate UserProfileController@updatechangeavatar and the ChangeAvatar Vue component.
+- **Deferred**: Financial dashboard (MRR click-through with collected revenue, taxes, payment methods) — spec written to .sisyphus/financial-dashboard-spec.md.
+- **Deferred**: Payment integration — no payment provider integrated yet. Growth ($35/mo) and Premium (Contact Us) have no way to collect payments.
+- **Deferred**: Per-school feature flags — would need new DB table and separate build. Settings restructure spec at .sisyphus/superadmin-settings-spec.md.
+
+### 2026-07-06 (Late): Super Admin redesign, plans consolidation, Settings restructure
+- **Work done**: Consolidated 4 plans → 3 tiers (Freemium $0, Growth $35/mo USD, Premium Contact Us). Added currency + is_custom_pricing columns to plans table. Migrated 7 test schools from deleted plan IDs. Updated all plan display locations (pricing page USD, super admin dashboard revenue, Toshi onboarding, register page plan selection). Schools List redesigned with ds-table/ds-badge/ds-btn. School Detail view expanded with 12+ fields including plan badge, ministry code, curriculum, admin accounts. Subscriptions table got "View School" action linking to School Detail. Contact form built (submissions stored in contacts table, emailed to team@klassapp.xyz). Mail list feature added (migration, model, landing page form, super admin view). Settings restructure: overview page with cards, Co-Admins CRUD (Livewire), System Settings UI (maintenance/login/registration toggles via existing settings table). Contact page handles scrollTo parameter. Profile dropdown extracted to shared partial across all 9 role navigation files. Growth chart height fixed. Register page plan selection now visible with 3 radio options.
+- **Files modified**: knowledge.md, routes/web.php, routes/superadmin menu, app/Livewire/Superadmin/Academics/*, app/Livewire/Superadmin/Reports/*, app/Livewire/Superadmin/Settings/* (new), resources/views/superadmin/*, resources/views/livewire/superadmin/*, resources/views/auth/register.blade.php, resources/views/landing.blade.php, resources/views/layouts/*/navigation.blade.php, resources/views/layouts/superadmin/menu.blade.php, resources/views/errors/*, public/css/app.css, public/css/dashboard-refresh.css, database/migrations/* (currency, is_custom_pricing, mail_list, contacts tables)
+- **Key decisions**: Settings restructured as an overview page with sub-sections (not aliased to Cities CRUD). Co-Admins get their own CRUD (usergroup_id=2). Feature flags deferred as separate build. Plans use is_custom_pricing boolean (not sentinel values) for Contact Us tiers. Profile dropdown is a single shared partial across all 9 roles — not duplicated. Google OAuth migration was empty (filled in with actual column definitions).
+- **Status**: ✅ Super Admin dashboard migrated, Settings restructured, Plans consolidated, Schools List/Detail built, Contact + Mail list live.
+- **Edge cases flagged**: plan_id=3 (extended) schools needed migration to plan_id=4 (premium) before deletion — 6 CurrentPlan records migrated, 0 orphaned. Setting::updateOrCreate key param must match DB column. schools table has no schoolType/schoolLevel/schoolGender columns (Toshi collects but doesn't persist them).
 
