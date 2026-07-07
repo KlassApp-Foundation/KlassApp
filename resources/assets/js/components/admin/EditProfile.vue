@@ -143,25 +143,6 @@
 
     <div class="w-full lg:w-1/3 mr-2 lg:mr-8 md:mr-8">
       <div class="mb-2">
-        <label class="tw-form-label">Region</label>
-      </div>
-      <div class="mb-2">
-        <!-- <select class="tw-form-control w-full" id="state_id" v-model="state_id" name="state_id">
-         <option :value="this.state_id">{{ this.state_id }}</option>
-         <option value="" v-for="state in statelist" v-bind:value="state.id">{{state.name}}</option>
-        </select> --> 
-        <select class="tw-form-control w-full" id="state_id" v-model="state_id" name="state_id">
-        <option value="">Select Region</option>
-        <option v-for="state in statelist" :value="state.id" :key="state.id">
-          {{ state.name }}
-        </option>
-      </select> 
-      </div>
-      <span v-if="errors.state_id" class="text-red-500 text-xs font-semibold">{{errors.state_id[0]}}</span>
-    </div>
-
-    <div class="w-full lg:w-1/3 mr-2 lg:mr-8 md:mr-8">
-      <div class="mb-2">
         <label for="pincode" class="tw-form-label">Pincode:</label>
       </div>
       <div class="mb-2">
@@ -195,11 +176,9 @@ export default {
           date_of_birth:'',
           address:'',
           city_id:'',
-          state_id:'',
           country_id:'7',
           pincode:'',
           countrylist:[],
-          statelist:[],
           citylist:[],
           errors:[],
           success:null,
@@ -222,11 +201,9 @@ export default {
               formData.append('date_of_birth',this.date_of_birth);                
               formData.append('address',this.address);
               formData.append('city_id',this.city_id);
-              formData.append('state_id',this.state_id);          
               formData.append('country_id',this.country_id);          
               formData.append('pincode',this.pincode);                   
               formData.append('countrylist',this.countrylist);
-              formData.append('statelist',this.statelist);
               formData.append('citylist',this.citylist);
         axios.post('/admin/profile',formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {     
            this.success = response.data.message;
@@ -257,9 +234,7 @@ export default {
           this.address=this.user.address;
           this.country_id=this.user.country_id;
           this.city_id=this.user.city_id;
-          this.state_id=this.user.state_id;
           this.countrylist=this.user.countrylist;
-          this.statelist=this.user.statelist;
           this.citylist=this.user.citylist;
           this.pincode=this.user.pincode;
           //console.log(this.name);

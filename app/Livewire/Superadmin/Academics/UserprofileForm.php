@@ -6,7 +6,6 @@ use Livewire\Component;
 use App\Models\Usergroup;
 use App\Models\School;
 use App\Models\City;
-use App\Models\State;
 use App\Models\Country;
 use App\Models\User;
 use App\Models\Userprofile;
@@ -42,8 +41,6 @@ class UserprofileForm extends Component
 	public $address;
 	#[Rule('required')] 
 	public $city;
-	#[Rule('required')] 
-	public $state;
 	#[Rule('required')] 
 	public $country;
 	#[Rule('required')] 
@@ -88,7 +85,6 @@ class UserprofileForm extends Component
 			$this->caste = $userprofile->caste;
 			$this->address = $userprofile->address;
 			$this->city = $userprofile->city_id;
-			$this->state = $userprofile->state_id;
 			$this->country = $userprofile->country_id;
 			$this->pincode = $userprofile->pincode;
 			$this->aadhar_number = $userprofile->aadhar_number;
@@ -120,7 +116,6 @@ class UserprofileForm extends Component
 			'caste' => $this->caste,
 			'address' => $this->address,
 			'city_id' => $this->city,
-			'state_id' => $this->state,
 			'country_id' => $this->country,
 			'pincode' => $this->pincode,
 			'aadhar_number' => $this->aadhar_number,
@@ -152,8 +147,6 @@ class UserprofileForm extends Component
 
     	$cities = City::get(); //where('status', 1)
 
-    	$states = State::get(); //where('status', 1)
-
     	$countries = Country::get(); //where('status', 1)
 
     	$user = User::where('id', $this->userId)->first();
@@ -163,7 +156,6 @@ class UserprofileForm extends Component
         	'usergroups' => $usergroups,
         	'schools' => $schools,
         	'cities' => $cities,
-        	'states' => $states,
         	'countries' => $countries,
         	'user' => $user,
         ]);

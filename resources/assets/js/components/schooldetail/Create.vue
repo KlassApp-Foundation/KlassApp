@@ -297,36 +297,6 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-1/2">
-                <div class="lg:mr-8 md:mr-8">
-                    <div class="mb-2">
-                        <label for="state" class="tw-form-label"
-                            >Region<span class="text-red-500">*</span></label
-                        >
-                    </div>
-                    <div class="w-full lg:w-3/4 my-2">
-                        <select
-                            class="tw-form-control w-full"
-                            id="state_id"
-                            v-model="state_id"
-                            name="state_id"
-                        >
-                            <option value="" disabled>Select Region</option>
-                            <option
-                                v-for="state in statelist[this.country_id]"
-                                v-bind:value="state.id"
-                            >
-                                {{ state.name }}
-                            </option>
-                        </select>
-                    </div>
-                    <span
-                        v-if="errors.state_id"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.state_id[0] }}</span
-                    >
-                </div>
-            </div>
         </div>
 
         <div class="flex flex-col lg:flex-row">
@@ -346,7 +316,7 @@
                         >
                             <option value="" disabled>Select District</option>
                             <option
-                                v-for="city in citylist[this.state_id]"
+                                v-for="city in citylist[this.country_id]"
                                 v-bind:value="city.id"
                             >
                                 {{ city.name }}
@@ -450,11 +420,9 @@ export default {
             landline_no: "",
             about_us: "",
             country_id: 7,
-            state_id: "",
             city_id: "",
             pincode: "",
             countrylist: [],
-            statelist: [],
             citylist: [],
             boardlist: [
                 {
@@ -484,8 +452,7 @@ export default {
             if (Object.keys(this.list).length > 0) {
                 this.name = this.list.school_name;
                 this.countrylist = this.list.countrylist;
-                this.statelist = this.list.statelist;
-                this.citylist = this.list.citylist;
+            this.citylist = this.list.citylist;
             }
         },
 
@@ -508,7 +475,6 @@ export default {
             formData.append("landline_no", this.landline_no);
             formData.append("about_us", this.about_us);
             formData.append("country_id", this.country_id);
-            formData.append("state_id", this.state_id);
             formData.append("city_id", this.city_id);
             formData.append("pincode", this.pincode);
 

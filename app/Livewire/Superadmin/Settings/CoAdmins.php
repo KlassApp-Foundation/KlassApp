@@ -68,7 +68,25 @@ class CoAdmins extends Component
 
     public function delete($id)
     {
-        User::find($id)?->delete();
+        $currentUser = auth()->user();
+        $target = User::find($id);
+
+        if (!$target) {
+            session()->flash('error', 'User not found.');
+            return;
+        }
+
+        if ($target->id === $currentUser->id) {
+            session()->flash('error', 'You cannot remove yourself.');
+            return;
+        }
+
+        if ($target->usergroup_id === 1) {
+            session()->flash('error', 'Cannot remove a super admin through this panel.');
+            return;
+        }
+
+        $target->delete();
         session()->flash('message', 'Co-admin removed.');
     }
 

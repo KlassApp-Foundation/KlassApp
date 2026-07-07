@@ -259,19 +259,6 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
         return view('superadmin.setting.countrydetail',compact('id'));
     })->name('superadmin.setting.countries.detail');
 
-    //State
-    Route::get('setting/states', function () {
-        return view('superadmin.setting.states');
-    })->name('superadmin.setting.states');
-
-    Route::get('setting/state/update/{id}', function ($id) {
-        return view('superadmin.setting.stateform', compact('id'));
-    })->name('superadmin.setting.states.update');
-
-    Route::get('setting/state/detail/{id}', function ($id) {
-        return view('superadmin.setting.statedetail',compact('id'));
-    })->name('superadmin.setting.states.detail');
-
     //Plan
     Route::get('setting/plans', function () {
         return view('superadmin.setting.planlist');
@@ -335,6 +322,18 @@ Route::get('/superadmin/settings/system', function () {
 Route::get('/superadmin/settings/co-admins', function () {
     return view('superadmin.settings.co-admins');
 })->name('superadmin.settings.co-admins')->middleware(['web', 'auth', 'superadmin']);
+
+Route::get('/superadmin/settings/features', function () {
+    return view('superadmin.settings.features');
+})->name('superadmin.settings.features')->middleware(['web', 'auth', 'superadmin']);
+
+Route::get('/superadmin/settings/locations', function () {
+    return view('superadmin.settings.locations');
+})->name('superadmin.settings.locations')->middleware(['web', 'auth', 'superadmin']);
+
+Route::get('/superadmin/settings/emis', function () {
+    return view('superadmin.settings.emis-schools');
+})->name('superadmin.settings.emis')->middleware(['web', 'auth', 'superadmin']);
 
 // Mail list subscription
 Route::post('/subscribe', function (Illuminate\Http\Request $request) {

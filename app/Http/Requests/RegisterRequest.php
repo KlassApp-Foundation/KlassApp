@@ -90,6 +90,7 @@ class RegisterRequest extends FormRequest
             'mobile_no'             =>  ['required', 'regex:/^0?\d{9,10}$/', 'checkunique_mobile'],
             'country'               =>  'nullable|string|max:100',
             'student_size'          =>  'nullable|string|max:50',
+            'ministry_code'         =>  'nullable|string|max:20',
             'email'                 =>  'required|email|checkunique_email',
             'password'              =>  'required|min:8|confirmed',
             'termsandcondn'         =>  'required',

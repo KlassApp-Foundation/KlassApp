@@ -10,7 +10,6 @@ use App\Http\Resources\API\Scholastic as ScholasticResource;
 use App\Http\Resources\TeacherLink as TeacherLinkResource;
 use App\Http\Resources\API\Country as CountryResource;
 use App\Http\Resources\Standard as StandardResource;
-use App\Http\Resources\API\State as StateResource;
 use App\Http\Resources\API\City as CityResource;
 use App\Models\TeacherLeaveApplication;
 use Illuminate\Support\Facades\Cache;
@@ -23,7 +22,6 @@ use App\Models\Teacherlink;
 use App\Models\Scholastic;
 use App\Models\Standard;
 use App\Models\Country;
-use App\Models\State;
 use App\Models\City;
 use App\Models\User;
 
@@ -63,19 +61,11 @@ class SiteHelper
         });
     }
 
-    public static function getStates()
-    {
-        return Cache::remember( "states", env('CACHE_TIME'), function ()  {
-            $state = State::get();
-            return StateResource::collection($state)->groupby('country_id');
-        });
-    }
-
     public static function getCities()
     {
         return Cache::remember( "cities", env('CACHE_TIME'), function ()  {
             $city  = City::get();
-            return CityResource::collection($city)->groupby('state_id');
+            return CityResource::collection($city)->groupby('country_id');
         });
     }
 

@@ -526,6 +526,17 @@
         </div>
 
         <div class="klass-field klass-field-full">
+          <label class="klass-label" for="ministry_code">EMIS Number <span class="text-xs text-gray-400 font-normal">(optional)</span></label>
+          <input id="ministry_code" type="text" class="klass-input{{ $errors->has('ministry_code') ? ' is-invalid' : '' }}" name="ministry_code" value="{{ old('ministry_code') }}" placeholder="6-digit EMIS code from Ministry of Education">
+          @if ($errors->has('ministry_code'))
+            <span class="klass-error" role="alert">{{ $errors->first('ministry_code') }}</span>
+          @endif
+          <p class="klass-field-helper" style="margin-top:6px;font-size:13px;color:#64748B;">
+            Don't have one? Contact <a href="mailto:onboarding@klassapp.xyz" style="color:#1E6FD9;text-decoration:underline;">onboarding@klassapp.xyz</a>
+          </p>
+        </div>
+
+        <div class="klass-field klass-field-full">
           <label class="klass-label" for="name">Your Full Name</label>
           <input id="name" type="text" class="klass-input{{ $errors->has('name') ? ' is-invalid' : '' }}" name="name" value="{{ old('name') }}" placeholder="Your name" required>
           @if ($errors->has('name'))

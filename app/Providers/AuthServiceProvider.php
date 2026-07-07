@@ -30,7 +30,7 @@ class AuthServiceProvider extends ServiceProvider
       'App\Models\Section'          => 'App\Policies\SectionPolicy',
       'App\Models\Standard'         => 'App\Policies\StandardPolicy',
       'App\Models\StandardLink'     => 'App\Policies\StandardLinkPolicy',
-      'App\Models\State'            => 'App\Policies\StatePolicy',
+
       'App\Models\StudentAcademic'  => 'App\Policies\StudentAcademicPolicy',
       'App\Models\Subscription'     => 'App\Policies\SubscriptionPolicy',
       'App\Models\TeacherProfile'   => 'App\Policies\TeacherProfilePolicy',

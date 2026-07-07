@@ -81,6 +81,7 @@ class GoogleAuthController extends Controller
                     'slug' => Str::slug($baseName . '-' . Str::random(8)),
                     'country' => '',
                     'student_size' => '',
+                    'ministry_code' => '',
                     'status' => '1',
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),

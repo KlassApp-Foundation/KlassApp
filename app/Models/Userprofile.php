@@ -39,7 +39,7 @@ class Userprofile extends Model
      * @var array
      */
     protected $fillable = [
-      'school_id' , 'user_id' , 'usergroup_id' , 'firstname' , 'lastname'  , 'alternate_no' , 'gender' , 'date_of_birth' , 'blood_group' , 'birth_place' , 'native_place' , 'mother_tongue' , 'caste', 'sub_caste' , 'address' , 'city_id' , 'state_id' , 'country_id' , 'pincode' , 'relation' , 'aadhar_number' , 'registration_number' , 'LIN' , 'joining_date' , 'notes' , 'avatar' , 'marital_status' , 'status'
+      'school_id' , 'user_id' , 'usergroup_id' , 'firstname' , 'lastname'  , 'alternate_no' , 'gender' , 'date_of_birth' , 'blood_group' , 'birth_place' , 'native_place' , 'mother_tongue' , 'caste', 'sub_caste' , 'address' , 'city_id' , 'country_id' , 'pincode' , 'relation' , 'aadhar_number' , 'registration_number' , 'LIN' , 'joining_date' , 'notes' , 'avatar' , 'marital_status' , 'status'
     ];
 
 
@@ -77,11 +77,6 @@ class Userprofile extends Model
     {
       return $this->belongsTo('App\Models\Country','country_id');
     }
-
-    public function state()
-    {
-      return $this->belongsTo('App\Models\State','state_id');
-    } 
 
     public function city()
     {

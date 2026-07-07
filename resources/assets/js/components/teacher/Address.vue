@@ -42,36 +42,6 @@
 
                 <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="state" class="tw-form-label"
-                            >Region<span class="text-red-500">*</span></label
-                        >
-                    </div>
-                    <div class="mb-2">
-                        <select
-                            class="tw-form-control w-full"
-                            id="state_id"
-                            v-model="state_id"
-                            name="state_id"
-                        >
-                            <option value="" disabled>Select Region</option>
-                            <option
-                                value=""
-                                v-for="state in statelist[this.country_id]"
-                                v-bind:value="state.id"
-                            >
-                                {{ state.name }}
-                            </option>
-                        </select>
-                    </div>
-                    <span
-                        v-if="errors.state_id"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.state_id[0] }}</span
-                    >
-                </div>
-
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
-                    <div class="mb-2">
                         <label for="city" class="tw-form-label"
                             >District<span class="text-red-500">*</span></label
                         >
@@ -86,7 +56,7 @@
                             <option value="" disabled>Select District</option>
                             <option
                                 value=""
-                                v-for="city in citylist[this.state_id]"
+                                v-for="city in citylist[this.country_id]"
                                 v-bind:value="city.id"
                             >
                                 {{ city.name }}
@@ -161,11 +131,9 @@ export default {
             profile_tab: "",
             user: [],
             city_id: "",
-            state_id: "",
             country_id: 7,
             pincode: "",
             countrylist: [],
-            statelist: [],
             citylist: [],
             errors: [],
             success: null,
@@ -184,16 +152,13 @@ export default {
             if (Object.keys(this.user).length > 0) {
                 if (this.type == "add") {
                     this.countrylist = this.user.countrylist;
-                    this.statelist = this.user.statelist;
                     this.citylist = this.user.citylist;
                 } else {
                     this.country_id = this.user.country_id;
-                    this.state_id = this.user.state_id;
                     this.city_id = this.user.city_id;
                     this.pincode = this.user.pincode;
 
                     this.countrylist = this.user.countrylist;
-                    this.statelist = this.user.statelist;
                     this.citylist = this.user.citylist;
                 }
             }
@@ -206,7 +171,6 @@ export default {
 
         resetForm() {
             this.city_id = "";
-            this.state_id = "";
             this.country_id = 7;
         },
 
@@ -222,7 +186,6 @@ export default {
             let formData = new FormData();
 
             formData.append("city_id", this.city_id);
-            formData.append("state_id", this.state_id);
             formData.append("country_id", this.country_id);
             formData.append("pincode", this.pincode);
 

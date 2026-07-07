@@ -48,7 +48,6 @@ class SchoolDetailsController extends Controller
       
         $array['school_name'] =   Auth::user()->school->name;
         $array['countrylist'] =   SiteHelper::getCountries();
-        $array['statelist']   =   SiteHelper::getStates();
         $array['citylist']    =   SiteHelper::getCities();
         
         return $array;
@@ -177,7 +176,6 @@ class SchoolDetailsController extends Controller
         $array['details']['city_id']      = $school->city_id;
         // $array['details']['pincode']      = $school->pincode;      
         $array['details']['countrylist']  = SiteHelper::getCountries();
-        $array['details']['statelist']    = SiteHelper::getStates();
         $array['details']['citylist']     = SiteHelper::getCities();
         
         return $array;

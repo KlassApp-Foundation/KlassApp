@@ -59,7 +59,7 @@ if (!function_exists('superadminActive')) {
     </li>
 
     {{-- Settings --}}
-    <li class="py-3 px-3 {{ superadminActive('settings') || Request::segment(3) == 'co-admins' || Request::segment(3) == 'cities' ? 'active' : '' }}">
+    <li class="py-3 px-3 {{ superadminActive('settings') || Request::segment(3) == 'co-admins' || Request::segment(3) == 'cities' || Request::segment(3) == 'locations' || Request::segment(3) == 'features' || Request::segment(3) == 'emis' ? 'active' : '' }}">
         <a href="{{ url('/superadmin/settings') }}" class="flex items-center">
             <x-icons.sidebar name="settings"/>
             <span class="mx-3 whitespace-no-wrap">Settings</span>

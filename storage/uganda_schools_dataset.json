@@ -1,0 +1,4366 @@
+{
+    "uganda": {
+        "description": "This dataset contains information about all Government Secondary Schools in Uganda, organized by district. The data includes school names and their corresponding EMIS (Education Management Information System) codes, which are unique identifiers for educational institutions in Uganda.",
+        "total_districts": "113",
+        "districts": {
+            "ABIM": [
+                {
+                    "name": "ABIM S.S",
+                    "emis": "4527"
+                },
+                {
+                    "name": "LOTUKE SEED S.S",
+                    "emis": "188003"
+                },
+                {
+                    "name": "MORULEM GIRLS' S.S",
+                    "emis": "188000"
+                }
+            ],
+            "ADJUMANI": [
+                {
+                    "name": "BIYAYA S.S.S",
+                    "emis": "11990"
+                },
+                {
+                    "name": "ALERE S.S.S",
+                    "emis": "418011"
+                },
+                {
+                    "name": "ADJUMANI S.S.S",
+                    "emis": "12016"
+                },
+                {
+                    "name": "DZAIPI S.S",
+                    "emis": "12034"
+                },
+                {
+                    "name": "OFUA S.S",
+                    "emis": "418002"
+                },
+                {
+                    "name": "ST MARY ASSUMPTA S.S.S",
+                    "emis": "12058"
+                }
+            ],
+            "AGAGO": [
+                {
+                    "name": "ADILANG SECONDARY SCHOOL",
+                    "emis": "4145"
+                },
+                {
+                    "name": "PATONGO S.S",
+                    "emis": "4153"
+                },
+                {
+                    "name": "ST CHARLES LWANGA",
+                    "emis": "4187"
+                },
+                {
+                    "name": "LIRA PALWO S.S",
+                    "emis": "4221"
+                },
+                {
+                    "name": "OMOT SECONDARY SCHOOL",
+                    "emis": "518015"
+                },
+                {
+                    "name": "AKWANG S.S",
+                    "emis": "518013"
+                }
+            ],
+            "ALEBTONG": [
+                {
+                    "name": "ST THERESA GIRLS SS",
+                    "emis": "4958"
+                },
+                {
+                    "name": "OMORO SS",
+                    "emis": "5019"
+                },
+                {
+                    "name": "AKII BUA COMP.SS",
+                    "emis": "208004"
+                },
+                {
+                    "name": "FATIMA ALOI COMP.GIRLS SS",
+                    "emis": "208026"
+                },
+                {
+                    "name": "ALOI SS",
+                    "emis": "4980"
+                },
+                {
+                    "name": "APALA SS",
+                    "emis": "5013"
+                }
+            ],
+            "AMOLATAR": [
+                {
+                    "name": "AGWINGIRI GIRL'S SCHOOL",
+                    "emis": "4908"
+                },
+                {
+                    "name": "AMOLATAR SS",
+                    "emis": "4911"
+                },
+                {
+                    "name": "ALEMERE COMPREHENSIVE SS",
+                    "emis": "208023"
+                },
+                {
+                    "name": "APUTI SS",
+                    "emis": "4888"
+                },
+                {
+                    "name": "AWELO SS",
+                    "emis": "4897"
+                },
+                {
+                    "name": "NAMASALE SEED SS",
+                    "emis": "690000"
+                }
+            ],
+            "AMUDAT": [
+                {
+                    "name": "POKOT SS",
+                    "emis": "268000"
+                }
+            ],
+            "AMURIA": [
+                {
+                    "name": "ST PAUL ABARILELA SS",
+                    "emis": "660000"
+                },
+                {
+                    "name": "AMURIA SS",
+                    "emis": "12423"
+                },
+                {
+                    "name": "MORUNGATUNY SSS",
+                    "emis": "660001"
+                },
+                {
+                    "name": "ORUNGO HIGH SCHOOL",
+                    "emis": "12432"
+                },
+                {
+                    "name": "ST PETERS SS AMURIA",
+                    "emis": "12456"
+                },
+                {
+                    "name": "JOHN ELURU MEM SS",
+                    "emis": "448017"
+                },
+                {
+                    "name": "ST FRANCIS ACUMET",
+                    "emis": "12473"
+                },
+                {
+                    "name": "LABIRA GIRLS SS",
+                    "emis": "12488"
+                }
+            ],
+            "AMURU": [
+                {
+                    "name": "LWANI MEMORIAL COLLEGE",
+                    "emis": "68006"
+                },
+                {
+                    "name": "KEYO SS",
+                    "emis": "1432"
+                },
+                {
+                    "name": "ST MARY'S COLLEGE LACOR",
+                    "emis": "1430"
+                },
+                {
+                    "name": "PABBO SS",
+                    "emis": "1437"
+                }
+            ],
+            "APAC": [
+                {
+                    "name": "ADUKU S.S",
+                    "emis": "74"
+                },
+                {
+                    "name": "IKWERA GIRLS S.S",
+                    "emis": "82"
+                },
+                {
+                    "name": "CHAWENTE S.S",
+                    "emis": "92"
+                },
+                {
+                    "name": "INOMO S.S",
+                    "emis": "101"
+                },
+                {
+                    "name": "NAMBIASO AGRO S.S",
+                    "emis": "106"
+                },
+                {
+                    "name": "AKOKORO S.S",
+                    "emis": "121"
+                },
+                {
+                    "name": "APAC S.S",
+                    "emis": "148"
+                },
+                {
+                    "name": "CHEGERE S.S",
+                    "emis": "156"
+                },
+                {
+                    "name": "IBUJE S.S",
+                    "emis": "176"
+                }
+            ],
+            "ARUA": [
+                {
+                    "name": "ADUMI SS",
+                    "emis": "388"
+                },
+                {
+                    "name": "ST JOSEPH OMBACI",
+                    "emis": "19373"
+                },
+                {
+                    "name": "MICU SS",
+                    "emis": "407"
+                },
+                {
+                    "name": "MVARA S.S",
+                    "emis": "19363"
+                },
+                {
+                    "name": "MUNI GIRLS",
+                    "emis": "421"
+                },
+                {
+                    "name": "EDIOFE GIRLS",
+                    "emis": "440"
+                },
+                {
+                    "name": "AWARA COLLEGE ETORI",
+                    "emis": "439"
+                },
+                {
+                    "name": "OFFAKA SS",
+                    "emis": "499"
+                },
+                {
+                    "name": "OGOKO SEED SECONDARY SCHOOL",
+                    "emis": "38017"
+                },
+                {
+                    "name": "OKOLLO S.S",
+                    "emis": "533"
+                },
+                {
+                    "name": "RHINO CAMP SS",
+                    "emis": "543"
+                },
+                {
+                    "name": "ULEPPI SECONDARY SCHOOL",
+                    "emis": "538"
+                },
+                {
+                    "name": "ARIPEA S.S",
+                    "emis": "631"
+                },
+                {
+                    "name": "ARIA S.S",
+                    "emis": "642"
+                },
+                {
+                    "name": "ORIAJINI S.S",
+                    "emis": "653"
+                },
+                {
+                    "name": "OMBATINI S.S.S",
+                    "emis": "657"
+                },
+                {
+                    "name": "OTUMBARI",
+                    "emis": "677"
+                },
+                {
+                    "name": "MT WATI S.S",
+                    "emis": "665"
+                },
+                {
+                    "name": "MODERN SS OCOKO",
+                    "emis": "38020"
+                },
+                {
+                    "name": "ARIVU SS",
+                    "emis": "701"
+                },
+                {
+                    "name": "BONDO ARMY SS",
+                    "emis": "38068"
+                },
+                {
+                    "name": "LOGIRI GIRLS' SS",
+                    "emis": "724"
+                },
+                {
+                    "name": "ANYAVU S.S",
+                    "emis": "712"
+                },
+                {
+                    "name": "VURRA SS",
+                    "emis": "733"
+                }
+            ],
+            "BUDAKA": [
+                {
+                    "name": "BUGWERE HIGH",
+                    "emis": "11547"
+                },
+                {
+                    "name": "KADERUNA S.S",
+                    "emis": "11575"
+                },
+                {
+                    "name": "KAMERUKA SEED SECONDARY SCHOOL",
+                    "emis": "850051"
+                },
+                {
+                    "name": "KAMONKOLI COLLEGE",
+                    "emis": "22136"
+                },
+                {
+                    "name": "LYAMA S.S",
+                    "emis": "398034"
+                },
+                {
+                    "name": "NABOA S.S.S",
+                    "emis": "11603"
+                },
+                {
+                    "name": "IKI IKI S.S",
+                    "emis": "11560"
+                }
+            ],
+            "BUDUDA": [
+                {
+                    "name": "SHITUMI SEED S.S",
+                    "emis": "740000"
+                },
+                {
+                    "name": "BUDUDA S.S",
+                    "emis": "6534"
+                },
+                {
+                    "name": "GATE OF HOPE S.S",
+                    "emis": "248050"
+                },
+                {
+                    "name": "BUKALASI S.S",
+                    "emis": "740001"
+                },
+                {
+                    "name": "BULUCHEKE S.S",
+                    "emis": "6553"
+                },
+                {
+                    "name": "BUMAYOKA SEED SS",
+                    "emis": ""
+                },
+                {
+                    "name": "BUSHIKA S.S",
+                    "emis": "680000"
+                }
+            ],
+            "BUGIRI": [
+                {
+                    "name": "BUKOOLI COLLEGE",
+                    "emis": "12101"
+                },
+                {
+                    "name": "NAMASERE HS",
+                    "emis": "12116"
+                },
+                {
+                    "name": "BUWUNGA S.S",
+                    "emis": "12144"
+                },
+                {
+                    "name": "ST STEPHEN BUGIRI S.S",
+                    "emis": "428001"
+                },
+                {
+                    "name": "NAMINYAGWE MUSLIM S.S",
+                    "emis": "12187"
+                },
+                {
+                    "name": "MUTERERE S.S",
+                    "emis": "12223"
+                },
+                {
+                    "name": "NALUBAALE S.S NANKOMA",
+                    "emis": "12245"
+                }
+            ],
+            "BUHWEJU": [
+                {
+                    "name": "BIHANGA S.S",
+                    "emis": "58013"
+                },
+                {
+                    "name": "NYAKITOKO S.S",
+                    "emis": "853"
+                },
+                {
+                    "name": "KARUNGU S.S",
+                    "emis": "58001"
+                },
+                {
+                    "name": "BUTARE S.S",
+                    "emis": "877"
+                }
+            ],
+            "BUIKWE": [
+                {
+                    "name": "LWERU S.S",
+                    "emis": "308071"
+                },
+                {
+                    "name": "3 RS S.S",
+                    "emis": "8950"
+                },
+                {
+                    "name": "SACRED HEART NAJJA S.S",
+                    "emis": "308021"
+                },
+                {
+                    "name": "NGOGWE BASKERVILLE S.S",
+                    "emis": "308094"
+                },
+                {
+                    "name": "NAMWEZI SS",
+                    "emis": "9074"
+                },
+                {
+                    "name": "ST PETERS NKOKONJERU",
+                    "emis": "9167"
+                },
+                {
+                    "name": "NYENGA S.S KIGUDU",
+                    "emis": "9087"
+                },
+                {
+                    "name": "VICTORIA SS SSI",
+                    "emis": "9157"
+                }
+            ],
+            "BUKEDEA": [
+                {
+                    "name": "BUKEDEA S.S",
+                    "emis": "4554"
+                },
+                {
+                    "name": "ST THERESA SS OKUNGURO",
+                    "emis": "4553"
+                },
+                {
+                    "name": "KONGUNGA HIGH SCHOOL",
+                    "emis": "4574"
+                },
+                {
+                    "name": "KIDONGOLE SEED SS",
+                    "emis": "4581"
+                },
+                {
+                    "name": "KOLIR COMPREHENSIVE SS",
+                    "emis": "4591"
+                }
+            ],
+            "BUKOMANSIMBI": [
+                {
+                    "name": "ST PETER'S S.S KIGUMBA",
+                    "emis": "228044"
+                },
+                {
+                    "name": "ST VICTOR'S KITAASA S.S.",
+                    "emis": "5493"
+                },
+                {
+                    "name": "KIRYASAAKA SEC.",
+                    "emis": "5506"
+                },
+                {
+                    "name": "MISANVU S.S",
+                    "emis": "5505"
+                },
+                {
+                    "name": "MISANVUCOMPREHENSIVE S.S",
+                    "emis": "228063"
+                },
+                {
+                    "name": "UGANDA MARTYRS S.S BUYOGA",
+                    "emis": "5513"
+                },
+                {
+                    "name": "MBULIRE S.S",
+                    "emis": "5520"
+                }
+            ],
+            "BUKWO": [
+                {
+                    "name": "AMANANG S.S",
+                    "emis": "3760"
+                },
+                {
+                    "name": "ST JOSEPH'S S.S",
+                    "emis": "158001"
+                },
+                {
+                    "name": "CHEPKWASTA S.S.S",
+                    "emis": "158000"
+                },
+                {
+                    "name": "CHESOWER S.S",
+                    "emis": "3763"
+                },
+                {
+                    "name": "KABEI SEED S.S",
+                    "emis": "3770"
+                },
+                {
+                    "name": "KAPYOYON HIGH SCHOOL",
+                    "emis": "3777"
+                }
+            ],
+            "BULAMBULI": [
+                {
+                    "name": "TUNYI SSS",
+                    "emis": "6358"
+                },
+                {
+                    "name": "BULAAGO SSS",
+                    "emis": "6359"
+                },
+                {
+                    "name": "BULUGANYA SS",
+                    "emis": "6335"
+                },
+                {
+                    "name": "BUMASOBO SS",
+                    "emis": ""
+                },
+                {
+                    "name": "BUGINYANYA COMPREHENSIVE SSS",
+                    "emis": "528001"
+                },
+                {
+                    "name": "NABBONGO SS",
+                    "emis": "6364"
+                }
+            ],
+            "BULIISA": [
+                {
+                    "name": "BIISO WAR MEMORIAL S.S",
+                    "emis": ""
+                },
+                {
+                    "name": "BUTIABA SEED SECONDARY SCHOOL",
+                    "emis": ""
+                },
+                {
+                    "name": "BUGUNGU S.S.S",
+                    "emis": "5915"
+                }
+            ],
+            "BUNDIBUGYO": [
+                {
+                    "name": "SEMULIKI HIGH SCHOOL",
+                    "emis": "785"
+                },
+                {
+                    "name": "BURAMBAGIRA S.S",
+                    "emis": "801"
+                },
+                {
+                    "name": "KAKUKA HILL S.S",
+                    "emis": "811"
+                },
+                {
+                    "name": "BUBANDI SEED S.S",
+                    "emis": "48009"
+                },
+                {
+                    "name": "BUBUKWANGA S.S",
+                    "emis": "749"
+                },
+                {
+                    "name": "BUMADU SEED SECONDARY SCHOOL",
+                    "emis": "48012"
+                },
+                {
+                    "name": "ST MARY'S SIMBYA S.S",
+                    "emis": "773"
+                },
+                {
+                    "name": "BUNDIKAHUNGU SEED SS",
+                    "emis": "555520"
+                }
+            ],
+            "BUSHENYI": [
+                {
+                    "name": "BWERANYANGI GIRLS S.S",
+                    "emis": "19558"
+                },
+                {
+                    "name": "ST KAGWA BUSHENYI H.S",
+                    "emis": "19567"
+                },
+                {
+                    "name": "NGANWA HIGH SCHOOL",
+                    "emis": "19673"
+                },
+                {
+                    "name": "KAKANJU VOC. S.S",
+                    "emis": "58003"
+                },
+                {
+                    "name": "KYABUGIMBI S.S",
+                    "emis": "1000"
+                },
+                {
+                    "name": "KYAMUHUNGA S.S.S",
+                    "emis": "1019"
+                },
+                {
+                    "name": "KYEIBAARE GIRLS SS",
+                    "emis": "19598"
+                },
+                {
+                    "name": "KYEIZOOBA GIRLS S S S",
+                    "emis": "19630"
+                },
+                {
+                    "name": "MWENGURA S.S",
+                    "emis": "58035"
+                },
+                {
+                    "name": "BISHOP OGEZ H/S",
+                    "emis": "1065"
+                },
+                {
+                    "name": "NYABUBARE S.S",
+                    "emis": "1080"
+                },
+                {
+                    "name": "MASHERUKA GIRLS S S",
+                    "emis": "1248"
+                },
+                {
+                    "name": "SACRED HEART MUSHANGA S S",
+                    "emis": "1226"
+                }
+            ],
+            "BUSIA": [
+                {
+                    "name": "BUHEHE S.S",
+                    "emis": "12283"
+                },
+                {
+                    "name": "BUHOBE S.S",
+                    "emis": "12290"
+                },
+                {
+                    "name": "BUWEMBE S.S",
+                    "emis": "12300"
+                },
+                {
+                    "name": "BUSIIME SEED S.S",
+                    "emis": "438081"
+                },
+                {
+                    "name": "RIVERSIDE HIGH SCHOOL",
+                    "emis": "438008"
+                },
+                {
+                    "name": "KAYORO S.S",
+                    "emis": "12327"
+                },
+                {
+                    "name": "DABANI GIRLS",
+                    "emis": "22351"
+                },
+                {
+                    "name": "LUMINO H.S",
+                    "emis": "12348"
+                },
+                {
+                    "name": "LUNYO HILL S.S",
+                    "emis": "12358"
+                },
+                {
+                    "name": "MASABA COLLEGE BUSIA",
+                    "emis": "12372"
+                },
+                {
+                    "name": "BUKALIKHA",
+                    "emis": "438007"
+                },
+                {
+                    "name": "MASINYA S.S",
+                    "emis": "438003"
+                }
+            ],
+            "BUTALEJA": [
+                {
+                    "name": "MULAGI GIRLS SS",
+                    "emis": "10770"
+                },
+                {
+                    "name": "BUSABA SEED SS",
+                    "emis": "64000"
+                },
+                {
+                    "name": "BUSABI SS",
+                    "emis": "10755"
+                },
+                {
+                    "name": "MUGULU HS",
+                    "emis": "10779"
+                },
+                {
+                    "name": "BUTALEJA SS",
+                    "emis": "10794"
+                },
+                {
+                    "name": "KANGALABA",
+                    "emis": "10824"
+                },
+                {
+                    "name": "BUKEDI COLL KACHONGA",
+                    "emis": "21910"
+                },
+                {
+                    "name": "ST MARY'S SS KAPISA",
+                    "emis": ""
+                },
+                {
+                    "name": "BUGALO COLLEGE BWIRVA",
+                    "emis": "10787"
+                },
+                {
+                    "name": "HASAHYA SS",
+                    "emis": "10804"
+                },
+                {
+                    "name": "BUSOLWE SS",
+                    "emis": "10778"
+                }
+            ],
+            "BUTAMBALA": [
+                {
+                    "name": "BUDDE S.S.S",
+                    "emis": "7817"
+                },
+                {
+                    "name": "BUTAWUKA MAGEZI NTAKE",
+                    "emis": "7830"
+                },
+                {
+                    "name": "LUKALU S.S",
+                    "emis": "7840"
+                },
+                {
+                    "name": "SAYIDINA ABUBAKER S.S",
+                    "emis": "7845"
+                },
+                {
+                    "name": "KAGGULWE S.S",
+                    "emis": "7847"
+                },
+                {
+                    "name": "KITAGOBWA S.S",
+                    "emis": "7888"
+                }
+            ],
+            "BUVUMA": [
+                {
+                    "name": "BUVUMA COLLEGE",
+                    "emis": "9175"
+                }
+            ],
+            "BUYENDE": [
+                {
+                    "name": "ST PETER'S NAMULIKYA",
+                    "emis": "148000"
+                },
+                {
+                    "name": "BUDIOPE SS",
+                    "emis": "3456"
+                },
+                {
+                    "name": "KIDERA SS",
+                    "emis": "3491"
+                },
+                {
+                    "name": "BALIGEYA MEM.SEED SCHOOL",
+                    "emis": "148081"
+                }
+            ],
+            "DOKOLO": [
+                {
+                    "name": "AGWATA SS",
+                    "emis": "4745"
+                },
+                {
+                    "name": "BATA SECONDARY SCHOOL",
+                    "emis": "4756"
+                },
+                {
+                    "name": "ST JOHN BOSCO SS DOKOLO",
+                    "emis": "4770"
+                },
+                {
+                    "name": "KANGAI SS",
+                    "emis": "4784"
+                },
+                {
+                    "name": "KWERA SS",
+                    "emis": "208006"
+                }
+            ],
+            "GOMBA": [
+                {
+                    "name": "BUKANDULA MIXED S.S",
+                    "emis": "7894"
+                },
+                {
+                    "name": "KABULASOKE SEC.SCH.",
+                    "emis": "7901"
+                },
+                {
+                    "name": "KISOZI SEED SS",
+                    "emis": ""
+                },
+                {
+                    "name": "KASAKA S.S",
+                    "emis": "7934"
+                },
+                {
+                    "name": "ST LEONARD'S S.S",
+                    "emis": "7954"
+                },
+                {
+                    "name": "MPENJA SEC.SCH.",
+                    "emis": "7965"
+                }
+            ],
+            "GULU": [
+                {
+                    "name": "AWACH SS",
+                    "emis": "1336"
+                },
+                {
+                    "name": "LUKOME SS",
+                    "emis": "1344"
+                },
+                {
+                    "name": "PAICHO SS",
+                    "emis": "0"
+                },
+                {
+                    "name": "SIR SAMUEL BAKER",
+                    "emis": "1361"
+                },
+                {
+                    "name": "ST THOMAS MOORE SS MINAKULU",
+                    "emis": "1480"
+                },
+                {
+                    "name": "ONONO MEMORIAL COLLEGE",
+                    "emis": "68007"
+                },
+                {
+                    "name": "KORO SS",
+                    "emis": "68017"
+                },
+                {
+                    "name": "LALOGI SEED SSS",
+                    "emis": "68030"
+                },
+                {
+                    "name": "OPIT SSS",
+                    "emis": "1531"
+                },
+                {
+                    "name": "AWERE SS",
+                    "emis": "1516"
+                },
+                {
+                    "name": "KOCH ONGAKO SS",
+                    "emis": "68031"
+                }
+            ],
+            "HOIMA": [
+                {
+                    "name": "BUSERUKA S.S",
+                    "emis": "78000"
+                },
+                {
+                    "name": "DUHAGA S.S",
+                    "emis": "78007"
+                },
+                {
+                    "name": "ST THOMAS MOORE SS KIGOROBYA",
+                    "emis": "78010"
+                },
+                {
+                    "name": "SIR TITO WINYI",
+                    "emis": "484445"
+                },
+                {
+                    "name": "KAKINDO SS",
+                    "emis": "78013"
+                },
+                {
+                    "name": "BUGAMBE SS",
+                    "emis": "78014"
+                },
+                {
+                    "name": "BUHIMBA SS",
+                    "emis": "1646"
+                },
+                {
+                    "name": "KABWOYA S.S",
+                    "emis": "78032"
+                },
+                {
+                    "name": "KIZIRANFUMBI SS",
+                    "emis": "78018"
+                },
+                {
+                    "name": "MUNTEME FATIMA COLLEGE",
+                    "emis": "78019"
+                }
+            ],
+            "IBANDA": [
+                {
+                    "name": "BIGYERA S.S",
+                    "emis": "6687"
+                },
+                {
+                    "name": "IBANDA S S",
+                    "emis": "2193"
+                },
+                {
+                    "name": "KIBUBURA S S",
+                    "emis": "21860"
+                },
+                {
+                    "name": "KAGONGO S.S",
+                    "emis": "6783"
+                },
+                {
+                    "name": "ISHONGORORO H.S",
+                    "emis": "6702"
+                },
+                {
+                    "name": "RYABATENGA S.S",
+                    "emis": "6803"
+                },
+                {
+                    "name": "RWENKOBWA SEC.SCH.",
+                    "emis": "6713"
+                },
+                {
+                    "name": "ST ANNE'S S.S KIHANI",
+                    "emis": "6727"
+                },
+                {
+                    "name": "NYABUHIKYE S.S",
+                    "emis": "6744"
+                },
+                {
+                    "name": "NYAMAREBE SEED S.S",
+                    "emis": "258006"
+                },
+                {
+                    "name": "MWAMBA SEC.SCH.",
+                    "emis": "6760"
+                }
+            ],
+            "IGANGA": [
+                {
+                    "name": "MAKUUTU SEED SS",
+                    "emis": ""
+                },
+                {
+                    "name": "BUKOYO S.S",
+                    "emis": "19811"
+                },
+                {
+                    "name": "IGANGA S S",
+                    "emis": "19817"
+                },
+                {
+                    "name": "IGANGA HIGH",
+                    "emis": "19824"
+                },
+                {
+                    "name": "ITANDA S S",
+                    "emis": "2039"
+                },
+                {
+                    "name": "NAKALAMA",
+                    "emis": "2062"
+                },
+                {
+                    "name": "NAKIGO S S",
+                    "emis": "2072"
+                },
+                {
+                    "name": "ST PAUL S S NASUTI",
+                    "emis": "2096"
+                },
+                {
+                    "name": "KUGULU COLLEGE",
+                    "emis": "2105"
+                },
+                {
+                    "name": "BUSEMBATIA S S",
+                    "emis": "1755"
+                },
+                {
+                    "name": "BUBINGA H S",
+                    "emis": "1697"
+                },
+                {
+                    "name": "BULUNGULI SEED SS",
+                    "emis": ""
+                },
+                {
+                    "name": "NKUUTU MEMORIAL SCHOOL",
+                    "emis": "1720"
+                }
+            ],
+            "ISINGIRO": [
+                {
+                    "name": "ENDIIZI HIGH SCH.",
+                    "emis": "258087"
+                },
+                {
+                    "name": "KIGARAGARA VOC S.S",
+                    "emis": "258085"
+                },
+                {
+                    "name": "KIHANDA S.S",
+                    "emis": "6660"
+                },
+                {
+                    "name": "BUKANGA SEEDS.S",
+                    "emis": "258000"
+                },
+                {
+                    "name": "NGARAMA S.S.S",
+                    "emis": "6654"
+                },
+                {
+                    "name": "AISHA GIRLS",
+                    "emis": "6825"
+                },
+                {
+                    "name": "BIRERE S.S",
+                    "emis": "6814"
+                },
+                {
+                    "name": "ISINGIRO S.S",
+                    "emis": "6839"
+                },
+                {
+                    "name": "KISYORO S.S",
+                    "emis": "6889"
+                },
+                {
+                    "name": "ST JOHN RUSTYA S.S",
+                    "emis": "6824"
+                },
+                {
+                    "name": "KYEZIMBIRE S.S",
+                    "emis": "6859"
+                },
+                {
+                    "name": "MASHA SEED SECONDARY SCHOOL",
+                    "emis": "590001"
+                },
+                {
+                    "name": "NTUNGU S.S",
+                    "emis": "6869"
+                }
+            ],
+            "JINJA": [
+                {
+                    "name": "BUSEDDE COLLEGE BUGAYA",
+                    "emis": "2238"
+                },
+                {
+                    "name": "BUSEDDE SEED SS",
+                    "emis": "98082"
+                },
+                {
+                    "name": "JINJA S S S",
+                    "emis": "2292"
+                },
+                {
+                    "name": "MUJIBHANI MADVANI COLLEGE WAIRAKA",
+                    "emis": "2259"
+                },
+                {
+                    "name": "KAKIRA HIGH SCHOOL",
+                    "emis": "2255"
+                },
+                {
+                    "name": "KIIRA COLLEGE BUTIKI",
+                    "emis": "19900"
+                },
+                {
+                    "name": "ST JOHN'S SEN. SEC.SCH.WAKITAKA",
+                    "emis": "2269"
+                },
+                {
+                    "name": "WANYANGE GIRLS",
+                    "emis": "19913"
+                },
+                {
+                    "name": "ST STEPHEN S.S BUDONDO",
+                    "emis": "98023"
+                },
+                {
+                    "name": "LUBANI S.S",
+                    "emis": "98015"
+                },
+                {
+                    "name": "PILKINGTON COLLEGE MUGULUKA",
+                    "emis": "98006"
+                },
+                {
+                    "name": "ST GONZAGA SENIOR SECONDARY SCHOOL",
+                    "emis": "80032"
+                }
+            ],
+            "KAABONG": [
+                {
+                    "name": "KAABONG S.S",
+                    "emis": "4494"
+                },
+                {
+                    "name": "JUBILEE S.S KARENGA",
+                    "emis": "188002"
+                }
+            ],
+            "KABALE": [
+                {
+                    "name": "ST PAULS BUKINDA",
+                    "emis": "19961"
+                },
+                {
+                    "name": "KIGEZI COLLEGE BUTOBERE",
+                    "emis": "2376"
+                },
+                {
+                    "name": "KIGEZI HIGH",
+                    "emis": "2384"
+                },
+                {
+                    "name": "ST MARY'S COLLEGE RUSHOROZA",
+                    "emis": "2395"
+                },
+                {
+                    "name": "HORNBY H.S SCHOOL",
+                    "emis": "2385"
+                },
+                {
+                    "name": "ST MARIA GORRETE RUSHOROZA",
+                    "emis": "2394"
+                },
+                {
+                    "name": "RUBAYA S S",
+                    "emis": "2507"
+                },
+                {
+                    "name": "RWESASI SS",
+                    "emis": "2441"
+                },
+                {
+                    "name": "BURANGA SS",
+                    "emis": "2447"
+                },
+                {
+                    "name": "ST BARNABAS S S S KARUJANGA",
+                    "emis": "2511"
+                },
+                {
+                    "name": "KAMUGANGUZI JANAN LUWUM",
+                    "emis": "2458"
+                },
+                {
+                    "name": "LAKE BUNYONYI S S",
+                    "emis": "2463"
+                },
+                {
+                    "name": "KIGATA H S",
+                    "emis": "2471"
+                },
+                {
+                    "name": "ST FRANCIS COLL KYANAMIRA",
+                    "emis": "2474"
+                },
+                {
+                    "name": "KAMURONKO S.S",
+                    "emis": "2483"
+                },
+                {
+                    "name": "KAHONDO S.S",
+                    "emis": "2498"
+                },
+                {
+                    "name": "RUKORE H S",
+                    "emis": "2516"
+                },
+                {
+                    "name": "BUBAARE S S",
+                    "emis": "2528"
+                },
+                {
+                    "name": "ST THOMAS AQUINAS S S S KASHAKI",
+                    "emis": "108013"
+                },
+                {
+                    "name": "BUFUNDI COLLEGE KACEREERE",
+                    "emis": "2554"
+                },
+                {
+                    "name": "BUTANDA S S",
+                    "emis": "108007"
+                },
+                {
+                    "name": "ST AGATHA'S S S KAKORE",
+                    "emis": "2575"
+                },
+                {
+                    "name": "NYARUHANGA HIGH SCH",
+                    "emis": "2605"
+                },
+                {
+                    "name": "ST ANDREW'S S S RUBANDA",
+                    "emis": "108011"
+                },
+                {
+                    "name": "ST CHARLES LWANGA SS MUKO",
+                    "emis": "108041"
+                },
+                {
+                    "name": "BISHOP KIVENGERE GIRLS S MUYEBE",
+                    "emis": "20048"
+                },
+                {
+                    "name": "KAMWEZI HIGH SCHOOL",
+                    "emis": "2651"
+                },
+                {
+                    "name": "KYOGO SS",
+                    "emis": ""
+                },
+                {
+                    "name": "ST ALOYSIUS GIRLS S S S KITANGA",
+                    "emis": "108044"
+                },
+                {
+                    "name": "KANTARE S S",
+                    "emis": "2675"
+                },
+                {
+                    "name": "BUKINDA S S",
+                    "emis": "2633"
+                },
+                {
+                    "name": "KIHANGA S S",
+                    "emis": "2688"
+                },
+                {
+                    "name": "ST JOSEPHS MPARO S S",
+                    "emis": "108042"
+                }
+            ],
+            "KABAROLE": [
+                {
+                    "name": "BUHEESI S.S",
+                    "emis": "118000"
+                },
+                {
+                    "name": "KIBIITO S.S",
+                    "emis": "118001"
+                },
+                {
+                    "name": "MOTHERCARE SS",
+                    "emis": ""
+                },
+                {
+                    "name": "RUBONA S.S",
+                    "emis": "118002"
+                },
+                {
+                    "name": "RWIMI S.S.S",
+                    "emis": "2741"
+                },
+                {
+                    "name": "BUKUUKU COMMUNITY S.S",
+                    "emis": "118047"
+                },
+                {
+                    "name": "IBAALE S.S",
+                    "emis": "118005"
+                },
+                {
+                    "name": "RUSEKERE S.S",
+                    "emis": "2762"
+                },
+                {
+                    "name": "NYAKASURA SCHOOL",
+                    "emis": "2748"
+                },
+                {
+                    "name": "KAHINJU",
+                    "emis": "118020"
+                },
+                {
+                    "name": "KABOYO S.S.",
+                    "emis": "2781"
+                },
+                {
+                    "name": "RUTEETE S.S",
+                    "emis": "2793"
+                },
+                {
+                    "name": "ST LEO COLEEGE KYEGOBE",
+                    "emis": "2806"
+                },
+                {
+                    "name": "KYEBAMBE GIRLS",
+                    "emis": "2816"
+                }
+            ],
+            "KABERAMAIDO": [
+                {
+                    "name": "KABERAMAIDO SS",
+                    "emis": "10501"
+                },
+                {
+                    "name": "KOBULUBULU SS",
+                    "emis": "550006"
+                },
+                {
+                    "name": "ST PAUL SS OCHERO",
+                    "emis": "550001"
+                },
+                {
+                    "name": "ANYARA SS",
+                    "emis": "348000"
+                },
+                {
+                    "name": "OLOMET SS",
+                    "emis": "550003"
+                },
+                {
+                    "name": "KALAKI SS",
+                    "emis": "10548"
+                },
+                {
+                    "name": "LWALA GIRLS SS",
+                    "emis": "10563"
+                },
+                {
+                    "name": "KABERAMAIDO COMP.SS",
+                    "emis": "348037"
+                }
+            ],
+            "KALANGALA": [
+                {
+                    "name": "BISHOP DUNSTAN S.S.S",
+                    "emis": "3054"
+                },
+                {
+                    "name": "SSERWANGA LWANGA MEM S.S.S",
+                    "emis": "128000"
+                },
+                {
+                    "name": "BUKASA S.S",
+                    "emis": "128001"
+                }
+            ],
+            "KALIRO": [
+                {
+                    "name": "BULAMOGI COLLEGE GADUMIRE",
+                    "emis": "148014"
+                },
+                {
+                    "name": "KALIRO HIGH SCHOOL",
+                    "emis": "148037"
+                },
+                {
+                    "name": "BUDINI S S S",
+                    "emis": "20292"
+                },
+                {
+                    "name": "NAMUGONGO SEED SS",
+                    "emis": "148047"
+                },
+                {
+                    "name": "KANAMBATIKO SS",
+                    "emis": "148057"
+                },
+                {
+                    "name": "NAMWIMA SSS",
+                    "emis": "148043"
+                }
+            ],
+            "KALUNGU": [
+                {
+                    "name": "LUTENGO S.S.S",
+                    "emis": "5687"
+                },
+                {
+                    "name": "ST CHARLES LWANGA SS KASASA",
+                    "emis": "0"
+                },
+                {
+                    "name": "KABUKUNGE MOSLEM S.S",
+                    "emis": "5701"
+                },
+                {
+                    "name": "KABUNGO S.S",
+                    "emis": "5705"
+                },
+                {
+                    "name": "KYATO S.S",
+                    "emis": "5694"
+                },
+                {
+                    "name": "HOLY FAMILY KYAMULIBWA",
+                    "emis": "228138"
+                },
+                {
+                    "name": "KYAGAMBIDDWA",
+                    "emis": "5740"
+                },
+                {
+                    "name": "ST BALIKUDDEMBE S.S LWABENGE",
+                    "emis": "5739"
+                }
+            ],
+            "KAMPALA": [
+                {
+                    "name": "KOLOLO HS",
+                    "emis": "3100"
+                },
+                {
+                    "name": "KAMPALA H.S",
+                    "emis": "3124"
+                },
+                {
+                    "name": "KOLOLO SS",
+                    "emis": "3097"
+                },
+                {
+                    "name": "CITY HIGH",
+                    "emis": "20295"
+                },
+                {
+                    "name": "KITANTE HILL SCHOOL",
+                    "emis": "20309"
+                },
+                {
+                    "name": "OLD KAMPALA SSS",
+                    "emis": "20342"
+                },
+                {
+                    "name": "KAWEMPE MUSLIM",
+                    "emis": "20361"
+                },
+                {
+                    "name": "MAKERERE COLLEGE",
+                    "emis": "20375"
+                },
+                {
+                    "name": "ST DENIS SSEBUGWAWO SS GGABA",
+                    "emis": "138034"
+                },
+                {
+                    "name": "KIBULI S S S",
+                    "emis": "20398"
+                },
+                {
+                    "name": "ST PETER NSAMBYA",
+                    "emis": "20398"
+                },
+                {
+                    "name": "KALINABIRI S S",
+                    "emis": "20404"
+                },
+                {
+                    "name": "NABISUNSA GIRLS",
+                    "emis": "20407"
+                },
+                {
+                    "name": "LUZIRA SS",
+                    "emis": "3313"
+                },
+                {
+                    "name": "UPPER PRISON INMATES SS LUZIRA",
+                    "emis": "111111"
+                },
+                {
+                    "name": "KYAMBOGO COLLEGE S",
+                    "emis": "20408"
+                },
+                {
+                    "name": "MENGO S S S",
+                    "emis": "20457"
+                },
+                {
+                    "name": "KITEBI S.S",
+                    "emis": "3395"
+                },
+                {
+                    "name": "NATETE MUSLIM H.S",
+                    "emis": "3411"
+                },
+                {
+                    "name": "MACKAY COLLEGE SCHOOL",
+                    "emis": "3412"
+                },
+                {
+                    "name": "LUBIRI S S S",
+                    "emis": "3428"
+                }
+            ],
+            "KAMULI": [
+                {
+                    "name": "BALAWOLI SS",
+                    "emis": "3503"
+                },
+                {
+                    "name": "KABUKYE SS",
+                    "emis": "3548"
+                },
+                {
+                    "name": "BUSOGA HIGH",
+                    "emis": "20536"
+                },
+                {
+                    "name": "NAMASAGALI COLLEGE",
+                    "emis": "3601"
+                },
+                {
+                    "name": "ST PETER'S NAMWENDWA SS",
+                    "emis": "3611"
+                },
+                {
+                    "name": "BUGULUMBYA SS",
+                    "emis": "148018"
+                },
+                {
+                    "name": "MATUUMU SS",
+                    "emis": "3715"
+                },
+                {
+                    "name": "BUZAAYA SS",
+                    "emis": "3711"
+                },
+                {
+                    "name": "ST PAUL S.S MBULAMUTI",
+                    "emis": "3730"
+                },
+                {
+                    "name": "KAMULI GIRLS' COLLEGE",
+                    "emis": "3744"
+                },
+                {
+                    "name": "LUZINGA SSS",
+                    "emis": "3748"
+                }
+            ],
+            "KAMWENGE": [
+                {
+                    "name": "BIGULI SS",
+                    "emis": "118011"
+                },
+                {
+                    "name": "KYABENDA SS",
+                    "emis": "2840"
+                },
+                {
+                    "name": "MPANGA PARENTS SS",
+                    "emis": "478021"
+                },
+                {
+                    "name": "KAMWEGE COLLEGE SCHOOL",
+                    "emis": "478019"
+                },
+                {
+                    "name": "KAMWENGE SS",
+                    "emis": "2842"
+                },
+                {
+                    "name": "RWAMWANJA SS",
+                    "emis": "2867"
+                },
+                {
+                    "name": "STELLA MARIS GIRLS SS BUNENA",
+                    "emis": "2886"
+                },
+                {
+                    "name": "KITAGWENDA HIGH S",
+                    "emis": "22466"
+                },
+                {
+                    "name": "MAHYORO SS",
+                    "emis": "2899"
+                },
+                {
+                    "name": "KICWAMBA SS",
+                    "emis": "2918"
+                },
+                {
+                    "name": "NYABBANI SS",
+                    "emis": "2910"
+                }
+            ],
+            "KANUNGU": [
+                {
+                    "name": "BISHOP COMBONI COLLEGE KAMBUGA",
+                    "emis": "10176"
+                },
+                {
+                    "name": "KAMBUGA SSS",
+                    "emis": "10177"
+                },
+                {
+                    "name": "SAN GIOVANNI SCHOOL MAKIRO",
+                    "emis": "338001"
+                },
+                {
+                    "name": "KINKIZI HIGH SCHOOL",
+                    "emis": "10227"
+                },
+                {
+                    "name": "BUREMA SSS",
+                    "emis": "10267"
+                },
+                {
+                    "name": "NYAMIYAGA SS",
+                    "emis": "10195"
+                },
+                {
+                    "name": "ST PIUS NYAMWEGABIRA",
+                    "emis": "10212"
+                },
+                {
+                    "name": "RUSHOROZA SEED SCHOOL",
+                    "emis": "560026"
+                },
+                {
+                    "name": "KIHIHI HIGH SCHOOL",
+                    "emis": "60027"
+                },
+                {
+                    "name": "KIRIMA COMMUNITY SS",
+                    "emis": "560017"
+                },
+                {
+                    "name": "BISHOP CALIST SSS MPUNGU",
+                    "emis": "560028"
+                },
+                {
+                    "name": "NYAKINONI",
+                    "emis": "10235"
+                },
+                {
+                    "name": "NYAMIRAMA SEED SECONDARY SCHOOL",
+                    "emis": "480155"
+                },
+                {
+                    "name": "NYAKABUNGO G.B SSS",
+                    "emis": "338008"
+                },
+                {
+                    "name": "RUGYEYO SSS",
+                    "emis": "10241"
+                },
+                {
+                    "name": "ST AUGUSTINE RUTENGA",
+                    "emis": "10259"
+                }
+            ],
+            "KAPCHORWA": [
+                {
+                    "name": "ST PAUL COMPREHENSIVE S.S KAPCHESOMBE",
+                    "emis": "158006"
+                },
+                {
+                    "name": "KAPCHORWA S.S",
+                    "emis": "3857"
+                },
+                {
+                    "name": "KASEREM S.S",
+                    "emis": "3839"
+                },
+                {
+                    "name": "SIPI S.S",
+                    "emis": "3849"
+                },
+                {
+                    "name": "GAMATUI GIRLS",
+                    "emis": "3844"
+                },
+                {
+                    "name": "SEBEI COLLEGE TEGERES",
+                    "emis": "20619"
+                }
+            ],
+            "KASESE": [
+                {
+                    "name": "ST CHARLES VOCATIONAL S.S.KASANGA",
+                    "emis": "3864"
+                },
+                {
+                    "name": "KARAMBI S.S",
+                    "emis": "3886"
+                },
+                {
+                    "name": "ST THEREZA GIRLS S.S",
+                    "emis": "3912"
+                },
+                {
+                    "name": "KISINGA VOCATIONAL S.S",
+                    "emis": "3911"
+                },
+                {
+                    "name": "SAAD MEMORIAL S.S",
+                    "emis": "3900"
+                },
+                {
+                    "name": "KITOLHU S.S",
+                    "emis": "3929"
+                },
+                {
+                    "name": "MUTANYWANA SEC SCH",
+                    "emis": "3944"
+                },
+                {
+                    "name": "MAHANGO.S.S",
+                    "emis": "168037"
+                },
+                {
+                    "name": "BWERA.S.S",
+                    "emis": "3875"
+                },
+                {
+                    "name": "MUNKUNYU S.S",
+                    "emis": "3986"
+                },
+                {
+                    "name": "NYAKIYUMBU SEC SCH",
+                    "emis": "3976"
+                },
+                {
+                    "name": "RWENZORI HIGH SCH",
+                    "emis": "3997"
+                },
+                {
+                    "name": "KARUSANDARA SEED SEC SCH - SEED",
+                    "emis": "168000"
+                },
+                {
+                    "name": "LAKE KATWE SEC SCH",
+                    "emis": "4136"
+                },
+                {
+                    "name": "KURUHE HIGH SCH",
+                    "emis": "4130"
+                },
+                {
+                    "name": "RUGENDEBARA YMCA VOC S.S",
+                    "emis": "168005"
+                },
+                {
+                    "name": "HAMUKUNGU PARENTS SCH",
+                    "emis": "4046"
+                }
+            ],
+            "KATAKWI": [
+                {
+                    "name": "MAGORO COMPREHENSIVE S.S.S",
+                    "emis": "12519"
+                },
+                {
+                    "name": "KAPUJAN COMMUNITY S.S",
+                    "emis": "448014"
+                },
+                {
+                    "name": "KATAKWI H.S",
+                    "emis": "12514"
+                },
+                {
+                    "name": "NGARIAM SEED S.S",
+                    "emis": "448016"
+                },
+                {
+                    "name": "TOROMA S.S",
+                    "emis": "12546"
+                },
+                {
+                    "name": "ONGONGONJA S.S",
+                    "emis": "448013"
+                },
+                {
+                    "name": "USUK S.S",
+                    "emis": "12565"
+                }
+            ],
+            "KAYUNGA": [
+                {
+                    "name": "BAALE S.S",
+                    "emis": "8871"
+                },
+                {
+                    "name": "GALIRAYA SEED S.S",
+                    "emis": "308000"
+                },
+                {
+                    "name": "KITATYA S.S",
+                    "emis": "8924"
+                },
+                {
+                    "name": "BUSAANA S.S.S",
+                    "emis": "9555"
+                },
+                {
+                    "name": "KANGULUMIRA PUBLIC S.S",
+                    "emis": "498012"
+                },
+                {
+                    "name": "NAMAGABI S.S",
+                    "emis": "9611"
+                },
+                {
+                    "name": "KANJUKI S S",
+                    "emis": "22544"
+                },
+                {
+                    "name": "NDEEBA S.S.S",
+                    "emis": "9592"
+                },
+                {
+                    "name": "ST M. KALEMBA S.S NAZIGO",
+                    "emis": "22559"
+                }
+            ],
+            "KIBAALE": [
+                {
+                    "name": "ST EDWARDS BUKUMI",
+                    "emis": "11020"
+                },
+                {
+                    "name": "UGANDA MARTYRS CEN SS, KAKUMIRO",
+                    "emis": "11012"
+                },
+                {
+                    "name": "ST ALBERT SSS KAKINDO",
+                    "emis": "11025"
+                },
+                {
+                    "name": "ST JOSEPH SS KASAMBYA",
+                    "emis": "11034"
+                },
+                {
+                    "name": "KISIITA SEED SS",
+                    "emis": "11075"
+                },
+                {
+                    "name": "NALWEYO SS",
+                    "emis": "11069"
+                },
+                {
+                    "name": "ST JOSEPH SS NKOOKO",
+                    "emis": "368050"
+                },
+                {
+                    "name": "BWIKARA S.S",
+                    "emis": "11084"
+                },
+                {
+                    "name": "KAGADI SS",
+                    "emis": "11101"
+                },
+                {
+                    "name": "NAIGANA SS",
+                    "emis": "11138"
+                },
+                {
+                    "name": "UGANDA MARTYRS SS MUGALIKE",
+                    "emis": "11135"
+                },
+                {
+                    "name": "MABAALE SS",
+                    "emis": "11154"
+                },
+                {
+                    "name": "MPEEFU SEED SS",
+                    "emis": "368036"
+                },
+                {
+                    "name": "ST ADOLF TIBEYALIRWA S.S",
+                    "emis": "11171"
+                },
+                {
+                    "name": "ST MARGRET MARY GIRLS SS",
+                    "emis": "368025"
+                },
+                {
+                    "name": "BUYANJA SS",
+                    "emis": "11215"
+                },
+                {
+                    "name": "ST KIZITO SS KIBEDI",
+                    "emis": "11237"
+                },
+                {
+                    "name": "NYAMARWA SS",
+                    "emis": "11220"
+                }
+            ],
+            "KIBOGA": [
+                {
+                    "name": "BUKOMERO SECONDARY SCHOOL",
+                    "emis": "11255"
+                },
+                {
+                    "name": "BUSULWA MEMORIAL SS",
+                    "emis": "11277"
+                },
+                {
+                    "name": "BAMUSUTA SS",
+                    "emis": "11332"
+                },
+                {
+                    "name": "LWAMATA SEED SS",
+                    "emis": "378028"
+                }
+            ],
+            "KIBUKU": [
+                {
+                    "name": "BUSETA SS",
+                    "emis": "11667"
+                },
+                {
+                    "name": "KAGUMU SS",
+                    "emis": "11658"
+                },
+                {
+                    "name": "KIBUKU SS",
+                    "emis": "11692"
+                },
+                {
+                    "name": "NABISWA SS",
+                    "emis": "11684"
+                }
+            ],
+            "KIRUHURA": [
+                {
+                    "name": "BUREMBA S S",
+                    "emis": "7013"
+                },
+                {
+                    "name": "BURUNGA SEED SECONDARY SCHOOL",
+                    "emis": "720014"
+                },
+                {
+                    "name": "KANONI S S S",
+                    "emis": "7044"
+                },
+                {
+                    "name": "KAZO S S S",
+                    "emis": "7050"
+                },
+                {
+                    "name": "RWEMIKOMA SEED S S S",
+                    "emis": "600002"
+                },
+                {
+                    "name": "LAKE MBURO SENIOR SECONDARY SCHOOL",
+                    "emis": "7166"
+                },
+                {
+                    "name": "KASHONGI HIGH SCHOOL",
+                    "emis": "7120"
+                },
+                {
+                    "name": "KAARO HIGH SCHOOL",
+                    "emis": "7127"
+                },
+                {
+                    "name": "KIKATSI SEED SECONDARY SCHOOL",
+                    "emis": "600014"
+                },
+                {
+                    "name": "SANGA SEN SEC SCHOOL",
+                    "emis": "258064"
+                }
+            ],
+            "KIRYANDONGO": [
+                {
+                    "name": "KIGUMBA S.S .S",
+                    "emis": "6016"
+                },
+                {
+                    "name": "MASINDI PORT S.S",
+                    "emis": "238024"
+                },
+                {
+                    "name": "MUTUNDA S.S.S",
+                    "emis": "6069"
+                },
+                {
+                    "name": "KIBANDA S.S.S",
+                    "emis": "6055"
+                }
+            ],
+            "KISORO": [
+                {
+                    "name": "NYAMIREMBE SSS",
+                    "emis": "11513"
+                },
+                {
+                    "name": "BUSANZA SSS",
+                    "emis": "11425"
+                },
+                {
+                    "name": "CHAHI SEED SSS",
+                    "emis": "388012"
+                },
+                {
+                    "name": "KANABA SS",
+                    "emis": "388001"
+                },
+                {
+                    "name": "IRYARUVUMBA H.S",
+                    "emis": "11437"
+                },
+                {
+                    "name": "SESEME S.S",
+                    "emis": "11470"
+                },
+                {
+                    "name": "MURAMBA SEED SSS",
+                    "emis": "388013"
+                },
+                {
+                    "name": "KABAMI SSS",
+                    "emis": "11522"
+                },
+                {
+                    "name": "ST GETRUDE'S GIRLS VOC. S.S.S",
+                    "emis": "22119"
+                },
+                {
+                    "name": "ST PAUL MUTOLERE S.S.S",
+                    "emis": "22118"
+                },
+                {
+                    "name": "ST PETERS RWANZU SS",
+                    "emis": "11457"
+                },
+                {
+                    "name": "KABINDI SS",
+                    "emis": "11500"
+                },
+                {
+                    "name": "MUHANGA SS",
+                    "emis": "11534"
+                }
+            ],
+            "KITGUM": [
+                {
+                    "name": "KITGUM HIGH SCHOOL",
+                    "emis": "4347"
+                },
+                {
+                    "name": "KITGUM MATIDI SEED SS",
+                    "emis": "178001"
+                },
+                {
+                    "name": "Y.Y OKOT MEMORIAL COLLEGE",
+                    "emis": "4335"
+                },
+                {
+                    "name": "LAGORO SEED SECONDARY SCHOOL",
+                    "emis": ""
+                },
+                {
+                    "name": "ARCH-JANANI LUWUMU MEM. SCHOOL",
+                    "emis": "4368"
+                },
+                {
+                    "name": "NAMOKORA VOC S.S",
+                    "emis": "4377"
+                },
+                {
+                    "name": "OMIYA ANYIMA SS",
+                    "emis": "160337"
+                },
+                {
+                    "name": "OROM SEED SECONDARY SCHOOL",
+                    "emis": ""
+                }
+            ],
+            "KOBOKO": [
+                {
+                    "name": "NYANGILIA S.S",
+                    "emis": "477"
+                },
+                {
+                    "name": "ST CHARLES LWANGA COLLEGE KOBOKO",
+                    "emis": "491"
+                },
+                {
+                    "name": "NYARILO S.S",
+                    "emis": "38035"
+                },
+                {
+                    "name": "MILLENIUM COLLEGE",
+                    "emis": "630001"
+                },
+                {
+                    "name": "NYAI S.S.S",
+                    "emis": "486"
+                },
+                {
+                    "name": "LONGIRA S.S.S",
+                    "emis": "458"
+                }
+            ],
+            "KOLE": [
+                {
+                    "name": "ABOKE HIGH S.S",
+                    "emis": "4"
+                },
+                {
+                    "name": "ACULBANYA S.S",
+                    "emis": "14"
+                },
+                {
+                    "name": "AKALO S.S",
+                    "emis": "24"
+                },
+                {
+                    "name": "ALITO S.S",
+                    "emis": "34"
+                },
+                {
+                    "name": "AYER SEED S.S",
+                    "emis": "280112"
+                }
+            ],
+            "KOTIDO": [
+                {
+                    "name": "KOTIDO SS",
+                    "emis": "4508"
+                }
+            ],
+            "KUMI": [
+                {
+                    "name": "KANYUM COMPREHENSIVE S.S",
+                    "emis": "4624"
+                },
+                {
+                    "name": "WIGGINS S.S",
+                    "emis": "4641"
+                },
+                {
+                    "name": "MUKONGORO HIGH SCH.",
+                    "emis": "4652"
+                },
+                {
+                    "name": "NYERO ROCK HIGH SCHOOL KUMI",
+                    "emis": "198031"
+                },
+                {
+                    "name": "ONGINO S.S",
+                    "emis": "4680"
+                }
+            ],
+            "KWEEN": [
+                {
+                    "name": "CHEMANGA SEED SCH.",
+                    "emis": "158032"
+                },
+                {
+                    "name": "KAPKOCH S.S",
+                    "emis": "158004"
+                },
+                {
+                    "name": "CHEMWANIA S.S",
+                    "emis": "3800"
+                }
+            ],
+            "KYANKWANZI": [
+                {
+                    "name": "NANKANDULA SS",
+                    "emis": "11348"
+                },
+                {
+                    "name": "ST JOSEPHS S.S KYANKWANZI",
+                    "emis": "378029"
+                },
+                {
+                    "name": "ST JOSEPH'S SS VVUMBA",
+                    "emis": "11385"
+                },
+                {
+                    "name": "ST JOSEPH'S VOCATIONAL SSS, KIGANDO",
+                    "emis": "378031"
+                },
+                {
+                    "name": "KIBOGA PARENT'S SSS",
+                    "emis": "378012"
+                },
+                {
+                    "name": "BUYIMBAZI SS",
+                    "emis": "378032"
+                },
+                {
+                    "name": "ST PAUL C.O.U SS",
+                    "emis": ""
+                }
+            ],
+            "KYEGEGWA": [
+                {
+                    "name": "HAPUUYO SEED SS",
+                    "emis": "488014"
+                },
+                {
+                    "name": "KAKABARA SSS",
+                    "emis": "118013"
+                },
+                {
+                    "name": "KASULE SEED SEC SCH",
+                    "emis": "118014"
+                },
+                {
+                    "name": "MPARA SECONDARY SCHOOL",
+                    "emis": "118016"
+                },
+                {
+                    "name": "WEKOMIRE SEC SCHOOL",
+                    "emis": "2944"
+                },
+                {
+                    "name": "HUMURA SEC SCHOOL",
+                    "emis": "2949"
+                }
+            ],
+            "KYENJOJO": [
+                {
+                    "name": "BUFUNJO SEED SS",
+                    "emis": ""
+                },
+                {
+                    "name": "BUHEMBA SSS",
+                    "emis": "2971"
+                },
+                {
+                    "name": "MADDOX SEC SCH",
+                    "emis": "2977"
+                },
+                {
+                    "name": "KATOOKE SSS",
+                    "emis": "2991"
+                },
+                {
+                    "name": "KISOJO SSS",
+                    "emis": "3007"
+                },
+                {
+                    "name": "KYARUSOZI SS",
+                    "emis": "118018"
+                },
+                {
+                    "name": "KYENJOJO SS",
+                    "emis": "3033"
+                },
+                {
+                    "name": "NYANKWANZI HIGH SCHOOL",
+                    "emis": "118017"
+                },
+                {
+                    "name": "NYARUKOMA SS",
+                    "emis": "3030"
+                }
+            ],
+            "LAMWO": [
+                {
+                    "name": "LOKUNG SS",
+                    "emis": "178007"
+                },
+                {
+                    "name": "PADIBE SECONDARY",
+                    "emis": "4440"
+                },
+                {
+                    "name": "PADIBE GIRLS COMPREHENSIVE",
+                    "emis": "178015"
+                },
+                {
+                    "name": "PALABEK S.S",
+                    "emis": "4452"
+                }
+            ],
+            "LIRA": [
+                {
+                    "name": "AGWENG SS",
+                    "emis": "4880"
+                },
+                {
+                    "name": "AMACH COMPLEX SS",
+                    "emis": "4818"
+                },
+                {
+                    "name": "AROMO VOC. SS",
+                    "emis": "4835"
+                },
+                {
+                    "name": "BARR SS",
+                    "emis": "4852"
+                },
+                {
+                    "name": "LIRA SS",
+                    "emis": "208041"
+                },
+                {
+                    "name": "COMBONI COLLEGE",
+                    "emis": "4799"
+                },
+                {
+                    "name": "ST KATHERINE SS",
+                    "emis": "1866"
+                },
+                {
+                    "name": "DR OBOTE COLLEGE BOROBORO",
+                    "emis": "4806"
+                }
+            ],
+            "LUUKA": [
+                {
+                    "name": "BUSALAMU S S",
+                    "emis": "2129"
+                },
+                {
+                    "name": "BUKANGA SEED SCHOOL",
+                    "emis": "88114"
+                },
+                {
+                    "name": "NAWANSEGA S S",
+                    "emis": "2154"
+                },
+                {
+                    "name": "KIYUNGA S S",
+                    "emis": "2169"
+                },
+                {
+                    "name": "BUSIIRO S S S",
+                    "emis": "88018"
+                }
+            ],
+            "LUWEERO": [
+                {
+                    "name": "LUTEETE SS",
+                    "emis": "5370"
+                },
+                {
+                    "name": "ST KALORI LWANGA SS MULAJJE",
+                    "emis": ""
+                },
+                {
+                    "name": "MPIGI SS",
+                    "emis": "5381"
+                },
+                {
+                    "name": "MAZZI VOC SSS",
+                    "emis": "218016"
+                },
+                {
+                    "name": "BUZZIBWERA SS",
+                    "emis": "5422"
+                },
+                {
+                    "name": "SEMU M MUWANGUZI SSS",
+                    "emis": "218014"
+                },
+                {
+                    "name": "WAKATAYI SS",
+                    "emis": "5434"
+                },
+                {
+                    "name": "BOMBO ARMY SS",
+                    "emis": "218035"
+                },
+                {
+                    "name": "BOMBO S.S.",
+                    "emis": "5088"
+                },
+                {
+                    "name": "ST ANDREW KAGGWA SSS",
+                    "emis": "5119"
+                },
+                {
+                    "name": "LUWEERO SEED SS",
+                    "emis": "218090"
+                },
+                {
+                    "name": "LUWERO S.S.",
+                    "emis": "5137"
+                },
+                {
+                    "name": "KALASA COLLEGE",
+                    "emis": "5157"
+                },
+                {
+                    "name": "ST JOHN'S NANDERE SS",
+                    "emis": "5182"
+                },
+                {
+                    "name": "NALINYA LWANTALE",
+                    "emis": "20883"
+                },
+                {
+                    "name": "NDEJJE S.S",
+                    "emis": "20882"
+                },
+                {
+                    "name": "ST KIZITO KATIKAMU KISULE SS",
+                    "emis": "5210"
+                },
+                {
+                    "name": "TARGET COMMUNITY COLLEGE",
+                    "emis": "218036"
+                }
+            ],
+            "LWENGO": [
+                {
+                    "name": "ST CLEMENT S.S NKONI",
+                    "emis": "228056"
+                },
+                {
+                    "name": "SSEKE S.S",
+                    "emis": "5803"
+                },
+                {
+                    "name": "ST PAUL KYANUKUZI SS",
+                    "emis": "210314"
+                },
+                {
+                    "name": "NAKATEETE S.S",
+                    "emis": "228057"
+                },
+                {
+                    "name": "NAKYENYI S.S.S",
+                    "emis": "5836"
+                },
+                {
+                    "name": "KAIKOLONGO SEED SECONDARY SCHOOL",
+                    "emis": "228021"
+                },
+                {
+                    "name": "NDAGWE S.S",
+                    "emis": "5852"
+                }
+            ],
+            "LYANTONDE": [
+                {
+                    "name": "ST JOHNS KALIIRO COMP. S.S",
+                    "emis": "328105"
+                },
+                {
+                    "name": "KINUUKA SEED S.S",
+                    "emis": "810000"
+                },
+                {
+                    "name": "LYANTONDE S.S.S",
+                    "emis": "9888"
+                },
+                {
+                    "name": "ST GONZAGA S.S.S",
+                    "emis": "9893"
+                }
+            ],
+            "MANAFWA": [
+                {
+                    "name": "BUBUTU S.S",
+                    "emis": "6083"
+                },
+                {
+                    "name": "BUGOBERO H.S",
+                    "emis": "6111"
+                },
+                {
+                    "name": "WABWALA S.S",
+                    "emis": "6118"
+                },
+                {
+                    "name": "BUKOKHO SEED S.S",
+                    "emis": "6135"
+                },
+                {
+                    "name": "BUTIRU S.S",
+                    "emis": "6166"
+                },
+                {
+                    "name": "BUMBO S.S",
+                    "emis": "6199"
+                },
+                {
+                    "name": "NAMISINDWA S.S",
+                    "emis": "6153"
+                },
+                {
+                    "name": "KIMALULI HIGH",
+                    "emis": "248009"
+                },
+                {
+                    "name": "BUTIRU COMP. S.S",
+                    "emis": "248017"
+                },
+                {
+                    "name": "BUBULO GIRL'S H.S",
+                    "emis": "20073"
+                },
+                {
+                    "name": "LWAKHAKHA S.S.S",
+                    "emis": "680002"
+                },
+                {
+                    "name": "ST JOHN COLLEGE MAGALE S.S",
+                    "emis": "6098"
+                },
+                {
+                    "name": "BUBULO S.S",
+                    "emis": "6177"
+                },
+                {
+                    "name": "BUWESSWA SEED S.S",
+                    "emis": "680004"
+                }
+            ],
+            "MARACHA": [
+                {
+                    "name": "KIJOMORO S.S",
+                    "emis": "572"
+                },
+                {
+                    "name": "MARACHA SECONDARY SCHOOL",
+                    "emis": "577"
+                },
+                {
+                    "name": "OLEBA S.S",
+                    "emis": "587"
+                },
+                {
+                    "name": "OTRAVU S.S",
+                    "emis": "607"
+                },
+                {
+                    "name": "YIVU S.S",
+                    "emis": "611"
+                },
+                {
+                    "name": "OMBATINI",
+                    "emis": "657"
+                }
+            ],
+            "MASAKA": [
+                {
+                    "name": "KIKUNGWE S.S",
+                    "emis": "5570"
+                },
+                {
+                    "name": "ST MAURICE LWAGGULWE S.S.S",
+                    "emis": "5574"
+                },
+                {
+                    "name": "ST ANTHONY S.S KAYUNGA",
+                    "emis": "5610"
+                },
+                {
+                    "name": "KADDUGALA S.S",
+                    "emis": "5615"
+                },
+                {
+                    "name": "MASAKA S.S",
+                    "emis": "21049"
+                },
+                {
+                    "name": "KAKO S.S",
+                    "emis": "20996"
+                },
+                {
+                    "name": "PILIGRIM'S GIRLS S.S BUKULULA",
+                    "emis": "21012"
+                },
+                {
+                    "name": "ST HENRY'S KITOVU",
+                    "emis": "5787"
+                }
+            ],
+            "MASINDI": [
+                {
+                    "name": "KINYARA S.S.S",
+                    "emis": "238022"
+                },
+                {
+                    "name": "BWIJANGA S.S",
+                    "emis": "5888"
+                },
+                {
+                    "name": "IKOBA GIRLS S.S",
+                    "emis": "5881"
+                },
+                {
+                    "name": "ST THERESA GIRLS S S NAYMIGISA",
+                    "emis": "5949"
+                },
+                {
+                    "name": "KABALEGA S.S",
+                    "emis": "21103"
+                },
+                {
+                    "name": "ST PAUL'S S.S PAKANYI",
+                    "emis": "5972"
+                },
+                {
+                    "name": "KIYUYA SEED S.S",
+                    "emis": "238026"
+                }
+            ],
+            "MAYUGE": [
+                {
+                    "name": "WAITAMBOGWE S.S",
+                    "emis": "1770"
+                },
+                {
+                    "name": "KIGANDALO S.S.S",
+                    "emis": "1844"
+                },
+                {
+                    "name": "BUKABOOLI SEED SS",
+                    "emis": ""
+                },
+                {
+                    "name": "KALUBA H.S",
+                    "emis": "1855"
+                },
+                {
+                    "name": "ST JOHN BUWAAYA S.S.S",
+                    "emis": "508013"
+                },
+                {
+                    "name": "MALONGO S.S",
+                    "emis": "508024"
+                },
+                {
+                    "name": "BUNYA S.S",
+                    "emis": "1811"
+                }
+            ],
+            "MBALE": [
+                {
+                    "name": "WANALE SEC .SCH",
+                    "emis": "6508"
+                },
+                {
+                    "name": "BUFUMBO SEC.SCH.",
+                    "emis": "6396"
+                },
+                {
+                    "name": "MULATSI SEC.SCH",
+                    "emis": "6427"
+                },
+                {
+                    "name": "BUKONDE SEC. SCH.",
+                    "emis": "6476"
+                },
+                {
+                    "name": "BUNGOKHO SEC.SCH",
+                    "emis": "6404"
+                },
+                {
+                    "name": "BUSANO SEC .SCH",
+                    "emis": "248006"
+                },
+                {
+                    "name": "MUSESE SEC.SCHOOL",
+                    "emis": "6446"
+                },
+                {
+                    "name": "BUSIU SEC.SCH.",
+                    "emis": "6437"
+                },
+                {
+                    "name": "MBALE SCHOOL FOR THE DEAF",
+                    "emis": "248075"
+                },
+                {
+                    "name": "NABUMALI H S",
+                    "emis": "20101"
+                },
+                {
+                    "name": "MAKHAI .S.S",
+                    "emis": "0"
+                },
+                {
+                    "name": "NAKALOKE S.S",
+                    "emis": "248013"
+                },
+                {
+                    "name": "NYONDO SS",
+                    "emis": "6461"
+                },
+                {
+                    "name": "NABUMALI SEC.SCH",
+                    "emis": "6452"
+                },
+                {
+                    "name": "MBALE S.S",
+                    "emis": "6614"
+                }
+            ],
+            "MBARARA": [
+                {
+                    "name": "ST PAUL'S SEED SS KAGONGI",
+                    "emis": "258016"
+                },
+                {
+                    "name": "NOMBE SS",
+                    "emis": "6934"
+                },
+                {
+                    "name": "RWANTSINGA HIGH SCHOOL",
+                    "emis": "6944"
+                },
+                {
+                    "name": "ST ANDREW'S RUBINDI SS",
+                    "emis": "6969"
+                },
+                {
+                    "name": "RUTOOMA SS",
+                    "emis": "6982"
+                },
+                {
+                    "name": "KASHAKA GIRLS",
+                    "emis": "20236"
+                },
+                {
+                    "name": "RUSHANJE GIRLS",
+                    "emis": "21599"
+                },
+                {
+                    "name": "MBARARA HIGH SCHOOL",
+                    "emis": "21579"
+                },
+                {
+                    "name": "NTARE SCHOOL",
+                    "emis": "21572"
+                },
+                {
+                    "name": "MARY'S HILL HIGH",
+                    "emis": "21585"
+                },
+                {
+                    "name": "BUGAMBA SSS",
+                    "emis": "258022"
+                },
+                {
+                    "name": "MWIZI SSS",
+                    "emis": "7213"
+                },
+                {
+                    "name": "LAKI HIGH SCHOOL BUJAGA",
+                    "emis": ""
+                },
+                {
+                    "name": "BUJAGA S.S",
+                    "emis": "21605"
+                },
+                {
+                    "name": "NYAKAYOJO SS",
+                    "emis": "7255"
+                },
+                {
+                    "name": "ST PETER KATUKURU SS",
+                    "emis": "7249"
+                },
+                {
+                    "name": "KINONI GIRLS",
+                    "emis": "485026"
+                }
+            ],
+            "MC": [
+                {
+                    "name": "ARUA PUBLIC SS ARUA",
+                    "emis": "372"
+                },
+                {
+                    "name": "ARUA SS ARUA",
+                    "emis": "381"
+                },
+                {
+                    "name": "ISHAKA ADVENTIST COLLEGE BUSHENYI",
+                    "emis": "966"
+                },
+                {
+                    "name": "RUYONZA SCHOOL BUSHENYI",
+                    "emis": "953"
+                },
+                {
+                    "name": "BUSIA S.S BUSIA",
+                    "emis": "12310"
+                },
+                {
+                    "name": "AIRFORCE SS ENTEBBE",
+                    "emis": "288001"
+                },
+                {
+                    "name": "ENTEBBE COMPREHENSIVE SS ENTEBBE",
+                    "emis": "538007"
+                },
+                {
+                    "name": "MPANGA S.S. FORT PORTAL",
+                    "emis": "2802"
+                },
+                {
+                    "name": "KAMENGO S.S FORT PORTAL",
+                    "emis": "2804"
+                },
+                {
+                    "name": "KITUMBA S.S.S FORT PORTAL",
+                    "emis": "2799"
+                },
+                {
+                    "name": "KAGOTE SEED FORT PORTAL",
+                    "emis": "118047"
+                },
+                {
+                    "name": "GULU HS GULU",
+                    "emis": "1384"
+                },
+                {
+                    "name": "GULU ARMY SS GULU",
+                    "emis": "68013"
+                },
+                {
+                    "name": "SACRED HEART SS GULU",
+                    "emis": "1376"
+                },
+                {
+                    "name": "GULU SS GULU",
+                    "emis": "1385"
+                },
+                {
+                    "name": "ST JOSEPH LAYIBI GULU",
+                    "emis": "1397"
+                },
+                {
+                    "name": "PMM GIRLS' JINJA JINJA",
+                    "emis": "19927"
+                },
+                {
+                    "name": "BUSOGA COLLEGE MWIRI JINJA",
+                    "emis": "484510"
+                },
+                {
+                    "name": "JINJA COLLEGE JINJA",
+                    "emis": "23049"
+                },
+                {
+                    "name": "KABALE S.S KABALE",
+                    "emis": "2386"
+                },
+                {
+                    "name": "NDORWA S S S KABALE",
+                    "emis": "2399"
+                },
+                {
+                    "name": "ST ANDREA KAAHWA'S COLLEGE HOIMA",
+                    "emis": "1576"
+                },
+                {
+                    "name": "KITARA SSS HOIMA",
+                    "emis": "78001"
+                },
+                {
+                    "name": "BWIKYA MUSLIM SS HOIMA",
+                    "emis": "1561"
+                },
+                {
+                    "name": "BUHANIKA SEED S.S HOIMA",
+                    "emis": "78055"
+                },
+                {
+                    "name": "KILEMBE S.S KASESE",
+                    "emis": "4045"
+                },
+                {
+                    "name": "MT RWENZORI GIRLS S.S KASESE",
+                    "emis": "168044"
+                },
+                {
+                    "name": "KASESE SECONDARY SCHOOL KASESE",
+                    "emis": "4024"
+                },
+                {
+                    "name": "LANGO COLLEGE LIRA",
+                    "emis": "4928"
+                },
+                {
+                    "name": "LIRA TOWN COLLEGE LIRA",
+                    "emis": "4937"
+                },
+                {
+                    "name": "KIJJABWEMI S.S MASAKA",
+                    "emis": "5766"
+                },
+                {
+                    "name": "MASINDI S.S.S MASINDI",
+                    "emis": "5958"
+                },
+                {
+                    "name": "MASINDI ARMY MASINDI",
+                    "emis": "5963"
+                },
+                {
+                    "name": "NYANGAHYA COMMUNITY S.S MASINDI",
+                    "emis": "238027"
+                },
+                {
+                    "name": "NKOMA SS. MBALE",
+                    "emis": "6588"
+                },
+                {
+                    "name": "MBALE HIGH SCHOOL MBALE",
+                    "emis": "6587"
+                },
+                {
+                    "name": "MBARARA ARMY BOARDING SS MBARARA",
+                    "emis": "258135"
+                },
+                {
+                    "name": "MBARARA SS MBARARA",
+                    "emis": "7067"
+                },
+                {
+                    "name": "NYAMITANGA SS MBARARA",
+                    "emis": "7094"
+                },
+                {
+                    "name": "MOROTO HIGH SCHOOL MOROTO",
+                    "emis": "7342"
+                },
+                {
+                    "name": "BISHOPS MUKONO MUKONO",
+                    "emis": "21541"
+                },
+                {
+                    "name": "NAMILYANGO COLLEGE MUKONO",
+                    "emis": "9219"
+                },
+                {
+                    "name": "MUKONO H.S MUKONO",
+                    "emis": "9294"
+                },
+                {
+                    "name": "KYAMATE SS NTUNGAMO",
+                    "emis": "11931"
+                },
+                {
+                    "name": "MURIISA SSS NTUNGAMO",
+                    "emis": "11844"
+                },
+                {
+                    "name": "KAGUNGA SEED S.S.S RUKUNGIRI",
+                    "emis": "338028"
+                },
+                {
+                    "name": "ST GERALDS NYAKIBALE RUKUNGIRI",
+                    "emis": "10470"
+                },
+                {
+                    "name": "SOROTI SS SOROTI",
+                    "emis": "10706"
+                },
+                {
+                    "name": "ST MARY'S GIRLS S.S MADERA SOROTI",
+                    "emis": "10715"
+                },
+                {
+                    "name": "ST FRANCIS S.S FOR THE BLIND SOROTI",
+                    "emis": "10714"
+                }
+            ],
+            "MITOOMA": [
+                {
+                    "name": "MAHUNGYE S.S",
+                    "emis": "1087"
+                },
+                {
+                    "name": "KIGARAMA MIXED S.S",
+                    "emis": "1091"
+                },
+                {
+                    "name": "KANYABWANGA S.S",
+                    "emis": "1139"
+                },
+                {
+                    "name": "KASHENSHERO GIRLS S.S",
+                    "emis": "1122"
+                },
+                {
+                    "name": "BUBANGIZI S.S.S",
+                    "emis": "1130"
+                },
+                {
+                    "name": "NKINGA VOC. S.S.S",
+                    "emis": "58006"
+                },
+                {
+                    "name": "RUHINDA S.S",
+                    "emis": "1169"
+                },
+                {
+                    "name": "ST NOAH S.S MUTARA",
+                    "emis": "1173"
+                },
+                {
+                    "name": "NYAKISHOJWA S.S",
+                    "emis": "1108"
+                }
+            ],
+            "MITYANA": [
+                {
+                    "name": "ST KIZITO SSS BANDA",
+                    "emis": "8467"
+                },
+                {
+                    "name": "KIGGWA S.S.S",
+                    "emis": "8440"
+                },
+                {
+                    "name": "ST JOSEPH S.S KAKINDU",
+                    "emis": "790022"
+                },
+                {
+                    "name": "BUJUBI S.S",
+                    "emis": "8474"
+                },
+                {
+                    "name": "KIWAWU S.S.S",
+                    "emis": "8490"
+                },
+                {
+                    "name": "NAMUTAMBA SEC SCHOOL",
+                    "emis": "8754"
+                },
+                {
+                    "name": "NAAMA S.S",
+                    "emis": "8769"
+                },
+                {
+                    "name": "KALANGAALO S.S",
+                    "emis": "8728"
+                },
+                {
+                    "name": "NAKWAYA S.S",
+                    "emis": "8804"
+                },
+                {
+                    "name": "MITYANA S.S",
+                    "emis": "21393"
+                },
+                {
+                    "name": "SEKANYONYI SSS",
+                    "emis": "8852"
+                }
+            ],
+            "MOROTO": [
+                {
+                    "name": "NADUNGET SEED S.S",
+                    "emis": "268002"
+                }
+            ],
+            "MOYO": [
+                {
+                    "name": "OBONGI SS",
+                    "emis": "7367"
+                },
+                {
+                    "name": "ITULA SS",
+                    "emis": "7387"
+                },
+                {
+                    "name": "LAROPI SEED SS",
+                    "emis": "278004"
+                },
+                {
+                    "name": "LEFORI SS",
+                    "emis": "7431"
+                },
+                {
+                    "name": "METU SS",
+                    "emis": "7404"
+                },
+                {
+                    "name": "MOYO SS",
+                    "emis": "7425"
+                }
+            ],
+            "MPIGI": [
+                {
+                    "name": "BULO PARENTS",
+                    "emis": "21175"
+                },
+                {
+                    "name": "GOMBE S.S",
+                    "emis": "21189"
+                },
+                {
+                    "name": "KIBIBI S.S",
+                    "emis": "484128"
+                },
+                {
+                    "name": "ST MARK SSS KAMENGO",
+                    "emis": "8328"
+                },
+                {
+                    "name": "ST MARIA GORETTI KATENDE",
+                    "emis": "21236"
+                },
+                {
+                    "name": "CARDINAL NSUBUGA S.S.S KITAKYUSA",
+                    "emis": "308060"
+                },
+                {
+                    "name": "KIBUUKA MEMORIAL S.S.S",
+                    "emis": "8391"
+                },
+                {
+                    "name": "BULAMU SEED SEC.SCH.",
+                    "emis": "288123"
+                },
+                {
+                    "name": "ST PHILLIPS EQUATORIAL SEC SCH.NABUSANKE",
+                    "emis": "8425"
+                },
+                {
+                    "name": "ST BALIKUDDEMBE S.S MITALA MARIA",
+                    "emis": "21223"
+                },
+                {
+                    "name": "ST MARY'S NKOZI S.S",
+                    "emis": "21258"
+                }
+            ],
+            "MUBENDE": [
+                {
+                    "name": "BAGEZZA SEED SS",
+                    "emis": "298046"
+                },
+                {
+                    "name": "BUTOLOOGO SEED SS",
+                    "emis": ""
+                },
+                {
+                    "name": "KITENGA SS",
+                    "emis": "8567"
+                },
+                {
+                    "name": "KIYUNI SS",
+                    "emis": "8576"
+                },
+                {
+                    "name": "ST ANDREW KAGGWA MADUDU SS",
+                    "emis": "8592"
+                },
+                {
+                    "name": "KASENYI SS",
+                    "emis": "8602"
+                },
+                {
+                    "name": "MUBENDE ARMY SS",
+                    "emis": "2980062"
+                },
+                {
+                    "name": "MUBENDE LIGHT SSS",
+                    "emis": "8510"
+                },
+                {
+                    "name": "KASAMBYA PARENTS",
+                    "emis": "298016"
+                },
+                {
+                    "name": "NABINGOOLA PUBLIC SCHOOL",
+                    "emis": "298003"
+                },
+                {
+                    "name": "KABBO SEED SS",
+                    "emis": ""
+                },
+                {
+                    "name": "BUKUYA SS",
+                    "emis": "8613"
+                },
+                {
+                    "name": "KALWANA SS",
+                    "emis": "298014"
+                },
+                {
+                    "name": "ST CHARLES LWANGA LWANGIRI SS",
+                    "emis": "298010"
+                },
+                {
+                    "name": "KASSANDA SS",
+                    "emis": "8655"
+                },
+                {
+                    "name": "ST MATIA MULUMBA MIREMBE-MARIA SS",
+                    "emis": "298097"
+                },
+                {
+                    "name": "ST MUGAGA SS KIGANDA",
+                    "emis": "8686"
+                },
+                {
+                    "name": "KAKUNGUBE SS",
+                    "emis": "8711"
+                },
+                {
+                    "name": "MYANZI SS",
+                    "emis": "8714"
+                }
+            ],
+            "MUKONO": [
+                {
+                    "name": "ST CHARLES LWANGA SS",
+                    "emis": "290169"
+                },
+                {
+                    "name": "KKOME SEED S.S",
+                    "emis": "290343"
+                },
+                {
+                    "name": "NAMASUMBI MOSLEM SCH",
+                    "emis": "9240"
+                },
+                {
+                    "name": "MT. ST. MARY'S NAMAGUNGA",
+                    "emis": "21659"
+                },
+                {
+                    "name": "NAMAKWA S.S",
+                    "emis": "9332"
+                },
+                {
+                    "name": "SEETA COLLEGE",
+                    "emis": "9351"
+                },
+                {
+                    "name": "SIR APOLLO KAGGWA S.S",
+                    "emis": "9346"
+                },
+                {
+                    "name": "KISOWERA S.S.S",
+                    "emis": "9269"
+                },
+                {
+                    "name": "KOJJA S.S.S",
+                    "emis": "9387"
+                },
+                {
+                    "name": "KAMDA COMMUNITY S.S",
+                    "emis": "308058"
+                },
+                {
+                    "name": "MPUNGE SEED SS",
+                    "emis": "0"
+                },
+                {
+                    "name": "KASANA SS & VOC SCH",
+                    "emis": "308050"
+                },
+                {
+                    "name": "KASAWO S.S.S",
+                    "emis": "9425"
+                },
+                {
+                    "name": "NAKANYONYI S.S.S",
+                    "emis": "9472"
+                },
+                {
+                    "name": "NAMATABA S.S",
+                    "emis": "9488"
+                },
+                {
+                    "name": "ST KIZITO S.S NAKIBANO",
+                    "emis": "9483"
+                },
+                {
+                    "name": "NAMUGANGA S.S.S",
+                    "emis": "9519"
+                },
+                {
+                    "name": "B.L.K MUWONGE NTUNDA",
+                    "emis": "9530"
+                }
+            ],
+            "NAKAPIRIPIRIT": [
+                {
+                    "name": "NAKAPIRIPIRIT SSS",
+                    "emis": "520037"
+                },
+                {
+                    "name": "NAMALU SS",
+                    "emis": "570001"
+                },
+                {
+                    "name": "ST KIZITO SS LORENGEDWAT",
+                    "emis": "570003"
+                },
+                {
+                    "name": "ARENGESIEP SSS",
+                    "emis": "7351"
+                }
+            ],
+            "NAKASEKE": [
+                {
+                    "name": "KASANGOMBE S.S",
+                    "emis": "218042"
+                },
+                {
+                    "name": "KAPEEKA S.S",
+                    "emis": "5240"
+                },
+                {
+                    "name": "KIWOKO S.S",
+                    "emis": "218004"
+                },
+                {
+                    "name": "KINYOGOGA SEED S.S",
+                    "emis": "650006"
+                },
+                {
+                    "name": "NGOMA SS",
+                    "emis": "5302"
+                },
+                {
+                    "name": "KIJAGUZO S.S",
+                    "emis": "5345"
+                },
+                {
+                    "name": "KALOKE CHRISTIAN HIGH SCHOOL",
+                    "emis": "218009"
+                },
+                {
+                    "name": "KATALEKAMMESE MODERN SS",
+                    "emis": "5690012"
+                }
+            ],
+            "NAKASONGOLA": [
+                {
+                    "name": "MIGYERA UWESO S.S",
+                    "emis": "458014"
+                },
+                {
+                    "name": "KAKOOGE S.S.S",
+                    "emis": "12574"
+                },
+                {
+                    "name": "KALONGO S.S",
+                    "emis": "458013"
+                },
+                {
+                    "name": "LWABIYATA SEED SS",
+                    "emis": "458019"
+                },
+                {
+                    "name": "NAKASONGOLA ARMY S.S",
+                    "emis": "12673"
+                },
+                {
+                    "name": "KISAALIZI S.S",
+                    "emis": "12628"
+                },
+                {
+                    "name": "ST JOSEPH'S VOCATIONAL HIGH SCH.NAKASONGOLA",
+                    "emis": "458020"
+                },
+                {
+                    "name": "NAKASONGOLA S.S.",
+                    "emis": "12682"
+                }
+            ],
+            "NAMAYINGO": [
+                {
+                    "name": "BANDA S.S",
+                    "emis": "12083"
+                },
+                {
+                    "name": "BUSWALE S.S",
+                    "emis": "12129"
+                },
+                {
+                    "name": "ST PHILIP'SSS LWANGOSIA",
+                    "emis": "12180"
+                },
+                {
+                    "name": "SIGULU SEED S.S",
+                    "emis": "428135"
+                }
+            ],
+            "NAMUTUMBA": [
+                {
+                    "name": "BUGOBI H.S",
+                    "emis": "1892"
+                },
+                {
+                    "name": "IVUKULA S.S",
+                    "emis": "790004"
+                },
+                {
+                    "name": "ST MATHIAS MAGADA S.S",
+                    "emis": "88066"
+                },
+                {
+                    "name": "KISIKI COLLEGE NAMUTUMBA",
+                    "emis": "1962"
+                },
+                {
+                    "name": "BUKONTE SEED S.S",
+                    "emis": "890001"
+                }
+            ],
+            "NAPAK": [
+                {
+                    "name": "ST ANDREWS SS LOTOME",
+                    "emis": "268003"
+                },
+                {
+                    "name": "KANGOLE GIRLS' S.S.S",
+                    "emis": "7305"
+                }
+            ],
+            "NEBBI": [
+                {
+                    "name": "PAKWACH SS",
+                    "emis": "9705"
+                },
+                {
+                    "name": "PANYANGO SS",
+                    "emis": "9670"
+                },
+                {
+                    "name": "OGENDA GIRLS SCHOOL",
+                    "emis": "9669"
+                },
+                {
+                    "name": "PANYIMUR SS",
+                    "emis": "318000"
+                },
+                {
+                    "name": "ST ALOYSIUS COLLEGE NYAPEA",
+                    "emis": "21687"
+                },
+                {
+                    "name": "AKWORO SS",
+                    "emis": "318001"
+                },
+                {
+                    "name": "ERUSSI SS",
+                    "emis": "9806"
+                },
+                {
+                    "name": "URINGI SECONDARY SCHOOL",
+                    "emis": "2172"
+                },
+                {
+                    "name": "NEBBI TOWN SS",
+                    "emis": "9830"
+                },
+                {
+                    "name": "ANGAL SS",
+                    "emis": "9857"
+                },
+                {
+                    "name": "PAROMBO SS",
+                    "emis": "9869"
+                }
+            ],
+            "NGORA": [
+                {
+                    "name": "OKAPEL HIGH SCH.",
+                    "emis": "4689"
+                },
+                {
+                    "name": "KOBWIN S.S.S",
+                    "emis": "4700"
+                },
+                {
+                    "name": "MUKURA MEM.S.S.S",
+                    "emis": "4715"
+                },
+                {
+                    "name": "NGORA H.S",
+                    "emis": "4726"
+                },
+                {
+                    "name": "NGORA GIRLS' S.S",
+                    "emis": "4725"
+                }
+            ],
+            "NTOROKO": [
+                {
+                    "name": "KARUGUTU S.S",
+                    "emis": "30052"
+                },
+                {
+                    "name": "RWEBISENGO S.S",
+                    "emis": "48003"
+                }
+            ],
+            "NTUNGAMO": [
+                {
+                    "name": "KAGAMBA SS",
+                    "emis": "11789"
+                },
+                {
+                    "name": "MUNTUYERA H S KITUNGA",
+                    "emis": "22197"
+                },
+                {
+                    "name": "BWONGYERA GIRLS",
+                    "emis": "22183"
+                },
+                {
+                    "name": "RUHANGA SDA SS",
+                    "emis": "7203"
+                },
+                {
+                    "name": "NYAKYERA SS",
+                    "emis": "408005"
+                },
+                {
+                    "name": "RUHAAMA SS",
+                    "emis": "11880"
+                },
+                {
+                    "name": "RUKONI SSS",
+                    "emis": "11894"
+                },
+                {
+                    "name": "ST PETER'S SSS RWERA",
+                    "emis": "11912"
+                },
+                {
+                    "name": "RWEIKINIRO S S",
+                    "emis": "11918"
+                },
+                {
+                    "name": "ST PAUL'S HIGH SCHOOL RUSHOOKA",
+                    "emis": "11948"
+                },
+                {
+                    "name": "RWAMANYONYI SS",
+                    "emis": "11949"
+                },
+                {
+                    "name": "KIBATSI SS",
+                    "emis": "0"
+                },
+                {
+                    "name": "KABEZI SEED SS",
+                    "emis": "408040"
+                },
+                {
+                    "name": "RUBAARE SSS",
+                    "emis": "11971"
+                },
+                {
+                    "name": "RUYONZA SEED SECONDARY SCHOOL",
+                    "emis": "390034"
+                },
+                {
+                    "name": "RUGARAMA SS",
+                    "emis": "11974"
+                }
+            ],
+            "NWOYA": [
+                {
+                    "name": "ALERO SS",
+                    "emis": ""
+                },
+                {
+                    "name": "POPE PAUL VI ANAKA",
+                    "emis": "720000"
+                },
+                {
+                    "name": "KOCH GOMA SS",
+                    "emis": "1468"
+                }
+            ],
+            "OTUKE": [
+                {
+                    "name": "ADWARI SS",
+                    "emis": "5048"
+                },
+                {
+                    "name": "OKWANG SS",
+                    "emis": "5055"
+                },
+                {
+                    "name": "OTUKE SS",
+                    "emis": "5065"
+                },
+                {
+                    "name": "ORUM SS",
+                    "emis": "5072"
+                }
+            ],
+            "OYAM": [
+                {
+                    "name": "ABUDALA ANYURU MEM",
+                    "emis": "183"
+                },
+                {
+                    "name": "DR ORYANG S.S",
+                    "emis": "246"
+                },
+                {
+                    "name": "AMWA COMP S.S",
+                    "emis": "28005"
+                },
+                {
+                    "name": "NGAI S.S",
+                    "emis": "262"
+                },
+                {
+                    "name": "OTWAL S.S",
+                    "emis": "281"
+                },
+                {
+                    "name": "ACABAS S.S",
+                    "emis": "200"
+                },
+                {
+                    "name": "ICEME GIRLS S.S",
+                    "emis": "223"
+                },
+                {
+                    "name": "ATAPARA S.S.S",
+                    "emis": "194"
+                },
+                {
+                    "name": "LORO S.S",
+                    "emis": "233"
+                }
+            ],
+            "PADER": [
+                {
+                    "name": "ACHOLI BUR SECONDARY SCHOOL",
+                    "emis": "178000"
+                },
+                {
+                    "name": "ATANGA S.S",
+                    "emis": "4244"
+                },
+                {
+                    "name": "ATANGA GIRLS S.S",
+                    "emis": "4250"
+                },
+                {
+                    "name": "PAJULE S.S",
+                    "emis": "518001"
+                },
+                {
+                    "name": "ACHOL-PII ARMY S.S",
+                    "emis": "518017"
+                },
+                {
+                    "name": "LAGWAI SEED S.S",
+                    "emis": "518016"
+                },
+                {
+                    "name": "PURANGA S.S",
+                    "emis": "4280"
+                }
+            ],
+            "PALLISA": [
+                {
+                    "name": "RAINER MODERN SS",
+                    "emis": "398014"
+                },
+                {
+                    "name": "BUTEBO SS",
+                    "emis": "11610"
+                },
+                {
+                    "name": "KABWANGASI SS",
+                    "emis": "11627"
+                },
+                {
+                    "name": "KAKORO HS",
+                    "emis": "11638"
+                },
+                {
+                    "name": "KIBALE SS",
+                    "emis": "11651"
+                },
+                {
+                    "name": "AGULE HIGH SCHOOL",
+                    "emis": "11702"
+                },
+                {
+                    "name": "APOPONG SS",
+                    "emis": "398046"
+                },
+                {
+                    "name": "GOGONYO SEED SS",
+                    "emis": "11722"
+                },
+                {
+                    "name": "KAMEKE SS",
+                    "emis": "398023"
+                },
+                {
+                    "name": "PALLISA SS",
+                    "emis": "11751"
+                },
+                {
+                    "name": "KAMUGE HS",
+                    "emis": "11768"
+                }
+            ],
+            "RAKAI": [
+                {
+                    "name": "ST JOHN MARY MUZEEYI'S BIGADA S S",
+                    "emis": "9905"
+                },
+                {
+                    "name": "ST MARY'S S S SSANJE",
+                    "emis": "9930"
+                },
+                {
+                    "name": "KABALE SANJE S S",
+                    "emis": "9929"
+                },
+                {
+                    "name": "KYAKAGO S S S",
+                    "emis": "328020"
+                },
+                {
+                    "name": "ST BERNARD MANYA S S S",
+                    "emis": "9948"
+                },
+                {
+                    "name": "KIFAMBA COMP. SS",
+                    "emis": "328031"
+                },
+                {
+                    "name": "HOLY FAMILY NAZARETH S S",
+                    "emis": "328003"
+                },
+                {
+                    "name": "SSERINYA S S S",
+                    "emis": "9961"
+                },
+                {
+                    "name": "KATEREERO S S S",
+                    "emis": "9962"
+                },
+                {
+                    "name": "BUYAMBA S S S",
+                    "emis": "10043"
+                },
+                {
+                    "name": "KIMULI S S S",
+                    "emis": "328004"
+                },
+                {
+                    "name": "KIZIBA HIGH SCHOOL",
+                    "emis": "328005"
+                },
+                {
+                    "name": "KIBAALE S S S",
+                    "emis": "9993"
+                },
+                {
+                    "name": "KAKABAGYO",
+                    "emis": "328006"
+                },
+                {
+                    "name": "KAKOMA S S S",
+                    "emis": "10025"
+                },
+                {
+                    "name": "ST ADRIAN KASOZI S S",
+                    "emis": "10057"
+                },
+                {
+                    "name": "ST RAPHAEL'S KABIRA S S S",
+                    "emis": "10066"
+                },
+                {
+                    "name": "CHRIST THE KING S S KALISIZO",
+                    "emis": "10080"
+                },
+                {
+                    "name": "MATALE C/U SEC SCHOOL",
+                    "emis": "10092"
+                },
+                {
+                    "name": "KABUWOKO S S S",
+                    "emis": "10118"
+                },
+                {
+                    "name": "KYOTERA CENTRAL S S",
+                    "emis": "10130"
+                },
+                {
+                    "name": "ST HERMAN LWANKONI",
+                    "emis": "10152"
+                },
+                {
+                    "name": "NAKASOGA",
+                    "emis": "10144"
+                }
+            ],
+            "RUBIRIZI": [
+                {
+                    "name": "NDEKYE S.S.S",
+                    "emis": "925"
+                },
+                {
+                    "name": "ST MICHAEL H.S RUGAZI",
+                    "emis": "926"
+                },
+                {
+                    "name": "KIRUGU S.S",
+                    "emis": "907"
+                }
+            ],
+            "RUKUNGIRI": [
+                {
+                    "name": "KYAMAKANDA S.S",
+                    "emis": "10283"
+                },
+                {
+                    "name": "ST PAUL'S VOCATIONAL S.S BUYANJA",
+                    "emis": "338011"
+                },
+                {
+                    "name": "NYABITEETE S.S",
+                    "emis": "10287"
+                },
+                {
+                    "name": "BISHOP RUHINDI KEBISONI HIGH SCHOOL",
+                    "emis": "338026"
+                },
+                {
+                    "name": "ST JEROME S.S NDAMA",
+                    "emis": "10315"
+                },
+                {
+                    "name": "NYAKISHENYI HIGH SCH.",
+                    "emis": "10332"
+                },
+                {
+                    "name": "ST MATHIAS NYAKISHENYI VOC.SCH.",
+                    "emis": "10325"
+                },
+                {
+                    "name": "ST PETER'S S.S NYARUSHANJE",
+                    "emis": "10363"
+                },
+                {
+                    "name": "RUBIRIZI S.S",
+                    "emis": "10368"
+                },
+                {
+                    "name": "BWANGA S.S",
+                    "emis": "10357"
+                },
+                {
+                    "name": "RUKUNGIRI VOC.S.S KARUKAATA",
+                    "emis": "10347"
+                },
+                {
+                    "name": "BUGANGARI S.S",
+                    "emis": "10378"
+                },
+                {
+                    "name": "ST WILLIAM'S S.S RWENGIRI",
+                    "emis": "338027"
+                },
+                {
+                    "name": "KATURIKA S.S",
+                    "emis": "10393"
+                },
+                {
+                    "name": "ST FRANCIS BUHUNGA H.S",
+                    "emis": "10381"
+                },
+                {
+                    "name": "BWAMBARA S.S",
+                    "emis": "10409"
+                },
+                {
+                    "name": "NYAKAGYEME S.S",
+                    "emis": "10429"
+                },
+                {
+                    "name": "KASHENYI S.S",
+                    "emis": "10466"
+                },
+                {
+                    "name": "RWABUKOBA S.S",
+                    "emis": "10454"
+                },
+                {
+                    "name": "BISHOP ROBERT VOC SS RWAMAGAYA",
+                    "emis": "338007"
+                },
+                {
+                    "name": "MAKOBORE H S KINYASANO",
+                    "emis": "10481"
+                },
+                {
+                    "name": "IMMACULATE HEART NYAKIBAALE",
+                    "emis": "21821"
+                },
+                {
+                    "name": "KINYASANO GIRLS HIGH",
+                    "emis": "21821"
+                }
+            ],
+            "SEMBABULE": [
+                {
+                    "name": "LWEMIYAGA SS",
+                    "emis": "12688"
+                },
+                {
+                    "name": "ST ANN'S SS NTUUSI",
+                    "emis": "12703"
+                },
+                {
+                    "name": "KAWANDA PARENTS",
+                    "emis": "468020"
+                },
+                {
+                    "name": "ST CHARLES LWANGA LWEBITAKULI",
+                    "emis": "12733"
+                },
+                {
+                    "name": "MAWOGOLA HIGH S BUKULULA",
+                    "emis": "468025"
+                },
+                {
+                    "name": "MATEETE COMPREHENSIVE SS",
+                    "emis": "468026"
+                },
+                {
+                    "name": "SEMBABULE COU SS",
+                    "emis": "12805"
+                }
+            ],
+            "SERERE": [
+                {
+                    "name": "KADUNGULU .S",
+                    "emis": "10586"
+                },
+                {
+                    "name": "KAMOD S.S",
+                    "emis": "10575"
+                },
+                {
+                    "name": "ST ELIZABETH'S S.S.S KIDETOK",
+                    "emis": "348014"
+                },
+                {
+                    "name": "PIGIRE S.S",
+                    "emis": "10595"
+                },
+                {
+                    "name": "OJETENYANGA SEED S.S",
+                    "emis": "348057"
+                },
+                {
+                    "name": "KATETA HILL VIEW S.S",
+                    "emis": "348059"
+                },
+                {
+                    "name": "KYERE S.S",
+                    "emis": "10633"
+                },
+                {
+                    "name": "SERERE S.S",
+                    "emis": "10652"
+                }
+            ],
+            "SHEEMA": [
+                {
+                    "name": "BUGONGI S.S",
+                    "emis": "40440"
+                },
+                {
+                    "name": "KABWOHE S.S",
+                    "emis": "40468"
+                },
+                {
+                    "name": "KIBINGO GIRLS S.S.S",
+                    "emis": "58079"
+                },
+                {
+                    "name": "ST JOHN'S NYABWINA",
+                    "emis": "1240"
+                },
+                {
+                    "name": "KITAGATA S.S.S",
+                    "emis": "1275"
+                },
+                {
+                    "name": "ST CHARLES LWANGA KASHEKURO",
+                    "emis": "1239"
+                },
+                {
+                    "name": "RWEIBAARE S.S.S",
+                    "emis": "1288"
+                },
+                {
+                    "name": "KYANGYENYI H.S",
+                    "emis": "1281"
+                },
+                {
+                    "name": "BUTSIBO S.S",
+                    "emis": "1302"
+                }
+            ],
+            "SIRONKO": [
+                {
+                    "name": "BUDADIRI GIRLS SS",
+                    "emis": "6254"
+                },
+                {
+                    "name": "BUHUGU SS",
+                    "emis": "6291"
+                },
+                {
+                    "name": "BUMASIFA SEED SCHOOL",
+                    "emis": "528020"
+                },
+                {
+                    "name": "BUGAMBI SS",
+                    "emis": "6312"
+                },
+                {
+                    "name": "MASABA SSS",
+                    "emis": "6246"
+                },
+                {
+                    "name": "NAMBULU SSS",
+                    "emis": "6259"
+                },
+                {
+                    "name": "BUGUNZU SEED SCHOOL",
+                    "emis": "528021"
+                },
+                {
+                    "name": "NALUSALA SEED SECONDARY SCHOOL",
+                    "emis": "540019"
+                },
+                {
+                    "name": "SIRONKO HIGH SCHOOL",
+                    "emis": "6277"
+                },
+                {
+                    "name": "BUGOBBIRO SS",
+                    "emis": "248004"
+                }
+            ],
+            "SOROTI": [
+                {
+                    "name": "TESO COLLEGE ALOET",
+                    "emis": "10731"
+                },
+                {
+                    "name": "GWERI S.S",
+                    "emis": "348005"
+                },
+                {
+                    "name": "TUBUR S.S",
+                    "emis": "348058"
+                }
+            ],
+            "TORORO": [
+                {
+                    "name": "ASINGE SSS",
+                    "emis": "10955"
+                },
+                {
+                    "name": "MERIKIT SSS",
+                    "emis": "358155"
+                },
+                {
+                    "name": "KIDOKO SS",
+                    "emis": "10964"
+                },
+                {
+                    "name": "ATIRI SS",
+                    "emis": "10983"
+                },
+                {
+                    "name": "BUKEDI SEEDSS",
+                    "emis": "358164"
+                },
+                {
+                    "name": "ST MARY ASSUMPTA MELLA SS",
+                    "emis": ""
+                },
+                {
+                    "name": "ST PETERS COLLEGE TORORO",
+                    "emis": "10840"
+                },
+                {
+                    "name": "MANJASI H S",
+                    "emis": "21927"
+                },
+                {
+                    "name": "TORORO GIRLS",
+                    "emis": "21929"
+                },
+                {
+                    "name": "ROCK HIGH",
+                    "emis": "21921"
+                },
+                {
+                    "name": "KIREWA SS",
+                    "emis": "10860"
+                },
+                {
+                    "name": "KISOKO HIGH",
+                    "emis": "21960"
+                },
+                {
+                    "name": "RAINER H.S",
+                    "emis": "10848"
+                },
+                {
+                    "name": "MULANDA SS",
+                    "emis": ""
+                },
+                {
+                    "name": "JAMES OCHOLA MEM SS",
+                    "emis": "10899"
+                },
+                {
+                    "name": "KIYEYI HIGH SCH",
+                    "emis": "340484"
+                },
+                {
+                    "name": "MAHANGA SS",
+                    "emis": "10911"
+                },
+                {
+                    "name": "PAYA SS",
+                    "emis": "10922"
+                },
+                {
+                    "name": "RUBONGI SS",
+                    "emis": "10938"
+                },
+                {
+                    "name": "RUBONGI ARMY SS",
+                    "emis": "3915"
+                },
+                {
+                    "name": "KATEREMA SS",
+                    "emis": "10945"
+                }
+            ],
+            "WAKISO": [
+                {
+                    "name": "AGGREY MEMORIAL SS",
+                    "emis": "8139"
+                },
+                {
+                    "name": "BALIBASEKA SS",
+                    "emis": "538116"
+                },
+                {
+                    "name": "BUSSI SEED SS",
+                    "emis": "7517"
+                },
+                {
+                    "name": "BUWAMBO SEED SECONDARY SCHOOL",
+                    "emis": "55154"
+                },
+                {
+                    "name": "ENTEBBE S.S.S.",
+                    "emis": "22672"
+                },
+                {
+                    "name": "GAYAZA HIGH SCH",
+                    "emis": "22935"
+                },
+                {
+                    "name": "JJUNGO SSS",
+                    "emis": "7523"
+                },
+                {
+                    "name": "KASENGEJJE SS",
+                    "emis": "7749"
+                },
+                {
+                    "name": "KINGS COLL BUDDO",
+                    "emis": "7624"
+                },
+                {
+                    "name": "KIRA SS",
+                    "emis": "8032"
+                },
+                {
+                    "name": "KIRINYA COU SS",
+                    "emis": "550153"
+                },
+                {
+                    "name": "KITALA SS",
+                    "emis": "538209"
+                },
+                {
+                    "name": "KITENDE SSS",
+                    "emis": "7693"
+                },
+                {
+                    "name": "LUBUGUMU JAMIA HIGH SCHOOL",
+                    "emis": "528201"
+                },
+                {
+                    "name": "MASULITA SSS",
+                    "emis": "7586"
+                },
+                {
+                    "name": "MENDE KALEMA MEMORIAL SSS",
+                    "emis": "7782"
+                },
+                {
+                    "name": "MMANZE SSS",
+                    "emis": "7587"
+                },
+                {
+                    "name": "MWEREERWE SS",
+                    "emis": "7998"
+                },
+                {
+                    "name": "NAGGULU SEED SS",
+                    "emis": "550140"
+                },
+                {
+                    "name": "NAMPUNGE COMMUNITY HIGH SCHOOL",
+                    "emis": "7501"
+                },
+                {
+                    "name": "NSANGI SECONDARY SCHOOL",
+                    "emis": "7687"
+                },
+                {
+                    "name": "OUR LADY OF COUNSEL GAYAZA",
+                    "emis": "8224"
+                },
+                {
+                    "name": "SAM IGA MEMORIAL COLLEGE",
+                    "emis": "8177"
+                },
+                {
+                    "name": "ST EDWARDS COLLEGE GALAMBA",
+                    "emis": "538153"
+                },
+                {
+                    "name": "ST MARY'S COLLEGE KISUBI",
+                    "emis": "22707"
+                },
+                {
+                    "name": "TRINITY COLLEGE NABBINGO",
+                    "emis": "22748"
+                },
+                {
+                    "name": "WAKISO SS FOR THE DEAF",
+                    "emis": "7506"
+                },
+                {
+                    "name": "WAMPEEWO NTAKKE SSS",
+                    "emis": "8265"
+                }
+            ],
+            "YUMBE": [
+                {
+                    "name": "ROMOGI SEED S.S",
+                    "emis": "548015"
+                },
+                {
+                    "name": "KURU S.S",
+                    "emis": "310"
+                },
+                {
+                    "name": "ODRAVU S.S",
+                    "emis": "38002"
+                },
+                {
+                    "name": "ARINGA S.S",
+                    "emis": "349"
+                },
+                {
+                    "name": "YUMBE S.S",
+                    "emis": "350"
+                }
+            ],
+            "ZOMBO": [
+                {
+                    "name": "PAKADHA SEED SS",
+                    "emis": "318124"
+                },
+                {
+                    "name": "JANGOKORO SEED SS",
+                    "emis": "300258"
+                },
+                {
+                    "name": "WARR GIRLS S. S.S",
+                    "emis": "9747"
+                },
+                {
+                    "name": "ALUKA SSS",
+                    "emis": "9717"
+                },
+                {
+                    "name": "ZEU SEC SCH",
+                    "emis": "9787"
+                }
+            ]
+        }
+    }
+}

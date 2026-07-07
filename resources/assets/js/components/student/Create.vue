@@ -215,35 +215,6 @@
 
                 <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="state" class="tw-form-label"
-                            >Region<span class="text-red-500">*</span></label
-                        >
-                    </div>
-                    <div class="mb-2">
-                        <select
-                            class="tw-form-control w-full"
-                            id="state_id"
-                            v-model="state_id"
-                            name="state_id"
-                        >
-                            <option value="" disabled>Select Region</option>
-                            <option
-                                v-for="state in statelist[this.country_id]"
-                                v-bind:value="state.id"
-                            >
-                                {{ state.name }}
-                            </option>
-                        </select>
-                    </div>
-                    <span
-                        v-if="errors.state_id"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.state_id[0] }}</span
-                    >
-                </div>
-
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
-                    <div class="mb-2">
                         <label for="city" class="tw-form-label"
                             >City<span class="text-red-500">*</span></label
                         >
@@ -257,7 +228,7 @@
                         >
                             <option value="" disabled>Select District</option>
                             <option
-                                v-for="city in citylist[this.state_id]"
+                                v-for="city in citylist[this.country_id]"
                                 v-bind:value="city.id"
                             >
                                 {{ city.name }}
@@ -477,7 +448,6 @@ export default {
             blood_group: "",
             standard: "",
             city_id: "",
-            state_id: "",
             country_id: 7,
             pincode: "",
             birth_place: "",
@@ -500,7 +470,6 @@ export default {
             notes: "",
             avatar: "",
             countrylist: [],
-            statelist: [],
             citylist: [],
             standardLinklist: [],
             inputs: [

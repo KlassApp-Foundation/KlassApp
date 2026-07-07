@@ -5,6 +5,11 @@
             {{ session('message') }}
         </div>
     @endif
+    @if (session()->has('error'))
+        <div class="ds-badge" style="display:block;padding:8px 12px;border-radius:8px;margin-bottom:12px;background:#FEE2E2;color:#991B1B;">
+            {{ session('error') }}
+        </div>
+    @endif
 
     <div class="ds-page-head">
         <h1 class="ds-page-head-title">Co-Admins</h1>

@@ -85,15 +85,6 @@
 
         <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
             <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
-                <p>State</p>
-            </div>
-            <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $schoolDetail->state->name }}</p>
-            </div>
-        </div>
-
-        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
-            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
                 <p>Country</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">

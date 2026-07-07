@@ -207,41 +207,6 @@
                 <div class="tw-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="state" class="tw-form-label"
-                                >Region<span class="text-red-500"
-                                    >*</span
-                                ></label
-                            >
-                        </div>
-                        <div class="w-full lg:w-3/4 my-2">
-                            <select
-                                class="tw-form-control w-full"
-                                id="state_id"
-                                v-model="state_id"
-                                name="state_id"
-                            >
-                                <option value="" disabled>Select Region</option>
-                                <option
-                                    v-for="state in statelist[country_id]"
-                                    :value="state.id"
-                                >
-                                    {{ state.name }}
-                                </option>
-                            </select>
-                        </div>
-                        <span
-                            v-if="errors.state_id"
-                            class="text-red-500 text-xs font-semibold"
-                            >{{ errors.state_id[0] }}</span
-                        >
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex flex-col lg:flex-row">
-                <div class="tw-form-group w-full lg:w-1/2">
-                    <div class="lg:mr-8 md:mr-8">
-                        <div class="mb-2">
                             <label for="city" class="tw-form-label"
                                 >District<span class="text-red-500"
                                     >*</span
@@ -259,7 +224,7 @@
                                     Select District
                                 </option>
                                 <option
-                                    v-for="city in citylist[state_id]"
+                                    v-for="city in citylist[country_id]"
                                     :value="city.id"
                                 >
                                     {{ city.name }}
@@ -365,12 +330,10 @@ export default {
             school_logo_display: "",
             about_us: "",
             country_id: 7,
-            state_id: "",
             city_id: "",
             website: "",
 
             countrylist: [],
-            statelist: [],
             citylist: [],
             boardlist: [
                 {
@@ -411,12 +374,10 @@ export default {
                     this.details.school_logo_display || "";
                 this.about_us = this.details.about_us || "";
                 this.country_id = this.details.country_id || 7;
-                this.state_id = this.details.state_id || "";
                 this.city_id = this.details.city_id || "";
                 this.website = this.details.website || "";
 
                 this.countrylist = this.details.countrylist || [];
-                this.statelist = this.details.statelist || [];
                 this.citylist = this.details.citylist || [];
             }
         },
@@ -436,7 +397,6 @@ export default {
             formData.append("school_logo", this.school_logo);
             formData.append("about_us", this.about_us);
             formData.append("country_id", this.country_id);
-            formData.append("state_id", this.state_id);
             formData.append("city_id", this.city_id);
             formData.append("website", this.website);
 
@@ -466,7 +426,6 @@ export default {
             this.about_us = "";
             this.website = "";
             this.school_logo = "";
-            this.state_id = "";
             this.city_id = "";
             this.errors = [];
             this.success = null;

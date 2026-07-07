@@ -19,9 +19,17 @@
             <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600"><i class="fa-solid fa-sliders"></i></div>
             <div><p class="font-semibold text-sm">System Settings</p><p class="text-xs text-gray-500">Maintenance, login, registration</p></div>
         </a>
-        <a href="{{ url('/superadmin/setting/cities') }}" class="ds-card ds-card-hover p-5 flex items-center gap-4">
+        <a href="{{ url('/superadmin/settings/features') }}" class="ds-card ds-card-hover p-5 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600"><i class="fa-solid fa-toggle-on"></i></div>
+            <div><p class="font-semibold text-sm">Feature Toggles</p><p class="text-xs text-gray-500">Per-school feature flags</p></div>
+        </a>
+        <a href="{{ url('/superadmin/settings/locations') }}" class="ds-card ds-card-hover p-5 flex items-center gap-4">
             <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600"><i class="fa-solid fa-location-dot"></i></div>
-            <div><p class="font-semibold text-sm">Locations</p><p class="text-xs text-gray-500">Cities, states, countries</p></div>
+            <div><p class="font-semibold text-sm">Locations</p><p class="text-xs text-gray-500">Cities, districts, countries</p></div>
+        </a>
+        <a href="{{ url('/superadmin/settings/emis') }}" class="ds-card ds-card-hover p-5 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600"><i class="fa-solid fa-graduation-cap"></i></div>
+            <div><p class="font-semibold text-sm">EMIS Schools</p><p class="text-xs text-gray-500">Browse ministry-registered schools</p></div>
         </a>
     </div>
 </div>
