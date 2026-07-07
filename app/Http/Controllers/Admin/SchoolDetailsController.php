@@ -89,7 +89,6 @@ class SchoolDetailsController extends Controller
             $school->name       = $request->name;
             $school->address    = $request->address;
             $school->country_id = $request->country_id;
-            $school->state_id   = $request->state_id;
             $school->city_id    = $request->city_id;
             // $school->pincode    = $request->pincode ?? null;
 
@@ -172,7 +171,6 @@ class SchoolDetailsController extends Controller
         $array['details']['name']         = $school->name;
         $array['details']['address']      = $school->address;
         $array['details']['country_id']   = $school->country_id;
-        $array['details']['state_id']     = $school->state_id;
         $array['details']['city_id']      = $school->city_id;
         // $array['details']['pincode']      = $school->pincode;      
         $array['details']['countrylist']  = SiteHelper::getCountries();
@@ -219,7 +217,6 @@ class SchoolDetailsController extends Controller
             $school->name       = $request->name;
             $school->address    = $request->address;
             $school->country_id = $request->country_id;
-            $school->state_id   = $request->state_id;
             $school->city_id    = $request->city_id;
             // $school->pincode    = $request->pincode ?? null;
 

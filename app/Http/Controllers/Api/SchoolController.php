@@ -42,7 +42,6 @@ class SchoolController extends Controller
         $array['website']               = $details['website']=='-' ? null:$details['website'];
         $array['address']               = $school->address;
         $array['country']               = $school->country->name;
-        $array['state']                 = $school->state->name;
         $array['city']                  = $school->city->name;
         $array['pincode']               = $school->pincode; 
         

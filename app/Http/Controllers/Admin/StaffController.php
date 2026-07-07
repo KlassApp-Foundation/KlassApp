@@ -224,7 +224,6 @@ class StaffController extends Controller
         $userprofile->blood_group           = $request->blood_group;
         $userprofile->address               = $request->address;
         $userprofile->city_id               = $request->city_id;
-        $userprofile->state_id              = $request->state_id;
         $userprofile->country_id            = $request->country_id;
         $userprofile->pincode               = $request->pincode;
         $userprofile->aadhar_number         = $request->aadhar_number;
@@ -448,10 +447,6 @@ class StaffController extends Controller
                 if(in_array('city', $heads))
                 {
                     $data[]=$user->userprofile->city->name;
-                }
-                if(in_array('state', $heads))
-                {
-                    $data[]=$user->userprofile->state->name;
                 }
                 if(in_array('country', $heads))
                 {

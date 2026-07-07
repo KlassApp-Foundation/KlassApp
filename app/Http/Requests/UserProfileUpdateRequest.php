@@ -110,7 +110,7 @@ class UserProfileUpdateRequest extends FormRequest
             'blood_group'               => 'nullable',
             'aadhar_number'             => 'nullable|numeric|digits:12|check_unique_aadhar_number',
             'city_id'                   => 'required',
-            'state_id'                  => 'required',
+            
             'country_id'                => 'required',
             'pincode'                   => 'nullable|numeric|digits:6',
             'birth_place'               => 'nullable|check_birth_place',
@@ -203,7 +203,7 @@ class UserProfileUpdateRequest extends FormRequest
 
             'city_id.required'                                  => 'City Is Required',
 
-            'state_id.required'                                 => 'State Is Required',
+            
 
             'country_id.required'                               => 'Country Is Required',
 

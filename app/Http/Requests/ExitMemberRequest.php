@@ -35,7 +35,7 @@ class ExitMemberRequest extends FormRequest
             //
             'address'       =>  'required',
             'city_id'       =>  'required',
-            'state_id'      =>  'required',
+            
             'country_id'    =>  'required',
             'pincode'       =>  'required|numeric|digits:6',
             'comments'      =>  'required|checkcomments|max:100'
@@ -47,7 +47,7 @@ class ExitMemberRequest extends FormRequest
         return[
             'address.required'          =>  'Address is required',
             'city_id.required'          =>  'City is required',
-            'state_id.required'         =>  'State is required',
+            
             'country_id.required'       =>  'Country is required',
             'pincode.required'          =>  'Pincode is required',
             'pincode.numeric'           =>  'Pincode should be numeric',

@@ -38,7 +38,7 @@ class TeacherImportExportController extends Controller
 
         if(count($users) > 0)
         {
-            $csv->insertOne(['employee_id','designation','firstname','lastname','gender','date_of_birth','address','city','state','country','pincode','mobile_no','email','notes','status',]);
+            $csv->insertOne(['employee_id','designation','firstname','lastname','gender','date_of_birth','address','city','country','pincode','mobile_no','email','notes','status',]);
       
             foreach($users as $user)
             {
@@ -52,7 +52,6 @@ class TeacherImportExportController extends Controller
                     date('d-m-Y',strtotime($user->userprofile->date_of_birth)),
                     $user->userprofile->address,
                     $user->userprofile->city->name,
-                    $user->userprofile->state->name,
                     $user->userprofile->country->name,
                     $user->userprofile->pincode,
                     $user->mobile_no,
@@ -269,7 +268,7 @@ exit;
                 }
                 if(in_array('district', $heads))
                 {
-                    $data[]=$user->userprofile->state->name;
+                    $data[]=$user->userprofile->city->name;
                 }
                 if(in_array('country', $heads))
                 {

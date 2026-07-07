@@ -88,7 +88,7 @@ class DetailRequest extends FormRequest
             'landline_no'           =>  'required|numeric|digits:10',
             'about_us'              =>  'required|max:250',
             'country_id'            =>  'required',
-            'state_id'              =>  'required',
+            
             'city_id'               =>  'required',
             'pincode'               =>  'required|numeric|digits:6',
             'website'               =>  'nullable|check_website',   
@@ -142,7 +142,7 @@ class DetailRequest extends FormRequest
 
             'country_id.required'               =>  'Country Is Required',
 
-            'state_id.required'                 =>  'State Is Required',
+            
 
             'city_id.required'                  =>  'City Is Required',
 

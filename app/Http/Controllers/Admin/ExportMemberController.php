@@ -64,7 +64,6 @@ class ExportMemberController extends Controller
                     date('d-m-Y',strtotime($user->userprofile->date_of_birth)),
                     $user->userprofile->address,
                     $user->userprofile->city->name,
-                    $user->userprofile->state->name,
                     $user->userprofile->country->name,
                     $user->userprofile->pincode,
                     $user->mobile_no,
@@ -194,10 +193,6 @@ class ExportMemberController extends Controller
                 if(in_array('city', $heads))
                 {
                     $data[]=$user->userprofile->city->name;
-                }
-                if(in_array('state', $heads))
-                {
-                    $data[]=$user->userprofile->state->name;
                 }
                 if(in_array('country', $heads))
                 {

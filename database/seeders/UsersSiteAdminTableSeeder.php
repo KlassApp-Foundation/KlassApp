@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\City;
 use App\Models\Country;
-use App\Models\State;
 use App\Models\User;
 use App\Models\Userprofile;
 use Illuminate\Database\Seeder;
@@ -16,9 +15,6 @@ class UsersSiteAdminTableSeeder extends Seeder
     public function run(): void
     {
         $countryId = Country::where('name', 'Uganda')->value('id');
-
-        $stateId = State::where('name', 'Western')->value('id');
-
         $cityId = City::where('name', 'Kabale')->value('id');
 
         $admins = [
@@ -78,7 +74,6 @@ class UsersSiteAdminTableSeeder extends Seeder
                     'profession'   => 'Super Administrator',
                     'address'      => 'Plot 15, Nakasero Road, Kampala, Uganda',
                     'country_id'   => $countryId,
-                    'state_id'     => $stateId,
                     'city_id'      => $cityId,
                     'pincode'      => null,
                 ]
