@@ -71,6 +71,10 @@ services:
       EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
       EVOLUTION_INSTANCE_NAME: ${EVOLUTION_INSTANCE_NAME:-klassapp}
       WHATSAPP_HMAC_SECRET: ${WHATSAPP_HMAC_SECRET}
+      # added redis port and users to solve permission issues @elijah-ug
+      REDIS_PORT: 6379
+      USER_ID: 1000
+      GROUP_ID: 1000
       PHP_FPM_LISTEN: "0.0.0.0:9000"
     # volumes:
     #   - .:/var/www
