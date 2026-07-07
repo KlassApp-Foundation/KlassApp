@@ -52,7 +52,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+      # Commented user for production
+    # user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     container_name: sms-app
     restart: unless-stopped
     working_dir: /var/www
@@ -73,8 +74,6 @@ services:
       WHATSAPP_HMAC_SECRET: ${WHATSAPP_HMAC_SECRET}
       # added redis port and users to solve permission issues @elijah-ug
       REDIS_PORT: 6379
-      USER_ID: 1000
-      GROUP_ID: 1000
       PHP_FPM_LISTEN: "0.0.0.0:9000"
     # volumes:
     #   - .:/var/www
