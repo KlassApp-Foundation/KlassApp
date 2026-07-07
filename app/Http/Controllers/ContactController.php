@@ -61,11 +61,9 @@ class ContactController extends Controller
         $contact->select = $request->select;
         $contact->save();
 
-        $user=User::find(1);
-
         if(env('MAIL_STATUS') == 'on')
         {
-            Mail::to($user->email)->send(new ContactMail($contact));
+            Mail::to('team@klassapp.xyz')->send(new ContactMail($contact));
         }
          $message=__('notes.notes_message');
 

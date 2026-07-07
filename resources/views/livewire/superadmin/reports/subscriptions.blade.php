@@ -16,21 +16,15 @@
         Create Subscription
     </x-filament::button> --}}
 
-    <div class="" style="display:flex;justify-content: space-between;padding:10px;align-items:center;">
-    <div class="">
-        <p style="font-size:1.25rem; font-weight:700;">Subscriptions</p>
-    </div>
-
-    <x-filament::button
-    size="lg"
-    color="" style="background-color:green; padding-bottom: 10px !important;
-    padding-top: 10px !important; padding-left: 14px !important;
-    padding-right: 14px !important; background-color: rgba(5,122,85,var(--tw-bg-opacity));"
-        href="{{ url('/superadmin/reports/subscription/create') }}"
-        tag="a">
-        Create Subscription
-    </x-filament::button>
-
+    <div class="ds-page-head">
+        <div>
+            <h1 class="ds-page-head-title">Subscriptions</h1>
+        </div>
+        <div>
+            <a href="{{ url('/superadmin/reports/subscription/create') }}" class="ds-btn ds-btn-primary ds-btn-sm">
+                Create Subscription
+            </a>
+        </div>
     </div>
 
 

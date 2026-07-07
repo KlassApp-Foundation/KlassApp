@@ -20,17 +20,21 @@
                 </h3>
 
                 <div class="mt-6">
-                    @if($plan->amount > 0)
-                        <div class="flex justify-center items-center">
-                            <span class="text-white text-lg font-semibold">UGX</span>
-                            <span class="text-3xl font-extrabold text-white">
-                                {{ number_format($plan->amount) }}
-                            </span>
-                        </div>
-
+                    @if($plan->is_custom_pricing)
+                        <span class="text-3xl font-extrabold text-white">
+                            Contact Us
+                        </span>
                         <p class="text-red-100 mt-2">
-                            Every {{ $plan->cycle }} days
+                            Custom pricing
                         </p>
+                    @elseif($plan->amount > 0)
+                        <div class="flex justify-center items-center">
+                            <span class="text-white text-lg font-semibold">$</span>
+                            <span class="text-3xl font-extrabold text-white">
+                                {{ $plan->amount }}
+                            </span>
+                            <span class="text-white text-sm font-semibold mt-2">/mo</span>
+                        </div>
                     @else
                         <span class="text-5xl font-extrabold text-white">
                             Free

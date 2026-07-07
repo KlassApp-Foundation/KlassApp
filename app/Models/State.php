@@ -32,17 +32,5 @@ class State extends Model
         return $this->belongsTo('App\Models\Country','country_id');
     }
 
-    public function school()
-    {
-        return $this->hasMany('App\Models\School','state_id','id');
-    }
-    public function userprofile()
-    {
-        return $this->hasMany('App\Models\Userprofile','state_id','id');
-    }
 
-    public function city()
-    {
-        return $this->hasMany('App\Models\City','state_id','id');
-    }
 }

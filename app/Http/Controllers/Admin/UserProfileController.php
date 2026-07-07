@@ -15,7 +15,6 @@ use App\Models\Userprofile;
 use App\Traits\LogActivity;
 use App\Models\Country;
 use App\Traits\Common;
-use App\Models\State;
 use App\Models\User;
 use App\Models\City;
 use App\Models\WhatsAppUser;
@@ -131,9 +130,8 @@ class UserProfileController extends Controller
     public function create()
     {
         $country = Country::all(); 
-        $state = State::get();
         $city = City::get();
-        $userprofile = Userprofile::with('country','state','city')->where('user_id', Auth::id())->first();
+        $userprofile = Userprofile::with('country','city')->where('user_id', Auth::id())->first();
 
         $array=[];
        
@@ -148,11 +146,9 @@ class UserProfileController extends Controller
         // $array['state_id']=$userprofile->state->name;
         // $array['city_id']=$userprofile->city->name;
         $array['country_id']=$userprofile->country->id;
-        $array['state_id']=$userprofile->state->id;
         $array['city_id']=$userprofile->city->id;
         $array['pincode']=$userprofile->pincode;
         $array['countrylist']=$country;
-        $array['statelist']=$state;
         $array['citylist']=$city;
 
         return $array;      
@@ -172,7 +168,6 @@ class UserProfileController extends Controller
             $userprofile->date_of_birth = $request->date_of_birth;
             $userprofile->address = $request->address;
             $userprofile->city_id = $request->city_id;
-            $userprofile->state_id = $request->state_id;
             $userprofile->country_id = $request->country_id;
             $userprofile->pincode = $request->pincode;
             

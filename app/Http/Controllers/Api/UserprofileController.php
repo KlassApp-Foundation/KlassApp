@@ -6,7 +6,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\API\Country as CountryResource;
-use App\Http\Resources\API\State as StateResource;
 use App\Http\Resources\API\City as CityResource;
 use App\Http\Requests\EditUserDetailRequest;
 use App\Http\Controllers\Controller;
@@ -14,7 +13,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Userprofile;
 use App\Models\Country;
-use App\Models\State;
 use App\Models\City;
 use App\Models\User;
 use Exception;
@@ -40,24 +38,9 @@ class UserprofileController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function state($id)
-    {
-        //
-        $state = State::where('country_id',$id)->get();
-        $state = StateResource::collection($state);
-
-        return $state;
-    }
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function city($id)
     {
-        //
-        $city = City::where('state_id',$id)->get();
+        $city = City::where('country_id', $id)->get();
         $city = CityResource::collection($city);
 
         return $city;
@@ -116,7 +99,6 @@ class UserprofileController extends Controller
             $userprofile->sub_occupation        = $request->sub_occupation;
             $userprofile->address               = $request->address;
             $userprofile->city_id               = $request->city;
-            $userprofile->state_id              = $request->state;
             $userprofile->country_id            = $request->country;
             $userprofile->pincode               = $request->pincode;
             $userprofile->family                = $request->family;

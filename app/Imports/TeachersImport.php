@@ -11,7 +11,6 @@ use App\Models\Qualification;
 use App\Models\AcademicYear;
 use App\Traits\RegisterUser;
 use App\Models\Country;
-use App\Models\State;
 use App\Models\City;
 use App\Models\User;
 use Carbon\Carbon;
@@ -49,9 +48,7 @@ class TeachersImport implements ToCollection, WithHeadingRow
                     ? Country::where('name', 'LIKE', '%' . $row['country'] . '%')->first()
                     : null;
 
-                $state = !empty($row['region'] ?? null)
-                    ? State::where('name', 'LIKE', '%' . $row['region'] . '%')->first()
-                    : null;
+
 
                 $city = !empty($row['district'] ?? null)
                     ? City::where('name', 'LIKE', '%' . $row['district'] . '%')->first()
@@ -123,7 +120,6 @@ class TeachersImport implements ToCollection, WithHeadingRow
                 $teacher->blood_group      = $row['blood_group'] ?? null;
                 $teacher->address          = $row['address'] ?? null;
                 $teacher->city_id          = $city->id ?? null;
-                $teacher->state_id         = $state->id ?? null;
                 $teacher->country_id       = $country->id ?? null;
 
                 $teacher->joining_date     = !empty($row['joining_date'] ?? null)

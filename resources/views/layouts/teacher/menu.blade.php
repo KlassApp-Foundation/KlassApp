@@ -5,13 +5,13 @@
         <a href="{{ url('teacher/dashboard') }}" class="flex items-center"><x-icons.sidebar name="dashboard"/><span class="mx-3 whitespace-no-wrap">Dashboard</span></a>
     </li>
     <li class="py-3 px-3 hover:bg-purple-900 {{ tActive(['standardLinks','standardLink']) }}">
-        <a href="{{ url('/teacher/standardLinks') }}" class="flex items-center whitespace-no-wrap"><x-icons.sidebar name="classes"/><span class="mx-3 whitespace-no-wrap">Classes</span></a>
+        <a href="{{ url('teacher/standardLinks') }}" class="flex items-center whitespace-no-wrap"><x-icons.sidebar name="classes"/><span class="mx-3 whitespace-no-wrap">Classes</span></a>
     </li>
     <li class="py-3 px-3 hover:bg-purple-900 {{ tActive(['timetable']) }}">
-        <a href="{{ url('teacher/dashboard/timetable') }}" class="flex items-center"><x-icons.sidebar name="timetable"/><span class="mx-3 whitespace-no-wrap">Timetable</span></a>
+        <a href="{{ url('teacher/dashboard') }}#timetable" class="flex items-center"><x-icons.sidebar name="timetable"/><span class="mx-3 whitespace-no-wrap">Timetable</span></a>
     </li>
     <li class="py-3 px-3 hover:bg-purple-900 {{ tActive(['attendance']) }}">
-        <a href="{{ url('teacher/attendance/list') }}" class="flex items-center"><x-icons.sidebar name="attendance"/><span class="mx-3 whitespace-no-wrap">Attendance</span></a>
+        <a href="{{ url('teacher/dashboard') }}#attendance" class="flex items-center"><x-icons.sidebar name="attendance"/><span class="mx-3 whitespace-no-wrap">Attendance</span></a>
     </li>
     <li class="py-3 px-3 hover:bg-purple-900 {{ tActive(['exams','exam']) }}">
         <a href="{{ url('teacher/exam/marks') }}" class="flex items-center"><x-icons.sidebar name="exams"/><span class="mx-3 whitespace-no-wrap">Exams</span></a>
@@ -26,7 +26,7 @@
         <a href="{{ url('teacher/standardLinks') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-no-wrap">Students</span></a>
     </li>
     <li class="py-3 px-3 hover:bg-purple-900 {{ tActive(['notices','notice']) }}">
-        <a href="{{ url('teacher/notice/show/list') }}" class="flex items-center"><x-icons.sidebar name="messages"/><span class="mx-3 whitespace-no-wrap">Notices</span></a>
+        <a href="{{ url('teacher/dashboard') }}#notices" class="flex items-center"><x-icons.sidebar name="messages"/><span class="mx-3 whitespace-no-wrap">Notices</span></a>
     </li>
     <li class="py-3 px-3 hover:bg-purple-900 {{ tActive(['events']) }}">
         <a href="{{ url('teacher/events') }}" class="flex items-center"><x-icons.sidebar name="calendar"/><span class="mx-3 whitespace-no-wrap">Events</span></a>

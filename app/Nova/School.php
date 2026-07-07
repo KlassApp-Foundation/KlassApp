@@ -79,8 +79,6 @@ class School extends Resource
 
             BelongsTo::make('City','city',\App\Nova\City::class)->rules('required')->hideFromIndex(),
 
-            BelongsTo::make('State','state',\App\Nova\State::class)->rules('required')->hideFromIndex(),
-
             BelongsTo::make('Country','country',\App\Nova\Country::class)->rules('required')->hideFromIndex(),
 
             Text::make('Pincode','pincode')->rules('required', 'numeric' , 'digits:6')->hideFromIndex(),

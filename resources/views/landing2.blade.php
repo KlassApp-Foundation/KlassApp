@@ -40,8 +40,8 @@
                         body: ['DM Sans', 'system-ui', 'sans-serif'],
                     },
                     colors: {
-                        navy: { DEFAULT: '#0D1526', light: '#141E36', dark: '#070C16' },
-                        brand: { blue: '#1E6FD9', green: '#22C55E', amber: '#D97706' },
+                        navy: { DEFAULT: '#141413', light: '#30302e', dark: '#0a0a0a' },
+                        brand: { blue: '#1E6FD9', green: '#22C55E', amber: '#D97706', accent: '#c96442' },
                         surface: '#FAFAF5',
                         warm: { 50: '#FFFCF5', 100: '#FEF7ED', 200: '#FDF0DB', 800: '#78350F' },
                     },
@@ -52,12 +52,13 @@
 
     <style>
         :root {
-            --navy: #0F172A;
+            --navy: #141413;
             --blue: #1E6FD9;
             --green: #22C55E;
             --amber: #D97706;
-            --surface: #FFFFFF;
-            --white: #FFFFFF;
+            --accent: #c96442;
+            --surface: #f5f4ed;
+            --white: #faf9f5;
             --wa-header: #075E54;
             --wa-bg: #E5DDD5;
             --wa-sent: #D9FDD3;
@@ -158,7 +159,7 @@
             text-decoration: none;
             transition: color 0.2s ease;
         }
-        .nav-pill .nav-links a:hover { color: #1E6FD9; }
+        .nav-pill .nav-links a:hover { color: #c96442; }
 
         .nav-pill .nav-cta {
             padding: 7px 18px;
@@ -166,14 +167,14 @@
             font-weight: 600;
             font-family: 'Sora', sans-serif;
             border-radius: 9999px;
-            background: #1E6FD9;
+            background: #c96442;
             color: #fff;
             text-decoration: none;
             transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
                         font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s,
                         background 0.2s ease;
         }
-        .nav-pill .nav-cta:hover { background: #22C55E; }
+        .nav-pill .nav-cta:hover { background: #a84d32; }
         .site-header.scrolled .nav-pill .nav-cta {
             padding: 10px 24px;
             font-size: 15px;

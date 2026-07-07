@@ -85,19 +85,79 @@
 
         <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
             <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
-                <p>State</p>
+                <p>Country</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $schoolDetail->state->name }}</p>
+                <p class="leading-loose txt-gray-light">{{ $schoolDetail->country->name }}</p>
             </div>
         </div>
 
         <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
             <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
-                <p>Country</p>
+                <p>Registration Country</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $schoolDetail->country->name }}</p>
+                <p class="leading-loose txt-gray-light">{{ $schoolDetail->registration_country ?? '—' }}</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
+            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
+                <p>Student Size</p>
+            </div>
+            <div class="text-sm lg:w-3/4 md:w-3/4">
+                <p class="leading-loose txt-gray-light">{{ $schoolDetail->student_size ?? '—' }}</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
+            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
+                <p>Ministry Code</p>
+            </div>
+            <div class="text-sm lg:w-3/4 md:w-3/4">
+                <p class="leading-loose txt-gray-light">{{ $schoolDetail->ministry_code ?? '—' }}</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
+            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
+                <p>Curriculum</p>
+            </div>
+            <div class="text-sm lg:w-3/4 md:w-3/4">
+                <p class="leading-loose txt-gray-light">{{ strtoupper($schoolDetail->curriculum ?? '—') }}</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
+            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
+                <p>Created</p>
+            </div>
+            <div class="text-sm lg:w-3/4 md:w-3/4">
+                <p class="leading-loose txt-gray-light">{{ $schoolDetail->created_at->format('M d, Y') }}</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
+            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
+                <p>Plan</p>
+            </div>
+            <div class="text-sm lg:w-3/4 md:w-3/4">
+                @php
+                    $plan = $schoolDetail->subscription->first()?->plan;
+                    $planName = $plan?->display_name ?? '—';
+                    $planBadge = match($planName) {
+                        'Freemium' => 'info',
+                        'Growth' => 'approved',
+                        'Premium' => 'warning',
+                        default => 'info',
+                    };
+                @endphp
+                <span class="ds-badge ds-badge-{{ $planBadge }}">{{ $planName }}</span>
+                @if($plan?->is_custom_pricing)
+                    <span class="text-xs text-gray-400 ml-2">Contact Us</span>
+                @elseif($plan?->amount > 0)
+                    <span class="text-xs text-gray-400 ml-2">\${{ $plan->amount }}/mo USD</span>
+                @endif
             </div>
         </div>
 
@@ -126,7 +186,20 @@
     </div>
 </div>
 
-<div class="text-xl ml-3 font-bold">Admin</div>
+<div class="text-xl ml-3 font-bold mt-4">Admin Accounts</div>
+<div class="text-sm text-gray-500 mb-2">Admins created during onboarding or manually</div>
+@if($admins->count() > 0)
+    @foreach($admins as $admin)
+        <div class="flex items-center gap-2 py-1 px-2 bg-gray-50 rounded mb-1">
+            <span class="font-medium text-sm">{{ $admin->name }}</span>
+            <span class="text-xs text-gray-400">{{ $admin->email }}</span>
+        </div>
+    @endforeach
+@else
+    <p class="text-xs text-gray-400">No admin accounts found.</p>
+@endif
+
+<div class="text-xl ml-3 font-bold mt-4">School Admins</div>
     <livewire:superadmin.academics.admin-list :id="$schoolDetail->id" />
 
 

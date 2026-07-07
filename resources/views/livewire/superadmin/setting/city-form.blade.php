@@ -33,30 +33,13 @@ SPDX-License-Identifier: MIT
             <label for="school_id" class="tw-form-label"> Country<span class="text-red-500">*</span></label>
           </div>
           <div class="mb-2">
-            <select class="tw-form-control w-full" wire:model.live="country" wire:change="changeState">
+            <select class="tw-form-control w-full" wire:model.live="country">
             	<option value="">Select Country</option>
 	            @foreach($countries as $value)
 	            <option value="{{ $value->id }}">{{ ucfirst($value->name) }}</option>
 	            @endforeach
             </select>
             @error('country')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
-        </div>
-      </div>
-
-     <div class="tw-form-group w-full lg:w-1/2">
-        <div class="lg:mr-8 ">
-          <div class="mb-2">
-            <label for="relation" class="tw-form-label">Region<span class="text-red-500">*</span></label>
-          </div>
-          <div class="mb-2">
-            <select class="tw-form-control w-full" wire:model.live="state">
-              <option value="">Select Region</option>
-              @foreach($states as $value)
-            <option value="{{ $value->id }}">{{ ucfirst($value->name) }}</option>
-            @endforeach
-            </select>
-            @error('state')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
           </div> 
         </div>
       </div>

@@ -14,7 +14,7 @@
 
         <link href="{{ asset('css/app.css') }}" rel="stylesheet">
         <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
-        <link href="{{ asset('css/dashboard-refresh.css') }}" rel="stylesheet">
+        <link href="{{ asset('css/dashboard-refresh.css') }}?v={{ filemtime(public_path('css/dashboard-refresh.css')) }}" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
         {{-- ===== added fontawesome icons --}}
         <link rel="stylesheet"
@@ -55,7 +55,7 @@
                 <div class="sidebar self-start">
                     @yield('base-sidebar')
                 </div>
-                <div class="bg-gray-200 flex-grow w-full px-4 md:w-auto" style="width: calc(100vw - 195px);">
+                <div class="bg-gray-200 dashboard-content-area flex-grow w-full px-4 md:w-auto" style="width: calc(100vw - 195px);">
                     @yield('base-content')
                 </div>
             </main>

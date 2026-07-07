@@ -54,8 +54,6 @@ class City extends Resource
 
             BelongsTo::make('Country','country',\App\Nova\Country::class)->hideFromIndex(),
 
-            BelongsTo::make('State','state',\App\Nova\State::class),
-
             Text::make('Name','name')
                 ->sortable()
                 ->rules('required', 'max:15'),

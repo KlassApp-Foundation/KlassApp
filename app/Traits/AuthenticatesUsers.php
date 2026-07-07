@@ -239,17 +239,23 @@ trait AuthenticatesUsers
             return null;
         }
 
+        // Prioritize exact email match first — most common login method
+        $exact = User::where('email', $login)->first();
+        if ($exact) {
+            return $exact;
+        }
+
         $digits = preg_replace('/\D+/', '', $login);
 
         return User::query()
-            ->where('email', $login)
-            ->orWhere('registration_number', $login)
+            ->where('registration_number', $login)
             ->orWhere('name', $login)
             ->when($digits !== '', function ($query) use ($login, $digits) {
                 $query->orWhere('mobile_no', $login)
                     ->orWhere('mobile_no', '+' . $digits)
                     ->orWhere('mobile_no', 'like', '%' . $digits);
             })
+            ->orderBy('id')
             ->first();
     }
 

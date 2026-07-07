@@ -41,7 +41,30 @@ Route::get('/landing', function () {
 Route::get('/features', fn() => view('landing', ['scrollTo' => 'features']));
 Route::get('/pricing', fn() => view('landing', ['scrollTo' => 'pricing']));
 Route::get('/schools', fn() => view('landing', ['scrollTo' => 'schools']));
-Route::get('/contact', fn() => view('landing', ['scrollTo' => 'demo']));
+Route::get('/contact', fn() => view('landing', ['scrollTo' => 'contact']));
+
+Route::post('/contact', function (Illuminate\Http\Request $request) {
+    $request->validate([
+        'fullname' => 'required|string|max:255',
+        'emailid' => 'required|email|max:255',
+        'school_name' => 'nullable|string|max:255',
+        'message' => 'required|string',
+    ]);
+
+    $contact = new App\Models\Contact();
+    $contact->fullname = $request->fullname;
+    $contact->email = $request->emailid;
+    $contact->school_name = $request->school_name ?? '';
+    $contact->message = $request->message;
+    $contact->contact_no = $request->contact_no ?? '';
+    $contact->save();
+
+    if (env('MAIL_STATUS') == 'on') {
+        Mail::to('team@klassapp.xyz')->send(new App\Mail\ContactMail($contact));
+    }
+
+    return redirect('/contact?sent=true#contact');
+})->name('contact.send');
 Route::get('/demo', fn() => view('landing', ['scrollTo' => 'demo']));
 
 // Terms of Service and Privacy Policy
@@ -240,19 +263,6 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
         return view('superadmin.setting.countrydetail',compact('id'));
     })->name('superadmin.setting.countries.detail');
 
-    //State
-    Route::get('setting/states', function () {
-        return view('superadmin.setting.states');
-    })->name('superadmin.setting.states');
-
-    Route::get('setting/state/update/{id}', function ($id) {
-        return view('superadmin.setting.stateform', compact('id'));
-    })->name('superadmin.setting.states.update');
-
-    Route::get('setting/state/detail/{id}', function ($id) {
-        return view('superadmin.setting.statedetail',compact('id'));
-    })->name('superadmin.setting.states.detail');
-
     //Plan
     Route::get('setting/plans', function () {
         return view('superadmin.setting.planlist');
@@ -299,7 +309,43 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
         return view('superadmin.changeavatar');
     })->name('superadmin.changeavatar');
 
+    // Settings pages
+    Route::get('/settings', function () {
+        return view('superadmin.settings.index');
+    })->name('superadmin.settings');
+
+    Route::get('/settings/system', function () {
+        return view('superadmin.settings.system-settings');
+    })->name('superadmin.settings.system');
+
+    Route::get('/settings/co-admins', function () {
+        return view('superadmin.settings.co-admins');
+    })->name('superadmin.settings.co-admins');
+
+    Route::get('/settings/features', function () {
+        return view('superadmin.settings.features');
+    })->name('superadmin.settings.features');
+
+    Route::get('/settings/locations', function () {
+        return view('superadmin.settings.locations');
+    })->name('superadmin.settings.locations');
+
+    Route::get('/settings/emis', function () {
+        return view('superadmin.settings.emis-schools');
+    })->name('superadmin.settings.emis');
 });
 
 
 
+// Mail list subscription
+Route::post('/subscribe', function (Illuminate\Http\Request $request) {
+    $request->validate(['email' => 'required|email|unique:mail_list,email']);
+    App\Models\MailList::create(['email' => $request->email, 'name' => $request->name ?? '']);
+    return back()->with('subscribed', true);
+})->name('subscribe');
+
+// Super admin mail list view
+Route::get('/superadmin/mail-list', function () {
+    $subscribers = App\Models\MailList::where('subscribed', true)->latest()->paginate(50);
+    return view('superadmin.mail-list', compact('subscribers'));
+})->name('superadmin.mail-list')->middleware(['web', 'auth', 'superadmin']);

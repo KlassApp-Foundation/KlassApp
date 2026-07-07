@@ -17,7 +17,6 @@ use App\Models\Standard;
 use App\Models\Section;
 use App\Models\Country;
 use App\Traits\Common;
-use App\Models\State;
 use App\Models\City;
 use App\Models\User;
 use Carbon\Carbon;
@@ -75,14 +74,12 @@ class UsersImport implements ToCollection, WithHeadingRow
                 |--------------------------------------------------------------------------
                 */
                 $country = !empty($row['country'])? Country::where('name', 'LIKE', '%' . $row['country'] . '%')->first() : null;
-                // $state   = !empty($row['state']) ? State::where('name', 'LIKE', '%' . $row['state'] . '%')->first() : null;
-                $state   = !empty($row['region']) ? State::where('name', 'LIKE', '%' . $row['region'] . '%')->first() : null;
+
                 // $city    = !empty($row['city']) ? City::where('name', 'LIKE', '%' . $row['city'] . '%')->first() : null;
                 $city    = !empty($row['district']) ? City::where('name', 'LIKE', '%' . $row['district'] . '%')->first() : null;
 
                 $student->country_id = $country->id ?? null;
-                $student->state_id   = $state->id ?? null;
-                $student->city_id    = $city->id ?? null;
+        $student->city_id     = $city->id ?? null;
                 $student->address    = $row['address'] ?? null;
 
                 /*

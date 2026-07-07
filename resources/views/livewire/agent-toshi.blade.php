@@ -49,13 +49,13 @@
             @endforeach
             {{-- Subject inline form --}}
             @if($showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 10px;">Add Subject</div>
+            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                <div style="font-size: 13px; font-weight: 600; color: #141413; margin-bottom: 10px;">Add Subject</div>
                 @php $subjects = $this->actionData['subjects'] ?? []; @endphp
                 @if(count($subjects) > 0)
                 <div style="margin-bottom: 8px;">
                     @foreach($subjects as $si => $s)
-                    <div class="toshi-row" style="padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                    <div class="toshi-row" style="padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
                         <span style="flex: 1;">{{ $s }}</span>
                         <button wire:click="removeSubject({{ $si }})" type="button"
                                 style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
@@ -65,17 +65,17 @@
                 @endif
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <input type="text" wire:model="subjectFormName" placeholder="Subject name *"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <input type="text" wire:model="subjectFormCode" placeholder="Subject code (optional)"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <select wire:model="subjectFormType"
-                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; background: white; font-family: 'DM Sans', sans-serif;">
+                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; background: white; font-family: 'DM Sans', sans-serif;">
                         <option value="core">Core</option>
                         <option value="elective">Elective</option>
                     </select>
                     <div style="display: flex; gap: 8px;">
                         <button wire:click="saveSubject" type="button"
-                                style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                             + Add Subject
                         </button>
                         <button wire:click="doneSubjects" type="button"
@@ -89,15 +89,15 @@
 
             {{-- Teacher inline form --}}
             @if($showTeacherForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers')
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Teacher</span>
+                    <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Teacher</span>
                     <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
                         <a href="{{ asset('templates/teacher-upload-template.xlsx') }}" download
-                           style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
-                        <span style="font-size: 10px; color: #94A3B8; cursor: help;" title="CSV/XLSX: columns Name, Email, Subjects, Classes. TXT: one name per line.">ⓘ</span>
+                           style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
+                        <span style="font-size: 10px; color: #87867f; cursor: help;" title="CSV/XLSX: columns Name, Email, Subjects, Classes. TXT: one name per line.">ⓘ</span>
                         <label class="flex items-center gap-1 cursor-pointer"
-                               style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                               style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
@@ -107,7 +107,7 @@
                 @if(count($teachers) > 0)
                 <div style="margin-bottom: 8px;">
                     @foreach($teachers as $ti => $t)
-                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
                         <span style="flex: 1;">{{ $t }}</span>
                         <button wire:click="removeTeacher({{ $ti }})" type="button"
                                 style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
@@ -117,16 +117,16 @@
                 @endif
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <input type="text" wire:model="teacherFormName" placeholder="Teacher name *"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <input type="email" wire:model="teacherFormEmail" placeholder="Email (optional)"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <input type="text" wire:model="teacherFormPhone" placeholder="WhatsApp number (optional)"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <div style="display: flex; gap: 8px;">
                         <div style="flex: 1;">
-                            <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Subject(s)</div>
+                            <div style="font-size: 10px; color: #87867f; margin-bottom: 2px;">Subject(s)</div>
                             <input type="text" wire:model="teacherFormSubjects" placeholder="e.g. Math, English" list="subject-list"
-                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                             <datalist id="subject-list">
                                 @php
                                     $allSubjects = [];
@@ -141,9 +141,9 @@
                             </datalist>
                         </div>
                         <div style="flex: 1;">
-                            <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Class(es)</div>
+                            <div style="font-size: 10px; color: #87867f; margin-bottom: 2px;">Class(es)</div>
                             <input type="text" wire:model="teacherFormClasses" placeholder="e.g. P1, P2" list="class-list"
-                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                             <datalist id="class-list">
                                 @foreach($this->standards ?? [] as $std)
                                 <option value="{{ $std['name'] }}">
@@ -153,7 +153,7 @@
                     </div>
                     <div style="display: flex; gap: 8px;">
                         <button wire:click="saveTeacher" type="button"
-                                style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                             + Add Teacher
                         </button>
                         <button wire:click="doneTeachers" type="button"
@@ -167,14 +167,14 @@
 
             {{-- Student inline form --}}
             @if($showStudentForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'students')
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Student</span>
+                    <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Student</span>
                     <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
                         <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
-                           style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                           style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
                         <label class="flex items-center gap-1 cursor-pointer"
-                               style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                               style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
@@ -184,8 +184,8 @@
                 @if(count($students) > 0)
                 <div style="margin-bottom: 8px;">
                     @foreach($students as $si => $s)
-                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
-                        <span style="flex: 1;">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #94A3B8;">({{ $s['class'] }})</span>@endif</span>
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
+                        <span style="flex: 1;">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #87867f;">({{ $s['class'] }})</span>@endif</span>
                         <button wire:click="removeStudent({{ $si }})" type="button"
                                 style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
                     </div>
@@ -194,35 +194,35 @@
                 @endif
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <input type="text" wire:model="studentFormName" placeholder="Student name *"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
 <select wire:model="studentFormType"
-        style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+        style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
     <option value="">Type (optional)</option>
     <option value="boarding">Boarding</option>
     <option value="day">Day Scholar</option>
 </select>
 <select wire:model="studentFormType"
-                                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                    style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                                                 <option value="">Type (optional)</option>
                                                 <option value="boarding">Boarding</option>
                                                 <option value="day">Day Scholar</option>
                                             </select>
                     <input type="text" wire:model="studentFormClass" placeholder="Class *" list="student-class-list"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <datalist id="student-class-list">
                         @foreach($this->standards ?? [] as $std)
                         <option value="{{ $std['name'] }}">
                         @endforeach
                     </datalist>
                     <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <input type="text" wire:model="studentFormParentPhone" placeholder="Parent phone (optional)"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <div style="display: flex; gap: 8px;">
                         <button wire:click="saveStudent" type="button"
-                                style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                             + Add Student
                         </button>
                         <button wire:click="doneStudents" type="button"
@@ -236,14 +236,14 @@
 
             {{-- Fee inline form --}}
             @if($showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Fee</span>
+                    <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Fee</span>
                     <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
                         <a href="{{ asset('templates/fee-upload-template.xlsx') }}" download
-                           style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                           style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
                         <label class="flex items-center gap-1 cursor-pointer"
-                               style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                               style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
@@ -253,7 +253,7 @@
                 @if(count($fees) > 0)
                 <div style="margin-bottom: 8px;">
                     @foreach($fees as $fi => $f)
-                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
                         <span style="flex: 1;">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif</span>
                         <button wire:click="removeFee({{ $fi }})" type="button"
                                 style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
@@ -263,11 +263,11 @@
                 @endif
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <input type="text" wire:model="feeFormName" placeholder="Fee name *"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <select wire:model="feeFormLevel"
-                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                         <option value="">Level (optional)</option>
                         <option value="nursery">Nursery</option>
                         <option value="primary">Primary</option>
@@ -275,14 +275,14 @@
                         <option value="all">All Levels</option>
                     </select>
                     <input type="text" wire:model="feeFormClass" placeholder="Class (optional)" list="fee-class-list"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <datalist id="fee-class-list">
                         @foreach($this->standards ?? [] as $std)
                         <option value="{{ $std['name'] }}">
                         @endforeach
                     </datalist>
                     <select wire:model="feeFormTerm"
-                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                         <option value="">Term (optional)</option>
                         <option value="Term I">Term I</option>
                         <option value="Term II">Term II</option>
@@ -290,7 +290,7 @@
                     </select>
                     <div style="display: flex; gap: 8px;">
                         <button wire:click="saveFee" type="button"
-                                style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                             + Add Fee
                         </button>
                         <button wire:click="doneFees" type="button"
@@ -304,14 +304,14 @@
 
             {{-- Exam inline form --}}
             @if($showExamForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams')
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Exam</span>
+                    <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Exam</span>
                     <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
                         <a href="{{ asset('templates/exam-upload-template.xlsx') }}" download
-                           style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                           style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
                         <label class="flex items-center gap-1 cursor-pointer"
-                               style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                               style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
@@ -321,7 +321,7 @@
                 @if(count($exams) > 0)
                 <div style="margin-bottom: 8px;">
                     @foreach($exams as $ei => $e)
-                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
                         <span style="flex: 1;">{{ $e['type'] }} — {{ $e['term'] }}</span>
                         <button wire:click="removeExam({{ $ei }})" type="button"
                                 style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
@@ -331,23 +331,23 @@
                 @endif
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <select wire:model="examFormTerm"
-                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                         <option value="">Term *</option>
                         <option value="Term I">Term I</option>
                         <option value="Term II">Term II</option>
                         <option value="Term III">Term III</option>
                     </select>
                     <input type="text" wire:model="examFormType" placeholder="Exam type * (e.g. Midterm, Final)"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <select wire:model="examFormStatus"
-                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                         <option value="">Status</option>
                         <option value="active">Active</option>
                         <option value="completed">Completed</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
                     <select wire:model="examFormLevel"
-                            style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                         <option value="">Level</option>
                         <option value="nursery">Nursery</option>
                         <option value="primary">Primary</option>
@@ -355,14 +355,14 @@
                         <option value="all">All Levels</option>
                     </select>
                     <input type="text" wire:model="examFormClass" placeholder="Class" list="exam-class-list"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <datalist id="exam-class-list">
                         @foreach($this->standards ?? [] as $std)
                         <option value="{{ $std['name'] }}">
                         @endforeach
                     </datalist>
                     <input type="text" wire:model="examFormSubject" placeholder="Subject" list="exam-subject-list"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <datalist id="exam-subject-list">
                         @php
                             $allSubs = [];
@@ -376,7 +376,7 @@
                         @endforeach
                     </datalist>
                     <input type="text" wire:model="examFormTeacher" placeholder="Teacher" list="exam-teacher-list"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <datalist id="exam-teacher-list">
                         @foreach($this->teacherList ?? [] as $t)
                         <option value="{{ $t }}">
@@ -384,11 +384,11 @@
                     </datalist>
                     <div style="display: flex; gap: 8px;">
                         <button wire:click="saveExam" type="button"
-                                style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                             + Add Exam
                         </button>
                         <button wire:click="doneExams" type="button"
-                                style="flex: 1; padding: 8px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">
+                                style="flex: 1; padding: 8px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">
                             Skip
                         </button>
                         <button wire:click="doneExams" type="button"
@@ -406,15 +406,15 @@
                 @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
                 @foreach($plans as $plan)
                 <button wire:click="selectPlan({{ $plan->id }})"
-                        style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #1E293B;"
+                        style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #4d4c48;"
                         onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
-                        onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
+                        onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
                     <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
                     <div style="flex: 1;">
                         <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
-                        <div style="color: #64748B; font-size: 12px; margin-top: 2px;">
-                            @if(strtolower($plan->name) === 'premium')
-                                Contact sales
+                        <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
+                            @if($plan->is_custom_pricing)
+                                Contact Us
                             @elseif($plan->amount > 0)
                                 ${{ number_format($plan->amount) }} / {{ $plan->cycle }} days
                             @else
@@ -430,7 +430,7 @@
             {{-- School Type Buttons --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'school_info' && $substep === 2)
             <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
-                <div style="font-size: 12px; font-weight: 600; color: #64748B; margin-bottom: 4px;">→ Category</div>
+                <div style="font-size: 12px; font-weight: 600; color: #5e5d59; margin-bottom: 4px;">→ Category</div>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                     <button wire:click="setSchoolType('nursery')" class="toshi-btn">Nursery</button>
                     <button wire:click="setSchoolType('primary','','mixed')" class="toshi-btn">Primary</button>
@@ -442,7 +442,7 @@
 
             {{-- Co-admin Invite Buttons --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'co_admin_invite' && $substep === 0)
-            <div style="font-size: 12px; font-weight: 600; color: #64748B; margin-bottom: 2px; padding: 8px 0 0;">→ Would you like to add a co-admin for this school?</div>
+            <div style="font-size: 12px; font-weight: 600; color: #5e5d59; margin-bottom: 2px; padding: 8px 0 0;">→ Would you like to add a co-admin for this school?</div>
             <div style="display: flex; gap: 8px; padding: 4px 0 8px;">
                 <button wire:click="coAdminInviteYes" class="toshi-btn" style="background: #F0FDF4; border-color: #22C55E; font-weight: 600;">Yes, add a co-admin</button>
                 <button wire:click="coAdminInviteSkip" class="toshi-btn">Skip</button>
@@ -455,20 +455,20 @@
                 @php $staff = $this->getAvailableStaff(); @endphp
                 @foreach($staff as $teacher)
                 <button wire:click="promoteCoAdmin({{ $teacher->id }})"
-                        style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #1E293B;"
-                        onmouseover="this.style.borderColor='#1E6FD9';this.style.boxShadow='0 2px 8px rgba(30,111,217,0.12)'"
-                        onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
-                    <div style="width: 32px; height: 32px; border-radius: 50%; background: #EFF6FF; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #1E6FD9; font-size: 12px;">{{ strtoupper(substr($teacher->name, 0, 1)) }}</div>
+                        style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #4d4c48;"
+                        onmouseover="this.style.borderColor='#c96442';this.style.boxShadow='0 2px 8px rgba(30,111,217,0.12)'"
+                        onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: #faf9f5; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #c96442; font-size: 12px;">{{ strtoupper(substr($teacher->name, 0, 1)) }}</div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600;">{{ $teacher->name }}</div>
-                        <div style="font-size: 11px; color: #64748B;">{{ $teacher->email }}</div>
+                        <div style="font-size: 11px; color: #5e5d59;">{{ $teacher->email }}</div>
                     </div>
                 </button>
                 @endforeach
                 <button wire:click="promoteCoAdminAddNew"
-                        style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #64748B; margin-top: 4px;"
+                        style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #f5f4ed; border: 1px dashed #CBD5E1; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #5e5d59; margin-top: 4px;"
                         onmouseover="this.style.borderColor='#22C55E';this.style.color='#166534'"
-                        onmouseout="this.style.borderColor='#CBD5E1';this.style.color='#64748B'">
+                        onmouseout="this.style.borderColor='#CBD5E1';this.style.color='#5e5d59'">
                     <span style="font-size: 16px;">＋</span>
                     <span>Add someone else (not on this list)</span>
                 </button>
@@ -479,7 +479,7 @@
             {{-- Success Card (shown after commit) --}}
             @if($step === 99 && !empty($reviewData['committed']))
             @php $isComplete = ($reviewData['mode'] ?? 'create') === 'complete'; @endphp
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0; text-align: center;">
+            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0; text-align: center;">
                 <div style="background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); padding: 24px 16px;">
                     <div style="font-size: 40px; margin-bottom: 8px;">🎉</div>
                     <div style="font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em;">
@@ -493,34 +493,34 @@
                     @if(!$isComplete)
                     <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 12px;">
                         <div style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.04em;">Admin Login Credentials</div>
-                        <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px;">{{ $reviewData['adminEmail'] ?? '—' }}</div>
-                        <div style="font-size: 13px; color: #64748B; margin-top: 2px;">Password: <strong>{{ $reviewData['adminPassword'] ?? 'password' }}</strong></div>
-                        <div style="font-size: 12px; color: #64748B; margin-top: 2px;">📱 {{ $reviewData['adminPhone'] ?? '—' }}</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #141413; margin-top: 6px;">{{ $reviewData['adminEmail'] ?? '—' }}</div>
+                        <div style="font-size: 13px; color: #5e5d59; margin-top: 2px;">Password: <strong>{{ $reviewData['adminPassword'] ?? 'password' }}</strong></div>
+                        <div style="font-size: 12px; color: #5e5d59; margin-top: 2px;">📱 {{ $reviewData['adminPhone'] ?? '—' }}</div>
                     </div>
                     @if(!empty($reviewData['coAdminEmail']))
                     <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 12px;">
                         <div style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
-                        <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px;">{{ $reviewData['coAdminEmail'] ?? '—' }}</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #141413; margin-top: 6px;">{{ $reviewData['coAdminEmail'] ?? '—' }}</div>
                         @if(!empty($reviewData['coAdminPromoted']))
                         <div style="font-size: 12px; color: #166534; margin-top: 2px;">✅ Promoted from teacher — they keep their existing password</div>
                         @else
-                        <div style="font-size: 13px; color: #64748B; margin-top: 2px;">Password: <strong>{{ $reviewData['coAdminPassword'] ?? 'password' }}</strong></div>
+                        <div style="font-size: 13px; color: #5e5d59; margin-top: 2px;">Password: <strong>{{ $reviewData['coAdminPassword'] ?? 'password' }}</strong></div>
                         @endif
                     </div>
                     @endif
-                    <div style="font-size: 12px; color: #64748B; line-height: 1.5;">
+                    <div style="font-size: 12px; color: #5e5d59; line-height: 1.5;">
                         Share these credentials with the school admin. They can log in at the <strong>KlassApp login page</strong>.
                     </div>
                     @else
-                    <div style="font-size: 13px; color: #64748B; line-height: 1.5;">
+                    <div style="font-size: 13px; color: #5e5d59; line-height: 1.5;">
                         ✅ Your school setup is complete. Toshi will remind you if anything needs attention later.
                     </div>
                     @endif
                 </div>
                 <div style="padding: 0 16px 16px;">
                     <button wire:click="resetOnboarding"
-                            style="width: 100%; padding: 11px; background: #0F172A; color: #FFFFFF; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;"
-                            onmouseover="this.style.background='#1E293B'" onmouseout="this.style.background='#0F172A'">
+                            style="width: 100%; padding: 11px; background: #141413; color: #FFFFFF; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+                            onmouseover="this.style.background='#4d4c48'" onmouseout="this.style.background='#141413'">
                         @if($isComplete) ✅ Done — Ask Toshi @else + Onboard Another School @endif
                     </button>
                 </div>
@@ -529,7 +529,7 @@
 
             {{-- Step progress bar — dots for all 15 steps --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] !== 'review')
-            <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin: 0 10px; background: #F8FAFC; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin: 0 10px; background: #f5f4ed; border-radius: 8px;">
                 <div style="display: flex; align-items: center; gap: 3px; flex: 1;">
                     @foreach($steps as $i => $name)
                         @php
@@ -539,7 +539,7 @@
                         <div class="toshi-progress-dot {{ $isDone ? 'toshi-progress-dot-done' : ($isCurrent ? 'toshi-progress-dot-current' : 'toshi-progress-dot-pending') }}"></div>
                     @endforeach
                 </div>
-                <span style="font-size: 10px; font-weight: 600; color: #64748B; white-space: nowrap;">{{ $step + 1 }}/{{ count($steps) }}</span>
+                <span style="font-size: 10px; font-weight: 600; color: #5e5d59; white-space: nowrap;">{{ $step + 1 }}/{{ count($steps) }}</span>
                 @if(in_array($steps[$step] ?? '', $mandatorySteps ?? []))
                 <span class="toshi-badge-required">Required</span>
                 @else
@@ -550,9 +550,9 @@
 
             {{-- Review Card (shown on review step) --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'review' && !empty($reviewData) && empty($reviewData['committed']))
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0;">
+            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0;">
                 {{-- Header --}}
-                <div style="background: #0F172A; color: #FFFFFF; padding: 14px 16px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px;">
+                <div style="background: #141413; color: #FFFFFF; padding: 14px 16px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px;">
                     <span>📋 Review &amp; Confirm</span>
                 </div>
 
@@ -560,31 +560,31 @@
                 <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;">
                     {{-- Plan + School --}}
                     <div style="display: flex; gap: 10px;">
-                        <div style="flex: 1; background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
-                            <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Plan</div>
-                            <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['plan'] }}</div>
+                        <div style="flex: 1; background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
+                            <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Plan</div>
+                            <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['plan'] }}</div>
                         </div>
-                        <div style="flex: 1; background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
-                            <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">School</div>
-                            <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['schoolName'] }}</div>
-                            <div style="font-size: 11px; color: #64748B;">{{ ucfirst($reviewData['schoolType']) }} · {{ $reviewData['curriculum'] ?? 'UNEB' }}</div>
-                            <div style="font-size: 10px; color: #94A3B8; margin-top: 2px;">EMIS: {{ $reviewData['ministryCode'] ?? '—' }}</div>
+                        <div style="flex: 1; background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
+                            <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">School</div>
+                            <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['schoolName'] }}</div>
+                            <div style="font-size: 11px; color: #5e5d59;">{{ ucfirst($reviewData['schoolType']) }} · {{ $reviewData['curriculum'] ?? 'UNEB' }}</div>
+                            <div style="font-size: 10px; color: #87867f; margin-top: 2px;">EMIS: {{ $reviewData['ministryCode'] ?? '—' }}</div>
                         </div>
                     </div>
 
                     {{-- Admin --}}
-                    <div style="background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
-                        <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Admin Account</div>
-                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['adminName'] }}</div>
-                        <div style="font-size: 11px; color: #64748B;">{{ $reviewData['adminEmail'] }} · {{ $reviewData['adminPhone'] }}</div>
+                    <div style="background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
+                        <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Admin Account</div>
+                        <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['adminName'] }}</div>
+                        <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['adminEmail'] }} · {{ $reviewData['adminPhone'] }}</div>
                     </div>
 
                     @if(!empty($reviewData['coAdminName']))
                     {{-- Co-Admin --}}
-                    <div style="background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
-                        <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
-                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['coAdminName'] }}</div>
-                        <div style="font-size: 11px; color: #64748B;">{{ $reviewData['coAdminEmail'] }}</div>
+                    <div style="background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
+                        <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
+                        <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['coAdminName'] }}</div>
+                        <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['coAdminEmail'] }}</div>
                     </div>
                     @endif
 
@@ -592,8 +592,8 @@
                     <div style="background: {{ !empty($reviewData['whatsapp']) && str_contains($reviewData['whatsapp'], '✅') ? '#F0FDF4' : '#FEF2F2' }}; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 16px;">📱</span>
                         <div>
-                            <div style="font-size: 12px; font-weight: 600; color: #0F172A;">WhatsApp</div>
-                            <div style="font-size: 11px; color: #64748B;">{{ $reviewData['whatsapp'] ?? 'Not set up' }}</div>
+                            <div style="font-size: 12px; font-weight: 600; color: #141413;">WhatsApp</div>
+                            <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['whatsapp'] ?? 'Not set up' }}</div>
                         </div>
                     </div>
 
@@ -609,41 +609,41 @@
 
                     {{-- Counts grid --}}
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-                        <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 700; color: #1E6FD9;">{{ $reviewData['classCount'] }}</div>
-                            <div style="font-size: 10px; color: #64748B; font-weight: 500;">Classes</div>
+                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
+                            <div style="font-size: 18px; font-weight: 700; color: #c96442;">{{ $reviewData['classCount'] }}</div>
+                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Classes</div>
                         </div>
-                        <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
                             <div style="font-size: 18px; font-weight: 700; color: #22C55E;">{{ $reviewData['teacherCount'] }}</div>
-                            <div style="font-size: 10px; color: #64748B; font-weight: 500;">Teachers</div>
+                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Teachers</div>
                             @if(!empty($reviewData['teacherLinkCount']) && $reviewData['teacherLinkCount'] > 0)
-                            <div style="font-size: 8px; color: #94A3B8; margin-top: 2px;">{{ $reviewData['teacherLinkCount'] }} subject links</div>
+                            <div style="font-size: 8px; color: #87867f; margin-top: 2px;">{{ $reviewData['teacherLinkCount'] }} subject links</div>
                             @endif
                         </div>
-                        <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
                             <div style="font-size: 18px; font-weight: 700; color: #D97706;">{{ $reviewData['studentCount'] }}</div>
-                            <div style="font-size: 10px; color: #64748B; font-weight: 500;">Students</div>
+                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Students</div>
                             @if(!empty($reviewData['studentIds']) && $reviewData['studentIds'] !== '—')
-                            <div style="font-size: 8px; color: #94A3B8; margin-top: 2px;">{{ $reviewData['studentIds'] }}</div>
+                            <div style="font-size: 8px; color: #87867f; margin-top: 2px;">{{ $reviewData['studentIds'] }}</div>
                             @endif
                         </div>
-                        <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
                             <div style="font-size: 18px; font-weight: 700; color: #8B5CF6;">{{ $reviewData['termCount'] }}</div>
-                            <div style="font-size: 10px; color: #64748B; font-weight: 500;">Terms</div>
+                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Terms</div>
                         </div>
-                        <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
                             <div style="font-size: 18px; font-weight: 700; color: #EC4899;">{{ $reviewData['feeCount'] }}</div>
-                            <div style="font-size: 10px; color: #64748B; font-weight: 500;">Fees</div>
+                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Fees</div>
                         </div>
-                        <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
                             <div style="font-size: 18px; font-weight: 700; color: #14B8A6;">{{ $reviewData['examCount'] }}</div>
-                            <div style="font-size: 10px; color: #64748B; font-weight: 500;">Exams</div>
+                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Exams</div>
                         </div>
                     </div>
                 </div>
 
                 {{-- Actions --}}
-                <div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #E2E8F0; background: #FAFAFA;">
+                <div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #e8e6dc; background: #FAFAFA;">
                 </div>
             </div>
             @endif
@@ -660,7 +660,7 @@
                 <button type="button" wire:click="editBeforeCommit"
                         style="padding: 11px 14px;"
                         class="toshi-btn-secondary"
-                        onmouseover="this.style.borderColor='#1E6FD9';this.style.color='#1E6FD9'" onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#64748B'">
+                        onmouseover="this.style.borderColor='#c96442';this.style.color='#c96442'" onmouseout="this.style.borderColor='#e8e6dc';this.style.color='#5e5d59'">
                     ← Edit
                 </button>
             </div>
@@ -671,21 +671,21 @@
         <div class="shrink-0" style="display: flex; flex-direction: column; gap: 6px; padding: 4px 16px 8px; background: #FFFFFF;">
             @php $drafts = $this->getDrafts(); @endphp
             @if(count($drafts) > 0)
-            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.04em;">Continue Setup</div>
+            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #87867f; letter-spacing: 0.04em;">Continue Setup</div>
             @foreach($drafts as $draft)
             <button wire:click="resumeDraft" type="button"
-                    style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; cursor: pointer; text-align: left; font-size: 12px; color: #1E293B; font-weight: 500; transition: all 0.15s; width: 100%;"
-                    onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#E2E8F0'">
+                    style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f5f4ed; border: 1px solid #e8e6dc; border-radius: 10px; cursor: pointer; text-align: left; font-size: 12px; color: #4d4c48; font-weight: 500; transition: all 0.15s; width: 100%;"
+                    onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#e8e6dc'">
                 <span style="width: 24px; height: 24px; border-radius: 6px; background: #22C55E; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px;">↻</span>
                 <span style="flex: 1;">{{ $draft['school_name'] }}</span>
-                <span style="font-size: 10px; color: #94A3B8;">Step {{ $draft['step'] + 1 }}</span>
+                <span style="font-size: 10px; color: #87867f;">Step {{ $draft['step'] + 1 }}</span>
             </button>
             @endforeach
             @endif
             <button wire:click="resetOnboarding(true)" type="button"
-                    style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: #0F172A; color: white; border: none; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; align-self: flex-start;"
-                    onmouseover="this.style.background='#1E6FD9'"
-                    onmouseout="this.style.background='#0F172A'">
+                    style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: #141413; color: white; border: none; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; align-self: flex-start;"
+                    onmouseover="this.style.background='#c96442'"
+                    onmouseout="this.style.background='#141413'">
                 <span style="font-size: 16px; line-height: 1;">+</span> New School
             </button>
         </div>
@@ -705,12 +705,12 @@
                     'generate_report' => ['label' => '📊 Report', 'hint' => '"show report"'],
                 ];
             @endphp
-            <div style="font-size: 12px; font-weight: 600; color: #0F172A;">{{ $schoolName }}</div>
-            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.04em;">Quick Actions</div>
+            <div style="font-size: 12px; font-weight: 600; color: #141413;">{{ $schoolName }}</div>
+            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #87867f; letter-spacing: 0.04em;">Quick Actions</div>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 @foreach($quickActions as $action => $def)
                     @if(in_array($action, $actions))
-                    <span style="padding: 4px 10px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: default;" title="{{ $def['hint'] }}">{{ $def['label'] }}</span>
+                    <span style="padding: 4px 10px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: default;" title="{{ $def['hint'] }}">{{ $def['label'] }}</span>
                     @endif
                 @endforeach
             </div>
@@ -719,7 +719,7 @@
 
         {{-- Confirmation buttons --}}
         @if($awaitingConfirm)
-        <div class="shrink-0" style="display: flex; gap: 10px; padding: 8px 16px 8px; background: #FFFFFF; border-top: 1px solid #F1F5F9;">
+        <div class="shrink-0" style="display: flex; gap: 10px; padding: 8px 16px 8px; background: #FFFFFF; border-top: 1px solid #f5f4ed;">
             <button wire:click="confirmYes" type="button"
                     style="flex: 1; padding: 10px; background: #22C55E; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
                     onmouseover="this.style.background='#16A34A'"
@@ -727,56 +727,56 @@
                 Yes ✓
             </button>
             <button wire:click="confirmNo" type="button"
-                    style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#E2E8F0'"
-                    onmouseout="this.style.background='#F1F5F9'">
+                    style="flex: 1; padding: 10px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#e8e6dc'"
+                    onmouseout="this.style.background='#f5f4ed'">
                 No
             </button>
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects' && $substep === 1)
             <button wire:click="confirmCustom" type="button"
-                    style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#1557B3'"
-                    onmouseout="this.style.background='#1E6FD9'">
+                    style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#a84d32'"
+                    onmouseout="this.style.background='#c96442'">
                 + Add Subject
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers' && $substep === 0)
             <button wire:click="showTeacherFormFn" type="button"
-                    style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#1557B3'"
-                    onmouseout="this.style.background='#1E6FD9'">
+                    style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#a84d32'"
+                    onmouseout="this.style.background='#c96442'">
                 + Add Teacher
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'students' && $substep === 0)
             <button wire:click="showStudentFormFn" type="button"
-                    style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#1557B3'"
-                    onmouseout="this.style.background='#1E6FD9'">
+                    style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#a84d32'"
+                    onmouseout="this.style.background='#c96442'">
                 + Add Student
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees' && $substep === 0)
             <button wire:click="showFeeFormFn" type="button"
-                    style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#1557B3'"
-                    onmouseout="this.style.background='#1E6FD9'">
+                    style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#a84d32'"
+                    onmouseout="this.style.background='#c96442'">
                 + Add Fee
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams' && $substep === 0)
             <button wire:click="showExamFormFn" type="button"
-                    style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#1557B3'"
-                    onmouseout="this.style.background='#1E6FD9'">
+                    style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#a84d32'"
+                    onmouseout="this.style.background='#c96442'">
                 + Add Exam
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
             <button wire:click="confirmSkipAll" type="button"
-                    style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#E2E8F0'"
-                    onmouseout="this.style.background='#F1F5F9'">
+                    style="flex: 1; padding: 10px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    onmouseover="this.style.background='#e8e6dc'"
+                    onmouseout="this.style.background='#f5f4ed'">
                 Skip All
             </button>
             @endif
@@ -812,18 +812,18 @@
                                 }
                             "
                             class="relative"
-                            style="width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #94A3B8; transition: color 0.15s;"
-                            onmouseover="this.style.color='#1E6FD9'"
-                            onmouseout="this.style.color='#94A3B8'">
+                            style="width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #87867f; transition: color 0.15s;"
+                            onmouseover="this.style.color='#c96442'"
+                            onmouseout="this.style.color='#87867f'">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
                         <span x-show="listening" class="absolute" style="width: 8px; height: 8px; border-radius: 50%; background: #22C55E; animation: toshi-pulse 1.4s ease-in-out infinite; top: 2px; right: 2px;"></span>
                     </button>
                     {{-- Right cluster: attach + send --}}
                     <div style="display: flex; align-items: center; gap: 6px;">
                         <label class="flex items-center justify-center cursor-pointer"
-                               style="width: 30px; height: 30px; color: #94A3B8; transition: color 0.15s; font-size: 20px; font-weight: 300;"
-                               onmouseover="this.style.color='#1E6FD9'"
-                               onmouseout="this.style.color='#94A3B8'"
+                               style="width: 30px; height: 30px; color: #87867f; transition: color 0.15s; font-size: 20px; font-weight: 300;"
+                               onmouseover="this.style.color='#c96442'"
+                               onmouseout="this.style.color='#87867f'"
                                title="Upload file">
                             +
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
@@ -831,7 +831,7 @@
                         {{-- Send --}}
                         <button type="submit"
                                 :disabled="!hasText"
-                                :style="hasText ? 'color: #0F172A; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
+                                :style="hasText ? 'color: #141413; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
                                 style="width: 30px; height: 30px; background: none; border: none; display: flex; align-items: center; justify-content: center; transition: color 0.15s;"
                                 class="active:scale-95">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
@@ -852,36 +852,36 @@
              onclick="event.stopPropagation()">
 
             {{-- Left Sidebar --}}
-            <div style="width: 260px; background: #F8FAFC; border-right: 1px solid #E2E8F0; display: flex; flex-direction: column; padding: 16px; flex-shrink: 0;">
+            <div style="width: 260px; background: #f5f4ed; border-right: 1px solid #e8e6dc; display: flex; flex-direction: column; padding: 16px; flex-shrink: 0;">
                 <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 4px;">
                     <img src="{{ asset('images/klassapp-logo.svg') }}" style="width: 22px; height: 22px;" alt="KlassApp">
-                    <span style="font-size: 16px; font-weight: 700; color: #0F172A; font-family: 'Sora', sans-serif;">Toshi</span>
+                    <span style="font-size: 16px; font-weight: 700; color: #141413; font-family: 'Sora', sans-serif;">Toshi</span>
                 </div>
-                <div style="font-size: 11px; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.04em; font-weight: 600; margin: 16px 0 8px;">Onboarding Session</div>
-                <button wire:click="resumeDraft" style="width: 100%; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #1E293B; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s;" onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#E2E8F0'">
+                <div style="font-size: 11px; text-transform: uppercase; color: #87867f; letter-spacing: 0.04em; font-weight: 600; margin: 16px 0 8px;">Onboarding Session</div>
+                <button wire:click="resumeDraft" style="width: 100%; background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #4d4c48; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s;" onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#e8e6dc'">
                     {{ $schoolName ?: ($reviewData['schoolName'] ?? 'New School') }}
                 </button>
                 @if($scope === 'platform' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm)
                 @php $drafts = $this->getDrafts(); @endphp
                 @if(count($drafts) > 0)
                 <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 4px;">
-                    <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.04em;">Continue Setup</div>
+                    <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #87867f; letter-spacing: 0.04em;">Continue Setup</div>
                     @foreach($drafts as $draft)
                     <button wire:click="resumeDraft" type="button"
-                            style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; cursor: pointer; text-align: left; font-size: 12px; color: #1E293B; font-weight: 500; transition: all 0.15s; width: 100%; font-family: 'DM Sans', sans-serif;"
-                            onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#E2E8F0'">
+                            style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 8px; cursor: pointer; text-align: left; font-size: 12px; color: #4d4c48; font-weight: 500; transition: all 0.15s; width: 100%; font-family: 'DM Sans', sans-serif;"
+                            onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#e8e6dc'">
                         <span style="width: 20px; height: 20px; border-radius: 5px; background: #22C55E; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px;">↻</span>
                         <span style="flex: 1;">{{ $draft['school_name'] }}</span>
-                        <span style="font-size: 9px; color: #94A3B8;">Step {{ $draft['step'] + 1 }}</span>
+                        <span style="font-size: 9px; color: #87867f;">Step {{ $draft['step'] + 1 }}</span>
                     </button>
                     @endforeach
                 </div>
                 @endif
                 <div style="margin-top: 8px;">
                     <button wire:click="resetOnboarding(true)" type="button"
-                            style="width: 100%; padding: 8px 12px; background: #0F172A; color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s; font-family: 'DM Sans', sans-serif;"
-                            onmouseover="this.style.background='#1E6FD9'"
-                            onmouseout="this.style.background='#0F172A'">
+                            style="width: 100%; padding: 8px 12px; background: #141413; color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s; font-family: 'DM Sans', sans-serif;"
+                            onmouseover="this.style.background='#c96442'"
+                            onmouseout="this.style.background='#141413'">
                         + New School
                     </button>
                 </div>
@@ -889,7 +889,7 @@
                 {{-- Step progress in sidebar --}}
                 @if(!empty($steps) && isset($steps[$step]) && $mode !== 'assistant')
                 <div style="margin-top: 12px;">
-                    <div style="font-size: 10px; text-transform: uppercase; color: #94A3B8; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 6px;">Progress — {{ $step + 1 }}/{{ count($steps) }}</div>
+                    <div style="font-size: 10px; text-transform: uppercase; color: #87867f; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 6px;">Progress — {{ $step + 1 }}/{{ count($steps) }}</div>
                     <div style="display: flex; flex-direction: column; gap: 3px;">
                         @foreach($steps as $i => $name)
                             @php
@@ -898,9 +898,9 @@
                                 $label = ucfirst(str_replace('_', ' ', $name));
                             @endphp
                             <button wire:click="jumpToStep({{ $i }})" type="button"
-                                    style="display: flex; align-items: center; gap: 6px; padding: 4px 6px; border: none; border-radius: 4px; background: {{ $isCurrent ? '#FFFFFF' : 'transparent' }}; cursor: {{ $isDone || $isCurrent ? 'pointer' : 'default' }}; text-align: left; font-size: 10px; color: {{ $isDone ? '#22C55E' : ($isCurrent ? '#0F172A' : '#CBD5E1') }}; font-weight: {{ $isCurrent ? '600' : '400' }}; transition: all 0.15s; font-family: 'DM Sans', sans-serif;"
+                                    style="display: flex; align-items: center; gap: 6px; padding: 4px 6px; border: none; border-radius: 4px; background: {{ $isCurrent ? '#FFFFFF' : 'transparent' }}; cursor: {{ $isDone || $isCurrent ? 'pointer' : 'default' }}; text-align: left; font-size: 10px; color: {{ $isDone ? '#22C55E' : ($isCurrent ? '#141413' : '#CBD5E1') }}; font-weight: {{ $isCurrent ? '600' : '400' }}; transition: all 0.15s; font-family: 'DM Sans', sans-serif;"
                                     onmouseover="this.style.background='#FFFFFF'" onmouseout="this.style.background='{{ $isCurrent ? '#FFFFFF' : 'transparent' }}'">
-                                <span style="width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700; flex-shrink: 0; background: {{ $isDone ? '#22C55E' : ($isCurrent ? '#0F172A' : '#E2E8F0') }}; color: white;">{{ $isDone ? '✓' : $i + 1 }}</span>
+                                <span style="width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700; flex-shrink: 0; background: {{ $isDone ? '#22C55E' : ($isCurrent ? '#141413' : '#e8e6dc') }}; color: white;">{{ $isDone ? '✓' : $i + 1 }}</span>
                                 <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $label }}</span>
                             </button>
                         @endforeach
@@ -908,7 +908,7 @@
                 </div>
                 @endif
                 <div style="margin-top: auto; padding-top: 16px;">
-                    <button wire:click="hide" style="font-size: 12px; color: #94A3B8; background: none; border: none; cursor: pointer; padding: 4px 0; font-family: 'DM Sans', sans-serif;" onmouseover="this.style.color='#64748B'" onmouseout="this.style.color='#94A3B8'">Close</button>
+                    <button wire:click="hide" style="font-size: 12px; color: #87867f; background: none; border: none; cursor: pointer; padding: 4px 0; font-family: 'DM Sans', sans-serif;" onmouseover="this.style.color='#5e5d59'" onmouseout="this.style.color='#87867f'">Close</button>
                 </div>
             </div>
 
@@ -959,13 +959,13 @@
                         @endforeach
                                     {{-- Subject inline form --}}
                                     @if($showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
-                                    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 10px;">Add Subject</div>
+                                    <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                                        <div style="font-size: 13px; font-weight: 600; color: #141413; margin-bottom: 10px;">Add Subject</div>
                                         @php $subjects = $this->actionData['subjects'] ?? []; @endphp
                                         @if(count($subjects) > 0)
                                         <div style="margin-bottom: 8px;">
                                             @foreach($subjects as $si => $s)
-                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
                                                 <span style="flex: 1;">{{ $s }}</span>
                                                 <button wire:click="removeSubject({{ $si }})" type="button"
                                                         style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
@@ -975,17 +975,17 @@
                                         @endif
                                         <div style="display: flex; flex-direction: column; gap: 8px;">
                                             <input type="text" wire:model="subjectFormName" placeholder="Subject name *"
-                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                             <input type="text" wire:model="subjectFormCode" placeholder="Subject code (optional)"
-                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                             <select wire:model="subjectFormType"
-                                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; background: white; font-family: 'DM Sans', sans-serif;">
+                                                    style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; background: white; font-family: 'DM Sans', sans-serif;">
                                                 <option value="core">Core</option>
                                                 <option value="elective">Elective</option>
                                             </select>
                                             <div style="display: flex; gap: 8px;">
                                                 <button wire:click="saveSubject" type="button"
-                                                        style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                        style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                                                     + Add Subject
                                                 </button>
                                                 <button wire:click="doneSubjects" type="button"
@@ -999,15 +999,15 @@
 
                                     {{-- Teacher inline form (maximized) --}}
                                     @if($showTeacherForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers')
-                                    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                                    <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
                                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                            <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Teacher</span>
+                                            <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Teacher</span>
                                             <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
                                                 <a href="{{ asset('templates/teacher-upload-template.xlsx') }}" download
-                                                   style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
-                                                <span style="font-size: 10px; color: #94A3B8; cursor: help;" title="CSV/XLSX: columns Name, Email, Subjects, Classes. TXT: one name per line.">ⓘ</span>
+                                                   style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
+                                                <span style="font-size: 10px; color: #87867f; cursor: help;" title="CSV/XLSX: columns Name, Email, Subjects, Classes. TXT: one name per line.">ⓘ</span>
                                                 <label class="flex items-center gap-1 cursor-pointer"
-                                                       style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                                                       style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
                                                     Upload File
                                                     <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                                                 </label>
@@ -1017,7 +1017,7 @@
                                         @if(count($teachers) > 0)
                                         <div style="margin-bottom: 8px;">
                                             @foreach($teachers as $ti => $t)
-                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
                                                 <span style="flex: 1;">{{ $t }}</span>
                                                 <button wire:click="removeTeacher({{ $ti }})" type="button"
                                                         style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
@@ -1027,16 +1027,16 @@
                                         @endif
                                         <div style="display: flex; flex-direction: column; gap: 8px;">
                                             <input type="text" wire:model="teacherFormName" placeholder="Teacher name *"
-                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                             <input type="email" wire:model="teacherFormEmail" placeholder="Email (optional)"
-                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                             <input type="text" wire:model="teacherFormPhone" placeholder="WhatsApp number (optional)"
-                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                             <div style="display: flex; gap: 8px;">
                                                 <div style="flex: 1;">
-                                                    <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Subject(s)</div>
+                                                    <div style="font-size: 10px; color: #87867f; margin-bottom: 2px;">Subject(s)</div>
                                                     <input type="text" wire:model="teacherFormSubjects" placeholder="e.g. Math, English" list="subject-list-modal"
-                                                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                     <datalist id="subject-list-modal">
                                                         @php
                                                             $allSubjects = [];
@@ -1051,9 +1051,9 @@
                                                     </datalist>
                                                 </div>
                                                 <div style="flex: 1;">
-                                                    <div style="font-size: 10px; color: #94A3B8; margin-bottom: 2px;">Class(es)</div>
+                                                    <div style="font-size: 10px; color: #87867f; margin-bottom: 2px;">Class(es)</div>
                                                     <input type="text" wire:model="teacherFormClasses" placeholder="e.g. P1, P2" list="class-list-modal"
-                                                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                     <datalist id="class-list-modal">
                                                         @foreach($this->standards ?? [] as $std)
                                                         <option value="{{ $std['name'] }}">
@@ -1063,7 +1063,7 @@
                                             </div>
                                             <div style="display: flex; gap: 8px;">
                                                 <button wire:click="saveTeacher" type="button"
-                                                        style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                        style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                                                     + Add Teacher
                                                 </button>
                                                 <button wire:click="doneTeachers" type="button"
@@ -1077,14 +1077,14 @@
 
                                                 {{-- Student inline form --}}
                                                 @if($showStudentForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'students')
-                                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                                                <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
                                                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                                        <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Student</span>
+                                                        <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Student</span>
                     <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
                         <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
-                           style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                           style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
                         <label class="flex items-center gap-1 cursor-pointer"
-                               style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                               style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
@@ -1094,8 +1094,8 @@
                                                     @if(count($students) > 0)
                                                     <div style="margin-bottom: 8px;">
                                                         @foreach($students as $si => $s)
-                                                        <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
-                                                            <span style="flex: 1;">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #94A3B8;">({{ $s['class'] }})</span>@endif</span>
+                                                        <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
+                                                            <span style="flex: 1;">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #87867f;">({{ $s['class'] }})</span>@endif</span>
                                                             <button wire:click="removeStudent({{ $si }})" type="button"
                                                                     style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
                                                         </div>
@@ -1104,26 +1104,26 @@
                                                     @endif
                                                     <div style="display: flex; flex-direction: column; gap: 8px;">
                                                         <input type="text" wire:model="studentFormName" placeholder="Student name *"
-                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                         <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
 
                     <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
-                           style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                     <input type="text" wire:model="studentFormClass" placeholder="Class *" list="student-class-list"
-                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                         <datalist id="student-class-list">
                                                             @foreach($this->standards ?? [] as $std)
                                                             <option value="{{ $std['name'] }}">
                                                             @endforeach
                                                         </datalist>
                                                         <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
-                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                         <input type="text" wire:model="studentFormParentPhone" placeholder="Parent phone (optional)"
-                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                         <div style="display: flex; gap: 8px;">
                                                             <button wire:click="saveStudent" type="button"
-                                                                    style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                                    style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                                                                 + Add Student
                                                             </button>
                                                             <button wire:click="doneStudents" type="button"
@@ -1137,14 +1137,14 @@
 
                                     {{-- Fee inline form (maximized) --}}
                                     @if($showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
-                                    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                                    <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
                                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                            <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Fee</span>
+                                            <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Fee</span>
                                             <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
                                                 <a href="{{ asset('templates/fee-upload-template.xlsx') }}" download
-                                                   style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                                                   style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
                                                 <label class="flex items-center gap-1 cursor-pointer"
-                                                       style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                                                       style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
                                                     Upload File
                                                     <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                                                 </label>
@@ -1154,7 +1154,7 @@
                                         @if(count($fees) > 0)
                                         <div style="margin-bottom: 8px;">
                                             @foreach($fees as $fi => $f)
-                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
                         <span style="flex: 1;">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif</span>
                                                 <button wire:click="removeFee({{ $fi }})" type="button"
                                                         style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
@@ -1164,11 +1164,11 @@
                                         @endif
                                         <div style="display: flex; flex-direction: column; gap: 8px;">
                                             <input type="text" wire:model="feeFormName" placeholder="Fee name *"
-                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                             <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
-                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                             <select wire:model="feeFormLevel"
-                                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                    style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                                                 <option value="">Level (optional)</option>
                                                 <option value="nursery">Nursery</option>
                                                 <option value="primary">Primary</option>
@@ -1176,14 +1176,14 @@
                                                 <option value="all">All Levels</option>
                                             </select>
                                             <input type="text" wire:model="feeFormClass" placeholder="Class (optional)" list="fee-class-list-modal"
-                                                   style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                             <datalist id="fee-class-list-modal">
                                                 @foreach($this->standards ?? [] as $std)
                                                 <option value="{{ $std['name'] }}">
                                                 @endforeach
                                             </datalist>
                                             <select wire:model="feeFormTerm"
-                                                    style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                    style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                                                 <option value="">Term (optional)</option>
                                                 <option value="Term I">Term I</option>
                                                 <option value="Term II">Term II</option>
@@ -1191,7 +1191,7 @@
                                             </select>
                                             <div style="display: flex; gap: 8px;">
                                                 <button wire:click="saveFee" type="button"
-                                                        style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                        style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                                                     + Add Fee
                                                 </button>
                                                 <button wire:click="doneFees" type="button"
@@ -1205,14 +1205,14 @@
 
                                                 {{-- Exam inline form --}}
                                                 @if($showExamForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams')
-                                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin: 4px 0;">
+                                                <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
                                                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                                        <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Add Exam</span>
+                                                        <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Exam</span>
                                                         <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
                                                             <a href="{{ asset('templates/exam-upload-template.xlsx') }}" download
-                                                               style="font-size: 10px; color: #1E6FD9; text-decoration: none; padding: 4px 8px; background: #EFF6FF; border-radius: 6px;">Download Template</a>
+                                                               style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
                                                             <label class="flex items-center gap-1 cursor-pointer"
-                                                                   style="padding: 4px 8px; background: #F1F5F9; border-radius: 6px; font-size: 11px; color: #64748B; cursor: pointer;">
+                                                                   style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
                                                                 Upload File
                                                                 <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                                                             </label>
@@ -1222,7 +1222,7 @@
                                                     @if(count($exams) > 0)
                                                     <div style="margin-bottom: 8px;">
                                                         @foreach($exams as $ei => $e)
-                                                        <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #1E293B; border-bottom: 1px solid #F1F5F9;">
+                                                        <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
                                                             <span style="flex: 1;">{{ $e['type'] }} — {{ $e['term'] }}</span>
                                                             <button wire:click="removeExam({{ $ei }})" type="button"
                                                                     style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
@@ -1232,23 +1232,23 @@
                                                     @endif
                                                     <div style="display: flex; flex-direction: column; gap: 8px;">
                                                         <select wire:model="examFormTerm"
-                                                                style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                                style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                                                             <option value="">Term *</option>
                                                             <option value="Term I">Term I</option>
                                                             <option value="Term II">Term II</option>
                                                             <option value="Term III">Term III</option>
                                                         </select>
                                                         <input type="text" wire:model="examFormType" placeholder="Exam type * (e.g. Midterm, Final)"
-                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                         <select wire:model="examFormStatus"
-                                                                style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                                style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                                                             <option value="">Status</option>
                                                             <option value="active">Active</option>
                                                             <option value="completed">Completed</option>
                                                             <option value="cancelled">Cancelled</option>
                                                         </select>
                                                         <select wire:model="examFormLevel"
-                                                                style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                                style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
                                                             <option value="">Level</option>
                                                             <option value="nursery">Nursery</option>
                                                             <option value="primary">Primary</option>
@@ -1256,14 +1256,14 @@
                                                             <option value="all">All Levels</option>
                                                         </select>
                                                         <input type="text" wire:model="examFormClass" placeholder="Class" list="exam-class-list"
-                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                         <datalist id="exam-class-list">
                                                             @foreach($this->standards ?? [] as $std)
                                                             <option value="{{ $std['name'] }}">
                                                             @endforeach
                                                         </datalist>
                                                         <input type="text" wire:model="examFormSubject" placeholder="Subject" list="exam-subject-list"
-                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                         <datalist id="exam-subject-list">
                                                             @php
                                                                 $allSubs = [];
@@ -1277,7 +1277,7 @@
                                                             @endforeach
                                                         </datalist>
                                                         <input type="text" wire:model="examFormTeacher" placeholder="Teacher" list="exam-teacher-list"
-                                                               style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
                                                         <datalist id="exam-teacher-list">
                                                             @foreach($this->teacherList ?? [] as $t)
                                                             <option value="{{ $t }}">
@@ -1285,11 +1285,11 @@
                                                         </datalist>
                                                         <div style="display: flex; gap: 8px;">
                                                             <button wire:click="saveExam" type="button"
-                                                                    style="flex: 1; padding: 8px; background: #1E6FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                                    style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                                                                 + Add Exam
                                                             </button>
                                                             <button wire:click="doneExams" type="button"
-                                                                    style="flex: 1; padding: 8px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">
+                                                                    style="flex: 1; padding: 8px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">
                                                                 Skip
                                                             </button>
                                                             <button wire:click="doneExams" type="button"
@@ -1307,13 +1307,13 @@
                             @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
                             @foreach($plans as $plan)
                             <button wire:click="selectPlan({{ $plan->id }})"
-                                    style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #1E293B; font-family: 'DM Sans', sans-serif;"
+                                    style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #4d4c48; font-family: 'DM Sans', sans-serif;"
                                     onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
-                                    onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
+                                    onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
                                 <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
-                                    <div style="color: #64748B; font-size: 12px; margin-top: 2px;">
+                                    <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
                                         @if(strtolower($plan->name) === 'premium')
                                             Contact sales
                                         @elseif($plan->amount > 0)
@@ -1330,7 +1330,7 @@
 
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'school_info' && $substep === 2)
                         <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; margin-bottom: 4px;">→ Category</div>
+                            <div style="font-size: 12px; font-weight: 600; color: #5e5d59; margin-bottom: 4px;">→ Category</div>
                             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                                 <button wire:click="setSchoolType('nursery')" class="toshi-btn">Nursery</button>
                                 <button wire:click="setSchoolType('primary','','mixed')" class="toshi-btn">Primary</button>
@@ -1341,7 +1341,7 @@
                         @endif
 
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'co_admin_invite' && $substep === 0)
-                        <div style="font-size: 12px; font-weight: 600; color: #64748B; margin-bottom: 2px; padding: 4px 0 0;">→ Would you like to add a co-admin for this school?</div>
+                        <div style="font-size: 12px; font-weight: 600; color: #5e5d59; margin-bottom: 2px; padding: 4px 0 0;">→ Would you like to add a co-admin for this school?</div>
                         <div style="display: flex; gap: 8px; padding: 4px 0 8px;">
                             <button wire:click="coAdminInviteYes" class="toshi-btn" style="background: #F0FDF4; border-color: #22C55E; font-weight: 600;">Yes, add a co-admin</button>
                             <button wire:click="coAdminInviteSkip" class="toshi-btn">Skip</button>
@@ -1353,20 +1353,20 @@
                             @php $staff = $this->getAvailableStaff(); @endphp
                             @foreach($staff as $teacher)
                             <button wire:click="promoteCoAdmin({{ $teacher->id }})"
-                                    style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #1E293B;"
-                                    onmouseover="this.style.borderColor='#1E6FD9';this.style.boxShadow='0 2px 8px rgba(30,111,217,0.12)'"
-                                    onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
-                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #EFF6FF; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #1E6FD9; font-size: 12px;">{{ strtoupper(substr($teacher->name, 0, 1)) }}</div>
+                                    style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #4d4c48;"
+                                    onmouseover="this.style.borderColor='#c96442';this.style.boxShadow='0 2px 8px rgba(30,111,217,0.12)'"
+                                    onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #faf9f5; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #c96442; font-size: 12px;">{{ strtoupper(substr($teacher->name, 0, 1)) }}</div>
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="font-weight: 600;">{{ $teacher->name }}</div>
-                                    <div style="font-size: 11px; color: #64748B;">{{ $teacher->email }}</div>
+                                    <div style="font-size: 11px; color: #5e5d59;">{{ $teacher->email }}</div>
                                 </div>
                             </button>
                             @endforeach
                             <button wire:click="promoteCoAdminAddNew"
-                                    style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #64748B; margin-top: 4px;"
+                                    style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #f5f4ed; border: 1px dashed #CBD5E1; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #5e5d59; margin-top: 4px;"
                                     onmouseover="this.style.borderColor='#22C55E';this.style.color='#166534'"
-                                    onmouseout="this.style.borderColor='#CBD5E1';this.style.color='#64748B'">
+                                    onmouseout="this.style.borderColor='#CBD5E1';this.style.color='#5e5d59'">
                                 <span style="font-size: 16px;">＋</span>
                                 <span>Add someone else (not on this list)</span>
                             </button>
@@ -1375,78 +1375,78 @@
 
                         {{-- Review Card (maximized modal) --}}
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'review' && !empty($reviewData) && empty($reviewData['committed']))
-                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0;">
+                        <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0;">
                             {{-- Header --}}
-                            <div style="background: #0F172A; color: #FFFFFF; padding: 14px 16px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px;">
+                            <div style="background: #141413; color: #FFFFFF; padding: 14px 16px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px;">
                                 <span>📋 Review &amp; Confirm</span>
                             </div>
                             {{-- Body --}}
                             <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;">
                                 <div style="display: flex; gap: 10px;">
-                                    <div style="flex: 1; background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
-                                        <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Plan</div>
-                                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['plan'] }}</div>
+                                    <div style="flex: 1; background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
+                                        <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Plan</div>
+                                        <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['plan'] }}</div>
                                     </div>
-                                    <div style="flex: 1; background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
-                                        <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">School</div>
-                                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['schoolName'] }}</div>
-                                        <div style="font-size: 11px; color: #64748B;">{{ ucfirst($reviewData['schoolType']) }}</div>
+                                    <div style="flex: 1; background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
+                                        <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">School</div>
+                                        <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['schoolName'] }}</div>
+                                        <div style="font-size: 11px; color: #5e5d59;">{{ ucfirst($reviewData['schoolType']) }}</div>
                                     </div>
                                 </div>
-                                <div style="background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
-                                    <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Admin Account</div>
-                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['adminName'] }}</div>
-                                    <div style="font-size: 11px; color: #64748B;">{{ $reviewData['adminEmail'] }} · {{ $reviewData['adminPhone'] }}</div>
+                                <div style="background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
+                                    <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Admin Account</div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['adminName'] }}</div>
+                                    <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['adminEmail'] }} · {{ $reviewData['adminPhone'] }}</div>
                                 </div>
                                 @if(!empty($reviewData['coAdminName']))
-                                <div style="background: #F8FAFC; border-radius: 10px; padding: 10px 12px;">
-                                    <div style="font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
-                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 3px;">{{ $reviewData['coAdminName'] }}</div>
-                                    <div style="font-size: 11px; color: #64748B;">{{ $reviewData['coAdminEmail'] }}</div>
+                                <div style="background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
+                                    <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['coAdminName'] }}</div>
+                                    <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['coAdminEmail'] }}</div>
                                 </div>
                                 @endif
                                 <div style="background: {{ !empty($reviewData['whatsapp']) && str_contains($reviewData['whatsapp'], '✅') ? '#F0FDF4' : '#FEF2F2' }}; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;">
                                     <span style="font-size: 16px;">📱</span>
                                     <div>
-                                        <div style="font-size: 12px; font-weight: 600; color: #0F172A;">WhatsApp</div>
-                                        <div style="font-size: 11px; color: #64748B;">{{ $reviewData['whatsapp'] ?? 'Not set up' }}</div>
+                                        <div style="font-size: 12px; font-weight: 600; color: #141413;">WhatsApp</div>
+                                        <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['whatsapp'] ?? 'Not set up' }}</div>
                                     </div>
                                 </div>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
-                                        <div style="font-size: 18px; font-weight: 700; color: #1E6FD9;">{{ $reviewData['classCount'] }}</div>
-                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Classes</div>
+                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
+                                        <div style="font-size: 18px; font-weight: 700; color: #c96442;">{{ $reviewData['classCount'] }}</div>
+                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Classes</div>
                                     </div>
-                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
                                         <div style="font-size: 18px; font-weight: 700; color: #22C55E;">{{ $reviewData['teacherCount'] }}</div>
-                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Teachers</div>
+                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Teachers</div>
                                         @if(!empty($reviewData['teacherLinkCount']) && $reviewData['teacherLinkCount'] > 0)
-                                        <div style="font-size: 8px; color: #94A3B8; margin-top: 2px;">{{ $reviewData['teacherLinkCount'] }} subject links</div>
+                                        <div style="font-size: 8px; color: #87867f; margin-top: 2px;">{{ $reviewData['teacherLinkCount'] }} subject links</div>
                                         @endif
                                     </div>
-                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
                                         <div style="font-size: 18px; font-weight: 700; color: #D97706;">{{ $reviewData['studentCount'] }}</div>
-                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Students</div>
+                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Students</div>
                                         @if(!empty($reviewData['studentIds']) && $reviewData['studentIds'] !== '—')
-                                        <div style="font-size: 8px; color: #94A3B8; margin-top: 2px;">{{ $reviewData['studentIds'] }}</div>
+                                        <div style="font-size: 8px; color: #87867f; margin-top: 2px;">{{ $reviewData['studentIds'] }}</div>
                                         @endif
                                     </div>
-                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
                                         <div style="font-size: 18px; font-weight: 700; color: #8B5CF6;">{{ $reviewData['termCount'] }}</div>
-                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Terms</div>
+                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Terms</div>
                                     </div>
-                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
                                         <div style="font-size: 18px; font-weight: 700; color: #EC4899;">{{ $reviewData['feeCount'] }}</div>
-                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Fees</div>
+                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Fees</div>
                                     </div>
-                                    <div style="background: #F8FAFC; border-radius: 8px; padding: 8px; text-align: center;">
+                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
                                         <div style="font-size: 18px; font-weight: 700; color: #14B8A6;">{{ $reviewData['examCount'] }}</div>
-                                        <div style="font-size: 10px; color: #64748B; font-weight: 500;">Exams</div>
+                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Exams</div>
                                     </div>
                                 </div>
                             </div>
                             {{-- Actions --}}
-                            <div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #E2E8F0; background: #FAFAFA;">
+                            <div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #e8e6dc; background: #FAFAFA;">
                                 <button type="button" wire:click="confirmOnboarding"
                                         style="flex: 1; padding: 11px; font-family: 'Sora', sans-serif;"
                                         class="toshi-btn-confirm"
@@ -1456,7 +1456,7 @@
                                 <button type="button" wire:click="editBeforeCommit"
                                         style="padding: 11px 14px;"
                                         class="toshi-btn-secondary"
-                                        onmouseover="this.style.borderColor='#1E6FD9';this.style.color='#1E6FD9'" onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#64748B'">
+                                        onmouseover="this.style.borderColor='#c96442';this.style.color='#c96442'" onmouseout="this.style.borderColor='#e8e6dc';this.style.color='#5e5d59'">
                                     ← Edit
                                 </button>
                             </div>
@@ -1465,7 +1465,7 @@
 
                         @if($step === 99 && !empty($reviewData['committed']))
                         @php $isComplete = ($reviewData['mode'] ?? 'create') === 'complete'; @endphp
-                        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0; text-align: center;">
+                        <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0; text-align: center;">
                             <div style="background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); padding: 24px 16px;">
                                 <div style="font-size: 40px; margin-bottom: 8px;">🎉</div>
                                 <div style="font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em;">
@@ -1479,34 +1479,34 @@
                                 @if(!$isComplete)
                                 <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 12px;">
                                     <div style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.04em;">Admin Login Credentials</div>
-                                    <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px;">{{ $reviewData['adminEmail'] ?? '—' }}</div>
-                                    <div style="font-size: 13px; color: #64748B; margin-top: 2px;">Password: <strong>{{ $reviewData['adminPassword'] ?? 'password' }}</strong></div>
-                                    <div style="font-size: 12px; color: #64748B; margin-top: 2px;">📱 {{ $reviewData['adminPhone'] ?? '—' }}</div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #141413; margin-top: 6px;">{{ $reviewData['adminEmail'] ?? '—' }}</div>
+                                    <div style="font-size: 13px; color: #5e5d59; margin-top: 2px;">Password: <strong>{{ $reviewData['adminPassword'] ?? 'password' }}</strong></div>
+                                    <div style="font-size: 12px; color: #5e5d59; margin-top: 2px;">📱 {{ $reviewData['adminPhone'] ?? '—' }}</div>
                                 </div>
                                 @if(!empty($reviewData['coAdminEmail']))
                                 <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 12px;">
                                     <div style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
-                                    <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px;">{{ $reviewData['coAdminEmail'] ?? '—' }}</div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #141413; margin-top: 6px;">{{ $reviewData['coAdminEmail'] ?? '—' }}</div>
                                     @if(!empty($reviewData['coAdminPromoted']))
                                     <div style="font-size: 12px; color: #166534; margin-top: 2px;">✅ Promoted from teacher — they keep their existing password</div>
                                     @else
-                                    <div style="font-size: 13px; color: #64748B; margin-top: 2px;">Password: <strong>{{ $reviewData['coAdminPassword'] ?? 'password' }}</strong></div>
+                                    <div style="font-size: 13px; color: #5e5d59; margin-top: 2px;">Password: <strong>{{ $reviewData['coAdminPassword'] ?? 'password' }}</strong></div>
                                     @endif
                                 </div>
                                 @endif
-                                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">
+                                <div style="font-size: 12px; color: #5e5d59; line-height: 1.5;">
                                     Share these credentials with the school admin. They can log in at the <strong>KlassApp login page</strong>.
                                 </div>
                                 @else
-                                <div style="font-size: 13px; color: #64748B; line-height: 1.5;">
+                                <div style="font-size: 13px; color: #5e5d59; line-height: 1.5;">
                                     ✅ Your school setup is complete. Toshi will remind you if anything needs attention later.
                                 </div>
                                 @endif
                             </div>
                             <div style="padding: 0 16px 16px;">
                                 <button wire:click="resetOnboarding"
-                                        style="width: 100%; padding: 11px; background: #0F172A; color: #FFFFFF; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;"
-                                        onmouseover="this.style.background='#1E293B'" onmouseout="this.style.background='#0F172A'">
+                                        style="width: 100%; padding: 11px; background: #141413; color: #FFFFFF; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;"
+                                        onmouseover="this.style.background='#4d4c48'" onmouseout="this.style.background='#141413'">
                                     @if($isComplete) ✅ Done — Ask Toshi @else + Onboard Another School @endif
                                 </button>
                             </div>
@@ -1525,56 +1525,56 @@
                             Yes ✓
                         </button>
                         <button wire:click="confirmNo" type="button"
-                                style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#E2E8F0'"
-                                onmouseout="this.style.background='#F1F5F9'">
+                                style="flex: 1; padding: 10px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#e8e6dc'"
+                                onmouseout="this.style.background='#f5f4ed'">
                         No
                     </button>
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects' && $substep === 1)
                         <button wire:click="confirmCustom" type="button"
-                                style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#1557B3'"
-                                onmouseout="this.style.background='#1E6FD9'">
+                                style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#a84d32'"
+                                onmouseout="this.style.background='#c96442'">
                             + Add Subject
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers' && $substep === 0)
                         <button wire:click="showTeacherFormFn" type="button"
-                                style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#1557B3'"
-                                onmouseout="this.style.background='#1E6FD9'">
+                                style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#a84d32'"
+                                onmouseout="this.style.background='#c96442'">
                             + Add Teacher
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'students' && $substep === 0)
                         <button wire:click="showStudentFormFn" type="button"
-                                style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#1557B3'"
-                                onmouseout="this.style.background='#1E6FD9'">
+                                style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#a84d32'"
+                                onmouseout="this.style.background='#c96442'">
                             + Add Student
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees' && $substep === 0)
                         <button wire:click="showFeeFormFn" type="button"
-                                style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#1557B3'"
-                                onmouseout="this.style.background='#1E6FD9'">
+                                style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#a84d32'"
+                                onmouseout="this.style.background='#c96442'">
                             + Add Fee
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams' && $substep === 0)
                         <button wire:click="showExamFormFn" type="button"
-                                style="flex: 1; padding: 10px; background: #1E6FD9; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#1557B3'"
-                                onmouseout="this.style.background='#1E6FD9'">
+                                style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#a84d32'"
+                                onmouseout="this.style.background='#c96442'">
                             + Add Exam
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
                         <button wire:click="confirmSkipAll" type="button"
-                                style="flex: 1; padding: 10px; background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#E2E8F0'"
-                                onmouseout="this.style.background='#F1F5F9'">
+                                style="flex: 1; padding: 10px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                onmouseover="this.style.background='#e8e6dc'"
+                                onmouseout="this.style.background='#f5f4ed'">
                             Skip All
                         </button>
                         @endif
@@ -1622,18 +1622,18 @@
                                         }
                                     "
                                     class="relative"
-                                    style="width: 30px; height: 30px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #94A3B8; transition: color 0.15s;"
-                                    onmouseover="this.style.color='#1E6FD9'"
-                                    onmouseout="this.style.color='#94A3B8'">
+                                    style="width: 30px; height: 30px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #87867f; transition: color 0.15s;"
+                                    onmouseover="this.style.color='#c96442'"
+                                    onmouseout="this.style.color='#87867f'">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
                                 <span x-show="listening" class="absolute" style="width: 8px; height: 8px; border-radius: 50%; background: #22C55E; animation: toshi-pulse 1.4s ease-in-out infinite; top: 2px; right: 2px;"></span>
                             </button>
                             {{-- Right cluster: attach + send --}}
                             <div style="display: flex; align-items: center; gap: 6px;">
                                 <label class="flex items-center justify-center cursor-pointer"
-                                       style="width: 30px; height: 30px; color: #94A3B8; transition: color 0.15s; font-size: 20px; font-weight: 300;"
-                                       onmouseover="this.style.color='#1E6FD9'"
-                                       onmouseout="this.style.color='#94A3B8'"
+                                       style="width: 30px; height: 30px; color: #87867f; transition: color 0.15s; font-size: 20px; font-weight: 300;"
+                                       onmouseover="this.style.color='#c96442'"
+                                       onmouseout="this.style.color='#87867f'"
                                        title="Upload file">
                                     +
                                     <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
@@ -1641,7 +1641,7 @@
                                 {{-- Send --}}
                                 <button type="submit"
                                         :disabled="!hasText"
-                                        :style="hasText ? 'color: #0F172A; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
+                                        :style="hasText ? 'color: #141413; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
                                         style="width: 30px; height: 30px; background: none; border: none; display: flex; align-items: center; justify-content: center; transition: color 0.15s;"
                                         class="active:scale-95">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>

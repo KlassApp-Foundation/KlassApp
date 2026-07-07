@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->string('google_id')->nullable()->unique()->after('id');
+            $table->text('google_avatar')->nullable()->after('google_id');
+            $table->text('google_token')->nullable()->after('google_avatar');
         });
     }
 
@@ -22,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->dropColumn(['google_id', 'google_avatar', 'google_token']);
         });
     }
 };

@@ -5,26 +5,23 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <!-- Favicon -->
     @include('layouts.partials.favicon')
     <title>{{ config('app.name', 'KlassApp') }}</title>
-    <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Exo+2:wght@400;500&family=IBM+Plex+Sans:wght@500;600;700&family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link href="{{ asset('css/dashboard-refresh.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     @stack('styles')
   </head>
-  <body>
+  <body style="background: #FAFAF5; font-family: 'DM Sans', sans-serif;">
     <div id="app">
       <main>
-        <div class="empty-layout flex items-center bg-gray-300 min-h-screen">
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
           @yield('content')
         </div>
       </main>
     </div>
-    <!-- Scripts -->
     <script src="{{ asset('js/app.js') }}" defer></script>
+    @stack('scripts')
   </body>
-
-  </html>
+</html>

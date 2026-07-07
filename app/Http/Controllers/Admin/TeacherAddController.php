@@ -40,7 +40,6 @@ class TeacherAddController extends Controller
 
       $array['academic_year_id']  =   $academic_year->id;
       $array['countrylist']       =   SiteHelper::getCountries();
-      $array['statelist']         =   SiteHelper::getStates();
       $array['citylist']          =   SiteHelper::getCities();
       $array['qualificationlist'] =   SiteHelper::getAdditionalCertificates();
       $array['pglist']            =   SiteHelper::getPGList();

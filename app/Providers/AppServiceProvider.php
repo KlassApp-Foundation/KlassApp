@@ -48,7 +48,10 @@ class AppServiceProvider extends ServiceProvider {
     */
 
     public function boot() { 
-
+        // Suppress PHP deprecation warnings in debug mode (PHP 8.4 compatibility)
+        if (config('app.debug')) {
+            error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+        }
 
      Validator::extend('check_logoutdevice_id', function ($attribute, $value, $parameters, $validator) 
         {

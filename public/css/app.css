@@ -16000,10 +16000,10 @@ ul.course_tabs li.current p {
 
 .dashboard-shell .dashboard-live-badge {
   display: inline-block;
-  background: linear-gradient(110deg, #0F172A 0%, #1E6FD9 36%, #22C55E 72%, #16A34A 100%) !important;
-  border-left: 4px solid #22c55e !important;
-  border: 1px solid rgba(30, 111, 217, 0.55);
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: linear-gradient(110deg, #141413 0%, #c96442 36%, #d97757 72%, #a84d32 100%) !important;
+  border-left: 4px solid #c96442 !important;
+  border: 1px solid rgba(201, 100, 66, 0.55);
+  box-shadow: 0 10px 26px rgba(20, 20, 19, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   padding: 0.75rem 1rem;
   border-radius: 0.375rem;
   color: #fff;
@@ -16014,19 +16014,19 @@ ul.course_tabs li.current p {
 
 .dashboard-shell .dashboard-live-badge--teacher {
   display: inline-block;
-  background: linear-gradient(110deg, #0F172A 0%, #1E6FD9 36%, #22C55E 72%, #16A34A 100%) !important;
-  border-left: 4px solid #22c55e !important;
-  border: 1px solid rgba(30, 111, 217, 0.55);
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: linear-gradient(110deg, #141413 0%, #c96442 36%, #d97757 72%, #a84d32 100%) !important;
+  border-left: 4px solid #c96442 !important;
+  border: 1px solid rgba(201, 100, 66, 0.55);
+  box-shadow: 0 10px 26px rgba(20, 20, 19, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   padding: 0.75rem 1rem;
   border-radius: 0.375rem;
 }
 
 .dashboard-shell .dashboard-live-badge--superadmin {
   display: inline-block;
-  background: linear-gradient(110deg, #0F172A 0%, #1E6FD9 36%, #22C55E 72%, #16A34A 100%) !important;
-  border-left: 4px solid #22c55e !important;
-  border: 1px solid rgba(30, 111, 217, 0.55);
+  background: linear-gradient(110deg, #141413 0%, #c96442 36%, #d97757 72%, #a84d32 100%) !important;
+  border-left: 4px solid #c96442 !important;
+  border: 1px solid rgba(201, 100, 66, 0.55);
   box-shadow: 0 10px 26px rgba(15, 23, 42, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   padding: 0.75rem 1rem;
   border-radius: 0.375rem;
@@ -16202,40 +16202,51 @@ ul.course_tabs li.current p {
 /*sidebar css start*/
 
 .admin-sidebar {
-  /* background: #48baf1; */
-  background: #063f8d;
+  background:
+    repeating-linear-gradient(45deg, rgba(217,119,6,0.04) 0px, rgba(217,119,6,0.04) 1px, transparent 1px, transparent 12px),
+    repeating-linear-gradient(-45deg, rgba(217,119,6,0.04) 0px, rgba(217,119,6,0.04) 1px, transparent 1px, transparent 12px),
+    radial-gradient(ellipse 100% 40% at 50% 90%, rgba(217,119,6,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 30% at 50% 10%, rgba(217,119,6,0.08) 0%, transparent 50%),
+    #FFFCF5;
+  background-color: #FFFCF5;
+  border-right: 1px solid #E2E8F0;
 }
 
 .dashboard-themed-header {
-  background-color: #0f172a !important;
+  background:
+    repeating-linear-gradient(45deg, rgba(217,119,6,0.04) 0px, rgba(217,119,6,0.04) 1px, transparent 1px, transparent 12px),
+    repeating-linear-gradient(-45deg, rgba(217,119,6,0.04) 0px, rgba(217,119,6,0.04) 1px, transparent 1px, transparent 12px),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(217,119,6,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 20% 0%, rgba(217,119,6,0.06) 0%, transparent 50%),
+    #FFFCF5 !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
 .dashboard-themed-header .tw-form-label {
-  color: #dbeafe !important;
+  color: #64748B !important;
   font-weight: 700;
 }
 
 .admin-sidebar ul li a {
-  --text-opacity: 1;
-  color: #fff;
-  color: rgba(255, 255, 255, var(--text-opacity));
+  color: #1E293B;
   font-size: 0.875rem;
   font-weight: 400;
 }
 
 .admin-sidebar .active {
-  background: #1e3a8a;
+  background: rgba(34, 197, 94, 0.10);
   border-left: 0;
 }
 
 .admin-sidebar .dashboard-menu-item.dashboard-active {
-  background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%);
-  border-left: 3px solid #22c55e;
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%);
+  border-left: 3px solid #22C55E;
 }
 
 .admin-sidebar li:hover,
 .admin-sidebar li.hover\:bg-red-900:hover {
-  background: rgba(34, 197, 94, 0.26) !important;
+  background: rgba(34, 197, 94, 0.06) !important;
 }
 
 /*sidebar css end*/
@@ -16462,38 +16473,108 @@ ul.course_tabs li.current p {
 .user-dtl {
   display: none;
   position: absolute;
-  margin-top: 20px;
+  margin-top: 16px;
   z-index: 99;
-  transform: translateY(-4px) scale(1.02);
-  background: #0F172A;
-  /* margin-left: -135px;*/
-  box-shadow: 0px 5px 75px 2px rgba(34, 197, 94, 0.15) !important;
-  /* min-width: 180px;*/
-  min-width: 250px;
-  /* left: 1061px;*/
   right: 20px;
-  border: 1px solid rgba(34, 197, 94, 0.25);
+  min-width: 260px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
-
-/* Global user-menu dropdown tone: green on blue theme */
 
 .user-dtl .list-reset {
-  background-color: #0F172A !important;
-  border-color: rgba(34, 197, 94, 0.25) !important;
-}
-
-.user-dtl .list-reset .border-b {
-  border-color: rgba(34, 197, 94, 0.25) !important;
-}
-
-.user-dtl .list-reset li:hover {
-  background: linear-gradient(90deg, rgba(34, 197, 94, 0.3) 0%, rgba(34, 197, 94, 0.18) 100%) !important;
-  border-left: 3px solid #22c55e;
-  padding-left: calc(0.75rem - 3px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .user-dtl .list-reset li a {
-  color: #fff !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #1E293B !important;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.12s ease;
+}
+
+.user-dtl .list-reset li a:hover {
+  background: rgba(34, 197, 94, 0.06) !important;
+  color: #22C55E !important;
+}
+
+.user-dtl .list-reset li:last-child a {
+  color: #DC2626 !important;
+}
+
+.user-dtl .list-reset li:last-child a:hover {
+  background: rgba(220, 38, 38, 0.06) !important;
+  color: #DC2626 !important;
+}
+
+.user-dtl-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #E2E8F0;
+  margin-bottom: 4px;
+}
+
+.user-dtl-header img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-dtl-header .user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-dtl-header .user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-dtl-header .user-email {
+  font-size: 12px;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-dtl-item .dtl-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #F8FAFC;
+  color: #64748B;
+  flex-shrink: 0;
+}
+
+.user-dtl-item a:hover .dtl-icon {
+  background: rgba(34, 197, 94, 0.10);
+  color: #22C55E;
+}
+
+.user-dtl-divider {
+  height: 1px;
+  background: #E2E8F0;
+  margin: 4px 8px;
 }
 
 .student_select [type=checkbox]:not(:checked),
@@ -16819,20 +16900,20 @@ body {
 }
 
 .admin-sidebar .sites-sidebar {
-  background: #0F172A !important;
-  border: 1px solid rgba(34, 197, 94, 0.25);
-  box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15);
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .admin-sidebar .sites-sidebar li:hover {
-  background: linear-gradient(90deg, rgba(34, 197, 94, 0.3) 0%, rgba(34, 197, 94, 0.18) 100%) !important;
-  border-left: 3px solid #22c55e;
+  background: rgba(34, 197, 94, 0.06) !important;
+  border-left: 3px solid #22C55E;
   padding-left: calc(0.75rem - 3px);
 }
 
 .admin-sidebar .sites-sidebar li.active {
-  background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%) !important;
-  border-left: 3px solid #22c55e;
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.06) 100%) !important;
+  border-left: 3px solid #22C55E;
   padding-left: calc(0.75rem - 3px);
 }
 
@@ -17445,19 +17526,26 @@ button.fc-button.fc-button-primary {
 .student-sidebar,
 .accountant-sidebar,
 .librarian-sidebar {
-  background-color: #0F172A !important;
+  background:
+    repeating-linear-gradient(45deg, rgba(217,119,6,0.04) 0px, rgba(217,119,6,0.04) 1px, transparent 1px, transparent 12px),
+    repeating-linear-gradient(-45deg, rgba(217,119,6,0.04) 0px, rgba(217,119,6,0.04) 1px, transparent 1px, transparent 12px),
+    radial-gradient(ellipse 100% 40% at 50% 90%, rgba(217,119,6,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 30% at 50% 10%, rgba(217,119,6,0.08) 0%, transparent 50%),
+    #FFFCF5 !important;
+  background-color: #FFFCF5 !important;
+  border-right: 1px solid #E2E8F0 !important;
 }
 
 /* Teacher Dashboard */
 
 .teacher-sidebar li:hover {
-  background: rgba(34, 197, 94, 0.26) !important;
+  background: rgba(34, 197, 94, 0.06) !important;
 }
 
 .teacher-sidebar ul li.active,
 .teacher-sidebar ul li.active:hover {
-  background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%) !important;
-  border-left: 3px solid #22c55e !important;
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%) !important;
+  border-left: 3px solid #22C55E !important;
 }
 
 .teacher-sidebar li:hover > .sites-sidebar,
@@ -17469,7 +17557,7 @@ button.fc-button.fc-button-primary {
 }
 
 .teacher-sidebar .sites-sidebar {
-  background: #0F172A !important;
+  background: #141413 !important;
   border: 1px solid rgba(34, 197, 94, 0.25);
   box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15);
 }
@@ -17506,7 +17594,7 @@ button.fc-button.fc-button-primary {
 }
 
 .student-sidebar .sites-sidebar {
-  background: #0F172A !important;
+  background: #141413 !important;
   border: 1px solid rgba(34, 197, 94, 0.25);
   box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15);
 }
@@ -17539,7 +17627,7 @@ button.fc-button.fc-button-primary {
 }
 
 .accountant-sidebar .sites-sidebar {
-  background: #0F172A !important;
+  background: #141413 !important;
   border: 1px solid rgba(34, 197, 94, 0.25);
   box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15);
 }
@@ -17572,7 +17660,7 @@ button.fc-button.fc-button-primary {
 }
 
 .librarian-sidebar .sites-sidebar {
-  background: #0F172A !important;
+  background: #141413 !important;
   border: 1px solid rgba(34, 197, 94, 0.25);
   box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15);
 }

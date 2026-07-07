@@ -109,7 +109,6 @@ class StudentController extends Controller
         
       $array['academic_year_id']  =   $academic_year->id;
       $array['countrylist']       =   SiteHelper::getCountries();
-      $array['statelist']         =   SiteHelper::getStates();
       $array['citylist']          =   SiteHelper::getCities();
       $array['standardLinklist']  =   SiteHelper::getStandardLinkList(Auth::user()->school_id);
       $array['blood_groups']      =   SiteHelper::getBloodGroups();
@@ -247,7 +246,6 @@ class StudentController extends Controller
       }
 
       $array['countrylist']       =   SiteHelper::getCountries();
-      $array['statelist']         =   SiteHelper::getStates();
       $array['citylist']          =   SiteHelper::getCities();
       $array['standardLinklist']  =   SiteHelper::getStandardLinkList(Auth::user()->school_id);
       $array['blood_groups']      =   SiteHelper::getBloodGroups();

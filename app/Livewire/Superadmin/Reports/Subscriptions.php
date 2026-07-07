@@ -86,9 +86,13 @@ class Subscriptions extends Component implements HasForms, HasTable
             //     ->url(fn (Subscription $r): string => route('superadmin.reports.subscription.update', ['id' => $r])),
             // ])
             ->actions([
-                
+                Action::make('view_school')
+                ->label('View School')
+                ->url(fn (Subscription $r) => url('/superadmin/academics/school/detail/' . $r->school_id))
+                ->color('info')
+                ->icon('heroicon-o-eye'),
+
                 Action::make('approve')
-                // ->requiresConfirmation()
                 ->visible(fn (Subscription $record) => $record->status === 'pending')
                 ->action(function (Subscription $record) {
                 $startDate = Carbon::today();
@@ -102,7 +106,7 @@ class Subscriptions extends Component implements HasForms, HasTable
                 })
                 ->color('success')
                 ->extraAttributes([
-                     'style' => 'background-color:#16a34a;color:white;padding:4px;border-radious:4px;',
+                     'style' => 'background-color:#16a34a;color:white;padding:4px;border-radius:4px;',
                  ])
                 ->icon('heroicon-o-check'),
             ])

@@ -268,8 +268,6 @@ Route::get('/bloodGroup/list','Api\TestController@getBloodGroup');
 
 Route::get('/get/country','Api\UserprofileController@country');
 
-Route::get('/get/state/{id}','Api\UserprofileController@state');
-
 Route::get('/get/city/{id}','Api\UserprofileController@city');
 
 Route::get('/events/show/details/{id}','Api\EventsController@showdetails');

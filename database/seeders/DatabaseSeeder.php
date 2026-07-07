@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
         $this->call(QualificationTableSeeder::class);
         $this->call(AbsentReasonsTableSeeder::class);
         $this->call(RolesTableSeeder::class);
+        $this->call(EmisSchoolTableSeeder::class);
        
         $this->call(UsersSiteAdminTableSeeder::class);
         

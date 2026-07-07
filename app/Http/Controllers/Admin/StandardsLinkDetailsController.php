@@ -67,6 +67,13 @@ class StandardsLinkDetailsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    public function timetableIndex()
+    {
+        $school_id = auth()->user()->school_id;
+        $standards = \App\Models\StandardLink::where('school_id', $school_id)->get();
+        return view('admin.timetable.index', compact('standards'));
+    }
+
     public function showTimetable($id)
     {
         //

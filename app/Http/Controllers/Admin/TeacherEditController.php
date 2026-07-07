@@ -77,7 +77,6 @@ class TeacherEditController extends Controller
       $array['reporting_to']      = $teacherprofile['reporting_to'];
 
       $array['countrylist']       =   SiteHelper::getCountries();
-      $array['statelist']         =   SiteHelper::getStates();
       $array['citylist']          =   SiteHelper::getCities();
       $array['qualificationlist'] =   SiteHelper::getAdditionalCertificates();
       $array['pglist']            =   SiteHelper::getPGList();

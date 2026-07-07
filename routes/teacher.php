@@ -438,6 +438,11 @@ Route::group(['middleware' => ['designation:student_leave_checker']], function (
  
 
 
+// Library activity — redirect to library module
+Route::get('/libraryactivity', function () {
+    return redirect('/library/books/index');
+});
+
 //Feed
 Route::get('/feeds', 'FeedController@index');
 

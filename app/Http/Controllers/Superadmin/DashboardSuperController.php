@@ -73,17 +73,20 @@ class DashboardSuperController extends Controller
 
             // ── WhatsApp metrics ──
             $whatsappUsers     = WhatsAppUser::whereNotIn('school_id', $testSchoolIds)->count();
-            $whatsappMessages  = MessageDeliveryLog::whereNotIn('school_id', $testSchoolIds)
-                ->whereDate('sent_at', '>=', $now->copy()->startOfMonth())
+            $whatsappMessages  = MessageDeliveryLog::whereHas('user', function ($q) use ($testSchoolIds) {
+                    $q->whereNotIn('school_id', $testSchoolIds);
+                })->whereDate('sent_at', '>=', $now->copy()->startOfMonth())
                 ->whereDate('sent_at', '<=', $now->copy()->endOfMonth())
                 ->count();
-            $whatsappLastMonth = MessageDeliveryLog::whereNotIn('school_id', $testSchoolIds)
-                ->whereDate('sent_at', '>=', $now->copy()->subMonth()->startOfMonth())
+            $whatsappLastMonth = MessageDeliveryLog::whereHas('user', function ($q) use ($testSchoolIds) {
+                    $q->whereNotIn('school_id', $testSchoolIds);
+                })->whereDate('sent_at', '>=', $now->copy()->subMonth()->startOfMonth())
                 ->whereDate('sent_at', '<=', $now->copy()->subMonth()->endOfMonth())
                 ->count();
             $whatsappSuccessRate = $whatsappMessages > 0
-                ? round(MessageDeliveryLog::whereNotIn('school_id', $testSchoolIds)
-                    ->whereDate('sent_at', '>=', $now->copy()->startOfMonth())
+                ? round(MessageDeliveryLog::whereHas('user', function ($q) use ($testSchoolIds) {
+                        $q->whereNotIn('school_id', $testSchoolIds);
+                    })->whereDate('sent_at', '>=', $now->copy()->startOfMonth())
                     ->whereDate('sent_at', '<=', $now->copy()->endOfMonth())
                     ->where('status', 'delivered')->count() / max($whatsappMessages, 1) * 100)
                 : 0;

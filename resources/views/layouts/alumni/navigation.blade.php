@@ -48,59 +48,7 @@
             @else
             <!-- start -->
                 <li>
-                    <div class="profile-click" dusk="profile-menu">
-                        @if(Auth::user()->alumniprofile->photo!= null)
-                          <img src="{{ Auth::user()->alumniprofile->PhotoPath }}" class="w-8 h-8 rounded-full cursor-pointer">
-                        @else
-                            <img src="{{asset('uploads/user/avatar/default-user.jpg')}}" class="w-8 h-8 rounded-full cursor-pointer">
-                        @endif
-                        <div class="user-dtl rounded">
-                            <ul class="list-reset">
-                                <div class="flex border-b p-2 items-center">
-                                    @if(Auth::user()->alumniprofile->photo!= null)
-                                        <img src="{{ Auth::user()->alumniprofile->PhotoPath }}" class="w-10 h-10 rounded-full cursor-pointer">
-                                    @else
-                                        <img src="{{asset('uploads/user/avatar/default-user.jpg')}}" class="w-10 h-10 rounded-full cursor-pointer">
-                                    @endif
-                                    <div>
-                                        <div>
-                                            <a id="navbarDropdown" class="nav-link dropdown-toggle text-sm  no-underline text-black px-2" href="{{url('/alumni/dashboard')}}">
-                                                {{ Auth::user()->FullName }} <span class="caret"></span>
-                                            </a>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm  no-underline text-black px-2">{{ Auth::user()->email }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="py-2 leading-loose">
-                                    <li class="hover:bg-gray-200">
-                                        <a  href="{{url('/alumni/changepassword/')}}" dusk="password-link" class="text-sm  no-underline text-black px-3">
-                                            <span>Change Password</span>
-                                        </a>
-                                    </li>
-                                    <li class="hover:bg-gray-200">
-                                        <a href="{{url('/alumni/edit')}}"  class="text-sm  no-underline text-black px-3">
-                                            <span>Edit Profile</span>
-                                        </a>
-                                    </li>
-                                  <!--   <li class="hover:bg-gray-200">
-                                        <a href="{{url('/admin/changeavatar')}}" class="text-sm  no-underline text-black px-3">
-                                            <span>Change Avatar</span>
-                                        </a>
-                                    </li> -->
-                                    <li class="hover:bg-gray-200" >
-                                        <a class="dropdown-item text-sm  no-underline text-black px-3" dusk="logout-link" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
-                                        {{ __('Logout') }}
-                                        </a>
-                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                            @csrf
-                                        </form>
-                                    </li>
-                                </div>
-                            </ul>
+                            @include('layouts.partials.profile-dropdown')
                         </div>
                     </div>
                 </li>

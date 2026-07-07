@@ -81,30 +81,13 @@
             <label for="relation" class="tw-form-label">Country<span class="text-red-500">*</span></label>
           </div>
           <div class="mb-2">
-            <select class="tw-form-control w-full" wire:model="country" wire:change="changeState">
+            <select class="tw-form-control w-full" wire:model="country" wire:change="changeCity">
             <option value="">Select Country</option>
             @foreach($countries as $value)
             <option value="{{ $value->id }}">{{ ucfirst($value->name) }}</option>
             @endforeach
             </select>
             @error('country')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
-        </div>
-      </div>
-
-      <div class="tw-form-group w-full lg:w-1/2">
-        <div class="lg:mr-8 ">
-          <div class="mb-2">
-            <label for="relation" class="tw-form-label">Region<span class="text-red-500">*</span></label>
-          </div>
-          <div class="mb-2">
-            <select class="tw-form-control w-full" wire:model="state" wire:change="changeCity">
-            <option value="">Select Region</option>
-            @foreach($states as $value)
-            <option value="{{ $value->id }}">{{ ucfirst($value->name) }}</option>
-            @endforeach
-            </select>
-            @error('state')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
           </div> 
         </div>
       </div>
@@ -134,6 +117,70 @@
         </div>
           <input name="pincode" value="" type="text" placeholder="Pincode" class="tw-form-control w-full" wire:model="pincode">
           @error('pincode')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
+        </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label class="tw-form-label">Registration Country</label>
+        </div>
+          <input name="registration_country" type="text" placeholder="e.g. Uganda" class="tw-form-control w-full" wire:model="registration_country">
+        </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label class="tw-form-label">Student Size</label>
+        </div>
+          <select class="tw-form-control w-full" wire:model="student_size">
+            <option value="">Select school size</option>
+            <option value="Under 100 students">Under 100 students</option>
+            <option value="100 to 500 students">100 to 500 students</option>
+            <option value="500 to 1,000 students">500 to 1,000 students</option>
+            <option value="1,000 to 3,000 students">1,000 to 3,000 students</option>
+            <option value="Over 3,000 students">Over 3,000 students</option>
+          </select>
+        </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label class="tw-form-label">EMIS Code <span class="text-xs text-gray-500 font-normal">(Ministry of Education)</span></label>
+        </div>
+          <input name="ministry_code" type="text" placeholder="e.g. 4527" class="tw-form-control w-full" wire:model.live="ministry_code">
+          @error('ministry_code')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
+          @if($emisSchoolName)
+            <div class="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-800">
+              <strong>{{ $emisSchoolName }}</strong>
+              @if($emisDistrict) &middot; {{ $emisDistrict }} @endif
+            </div>
+          @endif
+        </div>
+        </div>
+        </div>
+
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label class="tw-form-label">Curriculum</label>
+        </div>
+          <select class="tw-form-control w-full" wire:model="curriculum">
+            <option value="uneb">UNEB</option>
+            <option value="uk">UK Curriculum</option>
+            <option value="us">US Curriculum</option>
+            <option value="ib">IB</option>
+            <option value="other">Other</option>
+          </select>
         </div>
         </div>
       </div>
