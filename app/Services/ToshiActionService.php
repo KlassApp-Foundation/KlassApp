@@ -126,7 +126,7 @@ class ToshiActionService
                 'actions' => [
                     'add_student', 'add_teacher', 'add_coadmin',
                     'create_fee', 'create_term', 'record_attendance',
-                    'record_payment',
+                    'record_payment', 'create_exam', 'add_parent', 'enter_mark',
                     'assign_teacher', 'create_subject',
                     'list_classes', 'list_teachers', 'list_sections', 'generate_report',
                 ],

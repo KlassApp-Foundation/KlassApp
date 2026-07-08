@@ -110,8 +110,13 @@ class ToshiAssistantAgent extends Agent
             // Build messages array with system prompt, history, and current query
             $messages = [['role' => 'system', 'content' => $systemPrompt]];
             foreach (array_slice($history, -10) as $msg) {
+                $role = match ($msg['role'] ?? 'user') {
+                    'bot', 'assistant' => 'assistant',
+                    'system' => 'system',
+                    default => 'user',
+                };
                 $messages[] = [
-                    'role' => $msg['role'] ?? 'user',
+                    'role' => $role,
                     'content' => $msg['text'] ?? $msg['content'] ?? '',
                 ];
             }
@@ -151,9 +156,9 @@ class ToshiAssistantAgent extends Agent
                             'parameters' => [
                                 'type' => 'object',
                                 'properties' => [
-                                    'name' => ['type' => 'string', 'description' => 'Parent name'],
-                                    'phone' => ['type' => 'string', 'description' => 'Phone +256...'],
-                                    'studentId' => ['type' => 'integer', 'description' => 'Student ID'],
+                                    'name' => ['type' => 'string', 'description' => 'Parent full name'],
+                                    'phone' => ['type' => 'string', 'description' => 'Phone number starting with +256'],
+                                    'student_id' => ['type' => 'integer', 'description' => 'Student ID to link to'],
                                 ],
                                 'required' => ['name', 'phone'],
                             ],
@@ -166,11 +171,11 @@ class ToshiAssistantAgent extends Agent
                             'parameters' => [
                                 'type' => 'object',
                                 'properties' => [
-                                    'studentId' => ['type' => 'integer', 'description' => 'Student ID'],
-                                    'examId' => ['type' => 'integer', 'description' => 'Exam ID'],
+                                    'student_id' => ['type' => 'integer', 'description' => 'Student ID'],
+                                    'exam_id' => ['type' => 'integer', 'description' => 'Exam ID'],
                                     'marks' => ['type' => 'number', 'description' => 'Score 0-100'],
                                 ],
-                                'required' => ['studentId', 'examId', 'marks'],
+                                'required' => ['student_id', 'exam_id', 'marks'],
                             ],
                         ],
                     ]],

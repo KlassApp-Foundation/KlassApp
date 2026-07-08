@@ -568,6 +568,9 @@ class AgentToshi extends Component
         if ($targetMode === 'assistant') {
             $this->mode = 'assistant';
             $this->step = 99;
+            $this->actionStep = null;
+            $this->actionSubstep = 0;
+            $this->actionData = [];
             $this->messages = [];
             $this->botSay($this->getAssistantGreeting());
             $this->deleteDraft();
@@ -2182,7 +2185,17 @@ class AgentToshi extends Component
             return true;
         }
 
-        if ($this->schoolId && $this->tryStudentLookup($original)) {
+        // Skip student lookup if the text looks like an action request (let LarAgent handle it)
+        $actionVerbs = ['create ', 'add ', 'make ', 'record ', 'enter ', 'assign ', 'register ', 'new '];
+        $startsWithAction = false;
+        foreach ($actionVerbs as $verb) {
+            if (str_starts_with(strtolower($original), $verb)) {
+                $startsWithAction = true;
+                break;
+            }
+        }
+
+        if ($this->schoolId && !$startsWithAction && $this->tryStudentLookup($original)) {
             return true;
         }
 
