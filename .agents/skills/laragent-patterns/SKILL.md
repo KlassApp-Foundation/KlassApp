@@ -122,13 +122,91 @@ public function toolListClasses(): array
 | `toolCreateFee` | Create fee category |
 | `toolCreateTerm` | Create academic term |
 | `toolRecordPayment` | Record fee payment |
-| `toolListStudents` | List students (with filters) |
 | `toolGetFeeBalance` | Get fee balance for a student |
-| `toolGetAttendance` | Get attendance records |
-| `toolGetGrades` | Get exam results |
-| `toolGetHealthRecord` | Get health records |
 | `toolGenerateReport` | Generate school report |
-| `toolListSchools` | List all schools (platform admin only) |
+| `toolCreateExam` | Create an exam |
+| `toolAddParent` | Add a parent and link to student |
+| `toolEnterMark` | Enter a mark for a student on an exam |
+| `toolSetGradingScale` | Set grading scale for a class |
+| `toolViewGradingScale` | View grading scale |
+| `toolSeedDefaultGrading` | Seed default MoE grading scales |
+
+### Tool Safety Tiers
+
+Every tool added to ToshiAssistantAgent MUST be classified into one of three tiers before being wired up. This is enforced by code review — no exceptions.
+
+**Tier 1 — Additive (safe, no data loss risk)**
+
+Creates new records. Worst case if the LLM misfires: junk data gets created, which is recoverable by deletion through the admin panel.
+
+| Tool | Classification |
+|---|---|
+| `toolAddStudent` | Tier 1 |
+| `toolAddTeacher` | Tier 1 |
+| `toolCreateTerm` | Tier 1 |
+| `toolCreateFee` | Tier 1 |
+| `toolCreateSubject` | Tier 1 |
+| `toolAssignTeacher` | Tier 1 |
+| `toolRecordPayment` | Tier 1 |
+| `toolRecordAttendance` | Tier 1 |
+| `toolRecordBulkAttendance` | Tier 1 |
+| `toolCreateExam` | Tier 1 |
+| `toolAddParent` | Tier 1 |
+| `toolEnterMark` | Tier 1 |
+| `toolSeedDefaultGrading` | Tier 1 |
+
+**Tier 2 — Destructive (requires explicit user confirmation before executing)**
+
+Modifies or deletes existing data. The LLM MUST NOT execute these in a single turn. It must:
+1. State what will happen
+2. Ask "Should I proceed?"  
+3. Wait for an explicit "Yes" from the user
+4. THEN call the tool
+
+| Tool | Classification | Risk |
+|---|---|---|
+| `toolSetGradingScale` | Tier 2 | Deletes all existing grading rules for the standard |
+| `toolAddCoAdmin` | Tier 2 | Promotes a teacher (role change is irreversible via UI) |
+
+**Implementation:** When adding a Tier 2 tool to `handleQuery()`, use this pattern:
+
+```php
+'toolDeleteStudent' => function ($args) use ($user, $socketId) {
+    // Tier 2: require confirmation first
+    $this->requireConfirmation(
+        "This will permanently delete student ID {$args['student_id']} and all their records. Are you sure?",
+        fn() => ToshiActionService::deleteStudent(auth()->user() ?? $user, $args)
+    );
+},
+```
+
+The `requireConfirmation()` method stores the pending action and sends a confirmation prompt. The next user message that says "yes" executes it.
+
+**Tier 3 — Informational (read-only, no side effects)**
+
+Queries and returns data. Safe to execute without restriction.
+
+| Tool | Classification |
+|---|---|
+| `toolListClasses` | Tier 3 |
+| `toolListSections` | Tier 3 |
+| `toolListTeachers` | Tier 3 |
+| `toolGenerateReport` | Tier 3 |
+| `toolFindStudent` | Tier 3 |
+| `toolGetStudentCount` | Tier 3 |
+| `toolGetFeeBalance` | Tier 3 |
+| `toolViewGradingScale` | Tier 3 |
+
+### Adding a New Tool — Checklist
+
+1. Add the `#[Tool('description')]` method to `ToshiAssistantAgent`
+2. Classify the tool as Tier 1, 2, or 3
+3. Add the function definition to the `tools` array in `handleQuery()`
+4. Add the `match` case in the tool-call handler
+5. If Tier 2: wrap in requireConfirmation
+6. Add the service method to `ToshiActionService` (or reuse existing)
+7. If it creates new data: add the capability to `getRoleCapabilities()` in ToshiActionService
+8. Test with a real conversational trigger — not just a direct method call
 
 ---
 

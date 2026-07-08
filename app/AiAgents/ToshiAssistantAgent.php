@@ -32,6 +32,11 @@ class ToshiAssistantAgent extends Agent
     private bool $lastQueryCached = false;
     private ?int $currentSchoolId = null;
 
+    // ── Tier 2 confirmation state ──
+
+    /** @var array|null Pending Tier 2 action: ['label' => string, 'callback' => callable] */
+    private ?array $pendingConfirmation = null;
+
     public function __construct()
     {
         parent::__construct('toshi-assistant');
@@ -41,6 +46,42 @@ class ToshiAssistantAgent extends Agent
     private function getSchoolId(): ?int
     {
         return $this->currentSchoolId;
+    }
+
+    /**
+     * Register a Tier 2 (destructive) action that requires explicit
+     * user confirmation before execution. The pending action is stored
+     * and the confirmation message is returned — the caller must wait
+     * for the user to say "yes" before calling executePendingConfirmation().
+     */
+    public function requireConfirmation(string $prompt, callable $callback): string
+    {
+        $this->pendingConfirmation = [
+            'label' => $prompt,
+            'callback' => $callback,
+        ];
+        return "⚠️ **{$prompt}**\n\nReply **yes** to confirm or **no** to cancel.";
+    }
+
+    /**
+     * Execute the pending Tier 2 confirmation if the user confirmed.
+     * Returns the result message or null if no confirmation was pending.
+     */
+    public function executePendingConfirmation(string $reply): ?string
+    {
+        if ($this->pendingConfirmation === null) {
+            return null;
+        }
+
+        $yes = in_array(strtolower(trim($reply)), ['yes', 'y', 'yeah', 'confirm', 'proceed', 'do it']);
+        if (!$yes) {
+            $this->pendingConfirmation = null;
+            return 'Cancelled. No changes were made.';
+        }
+
+        $callback = $this->pendingConfirmation['callback'];
+        $this->pendingConfirmation = null;
+        return $callback();
     }
 
     public function instructions(): string
@@ -203,9 +244,15 @@ class ToshiAssistantAgent extends Agent
                     $toolArgs = json_decode($toolCall['function']['arguments'] ?? '{}', true) ?? [];
 
                     $toolResult = match ($toolName) {
+                        // Tier 1 tools — executed immediately (additive, recoverable)
                         'toolCreateExam' => \App\Services\ToshiActionService::createExam(auth()->user() ?? $user, $toolArgs),
                         'toolAddParent' => \App\Services\ToshiActionService::addParent(auth()->user() ?? $user, $toolArgs),
                         'toolEnterMark' => \App\Services\ToshiActionService::enterMark(auth()->user() ?? $user, $toolArgs),
+                        // Tier 2 tools would use requireConfirmation() here:
+                        // 'toolDeleteStudent' => $this->requireConfirmation(
+                        //     "This will permanently delete student {$toolArgs['student_id']}. Proceed?",
+                        //     fn() => ToshiActionService::deleteStudent(auth()->user() ?? $user, $toolArgs)
+                        // ),
                         default => ['success' => false, 'message' => "Unknown tool: {$toolName}"],
                     };
 
