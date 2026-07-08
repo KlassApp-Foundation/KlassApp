@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Superadmin\DashboardController;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 /*Route::get('/', function () {
   return redirect()->route('login');
@@ -28,9 +31,9 @@ Route::get('/docs/community/{path?}', function ($path = '') {
 })->where('path', '.*');
 
 // Landing page v2 (Flare-style)
-Route::get('/landing2', function () {
-    return view('landing2');
-});
+// Route::get('/landing2', function () {
+//     return view('landing2');
+// });
 
 // Landing page (public)
 Route::get('/landing', function () {

@@ -212,6 +212,7 @@ class RegisterController extends Controller
         }
     }
 
+    // create subscription
     private function createSchoolSubscription(User $user)
     {
         try
