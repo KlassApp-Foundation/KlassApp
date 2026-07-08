@@ -21,7 +21,7 @@ class WelcomeController extends Controller
         ->where('is_active', true)
         ->orderBy('amount')
         ->get();
-
+// dd($plans);
     return view('landing', compact('plans'));
 }
 }
