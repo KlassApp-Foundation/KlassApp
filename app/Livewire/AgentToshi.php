@@ -4304,6 +4304,22 @@ class AgentToshi extends Component
                                 ['school_id' => $schoolId, 'usergroup_id' => 6,
                                  'firstname' => trim($studentName), 'lastname' => '', 'status' => 'active']
                             );
+                            // Link student to a class via student_academics
+                            try {
+                                $firstStdLink = \App\Models\StandardLink::where('school_id', $schoolId)->first();
+                                if ($firstStdLink) {
+                                    StudentAcademic::create([
+                                        'school_id' => $schoolId,
+                                        'academic_year_id' => $academicYear->id,
+                                        'user_id' => $student->id,
+                                        'standardLink_id' => $firstStdLink->id,
+                                        'klassapp_student_id' => 'KLS' . str_pad((string)$schoolId, 3, '0', STR_PAD_LEFT)
+                                            . str_pad((string)($index + 1), 4, '0', STR_PAD_LEFT),
+                                    ]);
+                                }
+                            } catch (\Exception $e) {
+                                \Log::warning('StudentAcademic creation skipped: ' . $e->getMessage());
+                            }
                         }
                     } catch (\Exception $e) {
                         \Log::warning('Student creation skipped: ' . $studentName . ' - ' . $e->getMessage());

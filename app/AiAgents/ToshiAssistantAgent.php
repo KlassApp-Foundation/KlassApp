@@ -9,7 +9,9 @@ use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use LarAgent\Agent;
+use LarAgent\Message;
 use LarAgent\Tools\Tool;
+use LarAgent\Core\Contracts\Message as MessageInterface;
 
 class ToshiAssistantAgent extends Agent
 {
@@ -87,32 +89,127 @@ class ToshiAssistantAgent extends Agent
                 $this->instructions()
             );
 
-            $this->systemPrompt($systemPrompt);
+            // Set instructions via the agent's internal property
+            $this->instructions = $systemPrompt;
 
-            // Inject conversation history
+            // Inject conversation history (system prompt is handled by the driver via instructions())
             foreach (array_slice($history, -10) as $msg) {
                 $role = $msg['role'] ?? 'user';
+                $content = $msg['text'] ?? $msg['content'] ?? '';
                 if ($role === 'user') {
-                    $this->addUserMessage($msg['text'] ?? $msg['content'] ?? '');
+                    $this->chatHistory()->addMessage(\LarAgent\Message::user($content));
                 } else {
-                    $this->addAssistantMessage($msg['text'] ?? $msg['content'] ?? '');
+                    $this->chatHistory()->addMessage(\LarAgent\Message::assistant($content));
                 }
             }
-
-            $this->addUserMessage($query);
 
             // Step 8: Complexity routing — pick model tier
             $tier = $this->classifyComplexity($query);
             $this->lastQueryTier = $tier;
 
-            if ($tier === 'cheap') {
-                $response = $this->run();
-            } else {
-                // Escalate: use a stronger model for complex queries
-                $response = $this->run();
+            // Build messages array with system prompt, history, and current query
+            $messages = [['role' => 'system', 'content' => $systemPrompt]];
+            foreach (array_slice($history, -10) as $msg) {
+                $messages[] = [
+                    'role' => $msg['role'] ?? 'user',
+                    'content' => $msg['text'] ?? $msg['content'] ?? '',
+                ];
+            }
+            $messages[] = ['role' => 'user', 'content' => $query];
+
+            // Call the LLM API directly (bypasses LarAgent driver which has compatibility issues with Nvidia NIM)
+            $baseUrl = config('toshi.base_url', 'https://integrate.api.nvidia.com/v1');
+            $apiKey = config('toshi.api_key', '');
+            $model = config('toshi.model', 'meta/llama-3.1-8b-instruct');
+            $timeout = (int) config('toshi.request_timeout', 15);
+
+            $httpResponse = \Illuminate\Support\Facades\Http::timeout($timeout)
+                ->withToken($apiKey)
+                ->withHeaders(['Content-Type' => 'application/json'])
+                ->post($baseUrl . '/chat/completions', [
+                    'model' => $model,
+                    'messages' => $messages,
+                    'tools' => [[
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'toolCreateExam',
+                            'description' => 'Create an exam. Provide name (e.g. "End of Term 1"), and optionally scheduled_at (Y-m-d).',
+                            'parameters' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'name' => ['type' => 'string', 'description' => 'Exam name'],
+                                    'scheduled_at' => ['type' => 'string', 'description' => 'Date Y-m-d'],
+                                ],
+                                'required' => ['name'],
+                            ],
+                        ],
+                    ], [
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'toolAddParent',
+                            'description' => 'Add a parent and link to a student. Provide parent name, phone (+256...), and optionally student_id.',
+                            'parameters' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'name' => ['type' => 'string', 'description' => 'Parent name'],
+                                    'phone' => ['type' => 'string', 'description' => 'Phone +256...'],
+                                    'studentId' => ['type' => 'integer', 'description' => 'Student ID'],
+                                ],
+                                'required' => ['name', 'phone'],
+                            ],
+                        ],
+                    ], [
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'toolEnterMark',
+                            'description' => 'Enter a mark for a student on an exam. Provide student_id, exam_id, and marks (score 0-100).',
+                            'parameters' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'studentId' => ['type' => 'integer', 'description' => 'Student ID'],
+                                    'examId' => ['type' => 'integer', 'description' => 'Exam ID'],
+                                    'marks' => ['type' => 'number', 'description' => 'Score 0-100'],
+                                ],
+                                'required' => ['studentId', 'examId', 'marks'],
+                            ],
+                        ],
+                    ]],
+                    'tool_choice' => 'auto',
+                    'max_tokens' => 500,
+                    'temperature' => 0.3,
+                ]);
+
+            if (!$httpResponse->successful()) {
+                Log::warning('LarAgent API error', [
+                    'model' => $model,
+                    'status' => $httpResponse->status(),
+                    'body' => $httpResponse->body(),
+                ]);
+                return null;
             }
 
-            $reply = $response->content() ?? '';
+            $data = $httpResponse->json();
+            $choice = $data['choices'][0] ?? [];
+
+            // Handle tool calls
+            if (!empty($choice['message']['tool_calls'])) {
+                foreach ($choice['message']['tool_calls'] as $toolCall) {
+                    $toolName = $toolCall['function']['name'] ?? '';
+                    $toolArgs = json_decode($toolCall['function']['arguments'] ?? '{}', true) ?? [];
+
+                    $toolResult = match ($toolName) {
+                        'toolCreateExam' => \App\Services\ToshiActionService::createExam(auth()->user() ?? $user, $toolArgs),
+                        'toolAddParent' => \App\Services\ToshiActionService::addParent(auth()->user() ?? $user, $toolArgs),
+                        'toolEnterMark' => \App\Services\ToshiActionService::enterMark(auth()->user() ?? $user, $toolArgs),
+                        default => ['success' => false, 'message' => "Unknown tool: {$toolName}"],
+                    };
+
+                    return $toolResult['message'] ?? 'Tool executed.';
+                }
+            }
+
+            $reply = $choice['message']['content'] ?? '';
+            $reply = trim($reply);
 
             // Step 9: Cache the response if it's generic (no school-specific data)
             $this->maybeCacheResponse($query, $reply, $schoolId);
