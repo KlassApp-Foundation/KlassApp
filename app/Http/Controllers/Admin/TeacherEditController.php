@@ -56,7 +56,6 @@ class TeacherEditController extends Controller
       $array['blood_group']       = $userprofile->blood_group;
       $array['aadhar_number']     = $userprofile->aadhar_number==NULL ? '':$userprofile->aadhar_number;
       $array['country_id']        = $userprofile->country_id;
-      $array['state_id']          = $userprofile->state_id;
       $array['city_id']           = $userprofile->city_id;
       $array['pincode']           = $userprofile->pincode==NULL ? '':$userprofile->pincode;
       $array['avatar']            = $userprofile->AvatarPath;
@@ -207,7 +206,6 @@ class TeacherEditController extends Controller
         $userprofile->blood_group           = $request->blood_group;
         $userprofile->address               = $request->address;
         $userprofile->city_id               = $request->city_id;
-        $userprofile->state_id              = $request->state_id;
         $userprofile->country_id            = $request->country_id;
         $userprofile->pincode               = $request->pincode;
         $userprofile->aadhar_number         = $request->aadhar_number;

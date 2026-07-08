@@ -26,7 +26,7 @@ class Plan extends Model
      * @var array
      */
     protected $fillable = [
-        'cycle' , 'name' , 'display_name' , 'order' , 'is_active' , 'amount' , 'no_of_users', 'no_of_students', 'whatsapp_services', 'no_of_events' , 'no_of_folders' , 'no_of_files' , 'no_of_bulletins', 'no_of_videos', 'no_of_audios', 'no_of_groups'
+        'cycle' , 'name' , 'display_name' , 'order' , 'is_active' , 'amount' , 'is_custom_pricing', 'no_of_users', 'no_of_students', 'whatsapp_services', 'no_of_events' , 'no_of_folders' , 'no_of_files' , 'no_of_bulletins', 'no_of_videos', 'no_of_audios', 'no_of_groups'
     ];
 
     protected $dates=['created_at' , 'updated_at' , 'deleted_at'];

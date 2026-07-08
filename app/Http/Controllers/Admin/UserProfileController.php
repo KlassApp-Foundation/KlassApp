@@ -143,7 +143,6 @@ class UserProfileController extends Controller
         $array['date_of_birth']=date('Y-m-d',strtotime($userprofile->date_of_birth));
         $array['address']=$userprofile->address;
         // $array['country_id']=$userprofile->country->name;
-        // $array['state_id']=$userprofile->state->name;
         // $array['city_id']=$userprofile->city->name;
         $array['country_id']=$userprofile->country->id;
         $array['city_id']=$userprofile->city->id;

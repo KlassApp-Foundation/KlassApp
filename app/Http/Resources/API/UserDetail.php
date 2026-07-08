@@ -32,7 +32,6 @@ class UserDetail extends JsonResource
 
             'city'                      =>  $this->userprofile->city_id,
 
-            'state'                     =>  $this->userprofile->state_id,
 
             'country'                   =>  $this->userprofile->country_id,
 

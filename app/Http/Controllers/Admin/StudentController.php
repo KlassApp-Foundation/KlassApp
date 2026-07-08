@@ -212,7 +212,6 @@ class StudentController extends Controller
       $array['blood_group']               = $userprofile->blood_group;
       $array['aadhar_number']             = $userprofile->aadhar_number==NULL ? '':$userprofile->aadhar_number;
       $array['city_id']                   = $userprofile->city_id;
-      $array['state_id']                  = $userprofile->state_id;
       $array['country_id']                = $userprofile->country_id;
       $array['pincode']                   = $userprofile->pincode==NULL ? '':$userprofile->pincode;
       $array['birth_place']               = $userprofile->birth_place;

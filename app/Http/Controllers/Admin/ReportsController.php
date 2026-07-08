@@ -379,7 +379,7 @@ class ReportsController extends Controller
 
             if(count($users) > 0)
             {   
-                $csv->insertOne(['firstname','lastname','gender','date_of_birth','class','address','city','state','country','pincode','mobile_no','email']);
+                $csv->insertOne(['firstname','lastname','gender','date_of_birth','class','address','city','country','pincode','mobile_no','email']);
           
                 foreach($users as $user)
                 { 
@@ -391,7 +391,6 @@ class ReportsController extends Controller
                         $user->studentAcademicLatest->standardLink->StandardSection,
                         $user->userprofile->address,
                         $user->userprofile->city->name,
-                        $user->userprofile->state->name,
                         $user->userprofile->country->name,
                         $user->userprofile->pincode,
                         $user->mobile_no,
@@ -441,7 +440,7 @@ class ReportsController extends Controller
 
             if(count($users) > 0)
             {   
-                $csv->insertOne(['firstname','lastname','gender','date_of_birth','class','address','city','state','country','pincode','mobile_no','email']);
+                $csv->insertOne(['firstname','lastname','gender','date_of_birth','class','address','city','country','pincode','mobile_no','email']);
           
                 foreach($users as $user)
                 { 
@@ -453,7 +452,7 @@ class ReportsController extends Controller
                         $user->studentAcademicLatest->standardLink->StandardSection,
                         $user->userprofile->address,
                         $user->userprofile->city->name,
-                        $user->userprofile->state->name,
+                        '',
                         $user->userprofile->country->name,
                         $user->userprofile->pincode,
                         $user->mobile_no,
@@ -503,7 +502,7 @@ class ReportsController extends Controller
 
             if(count($users) > 0)
             {   
-                $csv->insertOne(['firstname','lastname','gender','date_of_birth','class','address','city','state','country','pincode','mobile_no','email']);
+                $csv->insertOne(['firstname','lastname','gender','date_of_birth','class','address','city','country','pincode','mobile_no','email']);
           
                 foreach($users as $user)
                 { 
@@ -515,7 +514,7 @@ class ReportsController extends Controller
                         $user->studentAcademicLatest->standardLink->StandardSection,
                         $user->userprofile->address,
                         $user->userprofile->city->name,
-                        $user->userprofile->state->name,
+                        '',
                         $user->userprofile->country->name,
                         $user->userprofile->pincode,
                         $user->mobile_no,

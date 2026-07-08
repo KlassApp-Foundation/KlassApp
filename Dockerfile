@@ -44,7 +44,7 @@ COPY --chown=appuser:appgroup . .
 
 RUN chown -R appuser:appgroup /var/www
 USER appuser
-RUN composer install --no-interaction --prefer-dist
+RUN composer install --no-interaction --prefer-dist --no-scripts
 
 # Switch back to root for PHP-FPM config
 USER root

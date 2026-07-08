@@ -14,10 +14,14 @@ while ! nc -z "$DB_HOST" "$DB_PORT"; do
 done
 echo "Database is ready!"
 
+echo "Running post-install scripts..."
+composer run-script post-autoload-dump --no-interaction 2>/dev/null || true
+
 echo "Running migrations (safe)..."
 php artisan migrate --force --no-interaction || true
-# to put migrations inside CI/CD
-# php artisan migrate:fresh --seed
+
+echo "Running essential seeders (idempotent)..."
+php artisan db:seed --class=ProductionSeeder --force --no-interaction || true
 
 # clear caches on startup (helps after permission fixes)
 php artisan config:clear || true

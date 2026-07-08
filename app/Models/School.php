@@ -119,7 +119,6 @@ class School extends Model
         $fulladdress =  $this->address
                         . "<br/>". $this->city
                         . "<br />" .$this->pincode 
-                        . "<br /> ". $this->state
                         . "<br /> ". "India" ;
 
         return $fulladdress;

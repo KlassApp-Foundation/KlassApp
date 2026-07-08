@@ -56,48 +56,18 @@ class CitiesTableSeeder extends Seeder
 ];
 $country = DB::table("countries")->where("name", "Uganda")->first();
 
-// foreach($ugandaDistricts['Northern'] as $dist){
-// //    dd($region);
-//     $region = DB::table("states")
-//                    ->where("country_id", $country->id)
-//                    ->where("name", "Northern")
-//                    ->first();
-//                     dd($region);
-//     $conditions = [
-//     'name' => $dist,
-//     'country_id' => $country->id,
-// ];
-
-// $values = [
-//     'state_id'   => $region->id,
-//     'status'     => 1,
-//     'created_at' => $now,
-//     'updated_at' => $now,
-// ];
-
-// DB::table('cities')->updateOrInsert($conditions, $values);
-// }
    
     foreach ($ugandaDistricts as $regionName => $districtList) {
-         $region = DB::table("states")
-                   ->where("country_id", $country->id)
-                   ->where("name", $regionName)
-                   ->first();
-
         foreach ($districtList as $districtName){
-            if (!$region) {
-                 $this->command->error("❌ Region NOT FOUND → Region: {$regionName}, District: {$districtName}, Country ID: {$country->id}");
-                 continue;
-           } 
-           $conditions = ['name' => $districtName,
-            'country_id' => $country->id
+            $conditions = [
+                'name' => $districtName,
+                'country_id' => $country->id
             ];
             $values = [
-            'state_id'   => $region->id,
-            'status'     => 1,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ];
+                'status'     => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
             DB::table('cities')->updateOrInsert($conditions, $values);
         }
     }
@@ -117,12 +87,10 @@ $country = DB::table("countries")->where("name", "Uganda")->first();
     ];
 foreach ($foreignCities as $city) {
         $country = DB::table("countries")->where("name", $city["country"])->first();
-        $state = DB::table("states")->where("id", $country->id)->first();
         DB::table('cities')->updateOrInsert(
             ['name'=> $city['name']],
              [
             'country_id' => $country->id,
-            'state_id'   => $state->id,
             'status'     => 1,
             'created_at' => $now,
             'updated_at' => $now,

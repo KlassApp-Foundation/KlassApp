@@ -79,7 +79,6 @@ trait RegisterUser
             
             $userprofile->city_id               = $data->city_id;
             
-            $userprofile->state_id              = $data->state_id;
             
             $userprofile->country_id            = $data->country_id;
             
@@ -232,7 +231,6 @@ trait RegisterUser
             
             $userprofile->city_id               = $data->city_id;
             
-            $userprofile->state_id              = $data->state_id;
             
             $userprofile->country_id            = $data->country_id;
             
@@ -610,7 +608,6 @@ trait RegisterUser
             
             $userprofile->city_id               = $data->city_id;
             
-            $userprofile->state_id              = $data->state_id;
             
             $userprofile->country_id            = $data->country_id;
             

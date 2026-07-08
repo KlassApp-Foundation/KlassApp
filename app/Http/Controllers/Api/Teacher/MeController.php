@@ -48,7 +48,6 @@ class MeController extends Controller
 
         $myInfo['address']                      = $user->userprofile->address;
         $myInfo['country']                      = ucfirst($user->userprofile->country->name);
-        $myInfo['state']                        = ucfirst($user->userprofile->state->name);
         $myInfo['city']                         = ucfirst($user->userprofile->city->name);
         $myInfo['pincode']                      = $user->userprofile->pincode;
         
