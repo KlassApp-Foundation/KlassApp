@@ -626,8 +626,16 @@ class ReportsController extends Controller
             {
                 $products = \Gegok12\Inventory\Models\Product::with('category','vendor')->where('school_id',Auth::user()->school_id)->get();
             }
-            else{
+            elseif(class_exists('App\Models\Product'))
+            {
                 $products = Product::with('category','vendor')->where('school_id',Auth::user()->school_id)->get();
+            }
+            else
+            {
+                $csv = Writer::createFromFileObject(new \SplTempFileObject());
+                $csv->insertOne(['Inventory module not available']);
+                $csv->output('SP Export Current Stock'.date('_d-m-Y_H:i').'.csv');
+                return;
             }  
 
             $csv = Writer::createFromFileObject(new \SplTempFileObject());
@@ -674,7 +682,15 @@ class ReportsController extends Controller
     }
 
     public function monthlypurchase(Request $request)
-    {  
+    {
+        if (!class_exists('Gegok12\Inventory\Models\PurchaseOrder') && !class_exists('App\Models\PurchaseOrder'))
+        {
+            $csv = Writer::createFromFileObject(new \SplTempFileObject());
+            $csv->insertOne(['Inventory module not available']);
+            $csv->output('SP Export Monthly Purchase'.date('_d-m-Y_H:i').'.csv');
+            return;
+        }
+
         try 
         {
             $purchase_month = $request->month;
@@ -684,22 +700,24 @@ class ReportsController extends Controller
             {
                 $month=date('m');
                 $year=date('Y');
-                if(class_exists('Gegok12\Inventory\Models\PurchaseOrder')) //new
+                if(class_exists('Gegok12\Inventory\Models\PurchaseOrder'))
                 {
                     $purchases = \Gegok12\Inventory\Models\PurchaseOrder::with('product')->where('school_id',Auth::user()->school_id)->whereMonth('purchased_date',$month)->whereYear('purchased_date',$year)->get(); 
                 }
-                else{                                                      //new
+                else
+                {
                     $purchases = PurchaseOrder::with('product')->where('school_id',Auth::user()->school_id)->whereMonth('purchased_date',$month)->whereYear('purchased_date',$year)->get();
                 }
             }
             else
             {
-                if(class_exists('Gegok12\Inventory\Models\PurchaseOrder')) //new
+                if(class_exists('Gegok12\Inventory\Models\PurchaseOrder'))
                 {
 
                     $purchases = \Gegok12\Inventory\Models\PurchaseOrder::with('product')->where('school_id',Auth::user()->school_id)->whereMonth('purchased_date',$purchase_month)->whereYear('purchased_date',$purchase_year)->get();
                 }
-                else{
+                else
+                {
                     $purchases = PurchaseOrder::with('product')->where('school_id',Auth::user()->school_id)->whereMonth('purchased_date',$purchase_month)->whereYear('purchased_date',$purchase_year)->get();
                 }
             }
@@ -748,6 +766,14 @@ class ReportsController extends Controller
 
     public function monthlysales(Request $request)
     {
+        if (!class_exists('Gegok12\Inventory\Models\SalesOrder') && !class_exists('App\Models\SalesOrder'))
+        {
+            $csv = Writer::createFromFileObject(new \SplTempFileObject());
+            $csv->insertOne(['Inventory module not available']);
+            $csv->output('SP Export Monthly Sales'.date('_d-m-Y_H:i').'.csv');
+            return;
+        }
+
         try
         {
             $sales_month = $request->month;
@@ -757,21 +783,23 @@ class ReportsController extends Controller
                 $month=date('m');
                 $year=date('Y');
                 
-                if(class_exists('Gegok12\Inventory\Models\SalesOrder')) //new
+                if(class_exists('Gegok12\Inventory\Models\SalesOrder'))
                 {
                     $sales = \Gegok12\Inventory\Models\SalesOrder::with('product','user')->where('school_id',Auth::user()->school_id)->whereMonth('sales_date',$month)->whereYear('sales_date',$year)->get();
                 }
-                else{                                              //new
+                else
+                {
                     $sales = SalesOrder::with('product','user')->where('school_id',Auth::user()->school_id)->whereMonth('sales_date',$month)->whereYear('sales_date',$year)->get();
                 } 
             }
             else
             {
-                if(class_exists('Gegok12\Inventory\Models\SalesOrder')) //new
+                if(class_exists('Gegok12\Inventory\Models\SalesOrder'))
                 {
                     $sales = \Gegok12\Inventory\Models\SalesOrder::with('product','user')->where('school_id',Auth::user()->school_id)->whereMonth('sales_date',$sales_month)->whereYear('sales_date',$sales_year)->get(); 
                 }
-                else{          //new
+                else
+                {
                     $sales = SalesOrder::with('product','user')->where('school_id',Auth::user()->school_id)->whereMonth('sales_date',$sales_month)->whereYear('sales_date',$sales_year)->get();
                 }
             }

@@ -30,7 +30,7 @@ class TrialService
             ['school_id' => $schoolId],
             [
                 'plan_id'          => $planId,
-                'status'           => 'active',
+                'status'           => 'running',
                 'is_trial'         => true,
                 'trial_started_at' => $now,
                 'trial_ends_at'    => $now->copy()->addDays(self::TRIAL_DAYS),

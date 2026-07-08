@@ -64,11 +64,11 @@ class DashboardSuperController extends Controller
             $expiredSubs   = (clone $subscriptionBase)->where('status', 'expired')->count();
             $cancelledSubs = (clone $subscriptionBase)->where('status', 'cancelled')->count();
 
-            // Revenue: sum of plan amounts for active subscriptions
+            // Revenue: sum of plan amounts for approved subscriptions
             $estimatedMRR = DB::table('subscriptions')
                 ->join('plans', 'subscriptions.plan_id', '=', 'plans.id')
                 ->whereNotIn('subscriptions.school_id', $testSchoolIds)
-                ->where('subscriptions.status', 'active')
+                ->where('subscriptions.status', 'approve')
                 ->sum('plans.amount');
 
             // ── WhatsApp metrics ──

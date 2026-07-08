@@ -33,7 +33,7 @@ class PlansTableSeeder extends Seeder
                 'name'            => 'growth',
                 'display_name'    => 'Growth',
                 'cycle'           => 30,
-                'amount'          => 49,
+                'amount'          => 35,
                 'is_active'       => 1,
                 'order'           => 2,
                 'no_of_users'     => 25,

@@ -5,7 +5,7 @@
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
 
 @include('layouts.partials.page-header', [
-    'title' => 'Reports',
+    'title' => 'Data Exports',
     'subtitle' => 'Generate and view school performance, attendance, and financial reports.',
 ])
 

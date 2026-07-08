@@ -14,6 +14,6 @@
         <a href="{{ url('library/borrowing') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-no-wrap">Borrowing</span></a>
     </li>
     <li class="py-3 px-3 hover:font-semibold {{ lActive(['reports','report']) }}">
-        <a href="{{ url('library/reports') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-no-wrap">Reports</span></a>
+        <a href="{{ url('library/reports') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-no-wrap">Data Exports</span></a>
     </li>
 </ul>

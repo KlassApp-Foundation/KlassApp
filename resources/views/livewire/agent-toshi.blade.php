@@ -3,12 +3,12 @@
          wire:click="show"
          class="toshi-pill"
          style="{{ $visible || $maximized ? 'display: none;' : '' }}">
-        <div class="flex items-center justify-center shrink-0" style="width: 38px; height: 38px; border-radius: 50%; background: var(--d-dark); overflow: hidden;">
-            <img src="{{ asset('images/klassapp-logo.svg') }}" style="width: 24px; height: 24px;" alt="KlassApp">
+        <div class="toshi-pill-avatar">
+            <img src="{{ asset('images/klassapp-logo.svg') }}" class="toshi-pill-logo" alt="KlassApp">
         </div>
-        <span style="flex: 1; font-size: 13px; color: var(--d-muted); font-weight: 400; white-space: nowrap;">Ask Toshi anything</span>
-        <div class="flex items-center shrink-0" style="height: 38px; padding: 0 14px; gap: 6px; color: #fff; font-size: 13px; font-weight: 600;">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="white"><rect x="1" y="4" width="3" height="6" rx="1"/><rect x="5.5" y="1" width="3" height="12" rx="1"/><rect x="10" y="3" width="3" height="8" rx="1"/></svg> Talk
+        <span class="toshi-pill-text">Toshi Agent</span>
+        <div class="toshi-pill-badge">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="4" width="3" height="6" rx="1"/><rect x="5.5" y="1" width="3" height="12" rx="1"/><rect x="10" y="3" width="3" height="8" rx="1"/></svg> Talk
         </div>
     </div>
 
@@ -16,26 +16,26 @@
          class="toshi-panel"
          style="{{ $visible ? 'display: flex;' : 'display: none;' }}">
         <div class="toshi-header">
-            <div class="flex items-center gap-2">
-                <span class="toshi-status-dot"></span>
-                <h3>Toshi</h3>
+            <div class="toshi-header-logo">
+                <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp">
+                <span>Toshi</span>
             </div>
-            <div class="flex items-center gap-2" style="margin-left: auto;">
-                <button wire:click="maximize"
-                        class="toshi-header-close"
-                        title="Expand">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {{-- Mode dropdown — shared partial --}}
+            @include('livewire.partials.toshi-mode-dropdown')
+            <div class="toshi-header-actions">
+                <button wire:click="resetSchoolOnboarding" class="toshi-header-btn" title="Restart onboarding" style="font-size:11px;font-weight:600;color:#D97706;">
+                    ↻ Restart
                 </button>
-                <button wire:click="hide"
-                        class="flex items-center justify-center"
-                        style="border-radius: 6px; background: rgba(0,0,0,0.06); border: none; cursor: pointer; padding: 8px;" title="Close">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <button wire:click="maximize" class="toshi-header-btn" title="Expand">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
+                </button>
+                <button wire:click="hide" class="toshi-header-btn" title="Close">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
                 </button>
             </div>
         </div>
-        <div class="flex-1 overflow-y-auto"
-             x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight); $wire.$watch('messages', () => $nextTick(() => $el.scrollTop = $el.scrollHeight))"
-              style="background: var(--d-shell); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0;">
+        <div class="toshi-messages-area"
+             x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight); $wire.$watch('messages', () => $nextTick(() => $el.scrollTop = $el.scrollHeight))">
             @foreach($messages as $msg)
                 @php $isUser = $msg['role'] === 'user'; @endphp
                 <div class="{{ $isUser ? 'toshi-msg-row-end' : 'toshi-msg-row' }}">
@@ -49,37 +49,37 @@
             @endforeach
             {{-- Subject inline form --}}
             @if($showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
-            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                <div style="font-size: 13px; font-weight: 600; color: #141413; margin-bottom: 10px;">Add Subject</div>
+            <div class="toshi-form-card">
+                <div class="toshi-section-title" style="margin-bottom: 10px;">Add Subject</div>
                 @php $subjects = $this->actionData['subjects'] ?? []; @endphp
                 @if(count($subjects) > 0)
-                <div style="margin-bottom: 8px;">
+                <div class="toshi-spacer-8">
                     @foreach($subjects as $si => $s)
                     <div class="toshi-row" style="padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
-                        <span style="flex: 1;">{{ $s }}</span>
+                        <span class="flex-1">{{ $s }}</span>
                         <button wire:click="removeSubject({{ $si }})" type="button"
-                                style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                class="toshi-remove-btn">✕</button>
                     </div>
                     @endforeach
                 </div>
                 @endif
-                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="toshi-flex-col">
                     <input type="text" wire:model="subjectFormName" placeholder="Subject name *"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <input type="text" wire:model="subjectFormCode" placeholder="Subject code (optional)"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <select wire:model="subjectFormType"
-                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; background: white; font-family: 'DM Sans', sans-serif;">
+                            class="toshi-input">
                         <option value="core">Core</option>
                         <option value="elective">Elective</option>
                     </select>
-                    <div style="display: flex; gap: 8px;">
+                    <div class="flex gap-2">
                         <button wire:click="saveSubject" type="button"
-                                style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                class="toshi-btn-primary-sm">
                             + Add Subject
                         </button>
                         <button wire:click="doneSubjects" type="button"
-                                style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                class="toshi-btn-done">
                             Continue ({{ count($this->actionData['subjects'] ?? []) }})
                         </button>
                     </div>
@@ -89,15 +89,14 @@
 
             {{-- Teacher inline form --}}
             @if($showTeacherForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers')
-            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Teacher</span>
-                    <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+            <div class="toshi-form-card">
+                <div class="toshi-flex-row">
+                    <span class="toshi-section-title">Add Teacher</span>
+                    <div class="flex items-center gap-2 toshi-ml-auto">
                         <a href="{{ asset('templates/teacher-upload-template.xlsx') }}" download
-                           style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
+                           class="toshi-tag-link">Download Template</a>
                         <span style="font-size: 10px; color: #87867f; cursor: help;" title="CSV/XLSX: columns Name, Email, Subjects, Classes. TXT: one name per line.">ⓘ</span>
-                        <label class="flex items-center gap-1 cursor-pointer"
-                               style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
+                        <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
@@ -105,28 +104,28 @@
                 </div>
                 @php $teachers = $this->actionData['teachers'] ?? []; @endphp
                 @if(count($teachers) > 0)
-                <div style="margin-bottom: 8px;">
+                <div class="toshi-spacer-8">
                     @foreach($teachers as $ti => $t)
-                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
-                        <span style="flex: 1;">{{ $t }}</span>
+                    <div class="toshi-list-item">
+                        <span class="flex-1">{{ $t }}</span>
                         <button wire:click="removeTeacher({{ $ti }})" type="button"
-                                style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                class="toshi-remove-btn">✕</button>
                     </div>
                     @endforeach
                 </div>
                 @endif
-                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="toshi-flex-col">
                     <input type="text" wire:model="teacherFormName" placeholder="Teacher name *"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <input type="email" wire:model="teacherFormEmail" placeholder="Email (optional)"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <input type="text" wire:model="teacherFormPhone" placeholder="WhatsApp number (optional)"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                    <div style="display: flex; gap: 8px;">
-                        <div style="flex: 1;">
-                            <div style="font-size: 10px; color: #87867f; margin-bottom: 2px;">Subject(s)</div>
+                           class="toshi-input">
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <div class="toshi-sub-label">Subject(s)</div>
                             <input type="text" wire:model="teacherFormSubjects" placeholder="e.g. Math, English" list="subject-list"
-                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                   class="toshi-input">
                             <datalist id="subject-list">
                                 @php
                                     $allSubjects = [];
@@ -140,10 +139,10 @@
                                 @endforeach
                             </datalist>
                         </div>
-                        <div style="flex: 1;">
-                            <div style="font-size: 10px; color: #87867f; margin-bottom: 2px;">Class(es)</div>
+                        <div class="flex-1">
+                            <div class="toshi-sub-label">Class(es)</div>
                             <input type="text" wire:model="teacherFormClasses" placeholder="e.g. P1, P2" list="class-list"
-                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                   class="toshi-input">
                             <datalist id="class-list">
                                 @foreach($this->standards ?? [] as $std)
                                 <option value="{{ $std['name'] }}">
@@ -151,13 +150,13 @@
                             </datalist>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div class="flex gap-2">
                         <button wire:click="saveTeacher" type="button"
-                                style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                class="toshi-btn-primary-sm">
                             + Add Teacher
                         </button>
                         <button wire:click="doneTeachers" type="button"
-                                style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                class="toshi-btn-done">
                             Continue ({{ count($this->actionData['teachers'] ?? []) }})
                         </button>
                     </div>
@@ -167,14 +166,13 @@
 
             {{-- Student inline form --}}
             @if($showStudentForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'students')
-            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Student</span>
-                    <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+            <div class="toshi-form-card">
+                <div class="toshi-flex-row">
+                    <span class="toshi-section-title">Add Student</span>
+                    <div class="flex items-center gap-2 toshi-ml-auto">
                         <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
-                           style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
-                        <label class="flex items-center gap-1 cursor-pointer"
-                               style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
+                           class="toshi-tag-link">Download Template</a>
+                        <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
@@ -182,51 +180,51 @@
                 </div>
                 @php $students = $this->actionData['students'] ?? []; @endphp
                 @if(count($students) > 0)
-                <div style="margin-bottom: 8px;">
+                <div class="toshi-spacer-8">
                     @foreach($students as $si => $s)
-                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
-                        <span style="flex: 1;">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #87867f;">({{ $s['class'] }})</span>@endif</span>
+                    <div class="toshi-list-item">
+                        <span class="flex-1">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #87867f;">({{ $s['class'] }})</span>@endif</span>
                         <button wire:click="removeStudent({{ $si }})" type="button"
-                                style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                class="toshi-remove-btn">✕</button>
                     </div>
                     @endforeach
                 </div>
                 @endif
-                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="toshi-flex-col">
                     <input type="text" wire:model="studentFormName" placeholder="Student name *"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
 <select wire:model="studentFormType"
-        style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+        class="toshi-input">
     <option value="">Type (optional)</option>
     <option value="boarding">Boarding</option>
     <option value="day">Day Scholar</option>
 </select>
 <select wire:model="studentFormType"
-                                                    style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                    class="toshi-input">
                                                 <option value="">Type (optional)</option>
                                                 <option value="boarding">Boarding</option>
                                                 <option value="day">Day Scholar</option>
                                             </select>
                     <input type="text" wire:model="studentFormClass" placeholder="Class *" list="student-class-list"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <datalist id="student-class-list">
                         @foreach($this->standards ?? [] as $std)
                         <option value="{{ $std['name'] }}">
                         @endforeach
                     </datalist>
                     <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <input type="text" wire:model="studentFormParentPhone" placeholder="Parent phone (optional)"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                    <div style="display: flex; gap: 8px;">
+                           class="toshi-input">
+                    <div class="flex gap-2">
                         <button wire:click="saveStudent" type="button"
-                                style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                class="toshi-btn-primary-sm">
                             + Add Student
                         </button>
                         <button wire:click="doneStudents" type="button"
-                                style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                class="toshi-btn-done">
                             Continue ({{ count($this->actionData['students'] ?? []) }})
                         </button>
                     </div>
@@ -236,14 +234,13 @@
 
             {{-- Fee inline form --}}
             @if($showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
-            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Fee</span>
-                    <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+            <div class="toshi-form-card">
+                <div class="toshi-flex-row">
+                    <span class="toshi-section-title">Add Fee</span>
+                    <div class="flex items-center gap-2 toshi-ml-auto">
                         <a href="{{ asset('templates/fee-upload-template.xlsx') }}" download
-                           style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
-                        <label class="flex items-center gap-1 cursor-pointer"
-                               style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
+                           class="toshi-tag-link">Download Template</a>
+                        <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
@@ -251,23 +248,23 @@
                 </div>
                 @php $fees = $this->actionData['fees'] ?? []; @endphp
                 @if(count($fees) > 0)
-                <div style="margin-bottom: 8px;">
+                <div class="toshi-spacer-8">
                     @foreach($fees as $fi => $f)
-                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
-                        <span style="flex: 1;">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif</span>
+                    <div class="toshi-list-item">
+                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif</span>
                         <button wire:click="removeFee({{ $fi }})" type="button"
-                                style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                class="toshi-remove-btn">✕</button>
                     </div>
                     @endforeach
                 </div>
                 @endif
-                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="toshi-flex-col">
                     <input type="text" wire:model="feeFormName" placeholder="Fee name *"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <select wire:model="feeFormLevel"
-                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                            class="toshi-input">
                         <option value="">Level (optional)</option>
                         <option value="nursery">Nursery</option>
                         <option value="primary">Primary</option>
@@ -275,26 +272,26 @@
                         <option value="all">All Levels</option>
                     </select>
                     <input type="text" wire:model="feeFormClass" placeholder="Class (optional)" list="fee-class-list"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <datalist id="fee-class-list">
                         @foreach($this->standards ?? [] as $std)
                         <option value="{{ $std['name'] }}">
                         @endforeach
                     </datalist>
                     <select wire:model="feeFormTerm"
-                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                            class="toshi-input">
                         <option value="">Term (optional)</option>
                         <option value="Term I">Term I</option>
                         <option value="Term II">Term II</option>
                         <option value="Term III">Term III</option>
                     </select>
-                    <div style="display: flex; gap: 8px;">
+                    <div class="flex gap-2">
                         <button wire:click="saveFee" type="button"
-                                style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                class="toshi-btn-primary-sm">
                             + Add Fee
                         </button>
                         <button wire:click="doneFees" type="button"
-                                style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                class="toshi-btn-done">
                             Continue ({{ count($this->actionData['fees'] ?? []) }})
                         </button>
                     </div>
@@ -304,14 +301,13 @@
 
             {{-- Exam inline form --}}
             @if($showExamForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams')
-            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Exam</span>
-                    <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+            <div class="toshi-form-card">
+                <div class="toshi-flex-row">
+                    <span class="toshi-section-title">Add Exam</span>
+                    <div class="flex items-center gap-2 toshi-ml-auto">
                         <a href="{{ asset('templates/exam-upload-template.xlsx') }}" download
-                           style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
-                        <label class="flex items-center gap-1 cursor-pointer"
-                               style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
+                           class="toshi-tag-link">Download Template</a>
+                        <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
@@ -319,35 +315,35 @@
                 </div>
                 @php $exams = $this->actionData['exams'] ?? []; @endphp
                 @if(count($exams) > 0)
-                <div style="margin-bottom: 8px;">
+                <div class="toshi-spacer-8">
                     @foreach($exams as $ei => $e)
-                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
-                        <span style="flex: 1;">{{ $e['type'] }} — {{ $e['term'] }}</span>
+                    <div class="toshi-list-item">
+                        <span class="flex-1">{{ $e['type'] }} — {{ $e['term'] }}</span>
                         <button wire:click="removeExam({{ $ei }})" type="button"
-                                style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                class="toshi-remove-btn">✕</button>
                     </div>
                     @endforeach
                 </div>
                 @endif
-                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="toshi-flex-col">
                     <select wire:model="examFormTerm"
-                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                            class="toshi-input">
                         <option value="">Term *</option>
                         <option value="Term I">Term I</option>
                         <option value="Term II">Term II</option>
                         <option value="Term III">Term III</option>
                     </select>
                     <input type="text" wire:model="examFormType" placeholder="Exam type * (e.g. Midterm, Final)"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <select wire:model="examFormStatus"
-                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                            class="toshi-input">
                         <option value="">Status</option>
                         <option value="active">Active</option>
                         <option value="completed">Completed</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
                     <select wire:model="examFormLevel"
-                            style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                            class="toshi-input">
                         <option value="">Level</option>
                         <option value="nursery">Nursery</option>
                         <option value="primary">Primary</option>
@@ -355,14 +351,14 @@
                         <option value="all">All Levels</option>
                     </select>
                     <input type="text" wire:model="examFormClass" placeholder="Class" list="exam-class-list"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <datalist id="exam-class-list">
                         @foreach($this->standards ?? [] as $std)
                         <option value="{{ $std['name'] }}">
                         @endforeach
                     </datalist>
                     <input type="text" wire:model="examFormSubject" placeholder="Subject" list="exam-subject-list"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <datalist id="exam-subject-list">
                         @php
                             $allSubs = [];
@@ -376,23 +372,23 @@
                         @endforeach
                     </datalist>
                     <input type="text" wire:model="examFormTeacher" placeholder="Teacher" list="exam-teacher-list"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <datalist id="exam-teacher-list">
                         @foreach($this->teacherList ?? [] as $t)
                         <option value="{{ $t }}">
                         @endforeach
                     </datalist>
-                    <div style="display: flex; gap: 8px;">
+                    <div class="flex gap-2">
                         <button wire:click="saveExam" type="button"
-                                style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                class="toshi-btn-primary-sm">
                             + Add Exam
                         </button>
                         <button wire:click="doneExams" type="button"
-                                style="flex: 1; padding: 8px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">
+                                class="toshi-btn-outline-sm">
                             Skip
                         </button>
                         <button wire:click="doneExams" type="button"
-                                style="flex: 1; padding: 8px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                class="toshi-btn-done-sm">
                             Continue ({{ count($this->actionData['exams'] ?? []) }})
                         </button>
                     </div>
@@ -406,11 +402,11 @@
                 @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
                 @foreach($plans as $plan)
                 <button wire:click="selectPlan({{ $plan->id }})"
-                        style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #4d4c48;"
+                        class="toshi-option-card"
                         onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
                         onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
                     <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
-                    <div style="flex: 1;">
+                    <div class="flex-1">
                         <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
                         <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
                             @if($plan->is_custom_pricing)
@@ -461,7 +457,7 @@
                     <div style="width: 32px; height: 32px; border-radius: 50%; background: #faf9f5; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #c96442; font-size: 12px;">{{ strtoupper(substr($teacher->name, 0, 1)) }}</div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600;">{{ $teacher->name }}</div>
-                        <div style="font-size: 11px; color: #5e5d59;">{{ $teacher->email }}</div>
+                        <div class="toshi-sm-text">{{ $teacher->email }}</div>
                     </div>
                 </button>
                 @endforeach
@@ -491,20 +487,20 @@
                 </div>
                 <div style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
                     @if(!$isComplete)
-                    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 12px;">
-                        <div style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.04em;">Admin Login Credentials</div>
-                        <div style="font-size: 14px; font-weight: 600; color: #141413; margin-top: 6px;">{{ $reviewData['adminEmail'] ?? '—' }}</div>
-                        <div style="font-size: 13px; color: #5e5d59; margin-top: 2px;">Password: <strong>{{ $reviewData['adminPassword'] ?? 'password' }}</strong></div>
+                    <div class="toshi-banner-success">
+                        <div class="toshi-green-label">Admin Login Credentials</div>
+                        <div class="toshi-info-value">{{ $reviewData['adminEmail'] ?? '—' }}</div>
+                        <div class="toshi-info-sub">Password: <strong>{{ $reviewData['adminPassword'] ?? 'password' }}</strong></div>
                         <div style="font-size: 12px; color: #5e5d59; margin-top: 2px;">📱 {{ $reviewData['adminPhone'] ?? '—' }}</div>
                     </div>
                     @if(!empty($reviewData['coAdminEmail']))
-                    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 12px;">
-                        <div style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
-                        <div style="font-size: 14px; font-weight: 600; color: #141413; margin-top: 6px;">{{ $reviewData['coAdminEmail'] ?? '—' }}</div>
+                    <div class="toshi-banner-success">
+                        <div class="toshi-green-label">Co-Admin</div>
+                        <div class="toshi-info-value">{{ $reviewData['coAdminEmail'] ?? '—' }}</div>
                         @if(!empty($reviewData['coAdminPromoted']))
                         <div style="font-size: 12px; color: #166534; margin-top: 2px;">✅ Promoted from teacher — they keep their existing password</div>
                         @else
-                        <div style="font-size: 13px; color: #5e5d59; margin-top: 2px;">Password: <strong>{{ $reviewData['coAdminPassword'] ?? 'password' }}</strong></div>
+                        <div class="toshi-info-sub">Password: <strong>{{ $reviewData['coAdminPassword'] ?? 'password' }}</strong></div>
                         @endif
                     </div>
                     @endif
@@ -539,7 +535,7 @@
                         <div class="toshi-progress-dot {{ $isDone ? 'toshi-progress-dot-done' : ($isCurrent ? 'toshi-progress-dot-current' : 'toshi-progress-dot-pending') }}"></div>
                     @endforeach
                 </div>
-                <span style="font-size: 10px; font-weight: 600; color: #5e5d59; white-space: nowrap;">{{ $step + 1 }}/{{ count($steps) }}</span>
+                <span class="toshi-progress-step">{{ $step + 1 }}/{{ count($steps) }}</span>
                 @if(in_array($steps[$step] ?? '', $mandatorySteps ?? []))
                 <span class="toshi-badge-required">Required</span>
                 @else
@@ -550,41 +546,41 @@
 
             {{-- Review Card (shown on review step) --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'review' && !empty($reviewData) && empty($reviewData['committed']))
-            <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0;">
+            <div class="toshi-review-card">
                 {{-- Header --}}
-                <div style="background: #141413; color: #FFFFFF; padding: 14px 16px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px;">
+                <div class="toshi-review-header">
                     <span>📋 Review &amp; Confirm</span>
                 </div>
 
                 {{-- Body --}}
-                <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;">
+                <div class="toshi-review-body">
                     {{-- Plan + School --}}
-                    <div style="display: flex; gap: 10px;">
-                        <div style="flex: 1; background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
-                            <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Plan</div>
-                            <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['plan'] }}</div>
+                    <div class="flex" style="gap: 10px;">
+                        <div class="toshi-info-card">
+                            <div class="toshi-uppercase-label">Plan</div>
+                            <div class="toshi-section-title toshi-gap-3">{{ $reviewData['plan'] }}</div>
                         </div>
-                        <div style="flex: 1; background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
-                            <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">School</div>
-                            <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['schoolName'] }}</div>
-                            <div style="font-size: 11px; color: #5e5d59;">{{ ucfirst($reviewData['schoolType']) }} · {{ $reviewData['curriculum'] ?? 'UNEB' }}</div>
-                            <div style="font-size: 10px; color: #87867f; margin-top: 2px;">EMIS: {{ $reviewData['ministryCode'] ?? '—' }}</div>
+                        <div class="toshi-info-card">
+                            <div class="toshi-uppercase-label">School</div>
+                            <div class="toshi-section-title toshi-gap-3">{{ $reviewData['schoolName'] }}</div>
+                            <div class="toshi-sm-text">{{ ucfirst($reviewData['schoolType']) }} · {{ $reviewData['curriculum'] ?? 'UNEB' }}</div>
+                            <div class="toshi-tiny-note">EMIS: {{ $reviewData['ministryCode'] ?? '—' }}</div>
                         </div>
                     </div>
 
                     {{-- Admin --}}
-                    <div style="background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
-                        <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Admin Account</div>
-                        <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['adminName'] }}</div>
-                        <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['adminEmail'] }} · {{ $reviewData['adminPhone'] }}</div>
+                    <div class="toshi-info-card" style="flex: none;">
+                        <div class="toshi-uppercase-label">Admin Account</div>
+                        <div class="toshi-section-title toshi-gap-3">{{ $reviewData['adminName'] }}</div>
+                        <div class="toshi-sm-text">{{ $reviewData['adminEmail'] }} · {{ $reviewData['adminPhone'] }}</div>
                     </div>
 
                     @if(!empty($reviewData['coAdminName']))
                     {{-- Co-Admin --}}
-                    <div style="background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
-                        <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
-                        <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['coAdminName'] }}</div>
-                        <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['coAdminEmail'] }}</div>
+                    <div class="toshi-info-card" style="flex: none;">
+                        <div class="toshi-uppercase-label">Co-Admin</div>
+                        <div class="toshi-section-title toshi-gap-3">{{ $reviewData['coAdminName'] }}</div>
+                        <div class="toshi-sm-text">{{ $reviewData['coAdminEmail'] }}</div>
                     </div>
                     @endif
 
@@ -593,7 +589,7 @@
                         <span style="font-size: 16px;">📱</span>
                         <div>
                             <div style="font-size: 12px; font-weight: 600; color: #141413;">WhatsApp</div>
-                            <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['whatsapp'] ?? 'Not set up' }}</div>
+                            <div class="toshi-sm-text">{{ $reviewData['whatsapp'] ?? 'Not set up' }}</div>
                         </div>
                     </div>
 
@@ -608,58 +604,56 @@
                     </div>
 
                     {{-- Counts grid --}}
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 700; color: #c96442;">{{ $reviewData['classCount'] }}</div>
-                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Classes</div>
+                    <div class="toshi-counts-grid">
+                        <div class="toshi-stat-card">
+                            <div class="toshi-stat-value" style="color: #c96442;">{{ $reviewData['classCount'] }}</div>
+                            <div class="toshi-stat-digit">Classes</div>
                         </div>
-                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 700; color: #22C55E;">{{ $reviewData['teacherCount'] }}</div>
-                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Teachers</div>
+                        <div class="toshi-stat-card">
+                            <div class="toshi-stat-value" style="color: #22C55E;">{{ $reviewData['teacherCount'] }}</div>
+                            <div class="toshi-stat-digit">Teachers</div>
                             @if(!empty($reviewData['teacherLinkCount']) && $reviewData['teacherLinkCount'] > 0)
-                            <div style="font-size: 8px; color: #87867f; margin-top: 2px;">{{ $reviewData['teacherLinkCount'] }} subject links</div>
+                            <div class="toshi-tiny-note">{{ $reviewData['teacherLinkCount'] }} subject links</div>
                             @endif
                         </div>
-                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 700; color: #D97706;">{{ $reviewData['studentCount'] }}</div>
-                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Students</div>
+                        <div class="toshi-stat-card">
+                            <div class="toshi-stat-value" style="color: #D97706;">{{ $reviewData['studentCount'] }}</div>
+                            <div class="toshi-stat-digit">Students</div>
                             @if(!empty($reviewData['studentIds']) && $reviewData['studentIds'] !== '—')
-                            <div style="font-size: 8px; color: #87867f; margin-top: 2px;">{{ $reviewData['studentIds'] }}</div>
+                            <div class="toshi-tiny-note">{{ $reviewData['studentIds'] }}</div>
                             @endif
                         </div>
-                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 700; color: #8B5CF6;">{{ $reviewData['termCount'] }}</div>
-                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Terms</div>
+                        <div class="toshi-stat-card">
+                            <div class="toshi-stat-value" style="color: #8B5CF6;">{{ $reviewData['termCount'] }}</div>
+                            <div class="toshi-stat-digit">Terms</div>
                         </div>
-                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 700; color: #EC4899;">{{ $reviewData['feeCount'] }}</div>
-                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Fees</div>
+                        <div class="toshi-stat-card">
+                            <div class="toshi-stat-value" style="color: #EC4899;">{{ $reviewData['feeCount'] }}</div>
+                            <div class="toshi-stat-digit">Fees</div>
                         </div>
-                        <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 700; color: #14B8A6;">{{ $reviewData['examCount'] }}</div>
-                            <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Exams</div>
+                        <div class="toshi-stat-card">
+                            <div class="toshi-stat-value" style="color: #14B8A6;">{{ $reviewData['examCount'] }}</div>
+                            <div class="toshi-stat-digit">Exams</div>
                         </div>
                     </div>
                 </div>
 
                 {{-- Actions --}}
-                <div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #e8e6dc; background: #FAFAFA;">
+                <div class="toshi-review-actions">
                 </div>
             </div>
             @endif
             {{-- Review actions outside the card to avoid CSS interference --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'review' && !empty($reviewData) && empty($reviewData['committed']))
-            <div style="display: flex; gap: 8px; padding: 4px 0;">
+            <div class="toshi-review-actions-outside">
                 <button type="button" wire:click="confirmOnboarding"
-                        style="flex: 1; padding: 11px; font-family: 'Sora', sans-serif;"
-                        class="toshi-btn-confirm"
+                        class="toshi-btn-confirm toshi-confirm-full"
                         onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'"
                         id="confirm-btn">
                     🎉 Confirm &amp; Create School
                 </button>
                 <button type="button" wire:click="editBeforeCommit"
-                        style="padding: 11px 14px;"
-                        class="toshi-btn-secondary"
+                        class="toshi-btn-secondary toshi-btn-edit"
                         onmouseover="this.style.borderColor='#c96442';this.style.color='#c96442'" onmouseout="this.style.borderColor='#e8e6dc';this.style.color='#5e5d59'">
                     ← Edit
                 </button>
@@ -671,20 +665,20 @@
         <div class="shrink-0" style="display: flex; flex-direction: column; gap: 6px; padding: 4px 16px 8px; background: #FFFFFF;">
             @php $drafts = $this->getDrafts(); @endphp
             @if(count($drafts) > 0)
-            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #87867f; letter-spacing: 0.04em;">Continue Setup</div>
+            <div class="toshi-label">Continue Setup</div>
             @foreach($drafts as $draft)
             <button wire:click="resumeDraft" type="button"
                     style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f5f4ed; border: 1px solid #e8e6dc; border-radius: 10px; cursor: pointer; text-align: left; font-size: 12px; color: #4d4c48; font-weight: 500; transition: all 0.15s; width: 100%;"
                     onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#e8e6dc'">
                 <span style="width: 24px; height: 24px; border-radius: 6px; background: #22C55E; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px;">↻</span>
-                <span style="flex: 1;">{{ $draft['school_name'] }}</span>
+                <span class="flex-1">{{ $draft['school_name'] }}</span>
                 <span style="font-size: 10px; color: #87867f;">Step {{ $draft['step'] + 1 }}</span>
             </button>
             @endforeach
             @endif
             <button wire:click="resetOnboarding(true)" type="button"
                     style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: #141413; color: white; border: none; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; align-self: flex-start;"
-                    onmouseover="this.style.background='#c96442'"
+                    onmouseover="this.style.background='#22C55E'"
                     onmouseout="this.style.background='#141413'">
                 <span style="font-size: 16px; line-height: 1;">+</span> New School
             </button>
@@ -706,11 +700,11 @@
                 ];
             @endphp
             <div style="font-size: 12px; font-weight: 600; color: #141413;">{{ $schoolName }}</div>
-            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #87867f; letter-spacing: 0.04em;">Quick Actions</div>
+            <div class="toshi-label">Quick Actions</div>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 @foreach($quickActions as $action => $def)
                     @if(in_array($action, $actions))
-                    <span style="padding: 4px 10px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: default;" title="{{ $def['hint'] }}">{{ $def['label'] }}</span>
+                    <span class="toshi-chip" style="cursor: default;" title="{{ $def['hint'] }}">{{ $def['label'] }}</span>
                     @endif
                 @endforeach
             </div>
@@ -727,54 +721,54 @@
                 Yes ✓
             </button>
             <button wire:click="confirmNo" type="button"
-                    style="flex: 1; padding: 10px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    class="toshi-btn-outline"
                     onmouseover="this.style.background='#e8e6dc'"
                     onmouseout="this.style.background='#f5f4ed'">
                 No
             </button>
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects' && $substep === 1)
             <button wire:click="confirmCustom" type="button"
-                    style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#a84d32'"
+                    class="toshi-btn-primary"
+                   
                     onmouseout="this.style.background='#c96442'">
                 + Add Subject
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers' && $substep === 0)
             <button wire:click="showTeacherFormFn" type="button"
-                    style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#a84d32'"
+                    class="toshi-btn-primary"
+                   
                     onmouseout="this.style.background='#c96442'">
                 + Add Teacher
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'students' && $substep === 0)
             <button wire:click="showStudentFormFn" type="button"
-                    style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#a84d32'"
+                    class="toshi-btn-primary"
+                   
                     onmouseout="this.style.background='#c96442'">
                 + Add Student
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees' && $substep === 0)
             <button wire:click="showFeeFormFn" type="button"
-                    style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#a84d32'"
+                    class="toshi-btn-primary"
+                   
                     onmouseout="this.style.background='#c96442'">
                 + Add Fee
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams' && $substep === 0)
             <button wire:click="showExamFormFn" type="button"
-                    style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                    onmouseover="this.style.background='#a84d32'"
+                    class="toshi-btn-primary"
+                   
                     onmouseout="this.style.background='#c96442'">
                 + Add Exam
             </button>
             @endif
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
             <button wire:click="confirmSkipAll" type="button"
-                    style="flex: 1; padding: 10px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                    class="toshi-btn-outline"
                     onmouseover="this.style.background='#e8e6dc'"
                     onmouseout="this.style.background='#f5f4ed'">
                 Skip All
@@ -782,9 +776,15 @@
             @endif
         </div>
         @endif
-        {{-- Composer --}}
+        {{-- Skip step button — shared partial --}}
+        @include('livewire.partials.toshi-skip-button', ['modal' => false])
+        {{-- Composer — Claude-style unified bar --}}
         <form wire:submit.prevent="send" class="toshi-composer">
             <div class="toshi-composer-inner">
+                <label class="toshi-attach-btn" title="Upload file">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 4v8M4 8h8"/></svg>
+                    <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
+                </label>
                 <textarea rows="1" wire:model.defer="input"
                           placeholder="Message Toshi…"
                           id="toshi-input-panel"
@@ -795,49 +795,14 @@
                           "
                            @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
                            class="toshi-composer-input"></textarea>
-                <button type="submit" class="toshi-composer-btn">Send</button>
-            </div>
-        </form>
-                                    recognition.interimResults = false;
-                                    recognition.onresult = function(event) {
-                                        var text = event.results[0][0].transcript;
-                                        var input = document.getElementById('toshi-input-panel');
-                                        input.value = text; input.dispatchEvent(new Event('input', {bubbles: true}));
-                                        input.closest('form').querySelector('button[type=submit]').click();
-                                        listening = false;
-                                    };
-                                    recognition.onerror = function() { listening = false; };
-                                    recognition.onend = function() { listening = false; };
-                                    recognition.start();
-                                }
-                            "
-                            class="relative"
-                            style="width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #87867f; transition: color 0.15s;"
-                            onmouseover="this.style.color='#c96442'"
-                            onmouseout="this.style.color='#87867f'">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                        <span x-show="listening" class="absolute" style="width: 8px; height: 8px; border-radius: 50%; background: #22C55E; animation: toshi-pulse 1.4s ease-in-out infinite; top: 2px; right: 2px;"></span>
-                    </button>
-                    {{-- Right cluster: attach + send --}}
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <label class="flex items-center justify-center cursor-pointer"
-                               style="width: 30px; height: 30px; color: #87867f; transition: color 0.15s; font-size: 20px; font-weight: 300;"
-                               onmouseover="this.style.color='#c96442'"
-                               onmouseout="this.style.color='#87867f'"
-                               title="Upload file">
-                            +
-                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
-                        </label>
-                        {{-- Send --}}
-                        <button type="submit"
-                                :disabled="!hasText"
-                                :style="hasText ? 'color: #141413; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
-                                style="width: 30px; height: 30px; background: none; border: none; display: flex; align-items: center; justify-content: center; transition: color 0.15s;"
-                                class="active:scale-95">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-                        </button>
-                    </div>
-                </div>
+                <button type="submit"
+                        :disabled="!hasText"
+                        :style="hasText ? 'color: #141413; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
+                        style="width: 32px; height: 32px; background: none; border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color 0.15s; margin-right: 2px; border-radius: 8px;"
+                        class="active:scale-95"
+                        title="Send">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                </button>
             </div>
         </form>
     </div>
@@ -856,6 +821,9 @@
                 <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 4px;">
                     <img src="{{ asset('images/klassapp-logo.svg') }}" style="width: 22px; height: 22px;" alt="KlassApp">
                     <span style="font-size: 16px; font-weight: 700; color: #141413; font-family: 'Sora', sans-serif;">Toshi</span>
+                    <button wire:click="resetSchoolOnboarding" style="margin-left:auto;font-size:11px;font-weight:600;color:#D97706;background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:4px;transition:background 0.15s;" onmouseover="this.style.background='rgba(217,119,6,0.1)'" onmouseout="this.style.background='transparent'" title="Restart onboarding">
+                        ↻ Restart
+                    </button>
                 </div>
                 <div style="font-size: 11px; text-transform: uppercase; color: #87867f; letter-spacing: 0.04em; font-weight: 600; margin: 16px 0 8px;">Onboarding Session</div>
                 <button wire:click="resumeDraft" style="width: 100%; background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #4d4c48; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s;" onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#e8e6dc'">
@@ -865,13 +833,13 @@
                 @php $drafts = $this->getDrafts(); @endphp
                 @if(count($drafts) > 0)
                 <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 4px;">
-                    <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; color: #87867f; letter-spacing: 0.04em;">Continue Setup</div>
+                    <div class="toshi-label">Continue Setup</div>
                     @foreach($drafts as $draft)
                     <button wire:click="resumeDraft" type="button"
                             style="display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 8px; cursor: pointer; text-align: left; font-size: 12px; color: #4d4c48; font-weight: 500; transition: all 0.15s; width: 100%; font-family: 'DM Sans', sans-serif;"
                             onmouseover="this.style.borderColor='#22C55E'" onmouseout="this.style.borderColor='#e8e6dc'">
                         <span style="width: 20px; height: 20px; border-radius: 5px; background: #22C55E; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px;">↻</span>
-                        <span style="flex: 1;">{{ $draft['school_name'] }}</span>
+                        <span class="flex-1">{{ $draft['school_name'] }}</span>
                         <span style="font-size: 9px; color: #87867f;">Step {{ $draft['step'] + 1 }}</span>
                     </button>
                     @endforeach
@@ -880,7 +848,7 @@
                 <div style="margin-top: 8px;">
                     <button wire:click="resetOnboarding(true)" type="button"
                             style="width: 100%; padding: 8px 12px; background: #141413; color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s; font-family: 'DM Sans', sans-serif;"
-                            onmouseover="this.style.background='#c96442'"
+                            onmouseover="this.style.background='#22C55E'"
                             onmouseout="this.style.background='#141413'">
                         + New School
                     </button>
@@ -916,19 +884,19 @@
             <div style="flex: 1; display: flex; flex-direction: column; background: #FFFFFF; min-width: 0;">
 
                 {{-- Header --}}
-                <div class="toshi-panel-header" style="justify-content: space-between; padding: 0 20px;">
-                    <div class="flex items-center gap-2">
-                        <span class="toshi-header-dot"></span>
-                        <span class="toshi-header-name">Toshi</span>
+                <div class="toshi-header">
+                    <div class="toshi-header-logo">
+                        <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp">
+                        <span>Toshi</span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <button wire:click="restore"
-                                style="border-radius: 6px; background: rgba(0,0,0,0.06); border: none; cursor: pointer; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" title="Restore">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 1H1v3M10 1h3v3M10 13h3v-3M4 13H1v-3"/></svg>
+                    {{-- Mode dropdown — shared partial --}}
+                    @include('livewire.partials.toshi-mode-dropdown')
+                    <div class="toshi-header-actions">
+                        <button wire:click="restore" class="toshi-header-btn" title="Restore">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2H2v4M12 2h2v4M12 14h2v-4M4 14H2v-4"/></svg>
                         </button>
-                        <button wire:click="hide"
-                                style="border-radius: 6px; background: rgba(0,0,0,0.06); border: none; cursor: pointer; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;" title="Close">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1B5E20" stroke-width="1.5" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg>
+                        <button wire:click="hide" class="toshi-header-btn" title="Close">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
                         </button>
                     </div>
                 </div>
@@ -959,37 +927,37 @@
                         @endforeach
                                     {{-- Subject inline form --}}
                                     @if($showSubjectForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects')
-                                    <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                                        <div style="font-size: 13px; font-weight: 600; color: #141413; margin-bottom: 10px;">Add Subject</div>
+                                    <div class="toshi-form-card">
+                                        <div class="toshi-section-title" style="margin-bottom: 10px;">Add Subject</div>
                                         @php $subjects = $this->actionData['subjects'] ?? []; @endphp
                                         @if(count($subjects) > 0)
-                                        <div style="margin-bottom: 8px;">
+                                        <div class="toshi-spacer-8">
                                             @foreach($subjects as $si => $s)
-                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
-                                                <span style="flex: 1;">{{ $s }}</span>
+                                            <div class="toshi-list-item">
+                                                <span class="flex-1">{{ $s }}</span>
                                                 <button wire:click="removeSubject({{ $si }})" type="button"
-                                                        style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                                        class="toshi-remove-btn">✕</button>
                                             </div>
                                             @endforeach
                                         </div>
                                         @endif
-                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <div class="toshi-flex-col">
                                             <input type="text" wire:model="subjectFormName" placeholder="Subject name *"
-                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   class="toshi-input">
                                             <input type="text" wire:model="subjectFormCode" placeholder="Subject code (optional)"
-                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   class="toshi-input">
                                             <select wire:model="subjectFormType"
-                                                    style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; background: white; font-family: 'DM Sans', sans-serif;">
+                                                    class="toshi-input">
                                                 <option value="core">Core</option>
                                                 <option value="elective">Elective</option>
                                             </select>
-                                            <div style="display: flex; gap: 8px;">
+                                            <div class="flex gap-2">
                                                 <button wire:click="saveSubject" type="button"
-                                                        style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                        class="toshi-btn-primary-sm">
                                                     + Add Subject
                                                 </button>
                                                 <button wire:click="doneSubjects" type="button"
-                                                        style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                                        class="toshi-btn-done">
                                                     Continue ({{ count($this->actionData['subjects'] ?? []) }})
                                                 </button>
                                             </div>
@@ -999,15 +967,14 @@
 
                                     {{-- Teacher inline form (maximized) --}}
                                     @if($showTeacherForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers')
-                                    <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                            <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Teacher</span>
-                                            <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                                    <div class="toshi-form-card">
+                                        <div class="toshi-flex-row">
+                                            <span class="toshi-section-title">Add Teacher</span>
+                                            <div class="flex items-center gap-2 toshi-ml-auto">
                                                 <a href="{{ asset('templates/teacher-upload-template.xlsx') }}" download
-                                                   style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
+                                                   class="toshi-tag-link">Download Template</a>
                                                 <span style="font-size: 10px; color: #87867f; cursor: help;" title="CSV/XLSX: columns Name, Email, Subjects, Classes. TXT: one name per line.">ⓘ</span>
-                                                <label class="flex items-center gap-1 cursor-pointer"
-                                                       style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
+                                                <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
                                                     Upload File
                                                     <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                                                 </label>
@@ -1015,28 +982,28 @@
                                         </div>
                                         @php $teachers = $this->actionData['teachers'] ?? []; @endphp
                                         @if(count($teachers) > 0)
-                                        <div style="margin-bottom: 8px;">
+                                        <div class="toshi-spacer-8">
                                             @foreach($teachers as $ti => $t)
-                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
-                                                <span style="flex: 1;">{{ $t }}</span>
+                                            <div class="toshi-list-item">
+                                                <span class="flex-1">{{ $t }}</span>
                                                 <button wire:click="removeTeacher({{ $ti }})" type="button"
-                                                        style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                                        class="toshi-remove-btn">✕</button>
                                             </div>
                                             @endforeach
                                         </div>
                                         @endif
-                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <div class="toshi-flex-col">
                                             <input type="text" wire:model="teacherFormName" placeholder="Teacher name *"
-                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   class="toshi-input">
                                             <input type="email" wire:model="teacherFormEmail" placeholder="Email (optional)"
-                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   class="toshi-input">
                                             <input type="text" wire:model="teacherFormPhone" placeholder="WhatsApp number (optional)"
-                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                                            <div style="display: flex; gap: 8px;">
-                                                <div style="flex: 1;">
-                                                    <div style="font-size: 10px; color: #87867f; margin-bottom: 2px;">Subject(s)</div>
+                                                   class="toshi-input">
+                                            <div class="flex gap-2">
+                                                <div class="flex-1">
+                                                    <div class="toshi-sub-label">Subject(s)</div>
                                                     <input type="text" wire:model="teacherFormSubjects" placeholder="e.g. Math, English" list="subject-list-modal"
-                                                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                           class="toshi-input">
                                                     <datalist id="subject-list-modal">
                                                         @php
                                                             $allSubjects = [];
@@ -1050,10 +1017,10 @@
                                                         @endforeach
                                                     </datalist>
                                                 </div>
-                                                <div style="flex: 1;">
-                                                    <div style="font-size: 10px; color: #87867f; margin-bottom: 2px;">Class(es)</div>
+                                                <div class="flex-1">
+                                                    <div class="toshi-sub-label">Class(es)</div>
                                                     <input type="text" wire:model="teacherFormClasses" placeholder="e.g. P1, P2" list="class-list-modal"
-                                                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                           class="toshi-input">
                                                     <datalist id="class-list-modal">
                                                         @foreach($this->standards ?? [] as $std)
                                                         <option value="{{ $std['name'] }}">
@@ -1061,13 +1028,13 @@
                                                     </datalist>
                                                 </div>
                                             </div>
-                                            <div style="display: flex; gap: 8px;">
+                                            <div class="flex gap-2">
                                                 <button wire:click="saveTeacher" type="button"
-                                                        style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                        class="toshi-btn-primary-sm">
                                                     + Add Teacher
                                                 </button>
                                                 <button wire:click="doneTeachers" type="button"
-                                                        style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                                        class="toshi-btn-done">
                                                     Continue ({{ count($this->actionData['teachers'] ?? []) }})
                                                 </button>
                                             </div>
@@ -1077,14 +1044,13 @@
 
                                                 {{-- Student inline form --}}
                                                 @if($showStudentForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'students')
-                                                <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                                        <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Student</span>
-                    <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                                                <div class="toshi-form-card">
+                                                    <div class="toshi-flex-row">
+                                                        <span class="toshi-section-title">Add Student</span>
+                    <div class="flex items-center gap-2 toshi-ml-auto">
                         <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
-                           style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
-                        <label class="flex items-center gap-1 cursor-pointer"
-                               style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
+                           class="toshi-tag-link">Download Template</a>
+                        <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
@@ -1092,42 +1058,42 @@
                                                     </div>
                                                     @php $students = $this->actionData['students'] ?? []; @endphp
                                                     @if(count($students) > 0)
-                                                    <div style="margin-bottom: 8px;">
+                                                    <div class="toshi-spacer-8">
                                                         @foreach($students as $si => $s)
-                                                        <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
-                                                            <span style="flex: 1;">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #87867f;">({{ $s['class'] }})</span>@endif</span>
+                                                        <div class="toshi-list-item">
+                                                            <span class="flex-1">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #87867f;">({{ $s['class'] }})</span>@endif</span>
                                                             <button wire:click="removeStudent({{ $si }})" type="button"
-                                                                    style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                                                    class="toshi-remove-btn">✕</button>
                                                         </div>
                                                         @endforeach
                                                     </div>
                                                     @endif
-                                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                    <div class="toshi-flex-col">
                                                         <input type="text" wire:model="studentFormName" placeholder="Student name *"
-                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               class="toshi-input">
                                                         <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
 
                     <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
-                           style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                           class="toshi-input">
                     <input type="text" wire:model="studentFormClass" placeholder="Class *" list="student-class-list"
-                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               class="toshi-input">
                                                         <datalist id="student-class-list">
                                                             @foreach($this->standards ?? [] as $std)
                                                             <option value="{{ $std['name'] }}">
                                                             @endforeach
                                                         </datalist>
                                                         <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
-                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               class="toshi-input">
                                                         <input type="text" wire:model="studentFormParentPhone" placeholder="Parent phone (optional)"
-                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
-                                                        <div style="display: flex; gap: 8px;">
+                                                               class="toshi-input">
+                                                        <div class="flex gap-2">
                                                             <button wire:click="saveStudent" type="button"
-                                                                    style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                                    class="toshi-btn-primary-sm">
                                                                 + Add Student
                                                             </button>
                                                             <button wire:click="doneStudents" type="button"
-                                                                    style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                                                    class="toshi-btn-done">
                                                                 Continue ({{ count($this->actionData['students'] ?? []) }})
                                                             </button>
                                                         </div>
@@ -1137,14 +1103,13 @@
 
                                     {{-- Fee inline form (maximized) --}}
                                     @if($showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
-                                    <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                            <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Fee</span>
-                                            <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                                    <div class="toshi-form-card">
+                                        <div class="toshi-flex-row">
+                                            <span class="toshi-section-title">Add Fee</span>
+                                            <div class="flex items-center gap-2 toshi-ml-auto">
                                                 <a href="{{ asset('templates/fee-upload-template.xlsx') }}" download
-                                                   style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
-                                                <label class="flex items-center gap-1 cursor-pointer"
-                                                       style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
+                                                   class="toshi-tag-link">Download Template</a>
+                                                <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
                                                     Upload File
                                                     <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                                                 </label>
@@ -1152,23 +1117,23 @@
                                         </div>
                                         @php $fees = $this->actionData['fees'] ?? []; @endphp
                                         @if(count($fees) > 0)
-                                        <div style="margin-bottom: 8px;">
+                                        <div class="toshi-spacer-8">
                                             @foreach($fees as $fi => $f)
-                                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
-                        <span style="flex: 1;">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif</span>
+                                            <div class="toshi-list-item">
+                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif</span>
                                                 <button wire:click="removeFee({{ $fi }})" type="button"
-                                                        style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                                        class="toshi-remove-btn">✕</button>
                                             </div>
                                             @endforeach
                                         </div>
                                         @endif
-                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <div class="toshi-flex-col">
                                             <input type="text" wire:model="feeFormName" placeholder="Fee name *"
-                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   class="toshi-input">
                                             <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
-                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   class="toshi-input">
                                             <select wire:model="feeFormLevel"
-                                                    style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                    class="toshi-input">
                                                 <option value="">Level (optional)</option>
                                                 <option value="nursery">Nursery</option>
                                                 <option value="primary">Primary</option>
@@ -1176,26 +1141,26 @@
                                                 <option value="all">All Levels</option>
                                             </select>
                                             <input type="text" wire:model="feeFormClass" placeholder="Class (optional)" list="fee-class-list-modal"
-                                                   style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                   class="toshi-input">
                                             <datalist id="fee-class-list-modal">
                                                 @foreach($this->standards ?? [] as $std)
                                                 <option value="{{ $std['name'] }}">
                                                 @endforeach
                                             </datalist>
                                             <select wire:model="feeFormTerm"
-                                                    style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                    class="toshi-input">
                                                 <option value="">Term (optional)</option>
                                                 <option value="Term I">Term I</option>
                                                 <option value="Term II">Term II</option>
                                                 <option value="Term III">Term III</option>
                                             </select>
-                                            <div style="display: flex; gap: 8px;">
+                                            <div class="flex gap-2">
                                                 <button wire:click="saveFee" type="button"
-                                                        style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                        class="toshi-btn-primary-sm">
                                                     + Add Fee
                                                 </button>
                                                 <button wire:click="doneFees" type="button"
-                                                        style="padding: 8px 12px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                                        class="toshi-btn-done">
                                                     Continue ({{ count($this->actionData['fees'] ?? []) }})
                                                 </button>
                                             </div>
@@ -1205,14 +1170,13 @@
 
                                                 {{-- Exam inline form --}}
                                                 @if($showExamForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams')
-                                                <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; padding: 14px; margin: 4px 0;">
-                                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                                        <span style="font-size: 13px; font-weight: 600; color: #141413;">Add Exam</span>
-                                                        <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                                                <div class="toshi-form-card">
+                                                    <div class="toshi-flex-row">
+                                                        <span class="toshi-section-title">Add Exam</span>
+                                                        <div class="flex items-center gap-2 toshi-ml-auto">
                                                             <a href="{{ asset('templates/exam-upload-template.xlsx') }}" download
-                                                               style="font-size: 10px; color: #c96442; text-decoration: none; padding: 4px 8px; background: #faf9f5; border-radius: 6px;">Download Template</a>
-                                                            <label class="flex items-center gap-1 cursor-pointer"
-                                                                   style="padding: 4px 8px; background: #f5f4ed; border-radius: 6px; font-size: 11px; color: #5e5d59; cursor: pointer;">
+                                                               class="toshi-tag-link">Download Template</a>
+                                                            <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
                                                                 Upload File
                                                                 <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                                                             </label>
@@ -1220,35 +1184,35 @@
                                                     </div>
                                                     @php $exams = $this->actionData['exams'] ?? []; @endphp
                                                     @if(count($exams) > 0)
-                                                    <div style="margin-bottom: 8px;">
+                                                    <div class="toshi-spacer-8">
                                                         @foreach($exams as $ei => $e)
-                                                        <div style="display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: #4d4c48; border-bottom: 1px solid #f5f4ed;">
-                                                            <span style="flex: 1;">{{ $e['type'] }} — {{ $e['term'] }}</span>
+                                                        <div class="toshi-list-item">
+                                                            <span class="flex-1">{{ $e['type'] }} — {{ $e['term'] }}</span>
                                                             <button wire:click="removeExam({{ $ei }})" type="button"
-                                                                    style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 14px; padding: 2px 4px;">✕</button>
+                                                                    class="toshi-remove-btn">✕</button>
                                                         </div>
                                                         @endforeach
                                                     </div>
                                                     @endif
-                                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                    <div class="toshi-flex-col">
                                                         <select wire:model="examFormTerm"
-                                                                style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                                class="toshi-input">
                                                             <option value="">Term *</option>
                                                             <option value="Term I">Term I</option>
                                                             <option value="Term II">Term II</option>
                                                             <option value="Term III">Term III</option>
                                                         </select>
                                                         <input type="text" wire:model="examFormType" placeholder="Exam type * (e.g. Midterm, Final)"
-                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               class="toshi-input">
                                                         <select wire:model="examFormStatus"
-                                                                style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                                class="toshi-input">
                                                             <option value="">Status</option>
                                                             <option value="active">Active</option>
                                                             <option value="completed">Completed</option>
                                                             <option value="cancelled">Cancelled</option>
                                                         </select>
                                                         <select wire:model="examFormLevel"
-                                                                style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif; background: white;">
+                                                                class="toshi-input">
                                                             <option value="">Level</option>
                                                             <option value="nursery">Nursery</option>
                                                             <option value="primary">Primary</option>
@@ -1256,14 +1220,14 @@
                                                             <option value="all">All Levels</option>
                                                         </select>
                                                         <input type="text" wire:model="examFormClass" placeholder="Class" list="exam-class-list"
-                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               class="toshi-input">
                                                         <datalist id="exam-class-list">
                                                             @foreach($this->standards ?? [] as $std)
                                                             <option value="{{ $std['name'] }}">
                                                             @endforeach
                                                         </datalist>
                                                         <input type="text" wire:model="examFormSubject" placeholder="Subject" list="exam-subject-list"
-                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               class="toshi-input">
                                                         <datalist id="exam-subject-list">
                                                             @php
                                                                 $allSubs = [];
@@ -1277,23 +1241,23 @@
                                                             @endforeach
                                                         </datalist>
                                                         <input type="text" wire:model="examFormTeacher" placeholder="Teacher" list="exam-teacher-list"
-                                                               style="padding: 8px 12px; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; font-family: 'DM Sans', sans-serif;">
+                                                               class="toshi-input">
                                                         <datalist id="exam-teacher-list">
                                                             @foreach($this->teacherList ?? [] as $t)
                                                             <option value="{{ $t }}">
                                                             @endforeach
                                                         </datalist>
-                                                        <div style="display: flex; gap: 8px;">
+                                                        <div class="flex gap-2">
                                                             <button wire:click="saveExam" type="button"
-                                                                    style="flex: 1; padding: 8px; background: #c96442; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                                    class="toshi-btn-primary-sm">
                                                                 + Add Exam
                                                             </button>
                                                             <button wire:click="doneExams" type="button"
-                                                                    style="flex: 1; padding: 8px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">
+                                                                    class="toshi-btn-outline-sm">
                                                                 Skip
                                                             </button>
                                                             <button wire:click="doneExams" type="button"
-                                                                    style="flex: 1; padding: 8px; background: #22C55E; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                                                    class="toshi-btn-done-sm">
                                                                 Continue ({{ count($this->actionData['exams'] ?? []) }})
                                                             </button>
                                                         </div>
@@ -1307,11 +1271,11 @@
                             @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
                             @foreach($plans as $plan)
                             <button wire:click="selectPlan({{ $plan->id }})"
-                                    style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 13px; color: #4d4c48; font-family: 'DM Sans', sans-serif;"
+                                    class="toshi-option-card"
                                     onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
                                     onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
                                 <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
-                                <div style="flex: 1;">
+                                <div class="flex-1">
                                     <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
                                     <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
                                         @if(strtolower($plan->name) === 'premium')
@@ -1359,7 +1323,7 @@
                                 <div style="width: 32px; height: 32px; border-radius: 50%; background: #faf9f5; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #c96442; font-size: 12px;">{{ strtoupper(substr($teacher->name, 0, 1)) }}</div>
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="font-weight: 600;">{{ $teacher->name }}</div>
-                                    <div style="font-size: 11px; color: #5e5d59;">{{ $teacher->email }}</div>
+                                    <div class="toshi-sm-text">{{ $teacher->email }}</div>
                                 </div>
                             </button>
                             @endforeach
@@ -1375,81 +1339,80 @@
 
                         {{-- Review Card (maximized modal) --}}
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'review' && !empty($reviewData) && empty($reviewData['committed']))
-                        <div style="background: #FFFFFF; border: 1px solid #e8e6dc; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 4px 0;">
+                        <div class="toshi-review-card">
                             {{-- Header --}}
-                            <div style="background: #141413; color: #FFFFFF; padding: 14px 16px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px;">
+                            <div class="toshi-review-header">
                                 <span>📋 Review &amp; Confirm</span>
                             </div>
                             {{-- Body --}}
-                            <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;">
-                                <div style="display: flex; gap: 10px;">
-                                    <div style="flex: 1; background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
-                                        <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Plan</div>
-                                        <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['plan'] }}</div>
+                            <div class="toshi-review-body">
+                                <div class="flex" style="gap: 10px;">
+                                    <div class="toshi-info-card">
+                                        <div class="toshi-uppercase-label">Plan</div>
+                                        <div class="toshi-section-title toshi-gap-3">{{ $reviewData['plan'] }}</div>
                                     </div>
-                                    <div style="flex: 1; background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
-                                        <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">School</div>
-                                        <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['schoolName'] }}</div>
-                                        <div style="font-size: 11px; color: #5e5d59;">{{ ucfirst($reviewData['schoolType']) }}</div>
+                                    <div class="toshi-info-card">
+                                        <div class="toshi-uppercase-label">School</div>
+                                        <div class="toshi-section-title toshi-gap-3">{{ $reviewData['schoolName'] }}</div>
+                                        <div class="toshi-sm-text">{{ ucfirst($reviewData['schoolType']) }}</div>
                                     </div>
                                 </div>
-                                <div style="background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
-                                    <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Admin Account</div>
-                                    <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['adminName'] }}</div>
-                                    <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['adminEmail'] }} · {{ $reviewData['adminPhone'] }}</div>
+                                <div class="toshi-info-card" style="flex: none;">
+                                    <div class="toshi-uppercase-label">Admin Account</div>
+                                    <div class="toshi-section-title toshi-gap-3">{{ $reviewData['adminName'] }}</div>
+                                    <div class="toshi-sm-text">{{ $reviewData['adminEmail'] }} · {{ $reviewData['adminPhone'] }}</div>
                                 </div>
                                 @if(!empty($reviewData['coAdminName']))
-                                <div style="background: #f5f4ed; border-radius: 10px; padding: 10px 12px;">
-                                    <div style="font-size: 10px; font-weight: 600; color: #5e5d59; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
-                                    <div style="font-size: 13px; font-weight: 600; color: #141413; margin-top: 3px;">{{ $reviewData['coAdminName'] }}</div>
-                                    <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['coAdminEmail'] }}</div>
+                                <div class="toshi-info-card" style="flex: none;">
+                                    <div class="toshi-uppercase-label">Co-Admin</div>
+                                    <div class="toshi-section-title toshi-gap-3">{{ $reviewData['coAdminName'] }}</div>
+                                    <div class="toshi-sm-text">{{ $reviewData['coAdminEmail'] }}</div>
                                 </div>
                                 @endif
                                 <div style="background: {{ !empty($reviewData['whatsapp']) && str_contains($reviewData['whatsapp'], '✅') ? '#F0FDF4' : '#FEF2F2' }}; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;">
                                     <span style="font-size: 16px;">📱</span>
                                     <div>
                                         <div style="font-size: 12px; font-weight: 600; color: #141413;">WhatsApp</div>
-                                        <div style="font-size: 11px; color: #5e5d59;">{{ $reviewData['whatsapp'] ?? 'Not set up' }}</div>
+                                        <div class="toshi-sm-text">{{ $reviewData['whatsapp'] ?? 'Not set up' }}</div>
                                     </div>
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                                        <div style="font-size: 18px; font-weight: 700; color: #c96442;">{{ $reviewData['classCount'] }}</div>
-                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Classes</div>
+                                <div class="toshi-counts-grid">
+                                    <div class="toshi-stat-card">
+                                        <div class="toshi-stat-value" style="color: #c96442;">{{ $reviewData['classCount'] }}</div>
+                                        <div class="toshi-stat-digit">Classes</div>
                                     </div>
-                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                                        <div style="font-size: 18px; font-weight: 700; color: #22C55E;">{{ $reviewData['teacherCount'] }}</div>
-                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Teachers</div>
+                                    <div class="toshi-stat-card">
+                                        <div class="toshi-stat-value" style="color: #22C55E;">{{ $reviewData['teacherCount'] }}</div>
+                                        <div class="toshi-stat-digit">Teachers</div>
                                         @if(!empty($reviewData['teacherLinkCount']) && $reviewData['teacherLinkCount'] > 0)
-                                        <div style="font-size: 8px; color: #87867f; margin-top: 2px;">{{ $reviewData['teacherLinkCount'] }} subject links</div>
+                                        <div class="toshi-tiny-note">{{ $reviewData['teacherLinkCount'] }} subject links</div>
                                         @endif
                                     </div>
-                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                                        <div style="font-size: 18px; font-weight: 700; color: #D97706;">{{ $reviewData['studentCount'] }}</div>
-                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Students</div>
+                                    <div class="toshi-stat-card">
+                                        <div class="toshi-stat-value" style="color: #D97706;">{{ $reviewData['studentCount'] }}</div>
+                                        <div class="toshi-stat-digit">Students</div>
                                         @if(!empty($reviewData['studentIds']) && $reviewData['studentIds'] !== '—')
-                                        <div style="font-size: 8px; color: #87867f; margin-top: 2px;">{{ $reviewData['studentIds'] }}</div>
+                                        <div class="toshi-tiny-note">{{ $reviewData['studentIds'] }}</div>
                                         @endif
                                     </div>
-                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                                        <div style="font-size: 18px; font-weight: 700; color: #8B5CF6;">{{ $reviewData['termCount'] }}</div>
-                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Terms</div>
+                                    <div class="toshi-stat-card">
+                                        <div class="toshi-stat-value" style="color: #8B5CF6;">{{ $reviewData['termCount'] }}</div>
+                                        <div class="toshi-stat-digit">Terms</div>
                                     </div>
-                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                                        <div style="font-size: 18px; font-weight: 700; color: #EC4899;">{{ $reviewData['feeCount'] }}</div>
-                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Fees</div>
+                                    <div class="toshi-stat-card">
+                                        <div class="toshi-stat-value" style="color: #EC4899;">{{ $reviewData['feeCount'] }}</div>
+                                        <div class="toshi-stat-digit">Fees</div>
                                     </div>
-                                    <div style="background: #f5f4ed; border-radius: 8px; padding: 8px; text-align: center;">
-                                        <div style="font-size: 18px; font-weight: 700; color: #14B8A6;">{{ $reviewData['examCount'] }}</div>
-                                        <div style="font-size: 10px; color: #5e5d59; font-weight: 500;">Exams</div>
+                                    <div class="toshi-stat-card">
+                                        <div class="toshi-stat-value" style="color: #14B8A6;">{{ $reviewData['examCount'] }}</div>
+                                        <div class="toshi-stat-digit">Exams</div>
                                     </div>
                                 </div>
                             </div>
                             {{-- Actions --}}
-                            <div style="display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #e8e6dc; background: #FAFAFA;">
+                            <div class="toshi-review-actions">
                                 <button type="button" wire:click="confirmOnboarding"
-                                        style="flex: 1; padding: 11px; font-family: 'Sora', sans-serif;"
-                                        class="toshi-btn-confirm"
+                                        class="toshi-btn-confirm toshi-confirm-full"
                                         onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'">
                                     🎉 Confirm &amp; Create School
                                 </button>
@@ -1477,20 +1440,20 @@
                             </div>
                             <div style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
                                 @if(!$isComplete)
-                                <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 12px;">
-                                    <div style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.04em;">Admin Login Credentials</div>
-                                    <div style="font-size: 14px; font-weight: 600; color: #141413; margin-top: 6px;">{{ $reviewData['adminEmail'] ?? '—' }}</div>
-                                    <div style="font-size: 13px; color: #5e5d59; margin-top: 2px;">Password: <strong>{{ $reviewData['adminPassword'] ?? 'password' }}</strong></div>
+                                <div class="toshi-banner-success">
+                                    <div class="toshi-green-label">Admin Login Credentials</div>
+                                    <div class="toshi-info-value">{{ $reviewData['adminEmail'] ?? '—' }}</div>
+                                    <div class="toshi-info-sub">Password: <strong>{{ $reviewData['adminPassword'] ?? 'password' }}</strong></div>
                                     <div style="font-size: 12px; color: #5e5d59; margin-top: 2px;">📱 {{ $reviewData['adminPhone'] ?? '—' }}</div>
                                 </div>
                                 @if(!empty($reviewData['coAdminEmail']))
-                                <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 12px;">
-                                    <div style="font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.04em;">Co-Admin</div>
-                                    <div style="font-size: 14px; font-weight: 600; color: #141413; margin-top: 6px;">{{ $reviewData['coAdminEmail'] ?? '—' }}</div>
+                                <div class="toshi-banner-success">
+                                    <div class="toshi-green-label">Co-Admin</div>
+                                    <div class="toshi-info-value">{{ $reviewData['coAdminEmail'] ?? '—' }}</div>
                                     @if(!empty($reviewData['coAdminPromoted']))
                                     <div style="font-size: 12px; color: #166534; margin-top: 2px;">✅ Promoted from teacher — they keep their existing password</div>
                                     @else
-                                    <div style="font-size: 13px; color: #5e5d59; margin-top: 2px;">Password: <strong>{{ $reviewData['coAdminPassword'] ?? 'password' }}</strong></div>
+                                    <div class="toshi-info-sub">Password: <strong>{{ $reviewData['coAdminPassword'] ?? 'password' }}</strong></div>
                                     @endif
                                 </div>
                                 @endif
@@ -1525,54 +1488,54 @@
                             Yes ✓
                         </button>
                         <button wire:click="confirmNo" type="button"
-                                style="flex: 1; padding: 10px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                class="toshi-btn-outline"
                                 onmouseover="this.style.background='#e8e6dc'"
                                 onmouseout="this.style.background='#f5f4ed'">
                         No
                     </button>
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'subjects' && $substep === 1)
                         <button wire:click="confirmCustom" type="button"
-                                style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#a84d32'"
+                                class="toshi-btn-primary"
+                               
                                 onmouseout="this.style.background='#c96442'">
                             + Add Subject
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'teachers' && $substep === 0)
                         <button wire:click="showTeacherFormFn" type="button"
-                                style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#a84d32'"
+                                class="toshi-btn-primary"
+                               
                                 onmouseout="this.style.background='#c96442'">
                             + Add Teacher
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'students' && $substep === 0)
                         <button wire:click="showStudentFormFn" type="button"
-                                style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#a84d32'"
+                                class="toshi-btn-primary"
+                               
                                 onmouseout="this.style.background='#c96442'">
                             + Add Student
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees' && $substep === 0)
                         <button wire:click="showFeeFormFn" type="button"
-                                style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#a84d32'"
+                                class="toshi-btn-primary"
+                               
                                 onmouseout="this.style.background='#c96442'">
                             + Add Fee
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'exams' && $substep === 0)
                         <button wire:click="showExamFormFn" type="button"
-                                style="flex: 1; padding: 10px; background: #c96442; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
-                                onmouseover="this.style.background='#a84d32'"
+                                class="toshi-btn-primary"
+                               
                                 onmouseout="this.style.background='#c96442'">
                             + Add Exam
                         </button>
                         @endif
                         @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
                         <button wire:click="confirmSkipAll" type="button"
-                                style="flex: 1; padding: 10px; background: #f5f4ed; color: #5e5d59; border: 1px solid #e8e6dc; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s;"
+                                class="toshi-btn-outline"
                                 onmouseover="this.style.background='#e8e6dc'"
                                 onmouseout="this.style.background='#f5f4ed'">
                             Skip All
@@ -1580,11 +1543,16 @@
                         @endif
                 </div>
                 @endif
-            {{-- Composer: maximized modal — single rounded shell with bottom action row --}}
-                <form wire:submit.prevent="send" class="shrink-0" style="padding: 0 24px 16px; background: #FFFFFF;">
+            {{-- Skip step button — shared partial (modal) --}}
+            @include('livewire.partials.toshi-skip-button', ['modal' => true])
+            {{-- Composer: maximized modal — unified bar matching panel --}}
+                <form wire:submit.prevent="send" style="padding: 0 24px 16px; background: #FFFFFF;">
                     <div class="toshi-composer-box">
-                        {{-- Textarea --}}
-                        <div class="toshi-composer-inner" style="padding: 14px 16px 0;">
+                        <div class="toshi-composer-inner" style="padding: 6px 4px 6px 6px;">
+                            <label class="toshi-attach-btn" title="Upload file">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 4v8M4 8h8"/></svg>
+                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
+                            </label>
                             <textarea rows="1" wire:model.defer="input"
                                       placeholder="Message Toshi..."
                                       id="toshi-input-modal"
@@ -1594,59 +1562,15 @@
                                           $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
                                       "
                                       @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
-                                      class="toshi-composer-textarea resize-none"
-                                      style="transition: height 0.15s ease;"></textarea>
-                        </div>
-                        {{-- Bottom action row --}}
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px 12px;">
-                            {{-- Voice (left) --}}
-                            <button type="button" x-data="{ listening: false }"
-                                    @click="
-                                        if (!listening) {
-                                            listening = true; hasText = true;
-                                            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                                            if (!SpeechRecognition) { listening = false; alert('Voice input not supported in this browser'); return; }
-                                            var recognition = new SpeechRecognition();
-                                            recognition.lang = 'en-US';
-                                            recognition.interimResults = false;
-                                            recognition.onresult = function(event) {
-                                                var text = event.results[0][0].transcript;
-                                                var input = document.getElementById('toshi-input-modal');
-                                                input.value = text; input.dispatchEvent(new Event('input', {bubbles: true}));
-                                                input.closest('form').querySelector('button[type=submit]').click();
-                                                listening = false;
-                                            };
-                                            recognition.onerror = function() { listening = false; };
-                                            recognition.onend = function() { listening = false; };
-                                            recognition.start();
-                                        }
-                                    "
-                                    class="relative"
-                                    style="width: 30px; height: 30px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #87867f; transition: color 0.15s;"
-                                    onmouseover="this.style.color='#c96442'"
-                                    onmouseout="this.style.color='#87867f'">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                                <span x-show="listening" class="absolute" style="width: 8px; height: 8px; border-radius: 50%; background: #22C55E; animation: toshi-pulse 1.4s ease-in-out infinite; top: 2px; right: 2px;"></span>
+                                      class="toshi-composer-textarea"></textarea>
+                            <button type="submit"
+                                    :disabled="!hasText"
+                                    :style="hasText ? 'color: #141413; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
+                                    style="width: 32px; height: 32px; background: none; border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color 0.15s; margin-right: 2px; border-radius: 8px;"
+                                    class="active:scale-95"
+                                    title="Send">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
                             </button>
-                            {{-- Right cluster: attach + send --}}
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <label class="flex items-center justify-center cursor-pointer"
-                                       style="width: 30px; height: 30px; color: #87867f; transition: color 0.15s; font-size: 20px; font-weight: 300;"
-                                       onmouseover="this.style.color='#c96442'"
-                                       onmouseout="this.style.color='#87867f'"
-                                       title="Upload file">
-                                    +
-                                    <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
-                                </label>
-                                {{-- Send --}}
-                                <button type="submit"
-                                        :disabled="!hasText"
-                                        :style="hasText ? 'color: #141413; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
-                                        style="width: 30px; height: 30px; background: none; border: none; display: flex; align-items: center; justify-content: center; transition: color 0.15s;"
-                                        class="active:scale-95">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </form>

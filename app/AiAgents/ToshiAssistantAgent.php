@@ -574,4 +574,33 @@ class ToshiAssistantAgent extends Agent
         return ['success' => true, 'message' => 'Default MoE grading scales seeded for all standards.'];
     }
 
+    // ══════════════════════════════════════════════════
+    //  New tools: Exams, Parents, Marks
+    // ══════════════════════════════════════════════════
+
+    #[Tool('Create an exam. Provide name (e.g. "End of Term 1"), and optionally scheduled_at (Y-m-d).')]
+    public function toolCreateExam(string $name, string $scheduledAt = ''): array
+    {
+        return ToshiActionService::createExam(auth()->user(), [
+            'name' => $name,
+            'scheduled_at' => $scheduledAt ?: now()->toDateString(),
+        ]);
+    }
+
+    #[Tool('Add a parent and link to a student. Provide parent name, phone (+256...), and student_id.')]
+    public function toolAddParent(string $name, string $phone, int $studentId = 0): array
+    {
+        return ToshiActionService::addParent(auth()->user(), [
+            'name' => $name, 'phone' => $phone, 'student_id' => $studentId,
+        ]);
+    }
+
+    #[Tool('Enter a mark for a student on an exam. Provide student_id, exam_id, and marks (score 0-100).')]
+    public function toolEnterMark(int $studentId, int $examId, float $marks): array
+    {
+        return ToshiActionService::enterMark(auth()->user(), [
+            'student_id' => $studentId, 'exam_id' => $examId, 'marks' => $marks,
+        ]);
+    }
+
 }

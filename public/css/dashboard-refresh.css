@@ -500,10 +500,21 @@ body {
 
 .toshi-root {
     --toshi-bg: var(--d-white);
-    --toshi-border: var(--d-border);
-    --toshi-accent: var(--d-accent);
+    --toshi-border: #e8e6dc;
+    --toshi-accent: #c96442;
+    --toshi-accent-hover: #a84d32;
+    --toshi-warm-bg: #f5f4ed;
+    --toshi-warm-text: #5e5d59;
+    --toshi-label-text: #87867f;
+    --toshi-title-text: #141413;
     --toshi-user-bubble: rgba(201, 100, 66, 0.10);
     --toshi-bot-bubble: var(--d-surface);
+
+    /* Position: fixed so the widget is always visible regardless of scroll */
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
 }
 
 /* ── Card Padding & Shadow Helpers ── */
@@ -627,3 +638,936 @@ body {
 .border-accent { border-color: var(--d-accent); }
 .text-warm { color: var(--d-text); }
 .bg-warm { background: var(--d-canvas); }
+
+/* ── Toshi Form Components ── */
+
+.toshi-input {
+    padding: 8px 12px;
+    border: 1px solid var(--toshi-border);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: "DM Sans", sans-serif;
+    background: var(--d-white);
+}
+
+.toshi-form-card {
+    background: var(--d-white);
+    border: 1px solid var(--toshi-border);
+    border-radius: 12px;
+    padding: 14px;
+    margin: 4px 0;
+}
+
+.toshi-remove-btn {
+    background: none;
+    border: none;
+    color: #EF4444;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+}
+
+.toshi-btn-primary {
+    flex: 1;
+    padding: 10px;
+    background: var(--toshi-accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.toshi-btn-primary:hover {
+    background: var(--toshi-accent-hover);
+}
+
+.toshi-btn-primary-sm {
+    flex: 1;
+    padding: 8px;
+    background: var(--toshi-accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.toshi-btn-primary-sm:hover {
+    background: var(--toshi-accent-hover);
+}
+
+.toshi-btn-outline {
+    flex: 1;
+    padding: 10px;
+    background: var(--toshi-warm-bg);
+    color: var(--toshi-warm-text);
+    border: 1px solid var(--toshi-border);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.toshi-btn-outline-sm {
+    flex: 1;
+    padding: 8px;
+    background: var(--toshi-warm-bg);
+    color: var(--toshi-warm-text);
+    border: 1px solid var(--toshi-border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.toshi-btn-outline-sm:hover {
+    background: #e8e6dc;
+}
+
+.toshi-option-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--d-white);
+    border: 1px solid var(--toshi-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    font-size: 13px;
+    color: #4d4c48;
+    font-family: "DM Sans", sans-serif;
+}
+
+.toshi-btn-done {
+    padding: 8px 12px;
+    background: var(--d-green);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.toshi-btn-done-sm {
+    flex: 1;
+    padding: 8px;
+    background: var(--d-green);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.toshi-stat-card {
+    background: var(--toshi-warm-bg);
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+}
+
+.toshi-chip {
+    padding: 4px 10px;
+    background: var(--toshi-warm-bg);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--toshi-warm-text);
+}
+
+.toshi-chip-compact {
+    padding: 4px 8px;
+    background: var(--toshi-warm-bg);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--toshi-warm-text);
+}
+
+.toshi-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--toshi-label-text);
+    letter-spacing: 0.04em;
+}
+
+.toshi-banner-success {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.toshi-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.toshi-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--toshi-title-text);
+}
+
+/* ── Toshi Pill ── */
+
+.toshi-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    background: var(--d-white);
+    border-radius: 100px;
+    padding: 6px 6px 6px 6px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    height: 52px;
+    max-width: 320px;
+    border: 2px solid var(--d-green);
+    transition: all 0.2s ease;
+}
+
+.toshi-pill:hover {
+    box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+    transform: translateY(-1px);
+    border-color: #16A34A;
+}
+
+.toshi-pill-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--d-green);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.toshi-pill-logo {
+    width: 24px;
+    height: 24px;
+}
+
+.toshi-pill-text {
+    flex: 1;
+    font-size: 13px;
+    color: var(--d-muted);
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+.toshi-pill-badge {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    height: 38px;
+    padding: 0 14px;
+    gap: 6px;
+    color: var(--d-white);
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--d-green);
+    border-radius: 100px;
+}
+
+/* ── Toshi Panel (non-maximized chat widget) ── */
+
+.toshi-panel {
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+    height: 600px;
+    max-height: calc(100vh - 120px);
+    background: var(--d-white);
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    border: 1px solid var(--toshi-border);
+    overflow: hidden;
+}
+
+/* ── Toshi Modal Overlay (maximized) ── */
+
+.toshi-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 10000;
+}
+
+.toshi-modal-box {
+    width: 90vw;
+    height: 85vh;
+    max-width: 1200px;
+    max-height: 900px;
+    border-radius: 16px;
+    box-shadow: 0 16px 64px rgba(0,0,0,0.2);
+}
+
+/* ── Toshi Header ── */
+
+.toshi-header-close-btn {
+    border-radius: 6px;
+    background: rgba(0,0,0,0.06);
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Toshi Messages Container ── */
+
+.toshi-messages-area {
+    background: var(--d-shell);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* ── Toshi Step Dots ── */
+
+.toshi-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: all 0.15s;
+}
+
+.toshi-dot-done {
+    background: var(--d-green);
+}
+
+.toshi-dot-current {
+    background: var(--toshi-accent);
+}
+
+.toshi-dot-pending {
+    background: var(--toshi-border);
+}
+
+.toshi-dot-overflow {
+    background: #e8e6dc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 9px;
+    color: #5e5d59;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.toshi-dot-label {
+    font-size: 9px;
+    color: var(--d-muted);
+    white-space: nowrap;
+}
+
+/* ── Toshi Step Progress Container ── */
+
+.toshi-progress-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    margin: 0 10px;
+    background: var(--toshi-warm-bg);
+    border-radius: 8px;
+}
+
+.toshi-progress-dots {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex: 1;
+}
+
+/* ── Toshi Draft Row ── */
+
+.toshi-draft-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--toshi-warm-bg);
+    border: 1px solid var(--toshi-border);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 12px;
+    color: #4d4c48;
+    font-weight: 500;
+    transition: all 0.15s;
+    width: 100%;
+}
+
+.toshi-draft-row:hover {
+    border-color: var(--d-green);
+}
+
+/* ── Toshi New School Button ── */
+
+.toshi-btn-new-school {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: #141413;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    align-self: flex-start;
+}
+
+.toshi-btn-new-school:hover {
+    background: var(--toshi-accent);
+}
+
+/* ── Toshi Quick Actions Section ── */
+
+.toshi-quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 16px 8px;
+    background: var(--d-white);
+    flex-shrink: 0;
+}
+
+.toshi-qaction-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #141413;
+}
+
+.toshi-qaction-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* ── Toshi Confirmation Buttons ── */
+
+.toshi-confirm-row {
+    display: flex;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--d-white);
+    border-top: 1px solid var(--toshi-warm-bg);
+    flex-shrink: 0;
+}
+
+.toshi-confirm-yes {
+    flex: 1;
+    padding: 10px;
+    background: var(--d-green);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.toshi-confirm-yes:hover {
+    background: #16A34A;
+}
+
+.toshi-confirm-no {
+    flex: 1;
+    padding: 10px;
+    background: var(--toshi-warm-bg);
+    color: var(--toshi-warm-text);
+    border: 1px solid var(--toshi-border);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.toshi-confirm-no:hover {
+    background: #e8e6dc;
+}
+
+/* ── Toshi Review Card ── */
+
+.toshi-review-section {
+    font-size: 12px;
+    color: var(--toshi-warm-text);
+    line-height: 1.5;
+}
+
+/* ── Toshi Review Action Row ── */
+
+.toshi-review-actions {
+    display: flex;
+    gap: 10px;
+    padding: 8px 16px 16px;
+    background: var(--d-white);
+    border-top: 1px solid var(--toshi-warm-bg);
+}
+
+/* ── Toshi Bottom Reset Button ── */
+
+.toshi-reset-btn {
+    width: 100%;
+    padding: 11px;
+    background: #141413;
+    color: var(--d-white);
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toshi-reset-btn:hover {
+    background: #4d4c48;
+}
+
+/* ── Toshi Panel Footer Padded ── */
+
+.toshi-panel-footer {
+    padding: 0 16px 16px;
+}
+
+/* ── Toshi Message Row for review/notice messages ── */
+
+.toshi-msg-notice {
+    font-size: 13px;
+    color: var(--toshi-warm-text);
+    line-height: 1.5;
+}
+
+/* ── Toshi Co-Admin Promoted Text ── */
+
+.toshi-success-text {
+    font-size: 12px;
+    color: #166534;
+}
+
+.toshi-password-text {
+    font-size: 13px;
+    color: var(--toshi-warm-text);
+}
+
+/* ── Toshi Stat Card Label ── */
+
+.toshi-stat-label {
+    font-size: 10px;
+    color: var(--toshi-warm-text);
+    font-weight: 500;
+}
+
+.toshi-stat-sub {
+    font-size: 8px;
+    color: var(--toshi-label-text);
+}
+
+.toshi-stat-color-green { color: var(--d-green); }
+.toshi-stat-color-amber { color: var(--d-amber); }
+.toshi-stat-color-purple { color: #8B5CF6; }
+.toshi-stat-color-pink { color: #EC4899; }
+.toshi-stat-color-teal { color: #14B8A6; }
+
+.toshi-list-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 12px;
+    color: #4d4c48;
+    border-bottom: 1px solid #f5f4ed;
+}
+
+.toshi-flex-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.toshi-flex-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.toshi-ml-auto {
+    margin-left: auto;
+}
+
+.toshi-tag-link {
+    font-size: 10px;
+    color: var(--toshi-accent);
+    text-decoration: none;
+    padding: 4px 8px;
+    background: #faf9f5;
+    border-radius: 6px;
+}
+
+.toshi-sm-text {
+    font-size: 11px;
+    color: var(--toshi-warm-text);
+}
+
+.toshi-stat-digit {
+    font-size: 10px;
+    color: var(--toshi-warm-text);
+    font-weight: 500;
+}
+
+.toshi-spacer-8 {
+    margin-bottom: 8px;
+}
+
+.toshi-gap-3 {
+    margin-top: 3px;
+}
+
+.toshi-uppercase-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--toshi-warm-text);
+}
+
+.toshi-review-card {
+    background: var(--d-white);
+    border: 1px solid var(--toshi-border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    margin: 4px 0;
+}
+
+.toshi-review-header {
+    background: #141413;
+    color: var(--d-white);
+    padding: 14px 16px;
+    font-family: "Sora", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toshi-review-body {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toshi-info-card {
+    flex: 1;
+    background: var(--toshi-warm-bg);
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.toshi-info-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--toshi-warm-text);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.toshi-info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--toshi-title-text);
+    margin-top: 6px;
+}
+
+.toshi-info-sub {
+    font-size: 13px;
+    color: var(--toshi-warm-text);
+    margin-top: 2px;
+}
+
+.toshi-green-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #166534;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.toshi-sub-label {
+    font-size: 10px;
+    color: var(--toshi-label-text);
+    margin-bottom: 2px;
+}
+
+.toshi-tiny-note {
+    font-size: 8px;
+    color: var(--toshi-label-text);
+    margin-top: 2px;
+}
+
+.toshi-progress-step {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--toshi-warm-text);
+    white-space: nowrap;
+}
+
+.toshi-review-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--toshi-border);
+    background: #FAFAFA;
+}
+
+.toshi-review-actions-outside {
+    display: flex;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.toshi-confirm-full {
+    flex: 1;
+    padding: 11px;
+    font-family: "Sora", sans-serif;
+}
+
+.toshi-btn-edit {
+    padding: 11px 14px;
+}
+
+.toshi-counts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+}
+
+.toshi-section-title-sm {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--toshi-title-text);
+}
+
+
+
+/* ── Toshi Active Student Count ── */
+
+.toshi-active-count {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* ── Toshi Composer (panel textarea) ── */
+
+.toshi-composer {
+    flex-shrink: 0;
+    padding: 0 16px 12px;
+    background: var(--d-white);
+}
+
+.toshi-composer-inner {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    background: var(--d-surface);
+    border: 1px solid var(--toshi-border);
+    border-radius: 12px;
+    padding: 4px 2px 4px 4px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.toshi-composer-inner:focus-within {
+    border-color: #e2e1dc;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
+}
+
+.toshi-attach-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: #87867f;
+    cursor: pointer;
+    flex-shrink: 0;
+    border-radius: 8px;
+    transition: color 0.15s, background 0.15s;
+    align-self: center;
+}
+
+.toshi-attach-btn:hover {
+    color: #c96442;
+    background: rgba(0,0,0,0.04);
+}
+
+.toshi-composer-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: "DM Sans", sans-serif;
+    color: var(--toshi-title-text);
+    background: transparent;
+    resize: none;
+    padding: 10px 0;
+    line-height: 1.5;
+    min-height: 24px;
+    max-height: 160px;
+}
+
+.toshi-composer-input::placeholder {
+    color: var(--d-muted);
+}
+
+/* Nuke ALL browser focus rings - Chrome, Safari, Firefox, Edge */
+.toshi-composer-inner:focus-within {
+    border-color: var(--toshi-border);
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+}
+.toshi-composer-input:focus,
+.toshi-composer-input:focus-visible,
+.toshi-composer-input:focus-within {
+    outline: 0 !important;
+    outline-width: 0 !important;
+    outline-style: none !important;
+    outline-color: transparent !important;
+    outline-offset: 0 !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* ── Toshi Panel Header ── */
+
+.toshi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--toshi-border);
+    flex-shrink: 0;
+    min-height: 52px;
+}
+
+.toshi-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toshi-header-logo img {
+    width: 24px;
+    height: 24px;
+    border-radius: 2px;
+}
+
+.toshi-header-logo span {
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--toshi-title-text);
+}
+
+.toshi-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.toshi-header-btn {
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    color: #5e5d59;
+}
+
+.toshi-header-btn:hover {
+    background: rgba(0,0,0,0.06);
+    color: #141413;
+}
+
+/* ── Toshi Composer (modal textarea) ── */
+
+.toshi-composer-box {
+    border: 1px solid var(--toshi-border);
+    border-radius: 12px;
+    background: var(--d-white);
+    overflow: hidden;
+}
+
+.toshi-composer-textarea {
+    flex: 1;
+    border: none;
+    font-size: 14px;
+    font-family: "DM Sans", sans-serif;
+    color: var(--toshi-title-text);
+    background: transparent;
+    resize: none;
+    padding: 9px 0;
+    line-height: 1.5;
+    width: 100%;
+    min-height: 24px;
+    max-height: 320px;
+}
+.toshi-composer-textarea:focus,
+.toshi-composer-textarea:focus-visible,
+.toshi-composer-textarea:focus-within {
+    outline: 0 !important;
+    outline-width: 0 !important;
+    outline-style: none !important;
+    outline-color: transparent !important;
+    outline-offset: 0 !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.toshi-composer-textarea::placeholder {
+    color: var(--d-muted);
+}

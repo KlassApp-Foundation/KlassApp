@@ -4,6 +4,10 @@ namespace App\Services;
 
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
+use App\Models\Academics\Exam;
+use App\Models\Academics\ExamType;
+use App\Models\Academics\Marks;
+use App\Models\Academics\NurseryAssessment;
 use App\Models\Attendance;
 use App\Models\CurrentPlan;
 use App\Models\FeesCategories;
@@ -13,10 +17,12 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
+use App\Models\StudentParentLink;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Models\WhatsAppUser;
 use App\Helpers\SiteHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -1045,5 +1051,115 @@ class ToshiActionService
         }
 
         return $query->first();
+    }
+
+    // ── Exam ──
+
+    public static function createExam(User $admin, array $data): array
+    {
+        $schoolId = $admin->school_id;
+        if (!$schoolId) return self::result(false, 'No school assigned.');
+        $label = trim($data['name'] ?? '');
+        if ($label === '') return self::result(false, 'Exam name is required.');
+
+        $academicYear = SiteHelper::getAcademicYear($schoolId);
+        if (!$academicYear) return self::result(false, 'No academic year set.');
+
+        $term = AcademicTerm::where('school_id', $schoolId)->first();
+        $examType = ExamType::first();
+        $section = Section::where('school_id', $schoolId)->first();
+        $subject = Subject::where('school_id', $schoolId)->first();
+        $standard = Standard::where('school_id', $schoolId)->first();
+        if (!$section || !$subject || !$standard) return self::result(false, 'Need section, subject, and standard configured first.');
+
+        try {
+            $exam = Exam::create([
+                'school_id' => $schoolId,
+                'standard_id' => $standard->id,
+                'academic_year_id' => $academicYear->id,
+                'academic_term_id' => $term?->id,
+                'exam_type_id' => $examType?->id,
+                'section_id' => $section->id,
+                'subject_id' => $subject->id,
+                'teacher_id' => auth()->id() ?? 1,
+                'scheduled_at' => $data['scheduled_at'] ?? now(),
+                'status' => 'undone',
+            ]);
+            return self::result(true, "Exam **{$label}** created.", ['exam_id' => $exam->id]);
+        } catch (\Exception $e) {
+            Log::error('ToshiAction: createExam failed', ['error' => $e->getMessage()]);
+            return self::result(false, 'Failed to create exam: ' . $e->getMessage());
+        }
+    }
+
+    // ── Parent ──
+
+    public static function addParent(User $admin, array $data): array
+    {
+        $schoolId = $admin->school_id;
+        if (!$schoolId) return self::result(false, 'No school assigned.');
+
+        $name = trim($data['name'] ?? '');
+        $phone = trim($data['phone'] ?? '');
+        $studentId = (int) ($data['student_id'] ?? 0);
+        if ($name === '' || $phone === '') return self::result(false, 'Parent name and phone are required.');
+
+        try {
+            DB::beginTransaction();
+            $email = 'parent.' . Str::random(6) . '@school.ug';
+            $parent = User::create([
+                'school_id' => $schoolId, 'usergroup_id' => 7,
+                'name' => $name, 'email' => $email,
+                'password' => Hash::make('password'), 'status' => 'active',
+                'mobile_no' => $phone,
+            ]);
+            Userprofile::create([
+                'school_id' => $schoolId, 'user_id' => $parent->id, 'usergroup_id' => 7,
+                'firstname' => $name, 'lastname' => '', 'status' => 'active',
+            ]);
+            if ($studentId) {
+                StudentParentLink::create([
+                    'school_id' => $schoolId, 'student_id' => $studentId,
+                    'parent_id' => $parent->id, 'status' => 1,
+                ]);
+            }
+            DB::commit();
+            return self::result(true, "Parent **{$name}** added.", ['parent_id' => $parent->id]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('ToshiAction: addParent failed', ['error' => $e->getMessage()]);
+            return self::result(false, 'Failed to add parent: ' . $e->getMessage());
+        }
+    }
+
+    // ── Marks (single entry) ──
+
+    public static function enterMark(User $admin, array $data): array
+    {
+        $schoolId = $admin->school_id;
+        if (!$schoolId) return self::result(false, 'No school assigned.');
+
+        $studentId = (int) ($data['student_id'] ?? 0);
+        $examId = (int) ($data['exam_id'] ?? 0);
+        $score = (float) ($data['marks'] ?? 0);
+        if (!$studentId || !$examId) return self::result(false, 'Student ID and Exam ID are required.');
+
+        $exam = Exam::find($examId);
+        if (!$exam) return self::result(false, 'Exam not found.');
+
+        try {
+            $mark = Marks::create([
+                'student_id' => $studentId, 'exam_id' => $examId,
+                'school_id' => $schoolId, 'subject_id' => $exam->subject_id,
+                'section_id' => $exam->section_id,
+                'teacher_id' => $admin->id,
+                'marks' => $score,
+                'grade' => $score >= 80 ? 'A' : ($score >= 70 ? 'B' : ($score >= 60 ? 'C' : ($score >= 50 ? 'D' : 'F'))),
+            ]);
+            return self::result(true, "Mark entered: {$score}.", ['mark_id' => $mark->id]);
+        } catch (\Exception $e) {
+            Log::error('ToshiAction: enterMark failed', ['error' => $e->getMessage()]);
+            return self::result(false, 'Failed to enter mark: ' . $e->getMessage());
+        }
     }
 }

@@ -46,6 +46,11 @@ class Subscriptions extends Component implements HasForms, HasTable
                        ->label('School')
                        ->searchable()
                        ->sortable(),
+
+                   TextColumn::make('plan.display_name')
+                       ->label('Plan')
+                       ->searchable()
+                       ->sortable(),
                
                    TextColumn::make('status')
                        ->badge(),

@@ -91,7 +91,7 @@ if (!function_exists('sidebarActive')) {
     <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['reports','report']) }}">
         <a href="{{ url('admin/reports') }}" class="flex items-center">
             <x-icons.sidebar name="reports"/>
-            <span class="mx-3 whitespace-no-wrap">Reports</span>
+            <span class="mx-3 whitespace-no-wrap">Data Exports</span>
         </a>
     </li>
 

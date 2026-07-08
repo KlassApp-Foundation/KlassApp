@@ -43,8 +43,8 @@ if (!function_exists('superadminActive')) {
     </li>
 
     {{-- Reports --}}
-    <li class="py-3 px-3 {{ Request::segment(3) == 'contact' || Request::segment(3) == 'contacts' ? 'active' : '' }}">
-        <a href="{{ route('superadmin.reports.contactlist') }}" class="flex items-center">
+    <li class="py-3 px-3 {{ Request::segment(2) == 'reports' ? 'active' : '' }}">
+        <a href="{{ route('superadmin.reports.index') }}" class="flex items-center">
             <x-icons.sidebar name="reports"/>
             <span class="mx-3 whitespace-no-wrap">Reports</span>
         </a>

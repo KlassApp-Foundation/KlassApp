@@ -497,7 +497,7 @@
           <label class="klass-label">Choose your plan</label>
           <div class="flex flex-wrap gap-3 mt-1">
             @php
-              $plans = \App\Models\Plan::orderBy('id')->get();
+              $plans = \App\Models\Plan::orderBy('order')->get();
               $selectedPlan = session('selected_plan', 'growth');
             @endphp
             @foreach($plans as $plan)
@@ -514,7 +514,7 @@
               </label>
             @endforeach
           </div>
-          <input type="hidden" name="plan_hidden" value="{{ session('selected_plan', 'growth') }}">
+          <input type="hidden" name="plan_hidden" value="{{ session('selected_plan', 'freemium') }}">
         </div>
 
         <div class="klass-field klass-field-full">

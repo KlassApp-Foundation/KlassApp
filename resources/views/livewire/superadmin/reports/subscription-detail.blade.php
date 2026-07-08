@@ -70,7 +70,7 @@ SPDX-License-Identifier: MIT
                 <p>Payment Details</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $subscriptionDetail->payment_details }}</p>
+                <p class="leading-loose txt-gray-light">{{ json_encode($subscriptionDetail->payment_details) }}</p>
             </div>
         </div>
 
@@ -79,7 +79,7 @@ SPDX-License-Identifier: MIT
                 <p>Plan Details</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $subscriptionDetail->plan_details }}</p>
+                <p class="leading-loose txt-gray-light">{{ json_encode($subscriptionDetail->plan_details) }}</p>
             </div>
         </div>
 

@@ -30,12 +30,14 @@
                     select: this.handleDateSelect,
                     eventClick: this.handleEventClick,
                     eventsSet: this.handleEvents,       
-                    eventColor:this.events.color,
+                    eventColor: this.events?.color ?? '#1E6FD9',
                 },
-                events: []
+                calendarEvents: [],
             }
         },
-
+        mounted() {
+            this.calendarEvents = JSON.parse(this.events);
+        },
         methods: 
         {
             handleWeekendsToggle() 
@@ -64,24 +66,26 @@
             handleEventClick(clickInfo) 
             {
                 this.success=null;
-                $('#show-detail').removeClass('hide-menu').addClass('block');
-                bus.$emit("dataEventDetail", clickInfo.event.id);
+                $('#show-detail').removeClass('hide-menu').addClass(
+                    'menu'
+                );
+                var eventObj = clickInfo.event;
+                this.id = eventObj.id;
+                this.event = eventObj;
+                $('.popover').remove();
+                $(clickInfo.el).popover({
+                    title: eventObj.title,
+                    html: true,
+                    content: eventObj.extendedProps.description,
+                    placement: 'top',
+                    trigger: 'manual'
+                }).popover('toggle');
             },
 
             handleEvents(events) 
             {
-                //
+                this.calendarEvents = events;
             },
         }
     }
 </script>
-
-<template>
-    <FullCalendar :options='calendarOptions'></FullCalendar>
-</template>
-
-<style>
-    .hide-menu {
-        display: none;
-    }
-</style>

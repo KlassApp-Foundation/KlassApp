@@ -281,6 +281,9 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
     })->name('superadmin.setting.plan.detail');
 
     //Reports
+    Route::get('reports', function () {
+        return view('superadmin.reports.index');
+    })->name('superadmin.reports.index');
 
     //Subscription
     Route::get('reports/subscriptions', function () {

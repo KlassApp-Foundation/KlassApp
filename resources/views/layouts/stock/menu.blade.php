@@ -17,6 +17,6 @@
         <a href="{{ url('stock/orders') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-no-wrap">Orders</span></a>
     </li>
     <li class="py-3 px-3 {{ stActive(['reports','report']) }}">
-        <a href="{{ url('stock/reports') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-no-wrap">Reports</span></a>
+        <a href="{{ url('stock/reports') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-no-wrap">Data Exports</span></a>
     </li>
 </ul>

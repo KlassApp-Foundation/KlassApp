@@ -357,7 +357,7 @@
                     this.standardlist = response.data.standardlist;
                     //console.log(this.standardlist);
                     this.start  = parseInt(response.data.start);
-                    if(this.date.end != null)
+                    if(response.data.end != null)
                     {
                         this.end = parseInt(response.data.end);
                     }

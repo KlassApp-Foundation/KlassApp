@@ -170,6 +170,24 @@ class AgentToshi extends Component
 
         // ── Restore state from session (survives page refresh) ──
         if ($this->restoreState()) {
+            // If restored state is assistant but school has missing steps, switch to complete
+            if ($this->mode === 'assistant' && $this->scope === 'school' && $user->school_id) {
+                $missing = $user->usergroup_id === 3
+                    ? \App\Helpers\OnboardingHelper::getMissingSteps($user->school_id, $user->id)
+                    : [];
+                if (!empty($missing)) {
+                    $this->mode = 'complete';
+                    $this->step = 5;
+                    $this->substep = 0;
+                    $this->schoolId = $user->school_id;
+                    $this->messages = [];
+                    $school = \App\Models\School::find($user->school_id);
+                    $name = $school ? $school->name : 'your school';
+                    $this->botSay("Hello! Let's finish setting up **{$name}** on KlassApp.");
+                    $this->detectMissingSteps();
+                    return;
+                }
+            }
             if ($this->mode === 'assistant' && empty($this->messages)) {
                 $this->botSay($this->getAssistantGreeting());
             }
@@ -465,18 +483,56 @@ class AgentToshi extends Component
     public function maximize() { $this->maximized = true; $this->visible = false; }
     public function restore() { $this->maximized = false; $this->visible = true; }
 
+    public function resetSchoolOnboarding()
+    {
+        $this->substep = 0;
+        $this->actionStep = null;
+        $this->actionSubstep = 0;
+        $this->actionData = [];
+        $this->subjectInputs = [];
+        $this->teacherList = [];
+        $this->studentList = [];
+        $this->fees = [];
+        $this->terms = [];
+        $this->exams = [];
+        $this->selectedPlanId = null;
+        $this->hasNursery = null;
+        $this->schoolName = '';
+        $this->schoolType = '';
+        $this->schoolLevel = '';
+        $this->standards = [];
+        $this->subjects = [];
+        $this->streamClassIndex = 0;
+        $this->deleteDraft();
+
+        $user = auth()->user();
+        if ($user && $user->school_id) {
+            $this->schoolId = $user->school_id;
+            $schoolName = \App\Models\School::find($this->schoolId)->name ?? 'your school';
+
+            // Reset to the first school-level step (standards/classes)
+            $this->step = 5;
+            $this->mode = 'complete';
+            $this->messages = [['role' => 'bot', 'text' => "Let's start fresh setting up **{$schoolName}** from the beginning."]];
+            $this->botSay("First, let's set up your classes. What classes does your school have? (e.g. Baby Class, Top Class, P1-P7, S1-S6)");
+            return;
+        }
+
+        $this->mode = 'assistant';
+        $this->step = 99;
+        $this->messages = [['role' => 'bot', 'text' => 'Setup restarted. How can I help you?']];
+    }
+
     // ── Button-driven confirm/edit ──
     public function confirmYes()
     {
         $this->awaitingConfirm = false;
-        $this->input = 'yes';
-        $this->send();
+        $this->callStepHandler('yes');
     }
     public function confirmNo()
     {
         $this->awaitingConfirm = false;
-        $this->input = 'no';
-        $this->send();
+        $this->callStepHandler('no');
     }
 
     /**
@@ -498,6 +554,28 @@ class AgentToshi extends Component
     /**
      * Custom action button — routes to the "no" path of the current step.
      */
+    public function skipStep()
+    {
+        $this->awaitingConfirm = false;
+        $this->callStepHandler('skip');
+    }
+
+    /**
+     * Switch between modes (called from the mode dropdown).
+     */
+    public function switchMode(string $targetMode): void
+    {
+        if ($targetMode === 'assistant') {
+            $this->mode = 'assistant';
+            $this->step = 99;
+            $this->messages = [];
+            $this->botSay($this->getAssistantGreeting());
+            $this->deleteDraft();
+        } elseif ($targetMode === 'create' && $this->scope === 'platform') {
+            $this->resetOnboarding(true);
+        }
+    }
+
     public function confirmCustom()
     {
         $this->awaitingConfirm = false;
@@ -1046,26 +1124,26 @@ class AgentToshi extends Component
                     // Single column — apply to all classes
                     if (!empty($this->standards)) {
                         $firstClass = $this->standards[0]['name'] ?? 'default';
-                        $this->subjects = [$firstClass => $names];
-                        $this->botSay("Parsed **" . count($names) . "** subject(s). Continue?");
+                        $this->subjects = [$firstClass => $plainNames];
+                        $this->botSay("Parsed **" . count($plainNames) . "** subject(s). Continue?");
                     } else {
                         $this->botSay("Please set up classes first, then upload subjects.");
                     }
                 }
-            } elseif ($stepName === 'fees' && count($names) > 0) {
-                $this->actionData['fees'] = array_map(fn($n) => ['name' => $n, 'amount' => '', 'level' => '', 'class' => '', 'term' => ''], $names);
+            } elseif ($stepName === 'fees' && count($plainNames) > 0) {
+                $this->actionData['fees'] = array_map(fn($n) => ['name' => $n, 'amount' => '', 'level' => '', 'class' => '', 'term' => ''], $plainNames);
                 $this->showFeeForm = false;
-                $this->userSay("📎 Uploaded " . count($names) . " fees from file");
-                $preview = implode(', ', array_slice($names, 0, 5));
-                $this->botSay("Parsed **" . count($names) . "** fees: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
+                $this->userSay("📎 Uploaded " . count($plainNames) . " fees from file");
+                $preview = implode(', ', array_slice($plainNames, 0, 5));
+                $this->botSay("Parsed **" . count($plainNames) . "** fees: {$preview}" . (count($plainNames) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
                 $this->awaitingConfirm = true;
                 $this->substep = 1;
-            } elseif ($stepName === 'exams' && count($names) > 0) {
-                $this->actionData['exams'] = array_map(fn($n) => ['term' => '', 'type' => $n, 'status' => '', 'level' => '', 'class' => '', 'subject' => '', 'teacher' => ''], $names);
+            } elseif ($stepName === 'exams' && count($plainNames) > 0) {
+                $this->actionData['exams'] = array_map(fn($n) => ['term' => '', 'type' => $n, 'status' => '', 'level' => '', 'class' => '', 'subject' => '', 'teacher' => ''], $plainNames);
                 $this->showExamForm = false;
-                $this->userSay("📎 Uploaded " . count($names) . " exams from file");
-                $preview = implode(', ', array_slice($names, 0, 5));
-                $this->botSay("Parsed **" . count($names) . "** exams: {$preview}" . (count($names) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
+                $this->userSay("📎 Uploaded " . count($plainNames) . " exams from file");
+                $preview = implode(', ', array_slice($plainNames, 0, 5));
+                $this->botSay("Parsed **" . count($plainNames) . "** exams: {$preview}" . (count($plainNames) > 5 ? '...' : '') . " | Is this correct? (yes / no)");
                 $this->awaitingConfirm = true;
                 $this->substep = 1;
             } elseif (count($names) > 0) {
@@ -2528,6 +2606,39 @@ class AgentToshi extends Component
         $this->userSay($text);
         $this->input = '';
 
+        // Global commands — work regardless of mode
+        $lower = strtolower($text);
+        if (in_array($lower, ['reset', 'restart', 'start over'])) {
+            $this->resetSchoolOnboarding();
+            return;
+        }
+
+        // Slash commands
+        if (str_starts_with($text, '/')) {
+            $cmd = strtolower(trim(explode(' ', $text)[0]));
+            match ($cmd) {
+                '/agent', '/ask' => $this->switchMode('assistant'),
+                '/create', '/school' => $this->switchMode('create'),
+                '/help' => $this->botSay(
+                    "**Available commands:**\n" .
+                    ($this->scope === 'platform' ? "• `/create` or `/school` — Start creating a new school\n" : "") .
+                    "• `/agent` or `/ask` — Switch to Q&A mode\n" .
+                    "• `/status` — Show current mode and school info\n" .
+                    "• `/help` — Show this message\n" .
+                    "• `reset` or `restart` — Restart current flow"
+                ),
+                '/status' => $this->botSay(
+                    "**Status:**\n" .
+                    "• Mode: **{$this->mode}**\n" .
+                    "• Scope: **{$this->scope}**\n" .
+                    "• School: " . (\App\Models\School::find($this->schoolId)->name ?? '—') . "\n" .
+                    "• Step: " . ($this->steps[$this->step] ?? '—')
+                ),
+                default => $this->botSay("Unknown command `{$cmd}`. Try `/help` for available commands."),
+            };
+            return;
+        }
+
         // Active action flow (multi-step, e.g. add student, enter marks)
         if ($this->actionStep) {
             $this->handleActionFlow($text);
@@ -3405,6 +3516,12 @@ class AgentToshi extends Component
     {
         // substep 0: confirm phone number or enter different one
         if ($this->substep === 0) {
+            $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
+            if ($skip) {
+                $this->botSay("Skipping WhatsApp verification. You can verify later from the admin settings.");
+                $this->advance();
+                return;
+            }
             $phone = $this->schoolPhone ?: '';
             if ($phone) {
                 $this->botSay("📱 We'll verify the admin's WhatsApp number: **{$phone}**");
@@ -3413,7 +3530,7 @@ class AgentToshi extends Component
                 $this->substep = 1;
                 return;
             }
-            $this->botSay("What's the admin's WhatsApp number? (e.g., +256701234567)");
+            $this->botSay("What's the admin's WhatsApp number? (e.g., +256701234567) or type 'skip' to skip this step.");
             $this->substep = 2;
             return;
         }
@@ -3440,6 +3557,12 @@ class AgentToshi extends Component
 
         // substep 2: enter different phone
         if ($this->substep === 2) {
+            $skip = in_array(strtolower(trim($text)), ['skip', 'later', 'no', 'none']);
+            if ($skip) {
+                $this->botSay("Skipping WhatsApp verification. You can verify later from the admin settings.");
+                $this->advance();
+                return;
+            }
             $phone = $this->normalizeUgandaPhone($text);
             if ($phone === null) return;
             $this->whatsappPhone = $phone;
@@ -3710,9 +3833,14 @@ class AgentToshi extends Component
                 $this->botSay($this->onboardingLimitNote);
                 $this->botSay('You can **upgrade your plan** anytime from the admin panel to add the remaining members.');
             }
-            // After creating a school, stay in 'create' mode so the user sees the success
-            // card with "Onboard Another School" option. Assistant mode is for existing schools.
-            $this->mode = 'create';
+            // Welcome message for school admin completing setup
+            if ($this->mode === 'complete') {
+                $schoolName = optional(\App\Models\School::find($this->schoolId))->name ?? 'your school';
+                $this->botSay("✅ All done! Your school is set up. Ask me about **{$schoolName}**.");
+            }
+            // After completing onboarding: school admin goes to assistant mode for Q&A,
+            // super admin stays in create mode to onboard another school.
+            $this->mode = $this->mode === 'complete' ? 'assistant' : 'create';
         } catch (\Illuminate\Database\QueryException $e) {
             \Log::error('Onboarding DB error: ' . $e->getMessage());
             $code = $e->getCode();
@@ -4081,21 +4209,39 @@ class AgentToshi extends Component
                     );
                 }
 
+                // Create subjects if any
+                foreach ($this->subjects as $className => $subjectNames) {
+                    $section = Section::where('school_id', $schoolId)->where('name', $className)->first();
+                    $stdLink = $section ? StandardLink::where('school_id', $schoolId)->where('section_id', $section->id)->first() : null;
+                    if ($stdLink && is_array($subjectNames)) {
+                        foreach ($subjectNames as $subjName) {
+                            Subject::firstOrCreate(
+                                ['school_id' => $schoolId, 'section_id' => $section->id, 'name' => $subjName],
+                                ['standard_id' => $phase->id, 'academic_year_id' => $academicYear->id, 'type' => 'core']
+                            );
+                        }
+                    }
+                }
+
                 // Create teachers if any
                 foreach ($this->teacherList as $name) {
                     $tEmail = Str::slug($name) . '@school.edu';
-                    $exists = User::where('school_id', $schoolId)->where('name', $name)->exists();
-                    if (!$exists) {
-                        $phone = $this->teacherPhones[$name] ?? null;
-                        $teacher = User::create([
-                            'school_id' => $schoolId, 'usergroup_id' => 5, 'name' => $name,
-                            'email' => $tEmail, 'password' => bcrypt('password'), 'status' => 'active', 'email_verified' => 1,
-                            'mobile_no' => $phone,
-                        ]);
-                        Userprofile::create([
-                            'school_id' => $schoolId, 'user_id' => $teacher->id, 'usergroup_id' => 5,
-                            'firstname' => $name, 'lastname' => '', 'profession' => 'teacher', 'status' => 'active',
-                        ]);
+                    try {
+                        $teacher = User::firstOrCreate(
+                            ['email' => $tEmail],
+                            ['school_id' => $schoolId, 'usergroup_id' => 5, 'name' => $name,
+                             'password' => bcrypt('password'), 'status' => 'active', 'email_verified' => 1,
+                             'mobile_no' => $this->teacherPhones[$name] ?? null]
+                        );
+                        if ($teacher->wasRecentlyCreated) {
+                            Userprofile::firstOrCreate(
+                                ['user_id' => $teacher->id],
+                                ['school_id' => $schoolId, 'usergroup_id' => 5,
+                                 'firstname' => $name, 'lastname' => '', 'profession' => 'teacher', 'status' => 'active']
+                            );
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning('Teacher creation skipped (duplicate): ' . $name . ' - ' . $e->getMessage());
                     }
                 }
 
@@ -4137,12 +4283,44 @@ class AgentToshi extends Component
                     );
                 }
 
-                // Create fees
+                // Create students
+                $studentRecords = !empty($this->actionData['students'])
+                    ? $this->actionData['students']
+                    : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
+                foreach ($studentRecords as $index => $record) {
+                    $studentName = is_string($record) ? $record : ($record['name'] ?? '');
+                    if (!trim($studentName)) continue;
+                    try {
+                        $sEmail = 'student.' . ($index + 1) . '@school.edu';
+                        $student = User::firstOrCreate(
+                            ['email' => $sEmail],
+                            ['school_id' => $schoolId, 'usergroup_id' => 6,
+                             'name' => trim($studentName), 'password' => bcrypt('password'),
+                             'status' => 'active', 'email_verified' => 1]
+                        );
+                        if ($student->wasRecentlyCreated) {
+                            Userprofile::firstOrCreate(
+                                ['user_id' => $student->id],
+                                ['school_id' => $schoolId, 'usergroup_id' => 6,
+                                 'firstname' => trim($studentName), 'lastname' => '', 'status' => 'active']
+                            );
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning('Student creation skipped: ' . $studentName . ' - ' . $e->getMessage());
+                    }
+                }
+
+                // Create fees (idempotent)
                 foreach ($this->fees as $feeName) {
                     if (is_string($feeName) && trim($feeName)) {
-                        FeesCategories::create([
-                            'school_id' => $schoolId, 'standard_id' => $phase->id, 'name' => trim($feeName), 'amount' => 0,
-                        ]);
+                        try {
+                            FeesCategories::firstOrCreate(
+                                ['school_id' => $schoolId, 'name' => trim($feeName)],
+                                ['standard_id' => $phase->id, 'amount' => 0]
+                            );
+                        } catch (\Exception $e) {
+                            \Log::warning('Fee creation skipped: ' . $feeName . ' - ' . $e->getMessage());
+                        }
                     }
                 }
 

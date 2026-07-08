@@ -588,7 +588,7 @@ Route::get( '/report/holidays', 'ReportsController@holidayCreate' );
 Route::post( '/report/importHolidays', 'ReportsController@holidayImport' );
 Route::get( '/report/exportHolidays', 'ReportsController@holidayExport' );
 Route::get( '/report/birthday/{type}', 'ReportsController@exportBirthday' );
-Route::get( '/report/anniversary', 'ReportsController@exportAnniversary' );
+//Route::get( '/report/anniversary', 'ReportsController@exportAnniversary' ); // Method doesn't exist in controller
 Route::get( '/report/activeStudents', 'ReportsController@exportActiveStudents' );
 Route::get( '/report/exitStudents', 'ReportsController@exportExitStudents' );
 Route::get( '/report/suspendedStudents', 'ReportsController@exportSuspendedStudents' );
