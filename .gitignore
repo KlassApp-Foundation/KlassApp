@@ -73,6 +73,10 @@ webpack.mix.js
 /vapor
 
 # === Storage artifacts ===
-/storage/debugbar/
+/storage/debugbar/*.json
 /storage/*.php
 /storage/*.json
+/storage/uganda_schools_dataset.json
+
+# === Dead CI config ===
+.github/workflows/
