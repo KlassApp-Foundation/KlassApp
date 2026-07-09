@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\GradingHelper;
 use App\Models\Academics\SchoolGradingSystem;
+use App\Models\Standard;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 use Illuminate\Validation\Rule;
@@ -34,7 +36,15 @@ class UpdateSchoolGradingSystem extends FormRequest
     {
         // get current model ID from route
         $grade = $this->route('grade');
-        // dd($grade);
+
+        // Points are only required for A-Level standards.
+        $pointsRequired = false;
+        if ($this->standard_id) {
+            $standard = Standard::find($this->standard_id);
+            if ($standard && GradingHelper::levelTypeForStandard($standard) === 'a-level') {
+                $pointsRequired = true;
+            }
+        }
 
         return [
             'school_id' => 'required|exists:schools,id',
@@ -54,7 +64,7 @@ class UpdateSchoolGradingSystem extends FormRequest
 
             'min_score' => 'required|integer|min:0|max:100',
             'max_score' => 'required|integer|min:0|max:100|gte:min_score',
-            'points' => 'required|integer|min:1|distinct',
+            'points' => $pointsRequired ? 'required|integer|min:0' : 'nullable|integer|min:0',
 
             'remark' => 'nullable|string|max:255',
             

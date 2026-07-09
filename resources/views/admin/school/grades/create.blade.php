@@ -71,6 +71,7 @@
                     placeholder="e.g. 1"
                     class="w-full border border-gray-400 rounded p-2"
                 >
+                <p class="text-xs text-gray-500 mt-1">Required only for A-Level standards. Leave blank for other levels.</p>
             </div>
 
             {{-- Min Score --}}

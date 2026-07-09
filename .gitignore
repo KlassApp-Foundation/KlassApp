@@ -12,6 +12,7 @@ npm-debug.log
 yarn-error.log
 .env
 .env.dusk.local
+.env.*
 .phpunit.result.cache
 .phpunit.cache/
 .DS_Store
@@ -100,17 +101,74 @@ public/uploads/student/*
 
 
 public/uploads/reports/*
-!public/uploads/reports/index.html.vapor/
+!public/uploads/reports/index.html
+.vapor/
+/vapor
+
+# === Development & IDE artifacts ===
 TODO.md
+todayswork.md
+test.md
 .sisyphus/
 .playwright-mcp/
 .gemini/
-.env.production
-.env.staging
-/.vapor
-.vapor/*
 .mcp.json
-.phpunit.cache/
+.idea/
+.vscode/
 
-todayswork.md
-test.md
+# === Logs & debug files ===
+*.log
+debug.log
+test_marker.txt
+
+# === Toshi E2E artifacts ===
+toshi-e2e-*
+
+# === Accidental / junk files ===
+1,
+id,
+i.e
+jkdncaj
+
+# === Backup & scratch files ===
+*.bak
+/phpunit.xml.bak
+/todo.md
+/notes.md
+/audit.md
+/knowledge.md
+/landing-page-content.md
+/AGENTS.md
+/CLAUDE.md
+/GEMINI.md
+/api.md
+/TESTING.md
+
+# === Legacy / unused folders ===
+/custompackages/
+/nova/
+/nova-components/
+vapor.yml
+webpack.mix.js
+
+# === Students list (dev artifact) ===
+/students-list.html
+
+# === Container setup ===
+Dockerfile
+docker-compose.yml
+docker-compose.prod.yml
+/entrypoint.sh
+/testinstall.sh
+/server.php
+
+# === Nginx config (deployment-specific) ===
+/nginx/
+
+# === WhatsApp (deployment-specific) ===
+/whatsapp/
+
+# === Storage artifacts ===
+/storage/debugbar/
+/storage/*.php
+/storage/*.json

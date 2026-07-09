@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\GradingHelper;
 use App\Models\Academics\SchoolGradingSystem;
+use App\Models\Standard;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -32,12 +34,21 @@ class CreateSchoolGradingSystem extends FormRequest
      */
     public function rules(): array
     {
+        // Points are only required for A-Level standards.
+        $pointsRequired = false;
+        if ($this->standard_id) {
+            $standard = Standard::find($this->standard_id);
+            if ($standard && GradingHelper::levelTypeForStandard($standard) === 'a-level') {
+                $pointsRequired = true;
+            }
+        }
+
         return [
             'school_id' => 'required|exists:schools,id',
             'standard_id' => 'required|exists:standards,id',
 
             'grade' => 'required|string|max:2',
-            'points' => 'required|integer|min:1|distinct',
+            'points' => $pointsRequired ? 'required|integer|min:0' : 'nullable|integer|min:0',
 
             'min_score' => 'required|integer|min:0|max:100',
             'max_score' => 'required|integer|min:0|max:100|gte:min_score',
