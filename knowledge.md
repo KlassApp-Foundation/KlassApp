@@ -1337,3 +1337,16 @@ Follow this sequence. Do not skip ahead.
 - **Data seeded**: Test School One — 32 students, 9 teachers, 8 parents, 7 exams, 65 marks, 10 classes, 28 subjects, 3 terms, 9 fee categories, 12 events
 - **Full dashboard audit**: All 18 admin sections tested — 0 console errors across all pages
 - **Status**: ✅ School fully functional for admin use
+
+### 2026-07-09: Tool safety tiering, confirmation rollout, complexity routing fix, class-assignment triple-fix, Toshi-vs-manual consistency verified
+- **Work done**: Comprehensive safety and correctness pass across all Toshi creation tools, plus escalated-model plumbing.
+- **Tool safety tiering**: All 7 creation tools (CreateExam, AddParent, EnterMark, AddStudent, CreateFee, CreateTerm, RecordPayment) now require explicit Yes/No button confirmation before executing. Default flipped from "additive = safe" to "confirm-first unless proven reliable" based on real hallucination testing (vague requests produced wrong-but-plausible data across every tool tested).
+- **Complexity routing bug fixed**: `classifyComplexity()` computed a 'cheap'/'escalated' tier label but model was hardcoded to `config('toshi.model')` regardless — the tier was logged but never read. Now correctly selects `toshi.escalated_model` when set. Multi-parameter creation requests (create/add/record + exam/fee/term/...) now score +4 to trigger escalation.
+- **Class-assignment bug found in THREE separate places**, all fixed:
+  1. `extractNamesFromFile()` (Toshi onboarding upload) — was correctly parsing the class column, but the data wasn't being used in commitAll's StudentAcademic creation
+  2. `commitAll()` 'complete' mode — StudentAcademic linking used `StandardLink::first()` instead of matching the student's class name to the correct section/standard_link
+  3. `ToshiActionService::resolveStandardLink()` — was matching class names against the `standards` table (which has `primary`, `nursery`, etc.) instead of the `sections` table (which has `Primary Three`, `Senior One`, etc.). Also `addStudent()` expected `class_name` but tools passed `class`.
+- **Toshi vs Manual consistency verified** via real paired browser test: adding a student through Toshi's chat (with confirmation buttons) and through the manual form produce equivalent results — both land in the correct class.
+- **Escalated model**: `meta/llama-3.1-70b-instruct` configured as `TOSHI_ESCALATED_MODEL` but currently unreachable/timing out on Nvidia NIM. Confirmation gates remain the primary safety mechanism until a working stronger model is available.
+- **Standing lesson reinforced**: Code-level "the paths look aligned" is not equivalent to a real browser test — this session found real, silent bugs (wrong table match, parameter name mismatch) three separate times specifically because a real click was insisted on instead of accepting a code read-through as sufficient.
+- **Open items carried forward**: Escalated model connectivity (Nvidia NIM), design-system migration for data table views (~214 unmigrated views backlog), and the standing Reports functional audit (still queued).
