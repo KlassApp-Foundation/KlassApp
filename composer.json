@@ -1,109 +1,152 @@
 {
-    "name": "laravel/laravel",
-    "description": "The Laravel Framework.",
-    "keywords": [
-        "framework",
-        "laravel"
+  "name": "laravel/laravel",
+  "description": "The Laravel Framework.",
+  "keywords": [
+    "framework",
+    "laravel"
+  ],
+  "license": "MIT",
+  "type": "project",
+  "require": {
+    "php": "^8.1",
+    "algolia/algoliasearch-client-php": "3.4.1",
+    "aws/aws-sdk-php-laravel": "dev-master",
+    "barryvdh/laravel-dompdf": "dev-master",
+    "caneara/axiom": "^3.2",
+    "filament/tables": "^3.0-stable",
+    "guzzlehttp/guzzle": "^7.0.1",
+    "jantinnerezo/livewire-alert": "^3.0",
+    "kreait/laravel-firebase": "^5.7",
+    "laracasts/presenter": "dev-master",
+    "laravel-notification-channels/fcm": "3.2.0",
+    "laravel/framework": "^10.0",
+    "laravel/helpers": "v1.7.0",
+    "laravel/legacy-factories": "1.x-dev",
+    "laravel/sanctum": "^3.2",
+    "laravel/scout": "*",
+    "laravel/socialite": "^5.28",
+    "laravel/tinker": "^2.0",
+    "laravel/ui": "4.x-dev",
+    "laravel/vapor-cli": "2.0.x-dev",
+    "laravel/vapor-core": "v2.36.0",
+    "league/csv": "9.7.0",
+    "league/flysystem-aws-s3-v3": "^3.24.0",
+    "livewire/livewire": "^3.4",
+    "maatwebsite/excel": "3.1.x-dev",
+    "maestroerror/laragent": "^0.3.1",
+    "nckg/laravel-impersonate": "4.0.1",
+    "openai-php/laravel": "^0.11.0",
+    "phpoffice/phpword": "^1.4",
+    "predis/predis": "v3.0.0-alpha1",
+    "pusher/pusher-php-server": "7.1.0-beta",
+    "smalot/pdfparser": "^2.12",
+    "spatie/laravel-activitylog": "4.7.3",
+    "spatie/laravel-ignition": "^2.0",
+    "spatie/laravel-medialibrary": "v10.x-dev",
+    "spatie/laravel-model-states": "^2.12",
+    "stevebauman/purify": "v6.1.3",
+    "symfony/http-client": "^6.0",
+    "symfony/mailgun-mailer": "^6.0",
+    "symfony/postmark-mailer": "^6.0",
+    "symfony/process": "v6.4.3",
+    "titasgailius/search-relations": "dev-master",
+    "twilio/sdk": "dev-main"
+  },
+  "require-dev": {
+    "barryvdh/laravel-debugbar": "^3.2",
+    "beyondcode/laravel-dump-server": "^1.9.0",
+    "fakerphp/faker": "^1.24",
+    "larastan/larastan": "^2.11",
+    "laravel/boost": "*",
+    "mockery/mockery": "^1.6",
+    "nunomaduro/collision": "^7.0",
+    "phpunit/phpunit": "^10.0",
+    "spatie/laravel-web-tinker": "^1.8.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/",
+      "Database\\Factories\\": "database/factories/",
+      "Database\\Seeders\\": "database/seeders/"
+    },
+    "files": [
+      "config/school-plus.php",
+      "app/Helpers/SiteHelper.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "dont-discover": []
+    }
+  },
+  "scripts": {
+    "post-root-package-install": [
+      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
     ],
-    "license": "MIT",
-    "type": "project",
-  
-    "require": {
-        "php": "^8.1",
-        "algolia/algoliasearch-client-php": "3.4.1",
-        "aws/aws-sdk-php-laravel": "dev-master",
-        "barryvdh/laravel-dompdf": "dev-master",
-        "caneara/axiom": "^3.2",
-        "filament/tables": "^3.0-stable",
-        "guzzlehttp/guzzle": "^7.0.1",
-        "jantinnerezo/livewire-alert": "^3.0",
-        "kreait/laravel-firebase": "^5.7",
-        "laracasts/presenter": "dev-master",
-        "laravel-notification-channels/fcm": "3.2.0",
-        "laravel/framework": "^10.0",
-        "laravel/helpers": "v1.7.0",
-        "laravel/legacy-factories": "1.x-dev",
-        "laravel/sanctum": "^3.2",
-        "laravel/scout": "*",
-        "laravel/socialite": "^5.28",
-        "laravel/tinker": "^2.0",
-        "laravel/ui": "4.x-dev",
-        "laravel/vapor-cli": "2.0.x-dev",
-        "laravel/vapor-core": "v2.36.0",
-        "league/csv": "9.7.0",
-        "league/flysystem-aws-s3-v3": "^3.24.0",
-        "livewire/livewire": "^3.4",
-        "maatwebsite/excel": "3.1.x-dev",
-        "maestroerror/laragent": "^0.3.1",
-        "nckg/laravel-impersonate": "4.0.1",
-        "openai-php/laravel": "^0.11.0",
-        "phpoffice/phpword": "^1.4",
-        "predis/predis": "v3.0.0-alpha1",
-        "pusher/pusher-php-server": "7.1.0-beta",
-        "smalot/pdfparser": "^2.12",
-        "spatie/laravel-activitylog": "4.7.3",
-        "spatie/laravel-ignition": "^2.0",
-        "spatie/laravel-medialibrary": "v10.x-dev",
-        "spatie/laravel-model-states": "^2.12",
-        "stevebauman/purify": "v6.1.3",
-        "symfony/http-client": "^6.0",
-        "symfony/mailgun-mailer": "^6.0",
-        "symfony/postmark-mailer": "^6.0",
-        "symfony/process": "v6.4.3",
-        "titasgailius/search-relations": "dev-master",
-        "twilio/sdk": "dev-main"
-    },
-    "require-dev": {
-        "barryvdh/laravel-debugbar": "^3.2",
-        "beyondcode/laravel-dump-server": "^1.9.0",
-        "fakerphp/faker": "^1.24",
-        "larastan/larastan": "^2.11",
-        "laravel/boost": "*",
-        "mockery/mockery": "^1.6",
-        "nunomaduro/collision": "^7.0",
-        "phpunit/phpunit": "^10.0",
-        "spatie/laravel-web-tinker": "^1.8.4"
-    },
-    "autoload": {
-        "psr-4": {
-        "App\\": "app/",
-        "Database\\Factories\\": "database/factories/",
-        "Database\\Seeders\\": "database/seeders/"
-        },
-        "files": [
-            "config/school-plus.php",
-            "app/Helpers/SiteHelper.php"
-        ]
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Tests\\": "tests/"
-        }
-    },
-    "extra": {
-        "laravel": {
-            "dont-discover": []
-        }
-    },
- 
-    "scripts": {
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate"
-        ],
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover",
-            "@php artisan filament:upgrade"
-        ]
-    },
-    "config": {
-        "preferred-install": "dist",
-        "sort-packages": true,
-        "optimize-autoloader": true
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+    "post-create-project-cmd": [
+      "@php artisan key:generate"
+    ],
+    "post-autoload-dump": [
+      "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+      "@php artisan package:discover",
+      "@php artisan filament:upgrade"
+    ]
+  },
+  "config": {
+    "preferred-install": "dist",
+    "sort-packages": true,
+    "optimize-autoloader": true,
+    "audit": {
+      "ignore": [
+        "PKSA-m5cs-t1y6-qpcs",
+        "PKSA-3r5d-mb8f-1qw9",
+        "PKSA-mdq4-51ck-6kdq",
+        "PKSA-8qx3-n5y5-vvnd",
+        "PKSA-w7xr-vk7n-rstm",
+        "PKSA-rkkf-636k-qjb3",
+        "PKSA-wws7-mr54-jsny",
+        "PKSA-q46n-4fdk-zjr4",
+        "PKSA-qzrn-rnz3-85w1",
+        "PKSA-zwc5-qtrz-zm1n",
+        "PKSA-21fb-n1x5-5nf7",
+        "PKSA-28rh-rzzn-djk4",
+        "PKSA-2n2k-66v2-bwg3",
+        "PKSA-2xmv-8f99-rg33",
+        "PKSA-3d8r-4bff-vcj1",
+        "PKSA-432p-hv1d-chf7",
+        "PKSA-4fc7-y875-17k3",
+        "PKSA-7qs6-zvnz-h66r",
+        "PKSA-88bj-c5ky-3pr6",
+        "PKSA-93qv-9n9h-6k6p",
+        "PKSA-b14r-zh1d-vdrc",
+        "PKSA-bf7t-jnpz-492k",
+        "PKSA-bvdf-tk8n-sbsf",
+        "PKSA-dwsq-ppd2-mb1x",
+        "PKSA-ft77-7h5f-p3r6",
+        "PKSA-gm5x-j3mz-71n9",
+        "PKSA-jj5t-2zs1-dcfm",
+        "PKSA-jwvg-gphd-brbz",
+        "PKSA-jyd3-2srm-pfqd",
+        "PKSA-k22t-f949-t9g6",
+        "PKSA-mnyp-475s-ywph",
+        "PKSA-mrgr-9pdf-y591",
+        "PKSA-n7tx-gkfb-14yj",
+        "PKSA-q2wy-m7mz-kg58",
+        "PKSA-tcfz-w4fm-hhk9",
+        "PKSA-v5yj-8nmz-sk2q",
+        "PKSA-w941-zhwq-2wbm",
+        "PKSA-wtxr-p26d-nn42",
+        "PKSA-y6py-qpv1-h52p",
+        "PKSA-yc7t-91v9-99xs",
+        "PKSA-z7t6-zt6p-wtng"
+      ]
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }
