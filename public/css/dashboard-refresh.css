@@ -417,6 +417,16 @@ body {
 
 /* ── Form Controls ── */
 
+.ds-label {
+    display: block;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--d-text-secondary);
+    margin-bottom: 5px;
+    letter-spacing: 0.02em;
+}
+
 .ds-form-input,
 .ds-form-select,
 .ds-form-textarea {

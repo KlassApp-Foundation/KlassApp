@@ -1353,6 +1353,65 @@ Follow this sequence. Do not skip ahead.
 - **Grade calculation fix**: `ToshiActionService::enterMark()` was using a hardcoded A/B/C/D/F map instead of reading from `school_grading_systems` table. Replaced with `GradingSystemService::grade()` (same method the manual entry path already uses). All 10 boundary tests pass (D1-F9 primary scale). 70 existing marks had wrong grades — 3 corrected, 67 coincidentally matched. Only Test School One affected.
 
 ### DEFERRED — Students List Redesign (Phase 3 implementation)
-- **Status**: Phase 1 (UX brief) complete and approved. Phase 2 (visual spec via open-design) can proceed. Phase 3 (implementation) deferred.
-- **Reason**: Critical grading bug found and fixed — higher priority than UI polish since it affects parent-facing report card accuracy. Phase 3 resumes after the grading/academic correctness audit is fully closed (aggregates, averages, PDF report manual verification).
-- **UX brief scope**: Replace A-Z alphabet jump with search box, fix class filter default, table with name/class/parent-contact/status columns, clickable rows, empty/loading states, clear action hierarchy. Reuse ds-* components, Tailwind v1.4.6, existing color palette.
+- **Status**: Phase 3 IMPLEMENTED this session (July 9, 2026). The students list page has been fully redesigned with server-rendered Blade, KlassApp brand colors, search/filter/pagination/status badges. Phase 2 (visual spec) generated via open-design daemon as reference.
+- **Reason**: Originally deferred; now completed as part of this session's work.
+- **UX brief scope**: Delivered — search box, class filter, status filter, table with name/class/parent/status/actions columns, avatar initials, empty state, pagination. Uses ds-* components and brand color tokens.
+
+---
+
+## Session: July 9, 2026 — Students List Redesign, studentAcademicLatest() Batch Bug Fix, 13-Role Dashboard Inventory
+
+### Summary
+Three major work streams completed: (1) students list page redesigned from Vue to server-rendered Blade with full search/filter/pagination, (2) systemic `studentAcademicLatest()` batch eager-loading bug fixed at the relationship level after discovering it affected 5 call sites, (3) full 13-role dashboard inventory correcting several earlier assumptions.
+
+### Closed / Verified
+
+1. **Open-design daemon unblocked** — `opencode` agent was failing on paid model default (zero balance). Fixed by specifying `model: "opencode/deepseek-v4-flash-free"`. Generated 40KB HTML prototype of students list page using Agentic design system.
+
+2. **Students list page redesigned** (Phase 3 delivered):
+   - `StudentController@index` — rewritten to query paginated students with eager-loaded userprofile/parents, leftJoin subquery for latest academic record + section name
+   - `resources/views/admin/member/index.blade.php` — full 158-line rewrite replacing Vue `member-list` + `search-filter` components with server-rendered Blade
+   - Features: search box (firstname/lastname), class filter dropdown, status filter (active/inactive/all), avatar initials, student name + ID, class badge, parent name or "No parent linked", green/orange status badges, view/edit/delete action buttons, empty state, pagination
+   - Uses KlassApp brand colors: `--d-blue`, `--d-green`, `--d-amber`, Sora/DM Sans fonts
+   - Tailwind v1.4.6 compatible — no v2/v3 classes, no JIT syntax
+
+3. **studentAcademicLatest() systemic bug fixed**:
+   - **Root cause**: `->limit(1)` on a `hasOne` relationship. When used with `with('studentAcademicLatest')` on multiple records, LIMIT 1 applies globally — only the first user gets data, everyone else gets null.
+   - **Fix**: Removed `->limit(1)` from `app/Models/User.php:391`. `hasOne` + `orderByDesc('id')` already guarantees the latest record per parent.
+   - **5 affected sites**: StudentController@index (paginated list), WhatsAppController@959 (broad name search, 8 students), WhatsAppController@1616/1747/1825 (sendGrades/sendFees/sendAttendance, children list)
+   - **Verified**: Both direct and nested eager-loading patterns — 8/8 students return correct class data in both patterns. 4 existing tests pass (11 assertions, 1.66s).
+
+4. **CSS addition**: `.ds-label` class added to `public/css/dashboard-refresh.css` for form field labels.
+
+5. **13-role dashboard inventory completed**:
+   - Corrected earlier assumptions: Accountant, Librarian, Receptionist ALL have real dashboards (design gaps, not build gaps)
+   - Identified 5 build-gap roles needing architecture work: SiteSubadmin (id=2, middleware exists but unused), SchoolSubadmin (id=4, same), OldStudent/Alumni (id=9, empty route file), Stock Keeper (id=12, empty routes), Non Teaching (id=13, nothing at all)
+   - Parent (id=7) confirmed WhatsApp-only by product design — no web routes, no views, skip
+   - Priority order for redesign: Teacher → Accountant → Student → Librarian → Receptionist
+
+### Bugs Fixed During Implementation
+- **SQL**: `ORDER BY firstname` failed — column is on `userprofiles` not `users`. Fixed with subquery.
+- **Broken relationship eager load**: `with('studentAcademicLatest')` used `limit(1)` which broke batch loading — all but first student got null class.
+- **Ambiguous columns**: `school_id`, `usergroup_id` without table prefix conflicted with joined tables.
+- **View data access**: `$student->firstname` accessed as direct property but stored on related `userprofile`.
+
+### Files Modified
+| File | Change |
+|---|---|
+| `app/Models/User.php` | Removed `->limit(1)` from `studentAcademicLatest()` relationship |
+| `app/Http/Controllers/Admin/StudentController.php` | Rewrote `index()` — subquery join, pagination, eager loading, search/filter |
+| `resources/views/admin/member/index.blade.php` | Full rewrite — server-rendered Blade replacing Vue components |
+| `public/css/dashboard-refresh.css` | Added `.ds-label` class |
+
+### Key Decisions
+- **Relationship fix over call-site patching**: Removing `->limit(1)` from the model fixed all 5 affected sites at once. LeftJoin subquery retained in StudentController for performance (single SQL query vs Eloquent's multi-query eager loading).
+- **Students list is server-rendered Blade**: Replaced Vue client-side filtering with server-side search/filter/pagination. The old Vue `find()` endpoint preserved for backward compatibility.
+- **Open-design daemon requires explicit free model**: `model: "opencode/deepseek-v4-flash-free"` must be specified or it defaults to paid models with zero balance.
+
+### Still Open — Priority Order for Next Session
+1. Per-school custom grading real click-test — change a boundary via `/admin/grades`, confirm it takes effect on real mark, confirm isolation between schools.
+2. Report card content brief review — draft at `.sisyphus/plans/report-card-design-spec.md`.
+3. Reports functional audit — 14 reports in ReportsController, still queued.
+4. Full redesign roadmap — Step 2 (pattern library) and Step 3 (per-page process) ready to proceed: Teacher → Accountant → Student → Librarian → Receptionist.
+5. Discrepancy to resolve: earlier notes claimed Accountant/Librarian/Receptionist dashboards "didn't exist" — today's inventory found they do. Needs reconciliation before redesign work starts on them.
+6. Trial plan-selection click-test (Toshi onboarding, Growth vs Premium) — still deferred, not yet done.

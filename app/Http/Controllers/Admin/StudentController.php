@@ -29,6 +29,7 @@ use Carbon\Carbon;
 use Exception;
 use Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
@@ -51,36 +52,72 @@ class StudentController extends Controller
         return $this->MemberFilter($request, Auth::user()->school_id, 6, 'active');
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $school_id = Auth::user()->school_id;
-        $academic_year = SiteHelper::getAcademicYear($school_id);
-        $count    = User::ByRole(6)->where('school_id',$school_id)->where('deleted_at',NULL)->count();
-        $alphabet = request('alphabet')?request('alphabet'):'';
-        $query    = \Request::getQueryString();
-        $standardLink = SiteHelper::getStandardLinkList($school_id);
+        $standardLinks = SiteHelper::getStandardLinkList($school_id);
 
-        $lowest_standard = Standard::where('school_id',$school_id)->orderBy('order')->first();
+        // Subquery: latest student_academics per user
+        $latestSa = DB::table('student_academics as sa')
+            ->select('sa.id', 'sa.user_id', 'sa.standardLink_id')
+            ->whereIn('sa.academic_year_id', function ($q) {
+                $q->select('id')->from('academic_years')->where('status', 1);
+            })
+            ->whereNull('sa.deleted_at')
+            ->orderByDesc('sa.id');
 
-        $standard = StandardLink::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['standard_id',$lowest_standard->id]])->first();
-        if(request('standard') != null)
-        {
-            $selected_standard = request('standard');
+        $query = User::where('users.school_id', $school_id)
+            ->where('users.usergroup_id', 6)
+            ->whereNull('users.deleted_at')
+            ->leftJoin(DB::raw("({$latestSa->toSql()}) as latest_sa"), 'users.id', '=', 'latest_sa.user_id')
+            ->addBinding($latestSa->getBindings(), 'join')
+            ->leftJoin('standards_link', 'latest_sa.standardLink_id', '=', 'standards_link.id')
+            ->leftJoin('sections', 'standards_link.section_id', '=', 'sections.id')
+            ->select('users.*', 'sections.name as class_name');
+
+        $search = $request->input('search');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('userprofile', function ($uq) use ($search) {
+                    $uq->where('firstname', 'like', "%{$search}%")
+                       ->orWhere('lastname', 'like', "%{$search}%");
+                });
+            });
         }
-        else
-        {
-            $selected_standard = null; // null = all classes, no filter
+
+        $standardFilter = $request->input('standard');
+        if ($standardFilter) {
+            $query->where('latest_sa.standardLink_id', $standardFilter);
         }
-        $birthday = request('date_of_birth') != null ? 'true' : null;
-        
-        return view('/admin/member/index',[
-            'alphabet' => $alphabet,
-            'query' => $query,
+
+        $statusFilter = $request->input('status');
+        if ($statusFilter) {
+            if ($statusFilter === 'active') {
+                $query->where('users.status', 'active');
+            } elseif ($statusFilter === 'inactive') {
+                $query->where('users.status', '!=', 'active');
+            }
+        } else {
+            $query->where('users.status', '!=', 'exit');
+        }
+
+        $students = $query->with([
+            'parents.userParent.userprofile',
+            'userprofile',
+        ])->orderBy(Userprofile::select('firstname')
+            ->whereColumn('user_id', 'users.id')
+            ->limit(1)
+        )->paginate(25)->withQueryString();
+
+        $count = $students->total();
+
+        return view('/admin/member/index', [
+            'students' => $students,
             'count' => $count,
-            'standardLinks' => $standardLink,
-            'standard' => $standard?->id,
-            'birthday' => $birthday,
-            'selected_standard' => $selected_standard,
+            'standardLinks' => $standardLinks,
+            'search' => $search,
+            'standardFilter' => $standardFilter,
+            'statusFilter' => $statusFilter,
         ]);
     }
 

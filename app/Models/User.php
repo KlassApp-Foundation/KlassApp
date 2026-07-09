@@ -387,8 +387,7 @@ public function scopeStudents($query)
                     ->from('academic_years')
                     ->where('status', 1);
             })
-            ->orderByDesc('student_academics.id')
-            ->limit(1);
+            ->orderByDesc('student_academics.id');
     }
 
     // public function marks()
