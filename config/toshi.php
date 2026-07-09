@@ -62,6 +62,14 @@ return [
     'fallback_model' => env('TOSHI_LLM_FALLBACK_MODEL'),
 
     /*
+    | Model to use for escalated (complex) queries. When set, queries classified
+    | as 'escalated' by classifyComplexity() use this model instead of the default.
+    | Leave null to use the default model for all queries (no escalation).
+    | Example: 'meta/llama-3.1-70b-instruct' (if available on your provider).
+    */
+    'escalated_model' => env('TOSHI_ESCALATED_MODEL'),
+
+    /*
     | Maximum number of LLM queries per user per day.
     | After this limit, Toshi falls back to the keyword router silently.
     | Set to 0 for unlimited (not recommended during free phase).

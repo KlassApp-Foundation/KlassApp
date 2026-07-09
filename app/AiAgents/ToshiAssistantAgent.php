@@ -172,11 +172,16 @@ class ToshiAssistantAgent extends Agent
             }
             $messages[] = ['role' => 'user', 'content' => $query];
 
-            // Call the LLM API directly (bypasses LarAgent driver which has compatibility issues with Nvidia NIM)
+            // Select model based on tier — escalated uses a more capable model if configured
             $baseUrl = config('toshi.base_url', 'https://integrate.api.nvidia.com/v1');
             $apiKey = config('toshi.api_key', '');
-            $model = config('toshi.model', 'meta/llama-3.1-8b-instruct');
             $timeout = (int) config('toshi.request_timeout', 15);
+
+            if ($tier === 'escalated' && config('toshi.escalated_model')) {
+                $model = config('toshi.escalated_model');
+            } else {
+                $model = config('toshi.model', 'meta/llama-3.1-8b-instruct');
+            }
 
             $httpResponse = \Illuminate\Support\Facades\Http::timeout($timeout)
                 ->withToken($apiKey)
@@ -354,6 +359,11 @@ class ToshiAssistantAgent extends Agent
         // Data analysis / reporting requests (these need the stronger model)
         if (preg_match('/\b(trend|analyze|analysis|forecast|predict|pattern|distribution|breakdown)\b/i', $query)) {
             $complexityScore += 2;
+        }
+
+        // Multi-parameter creation/action requests (tools need reliable parameter extraction)
+        if (preg_match('/\b(create|add|record|register|enter|assign)\b.{0,40}\b(exam|fee|term|payment|student|teacher|parent|mark|attendance)\b/i', $query)) {
+            $complexityScore += 4;
         }
 
         // Escalate if score >= 4
