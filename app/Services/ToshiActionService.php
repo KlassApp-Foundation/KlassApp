@@ -242,7 +242,7 @@ class ToshiActionService
         }
 
         $standardLink = null;
-        $className = trim($data['class_name'] ?? '');
+        $className = trim($data['class_name'] ?? $data['class'] ?? '');
         if ($className !== '') {
             $sectionName = trim($data['section_name'] ?? '');
             $standardLink = self::resolveStandardLink($schoolId, $academicYear->id, $className, $sectionName);
@@ -1027,27 +1027,37 @@ class ToshiActionService
      */
     private static function resolveStandardLink(int $schoolId, ?int $academicYearId, string $className, string $sectionName = ''): ?StandardLink
     {
+        // First try matching the class name against sections directly (e.g. "Primary Three", "Senior One")
+        $sectionNameToUse = $sectionName ?: $className;
+        $section = null;
+        if ($sectionNameToUse !== '') {
+            $section = Section::where('school_id', $schoolId)
+                ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($sectionNameToUse) . '%'])
+                ->first();
+        }
+        if ($section) {
+            $query = StandardLink::where('school_id', $schoolId)
+                ->where('section_id', $section->id);
+            if ($academicYearId) {
+                $query->where('academic_year_id', $academicYearId);
+            }
+            $link = $query->first();
+            if ($link) return $link;
+        }
+
+        // Fallback: match class name against standards (legacy)
         $standard = Standard::where('school_id', $schoolId)->where('name', $className)->first();
         if (!$standard) {
-            // Try partial match
             $standard = Standard::where('school_id', $schoolId)
                 ->where('name', 'LIKE', '%' . $className . '%')
                 ->first();
         }
         if (!$standard) return null;
 
-        $section = null;
-        if ($sectionName !== '') {
-            $section = Section::where('name', $sectionName)->first();
-        }
-
         $query = StandardLink::where('school_id', $schoolId)
             ->where('standard_id', $standard->id);
         if ($academicYearId) {
             $query->where('academic_year_id', $academicYearId);
-        }
-        if ($section) {
-            $query->where('section_id', $section->id);
         }
 
         return $query->first();
@@ -1155,7 +1165,16 @@ class ToshiActionService
             $subject = Subject::where('school_id', $schoolId)->first();
         }
 
-        $standard = Standard::where('school_id', $schoolId)->first();
+        // Resolve standard from the section (which was resolved from the class parameter)
+        $standard = null;
+        if ($section) {
+            $stdLink = StandardLink::where('school_id', $schoolId)
+                ->where('section_id', $section->id)->first();
+            $standard = $stdLink ? Standard::find($stdLink->standard_id) : null;
+        }
+        if (!$standard) {
+            $standard = Standard::where('school_id', $schoolId)->first();
+        }
 
         // If essential params are missing, say what was inferred
         $notes = [];
