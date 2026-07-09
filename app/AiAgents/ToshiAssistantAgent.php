@@ -179,11 +179,15 @@ class ToshiAssistantAgent extends Agent
                         'type' => 'function',
                         'function' => [
                             'name' => 'toolCreateExam',
-                            'description' => 'Create an exam. Provide name (e.g. "End of Term 1"), and optionally scheduled_at (Y-m-d).',
+                            'description' => 'Create an exam. Provide name (required), and optionally: subject, class/section, type (e.g. "Mid Term", "End of Term", "Mock"), term (e.g. "Term 1"), scheduled_at (Y-m-d). When the user specifies a class, subject, or term in their request, pass it here.',
                             'parameters' => [
                                 'type' => 'object',
                                 'properties' => [
-                                    'name' => ['type' => 'string', 'description' => 'Exam name'],
+                                    'name' => ['type' => 'string', 'description' => 'Exam name, e.g. "End of Term 1 Mathematics"'],
+                                    'subject' => ['type' => 'string', 'description' => 'Subject name, e.g. "Mathematics", "English"'],
+                                    'class' => ['type' => 'string', 'description' => 'Class/section name, e.g. "Primary Four", "Senior One", "Baby Class"'],
+                                    'type' => ['type' => 'string', 'description' => 'Exam type, e.g. "End of Term", "Mid Term", "Mock", "BOT", "EOT"'],
+                                    'term' => ['type' => 'string', 'description' => 'Term name, e.g. "Term 1", "Term 2"'],
                                     'scheduled_at' => ['type' => 'string', 'description' => 'Date Y-m-d'],
                                 ],
                                 'required' => ['name'],

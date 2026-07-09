@@ -4319,13 +4319,27 @@ class AgentToshi extends Component
                             );
                             // Link student to a class via student_academics
                             try {
-                                $firstStdLink = \App\Models\StandardLink::where('school_id', $schoolId)->first();
-                                if ($firstStdLink) {
+                                $studentClass = is_array($record) ? ($record['class'] ?? '') : '';
+                                $targetStdLink = null;
+                                if (!empty($studentClass)) {
+                                    $section = \App\Models\Section::where('school_id', $schoolId)
+                                        ->where('name', $studentClass)->first();
+                                    if ($section) {
+                                        $targetStdLink = \App\Models\StandardLink::where('school_id', $schoolId)
+                                            ->where('section_id', $section->id)
+                                            ->where('academic_year_id', $academicYear->id)
+                                            ->first();
+                                    }
+                                }
+                                if (!$targetStdLink) {
+                                    $targetStdLink = \App\Models\StandardLink::where('school_id', $schoolId)->first();
+                                }
+                                if ($targetStdLink) {
                                     StudentAcademic::create([
                                         'school_id' => $schoolId,
                                         'academic_year_id' => $academicYear->id,
                                         'user_id' => $student->id,
-                                        'standardLink_id' => $firstStdLink->id,
+                                        'standardLink_id' => $targetStdLink->id,
                                         'klassapp_student_id' => 'KLS' . str_pad((string)$schoolId, 3, '0', STR_PAD_LEFT)
                                             . str_pad((string)($index + 1), 4, '0', STR_PAD_LEFT),
                                     ]);

@@ -1065,27 +1065,83 @@ class ToshiActionService
         $academicYear = SiteHelper::getAcademicYear($schoolId);
         if (!$academicYear) return self::result(false, 'No academic year set.');
 
-        $term = AcademicTerm::where('school_id', $schoolId)->first();
-        $examType = ExamType::first();
-        $section = Section::where('school_id', $schoolId)->first();
-        $subject = Subject::where('school_id', $schoolId)->first();
+        // Resolve exam type from label or parameter
+        $examTypeName = $data['type'] ?? $data['exam_type'] ?? '';
+        $examType = null;
+        if ($examTypeName) {
+            $examType = ExamType::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($examTypeName) . '%'])
+                ->orWhereRaw('LOWER(code) = ?', [strtolower($examTypeName)])
+                ->first();
+        }
+        if (!$examType) {
+            $examType = ExamType::first();
+        }
+
+        // Resolve term from parameter
+        $termName = $data['term'] ?? '';
+        $term = null;
+        if ($termName) {
+            $term = AcademicTerm::where('school_id', $schoolId)
+                ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($termName) . '%'])
+                ->first();
+        }
+        if (!$term) {
+            $term = AcademicTerm::where('school_id', $schoolId)->first();
+        }
+
+        // Resolve class/section from parameter
+        $className = $data['class'] ?? $data['section'] ?? '';
+        $section = null;
+        if ($className) {
+            $section = Section::where('school_id', $schoolId)
+                ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($className) . '%'])
+                ->first();
+        }
+        if (!$section) {
+            $section = Section::where('school_id', $schoolId)->first();
+        }
+
+        // Resolve subject from parameter
+        $subjectName = $data['subject'] ?? '';
+        $subject = null;
+        if ($subjectName && $section) {
+            $subject = Subject::where('school_id', $schoolId)
+                ->where('section_id', $section->id)
+                ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($subjectName) . '%'])
+                ->first();
+        }
+        if (!$subject) {
+            $subject = Subject::where('school_id', $schoolId)->first();
+        }
+
         $standard = Standard::where('school_id', $schoolId)->first();
-        if (!$section || !$subject || !$standard) return self::result(false, 'Need section, subject, and standard configured first.');
+
+        // If essential params are missing, say what was inferred
+        $notes = [];
+        if (!($data['type'] ?? $data['exam_type'] ?? '')) $notes[] = 'exam type: ' . ($examType->name ?? 'default');
+        if (!($data['class'] ?? $data['section'] ?? '')) $notes[] = 'class: ' . ($section->name ?? 'default');
+        if (!($data['subject'] ?? '')) $notes[] = 'subject: ' . ($subject->name ?? 'default');
+        if (!($data['term'] ?? '')) $notes[] = 'term: ' . ($term->name ?? 'default');
 
         try {
             $exam = Exam::create([
                 'school_id' => $schoolId,
-                'standard_id' => $standard->id,
+                'standard_id' => $standard->id ?? 1,
                 'academic_year_id' => $academicYear->id,
                 'academic_term_id' => $term?->id,
                 'exam_type_id' => $examType?->id,
                 'section_id' => $section->id,
-                'subject_id' => $subject->id,
-                'teacher_id' => auth()->id() ?? 1,
+                'subject_id' => $subject->id ?? 1,
+                'teacher_id' => $admin->id,
                 'scheduled_at' => $data['scheduled_at'] ?? now(),
                 'status' => 'undone',
             ]);
-            return self::result(true, "Exam **{$label}** created.", ['exam_id' => $exam->id]);
+
+            $msg = "Exam **{$label}** created.";
+            if (!empty($notes)) {
+                $msg .= ' (Inferred: ' . implode(', ', $notes) . '. Be more specific next time — e.g. "create a Mid-Term exam for P4 Mathematics".)';
+            }
+            return self::result(true, $msg, ['exam_id' => $exam->id]);
         } catch (\Exception $e) {
             Log::error('ToshiAction: createExam failed', ['error' => $e->getMessage()]);
             return self::result(false, 'Failed to create exam: ' . $e->getMessage());
