@@ -43,16 +43,12 @@ class StudentController extends Controller
         $school_id = Auth::user()->school_id;
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
-        $lowest_standard = Standard::where('school_id',$school_id)->orderBy('order')->first();
-
-        $standard = StandardLink::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['standard_id',$lowest_standard->id]])->first();
-
-        if(count((array)\Request::getQueryString()) == 0)
-        {
-            $request['standard'] = $standard->id;
+        // When no filter is specified, return ALL students (don't default to lowest standard)
+        if (count((array)$request->query()) == 0 && !$request->has('standard')) {
+            $request->merge(['standard' => '']);
         }
 
-        return $this->MemberFilter($request,Auth::user()->school_id,6,'active');
+        return $this->MemberFilter($request, Auth::user()->school_id, 6, 'active');
     }
 
     public function index()
@@ -73,7 +69,7 @@ class StudentController extends Controller
         }
         else
         {
-            $selected_standard = $standard?->id;
+            $selected_standard = null; // null = all classes, no filter
         }
         $birthday = request('date_of_birth') != null ? 'true' : null;
         

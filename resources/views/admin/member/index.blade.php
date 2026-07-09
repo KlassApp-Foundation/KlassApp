@@ -15,15 +15,15 @@
         <form action="{{ url('/admin/students') }}" enctype="multipart form-data">
             <div class="flex flex-wrap items-center gap-3 mb-4">
                 <select class="tw-form-control text-xs" name="standard">
-                    <option value="">All Class</option>
-                    @foreach($standardLinks as $standardLink)
-                        <option value="{{ $standardLink->id }}" {{ $standardLink->id == request()->query('standard') ? 'selected' : '' }} {{ $standardLink->id == $standard ? 'selected' : '' }}>{{ $standardLink->StandardSection }}</option>
-                    @endforeach
+                <option value="">All Classes</option>
+                @foreach($standardLinks as $standardLink)
+                <option value="{{ $standardLink->id }}" {{ (string)$standardLink->id === (string)request()->query('standard') ? 'selected' : '' }}>{{ $standardLink->StandardSection }}</option>
+                @endforeach
                 </select>
                 <button value="Submit" type="submit" class="blue-bg text-sm text-white px-2 py-1 rounded mx-1">Submit</button>
             </div>
         </form>
-        <member-list url="{{ url('/') }}" searchquery="{{ $query }}" letter="{{ $alphabet }}" standard="{{ $standard }}" birthday="{{ $birthday }}" selected_standard="{{ $selected_standard }}"></member-list>
+                <member-list url="{{ url('/') }}" searchquery="{{ $query }}" letter="{{ $alphabet }}" birthday="{{ $birthday }}" selected_standard="{{ $selected_standard }}"></member-list>
         <search-filter url="{{ url('/') }}" searchquery="{{ $query }}" selected_standard="{{ $selected_standard }}"></search-filter>
     </div>
 </div>
