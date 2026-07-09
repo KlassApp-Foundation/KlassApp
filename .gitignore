@@ -5,7 +5,6 @@
 /vendor
 /.idea
 /.vscode
-/.vagrant
 Homestead.json
 Homestead.yaml
 npm-debug.log
@@ -16,157 +15,62 @@ yarn-error.log
 .phpunit.result.cache
 .phpunit.cache/
 .DS_Store
+
+# == Laravel uploads ==
 public/livewire-tmp/
 public/avatars/
-public/uploads/admin/schooldetails/*
-!public/uploads/admin/schooldetails/index.html
+public/uploads/*
+!public/uploads/**/index.html
 
-public/uploads/admin/notice/*
-!public/uploads/admin/notice/index.html
-
-public/uploads/admin/Images/*
-!public/uploads/admin/Images/index.html
-
-public/uploads/admin/send_mail/*
-!public/uploads/admin/send_mail/index.html
-
-public/uploads/audio/*
-!public/uploads/audio/index.html
-
-public/uploads/admin/student/*
-!public/uploads/admin/student/index.html
-
-public/uploads/purify/*
-!public/uploads/purify/index.html
-
-public/uploads/photos/*
-!public/uploads/photos/index.html
-
-public/uploads/admin/gallery/*
-!public/uploads/admin/gallery/index.html
-
-public/uploads/admin/files/*
-!public/uploads/admin/files/index.html
-
-public/uploads/admin/bulletins/*
-!public/uploads/admin/bulletins/index.html
-
-public/uploads/sermons/*
-!public/uploads/sermons/index.html
-
-public/uploads/admin/groups/*
-!public/uploads/admin/groups/index.html
-
-public/uploads/admin/event/*
-!public/uploads/admin/event/index.html
-
-public/uploads/admin/member/*
-!public/uploads/admin/member/index.html
-
-public/uploads/admin/preacher/*
-!public/uploads/admin/preacher/index.html
-
-public/uploads/admin/quotes/*
-!public/uploads/admin/quotes/index.html
-
-public/uploads/avatars/*
-!public/uploads/avatars/index.html
-
-public/uploads/export/*
-!public/uploads/export/index.html
-
-public/uploads/files/*
-!public/uploads/files/index.html
-
-public/uploads/admin/teacher/*
-!public/uploads/admin/teacher/index.html
-
-public/uploads/marks*
-!public/uploads/marks/index.html
-
-public/uploads/promotion*
-!public/uploads/promotion/index.html
-
-public/uploads/admin/discipline*
-!public/uploads/admin/discipline/index.html
-
-public/uploads/admin/homework/*
-!public/uploads/admin/homework/index.html
-
-public/uploads/teacher/*
-!public/uploads/teacher/index.html
-
-public/uploads/student/*
-!public/uploads/student/index.html
-
-
-public/uploads/reports/*
-!public/uploads/reports/index.html
-.vapor/
-/vapor
-
-# === Development & IDE artifacts ===
-TODO.md
-todayswork.md
-test.md
+# === Internal AI / Agent tools (NOT for public) ===
+.agents/
+.opencode/
 .sisyphus/
 .playwright-mcp/
 .gemini/
 .mcp.json
-.idea/
-.vscode/
+.history/
+boost.json
+opencode.json
+AGENTS.md
+CLAUDE.md
+GEMINI.md
 
-# === Logs & debug files ===
-*.log
+# === Development & testing noise ===
+TESTING.md
+api.md
+phpunit.dusk.xml
+*.bak
 debug.log
 test_marker.txt
+/testinstall.sh
 
-# === Toshi E2E artifacts ===
-toshi-e2e-*
-
-# === Accidental / junk files ===
-1,
-id,
-i.e
-jkdncaj
-
-# === Backup & scratch files ===
-*.bak
-/phpunit.xml.bak
+# === Backup / scratch docs ===
 /todo.md
 /notes.md
 /audit.md
 /knowledge.md
 /landing-page-content.md
-/AGENTS.md
-/CLAUDE.md
-/GEMINI.md
-/api.md
-/TESTING.md
 
-# === Legacy / unused folders ===
+# === Accidental junk files ===
+/1,
+/id,
+/i.e
+/jkdncaj
+/students-list.html
+
+# === Legacy folders ===
 /custompackages/
 /nova/
 /nova-components/
 vapor.yml
 webpack.mix.js
 
-# === Students list (dev artifact) ===
-/students-list.html
-
-# === Container setup ===
-Dockerfile
-docker-compose.yml
-docker-compose.prod.yml
-/entrypoint.sh
-/testinstall.sh
-/server.php
-
-# === Nginx config (deployment-specific) ===
+# === Deployment-specific (per-environment) ===
 /nginx/
-
-# === WhatsApp (deployment-specific) ===
 /whatsapp/
+.vapor/
+/vapor
 
 # === Storage artifacts ===
 /storage/debugbar/
