@@ -1264,13 +1264,23 @@ class ToshiActionService
         if (!$exam) return self::result(false, 'Exam not found.');
 
         try {
+            // Look up grade from the actual grading system table
+            $grade = null;
+            $isNursery = \App\Helpers\GradingHelper::levelTypeForStandard(
+                \App\Models\Standard::find($exam->standard_id)
+            ) === 'nursery';
+            if (!$isNursery) {
+                $gradingService = app(\App\Services\GradingSystemService::class);
+                $grade = $gradingService->grade((int)$score, $schoolId, $exam);
+            }
+
             $mark = Marks::create([
                 'student_id' => $studentId, 'exam_id' => $examId,
                 'school_id' => $schoolId, 'subject_id' => $exam->subject_id,
                 'section_id' => $exam->section_id,
                 'teacher_id' => $admin->id,
                 'marks' => $score,
-                'grade' => $score >= 80 ? 'A' : ($score >= 70 ? 'B' : ($score >= 60 ? 'C' : ($score >= 50 ? 'D' : 'F'))),
+                'grade' => $grade,
             ]);
             return self::result(true, "Mark entered: {$score}.", ['mark_id' => $mark->id]);
         } catch (\Exception $e) {
