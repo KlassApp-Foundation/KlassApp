@@ -60,7 +60,6 @@ class ToshiAssistantAgent extends Agent
             'tool' => $toolName,
             'args' => $toolArgs,
             'preview' => $preview,
-            'prompt' => "⚠️ **{$preview}**\n\nReply **yes** to confirm or **no** to cancel.",
         ]);
     }
     public function requireConfirmation(string $prompt, callable $callback): string

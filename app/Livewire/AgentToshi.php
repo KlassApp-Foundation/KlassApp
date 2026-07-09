@@ -530,11 +530,40 @@ class AgentToshi extends Component
     public function confirmYes()
     {
         $this->awaitingConfirm = false;
+
+        // Check for pending tool confirmation first
+        if ($this->pendingToolConfirm !== null) {
+            $tool = $this->pendingToolConfirm['tool'];
+            $args = $this->pendingToolConfirm['args'];
+            $this->pendingToolConfirm = null;
+
+            $result = match ($tool) {
+                'toolCreateExam' => \App\Services\ToshiActionService::createExam(auth()->user(), $args),
+                'toolAddParent' => \App\Services\ToshiActionService::addParent(auth()->user(), $args),
+                'toolEnterMark' => \App\Services\ToshiActionService::enterMark(auth()->user(), $args),
+                'toolAddStudent' => \App\Services\ToshiActionService::addStudent(auth()->user(), $args),
+                'toolCreateFee' => \App\Services\ToshiActionService::createFee(auth()->user(), $args),
+                'toolCreateTerm' => \App\Services\ToshiActionService::createTerm(auth()->user(), $args),
+                'toolRecordPayment' => \App\Services\ToshiActionService::recordPayment(auth()->user(), $args),
+                default => ['success' => false, 'message' => "Unknown tool: {$tool}"],
+            };
+            $this->botSay($result['message'] ?? 'Done.');
+            return;
+        }
+
         $this->callStepHandler('yes');
     }
     public function confirmNo()
     {
         $this->awaitingConfirm = false;
+
+        // Check for pending tool confirmation
+        if ($this->pendingToolConfirm !== null) {
+            $this->pendingToolConfirm = null;
+            $this->botSay('Cancelled. No changes were made.');
+            return;
+        }
+
         $this->callStepHandler('no');
     }
 
@@ -1846,13 +1875,15 @@ class AgentToshi extends Component
     {
         $lower = strtolower($text);
 
-        // Check for pending Tier 2 tool confirmation
+        // Check for pending Tier 2 tool confirmation — handled by buttons now
         if ($this->pendingToolConfirm !== null) {
+            // Text-based fallback still works, but buttons are the primary path
             $yes = in_array($lower, ['yes', 'y', 'yeah', 'confirm', 'proceed', 'do it']);
             if ($yes) {
                 $tool = $this->pendingToolConfirm['tool'];
                 $args = $this->pendingToolConfirm['args'];
                 $this->pendingToolConfirm = null;
+                $this->awaitingConfirm = false;
 
                 $result = match ($tool) {
                     'toolCreateExam' => \App\Services\ToshiActionService::createExam(auth()->user(), $args),
@@ -1865,10 +1896,12 @@ class AgentToshi extends Component
                     default => ['success' => false, 'message' => "Unknown tool: {$tool}"],
                 };
                 $this->botSay($result['message'] ?? 'Done.');
-            } else {
+            } elseif (in_array($lower, ['no', 'n', 'cancel', 'stop'])) {
                 $this->pendingToolConfirm = null;
+                $this->awaitingConfirm = false;
                 $this->botSay('Cancelled. No changes were made.');
             }
+            // If neither yes nor no, do nothing — buttons handle it
             return;
         }
 
@@ -1894,7 +1927,8 @@ class AgentToshi extends Component
                             'tool' => $decoded['tool'],
                             'args' => $decoded['args'],
                         ];
-                        $this->botSay($decoded['prompt']);
+                        $this->awaitingConfirm = true;
+                        $this->botSay($decoded['preview'] . "\n\nUse the buttons below to confirm or cancel.");
                     } else {
                         $this->botSay($response);
                     }
