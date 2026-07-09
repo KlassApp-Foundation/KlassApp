@@ -130,6 +130,13 @@ if (!function_exists('sidebarActive')) {
         </a>
     </li>
 
+    <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['grades', 'grade']) }}">
+        <a href="{{ url('admin/grades') }}" class="flex items-center">
+            <x-icons.sidebar name="subjects"/>
+            <span class="mx-3 whitespace-no-wrap">Grading</span>
+        </a>
+    </li>
+
     <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['settings']) }}">
         <a href="{{ url('admin/settings') }}" class="flex items-center">
             <x-icons.sidebar name="settings"/>
