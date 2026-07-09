@@ -262,23 +262,39 @@ class ToshiAssistantAgent extends Agent
                     $toolArgs = json_decode($toolCall['function']['arguments'] ?? '{}', true) ?? [];
 
                     $toolResult = match ($toolName) {
-                        // Tier 1 tools — executed immediately (additive, recoverable)
-                        'toolAddParent' => \App\Services\ToshiActionService::addParent(auth()->user() ?? $user, $toolArgs),
-                        'toolEnterMark' => \App\Services\ToshiActionService::enterMark(auth()->user() ?? $user, $toolArgs),
-                        // createExam moved to Tier 2 — requires confirmation due to 8B model's
-                        // unreliable parameter extraction (hallucinates class/subject/type).
-                        // Returns a confirmation prompt string — handleAssistantQuery() in
-                        // AgentToshi stores the pending action and waits for user to say "yes".
+                        // ALL creation tools use confirmation (Tier 2 by default).
+                        // The 8B model cannot reliably extract parameters — preview
+                        // lets the admin catch wrong/defaulted values before creation.
                         'toolCreateExam' => $this->confirmationPrompt(
-                            'toolCreateExam',
-                            $toolArgs,
+                            'toolCreateExam', $toolArgs,
                             \App\Services\ToshiActionService::previewExam(auth()->user() ?? $user, $toolArgs)
                         ),
-                        // Tier 2 tools would use confirmationPrompt() here:
-                        // 'toolDeleteStudent' => $this->confirmationPrompt(
-                        //     'toolDeleteStudent', $toolArgs,
-                        //     "Delete student ID {$toolArgs['student_id']} — all records will be permanently removed."
-                        // ),
+                        'toolAddParent' => $this->confirmationPrompt(
+                            'toolAddParent', $toolArgs,
+                            "Add parent: " . ($toolArgs['name'] ?? '?') . ", phone: " . ($toolArgs['phone'] ?? '?')
+                                . ($toolArgs['student_id'] ? ", student ID: {$toolArgs['student_id']}" : "")
+                        ),
+                        'toolEnterMark' => $this->confirmationPrompt(
+                            'toolEnterMark', $toolArgs,
+                            "Enter mark: student " . ($toolArgs['student_id'] ?? '?') . ", exam " . ($toolArgs['exam_id'] ?? '?') . ", score " . ($toolArgs['marks'] ?? '?')
+                        ),
+                        'toolAddStudent' => $this->confirmationPrompt(
+                            'toolAddStudent', $toolArgs,
+                            "Add student: " . ($toolArgs['name'] ?? '?') . ", class: " . ($toolArgs['class'] ?? '?')
+                        ),
+                        'toolCreateFee' => $this->confirmationPrompt(
+                            'toolCreateFee', $toolArgs,
+                            "Create fee: " . ($toolArgs['name'] ?? '?') . ", amount: " . ($toolArgs['amount'] ?? '0')
+                        ),
+                        'toolCreateTerm' => $this->confirmationPrompt(
+                            'toolCreateTerm', $toolArgs,
+                            "Create term: " . ($toolArgs['name'] ?? '?') . ", start: " . ($toolArgs['start_date'] ?? $toolArgs['start'] ?? '?')
+                                . ", end: " . ($toolArgs['end_date'] ?? $toolArgs['end'] ?? '?')
+                        ),
+                        'toolRecordPayment' => $this->confirmationPrompt(
+                            'toolRecordPayment', $toolArgs,
+                            "Record payment: student " . ($toolArgs['student_id'] ?? '?') . ", amount " . ($toolArgs['amount'] ?? '?') . ", method: " . ($toolArgs['method'] ?? 'cash')
+                        ),
                         default => ['success' => false, 'message' => "Unknown tool: {$toolName}"],
                     };
 

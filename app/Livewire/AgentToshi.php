@@ -1856,6 +1856,12 @@ class AgentToshi extends Component
 
                 $result = match ($tool) {
                     'toolCreateExam' => \App\Services\ToshiActionService::createExam(auth()->user(), $args),
+                    'toolAddParent' => \App\Services\ToshiActionService::addParent(auth()->user(), $args),
+                    'toolEnterMark' => \App\Services\ToshiActionService::enterMark(auth()->user(), $args),
+                    'toolAddStudent' => \App\Services\ToshiActionService::addStudent(auth()->user(), $args),
+                    'toolCreateFee' => \App\Services\ToshiActionService::createFee(auth()->user(), $args),
+                    'toolCreateTerm' => \App\Services\ToshiActionService::createTerm(auth()->user(), $args),
+                    'toolRecordPayment' => \App\Services\ToshiActionService::recordPayment(auth()->user(), $args),
                     default => ['success' => false, 'message' => "Unknown tool: {$tool}"],
                 };
                 $this->botSay($result['message'] ?? 'Done.');
