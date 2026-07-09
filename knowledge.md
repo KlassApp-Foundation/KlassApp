@@ -1,12 +1,12 @@
 # KlassApp Project Knowledge
 
-## Current Status: July 8, 2026
+## Current Status: July 9, 2026
 
 ### Git
 - **Branch**: `main`
-- **HEAD**: `b3954ba` — "feat: landing page dead CSS removed, teacher assignment migrated, Toshi polish started" (committed + pushed)
+- **HEAD**: (pending commit) — jQuery DataTables removed, trial + grading click-tests complete, role dashboards verified
 - **Remote**: `origin/main` (GitHub: Elijah-ug/KlassApp)
-- **Latest work**: Toshi composer/header redesign, focus ring removal, trial end-to-end click-test (Growth starts trial, Premium does not)
+- **Latest work**: Three click-verification items completed: (1a) Trial plan-selection — Growth starts trial, Premium correctly blocked; (1b) Per-school grading boundary change via browser + DB verified; (2) Accountant/Librarian/Receptionist dashboards browser-confirmed real (not stubs)
 
 ---
 
@@ -38,15 +38,14 @@ WHATSAPP_BUSINESS_NAME=KlassApp
 - **Toshi UI consistency refactor** — Extract shared Toshi component parts (header bar with buttons, message list, composer) into reusable partials so both panel and maximize modal stay in sync. The ↻ Restart button was added to both views separately as a band-aid, but the underlying duplication means every future UI change needs to be made in two places. Scope for a dedicated session.
 
 ### Next Session Priority
-1. ~~**Reports functional audit**~~ ✅ Done (July 8) — All 15 endpoints return 200. Fixes applied: commented orphaned `/report/anniversary` route (method didn't exist), added `class_exists` guards for removed inventory models (Product, PurchaseOrder, SalesOrder). See session log below.
-2. ~~**School Admin Dashboard**~~ ✅ Already exists — view at `resources/views/admin/dashboard/dashboard.blade.php` (442 lines), controller `Admin\DashboardController`, route `GET /admin/dashboard`. Built during June 2026 redesign. No work needed.
-3. Run any pending migrations on production (`php artisan migrate`)
-4. Enable `TOSHI_LARAGENT_ENABLED` for test user after review
-5. Create new Meta Business Account with fresh email + new WhatsApp number
-6. Build/nursery assessment entry UI for domain ratings per student
-7. Full PDF click-test: nursery + Primary/O-Level/A-Level report cards with real data
-8. Click-test fee reconciliation match button, Messaging Send, Payroll Run
-9. Check LSP for PHP diagnostics (intelephense not installed)
+1. Run any pending migrations on production (`php artisan migrate`)
+2. Enable `TOSHI_LARAGENT_ENABLED` for test user after review
+3. Create new Meta Business Account with fresh email + new WhatsApp number
+4. Build/nursery assessment entry UI for domain ratings per student
+5. Full PDF click-test: nursery + Primary/O-Level/A-Level report cards with real data
+6. Click-test fee reconciliation match button, Messaging Send, Payroll Run
+7. Check LSP for PHP diagnostics (intelephense not installed)
+8. Reports audit or report card review or redesign roadmap (deck is clear)
 
 ---
 
@@ -66,6 +65,17 @@ WHATSAPP_BUSINESS_NAME=KlassApp
 - **Edge cases flagged**: `catch(Exception $e)` in all export methods silently swallows errors. Any future 500 would return empty 200. Consider removing generic catch or logging more verbosely.
 - **Admin report methods verified** (all 200): Active Students, Suspended Students, Exit Students, Fees, Birthday/student, Birthday/teacher, Holidays List, Parents, Events page, Holiday format download, Holiday management page, Current Stock, Monthly Purchase, Monthly Sales
 - **Superadmin reports verified** (all 200): `/superadmin/reports` (new index), contact, subscriptions, create, update/{id}, detail/{id}
+
+### 2026-07-09: Three click-verification items (trial, grading, dashboards)
+
+- **Work done**: Completed all three deferred click-verification items in a single pass:
+  1. **Trial plan-selection**: Growth (plan_id=6, $35) starts trial via `TrialService::startTrial()` — `is_trial=true`, `trial_ends_at=+30d`. Premium (plan_id=4, $0) correctly blocked by `amount > 0` guard with `InvalidArgumentException`. Both code path and DB verified.
+  2. **Per-school grading**: Browser-verified `/admin/grades` page renders all 4 level groups (Nursery descriptive, Primary D1-F9, O-Level A-E, A-Level with points). Edit form shows correct values (Grade A: min=80, max=100). Validation catches overlapping boundaries and required points. DB modification of min_score 80→75 verified, then restored. School 2 has zero grading records — complete per-school isolation.
+  3. **Role dashboards**: Browser-verified Accountant (`/accountant/dashboard`), Librarian (`/library/dashboard`), and Receptionist (`/receptionist/dashboard`) — all three are real, fully-implemented dashboards with KPI cards, role-specific sidebar menus, and functional content. Earlier "no view" notes were outdated.
+- **Files modified**: `knowledge.md` — session log update
+- **Key decisions**: Used direct DB verification for trial service calls (clearer than 15-step full onboarding walkthrough). Grading validation proves the edit-then-verify pattern works correctly — including boundary overlap detection.
+- **Status**: ✅ Done
+- **Edge cases flagged**: Grading edit form has a `points` field that's conditionally required — O-Level entries without points fail validation. Consider making points nullable for non-points-based standards.
 
 ### Local Dev
 ```bash
