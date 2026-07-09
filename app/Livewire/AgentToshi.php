@@ -150,6 +150,9 @@ class AgentToshi extends Component
     public $actionSubstep = 0;
     public $actionData = [];
 
+    /** Tier 2 tool confirmation: pending tool name + args before execution */
+    public $pendingToolConfirm = null;   // ['tool' => 'toolCreateExam', 'args' => [...]]
+
     /** Capabilities for the current user, loaded from ToshiActionService. */
     public array $capabilities = [];
 
@@ -1843,6 +1846,26 @@ class AgentToshi extends Component
     {
         $lower = strtolower($text);
 
+        // Check for pending Tier 2 tool confirmation
+        if ($this->pendingToolConfirm !== null) {
+            $yes = in_array($lower, ['yes', 'y', 'yeah', 'confirm', 'proceed', 'do it']);
+            if ($yes) {
+                $tool = $this->pendingToolConfirm['tool'];
+                $args = $this->pendingToolConfirm['args'];
+                $this->pendingToolConfirm = null;
+
+                $result = match ($tool) {
+                    'toolCreateExam' => \App\Services\ToshiActionService::createExam(auth()->user(), $args),
+                    default => ['success' => false, 'message' => "Unknown tool: {$tool}"],
+                };
+                $this->botSay($result['message'] ?? 'Done.');
+            } else {
+                $this->pendingToolConfirm = null;
+                $this->botSay('Cancelled. No changes were made.');
+            }
+            return;
+        }
+
         // Fast path: keyword router runs first regardless (zero API cost)
         if ($this->tryKeywordRoute($lower, $text)) {
             return;
@@ -1858,7 +1881,17 @@ class AgentToshi extends Component
                 $agent = app(\App\AiAgents\ToshiAssistantAgent::class);
                 $response = $agent->handleQuery($user, $this->schoolId, $text, $history);
                 if ($response !== null) {
-                    $this->botSay($response);
+                    // Check if response is a Tier 2 confirmation prompt
+                    $decoded = json_decode($response, true);
+                    if (isset($decoded['__tier2_confirm']) && $decoded['__tier2_confirm']) {
+                        $this->pendingToolConfirm = [
+                            'tool' => $decoded['tool'],
+                            'args' => $decoded['args'],
+                        ];
+                        $this->botSay($decoded['prompt']);
+                    } else {
+                        $this->botSay($response);
+                    }
                     \Log::info('Assistant path: LarAgent', ['user_id' => $user->id, 'length' => strlen($response)]);
                     return;
                 }

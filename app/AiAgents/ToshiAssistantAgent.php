@@ -49,11 +49,20 @@ class ToshiAssistantAgent extends Agent
     }
 
     /**
-     * Register a Tier 2 (destructive) action that requires explicit
-     * user confirmation before execution. The pending action is stored
-     * and the confirmation message is returned — the caller must wait
-     * for the user to say "yes" before calling executePendingConfirmation().
+     * Return a confirmation prompt string for a Tier 2 tool action.
+     * The caller (handleAssistantQuery) stores this as pendingToolConfirm
+     * and waits for the user to say "yes" before executing.
      */
+    private function confirmationPrompt(string $toolName, array $toolArgs, string $preview): string
+    {
+        return json_encode([
+            '__tier2_confirm' => true,
+            'tool' => $toolName,
+            'args' => $toolArgs,
+            'preview' => $preview,
+            'prompt' => "⚠️ **{$preview}**\n\nReply **yes** to confirm or **no** to cancel.",
+        ]);
+    }
     public function requireConfirmation(string $prompt, callable $callback): string
     {
         $this->pendingConfirmation = [
@@ -249,17 +258,29 @@ class ToshiAssistantAgent extends Agent
 
                     $toolResult = match ($toolName) {
                         // Tier 1 tools — executed immediately (additive, recoverable)
-                        'toolCreateExam' => \App\Services\ToshiActionService::createExam(auth()->user() ?? $user, $toolArgs),
                         'toolAddParent' => \App\Services\ToshiActionService::addParent(auth()->user() ?? $user, $toolArgs),
                         'toolEnterMark' => \App\Services\ToshiActionService::enterMark(auth()->user() ?? $user, $toolArgs),
-                        // Tier 2 tools would use requireConfirmation() here:
-                        // 'toolDeleteStudent' => $this->requireConfirmation(
-                        //     "This will permanently delete student {$toolArgs['student_id']}. Proceed?",
-                        //     fn() => ToshiActionService::deleteStudent(auth()->user() ?? $user, $toolArgs)
+                        // createExam moved to Tier 2 — requires confirmation due to 8B model's
+                        // unreliable parameter extraction (hallucinates class/subject/type).
+                        // Returns a confirmation prompt string — handleAssistantQuery() in
+                        // AgentToshi stores the pending action and waits for user to say "yes".
+                        'toolCreateExam' => $this->confirmationPrompt(
+                            'toolCreateExam',
+                            $toolArgs,
+                            \App\Services\ToshiActionService::previewExam(auth()->user() ?? $user, $toolArgs)
+                        ),
+                        // Tier 2 tools would use confirmationPrompt() here:
+                        // 'toolDeleteStudent' => $this->confirmationPrompt(
+                        //     'toolDeleteStudent', $toolArgs,
+                        //     "Delete student ID {$toolArgs['student_id']} — all records will be permanently removed."
                         // ),
                         default => ['success' => false, 'message' => "Unknown tool: {$toolName}"],
                     };
 
+                    // If toolResult is a string (confirmation prompt), return it directly
+                    if (is_string($toolResult)) {
+                        return $toolResult;
+                    }
                     return $toolResult['message'] ?? 'Tool executed.';
                 }
             }

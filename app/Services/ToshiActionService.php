@@ -1055,6 +1055,47 @@ class ToshiActionService
 
     // ── Exam ──
 
+    /**
+     * Preview what createExam will do without actually creating.
+     * Returns a human-readable description string for the confirmation prompt.
+     */
+    public static function previewExam(User $admin, array $data): string
+    {
+        $schoolId = $admin->school_id;
+        if (!$schoolId) return 'No school assigned.';
+
+        $label = trim($data['name'] ?? '');
+        if ($label === '') return 'Unnamed exam';
+
+        // Resolve the same way createExam would
+        $examTypeName = $data['type'] ?? $data['exam_type'] ?? '';
+        $examType = $examTypeName
+            ? ExamType::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($examTypeName) . '%'])->first()
+            : null;
+        $typeName = $examType?->name ?? ExamType::first()?->name ?? 'Exam';
+
+        $className = $data['class'] ?? $data['section'] ?? '';
+        $section = $className
+            ? Section::where('school_id', $schoolId)->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($className) . '%'])->first()
+            : null;
+        $sectionName = $section?->name ?? Section::where('school_id', $schoolId)->first()?->name ?? '?';
+
+        $subjectName = $data['subject'] ?? '';
+        $subject = ($subjectName && $section)
+            ? Subject::where('school_id', $schoolId)->where('section_id', $section->id)
+                ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($subjectName) . '%'])->first()
+            : null;
+        $subjName = $subject?->name ?? Subject::where('school_id', $schoolId)->first()?->name ?? '?';
+
+        $inferred = [];
+        if (!$examTypeName) $inferred[] = 'type: ' . $typeName;
+        if (!$className) $inferred[] = 'class: ' . $sectionName;
+        if (!$subjectName) $inferred[] = 'subject: ' . $subjName;
+        $suffix = $inferred ? ' (inferred: ' . implode(', ', $inferred) . ')' : '';
+
+        return "Create {$typeName} exam \"{$label}\" for {$sectionName}, {$subjName}{$suffix}";
+    }
+
     public static function createExam(User $admin, array $data): array
     {
         $schoolId = $admin->school_id;
