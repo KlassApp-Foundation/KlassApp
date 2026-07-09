@@ -47,7 +47,7 @@ public function subjects($schoolId, $section, $learner, $exam){
                                  ->with("mark", function($q) use($learner, $exam){
                                     $q->where("student_id", $learner->id)
                                     ->with("exam", function ($q2) use($exam){
-                                        $q2->where("section_id", $exam->school_id)
+                                        $q2->where("section_id", $exam->section_id)
                                           ->where("academic_term_id", $exam->academic_term_id)
                                           ->where("academic_year_id", $exam->academic_year_id);
                                     });
@@ -137,20 +137,22 @@ return $total;
                        ->count();
   }
 
-  public function grade($learner, $exam){
-       $agg = 0;   
-       $remark = null;
-       foreach($learner->marks as $mark){
-        $gradeMapping = SchoolGradingSystem::where('school_id', $learner->school_id)
-                ->where('standard_id', $exam->standard_id)
-                ->where('grade', $mark->grade)
-                ->first();
-                
-        $agg += $gradeMapping->points;
-        $remark[] = $gradeMapping;
-       }         
-       return ["agg" => $agg, "remark" => $remark];
-  }
+   public function grade($learner, $exam){
+        $agg = 0;   
+        $remark = null;
+        foreach($learner->marks as $mark){
+            if (empty($mark->grade)) continue; // skip marks with no grade (shouldn't happen, but handle gracefully)
+            $gradeMapping = SchoolGradingSystem::where('school_id', $learner->school_id)
+                    ->where('standard_id', $exam->standard_id)
+                    ->where('grade', $mark->grade)
+                    ->first();
+            if (!$gradeMapping) continue; // grade not found in grading system (shouldn't happen, but handle gracefully)
+                    
+            $agg += $gradeMapping->points;
+            $remark[] = $gradeMapping;
+        }         
+        return ["agg" => $agg, "remark" => $remark];
+    }
 //   grading school system
 // public function grade(int $mark, int $schoolId, Exam $exam){
 //         // dd($exam);

@@ -217,15 +217,24 @@
             <tbody>
                 @foreach ($subjects as $subject)
                     @php
-                     $score = $subject->mark->first()->marks;
-                     $average = $subject->mark->average("marks");
+                     $subjectMarks = $learner->marks->where('subject_id', $subject->id);
+                     $firstMark = $subjectMarks->first();
+                     $score = $firstMark ? $firstMark->marks : null;
+                     $average = $subjectMarks->avg('marks');
                     @endphp
                     <tr>
                         <td>{{ $subject->name }}</td>
                         <td>100</td>
                         @foreach ($marksFromSubject as $subje)
+                          @php
+                            // Find the mark for this specific exam type and subject
+                            $examTypeCode = $subje->examType->code ?? '';
+                            $markForExam = $subjectMarks->first(function ($m) use ($examTypeCode) {
+                                return $m->exam && strtoupper($m->exam->examType->code ?? '') === strtoupper($examTypeCode);
+                            });
+                          @endphp
                           <td>
-                              {{$score ? floor($score) : "-"}}
+                              {{ $markForExam ? floor($markForExam->marks) : "-" }}
                           </td>                 
                         @endforeach
                             @if ($uniqueExamTypes > 1)
@@ -234,10 +243,10 @@
                             </td>
                             @endif
                         {{-- ============ grade ========= --}}
-                        <td>{{ $subject->mark->first()->grade }}</td>
+                        <td>{{ $firstMark ? $firstMark->grade : '-' }}</td>
                          @php
-                           $subjectGrade = $subject->mark->first()->grade;
-                           $remark = collect($grade['remark'])->firstWhere('grade', $subjectGrade);
+                            $subjectGrade = $firstMark ? $firstMark->grade : null;
+                            $remark = $grade ? collect($grade['remark'])->firstWhere('grade', $subjectGrade) : null;
                          @endphp
                         {{-- ============ Remark ========= --}}
                               <td>{{ $remark->remark ?? '-' }}</td>
