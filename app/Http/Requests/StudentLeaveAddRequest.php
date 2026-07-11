@@ -45,7 +45,10 @@ class StudentLeaveAddRequest extends FormRequest
                 ['school_id',$school_id],
                 ['academic_year_id',$academic_year->id],
                 ['status','pending']
-            ])->where(\DB::raw("(DATE_FORMAT(from_date,'%Y-%m-%d'))"),'=',$from_date)->orWhere(\DB::raw("(DATE_FORMAT(to_date,'%Y-%m-%d'))"),'=',$from_date)->latest()->first();
+            ])->where(function ($q) use ($from_date) {
+                $q->where(\DB::raw("(DATE_FORMAT(from_date,'%Y-%m-%d'))"),'=',$from_date)
+                  ->orWhere(\DB::raw("(DATE_FORMAT(to_date,'%Y-%m-%d'))"),'=',$from_date);
+            })->latest()->first();
 
             if( $application == null)
             {
