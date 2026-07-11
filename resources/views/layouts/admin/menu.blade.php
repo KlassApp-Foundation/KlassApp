@@ -96,15 +96,15 @@ if (!function_exists('sidebarActive')) {
         </a>
     </li>
 
-    <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['messages','messaging','notifications']) }}">
-        <a href="{{ url('admin/sentmessages') }}" class="flex items-center">
+    <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['messages','messaging','notifications','sentmessages']) }}">
+        <a href="{{ route('admin.messages') }}" class="flex items-center">
             <x-icons.sidebar name="messages"/>
             <span class="mx-3 whitespace-no-wrap">Messaging</span>
         </a>
     </li>
 
     <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['library','books']) }}">
-        <a href="{{ url('library/books/index') }}" class="flex items-center">
+        <a href="{{ route('admin.library.books') }}" class="flex items-center">
             <x-icons.sidebar name="library"/>
             <span class="mx-3 whitespace-no-wrap">Library</span>
         </a>

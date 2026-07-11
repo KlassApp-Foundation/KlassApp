@@ -875,12 +875,26 @@ Route::get('/health', function () {
 })->name('admin.health');
 
 Route::get('/messages', function () {
-    return redirect('/admin/sentmessages');
-})->name('admin.messages.redirect');
+    return view('admin.messages.index');
+})->name('admin.messages');
 
-Route::get('/library', function () {
-    return redirect('/library/books/index');
-})->name('admin.library.redirect');
+// Library module — school admin book management
+Route::prefix('library')->name('admin.library.')->group(function () {
+    // Books
+    Route::get('/books', 'LibraryController@bookIndex')->name('books');
+    Route::get('/books/create', 'LibraryController@bookCreate')->name('books.create');
+    Route::post('/books', 'LibraryController@bookStore')->name('books.store');
+    Route::get('/books/{id}/edit', 'LibraryController@bookEdit')->name('books.edit');
+    Route::post('/books/{id}', 'LibraryController@bookUpdate')->name('books.update');
+    Route::delete('/books/{id}', 'LibraryController@bookDestroy')->name('books.destroy');
+    // Lending
+    Route::get('/lends', 'LibraryController@lendIndex')->name('lends');
+    Route::get('/lends/create', 'LibraryController@lendCreate')->name('lends.create');
+    Route::post('/lends', 'LibraryController@lendStore')->name('lends.store');
+    Route::post('/lends/{id}/return', 'LibraryController@lendReturn')->name('lends.return');
+    // Library cards
+    Route::get('/cards', 'LibraryController@cardIndex')->name('cards');
+});
 
 // Seed MoE default grading scales for the school
 Route::post('/grades/seed-defaults', function (\Illuminate\Http\Request $req) {

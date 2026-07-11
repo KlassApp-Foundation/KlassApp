@@ -329,14 +329,12 @@ class StudentController extends Controller
      */
     public function update(Request $request,$name)
     {
-      //
+      $school_id = Auth::user()->school_id;
+      $user = User::where('name', $name)->where('school_id', $school_id)->firstOrFail();
+
       try
       {
-        $user = User::where('name',$name)->first();
-
         $userprofile = Userprofile::where('user_id',$user->id)->first();
-
-        $school_id = Auth::user()->school_id;
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
             
@@ -368,46 +366,56 @@ class StudentController extends Controller
       }
       catch(Exception $e)
       {
-        //dd($e->getMessage());
+        Log::error('StudentController@update failed: ' . $e->getMessage());
+        \Session::put('errormessage', trans('messages.update_error_msg', ['module' => 'Student']));
+        return redirect()->back();
       } 
     }
 
     public function destroy($name)
     {
+        $schoolId = Auth::user()->school_id;
+        $user = User::with('userprofile')->where('name', $name)
+            ->where('school_id', $schoolId)
+            ->firstOrFail();
+
+        \DB::beginTransaction();
         try
-      {
-        $user = User::with('userprofile')->where('name',$name)->first();
+        {
+            StudentAcademic::where('user_id', $user->id)
+                ->where('school_id', $schoolId)
+                ->delete();
 
-         $studentacademic = StudentAcademic::where('user_id',$user->id);
-       if($studentacademic!=null){
-         $studentacademic->delete();
-         }
-         $studentparentlink = StudentParentLink::where('student_id',$user->id);
-         if($studentparentlink!=null){
-         $studentparentlink->delete();
-         }
-         $userprofile = Userprofile::where('user_id',$user->id);
-         $userprofile->delete();
-         $user->delete();
+            StudentParentLink::where('student_id', $user->id)
+                ->delete();
 
+            Userprofile::where('user_id', $user->id)
+                ->delete();
 
-        $message=trans('messages.delete_success_msg',['module' => 'Student']);
+            $user->delete();
 
-        $ip= $this->getRequestIP();
-        $this->doActivityLog(
-          $user,
-          Auth::user(),
-          ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-          LOGNAME_DELETE_STUDENT,
-          $message
-        ); 
-        \Session::put('successmessage',$message);
-        return redirect('/admin/students');
-      }
-      catch(Exception $e)
-      {
-        //dd($e->getMessage());
-      } 
+            \DB::commit();
+
+            $message = trans('messages.delete_success_msg', ['module' => 'Student']);
+
+            $ip = $this->getRequestIP();
+            $this->doActivityLog(
+                $user,
+                Auth::user(),
+                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT']],
+                LOGNAME_DELETE_STUDENT,
+                $message
+            );
+            \Session::put('successmessage', $message);
+            return redirect('/admin/students');
+        }
+        catch(Exception $e)
+        {
+            \DB::rollBack();
+            Log::error('StudentController@destroy failed: ' . $e->getMessage());
+            \Session::put('errormessage', trans('messages.delete_error_msg', ['module' => 'Student']));
+            return redirect('/admin/students');
+        }
     }
 
     public function blockedstudents()
