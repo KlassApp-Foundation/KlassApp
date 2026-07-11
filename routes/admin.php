@@ -912,9 +912,14 @@ Route::get('/calendar', function () {
 //     return redirect('/admin/settings/generalsettings');
 // });
 
-// Transport placeholder
-Route::get('/transport', function () {
-    return view('admin.transport.index');
+// Transport routes
+Route::prefix('transport')->name('admin.transport')->group(function () {
+    Route::get('/', 'TransportController@index')->name('');
+    Route::get('/create', 'TransportController@create')->name('.create');
+    Route::post('/', 'TransportController@store')->name('.store');
+    Route::get('/{id}/edit', 'TransportController@edit')->name('.edit');
+    Route::post('/{id}', 'TransportController@update')->name('.update');
+    Route::delete('/{id}', 'TransportController@destroy')->name('.destroy');
 });
 
 Route::get('/addon', function () {
