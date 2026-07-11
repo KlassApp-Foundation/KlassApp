@@ -154,8 +154,8 @@ class PayrollSalaryController extends Controller
         \DB::beginTransaction();
         try 
         {
-        $salary=Salary::find($id);
-        $salary->school_id=Auth::user()->school_id;
+        $schoolId = Auth::user()->school_id;
+        $salary=Salary::where('school_id', $schoolId)->findOrFail($id);
         $salary->staff_id=$request->staff_id;
         $salary->template_id=$request->template_id;
         $salary->gross_salary=$request->gross_salary;
@@ -187,8 +187,8 @@ class PayrollSalaryController extends Controller
         catch(Exception $e) 
         {
             \DB::rollBack();
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('PayrollSalaryController@update failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update salary.'], 422);
         }
     }
 
@@ -200,7 +200,8 @@ class PayrollSalaryController extends Controller
      */
     public function destroy($id)
     {
-         $salary=Salary::find($id);
+         $schoolId = Auth::user()->school_id;
+         $salary=Salary::where('school_id', $schoolId)->findOrFail($id);
         /* if(count($salary->payrolls())>0)
          {
            $res['message'] = 'Salary structure  used at many payrolls';

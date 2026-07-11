@@ -39,10 +39,11 @@ class PayrollController extends Controller
         return view('accountant/payroll/payslip/index');
     }
 
-     public function downloadpayroll($id)
+      public function downloadpayroll($id)
     {
+      $schoolId = Auth::user()->school_id;
       $logo=null;
-      $payroll=Payroll::where('id',$id)->first();
+      $payroll=Payroll::where('school_id', $schoolId)->findOrFail($id);
       //dd($payroll);
       if(Auth::user()->SchoolLogo['meta_value'] != '-'){
       $logo=Auth::user()->SchoolLogoPath;
@@ -181,8 +182,8 @@ class PayrollController extends Controller
         catch(Exception $e) 
         {
             \DB::rollBack();
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('PayrollController@store failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to create payroll.'], 422);
         }
     }
 
@@ -194,7 +195,8 @@ class PayrollController extends Controller
      */
     public function show($id)
     {
-        $payroll=Payroll::find($id);
+        $schoolId = Auth::user()->school_id;
+        $payroll=Payroll::where('school_id', $schoolId)->findOrFail($id);
         return view('accountant/payroll/payslip/show',['payroll'=>$payroll]);
     }
 
@@ -211,7 +213,8 @@ class PayrollController extends Controller
 
     public function editshow($id)
     {
-        return new PayrollDetailResource(Payroll::find($id));
+        $schoolId = Auth::user()->school_id;
+        return new PayrollDetailResource(Payroll::where('school_id', $schoolId)->findOrFail($id));
 
     }
 
@@ -227,8 +230,8 @@ class PayrollController extends Controller
          \DB::beginTransaction();
         try 
         {
-       
-        $payslip=Payroll::find($id);
+        $schoolId = Auth::user()->school_id;
+        $payslip=Payroll::where('school_id', $schoolId)->findOrFail($id);
         $payslip->comments=$request->comments;
         $payslip->leave=$request->leave;
         $payslip->late=$request->late;
@@ -253,8 +256,8 @@ class PayrollController extends Controller
         catch(Exception $e) 
         {
             \DB::rollBack();
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('PayrollController@update failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update payroll.'], 422);
         }
     }
 
@@ -585,7 +588,8 @@ class PayrollController extends Controller
      */
     public function destroy($id)
     {
-         $template=Payroll::find($id);
+         $schoolId = Auth::user()->school_id;
+         $template=Payroll::where('school_id', $schoolId)->findOrFail($id);
          $template->payslipitems()->delete();
          $template->delete();
          $res['message'] = 'Payroll deleted successfully';

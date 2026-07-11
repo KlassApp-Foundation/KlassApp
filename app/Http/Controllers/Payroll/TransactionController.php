@@ -152,17 +152,12 @@ class TransactionController extends Controller
 
     public function statusupdate($id)
     {
-        $payroll=Payroll::find($id);
+        $schoolId = Auth::user()->school_id;
+        $payroll=Payroll::where('school_id', $schoolId)->findOrFail($id);
         $payroll->status='paid';
         $payroll->save();
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function edit($id)
     {
          return view('accountant/payroll/transaction/edit',['transactionid'=>$id]);
@@ -170,19 +165,15 @@ class TransactionController extends Controller
 
     public function editshow($id)
     {
-        $transaction=PayrollTransaction::with('payroll')->find($id);
+        $schoolId = Auth::user()->school_id;
+        $transaction=PayrollTransaction::whereHas('payroll', fn($q) => $q->where('school_id', $schoolId))
+            ->with('payroll')->findOrFail($id);
         return $transaction;
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
+         $schoolId = Auth::user()->school_id;
          if($request->payment_method=="Cheque")
             {
                 $detail = array(
@@ -192,8 +183,8 @@ class TransactionController extends Controller
                     "clearnig_date" => $request->clearnig_date
                 );
             }
-         $transaction=PayrollTransaction::find($id);
-         $transaction->school_id=Auth::user()->school_id;
+         $transaction=PayrollTransaction::whereHas('payroll', fn($q) => $q->where('school_id', $schoolId))
+            ->findOrFail($id);
          $transaction->account_id=$request->account_id;
         /* $transaction->paytype=$request->paytype;
          $transaction->staff_id=$request->staff_id;*/
@@ -223,8 +214,9 @@ class TransactionController extends Controller
      */
     public function destroy($id)
     {
-        //
-        $payroll=PayrollTransaction::find($id);
+        $schoolId = Auth::user()->school_id;
+        $payroll=PayrollTransaction::whereHas('payroll', fn($q) => $q->where('school_id', $schoolId))
+            ->findOrFail($id);
         $payroll->delete();
         $res['message'] = 'Transaction deleted successfully';
         return $res;

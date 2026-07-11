@@ -123,23 +123,17 @@ class PayrollTemplateController extends Controller
 
     public function editshow($id)
     {
-        return new TemplateResource(PayrollTemplate::find($id));
+        $schoolId = Auth::user()->school_id;
+        return new TemplateResource(PayrollTemplate::where('school_id', $schoolId)->findOrFail($id));
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(TemplateUpdateRequest $request, $id)
     {
          \DB::beginTransaction();
         try 
         {
-       
-         $template=PayrollTemplate::find($id);
+        $schoolId = Auth::user()->school_id;
+         $template=PayrollTemplate::where('school_id', $schoolId)->findOrFail($id);
          $template->name=$request->name;
          $template->status=$request->status;
          $template->created_by=Auth::id();
@@ -167,20 +161,15 @@ class PayrollTemplateController extends Controller
         catch(Exception $e) 
         {
             \DB::rollBack();
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('PayrollTemplateController@update failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update template.'], 422);
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-         $template=PayrollTemplate::find($id);
+         $schoolId = Auth::user()->school_id;
+         $template=PayrollTemplate::where('school_id', $schoolId)->findOrFail($id);
          /*if(count($template->salaries())>0)
          {
            $res['message'] = 'Template used at many salary structure';

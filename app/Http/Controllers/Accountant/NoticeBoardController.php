@@ -17,24 +17,32 @@ class NoticeBoardController extends Controller
 
     public function showList(Request $request)
     {
-        //
-        $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-        $notices = NoticeBoard::where([['school_id',Auth::user()->school_id],['academic_year_id',$academic_year->id]])->where('expire_date','>=',date('Y-m-d'))->where('status',1);
-        if(count((array)\Request::getQueryString())>0)
-        {
-            if($request->showExpired == 'true')
-            { 
-                $notices = $notices->orWhere('status',0)->orWhere('expire_date','<=',date('Y-m-d'));
-            }
+        $school_id = Auth::user()->school_id;
+        $academic_year = SiteHelper::getAcademicYear($school_id);
 
-            if($request->standardLink_id != '')
-            { 
-                $notices = $notices->where('standardLink_id',$request->standardLink_id);
+        $notices = NoticeBoard::where(function ($query) use ($school_id, $academic_year, $request) {
+            $query->where('school_id', $school_id)
+                  ->where('academic_year_id', $academic_year->id)
+                  ->where(function ($q) {
+                      $q->where('expire_date', '>=', date('Y-m-d'))
+                        ->where('status', 1);
+                  });
+
+            if ($request->showExpired == 'true') {
+                $query->orWhere(function ($q) {
+                    $q->where('status', 0)
+                      ->where('expire_date', '<=', date('Y-m-d'));
+                });
             }
+        });
+
+        if ($request->standardLink_id != '') {
+            $notices = $notices->where('standardLink_id', $request->standardLink_id);
         }
+
         $notices = $notices->get();
         $notices = NoticeResource::collection($notices);
-        
+
         return $notices;
     }
 
