@@ -70,9 +70,14 @@ class AssignmentController extends Controller
 
             if($request->search != null)
             {
-                $assignment = $assignment->where('title','LIKE','%'.$request->search.'%')->orWhere('description','LIKE','%'.$request->search.'%')->orWhere('marks','LIKE','%'.$request->search.'%')->orWhereHas('subject' , function ($query) use($request)
-                {
-                    $query->where('name','LIKE','%'.$request->search.'%');
+                $assignment = $assignment->where(function ($q) use ($request) {
+                    $q->where('title','LIKE','%'.$request->search.'%')
+                      ->orWhere('description','LIKE','%'.$request->search.'%')
+                      ->orWhere('marks','LIKE','%'.$request->search.'%')
+                      ->orWhereHas('subject' , function ($query) use($request)
+                      {
+                          $query->where('name','LIKE','%'.$request->search.'%');
+                      });
                 });
             }
         }

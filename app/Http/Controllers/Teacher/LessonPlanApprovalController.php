@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\LessonPlan;
 use App\Models\Approval;
+use App\Helpers\SiteHelper;
 use App\States\Approval\Approved;
 use App\States\Approval\Pending;
 use App\States\Approval\Rejected;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use App\Traits\LogActivity;
 use App\Traits\Common;
 use Exception;
+use Log;
 
 class LessonPlanApprovalController extends Controller
 {
@@ -33,7 +35,10 @@ class LessonPlanApprovalController extends Controller
         \DB::beginTransaction();
         try
         {
-            $lessonplan = LessonPlan::where('id',$id)->first();
+            $schoolId = Auth::user()->school_id;
+            $lessonplan = LessonPlan::where('id',$id)
+                ->whereHas('teacherlink', fn($q) => $q->where('school_id', $schoolId))
+                ->firstOrFail();
             $lessonplan->status = 'approved';
             $lessonplan->save();
 
@@ -65,6 +70,8 @@ class LessonPlanApprovalController extends Controller
         catch(Exception $e)
         {
             \DB::rollBack();
+            Log::error('LessonPlanApprovalController@approve failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to approve lesson plan.'], 422);
         }
     }
 
@@ -73,7 +80,10 @@ class LessonPlanApprovalController extends Controller
         \DB::beginTransaction();
         try
         {
-            $lessonplan = LessonPlan::where('id',$id)->first();
+            $schoolId = Auth::user()->school_id;
+            $lessonplan = LessonPlan::where('id',$id)
+                ->whereHas('teacherlink', fn($q) => $q->where('school_id', $schoolId))
+                ->firstOrFail();
             $lessonplan->status = 'rejected';
             $lessonplan->save();
 
@@ -105,6 +115,8 @@ class LessonPlanApprovalController extends Controller
         catch(Exception $e)
         {
             \DB::rollBack();
+            Log::error('LessonPlanApprovalController@reject failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to reject lesson plan.'], 422);
         }
     }
 }

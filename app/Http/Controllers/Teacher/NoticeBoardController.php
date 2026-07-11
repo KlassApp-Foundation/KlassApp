@@ -19,7 +19,6 @@ class NoticeBoardController extends Controller
 
     public function list(Request $request)
     {
-        //
         $school_id = Auth::user()->school_id;
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
@@ -38,32 +37,34 @@ class NoticeBoardController extends Controller
         $standards = array_merge($standardLinks,$teacherlinks);
         array_push($standards, null);
 
-        $notices = NoticeBoard::where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->where([['expire_date','>=',date('Y-m-d')],['status',1]])->orWhereIn('standardLink_id',$standards);//check with standards
+        $showExpired = $request->showExpired == 'true';
 
-        if(count((array)\Request::getQueryString())>0)
-        {
-            if($request->showExpired == 'true')
-            { 
-                $notices = $notices->orWhere([['status',0],['expire_date','<=',date('Y-m-d')]]);
-            }
-        }
+        $notices = NoticeBoard::where(function ($query) use ($school_id, $academic_year_id, $standards, $showExpired) {
+            $query->where('school_id', $school_id)
+                  ->where('academic_year_id', $academic_year_id)
+                  ->where(function ($q) use ($standards, $showExpired) {
+                      $q->where('expire_date', '>=', date('Y-m-d'))
+                        ->where('status', 1)
+                        ->orWhereIn('standardLink_id', $standards);
+                      if ($showExpired) {
+                          $q->orWhere(function ($q2) {
+                              $q2->where('status', 0)
+                                 ->where('expire_date', '<=', date('Y-m-d'));
+                          });
+                      }
+                  });
+        });
 
         $notices = $notices->get();
-
         $notices = NoticeResource::collection($notices);
-        
+
         return $notices;
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
-    { 
+    {
         $query = \Request::getQueryString();
 
         return view('/teacher/noticeboard/index' ,['query' => $query]);
-    }  
+    }
 }

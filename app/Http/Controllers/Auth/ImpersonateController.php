@@ -25,11 +25,12 @@ class ImpersonateController extends Controller
     {
         try
         {
-            $user = User::find($id);
-              
+            $schoolId = Auth::user()->school_id;
+            $user = User::where('school_id', $schoolId)->findOrFail($id);
+
             $is_admin = $this->is_admin($user->id);
             if($is_admin == false)
-            { 
+            {
                 Auth::user()->setImpersonating($user->id);
             }
             else
@@ -41,8 +42,8 @@ class ImpersonateController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('ImpersonateController@impersonate failed: ' . $e->getMessage());
+            return redirect()->back()->with('errormessage', 'Failed to impersonate user.');
         }
     }
 
@@ -50,11 +51,12 @@ class ImpersonateController extends Controller
     {
         try
         {
-            $user = User::find($id);
-              
+            $schoolId = Auth::user()->school_id;
+            $user = User::where('school_id', $schoolId)->findOrFail($id);
+
             $is_admin = $this->is_admin($user->id);
             if($is_admin == false)
-            { 
+            {
                 Auth::user()->setImpersonating($user->id);
             }
             else
@@ -66,8 +68,8 @@ class ImpersonateController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('ImpersonateController@librarianimpersonate failed: ' . $e->getMessage());
+            return redirect()->back()->with('errormessage', 'Failed to impersonate user.');
         }
     }
 
@@ -75,11 +77,12 @@ class ImpersonateController extends Controller
     {
         try
         {
-            $user = User::find($id);
-              
+            $schoolId = Auth::user()->school_id;
+            $user = User::where('school_id', $schoolId)->findOrFail($id);
+
             $is_admin = $this->is_admin($user->id);
             if($is_admin == false)
-            { 
+            {
                 Auth::user()->setImpersonating($user->id);
             }
             else
@@ -91,8 +94,8 @@ class ImpersonateController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('ImpersonateController@studentimpersonate failed: ' . $e->getMessage());
+            return redirect()->back()->with('errormessage', 'Failed to impersonate user.');
         }
     }
 
@@ -100,15 +103,15 @@ class ImpersonateController extends Controller
     {
         try
         {
-            $user = User::find($id);
-              
+            $user = User::findOrFail($id);
+
             $is_admin = $this->is_admin($user->id);
             if($is_admin == true)
-            { //dd('if');
+            {
                 Auth::user()->setImpersonating($user->id);
             }
             else
-            {//dd('false');
+            {
                 \Session::put('Impersonate disabled for this user.');
             }
 
@@ -116,8 +119,8 @@ class ImpersonateController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('ImpersonateController@schoolAdminimpersonate failed: ' . $e->getMessage());
+            return redirect()->back()->with('errormessage', 'Failed to impersonate user.');
         }
     }
 

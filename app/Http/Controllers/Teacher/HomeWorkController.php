@@ -34,14 +34,25 @@ class HomeWorkController extends Controller
     public function showList(Request $request)
     {
         //
-        $homework = Homework::where('school_id',Auth::user()->school_id)->where('date','>=',date('Y-m-d'))->orderBy('date','DESC')->whereHas('standardLink' , function ($query){
-            $query->where('class_teacher_id',Auth::id());
-        });
+        $schoolId = Auth::user()->school_id;
+        $homework = Homework::where('school_id', $schoolId);
+
+        if ($request->showPast == 'true') {
+            $homework->where(function ($q) {
+                $q->where('date','>=',date('Y-m-d'))
+                  ->whereHas('standardLink', fn($query) => $query->where('class_teacher_id', Auth::id()))
+                  ->orWhere('date','<',date('Y-m-d'));
+            });
+        } else {
+            $homework->where('date','>=',date('Y-m-d'))
+                     ->whereHas('standardLink', fn($query) => $query->where('class_teacher_id', Auth::id()));
+        }
+
         if(count((array)\Request::getQueryString())>0)
         {
             if($request->showPast == 'true')
             { 
-                $homework = $homework->orWhere('date','<',date('Y-m-d'));
+                // handled above
             }
 
             if($request->standardLink_id != '')
