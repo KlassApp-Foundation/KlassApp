@@ -2,139 +2,113 @@
 @extends('layouts.student.layout')
 
 @section('content')
-    <div class="dashboard-shell dashboard-shell--student">
-        <div class="dashboard-heading">
-            <div>
-                <h1 class="dashboard-section-title" style="font-size: 1.25rem;">Student</h1>
-                <p class="dashboard-subtitle" style="margin-top: 4px;">Track attendance, upcoming events, notices, and class activity in one view.</p>
+<div class="dashboard-shell dashboard-shell--student px-4 md:px-6 py-4">
+    @include('layouts.partials.page-header', [
+        'title' => 'Student',
+        'subtitle' => 'Track attendance, upcoming events, notices, and class activity in one view.',
+    ])
+
+    @include('partials.message')
+
+    {{-- KPI Cards --}}
+    <div class="dashboard-kpi-grid">
+        <x-ds-kpi-card icon="calendar" value="{{ $dashboard['presentPercentage'] ?? 0 }}%" label="Attendance Rate" color="green" />
+        <x-ds-kpi-card icon="check" value="{{ $dashboard['presentDay'] ?? 0 }}" label="Days Present" color="blue" />
+        <x-ds-kpi-card icon="calendar" value="{{ $dashboard['upcomingeventCount'] ?? 0 }}" label="Upcoming Events" color="amber" />
+        <x-ds-kpi-card icon="book" value="{{ isset($dashboard['marks']) ? count($dashboard['marks']) : 0 }}" label="Recent Marks" color="purple" />
+    </div>
+
+    {{-- Main grid --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {{-- Recent Marks --}}
+        <div class="ds-card ds-card-padding-none">
+            <div class="px-5 py-4 border-b border-gray-100">
+                <h2 class="text-base font-semibold" style="font-family: Sora, sans-serif; color: var(--d-text);">
+                    <svg class="w-5 h-5 inline mr-2" style="color: var(--d-blue);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                    Recent Marks
+                </h2>
+            </div>
+            <div class="p-5">
+                @if(isset($dashboard['marks']) && count($dashboard['marks']) > 0)
+                    <div class="space-y-3">
+                        @foreach($dashboard['marks'] as $mark)
+                            <div class="flex items-center justify-between pb-3 border-b border-gray-100 last:border-b-0 last:pb-0">
+                                <div>
+                                    <p class="text-sm font-medium" style="color: var(--d-text);">{{ $mark->subject->name ?? '—' }}</p>
+                                    <p class="text-xs" style="color: var(--d-muted);">{{ $mark->exam->name ?? '' }}</p>
+                                </div>
+                                <span class="ds-badge ds-badge-sm {{ ($mark->marks ?? 0) >= 50 ? 'ds-badge-active' : 'ds-badge-warning' }}">
+                                    {{ $mark->marks ?? 0 }}
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                        <p class="text-sm" style="color: var(--d-muted);">No marks recorded yet.</p>
+                    </div>
+                @endif
             </div>
         </div>
-        @include('partials.message')
 
-        {{-- KPI Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div class="dashboard-kpi-card">
-                <div class="dashboard-kpi-icon" style="background: rgba(30,111,217,0.10); color: #1E6FD9;">
-                    <i class="fa-solid fa-calendar-check"></i>
-                </div>
-                <div class="dashboard-kpi-value">{{ $dashboard['presentPercentage'] ?? 0 }}%</div>
-                <div class="dashboard-kpi-label">Attendance Rate</div>
-                <div class="text-xs text-gray-500 mt-1">
-                    {{ $dashboard['presentDay'] ?? 0 }} present · {{ $dashboard['absentDay'] ?? 0 }} absent
-                </div>
+        {{-- Upcoming Events --}}
+        <div class="ds-card ds-card-padding-none">
+            <div class="px-5 py-4 border-b border-gray-100">
+                <h2 class="text-base font-semibold" style="font-family: Sora, sans-serif; color: var(--d-text);">
+                    <svg class="w-5 h-5 inline mr-2" style="color: var(--d-amber);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Upcoming Events
+                </h2>
             </div>
-
-            <div class="dashboard-kpi-card">
-                <div class="dashboard-kpi-icon" style="background: rgba(34,197,94,0.10); color: #22C55E;">
-                    <i class="fa-solid fa-check-circle"></i>
-                </div>
-                <div class="dashboard-kpi-value">{{ $dashboard['presentDay'] ?? 0 }}</div>
-                <div class="dashboard-kpi-label">Days Present</div>
-            </div>
-
-            <div class="dashboard-kpi-card">
-                <div class="dashboard-kpi-icon" style="background: rgba(217,119,6,0.10); color: #D97706;">
-                    <i class="fa-solid fa-calendar-days"></i>
-                </div>
-                <div class="dashboard-kpi-value">{{ $dashboard['upcomingeventCount'] ?? 0 }}</div>
-                <div class="dashboard-kpi-label">Upcoming Events</div>
-            </div>
-
-            <div class="dashboard-kpi-card">
-                <div class="dashboard-kpi-icon" style="background: rgba(15,23,42,0.08); color: #0F172A;">
-                    <i class="fa-solid fa-marks"></i>
-                </div>
-                <div class="dashboard-kpi-value">{{ isset($dashboard['marks']) ? count($dashboard['marks']) : 0 }}</div>
-                <div class="dashboard-kpi-label">Recent Marks</div>
+            <div class="p-5">
+                @if(isset($dashboard['events']) && count($dashboard['events']) > 0)
+                    <div class="space-y-3">
+                        @foreach($dashboard['events'] as $event)
+                            <div class="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-b-0 last:pb-0">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background: rgba(30,111,217,0.10);">
+                                    <svg class="w-5 h-5" style="color: var(--d-blue);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium" style="color: var(--d-text);">{{ $event->title }}</p>
+                                    <p class="text-xs mt-0.5" style="color: var(--d-muted);">{{ date('d M Y', strtotime($event->start_date)) }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <p class="text-sm" style="color: var(--d-muted);">No upcoming events.</p>
+                    </div>
+                @endif
             </div>
         </div>
+    </div>
 
-        {{-- Lower panels --}}
-        <div class="flex flex-wrap my-2">
-            {{-- Recent Marks --}}
-            <div class="w-full xl:w-1/3 lg:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow px-5 py-4 border dashboard-panel-card">
-                    <h1 class="dashboard-panel-title">Recent Marks</h1>
-                    <div class="notice-box">
-                        @if(isset($dashboard['marks']) && count($dashboard['marks']) > 0)
-                            @foreach($dashboard['marks'] as $mark)
-                                <div class="notice-box-list py-3 border-b last:border-b-0">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <p class="text-sm font-semibold text-gray-900">{{ $mark->subject->name ?? 'Subject' }}</p>
-                                            <p class="text-xs text-gray-500 mt-1">{{ $mark->exam->name ?? 'Exam' }}</p>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-sm font-bold {{ $mark->obtained_marks >= 50 ? 'text-green-600' : 'text-red-500' }}">
-                                                {{ $mark->obtained_marks }}/{{ $mark->total_marks ?? 100 }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @else
-                            <div class="py-6 text-center text-gray-400 text-sm">No marks recorded yet.</div>
-                        @endif
-                    </div>
+    {{-- Attendance Summary --}}
+    <div class="ds-card ds-card-padding-none mt-6">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h2 class="text-base font-semibold" style="font-family: Sora, sans-serif; color: var(--d-text);">
+                <svg class="w-5 h-5 inline mr-2" style="color: var(--d-green);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Attendance Summary
+            </h2>
+        </div>
+        <div class="p-5">
+            <div class="flex items-center gap-6">
+                <div class="text-center">
+                    <p class="text-2xl font-bold" style="font-family: Sora, sans-serif; color: var(--d-green);">{{ $dashboard['presentDay'] ?? 0 }}</p>
+                    <p class="text-xs" style="color: var(--d-muted);">Present</p>
                 </div>
-            </div>
-
-            {{-- Notice Board --}}
-            <div class="w-full xl:w-1/3 lg:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow px-5 py-4 border dashboard-panel-card">
-                    <h1 class="dashboard-panel-title">Notice Board</h1>
-                    <div class="notice-box">
-                        @if(isset($dashboard['noticeboard']) && count($dashboard['noticeboard']) > 0)
-                            @foreach($dashboard['noticeboard'] as $noticeboard)
-                                <div class="notice-box-list py-3 border-b last:border-b-0">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <p class="text-sm font-semibold text-gray-900">{{ $noticeboard->title }}</p>
-                                            <p class="text-xs text-gray-500 mt-1">{{ Str::limit(strip_tags($noticeboard->description ?? ''), 60) }}</p>
-                                        </div>
-                                        <span class="text-xs text-gray-400 whitespace-nowrap ml-2">{{ $noticeboard->created_at->diffForHumans() }}</span>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @else
-                            <div class="py-6 text-center text-gray-400 text-sm">No notices for you yet.</div>
-                        @endif
-                    </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold" style="font-family: Sora, sans-serif; color: var(--d-amber);">{{ $dashboard['absentDay'] ?? 0 }}</p>
+                    <p class="text-xs" style="color: var(--d-muted);">Absent</p>
                 </div>
-            </div>
-
-            {{-- Attendance Summary --}}
-            <div class="w-full xl:w-1/3 lg:w-1/2 px-1 my-2">
-                <div class="bg-white custom-shadow px-5 py-4 border dashboard-panel-card">
-                    <h1 class="dashboard-panel-title">Attendance Summary</h1>
-                    <div class="py-4 px-2">
-                        @php
-                            $present = $dashboard['presentDay'] ?? 0;
-                            $absent = $dashboard['absentDay'] ?? 0;
-                            $total = $present + $absent;
-                            $pct = $total > 0 ? round(($present / $total) * 100) : 0;
-                        @endphp
-                        <div class="flex items-center gap-4 mb-4">
-                            <div class="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold" style="font-family: 'Sora', sans-serif; background: rgba(34,197,94,0.10); color: #22C55E;">
-                                {{ $pct }}%
-                            </div>
-                            <div>
-                                <div class="text-sm font-semibold text-gray-900">Overall Attendance</div>
-                                <div class="text-xs text-gray-500 mt-1">{{ $present }} days present · {{ $absent }} days absent</div>
-                            </div>
-                        </div>
-                        {{-- Attendance bar --}}
-                        <div style="height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden;">
-                            <div style="height: 100%; width: {{ $pct }}%; background: #22C55E; border-radius: 4px; transition: width 0.5s;"></div>
-                        </div>
-                        <div class="flex justify-between text-xs text-gray-400 mt-1">
-                            <span>0%</span>
-                            <span>50%</span>
-                            <span>100%</span>
-                        </div>
-                    </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold" style="font-family: Sora, sans-serif; color: var(--d-blue);">{{ $dashboard['presentPercentage'] ?? 0 }}%</p>
+                    <p class="text-xs" style="color: var(--d-muted);">Attendance Rate</p>
                 </div>
             </div>
         </div>
     </div>
+</div>
 @endsection

@@ -18,8 +18,6 @@ use App\Models\SendMail;
 use App\Traits\Common;
 use App\Models\User;
 use App\Models\StudentAcademic;
-use Exception;
-use Log;
 use App\Models\AcademicYear;
 use App\Models\Userprofile;
 use App\Traits\RegisterUser;
@@ -74,19 +72,23 @@ class SendMessageController extends Controller
      */
     public function store(SendMailRequest $request)
     {
-        //
-        try
-        {
-            event (new SendMessageEvent ($request , Auth::user()->school_id , Auth::user()->email , Auth::user() ) );
-                  
-            $res['message'] = trans('messages.message_success_msg');
-            return $res;
+        // Require at least one recipient group to be selected.
+        // The UI sends selected (parent IDs) and selectedUsers (student IDs)
+        // — both must be non-empty arrays or the event listener is a no-op.
+        $selected = $request->input('selected', []);
+        $selectedUsers = $request->input('selectedUsers', []);
+
+        if (empty($selected) || empty($selectedUsers)) {
+            return response()->json([
+                'message' => trans('validation.required', ['attribute' => 'recipients']),
+            ], 422);
         }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
+
+        event(new SendMessageEvent($request, Auth::user()->school_id, Auth::user()->email, Auth::user()));
+
+        return response()->json([
+            'message' => trans('messages.message_success_msg'),
+        ]);
     }
 
     /**
@@ -97,27 +99,27 @@ class SendMessageController extends Controller
      */
     public function storeTeacher(SendMailRequest $request)
     {
-        //
-        try
-        {
-            $data=[];
-            $data['selected'] =$request->selected;
-            $data['subject']=$request->subject;
-            $data['message']=$request->message;
-            $data['send_later']=$request->send_later;
-            $data['executed_at']=$request->executed_at;
-            $datas=(object)$data;
-            
-            event (new SendMessageTeacherEvent ($datas , Auth::user()->school_id , Auth::user()->email , Auth::user() ) );
-                  
-            $res['message'] = trans('messages.message_success_msg');
-            return $res;
+        // Require at least one recipient.
+        $selected = $request->input('selected', []);
+        if (empty($selected)) {
+            return response()->json([
+                'message' => trans('validation.required', ['attribute' => 'recipients']),
+            ], 422);
         }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
+
+        $data = [];
+        $data['selected'] = $request->selected;
+        $data['subject'] = $request->subject;
+        $data['message'] = $request->message;
+        $data['send_later'] = $request->send_later;
+        $data['executed_at'] = $request->executed_at;
+        $datas = (object) $data;
+
+        event(new SendMessageTeacherEvent($datas, Auth::user()->school_id, Auth::user()->email, Auth::user()));
+
+        return response()->json([
+            'message' => trans('messages.message_success_msg'),
+        ]);
     }
 
     public function shift(request $request)

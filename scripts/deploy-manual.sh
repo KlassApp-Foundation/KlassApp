@@ -2,48 +2,47 @@
 set -e
 
 # ====================================
-# KlassApp Deploy Script (No SSH Key)
+# KlassApp Deploy Script (Docker)
 # Server: root@46.101.111.131
-# Use SSH password or add key via DigitalOcean panel
+# Key: ~/.ssh/id_ed25519_do
 # ====================================
 
 APP_SERVER="root@46.101.111.131"
-APP_DIR="/var/www/klassapp"
+APP_DIR="/var/www/KlassApp"
+CONTAINER="sms-app"
 GIT_BRANCH="main"
 
 echo "========================================"
 echo " KlassApp Deploy"
 echo " Server: $APP_SERVER"
+echo " Container: $CONTAINER"
 echo " Branch: $GIT_BRANCH"
 echo "========================================"
 echo ""
-echo "This will SSH into the server and run the deploy."
-echo "You may need to enter the server password."
-echo ""
 
-# Deploy via SSH
-echo "[1/5] Connecting to server..."
-ssh "$APP_SERVER" << REMOTE_SCRIPT
+ssh "$APP_SERVER" -i ~/.ssh/id_ed25519_do << REMOTE_SCRIPT
 set -e
-APP_DIR="/var/www/klassapp"
-GIT_BRANCH="main"
+APP_DIR="$APP_DIR"
+CONTAINER="$CONTAINER"
+GIT_BRANCH="$GIT_BRANCH"
 
-cd "$APP_DIR"
+cd "\$APP_DIR"
 
-echo "[2/5] Pulling latest code..."
-git pull origin "$GIT_BRANCH" --ff-only
+echo "[1/5] Pulling latest code..."
+git pull origin "\$GIT_BRANCH" --ff-only
 
-echo "[3/5] Installing dependencies..."
-composer install --no-dev --optimize-autoloader --no-interaction
+echo "[2/5] Running migrations..."
+docker exec "\$CONTAINER" php artisan migrate --force
 
-echo "[4/5] Clearing caches..."
-php artisan cache:clear
-php artisan config:clear
-php artisan view:clear
+echo "[3/5] Clearing caches inside container..."
+docker exec "\$CONTAINER" php artisan optimize:clear
 
-echo "[5/5] Restarting services..."
-systemctl reload php8.3-fpm || systemctl reload php-fpm
-systemctl reload nginx
+echo "[4/5] Restarting FPM..."
+docker exec "\$CONTAINER" sh -c "kill -USR2 1 2>/dev/null || php-fpm -t >/dev/null 2>&1" || true
+
+echo "[5/5] Verifying app is serving..."
+sleep 1
+docker exec "\$CONTAINER" php -r "echo 'PHP OK: ' . phpversion() . PHP_EOL;"
 
 echo ""
 echo "========================================"

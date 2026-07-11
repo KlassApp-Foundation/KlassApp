@@ -207,6 +207,51 @@ body {
 
 .dashboard-kpi-value { color: var(--d-dark) !important; }
 
+/* ── ds-* KPI Card Theme (for <x-ds-kpi-card> component) ── */
+
+.ds-kpi-card {
+    background: var(--d-white);
+    border: 1px solid var(--d-border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    cursor: default;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+}
+a.ds-kpi-card:hover {
+    box-shadow: 0 0 0 1px var(--d-border-strong), 0 4px 12px rgba(0, 0, 0, 0.04);
+    transform: translateY(-1px);
+}
+
+.ds-kpi-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--d-blue);
+    margin-bottom: 14px;
+}
+
+.ds-kpi-value {
+    font-family: "Sora", sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--d-dark);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.ds-kpi-label {
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.78rem;
+    color: var(--d-muted);
+    margin: 4px 0 0;
+}
+
 /* ── Page Header ── */
 
 .ds-page-head {

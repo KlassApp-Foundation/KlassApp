@@ -12,7 +12,3 @@
 @section('base-content')
   @yield('content')
 @endsection
-
-@section('base-content')
-  @yield('content')
-@endsection

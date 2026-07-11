@@ -27,9 +27,7 @@ use App\Models\User;
 use App\Models\File;
 use App\Models\Plan;
 use SplFileObject;
-use Exception;
 use Excel;
-use Log;
 
 class ReportsController extends Controller
 {
@@ -74,8 +72,6 @@ class ReportsController extends Controller
     public function holidayImport(Request $request)
     {
         //
-        try
-        {
             Excel::import(new HolidaysImport,$request->file('import_file'));
                          
             $insertedcount = \Session::get('insertedcount');
@@ -98,19 +94,11 @@ class ReportsController extends Controller
               return back()->with('failmessage',trans('messages.insert_failure_msg'));
             } 
             \Session::forget('insertedcount');
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 
     public function holidayExport(Request $request)
     {
         //
-        try
-        {
             $school_id = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
             $holidays = Events::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['category','holidays']])->orderBy('start_date','ASC')->get();   
@@ -146,12 +134,6 @@ class ReportsController extends Controller
                 LOGNAME_EXPORT_HOLIDAY,
                 $message
             );
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 
     public function eventReport()
@@ -211,8 +193,7 @@ class ReportsController extends Controller
 
     public function exportFee(Request $request)
     {
-        try
-        {
+
             if(count($request->request) > 0)
             {
                 $users = $this->MemberFilter($request,Auth::user()->school_id,6,'active'); 
@@ -264,18 +245,11 @@ class ReportsController extends Controller
                 LOGNAME_EXPORT_FEE_PAYMENT,
                 $message
             );
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 
     public function exportBirthday($type)
     {
-        try
-        {
+
             if($type == 'student')
             {
                 $users = User::with('userprofile')->where('school_id',Auth::user()->school_id)->ByRole(6)->get();    
@@ -355,18 +329,11 @@ class ReportsController extends Controller
                     $message
                 );
             }
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 
     public function exportActiveStudents(Request $request)
     { 
-        try
-        {
+
             if(count($request->request) > 0)
             {
                 $users = $this->MemberFilter($request,Auth::user()->school_id,6,'active'); 
@@ -416,18 +383,11 @@ class ReportsController extends Controller
                 LOGNAME_EXPORT_ACTIVE_STUDENT,
                 $message
             );
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 
     public function exportExitStudents(Request $request)
     { 
-        try
-        {       
+       
             if(count($request->request) > 0)
             {
                 $users = $this->MemberFilter($request,Auth::user()->school_id,6,'exit'); 
@@ -478,18 +438,11 @@ class ReportsController extends Controller
                 LOGNAME_EXPORT_EXIT_STUDENT,
                 $message
             );
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 
     public function exportSuspendedStudents(Request $request)
     {
-        try
-        {     
+     
             if(count($request->request) > 0)
             {   
                 $users = $this->MemberFilter($request,Auth::user()->school_id,6,'inactive');
@@ -540,18 +493,10 @@ class ReportsController extends Controller
                 LOGNAME_EXPORT_SUSPENDED_STUDENT,
                 $message
             );
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 
     public function exportParent(Request $request)
     { 
-        try 
-        {     
             if(count($request->request) > 0)
             { 
                 $users = $this->ParentFilter($request,Auth::user()->school_id,6);
@@ -610,18 +555,11 @@ class ReportsController extends Controller
                 LOGNAME_EXPORT_PARENT,
                 $message
             );
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 
     public function currentstock()
     {
-        try
-        {
+
             if(class_exists('Gegok12\Inventory\Models\Product'))
             {
                 $products = \Gegok12\Inventory\Models\Product::with('category','vendor')->where('school_id',Auth::user()->school_id)->get();
@@ -673,12 +611,6 @@ class ReportsController extends Controller
                 LOGNAME_EXPORT_CURRENT_STOCK,
                 $message
             );
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 
     public function monthlypurchase(Request $request)
@@ -691,8 +623,6 @@ class ReportsController extends Controller
             return;
         }
 
-        try 
-        {
             $purchase_month = $request->month;
             $purchase_year = $request->year;
 
@@ -756,12 +686,6 @@ class ReportsController extends Controller
                 LOGNAME_EXPORT_MONTHLY_PURCHASE,
                 $message
             );
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 
     public function monthlysales(Request $request)
@@ -774,8 +698,7 @@ class ReportsController extends Controller
             return;
         }
 
-        try
-        {
+
             $sales_month = $request->month;
             $sales_year = $request->year;
             if( ($sales_month == null) && ($sales_year == null) )
@@ -840,11 +763,5 @@ class ReportsController extends Controller
                 LOGNAME_EXPORT_MONTHLY_SALES,
                 $message
             );
-        }
-        catch(Exception $e)
-        {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
-        }
     }
 }

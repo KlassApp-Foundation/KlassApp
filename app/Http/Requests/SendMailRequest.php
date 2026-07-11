@@ -31,10 +31,11 @@ class SendMailRequest extends FormRequest
         });
 
         $rules = [
-            //
             'subject'       => 'required|max:100',
             'message'       => 'required|max:1000',
-            'attachments'   => 'nullable|mimes:pdf,jpg,jpeg,png,bmp,doc,csv,txt,xlsx,xls,docx,ppt,'
+            'attachments'   => 'nullable|mimes:pdf,jpg,jpeg,png,bmp,doc,csv,txt,xlsx,xls,docx,ppt,',
+            'selected'      => 'required|array|min:1',
+            'selectedUsers' => 'required|array|min:1',
         ];
         
         if(request('send_later') == 'true')

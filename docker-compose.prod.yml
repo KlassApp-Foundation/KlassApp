@@ -78,8 +78,8 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
       PHP_FPM_LISTEN: "0.0.0.0:9000"
-    # volumes:
-    #   - .:/var/www
+    volumes:
+      - .:/var/www
     depends_on:
       database:
         condition: service_healthy

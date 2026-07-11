@@ -454,10 +454,34 @@ class PayrollController extends Controller
 
     /**
      * Process batch payroll rows — creates payroll + payslip_items.
+     * Throws a readable exception if any staff already has payroll for the period
+     * (double-run prevention via application-layer guard + DB unique constraint).
      */
     private function processBatchRows(int $schoolId, int $userId, int $templateId, string $startDate, string $endDate, array $rows): array
     {
         $payrollNumbers = [];
+
+        // ── Application-layer double-run guard ──
+        // Check for existing payroll records covering the same staff + period.
+        // This catches duplicates before the DB constraint throws, giving a
+        // friendlier error message. The DB unique constraint
+        // (payrolls_staff_period_unique) is the final backstop.
+        $staffIds = collect($rows)->pluck('staff_id')->toArray();
+        $existing = Payroll::whereIn('staff_id', $staffIds)
+            ->where('start_date', $startDate)
+            ->where('end_date', $endDate)
+            ->get()
+            ->keyBy('staff_id');
+
+        if ($existing->isNotEmpty()) {
+            $names = $existing->map(function ($p) {
+                return $p->user->name ?? "staff #{$p->staff_id}";
+            })->implode(', ');
+            throw new \App\Exceptions\PayrollConflictException(
+                "Payroll already exists for this period: {$names}. "
+                . 'Each staff member can only have one payroll record per date range.'
+            );
+        }
 
         \DB::beginTransaction();
         try {
@@ -475,11 +499,16 @@ class PayrollController extends Controller
                     'percentage'     => 100,
                     'leave'          => 0,
                     'leave_deduction'=> $row['leave_deduction'] ?? 0,
+                    'gross_pay'      => $row['gross'] ?? 0,
+                    'paye'           => $row['paye'] ?? 0,
+                    'nssf'           => $row['nssf'] ?? 0,
+                    'lst'            => $row['lst'] ?? 0,
+                    'net_pay'        => $row['net_pay'] ?? 0,
                     'status'         => 'unpaid',
                     'comments'       => "Batch run from template #{$templateId}",
                 ]);
 
-                // Create payslip items for statutory deductions
+                // Create payslip items for salary-template earnings/deductions
                 $salary = Salary::with('salaryitems')->find($row['salary_id']);
                 if ($salary && $salary->salaryitems->isNotEmpty()) {
                     foreach ($salary->salaryitems as $item) {

@@ -15,7 +15,7 @@ class MustBeSchoolAdmin
      */
     public function handle($request, Closure $next)
     {
-       
+        
         if(\Auth::user()->usergroup_id==3)
         {
             return $next($request);
@@ -30,6 +30,13 @@ class MustBeSchoolAdmin
         if(\Auth::user()->usergroup_id==2)
         {
             // Site subadmins also pass through (same reasoning as superadmins).
+            return $next($request);
+        }
+
+        // School subadmins (id=4) also pass through — they share the same admin UI
+        // with Settings access blocked at the controller/middleware level.
+        if(\Auth::user()->usergroup_id==4)
+        {
             return $next($request);
         }
 

@@ -85,6 +85,10 @@ class DashboardController extends Controller
                 ->count()
             : 0;
 
+        // ── Fee Collection Trend (default: monthly, last 6 periods) ──
+        $trendPeriod = in_array($request->period, ['day', 'week', 'month']) ? $request->period : 'month';
+        $feeTrend = $this->computeFeeTrend($school_id, $trendPeriod, 6);
+
         return view( '/admin/dashboard/dashboard', [
             'dashboard' => $dashboard,
             'standardLink' => $standardLink,
@@ -93,6 +97,8 @@ class DashboardController extends Controller
             'plan' => $plan,
             'planUsage' => $planUsage,
             'onboardingMissing' => $onboardingMissing,
+            'feeTrend' => $feeTrend,
+            'trendPeriod' => $trendPeriod,
         ] );
     }
 

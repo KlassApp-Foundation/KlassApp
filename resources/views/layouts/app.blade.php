@@ -23,7 +23,7 @@
         window.User = {!! json_encode(optional(auth()->user())->only('id')) !!}
     </script>
 
-    <!-- <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script> -->
+    {{-- Alpine is bundled with Livewire v3 — remove duplicate CDN load --}}
 
     <!-- new -->
     <script>

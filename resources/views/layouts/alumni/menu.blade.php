@@ -4,10 +4,10 @@
     <li class="py-3 px-3 {{ alActive('dashboard') }}">
         <a href="{{ url('alumni/dashboard') }}" class="flex items-center"><x-icons.sidebar name="dashboard"/><span class="mx-3 whitespace-no-wrap">Dashboard</span></a>
     </li>
-    <li class="py-3 px-3 {{ alActive(['members','member']) }}">
-        <a href="{{ url('alumni/members') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-no-wrap">Members</span></a>
+    <li class="py-3 px-3 {{ alActive(['marks','mark']) }}">
+        <a href="{{ url('alumni/marks') }}" class="flex items-center"><x-icons.sidebar name="exams"/><span class="mx-3 whitespace-no-wrap">My Marks</span></a>
     </li>
-    <li class="py-3 px-3 {{ alActive(['events','event']) }}">
-        <a href="{{ url('alumni/events') }}" class="flex items-center"><x-icons.sidebar name="calendar"/><span class="mx-3 whitespace-no-wrap">Events</span></a>
+    <li class="py-3 px-3 {{ alActive(['directory']) }}">
+        <a href="{{ url('alumni/directory') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-no-wrap">Directory</span></a>
     </li>
 </ul>

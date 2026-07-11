@@ -5,6 +5,7 @@
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
 
 @include('layouts.partials.page-header', [
+    {{-- UI title renamed from "Reports" to "Data Exports" (May 2026). Internal routes remain /admin/report* for backward compat --}}
     'title' => 'Data Exports',
     'subtitle' => 'Generate and view school performance, attendance, and financial reports.',
 ])

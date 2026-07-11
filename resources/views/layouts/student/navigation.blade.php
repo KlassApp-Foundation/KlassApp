@@ -52,6 +52,7 @@
           <!-- start -->
           <li>
                             @include('layouts.partials.profile-dropdown')
+        @endguest
       </ul>
     </div>
   </div>

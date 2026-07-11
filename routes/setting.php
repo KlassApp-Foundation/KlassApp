@@ -1,5 +1,18 @@
 <?php
 
+// Settings index — redirect to general settings (guarded by fullschooladmin)
+Route::get('/settings', function () {
+    return redirect('/admin/settings/generalsettings');
+});
+
+// School settings — guarded by fullschooladmin so subadmins can't access
+Route::get('/settings/generalsettings', 'Setting\GeneralController@create');
+Route::post('/settings/generalsettings', 'Setting\GeneralController@store');
+Route::get('/settings/maintenancesettings', 'Setting\MaintenanceController@create');
+Route::post('/settings/maintenancesettings', 'Setting\MaintenanceController@store');
+Route::get('/settings/seodetailsettings', 'Setting\SeoDetailController@create');
+Route::post('/settings/seodetailsettings', 'Setting\SeoDetailController@store');
+
 //navigation drop-down
 Route::get('/list/academicyear','NavigationController@list');
 Route::post('/academicyear/index','NavigationController@index');

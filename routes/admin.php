@@ -388,14 +388,14 @@ Route::get( '/events/delete/{id}', 'EventsController@destroy' );
 Route::get( '/event/approve/{id}', 'EventsController@eventapprove' );
 
 //Settings
-//Route::get( 'settings/', 'SettingController@index' );
-Route::get( '/settings/generalsettings', 'Setting\GeneralController@create' );
-Route::post( '/settings/generalsettings', 'Setting\GeneralController@store' );
-Route::get( '/settings/maintenancesettings', 'Setting\MaintenanceController@create' );
-Route::post( '/settings/maintenancesettings', 'Setting\MaintenanceController@store' );
-Route::get( '/settings/seodetailsettings', 'Setting\SeoDetailController@create' );
-Route::post( '/settings/seodetailsettings', 'Setting\SeoDetailController@store' );
-Route::post( '/settings/seodetailsettings', 'Setting\SeoDetailController@store' );
+// These are defined in routes/setting.php with fullschooladmin middleware.
+// Kept here commented to prevent accidental duplicate registration:
+// Route::get( '/settings/generalsettings', 'Setting\GeneralController@create' );
+// Route::post( '/settings/generalsettings', 'Setting\GeneralController@store' );
+// Route::get( '/settings/maintenancesettings', 'Setting\MaintenanceController@create' );
+// Route::post( '/settings/maintenancesettings', 'Setting\MaintenanceController@store' );
+// Route::get( '/settings/seodetailsettings', 'Setting\SeoDetailController@create' );
+// Route::post( '/settings/seodetailsettings', 'Setting\SeoDetailController@store' );
 //password and avatar
 
 Route::get( '/changepassword', 'UserProfileController@ChangePassword' );
@@ -893,10 +893,10 @@ Route::get('/calendar', function () {
     return redirect('/admin/events');
 });
 
-// Settings index — redirect to general settings
-Route::get('/settings', function () {
-    return redirect('/admin/settings/generalsettings');
-});
+// Settings index — handled in routes/setting.php with fullschooladmin middleware
+// Route::get('/settings', function () {
+//     return redirect('/admin/settings/generalsettings');
+// });
 
 // Transport placeholder
 Route::get('/transport', function () {

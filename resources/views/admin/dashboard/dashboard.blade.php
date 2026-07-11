@@ -343,6 +343,32 @@
                 </div>
             </div>
         </div>
+
+        {{-- Fee Collection Trend Chart --}}
+        <div class="flex my-2 gap-4">
+            <div class="w-full">
+                <div class="bg-white custom-shadow px-5 py-4 border dashboard-chart-card">
+                    <div class="flex flex-wrap items-center justify-between mb-4">
+                        <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Fee Collection Trends</h1>
+                        <div class="flex gap-1 bg-gray-100 rounded-lg p-0.5" role="group">
+                            <a href="{{ request()->fullUrlWithQuery(['period' => 'day']) }}"
+                               class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'day' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                                Days
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['period' => 'week']) }}"
+                               class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'week' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                                Weeks
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['period' => 'month']) }}"
+                               class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'month' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                                Months
+                            </a>
+                        </div>
+                    </div>
+                    <canvas id="feeTrendChart" class="dashboard-chart-canvas" style="height:260px;"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
 @endsection
@@ -405,6 +431,75 @@
                 }
             }
         });
+
+        // ── Fee Collection Trend Chart ──
+        var trendCtx = document.getElementById('feeTrendChart');
+        if (trendCtx) {
+            var trendData = {!! json_encode($feeTrend ?? []) !!};
+            new Chart(trendCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: trendData.map(function (d) { return d.label; }),
+                    datasets: [{
+                        label: 'Fee Collection',
+                        data: trendData.map(function (d) { return d.amount; }),
+                        borderColor: '#22C55E',
+                        backgroundColor: 'rgba(34,197,94,0.06)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#22C55E',
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.3,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: {
+                        display: false,
+                    },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#0F172A',
+                        callbacks: {
+                            label: function (tooltipItem, data) {
+                                var val = tooltipItem.yLabel;
+                                return 'UGX ' + Number(val).toLocaleString();
+                            }
+                        }
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                fontFamily: 'DM Sans',
+                                fontSize: 11,
+                                callback: function (value) {
+                                    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+                                    return value;
+                                }
+                            },
+                            gridLines: {
+                                color: '#F1F5F9',
+                                drawBorder: false,
+                            }
+                        }],
+                        xAxes: [{
+                            ticks: {
+                                fontFamily: 'DM Sans',
+                                fontSize: 11,
+                            },
+                            gridLines: {
+                                display: false,
+                            }
+                        }]
+                    }
+                }
+            });
+        }
 
         var ctx = document.getElementById("barChart");
         if (ctx) {

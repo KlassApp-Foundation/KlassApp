@@ -26,6 +26,7 @@ class RouteServiceProvider extends ServiceProvider
     protected $payrollNamespace = 'App\Http\Controllers\Payroll';
     protected $alumniNamespace = 'App\Http\Controllers\Alumni';
     protected $superadminNamespace = 'App\Http\Controllers\Superadmin';
+    protected $subadminNamespace = 'App\Http\Controllers\Admin'; // reuses admin controllers
 
     //public const HOME = '/dashboard';
 
@@ -62,6 +63,7 @@ class RouteServiceProvider extends ServiceProvider
         $this->mapAccountantRoutes();
         $this->mapPayrollRoutes();
         $this->mapAlumniRoutes();
+        $this->mapSchoolSubadminRoutes();
         $this->mapSuperadminRoutes();
         //
     }
@@ -106,7 +108,7 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapSettingsRoutes()
     {
         Route::prefix('admin')
-            ->middleware(['web','auth', 'schooladmin'])
+            ->middleware(['web','auth', 'fullschooladmin'])
             ->namespace($this->adminNamespace)
             ->group(base_path('routes/setting.php'));
     }
@@ -196,5 +198,13 @@ class RouteServiceProvider extends ServiceProvider
             ->middleware(['web','auth', 'superadmin'])
             ->namespace($this->superadminNamespace)
             ->group(base_path('routes/superadmin.php'));
+    }
+
+    protected function mapSchoolSubadminRoutes()
+    {
+        Route::prefix('subadmin')
+            ->middleware(['web','auth', 'schoolsubadmin'])
+            ->namespace($this->subadminNamespace)
+            ->group(base_path('routes/subadmin.php'));
     }
 }

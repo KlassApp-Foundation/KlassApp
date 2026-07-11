@@ -12,7 +12,13 @@ class Payroll extends Model
 {
   use SoftDeletes;
 
-    protected $fillable = ['school_id' , 'payrollno','staff_id','salary_id','start_date','end_date','percentage','leave','late','leave_deduction','status','comments'];
+    protected $fillable = [
+        'school_id', 'payrollno', 'staff_id', 'salary_id',
+        'start_date', 'end_date',
+        'percentage', 'leave', 'late', 'leave_deduction',
+        'gross_pay', 'paye', 'nssf', 'lst', 'net_pay',
+        'status', 'comments',
+    ];
 
   public function user()
     {

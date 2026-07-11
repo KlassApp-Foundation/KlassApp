@@ -32,6 +32,7 @@ use App\Models\Mark;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\Book;
+use App\Models\FeePayment;
 use Carbon\Carbon;
 
 /**
@@ -203,6 +204,52 @@ trait Dashboard
         ];
 
         return $array;
+    }
+
+    /**
+     * Compute fee collection trend data for a school over a configurable period.
+     *
+     * @param  int     $school_id
+     * @param  string  $period   'day', 'week', or 'month'
+     * @param  int     $count    Number of data points (default 6)
+     * @return array
+     */
+    public function computeFeeTrend($school_id, $period = 'month', $count = 6)
+    {
+        $now   = Carbon::now();
+        $trend = [];
+
+        for ($i = $count - 1; $i >= 0; $i--) {
+            switch ($period) {
+                case 'day':
+                    $start = $now->copy()->subDays($i)->startOfDay();
+                    $end   = $now->copy()->subDays($i)->endOfDay();
+                    $label = $start->format('M d');
+                    break;
+                case 'week':
+                    $start = $now->copy()->subWeeks($i)->startOfWeek();
+                    $end   = $now->copy()->subWeeks($i)->endOfWeek();
+                    $label = 'W' . $start->weekOfYear . ' ' . $start->format('M');
+                    break;
+                case 'month':
+                default:
+                    $start = $now->copy()->subMonths($i)->startOfMonth();
+                    $end   = $now->copy()->subMonths($i)->endOfMonth();
+                    $label = $start->format('M Y');
+                    break;
+            }
+
+            $total = FeePayment::where('school_id', $school_id)
+                ->whereBetween('paid_on', [$start, $end])
+                ->sum('amount');
+
+            $trend[] = [
+                'label'  => $label,
+                'amount' => (float) $total,
+            ];
+        }
+
+        return $trend;
     }
 
     public function studentDashboard($school_id,$user_id,$standardLink_id,$subject,$exam,$mark,$exam_date)

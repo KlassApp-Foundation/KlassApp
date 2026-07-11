@@ -1,30 +1,20 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @extends('layouts.app')
 
-
-
+@section('base-navigation')
   @if(Auth::user()->usergroup_id==11)
-    @section('base-navigation')
-      @include('layouts.accountant.navigation')
-     @endsection
-
-    @section('base-sidebar')
-      @include('layouts.accountant.sidebar')
-    @endsection
-  @endif
-
-  @if(Auth::user()->usergroup_id==3)
-
-  @section('base-navigation')
+    @include('layouts.accountant.navigation')
+  @elseif(Auth::user()->usergroup_id==3)
     @include('layouts.partials.navigation')
-   @endsection
-    @section('base-sidebar')
-      @include('layouts.admin.sidebar')
-    @endsection
   @endif
+@endsection
 
-@section('base-content')
-  @yield('content')
+@section('base-sidebar')
+  @if(Auth::user()->usergroup_id==11)
+    @include('layouts.accountant.sidebar')
+  @elseif(Auth::user()->usergroup_id==3)
+    @include('layouts.admin.sidebar')
+  @endif
 @endsection
 
 @section('base-content')

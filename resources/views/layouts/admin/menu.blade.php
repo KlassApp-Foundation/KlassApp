@@ -91,6 +91,7 @@ if (!function_exists('sidebarActive')) {
     <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['reports','report']) }}">
         <a href="{{ url('admin/reports') }}" class="flex items-center">
             <x-icons.sidebar name="reports"/>
+            {{-- UI label renamed from "Reports" to "Data Exports" (May 2026). Routes remain /admin/report* for backward compat --}}
             <span class="mx-3 whitespace-no-wrap">Data Exports</span>
         </a>
     </li>
@@ -137,12 +138,14 @@ if (!function_exists('sidebarActive')) {
         </a>
     </li>
 
+    @if(Auth::user()->usergroup_id != 4)
     <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['settings']) }}">
         <a href="{{ url('admin/settings') }}" class="flex items-center">
             <x-icons.sidebar name="settings"/>
             <span class="mx-3 whitespace-no-wrap">Settings</span>
         </a>
     </li>
+    @endif
 
     {{-- TODO: Alumni — route and controller not built yet --}}
     {{-- TODO: Certificates — route and controller not built yet --}}
