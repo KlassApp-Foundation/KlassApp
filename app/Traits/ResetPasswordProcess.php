@@ -18,7 +18,7 @@ trait ResetPasswordProcess
 
     public function resetPasswordToUser($model)
     {
-        $token = str_random(10);
+        $token = \Illuminate\Support\Str::random(10);
         $password = \DB::table(config('auth.passwords.users.table'))->insert([
             'email' => $model->email,
             'token' => Hash::make($token),
@@ -54,7 +54,7 @@ trait ResetPasswordProcess
     {
         try
         {
-            $token = str_random(10);
+            $token = \Illuminate\Support\Str::random(10);
             $password = \DB::table(config('auth.passwords.users.table'))->insert([
                 'email' => $user->email,
                 'token' => Hash::make($token),

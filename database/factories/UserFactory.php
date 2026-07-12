@@ -28,11 +28,11 @@ class UserFactory extends Factory
         'email' => $this->faker->unique()->safeEmail,
         'mobile_no' => $this->faker->unique()->randomNumber($nbDigits = 9, $strict = false),
         'password' => bcrypt('password'),
-        'email_verification_code' =>str_random(40),
+        'email_verification_code' => \Illuminate\Support\Str::random(40),
         //'email_verified' => 1,
         //'email_verified_at' => Carbon::now(),
         'registration_number'   =>  $this->faker->unique()->randomNumber($nbDigits = 6, $strict = false),
-        'remember_token' => str_random(10),
+        'remember_token' => \Illuminate\Support\Str::random(10),
     ];
 
 
