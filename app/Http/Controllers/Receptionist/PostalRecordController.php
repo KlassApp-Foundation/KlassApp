@@ -112,7 +112,8 @@ class PostalRecordController extends Controller
 
     public function show($id)
     {
-        $postalrecord=PostalRecord::where('id',$id)->get();
+        $schoolId = Auth::user()->school_id;
+        $postalrecord=PostalRecord::where('school_id', $schoolId)->where('id',$id)->get();
 
         $postalrecord=PostalRecordResource::collection($postalrecord);
 
@@ -147,7 +148,7 @@ class PostalRecordController extends Controller
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
         try
         {
-            $postalrecord=PostalRecord::find($id);
+            $postalrecord=PostalRecord::where('school_id', $school_id)->findOrFail($id);
 
             $postalrecord->school_id=$school_id;
             $postalrecord->academic_year_id=$academic_year->id;
@@ -189,8 +190,8 @@ class PostalRecordController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('PostalRecordController@update failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update postal record.'], 422);
         }
     }
 
@@ -204,7 +205,8 @@ class PostalRecordController extends Controller
     {
         try 
         {
-            $postalrecord=PostalRecord::where('id',$id)->first();
+            $schoolId = Auth::user()->school_id;
+            $postalrecord=PostalRecord::where('school_id', $schoolId)->findOrFail($id);
         
             $postalrecord->delete();
 
@@ -224,8 +226,8 @@ class PostalRecordController extends Controller
         }
         catch(Exception $e) 
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('PostalRecordController@destroy failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to delete postal record.'], 422);
         }
     }
 }

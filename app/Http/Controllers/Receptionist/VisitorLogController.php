@@ -54,7 +54,9 @@ class VisitorLogController extends Controller
         //
         $array = [];
 
-        $teacher    =   User::BySchool(Auth::user()->school_id)->where('usergroup_id',5)->orWhere('usergroup_id',8)->ByStatus('active')->get();
+        $teacher    =   User::BySchool(Auth::user()->school_id)->where(function ($q) {
+            $q->where('usergroup_id',5)->orWhere('usergroup_id',8);
+        })->ByStatus('active')->get();
         $array['teacherlist']   = UserResource::collection($teacher);
 
         $array['standardlist']  = SiteHelper::getStandardLinkList(Auth::user()->school_id);

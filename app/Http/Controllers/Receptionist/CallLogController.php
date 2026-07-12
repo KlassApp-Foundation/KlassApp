@@ -122,7 +122,8 @@ class CallLogController extends Controller
 
     public function show($id)
     {
-        $calllog=CallLog::where('id',$id)->get();
+        $schoolId = Auth::user()->school_id;
+        $calllog=CallLog::where('school_id', $schoolId)->where('id',$id)->get();
 
         $calllog=CallLogResource::collection($calllog);
 
@@ -157,7 +158,7 @@ class CallLogController extends Controller
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
         try
         {
-            $calllog=CallLog::find($id);
+            $calllog=CallLog::where('school_id', $school_id)->findOrFail($id);
 
             $calllog->school_id=$school_id;
             $calllog->academic_year_id=$academic_year->id;
@@ -197,8 +198,8 @@ class CallLogController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('CallLogController@update failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update call log.'], 422);
         }
     }
 
@@ -213,7 +214,8 @@ class CallLogController extends Controller
         \DB::beginTransaction();
         try 
         {
-            $calllog=CallLog::where('id',$id)->first();
+            $schoolId = Auth::user()->school_id;
+            $calllog=CallLog::where('school_id', $schoolId)->findOrFail($id);
             
             $calllog->delete();
             
@@ -236,8 +238,8 @@ class CallLogController extends Controller
         catch(Exception $e) 
         {
             \DB::rollBack();
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('CallLogController@destroy failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to delete call log.'], 422);
         }
     }
 }

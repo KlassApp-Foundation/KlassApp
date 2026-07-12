@@ -105,7 +105,8 @@ class EmailRecordController extends Controller
 
      public function show($id)
     {
-        $emailrecord=EmailRecord::where('id',$id)->get();
+        $schoolId = Auth::user()->school_id;
+        $emailrecord=EmailRecord::where('school_id', $schoolId)->where('id',$id)->get();
 
         $emailrecord=EmailRecordResource::collection($emailrecord);
 
@@ -141,7 +142,7 @@ class EmailRecordController extends Controller
           $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
         try
         {
-            $emailrecord=EmailRecord::find($id);
+            $emailrecord=EmailRecord::where('school_id', $school_id)->findOrFail($id);
 
            
             $emailrecord->school_id=$school_id;
@@ -183,8 +184,8 @@ class EmailRecordController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('EmailRecordController@update failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update email record.'], 422);
         }
     }
 
@@ -198,7 +199,8 @@ class EmailRecordController extends Controller
     {
         try 
         {
-            $emailrecord=EmailRecord::where('id',$id)->first();
+            $schoolId = Auth::user()->school_id;
+            $emailrecord=EmailRecord::where('school_id', $schoolId)->findOrFail($id);
           
             $emailrecord->delete();
 
@@ -219,8 +221,8 @@ class EmailRecordController extends Controller
         }
         catch(Exception $e) 
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('EmailRecordController@destroy failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to delete email record.'], 422);
         }
     }
 }
