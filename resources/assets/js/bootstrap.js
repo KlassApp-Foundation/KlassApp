@@ -23,6 +23,10 @@ window.axios = require("axios");
 
 window.axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
 
+// Preserve pre-1.x validateStatus behavior (accept all HTTP status codes)
+// to avoid breaking components that handle errors via response status checks
+window.axios.defaults.validateStatus = null;
+
 /**
  * Next we will register the CSRF Token as a common header with Axios so that
  * all outgoing HTTP requests automatically have it attached. This is just
