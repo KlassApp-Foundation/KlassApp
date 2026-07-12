@@ -139,12 +139,22 @@ class ToshiActionService
             5 => [ // Teacher
                 'scope'   => 'school',
                 'label'   => 'teacher',
-                'actions' => [],
+                'actions' => [
+                    'mark_attendance', 'enter_marks', 'manage_lesson_plans',
+                    'manage_assignments', 'manage_homework', 'apply_leave',
+                    'manage_class_wall', 'view_students', 'view_timetable',
+                    'view_events', 'manage_tasks', 'manage_noticeboard',
+                ],
             ],
             6 => [ // Student
                 'scope'   => 'self',
                 'label'   => 'student',
-                'actions' => [],
+                'actions' => [
+                    'view_dashboard', 'view_assignments', 'view_homework',
+                    'manage_tasks', 'view_events', 'view_notices',
+                    'view_marks', 'view_attendance', 'view_library_activity',
+                    'view_class_wall', 'manage_conversations',
+                ],
             ],
             7 => [ // Parent — API-only (no web dashboard). No route group registered.
                 'scope'   => 'none',
@@ -154,7 +164,10 @@ class ToshiActionService
             8 => [ // Librarian
                 'scope'   => 'school',
                 'label'   => 'librarian',
-                'actions' => [],
+                'actions' => [
+                    'manage_books', 'manage_book_categories', 'manage_lending',
+                    'manage_library_cards', 'view_dashboard', 'manage_tasks',
+                ],
             ],
             9 => [ // OldStudent
                 'scope'   => 'none',
@@ -164,14 +177,21 @@ class ToshiActionService
             10 => [ // Receptionist
                 'scope'   => 'school',
                 'label'   => 'receptionist',
-                'actions' => [],
+                'actions' => [
+                    'manage_visitor_log', 'manage_call_log', 'manage_postal_record',
+                    'manage_email_record', 'view_dashboard', 'view_events',
+                    'manage_noticeboard', 'manage_tasks',
+                ],
             ],
             11 => [ // Accountant
                 'scope'   => 'school',
                 'label'   => 'accountant',
-                'actions' => [],
+                'actions' => [
+                    'record_payment', 'manage_payroll', 'view_unpaid_reports',
+                    'view_fee_structure', 'view_dashboard', 'manage_tasks',
+                ],
             ],
-            12 => [ // Stock Keeper
+            12 => [ // Stock Keeper — routes/stock.php is empty, no modules implemented yet
                 'scope'   => 'school',
                 'label'   => 'stock keeper',
                 'actions' => [],
