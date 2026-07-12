@@ -115,10 +115,10 @@ class ToshiActionService
                 'label'   => 'platform administrator',
                 'actions' => ['create_school', 'platform_reports', 'list_schools'],
             ],
-            2 => [ // SiteSubadmin
-                'scope'   => 'platform',
-                'label'   => 'platform administrator',
-                'actions' => ['create_school', 'platform_reports', 'list_schools'],
+            2 => [ // SiteSubadmin — dead role, pending removal. No routes or middleware.
+                'scope'   => 'none',
+                'label'   => 'inactive role',
+                'actions' => [],
             ],
             3 => [ // SchoolAdmin
                 'scope'   => 'school',
@@ -146,8 +146,8 @@ class ToshiActionService
                 'label'   => 'student',
                 'actions' => [],
             ],
-            7 => [ // Parent
-                'scope'   => 'children',
+            7 => [ // Parent — API-only (no web dashboard). No route group registered.
+                'scope'   => 'none',
                 'label'   => 'parent',
                 'actions' => [],
             ],
