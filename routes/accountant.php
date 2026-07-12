@@ -91,3 +91,8 @@ Route::get('/notification/showList', 'NotificationController@showList');
 Route::get('/fees/payments', 'FeePaymentController@index')->name('accountant.fee-payments');
 Route::get('/fees/payments/create', 'FeePaymentController@create')->name('accountant.fee-payments.create');
 Route::post('/fees/payments/store', 'FeePaymentController@store')->name('accountant.fee-payments.store');
+
+// Reports / Data Exports landing page
+Route::get('/reports', function () {
+    return view('accountant.reports.index');
+})->name('accountant.reports');
