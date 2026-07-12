@@ -135,7 +135,7 @@ class ToshiAssistantService
             return str_replace('_', ' ', $a);
         }, $allowedActions);
 
-        $isSuperAdmin = $user->usergroup_id === 1 || $user->usergroup_id === 2;
+        $isSuperAdmin = $user->usergroup_id === 1;
 
         if ($isSuperAdmin) {
             $totalSchools = School::count();

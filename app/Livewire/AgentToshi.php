@@ -2235,7 +2235,7 @@ class AgentToshi extends Component
         // Re-launch onboarding (super admin only)
         if (preg_match('/\b(?:create|add|start|new|setup|onboard)\b.*\b(?:school|onboarding)\b/i', $text)
             || in_array($lower, ['setup', 'onboard', 'add school', 'new school', 'create school'])) {
-            if (auth()->user()?->usergroup_id === 1 || auth()->user()?->usergroup_id === 2) {
+            if (auth()->user()?->usergroup_id === 1) {
                 $this->resetOnboarding(startNew: true);
                 return true;
             }

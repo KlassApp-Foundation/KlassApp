@@ -180,6 +180,7 @@ class TeacherEditController extends Controller
         else if($request->designation=="others")
         {
           $usergroup_id= 13;
+          \App\Models\Usergroup::firstOrCreate(['id' => 13], ['name' => 'Non Teaching']);
         }
         else
         {

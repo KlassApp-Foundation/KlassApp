@@ -11,7 +11,6 @@ class UsergroupTableSeeder extends Seeder
     {
         $groups = [
             ['id' => 1, 'name' => 'SiteAdmin'],
-            ['id' => 2, 'name' => 'SiteSubadmin'],
             ['id' => 3, 'name' => 'SchoolAdmin'],
             ['id' => 4, 'name' => 'SchoolSubadmin'],
             ['id' => 5, 'name' => 'Teacher'],
@@ -22,7 +21,6 @@ class UsergroupTableSeeder extends Seeder
             ['id' => 10, 'name' => 'Receptionist'],
             ['id' => 11, 'name' => 'Accountant'],
             ['id' => 12, 'name' => 'Stock Keeper'],
-            ['id' => 13, 'name' => 'Non Teaching'],
         ];
 
         foreach ($groups as $group) {

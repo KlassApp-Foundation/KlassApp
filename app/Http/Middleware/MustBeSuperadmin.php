@@ -13,11 +13,11 @@ class MustBeSuperadmin
      * @param  \Closure  $next
      * @return mixed
      */
-    public function handle($request, Closure $next)
+     public function handle($request, Closure $next)
     {
 
-    
-        if(\Auth::user()->usergroup_id==1 || \Auth::user()->usergroup_id==2)
+     
+        if(\Auth::user()->usergroup_id==1)
         {//dd('superadmin_midl');
             //return $next($request);
            // dd("jj");
