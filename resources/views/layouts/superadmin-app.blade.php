@@ -44,7 +44,7 @@
         @yield('outside-app')
 
         @auth
-            @if(in_array(auth()->user()->usergroup_id, [1, 2, 3]))
+            @if(in_array(auth()->user()->usergroup_id, [1, 3]))
                 @livewire('agent-toshi')
             @endif
         @endauth
