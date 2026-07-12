@@ -20,6 +20,12 @@ echo " Branch: $GIT_BRANCH"
 echo "========================================"
 echo ""
 
+# ---- Local build step ----
+echo "[Local] Rebuilding frontend assets..."
+cd "$(dirname "$0")/.."
+NODE_OPTIONS=--openssl-legacy-provider npm run production
+echo "[Local] Assets rebuilt. Remember to commit if running manually."
+
 ssh "$APP_SERVER" -i ~/.ssh/id_ed25519_do << REMOTE_SCRIPT
 set -e
 APP_DIR="$APP_DIR"
@@ -28,7 +34,7 @@ GIT_BRANCH="$GIT_BRANCH"
 
 cd "\$APP_DIR"
 
-echo "[1/5] Pulling latest code..."
+echo "[1/5] Pulling latest code (includes compiled assets)..."
 git pull origin "\$GIT_BRANCH" --ff-only
 
 echo "[2/5] Running migrations..."

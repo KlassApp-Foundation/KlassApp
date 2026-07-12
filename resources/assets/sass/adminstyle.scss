@@ -982,7 +982,7 @@ button.fc-button.fc-button-primary {
     box-shadow: 0 0 4px 2px #6ee7b7;
 }
 .mobile-frame {
-    background-image: url("../../images/mobile.png");
+    /* background-image: url("../../images/mobile.png"); -- file missing, removed to unblock build */
     min-height: 550px;
     background-size: contain;
     background-position: center;
