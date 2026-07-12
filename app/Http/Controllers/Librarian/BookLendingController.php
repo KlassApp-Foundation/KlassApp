@@ -33,13 +33,15 @@ class BookLendingController extends Controller
      */
     public function index()
     {
-        $booklending = BookLending::where('status','pending');
+        $schoolId = Auth::user()->school_id;
+        $booklending = BookLending::whereHas('user', fn($q) => $q->where('school_id', $schoolId))
+            ->where('status','pending');
 
         $q = request('q');
 
         if($q!= '')
         {
-            $booklending = BookCategory::where(function ($query) use($q)
+            $booklending = $booklending->where(function ($query) use($q)
             {
                 $query->where('book_code_no','LIKE','%'.$q.'%')->orWhere('library_card_no','LIKE','%'.$q.'%');
             });                
@@ -50,7 +52,7 @@ class BookLendingController extends Controller
 
         $currentDate = date('Y-m-d');
 
-        return view('/library/booklending/index',['booklending' => $booklending , 'currentDate' => $currentDate , 'category' => $category]);
+        return view('/library/booklending/index',['booklending' => $booklending , 'currentDate' => $currentDate]);
     }
 
     /**
@@ -73,7 +75,10 @@ class BookLendingController extends Controller
     {
         try
         {
-            $library_card = LibraryCard::where('library_card_no',$request->library_card_no)->first();
+            $schoolId = Auth::user()->school_id;
+            $library_card = LibraryCard::where('school_id', $schoolId)
+                ->where('library_card_no',$request->library_card_no)
+                ->firstOrFail();
 
             $booklending = new BookLending;
 
@@ -110,53 +115,42 @@ class BookLendingController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('BookLendingController@store failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to create book lending.'], 422);
         }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
-        $booklending=BookLending::where('id',$id)->get();
+        $schoolId = Auth::user()->school_id;
+        $booklending=BookLending::whereHas('user', fn($q) => $q->where('school_id', $schoolId))
+            ->where('id',$id)->get();
 
         $booklending=BookLendingResource::collection($booklending);
 
         return $booklending;
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function edit($id)
     {
-        $booklending = BookLending::where('id',$id)->first();
+        $schoolId = Auth::user()->school_id;
+        $booklending = BookLending::whereHas('user', fn($q) => $q->where('school_id', $schoolId))
+            ->where('id',$id)->firstOrFail();
 
         return view('/library/booklending/edit' , ['booklending' => $booklending]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
         try
         {
-            $booklending = BookLending::where('id',$id)->first();
+            $schoolId = Auth::user()->school_id;
+            $booklending = BookLending::whereHas('user', fn($q) => $q->where('school_id', $schoolId))
+                ->where('id',$id)->firstOrFail();
 
-            $library_card = LibraryCard::where('library_card_no',$request->library_card_no)->first();
+            $library_card = LibraryCard::where('school_id', $schoolId)
+                ->where('library_card_no',$request->library_card_no)
+                ->firstOrFail();
 
             $booklending->user_id           =   $library_card->user_id;
             $booklending->library_card_no   =   $request->library_card_no;
@@ -204,8 +198,8 @@ class BookLendingController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('BookLendingController@update failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update book lending.'], 422);
         }
     }
 
@@ -247,8 +241,8 @@ class BookLendingController extends Controller
         }
         catch(Exception $e)
         {
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            Log::error('BookLendingController@returnBook failed: ' . $e->getMessage());
+            return redirect()->back()->with('errormessage', 'Failed to return book.');
         }
     }
 }

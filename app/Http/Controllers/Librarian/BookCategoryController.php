@@ -180,7 +180,7 @@ class BookCategoryController extends Controller
     {
         try
         {
-            $category = BookCategory::where('id',$id)->first();
+            $category = BookCategory::where('id',$id)->where('school_id',Auth::user()->school_id)->firstOrFail();
 
             if(Gate::allows('category',$category))
             {
