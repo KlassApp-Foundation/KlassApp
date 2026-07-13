@@ -1446,6 +1446,25 @@
         });
     }
 
+    // ── Audience typewriter content ──
+    const audienceCopy = {
+        admin: {
+            title: "The school in every parent's pocket.",
+            subtitle: 'And the command centre your admin team runs on.'
+        },
+        teacher: {
+            title: 'Spend less time on admin. More time doing what you love.',
+            subtitle: 'KlassApp handles the noise so you can focus on what actually matters — teaching.'
+        },
+        parent: {
+            title: "Always in the loop. Never in the dark.",
+            subtitle: 'Real-time updates on attendance, grades, and school communications — all in one place, built for busy parents.'
+        }
+    };
+
+    const titleEl = document.getElementById('typewriter-text');
+    const cursorEl = document.getElementById('typewriter-cursor');
+
     // ── Audience tabs (tagline switching only) ──
     const audienceSubtitles = {
         admin: '✦ And the system your admin team operates on.',
