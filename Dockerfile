@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.4-fpm
 
 # Accept build arguments from docker-compose
 ARG USER_ID=1000
