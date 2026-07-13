@@ -1,3 +1,9 @@
+{{-- 
+    PROMOTION FORM PARTIAL
+    Structurally NOT a marks grid — it's a promotion action button with confirmation dialog.
+    The ds-grid-marks pattern does not apply to this view.
+    Included only by filter.blade.php for End Of Year exam type.
+--}}
 <form
     id="promotionForm"
     method="GET"
@@ -13,7 +19,7 @@
     <button
         type="button"
         id="promoteBtn"
-        class="px-2 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+        class="ds-btn ds-btn-primary"
     >
         Finalize Promotion
     </button>
