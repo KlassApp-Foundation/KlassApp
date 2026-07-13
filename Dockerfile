@@ -54,6 +54,20 @@ RUN sed -i 's/user = www-data/user = appuser/g' /usr/local/etc/php-fpm.d/www.con
  && sed -i 's/group = www-data/group = appgroup/g' /usr/local/etc/php-fpm.d/www.conf \
  && sed -i 's|^;*listen = .*|listen = 0.0.0.0:9000|' /usr/local/etc/php-fpm.d/www.conf
 
+# Xdebug (dev only — set BUILD_WITH_XDEBUG=1 to include)
+ARG BUILD_WITH_XDEBUG=0
+RUN if [ "$BUILD_WITH_XDEBUG" = "1" ]; then \
+    pecl install xdebug && \
+    docker-php-ext-enable xdebug && \
+    { \
+        echo "xdebug.mode=debug"; \
+        echo "xdebug.client_host=host.docker.internal"; \
+        echo "xdebug.client_port=9003"; \
+        echo "xdebug.start_with_request=yes"; \
+        echo "xdebug.idekey=PHPSTORM"; \
+    } >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+    fi
+
 # Entry point
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

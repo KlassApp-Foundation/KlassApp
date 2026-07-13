@@ -2,10 +2,10 @@
 
 @section('content')
 <div class="dashboard-shell">
-    <div class="dashboard-heading">
+    <div class="ds-page-head">
         <div>
-            <h1 class="dashboard-section-title">Transport Routes</h1>
-            <p class="dashboard-subtitle">Manage school transport routes and vehicles.</p>
+            <h1 class="ds-page-head-title">Transport Routes</h1>
+            <p class="ds-page-head-sub">Manage school transport routes and vehicles.</p>
         </div>
         <a href="{{ route('admin.transport.create') }}" class="ds-btn ds-btn-primary ds-btn-sm">
             + Add Route

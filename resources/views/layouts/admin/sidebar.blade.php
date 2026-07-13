@@ -1,6 +1,6 @@
 {{-- SPDX-License-Identifier: MIT --}}
 {{-- Desktop sidebar — visible md+ --}}
-<div id="admin-sidebar" class="hidden md:block lg:w-48 md:w-48 text-white dashboard-themed-sidebar admin-sidebar" data-collapsed="false" style="background-color: #FFFCF5;">
+<div id="admin-sidebar" class="hidden md:block lg:w-48 md:w-48 text-slate-700 dashboard-themed-sidebar admin-sidebar" data-collapsed="false" style="background-color: #FFFCF5;">
   <div class="min-h-full header-wrapper-b">
    @include('layouts.admin.menu')
   </div>

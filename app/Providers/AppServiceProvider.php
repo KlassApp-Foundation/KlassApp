@@ -38,6 +38,9 @@ use Schema;
 use Config;
 use App;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Notifications\ChannelManager;
+use Illuminate\Support\Facades\Notification;
+use App\Channels\WhatsAppBackupChannel;
 // Importing DuskServiceProvider class
 
 class AppServiceProvider extends ServiceProvider {
@@ -122,6 +125,13 @@ class AppServiceProvider extends ServiceProvider {
         }
 
         Paginator::useBootstrap();
+
+        // Register WhatsApp backup notification channel
+        Notification::resolved(function (ChannelManager $service) {
+            $service->extend('whatsapp', function ($app): WhatsAppBackupChannel {
+                return $app->make(WhatsAppBackupChannel::class);
+            });
+        });
     }
 
     /**

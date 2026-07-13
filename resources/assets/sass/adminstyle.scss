@@ -114,11 +114,19 @@
     font-weight: 700;
 }
 .admin-sidebar ul li a {
-    @apply .text-white .text-sm .font-normal;
+    @apply .text-sm .font-normal;
+    color: #1E293B;
+}
+.admin-sidebar ul li a:hover {
+    color: #15803D;
+    background: rgba(34, 197, 94, 0.08);
+    border-radius: 6px;
 }
 .admin-sidebar .active {
-    background: #1e3a8a;
-    border-left: 0;
+    background: rgba(34, 197, 94, 0.12);
+    border-left: 3px solid var(--d-accent, #22C55E);
+    color: #15803D;
+    border-radius: 0 6px 6px 0;
 }
 
 .admin-sidebar .dashboard-menu-item.dashboard-active {

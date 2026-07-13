@@ -78,6 +78,28 @@ class Kernel extends ConsoleKernel
                  ->everyMinute()
                  ->withoutOverlapping();
 
+        // ─── Backup Pipeline ────────────────────────────────────────────
+        // Database + file backup to Hetzner Object Storage (S3)
+        $schedule->command('backup:run')
+                 ->daily()
+                 ->at('02:00')
+                 ->withoutOverlapping()
+                 ->environments(['production']);
+
+        // Cleanup old backups per retention policy
+        $schedule->command('backup:clean')
+                 ->daily()
+                 ->at('03:00')
+                 ->withoutOverlapping()
+                 ->environments(['production']);
+
+        // Monitor backup health (age, size)
+        $schedule->command('backup:monitor')
+                 ->daily()
+                 ->at('08:00')
+                 ->withoutOverlapping()
+                 ->environments(['production']);
+
         $schedule->command('gego:checknotification')
                  ->hourly()
                  ->withoutOverlapping();

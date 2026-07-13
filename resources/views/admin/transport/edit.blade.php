@@ -2,10 +2,10 @@
 
 @section('content')
 <div class="dashboard-shell">
-    <div class="dashboard-heading">
+    <div class="ds-page-head">
         <div>
-            <h1 class="dashboard-section-title">Edit Transport Route</h1>
-            <p class="dashboard-subtitle">Update route details for <strong>{{ $route->name }}</strong>.</p>
+            <h1 class="ds-page-head-title">Edit Transport Route</h1>
+            <p class="ds-page-head-sub">Update route details for <strong>{{ $route->name }}</strong>.</p>
         </div>
         <a href="{{ route('admin.transport') }}" class="ds-btn ds-btn-ghost ds-btn-sm">&larr; Back to Routes</a>
     </div>

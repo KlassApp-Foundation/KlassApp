@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        BUILD_WITH_XDEBUG: ${BUILD_WITH_XDEBUG:-0}
     user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     container_name: sms-app
     restart: unless-stopped

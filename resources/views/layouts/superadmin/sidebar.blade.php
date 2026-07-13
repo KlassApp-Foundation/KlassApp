@@ -1,6 +1,6 @@
 {{-- SPDX-License-Identifier: MIT --}}
 <div id="superadmin-sidebar" class="w-full h-full lg:w-48 md:w-48 dashboard-themed-sidebar admin-sidebar" data-collapsed="false">
-  <div class="min-h-full header-wrapper-b hidden lg:block md:block">
+  <div class="min-h-full header-wrapper-b hidden lg:block md:block" style="color: var(--d-text);">
    @include('layouts.superadmin.menu')
   </div>
 </div>

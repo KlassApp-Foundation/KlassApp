@@ -1,0 +1,27 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+        - config/
+
+    level: 5
+
+    excludePaths:
+        - vendor/
+        - node_modules/
+        - storage/
+        - bootstrap/cache/
+
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+    checkUninitializedProperties: true
+
+    # Ignore common Laravel magic (facades, dynamic calls, etc.)
+    ignoreErrors:
+        - '#Method .*::[a-z]+\(\) has no return type specified#'
+        - '#Property .* has no type specified#'
+        - '#Access to an undefined property .*::\$[a-z]+#'
+        - '#Call to an undefined method .*::[a-z]+\(\)#'
+        - '#PHPDoc tag @var has no type specified#'
