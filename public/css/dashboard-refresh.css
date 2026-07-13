@@ -1809,3 +1809,271 @@ a.ds-kpi-card:hover {
     color: var(--d-muted);
     margin: 0 0 16px;
 }
+
+/* ── Premium Data Table (Scholarly Ledger) ── */
+.ds-table-ledger {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.85rem;
+}
+.ds-table-ledger thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.ds-table-ledger th {
+    padding: 12px 20px;
+    font-family: "Sora", sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--d-muted);
+    background: rgba(255, 255, 252, 0.97);
+    border-bottom: 2px solid var(--d-blue);
+    white-space: nowrap;
+    text-align: left;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease;
+    min-height: 48px;
+}
+.ds-table-ledger th:hover { color: var(--d-blue); }
+.ds-table-ledger th .dt-sort-arrow {
+    display: inline-block;
+    margin-left: 6px;
+    transition: transform 0.2s ease;
+    color: var(--d-muted);
+}
+.ds-table-ledger th.active .dt-sort-arrow { color: var(--d-blue); }
+.ds-table-ledger th.active .dt-sort-arrow.dt-asc { transform: rotate(180deg); }
+
+.ds-table-ledger td {
+    padding: 16px 20px;
+    color: var(--d-text);
+    border-bottom: 1px solid var(--d-border);
+    vertical-align: middle;
+    line-height: 1.4;
+}
+.ds-table-ledger tbody tr {
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.ds-table-ledger tbody tr:hover {
+    background: #F5F0E9;
+    box-shadow: inset 3px 0 0 var(--d-blue);
+}
+.ds-table-ledger tbody tr.dt-selected {
+    background: #E8F0FE;
+    box-shadow: inset 3px 0 0 var(--d-blue);
+}
+.ds-table-ledger tbody tr.dt-row-alt {
+    background: #F8F5F0;
+}
+.ds-table-ledger tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Checkbox cell */
+.ds-table-ledger .dt-cell-check {
+    width: 44px;
+    padding: 0 4px 0 16px;
+    text-align: center;
+}
+.dt-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid var(--d-border);
+    accent-color: var(--d-blue);
+    cursor: pointer;
+    min-width: 18px;
+    min-height: 18px;
+}
+.dt-checkbox:checked { border-color: var(--d-blue); }
+
+/* Badge cells */
+.dt-cell-badge { min-width: 100px; }
+
+/* Numeric cells */
+.dt-cell-num {
+    font-family: "DM Sans", sans-serif;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+/* Status Badges */
+.dt-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    min-height: 28px;
+    white-space: nowrap;
+}
+.dt-badge svg { width: 14px; height: 14px; flex-shrink: 0; }
+.dt-badge-paid { background: #F0FDF4; color: #15803D; }
+.dt-badge-unpaid { background: #FEF2F2; color: #DC2626; }
+.dt-badge-partial { background: #FFFBEB; color: #B45309; }
+.dt-badge-pending { background: #F1F5F9; color: #64748B; }
+.dt-badge-active { background: #F0FDF4; color: #15803D; }
+.dt-badge-inactive { background: #F1F5F9; color: #64748B; }
+.dt-badge-present { background: #EFF6FF; color: #1D4ED8; }
+.dt-badge-absent { background: #FEF2F2; color: #DC2626; }
+
+/* Density variants */
+.ds-table-ledger.dt-comfortable td { padding: 18px 20px; }
+.ds-table-ledger.dt-compact td { padding: 12px 16px; font-size: 0.8rem; }
+.ds-table-ledger.dt-compact th { padding: 8px 16px; }
+.ds-table-ledger.dt-compact .dt-badge { font-size: 0.72rem; padding: 2px 8px; min-height: 24px; }
+
+/* Pagination */
+.dt-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.8rem;
+    color: var(--d-muted);
+    min-height: 44px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.dt-pagination-info { color: var(--d-muted); }
+.dt-pagination-pages {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.dt-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid var(--d-border);
+    background: transparent;
+    color: var(--d-text);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 44px;
+    min-height: 44px;
+}
+.dt-page-btn:hover { border-color: var(--d-blue); color: var(--d-blue); }
+.dt-page-btn.active { background: var(--d-blue); color: #fff; border-color: var(--d-blue); }
+.dt-page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.dt-page-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    color: var(--d-blue);
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    min-height: 44px;
+}
+.dt-page-nav:hover { text-decoration: underline; }
+.dt-page-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Table empty state */
+.ds-table-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+}
+.ds-table-empty .ds-empty-state-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
+.ds-table-empty .ds-empty-state-title {
+    font-family: "Sora", sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--d-text);
+    margin: 0 0 4px;
+}
+.ds-table-empty .ds-empty-state-desc {
+    font-size: 0.85rem;
+    color: var(--d-muted);
+    max-width: 320px;
+    margin: 0;
+}
+
+/* Density toggle */
+.dt-density-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--d-border);
+    background: transparent;
+    color: var(--d-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    min-width: 44px;
+    min-height: 44px;
+}
+.dt-density-btn.active { background: var(--d-blue); color: #fff; border-color: var(--d-blue); }
+.dt-density-btn:hover { border-color: var(--d-blue); color: var(--d-blue); }
+
+/* Responsive wrapper */
+.ds-table-wrap { overflow-x: auto; }
+@media (max-width: 768px) {
+    .ds-table-ledger th, .ds-table-ledger td { padding-left: 12px; padding-right: 12px; }
+    .dt-pagination { flex-direction: column; align-items: flex-start; }
+}
+
+/* ── Marks Grid (grade-entry variant) ── */
+.ds-grid-marks {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.8rem;
+}
+.ds-grid-marks thead { position: sticky; top: 0; z-index: 2; }
+.ds-grid-marks th {
+    padding: 8px 10px;
+    font-family: "Sora", sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--d-muted);
+    background: rgba(255, 255, 252, 0.97);
+    border-bottom: 2px solid var(--d-blue);
+    white-space: nowrap;
+    text-align: center;
+    min-width: 48px;
+}
+.ds-grid-marks th:first-child { text-align: left; padding-left: 16px; position: sticky; left: 0; z-index: 3; background: rgba(255, 255, 252, 0.97); }
+.ds-grid-marks th:nth-child(2) { text-align: left; min-width: 140px; position: sticky; left: 48px; z-index: 3; background: rgba(255, 255, 252, 0.97); }
+.ds-grid-marks td {
+    padding: 8px 10px;
+    color: var(--d-text);
+    border-bottom: 1px solid var(--d-border);
+    text-align: center;
+    vertical-align: middle;
+    font-variant-numeric: tabular-nums;
+}
+.ds-grid-marks td:first-child { text-align: center; color: var(--d-muted); font-size: 0.75rem; position: sticky; left: 0; z-index: 1; background: var(--d-white); }
+.ds-grid-marks td:nth-child(2) { text-align: left; font-weight: 500; position: sticky; left: 48px; z-index: 1; background: var(--d-white); }
+.ds-grid-marks tbody tr { transition: background 0.15s ease; }
+.ds-grid-marks tbody tr:hover { background: #F5F0E9; }
+.ds-grid-marks tbody tr:nth-child(even) { background: #F8F5F0; }
+.ds-grid-marks tbody tr:nth-child(even):hover { background: #F5F0E9; }
+.ds-grid-marks .gm-total { font-weight: 600; color: var(--d-dark); }
+.ds-grid-marks .gm-agg { font-weight: 600; color: var(--d-blue); }
+.ds-grid-marks .gm-pos { font-weight: 600; color: var(--d-green); }
+.ds-grid-marks .gm-subject-code { font-size: 0.6rem; display: block; color: var(--d-muted); font-weight: 400; letter-spacing: 0; text-transform: none; }

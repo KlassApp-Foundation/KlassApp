@@ -63,11 +63,12 @@
 
     {{-- Students Table --}}
     @if($students->isEmpty())
-        <div class="ds-card text-center py-12 mt-4">
-            <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
-            <p class="text-gray-400 text-sm">No students found matching your filters.</p>
+        <div class="ds-table-empty">
+            <div class="ds-empty-state-icon">👤</div>
+            <p class="ds-empty-state-title">No students found</p>
+            <p class="ds-empty-state-desc">Try adjusting your search or filter criteria.</p>
             @if($search || $standardFilter || $statusFilter)
-                <a href="{{ url('/admin/students') }}" class="text-blue-600 text-sm mt-2 inline-block hover:underline">Clear all filters</a>
+                <a href="{{ url('/admin/students') }}" class="text-blue-600 text-sm mt-3 inline-block hover:underline">Clear all filters</a>
             @endif
         </div>
     @else
@@ -91,7 +92,8 @@
                         </td>
                         <td>
                             @if($student->class_name)
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <span class="dt-badge dt-badge-active" style="background:#EFF6FF;color:#1D4ED8;">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
                                     {{ $student->class_name }}
                                 </span>
                             @else
@@ -113,13 +115,13 @@
                         </td>
                         <td>
                             @if($student->status === 'active')
-                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                <span class="dt-badge dt-badge-active">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
                                     Active
                                 </span>
                             @else
-                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                    <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                                <span class="dt-badge dt-badge-inactive">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
                                     {{ ucfirst($student->status) }}
                                 </span>
                             @endif

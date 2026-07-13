@@ -1914,6 +1914,33 @@ class AgentToshi extends Component
         $history = array_slice($this->messages, -20);
         $handled = false;
 
+        // SDK v2 path: Laravel AI SDK agent stack (gated by feature flag)
+        if (config('toshi.sdk_v2_enabled', false)) {
+            try {
+                $service = app(\App\AiAgents\ToshiSdkV2Service::class);
+                if ($service->isAvailable($user, $this->schoolId) && $service->consumeBudget($user, $this->schoolId)) {
+                    $response = $service->ask($user, $this->schoolId, $text, $history);
+                    if ($response !== null) {
+                        $this->botSay($response);
+                        \Log::info('Assistant path: SDK v2', ['user_id' => $user->id]);
+                        return;
+                    }
+                } else {
+                    $remaining = $service->getRemainingBudget($user, $this->schoolId);
+                    if ($remaining <= 0) {
+                        $this->botSay("You've reached your query limit for this period. I can still answer common questions using the keyword router.");
+                        \Log::info('Assistant path: SDK v2 budget exhausted', ['user_id' => $user->id]);
+                        return;
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('SDK v2 failed, falling back to LarAgent', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         // New path: LarAgent agent (gated by feature flag)
         if (config('toshi.laragent_enabled', false)) {
             try {
@@ -1928,6 +1955,9 @@ class AgentToshi extends Component
                             'args' => $decoded['args'],
                         ];
                         $this->awaitingConfirm = true;
+                        // Store in session so confirmation survives page refresh
+                        $messageId = md5($decoded['preview'] ?? '');
+                        session(['toshi_pending_confirm_' . $messageId => $this->pendingToolConfirm]);
                         $this->botSay($decoded['preview'] . "\n\nUse the buttons below to confirm or cancel.");
                     } else {
                         $this->botSay($response);
@@ -2298,10 +2328,19 @@ class AgentToshi extends Component
     }
 
     /**
-     * Cancel the current action flow.
+     * Cancel the current action flow, or a pending tool confirmation.
+     * Called internally (no args) to reset the action flow, or from the
+     * confirmation UI (with messageId) to discard a pending confirmation.
      */
-    private function cancelAction(): void
+    public function cancelAction(string $messageId = ''): void
     {
+        if ($messageId) {
+            session()->forget('toshi_pending_confirm_' . $messageId);
+            $this->pendingToolConfirm = null;
+            $this->awaitingConfirm = false;
+            $this->botSay('Cancelled. No changes were made.');
+            return;
+        }
         $this->actionStep = null;
         $this->actionSubstep = 0;
         $this->actionData = [];

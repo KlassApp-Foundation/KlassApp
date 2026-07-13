@@ -43,6 +43,14 @@
                         <div class="toshi-msg-label">{{ $isUser ? 'You' : 'Toshi' }}</div>
                         <div class="{{ $isUser ? 'toshi-msg-user' : 'toshi-msg-bot' }}">
                             @if(!$isUser){!! preg_replace('/\*\*(.+?)\*\*/','<strong>$1</strong>',nl2br(e($msg['text']))) !!}@else{!! nl2br(e($msg['text'])) !!}@endif
+                            @if(!$isUser && $awaitingConfirm && $pendingToolConfirm && $loop->last)
+                                <div class="flex gap-2 mt-2">
+                                    <button wire:click="confirmYes" type="button"
+                                            class="px-4 py-1.5 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700">Yes</button>
+                                    <button wire:click="cancelAction('{{ md5($msg['text'] ?? '') }}')" type="button"
+                                            class="px-4 py-1.5 bg-red-100 text-red-700 text-xs rounded hover:bg-red-200">No</button>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -921,6 +929,14 @@
                                     </div>
                                     <div class="toshi-msg-bot" style="padding: 12px 16px; font-size: 14px; line-height: 1.6; max-width: 85%;">
                                         {!! preg_replace('/\*\*(.+?)\*\*/','<strong>$1</strong>',nl2br(e($msg['text']))) !!}
+                                        @if($awaitingConfirm && $pendingToolConfirm && $loop->last)
+                                            <div class="flex gap-2 mt-2">
+                                                <button wire:click="confirmYes" type="button"
+                                                        class="px-4 py-1.5 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700">Yes</button>
+                                                <button wire:click="cancelAction('{{ md5($msg['text'] ?? '') }}')" type="button"
+                                                        class="px-4 py-1.5 bg-red-100 text-red-700 text-xs rounded hover:bg-red-200">No</button>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             @endif

@@ -45,15 +45,14 @@
     </form>
 
     <!-- Table -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <table class="w-full">
-            <thead class="bg-gray-100">
+    <div class="ds-table-wrap">
+        <table class="ds-table-ledger">
+            <thead>
                 <tr>
-                    <th class="px-6 py-4 text-left">Student Name</th>
-                    {{-- <th class="px-6 py-4 text-center">Class</th> --}}
-                    <th class="px-6 py-4 text-center">Status</th>
-                    <th class="px-6 py-4 text-left">Reason</th>
-                    <th class="px-6 py-4 text-left">Remarks</th>
+                    <th>Student Name</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                    <th>Remarks</th>
                 </tr>
             </thead>
             <tbody>

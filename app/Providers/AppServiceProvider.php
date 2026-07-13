@@ -39,8 +39,9 @@ use Config;
 use App;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Notifications\ChannelManager;
-use Illuminate\Support\Facades\Notification;
 use App\Channels\WhatsAppBackupChannel;
+use Laravel\Ai\Tools\Request as AiToolRequest;
+use Illuminate\Support\Facades\Notification;
 // Importing DuskServiceProvider class
 
 class AppServiceProvider extends ServiceProvider {
@@ -125,6 +126,11 @@ class AppServiceProvider extends ServiceProvider {
         }
 
         Paginator::useBootstrap();
+
+        // Add get() helper to the AI Tool Request class for convenience
+        AiToolRequest::macro('get', function (string $key, mixed $default = null): mixed {
+            return $this->offsetExists($key) ? $this->offsetGet($key) : $default;
+        });
 
         // Register WhatsApp backup notification channel
         Notification::resolved(function (ChannelManager $service) {

@@ -1,14 +1,16 @@
 @props([
     'headers' => [],
     'striped' => false,
-    'hover' => false,
+    'hover' => true,
+    'density' => 'comfortable', // comfortable | compact
+    'selectable' => false,
+    'sortable' => false,
     'class' => '',
 ])
 
 @php
-    $stripedClass = $striped ? 'ds-table-striped' : '';
-    $hoverClass = $hover ? 'ds-table-hover' : '';
-    $classes = 'ds-table ' . $stripedClass . ' ' . $hoverClass . ' ' . $class;
+    $densityClass = $density === 'compact' ? 'dt-compact' : 'dt-comfortable';
+    $classes = 'ds-table-ledger ' . $densityClass . ' ' . $class;
 @endphp
 
 <div class="ds-table-wrap">
@@ -16,8 +18,18 @@
         @if(count($headers) > 0)
             <thead>
                 <tr>
+                    @if($selectable)
+                        <th class="dt-cell-check" style="cursor: default;">
+                            <input type="checkbox" class="dt-checkbox" id="select-all">
+                        </th>
+                    @endif
                     @foreach($headers as $header)
-                        <th>{{ $header }}</th>
+                        <th>
+                            {{ $header }}
+                            @if($sortable)
+                                <span class="dt-sort-arrow">&#x25B4;</span>
+                            @endif
+                        </th>
                     @endforeach
                 </tr>
             </thead>

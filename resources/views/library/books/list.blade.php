@@ -1,17 +1,16 @@
 {{-- SPDX-License-Identifier: MIT --}}
 <div class="relative">
-   <div class="flex flex-row justify-between custom-table overflow-x-auto">
-      <table class="w-full">
-       <!--   <caption><h1 class="admin-h1 mb-6">Exam Schedule Details</h1></caption> -->
-         <thead class="bg-grey-light">
-            <tr class="border-t-2 border-b-2">
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Book Name</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">ISBN</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Book Code</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Category</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Author</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Stock</th>
-               <th colspan="3">Actions</th>
+   <div class="ds-table-wrap">
+      <table class="ds-table-ledger">
+         <thead>
+            <tr>
+               <th>Book Name</th>
+               <th>ISBN</th>
+               <th>Book Code</th>
+               <th>Category</th>
+               <th>Author</th>
+               <th>Stock</th>
+               <th>Actions</th>
             </tr>
          </thead>
          @if(count($book) != 0)

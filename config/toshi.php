@@ -34,6 +34,20 @@ return [
     'laragent_enabled' => env('TOSHI_LARAGENT_ENABLED', false),
 
     /*
+    |--------------------------------------------------------------------------
+    | Laravel AI SDK Agent Mode (v2 — parallel implementation)
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, assistant-mode queries are routed through the new Laravel AI
+    | SDK agent stack (ToshiOrchestrator → Skill Agents with Tool classes).
+    | Uses the 'openai-compatible' provider from config/ai.php which reads
+    | TOSHI_LLM_* env vars for backward compatibility.
+    |
+    | Internal accounts only until parity is verified with the legacy paths.
+    */
+    'sdk_v2_enabled' => env('TOSHI_SDK_V2_ENABLED', false),
+
+    /*
     | The OpenAI-compatible API endpoint.
     | OpenAI:      https://api.openai.com/v1
     | DeepSeek:    https://api.deepseek.com

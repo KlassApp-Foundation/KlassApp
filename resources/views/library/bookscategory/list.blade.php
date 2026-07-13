@@ -1,13 +1,11 @@
 {{-- SPDX-License-Identifier: MIT --}}
 <div class="relative">
-   <div class="flex flex-row justify-between custom-table">
-      <table class="w-full">
-       <!--   <caption><h1 class="admin-h1 mb-6">Exam Schedule Details</h1></caption> -->
-         <thead class="bg-grey-light">
-            <tr class="border-t-2 border-b-2">
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Book Category Name</th>
-             
-               <th class="text-left text-sm px-2 py-2 text-grey-darker " width="5%">Actions</th>
+   <div class="ds-table-wrap">
+      <table class="ds-table-ledger">
+         <thead>
+            <tr>
+               <th>Book Category Name</th>
+               <th width="5%">Actions</th>
             </tr>
          </thead>
          @if(count($category) != 0)

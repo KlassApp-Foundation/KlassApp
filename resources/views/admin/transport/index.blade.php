@@ -16,7 +16,7 @@
 
     <div class="ds-card">
         <div class="ds-table-wrap">
-            <table class="ds-table ds-table-striped ds-table-hover">
+            <table class="ds-table-ledger">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -38,9 +38,9 @@
                         <td class="max-w-xs truncate">{{ Str::limit($route->stops, 60) }}</td>
                         <td>
                             @if($route->status)
-                                <span class="ds-badge ds-badge-success">Active</span>
+                                <span class="dt-badge dt-badge-active"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Active</span>
                             @else
-                                <span class="ds-badge ds-badge-muted">Inactive</span>
+                                <span class="dt-badge dt-badge-inactive"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Inactive</span>
                             @endif
                         </td>
                         <td class="text-right whitespace-nowrap">

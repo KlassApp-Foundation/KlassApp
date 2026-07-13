@@ -11,21 +11,17 @@
 
 <div class="relative mt-4">
     </div>
-    <table class="min-w-full divide-y divide-gray-200">
-        {{-- Flash Success Message --}}
-       @include('partials.message')
-        <thead class="bg-gray-100 text-gray-700 text-sm">
+    <div class="ds-table-wrap">
+    @include('partials.message')
+    <table class="ds-table-ledger">
+        <thead>
             <tr>
                 @foreach ($headers as $header)
-                    <th class="px-4 py-2 text-left font-bold capitalize tracking-wider border border-gray-400">
-                        {{ $header }}
-                    </th>
+                    <th>{{ $header }}</th>
                 @endforeach
-                
-                
             </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200 text-sm">
+        <tbody>
             @forelse ($exams as $exam)
             {{-- {{ dd($exam) }} --}}
             <tr>
@@ -58,6 +54,7 @@
             @endforelse
         </tbody>
     </table>
+    </div>
 </div>
 
 @endsection
