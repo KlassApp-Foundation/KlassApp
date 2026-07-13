@@ -1,11 +1,8 @@
-FROM php:8.3-fpm
+FROM php:8.4-fpm
 
-# PHP 8.4 MIGRATION PENDING — See knowledge.md "PHP 8.4 Move" incident plan.
-# Do NOT bump this to php:8.4-fpm without completing the full migration:
-#   - Audit all packages for PHP 8.4 compatibility (11 known blockers as of Jul 14)
-#   - Docker image rebuild + full test suite run
-#   - Smoke-test all 8 dashboards
-#   - This is tracked as Part 2 of the laravel/ai incident follow-up
+# PHP 8.4 migration completed 2026-07-14. See knowledge.md for the full
+# migration record including the 11 packages that were temporarily
+# downgraded to v7.4.x and restored to v8.1.x on PHP 8.4.
 
 # Accept build arguments from docker-compose
 ARG USER_ID=1000
