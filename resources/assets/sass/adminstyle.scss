@@ -102,8 +102,7 @@
 /*table css end*/
 /*sidebar css start*/
 .admin-sidebar {
-    /* background: #48baf1; */
-    background: #063f8d;
+    background: #FFFCF5;
 }
 .dashboard-themed-header {
     background-color: transparent;
@@ -296,20 +295,19 @@
     margin-top: 20px;
     z-index: 99;
     transform: translateY(-4px) scale(1.02);
-    background: #0F172A;
-    /* margin-left: -135px;*/
-    box-shadow: 0px 5px 75px 2px rgba(34, 197, 94, 0.15) !important;
-    /* min-width: 180px;*/
+    background: #FFFFFF;
+    box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.08) !important;
     min-width: 250px;
-    /* left: 1061px;*/
     right: 20px;
-    border: 1px solid rgba(34, 197, 94, 0.25);
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
 }
 
-/* Global user-menu dropdown tone: green on blue theme */
+/* Global user-menu dropdown — light theme */
 .user-dtl .list-reset {
-    background-color: #0F172A !important;
-    border-color: rgba(34, 197, 94, 0.25) !important;
+    background-color: #FFFFFF !important;
+    border-color: #E2E8F0 !important;
+    border-radius: 12px;
 }
 
 .user-dtl .list-reset .border-b {
@@ -323,7 +321,10 @@
 }
 
 .user-dtl .list-reset li a {
-    color: #fff !important;
+    color: #1E293B !important;
+}
+.user-dtl .list-reset li a:hover {
+    color: #15803D !important;
 }
 
 .student_select [type="checkbox"]:not(:checked),
@@ -916,9 +917,6 @@ body {
         width: unset !important;
     }
 }
-.accountant-sidebar {
-    background-color: #38b2ac;
-}
 .accountant-sidebar li.active,
 .accountant-sidebar li:hover {
     background: rgba(34, 197, 94, 0.26) !important;
@@ -1090,24 +1088,39 @@ button.fc-button.fc-button-primary {
 }
 /*on off switch css*/
 
-/* Apply admin design theme to all dashboard sidebars */
+/* Apply light theme to all dashboard sidebars */
 .teacher-sidebar,
 .student-sidebar,
 .accountant-sidebar,
 .librarian-sidebar {
-    background-color: #0F172A !important;
+    background: #FFFCF5;
+}
+.teacher-sidebar ul li a,
+.student-sidebar ul li a,
+.accountant-sidebar ul li a,
+.librarian-sidebar ul li a {
+    color: #1E293B;
+}
+.teacher-sidebar ul li a:hover,
+.student-sidebar ul li a:hover,
+.accountant-sidebar ul li a:hover,
+.librarian-sidebar ul li a:hover {
+    color: #15803D;
+    background: rgba(34, 197, 94, 0.08);
+    border-radius: 6px;
 }
 
 /* Teacher Dashboard */
 
-.teacher-sidebar li:hover {
-    background: rgba(34, 197, 94, 0.26) !important;
-}
-
 .teacher-sidebar ul li.active,
 .teacher-sidebar ul li.active:hover {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%) !important;
+    background: rgba(34, 197, 94, 0.12) !important;
     border-left: 3px solid #22c55e !important;
+    border-radius: 0 6px 6px 0;
+}
+.teacher-sidebar ul li.active a,
+.teacher-sidebar ul li.active:hover a {
+    color: #166534;
 }
 
 .teacher-sidebar li:hover > .sites-sidebar,
@@ -1174,9 +1187,21 @@ button.fc-button.fc-button-primary {
 }
 
 /* Accountant Dashboard */
+.accountant-sidebar ul li a {
+    color: #1E293B;
+}
+.accountant-sidebar ul li a:hover {
+    color: #15803D;
+    background: rgba(34, 197, 94, 0.08);
+    border-radius: 6px;
+}
 .accountant-sidebar ul li.active {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%);
+    background: rgba(34, 197, 94, 0.12);
     border-left: 3px solid #22c55e;
+    border-radius: 0 6px 6px 0;
+}
+.accountant-sidebar ul li.active a {
+    color: #166534;
 }
 
 .accountant-sidebar li:hover > .sites-sidebar,
@@ -1206,9 +1231,21 @@ button.fc-button.fc-button-primary {
 }
 
 /* Librarian Dashboard */
+.librarian-sidebar ul li a {
+    color: #1E293B;
+}
+.librarian-sidebar ul li a:hover {
+    color: #15803D;
+    background: rgba(34, 197, 94, 0.08);
+    border-radius: 6px;
+}
 .librarian-sidebar ul li.active {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%);
+    background: rgba(34, 197, 94, 0.12);
     border-left: 3px solid #22c55e;
+    border-radius: 0 6px 6px 0;
+}
+.librarian-sidebar ul li.active a {
+    color: #166534;
 }
 
 .librarian-sidebar li:hover > .sites-sidebar,

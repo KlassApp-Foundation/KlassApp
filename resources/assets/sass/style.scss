@@ -374,9 +374,6 @@ ul.course_tabs li.current p {
 }
 
 /*Tab css*/
-.teacher-sidebar li.active {
-    background-color: #44337a !important;
-}
 .event-box {
     height: 295px;
     overflow-y: auto;
@@ -394,12 +391,22 @@ ul.course_tabs li.current p {
 }
 
 .student-sidebar {
-    background-color: #3fbbd3;
+    background: #FFFCF5;
+}
+.student-sidebar ul li a {
+    color: #1E293B;
+}
+.student-sidebar ul li a:hover {
+    color: #15803D;
+    background: rgba(34, 197, 94, 0.08);
+    border-radius: 6px;
 }
 .student-sidebar li.active,
 .student-sidebar li:hover {
-    background-color: #64c9db !important;
+    background: rgba(34, 197, 94, 0.12) !important;
+    border-left: 3px solid #22c55e;
+    border-radius: 0 6px 6px 0;
 }
-.teacher-sidebar .sites-sidebar {
-    background-color: #553c9a !important;
+.student-sidebar li.active a {
+    color: #166534;
 }
