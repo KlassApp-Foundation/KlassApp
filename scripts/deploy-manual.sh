@@ -20,9 +20,15 @@ echo " Branch: $GIT_BRANCH"
 echo "========================================"
 echo ""
 
+# ---- Pre-deploy checks ----
+cd "$(dirname "$0")/.."
+
+echo "[Pre] Checking for unresolved git conflict markers..."
+bash scripts/check-conflict-markers.sh
+echo "[Pre] Conflict marker check passed."
+
 # ---- Local build step ----
 echo "[Local] Rebuilding frontend assets..."
-cd "$(dirname "$0")/.."
 NODE_OPTIONS=--openssl-legacy-provider npm run production
 echo "[Local] Assets rebuilt. Remember to commit if running manually."
 

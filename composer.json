@@ -38,6 +38,7 @@
     "predis/predis": "v3.0.0-alpha1",
     "pusher/pusher-php-server": "7.1.0-beta",
     "smalot/pdfparser": "^2.12",
+    "spatie/laravel-backup": "^10.3",
     "spatie/laravel-medialibrary": "^11.0",
     "spatie/laravel-model-states": "^2.12",
     "stevebauman/purify": "^6.0",
@@ -98,6 +99,9 @@
       "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
       "@php artisan package:discover",
       "@php artisan filament:upgrade"
+    ],
+    "check-conflict-markers": [
+      "bash scripts/check-conflict-markers.sh"
     ]
   },
   "config": {
