@@ -19,6 +19,7 @@
     "jantinnerezo/livewire-alert": "^3.0",
     "kreait/laravel-firebase": "^7.0",
     "laracasts/presenter": "dev-master",
+    "laravel/ai": "^0.9.0",
     "laravel/framework": "^12.0",
     "laravel/sanctum": "^4.0",
     "laravel/scout": "*",
