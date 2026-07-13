@@ -1,4 +1,8 @@
 <?php
+// DEPENDS ON: laravel/ai ^0.9.0 (requires PHP ^8.4, not installed in production).
+// This file and all Tools/Skills under App\AiAgents\ will FATAL ERROR if autoloaded
+// when laravel/ai is absent. Production PHP is 8.3 — these are local-dev only.
+// See knowledge.md: "Toshi SDK v2 — laravel/ai dependency removal incident".
 
 namespace App\AiAgents;
 
