@@ -44,7 +44,7 @@ echo "[1/6] Pulling latest code (includes compiled assets)..."
 git pull origin "\$GIT_BRANCH" --ff-only
 
 echo "[2/6] Installing/updating PHP dependencies inside container..."
-docker exec "\$CONTAINER" composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=php
+docker exec "$CONTAINER" composer install --no-dev --optimize-autoloader --no-interaction
 echo "[2/6] Dependencies synchronized."
 
 echo "[3/6] Running migrations..."

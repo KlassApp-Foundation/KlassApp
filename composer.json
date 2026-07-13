@@ -40,7 +40,7 @@
     "smalot/pdfparser": "^2.12",
     "spatie/laravel-backup": "^10.3",
     "spatie/laravel-medialibrary": "^11.0",
-    "spatie/laravel-model-states": "^2.12",
+    "spatie/laravel-model-states": "^2.11.3",
     "stevebauman/purify": "^6.0",
     "symfony/http-client": "^7.0",
     "symfony/mailgun-mailer": "^7.0",
