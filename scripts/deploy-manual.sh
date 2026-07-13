@@ -40,19 +40,23 @@ GIT_BRANCH="$GIT_BRANCH"
 
 cd "\$APP_DIR"
 
-echo "[1/5] Pulling latest code (includes compiled assets)..."
+echo "[1/6] Pulling latest code (includes compiled assets)..."
 git pull origin "\$GIT_BRANCH" --ff-only
 
-echo "[2/5] Running migrations..."
+echo "[2/6] Installing/updating PHP dependencies inside container..."
+docker exec "\$CONTAINER" composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=php
+echo "[2/6] Dependencies synchronized."
+
+echo "[3/6] Running migrations..."
 docker exec "\$CONTAINER" php artisan migrate --force
 
-echo "[3/5] Clearing caches inside container..."
+echo "[4/6] Clearing caches inside container..."
 docker exec "\$CONTAINER" php artisan optimize:clear
 
-echo "[4/5] Restarting FPM..."
+echo "[5/6] Restarting FPM..."
 docker exec "\$CONTAINER" sh -c "kill -USR2 1 2>/dev/null || php-fpm -t >/dev/null 2>&1" || true
 
-echo "[5/5] Verifying app is serving..."
+echo "[6/6] Verifying app is serving..."
 sleep 1
 docker exec "\$CONTAINER" php -r "echo 'PHP OK: ' . phpversion() . PHP_EOL;"
 
