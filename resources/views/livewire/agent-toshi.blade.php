@@ -550,6 +550,19 @@
                 <span class="toshi-badge-optional">Optional</span>
                 @endif
             </div>
+            {{-- Step progress list — always visible, not just in maximized modal --}}
+            <div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 14px; margin: 0 10px;">
+                @foreach($steps as $i => $name)
+                    @php
+                        $isDone = $i < $step;
+                        $isCurrent = $i === $step;
+                        $label = ucfirst(str_replace('_', ' ', $name));
+                    @endphp
+                    <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 3px 8px; border-radius: 4px; background: {{ $isDone ? '#F0FDF4' : ($isCurrent ? '#FFFFFF' : '#F1F5F9') }}; color: {{ $isDone ? '#15803D' : ($isCurrent ? '#141413' : '#94A3B8') }}; font-weight: {{ $isCurrent ? '600' : '400' }}; border: 1px solid {{ $isCurrent ? '#22C55E' : 'transparent' }}; white-space: nowrap;">
+                        {{ $isDone ? '✓' : ($isCurrent ? '→' : '') }} {{ $label }}
+                    </span>
+                @endforeach
+            </div>
             @endif
 
             {{-- Review Card (shown on review step) --}}

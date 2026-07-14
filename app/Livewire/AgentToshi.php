@@ -1750,7 +1750,8 @@ class AgentToshi extends Component
         $this->step = $to ?? $this->step + 1;
         $this->substep = 0;
         $this->saveDraft();
-        // Immediately trigger the step handler to show its prompt
+        // Trigger the step handler to auto-populate defaults (e.g. terms, subjects).
+        // Handlers must check for empty text and show a prompt instead of validating.
         $this->callStepHandler('');
     }
 
@@ -2898,6 +2899,11 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     private function handleSchoolInfo(string $text)
     {
+        // Called on step entry via advance() — show prompt, don't validate
+        if ($text === '' && $this->substep === 0) {
+            return;
+        }
+
         if ($this->substep === 0) {
             // Collecting school name
             $name = $this->validateRequired($text, 'School name', 3);
@@ -2960,6 +2966,11 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     private function handleAdminAccount(string $text)
     {
+        // Called on step entry via advance() — show prompt, don't validate
+        if ($text === '' && $this->substep === 0) {
+            return;
+        }
+
         // substep 0: collect admin email
         if ($this->substep === 0) {
             $email = $this->validateEmail($text);
