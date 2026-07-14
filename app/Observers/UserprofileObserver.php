@@ -16,7 +16,11 @@ class UserprofileObserver
      */
     public function created(Userprofile $userprofile)
     {
-        //
+        // NOTE: users.name is an internal URL slug / unique identifier, NOT a display name.
+        // Display names are sourced from userprofiles.firstname + userprofiles.lastname
+        // in all student/teacher/parent-facing views (attendance, marks, reports, class lists).
+        // This transform produces a stable, unique, lowercase slug suitable for route URLs.
+        // If you change this, ensure all routes using ->name as a slug still resolve correctly.
         try
         {
             $name = strtolower($userprofile->firstname) . $userprofile->user_id . rand(1,10);

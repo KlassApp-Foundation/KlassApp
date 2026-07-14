@@ -349,10 +349,7 @@ class ToshiActionService
 
             DB::commit();
 
-            // Re-read name after UserprofileObserver normalization
-            $storedName = User::where('id', $student->id)->value('name') ?? $name;
-
-            $msg = "Student **{$storedName}** added successfully";
+            $msg = "Student **{$name}** added successfully";
             if ($standardLink) {
                 $section = $standardLink->section;
                 $std = $standardLink->standard;
@@ -433,9 +430,7 @@ class ToshiActionService
 
             DB::commit();
 
-            // Re-read name after UserprofileObserver normalization
-            $storedName = User::where('id', $teacher->id)->value('name') ?? $name;
-            return self::result(true, "Teacher **{$storedName}** added successfully. Login: `{$email}` / password: `password`", [
+            return self::result(true, "Teacher **{$name}** added successfully. Login: `{$email}` / password: `password`", [
                 'user_id' => $teacher->id, 'email' => $email,
             ]);
         } catch (\Exception $e) {
