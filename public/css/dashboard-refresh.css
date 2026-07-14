@@ -559,7 +559,7 @@ a.ds-kpi-card:hover {
 
 /* ── Toshi Widget Base (colors only — structure in blade) ── */
 
-.toshi-root {
+body .toshi-root {
     --toshi-bg: var(--d-white);
     --toshi-border: #e8e6dc;
     --toshi-accent: #c96442;
@@ -572,10 +572,34 @@ a.ds-kpi-card:hover {
     --toshi-bot-bubble: var(--d-surface);
 
     /* Position: fixed so the widget is always visible regardless of scroll */
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 9999;
+    position: fixed !important;
+    bottom: 24px !important;
+    right: 24px !important;
+    z-index: 9999 !important;
+}
+
+/* Bump specificity on critical Toshi layout rules to prevent override by unrelated CSS */
+body .toshi-pill {
+    display: flex !important;
+    align-items: center;
+}
+body .toshi-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+/* Desktop panel: fixed position at bottom-right */
+@media (min-width: 641px) {
+    .toshi-panel {
+        position: fixed !important;
+        bottom: 24px !important;
+        right: 24px !important;
+        z-index: 9998 !important;
+    }
+    /* Hide pill when panel is open on desktop */
+    .toshi-panel ~ .toshi-pill {
+        display: none;
+    }
 }
 
 /* ── Card Padding & Shadow Helpers ── */
@@ -960,6 +984,49 @@ a.ds-kpi-card:hover {
     box-shadow: 0 8px 40px rgba(0,0,0,0.12);
     border: 1px solid var(--toshi-border);
     overflow: hidden;
+}
+/* Toshi panel: fullscreen on mobile */
+@media (max-width: 640px) {
+    .toshi-panel {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        max-height: none;
+        border-radius: 0;
+        border: none;
+        z-index: 9998;
+    }
+    /* Pin composer to bottom — stays visible when keyboard opens */
+    .toshi-panel .toshi-composer {
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
+        background: var(--d-white);
+    }
+    /* Messages area fills remaining space */
+    .toshi-panel [class*="message"]:not([class*="input"]):not([class*="composer"]),
+    .toshi-panel > div:nth-child(2) {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+    }
+    /* Hide expand/maximize button on mobile — panel is already fullscreen */
+    .toshi-header-btn[title="Expand"] {
+        display: none;
+    }
+}
+
+/* ── Student/Teacher List Cards → ds-card styling ── */
+.member-list {
+    background: var(--d-white);
+    border: 1px solid var(--d-border);
+    border-radius: 12px;
+    padding: 16px;
+    transition: box-shadow 0.15s ease;
+}
+.member-list:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 /* ── Toshi Modal Overlay (maximized) ── */
