@@ -33,6 +33,14 @@ class ToshiSdkV2Service
             return false;
         }
 
+        // Per-school gate: check toshi_enabled flag
+        if (config('toshi.per_school_gate', true)) {
+            $school = $schoolId ? \App\Models\School::find($schoolId) : $user->school;
+            if (!$school || !$school->toshi_enabled) {
+                return false;
+            }
+        }
+
         if (empty(config('ai.providers.openai-compatible.key'))) {
             return false;
         }

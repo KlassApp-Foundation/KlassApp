@@ -48,6 +48,13 @@ return [
     'sdk_v2_enabled' => env('TOSHI_SDK_V2_ENABLED', false),
 
     /*
+    | Per-school Toshi enablement flag.
+    | When toshi_enabled is true on the schools table AND sdk_v2_enabled is true
+    | in the environment, Toshi SDK v2 features are active for that school.
+    */
+    'per_school_gate' => true,
+
+    /*
     | The OpenAI-compatible API endpoint.
     | OpenAI:      https://api.openai.com/v1
     | DeepSeek:    https://api.deepseek.com

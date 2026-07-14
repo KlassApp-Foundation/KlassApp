@@ -100,6 +100,17 @@ class ToshiActionService
     // ── Role Capabilities ──
 
     /**
+     * ⚠️  ADVISORY-ONLY — NOT for authorization enforcement.
+     *
+     * This method provides an LLM-readable hint layer about what actions each
+     * usergroup can perform. It is used by the AI agent to understand context,
+     * NOT to gate access.
+     *
+     * Real authorization enforcement lives in the `toshi-school-action` Gate
+     * defined in `AuthServiceProvider`, which checks the same MustBeSchoolAdmin
+     * rule: ug3 (SchoolAdmin) → always authorized; ug1 (Superadmin) → authorized
+     * ONLY when impersonating a SchoolAdmin; all others → denied.
+     *
      * Map of usergroup_id → allowed capabilities.
      *
      * Keys are action identifiers used in keyword routes and actionXxx handlers.
@@ -223,6 +234,40 @@ class ToshiActionService
         return self::getRoleCapabilities($user->usergroup_id)['label'];
     }
 
+    // ── Impersonation-aware identity helpers ──
+
+    /**
+     * Resolve the effective user for school-scoped authorization.
+     *
+     * When a Superadmin (ug1) impersonates a SchoolAdmin (ug3), Auth::user()
+     * still returns the Superadmin. This method returns the impersonated
+     * SchoolAdmin instead, so the tool's school-scoping logic works correctly.
+     *
+     * Returns the same $user for all non-impersonation contexts.
+     */
+    public static function getEffectiveUser(User $user): User
+    {
+        if ($user->usergroup_id === 1 && $user->isImpersonating()) {
+            $impersonatedId = \Session::get('impersonate');
+            $impersonated = User::find($impersonatedId);
+            if ($impersonated && $impersonated->usergroup_id === 3) {
+                return $impersonated;
+            }
+        }
+        return $user;
+    }
+
+    /**
+     * Resolve the effective school_id for the acting user.
+     *
+     * In impersonation context, returns the impersonated SchoolAdmin's school_id.
+     * Otherwise returns the authenticated user's school_id.
+     */
+    public static function getEffectiveSchoolId(User $user): ?int
+    {
+        return self::getEffectiveUser($user)->school_id;
+    }
+
     // ── Student ──
 
     /**
@@ -304,7 +349,10 @@ class ToshiActionService
 
             DB::commit();
 
-            $msg = "Student **{$name}** added successfully";
+            // Re-read name after UserprofileObserver normalization
+            $storedName = User::where('id', $student->id)->value('name') ?? $name;
+
+            $msg = "Student **{$storedName}** added successfully";
             if ($standardLink) {
                 $section = $standardLink->section;
                 $std = $standardLink->standard;
@@ -385,7 +433,9 @@ class ToshiActionService
 
             DB::commit();
 
-            return self::result(true, "Teacher **{$name}** added successfully. Login: `{$email}` / password: `password`", [
+            // Re-read name after UserprofileObserver normalization
+            $storedName = User::where('id', $teacher->id)->value('name') ?? $name;
+            return self::result(true, "Teacher **{$storedName}** added successfully. Login: `{$email}` / password: `password`", [
                 'user_id' => $teacher->id, 'email' => $email,
             ]);
         } catch (\Exception $e) {
@@ -1307,5 +1357,51 @@ class ToshiActionService
             Log::error('ToshiAction: enterMark failed', ['error' => $e->getMessage()]);
             return self::result(false, 'Failed to enter mark: ' . $e->getMessage());
         }
+    }
+
+    public static function seedDefaultGrading(User $admin): array
+    {
+        $schoolId = self::getEffectiveSchoolId($admin);
+        if (!$schoolId) return self::result(false, 'No school ID.');
+
+        $defaultScales = [
+            ['grade' => 'A', 'min' => 80, 'max' => 100],
+            ['grade' => 'B', 'min' => 70, 'max' => 79],
+            ['grade' => 'C', 'min' => 55, 'max' => 69],
+            ['grade' => 'D', 'min' => 40, 'max' => 54],
+            ['grade' => 'E', 'min' => 0, 'max' => 39],
+        ];
+
+        $standards = \App\Models\Standard::whereHas('standardLinks', fn($q) => $q->where('school_id', $schoolId))->get();
+        $count = 0;
+        foreach ($standards as $standard) {
+            if (!$standard->grade_scale) {
+                $standard->grade_scale = json_encode($defaultScales);
+                $standard->save();
+                $count++;
+            }
+        }
+        return self::result(true, "Default grading scale seeded for {$count} standards.");
+    }
+
+    public static function setGradingScale(User $admin, array $data): array
+    {
+        $schoolId = self::getEffectiveSchoolId($admin);
+        if (!$schoolId) return self::result(false, 'No school ID.');
+
+        $standardName = $data['standardName'] ?? '';
+        $grades = $data['gradeDefinitions'] ?? [];
+
+        $standard = \App\Models\Standard::where('school_id', $schoolId)->where('name', $standardName)->first();
+        if (!$standard) return self::result(false, "Standard '{$standardName}' not found.");
+        if (empty($grades)) return self::result(false, 'No grade definitions provided.');
+
+        $validGrades = [];
+        foreach ($grades as $g) {
+            $validGrades[] = ['grade' => $g['grade'], 'min' => (int)$g['min'], 'max' => (int)$g['max']];
+        }
+        $standard->grade_scale = json_encode($validGrades);
+        $standard->save();
+        return self::result(true, "Grading scale updated for {$standardName}.");
     }
 }
