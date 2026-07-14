@@ -30,8 +30,8 @@
   .klass-password-wrap { position: relative; }
   .klass-password-wrap .klass-input { padding-right: 46px; }
   .klass-password-toggle {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    width: 32px; height: 32px; border-radius: 8px; border: none;
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 8px; border: none;
     background: transparent; cursor: pointer; display: flex;
     align-items: center; justify-content: center; color: #94A3B8;
     transition: color 0.15s ease;
@@ -43,7 +43,7 @@
   .klass-checkbox-row { display: flex; align-items: center; gap: 8px; }
   .klass-checkbox { width: 16px; height: 16px; accent-color: #22C55E; }
   .klass-checkbox-label { font-size: 13px; color: #0F172A; cursor: pointer; }
-  .klass-forgot-link { font-size: 13px; font-weight: 600; color: #22C55E; text-decoration: none; }
+  .klass-forgot-link { font-size: 13px; font-weight: 600; color: #22C55E; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
   .klass-forgot-link:hover { text-decoration: underline; }
   .klass-submit {
     margin-top: 6px; width: 100%; border: 0; border-radius: 10px;

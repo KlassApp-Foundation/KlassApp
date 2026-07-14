@@ -2077,3 +2077,71 @@ a.ds-kpi-card:hover {
 .ds-grid-marks .gm-agg { font-weight: 600; color: var(--d-blue); }
 .ds-grid-marks .gm-pos { font-weight: 600; color: var(--d-green); }
 .ds-grid-marks .gm-subject-code { font-size: 0.6rem; display: block; color: var(--d-muted); font-weight: 400; letter-spacing: 0; text-transform: none; }
+
+/* ── Mobile Touch Target Sizing (minimum 44px) ── */
+@media (hover: none) and (pointer: coarse) {
+    .ds-grid-marks a, .ds-grid-marks button,
+    .ds-table-ledger a, .ds-table-ledger button,
+    .ds-btn, .ds-btn-primary, .ds-btn-secondary,
+    .dt-name-link, .dt-action-btn,
+    .filter-alphabet a {
+        min-height: 44px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+}
+/* Desktop touch targets */
+.ds-btn, .ds-btn-primary, .ds-btn-secondary {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.dt-name-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
+.dt-action-btn {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.filter-alphabet a {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.ds-grid-marks td a, .ds-grid-marks td button {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+/* Hamburger menu toggle */
+#mobile-menu-trigger {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+/* Navbar touch targets */
+.nav-brand a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
+/* Dashboard notification/action links */
+.ds-alert a, .notice-body a, .notice-card a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
