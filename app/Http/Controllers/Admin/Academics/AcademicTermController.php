@@ -32,7 +32,7 @@ class AcademicTermController extends Controller
         $terms = AcademicTerm::where("school_id", $school_id)->where("academic_year_id", $academic_year->id)->get();
 
         $standards = Standard::with("subject")->where("name", "primary")->first();
-        dd($standards);
+        
         return view("admin.school.term.index", compact(
             "academic_year", "terms", "standards"
         ) );
