@@ -352,15 +352,15 @@
                         <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Fee Collection Trends</h1>
                         <div class="flex gap-1 bg-gray-100 rounded-lg p-0.5" role="group">
                             <a href="{{ request()->fullUrlWithQuery(['period' => 'day']) }}"
-                               class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'day' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                               class="px-3 py-2.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'day' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
                                 Days
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['period' => 'week']) }}"
-                               class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'week' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                               class="px-3 py-2.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'week' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
                                 Weeks
                             </a>
                             <a href="{{ request()->fullUrlWithQuery(['period' => 'month']) }}"
-                               class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'month' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                               class="px-3 py-2.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'month' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
                                 Months
                             </a>
                         </div>

@@ -19,10 +19,10 @@
                 </div>
             </div>
             <div style="display: flex; gap: 8px; flex-shrink: 0; align-items: center;">
-                <button onclick="fetch('{{ route('dismiss.onboarding.reminder') }}').then(function(){ document.getElementById('toshi-pill').click(); document.getElementById('onboarding-reminder').style.display='none'; })" style="padding: 8px 16px; background: #0F172A; color: #FFFFFF; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;">
+                <button onclick="fetch('{{ route('dismiss.onboarding.reminder') }}').then(function(){ document.getElementById('toshi-pill').click(); document.getElementById('onboarding-reminder').style.display='none'; })" style="padding: 12px 20px; min-height: 44px; background: #0F172A; color: #FFFFFF; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;">
                     Open Toshi
                 </button>
-                <a href="{{ route('dismiss.onboarding.reminder') }}" style="color: #A16207; font-size: 13px; text-decoration: none; padding: 6px 10px; border-radius: 6px; transition: background 0.15s;" onmouseover="this.style.background='#FEF3C7'" onmouseout="this.style.background='transparent'">
+                <a href="{{ route('dismiss.onboarding.reminder') }}" style="color: #A16207; font-size: 14px; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 6px; transition: background 0.15s;" onmouseover="this.style.background='#FEF3C7'" onmouseout="this.style.background='transparent'">
                     Dismiss
                 </a>
             </div>

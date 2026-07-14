@@ -2151,3 +2151,9 @@ a.ds-kpi-card:hover {
     display: flex;
     align-items: center;
 }
+/* KPI stat links and period tabs */
+.ds-kpi-card a, [class*="kpi"] a, .dashboard-chart-card a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
