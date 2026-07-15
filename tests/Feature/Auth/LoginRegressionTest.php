@@ -3,12 +3,14 @@
 namespace Tests\Feature\Auth;
 
 use App\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class LoginRegressionTest extends TestCase
 {
+    use RefreshDatabase;
     private const TEST_EMAIL = 'qa+local@klassapp.test';
     private const TEST_PASSWORD = 'Passw0rd!123';
 
@@ -45,7 +47,7 @@ class LoginRegressionTest extends TestCase
             'password' => self::TEST_PASSWORD,
         ]);
 
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect('/superadmin/dashboard');
         $this->assertAuthenticated();
     }
 
