@@ -1,6 +1,7 @@
 <div x-data="{ hasText: false }"
      x-on:toshi-run-plan-step.window="setTimeout(() => $wire.executeNextPlanStep(), 200)"
      class="toshi-root">
+    @if(!$desktopMode)
     <div id="toshi-pill"
          wire:click="show"
          class="toshi-pill"
@@ -13,6 +14,7 @@
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="4" width="3" height="6" rx="1"/><rect x="5.5" y="1" width="3" height="12" rx="1"/><rect x="10" y="3" width="3" height="8" rx="1"/></svg> Talk
         </div>
     </div>
+    @endif
 
     <div id="toshi-panel"
          class="toshi-panel"

@@ -59,7 +59,8 @@ class AgentToshi extends Component
     public $input = '';
     public $schoolId = null;
     public $preview = [];
-    public $substep = 0; // internal sub-step within a step
+    public $substep = 0;
+    public $desktopMode = false; // internal sub-step within a step
 
     // Collected data across steps
     public $schoolName = '';
