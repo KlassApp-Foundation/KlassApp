@@ -27,7 +27,7 @@ class RecordBulkAttendanceTool implements Tool, VerifiableTool
 
     public function description(): string
     {
-        return 'Record attendance for multiple students at once. Provide a JSON array of student records, each with student name, date, and status. Always use student names, not IDs.';
+        return 'Record attendance for multiple students at once. Provide a JSON array of student records, each with student name or ID, date, and status. Always use student names first — only use student_identifier when the name was ambiguous and you received an ID to disambiguate.';
     }
 
     public function schema(JsonSchema $schema): array
@@ -36,6 +36,8 @@ class RecordBulkAttendanceTool implements Tool, VerifiableTool
             'students' => $schema->array()
                 ->items($schema->object([
                     'student' => $schema->string()->description('Student full name'),
+                    'student_identifier' => $schema->string()->optional()->description('Student ID number, admission number, or klassapp_student_id. Use ONLY when the name was ambiguous and you need to disambiguate — set disambiguation_confirmed=true when the user explicitly replied with this ID after seeing the candidate list.'),
+                    'disambiguation_confirmed' => $schema->boolean()->optional()->description('Set to true ONLY when the ambiguous-match candidate list was shown to the user AND they replied with a specific ID from that list. Never set this without showing the candidates first.'),
                     'date' => $schema->string()->description('Date in Y-m-d format'),
                     'status' => $schema->string()->enum(['present', 'absent', 'late', 'excused'])->description('Attendance status'),
                 ]))
@@ -122,17 +124,73 @@ class RecordBulkAttendanceTool implements Tool, VerifiableTool
         // Resolve each student name to a model
         $this->resolvedStudents = [];
         $this->unresolvedNames = [];
+        $ambiguousEntries = [];
         foreach ($this->rawStudents as $entry) {
-            $result = EntityResolver::resolveStudent($schoolId, trim($entry['student']));
-            if ($result['state'] === 'resolved') {
-                $this->resolvedStudents[] = [
-                    'model' => $result['model'],
-                    'status' => strtolower(trim($entry['status'] ?? 'present')),
-                    'date' => $entry['date'] ?? now()->toDateString(),
-                ];
+            $identifier = trim($entry['student_identifier'] ?? '');
+            if ($identifier !== '') {
+                // Identifier-based resolution: strongest disambiguator
+                $idResult = EntityResolver::resolveStudentByIdentifier($schoolId, $identifier);
+                if ($idResult['state'] === 'resolved') {
+                    $confirmed = (bool) ($entry['disambiguation_confirmed'] ?? false);
+                    if (!$confirmed) {
+                        $dupError = ToshiActionService::guardDuplicateName($schoolId, $idResult['model']->id, 'student');
+                        if ($dupError) {
+                            // Show ALL candidates with the same name, not just the resolved one
+                            $allDupes = EntityResolver::resolveStudent($schoolId, $idResult['model']->name);
+                            if ($allDupes['state'] === 'ambiguous') {
+                                $ambiguousEntries[] = $allDupes;
+                            } else {
+                                // Fallback: at minimum show the one we found
+                                $ambiguousEntries[] = [
+                                    'candidates' => [
+                                        ['id' => $idResult['model']->id, 'name' => $idResult['model']->name, 'class' => EntityResolver::classLabelForUser($schoolId, $idResult['model'])],
+                                    ],
+                                ];
+                            }
+                            $this->unresolvedNames[] = $entry['student'] ?: $identifier;
+                            continue;
+                        }
+                    }
+                    $this->resolvedStudents[] = [
+                        'model' => $idResult['model'],
+                        'status' => strtolower(trim($entry['status'] ?? 'present')),
+                        'date' => $entry['date'] ?? now()->toDateString(),
+                    ];
+                } else {
+                    $this->unresolvedNames[] = $entry['student'] ?: $identifier;
+                }
             } else {
-                $this->unresolvedNames[] = $entry['student'];
+                $result = EntityResolver::resolveStudent($schoolId, trim($entry['student']));
+                if ($result['state'] === 'resolved') {
+                    $this->resolvedStudents[] = [
+                        'model' => $result['model'],
+                        'status' => strtolower(trim($entry['status'] ?? 'present')),
+                        'date' => $entry['date'] ?? now()->toDateString(),
+                    ];
+                } elseif ($result['state'] === 'ambiguous') {
+                    $ambiguousEntries[] = $result;
+                    $this->unresolvedNames[] = $entry['student'];
+                } else {
+                    $this->unresolvedNames[] = $entry['student'];
+                }
             }
+        }
+
+        // Handle ambiguous entries: show candidates for each
+        if (!empty($ambiguousEntries)) {
+            $msg = '';
+            foreach ($ambiguousEntries as $ae) {
+                $candidateName = $ae['candidates'][0]['name'] ?? 'unknown';
+                $lines = [];
+                foreach ($ae['candidates'] as $c) {
+                    $classInfo = isset($c['class']) ? ", {$c['class']}" : '';
+                    $lines[] = "ID {$c['id']}: {$c['name']}{$classInfo}";
+                }
+                $list = implode("\n", $lines);
+                $msg .= "Found **" . count($ae['candidates']) . "** students matching \"{$candidateName}\":\n{$list}\n\n";
+            }
+            $msg .= "Please reply with the ID number to specify which one (e.g. \"124\").";
+            return $msg;
         }
 
         if (!empty($this->unresolvedNames)) {

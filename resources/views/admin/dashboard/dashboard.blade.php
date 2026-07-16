@@ -66,7 +66,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-white custom-shadow px-5 py-4 border dashboard-kpi-card h-full">
                         <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto text-green-500 dashboard-kpi-icon" style="background: rgba(34,197,94,0.10);">
-                            <i class="fa-brands fa-whatsapp text-3xl"></i>
+                            <i class="fab fa-whatsapp text-3xl"></i>
                         </div>
                         <div class="text-center py-1">
                             <p class="text-2xl font-semibold text-gray-800 dashboard-kpi-value">{{ $dashboard['whatsapp']['parentsOptedIn'] }}</p>
@@ -75,7 +75,7 @@
                     </div>
                     <div class="bg-white custom-shadow px-5 py-4 border dashboard-kpi-card h-full">
                         <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto text-blue-500 dashboard-kpi-icon" style="background: rgba(30,111,217,0.10);">
-                            <i class="fa-solid fa-paper-plane text-3xl"></i>
+                            <i class="fas fa-paper-plane text-3xl"></i>
                         </div>
                         <div class="text-center py-1">
                             <p class="text-2xl font-semibold text-gray-800 dashboard-kpi-value">{{ $dashboard['whatsapp']['messagesThisMonth'] }}</p>

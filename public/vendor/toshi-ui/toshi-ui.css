@@ -73,9 +73,13 @@
     .toshi-toggle:hover { color: #22C55E; }
     body.toshi-collapsed .toshi-toggle { right: 0; }
     body:not(.toshi-collapsed) .toshi-toggle { right: 380px; }
+    /* Content area — let flex determine width, not hardcoded viewport calc */
+    .dashboard-content-area {
+        width: auto !important;
+        transition: margin-right 0.25s ease;
+    }
     body:not(.toshi-collapsed) .dashboard-content-area {
         margin-right: 380px;
-        transition: margin-right 0.25s ease;
     }
     .toshi-panel::before {
         content: '';

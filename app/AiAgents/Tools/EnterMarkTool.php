@@ -23,13 +23,15 @@ class EnterMarkTool implements Tool, VerifiableTool
 
     public function description(): string
     {
-        return 'Enter an exam mark for a student. Provide the student name and subject name (not IDs), and the score.';
+        return 'Enter an exam mark for a student. Provide the student name and subject name (not IDs), and the score. If the student name is ambiguous (multiple matches), you will receive a list of IDs — reply with the ID number to disambiguate.';
     }
 
     public function schema(JsonSchema $schema): array
     {
         return [
             'student_name' => $schema->string()->description('Student full name, e.g. "John Smith"'),
+            'student_identifier' => $schema->string()->optional()->description('Student ID number, admission number, or klassapp_student_id. Use ONLY when the name was ambiguous and you need to disambiguate — set disambiguation_confirmed=true when the user explicitly replied with this ID after seeing the candidate list.'),
+            'disambiguation_confirmed' => $schema->boolean()->optional()->description('Set to true ONLY when the ambiguous-match candidate list was shown to the user AND they replied with a specific ID from that list. Never set this without showing the candidates first.'),
             'subject_name' => $schema->string()->description('Subject name, e.g. "Mathematics" or "English"'),
             'marks' => $schema->number()->min(0)->max(100)->description('Score 0-100'),
         ];
@@ -63,8 +65,73 @@ class EnterMarkTool implements Tool, VerifiableTool
             return $result['success'] ? '✅ ' . $result['message'] : '❌ ' . $result['message'];
         }
 
+        // Identifier-based resolution: strongest disambiguator, skips name matching entirely
+        $identifier = trim($request->get('student_identifier', ''));
+        if ($identifier !== '') {
+            $idResult = EntityResolver::resolveStudentByIdentifier($schoolId, $identifier);
+            if ($idResult['state'] === 'not_found') {
+                return "❌ No student found with identifier \"{$identifier}\". Please check the ID and try again, or use the student's full name.";
+            }
+            $resolvedUser = $idResult['model'];
+
+            // Duplicate-name guard: if this student has a duplicate name at
+            // this school, block the write UNLESS the user explicitly
+            // disambiguated (disambiguation_confirmed=true). This prevents
+            // the LLM from silently resolving an ambiguous name without
+            // surfacing the duplicate to the user first.
+            $confirmed = (bool) $request->get('disambiguation_confirmed', false);
+            if (!$confirmed) {
+                $dupError = ToshiActionService::guardDuplicateName($schoolId, $resolvedUser->id, 'student');
+                if ($dupError) {
+                    $name = $resolvedUser->name;
+                    $dupeIds = \App\Models\User::where('school_id', $schoolId)
+                        ->where('name', $name)
+                        ->pluck('id');
+                    $lines = [];
+                    foreach ($dupeIds as $id) {
+                        $u = \App\Models\User::find($id);
+                        $class = $u ? EntityResolver::classLabelForUser($schoolId, $u) : null;
+                        $classInfo = $class ? ", {$class}" : '';
+                        $lines[] = "ID {$id}: {$name}{$classInfo}";
+                    }
+                    return "Found **" . count($dupeIds) . "** students named \"{$name}\":\n" . implode("\n", $lines) . "\n\nPlease reply with the ID number to specify which one (e.g. \"124\").";
+                }
+            }
+
+            // Resolve exam by subject name
+            $subjectName = trim($request->get('subject_name', ''));
+            if ($subjectName === '') {
+                return '❌ Subject name is required.';
+            }
+            $examResult = EntityResolver::resolveExam($schoolId, $subjectName);
+            if ($examResult['state'] === 'not_found') {
+                return "❌ Subject \"{$subjectName}\" not found. Available subjects: English, Mathematics, Science, Social Studies.";
+            }
+            if ($examResult['state'] === 'ambiguous') {
+                $list = implode('; ', array_map(fn($c) => $c['name'] . ' (ID: ' . $c['id'] . ')', $examResult['candidates']));
+                return "Found **" . count($examResult['candidates']) . "** subjects matching \"{$subjectName}\":\n{$list}\n\nPlease specify which subject.";
+            }
+
+            $marks = $request->get('marks');
+            $args = [
+                'student_id' => $resolvedUser->id,
+                'exam_id' => $examResult['model']->id,
+                'marks' => $marks,
+            ];
+
+            $confirm = $this->confirmOrExecute('toolEnterMark', $args,
+                fn() => "Enter mark: {$resolvedUser->name} → {$examResult['model']->subject?->name} ({$examResult['model']->examType?->name}): {$marks}");
+            if ($confirm !== null) return $confirm;
+
+            $user = ToshiActionService::getEffectiveUser($user);
+            $result = ToshiActionService::enterMark($user, $args);
+            return $result['success'] ? '✅ ' . $result['message'] : '❌ ' . $result['message'];
+        }
+
         // First pass: resolve names to IDs
         $studentName = trim($request->get('student_name', ''));
+
+        // ... rest of name-based resolution
         $subjectName = trim($request->get('subject_name', ''));
         $marks = $request->get('marks');
 
@@ -78,8 +145,13 @@ class EnterMarkTool implements Tool, VerifiableTool
             return "❌ Student \"{$studentName}\" not found. Please check the spelling.";
         }
         if ($studentResult['state'] === 'ambiguous') {
-            $list = implode('; ', array_map(fn($c) => $c['name'] . ' (ID: ' . $c['id'] . ')', $studentResult['candidates']));
-            return "Found **" . count($studentResult['candidates']) . "** students matching \"{$studentName}\":\n{$list}\n\nPlease specify which student by using their full name.";
+            $lines = [];
+            foreach ($studentResult['candidates'] as $c) {
+                $classInfo = isset($c['class']) ? ", {$c['class']}" : '';
+                $lines[] = "ID {$c['id']}: {$c['name']}{$classInfo}";
+            }
+            $list = implode("\n", $lines);
+            return "Found **" . count($studentResult['candidates']) . "** students matching \"{$studentName}\":\n{$list}\n\nPlease reply with the ID number to specify which one (e.g. \"124\").";
         }
 
         // Resolve exam by subject name internally

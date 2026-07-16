@@ -138,6 +138,10 @@ class Exam extends Model
             return $this->belongsTo(User::class, "teacher_id");
         }
 
+        public function examType(){
+            return $this->belongsTo(ExamType::class, "exam_type_id");
+        }
+
         public function officialTeacher(){
             return $this->belongsTo(Userprofile::class, "teacher_id");
         }

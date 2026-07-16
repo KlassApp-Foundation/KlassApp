@@ -1397,6 +1397,32 @@ class ToshiActionService
 
     // ── Marks (single entry) ──
 
+    /**
+     * Check if a student ID has a duplicate name at the same school.
+     * If duplicates exist, returns an error string blocking the write.
+     * This catches a specific failure mode where the LLM silently resolves
+     * an ambiguous name to one ID without realizing duplicates exist.
+     */
+    public static function guardDuplicateName(int $schoolId, int $studentId, string $label = 'Student'): ?string
+    {
+        $student = \App\Models\User::find($studentId);
+        if (!$student) return null;
+
+        $dupes = \App\Models\User::where('school_id', $schoolId)
+            ->where('name', $student->name)
+            ->where('id', '!=', $studentId)
+            ->count();
+
+        if ($dupes > 0) {
+            $ids = \App\Models\User::where('school_id', $schoolId)
+                ->where('name', $student->name)
+                ->pluck('id')->implode(', ');
+            return "❌ Cannot confirm — multiple {$label}s named \"{$student->name}\" exist (IDs: {$ids}). Please specify which one before proceeding.";
+        }
+
+        return null;
+    }
+
     public static function enterMark(User $admin, array $data): array
     {
         $schoolId = $admin->school_id;
@@ -1421,14 +1447,16 @@ class ToshiActionService
                 $grade = $gradingService->grade((int)$score, $schoolId, $exam);
             }
 
-            $mark = Marks::create([
-                'student_id' => $studentId, 'exam_id' => $examId,
-                'school_id' => $schoolId, 'subject_id' => $exam->subject_id,
-                'section_id' => $exam->section_id,
-                'teacher_id' => $admin->id,
-                'marks' => $score,
-                'grade' => $grade ?? '-',
-            ]);
+            $mark = Marks::updateOrCreate(
+                ['student_id' => $studentId, 'exam_id' => $examId],
+                [
+                    'school_id' => $schoolId, 'subject_id' => $exam->subject_id,
+                    'section_id' => $exam->section_id,
+                    'teacher_id' => $admin->id,
+                    'marks' => $score,
+                    'grade' => $grade ?? '-',
+                ]
+            );
             return self::result(true, "Mark entered: {$score}.", ['mark_id' => $mark->id]);
         } catch (\Exception $e) {
             Log::error('ToshiAction: enterMark failed', ['error' => $e->getMessage()]);

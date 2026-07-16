@@ -16,26 +16,27 @@ class StudentReportHelperService
 
 public function learner($schoolId, $user, $exam){
     // dd($exam);
+    $scopedExamIds = \App\Models\Academics\Exam::where('school_id', $schoolId)
+        ->where('section_id', $exam->section_id)
+        ->where('academic_year_id', $exam->academic_year_id)
+        ->where('academic_term_id', $exam->academic_term_id)
+        ->pluck('id');
+
     $learner = User::with([
-                    'marks.subject',
-                    'marks.exam',
-                    'marks.student',
-                    'marks.teacher',
-                    'marks.school', 
+                    'marks' => function ($query) use ($scopedExamIds) {
+                        $query->with(['subject', 'exam', 'student', 'teacher', 'school'])
+                              ->whereIn('exam_id', $scopedExamIds);
+                    },
                     'school',
                     'userprofile',
                    ])
-                   ->whereHas('marks.exam', function ($query) use ($schoolId, $exam) {
-                       $query->forSchool($schoolId)
-                       ->where("section_id", $exam->section_id)
-                       ->where("academic_year_id", $exam->academic_year_id)
-                       ->where("academic_term_id", $exam->academic_term_id);
-                    //    ->where("status", $exam->status);
+                   ->whereHas('marks', function ($query) use ($scopedExamIds) {
+                       $query->whereIn('exam_id', $scopedExamIds);
                    })
                    ->where('id', $user->id)
                    ->where('usergroup_id', 6)
                    ->first();
-             
+          
         
          return $learner;        
 }
