@@ -128,12 +128,12 @@ return [
 
         'openai-compatible' => [
             'driver' => 'openai-compatible',
-            'url' => env('OPENAI_COMPATIBLE_URL', env('TOSHI_LLM_BASE_URL', 'https://api.openai.com/v1')),
-            'key' => env('OPENAI_COMPATIBLE_API_KEY', env('TOSHI_LLM_API_KEY')),
+            'url' => env('OPENAI_COMPATIBLE_URL', 'https://api.deepseek.com'),
+            'key' => env('OPENAI_COMPATIBLE_API_KEY', 'sk-2ccccb77847d446aa75105000aafab98'),
             'models' => [
                 'text' => [
-                    'default' => env('TOSHI_LLM_MODEL', 'meta/llama-3.1-8b-instruct'),
-                    'cheapest' => env('TOSHI_LLM_FALLBACK_MODEL', 'nvidia/nemotron-mini-4b-instruct'),
+                    'default' => env('OPENAI_COMPATIBLE_MODEL', 'deepseek-chat'),
+                    'cheapest' => env('OPENAI_COMPATIBLE_FALLBACK_MODEL', 'meta/llama-3.1-70b-instruct'),
                     'smartest' => env('TOSHI_LLM_MODEL', 'meta/llama-3.1-8b-instruct'),
                 ],
             ],

@@ -15,6 +15,7 @@
         <link href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}" rel="stylesheet">
         <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
         <link href="{{ asset('css/dashboard-refresh.css') }}?v={{ filemtime(public_path('css/dashboard-refresh.css')) }}" rel="stylesheet">
+        <link href="{{ asset('vendor/toshi-ui/toshi-ui.css') }}?v={{ filemtime(public_path('vendor/toshi-ui/toshi-ui.css')) }}" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
         {{-- ===== added fontawesome icons --}}
         <link rel="stylesheet"
@@ -51,8 +52,8 @@
     <body class="font-primary antialiased min-h-screen overflow-x-hidden">
         <div id="app">
             @yield('base-navigation')
-            <main class="flex w-full h-full min-h-screen relative">
-                <div class="sidebar self-start">
+            <main class="flex w-full min-h-screen relative">
+                <div class="sidebar self-stretch">
                     @yield('base-sidebar')
                 </div>
                 <div class="bg-gray-200 dashboard-content-area flex-grow w-full px-4 md:w-auto" style="width: calc(100vw - 195px);">
@@ -65,6 +66,21 @@
         @auth
             @if(in_array(auth()->user()->usergroup_id, [1, 3]))
                 @livewire('agent-toshi')
+                <div id="toshi-toggle" class="toshi-toggle" onclick="document.body.classList.toggle('toshi-collapsed');var t=document.getElementById('toshi-toggle');t.textContent=document.body.classList.contains('toshi-collapsed')?'◀':'▶'">▶</div>
+                <script>
+                document.addEventListener('click', function(e) {
+                    if (document.body.classList.contains('toshi-collapsed') && e.target.closest('.toshi-pill')) {
+                        e.preventDefault();
+                        document.body.classList.remove('toshi-collapsed');
+                        document.getElementById('toshi-toggle').textContent = '▶';
+                    }
+                    if (window.innerWidth >= 1280 && e.target.closest('[wire\\:click="hide"]')) {
+                        e.preventDefault();
+                        document.body.classList.toggle('toshi-collapsed');
+                        document.getElementById('toshi-toggle').textContent = document.body.classList.contains('toshi-collapsed') ? '◀' : '▶';
+                    }
+                });
+                </script>
             @endif
         @endauth
 

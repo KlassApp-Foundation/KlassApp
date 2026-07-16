@@ -44,12 +44,12 @@ return [
     | DeepSeek:    https://api.deepseek.com
     | Nvidia NIM:  https://api.nvcf.nvidia.com/v1
     */
-    'base_url' => env('TOSHI_LLM_BASE_URL', 'https://api.openai.com/v1'),
+    'base_url' => 'https://api.deepseek.com',
 
     /*
     | API key for the LLM provider.
     */
-    'api_key' => env('TOSHI_LLM_API_KEY', ''),
+    'api_key' => 'sk-2ccccb77847d446aa75105000aafab98',
 
     /*
     | Model name to use.
@@ -57,11 +57,10 @@ return [
     | DeepSeek:    deepseek-chat
     | Nvidia NIM:  meta/llama-3.1-8b-instruct
     */
-    'model' => 'nvidia/llama-3.3-nemotron-super-49b-v1',
+    'model' => 'deepseek-chat',
 
     /*
     | Fallback model — used when the primary model fails (404, timeout, etc.).
-    | Useful with NIM where specific models may be temporarily unavailable.
     | Set to empty to disable fallback behaviour.
     */
     'fallback_model' => 'meta/llama-3.1-70b-instruct',
