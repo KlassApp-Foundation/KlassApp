@@ -452,6 +452,81 @@ class WhatsAppBusinessService
     }
 
     /**
+     * Send a document (PDF) via Meta Cloud API.
+     *
+     * Uploads the file to a publicly-accessible URL and sends it as a
+     * WhatsApp document message. The file is not stored permanently —
+     * Meta downloads it once at send time.
+     *
+     * @param string $phone E.164 format
+     * @param string $fileUrl Publicly-accessible URL to the PDF
+     * @param string $caption Optional caption text
+     * @param string|null $filename Optional filename (default: document.pdf)
+     * @return array{success: bool, message_id: string, error?: string}
+     */
+    public function sendDocument(
+        string $phone,
+        string $fileUrl,
+        string $caption = '',
+        ?string $filename = null,
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        $cleanPhone = $this->cleanPhone($phone);
+
+        $body = [
+            'messaging_product' => 'whatsapp',
+            'recipient_type'    => 'individual',
+            'to'                => $cleanPhone,
+            'type'              => 'document',
+            'document'          => [
+                'link'          => $fileUrl,
+                'caption'       => $caption,
+            ],
+        ];
+
+        if ($filename) {
+            $body['document']['filename'] = $filename;
+        }
+
+        $response = Http::withToken($this->token)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", $body);
+
+        $respBody = $response->json();
+        $messageId = $respBody['messages'][0]['id'] ?? Str::uuid()->toString();
+        $success = $response->successful();
+
+        MessageDeliveryLog::create([
+            'whatsapp_message_id' => $messageId,
+            'phone'               => $phone,
+            'direction'           => 'outbound',
+            'category'            => $flowType ?? 'document',
+            'status'              => $success ? 'sent' : 'failed',
+            'content_preview'     => Str::limit($caption ?: $filename ?: 'document', 200),
+        ]);
+
+        if (!$success) {
+            $error = $respBody['error']['message'] ?? 'Unknown error';
+            Log::error('WhatsApp Business API: sendDocument failed', [
+                'phone'  => $phone,
+                'error'  => $error,
+                'url'    => $fileUrl,
+            ]);
+            return [
+                'success'    => false,
+                'message_id' => $messageId,
+                'error'      => $error,
+            ];
+        }
+
+        return [
+            'success'    => true,
+            'message_id' => $messageId,
+        ];
+    }
+
+    /**
      * Send a message to a WhatsApp user by KlassApp user ID.
      *
      * Convenience method that resolves the user's WhatsApp phone number.

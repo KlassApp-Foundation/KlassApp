@@ -305,6 +305,7 @@ Route::prefix('whatsapp')->group(function () {
 
     // Student data endpoints (used by n8n for parent/student flows)
     Route::get('/student/{studentId}/grades', 'Api\WhatsAppController@grades');
+    Route::get('/student/{studentId}/report', 'Api\WhatsAppController@report');
     Route::get('/student/{studentId}/attendance', 'Api\WhatsAppController@attendance');
     Route::get('/fees/{studentId}/balance', 'Api\WhatsAppController@feeBalance');
 

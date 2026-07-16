@@ -27,7 +27,7 @@ class Events extends Model
      * @var array
      */
     protected $fillable = [
-        'school_id' , 'academic_year_id' , 'standard_id' , 'select_type' , 'title' , 'description' , 'repeats' , 'freq' , 'freq_term' , 'location' , 'category' , 'organised_by' , 'image' , 'start_date' , 'end_date' , 'allDay' , 'url' , 'created_by' , 'updated_by','status'
+        'school_id' , 'academic_year_id' , 'standard_id' , 'select_type' , 'title' , 'description' , 'repeats' , 'freq' , 'freq_term' , 'location' , 'category' , 'organised_by' , 'image' , 'start_date' , 'end_date' , 'allDay' , 'url' , 'created_by' , 'updated_by','status', 'exam_id', 'timetable_slot_id'
     ];
 
     /**

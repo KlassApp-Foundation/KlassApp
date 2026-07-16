@@ -303,6 +303,17 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	//show
 	Route::get( '/teacher/show/details/{name}', 'TeacherShowController@showDetails' );
 	Route::get( '/teacher/show/timetable/{name}', 'TeacherShowController@showTimetable' );
+
+// Timetable slot management
+Route::get('/timetable/slots', 'TimetableSlotController@index')->name('admin.timetable.index');
+Route::get('/timetable/slots/create', 'TimetableSlotController@create')->name('admin.timetable.create');
+Route::post('/timetable/slots', 'TimetableSlotController@store')->name('admin.timetable.store');
+Route::get('/timetable/slots/{slot}/edit', 'TimetableSlotController@edit')->name('admin.timetable.edit');
+Route::put('/timetable/slots/{slot}', 'TimetableSlotController@update')->name('admin.timetable.update');
+Route::delete('/timetable/slots/{slot}', 'TimetableSlotController@destroy')->name('admin.timetable.destroy');
+
+// Teacher's own weekly timetable
+Route::get('/teacher/my-timetable', 'TimetableSlotController@teacherWeekly')->name('admin.timetable.teacher');
 	Route::get( '/teacher/show/classes/{name}', 'TeacherShowController@showClasses' );
 	Route::get( '/teacher/show/classteacher/{name}', 'TeacherShowController@showClassTeacher' );
 	Route::get( '/teacher/show/leave/{name}', 'TeacherShowController@showLeaveHistory' );

@@ -4,6 +4,7 @@ namespace App\Models\Academics;
 
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
+use App\Models\Events;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
@@ -24,8 +25,94 @@ class Exam extends Model
 
       protected $casts = [
           'default_deadline' => 'datetime',
+          'scheduled_at' => 'datetime',
       ];
-        public function marks(){
+
+    protected static function booted()
+    {
+        // When an exam is created with a scheduled_at, create corresponding
+        // calendar events for both the exam date and the marks deadline.
+        static::created(function (Exam $exam) {
+            $exam->syncCalendarEvents();
+        });
+
+        // When an exam is updated (rescheduled, deadline changed), refresh
+        // the linked calendar events.
+        static::updated(function (Exam $exam) {
+            $exam->syncCalendarEvents();
+        });
+
+        // When an exam is deleted, remove its calendar events so they
+        // aren't orphaned.
+        static::deleted(function (Exam $exam) {
+            Events::where('exam_id', $exam->id)->delete();
+        });
+    }
+
+    /**
+     * Create or update calendar events for this exam's scheduled date
+     * and marks deadline. Creates two events:
+     *   1. "Exam: {Subject} — {ExamType}" on scheduled_at
+     *   2. "📝 Marks Due: {Subject} — {ExamType}" on default_deadline
+     *
+     * Only creates events when the respective date is set.
+     */
+    public function syncCalendarEvents(): void
+    {
+        if (!$this->school_id) return;
+
+        $subjectName = $this->subject?->name ?? 'Subject';
+        $examTypeName = $this->examType?->name ?? 'Exam';
+        $baseTitle = "{$subjectName} — {$examTypeName}";
+
+        // Remove existing events for this exam so we can rebuild cleanly
+        Events::where('exam_id', $this->id)->delete();
+
+        // Event 1: exam date
+        if ($this->scheduled_at) {
+            Events::create([
+                'exam_id'          => $this->id,
+                'school_id'        => $this->school_id,
+                'academic_year_id' => $this->academic_year_id,
+                'batch'            => '',
+                'select_type'      => 'school',
+                'title'            => "Exam: {$baseTitle}",
+                'category'         => 'exam',
+                'start_date'       => $this->scheduled_at,
+                'end_date'         => $this->scheduled_at,
+                'allDay'           => 1,
+                'status'           => 'active',
+                'color'            => '#2563EB',
+                'created_by'       => $this->teacher_id,
+            ]);
+        }
+
+        // Event 2: marks deadline
+        if ($this->default_deadline) {
+            Events::create([
+                'exam_id'          => $this->id,
+                'school_id'        => $this->school_id,
+                'academic_year_id' => $this->academic_year_id,
+                'batch'            => '',
+                'select_type'      => 'school',
+                'title'            => "📝 Marks Due: {$baseTitle}",
+                'category'         => 'exam',
+                'start_date'       => $this->default_deadline,
+                'end_date'         => $this->default_deadline,
+                'allDay'           => 1,
+                'status'           => 'active',
+                'color'            => '#DC2626',
+                'created_by'       => $this->teacher_id,
+            ]);
+        }
+    }
+
+    public function calendarEvents()
+    {
+        return $this->hasMany(\App\Models\Events::class, 'exam_id');
+    }
+
+    public function marks(){
            return $this->hasMany(Marks::class);
        }
        public function academicTerm(){
@@ -37,10 +124,7 @@ class Exam extends Model
         public function standard(){
             return $this->belongsTo(Standard::class, "standard_id");
         }
-         public function examType(){
-            return $this->belongsTo(ExamType::class);
-        }
-       
+        
         public function school(){
             return $this->belongsTo(School::class, "school_id");
         }

@@ -320,6 +320,126 @@ class WhatsAppController extends Controller
     }
 
     /**
+     * Generate and deliver a report card PDF via WhatsApp.
+     *
+     * GET /api/whatsapp/student/{studentId}/report?phone=+256...&year_id=X&term_id=Y
+     */
+    public function report(string $studentId, Request $request)
+    {
+        $phone = WhatsAppPhoneHelper::normalise($request->input('phone', ''));
+        if (empty($phone)) {
+            return response()->json(['error' => 'Phone number is required.'], 422);
+        }
+
+        $whatsappUser = \App\Models\WhatsAppUser::where('phone', $phone)->with('user')->first();
+        if (!$whatsappUser || !$whatsappUser->user) {
+            return response()->json(['error' => 'Phone number not linked to any account.'], 404);
+        }
+
+        $parent = $whatsappUser->user;
+
+        $student = \App\Models\User::with('studentAcademic.standardLink.standard')->where('id', $studentId)->first();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found.'], 404);
+        }
+
+        $isLinked = \DB::table('student_parent_links')
+            ->where('parent_id', $parent->id)
+            ->where('student_id', $student->id)
+            ->exists();
+        if (!$isLinked) {
+            return response()->json(['error' => 'This student is not linked to your account.'], 403);
+        }
+
+        $schoolId = $student->school_id;
+        $yearId = $request->input('year_id');
+        if (!$yearId) {
+            $academicYear = \App\Helpers\SiteHelper::getAcademicYear($schoolId);
+            $yearId = $academicYear ? $academicYear->id : null;
+        }
+        if (!$yearId) {
+            return response()->json(['error' => 'No academic year found.'], 404);
+        }
+
+        // Check approval status
+        $approvedCount = \DB::table('exam_marks_submissions')
+            ->join('exams', 'exams.id', '=', 'exam_marks_submissions.exam_id')
+            ->join('marks', fn($j) => $j->on('marks.exam_id', '=', 'exams.id')->where('marks.student_id', $studentId))
+            ->where('exams.school_id', $schoolId)
+            ->where('exams.academic_year_id', $yearId)
+            ->where('exam_marks_submissions.approval_status', 'approved')
+            ->distinct('exam_marks_submissions.subject_id')
+            ->count('exam_marks_submissions.subject_id');
+
+        if ($approvedCount === 0) {
+            return response()->json([
+                'student_name' => $student->name,
+                'message'      => 'Marks are not yet finalized for this term. Please check back after your child\'s teacher has submitted and the school has approved the results.',
+                'approved'     => false,
+            ]);
+        }
+
+        $term = $request->input('term_id')
+            ? \App\Models\AcademicTerm::find($request->input('term_id'))
+            : \App\Models\AcademicTerm::where('school_id', $schoolId)->where('academic_year_id', $yearId)->first();
+        if (!$term) {
+            return response()->json(['error' => 'Term not found.'], 404);
+        }
+
+        $school = \App\Models\School::find($schoolId);
+        $examTypePrefs = $school ? ($school->exam_type_preferences ?? []) : [];
+        $contributingIds = \App\Models\Academics\ExamType::all()->filter(fn($et) => $examTypePrefs[$et->id] ?? $et->contributes_to_report_total)->pluck('id')->toArray();
+
+        $exams = \App\Models\Academics\Exam::where('school_id', $schoolId)
+            ->where('academic_term_id', $term->id)
+            ->whereIn('exam_type_id', $contributingIds)
+            ->with(['marks' => fn($q) => $q->where('student_id', $student->id), 'examType', 'subject'])
+            ->get();
+
+        $approvedSubjectIds = \DB::table('exam_marks_submissions')
+            ->join('exams', 'exams.id', '=', 'exam_marks_submissions.exam_id')
+            ->where('exams.school_id', $schoolId)
+            ->where('exams.academic_term_id', $term->id)
+            ->where('exam_marks_submissions.approval_status', 'approved')
+            ->pluck('exam_marks_submissions.subject_id')->unique()->toArray();
+
+        $marksData = [];
+        foreach ($exams as $exam) {
+            $isApproved = in_array($exam->subject_id, $approvedSubjectIds);
+            $mark = $exam->marks->first();
+            $marksData[] = [
+                'subject'  => $exam->subject?->name ?? 'Unknown',
+                'score'    => $isApproved && $mark ? $mark->marks : null,
+                'grade'    => $isApproved && $mark ? $mark->grade : null,
+                'approved' => $isApproved,
+                'display'  => $isApproved && $mark ? $mark->marks . '%' : 'Not yet available',
+            ];
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('whatsapp.report-card', [
+            'student'   => $student,
+            'marksData' => $marksData,
+            'term'      => $term,
+            'school'    => $school,
+            'partial'   => $approvedCount < count($marksData),
+        ]);
+
+        $filename = 'report_' . $student->id . '_' . time() . '.pdf';
+        $path = storage_path('app/public/reports/' . $filename);
+        if (!is_dir(dirname($path))) { mkdir(dirname($path), 0755, true); }
+        $pdf->save($path);
+
+        $fileUrl = url('storage/reports/' . $filename);
+        $caption = 'Report Card for ' . $student->name . ' — ' . ($term->name ?? '');
+
+        $result = $this->businessApi->sendDocument($phone, $fileUrl, $caption, $filename, 'report_card', $student->id);
+
+        return $result['success']
+            ? response()->json(['student_name' => $student->name, 'message' => 'Report card sent via WhatsApp.', 'approved' => true, 'partial' => $approvedSubjectIds < count($marksData), 'message_id' => $result['message_id']])
+            : response()->json(['student_name' => $student->name, 'error' => $result['error'] ?? 'Failed to send document via WhatsApp.'], 500);
+    }
+
+    /**
      * Get school events via WhatsApp.
      *
      * GET /api/whatsapp/school/{schoolId}/events?upcoming=1
