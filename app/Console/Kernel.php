@@ -41,6 +41,9 @@ class Kernel extends ConsoleKernel
         // WhatsApp
             \App\Console\Commands\SendFeeReminders::class,
             \App\Console\Commands\SendWhatsAppPendingNotifications::class,
+
+        // Marks
+            \App\Console\Commands\LockExpiredExamSubmissions::class,
     ];
 
     /**
@@ -136,6 +139,10 @@ class Kernel extends ConsoleKernel
                  ->everyFifteenMinutes()
                  ->withoutOverlapping()
                  ->appendOutputTo(storage_path('logs/whatsapp-pending.log'));
+
+        $schedule->command('marks:lock-expired')
+                 ->everyFifteenMinutes()
+                 ->withoutOverlapping();
     }
 
     /**

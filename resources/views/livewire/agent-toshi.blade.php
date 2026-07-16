@@ -1,4 +1,6 @@
-<div x-data="{ hasText: false }" class="toshi-root">
+<div x-data="{ hasText: false }"
+     x-on:toshi-run-plan-step.window="setTimeout(() => $wire.executeNextPlanStep(), 200)"
+     class="toshi-root">
     <div id="toshi-pill"
          wire:click="show"
          class="toshi-pill"
@@ -42,14 +44,49 @@
                     <div>
                         <div class="toshi-msg-label">{{ $isUser ? 'You' : 'Toshi' }}</div>
                         <div class="{{ $isUser ? 'toshi-msg-user' : 'toshi-msg-bot' }}">
-                            @if(!$isUser){!! preg_replace('/\*\*(.+?)\*\*/','<strong>$1</strong>',nl2br(e($msg['text']))) !!}@else{!! nl2br(e($msg['text'])) !!}@endif
-                            @if(!$isUser && $awaitingConfirm && $pendingToolConfirm && $loop->last)
-                                <div class="flex gap-2 mt-2">
-                                    <button wire:click="confirmYes" type="button"
-                                            class="px-4 py-1.5 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700">Yes</button>
-                                    <button wire:click="cancelAction('{{ md5($msg['text'] ?? '') }}')" type="button"
-                                            class="px-4 py-1.5 bg-red-100 text-red-700 text-xs rounded hover:bg-red-200">No</button>
-                                </div>
+                            @if(!$isUser)
+                                @if(!empty($msg['_streamId']))
+                                    <span x-stream="{{ $msg['_streamId'] }}"></span>
+                                @endif
+                                {!! preg_replace('/\*\*(.+?)\*\*/','<strong>$1</strong>',nl2br(e($msg['text']))) !!}
+                            @else
+                                {!! nl2br(e($msg['text'])) !!}
+                            @endif
+                            @if(!$isUser && $loop->last && $pendingToolConfirm)
+                                @php
+                                    $toolInfo = $this->getToolDisplay($pendingToolConfirm['tool']);
+                                    $toolArgs = $this->getToolArgsDisplay($pendingToolConfirm['args'] ?? []);
+                                @endphp
+                                @include('toshi-ui::components.tool-confirm-card', [
+                                    'toolName' => $toolInfo['label'],
+                                    'toolIcon' => $toolInfo['icon'],
+                                    'params' => $toolArgs,
+                                    'state' => 'pending',
+                                    'wireKey' => 'tpc-' . md5($msg['text'] ?? ''),
+                                    'confirmMethod' => 'confirmYes',
+                                    'cancelMethod' => 'cancelAction',
+                                    'cancelParam' => md5($msg['text'] ?? ''),
+                                ])
+                            @elseif(!$isUser && $loop->last && $cancelledToolConfirm)
+                                @php
+                                    $toolInfo = $this->getToolDisplay($cancelledToolConfirm['tool']);
+                                    $toolArgs = $this->getToolArgsDisplay($cancelledToolConfirm['args'] ?? []);
+                                @endphp
+                                @include('toshi-ui::components.tool-confirm-card', [
+                                    'toolName' => $toolInfo['label'],
+                                    'toolIcon' => $toolInfo['icon'],
+                                    'params' => $toolArgs,
+                                    'state' => 'cancelled',
+                                    'wireKey' => 'tcc-' . md5(json_encode($cancelledToolConfirm)),
+                                ])
+                            @elseif(!$isUser && $loop->last && $planSteps)
+                                @include('toshi-ui::components.plan-card', [
+                                    'steps' => $planSteps,
+                                    'wireKey' => 'plan-' . md5(json_encode($planSteps)),
+                                    'confirmMethod' => 'confirmPlan',
+                                    'cancelMethod' => 'cancelPlan',
+                                    'executingVerb' => $this->getPlanExecutingVerb(),
+                                ])
                             @endif
                         </div>
                     </div>
@@ -706,30 +743,25 @@
         </div>
         @endif
 
-        {{-- School admin quick actions --}}
+        {{-- School admin quick actions — suggestion chips row --}}
         @if($scope === 'school' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm && $schoolId)
-        <div class="shrink-0" style="display: flex; flex-direction: column; gap: 6px; padding: 4px 16px 8px; background: #FFFFFF;">
-            @php
-                $school = \App\Models\School::find($schoolId);
-                $schoolName = $school ? $school->name : 'School';
-                $actions = $this->capabilities['actions'] ?? [];
-                $quickActions = [
-                    'add_student'  => ['label' => '+ Student', 'hint' => '"add student"'],
-                    'record_payment' => ['label' => '💳 Payment', 'hint' => '"record payment"'],
-                    'record_attendance' => ['label' => '📋 Attendance', 'hint' => '"mark present"'],
-                    'generate_report' => ['label' => '📊 Report', 'hint' => '"show report"'],
-                ];
-            @endphp
-            <div style="font-size: 12px; font-weight: 600; color: #141413;">{{ $schoolName }}</div>
-            <div class="toshi-label">Quick Actions</div>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                @foreach($quickActions as $action => $def)
-                    @if(in_array($action, $actions))
-                    <span class="toshi-chip" style="cursor: default;" title="{{ $def['hint'] }}">{{ $def['label'] }}</span>
-                    @endif
-                @endforeach
-            </div>
-        </div>
+        @php
+            $availableActions = $this->capabilities['actions'] ?? [];
+            $suggestions = array_values(array_filter([
+                'record_attendance' => ['icon' => '📋', 'label' => 'Record attendance'],
+                'record_payment'    => ['icon' => '💳', 'label' => 'Check fee balance'],
+                'add_student'       => ['icon' => '👤', 'label' => 'Add a student'],
+                'list_classes'      => ['icon' => '📚', 'label' => 'List my classes'],
+                'list_teachers'     => ['icon' => '🔍', 'label' => 'Find a student'],
+            ], fn($key) => in_array($key, $availableActions), ARRAY_FILTER_USE_KEY));
+        @endphp
+        @if(count($messages) < 3)
+        @include('toshi-ui::components.suggestion-chips', [
+            'suggestions' => $suggestions,
+            'inputId' => 'toshi-input-panel',
+            'wireKey' => 'sc-panel',
+        ])
+        @endif
         @endif
 
         {{-- Confirmation buttons --}}
@@ -809,6 +841,7 @@
                 <textarea rows="1" wire:model.defer="input"
                           placeholder="Message Toshi…"
                           id="toshi-input-panel"
+                          x-init="$el.removeAttribute('readonly')"
                           @input="
                               hasText = $el.value.trim().length > 0;
                               $el.style.height = 'auto';
@@ -942,13 +975,33 @@
                                     </div>
                                     <div class="toshi-msg-bot" style="padding: 12px 16px; font-size: 14px; line-height: 1.6; max-width: 85%;">
                                         {!! preg_replace('/\*\*(.+?)\*\*/','<strong>$1</strong>',nl2br(e($msg['text']))) !!}
-                                        @if($awaitingConfirm && $pendingToolConfirm && $loop->last)
-                                            <div class="flex gap-2 mt-2">
-                                                <button wire:click="confirmYes" type="button"
-                                                        class="px-4 py-1.5 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700">Yes</button>
-                                                <button wire:click="cancelAction('{{ md5($msg['text'] ?? '') }}')" type="button"
-                                                        class="px-4 py-1.5 bg-red-100 text-red-700 text-xs rounded hover:bg-red-200">No</button>
-                                            </div>
+                                        @if($loop->last && $pendingToolConfirm)
+                                            @php
+                                                $toolInfo = $this->getToolDisplay($pendingToolConfirm['tool']);
+                                                $toolArgs = $this->getToolArgsDisplay($pendingToolConfirm['args'] ?? []);
+                                            @endphp
+                                            @include('toshi-ui::components.tool-confirm-card', [
+                                                'toolName' => $toolInfo['label'],
+                                                'toolIcon' => $toolInfo['icon'],
+                                                'params' => $toolArgs,
+                                                'state' => 'pending',
+                                                'wireKey' => 'tpc-m-' . md5($msg['text'] ?? ''),
+                                                'confirmMethod' => 'confirmYes',
+                                                'cancelMethod' => 'cancelAction',
+                                                'cancelParam' => md5($msg['text'] ?? ''),
+                                            ])
+                                        @elseif($loop->last && $cancelledToolConfirm)
+                                            @php
+                                                $toolInfo = $this->getToolDisplay($cancelledToolConfirm['tool']);
+                                                $toolArgs = $this->getToolArgsDisplay($cancelledToolConfirm['args'] ?? []);
+                                            @endphp
+                                            @include('toshi-ui::components.tool-confirm-card', [
+                                                'toolName' => $toolInfo['label'],
+                                                'toolIcon' => $toolInfo['icon'],
+                                                'params' => $toolArgs,
+                                                'state' => 'cancelled',
+                                                'wireKey' => 'tcc-m-' . md5(json_encode($cancelledToolConfirm)),
+                                            ])
                                         @endif
                                     </div>
                                 </div>
@@ -1574,6 +1627,26 @@
                 @endif
             {{-- Skip step button — shared partial (modal) --}}
             @include('livewire.partials.toshi-skip-button', ['modal' => true])
+            {{-- Suggestion chips (modal) --}}
+            @if($scope === 'school' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm && $schoolId)
+            @php
+                $availableActions = $this->capabilities['actions'] ?? [];
+                $suggestions = array_values(array_filter([
+                    'record_attendance' => ['icon' => '📋', 'label' => 'Record attendance'],
+                    'record_payment'    => ['icon' => '💳', 'label' => 'Check fee balance'],
+                    'add_student'       => ['icon' => '👤', 'label' => 'Add a student'],
+                    'list_classes'      => ['icon' => '📚', 'label' => 'List my classes'],
+                    'list_teachers'     => ['icon' => '🔍', 'label' => 'Find a student'],
+                ], fn($key) => in_array($key, $availableActions), ARRAY_FILTER_USE_KEY));
+            @endphp
+            @if(count($messages) < 3)
+            @include('toshi-ui::components.suggestion-chips', [
+                'suggestions' => $suggestions,
+                'inputId' => 'toshi-input-modal',
+                'wireKey' => 'sc-modal',
+            ])
+            @endif
+            @endif
             {{-- Composer: maximized modal — unified bar matching panel --}}
                 <form wire:submit.prevent="send" style="padding: 0 24px 16px; background: #FFFFFF;">
                     <div class="toshi-composer-box">
@@ -1585,6 +1658,7 @@
                             <textarea rows="1" wire:model.defer="input"
                                       placeholder="Message Toshi..."
                                       id="toshi-input-modal"
+                                      x-init="$el.removeAttribute('readonly')"
                                       @input="
                                           hasText = $el.value.trim().length > 0;
                                           $el.style.height = 'auto';

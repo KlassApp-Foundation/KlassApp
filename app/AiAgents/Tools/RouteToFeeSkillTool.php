@@ -5,10 +5,12 @@ namespace App\AiAgents\Tools;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Skills\FeeSkill;
 
 class RouteToFeeSkillTool implements Tool
 {
+    use AuthorizesToshiAction;
     public function description(): string
     {
         return 'Route a fee/payment query to the Fee skill. Handles: creating fee categories, recording payments, checking fee balances. Call this when the user asks about fees, payments, balances, invoices, or school fees.';
@@ -23,6 +25,10 @@ class RouteToFeeSkillTool implements Tool
 
     public function handle(Request $request): string
     {
+        $user = auth()->user() ?? request()->user();
+        $error = $this->authorizeOrMessage($user);
+        if ($error) return $error;
+
         $skill = new FeeSkill;
         return $skill->prompt($request->get('query'))->text;
     }

@@ -7,6 +7,7 @@ use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Promptable;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Model;
+use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Enums\Lab;
 use App\AiAgents\Tools\RouteToStudentSkillTool;
 use App\AiAgents\Tools\RouteToTeacherSkillTool;
@@ -16,6 +17,7 @@ use App\AiAgents\Tools\RouteToGradingSkillTool;
 use App\AiAgents\Tools\RouteToReportingSkillTool;
 
 #[MaxSteps(3)]
+#[Timeout(120)]
 class ToshiOrchestrator implements Agent, HasTools
 {
     use Promptable;
@@ -112,7 +114,7 @@ PROMPT;
      * Convenience method to run the orchestrator from the Livewire component.
      * Returns the skill's response text or a fallback message.
      */
-    public function run(string $query): string
+    public function run(string $query): ?string
     {
         try {
             $response = $this->prompt($query);
@@ -122,7 +124,7 @@ PROMPT;
                 'error' => $e->getMessage(),
                 'query' => $query,
             ]);
-            return 'I encountered an error processing your request. Please try rephrasing your question.';
+            return null;
         }
     }
 }

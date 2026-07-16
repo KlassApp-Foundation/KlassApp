@@ -14,7 +14,7 @@ class ActivityLog extends Model
    protected $table = 'activity_log';
 
     protected $fillable = [
-        'log_name', 'description', 'subject_id', 'subject_type', 'causer_id', 'causer_type', 'properties','batch_uuid'
+        'log_name', 'description', 'subject_id', 'subject_type', 'causer_id', 'causer_type', 'properties', 'batch_uuid', 'school_id'
     ];
    protected $casts=[
     	'properties'=>'array'	
@@ -27,4 +27,9 @@ class ActivityLog extends Model
    {
        return $this->belongsTo('App\Models\User', 'causer_id');
 	}
+
+   public function school()
+   {
+       return $this->belongsTo('App\Models\School', 'school_id');
+   }
 }

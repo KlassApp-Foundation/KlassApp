@@ -165,6 +165,8 @@ Route::post( '/notes', 'NotesController@store' );
 //activity_log
 Route::get( '/activity', 'ActivityLogController@index' );
 
+Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.toshi.activity');
+
 //discipline
 	//index
 	Route::get( '/disciplines', 'DisciplineController@index' );
@@ -814,6 +816,15 @@ Route::get('/promotion', "MarksController@promoteStudents")->name('admin.student
 Route::get("/marks/student/{user}/class/{class}/{exam}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
 Route::get("/report/student/{learner}/class/{class}/{exam}", "DownloadStudentReport@download")->name("admin.report.student.class");
 Route::get('/marks/download/', "DownloadMarksSheet@download")->name("admin.marksheet.download");
+
+// ===== Exam Marks Submissions (Lock / Reopen) =====
+Route::get('/marks/submissions', 'ExamMarksSubmissionController@index')->name('admin.marks.submissions');
+Route::get('/marks/submissions/{exam}', 'ExamMarksSubmissionController@show')->name('admin.marks.submissions.show');
+Route::post('/marks/submissions/{exam}/lock', 'ExamMarksSubmissionController@lock')->name('admin.marks.submissions.lock');
+Route::post('/marks/submissions/{exam}/reopen', 'ExamMarksSubmissionController@reopen')->name('admin.marks.submissions.reopen');
+Route::post('/marks/submissions/{exam}/approve', 'ExamMarksSubmissionController@approve')->name('admin.marks.submissions.approve');
+Route::post('/marks/submissions/{exam}/reject', 'ExamMarksSubmissionController@reject')->name('admin.marks.submissions.reject');
+
 // Optional later: full resource or more actions
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 // handle classes

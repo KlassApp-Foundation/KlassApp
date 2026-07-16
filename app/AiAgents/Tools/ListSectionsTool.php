@@ -5,9 +5,11 @@ namespace App\AiAgents\Tools;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use App\AiAgents\Concerns\AuthorizesToshiAction;
 
 class ListSectionsTool implements Tool
 {
+    use AuthorizesToshiAction;
     public function description(): string
     {
         return 'List all sections/streams configured for the school.';
@@ -21,6 +23,9 @@ class ListSectionsTool implements Tool
     public function handle(Request $request): string
     {
         $user = auth()->user() ?? request()->user();
+        $error = $this->authorizeOrMessage($user);
+        if ($error) return $error;
+        $user = \App\Services\ToshiActionService::getEffectiveUser($user);
         $result = \App\Services\ToshiActionService::listSections($user);
         if (!$result['success']) {
             return '❌ ' . $result['message'];

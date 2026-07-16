@@ -66,11 +66,11 @@ class ToshiTrialFlowTest extends TestCase
         $component->set('academicYearLabel', '2026');
         $component->set('adminName', 'Toshi Admin');
         $component->set('adminEmail', 'toshi-trial@test.internal');
-        $component->set('adminPhone', '+256700000001');
-        $component->set('password', 'password123');
+        $component->set('adminPassword', 'password123');
         $component->set('standards', [['name' => 'Primary One']]);
         $component->set('subjects', ['Primary One' => ['Mathematics']]);
-        $component->call('commitAll');
+        $component->set('mode', 'create');
+        $component->call('commit');
 
         $school = School::where('name', 'Test Toshi Trial')->first();
         $this->assertNotNull($school);
@@ -96,11 +96,11 @@ class ToshiTrialFlowTest extends TestCase
         $component->set('academicYearLabel', '2026');
         $component->set('adminName', 'Toshi Admin');
         $component->set('adminEmail', 'toshi-premium@test.internal');
-        $component->set('adminPhone', '+256700000003');
-        $component->set('password', 'password123');
+        $component->set('adminPassword', 'password123');
         $component->set('standards', [['name' => 'Primary One']]);
         $component->set('subjects', ['Primary One' => ['Mathematics']]);
-        $component->call('commitAll');
+        $component->set('mode', 'create');
+        $component->call('commit');
 
         $school = School::where('name', 'Test Toshi Premium')->first();
         $this->assertNotNull($school);
@@ -125,11 +125,11 @@ class ToshiTrialFlowTest extends TestCase
         $component->set('academicYearLabel', '2026');
         $component->set('adminName', 'Toshi Free Admin');
         $component->set('adminEmail', 'toshi-free@test.internal');
-        $component->set('adminPhone', '+256700000002');
-        $component->set('password', 'password123');
+        $component->set('adminPassword', 'password123');
         $component->set('standards', [['name' => 'Primary One']]);
         $component->set('subjects', ['Primary One' => ['Mathematics']]);
-        $component->call('commitAll');
+        $component->set('mode', 'create');
+        $component->call('commit');
 
         $school = School::where('name', 'Test Toshi Free')->first();
         $this->assertNotNull($school);

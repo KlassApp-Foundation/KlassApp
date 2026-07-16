@@ -32,11 +32,81 @@ use Illuminate\Support\Str;
 class ToshiActionService
 {
     /**
+     * When false, write tools return a confirmation payload instead of executing.
+     * Set to true by confirmYes() for the second pass that actually writes.
+     */
+    public static bool $bypassConfirm = false;
+
+    /**
+     * Side-channel for the SDK v2 path: when a write tool returns __tier2_confirm,
+     * it stores the payload here so ToshiSdkV2Service can retrieve it after the
+     * orchestrator returns, bypassing the LLM loop that might reformat the JSON.
+     */
+    public static ?array $pendingConfirmPayload = null;
+
+    /**
+     * If bypassConfirm is false, returns a __tier2_confirm JSON payload
+     * that the Livewire component converts to pendingToolConfirm.
+     * Returns null when bypassConfirm is true (tool should execute).
+     */
+    public static function confirmationPayload(string $toolName, array $args, string $preview): ?string
+    {
+        if (self::$bypassConfirm) {
+            return null;
+        }
+        // Store in the side-channel so ToshiSdkV2Service can retrieve it
+        // without relying on LLM-preserved JSON formatting
+        self::$pendingConfirmPayload = [
+            'tool' => $toolName,
+            'args' => $args,
+            'preview' => $preview,
+        ];
+        return json_encode([
+            '__tier2_confirm' => true,
+            'tool' => $toolName,
+            'args' => $args,
+            'preview' => $preview,
+        ]);
+    }
+
+    /**
      * Result returned by every action method.
      */
     public static function result(bool $success, string $message, array $data = []): array
     {
         return array_merge(['success' => $success, 'message' => $message], $data);
+    }
+
+    // ── Shared daily budget tracking (single source of truth) ──
+
+    /**
+     * Get the remaining daily LLM query budget for a user.
+     */
+    public static function getRemainingBudget(int $userId, ?int $schoolId): int
+    {
+        $dailyLimit = (int) config('toshi.daily_llm_limit', 100);
+        $key = 'toshi_daily_llm_' . $userId . '_' . ($schoolId ?? 0);
+        $used = (int) cache()->get($key, 0);
+        return max(0, $dailyLimit - $used);
+    }
+
+    /**
+     * Consume one unit from the daily LLM query budget.
+     * Returns true if the budget was available and consumed.
+     */
+    public static function consumeBudget(int $userId, ?int $schoolId): bool
+    {
+        if (self::getRemainingBudget($userId, $schoolId) <= 0) {
+            return false;
+        }
+
+        $key = 'toshi_daily_llm_' . $userId . '_' . ($schoolId ?? 0);
+        $ttl = now()->endOfDay()->diffInSeconds(now());
+
+        cache()->add($key, 0, $ttl);
+        cache()->increment($key);
+
+        return true;
     }
 
     /**

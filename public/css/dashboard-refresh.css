@@ -2224,3 +2224,421 @@ body .toshi-panel {
     display: inline-flex;
     align-items: center;
 }
+
+/* ── Toshi Suggestion Chips (Phase A) ── */
+.toshi-suggestions-wrapper {
+    padding: 8px 0;
+    transition: opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease;
+    overflow: hidden;
+    max-height: 80px;
+    opacity: 1;
+    margin-bottom: 0;
+}
+.toshi-suggestions-wrapper.toshi-suggestions-hidden {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: -8px;
+    pointer-events: none;
+}
+.toshi-suggestions-scroll {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 16px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+}
+.toshi-suggestions-scroll::-webkit-scrollbar {
+    display: none;
+}
+.toshi-chip-suggestion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 16px;
+    background: #F1F5F9;
+    border: 1px solid var(--d-border);
+    border-radius: 9999px;
+    font-family: "DM Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--d-text);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s ease, border-color 0.15s ease, background 0.15s ease;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    appearance: none;
+    outline: none;
+}
+.toshi-chip-suggestion:hover {
+    border-color: var(--d-border-strong);
+    background: #EEF2F6;
+}
+.toshi-chip-suggestion:focus-visible {
+    box-shadow: 0 0 0 2px var(--d-white), 0 0 0 4px var(--d-green);
+}
+.toshi-chip-suggestion .toshi-chip-icon {
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.toshi-chip-suggestion.toshi-chip-used {
+    opacity: 0.5;
+}
+.toshi-chip-suggestion.toshi-chip-used:hover {
+    opacity: 0.65;
+}
+
+/* ── Toshi Tool Confirmation Card (Phase B) ── */
+.toshi-confirm-card {
+    background: var(--d-white);
+    border-radius: 16px;
+    border: 1px solid var(--d-border);
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-top: 8px;
+    overflow: hidden;
+}
+.toshi-confirm-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--d-green);
+    transition: background 0.4s ease;
+}
+.toshi-confirm-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 0 20px;
+    gap: 12px;
+}
+.toshi-confirm-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Sora', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--d-text);
+    line-height: 1.4;
+}
+.toshi-confirm-card-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #ECFDF5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #16A34A;
+    font-size: 14px;
+}
+.toshi-confirm-cancelled-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: 100px;
+    background: #FEF3C7;
+    color: #92400E;
+    white-space: nowrap;
+}
+.toshi-confirm-card-body {
+    padding: 12px 20px 16px 20px;
+}
+.toshi-confirm-param-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.toshi-confirm-param-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+.toshi-confirm-param-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--d-text-secondary);
+    min-width: 72px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.toshi-confirm-param-value {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--d-text);
+    line-height: 1.4;
+}
+.toshi-confirm-card-footer {
+    padding: 0 20px 16px 20px;
+    display: flex;
+    gap: 10px;
+}
+.toshi-confirm-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1.5px solid transparent;
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
+}
+.toshi-confirm-btn:focus-visible {
+    outline: 2px solid var(--d-blue);
+    outline-offset: 2px;
+}
+.toshi-confirm-btn-yes {
+    background: var(--d-green);
+    color: white;
+    border-color: var(--d-green);
+}
+.toshi-confirm-btn-yes:hover {
+    background: #16A34A;
+    border-color: #16A34A;
+}
+.toshi-confirm-btn-no {
+    background: var(--d-white);
+    color: var(--d-text);
+    border-color: var(--d-border-strong);
+}
+.toshi-confirm-btn-no:hover {
+    background: #F8FAFC;
+    border-color: var(--d-text-secondary);
+}
+.toshi-confirm-card.is-cancelled::before {
+    background: var(--d-amber);
+}
+.toshi-confirm-card.is-cancelled {
+    opacity: 0.85;
+}
+.toshi-confirm-card.is-cancelled .toshi-confirm-param-value {
+    text-decoration: line-through;
+    color: var(--d-text-secondary);
+}
+.toshi-confirm-card.is-cancelled .toshi-confirm-card-icon {
+    background: #FEF3C7;
+    color: #D97706;
+}
+.toshi-confirm-cancelled-msg {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--d-text-secondary);
+    padding: 6px 0;
+    min-height: 48px;
+}
+@media (max-width: 480px) {
+    .toshi-confirm-card-header {
+        padding: 14px 14px 0 14px;
+    }
+    .toshi-confirm-card-title {
+        font-size: 14px;
+    }
+    .toshi-confirm-card-body {
+        padding: 10px 14px 14px 14px;
+    }
+    .toshi-confirm-param-row {
+        flex-direction: column;
+        gap: 2px;
+    }
+    .toshi-confirm-param-label {
+        min-width: unset;
+        font-size: 11px;
+    }
+    .toshi-confirm-param-value {
+        font-size: 14px;
+    }
+    .toshi-confirm-card-footer {
+        padding: 0 14px 14px 14px;
+        flex-direction: column;
+    }
+    .toshi-confirm-btn {
+        width: 100%;
+    }
+}
+
+/* ── Plan Card (Phase 3) ── */
+.toshi-plan-card {
+    background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+    border: 1px solid #BAE6FD;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+.toshi-plan-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px 8px 14px;
+}
+.toshi-plan-card-icon {
+    font-size: 18px;
+    line-height: 1;
+}
+.toshi-plan-card-title {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0369A1;
+}
+.toshi-plan-card-count {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #0284C7;
+    background: #BAE6FD;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+.toshi-plan-card-steps {
+    padding: 4px 14px 8px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.toshi-plan-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    transition: background 0.15s ease;
+}
+.toshi-plan-step.step-pending {
+    color: #0F172A;
+    background: transparent;
+}
+.toshi-plan-step.step-active {
+    color: #0369A1;
+    background: #BAE6FD;
+    font-weight: 600;
+}
+.toshi-plan-step.step-completed {
+    color: #166534;
+    background: #DCFCE7;
+}
+.toshi-plan-step.step-failed {
+    color: #991B1B;
+    background: #FEE2E2;
+}
+.toshi-plan-step-icon {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.toshi-plan-step-num {
+    font-weight: 600;
+    min-width: 20px;
+    flex-shrink: 0;
+    color: var(--d-text-secondary);
+}
+.toshi-plan-step.step-active .toshi-plan-step-num {
+    color: #0369A1;
+}
+.toshi-plan-step-label {
+    flex: 1;
+}
+.toshi-plan-card-footer {
+    display: flex;
+    gap: 8px;
+    padding: 4px 14px 12px 14px;
+}
+.toshi-plan-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.toshi-plan-btn-execute {
+    background: #0284C7;
+    color: #fff;
+}
+.toshi-plan-btn-execute:hover {
+    background: #0369A1;
+}
+.toshi-plan-btn-cancel {
+    background: #F1F5F9;
+    color: #475569;
+}
+.toshi-plan-btn-cancel:hover {
+    background: #E2E8F0;
+}
+.toshi-plan-card-done {
+    flex: 1;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #166534;
+    padding: 8px;
+}
+.toshi-plan-card-processing {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0369A1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.toshi-plan-card-processing::before {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #BAE6FD;
+    border-top-color: #0369A1;
+    border-radius: 50%;
+    animation: toshi-spin 0.6s linear infinite;
+}
+@keyframes toshi-spin {
+    to { transform: rotate(360deg); }
+}

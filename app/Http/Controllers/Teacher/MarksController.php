@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Events\MarksUpdated;
 use App\Events\GradesPublished;
+use App\Exceptions\MarksLockedException;
+use App\Models\Academics\ExamMarksSubmission;
 
 class MarksController extends Controller
 {
@@ -135,6 +137,8 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
     if ($exam->school_id !== $schoolId) {
         abort(403, "Not Authorized");
     }
+
+    $this->checkSubmissionLocked($exam);
 
     // ===== Nursery branch: save domain ratings instead of numeric marks =====
     $exam->load('standard');
@@ -274,6 +278,8 @@ public function editMark(Exam $exam, User $student, Marks $marks)
 {
     $teacher = Auth::user();
 
+    $this->checkSubmissionLocked($exam);
+
     // Find the existing mark (or create a new one if allowed)
     $mark = Marks::firstOrNew([
         'exam_id'     => $exam->id,
@@ -299,6 +305,9 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
 {
     $teacher = Auth::user();
     $schoolId = $teacher->school_id;
+
+    $this->checkSubmissionLocked($exam);
+
     $validated = $request->validate([
         'marks'       => 'sometimes|nullable|numeric|min:0|max:100', // adjust rules to your system
         'grade'       => 'nullable|string|max:5',
@@ -326,4 +335,23 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
         ->with('successmessage', $student->name . "'s ". '  Marks updated!');
 }
 
+    /**
+     * Check whether the submission for this exam+class+subject is locked.
+     *
+     * @throws MarksLockedException
+     */
+    private function checkSubmissionLocked(Exam $exam): void
+    {
+        $submission = ExamMarksSubmission::where('exam_id', $exam->id)
+            ->where('class_id', $exam->section_id)
+            ->where('subject_id', $exam->subject_id)
+            ->first();
+
+        if ($submission && $submission->isLocked()) {
+            $deadline = $submission->deadline
+                ? $submission->deadline->format('j M Y H:i')
+                : null;
+            throw new MarksLockedException($deadline);
+        }
+    }
 }

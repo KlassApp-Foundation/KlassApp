@@ -123,7 +123,7 @@
             <div class="my-6" v-if="!studentsLoaded">
                 <button
                     @click="selectStudents"
-                    class="btn btn-submit blue-bg text-white rounded px-3 py-1 text-sm font-medium"
+                    class="ds-btn ds-btn-primary text-sm"
                 >
                     Select Students
                 </button>
@@ -183,7 +183,7 @@
                                 student.user_name
                             }}</span>
                         </div>
-                        <div class="flex gap-3">
+                        <div class="flex flex-col md:flex-row gap-1 md:gap-3">
                             <select
                                 v-model="student.reason_id"
                                 class="tw-form-control"
@@ -212,13 +212,13 @@
             <div v-if="showSubmit" class="my-6 flex gap-3">
                 <button
                     @click="submitForm"
-                    class="btn btn-submit blue-bg text-white rounded px-3 py-1 text-sm font-medium"
+                    class="ds-btn ds-btn-primary text-sm"
                 >
                     Submit Attendance
                 </button>
                 <button
                     @click="resetForm"
-                    class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 text-sm font-medium"
+                    class="ds-btn ds-btn-secondary text-sm"
                 >
                     Reset
                 </button>

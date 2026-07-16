@@ -17,22 +17,6 @@ return [
     |
     */
 
-    'llm_enabled' => env('TOSHI_LLM_ENABLED', false),
-
-    /*
-    |--------------------------------------------------------------------------
-    | LarAgent Assistant Mode (parallel implementation)
-    |--------------------------------------------------------------------------
-    |
-    | When enabled, assistant-mode queries are routed to the new LarAgent agent
-    | class instead of the legacy ToshiAssistantService. Both paths coexist.
-    | Enable for a subset of users by setting to true per-user via a toggle or
-    | globally via env for testing.
-    |
-    | Logs which path handled each query (laragent vs legacy).
-    */
-    'laragent_enabled' => env('TOSHI_LARAGENT_ENABLED', false),
-
     /*
     |--------------------------------------------------------------------------
     | Laravel AI SDK Agent Mode (v2 — parallel implementation)
@@ -164,4 +148,20 @@ return [
     | Falls back to the main model if not set.
     */
     'persona_model' => env('TOSHI_PERSONA_MODEL', 'gpt-4o-mini'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Streaming
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, LLM response tokens are streamed to the browser in real-time
+    | via Livewire's $this->stream() + Alpine x-stream, instead of appearing all
+    | at once after the full response is generated.
+    |
+    | Uses the package's Agent::stream() under the hood — tool-calling loop and
+    | tier 2 confirmations still work; only plain text responses are streamed.
+    |
+    | Requires sdk_v2_enabled to also be true to take effect.
+    */
+    'streaming_enabled' => env('TOSHI_STREAMING_ENABLED', false),
 ];

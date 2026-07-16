@@ -5,9 +5,11 @@ namespace App\AiAgents\Tools;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use App\AiAgents\Concerns\AuthorizesToshiAction;
 
 class ListTeachersTool implements Tool
 {
+    use AuthorizesToshiAction;
     public function description(): string
     {
         return 'List all teachers in the school with their subject and class assignments.';
@@ -21,6 +23,9 @@ class ListTeachersTool implements Tool
     public function handle(Request $request): string
     {
         $user = auth()->user() ?? request()->user();
+        $error = $this->authorizeOrMessage($user);
+        if ($error) return $error;
+        $user = \App\Services\ToshiActionService::getEffectiveUser($user);
         $result = \App\Services\ToshiActionService::listTeachers($user);
         if (!$result['success']) {
             return '❌ ' . $result['message'];

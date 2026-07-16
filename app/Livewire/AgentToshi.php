@@ -24,11 +24,32 @@ use Illuminate\Support\Str;
 use App\Mail\CoAdminInviteMail;
 use App\Models\OnboardingSession;
 use App\Services\ToshiActionService;
-use App\Services\ToshiAssistantService;
 
 class AgentToshi extends Component
 {
     use WithFileUploads;
+
+    /**
+     * Map of tool name (as stored in pendingToolConfirm) to Tool class FQCN.
+     * The only source of truth for what happens when a user confirms a tool.
+     */
+    private const TOOL_CLASS_MAP = [
+        'toolCreateExam'          => \App\AiAgents\Tools\CreateExamTool::class,
+        'toolAddParent'           => \App\AiAgents\Tools\AddParentTool::class,
+        'toolEnterMark'           => \App\AiAgents\Tools\EnterMarkTool::class,
+        'toolAddStudent'          => \App\AiAgents\Tools\AddStudentTool::class,
+        'toolAddTeacher'          => \App\AiAgents\Tools\AddTeacherTool::class,
+        'toolAddCoAdmin'          => \App\AiAgents\Tools\AddCoAdminTool::class,
+        'toolCreateFee'           => \App\AiAgents\Tools\CreateFeeTool::class,
+        'toolCreateTerm'          => \App\AiAgents\Tools\CreateTermTool::class,
+        'toolRecordPayment'       => \App\AiAgents\Tools\RecordPaymentTool::class,
+        'toolRecordAttendance'    => \App\AiAgents\Tools\RecordAttendanceTool::class,
+        'toolRecordBulkAttendance' => \App\AiAgents\Tools\RecordBulkAttendanceTool::class,
+        'toolAssignTeacher'       => \App\AiAgents\Tools\AssignTeacherTool::class,
+        'toolCreateSubject'       => \App\AiAgents\Tools\CreateSubjectTool::class,
+        'toolSeedDefaultGrading'  => \App\AiAgents\Tools\SeedDefaultGradingTool::class,
+        'toolSetGradingScale'     => \App\AiAgents\Tools\SetGradingScaleTool::class,
+    ];
 
     public $step = 0;
     public $visible = false;
@@ -45,6 +66,7 @@ class AgentToshi extends Component
     public $schoolType = 'primary';
     public $schoolLevel = '';   // o-level, a-level, both
     public $schoolGender = '';  // boys, girls, mixed
+    public $schoolCountry = '';
     public $schoolEmail = '';
     public $schoolPhone = '';
     public $ministryCode = '';
@@ -153,11 +175,84 @@ class AgentToshi extends Component
     /** Tier 2 tool confirmation: pending tool name + args before execution */
     public $pendingToolConfirm = null;   // ['tool' => 'toolCreateExam', 'args' => [...]]
 
+    /** Recently cancelled tool confirmation — shown as cancelled state briefly */
+    public $cancelledToolConfirm = null; // same format as pendingToolConfirm
+
     /** Capabilities for the current user, loaded from ToshiActionService. */
     public array $capabilities = [];
 
     /** When true, the UI shows Yes/No buttons instead of requiring text input. */
     public bool $awaitingConfirm = false;
+
+    /** Multi-step plan state (Phase 3). Non-null when a plan is displayed. */
+    public ?array $planSteps = null;
+
+    /** Index of the step currently being executed (-1 = idle). */
+    public int $planCurrentStep = -1;
+
+    /**
+     * When a plan step triggers a tool confirmation, we store the step index
+     * here so confirmYes() can resume the plan after the user confirms.
+     * -1 means no plan step is awaiting confirmation.
+     */
+    public int $planPendingConfirmStep = -1;
+
+    /** Whether a streaming placeholder message has been placed. */
+    public bool $streamingMessagePlaced = false;
+
+    /** Unique ID for the current streaming session (used as x-stream key). */
+    public string $streamingMessageId = '';
+
+    /**
+     * Map of tool names to present-tense action verbs for the plan card.
+     */
+    private const PLAN_ACTION_VERBS = [
+        'toolAddStudent'          => 'Adding student...',
+        'toolRecordAttendance'    => 'Recording attendance...',
+        'toolRecordBulkAttendance' => 'Recording attendance...',
+        'toolCreateExam'          => 'Creating exam...',
+        'toolCreateSubject'       => 'Creating subject...',
+        'toolAddTeacher'          => 'Adding teacher...',
+        'toolAddCoAdmin'          => 'Adding admin...',
+        'toolAddParent'           => 'Adding parent...',
+        'toolCreateFee'           => 'Creating fee...',
+        'toolCreateTerm'          => 'Creating term...',
+        'toolRecordPayment'       => 'Recording payment...',
+        'toolEnterMark'           => 'Entering marks...',
+        'toolAssignTeacher'       => 'Assigning teacher...',
+        'toolSeedDefaultGrading'  => 'Configuring grading...',
+        'toolSetGradingScale'     => 'Configuring grading...',
+    ];
+
+    /**
+     * Evocative "thinking" verbs that cycle during idle processing.
+     */
+    private const THINKING_VERBS = [
+        'Exploring...',
+        'Navigating...',
+        'Pondering...',
+        'Preparing...',
+        'Consulting records...',
+        'Looking up data...',
+    ];
+
+    /**
+     * Derive the action verb to show in the plan card footer,
+     * based on whichever step is currently in_progress.
+     */
+    public function getPlanExecutingVerb(): string
+    {
+        if ($this->planSteps === null || $this->planCurrentStep < 0) {
+            // No active step — pick a thinking verb based on the clock
+            $idx = now()->second % count(self::THINKING_VERBS);
+            return self::THINKING_VERBS[$idx];
+        }
+
+        $step = $this->planSteps[$this->planCurrentStep] ?? [];
+        $tool = $step['tool'] ?? '';
+
+        return self::PLAN_ACTION_VERBS[$tool] ?? 'Processing...';
+    }
 
     public function mount()
     {
@@ -336,6 +431,7 @@ class AgentToshi extends Component
         $this->schoolType = $data['schoolType'] ?? 'primary';
         $this->schoolLevel = $data['schoolLevel'] ?? '';
         $this->schoolGender = $data['schoolGender'] ?? '';
+        $this->schoolCountry = $data['schoolCountry'] ?? '';
         $this->schoolEmail = $data['schoolEmail'] ?? '';
         $this->schoolPhone = $data['schoolPhone'] ?? '';
         $this->ministryCode = $data['ministryCode'] ?? '';
@@ -375,6 +471,7 @@ class AgentToshi extends Component
             'schoolType'        => $this->schoolType,
             'schoolLevel'       => $this->schoolLevel,
             'schoolGender'      => $this->schoolGender,
+            'schoolCountry'     => $this->schoolCountry,
             'schoolEmail'       => $this->schoolEmail,
             'schoolPhone'       => $this->schoolPhone,
             'ministryCode'      => $this->ministryCode,
@@ -526,6 +623,64 @@ class AgentToshi extends Component
         $this->messages = [['role' => 'bot', 'text' => 'Setup restarted. How can I help you?']];
     }
 
+    // ── Tool display helpers (Phase B) ──
+    /**
+     * Map internal tool names to user-friendly labels + icons.
+     */
+    private function getToolDisplay(string $tool): array
+    {
+        $map = [
+            'toolAddStudent'       => ['label' => 'Add Student',       'icon' => '👤'],
+            'toolAddTeacher'       => ['label' => 'Add Teacher',       'icon' => '👨‍🏫'],
+            'toolAddCoAdmin'       => ['label' => 'Add Co-Admin',      'icon' => '👤'],
+            'toolCreateExam'       => ['label' => 'Create Exam',       'icon' => '📝'],
+            'toolCreateFee'        => ['label' => 'Create Fee',        'icon' => '💵'],
+            'toolCreateTerm'       => ['label' => 'Create Term',       'icon' => '📅'],
+            'toolRecordPayment'    => ['label' => 'Record Payment',    'icon' => '💳'],
+            'toolRecordAttendance' => ['label' => 'Record Attendance', 'icon' => '📋'],
+            'toolRecordBulkAttendance' => ['label' => 'Bulk Attendance', 'icon' => '📋'],
+            'toolAssignTeacher'    => ['label' => 'Assign Teacher',    'icon' => '👨‍🏫'],
+            'toolCreateSubject'    => ['label' => 'Create Subject',    'icon' => '📖'],
+            'toolAddParent'        => ['label' => 'Add Parent',        'icon' => '👪'],
+            'toolEnterMark'        => ['label' => 'Enter Mark',        'icon' => '📊'],
+            'toolSeedDefaultGrading' => ['label' => 'Setup Grading',   'icon' => '⚙️'],
+            'toolSetGradingScale'  => ['label' => 'Set Grading Scale', 'icon' => '📏'],
+        ];
+        return $map[$tool] ?? ['label' => 'Execute Action', 'icon' => '⚡'];
+    }
+
+    /**
+     * Extract readable parameters from tool args for display.
+     * Filters out internal/technical keys, returns label-value pairs.
+     */
+    private function getToolArgsDisplay(array $args): array
+    {
+        $labelMap = [
+            'name' => 'Name', 'class' => 'Class', 'stream' => 'Stream',
+            'type' => 'Type', 'date' => 'Date', 'status' => 'Status',
+            'amount' => 'Amount', 'fee' => 'Fee', 'term' => 'Term',
+            'student' => 'Student', 'teacher' => 'Teacher', 'subject' => 'Subject',
+            'parent' => 'Parent', 'parentPhone' => 'Parent Phone',
+            'section' => 'Section', 'grade' => 'Grade', 'score' => 'Score',
+            'student_id' => 'Student ID', 'teacher_id' => 'Teacher ID',
+            'class_id' => 'Class ID', 'subject_id' => 'Subject ID',
+            'start_date' => 'Start Date', 'end_date' => 'End Date',
+            'firstname' => 'First Name', 'lastname' => 'Last Name',
+            'email' => 'Email', 'phone' => 'Phone',
+            'students' => 'Students', 'teachers' => 'Teachers',
+        ];
+        $result = [];
+        foreach ($args as $key => $value) {
+            if (is_array($value)) {
+                $value = implode(', ', array_filter($value, fn($v) => !is_array($v)));
+                if (empty($value)) continue;
+            }
+            $label = $labelMap[$key] ?? ucwords(str_replace(['_', '-'], ' ', $key));
+            $result[] = ['label' => $label, 'value' => $value];
+        }
+        return $result;
+    }
+
     // ── Button-driven confirm/edit ──
     public function confirmYes()
     {
@@ -535,27 +690,39 @@ class AgentToshi extends Component
         if ($this->pendingToolConfirm !== null) {
             $tool = $this->pendingToolConfirm['tool'];
             $args = $this->pendingToolConfirm['args'];
+            $wasPlanStep = $this->planPendingConfirmStep >= 0;
+            $planStepIdx = $this->planPendingConfirmStep;
             $this->pendingToolConfirm = null;
+            $this->planPendingConfirmStep = -1;
 
-            $result = match ($tool) {
-                'toolCreateExam' => \App\Services\ToshiActionService::createExam(auth()->user(), $args),
-                'toolAddParent' => \App\Services\ToshiActionService::addParent(auth()->user(), $args),
-                'toolEnterMark' => \App\Services\ToshiActionService::enterMark(auth()->user(), $args),
-                'toolAddStudent' => \App\Services\ToshiActionService::addStudent(auth()->user(), $args),
-                'toolAddTeacher' => \App\Services\ToshiActionService::addTeacher(auth()->user(), $args),
-                'toolAddCoAdmin' => \App\Services\ToshiActionService::addCoAdmin(auth()->user(), $args),
-                'toolCreateFee' => \App\Services\ToshiActionService::createFee(auth()->user(), $args),
-                'toolCreateTerm' => \App\Services\ToshiActionService::createTerm(auth()->user(), $args),
-                'toolRecordPayment' => \App\Services\ToshiActionService::recordPayment(auth()->user(), $args),
-                'toolRecordAttendance' => \App\Services\ToshiActionService::recordAttendance(auth()->user(), $args),
-                'toolRecordBulkAttendance' => \App\Services\ToshiActionService::recordBulkAttendance(auth()->user(), $args),
-                'toolAssignTeacher' => \App\Services\ToshiActionService::assignTeacher(auth()->user(), $args),
-                'toolCreateSubject' => \App\Services\ToshiActionService::createSubject(auth()->user(), $args),
-                'toolSeedDefaultGrading' => \App\Services\ToshiActionService::seedDefaultGrading(auth()->user()),
-                'toolSetGradingScale' => \App\Services\ToshiActionService::setGradingScale(auth()->user(), $args),
-                default => ['success' => false, 'message' => "Unknown tool: {$tool}"],
-            };
-            $this->botSay($result['message'] ?? 'Done.');
+            // Single path: re-invoke the same Tool class via bypassConfirm
+            // so the exact handle() logic that built the preview also writes
+            $result = $this->executeConfirmedTool($tool, $args);
+            $this->botSay($result);
+
+            // If this was a plan step awaiting confirmation, resume the plan
+            if ($wasPlanStep && $this->planSteps !== null && $planStepIdx >= 0) {
+                $success = str_starts_with($result, '✅') || str_starts_with($result, '⚠️');
+                $this->planSteps[$planStepIdx]['status'] = $success ? 'completed' : 'failed';
+
+                $next = $planStepIdx + 1;
+                if ($next < count($this->planSteps)) {
+                    $this->planCurrentStep = $next;
+                    $this->planSteps[$next]['status'] = 'in_progress';
+                    $this->dispatch('toshi-run-plan-step');
+                } else {
+                    // All done — show summary
+                    $succeeded = collect($this->planSteps)->where('status', 'completed')->count();
+                    $failed = collect($this->planSteps)->where('status', 'failed')->count();
+                    if ($failed === 0) {
+                        $this->botSay("✅ All **{$succeeded}** steps completed successfully.");
+                    } else {
+                        $this->botSay("⚠️ Plan complete: **{$succeeded}** succeeded, **{$failed}** failed.");
+                    }
+                    $this->planSteps = null;
+                    $this->planCurrentStep = -1;
+                }
+            }
             return;
         }
 
@@ -567,12 +734,240 @@ class AgentToshi extends Component
 
         // Check for pending tool confirmation
         if ($this->pendingToolConfirm !== null) {
+            // Store cancelled state for UI (cleared on next send)
+            $this->cancelledToolConfirm = $this->pendingToolConfirm;
             $this->pendingToolConfirm = null;
-            $this->botSay('Cancelled. No changes were made.');
+
+            // Audit trail — log every cancellation so the picture is complete
+            // (not just what executed, but what was proposed and rejected).
+            $school = $this->schoolId ? \App\Models\School::find($this->schoolId) : null;
+            \App\Services\ToshiAuditService::logCancellation(
+                user: auth()->user() ?? auth('web')->user(),
+                school: $school,
+                toolName: $this->cancelledToolConfirm['tool'],
+                arguments: $this->cancelledToolConfirm['args'],
+            );
+
+            // If this cancellation was part of a multi-step plan, cancel the
+            // entire plan — a rejected step breaks the batch contract.
+            if ($this->planPendingConfirmStep >= 0 && $this->planSteps !== null) {
+                $this->planSteps = null;
+                $this->planCurrentStep = -1;
+                $this->planPendingConfirmStep = -1;
+                $this->botSay('Plan cancelled because a step was rejected.');
+            } else {
+                $this->botSay('Cancelled. No changes were made.');
+            }
             return;
         }
 
         $this->callStepHandler('no');
+    }
+
+    // ── Multi-Step Plan Execution (Phase 3) ──
+
+    /**
+     * Start executing the plan. Runs one step and dispatches a browser event
+     * so Alpine auto-triggers the next step — each step is its own Livewire
+     * request, giving the user a real-time view of progress.
+     */
+    public function confirmPlan()
+    {
+        if (empty($this->planSteps)) {
+            return;
+        }
+
+        $this->planCurrentStep = 0;
+        $this->planSteps[0]['status'] = 'in_progress';
+
+        // Dispatch a browser event — Alpine will wait briefly then call
+        // executeNextPlanStep, making the actual tool call.
+        $this->dispatch('toshi-run-plan-step');
+    }
+
+    /**
+     * Execute the current plan step, respecting each tool's confirmation gate.
+     *
+     * If the tool returns a __tier2_confirm payload, the plan pauses and the
+     * existing confirmation card flow takes over. After the user confirms,
+     * confirmYes() resumes the plan.
+     *
+     * Called from Alpine after a short delay so the UI re-renders first.
+     */
+    public function executeNextPlanStep()
+    {
+        $steps = $this->planSteps;
+        $i = $this->planCurrentStep;
+
+        if ($steps === null || $i < 0 || $i >= count($steps)) {
+            $this->planCurrentStep = -1;
+            return;
+        }
+
+        $step = $steps[$i];
+
+        // Call the tool WITHOUT bypassConfirm so write tools still show
+        // their confirmation card. The plan card is a visual preview, not
+        // a shortcut past safety checks.
+        $class = self::TOOL_CLASS_MAP[$step['tool']] ?? null;
+        $result = '❌ Unknown tool.';
+
+        if ($class !== null) {
+            $tool = app($class);
+            $request = new \Laravel\Ai\Tools\Request($step['args']);
+            $result = $tool->handle($request);
+
+            // Check if the tool requested confirmation
+            $decoded = json_decode($result, true);
+            if (isset($decoded['__tier2_confirm']) && $decoded['__tier2_confirm']) {
+                // Pause the plan — confirmYes() will resume it after the user acts
+                $this->planPendingConfirmStep = $i;
+                $this->pendingToolConfirm = [
+                    'tool' => $decoded['tool'],
+                    'args' => $decoded['args'],
+                ];
+                $this->awaitingConfirm = true;
+                $messageId = md5($decoded['preview'] ?? '');
+                session(['toshi_pending_confirm_' . $messageId => $this->pendingToolConfirm]);
+                $this->botSay($decoded['preview'] . "\n\nUse the buttons below to confirm or cancel.");
+                return;
+            }
+        }
+
+        $success = str_starts_with($result, '✅') || str_starts_with($result, '⚠️');
+        $this->planSteps[$i]['status'] = $success ? 'completed' : 'failed';
+
+        // If there are more steps, advance and dispatch
+        $next = $i + 1;
+        if ($next < count($steps)) {
+            $this->planCurrentStep = $next;
+            $this->planSteps[$next]['status'] = 'in_progress';
+            $this->dispatch('toshi-run-plan-step');
+        } else {
+            // All done — show summary and clean up
+            $label = $step['label'] ?? $step['tool'];
+            $icon = $success ? '✅' : '❌';
+            $this->botSay("{$icon} Step " . ($i + 1) . "/" . count($steps) . ": {$label}");
+
+            $succeeded = collect($this->planSteps)->where('status', 'completed')->count();
+            $failed = collect($this->planSteps)->where('status', 'failed')->count();
+
+            if ($failed === 0) {
+                $this->botSay("✅ All **{$succeeded}** steps completed successfully.");
+            } else {
+                $this->botSay("⚠️ Plan complete: **{$succeeded}** succeeded, **{$failed}** failed.");
+            }
+
+            $this->planSteps = null;
+            $this->planCurrentStep = -1;
+        }
+    }
+
+    /**
+     * Cancel the currently displayed plan.
+     */
+    public function cancelPlan()
+    {
+        $this->planSteps = null;
+        $this->planCurrentStep = -1;
+        $this->planPendingConfirmStep = -1;
+        $this->botSay('Plan cancelled. No changes were made.');
+    }
+
+    // ── Streaming ──
+
+    /**
+     * Handle a streaming query via the Laravel AI SDK's Agent::stream().
+     *
+     * Creates a placeholder message, pipes text deltas to the browser
+     * in real-time via Livewire's stream(), and returns the full response
+     * (or a tier 2 confirmation JSON) after the stream completes.
+     */
+    private function handleStreamedQuery(
+        \App\AiAgents\ToshiSdkV2Service $service,
+        \App\Models\User $user,
+        string $text,
+        array $history,
+    ): ?string {
+        // Generate a stable stream ID for the x-stream key
+        $this->streamingMessageId = 'ts-' . md5($text . microtime());
+        $this->streamingMessagePlaced = true;
+
+        // Place an empty message — Alpine will fill it via x-stream
+        $messageIdx = count($this->messages);
+        $this->messages[] = [
+            'role'      => 'bot',
+            'text'      => '',
+            '_streamId' => $this->streamingMessageId,
+        ];
+
+        // Run the stream; each chunk is flushed to the browser immediately
+        $response = $service->askStreamed(
+            $user,
+            $this->schoolId,
+            $text,
+            $history,
+            fn (string $chunk) => $this->stream($this->streamingMessageId, $chunk, false),
+        );
+
+        if ($response !== null) {
+            // Finalize the placeholder with the full text
+            $this->messages[$messageIdx]['text'] = $response;
+        }
+
+        return $response;
+    }
+
+    /**
+     * Re-invoke the same Tool class that generated the confirmation preview,
+     * with the user-confirmed args, via bypassConfirm so it writes to the DB.
+     *
+     * Returns the tool's output string (same format the LLM would see).
+     */
+    private function executeConfirmedTool(string $toolName, array $args): string
+    {
+        $class = self::TOOL_CLASS_MAP[$toolName] ?? null;
+        if ($class === null) {
+            return "❌ Unknown tool: {$toolName}";
+        }
+
+        $tool = app($class);
+        $request = new \Laravel\Ai\Tools\Request($args);
+
+        // Bypass the confirmation gate so the tool executes instead of
+        // returning a __tier2_confirm payload. Reset immediately after
+        // so the flag can't leak into unrelated requests.
+        \App\Services\ToshiActionService::$bypassConfirm = true;
+        try {
+            $result = $tool->handle($request);
+
+            // Self-verification: tools that implement VerifiableTool re-read
+            // their write from the DB immediately. If the record isn't found
+            // (race condition, persistence gap, or silent failure), the user
+            // sees a caution instead of a false success.
+            if (str_starts_with($result, '✅') && $tool instanceof \App\AiAgents\Concerns\VerifiableTool) {
+                $verification = $tool->verify($request);
+                if (!$verification['verified']) {
+                    $result = '⚠️ The action appeared to succeed, but verification could not confirm the data was saved. '
+                        . ($verification['message'] ?? 'You may want to check manually.');
+                }
+            }
+
+            // Audit trail — log every write action at the single execution point.
+            // School may be null during initial create-onboarding before schoolId is set.
+            $school = $this->schoolId ? \App\Models\School::find($this->schoolId) : null;
+            \App\Services\ToshiAuditService::logExecution(
+                user: auth()->user() ?? auth('web')->user(),
+                school: $school,
+                toolName: $toolName,
+                arguments: $args,
+                result: $result,
+            );
+
+            return $result;
+        } finally {
+            \App\Services\ToshiActionService::$bypassConfirm = false;
+        }
     }
 
     /**
@@ -1882,6 +2277,10 @@ class AgentToshi extends Component
     // ── Assistant mode — keyword router first (zero cost), then LLM, then fallback ──
     private function handleAssistantQuery(string $text): void
     {
+        // Reset cross-request flags — Livewire properties persist between queries
+        $this->streamingMessagePlaced = false;
+        $this->streamingMessageId = '';
+
         $lower = strtolower($text);
 
         // Check for pending Tier 2 tool confirmation — handled by buttons now
@@ -1894,26 +2293,22 @@ class AgentToshi extends Component
                 $this->pendingToolConfirm = null;
                 $this->awaitingConfirm = false;
 
-                $result = match ($tool) {
-                    'toolCreateExam' => \App\Services\ToshiActionService::createExam(auth()->user(), $args),
-                    'toolAddParent' => \App\Services\ToshiActionService::addParent(auth()->user(), $args),
-                    'toolEnterMark' => \App\Services\ToshiActionService::enterMark(auth()->user(), $args),
-                    'toolAddStudent' => \App\Services\ToshiActionService::addStudent(auth()->user(), $args),
-                    'toolAddTeacher' => \App\Services\ToshiActionService::addTeacher(auth()->user(), $args),
-                    'toolAddCoAdmin' => \App\Services\ToshiActionService::addCoAdmin(auth()->user(), $args),
-                    'toolCreateFee' => \App\Services\ToshiActionService::createFee(auth()->user(), $args),
-                    'toolCreateTerm' => \App\Services\ToshiActionService::createTerm(auth()->user(), $args),
-                    'toolRecordPayment' => \App\Services\ToshiActionService::recordPayment(auth()->user(), $args),
-                    'toolRecordAttendance' => \App\Services\ToshiActionService::recordAttendance(auth()->user(), $args),
-                    'toolRecordBulkAttendance' => \App\Services\ToshiActionService::recordBulkAttendance(auth()->user(), $args),
-                    'toolAssignTeacher' => \App\Services\ToshiActionService::assignTeacher(auth()->user(), $args),
-                    'toolCreateSubject' => \App\Services\ToshiActionService::createSubject(auth()->user(), $args),
-                    'toolSeedDefaultGrading' => \App\Services\ToshiActionService::seedDefaultGrading(auth()->user()),
-                    'toolSetGradingScale' => \App\Services\ToshiActionService::setGradingScale(auth()->user(), $args),
-                    default => ['success' => false, 'message' => "Unknown tool: {$tool}"],
-                };
-                $this->botSay($result['message'] ?? 'Done.');
+                // Single path: re-invoke the same Tool class via bypassConfirm
+                $result = $this->executeConfirmedTool($tool, $args);
+                $this->botSay($result);
             } elseif (in_array($lower, ['no', 'n', 'cancel', 'stop'])) {
+                // Audit trail — log text-based cancellation too
+                $cancelledTool = $this->pendingToolConfirm['tool'] ?? null;
+                $cancelledArgs = $this->pendingToolConfirm['args'] ?? [];
+                $school = $this->schoolId ? \App\Models\School::find($this->schoolId) : null;
+                if ($cancelledTool) {
+                    \App\Services\ToshiAuditService::logCancellation(
+                        user: auth()->user() ?? auth('web')->user(),
+                        school: $school,
+                        toolName: $cancelledTool,
+                        arguments: $cancelledArgs,
+                    );
+                }
                 $this->pendingToolConfirm = null;
                 $this->awaitingConfirm = false;
                 $this->botSay('Cancelled. No changes were made.');
@@ -1936,9 +2331,33 @@ class AgentToshi extends Component
             try {
                 $service = app(\App\AiAgents\ToshiSdkV2Service::class);
                 if ($service->isAvailable($user, $this->schoolId) && $service->consumeBudget($user, $this->schoolId)) {
-                    $response = $service->ask($user, $this->schoolId, $text, $history);
+
+                    // Streaming path: pushes tokens to the browser in real-time
+                    // via Livewire's stream() + Alpine x-stream.
+                    if (config('toshi.streaming_enabled', false)) {
+                        $response = $this->handleStreamedQuery($service, $user, $text, $history);
+                    } else {
+                        $response = $service->ask($user, $this->schoolId, $text, $history);
+                    }
+
                     if ($response !== null) {
-                        $this->botSay($response);
+                        // Check if response is a Tier 2 confirmation prompt
+                        // (write tools on the SDK v2 path return this via the
+                        // side-channel in ToshiSdkV2Service::ask())
+                        $decoded = json_decode($response, true);
+                        if (isset($decoded['__tier2_confirm']) && $decoded['__tier2_confirm']) {
+                            $this->pendingToolConfirm = [
+                                'tool' => $decoded['tool'],
+                                'args' => $decoded['args'],
+                            ];
+                            $this->awaitingConfirm = true;
+                            $messageId = md5($decoded['preview'] ?? '');
+                            session(['toshi_pending_confirm_' . $messageId => $this->pendingToolConfirm]);
+                            $this->botSay($decoded['preview'] . "\n\nUse the buttons below to confirm or cancel.");
+                        } elseif (!$this->streamingMessagePlaced) {
+                            // Only botSay if streaming didn't already place the response
+                            $this->botSay($response);
+                        }
                         \Log::info('Assistant path: SDK v2', ['user_id' => $user->id]);
                         return;
                     }
@@ -1951,67 +2370,10 @@ class AgentToshi extends Component
                     }
                 }
             } catch (\Throwable $e) {
-                \Log::warning('SDK v2 failed, falling back to LarAgent', [
+                \Log::warning('SDK v2 failed', [
                     'user_id' => $user->id,
                     'error' => $e->getMessage(),
                 ]);
-            }
-        }
-
-        // New path: LarAgent agent (gated by feature flag)
-        if (config('toshi.laragent_enabled', false)) {
-            try {
-                $agent = app(\App\AiAgents\ToshiAssistantAgent::class);
-                $response = $agent->handleQuery($user, $this->schoolId, $text, $history);
-                if ($response !== null) {
-                    // Check if response is a Tier 2 confirmation prompt
-                    $decoded = json_decode($response, true);
-                    if (isset($decoded['__tier2_confirm']) && $decoded['__tier2_confirm']) {
-                        $this->pendingToolConfirm = [
-                            'tool' => $decoded['tool'],
-                            'args' => $decoded['args'],
-                        ];
-                        $this->awaitingConfirm = true;
-                        // Store in session so confirmation survives page refresh
-                        $messageId = md5($decoded['preview'] ?? '');
-                        session(['toshi_pending_confirm_' . $messageId => $this->pendingToolConfirm]);
-                        $this->botSay($decoded['preview'] . "\n\nUse the buttons below to confirm or cancel.");
-                    } else {
-                        $this->botSay($response);
-                    }
-                    \Log::info('Assistant path: LarAgent', ['user_id' => $user->id, 'length' => strlen($response)]);
-                    return;
-                }
-            } catch (\Throwable $e) {
-                \Log::warning('LarAgent failed, falling back to legacy', [
-                    'user_id' => $user->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        // Legacy path: existing ToshiAssistantService
-        $service = app(ToshiAssistantService::class);
-
-        if ($service->isAvailable($user, $this->schoolId)) {
-            $response = $service->ask($user, $this->schoolId, $text, $history);
-            if ($response !== null) {
-                $this->botSay($response);
-                \Log::info('Assistant path: legacy', ['user_id' => $user->id, 'length' => strlen($response)]);
-                return;
-            }
-        } else {
-            $remaining = $service->getRemainingBudget($user, $this->schoolId);
-            if ($remaining <= 0) {
-                $resetTime = $service->getWindowResetTime($user, $this->schoolId)->format('g:i A');
-                $upgrade = $service->getUpgradeSuggestion($user, $this->schoolId);
-                $msg = "You've reached your query limit for this period. I can still answer common questions about reports, students, attendance, fees, marks, and WhatsApp. More queries available at {$resetTime}.";
-                if ($upgrade) {
-                    $msg .= " " . $upgrade;
-                }
-                $this->botSay($msg);
-                \Log::info('Assistant path: budget exhausted', ['user_id' => $user->id]);
-                return;
             }
         }
 
@@ -2353,6 +2715,7 @@ class AgentToshi extends Component
     {
         if ($messageId) {
             session()->forget('toshi_pending_confirm_' . $messageId);
+            $this->cancelledToolConfirm = $this->pendingToolConfirm;
             $this->pendingToolConfirm = null;
             $this->awaitingConfirm = false;
             $this->botSay('Cancelled. No changes were made.');
@@ -2745,6 +3108,9 @@ class AgentToshi extends Component
         $text = trim($this->input);
         if ($text === '') return;
 
+        // Clear cancelled state on new message
+        $this->cancelledToolConfirm = null;
+
         $this->userSay($text);
         $this->input = '';
 
@@ -2789,6 +3155,15 @@ class AgentToshi extends Component
 
         // Assistant mode — school is set up, Toshi can answer questions
         if ($this->mode === 'assistant') {
+            // Phase 3: Check if the query is a multi-step batch.
+            // If so, show a plan card instead of going straight to the orchestrator.
+            $plan = app(\App\Services\ToshiPlanService::class)->generatePlan($text);
+            if ($plan !== null && count($plan['steps']) >= 2) {
+                $this->planSteps = $plan['steps'];
+                $this->botSay("I'll perform these **" . count($plan['steps']) . "** steps. Please review and confirm:");
+                return;
+            }
+
             $this->handleAssistantQuery($text);
             return;
         }
@@ -4029,7 +4404,7 @@ class AgentToshi extends Component
                     'school_pay_webhook_enabled' => $this->schoolPayPassword ? true : false,
                     'status'  => 1,
                     'slug'    => Str::slug($this->schoolName),
-                    'registration_country' => 'Uganda',
+                    'registration_country' => $this->schoolCountry ?: 'Uganda',
                 ]);
                 $this->schoolId = $school->id;
                 $schoolId = $school->id;

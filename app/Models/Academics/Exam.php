@@ -18,9 +18,13 @@ class Exam extends Model
 {
     use HasFactory;
     protected $fillable=[
-         "standard_id", "school_id", "section_id", "academic_year_id", "academic_term_id", "subject_id", "teacher_id", "exam_type_id", "status","scheduled_at"
+         "standard_id", "school_id", "section_id", "academic_year_id", "academic_term_id", "subject_id", "teacher_id", "exam_type_id", "status","scheduled_at", "default_deadline"
         ];
-      protected $dates = ["deleted_at"];  
+      protected $dates = ["deleted_at"];
+
+      protected $casts = [
+          'default_deadline' => 'datetime',
+      ];
         public function marks(){
            return $this->hasMany(Marks::class);
        }
@@ -64,7 +68,14 @@ class Exam extends Model
             $this->save();
         }
 
-        // ============= SCOPES ==========
+    public function submission(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ExamMarksSubmission::class, 'exam_id')
+            ->whereColumn('class_id', 'section_id')
+            ->whereColumn('subject_id', 'subject_id');
+    }
+
+    // ============= SCOPES ==========
     public function scopeForSchool($query, $val) {
         return $query->where("school_id", $val);
     }

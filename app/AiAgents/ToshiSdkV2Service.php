@@ -4,6 +4,7 @@ namespace App\AiAgents;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Laravel\Ai\Streaming\Events\TextDelta;
 
 /**
  * Service layer that provides a consistent interface for the Livewire
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Log;
  *   - Running queries through ToshiOrchestrator
  *   - Tier 2 confirmation flow (pending tool confirmations)
  *   - Daily budget checks (reuses existing ToshiActionService budget)
- *   - Caching of static responses
+ *   - Streaming responses (via the package's Agent::stream())
  */
 class ToshiSdkV2Service
 {
@@ -51,6 +52,11 @@ class ToshiSdkV2Service
     /**
      * Run a query through the ToshiOrchestrator and return the response text.
      * Returns null if the path is disabled or fails.
+     *
+     * If a write tool triggered a pending confirmation during execution,
+     * the payload is stored in ToshiActionService::$pendingConfirmPayload
+     * (bypassed the LLM loop that might reformat it). We detect that here
+     * and return the __tier2_confirm JSON to the Livewire component.
      */
     public function ask(User $user, ?int $schoolId, string $query, array $history = []): ?string
     {
@@ -59,6 +65,9 @@ class ToshiSdkV2Service
         }
 
         try {
+            // Reset the side-channel before each query
+            \App\Services\ToshiActionService::$pendingConfirmPayload = null;
+
             $orchestrator = new ToshiOrchestrator;
             $response = $orchestrator->run($query);
 
@@ -66,6 +75,19 @@ class ToshiSdkV2Service
                 'user_id' => $user->id,
                 'query' => substr($query, 0, 100),
             ]);
+
+            // Check if a write tool stored a confirmation payload
+            // (more reliable than parsing the LLM's potentially reformatted response)
+            $payload = \App\Services\ToshiActionService::$pendingConfirmPayload;
+            if ($payload !== null && isset($payload['tool'])) {
+                \App\Services\ToshiActionService::$pendingConfirmPayload = null;
+                return json_encode([
+                    '__tier2_confirm' => true,
+                    'tool' => $payload['tool'],
+                    'args' => $payload['args'],
+                    'preview' => $payload['preview'],
+                ]);
+            }
 
             return $response;
         } catch (\Throwable $e) {
@@ -78,32 +100,94 @@ class ToshiSdkV2Service
     }
 
     /**
+     * Run a query through the ToshiOrchestrator with streaming.
+     *
+     * Uses the package's Agent::stream() under the hood, which handles
+     * the full tool-calling loop internally. Text deltas are forwarded to
+     * $onChunk for real-time display (e.g. via Livewire's stream()).
+     *
+     * After the stream completes, checks for pending tool confirmations
+     * (tier 2). If one exists, returns the __tier2_confirm JSON instead
+     * of the full text so the caller can show a confirmation card.
+     *
+     * Returns null on failure.
+     */
+    public function askStreamed(
+        User $user,
+        ?int $schoolId,
+        string $query,
+        array $history,
+        callable $onChunk,
+    ): ?string {
+        if (!$this->isAvailable($user, $schoolId)) {
+            return null;
+        }
+
+        try {
+            \App\Services\ToshiActionService::$pendingConfirmPayload = null;
+
+            $orchestrator = new ToshiOrchestrator;
+            $fullText = '';
+
+            $orchestrator
+                ->stream($query)
+                ->each(function ($event) use ($onChunk, &$fullText) {
+                    if ($event instanceof TextDelta) {
+                        $fullText .= $event->delta;
+                        $onChunk($event->delta);
+                    }
+                    // ToolCall and ToolResult events are handled internally
+                    // by the orchestrator — we only care about text deltas.
+                })
+                ->then(function ($response) use (&$fullText) {
+                    // If the streamed response has a full text, prefer it
+                    if (!empty($response->text)) {
+                        $fullText = $response->text;
+                    }
+                });
+
+            Log::info('SDK v2 path: streamed', [
+                'user_id' => $user->id,
+                'query' => substr($query, 0, 100),
+            ]);
+
+            // Check for pending tool confirmation
+            $payload = \App\Services\ToshiActionService::$pendingConfirmPayload;
+            if ($payload !== null && isset($payload['tool'])) {
+                \App\Services\ToshiActionService::$pendingConfirmPayload = null;
+                return json_encode([
+                    '__tier2_confirm' => true,
+                    'tool' => $payload['tool'],
+                    'args' => $payload['args'],
+                    'preview' => $payload['preview'],
+                ]);
+            }
+
+            return $fullText;
+        } catch (\Throwable $e) {
+            Log::warning('SDK v2 stream failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
      * Get the remaining daily budget for the user.
-     * Uses the same budget tracking as the legacy path for consistency.
+     * Delegates to ToshiActionService (single source of truth).
      */
     public function getRemainingBudget(User $user, ?int $schoolId): int
     {
-        $dailyLimit = (int) config('toshi.daily_llm_limit', 100);
-        $key = 'toshi_daily_llm_' . $user->id . '_' . ($schoolId ?? 0);
-        $used = (int) cache()->get($key, 0);
-        return max(0, $dailyLimit - $used);
+        return \App\Services\ToshiActionService::getRemainingBudget($user->id, $schoolId);
     }
 
     /**
      * Consume one unit from the daily budget.
+     * Delegates to ToshiActionService (single source of truth).
      */
     public function consumeBudget(User $user, ?int $schoolId): bool
     {
-        if ($this->getRemainingBudget($user, $schoolId) <= 0) {
-            return false;
-        }
-
-        $key = 'toshi_daily_llm_' . $user->id . '_' . ($schoolId ?? 0);
-        $ttl = now()->endOfDay()->diffInSeconds(now());
-
-        cache()->add($key, 0, $ttl);
-        cache()->increment($key);
-
-        return true;
+        return \App\Services\ToshiActionService::consumeBudget($user->id, $schoolId);
     }
 }

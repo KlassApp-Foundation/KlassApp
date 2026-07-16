@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "929e0e8e86b5518e521ee73f84c3e2e1",
+    "content-hash": "1d5bb8fe7cf13b87dd0fb6e5ba377649",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -3707,6 +3707,36 @@
             "time": "2026-05-28T20:35:55+00:00"
         },
         {
+            "name": "klassapp/toshi-ui",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/toshi-ui",
+                "reference": "628ad441130eb7b3bc092369ca160a1513303fb3"
+            },
+            "require": {
+                "illuminate/support": "^10.0|^11.0|^12.0",
+                "php": ">=8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "KlassApp\\ToshiUi\\ToshiUiServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "KlassApp\\ToshiUi\\": "src/"
+                }
+            },
+            "description": "Reusable Toshi AI assistant UI components — suggestion chips row and tool confirmation card. Presentation only, no business logic.",
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "kreait/firebase-php",
             "version": "8.2.0",
             "source": {
@@ -5999,87 +6029,6 @@
                 }
             ],
             "time": "2026-04-11T18:38:28+00:00"
-        },
-        {
-            "name": "maestroerror/laragent",
-            "version": "0.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/MaestroError/LarAgent.git",
-                "reference": "997974d9bc645be5cb15d118801f00d9056ba93a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/MaestroError/LarAgent/zipball/997974d9bc645be5cb15d118801f00d9056ba93a",
-                "reference": "997974d9bc645be5cb15d118801f00d9056ba93a",
-                "shasum": ""
-            },
-            "require": {
-                "guzzlehttp/guzzle": "^7.9",
-                "illuminate/contracts": "^10.0||^11.0||^12.0",
-                "openai-php/client": "^0.10.3",
-                "php": "^8.3",
-                "spatie/laravel-package-tools": "^1.16"
-            },
-            "require-dev": {
-                "larastan/larastan": "^3.1",
-                "laravel/pint": "^1.14",
-                "nunomaduro/collision": "^8.1.1||^7.10.0",
-                "orchestra/testbench": "^10.0.0||^9.0.0||^8.22.0",
-                "pestphp/pest": "^3.0",
-                "pestphp/pest-plugin-arch": "^3.0",
-                "pestphp/pest-plugin-laravel": "^3.0",
-                "phpstan/extension-installer": "^1.3",
-                "phpstan/phpstan": "^2.1.3"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "aliases": {
-                        "LarAgent": "LarAgent\\Facades\\LarAgent"
-                    },
-                    "providers": [
-                        "LarAgent\\LarAgentServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "LarAgent\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "maestroerror",
-                    "email": "revaz.gh@gmail.com",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Power of AI Agents in your Laravel project ",
-            "homepage": "https://github.com/maestroerror/laragent",
-            "keywords": [
-                "Agent",
-                "ai",
-                "laragent",
-                "laravel",
-                "maestroerror",
-                "rag"
-            ],
-            "support": {
-                "issues": "https://github.com/MaestroError/LarAgent/issues",
-                "source": "https://github.com/MaestroError/LarAgent/tree/0.3.1"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/MaestroError",
-                    "type": "github"
-                }
-            ],
-            "time": "2025-04-18T10:12:09+00:00"
         },
         {
             "name": "markbaker/complex",

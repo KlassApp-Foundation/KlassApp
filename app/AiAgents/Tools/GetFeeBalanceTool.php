@@ -5,11 +5,14 @@ namespace App\AiAgents\Tools;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\Models\FeePayment;
 use App\Models\StudentAcademic;
+use App\Services\ToshiActionService;
 
 class GetFeeBalanceTool implements Tool
 {
+    use AuthorizesToshiAction;
     public function description(): string
     {
         return 'Get the current fee balance for a student. Provide the student ID.';
@@ -25,8 +28,10 @@ class GetFeeBalanceTool implements Tool
     public function handle(Request $request): string
     {
         $user = auth()->user() ?? request()->user();
+        $error = $this->authorizeOrMessage($user);
+        if ($error) return $error;
         $studentId = $request->get('studentId');
-        $schoolId = $user->school_id;
+        $schoolId = ToshiActionService::getEffectiveSchoolId($user);
 
         if (!$schoolId) {
             return 'You are not assigned to a school.';

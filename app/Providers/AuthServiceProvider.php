@@ -7,6 +7,7 @@ use Laravel\Airlock\PersonalAccessToken;
 use Illuminate\Support\Facades\Gate;
 use App\Policies\ApiTokenPolicy;
 use App\Models\Plan;
+use App\Models\User;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -163,5 +164,32 @@ class AuthServiceProvider extends ServiceProvider
         }
         
       });
+
+        // ── Toshi SDK v2 Authorization ──
+        //
+        // Single source of truth for all 23 SDK v2 Tool classes.
+        // Rule matches MustBeSchoolAdmin middleware (admin routes):
+        //   - SchoolAdmin (ug3) → authorized within own school
+        //   - Superadmin (ug1)  → authorized ONLY when impersonating a SchoolAdmin
+        //   - All others        → denied
+        //
+        // This Gate is the enforcement layer. ToshiActionService::getRoleCapabilities()
+        // is the advisory LLM hint layer — they serve different purposes.
+        Gate::define('toshi-school-action', function (User $user): \Illuminate\Auth\Access\Response {
+            // SchoolAdmin (ug3) — core authorized role for school-level tools
+            if ($user->usergroup_id === 3) {
+                return \Illuminate\Auth\Access\Response::allow();
+            }
+
+            // Superadmin (ug1) — only when impersonating a SchoolAdmin
+            if ($user->usergroup_id === 1 && $user->isImpersonating()) {
+                $impersonated = User::find(\Session::get('impersonate'));
+                if ($impersonated && $impersonated->usergroup_id === 3) {
+                    return \Illuminate\Auth\Access\Response::allow();
+                }
+            }
+
+            return \Illuminate\Auth\Access\Response::deny('You are not authorized for this school action.');
+        });
     }
 }
