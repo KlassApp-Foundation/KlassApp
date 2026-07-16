@@ -115,7 +115,7 @@ class ToshiVerificationTest extends TestCase
         $this->assertDatabaseHas('attendances', [
             'school_id' => $school->id,
             'user_id' => $student->id,
-            'status' => 'present',
+            'status' => 1,
         ]);
 
         $messages = $component->get('messages');
@@ -185,7 +185,7 @@ class ToshiVerificationTest extends TestCase
         Attendance::created(function ($attendance) use ($school, $student) {
             Attendance::where('school_id', $school->id)
                 ->where('user_id', $student->id)
-                ->where('status', 'present')
+                ->where('status', 1)
                 ->delete();
         });
 

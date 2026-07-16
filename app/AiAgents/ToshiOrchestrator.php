@@ -9,6 +9,8 @@ use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Model;
 use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Enums\Lab;
+use App\Models\Academics\SchoolGradingSystem;
+use App\Models\School;
 use App\AiAgents\Tools\RouteToStudentSkillTool;
 use App\AiAgents\Tools\RouteToTeacherSkillTool;
 use App\AiAgents\Tools\RouteToAcademicSkillTool;
@@ -29,15 +31,17 @@ class ToshiOrchestrator implements Agent, HasTools
 
     public function model(): string
     {
-        return 'meta/llama-3.1-8b-instruct';
+        return config('toshi.model', 'nvidia/llama-3.3-nemotron-super-49b-v1');
     }
 
     public function instructions(): string
     {
         $context = $this->buildSchoolContext();
 
+        $countryLabel = $this->getSchoolCountryLabel();
+
         return <<<PROMPT
-You are Toshi, the intelligent AI assistant for KlassApp — a school management system for Ugandan schools.
+You are Toshi, the intelligent AI assistant for KlassApp — a school management system for {$countryLabel} schools.
 
 {$context}
 
@@ -92,10 +96,61 @@ PROMPT;
             return 'You are helping a platform-level administrator with no specific school context.';
         }
 
-        $school = \App\Models\School::find($schoolId);
-        $schoolName = $school ? $school->name : 'Unknown School';
+        $school = School::find($schoolId);
+        if (!$school) {
+            return 'Current school: Unknown (ID: ' . $schoolId . '). User role: ' . $this->getUserRole($user) . '.';
+        }
 
-        return "Current school: **{$schoolName}** (ID: {$schoolId}). User role: " . $this->getUserRole($user) . '.';
+        $parts = [];
+        $parts[] = 'School: **' . $school->name . '** (ID: ' . $schoolId . ')';
+        $parts[] = 'Country: **' . ($school->registration_country ?: 'Uganda') . '**';
+        $parts[] = 'Curriculum: **' . ($school->curriculum ?: 'UNEB') . '**';
+        $parts[] = 'User role: **' . $this->getUserRole($user) . '**';
+
+        // Add grading-scale context if configured
+        $standardCount = SchoolGradingSystem::where('school_id', $schoolId)
+            ->distinct('standard_id')
+            ->count('standard_id');
+        if ($standardCount > 0) {
+            $parts[] = 'Grading scales configured for **' . $standardCount . '** class(es). Use the grading skill to view or modify them.';
+        } else {
+            $parts[] = 'No grading scales configured yet. Use the grading skill to seed default UNEB scales.';
+        }
+
+        return implode(' | ', $parts) . '.';
+    }
+
+    /**
+     * Get a human-readable country label for the system prompt.
+     */
+    private function getSchoolCountryLabel(): string
+    {
+        $user = auth()->user() ?? request()->user();
+        if (!$user || !$user->school_id) {
+            return 'Ugandan';
+        }
+
+        $school = School::find($user->school_id);
+        $country = $school ? $school->registration_country : null;
+
+        if (!$country) {
+            return 'Ugandan';
+        }
+
+        // Map common country names to adjective form
+        $adjectives = [
+            'Uganda'       => 'Ugandan',
+            'Kenya'        => 'Kenyan',
+            'Tanzania'     => 'Tanzanian',
+            'Rwanda'       => 'Rwandan',
+            'Burundi'      => 'Burundian',
+            'South Sudan'  => 'South Sudanese',
+            'Nigeria'      => 'Nigerian',
+            'Ghana'        => 'Ghanaian',
+            'South Africa' => 'South African',
+        ];
+
+        return $adjectives[$country] ?? $country;
     }
 
     private function getUserRole(\App\Models\User $user): string

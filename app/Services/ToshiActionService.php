@@ -410,7 +410,6 @@ class ToshiActionService
                 'school_id'        => $schoolId,
                 'academic_year_id' => $academicYear->id,
                 'user_id'          => $student->id,
-                'academic_status'  => 'active',
             ];
             if ($standardLink) {
                 $academicData['standardLink_id'] = $standardLink->id;
@@ -606,9 +605,21 @@ class ToshiActionService
         }
 
         $status = strtolower(trim($data['status'] ?? 'present'));
-        if (!in_array($status, ['present', 'absent', 'late', 'half-day', 'holiday'])) {
+        $validStatuses = ['present', 'absent', 'late', 'half-day', 'holiday'];
+        if (!in_array($status, $validStatuses)) {
             return self::result(false, "Status must be one of: present, absent, late, half-day.");
         }
+
+        // Map status string to integer: the attendances.status column is
+        // tinyint(1), not a string — 1 = present, 0 = absent (default).
+        $statusMap = [
+            'present'  => 1,
+            'absent'   => 0,
+            'late'     => 1,
+            'half-day' => 1,
+            'holiday'  => 1,
+        ];
+        $statusInt = $statusMap[$status] ?? 1;
 
         $academicYear = SiteHelper::getAcademicYear($schoolId);
         if (!$academicYear) {
@@ -641,7 +652,7 @@ class ToshiActionService
                 [
                     'academic_year_id'  => $academicYear->id,
                     'standardLink_id'   => $studentAcademic->standardLink_id,
-                    'status'            => $status,
+                    'status'            => $statusInt,
                     'recorded_by'       => $admin->id,
                     'remarks'           => $data['remarks'] ?? null,
                 ]
@@ -731,6 +742,7 @@ class ToshiActionService
                 'name'             => $name,
                 'starts_on'        => $startDate,
                 'ends_on'          => $endDate,
+                'status'           => 'current',
             ]);
 
             return self::result(true, "Term **{$name}** created ({$startDate} to {$endDate}).", ['term_id' => $term->id]);
@@ -1415,7 +1427,7 @@ class ToshiActionService
                 'section_id' => $exam->section_id,
                 'teacher_id' => $admin->id,
                 'marks' => $score,
-                'grade' => $grade,
+                'grade' => $grade ?? '-',
             ]);
             return self::result(true, "Mark entered: {$score}.", ['mark_id' => $mark->id]);
         } catch (\Exception $e) {

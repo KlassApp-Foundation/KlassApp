@@ -197,9 +197,22 @@ class ToshiPlanService
      */
     private function splitItems(string $text): array
     {
-        // Try comma separation first
+        // Try comma separation first, then further split each item by "and"/"&".
+        // This handles "Alice, Bob and Charlie" → ["Alice", "Bob", "Charlie"].
         if (mb_strpos($text, ',') !== false) {
-            return explode(',', $text);
+            $parts = explode(',', $text);
+            $result = [];
+            foreach ($parts as $part) {
+                $trimmed = trim($part);
+                $sub = preg_split('/\s+(and|&)\s+/i', $trimmed);
+                foreach ($sub as $s) {
+                    $t = trim($s);
+                    if ($t !== '') {
+                        $result[] = $t;
+                    }
+                }
+            }
+            return $result;
         }
 
         // Try " and " separation

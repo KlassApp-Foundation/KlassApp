@@ -8,6 +8,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
+use App\Models\Academics\SchoolGradingSystem;
 use App\Models\Standard;
 use App\Models\User;
 use App\Services\ToshiActionService;
@@ -58,9 +59,19 @@ class SeedDefaultGradingTool implements Tool, VerifiableTool
 
         $count = 0;
         foreach ($standards as $standard) {
-            if (!$standard->grade_scale) {
-                $standard->grade_scale = json_encode($defaultScales);
-                $standard->save();
+            $hasScale = SchoolGradingSystem::where('school_id', $schoolId)
+                ->where('standard_id', $standard->id)
+                ->exists();
+            if (!$hasScale) {
+                foreach ($defaultScales as $g) {
+                    SchoolGradingSystem::create([
+                        'school_id'   => $schoolId,
+                        'standard_id' => $standard->id,
+                        'grade'       => $g['grade'],
+                        'min_score'   => $g['min'],
+                        'max_score'   => $g['max'],
+                    ]);
+                }
                 $count++;
             }
         }
@@ -76,9 +87,9 @@ class SeedDefaultGradingTool implements Tool, VerifiableTool
             return ['verified' => false, 'message' => 'No school assigned for verification.'];
         }
 
-        $seeded = Standard::whereHas('standardLinks', function ($q) use ($schoolId) {
-            $q->where('school_id', $schoolId);
-        })->whereNotNull('grade_scale')->count();
+        $seeded = SchoolGradingSystem::where('school_id', $schoolId)
+            ->distinct('standard_id')
+            ->count('standard_id');
 
         return [
             'verified' => $seeded > 0,

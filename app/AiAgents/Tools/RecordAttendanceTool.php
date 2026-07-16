@@ -62,6 +62,9 @@ class RecordAttendanceTool implements Tool, VerifiableTool
         $studentIdentifier = trim($request->get('student', ''));
         $date = trim($request->get('date', now()->toDateString()));
         $status = strtolower(trim($request->get('status', 'present')));
+        // Map to integer: attendances.status is tinyint(1), not a string
+        $statusMap = ['present' => 1, 'absent' => 0, 'late' => 1, 'half-day' => 1, 'holiday' => 1];
+        $statusInt = $statusMap[$status] ?? 1;
 
         $student = \App\Models\User::where('school_id', $schoolId)
             ->where(function ($q) use ($studentIdentifier) {
@@ -83,7 +86,7 @@ class RecordAttendanceTool implements Tool, VerifiableTool
         $exists = Attendance::where('school_id', $schoolId)
             ->where('user_id', $student->id)
             ->whereDate('date', $parsedDate)
-            ->where('status', $status)
+            ->where('status', $statusInt)
             ->exists();
 
         return [

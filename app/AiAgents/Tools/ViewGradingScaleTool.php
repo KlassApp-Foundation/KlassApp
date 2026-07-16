@@ -6,6 +6,7 @@ use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use App\AiAgents\Concerns\AuthorizesToshiAction;
+use App\Models\Academics\SchoolGradingSystem;
 use App\Models\Standard;
 use App\Models\User;
 use App\Services\ToshiActionService;
@@ -40,14 +41,25 @@ class ViewGradingScaleTool implements Tool
             return 'Standard "' . $standardName . '" not found.';
         }
 
-        $scale = $standard->grade_scale ? json_decode($standard->grade_scale, true) : null;
-        if (!$scale) {
+        $grades = SchoolGradingSystem::where('school_id', $schoolId)
+            ->where('standard_id', $standard->id)
+            ->orderBy('min_score', 'desc')
+            ->get();
+
+        if ($grades->isEmpty()) {
             return 'No grading scale configured for "' . $standardName . '".';
         }
 
-        $lines = array_map(function ($g) {
-            return '• ' . $g['grade'] . ': ' . $g['min'] . '% — ' . $g['max'] . '%';
-        }, $scale);
+        $lines = $grades->map(function ($g) {
+            $parts = '• ' . $g->grade . ': ' . $g->min_score . '% — ' . $g->max_score . '%';
+            if ($g->remark) {
+                $parts .= ' (' . $g->remark . ')';
+            }
+            if ($g->points !== null) {
+                $parts .= ' — points: ' . $g->points;
+            }
+            return $parts;
+        })->toArray();
 
         return '**Grading Scale for ' . $standardName . ':**' . "\n" . implode("\n", $lines);
     }

@@ -57,14 +57,14 @@ return [
     | DeepSeek:    deepseek-chat
     | Nvidia NIM:  meta/llama-3.1-8b-instruct
     */
-    'model' => env('TOSHI_LLM_MODEL', 'gpt-4o-mini'),
+    'model' => 'nvidia/llama-3.3-nemotron-super-49b-v1',
 
     /*
     | Fallback model — used when the primary model fails (404, timeout, etc.).
     | Useful with NIM where specific models may be temporarily unavailable.
     | Set to empty to disable fallback behaviour.
     */
-    'fallback_model' => env('TOSHI_LLM_FALLBACK_MODEL'),
+    'fallback_model' => 'meta/llama-3.1-70b-instruct',
 
     /*
     | Model to use for escalated (complex) queries. When set, queries classified
@@ -162,6 +162,16 @@ return [
     | tier 2 confirmations still work; only plain text responses are streamed.
     |
     | Requires sdk_v2_enabled to also be true to take effect.
+    |
+    | KNOWN ISSUES (disabled by default — not actively fixed):
+    | 1. Tool-serialization bug (Phase 3, item 4): The Agent::stream() path
+    |    serializes tool call contexts in a way that can break the tool-calling
+    |    loop under certain LLM response patterns. The non-streaming path
+    |    (the default) handles all tool confirmations correctly.
+    | 2. Blank-message artifact (Phase 3, item 1): When streaming is enabled,
+    |    a blank streaming placeholder message can remain visible in the Toshi
+    |    panel if the stream terminates unexpectedly before any content is
+    |    delivered. Cosmetic — no data loss, no user impact.
     */
-    'streaming_enabled' => env('TOSHI_STREAMING_ENABLED', false),
+    'streaming_enabled' => false,
 ];

@@ -668,17 +668,93 @@ class AgentToshi extends Component
             'firstname' => 'First Name', 'lastname' => 'Last Name',
             'email' => 'Email', 'phone' => 'Phone',
             'students' => 'Students', 'teachers' => 'Teachers',
+            'gradeDefinitions' => 'Grade Levels',
+            'grade_definition' => 'Grade Levels',
         ];
         $result = [];
         foreach ($args as $key => $value) {
-            if (is_array($value)) {
-                $value = implode(', ', array_filter($value, fn($v) => !is_array($v)));
-                if (empty($value)) continue;
-            }
+            // Format complex values (arrays, JSON strings) as human-readable summaries
+            $formatted = $this->formatArgValue($value);
+            if ($formatted === null) continue; // skip empty/complex unrepresentable
             $label = $labelMap[$key] ?? ucwords(str_replace(['_', '-'], ' ', $key));
-            $result[] = ['label' => $label, 'value' => $value];
+            $result[] = ['label' => $label, 'value' => $formatted];
         }
         return $result;
+    }
+
+    /**
+     * Format a tool argument value for human-readable display.
+     * Arrays and JSON strings are summarised; primitives pass through.
+     * Returns null if the value should be omitted (empty after formatting).
+     */
+    private function formatArgValue(mixed $value): ?string
+    {
+        // Already a simple scalar
+        if (is_string($value) || is_int($value) || is_float($value) || is_bool($value)) {
+            $s = trim((string) $value);
+            // Try decoding a JSON string — if it decodes to an array, format it
+            if (str_starts_with($s, '[') || str_starts_with($s, '{')) {
+                $decoded = json_decode($s, true);
+                if (is_array($decoded)) {
+                    return $this->formatStructuredValue($decoded);
+                }
+            }
+            return $s ?: null;
+        }
+
+        if (is_array($value)) {
+            return $this->formatStructuredValue($value);
+        }
+
+        return null;
+    }
+
+    /**
+     * Format a structured value (array of grade definitions, etc.) as a
+     * compact human-readable summary.
+     */
+    private function formatStructuredValue(array $data): string
+    {
+        // Grade definitions: array of {grade, min, max} objects
+        if (!empty($data) && isset($data[0]) && is_array($data[0])) {
+            $first = $data[0];
+            if (isset($first['grade']) && (isset($first['min']) || isset($first['min_score']))) {
+                $parts = [];
+                foreach ($data as $g) {
+                    $grade = $g['grade'] ?? '';
+                    $lo = $g['min'] ?? $g['min_score'] ?? 0;
+                    $hi = $g['max'] ?? $g['max_score'] ?? 100;
+                    $parts[] = "{$grade}: {$lo}–{$hi}%";
+                }
+                return count($parts) . ' levels — ' . implode(', ', $parts);
+            }
+            // Generic array of objects: show count + first item as preview
+            $preview = json_encode($data[0], JSON_UNESCAPED_UNICODE);
+            return count($data) . ' item(s) — e.g. ' . (strlen($preview) > 60 ? substr($preview, 0, 60) . '…' : $preview);
+        }
+
+        // Flat key-value object: "key: value, key: value"
+        if ($this->isAssociative($data)) {
+            $parts = [];
+            foreach ($data as $k => $v) {
+                $parts[] = $k . ': ' . (is_array($v) ? json_encode($v) : $v);
+            }
+            return implode(', ', $parts);
+        }
+
+        // Flat list: "item1, item2, …"
+        $filtered = array_filter($data, fn($v) => !is_array($v));
+        if (!empty($filtered)) {
+            return implode(', ', $filtered);
+        }
+
+        return json_encode($data, JSON_UNESCAPED_UNICODE);
+    }
+
+    private function isAssociative(array $array): bool
+    {
+        if (empty($array)) return false;
+        return array_keys($array) !== range(0, count($array) - 1);
     }
 
     // ── Button-driven confirm/edit ──
@@ -704,6 +780,16 @@ class AgentToshi extends Component
             if ($wasPlanStep && $this->planSteps !== null && $planStepIdx >= 0) {
                 $success = str_starts_with($result, '✅') || str_starts_with($result, '⚠️');
                 $this->planSteps[$planStepIdx]['status'] = $success ? 'completed' : 'failed';
+
+                // A failed step stops the plan
+                if (!$success) {
+                    $succeeded = collect($this->planSteps)->where('status', 'completed')->count();
+                    $failed = collect($this->planSteps)->where('status', 'failed')->count();
+                    $this->botSay("⚠️ Plan stopped: step " . ($planStepIdx + 1) . "/" . count($this->planSteps) . " failed. **{$succeeded}** succeeded, **{$failed}** failed.");
+                    $this->planSteps = null;
+                    $this->planCurrentStep = -1;
+                    return;
+                }
 
                 $next = $planStepIdx + 1;
                 if ($next < count($this->planSteps)) {
@@ -836,6 +922,17 @@ class AgentToshi extends Component
 
         $success = str_starts_with($result, '✅') || str_starts_with($result, '⚠️');
         $this->planSteps[$i]['status'] = $success ? 'completed' : 'failed';
+
+        // A failed step must stop the plan — don't advance to the next step
+        // (the step's ❌ result message is already visible in the chat).
+        if (!$success) {
+            $succeeded = collect($this->planSteps)->where('status', 'completed')->count();
+            $failed = collect($this->planSteps)->where('status', 'failed')->count();
+            $this->botSay("⚠️ Plan stopped: step " . ($i + 1) . "/" . count($steps) . " failed. **{$succeeded}** succeeded, **{$failed}** failed.");
+            $this->planSteps = null;
+            $this->planCurrentStep = -1;
+            return;
+        }
 
         // If there are more steps, advance and dispatch
         $next = $i + 1;
@@ -2063,6 +2160,18 @@ class AgentToshi extends Component
 
     private function botSay(string $message)
     {
+        // Safety filter: never display raw __tier2_confirm JSON payloads as bot messages.
+        // These are internal protocol payloads that should only reach the confirmation
+        // card handler. If one leaks here (from the LLM echoing tool output, the agent
+        // framework returning it as final text, or any other path), discard silently.
+        $trimmed = ltrim($message);
+        if (str_starts_with($trimmed, '{"__tier2_confirm')) {
+            \Illuminate\Support\Facades\Log::warning('botSay suppressed raw __tier2_confirm JSON', [
+                'preview' => json_decode($trimmed, true)['preview'] ?? '(unknown)',
+            ]);
+            return;
+        }
+
         $this->messages[] = ['role' => 'bot', 'text' => $message];
         $this->persistState();
     }
@@ -2355,6 +2464,14 @@ class AgentToshi extends Component
                             session(['toshi_pending_confirm_' . $messageId => $this->pendingToolConfirm]);
                             $this->botSay($decoded['preview'] . "\n\nUse the buttons below to confirm or cancel.");
                         } elseif (!$this->streamingMessagePlaced) {
+                            // Safety guard: never display raw JSON payloads as bot messages.
+                            // The __tier2_confirm JSON should only reach the confirmation
+                            // card handler above. If it reaches here, something went wrong
+                            // with the side-channel — discard silently.
+                            if (str_starts_with(ltrim($response), '{"__tier2_confirm')) {
+                                $this->botSay('I need to confirm with you first. Please check the confirmation card.');
+                                return;
+                            }
                             // Only botSay if streaming didn't already place the response
                             $this->botSay($response);
                         }

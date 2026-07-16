@@ -71,6 +71,8 @@ class RecordBulkAttendanceTool implements Tool, VerifiableTool
             $studentIdentifier = trim($item['student'] ?? '');
             $date = trim($item['date'] ?? $request->get('date', now()->toDateString()));
             $status = strtolower(trim($item['status'] ?? 'present'));
+            $statusMap = ['present' => 1, 'absent' => 0, 'late' => 1, 'half-day' => 1, 'holiday' => 1];
+            $statusInt = $statusMap[$status] ?? 1;
 
             $student = \App\Models\User::where('school_id', $schoolId)
                 ->where('usergroup_id', 6)
@@ -95,7 +97,7 @@ class RecordBulkAttendanceTool implements Tool, VerifiableTool
             $exists = Attendance::where('school_id', $schoolId)
                 ->where('user_id', $student->id)
                 ->whereDate('date', $parsedDate)
-                ->where('status', $status)
+                ->where('status', $statusInt)
                 ->exists();
 
             if (!$exists) {

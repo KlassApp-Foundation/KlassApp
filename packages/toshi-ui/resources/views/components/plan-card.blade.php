@@ -47,7 +47,7 @@
                 $failed = collect($steps)->where('status', 'failed')->count();
             @endphp
             <div class="toshi-plan-card-done">
-                ✅ Plan complete: {{ $succeeded }} succeeded@if($failed), {{ $failed }} failed @endif
+                ✅ Plan complete: {{ $succeeded }} succeeded{{ $failed ? ', '.$failed.' failed' : '' }}
             </div>
         @elseif($isProcessing)
             <span class="toshi-plan-card-processing">⏳ {{ $executingVerb }}</span>

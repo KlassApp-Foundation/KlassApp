@@ -35,9 +35,10 @@ class EnterMarkTool implements Tool, VerifiableTool
         $error = $this->authorizeOrMessage($user);
         if ($error) return $error;
 
+        // Accept both camelCase (from LLM schema) and snake_case (from stored args)
         $args = [
-            'student_id' => $request->get('studentId'),
-            'exam_id' => $request->get('examId'),
+            'student_id' => $request->get('studentId') ?? $request->get('student_id'),
+            'exam_id' => $request->get('examId') ?? $request->get('exam_id'),
             'marks' => $request->get('marks'),
         ];
 
