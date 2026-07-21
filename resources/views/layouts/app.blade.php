@@ -59,25 +59,26 @@
                 <div class="bg-gray-200 dashboard-content-area flex-grow w-full px-4 md:w-auto" style="width: calc(100vw - 195px);">
                     @yield('base-content')
                 </div>
+                @auth
+                    @if(in_array(auth()->user()->usergroup_id, [1, 3]))
+                        <div v-pre>@livewire('agent-toshi')</div>
+                        <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper">
+                            <div id="toshi-toggle" class="toshi-toggle" title="Open Toshi" onclick="document.body.classList.toggle('toshi-collapsed');var t=document.getElementById('toshi-toggle');t.textContent=document.body.classList.contains('toshi-collapsed')?'◀':'▶'">▶</div>
+                        </div>
+                    @endif
+                @endauth
             </main>
             @yield('base-footer')
         </div>
 
         @auth
             @if(in_array(auth()->user()->usergroup_id, [1, 3]))
-                @livewire('agent-toshi')
-                <div id="toshi-toggle" class="toshi-toggle" onclick="document.body.classList.toggle('toshi-collapsed');var t=document.getElementById('toshi-toggle');t.textContent=document.body.classList.contains('toshi-collapsed')?'◀':'▶'">▶</div>
                 <script>
                 document.addEventListener('click', function(e) {
                     if (document.body.classList.contains('toshi-collapsed') && e.target.closest('.toshi-pill')) {
                         e.preventDefault();
                         document.body.classList.remove('toshi-collapsed');
                         document.getElementById('toshi-toggle').textContent = '▶';
-                    }
-                    if (window.innerWidth >= 1280 && e.target.closest('[wire\\:click="hide"]')) {
-                        e.preventDefault();
-                        document.body.classList.toggle('toshi-collapsed');
-                        document.getElementById('toshi-toggle').textContent = document.body.classList.contains('toshi-collapsed') ? '◀' : '▶';
                     }
                 });
                 </script>

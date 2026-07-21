@@ -2,20 +2,19 @@
 
 namespace App\Helpers;
 
-use App\Models\AcademicTerm;
-use App\Models\FeesCategories;
-use App\Models\Standard;
-use App\Models\Subject;
-use App\Models\Teacherlink;
-use App\Models\WhatsAppUser;
+use App\Models\School;
+use App\Services\OnboardingStepsService;
 
+/**
+ * Onboarding helper — delegates to OnboardingStepsService.
+ *
+ * Kept for backwards compatibility; new code should use
+ * OnboardingStepsService directly.
+ */
 class OnboardingHelper
 {
-    /**
-     * Steps that can be missing after initial school creation.
-     * Matches the checks in AgentToshi::detectMissingSteps().
-     */
     const STEP_LABELS = [
+        'curriculum'      => 'Board / Curriculum',
         'standards'       => 'Classes',
         'subjects'        => 'Subjects',
         'teachers'        => 'Teachers',
@@ -24,48 +23,24 @@ class OnboardingHelper
         'whatsapp_verify' => 'WhatsApp verification',
     ];
 
-    /**
-     * Return an array of step keys that are missing for the given school.
-     */
     public static function getMissingSteps(int $schoolId, ?int $userId = null): array
     {
-        $missing = [];
+        $school = School::find($schoolId);
+        if (!$school) return [];
 
-        if (!Standard::where('school_id', $schoolId)->exists()) {
-            $missing[] = 'standards';
-        }
-        if (!Subject::where('school_id', $schoolId)->exists()) {
-            $missing[] = 'subjects';
-        }
-        if (!Teacherlink::where('school_id', $schoolId)->exists()) {
-            $missing[] = 'teachers';
-        }
-        if (!AcademicTerm::where('school_id', $schoolId)->exists()) {
-            $missing[] = 'terms';
-        }
-        if (!FeesCategories::where('school_id', $schoolId)->exists()) {
-            $missing[] = 'fees';
-        }
-        if ($userId && !WhatsAppUser::where('user_id', $userId)->exists()) {
-            $missing[] = 'whatsapp_verify';
-        }
-
-        return $missing;
+        $incomplete = OnboardingStepsService::incompleteSteps($school, $userId);
+        return array_map(fn($s) => $s['key'], $incomplete);
     }
 
-    /**
-     * Returns true if the school has any incomplete onboarding steps.
-     */
     public static function hasMissingSteps(int $schoolId, ?int $userId = null): bool
     {
-        return !empty(self::getMissingSteps($schoolId, $userId));
+        $school = School::find($schoolId);
+        if (!$school) return false;
+        return OnboardingStepsService::hasIncompleteSteps($school, $userId);
     }
 
-    /**
-     * Get human-readable labels for a list of missing step keys.
-     */
     public static function getMissingLabels(array $missingKeys): array
     {
-        return array_map(fn ($key) => self::STEP_LABELS[$key] ?? ucfirst($key), $missingKeys);
+        return array_map(fn($key) => self::STEP_LABELS[$key] ?? ucfirst($key), $missingKeys);
     }
 }

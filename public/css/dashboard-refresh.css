@@ -572,34 +572,70 @@ body .toshi-root {
     --toshi-bot-bubble: var(--d-surface);
 
     /* Position: fixed so the widget is always visible regardless of scroll */
+    /* On desktop (≥1280px), toshi-ui.css overrides this to position: static inside the flex layout */
     position: fixed !important;
     bottom: 24px !important;
     right: 24px !important;
     z-index: 9999 !important;
 }
 
-/* Bump specificity on critical Toshi layout rules to prevent override by unrelated CSS */
+/* ── Pill: bottom of widget (via column-reverse), does NOT steal panel width ── */
 body .toshi-pill {
-    display: flex !important;
+    display: flex;
+    flex-shrink: 0;
+    z-index: 45;
     align-items: center;
 }
+
+/* ── Panel: fills the fixed toshi-root container — not independently fixed ── */
 body .toshi-panel {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    flex: 1;
+    max-height: none !important;
+    min-height: 0;
+    width: 100%;
 }
-/* Desktop panel: fixed position at bottom-right */
 @media (min-width: 641px) {
     .toshi-panel {
-        position: fixed !important;
-        bottom: 24px !important;
-        right: 24px !important;
-        z-index: 9998 !important;
+        border-radius: 16px !important;
     }
-    /* Hide pill when panel is open on desktop */
-    .toshi-panel ~ .toshi-pill {
-        display: none;
-    }
+}
+
+/* ── Toggle button: always above toshi-root so it's clickable ── */
+body .toshi-toggle {
+    position: fixed !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 28px !important;
+    height: 64px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000 !important;
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    font-size: 12px;
+    color: #64748B;
+    cursor: pointer;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.04);
+    user-select: none;
+    transition: right 0.25s ease;
+}
+body.toshi-collapsed .toshi-root {
+    width: 0 !important;
+    min-width: 0 !important;
+    border: none !important;
+}
+/* Toggle button: visible only when collapsed (to reopen), hidden when panel is open */
+body:not(.toshi-collapsed) .toshi-toggle {
+    display: none !important;
+}
+body.toshi-collapsed .toshi-toggle {
+    display: flex !important;
+    right: 24px !important;
 }
 
 /* ── Card Padding & Shadow Helpers ── */

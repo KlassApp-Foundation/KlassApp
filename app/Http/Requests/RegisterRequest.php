@@ -91,6 +91,7 @@ class RegisterRequest extends FormRequest
             'country'               =>  'nullable|string|max:100',
             'student_size'          =>  'nullable|string|max:50',
             'ministry_code'         =>  'nullable|string|max:20',
+            'curriculum'            =>  'required|in:uneb,cambridge,montessori,other',
             'email'                 =>  'required|email|checkunique_email',
             'password'              =>  'required|min:8|confirmed',
             'termsandcondn'         =>  'required',

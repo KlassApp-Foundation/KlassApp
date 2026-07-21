@@ -49,6 +49,7 @@ class AgentToshi extends Component
         'toolCreateSubject'       => \App\AiAgents\Tools\CreateSubjectTool::class,
         'toolSeedDefaultGrading'  => \App\AiAgents\Tools\SeedDefaultGradingTool::class,
         'toolSetGradingScale'     => \App\AiAgents\Tools\SetGradingScaleTool::class,
+        'toolSetCurriculum'       => \App\AiAgents\Tools\SetCurriculumTool::class,
     ];
 
     public $step = 0;
@@ -219,6 +220,7 @@ class AgentToshi extends Component
         'toolCreateFee'           => 'Creating fee...',
         'toolCreateTerm'          => 'Creating term...',
         'toolRecordPayment'       => 'Recording payment...',
+        'toolSetCurriculum'       => 'Setting curriculum...',
         'toolEnterMark'           => 'Entering marks...',
         'toolAssignTeacher'       => 'Assigning teacher...',
         'toolSeedDefaultGrading'  => 'Configuring grading...',
@@ -529,54 +531,45 @@ class AgentToshi extends Component
     private function detectMissingSteps()
     {
         $sid = $this->schoolId;
-        $missing = [];
+        $school = \App\Models\School::find($sid);
+        if (!$school) {
+            $this->botSay("I can't detect your school setup right now.");
+            return;
+        }
 
-        if (!\App\Models\Standard::where('school_id', $sid)->exists()) $missing[] = 'standards';
-        if (!\App\Models\Subject::where('school_id', $sid)->exists()) $missing[] = 'subjects';
-        if (!\App\Models\Teacherlink::where('school_id', $sid)->exists()) $missing[] = 'teachers';
-        if (!\App\Models\AcademicTerm::where('school_id', $sid)->exists()) $missing[] = 'terms';
-        if (!\App\Models\FeesCategories::where('school_id', $sid)->exists()) $missing[] = 'fees';
-        if (!\App\Models\WhatsAppUser::where('user_id', auth()->id())->exists()) $missing[] = 'whatsapp_verify';
-
-        if (empty($missing)) {
+        $incomplete = \App\Services\OnboardingStepsService::incompleteSteps($school, auth()->id());
+        if (empty($incomplete)) {
             $this->botSay("✅ Everything looks set up! Your school is ready to go.");
             $this->botSay("If you need help with anything, just ask.");
             $this->step = 99;
             return;
         }
 
-        $this->botSay("I found **" . count($missing) . "** thing" . (count($missing) > 1 ? 's' : '') . " to set up:");
-        foreach ($missing as $item) {
-            $labels = [
-                'standards' => '📚 Classes',
-                'subjects'  => '📖 Subjects',
-                'teachers'  => '👨‍🏫 Teachers',
-                'terms'     => '📅 Academic terms',
-                'fees'      => '💵 Fee structures',
-                'whatsapp_verify' => '📱 WhatsApp verification',
-            ];
-            $this->botSay("  ❌ " . ($labels[$item] ?? $item));
+        $this->botSay("I found **" . count($incomplete) . "** thing" . (count($incomplete) > 1 ? 's' : '') . " to set up:");
+        foreach ($incomplete as $step) {
+            $this->botSay("  ❌ " . ($step['icon'] ?? '') . ' ' . $step['label']);
         }
 
-        // Jump to first missing step
-        $stepNames = array_values($this->steps);
-        foreach ($stepNames as $i => $name) {
-            if (in_array($name, $missing)) {
-                $this->step = $i;
-                break;
-            }
-        }
+        // Jump to first incomplete step
+        $first = $incomplete[0];
+        $this->botSay(self::onboardingPromptForStep($first['key']));
+    }
 
-        $current = $this->steps[$this->step] ?? '';
-        $labels = [
-            'standards' => "Let's start with classes. What classes does your school have?",
-            'subjects'  => "Let's set up subjects per class.",
-            'teachers'  => "Let's add teachers. Paste their names (one per line) or type 'skip'.",
-            'terms'     => "Let's set up academic terms.",
-            'fees'      => "Let's add fee categories. Type a fee name or 'skip'.",
+    /**
+     * Get the conversational prompt for a given onboarding step key.
+     */
+    private static function onboardingPromptForStep(string $key): string
+    {
+        return match ($key) {
+            'curriculum' => "First, let's confirm your school's curriculum. I see it's currently set — is that correct, or would you like to change it?",
+            'standards'  => "Let's start with classes. What classes does your school have?",
+            'subjects'   => "Let's set up subjects per class.",
+            'teachers'   => "Let's add teachers. Paste their names (one per line) or type 'skip'.",
+            'terms'      => "Let's set up academic terms.",
+            'fees'       => "Let's add fee categories. Type a fee name or 'skip'.",
             'whatsapp_verify' => "Let's verify your WhatsApp number for school notifications.",
-        ];
-        $this->botSay($labels[$current] ?? "Let's continue setting up.");
+            default      => "Let's continue setting up.",
+        };
     }
 
     public function show() { $this->visible = true; $this->maximized = false; }
@@ -646,6 +639,7 @@ class AgentToshi extends Component
             'toolEnterMark'        => ['label' => 'Enter Mark',        'icon' => '📊'],
             'toolSeedDefaultGrading' => ['label' => 'Setup Grading',   'icon' => '⚙️'],
             'toolSetGradingScale'  => ['label' => 'Set Grading Scale', 'icon' => '📏'],
+            'toolSetCurriculum'    => ['label' => 'Set Curriculum',   'icon' => '📚'],
         ];
         return $map[$tool] ?? ['label' => 'Execute Action', 'icon' => '⚡'];
     }
@@ -3296,6 +3290,20 @@ class AgentToshi extends Component
             }
             // Fall through to step handler normally
         } else {
+            // Check if user wants to resume onboarding (setup mode)
+            $isSetupIntent = preg_match('/\b(setup|set.?up|finish|onboard|continue setting|resume|what.?next|next step)\b/i', $text)
+                && !preg_match('/\b(add|create|record|mark|enter)\b.*\b(student|exam|attendance|mark|fee|parent)\b/i', $text);
+            if ($isSetupIntent) {
+                $school = \App\Models\School::find($this->schoolId);
+                if ($school) {
+                    $next = \App\Services\OnboardingStepsService::nextIncompleteStep($school, auth()->id());
+                    if ($next) {
+                        $this->botSay("Let's continue setting up **{$school->name}**. " . self::onboardingPromptForStep($next['key']));
+                        return true;
+                    }
+                }
+            }
+
             // Try the keyword router first (zero-cost). If it matches, switch to assistant.
             if ($this->tryKeywordRoute(strtolower($text), $text)) {
                 $this->mode = 'assistant';

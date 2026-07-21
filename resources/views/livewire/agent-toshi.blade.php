@@ -1,9 +1,9 @@
 <div x-data="{ hasText: false }"
      x-on:toshi-run-plan-step.window="setTimeout(() => $wire.executeNextPlanStep(), 200)"
      class="toshi-root">
-    @if(!$desktopMode)
     <div id="toshi-pill"
          wire:click="show"
+         onclick="document.body.classList.remove('toshi-collapsed');"
          class="toshi-pill"
          style="{{ $visible || $maximized ? 'display: none;' : '' }}">
         <div class="toshi-pill-avatar">
@@ -14,7 +14,6 @@
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="4" width="3" height="6" rx="1"/><rect x="5.5" y="1" width="3" height="12" rx="1"/><rect x="10" y="3" width="3" height="8" rx="1"/></svg> Talk
         </div>
     </div>
-    @endif
 
     <div id="toshi-panel"
          class="toshi-panel"
@@ -30,7 +29,7 @@
                 <button wire:click="resetSchoolOnboarding" class="toshi-header-btn" title="Restart onboarding" style="font-size:11px;font-weight:600;color:#D97706;">
                     ↻ Restart
                 </button>
-                <button wire:click="hide" class="toshi-header-btn" title="Close">
+                <button onclick="document.body.classList.add('toshi-collapsed');document.getElementById('toshi-toggle').textContent='◀';" class="toshi-header-btn" title="Close">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
                 </button>
             </div>

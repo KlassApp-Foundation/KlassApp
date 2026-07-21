@@ -5,82 +5,164 @@
    or directly from packages/toshi-ui/resources/css/toshi-ui.css
    ══════════════════════════════════════════════════════════════ */
 
-:root { --nav-height: 56px; }
+:root { --nav-height: 83px; }
+
+/* ── Toggle wrapper: zero-width flex child that expands to 28px when collapsed ── */
+.toshi-toggle-wrapper {
+    width: 0;
+    flex-shrink: 0;
+    overflow: visible;
+    position: relative;
+    transition: width 0.25s ease;
+}
 
 @media (min-width: 1280px) {
+    body {
+        overflow: hidden !important;
+        height: 100vh;
+    }
+
+    #app {
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
     .navbar {
         position: sticky;
         top: 0;
         z-index: 31;
+        flex-shrink: 0;
     }
-    .toshi-pill {
-        display: none !important;
+
+    main {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden;
+        height: auto !important;
     }
-    body.toshi-collapsed .toshi-pill {
-        display: flex !important;
-        z-index: 45;
-    }
+
     .sidebar {
-        position: sticky;
-        top: var(--nav-height);
-        height: calc(100vh - var(--nav-height));
-        align-self: start;
+        position: static !important;
+        height: 100%;
         overflow-y: auto;
+        align-self: stretch;
+        flex-shrink: 0;
     }
+
+    .dashboard-content-area,
+    .superadmin-content {
+        overflow-y: auto;
+        height: 100%;
+        flex: 1;
+        min-width: 0;
+        margin-right: 0 !important;
+        width: auto !important;
+        transition: none !important;
+    }
+
+    body .toshi-root {
+        display: flex;
+        height: 100%;
+        flex-shrink: 0;
+        width: 380px;
+        overflow: hidden;
+        transition: width 0.25s ease;
+        /* override dashboard-refresh.css position: fixed !important — must match specificity and have !important */
+        position: static !important;
+        bottom: auto !important;
+        right: auto !important;
+        z-index: auto !important;
+    }
+
     .toshi-panel {
-        position: fixed !important;
-        top: var(--nav-height) !important;
-        right: 0 !important;
-        bottom: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        right: auto !important;
+        bottom: auto !important;
         left: auto !important;
         width: 380px !important;
-        height: calc(100vh - var(--nav-height)) !important;
+        height: 100% !important;
         max-height: none !important;
         display: flex !important;
+        flex-direction: column;
         border-radius: 0 !important;
         box-shadow: -4px 0 16px rgba(0,0,0,0.04) !important;
         border-left: 1px solid #E5E7EB !important;
-        z-index: 30 !important;
-        transition: transform 0.25s ease !important;
+        z-index: auto !important;
+        transition: none !important;
     }
+
+    .toshi-messages-area {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+    }
+
+    body.toshi-collapsed .toshi-root {
+        width: 0 !important;
+    }
+
     body.toshi-collapsed .toshi-panel {
-        transform: translateX(380px) !important;
+        transform: none !important;
         border-left: none !important;
         box-shadow: none !important;
     }
-    .toshi-toggle {
-        position: fixed;
+
+    /* ── Toggle wrapper expands to 28px when collapsed ── */
+    body.toshi-collapsed .toshi-toggle-wrapper {
+        width: 28px !important;
+    }
+
+    /* ── Toggle positioned inside wrapper — never overlaps content ── */
+    .toshi-toggle-wrapper .toshi-toggle {
+        position: absolute;
         right: 0;
         top: 50%;
         transform: translateY(-50%);
         width: 28px;
         height: 64px;
-        background: #FFFFFF;
-        border: 1px solid #E5E7EB;
-        border-right: none;
+        background: #22C55E;
+        border: none;
         border-radius: 8px 0 0 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
-        color: #64748B;
+        font-size: 16px;
+        color: #FFFFFF;
         cursor: pointer;
-        z-index: 42;
-        box-shadow: -2px 0 8px rgba(0,0,0,0.04);
-        transition: right 0.25s ease, color 0.15s;
+        z-index: 1;
+        box-shadow: -2px 0 10px rgba(34,197,94,0.3);
         user-select: none;
+        transition: width 0.2s ease, box-shadow 0.2s ease;
     }
-    .toshi-toggle:hover { color: #22C55E; }
-    body.toshi-collapsed .toshi-toggle { right: 0; }
-    body:not(.toshi-collapsed) .toshi-toggle { right: 380px; }
-    /* Content area — let flex determine width, not hardcoded viewport calc */
-    .dashboard-content-area {
-        width: auto !important;
-        transition: margin-right 0.25s ease;
+    .toshi-toggle-wrapper .toshi-toggle:hover {
+        width: 36px;
+        box-shadow: -4px 0 16px rgba(34,197,94,0.45);
+        color: #FFFFFF;
     }
-    body:not(.toshi-collapsed) .dashboard-content-area {
-        margin-right: 380px;
+
+    /* ── Override dashboard-refresh.css display rules (higher specificity) ── */
+    body:not(.toshi-collapsed) .toshi-toggle-wrapper .toshi-toggle {
+        display: none !important;
     }
+    body.toshi-collapsed .toshi-toggle-wrapper .toshi-toggle {
+        display: flex !important;
+        right: 0 !important;
+    }
+
+    .toshi-pill {
+        display: none !important;
+    }
+    body.toshi-collapsed .toshi-pill {
+        display: flex !important;
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+    }
+
     .toshi-panel::before {
         content: '';
         position: absolute;

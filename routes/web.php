@@ -95,8 +95,13 @@ Route::get('/teacher/impersonate/stop', 'Auth\ImpersonateController@stopImperson
 Route::get('/schooladmin/{id}/impersonate', 'Auth\ImpersonateController@schoolAdminimpersonate')->middleware('auth', 'superadmin');
 
 //Reset Password for member
-Route::get('/password/reset/{token}', 'Auth\ResetPasswordController@showResetForm');
-Route::post('/password/reset', 'Auth\ResetPasswordController@reset')->name('password.reset');
+Route::get('/password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('password.email');
+Route::post('/password/reset', 'Auth\ForgotPasswordController@sendResetLinkEmail');
+Route::get('/password/reset/{token}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset.form');
+Route::post('/password/reset/change', 'Auth\ResetPasswordController@reset')->name('password.reset');
+Route::get('/password/reset-code', 'Auth\PasswordResetCodeController@showCodeForm')->name('password.reset.code');
+Route::post('/password/reset-code/verify', 'Auth\PasswordResetCodeController@verifyCode')->name('password.reset.code.verify');
+Route::get('/password/reset-code/resend', 'Auth\PasswordResetCodeController@resendCode')->name('password.reset.code.resend');
 //Email Verification for Member
 Route::get('/emailverification/{token}', 'Auth\EmailVerificationController@emailverification');
 // OTP Verification

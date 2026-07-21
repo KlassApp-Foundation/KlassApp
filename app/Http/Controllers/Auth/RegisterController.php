@@ -177,6 +177,10 @@ class RegisterController extends Controller
                 $schoolData['ministry_code'] = $data['ministry_code'] ?? null;
             }
 
+            if (Schema::hasColumn('schools', 'curriculum')) {
+                $schoolData['curriculum'] = $data['curriculum'] ?? 'uneb';
+            }
+
             $school = School::create($schoolData);
             
             Log::info('New School Created. School Id : '. $school->id. ' Name : '. $school->name );

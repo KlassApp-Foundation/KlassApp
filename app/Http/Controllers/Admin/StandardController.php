@@ -102,12 +102,16 @@ protected $academicSetupService;
     public function create()
     {
         //
+        $school = Auth::user()->school;
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
         $board = ["uneb", "cambridge", "ib", "montessori", "other"];
         $standards = ["nursery", "primary", "o-level", "a-level"];
 // ['academic_year_id' => $academic_year->id]
 // compact("board", "academic_year")
-        return view('admin.school.standards.add', ['academic_year_id' => $academic_year->id]);
+        return view('admin.school.standards.add', [
+            'academic_year_id' => $academic_year->id,
+            'current_board' => $school->curriculum ?? '',
+        ]);
     }
 
     /**

@@ -15,6 +15,7 @@
         <link href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}" rel="stylesheet">
         <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
         <link href="{{ asset('css/dashboard-refresh.css') }}" rel="stylesheet">
+        <link href="{{ asset('vendor/toshi-ui/toshi-ui.css') }}?v={{ filemtime(public_path('vendor/toshi-ui/toshi-ui.css')) }}" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
         <link rel="stylesheet" href="https://unpkg.com/@themesberg/flowbite@1.2.0/dist/flowbite.min.css" />
@@ -37,17 +38,19 @@
                 <div class="flex-grow w-full px-4 superadmin-content" style="width: calc(100vw - 195px); background: #FAFAF5; transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
                     @yield('base-content')
                 </div>
+                @auth
+                    @if(in_array(auth()->user()->usergroup_id, [1, 3]))
+                        <div v-pre>@livewire('agent-toshi')</div>
+                        <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper">
+                            <div id="toshi-toggle" class="toshi-toggle" title="Open Toshi" onclick="document.body.classList.toggle('toshi-collapsed');var t=document.getElementById('toshi-toggle');t.textContent=document.body.classList.contains('toshi-collapsed')?'◀':'▶'">▶</div>
+                        </div>
+                    @endif
+                @endauth
             </main>
             @yield('base-footer')
         </div>
 
         @yield('outside-app')
-
-        @auth
-            @if(in_array(auth()->user()->usergroup_id, [1, 3]))
-                @livewire('agent-toshi')
-            @endif
-        @endauth
 
         <!-- Scripts -->
         @filamentScripts
@@ -129,6 +132,20 @@
         }
     })();
 </script>
+
+@auth
+    @if(in_array(auth()->user()->usergroup_id, [1, 3]))
+        <script>
+        document.addEventListener('click', function(e) {
+            if (document.body.classList.contains('toshi-collapsed') && e.target.closest('.toshi-pill')) {
+                e.preventDefault();
+                document.body.classList.remove('toshi-collapsed');
+                document.getElementById('toshi-toggle').textContent = '▶';
+            }
+        });
+        </script>
+    @endif
+@endauth
 
     </body>
     <style>

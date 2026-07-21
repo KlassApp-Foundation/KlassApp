@@ -46,37 +46,21 @@
     width: 160px;
   }
 
-  .klass-auth-logo {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
+  .klass-auth-logo { width: 100%; height: auto; display: block; }
 
   .klass-auth-title {
-    margin: 0;
-    font-family: 'Sora', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: #0F172A;
-    letter-spacing: -0.02em;
+    margin: 0; font-family: 'Sora', sans-serif;
+    font-size: 22px; font-weight: 700; color: #0F172A; letter-spacing: -0.02em;
   }
 
   .klass-auth-sub {
-    margin: 6px 0 0;
-    color: #64748B;
-    font-size: 14px;
+    margin: 6px 0 0; color: #64748B; font-size: 14px;
   }
 
   .klass-status {
-    margin-top: 20px;
-    border-radius: 10px;
-    padding: 12px 16px;
-    background: #F0FDF4;
-    border: 1px solid #BBF7D0;
-    color: #166534;
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.5;
+    margin-top: 20px; border-radius: 10px; padding: 12px 16px;
+    background: #F0FDF4; border: 1px solid #BBF7D0;
+    color: #166534; font-size: 13px; font-weight: 600; line-height: 1.5;
   }
 
   .klass-field { margin-bottom: 16px; }
@@ -84,13 +68,14 @@
 
   .klass-input {
     width: 100%; background: #F8FAFC; border: 1.5px solid #E2E8F0;
-    border-radius: 10px; padding: 12px 16px; font-size: 15px; color: #1E293B;
-    outline: none; min-height: 48px; font-family: 'DM Sans', sans-serif;
+    border-radius: 10px; padding: 12px 16px; font-size: 24px; color: #1E293B;
+    outline: none; min-height: 56px; font-family: 'DM Sans', sans-serif;
+    text-align: center; letter-spacing: 8px;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
   }
 
   .klass-input:focus { border-color: #22C55E; box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
-  .klass-input::placeholder { color: #94A3B8; }
+  .klass-input::placeholder { color: #94A3B8; letter-spacing: 2px; font-size: 16px; }
   .klass-input.is-invalid { border-color: #EF4444; }
 
   .klass-error {
@@ -113,7 +98,6 @@
     color: #64748B; font-size: 14px; text-decoration: none; font-weight: 500;
     transition: color 0.15s ease;
   }
-
   .klass-back-link:hover { color: #22C55E; }
 
   @media (max-width: 640px) { .klass-auth-wrap { padding: 14px; } }
@@ -127,32 +111,38 @@
       <span class="klass-auth-logo-frame">
         <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="klass-auth-logo" alt="KlassApp">
       </span>
-      <h1 class="klass-auth-title">{{ __('Reset Password') }}</h1>
-      <p class="klass-auth-sub">Enter your email and we will send you a password reset code.</p>
+      <h1 class="klass-auth-title">{{ __('Enter Reset Code') }}</h1>
+      <p class="klass-auth-sub">Enter the 6-digit code sent to <strong>{{ $email }}</strong>.</p>
     </div>
 
     @if (session('status'))
-      <div class="klass-status" role="status">
-        {{ session('status') }}
-      </div>
-      <a href="{{ url('/login') }}" class="klass-back-link">← Back to sign in</a>
-    @else
-      <form method="POST" action="{{ route('password.email') }}" aria-label="{{ __('Reset Password') }}">
-        @csrf
-
-        <div class="klass-field">
-          <label class="klass-label" for="email">{{ __('E-Mail Address') }}</label>
-          <input id="email" type="email" class="klass-input{{ $errors->has('email') ? ' is-invalid' : '' }}" name="email" value="{{ old('email') }}" placeholder="you@school.edu" required>
-          @if ($errors->has('email'))
-            <span class="klass-error" role="alert">{{ $errors->first('email') }}</span>
-          @endif
-        </div>
-
-        <button type="submit" class="klass-submit">{{ __('Send Reset Code') }}</button>
-      </form>
-
-      <a href="{{ url('/login') }}" class="klass-back-link">← Back to sign in</a>
+      <div class="klass-status" role="status">{{ session('status') }}</div>
     @endif
+
+    <form method="POST" action="{{ route('password.reset.code.verify') }}">
+      @csrf
+      <input type="hidden" name="email" value="{{ $email }}">
+
+      <div class="klass-field">
+        <label class="klass-label" for="code">{{ __('Reset Code') }}</label>
+        <input id="code" type="text" class="klass-input{{ $errors->has('code') ? ' is-invalid' : '' }}"
+               name="code" value="{{ old('code') }}" placeholder="000000"
+               inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autofocus>
+        @if ($errors->has('code'))
+          <span class="klass-error" role="alert">{{ $errors->first('code') }}</span>
+        @endif
+      </div>
+
+      <button type="submit" class="klass-submit">{{ __('Verify Code') }}</button>
+    </form>
+
+    <form method="GET" action="{{ route('password.reset.code.resend') }}" style="margin-top: 16px; text-align: center;">
+      <input type="hidden" name="email" value="{{ $email }}">
+      <button type="submit" class="klass-back-link" style="border: none; background: none; cursor: pointer; display: inline; font-size: 14px; font-family: 'DM Sans', sans-serif;">
+        {{ __("Didn't receive it? Resend code") }}
+      </button>
+    </form>
+    <a href="{{ route('password.email') }}" class="klass-back-link" style="display: block; margin-top: 8px;">← Try a different email</a>
   </div>
 </div>
 @endsection

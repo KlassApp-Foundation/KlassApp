@@ -13,7 +13,7 @@
         @include('partials.message')
         {{-- @include("admin.school.standards.standard_form") --}}
         <standard-setup 
-        url="{{ url('/') }}" academic_year_id="{{ $academic_year_id }}">
+        url="{{ url('/') }}" academic_year_id="{{ $academic_year_id }}" current-board="{{ $current_board }}">
         </standard-setup>
     </div>
 @endsection

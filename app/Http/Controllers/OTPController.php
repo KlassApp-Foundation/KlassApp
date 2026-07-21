@@ -35,25 +35,16 @@ class OTPController extends Controller
             $email = (string) $request->query('email', '');
 
             if ($email === '' || strcasecmp($email, (string) $user->email) !== 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid resend email address.',
-                ], 422);
+                return redirect('/verifyotp')->withErrors(['email' => 'Invalid resend email address.']);
             }
 
             $sent = $this->createAuthentication($user, $request, 'register');
 
             if ($sent) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Verification email sent!',
-                ]);
+                return redirect('/verifyotp')->with('resent', true);
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong. Please try again.',
-            ], 500);
+            return redirect('/verifyotp')->withErrors(['email' => 'Something went wrong. Please try again.']);
         }
 
         return view('/admin/otp/create');

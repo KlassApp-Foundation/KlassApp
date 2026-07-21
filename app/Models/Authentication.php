@@ -26,7 +26,7 @@ class Authentication extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id' , 'token' , 'ip_address' , 'expires_on' , 'status'
+        'user_id' , 'type' , 'token' , 'ip_address' , 'expires_on' , 'status'
     ];
 
     /**

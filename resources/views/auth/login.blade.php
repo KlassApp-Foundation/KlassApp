@@ -111,7 +111,7 @@
           <input id="remember" type="checkbox" class="klass-checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
           <label for="remember" class="klass-checkbox-label">Remember me</label>
         </div>
-        <a href="{{ route('password.request') }}" class="klass-forgot-link">Forgot password?</a>
+        <a href="{{ route('password.email') }}" class="klass-forgot-link">Forgot password?</a>
       </div>
       <button type="submit" class="klass-submit">Sign in</button>
     </form>

@@ -518,10 +518,38 @@
         </div>
 
         <div class="klass-field klass-field-full">
+          <div class="klass-field klass-field-full">
           <label class="klass-label" for="school_name">School Name</label>
           <input id="school_name" type="text" class="klass-input{{ $errors->has('school_name') ? ' is-invalid' : '' }}" name="school_name" value="{{ old('school_name') }}" placeholder="name of the school" required>
           @if ($errors->has('school_name'))
             <span class="klass-error" role="alert">{{ $errors->first('school_name') }}</span>
+          @endif
+        </div>
+
+        <div class="klass-field">
+          <label class="klass-label" for="country">Country</label>
+          <select id="country" name="country" class="klass-select">
+            <option value="" @if(old('country')=='') selected @endif>Select country</option>
+            <option value="Uganda" @if(old('country')=='Uganda') selected @endif>Uganda</option>
+            <option value="Kenya" @if(old('country')=='Kenya') selected @endif>Kenya</option>
+            <option value="Tanzania" @if(old('country')=='Tanzania') selected @endif>Tanzania</option>
+            <option value="Rwanda" @if(old('country')=='Rwanda') selected @endif>Rwanda</option>
+            <option value="Nigeria" @if(old('country')=='Nigeria') selected @endif>Nigeria</option>
+            <option value="Ghana" @if(old('country')=='Ghana') selected @endif>Ghana</option>
+            <option value="South Africa" @if(old('country')=='South Africa') selected @endif>South Africa</option>
+            <option value="Other" @if(old('country')=='Other') selected @endif>Other</option>
+          </select>
+        </div>
+
+        <div class="klass-field">
+          <label class="klass-label" for="mobile_no">Phone Number (WhatsApp)</label>
+          <div class="klass-phone-shell" id="mobile_shell">
+            <span class="klass-phone-prefix" id="mobile_prefix" hidden>+256</span>
+            <span class="klass-phone-divider" id="mobile_divider" hidden></span>
+            <input id="mobile_no" type="tel" class="klass-input{{ $errors->has('mobile_no') ? ' is-invalid' : '' }}" name="mobile_no" value="{{ old('mobile_no') }}" placeholder="712345678" inputmode="numeric" pattern="0?[0-9]{9,10}" minlength="9" maxlength="11" title="Enter your local number without the leading zero" required>
+          </div>
+          @if ($errors->has('mobile_no'))
+            <span class="klass-error" role="alert">{{ $errors->first('mobile_no') }}</span>
           @endif
         </div>
 
@@ -537,6 +565,20 @@
         </div>
 
         <div class="klass-field klass-field-full">
+          <label class="klass-label" for="curriculum">Curriculum / Board <span class="text-red-500">*</span></label>
+          <select id="curriculum" name="curriculum" class="klass-select{{ $errors->has('curriculum') ? ' is-invalid' : '' }}" required>
+            <option value="" @if(old('curriculum')=='') selected @endif>Select curriculum</option>
+            <option value="uneb" @if(old('curriculum')=='uneb') selected @endif>UNEB — Uganda National Examinations Board</option>
+            <option value="cambridge" @if(old('curriculum')=='cambridge') selected @endif>Cambridge International</option>
+            <option value="montessori" @if(old('curriculum')=='montessori') selected @endif>Montessori</option>
+            <option value="other" @if(old('curriculum')=='other') selected @endif>Other / Custom</option>
+          </select>
+          @if ($errors->has('curriculum'))
+            <span class="klass-error" role="alert">{{ $errors->first('curriculum') }}</span>
+          @endif
+        </div>
+
+        <div class="klass-field klass-field-full">
           <label class="klass-label" for="name">Your Full Name</label>
           <input id="name" type="text" class="klass-input{{ $errors->has('name') ? ' is-invalid' : '' }}" name="name" value="{{ old('name') }}" placeholder="Your name" required>
           @if ($errors->has('name'))
@@ -544,81 +586,19 @@
           @endif
         </div>
 
-        <div class="klass-field">
-          <label class="klass-label" for="country">Country</label>
-          <select id="country" name="country" class="klass-select">
-            <option value="" @if(old('country')=='') selected @endif>Select country</option>
-            <option value="Uganda" @if(old('country')=='Uganda') selected @endif>Uganda</option>
-            <option value="Kenya" @if(old('country')=='Kenya') selected @endif>Kenya</option>
-            <option value="Tanzania" @if(old('country')=='Tanzania') selected @endif>Tanzania</option>
-            <option value="Rwanda" @if(old('country')=='Rwanda') selected @endif>Rwanda</option>
-            <option value="Nigeria" @if(old('country')=='Nigeria') selected @endif>Nigeria</option>
-            <option value="Ghana" @if(old('country')=='Ghana') selected @endif>Ghana</option>
-            <option value="South Africa" @if(old('country')=='South Africa') selected @endif>South Africa</option>
-            <option value="United Kingdom" @if(old('country')=='United Kingdom') selected @endif>United Kingdom</option>
-            <option value="United States" @if(old('country')=='United States') selected @endif>United States</option>
-            <option value="Afghanistan" @if(old('country')=='Afghanistan') selected @endif>Afghanistan</option>
-            <option value="Albania" @if(old('country')=='Albania') selected @endif>Albania</option>
-            <option value="Algeria" @if(old('country')=='Algeria') selected @endif>Algeria</option>
-            <option value="Argentina" @if(old('country')=='Argentina') selected @endif>Argentina</option>
-            <option value="Australia" @if(old('country')=='Australia') selected @endif>Australia</option>
-            <option value="Austria" @if(old('country')=='Austria') selected @endif>Austria</option>
-            <option value="Bangladesh" @if(old('country')=='Bangladesh') selected @endif>Bangladesh</option>
-            <option value="Belgium" @if(old('country')=='Belgium') selected @endif>Belgium</option>
-            <option value="Botswana" @if(old('country')=='Botswana') selected @endif>Botswana</option>
-            <option value="Brazil" @if(old('country')=='Brazil') selected @endif>Brazil</option>
-            <option value="Cameroon" @if(old('country')=='Cameroon') selected @endif>Cameroon</option>
-            <option value="Canada" @if(old('country')=='Canada') selected @endif>Canada</option>
-            <option value="China" @if(old('country')=='China') selected @endif>China</option>
-            <option value="Cote d'Ivoire" @if(old('country')=="Cote d'Ivoire") selected @endif>Cote d'Ivoire</option>
-            <option value="Denmark" @if(old('country')=='Denmark') selected @endif>Denmark</option>
-            <option value="Egypt" @if(old('country')=='Egypt') selected @endif>Egypt</option>
-            <option value="Ethiopia" @if(old('country')=='Ethiopia') selected @endif>Ethiopia</option>
-            <option value="Finland" @if(old('country')=='Finland') selected @endif>Finland</option>
-            <option value="France" @if(old('country')=='France') selected @endif>France</option>
-            <option value="Germany" @if(old('country')=='Germany') selected @endif>Germany</option>
-            <option value="India" @if(old('country')=='India') selected @endif>India</option>
-            <option value="Indonesia" @if(old('country')=='Indonesia') selected @endif>Indonesia</option>
-            <option value="Ireland" @if(old('country')=='Ireland') selected @endif>Ireland</option>
-            <option value="Israel" @if(old('country')=='Israel') selected @endif>Israel</option>
-            <option value="Italy" @if(old('country')=='Italy') selected @endif>Italy</option>
-            <option value="Japan" @if(old('country')=='Japan') selected @endif>Japan</option>
-            <option value="Malawi" @if(old('country')=='Malawi') selected @endif>Malawi</option>
-            <option value="Malaysia" @if(old('country')=='Malaysia') selected @endif>Malaysia</option>
-            <option value="Morocco" @if(old('country')=='Morocco') selected @endif>Morocco</option>
-            <option value="Mozambique" @if(old('country')=='Mozambique') selected @endif>Mozambique</option>
-            <option value="Namibia" @if(old('country')=='Namibia') selected @endif>Namibia</option>
-            <option value="Netherlands" @if(old('country')=='Netherlands') selected @endif>Netherlands</option>
-            <option value="New Zealand" @if(old('country')=='New Zealand') selected @endif>New Zealand</option>
-            <option value="Pakistan" @if(old('country')=='Pakistan') selected @endif>Pakistan</option>
-            <option value="Philippines" @if(old('country')=='Philippines') selected @endif>Philippines</option>
-            <option value="Portugal" @if(old('country')=='Portugal') selected @endif>Portugal</option>
-            <option value="Saudi Arabia" @if(old('country')=='Saudi Arabia') selected @endif>Saudi Arabia</option>
-            <option value="Senegal" @if(old('country')=='Senegal') selected @endif>Senegal</option>
-            <option value="Sierra Leone" @if(old('country')=='Sierra Leone') selected @endif>Sierra Leone</option>
-            <option value="Singapore" @if(old('country')=='Singapore') selected @endif>Singapore</option>
-            <option value="Somalia" @if(old('country')=='Somalia') selected @endif>Somalia</option>
-            <option value="South Korea" @if(old('country')=='South Korea') selected @endif>South Korea</option>
-            <option value="Spain" @if(old('country')=='Spain') selected @endif>Spain</option>
-            <option value="Sweden" @if(old('country')=='Sweden') selected @endif>Sweden</option>
-            <option value="Switzerland" @if(old('country')=='Switzerland') selected @endif>Switzerland</option>
-            <option value="Turkey" @if(old('country')=='Turkey') selected @endif>Turkey</option>
-            <option value="United Arab Emirates" @if(old('country')=='United Arab Emirates') selected @endif>United Arab Emirates</option>
-            <option value="Zambia" @if(old('country')=='Zambia') selected @endif>Zambia</option>
-            <option value="Zimbabwe" @if(old('country')=='Zimbabwe') selected @endif>Zimbabwe</option>
-            <option value="Other" @if(old('country')=='Other') selected @endif>Other</option>
-          </select>
+        <div class="klass-field klass-field-full">
+          <label class="klass-label" for="email">Email Address</label>
+          <input id="email" type="email" class="klass-input{{ $errors->has('email') ? ' is-invalid' : '' }}" name="email" value="{{ old('email') }}" placeholder="admin@school.ug" required>
+          @if ($errors->has('email'))
+            <span class="klass-error" role="alert">{{ $errors->first('email') }}</span>
+          @endif
         </div>
 
-        <div class="klass-field">
-          <label class="klass-label" for="mobile_no">Mobile Number (WhatsApp)</label>
-          <div class="klass-phone-shell" id="mobile_shell">
-            <span class="klass-phone-prefix" id="mobile_prefix" hidden>+256</span>
-            <span class="klass-phone-divider" id="mobile_divider" hidden></span>
-            <input id="mobile_no" type="tel" class="klass-input{{ $errors->has('mobile_no') ? ' is-invalid' : '' }}" name="mobile_no" value="{{ old('mobile_no') }}" placeholder="Select your country first" inputmode="numeric" pattern="0?[0-9]{9,10}" minlength="9" maxlength="11" title="Please enter your local number only, without the leading zero — between 9 and 10 digits." required>
-          </div>
-          @if ($errors->has('mobile_no'))
-            <span class="klass-error" role="alert">{{ $errors->first('mobile_no') }}</span>
+
+
+
+          @if ($errors->has('password'))
+            <span class="klass-error" role="alert">{{ $errors->first('password') }}</span>
           @endif
         </div>
 
@@ -634,13 +614,6 @@
           </select>
         </div>
 
-        <div class="klass-field klass-field-full">
-          <label class="klass-label" for="email">Email Address</label>
-          <input id="email" type="email" class="klass-input{{ $errors->has('email') ? ' is-invalid' : '' }}" name="email" value="{{ old('email') }}" placeholder="you@school.edu" required>
-          @if ($errors->has('email'))
-            <span class="klass-error" role="alert">{{ $errors->first('email') }}</span>
-          @endif
-        </div>
 
         <div class="klass-field">
           <label class="klass-label" for="password">Password</label>
@@ -657,6 +630,7 @@
             <span class="klass-error" role="alert">{{ $errors->first('password') }}</span>
           @endif
         </div>
+
 
         <div class="klass-field">
           <label class="klass-label" for="password-confirm">Confirm Password</label>
@@ -724,6 +698,33 @@
 <script>
 (function() {
   'use strict';
+
+  // Plan selection highlighting
+  var planRadios = document.querySelectorAll('input[name="plan"]');
+  var planFeedback = document.getElementById('plan-feedback');
+  function updatePlanDisplay() {
+    var selected = document.querySelector('input[name="plan"]:checked');
+    if (!selected) return;
+    document.querySelectorAll('.plan-option').forEach(function(lbl) {
+      lbl.classList.remove('border-green-500', 'bg-green-50', 'border-gray-400', 'bg-gray-50', 'border-amber-500', 'bg-amber-50');
+      lbl.classList.add('border-gray-200', 'hover:border-gray-300');
+    });
+    var label = selected.closest('.plan-option');
+    if (label) {
+      var isCustom = label.querySelector('.text-lg')?.textContent?.includes('Contact');
+      if (isCustom) {
+        label.classList.add('border-amber-500', 'bg-amber-50');
+      } else if (label.querySelector('.text-lg')?.textContent !== 'Free') {
+        label.classList.add('border-green-500', 'bg-green-50');
+      } else {
+        label.classList.add('border-gray-400', 'bg-gray-50');
+      }
+    }
+    if (planFeedback) planFeedback.textContent = 'You selected: ' + selected.value;
+  }
+  planRadios.forEach(function(r) { r.addEventListener('change', updatePlanDisplay); });
+  updatePlanDisplay();
+
   var toggles = document.querySelectorAll('.klass-password-toggle');
   for (var i = 0; i < toggles.length; i++) {
     toggles[i].addEventListener('click', function(e) {

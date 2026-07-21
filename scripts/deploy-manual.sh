@@ -40,23 +40,28 @@ GIT_BRANCH="$GIT_BRANCH"
 
 cd "\$APP_DIR"
 
-echo "[1/6] Pulling latest code (includes compiled assets)..."
+echo "[1/7] Pulling latest code (includes compiled assets)..."
 git pull origin "\$GIT_BRANCH" --ff-only
 
-echo "[2/6] Installing/updating PHP dependencies inside container..."
+echo "[2/7] Installing/updating PHP dependencies inside container..."
 docker exec "$CONTAINER" composer install --no-dev --optimize-autoloader --no-interaction
-echo "[2/6] Dependencies synchronized."
+echo "[2/7] Dependencies synchronized."
 
-echo "[3/6] Running migrations..."
+echo "[3/7] Publishing toshi-ui assets (CSS, views)..."
+docker exec "\$CONTAINER" php artisan vendor:publish --tag=toshi-ui-css --force
+docker exec "\$CONTAINER" php artisan vendor:publish --tag=toshi-ui-views --force
+echo "[3/7] Toshi UI assets published."
+
+echo "[4/7] Running migrations..."
 docker exec "\$CONTAINER" php artisan migrate --force
 
-echo "[4/6] Clearing caches inside container..."
+echo "[5/7] Clearing caches inside container..."
 docker exec "\$CONTAINER" php artisan optimize:clear
 
-echo "[5/6] Restarting FPM..."
+echo "[6/7] Restarting FPM..."
 docker exec "\$CONTAINER" sh -c "kill -USR2 1 2>/dev/null || php-fpm -t >/dev/null 2>&1" || true
 
-echo "[6/6] Verifying app is serving..."
+echo "[7/7] Verifying app is serving..."
 sleep 1
 docker exec "\$CONTAINER" php -r "echo 'PHP OK: ' . phpversion() . PHP_EOL;"
 

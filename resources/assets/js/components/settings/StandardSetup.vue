@@ -130,11 +130,11 @@
 
 <script>
 export default {
-    props: ["url", "academic_year_id"],
+    props: ["url", "academic_year_id", "currentBoard"],
 
     data() {
         return {
-            board: "",
+            board: this.currentBoard || "",
             standards: "",
             boardlist: [
                 {
