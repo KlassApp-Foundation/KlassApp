@@ -36,6 +36,8 @@ AGENTS.md
 CLAUDE.md
 GEMINI.md
 
+test-results/
+
 # === Development & testing noise ===
 TESTING.md
 api.md

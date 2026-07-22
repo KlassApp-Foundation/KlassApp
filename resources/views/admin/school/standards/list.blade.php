@@ -1,54 +1,34 @@
 {{-- SPDX-License-Identifier: MIT --}}
+@php $headers = ['Standard Name', 'Status', 'Actions']; @endphp
 <div class="relative">
-   <div class="flex flex-row justify-between custom-table">
-      <table class="w-1/2">
-         <caption><h1 class="admin-h1 mb-6">Standards History</h1></caption>
-         <thead class="bg-grey-light">
-            <tr class="border-t-2 border-b-2">
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Standard Name</th>
-
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Status</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Actions</th>
-
-            </tr>
-         </thead>
-         @if(count($standards) != 0)
-            <tbody class="bg-grey-light">
-               @foreach($standards as $standard)
-                  <tr class="border-t-2 border-b-2">    
-                     <td class="py-3 px-2">{{ $standard->name }}</td>
-                     <td class="py-3 px-2 text-center">
-                        
-                        @if( $standard->status == 1)
-                           <a href="#" rel="{{ url('/admin/standard/updateStatus/'.$standard->id) }}" class=" status bg-green-400 px-4 py-1 rounded text-white font-semibold" value="0">
-                              Edit
-                              {{-- <img src="{{asset('uploads/icons/actions/tick.svg')}}" class="w-5 h-5"> --}}
-                           </a>
-                        @else
-                           <a href="#" rel="{{ url('/admin/standard/updateStatus/'.$standard->id) }}" class="status bg-green-400 px-4 py-1 rounded text-white font-semibold" value="1">
-                              Edit
-                              {{-- <img src="{{asset('uploads/icons/actions/close.svg')}}" class="w-5 h-5"> --}}
-                           </a>
-                        @endif
-                     </td>
-                     <td class="py-3 px-2 text-center">
-                        <a href="#" rel="{{url('/admin/standard/delete/'.$standard->id)}}" class="delete bg-red-400 px-4 py-1 rounded text-white font-semibold">
-                           Delete
-                           {{-- <img src="{{asset('uploads/icons/actions/trash.svg')}}" class="w-5 h-5 ml-1"> --}}
-                        </a>
-                     </td>
-                  </tr>
-               @endforeach
-            </tbody>
-         @else
-            <tbody class="bg-grey-light">
-               <tr class="border-t-2 border-b-2">    
-                  <td colspan="5" class="py-3 px-2"><p class="font-semibold text-s" style="text-align: center">No Records Found</p></td>
-               </tr>
-            </tbody>
-         @endif
-      </table>      
-   </div>
+   <x-table :headers="$headers" hover>
+      @forelse($standards as $standard)
+         <tr>
+            <td data-label="Standard Name" class="font-medium">{{ $standard->name }}</td>
+            <td data-label="Status">
+               @if($standard->status == 1)
+                  <span class="dt-badge dt-badge-active">
+                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                     Active
+                  </span>
+               @else
+                  <span class="dt-badge dt-badge-inactive">
+                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                     Inactive
+                  </span>
+               @endif
+            </td>
+            <td data-label="Actions" class="flex items-center gap-2">
+               <a href="#" rel="{{ url('/admin/standard/updateStatus/'.$standard->id) }}" class="ds-btn ds-btn-ghost ds-btn-sm status">{{ $standard->status == 1 ? 'Deactivate' : 'Activate' }}</a>
+               <a href="#" rel="{{ url('/admin/standard/delete/'.$standard->id) }}" class="ds-btn ds-btn-danger ds-btn-sm delete">Delete</a>
+            </td>
+         </tr>
+      @empty
+         <tr>
+            <td colspan="3" class="text-center text-gray-400 py-8">No standards found.</td>
+         </tr>
+      @endforelse
+   </x-table>
 </div>
 
 @push('scripts')

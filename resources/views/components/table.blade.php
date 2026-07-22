@@ -5,12 +5,14 @@
     'density' => 'comfortable', // comfortable | compact
     'selectable' => false,
     'sortable' => false,
+    'cardMobile' => true, // stacked-card layout on mobile ≤767px
     'class' => '',
 ])
 
 @php
     $densityClass = $density === 'compact' ? 'dt-compact' : 'dt-comfortable';
-    $classes = 'ds-table-ledger ' . $densityClass . ' ' . $class;
+    $cardMobileClass = $cardMobile ? 'ds-table-card-mobile' : '';
+    $classes = 'ds-table-ledger ' . $densityClass . ' ' . $cardMobileClass . ' ' . $class;
 @endphp
 
 <div class="ds-table-wrap">

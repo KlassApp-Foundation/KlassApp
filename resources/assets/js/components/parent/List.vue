@@ -1,198 +1,178 @@
 <template>
     <div>
         <portal to="parent_index">
-            <div class="flex flex-wrap lg:flex-row justify-between my-3">
-                <div class="">
-                    <h1 class="admin-h1 my-3">Parents</h1>
+            <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Parents</h1>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">View, search and manage all parents.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a :href="url+'/admin/parents'" class="ds-btn ds-btn-ghost text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                            Reset
+                        </a>
+                    </div>
                 </div>
 
-                <div class="relative flex items-center w-8/12 lg:w-1/4 md:w-1/4 justify-end">
-                    <div class="flex items-center w-full justify-end">
-                        <a :href="url+'/admin/parents'" class="btn btn-reset bg-gray-100 text-gray-700 border rounded px-3 py-1 ml-3 text-sm font-medium">
-                            <span class="mx-1 text-sm font-semibold">Reset</span>
-                        </a> 
+                <!-- Search / Filter Bar -->
+                <div class="ds-card mb-4">
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="ds-label">Search by name</label>
+                            <input type="text" v-model="fullname" @input="onFilterChange" placeholder="Search parent name..." class="ds-form-input">
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="ds-label">Mobile number</label>
+                            <input type="text" v-model="mobile_no" @input="onFilterChange" placeholder="Search mobile..." class="ds-form-input">
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="ds-label">Student name</label>
+                            <input type="text" v-model="student_name" @input="onFilterChange" placeholder="Search student..." class="ds-form-input">
+                        </div>
                     </div>
                 </div>
             </div>
         </portal>
-        <vue-good-table  :columns="columns" :rows="rows" @on-column-filter="onColumnFilter" @on-page-change="onPageChange" :paginationOptions="{ enabled: true , perPageDropdownEnabled: false }" :totalRows="totalRecords" :isLoading="isLoading" mode="remote"> 
-            <template slot="table-row" slot-scope="props">
-                <div v-if="props.column.field == 'action'" class="w-full flex justify-between">
-                    <p v-bind:class="[props.row.count==0?'hidden':'block']">
-                        <a :href=props.row.editurl class="block btn px-2 py-1 bg-blue-600 text-white rounded text-sm">Edit</a>
-                    </p>
-                </div>
-                <div v-if="props.column.field == 'fullname'" class="w-full flex justify-between">
-                    <a :href=props.row.showurl class="">{{ props.row.fullname }}
-                    <span  v-if="props.row.status != 'active'" class="bg-red-500 rounded px-1 text-xs text-white">InActive</span> 
-                    </a>
 
+        <!-- Data Table -->
+        <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4" style="padding-top: 0;">
+            <div v-if="isLoading" class="text-center py-12 text-gray-500">Loading parents...</div>
+
+            <div v-else-if="!rows.length" class="ds-table-empty">
+                <div class="ds-empty-state-icon">👤</div>
+                <p class="ds-empty-state-title">No parents found</p>
+                <p class="ds-empty-state-desc">Try adjusting your search or filter criteria.</p>
+            </div>
+
+            <div v-else class="ds-table-wrap">
+                <table class="ds-table-ledger ds-table-card-mobile">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Parent Of</th>
+                            <th>Mobile Number</th>
+                            <th style="text-align: center; width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(row, index) in rows" :key="row.id">
+                            <td data-label="#" class="text-gray-400 text-xs font-mono">{{ index + 1 + (page - 1) * 10 }}</td>
+                            <td data-label="Name">
+                                <a :href="row.showurl" class="dt-name-link">
+                                    <span class="font-medium text-gray-900">{{ row.fullname }}</span>
+                                    <span v-if="row.status != 'active'" class="dt-badge dt-badge-inactive ml-2">
+                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                        Inactive
+                                    </span>
+                                </a>
+                            </td>
+                            <td data-label="Parent Of">
+                                <a :href="row.children.name" class="text-sm text-gray-700 hover:text-blue transition-colors">
+                                    {{ row.children.fullname }}
+                                </a>
+                            </td>
+                            <td data-label="Mobile Number">
+                                <span class="text-sm text-gray-600">{{ row.mobile_no }}</span>
+                            </td>
+                            <td data-label="Actions" style="text-align: center;">
+                                <a :href="row.editurl" class="dt-action-btn" title="Edit">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-4 flex items-center justify-between" v-if="rows.length && page_count > 1">
+                <div class="text-sm text-gray-600">
+                    Page {{ page }} of {{ page_count }} ({{ totalRecords }} total)
                 </div>
-                <div v-if="props.column.field == 'children.fullname'" class="w-full flex justify-between">
-                    <a :href=props.row.children.name class="">{{ props.row.children.fullname }}</a>
+                <div class="flex items-center gap-1">
+                    <button @click="changePage(1)" :disabled="page <= 1" class="ds-btn ds-btn-ghost ds-btn-sm" :class="{'opacity-40 cursor-not-allowed': page <= 1}" title="First page">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+                    </button>
+                    <button @click="changePage(page - 1)" :disabled="page <= 1" class="ds-btn ds-btn-ghost ds-btn-sm" :class="{'opacity-40 cursor-not-allowed': page <= 1}" title="Previous">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <span v-for="p in pageRange" :key="p">
+                        <button @click="changePage(p)" class="ds-btn ds-btn-sm min-w-[36px]" :class="p === page ? 'ds-btn-primary' : 'ds-btn-ghost'">
+                            {{ p }}
+                        </button>
+                    </span>
+                    <button @click="changePage(page + 1)" :disabled="page >= page_count" class="ds-btn ds-btn-ghost ds-btn-sm" :class="{'opacity-40 cursor-not-allowed': page >= page_count}" title="Next">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                    <button @click="changePage(page_count)" :disabled="page >= page_count" class="ds-btn ds-btn-ghost ds-btn-sm" :class="{'opacity-40 cursor-not-allowed': page >= page_count}" title="Last page">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+                    </button>
                 </div>
-                <div v-if="props.column.field == 'mobile_no'" class="w-full flex justify-between">
-                    <p>{{ props.row.mobile_no }}</p>
-                </div>
-            </template>
-        </vue-good-table>     
+            </div>
+        </div>
     </div>
 </template>
 
 <script>
-
-    import 'vue-good-table/dist/vue-good-table.css'
-    import { VueGoodTable } from 'vue-good-table';
     export default {
-        props:['url' , 'searchquery'],
-        components: {
-            VueGoodTable,
-        },
+        props: ['url', 'searchquery'],
         data() {
-            return{
-                show_event_link:'',
-                array:{},
-                totalRecords:'',
-                action:'',
-                id:'',
-                isLoading: false,
-                columns: [
-                    {
-                        label: 'Name',
-                        field: 'fullname',
-                        filterOptions: {
-                            enabled: true,
-                            placeholder: "Search",
-                            filterFn: this.myFunc,
-                        }
-                    },
-                    {
-                        label: 'Parent Of',
-                        field: 'children.fullname',
-                        filterOptions: {
-                            enabled: true,
-                            placeholder: "Search",
-                            filterFn: this.myFunc,
-                        }
-                    },
-                    {
-                        label: 'Mobile Number',
-                        field: 'mobile_no',
-                        filterOptions: {
-                            enabled: true,
-                            placeholder: "Search",
-                            filterFn: this.myFunc,
-                        }
-                    },
-                    {
-                        label: 'Action',
-                        field:'action',
-                        html:true,
-                    },
-                ],
-                rows: [
-          
-                ], 
-                total: 0,
+            return {
+                rows: [],
+                totalRecords: 0,
                 page: 1,
                 page_count: 0,
-                fullname:'',
-                mobile_no:'',
-                student_name:'',
+                isLoading: false,
+                fullname: '',
+                mobile_no: '',
+                student_name: '',
+                debouncedSearch: null,
             }
         },
-
-        methods: 
-        {
-            getData()
-            {
-                /*axios.get('/admin/parent/list?'+this.searchquery+'&page='+page).then(response => {
+        computed: {
+            pageRange() {
+                const range = [];
+                const start = Math.max(1, this.page - 2);
+                const end = Math.min(this.page_count, this.page + 2);
+                for (let i = start; i <= end; i++) {
+                    range.push(i);
+                }
+                return range;
+            }
+        },
+        methods: {
+            getData() {
+                this.isLoading = true;
+                axios.get('/admin/parent/list?' +
+                    'fullname=' + encodeURIComponent(this.fullname) +
+                    '&student_name=' + encodeURIComponent(this.student_name) +
+                    '&mobile_no=' + encodeURIComponent(this.mobile_no) +
+                    '&page=' + this.page
+                ).then(response => {
                     this.rows = response.data.data;
                     this.page_count = response.data.meta.last_page;
                     this.totalRecords = response.data.meta.total;
-                    //console.log(this.rows)
-                });*/
-                axios.get('/admin/parent/list?'+'fullname='+this.fullname+'&student_name='+this.student_name+'&mobile_no='+this.mobile_no+'&page='+this.page).then(response => {
-                    this.rows = response.data.data;
-                    this.page_count = response.data.meta.last_page;
-                    this.totalRecords = response.data.meta.total;
-                    //console.log(this.rows)
+                    this.isLoading = false;
+                }).catch(() => {
+                    this.isLoading = false;
                 });
             },
-
-    
-            onColumnFilter(params) 
-            {
-                //console.log(params.columnFilters['fullname']);
-
-                if(typeof params.columnFilters['fullname'] !== "undefined")
-                {
-                  this.fullname=params.columnFilters['fullname'];
-                }
-                if(typeof params.columnFilters['mobile_no'] !== "undefined")
-                {
-                   this.mobile_no=params.columnFilters['mobile_no'];
-                }
-                if(typeof params.columnFilters['children.fullname'] !== "undefined")
-                {
-                  this.student_name=params.columnFilters['children.fullname'];
-                }
-                this.page=1;
-                
-                
-                 
-               /* this.array = {
-                    fullname:params.columnFilters['fullname'],
-                    mobile_no:params.columnFilters['mobile_no'],
-                    student_name:params.columnFilters['children.fullname'],
-                };*/
-    
-                /*axios.get('/admin/parent/list?'+'firstname='+this.fullname+'&page='+this.page).then(response => {
-                    this.rows = response.data.data;
-                    this.page_count = response.data.meta.last_page;
-                    this.totalRecords = response.data.meta.total;
-                    //console.log(this.rows)
-                });*/
+            onFilterChange() {
+                this.debouncedSearch();
+            },
+            changePage(p) {
+                if (p < 1 || p > this.page_count || p === this.page) return;
+                this.page = p;
                 this.getData();
-
-               /* this.final=this.url+'/admin/parents?'+this.searchquery;
-          
-                Object.keys(this.array).forEach(key => {
-                    this.final = this.addParam(this.final, key, this.array[key])
-                });
-
-                window.location.href=this.final;*/
-            },
-
-            onPageChange(params) 
-            {
-                this.page = params.currentPage;
-                this.getData(this.page);
-            },
-
-            addParam(url, param, value) 
-            {
-                param = encodeURIComponent(param);
-                var r = "([&?]|&amp;)" + param + "\\b(?:=(?:[^&#]*))*";
-                var a = document.createElement('a');
-                var regex = new RegExp(r);
-                var str = param + (value ? "=" + encodeURIComponent(value) : ""); 
-                a.href = url;
-                var q = a.search.replace(regex, "$1"+str);
-                if (q === a.search) 
-                {
-                    a.search += (a.search ? "&" : "") + str;
-                } 
-                else 
-                {
-                    a.search = q;
-                }
-                return a.href ;
             },
         },
-
-        created()
-        {
+        created() {
+            this.debouncedSearch = _.debounce(function() {
+                this.page = 1;
+                this.getData();
+            }, 300);
             this.getData();
         },
     }

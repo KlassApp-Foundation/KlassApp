@@ -32,19 +32,32 @@ class UgSubjectController extends Controller
         "sectionStandardMap" => $sectionStandardMap,
          ];
     }
-    public function index()
+    public function index(Request $request)
     {
-
         $school_id = Auth::user()->school_id;
-        $subject = Subject::where("school_id", $school_id)->get();
-        $archievedSubjects = Subject::onlyTrashed() 
-                                 ->where("school_id", $school_id)
-                                //  ->where("section_id", $section)
-                                 ->get();      
-        // dd($subject);
+        $search = $request->get('search');
+
+        $query = Subject::where("school_id", $school_id);
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+        $subject = $query->get();
+
+        $archivedQuery = Subject::onlyTrashed()->where("school_id", $school_id);
+        if ($search) {
+            $archivedQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+        $archievedSubjects = $archivedQuery->get();
+
         return view("admin.subject.index", compact(
-            "subject", "school_id", "archievedSubjects"
-            ));
+            "subject", "school_id", "archievedSubjects", "search"
+        ));
     }
 
     /**

@@ -7,12 +7,15 @@
 
 :root { --nav-height: 83px; }
 
-/* ── Toggle wrapper: zero-width flex child that expands to 28px when collapsed ── */
+/* ── Toggle wrapper: fixed right-edge strip that expands to 28px when collapsed ── */
 .toshi-toggle-wrapper {
     width: 0;
-    flex-shrink: 0;
     overflow: visible;
-    position: relative;
+    position: fixed;
+    right: 0;
+    top: var(--nav-height);
+    height: calc(100vh - var(--nav-height));
+    z-index: 31;
     transition: width 0.25s ease;
 }
 
@@ -57,23 +60,31 @@
         height: 100%;
         flex: 1;
         min-width: 0;
-        margin-right: 0 !important;
         width: auto !important;
-        transition: none !important;
+        transition: margin-right 0.25s ease !important;
+    }
+    body:not(.toshi-collapsed) .dashboard-content-area,
+    body:not(.toshi-collapsed) .superadmin-content {
+        margin-right: 380px !important;
+    }
+    body.toshi-collapsed .dashboard-content-area,
+    body.toshi-collapsed .superadmin-content {
+        margin-right: 28px !important;
     }
 
     body .toshi-root {
         display: flex;
-        height: 100%;
-        flex-shrink: 0;
+        flex-direction: column;
         width: 380px;
         overflow: hidden;
         transition: width 0.25s ease;
-        /* override dashboard-refresh.css position: fixed !important — must match specificity and have !important */
-        position: static !important;
+        /* Livewire client-side hydration moves the element; position:fixed guarantees correct location */
+        position: fixed !important;
+        top: var(--nav-height) !important;
+        right: 0 !important;
         bottom: auto !important;
-        right: auto !important;
-        z-index: auto !important;
+        height: calc(100vh - var(--nav-height)) !important;
+        z-index: 30 !important;
     }
 
     .toshi-panel {
@@ -110,9 +121,13 @@
         box-shadow: none !important;
     }
 
-    /* ── Toggle wrapper expands to 28px when collapsed ── */
+    /* ── Toggle wrapper expands to 28px when collapsed (fixed position, right edge) ── */
     body.toshi-collapsed .toshi-toggle-wrapper {
         width: 28px !important;
+    }
+    /* When Toshi panel is open, shrink toggle-wrapper to 0 so content margin lines up */
+    body:not(.toshi-collapsed) .toshi-toggle-wrapper {
+        width: 0 !important;
     }
 
     /* ── Toggle positioned inside wrapper — never overlaps content ── */

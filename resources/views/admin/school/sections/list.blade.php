@@ -1,50 +1,38 @@
 {{-- SPDX-License-Identifier: MIT --}}
+@php $headers = ['Section Name', 'Status', 'Actions']; @endphp
 <div class="">
-   <div class=" custom-table flex items-center justify-center">
-      <table class="w-full max-w-sm lg:max-w-xl">
-         <caption><h1 class="admin-h1 mb-6">Class History</h1></caption>
-         <thead class="bg-grey-light">
-            <tr class="border-t-2 border-b-2">
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Section Name</th>
-                <th class="text-left text-sm px-2 py-2 text-grey-darker">Status</th>
-               <th class="text-left text-sm px-2 py-2 text-grey-darker">Actions</th>
-            </tr>
-         </thead>
-         @if(!is_null($sections) && count($sections) != 0)
-            <tbody class="bg-grey-light">
-               @foreach($sections as $section)
-                  <tr class="border-t-2 border-b-2">    
-                     <td class="py-3 px-2">{{ $section->name }}</td>
-                     <td class="py-3 px-2">
-                        {{ $section->status === 1 ? "Active" : "Inactive" }}
-                        {{-- @if( $section->status == 1)
-                           <a href="#" rel="{{ url('/admin/section/updateStatus/'.$section->id) }}" class="status" value="0"><img src="{{asset('uploads/icons/actions/tick.svg')}}" class="w-5 h-5"></a>
-                        @else
-                           <a href="#" rel="{{ url('/admin/section/updateStatus/'.$section->id) }}" class="status" value="1"><img src="{{asset('uploads/icons/actions/close.svg')}}" class="w-5 h-5"></a>
-                        @endif --}}
-                     </td>
-                     <td class="py-3 px-2 flex items-center justify-center gap-2 sm:gap-4">
-                        {{-- <a href="#" rel="{{url('/admin/section/delete/'.$section->id)}}" class="delete"><img src="{{asset('uploads/icons/actions/trash.svg')}}" class="w-5 h-5 ml-1">
-                        </a> --}}
-                        <a href="#" class='bg-green-500 px-2 rounded text-white'>Edit</a>
-                       <form action="{{route("admin.classes.delete", $section)}}" method='POST' >
-                        @csrf
-                        @method("DELETE")
-                        <input type="submit" value="Delete" class='bg-red-300 px-2 rounded cursor-pointer   '>
-                       </form>
-                     </td>
-                  </tr>
-               @endforeach
-            </tbody>
-         @else
-            <tbody class="bg-grey-light">
-               <tr class="border-t-2 border-b-2">    
-                  <td colspan="5" class="py-3 px-2"><p class="font-semibold text-s" style="text-align: center">No Records Found</p></td>
-               </tr>
-            </tbody>
-         @endif
-      </table>      
-   </div>
+   <x-table :headers="$headers" hover>
+      @forelse($sections as $section)
+         <tr>
+            <td data-label="Section Name" class="font-medium">{{ $section->name }}</td>
+            <td data-label="Status">
+               @if($section->status == 1)
+                  <span class="dt-badge dt-badge-active">
+                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                     Active
+                  </span>
+               @else
+                  <span class="dt-badge dt-badge-inactive">
+                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                     Inactive
+                  </span>
+               @endif
+            </td>
+            <td data-label="Actions" class="flex items-center gap-2">
+               <a href="#" class="ds-btn ds-btn-ghost ds-btn-sm">Edit</a>
+               <form action="{{ route('admin.classes.delete', $section) }}" method='POST' class='inline'>
+                  @csrf
+                  @method("DELETE")
+                  <button type="submit" class="ds-btn ds-btn-danger ds-btn-sm">Delete</button>
+               </form>
+            </td>
+         </tr>
+      @empty
+         <tr>
+            <td colspan="3" class="text-center text-gray-400 py-8">No sections found.</td>
+         </tr>
+      @endforelse
+   </x-table>
 </div>
 
 @push('scripts')

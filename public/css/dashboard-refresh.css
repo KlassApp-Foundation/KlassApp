@@ -302,10 +302,12 @@ a.ds-kpi-card:hover {
     margin-bottom: 12px;
 }
 
+.ds-card-hover {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
 .ds-card-hover:hover {
     box-shadow: 0 0 0 1px var(--d-border-strong), 0 4px 12px rgba(0, 0, 0, 0.04);
     transform: translateY(-1px);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 /* ── Button System ── */
@@ -323,7 +325,7 @@ a.ds-kpi-card:hover {
     line-height: 1.4;
     border: 1px solid transparent;
     cursor: pointer;
-    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
     text-decoration: none;
 }
 
@@ -464,7 +466,8 @@ a.ds-kpi-card:hover {
 
 .ds-table-striped tbody tr:nth-child(even) { background: var(--d-surface); }
 
-.ds-table-hover tbody tr:hover { background: rgba(201, 100, 66, 0.04); }
+.ds-table-hover tbody tr { transition: background 0.15s ease; }
+.ds-table-hover tbody tr:hover { background: rgba(34, 197, 94, 0.04); }
 
 /* ── Form Controls ── */
 
@@ -544,6 +547,7 @@ a.ds-kpi-card:hover {
 
 /* ── Sidebar (dark warm) ── */
 
+.sidebar-nav a { transition: color 0.15s ease; }
 .sidebar-nav a:hover { color: var(--d-accent); }
 .sidebar-nav .active { color: var(--d-accent); }
 
@@ -1964,8 +1968,8 @@ body.toshi-collapsed .toshi-toggle {
     transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 .ds-table-ledger tbody tr:hover {
-    background: #F5F0E9;
-    box-shadow: inset 3px 0 0 var(--d-blue);
+    background: rgba(34, 197, 94, 0.04);
+    box-shadow: inset 3px 0 0 var(--d-green);
 }
 .ds-table-ledger tbody tr.dt-selected {
     background: #E8F0FE;
@@ -2137,6 +2141,74 @@ body.toshi-collapsed .toshi-toggle {
     .dt-pagination { flex-direction: column; align-items: flex-start; }
 }
 
+/* ── Mobile Stacked Cards (ds-table-card-mobile) ── */
+@media (max-width: 767px) {
+    .ds-table-card-mobile thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        white-space: nowrap;
+    }
+    .ds-table-card-mobile,
+    .ds-table-card-mobile tbody,
+    .ds-table-card-mobile tr,
+    .ds-table-card-mobile td {
+        display: block;
+    }
+    .ds-table-card-mobile tbody tr {
+        background: var(--d-white);
+        border: 1px solid var(--d-border);
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .ds-table-card-mobile tbody tr:hover {
+        background: var(--d-white);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .ds-table-card-mobile td {
+        padding: 6px 0 !important;
+        border: none !important;
+        text-align: left !important;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+    }
+    .ds-table-card-mobile td::before {
+        content: attr(data-label);
+        font-family: "Sora", sans-serif;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--d-muted);
+        min-width: 90px;
+        flex-shrink: 0;
+    }
+    .ds-table-card-mobile td:last-child {
+        padding-top: 10px !important;
+        border-top: 1px solid var(--d-border) !important;
+        margin-top: 6px;
+    }
+    .ds-table-card-mobile .dt-name-link {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .ds-table-card-mobile .dt-action-btn {
+        min-height: 44px;
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
 /* ── Marks Grid (grade-entry variant) ── */
 .ds-grid-marks {
     width: 100%;
@@ -2253,7 +2325,78 @@ body.toshi-collapsed .toshi-toggle {
     min-height: 44px;
     display: flex;
     align-items: center;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
+@media (hover: hover) and (pointer: fine) {
+    .dashboard-menu-item:hover {
+        background-color: rgba(34, 197, 94, 0.04);
+    }
+    .sidebar-menu-item:hover {
+        color: #22C55E;
+    }
+}
+
+/* ── Sidebar collapsible groups ── */
+.sidebar-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    cursor: pointer;
+    user-select: none;
+    min-height: 40px;
+    transition: background-color 0.15s ease;
+    border-top: 1px solid rgba(0,0,0,0.04);
+    margin-top: 4px;
+}
+@media (hover: hover) and (pointer: fine) {
+    .sidebar-group-header:hover {
+        background-color: rgba(34, 197, 94, 0.06);
+    }
+    .sidebar-group-header:hover .sidebar-group-label {
+        color: #22C55E;
+    }
+    .sidebar-group-header:hover .sidebar-group-chevron {
+        color: #22C55E;
+    }
+}
+.sidebar-group-header--open {
+    background-color: rgba(34, 197, 94, 0.04);
+}
+.sidebar-group-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94A3B8;
+    transition: color 0.15s ease;
+}
+.sidebar-group-header--open .sidebar-group-label {
+    color: #22C55E;
+}
+.sidebar-group-chevron {
+    color: #94A3B8;
+    transition: transform 0.15s ease, color 0.15s ease;
+    flex-shrink: 0;
+}
+.sidebar-group-header--open .sidebar-group-chevron {
+    color: #22C55E;
+}
+.rotate-180 {
+    transform: rotate(180deg);
+}
+.sidebar-group ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+/* Active item inside a group gets the same Pulse green treatment */
+.sidebar-group .dashboard-menu-item.active,
+.sidebar-group .dashboard-menu-item.dashboard-active {
+    background-color: rgba(34, 197, 94, 0.24);
+    color: #166534;
+}
+
 /* KPI stat links and period tabs */
 .ds-kpi-card a, [class*="kpi"] a, .dashboard-chart-card a {
     min-height: 44px;
