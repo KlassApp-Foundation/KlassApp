@@ -365,9 +365,7 @@ class RegisterController extends Controller
                 $userData['registration_role'] = $data['role'] ?? null;
             }
 
-            if (Schema::hasColumn('users', 'name')) {
-                $userData['username'] = $this->generateUsernameFromName($data['name']);
-            }
+            $userData['name'] = $data['name'];
 
             $user = User::create($userData);
 
@@ -470,30 +468,6 @@ class RegisterController extends Controller
         ];
 
         return $countryCodeMap[$country] ?? '+';
-    }
-
-    private function generateUsernameFromName($name)
-    {
-        $baseUsername = Str::of((string) $name)
-            ->lower()
-            ->replaceMatches('/[^a-z0-9\s\-]/', '')
-            ->trim()
-            ->replaceMatches('/[\s\-]+/', '.')
-            ->value();
-
-        if ($baseUsername === '') {
-            $baseUsername = 'user';
-        }
-
-        $username = $baseUsername;
-        $counter = 1;
-
-        while (User::where('name', $username)->exists()) {
-            $username = $baseUsername . '.' . $counter;
-            $counter++;
-        }
-
-        return $username;
     }
 
     private function createSchoolDetails($school)

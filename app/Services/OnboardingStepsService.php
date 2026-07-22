@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
 use App\Models\School;
-use App\Models\Standard;
+use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\WhatsAppUser;
@@ -84,7 +84,7 @@ class OnboardingStepsService
 
         return match ($step) {
             'curriculum' => !empty($school->curriculum),
-            'standards'  => Standard::where('school_id', $sid)->exists(),
+            'standards'  => StandardLink::where('school_id', $sid)->exists(),
             'subjects'   => Subject::where('school_id', $sid)->exists(),
             'teachers'   => Teacherlink::where('school_id', $sid)->exists(),
             'terms'      => AcademicTerm::where('school_id', $sid)->exists(),

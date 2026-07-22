@@ -4528,6 +4528,7 @@ class AgentToshi extends Component
                     'curriculum'    => $this->curriculum ?: 'uneb',
                     'school_pay_api_password' => $this->schoolPayPassword ?: null,
                     'school_pay_webhook_enabled' => $this->schoolPayPassword ? true : false,
+                    'toshi_enabled' => 1,
                     'status'  => 1,
                     'slug'    => Str::slug($this->schoolName),
                     'registration_country' => $this->schoolCountry ?: 'Uganda',
@@ -4854,18 +4855,22 @@ class AgentToshi extends Component
                     $phase = Standard::create(['school_id' => $schoolId, 'name' => 'default', 'order' => 1, 'status' => '1']);
                 }
 
-                // Create standards if missing
+                // Create standards if missing (including StandardLink for each class)
                 foreach ($this->standards as $class) {
-                    Section::firstOrCreate(
+                    $section = Section::firstOrCreate(
                         ['school_id' => $schoolId, 'name' => $class['name']],
-                        ['value' => $class['name'], 'status' => '1']
+                        ['status' => '1']
+                    );
+                    StandardLink::firstOrCreate(
+                        ['school_id' => $schoolId, 'section_id' => $section->id, 'academic_year_id' => $academicYear->id],
+                        ['standard_id' => $phase->id, 'status' => '1']
                     );
                 }
 
                 // Create subjects if any
                 foreach ($this->subjects as $className => $subjectNames) {
                     $section = Section::where('school_id', $schoolId)->where('name', $className)->first();
-                    $stdLink = $section ? StandardLink::where('school_id', $schoolId)->where('section_id', $section->id)->first() : null;
+                    $stdLink = $section ? StandardLink::where('school_id', $schoolId)->where('section_id', $section->id)->where('academic_year_id', $academicYear->id)->first() : null;
                     if ($stdLink && is_array($subjectNames)) {
                         foreach ($subjectNames as $subjName) {
                             Subject::firstOrCreate(
