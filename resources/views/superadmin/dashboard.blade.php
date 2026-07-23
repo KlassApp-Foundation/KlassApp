@@ -14,10 +14,10 @@
         </div>
         <div class="flex items-center gap-3">
             <a href="{{ url('/superadmin/academics/schools') }}" class="ds-btn ds-btn-outline ds-btn-sm">
-                <i class="fa-solid fa-school"></i> Schools
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2" ry="2"/><path d="M9 21V14h6v7"/><path d="M12 3L3 10h18L12 3z"/></svg> Schools
             </a>
             <a href="{{ url('/superadmin/reports/subscriptions') }}" class="ds-btn ds-btn-outline ds-btn-sm">
-                <i class="fa-solid fa-credit-card"></i> Plans
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Plans
             </a>
         </div>
     </div>
@@ -31,7 +31,7 @@
         {{-- Schools --}}
         <a href="{{ url('/superadmin/academics/schools') }}" class="dashboard-kpi-card">
             <div class="dashboard-kpi-icon" style="background: rgba(30,111,217,0.10); color: #1E6FD9;">
-                <i class="fa-solid fa-school"></i>
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2" ry="2"/><path d="M9 21V14h6v7"/><path d="M12 3L3 10h18L12 3z"/></svg>
             </div>
             <div class="dashboard-kpi-value">{{ number_format($stats['totalSchools']) }}</div>
             <div class="dashboard-kpi-label">Schools</div>
@@ -47,7 +47,7 @@
         {{-- Users --}}
         <a href="{{ url('/superadmin/academics/schools') }}" class="dashboard-kpi-card">
             <div class="dashboard-kpi-icon" style="background: rgba(15,23,42,0.08); color: #0F172A;">
-                <i class="fa-solid fa-users"></i>
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
             </div>
             <div class="dashboard-kpi-value">{{ number_format($stats['totalUsers']) }}</div>
             <div class="dashboard-kpi-label">Users</div>
@@ -68,7 +68,7 @@
         {{-- Subscriptions --}}
         <a href="{{ url('/superadmin/reports/subscriptions') }}" class="dashboard-kpi-card">
             <div class="dashboard-kpi-icon" style="background: rgba(217,119,6,0.10); color: #D97706;">
-                <i class="fa-solid fa-credit-card"></i>
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             </div>
             <div class="dashboard-kpi-value">{{ number_format($stats['subscriptionsTotal']) }}</div>
             <div class="dashboard-kpi-label">Subscriptions</div>
@@ -84,7 +84,7 @@
         {{-- MRR --}}
         <div class="dashboard-kpi-card">
             <div class="dashboard-kpi-icon" style="background: rgba(34,197,94,0.10); color: #22C55E;">
-                <i class="fa-solid fa-dollar-sign"></i>
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             </div>
             <div class="dashboard-kpi-value">${{ number_format($stats['estimatedMRR'], 0) }}</div>
             <div class="dashboard-kpi-label">Est. MRR</div>
@@ -96,7 +96,7 @@
         {{-- WhatsApp Users --}}
         <div class="dashboard-kpi-card">
             <div class="dashboard-kpi-icon" style="background: rgba(34,197,94,0.10); color: #22C55E;">
-                <i class="fa-brands fa-whatsapp"></i>
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
             </div>
             <div class="dashboard-kpi-value">{{ number_format($stats['whatsappUsers']) }}</div>
             <div class="dashboard-kpi-label">WhatsApp</div>
@@ -108,7 +108,7 @@
         {{-- Messages --}}
         <div class="dashboard-kpi-card">
             <div class="dashboard-kpi-icon" style="background: rgba(30,111,217,0.10); color: #1E6FD9;">
-                <i class="fa-solid fa-paper-plane"></i>
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </div>
             <div class="dashboard-kpi-value">{{ number_format($stats['whatsappMessages']) }}</div>
             <div class="dashboard-kpi-label">Messages</div>
@@ -143,10 +143,10 @@
             <div class="space-y-3">
                 @php
                     $roles = [
-                        ['label' => 'School Admins', 'count' => $stats['schoolAdmins'], 'color' => '#1E6FD9', 'icon' => 'fa-user-tie'],
-                        ['label' => 'Teachers',      'count' => $stats['teachers'],     'color' => '#22C55E', 'icon' => 'fa-chalkboard-user'],
-                        ['label' => 'Students',      'count' => $stats['students'],     'color' => '#0F172A', 'icon' => 'fa-user-graduate'],
-                        ['label' => 'Parents',       'count' => $stats['parents'],      'color' => '#D97706', 'icon' => 'fa-people-roof'],
+                        ['label' => 'School Admins', 'count' => $stats['schoolAdmins'], 'color' => '#1E6FD9', 'icon' => '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'],
+                        ['label' => 'Teachers',      'count' => $stats['teachers'],     'color' => '#22C55E', 'icon' => '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>'],
+                        ['label' => 'Students',      'count' => $stats['students'],     'color' => '#0F172A', 'icon' => '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 3 2.7 5 6 5s6-2 6-5v-5"/></svg>'],
+                        ['label' => 'Parents',       'count' => $stats['parents'],      'color' => '#D97706', 'icon' => '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M20 3.13a4 4 0 010 7.75"/><path d="M21 9l-2 2-1-1"/></svg>'],
                     ];
                     $maxRole = max(collect($roles)->max('count'), 1);
                 @endphp
@@ -154,7 +154,7 @@
                     <div class="flex items-center gap-3 py-1">
                         <div class="flex items-center gap-3 mb-1">
                             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0" style="background: {{ $role['color'] }}20; color: {{ $role['color'] }};">
-                                <i class="fa-solid {{ $role['icon'] }}"></i>
+                                {!! $role['icon'] !!}
                             </div>
                             <span class="text-sm font-semibold text-gray-800 flex-1">{{ $role['label'] }}</span>
                             <span class="text-sm font-bold" style="font-family: 'Sora', sans-serif; color: {{ $role['color'] }};">
@@ -170,7 +170,7 @@
             @if($stats['failedJobs'] > 0)
                 <div class="mt-4 pt-4 border-t" style="border-color: #E2E8F0;">
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
+                        <svg class="w-4 h-4 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         <span class="text-xs text-red-600 font-semibold">{{ $stats['failedJobs'] }} failed job{{ $stats['failedJobs'] > 1 ? 's' : '' }}</span>
                     </div>
                 </div>
@@ -193,10 +193,10 @@
                     @php
                         $name = $plan->display_name ?? $plan->name;
                         $icon = match(strtolower($plan->name)) {
-                            'freemium' => 'fa-seedling',
-                            'growth' => 'fa-chart-line',
-                            'premium' => 'fa-crown',
-                            default => 'fa-box',
+                            'freemium' => '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>',
+                            'growth' => '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+                            'premium' => '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+                            default => '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
                         };
                         $accent = match(strtolower($plan->name)) {
                             'freemium' => '#64748B',
@@ -207,8 +207,8 @@
                     @endphp
                     <div class="flex items-center gap-3 py-1.5">
                         <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0" style="background: {{ $accent }}15; color: {{ $accent }};">
-                                <i class="fa-solid {{ $icon }}"></i>
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background: {{ $accent }}15; color: {{ $accent }};">
+                                {!! $icon !!}
                             </div>
                             <div class="flex-1">
                                 <p class="text-sm font-semibold text-gray-800">{{ $name }}</p>

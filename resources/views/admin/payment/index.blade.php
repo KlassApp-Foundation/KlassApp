@@ -104,7 +104,7 @@
           	dataType: 'json',
           	success: function(json) {
             	if (json['error']) {
-			 		$('#alertinfo').html('<i class="fa fa-info-circle"></i>'+json['error']);
+			 		$('#alertinfo').html('<svg class="w-4 h-4 inline-block mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'+json['error']);
             	}
 				else if (json['success']) {	
 					$('#hash').val(json['success']);

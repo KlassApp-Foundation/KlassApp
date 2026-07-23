@@ -19,7 +19,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
         <link rel="stylesheet" href="https://unpkg.com/@themesberg/flowbite@1.2.0/dist/flowbite.min.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">   
+        {{-- Font Awesome removed — all icons migrated to inline SVGs (Jul 22, 2026) --}}   
          <script>
         window.User = {!! json_encode(optional(auth()->user())->only('id')) !!}
     </script>

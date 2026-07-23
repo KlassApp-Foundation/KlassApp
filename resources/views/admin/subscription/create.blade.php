@@ -34,7 +34,7 @@
                 <a href="{{ route('admin.subscriptions.index') }}"
                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
 
-                    <i class="fas fa-arrow-left"></i>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                     Back to Subscriptions
                 </a>
 
@@ -44,7 +44,7 @@
 
                         <div class="mb-6 flex items-center gap-3">
                             <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-                                <i class="fas fa-credit-card"></i>
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                             </div>
 
                             <div>
@@ -150,7 +150,7 @@
                                     type="submit"
                                     class="flex  items-center justify-center gap-2 rounded bg-green-600 px-5 py-4 font-semibold text-slate-900 transition hover:scale-[1.02] hover:bg-slate-100 text-white">
 
-                                    <i class="fas fa-save"></i>
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
 
                                     {{ isset($subscription)
                                         ? 'Update Subscription'

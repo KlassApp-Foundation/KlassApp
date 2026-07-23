@@ -8,10 +8,12 @@
         </div>
         <div class="flex items-center gap-2">
             <button @click="showFilters = !showFilters" class="ds-btn ds-btn-ghost ds-btn-sm">
-                <i class="fa-solid fa-filter"></i> Filters
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="18" y2="12"/><line x1="11" y1="18" x2="15" y2="18"/></svg>
+                Filters
             </button>
             <a href="{{ url('/superadmin/academics/school/create') }}" class="ds-btn ds-btn-primary ds-btn-sm">
-                <i class="fa-solid fa-plus"></i> Create School
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create School
             </a>
         </div>
     </div>
@@ -90,25 +92,25 @@
                 <tr>
                     <th class="cursor-pointer" wire:click="sortBy('name')">
                         Name
-                        @if($sortField === 'name') <i class="fa-solid fa-chevron-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i> @endif
+                        @if($sortField === 'name') <svg class="w-3 h-3 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="{{ $sortDirection === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9' }}"/></svg> @endif
                     </th>
                     <th>Contact</th>
                     <th class="cursor-pointer" wire:click="sortBy('city_id')">
                         City
-                        @if($sortField === 'city_id') <i class="fa-solid fa-chevron-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i> @endif
+                        @if($sortField === 'city_id') <svg class="w-3 h-3 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="{{ $sortDirection === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9' }}"/></svg> @endif
                     </th>
                     <th class="text-center cursor-pointer" wire:click="sortBy('student_count')">
                         Students
-                        @if($sortField === 'student_count') <i class="fa-solid fa-chevron-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i> @endif
+                        @if($sortField === 'student_count') <svg class="w-3 h-3 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="{{ $sortDirection === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9' }}"/></svg> @endif
                     </th>
                     <th class="text-center cursor-pointer" wire:click="sortBy('teacher_count')">
                         Teachers
-                        @if($sortField === 'teacher_count') <i class="fa-solid fa-chevron-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i> @endif
+                        @if($sortField === 'teacher_count') <svg class="w-3 h-3 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="{{ $sortDirection === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9' }}"/></svg> @endif
                     </th>
                     <th class="text-center">Plan</th>
                     <th class="text-center cursor-pointer" wire:click="sortBy('status')">
                         Status
-                        @if($sortField === 'status') <i class="fa-solid fa-chevron-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i> @endif
+                        @if($sortField === 'status') <svg class="w-3 h-3 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="{{ $sortDirection === 'asc' ? '18 15 12 9 6 15' : '6 9 12 15 18 9' }}"/></svg> @endif
                     </th>
                     <th class="text-right">Actions</th>
                 </tr>

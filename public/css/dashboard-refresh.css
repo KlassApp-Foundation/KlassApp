@@ -726,6 +726,12 @@ body.toshi-collapsed .toshi-toggle {
     background: var(--d-canvas) !important;
 }
 
+/* Neutralize legacy #212529 dark background on .sidebar wrapper from admin.css (line 6531).
+   The inner #admin-sidebar provides the cream background via inline style. */
+.sidebar {
+    background: transparent;
+}
+
 /* ── Super Admin — Health Ring ── */
 
 .superadmin-health-ring {
@@ -2326,6 +2332,11 @@ body.toshi-collapsed .toshi-toggle {
     display: flex;
     align-items: center;
     transition: background-color 0.15s ease, color 0.15s ease;
+    --icon-fill-opacity: 0;
+}
+.dashboard-menu-item.active,
+.dashboard-menu-item.dashboard-active {
+    --icon-fill-opacity: 1;
 }
 @media (hover: hover) and (pointer: fine) {
     .dashboard-menu-item:hover {
@@ -2395,6 +2406,7 @@ body.toshi-collapsed .toshi-toggle {
 .sidebar-group .dashboard-menu-item.dashboard-active {
     background-color: rgba(34, 197, 94, 0.24);
     color: #166534;
+    --icon-fill-opacity: 1;
 }
 
 /* KPI stat links and period tabs */

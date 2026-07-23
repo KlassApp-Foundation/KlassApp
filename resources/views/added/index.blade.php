@@ -13,7 +13,7 @@
 
         <a href="{{ route('admin.subscriptions.create') }}" 
            class="mt-4 sm:mt-0 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl font-medium transition-all shadow-sm">
-            <i class="fas fa-plus"></i>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Subscription
         </a>
     </div>
@@ -21,7 +21,7 @@
     <!-- Success Alert -->
     @if(session('success'))
         <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-2xl flex items-center gap-3">
-            <i class="fas fa-check-circle text-xl"></i>
+            <svg class="w-5 h-5 text-green-700 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             {{ session('success') }}
         </div>
     @endif
@@ -126,14 +126,14 @@
                             <td class="px-6 py-5 text-center">
                                 <a href="{{ route('admin.subscriptions.edit', $subscription) }}"
                                    class="inline-flex items-center justify-center w-9 h-9 text-amber-600 hover:bg-amber-50 rounded-2xl transition-colors">
-                                    <i class="fas fa-edit"></i>
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </a>
                             </td>
                         </tr>
                     @empty
                         <tr>
                             <td colspan="8" class="px-6 py-16 text-center">
-                                <i class="fas fa-folder-open text-6xl text-gray-200 mb-4"></i>
+                                <svg class="w-12 h-12 text-gray-200 mb-4 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
                                 <h5 class="text-gray-400 font-medium">No subscriptions yet</h5>
                             </td>
                         </tr>

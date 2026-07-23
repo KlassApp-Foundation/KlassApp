@@ -82,3 +82,4 @@ webpack.mix.js
 
 # === Dead CI config ===
 #.github/workflows/
+tmp/

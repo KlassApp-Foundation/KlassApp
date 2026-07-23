@@ -546,24 +546,7 @@
 }
 /*atte bar css*/
 /*New css 30-3*/
-.sites-sidebar {
-    visibility: hidden;
-    opacity: 0;
-    position: absolute;
-    transition: all 0.5s ease;
-    left: 192px;
-    display: none;
-    width: 200px;
-    top: 0;
-    @apply .bg-red-700;
-}
-.sidebar li:hover > .sites-sidebar,
-.sidebar li .sites-sidebar:hover {
-    visibility: visible;
-    opacity: 1;
-    display: block;
-    z-index: 99;
-}
+/* .sites-sidebar base + .sidebar hover removed — dead CSS */
 body {
     font-family: "Nunito", sans-serif;
 }
@@ -577,37 +560,7 @@ body {
     border-left: 3px solid #22c55e;
 }
 
-/* Show submenu on hover for admin sidebar */
-.admin-sidebar li:hover > .sites-sidebar,
-.admin-sidebar li .sites-sidebar:hover {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: block !important;
-    z-index: 99;
-}
-
-.admin-sidebar .sites-sidebar {
-    background: #0F172A !important;
-    border: 1px solid rgba(34, 197, 94, 0.25);
-    box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15);
-}
-
-.admin-sidebar .sites-sidebar li:hover {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.30) 0%, rgba(34, 197, 94, 0.18) 100%) !important;
-    border-left: 3px solid #22c55e;
-    padding-left: calc(0.75rem - 3px);
-}
-
-.admin-sidebar .sites-sidebar li.active {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%) !important;
-    border-left: 3px solid #22c55e;
-    padding-left: calc(0.75rem - 3px);
-}
-
-.admin-sidebar .sites-sidebar li.active a {
-    background: transparent !important;
-    color: #fff;
-}
+/* .admin-sidebar .sites-sidebar hover removed — dead CSS */
 .file_list:hover .media_file_dtl {
     visibility: visible !important;
 }
@@ -649,9 +602,6 @@ body {
     @apply .border;
 }
 @media (max-width: 767px) {
-    .sites-sidebar {
-        left: 200px;
-    }
     .filter-alphabet {
         width: 100% !important;
     }
@@ -724,12 +674,7 @@ body {
     border: 1px dashed #e5e5e5 !important;
     line-height: 42px;
 }
-.student-sidebar .sites-sidebar {
-    background-color: #3fbbd3;
-}
-.accountant-sidebar .sites-sidebar {
-    background-color: #38b2ac;
-}
+/* .student-sidebar/.accountant-sidebar .sites-sidebar bg removed — dead CSS */
 /*.jumping-img {
   animation: jump 7s infinite;
   position: relative;
@@ -1123,31 +1068,7 @@ button.fc-button.fc-button-primary {
     color: #166534;
 }
 
-.teacher-sidebar li:hover > .sites-sidebar,
-.teacher-sidebar li .sites-sidebar:hover {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: block !important;
-    z-index: 99;
-}
-
-.teacher-sidebar .sites-sidebar {
-    background: #0F172A !important;
-    border: 1px solid rgba(34, 197, 94, 0.25);
-    box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15);
-}
-
-.teacher-sidebar .sites-sidebar li:hover {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.30) 0%, rgba(34, 197, 94, 0.18) 100%) !important;
-    border-left: 3px solid #22c55e;
-    padding-left: calc(0.75rem - 3px);
-}
-
-.teacher-sidebar .sites-sidebar li.active {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%) !important;
-    border-left: 3px solid #22c55e;
-    padding-left: calc(0.75rem - 3px);
-}
+/* .teacher-sidebar li:hover > .sites-sidebar removed — dead CSS */
 
 /* Student Dashboard */
 
@@ -1160,31 +1081,7 @@ button.fc-button.fc-button-primary {
     border-left: 3px solid #22c55e;
 }
 
-.student-sidebar li:hover > .sites-sidebar,
-.student-sidebar li .sites-sidebar:hover {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: block !important;
-    z-index: 99;
-}
-
-.student-sidebar .sites-sidebar {
-    background: #0F172A !important;
-    border: 1px solid rgba(34, 197, 94, 0.25);
-    box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15);
-}
-
-.student-sidebar .sites-sidebar li:hover {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.30) 0%, rgba(34, 197, 94, 0.18) 100%) !important;
-    border-left: 3px solid #22c55e;
-    padding-left: calc(0.75rem - 3px);
-}
-
-.student-sidebar .sites-sidebar li.active {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%) !important;
-    border-left: 3px solid #22c55e;
-    padding-left: calc(0.75rem - 3px);
-}
+/* .student-sidebar li:hover > .sites-sidebar removed — dead CSS */
 
 /* Accountant Dashboard */
 .accountant-sidebar ul li a {
@@ -1204,31 +1101,7 @@ button.fc-button.fc-button-primary {
     color: #166534;
 }
 
-.accountant-sidebar li:hover > .sites-sidebar,
-.accountant-sidebar li .sites-sidebar:hover {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: block !important;
-    z-index: 99;
-}
-
-.accountant-sidebar .sites-sidebar {
-    background: #0F172A !important;
-    border: 1px solid rgba(34, 197, 94, 0.25);
-    box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15);
-}
-
-.accountant-sidebar .sites-sidebar li:hover {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.30) 0%, rgba(34, 197, 94, 0.18) 100%) !important;
-    border-left: 3px solid #22c55e;
-    padding-left: calc(0.75rem - 3px);
-}
-
-.accountant-sidebar .sites-sidebar li.active {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%) !important;
-    border-left: 3px solid #22c55e;
-    padding-left: calc(0.75rem - 3px);
-}
+/* .accountant-sidebar li:hover > .sites-sidebar removed — dead CSS */
 
 /* Librarian Dashboard */
 .librarian-sidebar ul li a {
@@ -1248,31 +1121,7 @@ button.fc-button.fc-button-primary {
     color: #166534;
 }
 
-.librarian-sidebar li:hover > .sites-sidebar,
-.librarian-sidebar li .sites-sidebar:hover {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: block !important;
-    z-index: 99;
-}
-
-.librarian-sidebar .sites-sidebar {
-    background: #0F172A !important;
-    border: 1px solid rgba(34, 197, 94, 0.25);
-    box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15);
-}
-
-.librarian-sidebar .sites-sidebar li:hover {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.30) 0%, rgba(34, 197, 94, 0.18) 100%) !important;
-    border-left: 3px solid #22c55e;
-    padding-left: calc(0.75rem - 3px);
-}
-
-.librarian-sidebar .sites-sidebar li.active {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%) !important;
-    border-left: 3px solid #22c55e;
-    padding-left: calc(0.75rem - 3px);
-}
+/* .librarian-sidebar li:hover > .sites-sidebar removed — dead CSS */
 @media (max-width: 678px) {
     .card-width {
         width: 100% !important;

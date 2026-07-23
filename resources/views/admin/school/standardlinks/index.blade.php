@@ -7,7 +7,7 @@
 @include('layouts.partials.page-header', [
     'title' => 'Classes',
     'subtitle' => 'Manage class sections, streams, and class-teacher assignments.',
-    'actions' => '<a href="' . url('/admin/school/standardlinks/create') . '" class="px-3 py-1.5 rounded text-xs text-white bg-green-600 hover:bg-green-700 flex items-center gap-1"><i class="fa-solid fa-plus text-xs"></i> Add Class</a>'
+    'actions' => '<a href="' . url('/admin/school/standardlinks/create') . '" class="px-3 py-1.5 rounded text-xs text-white bg-green-600 hover:bg-green-700 flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Class</a>'
 ])
 
 <div class="bg-white rounded-lg border border-gray-200 p-4 md:p-6 shadow-sm mt-4">

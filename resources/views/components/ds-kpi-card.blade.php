@@ -9,7 +9,7 @@
 @php
 $colorMap = [
     'blue' => ['bg' => 'rgba(30,111,217,0.10)', 'text' => 'var(--d-blue)'],
-    'green' => ['bg' => 'rgba(34,197,94,0.10)', 'text' => 'var(--d-green)'],
+    'green' => ['bg' => 'rgba(22,163,74,0.10)', 'text' => '#16A34A'],
     'amber' => ['bg' => 'rgba(217,119,6,0.10)', 'text' => 'var(--d-amber)'],
     'red' => ['bg' => 'rgba(220,38,38,0.10)', 'text' => 'var(--d-red)'],
     'purple' => ['bg' => 'rgba(139,92,246,0.10)', 'text' => '#8B5CF6'],
@@ -20,7 +20,7 @@ $attrs = $link ? 'href="' . $link . '"' : '';
 @endphp
 
 <{{ $tag }} {{ $attrs }} class="ds-kpi-card group">
-    <div class="ds-kpi-icon-wrap" style="background: {{ $c['bg'] }};">
+    <div class="ds-kpi-icon-wrap" style="background: {{ $c['bg'] }}; color: {{ $c['text'] }};">
         @if($icon === 'users')
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
         @elseif($icon === 'classes' || $icon === 'door')
