@@ -97,16 +97,19 @@
                     </div>
                     <canvas id="graph" class="dashboard-chart-canvas"></canvas>
                     <div class="flex items-center justify-between my-1">
+                        @php
+                            $hasGenderData = ($dashboard['femaleCount'] ?? 0) > 0 || ($dashboard['maleCount'] ?? 0) > 0;
+                        @endphp
                         <div class="border-r w-1/2 mt-4 bar-bg-blue relative student_count dashboard-gender-stat">
                             <a href="{{ url('/admin/students?gender=female') }}">
                                 <p class="text-sm item-title font-semibold">Girls</p>
-                                <p class="text-lg font-semibold text-gray-800">{{ $dashboard['femaleCount'] }}</p>
+                                <p class="text-lg font-semibold text-gray-800">{{ $hasGenderData ? $dashboard['femaleCount'] : '—' }}</p>
                             </a>
                         </div>
                         <div class="w-1/2 text-right mt-4 bar-bg-orange relative student_count student_male_count dashboard-gender-stat">
                             <a href="{{ url('/admin/students?gender=male') }}" target="_blank">
                                 <p class="text-sm item-title font-semibold ">Boys</p>
-                                <p class="text-lg font-semibold text-gray-800">{{ $dashboard['maleCount'] }}</p>
+                                <p class="text-lg font-semibold text-gray-800">{{ $hasGenderData ? $dashboard['maleCount'] : '—' }}</p>
                             </a>
                         </div>
                     </div>
@@ -383,9 +386,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
     <script>
         var ctx = document.getElementById('graph').getContext('2d');
-        var femaleCount = {!! trans($dashboard['femaleCount']) !!};
-        var maleCount = {!! trans($dashboard['maleCount']) !!};
+        var femaleCount = {!! trans($dashboard['femaleCount'] ?? 0) !!};
+        var maleCount = {!! trans($dashboard['maleCount'] ?? 0) !!};
         var totalStudents = femaleCount + maleCount;
+
+        if (totalStudents === 0) {
+            var ctx2 = document.getElementById('graph').getContext('2d');
+            ctx2.clearRect(0, 0, ctx2.canvas.width, ctx2.canvas.height);
+            ctx2.textAlign = 'center';
+            ctx2.textBaseline = 'middle';
+            ctx2.font = "13px 'DM Sans', sans-serif";
+            ctx2.fillStyle = '#94A3B8';
+            ctx2.fillText('No gender data', ctx2.canvas.width / 2, ctx2.canvas.height / 2);
+        }
 
         Chart.pluginService.register({
             beforeDraw: function(chart) {

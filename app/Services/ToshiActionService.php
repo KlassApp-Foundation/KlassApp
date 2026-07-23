@@ -397,12 +397,17 @@ class ToshiActionService
                 'email_verified' => 1,
             ]);
 
+            $profileGender = in_array(strtolower(trim($data['gender'] ?? '')), ['male', 'female'])
+                ? strtolower(trim($data['gender']))
+                : null;
+
             Userprofile::create([
                 'school_id'    => $schoolId,
                 'user_id'      => $student->id,
                 'usergroup_id' => 6,
                 'firstname'    => $name,
                 'lastname'     => '',
+                'gender'       => $profileGender,
                 'status'       => 'active',
             ]);
 

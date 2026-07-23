@@ -2849,14 +2849,23 @@ class AgentToshi extends Component
         }
 
         if ($this->actionSubstep === 0) {
-            // Collect name
-            if (strlen(trim($text)) < 3) {
+            // Collect name — optional gender can be appended as "(male)" or "(female)"
+            $raw = trim($text);
+            if (strlen($raw) < 3) {
                 $this->botSay('Please enter a valid name (at least 3 characters).');
                 return;
             }
-            $this->actionData['name'] = trim($text);
+            $gender = null;
+            $name = $raw;
+            if (preg_match('/^(.+?)\s*\((\s*male\s*|\s*female\s*)\)\s*$/i', $raw, $m)) {
+                $name = trim($m[1]);
+                $gender = strtolower(trim($m[2]));
+            }
+            $this->actionData['name'] = $name;
+            $this->actionData['gender'] = $gender;
+            $displayLine = "Name: **{$name}**" . ($gender ? " ({$gender})" : '');
             $this->actionSubstep = 1;
-            $this->botSay("Name: **{$this->actionData['name']}**. | What class should they join? (type the class name, or **skip** to assign later)");
+            $this->botSay("{$displayLine}. | What class should they join? (type the class name, or **skip** to assign later)");
             return;
         }
 
@@ -2896,7 +2905,7 @@ class AgentToshi extends Component
             } elseif (in_array($lower, ['no', 'n', 'edit', 'change'])) {
                 $this->actionSubstep = 0;
                 $this->actionData = [];
-                $this->botSay("Let's start over. What is the student's full name?");
+                $this->botSay("Let's start over. What is the student's full name? (you can add gender in parentheses, e.g. \"John (male)\")");
             } else {
                 $this->botSay("Type **yes** to confirm or **no** to restart.");
             }
@@ -2908,6 +2917,7 @@ class AgentToshi extends Component
     {
         $parts = [];
         if (!empty($this->actionData['name'])) $parts[] = "Name: **{$this->actionData['name']}**";
+        if (!empty($this->actionData['gender'])) $parts[] = "Gender: **{$this->actionData['gender']}**";
         if (!empty($this->actionData['class_name'])) $parts[] = "Class: **{$this->actionData['class_name']}**";
         if (!empty($this->actionData['section_name'])) $parts[] = "Section: **{$this->actionData['section_name']}**";
         $this->botSay(implode(' | ', $parts) . "\n\nType **yes** to confirm, **no** to restart, or **cancel** to stop.");
