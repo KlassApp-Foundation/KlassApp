@@ -50,10 +50,20 @@ class ToshiPlanService
             'share_keys'   => ['amount', 'level', 'class', 'term_name'],
             'label_format' => 'Create fee: {name}',
         ],
-        'toolCreateTerm' => [
+'toolCreateTerm'       => [
             'multi_key'    => 'name',
             'share_keys'   => ['start_date', 'end_date'],
             'label_format' => 'Create term: {name}',
+        ],
+        'toolCreateStream' => [
+            'multi_key'    => 'className',
+            'share_keys'   => ['streams', 'phase'],
+            'label_format' => 'Create class: {className}',
+        ],
+        'toolAssignStudentsToStream' => [
+            'multi_key'    => 'students',
+            'share_keys'   => ['className', 'streamName'],
+            'label_format' => 'Assign to {streamName}: {students}',
         ],
     ];
 
@@ -135,6 +145,8 @@ class ToshiPlanService
             'toolAddTeacher'       => ['add teacher', 'add teachers', 'hire teacher', 'hire teachers'],
             'toolCreateFee'        => ['create fee', 'create fees', 'add fee', 'add fees'],
             'toolCreateTerm'       => ['create term', 'create terms', 'add term', 'add terms'],
+            'toolCreateStream'        => ['create class', 'create classes', 'add class', 'add stream', 'add streams'],
+            'toolAssignStudentsToStream' => ['sort students', 'put students in', 'assign to stream', 'move to stream'],
         ];
         return $map[$tool] ?? [];
     }

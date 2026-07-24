@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\CoAdminInviteMail;
 use App\Models\OnboardingSession;
+use App\Services\StudentIdGeneratorService;
 use App\Services\ToshiActionService;
 
 class AgentToshi extends Component
@@ -50,6 +51,8 @@ class AgentToshi extends Component
         'toolSeedDefaultGrading'  => \App\AiAgents\Tools\SeedDefaultGradingTool::class,
         'toolSetGradingScale'     => \App\AiAgents\Tools\SetGradingScaleTool::class,
         'toolSetCurriculum'       => \App\AiAgents\Tools\SetCurriculumTool::class,
+        'toolCreateStream'        => \App\AiAgents\Tools\CreateStreamTool::class,
+        'toolAssignStudentsToStream' => \App\AiAgents\Tools\AssignStudentsToStreamTool::class,
     ];
 
     public $step = 0;
@@ -4617,10 +4620,10 @@ class AgentToshi extends Component
                         ['school_id' => $school->id, 'name' => $class['name']],
                         ['status' => '1']
                     );
-                    $standardLink = StandardLink::create([
-                        'school_id' => $school->id, 'academic_year_id' => $academicYear->id,
-                        'standard_id' => $phase->id, 'section_id' => $section->id, 'status' => '1',
-                    ]);
+                    $standardLink = StandardLink::firstOrCreate(
+                        ['school_id' => $school->id, 'section_id' => $section->id, 'academic_year_id' => $academicYear->id],
+                        ['standard_id' => $phase->id, 'status' => '1']
+                    );
                     $classLinkMap[$class['name']] = $standardLink;
                     if (!$firstStandardLink) {
                         $firstStandardLink = $standardLink;
@@ -4778,11 +4781,7 @@ class AgentToshi extends Component
                     }
 
                     if ($targetLink) {
-                        // Generate KlassApp Student ID: KLS{school_code_3}{sequential_4}
-                        $codeRaw = $school->ministry_code ?? $school->id;
-                        $schoolCode = str_pad(substr((string) $codeRaw, 0, 3), 3, '0', STR_PAD_LEFT);
-                        $seq = str_pad($index + 1, 4, '0', STR_PAD_LEFT);
-                        $klassappId = "KLS{$schoolCode}{$seq}";
+                        $klassappId = StudentIdGeneratorService::next($school->id);
 
                         $lin = is_array($record) ? ($record['lin'] ?? '') : '';
                         StudentAcademic::create([
@@ -4995,8 +4994,7 @@ class AgentToshi extends Component
                                         'academic_year_id' => $academicYear->id,
                                         'user_id' => $student->id,
                                         'standardLink_id' => $targetStdLink->id,
-                                        'klassapp_student_id' => 'KLS' . str_pad((string)$schoolId, 3, '0', STR_PAD_LEFT)
-                                            . str_pad((string)($index + 1), 4, '0', STR_PAD_LEFT),
+                                        'klassapp_student_id' => StudentIdGeneratorService::next($schoolId),
                                     ]);
                                 }
                             } catch (\Exception $e) {
