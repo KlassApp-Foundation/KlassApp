@@ -1,0 +1,44 @@
+---
+description: "Frontend conventions: ds-* pattern library, mobile-first responsive standards, visual verification."
+globs: "**/*.{blade.php,vue,js,css,scss}"
+---
+
+# KlassApp — Frontend Conventions
+
+## ds-* Pattern Library
+
+The project uses a `ds-*` CSS class convention for dashboard components:
+
+| Pattern | Purpose | Examples |
+|---|---|---|
+| `ds-kpi-card` | KPI metric card (icon + value + label) | Student count, teacher count, fee totals |
+| `ds-kpi-icon-wrap` | Icon container inside KPI card | Colored icon background |
+| `ds-kpi-value` | Metric number text | Bold large font |
+| `ds-kpi-label` | Metric description label | Muted small text |
+| `ds-page-head` | Page header wrapper | Flex row with title + action button |
+| `ds-page-head-title` | Page heading | `<h1>` styled |
+| `ds-btn` | Base button | Shared button base styles |
+| `ds-btn-primary` | Primary action button | Colored variant |
+| `ds-btn-sm` | Small button size | Compact variant |
+
+These are defined in `resources/assets/sass/` (Tailwind 1.x + custom SCSS), **not** in a separate CSS framework. Stick to existing patterns rather than introducing new utility classes.
+
+## Mobile-First Responsive Standards
+
+- **Breakpoints tested**: 375px (small mobile), 414px (large mobile), 768px (tablet), 1280px+ (desktop)
+- **Layout approach**: Stacked cards on mobile, multi-column on desktop — never horizontal scroll
+- **Verification**: Confirm with real screenshots at each breakpoint, not computed CSS values
+- **The project has had regressions from assuming CSS values match rendered output** — always render and capture visually
+
+## Sidebar Convention (Option 3)
+
+- Sidebar uses the established "Option 3" icon set
+- Group hover-preview pattern on desktop (expands on hover over group indicator)
+- Consistent with Pulse dashboard standard
+
+## Tooling
+
+- **Laravel Mix 4** (NOT Vite) — `npm run dev` / `npm run production`
+- **Tailwind 1.4.6** — no v3/v4 features available (no JIT, no arbitrary values like `w-[100px]`)
+- **Vue 2.6.12** — Options API, `Vue.component()` registration, no `<script setup>`, no Composition API
+- **Playwright** available in `node_modules` for E2E testing

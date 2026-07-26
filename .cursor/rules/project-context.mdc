@@ -1,0 +1,63 @@
+---
+description: "Project identity, stack, architecture, and conventions — always loaded for every session."
+alwaysApply: true
+---
+
+# KlassApp — Project Context
+
+## Verified Stack (production — as of July 26, 2026)
+
+| Layer | Version |
+|---|---|
+| **PHP** | 8.4.23 (production), 8.4.19 (local) |
+| **Laravel Framework** | 12.63.0 |
+| **Livewire** | 3.x |
+| **Vue** | 2.6.12 |
+| **Tailwind CSS** | 1.4.6 |
+| **Laravel Mix** | 4.x (NOT Vite) |
+| **MySQL** | 8.0 |
+| **Redis** | 7.x |
+| **Node** | per `.nvmrc` or local install |
+
+> ⚠️ PHP constraint in `composer.json` says `^8.2`, platform config `8.3.6` — but production runs **8.4.23**. Do not rely on the platform config for actual version.
+
+## Hosting
+
+- **Production**: Docker on Hetzner VPS (46.101.111.131)
+- **Container**: `sms-app` (PHP-FPM), nginx, MySQL, Redis
+- **Domain**: ugasch.com via Cloudflare → Hetzner VPS
+- **Also configured**: Laravel Vapor (gegok12, ID: 10390) for AWS Lambda — not actively deployed
+- **Deploy script**: `scripts/deploy-manual.sh` — Docker-based, pulls main, composer install, vendor:publish toshi-ui, migrate, cache clear
+
+## Architecture Patterns
+
+- **Service layer**: Business logic lives in `app/Services/` — controllers delegate to services
+- **Blade + Vue 2 hybrid**: Vue components via `window.Vue = require('vue')` and `Vue.component()` in `resources/assets/js/app.js`. Options API throughout.
+- **Livewire 3**: For reactive components (Toshi assistant, reports tables, forms). Mounted via `@livewire('component-name')` in Blade.
+- **Laravel Mix 4**: Builds frontend assets via `webpack.mix.js`. Uses `mix('js/app.js')` and `mix('css/app.css')` in Blade templates.
+
+## WhatsApp Integration (Evolution API)
+
+```
+User ↔ Evolution API ↔ Laravel Webhook / Outbound Service
+                        ↕
+               WhatsAppService (HTTP transport)
+                        ↕
+            OutboundWhatsAppService (business logic)
+                        ↕
+              MessageDeliveryLog (DB tracking)
+```
+
+- **Evolution API URL**: `http://localhost:8081`
+- **Instance**: `klassapp`
+- **Business number**: `+256765275289`
+
+## Uganda Phone Validation
+
+- Format: `+256 7[0578] XXX XXX` (12 chars with `+`, 9 digits after 256)
+- Regex: `/^\+256(7[0578]\d{7})$/`
+- wa.me links: strip the `+` prefix
+
+## Deeper Context
+
+For full project knowledge — session history, past incidents, design decisions, and the file index — read `knowledge.md` in the project root. This `.mdc` contains the verified-current subset; `knowledge.md` has the full historical record.

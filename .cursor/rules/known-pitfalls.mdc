@@ -1,0 +1,49 @@
+---
+description: "Recurring bugs, known failure patterns, and the verification discipline this project requires."
+alwaysApply: true
+---
+
+# KlassApp — Known Pitfalls & Debugging Discipline
+
+## Recurring Bug Patterns
+
+### 1. Legacy Dark-Theme CSS Values Resurface
+- Certain CSS values (`#0F172A` slate, `#063f8d` dark blue) are remnants of an old dark theme
+- They reappear when new UI components are added without explicit light-theme styling
+- **Fix**: Always set explicit background/text colors on new components — don't rely on inheritance
+
+### 2. CSS Publish/Sync Gap
+- `toshi-ui.css` and other published assets have a two-copy problem: the source file in the package and the published copy in `public/`
+- After editing the source, you must run `php artisan vendor:publish --tag=toshi-ui-css --force` to sync
+- **Common failure**: "I fixed the CSS but the change isn't showing" — you forgot to publish
+
+### 3. Local/Production Version Drift
+- `composer.json` platform config says `8.3.6` — production runs **8.4.23**
+- `php -v` locally may differ from the Docker container
+- **Always verify**: SSH into production (`root@46.101.111.131`) and `docker exec sms-app php -v` before assuming version compatibility
+- Laravel 12.63.0 on prod vs potentially different minor on local
+
+### 4. Livewire DOM Reparenting
+- Livewire 3 (and previously v2) can move DOM nodes during client-side hydration
+- Components relying on precise DOM position for CSS layout may break after page load
+- **Workaround**: Use `position: fixed/absolute` for layout-critical positioning rather than relying on flex parent-child DOM order
+- **Known case**: Toshi panel — `@livewire('agent-toshi')` renders as a flex child in server HTML but Livewire JS repositions it into `dashboard-content-area`
+
+### 5. Env Var Leak from Shell
+- Laravel's `Dotenv\Repository` caches env from `getenv()`, `$_SERVER`, and `$_ENV` at boot
+- If an env var was exported in the parent shell, it silently overrides `.env`
+- **Fix**: `unset()` all three sources + reset `Env` repository via reflection
+- **Affected**: TOSHI_LARAGENT_ENABLED previously, but this applies to **any** env var
+
+## Verification Discipline
+
+> **"Verify with real evidence before reporting done."**
+
+This is the single most important rule this project has learned:
+
+1. **After every change**: Run `php artisan optimize:clear` inside the container
+2. **CSS changes**: `vendor:publish --force` then hard-refresh browser
+3. **Responsive layout**: Take real screenshots at 375px, 414px, 768px, 1280px — do NOT trust computed values
+4. **Database changes**: Run migrations and confirm with `SELECT` queries, not assumptions
+5. **Before reporting "done"**: Confirm with a tool output, a screenshot, or a log — never "should work"
+6. **Deploy**: Run the full deploy script (`scripts/deploy-manual.sh`), then verify on the live site

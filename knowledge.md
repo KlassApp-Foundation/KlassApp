@@ -1,11 +1,30 @@
 # KlassApp Project Knowledge
 
-## Current Status: July 22, 2026
+## Verified Stack (production — July 26, 2026)
+
+| Layer | Version | Source |
+|---|---|---|
+| **PHP** | 8.4.23 | `ssh root@46.101.111.131 docker exec sms-app php -v` |
+| **Laravel** | 12.63.0 | `php artisan --version` on production |
+| **Livewire** | 3.x | `composer.json` require `^3.4` |
+| **Vue** | 2.6.12 | `package.json` |
+| **Tailwind CSS** | 1.4.6 | `package.json` |
+| **Laravel Mix** | 4.1.4 | `package.json` — NOT Vite |
+| **MySQL** | 8.0 | `docker-compose.yml` |
+| **Redis** | 7.x | `docker-compose.yml` |
+| **Production host** | Docker on Hetzner VPS (46.101.111.131) | `scripts/deploy-manual.sh` |
+
+> ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
+> 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
+
+## Current Status: July 26, 2026
 
 ### Git
 - **Branch**: `main`
-- **HEAD**: `961f84b` — fix: Toshi layout audit + persistent chat bubble collapse
-- **Latest work (Jul 22)**: Hover consistency audit (Pulse standard) + sidebar group hover-preview (desktop)
+- **HEAD**: `961f84b` (knowledge.md stale — local HEAD is `1ba5bea` before this session's work)
+- **Latest work (Jul 26, gender fix)**: Fixed gender persistence gap in commitAll() — bulk student onboarding path now parses `(male)/(female)` suffix from names.
+- **Latest work (Jul 26, partial CSS scoping)**: Renamed `.toshi-root` class → `[data-toshi-root]` attribute across 4 CSS/Blade files (root-positioning selectors only).
+- **Latest work (Jul 26, scoping audit)**: Discovered the `[data-toshi-root]` change only covers 4 root-positioning selectors — **222 bare `.toshi-*` child selectors remain unscoped**. Full scoping pass deferred.
 
 ### Toshi Layout History (app.blade.php)
 
@@ -26,16 +45,16 @@ The Toshi panel on `/admin/reports` (and all `app.blade.php` pages) was fixed ac
 - **REMOVED** `window.innerWidth >= 1280` condition from the hide click handler (simplified JS)
 - **Layout fix**: Toshi now participates as a flex child of `<main>` — theoretically in the right column
 
-**Recurring bug (Jul 22, new finding)**: Even after `961f84b`, Livewire v2's client-side hydration moves the Toshi DOM element inside `dashboard-content-area` div (observed via Playwright DOM path: `main > div.dashboard-content-area > div > div.toshi-root`). The compiled Blade template is correct — Livewire JS repositions the node after page load.
+**Recurring bug (Jul 22, new finding)**: Even after `961f84b`, Livewire's client-side hydration (project is on Livewire 3, but the DOM reparenting pattern exists across v2 and v3) moves the Toshi DOM element inside `dashboard-content-area` div (observed via Playwright DOM path: `main > div.dashboard-content-area > div > div.toshi-root`). The compiled Blade template is correct — Livewire JS repositions the node after page load.
 
 **Hot-fix applied (Jul 22)**: Changed `toshi-ui.css` to use `position: fixed` for `.toshi-root` at ≥1280px (same strategy as the <1280px viewport) instead of relying on flex layout. Added `margin-right: 380px` / `28px` to `.dashboard-content-area`. Verified:
 - Toshi panel: `position: fixed; top: 83px; right: 0; width: 380px; height: calc(100vh - 83px)`
 - Content area: `margin-right: 380px` when Toshi open, `28px` when collapsed (toggle space)
 - Toggle: `position: fixed` on the right edge, 28px wide when collapsed, green (#22C55E) button
 
-**⚠️ Known fragility**: This `position: fixed` approach is a hot-fix that works today because the pixel math matches — content margin-right:380px + Toshi fixed at width:380px = full 1400px viewport with no gap or overlap. But `position: fixed` doesn't participate in the shell's layout sizing. If sidebar width changes, a banner is added, or viewport assumptions shift, the fixed pixel values will silently drift out of alignment — unlike a true flex child which would be sized naturally. The proper fix (making Toshi a flex sibling of content-area inside `<main>`) is blocked by Livewire v2's client-side hydration re-parenting DOM nodes. If that hydration issue is ever resolved (Livewire v3, or a workaround), the `position: fixed` approach should be replaced with the flex layout.
+**⚠️ Known fragility**: This `position: fixed` approach is a hot-fix that works today because the pixel math matches — content margin-right:380px + Toshi fixed at width:380px = full 1400px viewport with no gap or overlap. But `position: fixed` doesn't participate in the shell's layout sizing. If sidebar width changes, a banner is added, or viewport assumptions shift, the fixed pixel values will silently drift out of alignment — unlike a true flex child which would be sized naturally. The proper fix (making Toshi a flex sibling of content-area inside `<main>`) is blocked by Livewire's client-side hydration re-parenting DOM nodes (observed on both Livewire v2 and v3). If that hydration issue is ever worked around, the `position: fixed` approach should be replaced with the flex layout.
 
-**🧠 Livewire v2 hydration pattern**: Livewire v2 re-parents DOM nodes on client-side hydration — observed here where `@livewire('agent-toshi')` correctly rendered as a `<main>` flex child in the server HTML but Livewire JS moved it into `dashboard-content-area` after page load. This is a general pattern, not Toshi-specific. Any component relying on precise DOM position for CSS layout (rather than visual appearance via `position: fixed/absolute`) could theoretically hit the same class of bug if placed inside a Livewire-managed region.
+**🧠 Livewire hydration pattern (v2 and v3)**: Livewire re-parents DOM nodes on client-side hydration — observed here where `@livewire('agent-toshi')` correctly rendered as a `<main>` flex child in the server HTML but Livewire JS moved it into `dashboard-content-area` after page load. This is a general pattern, not Toshi-specific. Any component relying on precise DOM position for CSS layout (rather than visual appearance via `position: fixed/absolute`) could theoretically hit the same class of bug if placed inside a Livewire-managed region.
 
 **419 Page Expired**: Investigated — `SESSION_DRIVER=database`, table exists with correct schema, `TrustProxies=*`, login form has `@csrf`. Could not reproduce in session. Likely browser privacy settings blocking localhost cookies. SESSION_SECURE_COOKIE=false, same_site=null (lax).
 
@@ -90,13 +109,17 @@ WHATSAPP_BUSINESS_NUMBER=+256765275289
 WHATSAPP_BUSINESS_NAME=KlassApp
 ```
 
-### Deferred Major-Version Migrations — Roadmap (July 12, 2026)
+### Deferred Major-Version Migrations — Roadmap (July 12, 2026, updated July 26)
 
 #### ✅ COMPLETED: axios 0.x → 1.x
 
 axios was upgraded from ^0.29 to **1.18.1** as part of this session.
 
-#### 1. axios 0.x → 1.x
+#### ✅ COMPLETED: Laravel 11 → 12
+
+Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The planned Phase A in the sequencing doc below is now done.
+
+#### 1. axios 0.x → 1.x (completed)
 | Dimension | Assessment |
 |---|---|
 | **Files affected** | 3 files import axios explicitly; 218 Vue component files use it via `window.axios` (global in bootstrap.js) |
@@ -117,15 +140,14 @@ axios was upgraded from ^0.29 to **1.18.1** as part of this session.
 | **Risk level** | **Medium-High** — third-party plugin availability is the main risk. Core Vue migration is mechanical (1-2 days for app.js). Plugin audit could reveal blockers that require finding alternatives. |
 | **Effort** | ~2 weeks (1 week migration + 1 week testing/plugin remediation) |
 
-#### 3. Laravel 11 → 12
+#### 3. Laravel 11 → 12 ✅ (completed)
 | Dimension | Assessment |
 |---|---|
-| **Current state** | On 11.54.0. The L10→11 upgrade took ~2 hours active + 30 min composer resolution. |
-| **Key deps to verify** | laravel/sanctum ^4.0 (should work), spatie/laravel-medialibrary ^11.0, spatie/laravel-model-states ^2.12, filament/tables ^3.0, maestroerror/laragent ^0.3.1 |
-| **Architectural delta L11→L12** | Smaller than L10→11. No bootstrap/app.php restructure. Mainly: SQLite by default in new projects (doesn't affect existing), new artisan commands, scheduled task improvements. |
-| **Risk level** | **Low** — incremental release, not a framework rewrite like L10→11 was. |
-| **Effort** | ~2-3 hours (composer update + test suite + smoke test) |
-| **Can parallelize?** | Yes — fully independent of frontend migrations |
+| **Current state** | Production is on **12.63.0**. The L10→11 upgrade took ~2 hours active + 30 min composer resolution. L11→12 was straightforward. |
+| **Key deps verified** | laravel/sanctum ^4.0 ✅, spatie/laravel-medialibrary ^11.0 ✅, spatie/laravel-model-states ^2.12 ✅, filament/tables ^3.0 ✅ |
+| **Architectural delta L11→L12** | Smaller than L10→11. No bootstrap/app.php restructure. |
+| **Risk level** | **Low** — incremental release. |
+| **Effort** | ~2-3 hours |
 
 #### 4. Mix (Laravel Mix 4) → Vite
 | Dimension | Assessment |
@@ -144,7 +166,7 @@ axios was upgraded from ^0.29 to **1.18.1** as part of this session.
 ### Recommended Sequencing
 
 ```
-Phase A: Laravel 12 + axios 1.x (parallel, 1-2 days total)
+Phase A: Laravel 12 + axios 1.x ✅ (completed)
   ├─ Laravel 11→12: composer bump, test suite, deploy
   └─ axios 0.x→1.x: bootstrap.js config, error handler audit, npm bump
        ↓
@@ -4755,3 +4777,65 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **Files modified**: `app/Http/Requests/UserProfileAddRequest.php` (added `in:male,female`), `app/Http/Requests/UserProfileUpdateRequest.php` (added `in:male,female`), `app/Services/ToshiActionService.php` (pass gender from $data to Userprofile::create), `app/Livewire/AgentToshi.php` (inline gender parsing from name input using `(male)`/`(female)` suffix, gender shown in confirmation, restart message hints at syntax).
 - **Toshi conversation design**: Gender is NOT a separate blocking step. Parsed inline from the name field: `"John Doe (male)"` → name=John Doe, gender=male. No extra question asked. Keeps the flow unchanged for admins who don't provide gender, captures it when they do.
 - **Status**: ✅ Gender now validated server-side for all entry paths (manual form, edit form, Toshi), captured during Toshi conversation via optional inline syntax, and dashboard displays "—" for existing NULL-gender students until edited.
+
+### 2026-07-24: Stream management tools (CreateStreamTool + AssignStudentsToStreamTool)
+- **Work done**: Two companion Toshi tools for creating classes with streams and sorting students into them. Includes guard logic (blocks direct-class on streamed class, allows streaming previously-direct class), registration-number + name matching, and full test coverage.
+- **Files created**: `app/AiAgents/Tools/CreateStreamTool.php`, `app/AiAgents/Tools/AssignStudentsToStreamTool.php`, `tests/Feature/Onboarding/CreateStreamToolTest.php`, `tests/Feature/Onboarding/AssignStudentsToStreamToolTest.php`, `tests/Feature/Onboarding/StreamingTransitionTest.php`
+- **Files modified**: `app/Livewire/AgentToshi.php` (TOOL_CLASS_MAP), `app/Services/ToshiPlanService.php` (BATCH_TOOLS, actionWords), `app/Models/User.php` (registration_number in $fillable)
+- **Migrations**: `add_registration_number_unique_to_users.php` (composite unique on school_id, registration_number), `add_unique_class_stream_index_to_standards_link.php` (composite unique on school_id, section_id, academic_year_id, stream)
+- **Key decisions**: Tools are post-onboarding assistant-mode only. Registration_number takes priority over name matching. JsonSchema API confirmed working (string(), array()->items(), nullable(), description()).
+- **Edge cases**: Multi-phase school ambiguity, duplicate names, student with no StudentAcademic row, cross-year scoping.
+- **Status**: ✅ Done. 27 onboarding tests pass.
+
+### 2026-07-24: Race-safe student ID generator + registration_number backfill
+- **Work done**: Extracted klassapp_student_id generation from commitAll()'s loop-counter scheme into a shared, atomic StudentIdGeneratorService using SELECT FOR UPDATE on a dedicated student_id_sequences table. Replaced all 3 call sites (2 in commitAll(), 1 in AssignStudentsToStreamTool). Created SeedStudentIdSequences and BackfillRegistrationNumbers Artisan commands. Ran backfill: 32 students copied from klassapp_student_id, 13 received fresh generated IDs.
+- **Files created**: `app/Services/StudentIdGeneratorService.php`, `database/migrations/2026_07_24_115624_create_student_id_sequences_table.php`, `app/Console/Commands/SeedStudentIdSequences.php`, `app/Console/Commands/BackfillRegistrationNumbers.php`, `tests/Unit/Services/StudentIdGeneratorServiceTest.php`, `tests/Feature/Onboarding/BackfillRegistrationNumbersCommandTest.php`
+- **Files modified**: `app/Livewire/AgentToshi.php` (2 call sites → StudentIdGeneratorService::next()), `app/AiAgents/Tools/AssignStudentsToStreamTool.php` (TODO replaced with generator call)
+- **Key decisions**: Dedicated sequence table vs MAX(seq)+1 with locking. Chose sequence table for simpler reasoning about concurrency safety. Backfill strategy: klassapp_student_id → registration_number for existing students, fresh KLS ID for students without either.
+- **Edge cases**: PHP 8.1 string interpolation limitation (?: inside "{$var}" not supported). School 1 max seq was 32. Some test students had no school_id. StudentAcademic::factory() doesn't exist.
+- **getEffectiveUser audit**: Determined (c) — the pattern is consistent. Group A tools (AddStudentTool etc.) use getEffectiveUser() because they pass the resolved user to service methods. Group B tools (SetCurriculumTool, CreateStreamTool, AssignStudentsToStreamTool) use getEffectiveSchoolId() because they only need the school_id for inline DB work. No fix needed.
+- **Status**: ✅ Done. 9 new tests pass. All 46 students now have registration_number.
+
+### 2026-07-24: Standards_link deduplication + unique constraint migration
+- **Work done**: Investigated 125 duplicate `(school_id, section_id, academic_year_id, stream)` rows across 5 schools (4 copies each, school 19 had 6). Root cause: `commitAll()` create-mode used `StandardLink::create()` instead of `firstOrCreate()` — the complete-mode path was already correct. Fixed the root cause. Created `DedupeStandardLinks` command with --dry-run, survivor selection (most children → earliest created_at), conflict detection, and per-school transactions. Ran dedup: 125 rows removed, zero orphaned children. Applied the unique constraint migration.
+- **Files created**: `app/Console/Commands/DedupeStandardLinks.php`, `tests/Feature/Onboarding/DedupeStandardLinksCommandTest.php`
+- **Files modified**: `app/Livewire/AgentToshi.php:4623` (StandardLink::create() → firstOrCreate())
+- **Key decisions**: Verified all 12 FK tables before deletion — zero children existed on any non-survivor row. All duplicates had identical data (same class_teacher_id, null no_of_students) so zero groups flagged for manual review. Unique constraint prevents future duplicates where stream is non-null, but MySQL allows multiple NULLs in unique indexes so the firstOrCreate fix is the actual protection.
+- **Edge cases**: 141 pre-existing orphaned events (standard_id = NULL) and 3 student_academics (standardLink_id = NULL) are unrelated, pre-date this work.
+- **Status**: ✅ Done. 49 tests total across all three sessions, all passing.
+
+### 2026-07-26: Toshi CSS scoping — class-based .toshi-root → attribute-based [data-toshi-root]
+- **Work done**: Migrated all CSS selectors targeting the Toshi root element from `.toshi-root` class to `[data-toshi-root]` attribute selector. Prevents class-name collisions (especially relevant given Livewire's DOM reparenting) and makes the root element identifiable via a dedicated attribute rather than a generic class name.
+- **Files modified**:
+  - `resources/views/livewire/agent-toshi.blade.php` — added `data-toshi-root` attribute to the root `<div>`
+  - `packages/toshi-ui/resources/css/toshi-ui.css` — 2 selectors: `body .toshi-root` → `body [data-toshi-root]`, `body.toshi-collapsed .toshi-root` → `body.toshi-collapsed [data-toshi-root]`
+  - `public/vendor/toshi-ui/toshi-ui.css` — same 2 selectors (published copy)
+  - `public/css/dashboard-refresh.css` — 2 selectors + 2 comments updated
+- **Design decision**: Kept `class="toshi-root"` on the Blade template as well — CSS no longer references the class, but keeping it avoids breaking any external JS or browser devtool workflows.
+- **Status**: ✅ Done.
+
+### 2026-07-26: Gender persistence gap in commitAll() bulk student creation
+- **Work done**: `commitAll()`'s bulk student creation path was not persisting gender, even when `(male)/(female)` was provided inline in student names. The single-student `actionAddStudent()` → `ToshiActionService::addStudent()` path already wrote gender correctly to `Userprofile.gender`. The gap was in the bulk path only.
+- **Root cause**: `saveStudent()` stored user input directly without parsing the `(male)/(female)` suffix, and `commitAll()`'s `Userprofile::create()` didn't include a `gender` field. The `actionData['gender']` scalar was only set in the `actionAddStudent()` flow and consumed immediately — never available to `commitAll()`.
+- **Fix**:
+  1. `saveStudent()`: Added inline gender parsing from name (same regex as `actionAddStudent()`) — stores cleaned name + extracted gender in the per-student record
+  2. File import mapping: Added `'gender' => null` to the record structure (explicit default)
+  3. `commitAll()`: Added `$profileGender` extraction using the same `in_array(['male','female'])` validation pattern as `ToshiActionService::addStudent()`, passed to `Userprofile::create()`
+- **Sibling-path scan**: Compared `addStudent()` vs `commitAll()` — both write the same set of fields. `addStudent()` writes gender (correct), `commitAll()` writes `klassapp_student_id` + `lin` (correct). No other fields missing on either side — gender is an isolated gap.
+- **Verification**: Created test school, added 5 students with mixed gender (Alice=female, Bob=male, Charlie=NULL, Diana=female, Eve=male), verified all persisted correctly in DB. Also verified fallback path (plain name strings with no gender) correctly stores NULL. All 8 tests passed.
+- **Files modified**: `app/Livewire/AgentToshi.php` (saveStudent, file import mapper, commitAll)
+- **Status**: ✅ Done.
+
+### 2026-07-26: [data-toshi-root] scoping audit — discovered partial fix
+- **Work done**: Audited all Toshi CSS selectors across all files to verify proper CSS scoping coverage after the `.toshi-root` → `[data-toshi-root]` migration.
+- **Counts**:
+  | File | Selectors | Scoped under `[data-toshi-root]` | Bare `.toshi-*` |
+  |---|---|---|---|
+  | `toshi-ui.css` (source) | 17 | 2 | 15 |
+  | `dashboard-refresh.css` | 189 | 2 | 187 |
+  | `toshi-ui.css` (published) | 20 | 2 | 18 |
+  | **Total** | **226** | **4** | **222** |
+- **Critical finding**: The 4 "scoped" selectors are `body [data-toshi-root]` and `body.toshi-collapsed [data-toshi-root]` (the root positioners themselves). **Zero `.toshi-*` child selectors are actually wrapped under `[data-toshi-root]` ancestor.** The rename was strictly a root-element identifier change, not a CSS scoping boundary.
+- **Risk**: Any third-party global `.panel`, `.message`, `.input`, `.pill`, `.chip`, `.label`, `.modal-box`, `.stat-card`, `.progress-bar`, `.dot`, `.btn-done` rule will leak into Toshi's internal elements.
+- **Fix needed**: Wrap all `.toshi-*` selectors under `[data-toshi-root]` ancestor in all 3 CSS files. Estimated ~200 find/replace operations.
+- **Status**: ⏳ Deferred — scoping audit completed, full pass not yet done.

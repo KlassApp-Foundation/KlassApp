@@ -563,7 +563,7 @@ a.ds-kpi-card:hover {
 
 /* ── Toshi Widget Base (colors only — structure in blade) ── */
 
-body .toshi-root {
+body [data-toshi-root] {
     --toshi-bg: var(--d-white);
     --toshi-border: #e8e6dc;
     --toshi-accent: #c96442;
@@ -591,7 +591,7 @@ body .toshi-pill {
     align-items: center;
 }
 
-/* ── Panel: fills the fixed toshi-root container — not independently fixed ── */
+/* ── Panel: fills the fixed [data-toshi-root] container — not independently fixed ── */
 body .toshi-panel {
     display: flex;
     flex-direction: column;
@@ -606,7 +606,7 @@ body .toshi-panel {
     }
 }
 
-/* ── Toggle button: always above toshi-root so it's clickable ── */
+/* ── Toggle button: always above [data-toshi-root] so it's clickable ── */
 body .toshi-toggle {
     position: fixed !important;
     top: 50% !important;
@@ -628,7 +628,7 @@ body .toshi-toggle {
     user-select: none;
     transition: right 0.25s ease;
 }
-body.toshi-collapsed .toshi-root {
+body.toshi-collapsed [data-toshi-root] {
     width: 0 !important;
     min-width: 0 !important;
     border: none !important;

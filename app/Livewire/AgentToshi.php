@@ -1273,15 +1273,23 @@ class AgentToshi extends Component
 
     public function saveStudent()
     {
-        $name = trim($this->studentFormName);
+        $raw = trim($this->studentFormName);
         $class = trim($this->studentFormClass);
-        if ($name === '') return;
+        if ($raw === '') return;
         if ($class === '') {
-            $this->botSay("Please select a class for **{$name}**.");
+            $this->botSay("Please select a class for **{$raw}**.");
             return;
         }
 
-        $entry = ['name' => $name, 'class' => $class, 'stream' => $this->studentFormStream, 'type' => $this->studentFormType];
+        // Parse optional gender suffix from name — same pattern as actionAddStudent()
+        $gender = null;
+        $name = $raw;
+        if (preg_match('/^(.+?)\s*\((\s*male\s*|\s*female\s*)\)\s*$/i', $raw, $m)) {
+            $name = trim($m[1]);
+            $gender = strtolower(trim($m[2]));
+        }
+
+        $entry = ['name' => $name, 'gender' => $gender, 'class' => $class, 'stream' => $this->studentFormStream, 'type' => $this->studentFormType];
         if ($this->studentFormParent) $entry['parent'] = trim($this->studentFormParent);
         if ($this->studentFormParentPhone) $entry['parent_phone'] = trim($this->studentFormParentPhone);
 
@@ -1594,6 +1602,7 @@ class AgentToshi extends Component
                     $linValues = $this->extractColumnFromFile($this->attachment->getRealPath(), $ext, ['lin', 'learner_id', 'learner_identification_number', 'emis_lin']);
                     $this->actionData['students'] = array_map(fn($i, $r) => [
                         'name' => $r['name'],
+                        'gender' => null,
                         'class' => $r['class'],
                         'stream' => '',
                         'parent' => '',
@@ -4731,9 +4740,14 @@ class AgentToshi extends Component
                         'email' => $sEmail, 'password' => $password,
                         'status' => 'active', 'email_verified' => 1,
                     ]);
+                    $profileGender = is_array($record)
+                        ? (in_array(strtolower(trim($record['gender'] ?? '')), ['male', 'female'])
+                            ? strtolower(trim($record['gender']))
+                            : null)
+                        : null;
                     Userprofile::create([
                         'school_id' => $school->id, 'user_id' => $studentUser->id, 'usergroup_id' => 6,
-                        'firstname' => trim($studentName), 'lastname' => '', 'status' => 'active',
+                        'firstname' => trim($studentName), 'lastname' => '', 'gender' => $profileGender, 'status' => 'active',
                     ]);
 
                     // Assign to correct class based on student's class field

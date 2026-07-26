@@ -72,7 +72,7 @@
         margin-right: 28px !important;
     }
 
-    body .toshi-root {
+    body [data-toshi-root] {
         display: flex;
         flex-direction: column;
         width: 380px;
@@ -111,7 +111,7 @@
         min-height: 0;
     }
 
-    body.toshi-collapsed .toshi-root {
+    body.toshi-collapsed [data-toshi-root] {
         width: 0 !important;
     }
 

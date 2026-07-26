@@ -1,5 +1,6 @@
 <div x-data="{ hasText: false }"
      x-on:toshi-run-plan-step.window="setTimeout(() => $wire.executeNextPlanStep(), 200)"
+     data-toshi-root
      class="toshi-root">
     <div id="toshi-pill"
          wire:click="show"
