@@ -584,7 +584,7 @@ body [data-toshi-root] {
 }
 
 /* ── Pill: bottom of widget (via column-reverse), does NOT steal panel width ── */
-body .toshi-pill {
+body [data-toshi-root] .toshi-pill {
     display: flex;
     flex-shrink: 0;
     z-index: 45;
@@ -592,7 +592,7 @@ body .toshi-pill {
 }
 
 /* ── Panel: fills the fixed [data-toshi-root] container — not independently fixed ── */
-body .toshi-panel {
+body [data-toshi-root] .toshi-panel {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -601,13 +601,13 @@ body .toshi-panel {
     width: 100%;
 }
 @media (min-width: 641px) {
-    .toshi-panel {
+    [data-toshi-root] .toshi-panel {
         border-radius: 16px !important;
     }
 }
 
 /* ── Toggle button: always above [data-toshi-root] so it's clickable ── */
-body .toshi-toggle {
+body [data-toshi-root] .toshi-toggle {
     position: fixed !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
@@ -634,10 +634,10 @@ body.toshi-collapsed [data-toshi-root] {
     border: none !important;
 }
 /* Toggle button: visible only when collapsed (to reopen), hidden when panel is open */
-body:not(.toshi-collapsed) .toshi-toggle {
+body:not(.toshi-collapsed) [data-toshi-root] .toshi-toggle {
     display: none !important;
 }
-body.toshi-collapsed .toshi-toggle {
+body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     display: flex !important;
     right: 24px !important;
 }
@@ -772,7 +772,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Form Components ── */
 
-.toshi-input {
+[data-toshi-root] .toshi-input {
     padding: 8px 12px;
     border: 1px solid var(--toshi-border);
     border-radius: 8px;
@@ -784,7 +784,7 @@ body.toshi-collapsed .toshi-toggle {
     background: var(--d-white);
 }
 
-.toshi-form-card {
+[data-toshi-root] .toshi-form-card {
     background: var(--d-white);
     border: 1px solid var(--toshi-border);
     border-radius: 12px;
@@ -792,7 +792,7 @@ body.toshi-collapsed .toshi-toggle {
     margin: 4px 0;
 }
 
-.toshi-remove-btn {
+[data-toshi-root] .toshi-remove-btn {
     background: none;
     border: none;
     color: #EF4444;
@@ -801,7 +801,7 @@ body.toshi-collapsed .toshi-toggle {
     padding: 2px 4px;
 }
 
-.toshi-btn-primary {
+[data-toshi-root] .toshi-btn-primary {
     flex: 1;
     padding: 10px;
     background: var(--toshi-accent);
@@ -814,11 +814,11 @@ body.toshi-collapsed .toshi-toggle {
     transition: all 0.15s;
 }
 
-.toshi-btn-primary:hover {
+[data-toshi-root] .toshi-btn-primary:hover {
     background: var(--toshi-accent-hover);
 }
 
-.toshi-btn-primary-sm {
+[data-toshi-root] .toshi-btn-primary-sm {
     flex: 1;
     padding: 8px;
     background: var(--toshi-accent);
@@ -831,11 +831,11 @@ body.toshi-collapsed .toshi-toggle {
     transition: all 0.15s;
 }
 
-.toshi-btn-primary-sm:hover {
+[data-toshi-root] .toshi-btn-primary-sm:hover {
     background: var(--toshi-accent-hover);
 }
 
-.toshi-btn-outline {
+[data-toshi-root] .toshi-btn-outline {
     flex: 1;
     padding: 10px;
     background: var(--toshi-warm-bg);
@@ -848,7 +848,7 @@ body.toshi-collapsed .toshi-toggle {
     transition: all 0.15s;
 }
 
-.toshi-btn-outline-sm {
+[data-toshi-root] .toshi-btn-outline-sm {
     flex: 1;
     padding: 8px;
     background: var(--toshi-warm-bg);
@@ -861,11 +861,11 @@ body.toshi-collapsed .toshi-toggle {
     transition: all 0.15s;
 }
 
-.toshi-btn-outline-sm:hover {
+[data-toshi-root] .toshi-btn-outline-sm:hover {
     background: #e8e6dc;
 }
 
-.toshi-option-card {
+[data-toshi-root] .toshi-option-card {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -881,7 +881,7 @@ body.toshi-collapsed .toshi-toggle {
     font-family: "DM Sans", sans-serif;
 }
 
-.toshi-btn-done {
+[data-toshi-root] .toshi-btn-done {
     padding: 8px 12px;
     background: var(--d-green);
     color: white;
@@ -893,7 +893,7 @@ body.toshi-collapsed .toshi-toggle {
     white-space: nowrap;
 }
 
-.toshi-btn-done-sm {
+[data-toshi-root] .toshi-btn-done-sm {
     flex: 1;
     padding: 8px;
     background: var(--d-green);
@@ -905,14 +905,14 @@ body.toshi-collapsed .toshi-toggle {
     cursor: pointer;
 }
 
-.toshi-stat-card {
+[data-toshi-root] .toshi-stat-card {
     background: var(--toshi-warm-bg);
     border-radius: 8px;
     padding: 8px;
     text-align: center;
 }
 
-.toshi-chip {
+[data-toshi-root] .toshi-chip {
     padding: 4px 10px;
     background: var(--toshi-warm-bg);
     border-radius: 6px;
@@ -920,7 +920,7 @@ body.toshi-collapsed .toshi-toggle {
     color: var(--toshi-warm-text);
 }
 
-.toshi-chip-compact {
+[data-toshi-root] .toshi-chip-compact {
     padding: 4px 8px;
     background: var(--toshi-warm-bg);
     border-radius: 6px;
@@ -928,7 +928,7 @@ body.toshi-collapsed .toshi-toggle {
     color: var(--toshi-warm-text);
 }
 
-.toshi-label {
+[data-toshi-root] .toshi-label {
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
@@ -936,19 +936,19 @@ body.toshi-collapsed .toshi-toggle {
     letter-spacing: 0.04em;
 }
 
-.toshi-banner-success {
+[data-toshi-root] .toshi-banner-success {
     background: #F0FDF4;
     border: 1px solid #BBF7D0;
     border-radius: 10px;
     padding: 12px;
 }
 
-.toshi-stat-value {
+[data-toshi-root] .toshi-stat-value {
     font-size: 18px;
     font-weight: 700;
 }
 
-.toshi-section-title {
+[data-toshi-root] .toshi-section-title {
     font-size: 13px;
     font-weight: 600;
     color: var(--toshi-title-text);
@@ -956,7 +956,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Pill ── */
 
-.toshi-pill {
+[data-toshi-root] .toshi-pill {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -971,13 +971,13 @@ body.toshi-collapsed .toshi-toggle {
     transition: all 0.2s ease;
 }
 
-.toshi-pill:hover {
+[data-toshi-root] .toshi-pill:hover {
     box-shadow: 0 6px 32px rgba(0,0,0,0.18);
     transform: translateY(-1px);
     border-color: #16A34A;
 }
 
-.toshi-pill-avatar {
+[data-toshi-root] .toshi-pill-avatar {
     width: 38px;
     height: 38px;
     border-radius: 50%;
@@ -990,12 +990,12 @@ body.toshi-collapsed .toshi-toggle {
     flex-shrink: 0;
 }
 
-.toshi-pill-logo {
+[data-toshi-root] .toshi-pill-logo {
     width: 24px;
     height: 24px;
 }
 
-.toshi-pill-text {
+[data-toshi-root] .toshi-pill-text {
     flex: 1;
     font-size: 13px;
     color: var(--d-muted);
@@ -1003,7 +1003,7 @@ body.toshi-collapsed .toshi-toggle {
     white-space: nowrap;
 }
 
-.toshi-pill-badge {
+[data-toshi-root] .toshi-pill-badge {
     display: flex;
     align-items: center;
     flex-shrink: 0;
@@ -1019,7 +1019,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Panel (non-maximized chat widget) ── */
 
-.toshi-panel {
+[data-toshi-root] .toshi-panel {
     display: flex;
     flex-direction: column;
     width: 400px;
@@ -1033,7 +1033,7 @@ body.toshi-collapsed .toshi-toggle {
 }
 /* Toshi panel: fullscreen on mobile */
 @media (max-width: 640px) {
-    .toshi-panel {
+    [data-toshi-root] .toshi-panel {
         position: fixed;
         inset: 0;
         width: 100vw;
@@ -1044,21 +1044,20 @@ body.toshi-collapsed .toshi-toggle {
         z-index: 9998;
     }
     /* Pin composer to bottom — stays visible when keyboard opens */
-    .toshi-panel .toshi-composer {
+    [data-toshi-root] .toshi-panel .toshi-composer {
         position: sticky;
         bottom: 0;
         z-index: 1;
         background: var(--d-white);
     }
     /* Messages area fills remaining space */
-    .toshi-panel [class*="message"]:not([class*="input"]):not([class*="composer"]),
-    .toshi-panel > div:nth-child(2) {
+    [data-toshi-root] .toshi-panel [class*="message"]:not([class*="input"]):not([class*="composer"]), [data-toshi-root] .toshi-panel > div:nth-child(2) {
         flex: 1;
         overflow-y: auto;
         min-height: 0;
     }
     /* Hide expand/maximize button on mobile — panel is already fullscreen */
-    .toshi-header-btn[title="Expand"] {
+    [data-toshi-root] .toshi-header-btn[title="Expand"] {
         display: none;
     }
 }
@@ -1077,14 +1076,14 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Modal Overlay (maximized) ── */
 
-.toshi-modal-overlay {
+[data-toshi-root] .toshi-modal-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.4);
     z-index: 10000;
 }
 
-.toshi-modal-box {
+[data-toshi-root] .toshi-modal-box {
     width: 90vw;
     height: 85vh;
     max-width: 1200px;
@@ -1095,7 +1094,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Header ── */
 
-.toshi-header-close-btn {
+[data-toshi-root] .toshi-header-close-btn {
     border-radius: 6px;
     background: rgba(0,0,0,0.06);
     border: none;
@@ -1108,7 +1107,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Messages Container ── */
 
-.toshi-messages-area {
+[data-toshi-root] .toshi-messages-area {
     background: var(--d-shell);
     padding: 16px;
     display: flex;
@@ -1121,26 +1120,26 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Step Dots ── */
 
-.toshi-dot {
+[data-toshi-root] .toshi-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     transition: all 0.15s;
 }
 
-.toshi-dot-done {
+[data-toshi-root] .toshi-dot-done {
     background: var(--d-green);
 }
 
-.toshi-dot-current {
+[data-toshi-root] .toshi-dot-current {
     background: var(--toshi-accent);
 }
 
-.toshi-dot-pending {
+[data-toshi-root] .toshi-dot-pending {
     background: var(--toshi-border);
 }
 
-.toshi-dot-overflow {
+[data-toshi-root] .toshi-dot-overflow {
     background: #e8e6dc;
     display: flex;
     align-items: center;
@@ -1154,7 +1153,7 @@ body.toshi-collapsed .toshi-toggle {
     flex-shrink: 0;
 }
 
-.toshi-dot-label {
+[data-toshi-root] .toshi-dot-label {
     font-size: 9px;
     color: var(--d-muted);
     white-space: nowrap;
@@ -1162,7 +1161,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Step Progress Container ── */
 
-.toshi-progress-bar {
+[data-toshi-root] .toshi-progress-bar {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1172,7 +1171,7 @@ body.toshi-collapsed .toshi-toggle {
     border-radius: 8px;
 }
 
-.toshi-progress-dots {
+[data-toshi-root] .toshi-progress-dots {
     display: flex;
     align-items: center;
     gap: 3px;
@@ -1181,7 +1180,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Draft Row ── */
 
-.toshi-draft-row {
+[data-toshi-root] .toshi-draft-row {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1198,13 +1197,13 @@ body.toshi-collapsed .toshi-toggle {
     width: 100%;
 }
 
-.toshi-draft-row:hover {
+[data-toshi-root] .toshi-draft-row:hover {
     border-color: var(--d-green);
 }
 
 /* ── Toshi New School Button ── */
 
-.toshi-btn-new-school {
+[data-toshi-root] .toshi-btn-new-school {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -1220,13 +1219,13 @@ body.toshi-collapsed .toshi-toggle {
     align-self: flex-start;
 }
 
-.toshi-btn-new-school:hover {
+[data-toshi-root] .toshi-btn-new-school:hover {
     background: var(--toshi-accent);
 }
 
 /* ── Toshi Quick Actions Section ── */
 
-.toshi-quick-actions {
+[data-toshi-root] .toshi-quick-actions {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -1235,13 +1234,13 @@ body.toshi-collapsed .toshi-toggle {
     flex-shrink: 0;
 }
 
-.toshi-qaction-label {
+[data-toshi-root] .toshi-qaction-label {
     font-size: 12px;
     font-weight: 600;
     color: #141413;
 }
 
-.toshi-qaction-chips {
+[data-toshi-root] .toshi-qaction-chips {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
@@ -1249,7 +1248,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Confirmation Buttons ── */
 
-.toshi-confirm-row {
+[data-toshi-root] .toshi-confirm-row {
     display: flex;
     gap: 10px;
     padding: 8px 16px;
@@ -1258,7 +1257,7 @@ body.toshi-collapsed .toshi-toggle {
     flex-shrink: 0;
 }
 
-.toshi-confirm-yes {
+[data-toshi-root] .toshi-confirm-yes {
     flex: 1;
     padding: 10px;
     background: var(--d-green);
@@ -1271,11 +1270,11 @@ body.toshi-collapsed .toshi-toggle {
     transition: all 0.15s;
 }
 
-.toshi-confirm-yes:hover {
+[data-toshi-root] .toshi-confirm-yes:hover {
     background: #16A34A;
 }
 
-.toshi-confirm-no {
+[data-toshi-root] .toshi-confirm-no {
     flex: 1;
     padding: 10px;
     background: var(--toshi-warm-bg);
@@ -1288,13 +1287,13 @@ body.toshi-collapsed .toshi-toggle {
     transition: all 0.15s;
 }
 
-.toshi-confirm-no:hover {
+[data-toshi-root] .toshi-confirm-no:hover {
     background: #e8e6dc;
 }
 
 /* ── Toshi Review Card ── */
 
-.toshi-review-section {
+[data-toshi-root] .toshi-review-section {
     font-size: 12px;
     color: var(--toshi-warm-text);
     line-height: 1.5;
@@ -1302,7 +1301,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Review Action Row ── */
 
-.toshi-review-actions {
+[data-toshi-root] .toshi-review-actions {
     display: flex;
     gap: 10px;
     padding: 8px 16px 16px;
@@ -1312,7 +1311,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Bottom Reset Button ── */
 
-.toshi-reset-btn {
+[data-toshi-root] .toshi-reset-btn {
     width: 100%;
     padding: 11px;
     background: #141413;
@@ -1325,19 +1324,19 @@ body.toshi-collapsed .toshi-toggle {
     transition: all 0.2s;
 }
 
-.toshi-reset-btn:hover {
+[data-toshi-root] .toshi-reset-btn:hover {
     background: #4d4c48;
 }
 
 /* ── Toshi Panel Footer Padded ── */
 
-.toshi-panel-footer {
+[data-toshi-root] .toshi-panel-footer {
     padding: 0 16px 16px;
 }
 
 /* ── Toshi Message Row for review/notice messages ── */
 
-.toshi-msg-notice {
+[data-toshi-root] .toshi-msg-notice {
     font-size: 13px;
     color: var(--toshi-warm-text);
     line-height: 1.5;
@@ -1345,36 +1344,36 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Co-Admin Promoted Text ── */
 
-.toshi-success-text {
+[data-toshi-root] .toshi-success-text {
     font-size: 12px;
     color: #166534;
 }
 
-.toshi-password-text {
+[data-toshi-root] .toshi-password-text {
     font-size: 13px;
     color: var(--toshi-warm-text);
 }
 
 /* ── Toshi Stat Card Label ── */
 
-.toshi-stat-label {
+[data-toshi-root] .toshi-stat-label {
     font-size: 10px;
     color: var(--toshi-warm-text);
     font-weight: 500;
 }
 
-.toshi-stat-sub {
+[data-toshi-root] .toshi-stat-sub {
     font-size: 8px;
     color: var(--toshi-label-text);
 }
 
-.toshi-stat-color-green { color: var(--d-green); }
-.toshi-stat-color-amber { color: var(--d-amber); }
-.toshi-stat-color-purple { color: #8B5CF6; }
-.toshi-stat-color-pink { color: #EC4899; }
-.toshi-stat-color-teal { color: #14B8A6; }
+[data-toshi-root] .toshi-stat-color-green { color: var(--d-green); }
+[data-toshi-root] .toshi-stat-color-amber { color: var(--d-amber); }
+[data-toshi-root] .toshi-stat-color-purple { color: #8B5CF6; }
+[data-toshi-root] .toshi-stat-color-pink { color: #EC4899; }
+[data-toshi-root] .toshi-stat-color-teal { color: #14B8A6; }
 
-.toshi-list-item {
+[data-toshi-root] .toshi-list-item {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -1384,24 +1383,24 @@ body.toshi-collapsed .toshi-toggle {
     border-bottom: 1px solid #f5f4ed;
 }
 
-.toshi-flex-row {
+[data-toshi-root] .toshi-flex-row {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 10px;
 }
 
-.toshi-flex-col {
+[data-toshi-root] .toshi-flex-col {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.toshi-ml-auto {
+[data-toshi-root] .toshi-ml-auto {
     margin-left: auto;
 }
 
-.toshi-tag-link {
+[data-toshi-root] .toshi-tag-link {
     font-size: 10px;
     color: var(--toshi-accent);
     text-decoration: none;
@@ -1410,26 +1409,26 @@ body.toshi-collapsed .toshi-toggle {
     border-radius: 6px;
 }
 
-.toshi-sm-text {
+[data-toshi-root] .toshi-sm-text {
     font-size: 11px;
     color: var(--toshi-warm-text);
 }
 
-.toshi-stat-digit {
+[data-toshi-root] .toshi-stat-digit {
     font-size: 10px;
     color: var(--toshi-warm-text);
     font-weight: 500;
 }
 
-.toshi-spacer-8 {
+[data-toshi-root] .toshi-spacer-8 {
     margin-bottom: 8px;
 }
 
-.toshi-gap-3 {
+[data-toshi-root] .toshi-gap-3 {
     margin-top: 3px;
 }
 
-.toshi-uppercase-label {
+[data-toshi-root] .toshi-uppercase-label {
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
@@ -1437,7 +1436,7 @@ body.toshi-collapsed .toshi-toggle {
     color: var(--toshi-warm-text);
 }
 
-.toshi-review-card {
+[data-toshi-root] .toshi-review-card {
     background: var(--d-white);
     border: 1px solid var(--toshi-border);
     border-radius: 16px;
@@ -1446,7 +1445,7 @@ body.toshi-collapsed .toshi-toggle {
     margin: 4px 0;
 }
 
-.toshi-review-header {
+[data-toshi-root] .toshi-review-header {
     background: #141413;
     color: var(--d-white);
     padding: 14px 16px;
@@ -1459,21 +1458,21 @@ body.toshi-collapsed .toshi-toggle {
     gap: 8px;
 }
 
-.toshi-review-body {
+[data-toshi-root] .toshi-review-body {
     padding: 12px 16px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-.toshi-info-card {
+[data-toshi-root] .toshi-info-card {
     flex: 1;
     background: var(--toshi-warm-bg);
     border-radius: 10px;
     padding: 10px 12px;
 }
 
-.toshi-info-label {
+[data-toshi-root] .toshi-info-label {
     font-size: 10px;
     font-weight: 600;
     color: var(--toshi-warm-text);
@@ -1481,20 +1480,20 @@ body.toshi-collapsed .toshi-toggle {
     letter-spacing: 0.04em;
 }
 
-.toshi-info-value {
+[data-toshi-root] .toshi-info-value {
     font-size: 14px;
     font-weight: 600;
     color: var(--toshi-title-text);
     margin-top: 6px;
 }
 
-.toshi-info-sub {
+[data-toshi-root] .toshi-info-sub {
     font-size: 13px;
     color: var(--toshi-warm-text);
     margin-top: 2px;
 }
 
-.toshi-green-label {
+[data-toshi-root] .toshi-green-label {
     font-size: 11px;
     font-weight: 600;
     color: #166534;
@@ -1502,26 +1501,26 @@ body.toshi-collapsed .toshi-toggle {
     letter-spacing: 0.04em;
 }
 
-.toshi-sub-label {
+[data-toshi-root] .toshi-sub-label {
     font-size: 10px;
     color: var(--toshi-label-text);
     margin-bottom: 2px;
 }
 
-.toshi-tiny-note {
+[data-toshi-root] .toshi-tiny-note {
     font-size: 8px;
     color: var(--toshi-label-text);
     margin-top: 2px;
 }
 
-.toshi-progress-step {
+[data-toshi-root] .toshi-progress-step {
     font-size: 10px;
     font-weight: 600;
     color: var(--toshi-warm-text);
     white-space: nowrap;
 }
 
-.toshi-review-actions {
+[data-toshi-root] .toshi-review-actions {
     display: flex;
     gap: 8px;
     padding: 12px 16px;
@@ -1529,29 +1528,29 @@ body.toshi-collapsed .toshi-toggle {
     background: #FAFAFA;
 }
 
-.toshi-review-actions-outside {
+[data-toshi-root] .toshi-review-actions-outside {
     display: flex;
     gap: 8px;
     padding: 4px 0;
 }
 
-.toshi-confirm-full {
+[data-toshi-root] .toshi-confirm-full {
     flex: 1;
     padding: 11px;
     font-family: "Sora", sans-serif;
 }
 
-.toshi-btn-edit {
+[data-toshi-root] .toshi-btn-edit {
     padding: 11px 14px;
 }
 
-.toshi-counts-grid {
+[data-toshi-root] .toshi-counts-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 6px;
 }
 
-.toshi-section-title-sm {
+[data-toshi-root] .toshi-section-title-sm {
     font-size: 12px;
     font-weight: 600;
     color: var(--toshi-title-text);
@@ -1561,20 +1560,20 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Active Student Count ── */
 
-.toshi-active-count {
+[data-toshi-root] .toshi-active-count {
     font-size: 18px;
     font-weight: 700;
 }
 
 /* ── Toshi Composer (panel textarea) ── */
 
-.toshi-composer {
+[data-toshi-root] .toshi-composer {
     flex-shrink: 0;
     padding: 0 16px 12px;
     background: var(--d-white);
 }
 
-.toshi-composer-inner {
+[data-toshi-root] .toshi-composer-inner {
     display: flex;
     align-items: flex-end;
     gap: 2px;
@@ -1585,12 +1584,12 @@ body.toshi-collapsed .toshi-toggle {
     transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.toshi-composer-inner:focus-within {
+[data-toshi-root] .toshi-composer-inner:focus-within {
     border-color: #e2e1dc;
     box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
 }
 
-.toshi-attach-btn {
+[data-toshi-root] .toshi-attach-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1604,12 +1603,12 @@ body.toshi-collapsed .toshi-toggle {
     align-self: center;
 }
 
-.toshi-attach-btn:hover {
+[data-toshi-root] .toshi-attach-btn:hover {
     color: #c96442;
     background: rgba(0,0,0,0.04);
 }
 
-.toshi-composer-input {
+[data-toshi-root] .toshi-composer-input {
     flex: 1;
     border: none;
     outline: none;
@@ -1624,19 +1623,17 @@ body.toshi-collapsed .toshi-toggle {
     max-height: 160px;
 }
 
-.toshi-composer-input::placeholder {
+[data-toshi-root] .toshi-composer-input::placeholder {
     color: var(--d-muted);
 }
 
 /* Nuke ALL browser focus rings - Chrome, Safari, Firefox, Edge */
-.toshi-composer-inner:focus-within {
+[data-toshi-root] .toshi-composer-inner:focus-within {
     border-color: var(--toshi-border);
     box-shadow: none !important;
     -webkit-box-shadow: none !important;
 }
-.toshi-composer-input:focus,
-.toshi-composer-input:focus-visible,
-.toshi-composer-input:focus-within {
+[data-toshi-root] .toshi-composer-input:focus, [data-toshi-root] .toshi-composer-input:focus-visible, [data-toshi-root] .toshi-composer-input:focus-within {
     outline: 0 !important;
     outline-width: 0 !important;
     outline-style: none !important;
@@ -1650,7 +1647,7 @@ body.toshi-collapsed .toshi-toggle {
 
 /* ── Toshi Panel Header ── */
 
-.toshi-header {
+[data-toshi-root] .toshi-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1661,32 +1658,32 @@ body.toshi-collapsed .toshi-toggle {
     min-height: 52px;
 }
 
-.toshi-header-logo {
+[data-toshi-root] .toshi-header-logo {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.toshi-header-logo img {
+[data-toshi-root] .toshi-header-logo img {
     width: 24px;
     height: 24px;
     border-radius: 2px;
 }
 
-.toshi-header-logo span {
+[data-toshi-root] .toshi-header-logo span {
     font-family: 'Sora', sans-serif;
     font-size: 15px;
     font-weight: 700;
     color: var(--toshi-title-text);
 }
 
-.toshi-header-actions {
+[data-toshi-root] .toshi-header-actions {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.toshi-header-btn {
+[data-toshi-root] .toshi-header-btn {
     border-radius: 8px;
     background: transparent;
     border: none;
@@ -1700,21 +1697,21 @@ body.toshi-collapsed .toshi-toggle {
     color: #5e5d59;
 }
 
-.toshi-header-btn:hover {
+[data-toshi-root] .toshi-header-btn:hover {
     background: rgba(0,0,0,0.06);
     color: #141413;
 }
 
 /* ── Toshi Composer (modal textarea) ── */
 
-.toshi-composer-box {
+[data-toshi-root] .toshi-composer-box {
     border: 1px solid var(--toshi-border);
     border-radius: 12px;
     background: var(--d-white);
     overflow: hidden;
 }
 
-.toshi-composer-textarea {
+[data-toshi-root] .toshi-composer-textarea {
     flex: 1;
     border: none;
     font-size: 14px;
@@ -1728,9 +1725,7 @@ body.toshi-collapsed .toshi-toggle {
     min-height: 24px;
     max-height: 320px;
 }
-.toshi-composer-textarea:focus,
-.toshi-composer-textarea:focus-visible,
-.toshi-composer-textarea:focus-within {
+[data-toshi-root] .toshi-composer-textarea:focus, [data-toshi-root] .toshi-composer-textarea:focus-visible, [data-toshi-root] .toshi-composer-textarea:focus-within {
     outline: 0 !important;
     outline-width: 0 !important;
     outline-style: none !important;
@@ -1742,7 +1737,7 @@ body.toshi-collapsed .toshi-toggle {
     -webkit-tap-highlight-color: transparent !important;
 }
 
-.toshi-composer-textarea::placeholder {
+[data-toshi-root] .toshi-composer-textarea::placeholder {
     color: var(--d-muted);
 }
 
@@ -2417,7 +2412,7 @@ body.toshi-collapsed .toshi-toggle {
 }
 
 /* ── Toshi Suggestion Chips (Phase A) ── */
-.toshi-suggestions-wrapper {
+[data-toshi-root] .toshi-suggestions-wrapper {
     padding: 8px 0;
     transition: opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease;
     overflow: hidden;
@@ -2425,13 +2420,13 @@ body.toshi-collapsed .toshi-toggle {
     opacity: 1;
     margin-bottom: 0;
 }
-.toshi-suggestions-wrapper.toshi-suggestions-hidden {
+[data-toshi-root] .toshi-suggestions-wrapper.toshi-suggestions-hidden {
     max-height: 0;
     opacity: 0;
     margin-bottom: -8px;
     pointer-events: none;
 }
-.toshi-suggestions-scroll {
+[data-toshi-root] .toshi-suggestions-scroll {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -2442,10 +2437,10 @@ body.toshi-collapsed .toshi-toggle {
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x proximity;
 }
-.toshi-suggestions-scroll::-webkit-scrollbar {
+[data-toshi-root] .toshi-suggestions-scroll::-webkit-scrollbar {
     display: none;
 }
-.toshi-chip-suggestion {
+[data-toshi-root] .toshi-chip-suggestion {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -2468,27 +2463,27 @@ body.toshi-collapsed .toshi-toggle {
     appearance: none;
     outline: none;
 }
-.toshi-chip-suggestion:hover {
+[data-toshi-root] .toshi-chip-suggestion:hover {
     border-color: var(--d-border-strong);
     background: #EEF2F6;
 }
-.toshi-chip-suggestion:focus-visible {
+[data-toshi-root] .toshi-chip-suggestion:focus-visible {
     box-shadow: 0 0 0 2px var(--d-white), 0 0 0 4px var(--d-green);
 }
-.toshi-chip-suggestion .toshi-chip-icon {
+[data-toshi-root] .toshi-chip-suggestion .toshi-chip-icon {
     font-size: 16px;
     line-height: 1;
     flex-shrink: 0;
 }
-.toshi-chip-suggestion.toshi-chip-used {
+[data-toshi-root] .toshi-chip-suggestion.toshi-chip-used {
     opacity: 0.5;
 }
-.toshi-chip-suggestion.toshi-chip-used:hover {
+[data-toshi-root] .toshi-chip-suggestion.toshi-chip-used:hover {
     opacity: 0.65;
 }
 
 /* ── Toshi Tool Confirmation Card (Phase B) ── */
-.toshi-confirm-card {
+[data-toshi-root] .toshi-confirm-card {
     background: var(--d-white);
     border-radius: 16px;
     border: 1px solid var(--d-border);
@@ -2497,7 +2492,7 @@ body.toshi-collapsed .toshi-toggle {
     margin-top: 8px;
     overflow: hidden;
 }
-.toshi-confirm-card::before {
+[data-toshi-root] .toshi-confirm-card::before {
     content: '';
     position: absolute;
     top: 0;
@@ -2507,14 +2502,14 @@ body.toshi-collapsed .toshi-toggle {
     background: var(--d-green);
     transition: background 0.4s ease;
 }
-.toshi-confirm-card-header {
+[data-toshi-root] .toshi-confirm-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px 0 20px;
     gap: 12px;
 }
-.toshi-confirm-card-title {
+[data-toshi-root] .toshi-confirm-card-title {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -2524,7 +2519,7 @@ body.toshi-collapsed .toshi-toggle {
     color: var(--d-text);
     line-height: 1.4;
 }
-.toshi-confirm-card-icon {
+[data-toshi-root] .toshi-confirm-card-icon {
     width: 28px;
     height: 28px;
     border-radius: 8px;
@@ -2536,7 +2531,7 @@ body.toshi-collapsed .toshi-toggle {
     color: #16A34A;
     font-size: 14px;
 }
-.toshi-confirm-cancelled-badge {
+[data-toshi-root] .toshi-confirm-cancelled-badge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -2551,20 +2546,20 @@ body.toshi-collapsed .toshi-toggle {
     color: #92400E;
     white-space: nowrap;
 }
-.toshi-confirm-card-body {
+[data-toshi-root] .toshi-confirm-card-body {
     padding: 12px 20px 16px 20px;
 }
-.toshi-confirm-param-list {
+[data-toshi-root] .toshi-confirm-param-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
-.toshi-confirm-param-row {
+[data-toshi-root] .toshi-confirm-param-row {
     display: flex;
     align-items: baseline;
     gap: 12px;
 }
-.toshi-confirm-param-label {
+[data-toshi-root] .toshi-confirm-param-label {
     font-family: 'DM Sans', sans-serif;
     font-size: 12px;
     font-weight: 500;
@@ -2574,19 +2569,19 @@ body.toshi-collapsed .toshi-toggle {
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
-.toshi-confirm-param-value {
+[data-toshi-root] .toshi-confirm-param-value {
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     font-weight: 500;
     color: var(--d-text);
     line-height: 1.4;
 }
-.toshi-confirm-card-footer {
+[data-toshi-root] .toshi-confirm-card-footer {
     padding: 0 20px 16px 20px;
     display: flex;
     gap: 10px;
 }
-.toshi-confirm-btn {
+[data-toshi-root] .toshi-confirm-btn {
     flex: 1;
     display: inline-flex;
     align-items: center;
@@ -2603,43 +2598,43 @@ body.toshi-collapsed .toshi-toggle {
     min-height: 48px;
     -webkit-tap-highlight-color: transparent;
 }
-.toshi-confirm-btn:focus-visible {
+[data-toshi-root] .toshi-confirm-btn:focus-visible {
     outline: 2px solid var(--d-blue);
     outline-offset: 2px;
 }
-.toshi-confirm-btn-yes {
+[data-toshi-root] .toshi-confirm-btn-yes {
     background: var(--d-green);
     color: white;
     border-color: var(--d-green);
 }
-.toshi-confirm-btn-yes:hover {
+[data-toshi-root] .toshi-confirm-btn-yes:hover {
     background: #16A34A;
     border-color: #16A34A;
 }
-.toshi-confirm-btn-no {
+[data-toshi-root] .toshi-confirm-btn-no {
     background: var(--d-white);
     color: var(--d-text);
     border-color: var(--d-border-strong);
 }
-.toshi-confirm-btn-no:hover {
+[data-toshi-root] .toshi-confirm-btn-no:hover {
     background: #F8FAFC;
     border-color: var(--d-text-secondary);
 }
-.toshi-confirm-card.is-cancelled::before {
+[data-toshi-root] .toshi-confirm-card.is-cancelled::before {
     background: var(--d-amber);
 }
-.toshi-confirm-card.is-cancelled {
+[data-toshi-root] .toshi-confirm-card.is-cancelled {
     opacity: 0.85;
 }
-.toshi-confirm-card.is-cancelled .toshi-confirm-param-value {
+[data-toshi-root] .toshi-confirm-card.is-cancelled .toshi-confirm-param-value {
     text-decoration: line-through;
     color: var(--d-text-secondary);
 }
-.toshi-confirm-card.is-cancelled .toshi-confirm-card-icon {
+[data-toshi-root] .toshi-confirm-card.is-cancelled .toshi-confirm-card-icon {
     background: #FEF3C7;
     color: #D97706;
 }
-.toshi-confirm-cancelled-msg {
+[data-toshi-root] .toshi-confirm-cancelled-msg {
     flex: 1;
     display: flex;
     align-items: center;
@@ -2653,61 +2648,61 @@ body.toshi-collapsed .toshi-toggle {
     min-height: 48px;
 }
 @media (max-width: 480px) {
-    .toshi-confirm-card-header {
+    [data-toshi-root] .toshi-confirm-card-header {
         padding: 14px 14px 0 14px;
     }
-    .toshi-confirm-card-title {
+    [data-toshi-root] .toshi-confirm-card-title {
         font-size: 14px;
     }
-    .toshi-confirm-card-body {
+    [data-toshi-root] .toshi-confirm-card-body {
         padding: 10px 14px 14px 14px;
     }
-    .toshi-confirm-param-row {
+    [data-toshi-root] .toshi-confirm-param-row {
         flex-direction: column;
         gap: 2px;
     }
-    .toshi-confirm-param-label {
+    [data-toshi-root] .toshi-confirm-param-label {
         min-width: unset;
         font-size: 11px;
     }
-    .toshi-confirm-param-value {
+    [data-toshi-root] .toshi-confirm-param-value {
         font-size: 14px;
     }
-    .toshi-confirm-card-footer {
+    [data-toshi-root] .toshi-confirm-card-footer {
         padding: 0 14px 14px 14px;
         flex-direction: column;
     }
-    .toshi-confirm-btn {
+    [data-toshi-root] .toshi-confirm-btn {
         width: 100%;
     }
 }
 
 /* ── Plan Card (Phase 3) ── */
-.toshi-plan-card {
+[data-toshi-root] .toshi-plan-card {
     background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
     border: 1px solid #BAE6FD;
     border-radius: 12px;
     overflow: hidden;
     margin-top: 8px;
 }
-.toshi-plan-card-header {
+[data-toshi-root] .toshi-plan-card-header {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 12px 14px 8px 14px;
 }
-.toshi-plan-card-icon {
+[data-toshi-root] .toshi-plan-card-icon {
     font-size: 18px;
     line-height: 1;
 }
-.toshi-plan-card-title {
+[data-toshi-root] .toshi-plan-card-title {
     flex: 1;
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     font-weight: 700;
     color: #0369A1;
 }
-.toshi-plan-card-count {
+[data-toshi-root] .toshi-plan-card-count {
     font-family: 'DM Sans', sans-serif;
     font-size: 11px;
     font-weight: 600;
@@ -2716,13 +2711,13 @@ body.toshi-collapsed .toshi-toggle {
     padding: 2px 8px;
     border-radius: 10px;
 }
-.toshi-plan-card-steps {
+[data-toshi-root] .toshi-plan-card-steps {
     padding: 4px 14px 8px 14px;
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
-.toshi-plan-step {
+[data-toshi-root] .toshi-plan-step {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -2732,47 +2727,47 @@ body.toshi-collapsed .toshi-toggle {
     font-size: 13px;
     transition: background 0.15s ease;
 }
-.toshi-plan-step.step-pending {
+[data-toshi-root] .toshi-plan-step.step-pending {
     color: #0F172A;
     background: transparent;
 }
-.toshi-plan-step.step-active {
+[data-toshi-root] .toshi-plan-step.step-active {
     color: #0369A1;
     background: #BAE6FD;
     font-weight: 600;
 }
-.toshi-plan-step.step-completed {
+[data-toshi-root] .toshi-plan-step.step-completed {
     color: #166534;
     background: #DCFCE7;
 }
-.toshi-plan-step.step-failed {
+[data-toshi-root] .toshi-plan-step.step-failed {
     color: #991B1B;
     background: #FEE2E2;
 }
-.toshi-plan-step-icon {
+[data-toshi-root] .toshi-plan-step-icon {
     font-size: 14px;
     width: 20px;
     text-align: center;
     flex-shrink: 0;
 }
-.toshi-plan-step-num {
+[data-toshi-root] .toshi-plan-step-num {
     font-weight: 600;
     min-width: 20px;
     flex-shrink: 0;
     color: var(--d-text-secondary);
 }
-.toshi-plan-step.step-active .toshi-plan-step-num {
+[data-toshi-root] .toshi-plan-step.step-active .toshi-plan-step-num {
     color: #0369A1;
 }
-.toshi-plan-step-label {
+[data-toshi-root] .toshi-plan-step-label {
     flex: 1;
 }
-.toshi-plan-card-footer {
+[data-toshi-root] .toshi-plan-card-footer {
     display: flex;
     gap: 8px;
     padding: 4px 14px 12px 14px;
 }
-.toshi-plan-btn {
+[data-toshi-root] .toshi-plan-btn {
     flex: 1;
     padding: 8px 16px;
     border-radius: 8px;
@@ -2787,21 +2782,21 @@ body.toshi-collapsed .toshi-toggle {
     justify-content: center;
     gap: 6px;
 }
-.toshi-plan-btn-execute {
+[data-toshi-root] .toshi-plan-btn-execute {
     background: #0284C7;
     color: #fff;
 }
-.toshi-plan-btn-execute:hover {
+[data-toshi-root] .toshi-plan-btn-execute:hover {
     background: #0369A1;
 }
-.toshi-plan-btn-cancel {
+[data-toshi-root] .toshi-plan-btn-cancel {
     background: #F1F5F9;
     color: #475569;
 }
-.toshi-plan-btn-cancel:hover {
+[data-toshi-root] .toshi-plan-btn-cancel:hover {
     background: #E2E8F0;
 }
-.toshi-plan-card-done {
+[data-toshi-root] .toshi-plan-card-done {
     flex: 1;
     text-align: center;
     font-family: 'DM Sans', sans-serif;
@@ -2810,7 +2805,7 @@ body.toshi-collapsed .toshi-toggle {
     color: #166534;
     padding: 8px;
 }
-.toshi-plan-card-processing {
+[data-toshi-root] .toshi-plan-card-processing {
     flex: 1;
     font-family: 'DM Sans', sans-serif;
     font-size: 13px;
@@ -2820,7 +2815,7 @@ body.toshi-collapsed .toshi-toggle {
     align-items: center;
     gap: 6px;
 }
-.toshi-plan-card-processing::before {
+[data-toshi-root] .toshi-plan-card-processing::before {
     content: '';
     display: inline-block;
     width: 14px;

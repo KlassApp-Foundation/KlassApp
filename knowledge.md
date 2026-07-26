@@ -21,7 +21,7 @@
 
 ### Git
 - **Branch**: `main`
-- **HEAD**: `961f84b` (knowledge.md stale — local HEAD is `1ba5bea` before this session's work)
+- **HEAD**: `8e4a93d` — fix(gender): persist gender in commitAll() bulk student path
 - **Latest work (Jul 26, gender fix)**: Fixed gender persistence gap in commitAll() — bulk student onboarding path now parses `(male)/(female)` suffix from names.
 - **Latest work (Jul 26, partial CSS scoping)**: Renamed `.toshi-root` class → `[data-toshi-root]` attribute across 4 CSS/Blade files (root-positioning selectors only).
 - **Latest work (Jul 26, scoping audit)**: Discovered the `[data-toshi-root]` change only covers 4 root-positioning selectors — **222 bare `.toshi-*` child selectors remain unscoped**. Full scoping pass deferred.

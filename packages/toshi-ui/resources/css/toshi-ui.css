@@ -8,7 +8,7 @@
 :root { --nav-height: 83px; }
 
 /* ── Toggle wrapper: zero-width flex child that expands to 28px when collapsed ── */
-.toshi-toggle-wrapper {
+[data-toshi-root] .toshi-toggle-wrapper {
     width: 0;
     flex-shrink: 0;
     overflow: visible;
@@ -76,7 +76,7 @@
         z-index: auto !important;
     }
 
-    .toshi-panel {
+    [data-toshi-root] .toshi-panel {
         position: relative !important;
         top: auto !important;
         right: auto !important;
@@ -94,7 +94,7 @@
         transition: none !important;
     }
 
-    .toshi-messages-area {
+    [data-toshi-root] .toshi-messages-area {
         flex: 1;
         overflow-y: auto;
         min-height: 0;
@@ -104,19 +104,19 @@
         width: 0 !important;
     }
 
-    body.toshi-collapsed .toshi-panel {
+    body.toshi-collapsed [data-toshi-root] .toshi-panel {
         transform: none !important;
         border-left: none !important;
         box-shadow: none !important;
     }
 
     /* ── Toggle wrapper expands to 28px when collapsed ── */
-    body.toshi-collapsed .toshi-toggle-wrapper {
+    body.toshi-collapsed [data-toshi-root] .toshi-toggle-wrapper {
         width: 28px !important;
     }
 
     /* ── Toggle positioned inside wrapper — never overlaps content ── */
-    .toshi-toggle-wrapper .toshi-toggle {
+    [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle {
         position: absolute;
         right: 0;
         top: 50%;
@@ -137,25 +137,25 @@
         user-select: none;
         transition: width 0.2s ease, box-shadow 0.2s ease;
     }
-    .toshi-toggle-wrapper .toshi-toggle:hover {
+    [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle:hover {
         width: 36px;
         box-shadow: -4px 0 16px rgba(34,197,94,0.45);
         color: #FFFFFF;
     }
 
     /* ── Override dashboard-refresh.css display rules (higher specificity) ── */
-    body:not(.toshi-collapsed) .toshi-toggle-wrapper .toshi-toggle {
+    body:not(.toshi-collapsed) [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle {
         display: none !important;
     }
-    body.toshi-collapsed .toshi-toggle-wrapper .toshi-toggle {
+    body.toshi-collapsed [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle {
         display: flex !important;
         right: 0 !important;
     }
 
-    .toshi-pill {
+    [data-toshi-root] .toshi-pill {
         display: none !important;
     }
-    body.toshi-collapsed .toshi-pill {
+    body.toshi-collapsed [data-toshi-root] .toshi-pill {
         display: flex !important;
         position: fixed;
         bottom: 24px;
@@ -163,7 +163,7 @@
         z-index: 9999;
     }
 
-    .toshi-panel::before {
+    [data-toshi-root] .toshi-panel::before {
         content: '';
         position: absolute;
         top: 0;
@@ -284,7 +284,7 @@
 }
 
 /* ── Toshi Suggestion Chips (Pulse) ── */
-.toshi-suggestion-chip {
+[data-toshi-root] .toshi-suggestion-chip {
     display: inline-block;
     padding: 6px 14px;
     border: 1.5px solid #22C55E;
@@ -296,10 +296,10 @@
     transition: all 0.15s ease;
     font-family: 'DM Sans', sans-serif;
 }
-.toshi-suggestion-chip:hover {
+[data-toshi-root] .toshi-suggestion-chip:hover {
     background: rgba(34,197,94,0.08);
 }
-.toshi-suggestion-chip:active {
+[data-toshi-root] .toshi-suggestion-chip:active {
     background: rgba(34,197,94,0.15);
 }
 
