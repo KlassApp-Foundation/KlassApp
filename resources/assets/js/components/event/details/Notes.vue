@@ -54,21 +54,21 @@
     </div>
 </div>
      <modal v-if="showModalClearCompleted" @close="showModalClearCompleted=false">
-        <template slot="header">
+        <template v-slot:header>
             Warning
         </template>
         You're about to delete all the completed ToDo's in the list
-        <template slot="footer">
+        <template v-slot:footer>
             <button class="button is-danger" @click="clearCompleted(),showModalClearCompleted=false">Confirm</button>
             <button class="button" @click="showModalClearCompleted=false">Cancel</button>
         </template>
     </modal>
     <modal v-if="showModalClearAll" @close="showModalClearAll=false">
-        <template slot="header">
+        <template v-slot:header>
             Warning
         </template>
         You're about to delete all the ToDo's in the list
-        <template slot="footer">
+        <template v-slot:footer>
             <button class="button is-danger" @click="clearList(),showModalClearAll=false">Confirm</button>
             <button class="button" @click="showModalClearAll=false">Cancel</button>
         </template>

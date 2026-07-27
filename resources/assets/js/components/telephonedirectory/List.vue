@@ -16,7 +16,7 @@
         </div>
 
         <vue-good-table :columns="columns" :rows="rows" :totalRows="Object.keys(rows).length" :isLoading="isLoading" :paginationOptions="{ enabled: true, perPage: 10, setCurrentPage: 1, mode: 'pages'}"> 
-            <template slot="table-row" slot-scope="props">
+            <template v-slot:table-row="props">
                 <div class="w-full flex justify-between">
                     <div v-if="props.column.field == 'name'" class="w-full flex justify-between">
                         <p>{{ props.row.name }}</p>

@@ -33,7 +33,7 @@
           将视频拖到此处，或
           <em>点击上传</em>
         </div>
-        <div class="el-upload__tip" slot="tip" v-if="showTip">
+        <template v-slot:tip><div class="el-upload__tip" v-if="showTip">
           请上传
           <span style="color: #f56c6c;"
             >&nbsp;{{
@@ -45,7 +45,7 @@
             <span style="color: #f56c6c;">{{ fileSize }}</span
             >&nbsp;MB
           </template>
-        </div>
+        </div></template>
       </template>
     </Upload>
 
