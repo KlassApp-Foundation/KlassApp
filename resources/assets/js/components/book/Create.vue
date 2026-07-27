@@ -180,7 +180,7 @@
                         <div class="w-full lg:w-1/4">
                             <label
                                 for="cover_image"
-                                v-model="cover_image"
+                               
                                 class="tw-form-label"
                                 >Upload Cover Image</label
                             >
@@ -254,74 +254,3 @@
         </div>
     </div>
 </template>
-
-<script>
-export default {
-    props: [],
-    data() {
-        return {
-            book: [],
-            categorylist: [],
-            category_id: "",
-            title: "",
-            author: "",
-            isbn_number: "",
-            book_code: "",
-            cover_image: "",
-            quantity: "",
-            errors: [],
-            success: null,
-        };
-    },
-
-    methods: {
-        reset() {
-            this.category_id = "";
-            (this.title = ""), (this.author = ""), (this.isbn_number = "");
-            this.book_code = "";
-            this.cover_image = "";
-            this.quantity = "";
-        },
-
-        checkForm() {
-            this.errors = [];
-            this.success = null;
-
-            let formData = new FormData();
-
-            formData.append("category_id", this.category_id);
-            formData.append("title", this.title);
-            formData.append("author", this.author);
-            formData.append("isbn_number", this.isbn_number);
-            formData.append("book_code", this.book_code);
-            formData.append("cover_image", this.cover_image);
-            formData.append("quantity", this.quantity);
-
-            axios
-                .post("/library/books/add", formData, {
-                    headers: { "Content-Type": "multipart/form-data" },
-                })
-                .then((response) => {
-                    this.success = response.data.success;
-                    this.reset();
-                })
-                .catch((error) => {
-                    this.errors = error.response.data.errors;
-                });
-        },
-
-        OnImageSelected(event) {
-            this.cover_image = event.target.files[0];
-        },
-
-        getData() {
-            axios.get("/library/bookscategory/list").then((response) => {
-                this.categorylist = response.data.data;
-            });
-        },
-    },
-    created() {
-        this.getData();
-    },
-};
-</script>

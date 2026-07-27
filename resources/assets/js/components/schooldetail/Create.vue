@@ -213,7 +213,7 @@
                     <div class="mb-2">
                         <label
                             for="school_logo"
-                            v-model="school_logo"
+                           
                             class="tw-form-label"
                             >School Logo<span class="text-red-500"
                                 >*</span
@@ -402,101 +402,3 @@
         </portal>
     </div>
 </template>
-
-<script>
-export default {
-    props: [],
-
-    data() {
-        return {
-            list: [],
-            name: "",
-            moto: "",
-            affiliated_by: "",
-            center_no: "",
-            date_of_establishment: "",
-            board: "",
-            school_logo: "",
-            landline_no: "",
-            about_us: "",
-            country_id: 7,
-            city_id: "",
-            pincode: "",
-            countrylist: [],
-            citylist: [],
-            boardlist: [
-                {
-                    id: "uneb",
-                    name: "UNEB (Uganda National Examinations Board)",
-                },
-                { id: "cambridge", name: "Cambridge International (CIE)" },
-                { id: "ib", name: "International Baccalaureate (IB)" },
-                { id: "montessori", name: "Montessori" },
-                { id: "other", name: "Other / Custom Curriculum" },
-            ],
-            errors: [],
-            success: null,
-        };
-    },
-
-    methods: {
-        getData() {
-            axios.get("/admin/schooldetails/list").then((response) => {
-                this.list = response.data;
-                //console.log(this.list)
-                this.setData();
-            });
-        },
-
-        setData() {
-            if (Object.keys(this.list).length > 0) {
-                this.name = this.list.school_name;
-                this.countrylist = this.list.countrylist;
-            this.citylist = this.list.citylist;
-            }
-        },
-
-        submitForm() {
-            this.errors = [];
-            this.success = null;
-
-            let formData = new FormData();
-
-            formData.append("name", this.name);
-            formData.append("moto", this.moto);
-            formData.append("affiliated_by", this.affiliated_by);
-            formData.append("center_no", this.center_no);
-            formData.append(
-                "date_of_establishment",
-                this.date_of_establishment
-            );
-            formData.append("board", this.board);
-            formData.append("school_logo", this.school_logo);
-            formData.append("landline_no", this.landline_no);
-            formData.append("about_us", this.about_us);
-            formData.append("country_id", this.country_id);
-            formData.append("city_id", this.city_id);
-            formData.append("pincode", this.pincode);
-
-            axios
-                .post("/admin/schooldetails/create/validationStore", formData, {
-                    headers: { "Content-Type": "multipart/form-data" },
-                })
-                .then((response) => {
-                    $("#submit-btn").click();
-                })
-                .catch((error) => {
-                    this.errors = error.response.data.errors;
-                });
-        },
-
-        OnImageSelected(event) {
-            this.school_logo = event.target.files[0];
-        },
-    },
-
-    created() {
-        this.getData();
-    },
-};
-</script>

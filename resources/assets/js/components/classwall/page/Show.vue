@@ -25,9 +25,7 @@
          			<div class="py-2">
 		            	<img class="card-img-top w-20 h-20" :src="page.cover_image">
 		        	</div> 
-		        	<p class="text-sm text-gray-700 flex items-center py-2" v-html="page.description">
-		            	{{ page.description }}
-		          	</p>
+		        	<p class="text-sm text-gray-700 flex items-center py-2" v-html="page.description"></p>
 		          	<ul class="list-reset leading-loose my-2 text-xs">
 		          		<li class="flex py-1 items-center justify-between">
 		          		<div class="flex items-center">
@@ -74,94 +72,3 @@
 		</div>
 	</div>
 </template>
-
-<script>
-	export default{
-		props:['url' , 'id' , 'entity_id' , 'entity_name' , 'mode'],
-		data() {
-			return{
-				page:[],
-				errors:[],
-				success:null,
-			}
-		},
-
-		methods:
-		{
-			getData()
-			{
-				axios.get(this.url+'/'+this.mode+'/classwall/page/showList/'+this.id).then(response => {
-					this.page = response.data;
-				});
-			},
-
-			following(id,val)
-			{
-			    this.errors=[];
-		        this.success=null;
-
-		        let formData=new FormData(); 
-
-		        formData.append('is_following',val);
-
-		        axios.post(this.url+'/'+this.mode+'/classwall/page/follow/'+id,formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {  
-		          	this.success = response.data.success;
-		          	window.location.reload();
-		        }).catch(error => {
-		          	this.errors = error.response.data.errors;
-		        });
-			},
-
-			like(id,val)
-			{
-			    this.errors=[];
-		        this.success=null;
-
-		        let formData=new FormData(); 
-
-		        formData.append('like',val);
-
-		        axios.post(this.url+'/'+this.mode+'/classwall/page/like/'+id,formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {  
-		          	this.success = response.data.success;
-		          	window.location.reload();
-		        }).catch(error => {
-		          	this.errors = error.response.data.errors;
-		        });
-			},
-
-			dislike(id,val)
-			{
-			    this.errors=[];
-		        this.success=null;
-
-		        let formData=new FormData(); 
-
-		        formData.append('dislike',val);
-
-		        axios.post(this.url+'/'+this.mode+'/classwall/page/dislike/'+id,formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {  
-		          	this.success = response.data.success;
-		          	window.location.reload();
-		        }).catch(error => {
-		          	this.errors = error.response.data.errors;
-		        });
-			},
-
-			showsidebar(id)
-			{
-			    if($('#'+id).hasClass('hidden'))
-			    {
-			      $('#'+id).removeClass('hidden').addClass('block');
-			    }
-			    else
-			    {
-			      $('#'+id).removeClass('block').addClass('hidden');
-			    }
-			},
-		},
-
-		created()
-		{
-			this.getData();
-		}
-	}
-</script>

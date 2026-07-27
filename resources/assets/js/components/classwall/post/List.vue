@@ -37,7 +37,7 @@
                 </div>
                 <div class="flex text-xs justify-between flex-col lg:flex-row w-11/12">
                     <div class="py-2 lg:py-2">
-                        <p class="text-gray-800 text-sm" v-html="post.description">{{ post.description }}</p>
+                        <p class="text-gray-800 text-sm" v-html="post.description"></p>
                     </div>   
                 </div>
 
@@ -53,83 +53,3 @@
         </div>
     </div>
 </template>
-
-<script>
-    export default{
-        props:['url' , 'entity_id' , 'entity_name' , 'mode' , 'auth_id' , 'id' , 'hidecolumns' , 'type'],
-        data(){
-            return{
-                posts:[],
-                errors:[],
-                success:null,
-            }
-        },
-        methods:
-        {
-            getData(link)
-            {
-                axios.get(link).then(response => {
-                    this.posts = response.data.data;
-                    //console.log(this.posts)
-                });
-            },
-
-            deletePost(id)
-            {
-                var thisswal = this;
-                swal({
-                    title: 'Are you sure',
-                    text: 'Do you want to delete this Post ?',
-                    icon: "info",
-                    buttons: [
-                      'No',
-                      'Yes'
-                    ],
-                    dangerMode: true,
-                  }).then(function(isConfirm) {
-                    if (isConfirm) 
-                    {
-                      axios.get(thisswal.url+'/'+thisswal.mode+'/classwall/post/delete/'+ id).then(response => {
-                        thisswal.success = response.data.success;
-                        window.location.reload();
-                      }); 
-                    }
-                    else 
-                    {
-                      swal("Cancelled");
-                    }
-                });
-            },
-
-            showsidebar(id)
-            {
-                if($('#'+id+'_post').hasClass('hidden'))
-                {
-                  $('#'+id+'_post').removeClass('hidden').addClass('block');
-                }
-                else
-                {
-                  $('#'+id+'_post').removeClass('block').addClass('hidden');
-                }
-            }
-        },
-        created()
-        {
-            if( (this.hidecolumns == true) || (this.hidecolumns == 'true') )
-            {
-                this.getData(this.url+'/'+this.mode+'/standardLink/show/classwall/'+this.id);
-            } 
-            else if( (this.hidecolumns == false) || (this.hidecolumns == 'false') )
-            {
-                if(this.type == 'page')
-                {
-                    this.getData(this.url+'/'+this.mode+'/classwall/post/list?entity_id='+this.entity_id+'&entity_name='+this.entity_name);
-                }
-                else
-                {
-                    this.getData(this.url+'/'+this.mode+'/classwall/post/list');
-                }
-            }
-        }
-    }
-</script>

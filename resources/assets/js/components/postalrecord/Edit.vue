@@ -165,7 +165,7 @@
         <div class="tw-form-group w-full lg:w-3/4 md:w-5/6">
           <div class="lg:mr-8">
             <div class="mb-2">
-                <label for="attachment" v-model="attachment" class="tw-form-label">Attachment</label>
+                <label for="attachment" class="tw-form-label">Attachment</label>
             </div>
             <div class="mb-2">
               <input type="file" name="attachment" @change="OnFileSelected" id="attachment" class="tw-form-control w-full">
@@ -184,109 +184,3 @@
     </div>
   </div>
 </template>
-
-<script>
-  export default {
-    props:['url','id','mode'],
-    data(){
-      return{
-        postalrecord:[],
-      
-        type:'',
-        reference_number:'',
-        confidential:'',
-        sender_title:'',
-        sender_address:'',
-        receiver_title:'',
-        receiver_address:'',
-        postal_date:'',
-        description:'',
-        attachment:'',
-
-        errors:[],
-        success:null,
-      }
-    },
-        
-      methods:
-        {
-
-      editPostalRecord()
-      {
-         //alert('kjhkjh');
-
-            axios.get(this.url+'/'+this.mode+'/postalrecord/show/'+this.id).then(response => {
-        
-
-            this.postalrecord= response.data.data[0]; 
-
-             //console.log(this.postalrecord); 
-
-           
-          this.type=this.postalrecord.type;                 
-          this.reference_number=this.postalrecord.reference_number;                 
-          this.confidential=this.postalrecord.confidential;                 
-          this.sender_title=this.postalrecord.sender_title;          
-          this.sender_address=this.postalrecord.sender_address;          
-          this.receiver_title=this.postalrecord.receiver_title;          
-          this.receiver_address=this.postalrecord.receiver_address;          
-          this.postal_date=this.postalrecord.postal_date;                   
-          this.description=this.postalrecord.description;          
-               
-           
-          
-           });             
-      },
-
-
-      updatePostalRecord()
-      {
-    
-        
-        this.errors=[];
-        this.success=null; 
-
-
-        let formData=new FormData();
-
-       
-        formData.append('type',this.type);                 
-        formData.append('reference_number',this.reference_number);                 
-        formData.append('confidential',this.confidential);                 
-        formData.append('sender_title',this.sender_title);                 
-        formData.append('sender_address',this.sender_address);          
-        formData.append('receiver_title',this.receiver_title);          
-        formData.append('receiver_address',this.receiver_address);          
-        formData.append('postal_date',this.postal_date);          
-        formData.append('description',this.description);  
-        formData.append('attachment',this.attachment);  
-       
-      
-              
-       axios.post(this.url+'/'+this.mode+'/postalrecord/update/'+this.id,formData).then(response => {   
-        this.postalrecord = response.data;
-        this.success = response.data.success;
-      
-        //console.log(this.exam);
-        //alert(this.school_id);
-        //window.location.reload();
-        }).catch(error => {
-          this.errors = error.response.data.errors;
-        });
- 
-    },
-
-     OnFileSelected(event)
-      {
-        this.attachment = event.target.files[0];
-      },
-
-
-        },
-      created()
-      {
-        
-       this.editPostalRecord();
-      }
-  }
-</script>

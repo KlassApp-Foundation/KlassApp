@@ -71,7 +71,7 @@
                 <div class="tw-form-group w-full lg:w-3/5 md:w-3/4">
                     <div class="lg:mr-8 md:mr-8 flex flex-col lg:flex-row md:flex-row lg:items-center md:items-center w-full">
                         <div class="w-full w-full lg:w-1/4 md:w-1/4">
-                            <label for="attachment" v-model="attachment" class="tw-form-label">Attachment</label>
+                            <label for="attachment" class="tw-form-label">Attachment</label>
                         </div>
                         <div class="mb-2 w-full lg:w-3/4 md:w-2/3">
                             <input type="file" name="attachment" @change="OnFileSelected" id="attachment" class="tw-form-control w-full">
@@ -116,105 +116,3 @@
         </div>
     </div>
 </template>
-
-<script>
-    import VueQuillEditor from 'vue-quill-editor'
-    import 'quill/dist/quill.core.css' // import styles
-    import 'quill/dist/quill.snow.css' // for snow theme
-    import 'quill/dist/quill.bubble.css' // for bubble theme
-    export default {
-        props:['url' , 'id' , 'mode'],
-        data(){
-            return{
-                list:[],
-                standardlist:[],
-                subjectlist:[],
-                teacherlist:[],
-                standardLink_id:'',
-                subject_id:'',
-                teacher_id:'',
-                description:'',
-                attachment:'',
-                attachment_file:'',
-                date:'',
-                editorOption:{
-                    theme: 'snow',
-                    modules: {
-                        toolbar: {
-                            container: [
-                                ['bold', 'italic', 'underline', 'strike'],       
-                                [{ 'color': [] }, { 'background': [] }],
-                                [{ 'script': 'sub' }, { 'script': 'super' }],        
-                                [{ 'align': [] }],
-                                ['image'],
-                            ],      
-                        }
-                    } 
-                },
-                errors:[],
-                success:null,
-            }
-        },
-        
-        methods:
-        {
-            submitForm()
-            {
-                this.errors=[];
-                this.success=null; 
-
-                let formData=new FormData();
-
-                formData.append('mode',this.mode);                 
-                formData.append('standardLink_id',this.standardLink_id);                 
-                formData.append('subject_id',this.subject_id);                 
-                formData.append('teacher_id',this.teacher_id);                 
-                formData.append('description',this.description);          
-                formData.append('attachment',this.attachment);          
-                formData.append('date',this.date); 
-                formData.append('submission_date',this.submission_date);          
-              
-                axios.post('/'+this.mode+'/homework/edit/'+this.id,formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {     
-                    this.success = response.data.success;
-                }).catch(error => {
-                    this.errors = error.response.data.errors;
-                });
-            },
-
-            OnFileSelected(event)
-            {
-                this.attachment = event.target.files[0];
-            },
-
-            getData()
-            {
-                axios.get('/'+this.mode+'/homework/edit/list/'+this.id).then(response => {
-                    this.list = response.data;
-                    //console.log(this.list)
-                    this.setData();
-                });
-            },
-
-            setData()
-            {
-                if(Object.keys(this.list).length > 0)
-                {
-                    this.standardlist     = this.list.standardlist;
-                    this.subjectlist      = this.list.subjectlist;
-                    this.teacherlist      = this.list.teacherlist;
-                    this.standardLink_id  = this.list.standardLink_id;
-                    this.subject_id       = this.list.subject_id;
-                    this.teacher_id       = this.list.teacher_id;
-                    this.description      = this.list.description;  
-                    this.attachment_file  = this.list.attachment;  
-                    this.date             = this.list.date; 
-                    this.submission_date  = this.list.submission_date; 
-                }
-            },
-        },
-        created()
-        {
-            this.getData();
-        }
-    }
-</script>

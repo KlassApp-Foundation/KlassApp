@@ -65,7 +65,7 @@
         <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
           <div class="lg:mr-8 md:mr-8">
             <div class="mb-2">
-              <label for="attachment" v-model="attachment" class="tw-form-label">Attachment</label>
+              <label for="attachment" class="tw-form-label">Attachment</label>
             </div>
             <div class="mb-2">
               <input type="file" name="attachment" @change="OnFileSelected" id="attachment" class="tw-form-control w-full">
@@ -120,84 +120,3 @@
 	  </div>
   </div>
 </template>
-
-<script>
-
-export default {
-
-  data(){
-    return{
-      standardLinklist:[],
-      subjectlist:[],
-      subject_id:'',
-      standardLink_id:'',
-      title:'',
-      description:'',
-      attachment:'',
-      marks:'',
-      assigned_date:'',
-      submission_date:'',
-      errors:[],
-      success:null,
-    }
-  },
-        
-  methods:
-  {
-    getList()
-    {
-      axios.get('/teacher/assignment/add/list').then(response => {
-        this.standardLinklist = response.data.standardLinklist;
-        this.subjectlist = response.data.subjectlist;
-        //console.log(response.data)
-      });
-    },
-
-    resetForm()
-    {
-      this.standardLink_id='';
-      this.subject_id='';
-      this.title='';
-      this.description='';  
-      this.attachment=''; 
-      this.marks=''; 
-      this.assigned_date='';
-      this.submission_date='';  
-    }, 
-
-    checkForm()
-    {
-      this.errors=[];
-      this.success=null; 
-
-      let formData=new FormData();
-                
-      formData.append('standardLink_id',this.standardLink_id);  
-      formData.append('subject_id',this.subject_id);                
-      formData.append('title',this.title);                
-      formData.append('description',this.description);          
-      formData.append('attachment',this.attachment);                  
-      formData.append('marks',this.marks);                  
-      formData.append('assigned_date',this.assigned_date);                 
-      formData.append('submission_date',this.submission_date);          
-                     
-      axios.post('/teacher/assignment/add',formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {     
-        this.success = response.data.success;
-        this.resetForm();
-      }).catch(error => {
-        this.errors = error.response.data.errors;
-      });
-    },
-
-    OnFileSelected(event)
-    {
-      this.attachment = event.target.files[0];
-    },
-  },
-
-  created()
-  {
-    this.getList();
-  }
-}
-</script>

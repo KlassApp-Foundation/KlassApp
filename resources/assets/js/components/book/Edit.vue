@@ -182,7 +182,7 @@
                         <div class="w-full lg:w-1/4">
                             <label
                                 for="cover_image"
-                                v-model="cover_image"
+                               
                                 class="tw-form-label"
                                 >Upload Cover Image</label
                             >
@@ -256,107 +256,3 @@
         </div>
     </div>
 </template>
-
-<script>
-export default {
-    props: ["id", "url"],
-
-    data() {
-        return {
-            book: [],
-            categorylist: [],
-            category_id: "",
-            title: "",
-            author: "",
-            isbn_number: "",
-            book_code: "",
-            cover_image: "",
-            quantity: "",
-            errors: [],
-            success: null,
-        };
-    },
-
-    methods: {
-        editBook() {
-            //alert('kjhkjh');
-
-            axios.get("/library/books/show/" + this.id).then((response) => {
-                this.book = response.data.data[0];
-
-                //console.log(this.book);
-
-                this.category_id = this.book.category_id;
-                this.title = this.book.title;
-                this.author = this.book.author;
-                this.book_code = this.book.book_code;
-                this.isbn_number = this.book.isbn_number;
-                this.cover_image = this.book.cover_image;
-                this.quantity = this.book.quantity;
-
-                //window.location.reload();
-                //
-            });
-        },
-
-        updateBook() {
-            this.errors = [];
-            this.success = null;
-
-            let formData = new FormData();
-
-            formData.append("category_id", this.category_id);
-            formData.append("title", this.title);
-            formData.append("author", this.author);
-            formData.append("book_code", this.book_code);
-            formData.append("isbn_number", this.isbn_number);
-            formData.append("cover_image", this.cover_image);
-            formData.append("quantity", this.quantity);
-
-            axios
-                .post("/library/books/update/" + this.id, formData)
-                .then((response) => {
-                    this.book = response.data;
-                    this.success = response.data.success;
-
-                    //console.log(this.exam);
-                    //alert(this.school_id);
-                    //window.location.reload();
-                })
-                .catch((error) => {
-                    this.errors = error.response.data.errors;
-                });
-        },
-
-        OnImageSelected(event) {
-            /*this.image = event.target.files[0];
-            this.createImage(files);*/
-            this.cover_image = event.target.files[0];
-            let files = event.target.files || event.dataTransfer.files;
-            if (!files.length) return;
-            this.createImage(files[0]);
-        },
-
-        createImage(file) {
-            let reader = new FileReader();
-            let vm = this;
-            reader.onload = (e) => {
-                vm.image = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        },
-
-        getData() {
-            axios.get("/library/bookscategory/list").then((response) => {
-                this.categorylist = response.data.data;
-                this.editBook();
-
-                //console.log(this.categorylist);
-            });
-        },
-    },
-    created() {
-        this.getData();
-    },
-};
-</script>

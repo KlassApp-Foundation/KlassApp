@@ -191,7 +191,7 @@
         <div class="tw-form-group w-full lg:w-3/4 md:w-5/6">
           <div class="lg:mr-8 ">
             <div class="mb-2">
-                <label for="attachment" v-model="attachment" class="tw-form-label">Attachment</label>
+                <label for="attachment" class="tw-form-label">Attachment</label>
             </div>
             <div class="mb-2">
               <input type="file" name="attachment" @change="OnFileSelected" id="attachment" class="tw-form-control w-full">
@@ -210,98 +210,3 @@
 	  </div>
   </div>
 </template>
-
-<script>
-	export default {
-    props:['url','mode','postal_date','sender_address'],
-    data(){
-      return{
-        postalrecord:[],
-      
-        type:'',
-        post_type:'',
-        reference_number:'',
-        confidential:'',
-        sender_title:'',
-        sender_address:'',
-        receiver_title:'',
-        receiver_address:'',
-        postal_date:'',
-        description:'',
-        attachment:'',
-
-        errors:[],
-        success:null,
-      }
-    },
-        
-    methods:
-    {
-      reset()
-      {
-        this.type='';
-        this.post_type='';
-        this.reference_number='';
-        this.confidential='';
-        this.sender_title='';  
-        this.sender_address='';  
-        this.receiver_title='';  
-        this.receiver_address='';  
-        this.postal_date='';  
-        this.description='';  
-        this.attachment='';  
-          
-      }, 
-
-      addPostalRecord()
-      {
-        this.errors=[];
-        this.success=null; 
-
-        let formData=new FormData();
-
-        formData.append('type',this.type);                 
-        formData.append('post_type',this.post_type);                 
-        formData.append('reference_number',this.reference_number);                 
-        formData.append('confidential',this.confidential);                 
-        formData.append('sender_title',this.sender_title);                 
-        formData.append('sender_address',this.sender_address);          
-        formData.append('receiver_title',this.receiver_title);          
-        formData.append('receiver_address',this.receiver_address);          
-        formData.append('postal_date',this.postal_date);          
-        formData.append('description',this.description);                    
-        formData.append('attachment',this.attachment);                    
-                 
-              
-        axios.post(this.url+'/'+this.mode+'/postalrecord/add',formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {     
-          this.success = response.data.success;
-          this.reset();
-        }).catch(error => {
-          this.errors = error.response.data.errors;
-        });
-      },
-
-       OnFileSelected(event)
-      {
-        this.attachment = event.target.files[0];
-      },
-      getData()
-      {
-        axios.get(this.url+'/'+this.mode+'/visitorlog/list').then(response => {
-          this.studentlist = response.data.studentlist;
-          this.classlists = response.data.standardlist;
-          this.postal_date=this.postal_date;
-          this.sender_address=this.sender_address;
-          this.teacherlist  = response.data.teacherlist;
-          //console.log(this.list);
-        
-        });
-      },
-
-    },
-    created()
-    {
-      this.getData();
-    }
-  }
-</script>

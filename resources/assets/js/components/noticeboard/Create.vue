@@ -135,7 +135,7 @@
         <div class="tw-form-group w-full">
           <div class="lg:mr-8 md:mr-8 flex flex-col lg:flex-row md:flex-row lg:items-center md:items-center w-full">
             <div class="w-full lw-full lg:w-1/4 md:w-1/4">
-              <label for="attachment_file" v-model="attachment_file" class="tw-form-label">Attachment</label>
+              <label for="attachment_file" class="tw-form-label">Attachment</label>
               <span class="font-semibold text-xs text-gray-700">(PDF only)</span>
             </div>
             <div class="mb-2 w-full lg:w-1/2 md:w-1/2">
@@ -198,7 +198,7 @@
         <div class="tw-form-group">
           <div class="lg:mr-8 md:mr-8 flex flex-col w-full">
             <div class="w-full">
-              <label for="bg_image" v-model="bg_image" class="tw-form-label">Background Image</label>
+              <label for="bg_image" class="tw-form-label">Background Image</label>
             </div>
             <div class="mb-2 w-full">
               <input type="file" name="bg_image" @change="OnFileSelectedImg" id="bg_image" class="tw-form-control w-full">
@@ -246,7 +246,7 @@
       </div>
     </div>
 <!-- End modal -->
-  </div>
+  
 </template>
 
 <script>

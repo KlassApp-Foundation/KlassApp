@@ -33,7 +33,7 @@
             <div class="my-5">
                 <div class="">
                     <div class="w-full lg:w-1/4">
-                        <label for="cover_image" v-model="cover_image" class="tw-form-label">Upload Cover Image</label>
+                        <label for="cover_image" class="tw-form-label">Upload Cover Image</label>
                     </div>
                     <div class="w-full lg:w-2/5 my-2">
                         <input type="file" name="cover_image" @change="OnImageSelected" id="cover_image" class="tw-form-control w-full">
@@ -45,7 +45,7 @@
             <div class="my-5">
                 <div class="">
                     <div class="w-full lg:w-1/4">
-                        <label for="bulletin_file" v-model="bulletin_file" class="tw-form-label">Upload Magazine File</label>
+                        <label for="bulletin_file" class="tw-form-label">Upload Magazine File</label>
                     </div>
                     <div class="w-full lg:w-2/5 my-2">
                         <input type="file" name="bulletin_file" @change="OnFileSelected" id="bulletin_file" class="tw-form-control w-full">
@@ -67,103 +67,3 @@
         </div>
     </div>
 </template>
-
-<script>
-    export default {
-        props:['count','no_of_bulletins'],
-        data(){
-            return{
-                bulletin:[],
-                academic_year_id:'',
-                year:'',
-                start:'',
-                end:'',
-                bulletin_file:'',
-                cover_image:'',
-                max: 15,
-                name:'',
-                errors:[],
-                success:null,
-            }
-        },
-        
-        methods:
-        {
-            resetForm()
-            {
-                window.location.reload();     
-            }, 
-
-            checkForm()
-            {
-                this.errors=[];
-                this.success=null; 
-
-                let formData=new FormData();
-
-                formData.append('name',this.name);                
-                formData.append('year',this.year);                   
-                formData.append('cover_image',this.cover_image);                   
-                formData.append('bulletin_file',this.bulletin_file);          
-              
-                axios.post('/admin/magazine/create',formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {     
-                    this.success = response.data.success;
-                    this.resetForm();
-                }).catch(error => {
-                    this.errors = error.response.data.errors;
-                });
-            },
-
-            OnFileSelected(event)
-            {
-                this.bulletin_file = event.target.files[0];
-            },
-
-            OnImageSelected(event)
-            {
-                this.cover_image = event.target.files[0];
-            },
-
-            getData()
-            {
-                axios.get('/admin/magazine/getDate').then(response => {
-                    this.bulletin = response.data;
-                    this.setData();   
-                });
-            },
-
-            setData()
-            {
-                if(Object.keys(this.bulletin).length>0)
-                {
-                    this.academic_year_id = this.bulletin.academic_year_id;
-                    if(this.academic_year_id == null)
-                    {
-                        alert("Add Academic Year")
-                    }
-                    else
-                    {
-                        this.start  = parseInt(this.bulletin.start);
-                        this.end    = parseInt(this.bulletin.end);
-                    }
-                }
-            },
-
-            range(max,min)
-            {
-                var array = [],
-                j = 0;
-                for(var i = max; i >= min; i--)
-                {
-                    array[j] = i;
-                    j++;
-                }
-                return array;
-            },
-        },
-        created()
-        {
-            this.getData();
-        }
-    }
-</script>
