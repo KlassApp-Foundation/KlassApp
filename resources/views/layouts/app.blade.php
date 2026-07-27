@@ -12,6 +12,7 @@
         <title>{{ config('app.name', 'KlassApp') }}</title>
         <!-- Styles -->
 
+        <link href="{{ asset('css/tailwind.css') }}?v={{ filemtime(public_path('css/tailwind.css')) }}" rel="stylesheet">
         <link href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}" rel="stylesheet">
         <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
         <link href="{{ asset('css/dashboard-refresh.css') }}?v={{ filemtime(public_path('css/dashboard-refresh.css')) }}" rel="stylesheet">
