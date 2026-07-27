@@ -69,7 +69,7 @@
                                 </a>
                             </td>
                             <td data-label="Parent Of">
-                                <a :href="row.children.name" class="text-sm text-gray-700 hover:text-blue transition-colors">
+                                <a :href="row.children.name" class="text-sm text-gray-700 hover:text-blue-600 transition-colors">
                                     {{ row.children.fullname }}
                                 </a>
                             </td>

@@ -227,7 +227,7 @@
       <div class="my-5 pb-5 flex items-center">
       <div wire:loading.attr="disabled" class="submit-btn w-max mr-2 btn btn-primary">
       <svg wire:loading wire:target="submitPlan"
-      class="w-4 h-4 mx-1 text-blue animate-spin"
+      class="w-4 h-4 mx-1 text-blue-500 animate-spin"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24">
