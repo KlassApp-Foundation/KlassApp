@@ -83,3 +83,6 @@ webpack.mix.js
 # === Dead CI config ===
 #.github/workflows/
 tmp/
+public/images/
+public/js/app.js.LICENSE.txt
+public/css/app.css.map
