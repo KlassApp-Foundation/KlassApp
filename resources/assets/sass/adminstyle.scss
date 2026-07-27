@@ -144,7 +144,7 @@
 /*memberlist start*/
 .filter-alphabet li a {
     background-color: #fff;
-    @apply .text-gray-600 .py-1 .px-3 .mx-1 .text-sm .shadow .font-semibold .uppercase .whitespace-no-wrap;
+    @apply .text-gray-600 .py-1 .px-3 .mx-1 .text-sm .shadow .font-semibold .uppercase .whitespace-nowrap;
 }
 .filter-alphabet li {
     @apply .my-1;

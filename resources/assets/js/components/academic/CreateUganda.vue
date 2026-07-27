@@ -80,7 +80,7 @@
                         <div class="lg:mx-3 md:mx-3">
                             <a
                                 href="#"
-                                class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-no-wrap"
+                                class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-nowrap"
                                 @click="showModal('section')"
                             >
                                 Add New Class
@@ -136,7 +136,7 @@
                 <div class="lg:mx-3 md:mx-0">
                     <a
                         href="#"
-                        class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-no-wrap"
+                        class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-nowrap"
                         @click="showModal('subject')"
                     >
                         Add New Subject

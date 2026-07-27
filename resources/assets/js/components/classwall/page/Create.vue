@@ -32,7 +32,7 @@
                 </div> 
             </div>
             <div class="py-12">
-                <a href=# class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-no-wrap" @click="showCategory()">Add New Category</a>
+                <a href=# class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-nowrap" @click="showCategory()">Add New Category</a>
             </div>
         </div>
 

@@ -48,7 +48,7 @@
             </div>      
            <div v-show="payroll.category_id==4" class="w-full pl-1">
               <input  type="text"  v-model="payroll.category_value" class="text-sm border rounded px-3 py-2 w-full "> <br>
-               <span v-if="errors['category_value'+k1]" class="text-red-500 text-xs font-semibold whitespace-no-wrap">{{errors['category_value'+k1][0]}}</span> 
+               <span v-if="errors['category_value'+k1]" class="text-red-500 text-xs font-semibold whitespace-nowrap">{{errors['category_value'+k1][0]}}</span> 
             </div>  
             </div>
         </div>
