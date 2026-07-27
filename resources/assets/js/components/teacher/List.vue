@@ -4,7 +4,7 @@
     <div class="my-4 filter-alphabet">
       <ul class="list-reset flex flex-wrap">
         <li v-for="alphabet in alphabets">
-          <a href="#" id="filter" class="block font-bold p-2 bg-grey-light border border-grey mx-2 ni" v-bind:class="letter === alphabet?'active':'text-blue'" v-text="alphabet"  @click="sortMembers(alphabet)"> </a>   
+          <a href="#" id="filter" class="block font-bold p-2 bg-grey-light border border-grey mx-2 ni" v-bind:class="letter === alphabet?'active':'text-gray-500'" v-text="alphabet"  @click="sortMembers(alphabet)"> </a>   
         </li>
         <li>
           <a href="#" class="block font-bold p-2 bg-grey-light border border-grey mx-2 ni" @click="clearAll()">Clear All</a>   
