@@ -26,8 +26,8 @@
         "sass": "^1.26.10",
         "sass-loader": "^7.3.1",
         "tailwindcss": "^4.3.3",
-        "vue": "^2.6.12",
-        "vue-template-compiler": "^2.6.12"
+        "vue": "3.5.40",
+        "@vue/compiler-sfc": "3.5.40"
     },
     "dependencies": {
         "@fullcalendar/daygrid": "^5.5.0",
@@ -36,7 +36,7 @@
         "@fullcalendar/vue": "^5.5.0",
         "@kevinfaguiar/vue-twemoji-picker": "^5.7.4",
         "@tailwindcss/postcss": "^4.3.3",
-        "@vue/compat": "^3.5.40",
+        "@vue/compat": "3.5.40",
         "acorn": "^8.17.0",
         "chart.js": "^2.9.3",
         "ckeditor4-vue": "^1.0.1",
@@ -66,7 +66,7 @@
         "vue-html-to-paper": "^1.3.1",
         "vue-image-lightbox-carousel": "^1.0.7",
         "vue-image-upload-croppie": "^1.0.6",
-        "vue-loader": "^15.11.1",
+        "vue-loader": "^16",
         "vue-loading-overlay": "^3.3.3",
         "vue-multiselect": "^2.1.6",
         "vue-popperjs": "^2.3.0",
