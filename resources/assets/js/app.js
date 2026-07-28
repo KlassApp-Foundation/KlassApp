@@ -7,7 +7,9 @@
 
 require('./bootstrap');
 
-window.Vue = require('vue');
+// Webpack 5 / Mix 6 + vue.esm.js: require('vue') returns the ESM namespace
+// ({ default: VueConstructor, ... }). Use .default so Vue.component / new Vue work.
+window.Vue = require('vue').default || require('vue');
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
