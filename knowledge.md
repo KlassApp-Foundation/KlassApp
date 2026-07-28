@@ -73,6 +73,7 @@
     - **Replace-now done**: `@vueup/vue-quill`, `dropzone-vue3`, `vue-good-table-next`, `emoji-mart-vue-fast`, `vue3-carousel`, `sweetalert2`/`vue-sweetalert2`, `vue-simple-uploader@1`, `vue-easy-lightbox`+`floating-vue`, `vue-multiselect@3`.
     - **Quarantine (not replaced)**: `portal-vue`, `vuejs-paginate`, `vuejs-datetimepicker`. **Defer**: `vue-flash-message`.
     - **⏸️ Next**: Phase 1b.2 Task 2 smoke suite (academics, attendance, discipline, multiselect, etc.) — **not run yet**.
+    - **Cleanup candidate (confirmed dead direct dep, Jul 29)**: `vue-upload-multiple-image` — **zero** source imports/requires of the npm package name across `resources/**/*.vue|js` and app JS; only listed in `package.json` / lockfile. App uses the **local** SFC `resources/assets/js/components/VueUploadMultipleImage.vue` (imported by `event/details/ShowImage.vue` as `../../VueUploadMultipleImage`), which depends on `vue-easy-lightbox` + `floating-vue` — not the npm package. Cleanup (do **not** run until scheduled): `npm uninstall vue-upload-multiple-image --legacy-peer-deps` (also drops transitive `vue-image-lightbox-carousel` / nested `vue-popperjs`).
     - **Older note (pre-1b branch work)**: on `main` @ `753697f`, runtime was still Vue 2.7.16; `@vue/compat` unwired until 1b.2 Task 1.
   - **Nothing is currently broken because of this gap**: Vue 2.7 boots correctly on `main`. Tonight’s verification (academics mount, attendance/add, discipline/add + `Vue.options.components.multiselect`, event bus, `$swal`, nav academic-year dropdown) is **valid confirmation that Vue 2.7 runs correctly** — not evidence of Vue 3 at runtime.
   - **Inaccurate status label**: ~~“Phase 1: Vue 2→3 migration — complete”~~ → use **Phase 1a complete / Phase 1b open** as above.
@@ -5067,4 +5068,10 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
   - Soft-downgrade VueCompilerError (invalid end tags, v-model on `<label>`, v-html+children) to webpack warnings via plugin — build-blocking strictness only; full template cleanup deferred to later smoke/fix tasks.
 - **Verification**: `npm run production` exit 0 (41 warnings). Playwright on `/login` → `Vue.version === "3.5.40"`, `configureCompat` present.
 - **Status**: ✅ Task 1 done / ⏸️ STOP — Task 2 smoke suite not run
+
+### 2026-07-29: Confirm dead `vue-upload-multiple-image` + re-verify 1b.2 Task 1
+- **Work done**: Grep confirmed **zero** source imports of npm package `vue-upload-multiple-image` (only `package.json` / lockfile). Documented local `VueUploadMultipleImage.vue` usage. Re-verified Task 1 already done (`dd13fc5`); `npm run production` PASS; browser `Vue.version` starts with `3`. Did **not** uninstall. Did **not** run Task 2 smoke.
+- **Files modified**: `knowledge.md` only
+- **Key decisions**: Keep dead dep until scheduled cleanup; cleanup cmd = `npm uninstall vue-upload-multiple-image --legacy-peer-deps`
+- **Status**: ✅ Done / ⏸️ STOP before Task 2
 
