@@ -7,9 +7,11 @@
 
 require('./bootstrap');
 
-// Webpack 5 / Mix 6 + vue.esm.js: require('vue') returns the ESM namespace
-// ({ default: VueConstructor, ... }). Use .default so Vue.component / new Vue work.
+// Vue 3 migration build (@vue/compat via webpack alias). Compat CJS export is the
+// constructor itself (no .default); keep fallback for ESM interop.
 window.Vue = require('vue').default || require('vue');
+const { configureCompat } = require('vue');
+configureCompat({ MODE: 2 });
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
