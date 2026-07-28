@@ -67,10 +67,12 @@
     - Large SFC compile-error sweep (~**3,381** errors at peak) — `v-model-on-prop`, deprecated **`slot`** → **`v-slot`**, and related template fixes across the Vue tree.
     - **Mix 4→6 / webpack 5 prerequisite** (`d295517`, `build(mix): upgrade Laravel Mix 4→6`) — genuinely merged; required for the stricter compile path that surfaced the SFC issues.
     - These fixes were **necessary regardless of which Vue version runs** — Vue 3’s stricter compiler (and webpack 5 / vue-loader path) is what surfaced them; the remediated SFCs remain valid on Vue 2.7.
-  - **🚧 Phase 1b: runtime switch to Vue 3 / `@vue/compat` — NOT done**:
-    - **Actual runtime today**: **Vue 2.7.16** — `require.resolve('vue')` → `vue/dist/vue.runtime.common.js`; webpack alias **`vue$: "vue/dist/vue.esm.js"`** (Vue **2** full ESM build, header `Vue.js v2.7.16`).
-    - **`@vue/compat@3.5.40` is installed** but **not wired** — no alias to `@vue/compat`; bundle and browser **`Vue.version === "2.7.16"`** (`main` @ `753697f`, verified Jul 28 on `:8082` `/admin/dashboard`).
-    - **Not caught during Phase 1 verification** — discovered during Phase 3 (Vite) audit, not because production was silently broken.
+  - **🚧 Phase 1b: runtime switch to Vue 3 / `@vue/compat` — in progress on `migration/vue3-runtime`**:
+    - **1b.1 replace-now (Jul 28, accepted option 1)**: Vue 2 UI packages swapped + source migrated; **alias intentionally still `vue$: "vue/dist/vue.esm.js"`** (do **not** flip to `@vue/compat` yet — that is **1b.2**).
+    - **Replace-now done**: `@vueup/vue-quill`, `dropzone-vue3`, `vue-good-table-next`, `emoji-mart-vue-fast`, `vue3-carousel`, `sweetalert2`/`vue-sweetalert2`, `vue-simple-uploader@1`, `vue-easy-lightbox`+`floating-vue`, `vue-multiselect@3`.
+    - **Quarantine (not replaced)**: `portal-vue`, `vuejs-paginate`, `vuejs-datetimepicker`. **Defer**: `vue-flash-message`.
+    - **`npm run production` still blocked** by missing `vue/dist/vue.esm.js` on Vue 3.5.40 until alias flip (1b.2).
+    - **Older note (pre-1b branch work)**: on `main` @ `753697f`, runtime was still Vue 2.7.16 with the same alias; `@vue/compat@3.5.40` installed but unwired.
   - **Nothing is currently broken because of this gap**: Vue 2.7 boots correctly on `main`. Tonight’s verification (academics mount, attendance/add, discipline/add + `Vue.options.components.multiselect`, event bus, `$swal`, nav academic-year dropdown) is **valid confirmation that Vue 2.7 runs correctly** — not evidence of Vue 3 at runtime.
   - **Inaccurate status label**: ~~“Phase 1: Vue 2→3 migration — complete”~~ → use **Phase 1a complete / Phase 1b open** as above.
   - **⏸️ Decision point (user — not assumed)** — how to sequence Vue runtime vs Vite:
@@ -218,7 +220,7 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | Sub-phase | Status | Notes |
 |---|---|---|
 | **Phase 1a — SFC compile remediation** | ✅ **Complete (merged)** | ~3,381 compile errors fixed; `v-model-on-prop`, `slot`→`v-slot`; Mix 4→6 prerequisite (`d295517`). |
-| **Phase 1b — Vue 3 / `@vue/compat` runtime** | 🚧 **Not done** | Runtime is **Vue 2.7.16**; `@vue/compat` 3.5.40 installed but **alias still `vue/dist/vue.esm.js`**. See Current Status (Jul 28 correction). |
+| **Phase 1b — Vue 3 / `@vue/compat` runtime** | 🚧 **1b.1 replace-now done; 1b.2 open** | On `migration/vue3-runtime`: Vue 3.5.40 deps + package swaps; **alias still `vue/dist/vue.esm.js`** (build blocked until 1b.2). Quarantine/defer packages untouched. |
 
 | Dimension | Assessment |
 |---|---|
@@ -5039,3 +5041,14 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **For Cursor**: Boost MCP wired via `.cursor/mcp.json`. `AGENTS.md` provides Laravel guidelines. `.cursor/rules/` has migration-specific warnings.
 - **Unresolved**: `layouts/main` `home_navigation` dead include needs intent check. `layouts/minimal` — no live route renders through it (`welcome` is dead code), no fix needed unless `welcome` or a new route starts using it.
 - **Status**: ✅ Phase 2c closeout complete on sampled/audited surfaces (see Current Status); Jul 28 session log below is the pre-closeout handoff record.
+
+### 2026-07-28: Phase 1b.1 replace-now package swaps (`migration/vue3-runtime`)
+- **Work done**: Accepted 1b.1 recommendations (option **1** — replace now). Installed Vue 3 replacements and migrated call sites. Did **not** flip webpack vue$ alias; did **not** start 1b.2.
+- **Commits**: `d49b323` (deps), `746fc90` (quill+dropzone), `b209243` (carousel/emoji/tables/multiselect), `8c1f8c9` (sweetalert2), `8fd9616` (lightbox+popper).
+- **Key decisions**:
+  - Keep alias pointing at vue.esm.js until 1b.2 (user explicit).
+  - Prefer `dropzone-vue3` (vue2-dropzone API port) over `vue3-dropzone` (react-dropzone-style).
+  - Quarantine: portal-vue, vuejs-paginate, vuejs-datetimepicker. Defer: vue-flash-message.
+- **Verification**: Old Vue2 package imports gone from `resources/assets/js`; `package.json` no longer depends on replaced packages. `npm run production` fails with missing `vue/dist/vue.esm.js` — expected until alias flip.
+- **Status**: ✅ 1b.1 replace-now complete / 🚧 1b.2 (alias + createApp bootstrap) not started
+
