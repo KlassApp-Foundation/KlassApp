@@ -5052,3 +5052,8 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **Verification**: Old Vue2 package imports gone from `resources/assets/js`; `package.json` no longer depends on replaced packages. `npm run production` fails with missing `vue/dist/vue.esm.js` — expected until alias flip.
 - **Status**: ✅ 1b.1 replace-now complete / 🚧 1b.2 (alias + createApp bootstrap) not started
 
+### 2026-07-28: Phase 1b.1 resume/verify after PING timeout
+- **Work done**: Inspected `KlassApp-main-review` (`migration/vue3-runtime`) after agent `228a2786` timeout. Prior agent had already finished replace-now: deps + SFC migrations + knowledge log. No further package/SFC edits required; did not push; did not start 1b.2.
+- **Confirmed**: `vue$: "vue/dist/vue.esm.js"` unchanged; quarantine/defer packages left; `node_modules` has all replace-now packages; `vue/dist/vue.esm.js` absent under Vue 3.5.40 (build blocker until 1b.2).
+- **Status**: ✅ Verified complete
+
