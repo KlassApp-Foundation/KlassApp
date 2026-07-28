@@ -1,5 +1,5 @@
 <template>
-<carousel :per-page="1" :autoplay="true">
+<carousel :wrap-around="true" :items-to-show="1" :autoplay="3000">
   <slide>
   <h3 class="font-extrabold my-4 text-xl text-center">Automated Student Attendance Alerts</h3>
    <p class="text-center text-sm">Through the daily attendance module, parents will be sent a notification and SMS through the module every time their child is absent from school/class. The teacher requires to take the attendance through the module and the app automatically triggers a message to the parents if the child is marked absent.</p>
@@ -45,12 +45,17 @@
   <p class="text-center text-sm">Parents will be able to send in any feedback or complaint to the admin through the app. The complaints & feedback module will enable parents to send in their grievances to the school admin for further actions.</p>
    <img :src="this.url+'/images/app-image/feedback.jpg'"/>
   </slide>
+  <template #addons>
+    <Navigation />
+    <Pagination />
+  </template>
 </carousel>
 
 </template>
 
 <script>
-import { Carousel, Slide } from 'vue-carousel';
+import { Carousel, Slide, Navigation, Pagination } from 'vue3-carousel'
+    import 'vue3-carousel/dist/carousel.css';
     export default {
    props:['url'],
         data() {
@@ -61,7 +66,9 @@ import { Carousel, Slide } from 'vue-carousel';
     },
      components: {
     Carousel,
-    Slide
+    Slide,
+    Navigation,
+    Pagination,
   },
      created()
             {
