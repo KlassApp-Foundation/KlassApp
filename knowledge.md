@@ -22,7 +22,28 @@
 ### Git
 - **Branch**: `migration/tailwind4`
 - **HEAD**: `355a838` — fix(tailwind): restore empty and main layout utility loading
-- **Latest work (Jul 27-28, Tailwind v4 migration)**: Completed Phase 2a (pre-migration CSS cleanup, 6 commits), Phase 2b (Tailwind v1.4.6 → v4.3.3, CSS-first config, @apply→hardcoded CSS replacement), and Phase 2c (visual regression pass, 19-selector regression fix in `ef5bb77`, admission flow verified, empty/main layouts fixed in `355a838`). Phase 2c handed off to Cursor for remaining work. See session logs below.
+- **Latest work (Jul 27-28, Tailwind v4 migration)**: Completed Phase 2a (pre-migration CSS cleanup, 6 commits), Phase 2b (Tailwind v1.4.6 → v4.3.3, CSS-first config, @apply→hardcoded CSS replacement), and Phase 2c (visual regression pass, 19-selector regression fix in `ef5bb77`, admission flow verified, empty/main layouts fixed in `355a838`). Phase 2c closeout complete — see bullets below.
+- **Phase 2 selector-count correction (Jul 28)**: the original Phase 2b audit's shorthand `3/8` figures for `.custom-table` and `.submit-btn` were incorrect and should not be treated as historical fact.
+  - **Exact class-token recount** across `resources/views/**/*.blade.php`: `.custom-table` = **16 files**, `.submit-btn` = **19 files**.
+  - **Why the earlier recount said `16` for `.submit-btn`**: that was a narrower "user-visible submit control" subset that excluded some Livewire loading-state wrappers even though those wrappers still carry the literal `submit-btn` class token in markup.
+  - **Use going forward**: treat **19/16** as the canonical exact-token counts unless a future audit intentionally switches to a different counting rule.
+- **Separate reproducible finding (Jul 28)**: `GET /admin/promotion/list` throws HTTP 500 — **not** a Tailwind migration issue; pre-existing app/schema bug surfaced during Phase 2c sampling (the route that failed during the earlier comparison pass was this one, not a transient dual-server artifact).
+  - **Route**: `admin/promotion/list` (`Admin\PromotionController@index`)
+  - **Error**: `Illuminate\Database\QueryException` — `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'exam_type' in 'where clause'` (query on `exams` with `school_id`, `academic_year_id`, and `exam_type = final`).
+  - **Observed result**: framework "Server Error" page (HTTP 500).
+  - **Reproduction (standalone)**:
+    1. On branch `migration/tailwind4`, with local DB `klassapp_local`.
+    2. Authenticate as seeded school admin `admin@testschoolone.sch.ug` (password `password`).
+    3. `GET /admin/promotion/list` (browser or in-app request).
+    4. Result: reproducible 500 without running a second dev server or tab-switching.
+  - **Scope**: track as its own bug ticket; unrelated to OKLCH/Tailwind v4 CSS work.
+- **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill of health for the whole app (`admin/promotion/list` 500, `home_navigation` / `minimal` deferred items remain).
+
+### Confirmed Orphaned Welcome-Era Files
+- **`resources/views/welcome/welcome.blade.php` and `resources/views/welcome/_modules_list_section.blade.php` are both currently orphaned/dead**.
+  - `welcome.blade.php`: already known to be effectively dead/orphaned because the old minimal-layout welcome route is no longer part of the live homepage path.
+  - `_modules_list_section.blade.php`: confirmed orphaned after a stronger sweep across direct Blade references, dynamic include/view patterns, Livewire `render()` methods, and JS/Vue-side references. No current consumer found.
+  - **Pattern note**: both files live under `resources/views/welcome/`, which likely reflects an older landing-page iteration rather than two unrelated leftovers. Treat that directory as suspect during future cleanup/audit work.
 
 ### Toshi Layout History (app.blade.php)
 
@@ -4945,4 +4966,4 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **Branch**: `migration/tailwind4` at `355a838` (empty/main fix applied). Not merged to `main`.
 - **For Cursor**: Boost MCP wired via `.cursor/mcp.json`. `AGENTS.md` provides Laravel guidelines. `.cursor/rules/` has migration-specific warnings.
 - **Unresolved**: `layouts/main` `home_navigation` dead include needs intent check. `layouts/minimal` — no live route renders through it (`welcome` is dead code), no fix needed unless `welcome` or a new route starts using it.
-- **Status**: 🚧 Phase 2c analysis complete, handed off to Cursor for remaining work.
+- **Status**: ✅ Phase 2c closeout complete on sampled/audited surfaces (see Current Status); Jul 28 session log below is the pre-closeout handoff record.
