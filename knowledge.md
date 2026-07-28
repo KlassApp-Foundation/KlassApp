@@ -37,6 +37,13 @@
     3. `GET /admin/promotion/list` (browser or in-app request).
     4. Result: reproducible 500 without running a second dev server or tab-switching.
   - **Scope**: track as its own bug ticket; unrelated to OKLCH/Tailwind v4 CSS work.
+- **🚨 Higher-priority deferred (Jul 28 pre-merge)**: PHPUnit auth/registration failures from missing `activity()` helper — **not** introduced by Tailwind v4 / Vue boot work tonight; confirmed identical on **`main` and `migration/tailwind4`**.
+  - **Failing tests**: `LoginRegressionTest` (login succeeds…), `RegistrationMinistryCodeTest` ×2, `RegistrationFlowTest` (`admin_name_is_set_on_manual_registration`).
+  - **Error**: `Call to undefined function App\Traits\activity()` at `app/Traits/LogActivity.php:19` (spaceless activity-log helper expected from a package / global helper that is not loaded in the test — or app — runtime).
+  - **Observed result**: login/registration feature tests fail (redirect/user assertions); stack traces show the undefined call during the auth/register HTTP path.
+  - **Also seen same suite run**: `ToshiE2EVerificationTest` LLM null (API timeout/error) — separate from `activity()`; keep as E2E/env noise unless it starts failing offline mocks.
+  - **Stakes**: blocks account creation / login regression coverage — **higher priority than** `admin/promotion/list` (`exam_type`) and `str_limit` on academic-year list (list/API views only).
+  - **Scope**: pre-existing app/test infra bug; fix before treating merge suite as green. Pre-merge suite baseline on both tips: **5 failed, 1 skipped, 220 passed**.
 - **Recurrence (Jul 28)**: `GET /admin/dashboard` HTTP 500 — **same homestead vs `klassapp_local` mismatch** already fixed in `.env` earlier this session (`DB_DATABASE=homestead` → `klassapp_local`; see Environment fixes below). **Not** a new schema bug or Tailwind regression.
   - **Route**: `GET /admin/dashboard` (`Admin\DashboardController@index`)
   - **Surface error**: `Illuminate\Database\QueryException` — `Table 'homestead.approvals' doesn't exist` at `DashboardController` ~line 84 (pending-approvals `whereHas`).
