@@ -21,7 +21,7 @@ The project uses a `ds-*` CSS class convention for dashboard components:
 | `ds-btn-primary` | Primary action button | Colored variant |
 | `ds-btn-sm` | Small button size | Compact variant |
 
-These are defined in `resources/assets/sass/` (Tailwind 1.x + custom SCSS), **not** in a separate CSS framework. Stick to existing patterns rather than introducing new utility classes.
+These are defined in `resources/assets/sass/` (custom SCSS). The original `@apply` directives that derived some of their values from Tailwind were replaced with hardcoded CSS in Phase 2b — changing Tailwind utility values will **not** automatically propagate to these selectors anymore. Stick to existing patterns rather than introducing new utility classes.
 
 ## Mobile-First Responsive Standards
 
@@ -39,6 +39,37 @@ These are defined in `resources/assets/sass/` (Tailwind 1.x + custom SCSS), **no
 ## Tooling
 
 - **Laravel Mix 4** (NOT Vite) — `npm run dev` / `npm run production`
-- **Tailwind 1.4.6** — no v3/v4 features available (no JIT, no arbitrary values like `w-[100px]`)
+- **Tailwind v4.3.3** — CSS-first config via `@theme` block in `resources/css/tailwind.css` (no `tailwind.config.js`). Uses PostCSS pipeline (`@tailwindcss/postcss` + `lightningcss`). The `@apply` directive uses no-dot syntax (`@apply text-sm`, not `@apply .text-sm`).
 - **Vue 2.6.12** — Options API, `Vue.component()` registration, no `<script setup>`, no Composition API
 - **Playwright** available in `node_modules` for E2E testing
+
+## Migration Branch State (migration/tailwind4)
+
+This branch has migrated from Tailwind v1.4.6 → v4.3.3. Key state differences from `main`:
+
+### Layout Tailwind Source Matrix
+Not all layouts load the same Tailwind source — **check which layout a page renders through before assuming a utility will work**:
+
+| Layout | Tailwind source |
+|---|---|
+| `layouts/app.blade.php` | Local `tailwind.css` v4 build |
+| `layouts/superadmin-app.blade.php` | Local `tailwind.css` v4 build |
+| `layouts/admission.blade.php` | CDN v1.1.3 only — **no local v4 build** |
+| `layouts/video.blade.php` | CDN v1.1.3 only — **no local v4 build** |
+| `layouts/empty.blade.php` | ⛔ **None** — neither local nor CDN. First-priority unfixed blocker: wrapper flexbox utilities (`flex items-center justify-center min-h-screen`) are dead, auth pages render top-left. |
+| `layouts/main.blade.php` | ⛔ **None** — neither local nor CDN. First-priority unfixed blocker: 35 marketing pages saturated with Tailwind utilities (`container mx-auto`, `bg-red-600`, `py-16`, `flex-grow`, etc.) are all dead. |
+| `layouts/minimal.blade.php` | **None** — neither local nor CDN |
+
+Landing pages (`landing.blade.php`, `landing2.blade.php`) use Tailwind Play CDN (browser JIT via `cdn.tailwindcss.com`) — self-configured, immune to the local migration.
+
+### @Apply → Hardcoded CSS
+The 31 `@apply` rules in `adminstyle.scss` / `style.scss` were replaced with hardcoded CSS values in Phase 2b because the PostCSS pipeline uses a separate entry file for `@import "tailwindcss"`, which sass-loader can't resolve. This means:
+- Selectors like `.admin-h1`, `.tw-form-control`, `.submit-btn`, `.custom-table` are **plain CSS**, decoupled from Tailwind's utility system
+- Changing Tailwind utilities will **not** propagate to these selectors automatically
+- If editing these selectors, use raw CSS values (check `tailwindcss` v4 output or use `@apply` in the tailwind.css entry file instead)
+
+### Regression Risk: Silent Property Drops
+The Phase 2b `@apply`→CSS rewrite dropped unrecognized properties as `// UNKNOWN:` SCSS comments that never survived compilation. An exhaustive SCSS source sweep found **19 selectors across 21 lines** with dropped properties — all verified against the actual Tailwind v1.1.3 CDN file and fixed in commit `ef5bb77`. After the fix, zero `// UNKNOWN:` comments remain in the SCSS source. The compiled `app.css` was never the right place to check for these (SCSS strips line comments during compilation). This specific regression is resolved, but the pattern is worth knowing about: if any new `@apply`→CSS rewrites are done, the SCSS source must be inspected for dropped properties — the compiled CSS won't show them.
+
+### v4 Preflight: Border Color Change
+Tailwind v4 changed the default `border-color` from `#e2e8f0` (gray) to `currentColor`. Any bare `border` utility (without an explicit `border-*-color`) will render using the parent element's `color` instead of the expected light gray. This affects dividers (`border-r`, `border-b`, etc.) and card borders. `.dashboard-kpi-card` is already protected by an explicit border in `dashboard-refresh.css`.
