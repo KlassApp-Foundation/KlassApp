@@ -68,11 +68,12 @@
     - **Mix 4→6 / webpack 5 prerequisite** (`d295517`, `build(mix): upgrade Laravel Mix 4→6`) — genuinely merged; required for the stricter compile path that surfaced the SFC issues.
     - These fixes were **necessary regardless of which Vue version runs** — Vue 3’s stricter compiler (and webpack 5 / vue-loader path) is what surfaced them; the remediated SFCs remain valid on Vue 2.7.
   - **🚧 Phase 1b: runtime switch to Vue 3 / `@vue/compat` — in progress on `migration/vue3-runtime`**:
-    - **1b.1 replace-now (Jul 28, accepted option 1)**: Vue 2 UI packages swapped + source migrated; **alias intentionally still `vue$: "vue/dist/vue.esm.js"`** (do **not** flip to `@vue/compat` yet — that is **1b.2**).
+    - **1b.1 replace-now (Jul 28, accepted option 1)**: Vue 2 UI packages swapped + source migrated.
+    - **1b.2 Task 1 (Jul 29, `dd13fc5`)**: alias `vue`/`vue$` → `@vue/compat`; vue-loader `compatConfig: { MODE: 2 }`; `configureCompat({ MODE: 2 })` in `app.js`; production build PASS; browser `Vue.version` = `3.5.40`. Soft-warn plugin for remaining SFC compiler strictness (invalid end tags / label v-model / v-html children).
     - **Replace-now done**: `@vueup/vue-quill`, `dropzone-vue3`, `vue-good-table-next`, `emoji-mart-vue-fast`, `vue3-carousel`, `sweetalert2`/`vue-sweetalert2`, `vue-simple-uploader@1`, `vue-easy-lightbox`+`floating-vue`, `vue-multiselect@3`.
     - **Quarantine (not replaced)**: `portal-vue`, `vuejs-paginate`, `vuejs-datetimepicker`. **Defer**: `vue-flash-message`.
-    - **`npm run production` still blocked** by missing `vue/dist/vue.esm.js` on Vue 3.5.40 until alias flip (1b.2).
-    - **Older note (pre-1b branch work)**: on `main` @ `753697f`, runtime was still Vue 2.7.16 with the same alias; `@vue/compat@3.5.40` installed but unwired.
+    - **⏸️ Next**: Phase 1b.2 Task 2 smoke suite (academics, attendance, discipline, multiselect, etc.) — **not run yet**.
+    - **Older note (pre-1b branch work)**: on `main` @ `753697f`, runtime was still Vue 2.7.16; `@vue/compat` unwired until 1b.2 Task 1.
   - **Nothing is currently broken because of this gap**: Vue 2.7 boots correctly on `main`. Tonight’s verification (academics mount, attendance/add, discipline/add + `Vue.options.components.multiselect`, event bus, `$swal`, nav academic-year dropdown) is **valid confirmation that Vue 2.7 runs correctly** — not evidence of Vue 3 at runtime.
   - **Inaccurate status label**: ~~“Phase 1: Vue 2→3 migration — complete”~~ → use **Phase 1a complete / Phase 1b open** as above.
   - **⏸️ Decision point (user — not assumed)** — how to sequence Vue runtime vs Vite:
