@@ -7,9 +7,9 @@
 | **PHP** | 8.4.23 | `ssh root@46.101.111.131 docker exec sms-app php -v` |
 | **Laravel** | 12.63.0 | `php artisan --version` on production |
 | **Livewire** | 3.x | `composer.json` require `^3.4` |
-| **Vue** | 2.6.12 | `package.json` |
+| **Vue** | **2.7.16** at runtime (`Vue.version` in browser; `npm ls vue`) — `package.json` still says `^2.6.12`. **Not Vue 3** — see Phase 1 status correction below. |
 | **Tailwind CSS** | 4.3.3 | `package.json` — v4, CSS-first config, no `tailwind.config.js` |
-| **Laravel Mix** | 4.1.4 | `package.json` — NOT Vite |
+| **Laravel Mix** | 6.0.49 | `package.json` — NOT Vite (webpack 5 via Mix 6) |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
 | **Production host** | Docker on Hetzner VPS (46.101.111.131) | `scripts/deploy-manual.sh` |
@@ -62,7 +62,22 @@
   - `GET /superadmin/academics/school/userprofile/detail/1` — **200** (site admin `siteadmin@gmail.com`; Livewire `userprofile-detail`)
   - `GET /superadmin/academics/school/userprofile/create/1` — **200** (same site admin; Livewire `userprofile-form`)
   - Method: session login via HTTP client against live `artisan serve` (not kernel-only tinker).
-- **✅ Phase 1 Vue boot regression CLOSED (Jul 28) — both branches**: Blank Vue main content (`Vue.component is not a function`) after Mix 4→6 / webpack 5 ESM interop. **Not** a Tailwind issue; **not** equivalent to `admin/promotion/list`.
+- **Phase 1 status correction (Jul 28, Phase 3 pre-audit on `main` @ `753697f`)** — **reframes prior “Vue 2→3 complete” assumptions**:
+  - **✅ Phase 1a: Vue 3 SFC compile-error remediation — complete and merged (real work)**:
+    - Large SFC compile-error sweep (~**3,381** errors at peak) — `v-model-on-prop`, deprecated **`slot`** → **`v-slot`**, and related template fixes across the Vue tree.
+    - **Mix 4→6 / webpack 5 prerequisite** (`d295517`, `build(mix): upgrade Laravel Mix 4→6`) — genuinely merged; required for the stricter compile path that surfaced the SFC issues.
+    - These fixes were **necessary regardless of which Vue version runs** — Vue 3’s stricter compiler (and webpack 5 / vue-loader path) is what surfaced them; the remediated SFCs remain valid on Vue 2.7.
+  - **🚧 Phase 1b: runtime switch to Vue 3 / `@vue/compat` — NOT done**:
+    - **Actual runtime today**: **Vue 2.7.16** — `require.resolve('vue')` → `vue/dist/vue.runtime.common.js`; webpack alias **`vue$: "vue/dist/vue.esm.js"`** (Vue **2** full ESM build, header `Vue.js v2.7.16`).
+    - **`@vue/compat@3.5.40` is installed** but **not wired** — no alias to `@vue/compat`; bundle and browser **`Vue.version === "2.7.16"`** (`main` @ `753697f`, verified Jul 28 on `:8082` `/admin/dashboard`).
+    - **Not caught during Phase 1 verification** — discovered during Phase 3 (Vite) audit, not because production was silently broken.
+  - **Nothing is currently broken because of this gap**: Vue 2.7 boots correctly on `main`. Tonight’s verification (academics mount, attendance/add, discipline/add + `Vue.options.components.multiselect`, event bus, `$swal`, nav academic-year dropdown) is **valid confirmation that Vue 2.7 runs correctly** — not evidence of Vue 3 at runtime.
+  - **Inaccurate status label**: ~~“Phase 1: Vue 2→3 migration — complete”~~ → use **Phase 1a complete / Phase 1b open** as above.
+  - **⏸️ Decision point (user — not assumed)** — how to sequence Vue runtime vs Vite:
+    - **(a)** Complete the **Vue 3 / `@vue/compat` runtime switch** as its own dedicated phase **before or alongside** Phase 3 (Vite).
+    - **(b)** **Stay on Vue 2.7** for Phase 3 — Mix→Vite with **`@vitejs/plugin-vue2`**, treat Vue 3 runtime switch as a **future Phase 4**.
+    - **(c)** Another approach — user’s call. Tonight’s Phase 1 scope was implicitly premised on Vue 3; **do not assume (a) or (b)** without explicit approval.
+- **✅ Phase 1 Vue boot regression CLOSED (Jul 28) — both branches**: Blank Vue main content (`Vue.component is not a function`) after Mix 6 / webpack 5 ESM interop. **Not** a Tailwind issue; **not** equivalent to `admin/promotion/list`. **Applies to Vue 2.7 runtime** (webpack `require('vue')` namespace interop — separate from Phase 1b).
   - **Root cause**: `window.Vue = require('vue')` bound the ESM namespace; constructor is at `.default`.
   - **Fix**: `resources/assets/js/app.js` → `window.Vue = require('vue').default || require('vue');` then `npm run production` (compiled `public/js/app.js` shows `window.Vue=n(…).default||n(…)`).
   - **Applied on** (`public/js/app.js` is git-tracked — source + rebuilt bundle committed):
@@ -198,16 +213,21 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Effort** | ~1 day (config update + spot-check 50 error handlers + test) |
 | **Can parallelize?** | Yes — independent of all other migrations |
 
-#### 2. Vue 2 → 3
+#### 2. Vue 2 → 3 (split: compile remediation vs runtime)
+
+| Sub-phase | Status | Notes |
+|---|---|---|
+| **Phase 1a — SFC compile remediation** | ✅ **Complete (merged)** | ~3,381 compile errors fixed; `v-model-on-prop`, `slot`→`v-slot`; Mix 4→6 prerequisite (`d295517`). |
+| **Phase 1b — Vue 3 / `@vue/compat` runtime** | 🚧 **Not done** | Runtime is **Vue 2.7.16**; `@vue/compat` 3.5.40 installed but **alias still `vue/dist/vue.esm.js`**. See Current Status (Jul 28 correction). |
+
 | Dimension | Assessment |
 |---|---|
 | **Component count** | **242** `.vue` files across 50+ feature directories |
-| **Architecture** | Global `window.Vue = require('vue')`, `Vue.component(...)` registration in app.js, Options API throughout (`data()`, `methods`, `computed`, `mounted`). No Vuex, no router. |
+| **Architecture** | Global `window.Vue`, `Vue.component(...)` in `app.js`, Options API throughout. No Vuex, no router. |
 | **Third-party plugins** | ckeditor4-vue, vue-carousel, vue-cookies, vue-croppie, vue-good-table, portal-vue, vue-flash-message, emoji-mart-vue, v-select2-component, etc. — many may lack Vue 3 versions |
-| **Breaking changes** | `Vue.prototype` → `app.config.globalProperties`, `Vue.component` → `app.component`, `new Vue()` → `createApp()`, `$listeners` removed (merged into `$attrs`), `$destroy` removed, `v-model` binding changes |
-| **Options API compatibility** | Vue 3 still supports Options API — migration is mostly `app.js` bootstrap + plugin changes. Templates are 95% compatible. |
-| **Risk level** | **Medium-High** — third-party plugin availability is the main risk. Core Vue migration is mechanical (1-2 days for app.js). Plugin audit could reveal blockers that require finding alternatives. |
-| **Effort** | ~2 weeks (1 week migration + 1 week testing/plugin remediation) |
+| **Breaking changes (Phase 1b only)** | `Vue.prototype` → `app.config.globalProperties`, `Vue.component` → `app.component`, `new Vue()` → `createApp()`, `$listeners` removed, `v-model` binding changes |
+| **Risk level (Phase 1b)** | **Medium-High** — plugin audit + alias to `@vue/compat` + bootstrap rewrite |
+| **Effort (Phase 1b)** | ~2 weeks (migration + testing/plugin remediation) — **not started** |
 
 #### 3. Laravel 11 → 12 ✅ (completed)
 | Dimension | Assessment |
@@ -224,11 +244,11 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Current config** | Zero custom webpack.mix.js — uses Laravel Mix 4 defaults from `node_modules/laravel-mix/setup/webpack.config.js` |
 | **Entry points** | `resources/assets/js/app.js` (Vue components) + `resources/assets/sass/app.scss` (styles) — both Mix defaults |
 | **Blade asset helpers** | Uses `mix('js/app.js')` and `mix('css/app.css')` — must change to `@vite('resources/js/app.js')` |
-| **Vue compatibility** | Requires `@vitejs/plugin-vue2` (NOT the default `plugin-vue` which targets Vue 3). If Vue 3 migration is done first, use standard `plugin-vue`. |
+| **Vue compatibility** | **Today: Vue 2.7.16** — Phase 3 Vite needs **`@vitejs/plugin-vue2`** unless Phase 1b (Vue 3 / `@vue/compat`) is done first. **User decision** — see Current Status Phase 1 correction (options a/b/c). |
 | **Feature gap: versioning** | Mix `version()` → Vite handles this automatically via hashed filenames |
 | **Feature gap: PurgeCSS** | Currently uses `laravel-mix-purgecss` — Vite equivalent is `@fullhuman/postcss-purgecss` PostCSS plugin |
-| **Risk level** | **Low-Medium** — no custom webpack config means the migration is mostly `vite.config.js` + Blade path changes. But doing it twice (once for Vue 2 with plugin-vue2, once for Vue 3) would be wasteful. |
-| **Effort** | ~1 day config + ~2 days Blade template audit (find/replace `mix()` with `@vite()` across all views) |
+| **Risk level** | **Low-Medium** for Vite config + Blade `@vite()` — **higher** if bundled with Phase 1b without a settled Vue major-version choice |
+| **Effort** | ~1 day config + ~2 days Blade template audit (find/replace `asset('js/app.js')` / CSS links with `@vite()` across layouts) |
 
 ---
 
@@ -239,16 +259,17 @@ Phase A: Laravel 12 + axios 1.x ✅ (completed)
   ├─ Laravel 11→12: composer bump, test suite, deploy
   └─ axios 0.x→1.x: bootstrap.js config, error handler audit, npm bump
        ↓
-Phase B: Mix→Vite + Vue 3 (together, 2-3 weeks total)
-  ├─ Vite migration: vite.config.js, Blade @vite() paths, PurgeCSS
-  ├─ Vue 3 migration: app.js bootstrap, plugin audit, component testing
-  └─ This sequence avoids the cost of doing Mix→Vite twice
+Phase B: Mix→Vite + (optional) Vue 3 runtime — **user must choose sequencing** (Jul 28)
+  ├─ Phase 3: Vite migration — vite.config.js, Blade @vite(), Tailwind v4 + @tailwindcss/vite (audit recommendation)
+  ├─ Phase 1b (optional / separate): Vue 3 / @vue/compat runtime — alias, app.js bootstrap, plugin audit — **not done; runtime is Vue 2.7.16 today**
+  └─ Doing Vite twice (plugin-vue2 then plugin-vue) is wasteful **if** Phase 1b follows soon — but staying on Vue 2.7 for Phase 3 is valid (option b)
 ```
 
-**Rationale:**
-- **Laravel 12 first** because it's independent, low-risk, and the quickest win. Provides immediate benefit (security patches, performance) without blocking anything else.
-- **axios 1.x in parallel** because it touches a completely different layer (frontend HTTP) and won't conflict with any backend migration.
-- **Mix→Vite and Vue 3 together** because Vite's Vue plugin is version-specific. Doing Mix→Vite first with Vue 2+plugin-vue2 means you'd have to swap plugins again when migrating to Vue 3. Bundle them into one phase and get the full benefit immediately. The 242 Vue components are mostly Options API which migrates mechanically — the real time sink is auditing third-party plugins for Vue 3 compatibility.
+**Rationale (updated Jul 28):**
+- **Laravel 12 first** — done.
+- **axios 1.x** — done.
+- **Phase 1a (SFC compile fixes)** — done and merged; **does not mean Vue 3 runs in the browser**.
+- **Mix→Vite (Phase 3)** vs **Vue 3 runtime (Phase 1b)** — **user decision** (see Current Status). Prior doc assumed bundling both; that assumed Vue 3 was already live — **it is not**.
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
@@ -4953,7 +4974,7 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
   - 31 `@apply` occurrences replaced: 30 in `adminstyle.scss`, 1 in `style.scss` — each replaced with the actual CSS values from Tailwind v1 reference
   - 2 main Blade layouts (`app.blade.php`, `superadmin-app.blade.php`) updated to link `tailwind.css` before `app.css`
 - **Fixes outside scope**:
-  - Replaced broken `@vue/compat` alias (`vue$: "vue/dist/vue.esm.js"`), dropped 42 pre-existing build errors (Vue module resolution — unrelated to Tailwind). Final build: **0 errors**.
+  - Webpack **`vue$` alias** set to **`vue/dist/vue.esm.js`** (Vue **2.7** ESM build) — **not** `@vue/compat`. Resolved pre-existing Vue module-resolution build errors (42 errors dropped in that session). **`@vue/compat` remains installed but unused at runtime** (confirmed Jul 28 Phase 3 audit). Final build: **0 errors**.
 - **Files created**: `resources/css/tailwind.css`
 - **Files modified** (untracked — in `.gitignore`): `webpack.mix.js`
 - **Selector usage audit** (after `@apply` removal):
