@@ -220,17 +220,16 @@
 			deletePost(id)
 			{
 				var thisswal = this;
-	      		swal({
+	      		Swal.fire({
 			        title: 'Are you sure',
 			        text: 'Do you want to delete this Post ?',
 			        icon: "info",
-			        buttons: [
-			          'No',
-			          'Yes'
-			        ],
-			        dangerMode: true,
-			      }).then(function(isConfirm) {
-			        if (isConfirm) 
+			        showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+			        
+			      }).then(function(result) {
+			        if (result.isConfirmed) 
 			        {
 			          axios.get(thisswal.url+'/'+thisswal.mode+ '/classwall/post/delete/'+ id).then(response => {
 			            thisswal.success = response.data.success;
@@ -239,7 +238,7 @@
 			        }
 			        else 
 			        {
-			          swal("Cancelled");
+			          Swal.fire("Cancelled");
 			        }
 			    });
 			},

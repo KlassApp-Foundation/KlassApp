@@ -343,8 +343,12 @@ Vue.component('nav-bar', require('./components/Navigation.vue').default);
 
 
 export const bus = new Vue();
-import VueSwal from 'vue-swal';
-Vue.use(VueSwal);
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+import VueSweetalert2 from 'vue-sweetalert2';
+// Phase 1b.1: global Swal for Options API call sites; Vue.use kept until createApp (1b.2)
+window.Swal = Swal;
+try { Vue.use(VueSweetalert2); } catch (e) { /* Vue 3 createApp path comes in 1b.2 */ }
 
 const app = new Vue({
     el: '#app'

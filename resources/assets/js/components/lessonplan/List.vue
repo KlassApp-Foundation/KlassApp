@@ -147,17 +147,16 @@
       deletelesson(id) 
       {
         var thisswal = this;
-        swal({
+        Swal.fire({
           title: 'Are you sure',
           text: 'Do you want to delete this lesson plan ?',
           icon: "info",
-          buttons: [
-            'No',
-            'Yes'
-          ],
-          dangerMode: true,
-        }).then(function(isConfirm) {
-          if (isConfirm) 
+          showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+          
+        }).then(function(result) {
+          if (result.isConfirmed) 
           {
             axios.get(thisswal.url+ '/teacher/lessonplan/delete/'+ id).then(response => {
               thisswal.success = response.data.success;
@@ -166,7 +165,7 @@
           }
           else 
           {
-            swal("Cancelled");
+            Swal.fire("Cancelled");
           }
         });
       },
@@ -174,23 +173,22 @@
       approvelesson(id) 
       {
         var thisswal = this;
-        swal({
+        Swal.fire({
           title: 'Are you sure',
           text: 'Do you want to approve this lesson plan ?',
           icon: "info",
-          buttons: [
-            'No',
-            'Yes'
-          ],
-          dangerMode: true,
-        }).then(function(isConfirm) {
-          if (isConfirm) 
+          showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+          
+        }).then(function(result) {
+          if (result.isConfirmed) 
           {
             window.location.href = thisswal.url+ '/teacher/lessonplan/show/'+id+'?status=approve';
           }
           else 
           {
-            swal("Cancelled");
+            Swal.fire("Cancelled");
           }
         });
       },
@@ -198,23 +196,22 @@
       rejectlesson(id) 
       {
         var thisswal = this;
-        swal({
+        Swal.fire({
           title: 'Are you sure',
           text: 'Do you want to reject this lesson plan ?',
           icon: "info",
-          buttons: [
-            'No',
-            'Yes'
-          ],
-          dangerMode: true,
-        }).then(function(isConfirm) {
-          if (isConfirm) 
+          showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+          
+        }).then(function(result) {
+          if (result.isConfirmed) 
           {
             window.location.href = thisswal.url+ '/teacher/lessonplan/show/'+id+'?status=reject'; 
           }
           else 
           {
-            swal("Cancelled");
+            Swal.fire("Cancelled");
           }
         });
       },
