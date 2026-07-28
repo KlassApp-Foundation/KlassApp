@@ -37,7 +37,50 @@
     3. `GET /admin/promotion/list` (browser or in-app request).
     4. Result: reproducible 500 without running a second dev server or tab-switching.
   - **Scope**: track as its own bug ticket; unrelated to OKLCH/Tailwind v4 CSS work.
-- **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill of health for the whole app (`admin/promotion/list` 500, `home_navigation` / `minimal` deferred items remain).
+- **Recurrence (Jul 28)**: `GET /admin/dashboard` HTTP 500 — **same homestead vs `klassapp_local` mismatch** already fixed in `.env` earlier this session (`DB_DATABASE=homestead` → `klassapp_local`; see Environment fixes below). **Not** a new schema bug or Tailwind regression.
+  - **Route**: `GET /admin/dashboard` (`Admin\DashboardController@index`)
+  - **Surface error**: `Illuminate\Database\QueryException` — `Table 'homestead.approvals' doesn't exist` at `DashboardController` ~line 84 (pending-approvals `whereHas`).
+  - **Actual root cause (confirmed Jul 28 diagnostic)**: **exported shell `DB_*` overrides `.env`** on the **long-running** `php artisan serve --port=8000` process (PID **12225**, started **10:45:53**, still listening on `127.0.0.1:8000`). Process environment (not `.env`): `DB_DATABASE=homestead`, `DB_USERNAME=root`, `DB_PASSWORD=` (empty), plus `DB_CONNECTION` / `DB_HOST` / `DB_PORT` — classic Laravel Homestead defaults.
+  - **Contrast**:
+    - Fresh diagnostic shell: `env | grep DB_DATABASE` → **empty**; `php artisan config:show database.connections.mysql.database` → **`klassapp_local`** (matches `.env`).
+    - Port **8000** server process: **`DB_DATABASE=homestead`** in `ps eww` — requests hit **homestead**, so dashboard 500 matches logs.
+  - **Where set**: No `export DB_DATABASE` found in `~/.zshrc`, `~/.zshenv`, `~/scripts`, or repo scripts. **Not** in `.cursor/mcp.json` (MySQL MCP uses `MYSQL_DB=klassapp_local` only for the MCP child). Most likely a **stale terminal/session export** (e.g. old `export`/`source` when `.env` still said `homestead`, or manual Homestead-style exports) inherited by `artisan serve` at 10:45 **before** the `.env` edit; fixing `.env` alone did not update the already-running server.
+  - **Repro**: `DB_DATABASE=homestead` + school admin → HTTP **500** on both `main` and `migration/tailwind4`; clean `klassapp_local` → **200**.
+  - **Scope**: local env/process hygiene (unset leaked vars, restart serve from clean shell) — out of Phase 2c / Tailwind. **Do not** treat as “missing migration on prod” without checking which DB the process actually uses.
+  - **✅ Resolved (Jul 28)**: Killed stale PID **12225** / port **8000** listener; restarted `php artisan serve --host=127.0.0.1 --port=8000` from clean shell (`env | grep DB_DATABASE` empty; artisan parent **no `DB_*` exported**). `GET /admin/dashboard` → HTTP **200** on `http://127.0.0.1:8000` (school admin session); HTML includes dashboard/KPI markers (not Server Error).
+- **Priority 2 route smoke tests (Jul 28)**: Closed the “template audit ≠ page loads” gap with authenticated HTTP **200** checks on port **8000** after clean serve (`klassapp_local`):
+  - `GET /admin/dashboard` — **200** (school admin `admin@testschoolone.sch.ug`)
+  - `GET /admin/schooldetails` — **200** (same admin; view `admin/schooldetails/index.blade.php`)
+  - `GET /admin/whatsapp/dashboard` — **200** (same admin; view `admin/whatsapp/dashboard.blade.php`)
+  - `GET /superadmin/academics/school/userprofile/detail/1` — **200** (site admin `siteadmin@gmail.com`; Livewire `userprofile-detail`)
+  - `GET /superadmin/academics/school/userprofile/create/1` — **200** (same site admin; Livewire `userprofile-form`)
+  - Method: session login via HTTP client against live `artisan serve` (not kernel-only tinker).
+- **✅ Phase 1 Vue boot regression CLOSED (Jul 28) — both branches**: Blank Vue main content (`Vue.component is not a function`) after Mix 4→6 / webpack 5 ESM interop. **Not** a Tailwind issue; **not** equivalent to `admin/promotion/list`.
+  - **Root cause**: `window.Vue = require('vue')` bound the ESM namespace; constructor is at `.default`.
+  - **Fix**: `resources/assets/js/app.js` → `window.Vue = require('vue').default || require('vue');` then `npm run production` (compiled `public/js/app.js` shows `window.Vue=n(…).default||n(…)`).
+  - **Applied on** (`public/js/app.js` is git-tracked — source + rebuilt bundle committed):
+    - `migration/tailwind4` — **`7f55429`** (`fix(vue): resolve Vue undefined via ESM/CJS interop break in require('vue')`; parent `016b354`).
+    - `main` — **`f54573d`** (same message; parent `d295517` Mix 4→6 tip).
+  - **Verification — `migration/tailwind4` (`:8000`)** — all **PASS**:
+    | Check | Result |
+    |---|---|
+    | `/admin/academics` mount | **PASS** — Academic Years + table + Add / Change Current Academic Year; body “No Records Found” (expected: deferred `str_limit` 500 on `/admin/academic/list`) |
+    | `/admin/attendance/add` | **PASS** — create-attendance form (class, date, Forenoon/Afternoon, Select Students) |
+    | `/admin/discipline/add` | **PASS** — form + teachers; `Vue.options.components.multiselect` present |
+    | Boot: `typeof Vue === 'function'` | **PASS** |
+    | Boot: `new Vue()` / `#app.__vue__` | **PASS** |
+    | Boot: `Vue.prototype.$swal` | **PASS** |
+    | Nav academic-year dropdown | **PASS** — options 2026, 2027 |
+  - **Verification — `main` (`:8082`)** — all **PASS** (same checklist):
+    | Check | Result |
+    |---|---|
+    | `/admin/academics` mount | **PASS** — same UI mount; “No Records Found” expected (`str_limit`) |
+    | `/admin/attendance/add` | **PASS** |
+    | `/admin/discipline/add` + multiselect | **PASS** — `Vue.options.components.multiselect === true`; teacher options populated |
+    | Boot checks (Vue fn, `new Vue()`, `#app.__vue__`, `$swal`, year dropdown) | **PASS** |
+  - **Audit note (kept)**: 183 active `Vue.component` sites / 0 `app.component`; sole Mix entry `app.js` — one-line interop fix restores full surface.
+  - **Still deferred**: `str_limit()` at `AcademicYear.php:21` (promotion/list-class); undefined `$school` in `AcademicYearController@index` (unused by view).
+- **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No Tailwind regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill. Open: `admin/promotion/list` 500, `str_limit` on academic list API, `home_navigation` / `minimal` deferred. **Phase 1 Vue boot regression CLOSED** (both branches verified). Dashboard env recurrence **resolved**; Priority 2 HTTP smoke routes **verified 200**.
 
 ### Confirmed Orphaned Welcome-Era Files
 - **`resources/views/welcome/welcome.blade.php` and `resources/views/welcome/_modules_list_section.blade.php` are both currently orphaned/dead**.
@@ -4949,6 +4992,7 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 
 #### Environment fixes
 - **`.env` `DB_DATABASE=homestead` → `klassapp_local`** — was pointing to wrong database. `.env` is gitignored. `php artisan serve` launched on port 8000. Login at `/login` with `siteadmin@gmail.com / password`.
+- **Jul 28 recurrence**: `.env` fix did **not** propagate to an already-running `php artisan serve --port=8000` that inherited **exported** `DB_DATABASE=homestead` in the parent process env — see Current Status “Recurrence” bullet. Verify with `ps eww -p <serve-pid> | tr ' ' '\n' | grep '^DB_'`, not only `cat .env`. **Fixed** by killing stale serve and restarting from clean shell (see Current Status ✅ Resolved).
 - **`.env.example` `DB_DATABASE=klassapp` → `klassapp_local`** — so new clones copy the correct value. ✅
 
 #### Cursor rules updates (`.cursor/rules/`)
