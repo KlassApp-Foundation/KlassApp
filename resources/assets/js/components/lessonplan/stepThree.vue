@@ -9,7 +9,7 @@
                         <label for="introduction" class="tw-form-label">Introduction<span class="text-red-500">*</span></label>
                     </div>
                     <div class="mb-2">
-                        <quill-editor ref="myQuillEditor" v-model="introduction" name="introduction" :options="option"/>
+                        <quill-editor ref="myQuillEditor" v-model:content="introduction" name="introduction" :options="option" contentType="html" />
                     </div>
                     <span v-if="errors.introduction" class="text-red-500 text-xs font-semibold">{{ errors.introduction[0] }}</span>
                 </div>
@@ -20,7 +20,7 @@
                         <label for="procedure" class="tw-form-label">Procedure<span class="text-red-500">*</span></label>
                     </div>
                     <div class="mb-2">
-                        <quill-editor ref="myQuillEditor" v-model="procedure" name="procedure" :options="option"/>
+                        <quill-editor ref="myQuillEditor" v-model:content="procedure" name="procedure" :options="option" contentType="html" />
                     </div>
                     <span v-if="errors.procedure" class="text-red-500 text-xs font-semibold">{{ errors.procedure[0] }}</span>
                 </div>
@@ -39,7 +39,7 @@
                         <label for="conclusion" class="tw-form-label">Conclusion<span class="text-red-500">*</span></label>
                     </div>
                     <div class="mb-2">
-                        <quill-editor ref="myQuillEditor" v-model="conclusion" name="conclusion" :options="option"/>
+                        <quill-editor ref="myQuillEditor" v-model:content="conclusion" name="conclusion" :options="option" contentType="html" />
                     </div>
                     <span v-if="errors.conclusion" class="text-red-500 text-xs font-semibold">{{errors.conclusion[0]}}</span> 
                 </div>
@@ -58,12 +58,11 @@
 
 <script>
     import { bus } from "../../app";
-    import VueQuillEditor from 'vue-quill-editor'
-    import 'quill/dist/quill.core.css' // import styles
-    import 'quill/dist/quill.snow.css' // for snow theme
-    import 'quill/dist/quill.bubble.css' // for bubble theme
+    import { QuillEditor } from '@vueup/vue-quill'
+    import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
     export default {
+        components: { QuillEditor },
         props:['url' , 'type' , 'id'],
         data(){
             return{

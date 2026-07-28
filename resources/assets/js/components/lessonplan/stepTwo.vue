@@ -10,7 +10,7 @@
                         <label for="objective" class="tw-form-label">Objective<span class="text-red-500">*</span></label>
                     </div>
                     <div class="mb-2">
-                        <quill-editor ref="myQuillEditor" v-model="objective" name="objective" :options="option"/>
+                        <quill-editor ref="myQuillEditor" v-model:content="objective" name="objective" :options="option" contentType="html" />
                     </div>
                     <span v-if="errors.objective" class="text-red-500 text-xs font-semibold">{{ errors.objective[0] }}</span>
                 </div>
@@ -26,7 +26,7 @@
                         <label for="materials_required" class="tw-form-label">Materials Required<span class="text-red-500">*</span></label>
                     </div>
                     <div class="mb-2">
-                        <quill-editor ref="myQuillEditor" v-model="materials_required" :options="option"/>
+                        <quill-editor ref="myQuillEditor" v-model:content="materials_required" :options="option" contentType="html" />
                     </div>
                     <span v-if="errors.materials_required" class="text-red-500 text-xs font-semibold">{{ errors.materials_required[0] }}</span>
                 </div>
@@ -66,12 +66,11 @@
 
 <script>
     import { bus } from "../../app";
-    import VueQuillEditor from 'vue-quill-editor'
-    import 'quill/dist/quill.core.css' // import styles
-    import 'quill/dist/quill.snow.css' // for snow theme
-    import 'quill/dist/quill.bubble.css' // for bubble theme
+    import { QuillEditor } from '@vueup/vue-quill'
+    import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
     export default {
+        components: { QuillEditor },
         props:['url' , 'type' , 'id'],
         data(){
             return{

@@ -24,13 +24,13 @@
 </template>
 
 <script>
-    import vue2Dropzone from 'vue2-dropzone'
-    import 'vue2-dropzone/dist/vue2Dropzone.min.css'
+    import vueDropzone from 'dropzone-vue3'
+    // dropzone CSS bundled via dropzone-vue3
     import { bus } from "../../../app";
     export default {
         props:['url' , 'id' , 'mode'],
         components:{ 
-            vueDropzone: vue2Dropzone,
+            vueDropzone,
         },
         data () {
             return {

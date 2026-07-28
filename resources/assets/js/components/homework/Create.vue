@@ -61,7 +61,7 @@
                         </div>
                         <div class="mb-2 w-full lg:w-3/4 md:w-2/3">
                             <!-- <textarea type="text" name="description" id="description" v-model="description" class="tw-form-control w-full" rows="3"></textarea> -->
-                            <quill-editor ref="myQuillEditor" v-model="description" :options="editorOption"/>
+                            <quill-editor ref="myQuillEditor" v-model:content="description" :options="editorOption" contentType="html" />
                             <span v-if="errors.description" class="text-red-500 text-xs font-semibold">{{errors.description[0]}}</span>
                         </div>
                     </div>
@@ -120,12 +120,10 @@
 </template>
 
 <script>
-    import VueQuillEditor from 'vue-quill-editor'
-    import 'quill/dist/quill.core.css' // import styles
-    import 'quill/dist/quill.snow.css' // for snow theme
-    import 'quill/dist/quill.bubble.css' // for bubble theme
-    Vue.use(VueQuillEditor)
+    import { QuillEditor } from '@vueup/vue-quill'
+    import '@vueup/vue-quill/dist/vue-quill.snow.css'
     export default {
+        components: { QuillEditor },
         props:['standard' , 'mode' , 'date'],
         data(){
             return{
