@@ -30,7 +30,7 @@
                             </div>
                         </div>
                         <a href="#" class="no-underline text-white px-4 my-3 mx-2 flex items-center custom-green py-1 justify-center cursor-pointer rounded" @click="submitForm()" v-if="this.selectedTaskCount > 0">
-                            <span class="text-sm font-semibold whitespace-no-wrap">Mark As Completed</span>
+                            <span class="text-sm font-semibold whitespace-nowrap">Mark As Completed</span>
                         </a> 
 
                         <div class="flex items-center rounded mx-2">

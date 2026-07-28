@@ -169,7 +169,7 @@
                 <div class="my-1">
                     <h6 class="text-sm font-bold mb-3">
                         Group Selection<span
-                            class="text-red-500 whitespace-no-wrap"
+                            class="text-red-500 whitespace-nowrap"
                             >*Only For Class X , XI , XII</span
                         >
                     </h6>
@@ -200,7 +200,7 @@
                                 class="tw-form-label"
                                 ><h6 class="text-sm font-bold mb-3">
                                     Board Registration Number<span
-                                        class="text-red-500 whitespace-no-wrap"
+                                        class="text-red-500 whitespace-nowrap"
                                         >*Only For Class X , XI , XII</span
                                     >
                                 </h6></label

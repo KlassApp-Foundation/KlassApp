@@ -36,7 +36,7 @@
 }
 
 .pricing-table tr td {
-    @apply .text-sm .text-white;
+    font-size: 0.875rem; --text-opacity: 1; color: #fff; color: rgba(255, 255, 255, var(--text-opacity));
 }
 /* .pricing-bg {
         background-color:#e3ebee;

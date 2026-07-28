@@ -35,7 +35,7 @@
                                     </p>
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <h3 class="font-semibold text-sm text-red-00 dark:text-white">{{ $exam->subject->name . " EXAM"}}
+                                        <h3 class="font-semibold text-sm text-gray-800 dark:text-white">{{ $exam->subject->name . " EXAM"}}
                                     </h3>
                                     
                                     </div>

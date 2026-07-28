@@ -994,9 +994,9 @@
                     <div class="mb-2">
                         <label
                             for="board_registration_number"
-                            class="tw-form-label whitespace-no-wrap"
+                            class="tw-form-label whitespace-nowrap"
                             >Board Registration Number<span
-                                class="text-red-500 whitespace-no-wrap"
+                                class="text-red-500 whitespace-nowrap"
                                 >*Only For Class X , XI , XII</span
                             ></label
                         >

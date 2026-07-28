@@ -16,7 +16,7 @@ if (!function_exists('sidebarActive')) {
     <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive('dashboard') }}">
         <a href="{{ url('admin/dashboard') }}" class="flex items-center">
             <x-icons.sidebar name="dashboard"/>
-            <span class="mx-3 whitespace-no-wrap">Dashboard</span>
+            <span class="mx-3 whitespace-nowrap">Dashboard</span>
         </a>
     </li>
 
@@ -45,49 +45,49 @@ if (!function_exists('sidebarActive')) {
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['students','student','parents','parent','teachers','teacher','staff','staffs','alumni','blocked_students']) }}">
                 <a href="{{ url('admin/students') }}" class="flex items-center">
                     <x-icons.sidebar name="students"/>
-                    <span class="mx-3 whitespace-no-wrap">Students</span>
+                    <span class="mx-3 whitespace-nowrap">Students</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['parents','parent']) }}">
                 <a href="{{ url('admin/parents') }}" class="flex items-center">
                     <x-icons.sidebar name="parents"/>
-                    <span class="mx-3 whitespace-no-wrap">Parents</span>
+                    <span class="mx-3 whitespace-nowrap">Parents</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['classes','sections','standardlinks','standardLink']) }}">
                 <a href="{{ url('admin/classes') }}" class="flex items-center">
                     <x-icons.sidebar name="classes"/>
-                    <span class="mx-3 whitespace-no-wrap">Classes &amp; Streams</span>
+                    <span class="mx-3 whitespace-nowrap">Classes &amp; Streams</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['subjects','subject']) }}">
                 <a href="{{ url('admin/subjects') }}" class="flex items-center">
                     <x-icons.sidebar name="subjects"/>
-                    <span class="mx-3 whitespace-no-wrap">Subjects</span>
+                    <span class="mx-3 whitespace-nowrap">Subjects</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['timetable','timetables']) }}">
                 <a href="{{ url('admin/timetable') }}" class="flex items-center">
                     <x-icons.sidebar name="timetable"/>
-                    <span class="mx-3 whitespace-no-wrap">Timetable</span>
+                    <span class="mx-3 whitespace-nowrap">Timetable</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['attendance']) }}">
                 <a href="{{ url('admin/attendance') }}" class="flex items-center">
                     <x-icons.sidebar name="attendance"/>
-                    <span class="mx-3 whitespace-no-wrap">Attendance</span>
+                    <span class="mx-3 whitespace-nowrap">Attendance</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['exams','exam','marks','mark']) }}">
                 <a href="{{ url('admin/exams') }}" class="flex items-center">
                     <x-icons.sidebar name="exams"/>
-                    <span class="mx-3 whitespace-no-wrap">Exams &amp; Marks</span>
+                    <span class="mx-3 whitespace-nowrap">Exams &amp; Marks</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['grades', 'grade']) }}">
                 <a href="{{ url('admin/grades') }}" class="flex items-center">
                     <x-icons.sidebar name="grading"/>
-                    <span class="mx-3 whitespace-no-wrap">Grading</span>
+                    <span class="mx-3 whitespace-nowrap">Grading</span>
                 </a>
             </li>
         </ul>
@@ -118,19 +118,19 @@ if (!function_exists('sidebarActive')) {
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['library','books']) }}">
                 <a href="{{ route('admin.library.books') }}" class="flex items-center">
                     <x-icons.sidebar name="library"/>
-                    <span class="mx-3 whitespace-no-wrap">Library</span>
+                    <span class="mx-3 whitespace-nowrap">Library</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['health','medical']) }}">
                 <a href="{{ url('admin/students') }}" class="flex items-center">
                     <x-icons.sidebar name="health"/>
-                    <span class="mx-3 whitespace-no-wrap">Health</span>
+                    <span class="mx-3 whitespace-nowrap">Health</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['transport']) }}">
                 <a href="{{ url('admin/transport') }}" class="flex items-center">
                     <x-icons.sidebar name="transport"/>
-                    <span class="mx-3 whitespace-no-wrap">Transport</span>
+                    <span class="mx-3 whitespace-nowrap">Transport</span>
                 </a>
             </li>
         </ul>
@@ -161,7 +161,7 @@ if (!function_exists('sidebarActive')) {
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['fees','fee','payments','payment','invoices']) }}">
                 <a href="{{ url('admin/fees/payments') }}" class="flex items-center">
                     <x-icons.sidebar name="fees"/>
-                    <span class="mx-3 whitespace-no-wrap">Fees &amp; Payments</span>
+                    <span class="mx-3 whitespace-nowrap">Fees &amp; Payments</span>
                 </a>
             </li>
             <li class="pl-6 py-2 px-3 dashboard-menu-item {{ sidebarActive('unmatched') }}">
@@ -198,13 +198,13 @@ if (!function_exists('sidebarActive')) {
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['messages','messaging','notifications','sentmessages']) }}">
                 <a href="{{ route('admin.messages') }}" class="flex items-center">
                     <x-icons.sidebar name="messages"/>
-                    <span class="mx-3 whitespace-no-wrap">Messaging</span>
+                    <span class="mx-3 whitespace-nowrap">Messaging</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['calendar','events']) }}">
                 <a href="{{ url('admin/calendar') }}" class="flex items-center">
                     <x-icons.sidebar name="calendar"/>
-                    <span class="mx-3 whitespace-no-wrap">Calendar</span>
+                    <span class="mx-3 whitespace-nowrap">Calendar</span>
                 </a>
             </li>
         </ul>
@@ -235,20 +235,20 @@ if (!function_exists('sidebarActive')) {
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['approvals','approval']) }}">
                 <a href="{{ url('admin/approvals') }}" class="flex items-center">
                     <x-icons.sidebar name="tasks"/>
-                    <span class="mx-3 whitespace-no-wrap">Approvals</span>
+                    <span class="mx-3 whitespace-nowrap">Approvals</span>
                 </a>
             </li>
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['reports','report']) }}">
                 <a href="{{ url('admin/reports') }}" class="flex items-center">
                     <x-icons.sidebar name="reports"/>
-                    <span class="mx-3 whitespace-no-wrap">Data Exports</span>
+                    <span class="mx-3 whitespace-nowrap">Data Exports</span>
                 </a>
             </li>
             @if(Auth::user()->usergroup_id != 4)
             <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['settings']) }}">
                 <a href="{{ url('admin/settings') }}" class="flex items-center">
                     <x-icons.sidebar name="settings"/>
-                    <span class="mx-3 whitespace-no-wrap">Settings</span>
+                    <span class="mx-3 whitespace-nowrap">Settings</span>
                 </a>
             </li>
             @endif

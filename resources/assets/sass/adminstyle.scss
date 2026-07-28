@@ -40,34 +40,34 @@
 }
 
 .admin-h1 {
-    @apply .text-lg .font-semibold .text-gray-700;
+    font-size: 1.125rem; font-weight: 600; color: #4a5568;
 }
 /*form css start*/
 .submit-btn {
     background-color: #3492e2;
-    @apply .px-3 .py-1 .text-xs .rounded .text-white .font-semibold capitalize;
+    padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: 0.25rem; color: #fff; font-weight: 600; text-transform: capitalize;
 }
 .reset-btn {
-    @apply .px-3 .py-1 bg-gray-100 .text-xs .rounded .text-gray-700 .font-semibold capitalize border;
+    padding: 0.25rem 0.75rem; --bg-opacity: 1; background-color: #f7fafc; background-color: rgba(247, 250, 252, var(--bg-opacity)); font-size: 0.75rem; border-radius: 0.25rem; color: #4a5568; font-weight: 600; text-transform: capitalize; border-width: 1px;
 }
 .tw-form-label {
-    @apply .text-xs  .text-gray-800 .font-bold;
+    font-size: 0.75rem; color: #2d3748; font-weight: 700;
 }
 .tw-form-control {
-    @apply .border .px-2 .py-1 .text-sm .border-gray-400 .rounded;
+    border-width: 1px; padding: 0.25rem 0.5rem; font-size: 0.875rem; border-color: #cbd5e0; border-radius: 0.25rem;
 }
 .ch-form-control {
-    @apply .border .px-2 .py-1 .text-sm .border-gray-400;
+    border-width: 1px; padding: 0.25rem 0.5rem; font-size: 0.875rem; border-color: #cbd5e0;
 }
 .filter-form-control {
-    @apply .border-b .text-xs .border-gray-300 .w-full .leading-none;
+    border-bottom-width: 1px; font-size: 0.75rem; border-color: #e2e8f0; width: 100%; line-height: 1;
 }
 .filter-form-control:focus {
     outline: none;
     border-color: #3492e2;
 }
 .tw-form-group {
-    @apply .mt-3 mb-2;
+    margin-top: 0.75rem; margin-bottom: 0.5rem;;
 }
 @media (min-width: 992px) {
     .lg\:w-128 {
@@ -84,20 +84,20 @@
 /*form css end*/
 /*table css start*/
 .custom-table table {
-    @apply .border;
+    border-width: 1px;;
 }
 .custom-table thead th {
-    @apply .text-sm .text-left .font-semibold .text-white .px-3 py-2;
+    font-size: 0.875rem; text-align: left; font-weight: 600; color: #fff; padding-left: 0.75rem; padding-right: 0.75rem; padding-top: 0.5rem; padding-bottom: 0.5rem;
 }
 .custom-table thead {
-    @apply .bg-gray-500;
+    --bg-opacity: 1; background-color: #a0aec0; background-color: rgba(160, 174, 192, var(--bg-opacity));;
 }
 .custom-table tbody td {
-    @apply .text-sm .px-3 .py-3 .border .border-gray-400;
+    font-size: 0.875rem; padding-left: 0.75rem; padding-right: 0.75rem; padding-top: 0.75rem; padding-bottom: 0.75rem; border-width: 1px; border-color: #cbd5e0;
 }
 
 .custom-table tbody tr:nth-child(even) {
-    @apply .bg-gray-100 .border-t .border-b .border-gray-300;
+    --bg-opacity: 1; background-color: #f7fafc; background-color: rgba(247, 250, 252, var(--bg-opacity)); border-top-width: 1px; border-bottom-width: 1px; border-color: #e2e8f0;
 }
 /*table css end*/
 /*sidebar css start*/
@@ -113,7 +113,7 @@
     font-weight: 700;
 }
 .admin-sidebar ul li a {
-    @apply .text-sm .font-normal;
+    font-size: 0.875rem; font-weight: 400;
     color: #1E293B;
 }
 .admin-sidebar ul li a:hover {
@@ -144,10 +144,10 @@
 /*memberlist start*/
 .filter-alphabet li a {
     background-color: #fff;
-    @apply .text-gray-600 .py-1 .px-3 .mx-1 .text-sm .shadow .font-semibold .uppercase .whitespace-no-wrap;
+    --text-opacity: 1; color: #718096; color: rgba(113, 128, 150, var(--text-opacity)); padding: 0.25rem 0.75rem; margin-left: 0.25rem; margin-right: 0.25rem; font-size: 0.875rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); font-weight: 600; text-transform: uppercase; white-space: nowrap;
 }
 .filter-alphabet li {
-    @apply .my-1;
+    margin-top: 0.25rem; margin-bottom: 0.25rem;;
 }
 .filter-alphabet li a.active,
 .filter-alphabet li a:hover {
@@ -155,16 +155,16 @@
     color: #fff;
 }
 .member-list {
-    @apply .border .bg-gray-100 .border-gray-200 .rounded .mx-1 .cursor-pointer;
+    border-width: 1px; background-color: #f7fafc; border-color: #edf2f7; border-radius: 0.25rem; margin-left: 0.25rem; margin-right: 0.25rem; cursor: pointer;
 }
 /*.member-list:hover {
-  @apply .bg-blue-100;
+  --bg-opacity: 1; background-color: #ebf8ff; background-color: rgba(235, 248, 255, var(--bg-opacity));;
 }*/
 .member-list .active {
-    @apply .bg-blue-100;
+    --bg-opacity: 1; background-color: #ebf8ff; background-color: rgba(235, 248, 255, var(--bg-opacity));;
 }
 .member-list p {
-    @apply .capitalize .text-gray-600 .text-xs;
+    text-transform: capitalize; color: #718096; font-size: 0.75rem;
 }
 .member-contact {
     background-color: #f4f4f4;
@@ -199,10 +199,10 @@
   color:#3492e2;
 }*/
 .profiletab-table thead th {
-    @apply .text-xs .text-gray-800 .text-left .px-2 .py-3;
+    font-size: 0.75rem; color: #2d3748; text-align: left; padding-left: 0.5rem; padding-right: 0.5rem; padding-top: 0.75rem; padding-bottom: 0.75rem;
 }
 .profiletab-table tbody td {
-    @apply .text-xs .px-2 .py-3;
+    font-size: 0.75rem; padding-left: 0.5rem; padding-right: 0.5rem; padding-top: 0.75rem; padding-bottom: 0.75rem;
 }
 .profiletab-table tr {
     border-bottom: 1px solid #edf2f7;
@@ -212,7 +212,7 @@
 }
 /*memberdetail end*/
 .filter_container {
-    @apply .text-xs;
+    font-size: 0.75rem;;
 }
 /*timeline start*/
 .timeline-img {
@@ -551,7 +551,7 @@ body {
     font-family: "Nunito", sans-serif;
 }
 .sidebar ul li.active {
-    @apply .bg-red-900;
+    --bg-opacity: 1; background-color: #742a2a; background-color: rgba(116, 42, 42, var(--bg-opacity));;
 }
 
 /* Admin-specific override for legacy red sidebar styles */
@@ -582,13 +582,13 @@ body {
     overflow-y: auto;
 }
 .conversations textarea {
-    @apply .border .w-1/3 .px-2 .py-1;
+    border-width: 1px; padding: 0.25rem 0.5rem; /* .w-1/3 never existed in Tailwind v1.1.3 — pre-existing broken @apply */;
 }
 .conversations .btn-block {
-    @apply .bg-blue-500 .rounded .text-white .py-1 .px-2;
+    --bg-opacity: 1; background-color: #4299e1; background-color: rgba(66, 153, 225, var(--bg-opacity)); border-radius: 0.25rem; color: #fff; padding: 0.25rem 0.5rem;
 }
 .conversations input[type="text"] {
-    @apply .border .px-2 .py-1;
+    border-width: 1px; padding: 0.25rem 0.5rem;
 }
 @media (min-width: 1024px) and (max-width: 1430px) {
     .dashboard-task {
@@ -599,7 +599,7 @@ body {
     }
 }
 .conversations .form-control {
-    @apply .border;
+    border-width: 1px;;
 }
 @media (max-width: 767px) {
     .filter-alphabet {
@@ -716,7 +716,7 @@ body {
 }
 
 .menu__btn {
-    @apply .bg-red-600 .px-3 .py-2 .rounded-full;
+    --bg-opacity: 1; background-color: #e53e3e; background-color: rgba(229, 62, 62, var(--bg-opacity)); padding: 0.5rem 0.75rem; border-radius: 9999px;
     display: flex;
     align-items: center;
     /*position: fixed;
@@ -782,7 +782,7 @@ body {
     display: none;
 }
 #menu__toggle:checked ~ .menu__btn {
-    @apply .rounded-l-full .rounded-r-none .px-4 .py-4;
+    border-top-left-radius: 9999px; border-bottom-left-radius: 9999px; border-top-right-radius: 0; border-bottom-right-radius: 0; padding: 1rem;
     right: 0;
 }
 /*@media(max-width: 1023px) {

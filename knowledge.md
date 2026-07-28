@@ -8,7 +8,7 @@
 | **Laravel** | 12.63.0 | `php artisan --version` on production |
 | **Livewire** | 3.x | `composer.json` require `^3.4` |
 | **Vue** | 2.6.12 | `package.json` |
-| **Tailwind CSS** | 1.4.6 | `package.json` |
+| **Tailwind CSS** | 4.3.3 | `package.json` — v4, CSS-first config, no `tailwind.config.js` |
 | **Laravel Mix** | 4.1.4 | `package.json` — NOT Vite |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
@@ -17,14 +17,83 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Current Status: July 26, 2026
+## Current Status: July 28, 2026
 
 ### Git
-- **Branch**: `main`
-- **HEAD**: `8e4a93d` — fix(gender): persist gender in commitAll() bulk student path
-- **Latest work (Jul 26, gender fix)**: Fixed gender persistence gap in commitAll() — bulk student onboarding path now parses `(male)/(female)` suffix from names.
-- **Latest work (Jul 26, partial CSS scoping)**: Renamed `.toshi-root` class → `[data-toshi-root]` attribute across 4 CSS/Blade files (root-positioning selectors only).
-- **Latest work (Jul 26, scoping audit)**: Discovered the `[data-toshi-root]` change only covers 4 root-positioning selectors — **222 bare `.toshi-*` child selectors remain unscoped**. Full scoping pass deferred.
+- **Branch**: `migration/tailwind4`
+- **HEAD**: `355a838` — fix(tailwind): restore empty and main layout utility loading
+- **Latest work (Jul 27-28, Tailwind v4 migration)**: Completed Phase 2a (pre-migration CSS cleanup, 6 commits), Phase 2b (Tailwind v1.4.6 → v4.3.3, CSS-first config, @apply→hardcoded CSS replacement), and Phase 2c (visual regression pass, 19-selector regression fix in `ef5bb77`, admission flow verified, empty/main layouts fixed in `355a838`). Phase 2c closeout complete — see bullets below.
+- **Phase 2 selector-count correction (Jul 28)**: the original Phase 2b audit's shorthand `3/8` figures for `.custom-table` and `.submit-btn` were incorrect and should not be treated as historical fact.
+  - **Exact class-token recount** across `resources/views/**/*.blade.php`: `.custom-table` = **16 files**, `.submit-btn` = **19 files**.
+  - **Why the earlier recount said `16` for `.submit-btn`**: that was a narrower "user-visible submit control" subset that excluded some Livewire loading-state wrappers even though those wrappers still carry the literal `submit-btn` class token in markup.
+  - **Use going forward**: treat **19/16** as the canonical exact-token counts unless a future audit intentionally switches to a different counting rule.
+- **Separate reproducible finding (Jul 28)**: `GET /admin/promotion/list` throws HTTP 500 — **not** a Tailwind migration issue; pre-existing app/schema bug surfaced during Phase 2c sampling (the route that failed during the earlier comparison pass was this one, not a transient dual-server artifact).
+  - **Route**: `admin/promotion/list` (`Admin\PromotionController@index`)
+  - **Error**: `Illuminate\Database\QueryException` — `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'exam_type' in 'where clause'` (query on `exams` with `school_id`, `academic_year_id`, and `exam_type = final`).
+  - **Observed result**: framework "Server Error" page (HTTP 500).
+  - **Reproduction (standalone)**:
+    1. On branch `migration/tailwind4`, with local DB `klassapp_local`.
+    2. Authenticate as seeded school admin `admin@testschoolone.sch.ug` (password `password`).
+    3. `GET /admin/promotion/list` (browser or in-app request).
+    4. Result: reproducible 500 without running a second dev server or tab-switching.
+  - **Scope**: track as its own bug ticket; unrelated to OKLCH/Tailwind v4 CSS work.
+- **🚨 Higher-priority deferred (Jul 28 pre-merge)**: PHPUnit auth/registration failures from missing `activity()` helper — **not** introduced by Tailwind v4 / Vue boot work tonight; confirmed identical on **`main` and `migration/tailwind4`**.
+  - **Failing tests**: `LoginRegressionTest` (login succeeds…), `RegistrationMinistryCodeTest` ×2, `RegistrationFlowTest` (`admin_name_is_set_on_manual_registration`).
+  - **Error**: `Call to undefined function App\Traits\activity()` at `app/Traits/LogActivity.php:19` (spaceless activity-log helper expected from a package / global helper that is not loaded in the test — or app — runtime).
+  - **Observed result**: login/registration feature tests fail (redirect/user assertions); stack traces show the undefined call during the auth/register HTTP path.
+  - **Also seen same suite run**: `ToshiE2EVerificationTest` LLM null (API timeout/error) — separate from `activity()`; keep as E2E/env noise unless it starts failing offline mocks.
+  - **Stakes**: blocks account creation / login regression coverage — **higher priority than** `admin/promotion/list` (`exam_type`) and `str_limit` on academic-year list (list/API views only).
+  - **Scope**: pre-existing app/test infra bug; fix before treating merge suite as green. Pre-merge suite baseline on both tips: **5 failed, 1 skipped, 220 passed**.
+- **Recurrence (Jul 28)**: `GET /admin/dashboard` HTTP 500 — **same homestead vs `klassapp_local` mismatch** already fixed in `.env` earlier this session (`DB_DATABASE=homestead` → `klassapp_local`; see Environment fixes below). **Not** a new schema bug or Tailwind regression.
+  - **Route**: `GET /admin/dashboard` (`Admin\DashboardController@index`)
+  - **Surface error**: `Illuminate\Database\QueryException` — `Table 'homestead.approvals' doesn't exist` at `DashboardController` ~line 84 (pending-approvals `whereHas`).
+  - **Actual root cause (confirmed Jul 28 diagnostic)**: **exported shell `DB_*` overrides `.env`** on the **long-running** `php artisan serve --port=8000` process (PID **12225**, started **10:45:53**, still listening on `127.0.0.1:8000`). Process environment (not `.env`): `DB_DATABASE=homestead`, `DB_USERNAME=root`, `DB_PASSWORD=` (empty), plus `DB_CONNECTION` / `DB_HOST` / `DB_PORT` — classic Laravel Homestead defaults.
+  - **Contrast**:
+    - Fresh diagnostic shell: `env | grep DB_DATABASE` → **empty**; `php artisan config:show database.connections.mysql.database` → **`klassapp_local`** (matches `.env`).
+    - Port **8000** server process: **`DB_DATABASE=homestead`** in `ps eww` — requests hit **homestead**, so dashboard 500 matches logs.
+  - **Where set**: No `export DB_DATABASE` found in `~/.zshrc`, `~/.zshenv`, `~/scripts`, or repo scripts. **Not** in `.cursor/mcp.json` (MySQL MCP uses `MYSQL_DB=klassapp_local` only for the MCP child). Most likely a **stale terminal/session export** (e.g. old `export`/`source` when `.env` still said `homestead`, or manual Homestead-style exports) inherited by `artisan serve` at 10:45 **before** the `.env` edit; fixing `.env` alone did not update the already-running server.
+  - **Repro**: `DB_DATABASE=homestead` + school admin → HTTP **500** on both `main` and `migration/tailwind4`; clean `klassapp_local` → **200**.
+  - **Scope**: local env/process hygiene (unset leaked vars, restart serve from clean shell) — out of Phase 2c / Tailwind. **Do not** treat as “missing migration on prod” without checking which DB the process actually uses.
+  - **✅ Resolved (Jul 28)**: Killed stale PID **12225** / port **8000** listener; restarted `php artisan serve --host=127.0.0.1 --port=8000` from clean shell (`env | grep DB_DATABASE` empty; artisan parent **no `DB_*` exported**). `GET /admin/dashboard` → HTTP **200** on `http://127.0.0.1:8000` (school admin session); HTML includes dashboard/KPI markers (not Server Error).
+- **Priority 2 route smoke tests (Jul 28)**: Closed the “template audit ≠ page loads” gap with authenticated HTTP **200** checks on port **8000** after clean serve (`klassapp_local`):
+  - `GET /admin/dashboard` — **200** (school admin `admin@testschoolone.sch.ug`)
+  - `GET /admin/schooldetails` — **200** (same admin; view `admin/schooldetails/index.blade.php`)
+  - `GET /admin/whatsapp/dashboard` — **200** (same admin; view `admin/whatsapp/dashboard.blade.php`)
+  - `GET /superadmin/academics/school/userprofile/detail/1` — **200** (site admin `siteadmin@gmail.com`; Livewire `userprofile-detail`)
+  - `GET /superadmin/academics/school/userprofile/create/1` — **200** (same site admin; Livewire `userprofile-form`)
+  - Method: session login via HTTP client against live `artisan serve` (not kernel-only tinker).
+- **✅ Phase 1 Vue boot regression CLOSED (Jul 28) — both branches**: Blank Vue main content (`Vue.component is not a function`) after Mix 4→6 / webpack 5 ESM interop. **Not** a Tailwind issue; **not** equivalent to `admin/promotion/list`.
+  - **Root cause**: `window.Vue = require('vue')` bound the ESM namespace; constructor is at `.default`.
+  - **Fix**: `resources/assets/js/app.js` → `window.Vue = require('vue').default || require('vue');` then `npm run production` (compiled `public/js/app.js` shows `window.Vue=n(…).default||n(…)`).
+  - **Applied on** (`public/js/app.js` is git-tracked — source + rebuilt bundle committed):
+    - `migration/tailwind4` — **`7f55429`** (`fix(vue): resolve Vue undefined via ESM/CJS interop break in require('vue')`; parent `016b354`).
+    - `main` — **`f54573d`** (same message; parent `d295517` Mix 4→6 tip).
+  - **Verification — `migration/tailwind4` (`:8000`)** — all **PASS**:
+    | Check | Result |
+    |---|---|
+    | `/admin/academics` mount | **PASS** — Academic Years + table + Add / Change Current Academic Year; body “No Records Found” (expected: deferred `str_limit` 500 on `/admin/academic/list`) |
+    | `/admin/attendance/add` | **PASS** — create-attendance form (class, date, Forenoon/Afternoon, Select Students) |
+    | `/admin/discipline/add` | **PASS** — form + teachers; `Vue.options.components.multiselect` present |
+    | Boot: `typeof Vue === 'function'` | **PASS** |
+    | Boot: `new Vue()` / `#app.__vue__` | **PASS** |
+    | Boot: `Vue.prototype.$swal` | **PASS** |
+    | Nav academic-year dropdown | **PASS** — options 2026, 2027 |
+  - **Verification — `main` (`:8082`)** — all **PASS** (same checklist):
+    | Check | Result |
+    |---|---|
+    | `/admin/academics` mount | **PASS** — same UI mount; “No Records Found” expected (`str_limit`) |
+    | `/admin/attendance/add` | **PASS** |
+    | `/admin/discipline/add` + multiselect | **PASS** — `Vue.options.components.multiselect === true`; teacher options populated |
+    | Boot checks (Vue fn, `new Vue()`, `#app.__vue__`, `$swal`, year dropdown) | **PASS** |
+  - **Audit note (kept)**: 183 active `Vue.component` sites / 0 `app.component`; sole Mix entry `app.js` — one-line interop fix restores full surface.
+  - **Still deferred**: `str_limit()` at `AcademicYear.php:21` (promotion/list-class); undefined `$school` in `AcademicYearController@index` (unused by view).
+- **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No Tailwind regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill. Open (priority order): **`activity()` undefined** (login/registration tests — higher stakes), `admin/promotion/list` 500, `str_limit` on academic list API, `home_navigation` / `minimal` deferred. **Phase 1 Vue boot regression CLOSED** (both branches verified). Dashboard env recurrence **resolved**; Priority 2 HTTP smoke routes **verified 200**.
+
+### Confirmed Orphaned Welcome-Era Files
+- **`resources/views/welcome/welcome.blade.php` and `resources/views/welcome/_modules_list_section.blade.php` are both currently orphaned/dead**.
+  - `welcome.blade.php`: already known to be effectively dead/orphaned because the old minimal-layout welcome route is no longer part of the live homepage path.
+  - `_modules_list_section.blade.php`: confirmed orphaned after a stronger sweep across direct Blade references, dynamic include/view patterns, Livewire `render()` methods, and JS/Vue-side references. No current consumer found.
+  - **Pattern note**: both files live under `resources/views/welcome/`, which likely reflects an older landing-page iteration rather than two unrelated leftovers. Treat that directory as suspect during future cleanup/audit work.
 
 ### Toshi Layout History (app.blade.php)
 
@@ -4839,3 +4908,113 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **Risk**: Any third-party global `.panel`, `.message`, `.input`, `.pill`, `.chip`, `.label`, `.modal-box`, `.stat-card`, `.progress-bar`, `.dot`, `.btn-done` rule will leak into Toshi's internal elements.
 - **Fix needed**: Wrap all `.toshi-*` selectors under `[data-toshi-root]` ancestor in all 3 CSS files. Estimated ~200 find/replace operations.
 - **Status**: ⏳ Deferred — scoping audit completed, full pass not yet done.
+
+### 2026-07-27: Phase 2a — pre-migration CSS/Vue cleanup (6 commits)
+
+**Work done**: Pre-migration cleanup required before the Tailwind v1→v4 upgrade. Removed dead entry point, renamed incompatible v1 utility classes, migrated slot syntax, and repaired color classes that would break under v4's stricter color parsing.
+
+- **Branch**: `migration/tailwind4`
+- **Commits**:
+
+  | Commit | Description |
+  |---|---|
+  | `b8df6d3` | Remove dead `resources/css/app.scss` entry point |
+  | `bf9ed1a` | Rename `whitespace-no-wrap` → `whitespace-nowrap` across 43 files |
+  | `77bf9df` | Migrate 5 Vue components from `slot` → `v-slot` syntax |
+  | `cb1247e` | Repair color classes — `text-red-00`→`gray-800`, bare `text-red`→`text-red-600` |
+  | `840ad90` | Group B hover/spinner colors — `text-blue`→`blue-500/600`, `text-red`→`red-600` |
+  | `c986da7` | B15-B17 filter toggle inactive — `text-blue`→`text-gray-500` |
+
+- **Key changes**:
+  - `d295517` (Mix 4→6 upgrade, prerequisite) was applied earlier but is the foundation these commits built on — `webpack.mix.js` updated, Laravel Mix 4→6 with webpack 5.
+  - Dead `resources/css/app.scss` removed — was a leftover entry point that had no `@import` directives and produced empty output.
+  - `whitespace-no-wrap` renamed to `whitespace-nowrap` — Tailwind v2+ renamed this utility; v4 doesn't provide the old alias.
+  - 5 Vue components migrated from deprecated `slot` attribute to `v-slot` directive — required for webpack 5 / Vue loader compatibility.
+  - Color class repairs: `text-red-00` was a typo that would silently fail in v4. Bare `text-blue`/`text-red` (which resolved to v1's ambiguous `#3490dc`/`#e3342f`) were pinned to explicit numbered shades (`blue-500`/`blue-600`, `red-600`).
+- **Status**: ✅ Phase 2a complete. Phase 2b (Tailwind v4 upgrade) followed immediately.
+
+### 2026-07-27: Tailwind v4 Phase 2b — build config, CSS-first migration, @apply replacement
+- **Work done**: Completed Phase 2b of the Tailwind v1→v4 migration. Upgraded tailwindcss from 1.4.6 to 4.3.3, swapped build pipeline to use `@tailwindcss/postcss` + `lightningcss`, migrated JS-based config to CSS-first `@theme` block, replaced all 31 `@apply` directives with raw CSS, and achieved 0-error production build.
+- **Branch**: `migration/tailwind4` (pushed to `origin`)
+- **Commits from this session** (5):
+
+  | Commit | Description |
+  |---|---|
+  | `1de3f0b` | Dep swap + PostCSS plugin + vue alias fix |
+  | `89854ec` | CSS-first config, delete tailwind.config.js |
+  | `ac67548` | Separate PostCSS entry for `@import "tailwindcss"` |
+  | `2362b49` | `@apply` → CSS replacement, Blade updates |
+  | `c002267` | Rebuild assets |
+- **Key changes**:
+  - `tailwindcss@^4.3.3`, `@tailwindcss/postcss@^4.3.3`, `lightningcss@^1.33.0` installed
+  - `tailwind.config.js` deleted — 3 font families (`nunito`, `muli`, `open-sans`) migrated to `@theme` block in `resources/css/tailwind.css`
+  - Created `resources/css/tailwind.css` as a separate PostCSS entry (bypasses sass-loader, which can't process `@import "tailwindcss"`)
+  - `webpack.mix.js` updated with two PostCSS entries: one for the existing Sass pipeline → `app.css`, one for `tailwind.css` → `tailwind.css`
+  - 31 `@apply` occurrences replaced: 30 in `adminstyle.scss`, 1 in `style.scss` — each replaced with the actual CSS values from Tailwind v1 reference
+  - 2 main Blade layouts (`app.blade.php`, `superadmin-app.blade.php`) updated to link `tailwind.css` before `app.css`
+- **Fixes outside scope**:
+  - Replaced broken `@vue/compat` alias (`vue$: "vue/dist/vue.esm.js"`), dropped 42 pre-existing build errors (Vue module resolution — unrelated to Tailwind). Final build: **0 errors**.
+- **Files created**: `resources/css/tailwind.css`
+- **Files modified** (untracked — in `.gitignore`): `webpack.mix.js`
+- **Selector usage audit** (after `@apply` removal):
+  | Selector | Occurrences | Active templates |
+  |---|---|---|
+  | `admin-h1` | 218 | Templates using it |
+  | `submit-btn` | 8 | 8 livewire views |
+  | `tw-form-control` | 52 | 52 form inputs |
+  | `custom-table` | 3 | 3 table wrappers |
+  | `reset-btn` | 0 | Unused — future cleanup |
+  | `filter-form-control` | 0 | Unused — future cleanup |
+- **Build output**: `app.css` = 23.5 KB, `tailwind.css` = 113 KB, JS = compiled successfully
+- **Status**: ✅ Phase 2b complete. Phase 2c completed and handed off to Cursor for remaining work (see Jul 28 log).
+- **Next (Snapshot at Phase 2b completion)**: 5 legacy-style layouts (video, admission, empty, main, minimal) still referenced only `app.css` without `tailwind.css`. `teacher` is not a standalone layout — it extends `layouts.app`. `class` has no layout directory. As of Phase 2c, `empty` and `main` were fixed in `355a838`; `video` and `admission` (CDN v1.1.3-protected) and `minimal` (dead `welcome` route only) remain as-identified.
+
+### 2026-07-28: Phase 2c — visual regression pass, environment fixes, Cursor handoff prep
+
+**Summary**: Phase 2c covered the visual regression pass (Priority 1 admission flow + Priority 2 top template check), a 19-selector regression fix (`ef5bb77`), environment fixes (`.env`/`.env.example`), Cursor rules overhaul (`frontend.mdc`, `known-pitfalls.mdc`, `.cursorignore`), Laravel Boost activation (`boost:install`), and final handoff prep for Cursor takeover on the remaining `migration/tailwind4` work.
+
+**Context**: Branch `migration/tailwind4` at `ef5bb77` (later advanced to `355a838` with the empty/main layout fix). Phase 2c started with a scope check: do any templates using the 4 live adminstyle.scss selectors render through the 5 true legacy layouts (main, minimal, empty, video, admission)? `teacher.blade.php` and `class.blade.php` don't exist as layouts — `layouts/teacher/layout` extends `layouts.app` (has tailwind.css); `class` has no layout at all.
+
+**Key findings**:
+1. **Priority 1 (admission flow)**: `layouts/admission` loads ONLY `app.css` + CDN Tailwind v1.1.3 (no local `tailwind.css`). Triple style source: CDN utilities, hardcoded @apply-derived CSS, custom SCSS. The 6 admission sub-templates (student-detail, parent-detail, personal-detail, academic-detail, previous-education, select-standard) are fieldsets pulled in via the `<add-admission>` Vue component inside `admission.blade.php`.
+2. **Phase 2b regression discovered**: the @apply rewrite left `/* UNKNOWN: .px-2 */` etc. as SCSS comments that never compiled — 19 selectors across 21 lines lost properties. Verified compiled `app.css`: `.tw-form-control` was literally `border-width:1px` only; `.admin-h1` was `font-size:1.125rem` only.
+3. **Regression fix (`ef5bb77`)**: all 19 selectors restored with values verified against the actual Tailwind v1.1.3 CDN file (border-gray-400=#cbd5e0, rounded=0.25rem, text-gray-700=#4a5568, etc.). 2 utilities never existed in v1.1.3 (w-1/3, whitespace-nowrap→v1 name was whitespace-no-wrap) — pre-existing broken @apply, left documented as comments. Build green, 0 errors.
+4. **Priority 2 (top-10 template visual pass) — 3 named templates checked** (user's message cut off; only 4 of 10 received):
+
+   **Named templates checked (3 total — user's list was cut off at 4 of 10):**
+   - `landing.blade.php` — landing page using **Tailwind Play CDN** (`cdn.tailwindcss.com`, browser JIT, self-configured). Immune to the migration. ✅
+   - `livewire/agent-toshi.blade.php` — uses exclusively custom `.toshi-*` classes from `toshi-ui.css`; no Tailwind utility dependency. Not affected. ✅
+   - `pages/admission/student-detail.blade.php` — admission sub-template rendered through `layouts.admission` (CDN v1.1.3). Uses `tw-form-control` (fixed in `ef5bb77`). No v4 exposure. ✅
+
+   **General findings (not from user's 10-list):**
+   - `welcome.blade.php` — **orphaned dead code**; `/` route renders `landing` via WelcomeController; welcome only referenced in a commented-out route. ⚪
+   - Zero usage of dead v1 utilities (`whitespace-no-wrap`, `overflow-ellipsis`, `scrolling-touch`, `shadow-outline`) anywhere in views. v4 keeps aliases for `flex-shrink-0`, `break-words`, `bg-gradient-to-*`. ✅
+   - **v4 preflight change**: bare `border` now defaults to `currentColor` (v1: `#e2e8f0`). `.dashboard-kpi-card` protected by its own border in dashboard-refresh.css (loaded after tailwind.css). Other bare-border dividers (e.g. `border-r` in admin dashboard) now render dark instead of light gray. ⚠️
+   - **`layouts/empty` regression**: wrapper `<div class="flex items-center justify-center min-h-screen px-4 py-8">` lost all utilities → login/register/verify/password-reset pages render top-left instead of centered. ✅ RESOLVED in `355a838`.
+   - **`layouts/main` regression**: 35 public marketing pages (privacypolicy, terms, 17 usecases, teachers-app, modules/*) are saturated with Tailwind (`container mx-auto`, `bg-red-600`, `py-16`) — all dead. ✅ RESOLVED in `355a838`.
+- **Deferred**: `layouts/main`'s `home_navigation` include is dead code (or a bug — intent unconfirmed).
+  - **Detail**: `resources/views/layouts/main.blade.php` includes the `home_navigation` partial, but `resources/views/layouts/partials/home_navigation.blade.php` is gated to only render on `/`. The `/` route does not use `layouts.main` — it routes to `landing.blade.php` via `WelcomeController` (Tailwind Play CDN, unrelated layout). Result: none of the ~35 pages using `layouts.main` can ever actually display this nav include. Pre-existing, unrelated to the Tailwind v4 migration — surfaced during Phase 2c visual verification (commit `355a838`).
+  - **Needs**: Confirm intent — either relax `home_navigation`'s gating so it renders on all `layouts.main` pages (if nav was meant to appear there), or remove the dead include from `layouts.main` (if it was never supposed to render there).
+  - **Scope**: `resources/views/layouts/main.blade.php`, `resources/views/layouts/partials/home_navigation.blade.php`
+
+#### Environment fixes
+- **`.env` `DB_DATABASE=homestead` → `klassapp_local`** — was pointing to wrong database. `.env` is gitignored. `php artisan serve` launched on port 8000. Login at `/login` with `siteadmin@gmail.com / password`.
+- **Jul 28 recurrence**: `.env` fix did **not** propagate to an already-running `php artisan serve --port=8000` that inherited **exported** `DB_DATABASE=homestead` in the parent process env — see Current Status “Recurrence” bullet. Verify with `ps eww -p <serve-pid> | tr ' ' '\n' | grep '^DB_'`, not only `cat .env`. **Fixed** by killing stale serve and restarting from clean shell (see Current Status ✅ Resolved).
+- **`.env.example` `DB_DATABASE=klassapp` → `klassapp_local`** — so new clones copy the correct value. ✅
+
+#### Cursor rules updates (`.cursor/rules/`)
+- **`frontend.mdc`** overhauled: removed Tailwind v1.4.6 → v4.3.3, removed `tailwind.config.js` guidance, added `@apply` no-dot syntax note. Added **"Migration Branch State"** section with: Layout Tailwind Source Matrix, `@Apply→Hardcoded CSS` implications, Regression Risk warning, v4 Preflight border color change.
+- **`known-pitfalls.mdc`** — 2 new permanent entries: #6 SCSS `//` comments stripped on compile (check source not compiled CSS), #7 Tailwind v4 preflight border color change to `currentColor`.
+- **`.cursorignore`** — created: `node_modules/`, `vendor/`, `.git/`, `public/js/app.js.map`
+
+#### Laravel Boost installation
+- Boost was already in `composer.json` (`"*"`) and installed at v2.4.12, but `php artisan boost:install` had never been run.
+- **Ran `boost:install`** — generated `boost.json`, `AGENTS.md`, `CLAUDE.md` (9 Laravel guidelines), `.cursor/mcp.json` (Cursor Boost MCP wiring), and 6 skills across `.cursor/skills/`, `.github/skills/`, `.claude/skills/`, `.junie/skills/`.
+- Skills: `ai-sdk-development`, `laravel-best-practices` (20 rule files), `livewire-development`, `scout-development`, `socialite-development`, `tailwindcss-development`.
+- Pre-existing `.mcp.json` at project root (with `laravel-boost` + `phpstorm` entries) left unchanged.
+
+#### Handoff state
+- **Branch**: `migration/tailwind4` at `355a838` (empty/main fix applied). Not merged to `main`.
+- **For Cursor**: Boost MCP wired via `.cursor/mcp.json`. `AGENTS.md` provides Laravel guidelines. `.cursor/rules/` has migration-specific warnings.
+- **Unresolved**: `layouts/main` `home_navigation` dead include needs intent check. `layouts/minimal` — no live route renders through it (`welcome` is dead code), no fix needed unless `welcome` or a new route starts using it.
+- **Status**: ✅ Phase 2c closeout complete on sampled/audited surfaces (see Current Status); Jul 28 session log below is the pre-closeout handoff record.

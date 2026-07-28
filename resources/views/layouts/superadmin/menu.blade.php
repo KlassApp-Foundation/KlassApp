@@ -14,7 +14,7 @@ if (!function_exists('superadminActive')) {
     <li class="py-3 px-3 {{ superadminActive('dashboard') }}">
         <a href="{{ route('superadmin.dashboard') }}" class="flex items-center">
             <x-icons.sidebar name="dashboard"/>
-            <span class="mx-3 whitespace-no-wrap">Dashboard</span>
+            <span class="mx-3 whitespace-nowrap">Dashboard</span>
         </a>
     </li>
 
@@ -22,7 +22,7 @@ if (!function_exists('superadminActive')) {
     <li class="py-3 px-3 {{ Request::segment(2) == 'academics' || Request::segment(3) == 'schools' || Request::segment(3) == 'school' ? 'active' : '' }}">
         <a href="{{ url('/superadmin/academics/schools') }}" class="flex items-center">
             <x-icons.sidebar name="classes"/>
-            <span class="mx-3 whitespace-no-wrap">Schools</span>
+            <span class="mx-3 whitespace-nowrap">Schools</span>
         </a>
     </li>
 
@@ -30,7 +30,7 @@ if (!function_exists('superadminActive')) {
     <li class="py-3 px-3 {{ Request::segment(3) == 'subscriptions' || Request::segment(3) == 'subscription' ? 'active' : '' }}">
         <a href="{{ route('superadmin.reports.subscriptionlist') }}" class="flex items-center">
             <x-icons.sidebar name="fees"/>
-            <span class="mx-3 whitespace-no-wrap">Subscriptions</span>
+            <span class="mx-3 whitespace-nowrap">Subscriptions</span>
         </a>
     </li>
 
@@ -38,7 +38,7 @@ if (!function_exists('superadminActive')) {
     <li class="py-3 px-3 {{ Request::segment(3) == 'plans' || Request::segment(3) == 'plan' ? 'active' : '' }}">
         <a href="{{ route('superadmin.setting.planlist') }}" class="flex items-center">
             <x-icons.sidebar name="fees"/>
-            <span class="mx-3 whitespace-no-wrap">Plans</span>
+            <span class="mx-3 whitespace-nowrap">Plans</span>
         </a>
     </li>
 
@@ -46,7 +46,7 @@ if (!function_exists('superadminActive')) {
     <li class="py-3 px-3 {{ Request::segment(2) == 'reports' ? 'active' : '' }}">
         <a href="{{ route('superadmin.reports.index') }}" class="flex items-center">
             <x-icons.sidebar name="reports"/>
-            <span class="mx-3 whitespace-no-wrap">Reports</span>
+            <span class="mx-3 whitespace-nowrap">Reports</span>
         </a>
     </li>
 
@@ -54,7 +54,7 @@ if (!function_exists('superadminActive')) {
     <li class="py-3 px-3 {{ Request::segment(3) == 'mail-list' ? 'active' : '' }}">
         <a href="{{ url('/superadmin/mail-list') }}" class="flex items-center">
             <x-icons.sidebar name="messages"/>
-            <span class="mx-3 whitespace-no-wrap">Mail List</span>
+            <span class="mx-3 whitespace-nowrap">Mail List</span>
         </a>
     </li>
 
@@ -62,7 +62,7 @@ if (!function_exists('superadminActive')) {
     <li class="py-3 px-3 {{ superadminActive('settings') || Request::segment(3) == 'co-admins' || Request::segment(3) == 'cities' || Request::segment(3) == 'locations' || Request::segment(3) == 'features' || Request::segment(3) == 'emis' ? 'active' : '' }}">
         <a href="{{ url('/superadmin/settings') }}" class="flex items-center">
             <x-icons.sidebar name="settings"/>
-            <span class="mx-3 whitespace-no-wrap">Settings</span>
+            <span class="mx-3 whitespace-nowrap">Settings</span>
         </a>
     </li>
 </ul>

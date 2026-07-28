@@ -9,7 +9,7 @@
                     </div>
                 </div> 
                 <div class="relative flex items-center w-full lg:w-1/4 md:w-1/4 lg:justify-end mx-3 lg:mx-0 md:mx-0 my-2 lg:my-0 md:my-0" v-if="this.selectedTaskCount > 0">
-                    <a href="#" class="btn btn-submit blue-bg text-white px-3 py-1 text-sm font-medium rounded whitespace-no-wrap" @click="changestatus()">Task Completed</a>
+                    <a href="#" class="btn btn-submit blue-bg text-white px-3 py-1 text-sm font-medium rounded whitespace-nowrap" @click="changestatus()">Task Completed</a>
                 </div>
             </div>
             <div class="flex flex-wrap">

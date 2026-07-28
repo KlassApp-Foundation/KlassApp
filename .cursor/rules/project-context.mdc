@@ -61,3 +61,4 @@ User ↔ Evolution API ↔ Laravel Webhook / Outbound Service
 ## Deeper Context
 
 For full project knowledge — session history, past incidents, design decisions, and the file index — read `knowledge.md` in the project root. This `.mdc` contains the verified-current subset; `knowledge.md` has the full historical record.
+Future sessions should check `knowledge.md` first for project history, past decisions, and migration context instead of relying only on the summaries in these `.mdc` rule files.

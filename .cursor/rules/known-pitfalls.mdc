@@ -35,6 +35,18 @@ alwaysApply: true
 - **Fix**: `unset()` all three sources + reset `Env` repository via reflection
 - **Affected**: TOSHI_LARAGENT_ENABLED previously, but this applies to **any** env var
 
+### 6. SCSS `//` Comments Stripped on Compile — Check Source, Not Compiled CSS
+- SCSS strips single-line `//` comments during compilation — they **never** survive into the output CSS.
+- If debugging a missing CSS property, checking the compiled `public/css/app.css` for commented-out lines will return **false negatives**. You must check the `.scss` source files directly.
+- **Known case**: The Phase 2b `@apply`→CSS rewrite dropped unrecognized properties as `// UNKNOWN:` comments that vanished silently. An exhaustive SCSS source sweep found 19 affected selectors; the compiled CSS showed nothing. The fix was applied to the source and compiled correctly after.
+- **Fix**: When investigating CSS output that looks incomplete, `grep -rn "// UNKNOWN:" resources/assets/sass/` first. If you find any, the SCSS source was not fully compiled — fix the source, not the output.
+
+### 7. Tailwind v4 Preflight Changed Default Border Color
+- Tailwind v4 changed the default `border-color` from `#e2e8f0` (gray) to `currentColor`.
+- Any bare `border` utility (without an explicit `border-*-color`) will render using the parent element's `color` instead of the expected light gray.
+- **Affects**: Dividers (`border-r`, `border-b`, `border-t`, `border-l`), card borders, and any element using just `border` or `border-{side}` without a color utility.
+- **Fix**: Add an explicit `border-gray-200`/`border-gray-300` utility alongside any bare `border` class, or define the color in CSS. The `dashboard-refresh.css` file already protects `.dashboard-kpi-card` with an explicit border declaration — follow that pattern.
+
 ## Verification Discipline
 
 > **"Verify with real evidence before reporting done."**

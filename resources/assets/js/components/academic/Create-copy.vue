@@ -44,7 +44,7 @@
                         </div>
                         <!-- <div class="w-4/12">
               <div class="lg:mx-3 md:mx-3">
-                <a href="#" class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-no-wrap" @click="showModal('standard')">Add New Standard</a>
+                <a href="#" class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-nowrap" @click="showModal('standard')">Add New Standard</a>
               </div> 
             </div> -->
                     </div>
@@ -149,7 +149,7 @@
                             <div class="lg:mx-3 md:mx-3">
                                 <a
                                     href="#"
-                                    class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-no-wrap"
+                                    class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-nowrap"
                                     @click="showModal('section')"
                                     >Add New Section</a
                                 >
@@ -478,7 +478,7 @@
                     </div>
                     <!-- <div class="w-4/12 lg:mx-1 md:m-1">
             <div class="lg:mx-3 md:mx-0">
-              <a href="#" class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-no-wrap" @click="showModal('subject')">Add New Subject</a>
+              <a href="#" class="bg-blue-500 rounded text-sm text-white px-2 py-1 whitespace-nowrap" @click="showModal('subject')">Add New Subject</a>
             </div>
           </div> -->
                 </div>

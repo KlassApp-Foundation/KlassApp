@@ -32,7 +32,7 @@
                                 <input type="checkbox" name="showExpired" id="showExpired" v-model="showExpired" class="tw-form-control w-full" @change="showExpiredNotice($event)">
                             </div>
                             <div class="2">
-                                <label for="showExpired" class="tw-form-label whitespace-no-wrap">Show Expired</label>
+                                <label for="showExpired" class="tw-form-label whitespace-nowrap">Show Expired</label>
                             </div>
                         </div>
                         <div class="flex items-center" v-if="hidecolumns == 'false'">

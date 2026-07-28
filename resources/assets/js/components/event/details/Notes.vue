@@ -37,7 +37,7 @@
       <textarea rows = "5" cols = "50" id="addnotes"  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" v-model="notes" placeholder="Add a note" @keyup.enter="addTask()">
             Enter your name
          </textarea>
-          <span v-if="errors.notes"><small class="text-red">{{errors.notes[0]}}</small></span>
+          <span v-if="errors.notes"><small class="text-red-600">{{errors.notes[0]}}</small></span>
 
         <input c type="textarea" >
        <!--  <button class="button is-primary" @click="addTask()" :disabled="newTask.length < 3"><i class="fa fa-plus"></i>&nbsp;Add</button> -->
@@ -54,21 +54,21 @@
     </div>
 </div>
      <modal v-if="showModalClearCompleted" @close="showModalClearCompleted=false">
-        <template slot="header">
+        <template v-slot:header>
             Warning
         </template>
         You're about to delete all the completed ToDo's in the list
-        <template slot="footer">
+        <template v-slot:footer>
             <button class="button is-danger" @click="clearCompleted(),showModalClearCompleted=false">Confirm</button>
             <button class="button" @click="showModalClearCompleted=false">Cancel</button>
         </template>
     </modal>
     <modal v-if="showModalClearAll" @close="showModalClearAll=false">
-        <template slot="header">
+        <template v-slot:header>
             Warning
         </template>
         You're about to delete all the ToDo's in the list
-        <template slot="footer">
+        <template v-slot:footer>
             <button class="button is-danger" @click="clearList(),showModalClearAll=false">Confirm</button>
             <button class="button" @click="showModalClearAll=false">Cancel</button>
         </template>

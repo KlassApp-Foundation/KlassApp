@@ -45,16 +45,16 @@
                     </div>
                     <div class="mb-2">
                         <multiselect v-model="select_id" id="ajax" name="select_id" label="fullname" track-by="fullname" placeholder="Type to search" open-direction="bottom" :options="users" :custom-label="customLabel" :show-labels="false" :multiple="true" :searchable="true" :loading="isLoading" :internal-search="true" :clear-on-select="false" :close-on-select="false" :limit-text="limitText" :max-height="600" :show-no-results="true" :hide-selected="true" @search-change="asyncFind">
-                            <template slot="tag" slot-scope="{ option, remove }">
+                            <template v-slot:tag="{ option, remove }">
                                 <span class="custom__tag">
                                     <span>{{ (option.fullname) }}</span>
                                     <span class="custom__remove" @click="remove(option)">x</span>
                                 </span>
                             </template>
-                            <template slot="clear" slot-scope="props">
+                            <template v-slot:clear="props">
                                 <div class="multiselect__clear" v-if="select_id.length" @mousedown.prevent.stop="clearAll(props.search)"></div>
                             </template>
-                            <template slot="option" slot-scope="props">
+                            <template v-slot:option="props">
                                 <div class="option__desc">
                                     <span class="option__name">{{ props.option.fullname }}</span>
                                 </div>
@@ -62,7 +62,7 @@
                                     <span class="option__small"> ( {{ props.option.mobile_no }} )</span>
                                 </div>
                             </template>
-                            <span slot="noResult">Oops! No users found.</span>
+                            <template v-slot:noResult><span>Oops! No users found.</span></template>
                         </multiselect>
                         <span v-if="errors.select_id" class="text-red-500 text-xs font-semibold">{{errors.select_id[0]}}</span>
                     </div> 

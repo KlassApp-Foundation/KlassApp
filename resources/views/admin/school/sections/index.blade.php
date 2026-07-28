@@ -10,7 +10,7 @@
          <div class="relative flex items-center w-1/4 lg:justify-end">
             <div class="flex items-center">
                <a href="{{route("admin.classes.create")}}" class="no-underline text-white px-4 my-3 mx-1 flex items-center custom-green py-1 justify-center">
-                  <span class="mx-1 text-sm font-semibold whitespace-no-wrap">Add Class</span>
+                  <span class="mx-1 text-sm font-semibold whitespace-nowrap">Add Class</span>
                   <img src="{{asset('uploads/icons/plus.svg')}}" class="w-3 h-3">
                </a>
             </div>

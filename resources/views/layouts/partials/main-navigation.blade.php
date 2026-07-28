@@ -36,7 +36,7 @@
 @if(request()->is('/'))
     <nav class="navbar bg-white w-full flex  lg:flex-row px-3 mt-4 mb-0 justify-between items-center home-navbar" ><!-- onscroll="checkscroll()" -->
         <!-- <div class="w-1/6 lg:w-1/6 md:w-1/6 pt-4">
-            <a class="text-sm lg:text-base px-3 py-1 rounded bg-white border hover:bg-gray-300 hover:text-gray-900 whitespace-no-wrap" href="https://klassapp.xyz">{{ __('A KlassApp Product') }}</a>
+            <a class="text-sm lg:text-base px-3 py-1 rounded bg-white border hover:bg-gray-300 hover:text-gray-900 whitespace-nowrap" href="https://klassapp.xyz">{{ __('A KlassApp Product') }}</a>
         </div> -->
         <!-- <div class="w-4/6 lg:w-3/6 absolute lg:relative px-3 left-0 homemenu">
             <div class="hamburger-menu">
