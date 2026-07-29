@@ -71,8 +71,12 @@
     - **1b.1 replace-now (Jul 28, accepted option 1)**: Vue 2 UI packages swapped + source migrated.
     - **1b.2 Task 1 (Jul 29, `dd13fc5`)**: alias `vue`/`vue$` → `@vue/compat`; vue-loader `compatConfig: { MODE: 2 }`; `configureCompat({ MODE: 2 })` in `app.js`; production build PASS; browser `Vue.version` = `3.5.40`. Soft-warn plugin for remaining SFC compiler strictness (invalid end tags / label v-model / v-html children).
     - **Replace-now done**: `@vueup/vue-quill`, `dropzone-vue3`, `vue-good-table-next`, `emoji-mart-vue-fast`, `vue3-carousel`, `sweetalert2`/`vue-sweetalert2`, `vue-simple-uploader@1`, `vue-easy-lightbox`+`floating-vue`, `vue-multiselect@3`.
-    - **Quarantine (not replaced)**: `portal-vue`, `vuejs-paginate`, `vuejs-datetimepicker`. **Defer**: `vue-flash-message`.
-    - **⏸️ Next**: Phase 1b.2 Task 2 smoke suite (academics, attendance, discipline, multiselect, etc.) — **not run yet**.
+    - **Quarantine (not replaced)**: `portal-vue`, `vuejs-paginate`, `vuejs-datetimepicker`.
+    - **1b.4 MODE 2 watch (load-bearing, not quarantined)**: `vue-flash-message` — used via `Vue.use(VueFlashMessage)` + `<flash-message>` + `this.flash()` in `change-credential` (admin teacher/staff/parent/member show) and `create-leave` (teacher leave create). Success/error UX is live (error flash stays on leave create; success often races reload/redirect).
+    - **Dead (not Element UI)**: `this.$message` only in unregistered `EleUploadVideo.vue` — no installer, never mounted.
+    - **✅ 1b.2 Task 2 shell smoke** (Jul 29): boot + attendance/discipline/year-nav PASS; academics PASS* (list API 500); multiselect registered but discipline uses native teacher `<select>`. Production bundle emitted **0** compat warnings.
+    - **✅ 1b follow-ups pre-1b.4** (Jul 29): Vue.prototype audit + **DEV** smoke warning inventory (17 unique MODE 2 messages).
+    - **✅ 1b.4 plugin-surface DEV smoke** (Jul 29): ClassWall create (Quill+dropzone-vue3+datetime) PASS; homework Quill PASS; noticeboard list portal header PASS; noticeboard **create FAIL** (`create-circular` unresolved — SFC `Invalid end tag` soft-fail → empty module); telephone `vue-good-table-next` PASS; discipline datetime PASS; change-credential modal+`<flash-message>` mount PASS; portal-vue panel open/close class toggle PASS. **⏸️ STOP before 1b.5**.
     - **Cleanup candidate (confirmed dead direct dep, Jul 29)**: `vue-upload-multiple-image` — **zero** source imports/requires of the npm package name across `resources/**/*.vue|js` and app JS; only listed in `package.json` / lockfile. App uses the **local** SFC `resources/assets/js/components/VueUploadMultipleImage.vue` (imported by `event/details/ShowImage.vue` as `../../VueUploadMultipleImage`), which depends on `vue-easy-lightbox` + `floating-vue` — not the npm package. Cleanup (do **not** run until scheduled): `npm uninstall vue-upload-multiple-image --legacy-peer-deps` (also drops transitive `vue-image-lightbox-carousel` / nested `vue-popperjs`).
     - **Older note (pre-1b branch work)**: on `main` @ `753697f`, runtime was still Vue 2.7.16; `@vue/compat` unwired until 1b.2 Task 1.
   - **Nothing is currently broken because of this gap**: Vue 2.7 boots correctly on `main`. Tonight’s verification (academics mount, attendance/add, discipline/add + `Vue.options.components.multiselect`, event bus, `$swal`, nav academic-year dropdown) is **valid confirmation that Vue 2.7 runs correctly** — not evidence of Vue 3 at runtime.
@@ -5050,7 +5054,7 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **Key decisions**:
   - Keep alias pointing at vue.esm.js until 1b.2 (user explicit).
   - Prefer `dropzone-vue3` (vue2-dropzone API port) over `vue3-dropzone` (react-dropzone-style).
-  - Quarantine: portal-vue, vuejs-paginate, vuejs-datetimepicker. Defer: vue-flash-message.
+  - Quarantine: portal-vue, vuejs-paginate, vuejs-datetimepicker. (1b.1 said Defer `vue-flash-message` — **superseded Jul 29 1b.4**: load-bearing MODE 2 watch, not quarantined.)
 - **Verification**: Old Vue2 package imports gone from `resources/assets/js`; `package.json` no longer depends on replaced packages. `npm run production` fails with missing `vue/dist/vue.esm.js` — expected until alias flip.
 - **Status**: ✅ 1b.1 replace-now complete / 🚧 1b.2 (alias + createApp bootstrap) not started
 
@@ -5074,4 +5078,19 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **Files modified**: `knowledge.md` only
 - **Key decisions**: Keep dead dep until scheduled cleanup; cleanup cmd = `npm uninstall vue-upload-multiple-image --legacy-peer-deps`
 - **Status**: ✅ Done / ⏸️ STOP before Task 2
+
+### 2026-07-29: Phase 1b follow-ups — Vue.prototype audit + DEV compat warning inventory
+- **Work done**: (1) Grep audit of `Vue.prototype` / plugin `$` installs in frontend source. (2) `npm run development` shell smoke (same Task 2 checklist) with Playwright console listener — captured MODE 2 warning catalog. Restored `npm run production` afterward (tree clean).
+- **Prototype audit**: No direct `Vue.prototype.$X` assignments in app source. `$swal` via `Vue.use(VueSweetalert2)` → `Vue.config.globalProperties` (Task 2 verified). `$flashStorage` via `Vue.use(VueFlashMessage)` in globally registered `change-credential` + `create-leave` → **prototype only** (NOT Task 2 verified). Event bus = `export const bus = new Vue()` (not `$bus`). No `$http`/`$bus` prototype. `this.$message` in `EleUploadVideo.vue` has no installer.
+- **Dev smoke**: Boot / attendance / discipline+multiselect-reg / year nav PASS; academics PASS* (mount + headings; list still hits `/admin/academic/list` 500 → Object.keys). Compat inventory: 17 unique messages (GLOBAL_*, INSTANCE_*, RENDER_FUNCTION, COMPONENT_V_MODEL, portal-vue lifecycle, multiselect re-register, feature-flag noise).
+- **Status**: ✅ Audit + DEV warning log done / ⏸️ STOP before 1b.4 — no hardening
+
+### 2026-07-29: Phase 1b.4 — flash audit + plugin-surface DEV smoke
+- **Work done**: (Part A) Exhaustive grep for `vue-flash-message` / `$flashStorage` / `this.flash` / `this.$message`. (Part B) `npm run development` then Playwright interaction smoke on ClassWall create, homework create, noticeboard, students/teachers portal, phonenumbers good-table, discipline datetime, change-credential. Restored `npm run production`.
+- **Part A disposition (final)**:
+  - `vue-flash-message` / `$flashStorage` / `this.flash()` — **load-bearing** (change-credential + create-leave). **MODE 2 watch item for 1b.4/1b.5. NOT quarantined. NOT deferred limbo.**
+  - `this.$message` in `EleUploadVideo.vue` — **dead** (no Element UI Message installer; component never registered/mounted).
+- **Part B**: See overview bullet “1b.4 plugin-surface DEV smoke”. Notable hard fail: `admin/notice/add` → `<create-circular>` fails to resolve (compiler Invalid end tag in `noticeboard/Create.vue` @ L249 — extra `</div>` after imgpopup modal).
+- **Files modified**: `knowledge.md` only (disposition + session log). Bundle restored to production after DEV smoke.
+- **Status**: ✅ 1b.4 Part A landed / Part B smoke logged / ⏸️ STOP before 1b.5 harden (noticeboard create fix is a recovery follow-up, not 1b.5)
 
