@@ -199,7 +199,6 @@
         }
     }
 </script>
-</script>
 <style scoped>
   .myCustomClass {
      margin-top:10px;
