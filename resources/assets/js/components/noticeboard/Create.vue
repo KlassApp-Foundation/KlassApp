@@ -239,8 +239,7 @@
                                     </div>
                                     </a>
                         </li>   
-                         </ul> 
-                         </div>  
+                         </ul>
           </div>
         </div>
       </div>
