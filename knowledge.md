@@ -44,6 +44,16 @@
   - **Also seen same suite run**: `ToshiE2EVerificationTest` LLM null (API timeout/error) — separate from `activity()`; keep as E2E/env noise unless it starts failing offline mocks.
   - **Stakes**: blocks account creation / login regression coverage — **higher priority than** `admin/promotion/list` (`exam_type`) and `str_limit` on academic-year list (list/API views only).
   - **Scope**: pre-existing app/test infra bug; fix before treating merge suite as green. Pre-merge suite baseline on both tips: **5 failed, 1 skipped, 220 passed**.
+- **Separate reproducible finding (Jul 30) — 4th deferred pre-existing**: `GET /admin/classwall/post/editList/{id}` throws HTTP 500 when `posts.attachment_file` is null — **not** a Vue 3 / `@vue/compat` / Phase 1b regression; confirmed identical on **`main` @ `02a1c52` and `migration/vue3-runtime`**.
+  - **Route**: `admin/classwall/post/editList/{id}` (`Admin\PostEditController@editList`) — also surfaces as broken ClassWall post edit UI (`edit-post` never gets list payload).
+  - **Error**: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given` at `app/Models/Post.php:83` (`getAttachmentPathAttribute` → `count($this->attachment_file)`).
+  - **Observed result**: HTTP **500** (framework "Server Error"); Vue client then `Cannot read properties of undefined (reading 'length')`.
+  - **Reproduction (standalone)**:
+    1. Local DB `klassapp_local`; post id **1** has `attachment_file = NULL`, `created_by = 5`.
+    2. Authenticate as that creator (user id 5) — or any user matching `created_by` (else 403).
+    3. `GET /admin/classwall/post/editList/1` via authenticated kernel request (same method as `admin/promotion/list`).
+    4. Result: **500** on `main` and on `migration/vue3-runtime`; `git diff main -- app/Models/Post.php` is empty.
+  - **Scope**: pre-existing PHP accessor null-safety bug; track as its own ticket. **Waive for Phase 1b.4 close** (not introduced by Vue runtime switch).
 - **Recurrence (Jul 28)**: `GET /admin/dashboard` HTTP 500 — **same homestead vs `klassapp_local` mismatch** already fixed in `.env` earlier this session (`DB_DATABASE=homestead` → `klassapp_local`; see Environment fixes below). **Not** a new schema bug or Tailwind regression.
   - **Route**: `GET /admin/dashboard` (`Admin\DashboardController@index`)
   - **Surface error**: `Illuminate\Database\QueryException` — `Table 'homestead.approvals' doesn't exist` at `DashboardController` ~line 84 (pending-approvals `whereHas`).
@@ -80,9 +90,9 @@
     - **1b.4 targeted re-run (Jul 30 night — four items only)**:
       1. **create-leave flash**: **PASS** (after fixing empty webpack module). Teacher `teacher_test_school_one@testschoolone.edu` → `/teacher/leave/add`; empty Submit → axios 422 → `this.flash(...)` → `.flash__message` / `.error.flash__message` with “Please fill all fields”. Prior FAIL root cause: duplicate `</script>` in `leave/teacher/Create.vue` made webpack module `()=>{}` so `<create-leave>` never mounted.
       2. **discipline datetime**: **PASS**. Same `v-model` + `value`/`$emit('input')` as ClassWall. Calendar open → day → OK updates parent (`FormData incident_date` set). Console noise: `TypeError: 'set' on proxy: trap returned falsish for property 'value'` from picker watcher `this.value = newVal` (illegal prop mutate under Vue 3) — does **not** block select.
-      3. **ClassWall edit**: **FAIL** (page heading mounts; Quill/dropzone/datetime do not stay). `editList/1` **500**: `count(): ... null given at Post.php:83` (`getAttachmentPathAttribute` on null `attachment_file`). Client then `Cannot read properties of undefined (reading 'length')`. Not a Vue-compat mount issue first — API accessor bug (S3 missing-region also logged as INFO elsewhere).
+      3. **ClassWall edit**: **FAIL** on branch (page heading mounts; Quill/dropzone/datetime do not stay) — **waived for 1b.4**: same `editList/1` **500** reproduces on **`main`** (see deferred finding below). Not a Vue 3 / Phase 1b regression. `git diff main..migration/vue3-runtime -- app/Models/Post.php` empty.
       4. **students/blockedstudents 500**: **NOT S3**. Exact: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given at StudentController.php:432` — `count(\Request::getQueryString())` when query string is null. **Compat-related? NO.**
-      - **Recommend**: **do not CLOSE 1b.4** until ClassWall edit path is green (or explicitly waived); create-leave + discipline datetime are OK.
+      - **Recommend**: **CLOSE 1b.4** — create-leave + discipline datetime PASS; ClassWall edit 500 is pre-existing on main (deferred); blockedstudents is non-compat app bug. **⏸️ STOP before 1b.5**.
     - **Cleanup candidate (confirmed dead direct dep, Jul 29)**: `vue-upload-multiple-image` — **zero** source imports/requires of the npm package name across `resources/**/*.vue|js` and app JS; only listed in `package.json` / lockfile. App uses the **local** SFC `resources/assets/js/components/VueUploadMultipleImage.vue` (imported by `event/details/ShowImage.vue` as `../../VueUploadMultipleImage`), which depends on `vue-easy-lightbox` + `floating-vue` — not the npm package. Cleanup (do **not** run until scheduled): `npm uninstall vue-upload-multiple-image --legacy-peer-deps` (also drops transitive `vue-image-lightbox-carousel` / nested `vue-popperjs`).
     - **Older note (pre-1b branch work)**: on `main` @ `753697f`, runtime was still Vue 2.7.16; `@vue/compat` unwired until 1b.2 Task 1.
   - **Nothing is currently broken because of this gap**: Vue 2.7 boots correctly on `main`. Tonight’s verification (academics mount, attendance/add, discipline/add + `Vue.options.components.multiselect`, event bus, `$swal`, nav academic-year dropdown) is **valid confirmation that Vue 2.7 runs correctly** — not evidence of Vue 3 at runtime.
@@ -5121,7 +5131,13 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 ### 2026-07-30: 1b.4 targeted re-run — four items only
 - **Work done**: Playwright smoke on `:8010` / `klassapp_local` / Vue 3.5.40 for (1) teacher create-leave flash UI path, (2) discipline datetime root-cause dig vs ClassWall, (3) ClassWall post edit, (4) blockedstudents 500 exact exception. Fixed duplicate `</script>` in `leave/teacher/Create.vue` so create-leave compiles (was empty webpack module). Rebuilt production bundle. Did **not** start 1b.5; did **not** push.
 - **Outcomes**: create-leave flash **PASS**; discipline datetime **PASS** (prop-mutate console noise only); ClassWall edit **FAIL** (`Post.php:83` AttachmentPath `count(null)`); blockedstudents **NOT S3** (`StudentController.php:432` `count(\Request::getQueryString())` on null) — **compat? NO**.
-- **Recommend**: **do not CLOSE 1b.4** yet (edit path still red).
+- **Recommend**: was hold for ClassWall; superseded by closeout below after main comparison.
 - **Files modified**: `knowledge.md`; `resources/assets/js/components/leave/teacher/Create.vue` (duplicate `</script>` removed); rebuilt `public/js/app.js` (+map).
 - **Status**: ✅ Four-item re-run done / ⏸️ STOP before 1b.5
+
+### 2026-07-30: 1b.4 closeout — ClassWall pre-existing + SESSION_SAME_SITE
+- **Work done**: (1) Compared ClassWall `editList/1` `count(null)` on `migration/vue3-runtime` vs `main` @ `02a1c52` (worktree `/Users/mac/projects/KlassApp-main-checkout`, same DB `klassapp_local`, post id=1). Both return HTTP **500** with identical `TypeError` at `Post.php:83`; Post model diff vs main empty. Logged as **4th deferred pre-existing** finding; waived for 1b.4. (2) Kept `config/session.php` `same_site` → `env('SESSION_SAME_SITE', 'lax')` as intentional localhost CSRF/419 fix (`.env` already had `SESSION_SAME_SITE=lax` but config was hardcoded `null`).
+- **Recommend**: **CLOSE 1b.4** — Vue plugin surfaces for the four re-run items are green or waived; do not start 1b.5 from this closeout.
+- **Files modified**: `knowledge.md`; `config/session.php`.
+- **Status**: ✅ 1b.4 closeout complete / ⏸️ STOP before 1b.5 / not pushed
 
