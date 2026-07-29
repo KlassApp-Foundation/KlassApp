@@ -76,7 +76,7 @@
     - **Dead (not Element UI)**: `this.$message` only in unregistered `EleUploadVideo.vue` — no installer, never mounted.
     - **✅ 1b.2 Task 2 shell smoke** (Jul 29): boot + attendance/discipline/year-nav PASS; academics PASS* (list API 500); multiselect registered but discipline uses native teacher `<select>`. Production bundle emitted **0** compat warnings.
     - **✅ 1b follow-ups pre-1b.4** (Jul 29): Vue.prototype audit + **DEV** smoke warning inventory (17 unique MODE 2 messages).
-    - **✅ 1b.4 plugin-surface DEV smoke** (Jul 29): ClassWall create (Quill+dropzone-vue3+datetime) PASS; homework Quill PASS; noticeboard list portal header PASS; noticeboard **create FAIL** (`create-circular` unresolved — SFC `Invalid end tag` soft-fail → empty module); telephone `vue-good-table-next` PASS; discipline datetime PASS; change-credential modal+`<flash-message>` mount PASS; portal-vue panel open/close class toggle PASS. **⏸️ STOP before 1b.5**.
+    - **✅ 1b.4 plugin-surface DEV smoke** (Jul 29): ClassWall create (Quill+dropzone-vue3+datetime) PASS; homework Quill PASS; noticeboard list portal header PASS; noticeboard create was FAIL then **recovery-fixed** (see session log); telephone `vue-good-table-next` PASS; discipline datetime PASS; change-credential modal+`<flash-message>` mount PASS; portal-vue panel open/close class toggle PASS. **⏸️ STOP before 1b.5**.
     - **Cleanup candidate (confirmed dead direct dep, Jul 29)**: `vue-upload-multiple-image` — **zero** source imports/requires of the npm package name across `resources/**/*.vue|js` and app JS; only listed in `package.json` / lockfile. App uses the **local** SFC `resources/assets/js/components/VueUploadMultipleImage.vue` (imported by `event/details/ShowImage.vue` as `../../VueUploadMultipleImage`), which depends on `vue-easy-lightbox` + `floating-vue` — not the npm package. Cleanup (do **not** run until scheduled): `npm uninstall vue-upload-multiple-image --legacy-peer-deps` (also drops transitive `vue-image-lightbox-carousel` / nested `vue-popperjs`).
     - **Older note (pre-1b branch work)**: on `main` @ `753697f`, runtime was still Vue 2.7.16; `@vue/compat` unwired until 1b.2 Task 1.
   - **Nothing is currently broken because of this gap**: Vue 2.7 boots correctly on `main`. Tonight’s verification (academics mount, attendance/add, discipline/add + `Vue.options.components.multiselect`, event bus, `$swal`, nav academic-year dropdown) is **valid confirmation that Vue 2.7 runs correctly** — not evidence of Vue 3 at runtime.
@@ -5093,4 +5093,10 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **Part B**: See overview bullet “1b.4 plugin-surface DEV smoke”. Notable hard fail: `admin/notice/add` → `<create-circular>` fails to resolve (compiler Invalid end tag in `noticeboard/Create.vue` @ L249 — extra `</div>` after imgpopup modal).
 - **Files modified**: `knowledge.md` only (disposition + session log). Bundle restored to production after DEV smoke.
 - **Status**: ✅ 1b.4 Part A landed / Part B smoke logged / ⏸️ STOP before 1b.5 harden (noticeboard create fix is a recovery follow-up, not 1b.5)
+
+### 2026-07-29: Noticeboard create Invalid end tag recovery
+- **Work done**: Removed stray `</div>` after imgpopup `</ul>` in `noticeboard/Create.vue` + `Edit.vue`; production rebuild; Playwright re-smoke `admin/notice/add` only.
+- **Commits**: `1048b62` (SFC fix), `d18f991` (assets).
+- **Smoke**: **PASS** — Vue 3.5.40, Add Notice form mounts, Quill `.ql-editor` present (1), no page errors / no Invalid end tag. (Vue 3 replaces `<create-circular>` tag with component root.)
+- **Status**: ✅ Done / ⏸️ STOP — did not re-run full 1b.4 or start 1b.5; not pushed
 
