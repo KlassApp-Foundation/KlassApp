@@ -17,8 +17,8 @@ import path from 'path';
  *   @import "tailwindcss", so @tailwindcss/vite does not utility-scan it.
  *   Wire into Blade only where Mix landing.css was used (not app layouts).
  *
- * Phase 3.1: app.js + bootstrap.js are ESM (no require). vite:dev and vite:build
- * both supported; production path remains vite:build without public/hot.
+ * Phase 3.1: app.js + bootstrap.js are ESM (no require).
+ * Phase 3.5: Mix removed — use `npm run dev` / `npm run build` (no public/hot in prod).
  */
 export default defineConfig({
     plugins: [
