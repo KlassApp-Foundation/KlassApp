@@ -386,9 +386,11 @@ export const bus = new Vue();
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 // Avoid Vue.use(vue-sweetalert2): its install() calls provide() outside setup under
-// compat Vue.use and emits a non-compat warn. Mirror the gp + window wiring Task 2 verified.
+// compat Vue.use. Avoid Vue.config.globalProperties alone / post-mount app.config.gp —
+// under @vue/compat those do not expose this.$swal on instances (singleton gp ≠ mounted
+// proxy). Match vue-flash-message: Vue.prototype.$swal (compat maps this onto instances).
 window.Swal = Swal;
-Vue.config.globalProperties.$swal = function (...args) {
+Vue.prototype.$swal = function (...args) {
     return Swal.fire(...args);
 };
 
