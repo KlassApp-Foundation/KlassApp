@@ -386,6 +386,27 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-07-31: Deferred bugs #3–4 — count(null) Post + blockedstudents
+- **Work done**: Null-safe `count()` at `Post::getAttachmentPathAttribute` (`attachment_file ?? []`) and `StudentController@blockedstudents` (`count((array) getQueryString())`, plus `$birthday = null` init). Tests in `CountNullSafetyTest`.
+- **Files modified**: `app/Models/Post.php`, `app/Http/Controllers/Admin/StudentController.php`, `tests/Feature/CountNullSafetyTest.php`
+- **Key decisions**: Call-site null-safety (not migration/backfill) — null is valid empty for posts without attachments and for requests with no query string. Laravel array casts leave DB null as null. Same mistake class, one commit. Light grep: bare `count(getQueryString())` only this StudentController site (others already `(array)`); `count($this->attachment_file)` only Post — similar homework/assignment accessors left out of scope.
+- **Status**: ✅ Done for items 3–4 — STOPPED before item 5
+- **Edge cases flagged**: Verified `GET /admin/classwall/post/editList/1` → 200 `attachment:[]`; `GET /admin/students/blockedstudents` → 200. Full suite 232 passed / 1 skipped / 1 failed (`ToshiE2EVerificationTest` LLM null — unrelated).
+
+### 2026-07-31: Deferred bug #2 — str_limit → Str::limit
+- **Work done**: Replaced all non-vendor `str_limit(` with `Str::limit(...)` (+ `use Illuminate\Support\Str` in PHP resources; FQCN in Blade). Commit `5b5540f` on `fix/deferred-bugs`.
+- **Files modified**: `app/Http/Resources/{AcademicYear,ShowVideo,ShowEvent,Discipline,Classwall/Page,API/ShowVideo}.php`, `resources/views/admin/{feedbacks,discipline}/list.blade.php`
+- **Key decisions**: Leave Item 1 activity() shim alone; no helpers package; match existing Blade `\Illuminate\Support\Str::limit` pattern.
+- **Status**: ✅ Done for item 2 only — STOPPED before item 3
+- **Edge cases flagged**: Full suite 228 passed / 1 skipped / 1 failed (`ToshiE2EVerificationTest` LLM null — unrelated API timeout). Verified `GET /admin/academic/list` 200 with real years.
+
+### 2026-07-31: Deferred bug #1 — restore activity() helper
+- **Work done**: Restored Spatie-compatible global `activity()` helper + `App\Services\ActivityLogger` writing to `App\Models\ActivityLog` (package not re-added). Fixed `RegistrationMinistryCodeTest` fixtures (`curriculum` + usergroups). Branch `fix/deferred-bugs` @ `77d1fbe`.
+- **Files modified**: `app/Helpers/activity.php`, `app/Services/ActivityLogger.php`, `composer.json` (autoload), `config/activitylog.php`, `tests/Feature/ActivityLoggerTest.php`, `tests/Feature/Auth/RegistrationMinistryCodeTest.php`
+- **Key decisions**: Prefer app-owned fluent helper over reintroducing `spatie/laravel-activitylog` (dependency change needs approval; app already uses custom ActivityLog + ToshiAuditService).
+- **Status**: ✅ Done for item 1 only — STOPPED awaiting approval before item 2 (`str_limit`)
+- **Edge cases flagged**: Login activity may be queued (`LogSuccessfulLogin` ShouldQueue) so live DB may lag without a worker; PHPUnit uses sync and covers the path.
+
 ### 2026-07-08: Reports functional audit + fixes
 - **Work done**: Click-verified all report endpoints at `/admin/reports`. 11/15 endpoints passed immediately. 4 had 500 errors. Also fixed superadmin reports: created landing page at `/superadmin/reports`, fixed sidebar link, fixed subscription detail 500 error.
 - **Files modified**:
