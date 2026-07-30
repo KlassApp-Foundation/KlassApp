@@ -40,6 +40,8 @@ export default defineConfig({
             vue: '@vue/compat',
             '@': path.resolve(__dirname, 'resources/assets/js'),
         },
+        // Webpack/Mix resolved extensionless ./Foo → Foo.vue; Vite needs this explicitly.
+        extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
     },
     define: {
         __VUE_OPTIONS_API__: true,
