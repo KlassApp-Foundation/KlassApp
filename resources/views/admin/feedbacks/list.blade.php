@@ -18,7 +18,7 @@
                     </td>
                     <td>{{ ucwords(str_replace('_', ' ', (str_replace('/', ' / ',$feedback->latestMessage->category)))) }}</td>          
                     <td> 
-                        <p> {!! str_limit($feedback->feedbackMessage->first()->message,50,'...') !!}
+                        <p> {!! \Illuminate\Support\Str::limit($feedback->feedbackMessage->first()->message,50,'...') !!}
                             @if( $feedback->latestMessage->is_seen == '0' ) 
                                 <span class="bg-red-300 rounded-full text-white inline-block px-2 my-1 mb-2"> New </span>
                             @endif  

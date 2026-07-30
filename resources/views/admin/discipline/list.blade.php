@@ -12,7 +12,7 @@
             </td>
             <td data-label="Type">{{ ucfirst($discipline->type) }}</td>
             <td data-label="Date" class="text-sm text-gray-600">{{ date('Y-m-d H:i:s', strtotime($discipline->incident_date)) }}</td>
-            <td data-label="Detail" class="text-sm text-gray-600">{{ str_limit($discipline->incident_detail, 10, '...') }}</td>
+            <td data-label="Detail" class="text-sm text-gray-600">{{ \Illuminate\Support\Str::limit($discipline->incident_detail, 10, '...') }}</td>
             <td data-label="Notify">
                @if($discipline->notify_parents == 1)
                   <a href="#" rel="{{ url('/admin/discipline/updateStatus/'.$discipline->id) }}" class="status">

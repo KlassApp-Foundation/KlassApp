@@ -4,6 +4,7 @@ namespace App\Http\Resources\Classwall;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use App\Models\ClassRoomPageDetail;
 
 class Page extends JsonResource
@@ -20,7 +21,7 @@ class Page extends JsonResource
             //
             'id'            =>  $this->id,
             'page_name'     =>  $this->page_name,
-            'description'   =>  str_limit($this->description,50,'...'),
+            'description'   =>  Str::limit($this->description,50,'...'),
             'cover_image'   =>  $this->CoverImagePath,
             'category'      =>  str_replace('_', ' ', ucwords($this->classRoomPageCategory->name)),
             'like_count'    =>  $this->classRoomPageDetail()->where('like',1)->count(),

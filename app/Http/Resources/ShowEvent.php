@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Str;
 
 class ShowEvent extends JsonResource
 {
@@ -40,7 +41,7 @@ class ShowEvent extends JsonResource
             'end_date'          => date('d-m-Y H:i:s', strtotime($this->end_date)),
             'date'              => date('d', strtotime($this->start_date)),
             'month'             => date('M', strtotime($this->start_date)),
-            'description_limit' => str_limit($this->description,30,'...'),
+            'description_limit' => Str::limit($this->description,30,'...'),
             'class_name' => $class_name,
             
         ];
