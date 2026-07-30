@@ -8,10 +8,14 @@
         "hot": "mix watch --hot",
         "prod": "npm run production",
         "production": "mix --production",
+        "vite:dev": "vite",
+        "vite:build": "vite build",
         "build-subscriptioninfo": "cd nova-components/Subscriptioninfo && npm run dev",
         "build-subscriptioninfo-prod": "cd nova-components/Subscriptioninfo && npm run prod"
     },
     "devDependencies": {
+        "@tailwindcss/vite": "^4.3.3",
+        "@vitejs/plugin-vue": "^6.0.8",
         "@vue/compiler-sfc": "3.5.40",
         "axios": "^1.18.1",
         "bootstrap": "^4.5.2",
@@ -20,6 +24,7 @@
         "jquery": "^3.5.1",
         "laravel-mix": "^6.0.49",
         "laravel-mix-purgecss": "^6.0.0",
+        "laravel-vite-plugin": "^3.1.3",
         "lodash": "^4.18.1",
         "popper.js": "^1.12",
         "postcss": "^8.4.47",
@@ -27,6 +32,7 @@
         "sass": "^1.26.10",
         "sass-loader": "^7.3.1",
         "tailwindcss": "^4.3.3",
+        "vite": "^8.1.5",
         "vue": "3.5.40"
     },
     "dependencies": {
