@@ -224,7 +224,7 @@
                                     <label for="date_of_visit" class="tw-form-label">Date Of Visit<span class="text-red-500">*</span></label>
                                 </div>
                                 <div class="mb-2">
-                                    <input type="date" name="date_of_visit" v-model="date_of_visit" class="tw-form-control w-full" id="date_of_visit">
+                                    <input type="date" name="date_of_visit" v-model="local_date_of_visit" class="tw-form-control w-full" id="date_of_visit">
                                     <span v-if="errors.date_of_visit" class="text-red-500 text-xs font-semibold">{{ errors.date_of_visit[0] }}</span>
                                 </div>
                             </div>
@@ -306,7 +306,7 @@
                 visiting_purpose:'',
                 standardLink_id:'',
                 employee_id:'',
-                //date_of_visit:'',
+                local_date_of_visit: this.date_of_visit,
                 entry_time:'',
                 exit_time:'',
                 remark:'',
@@ -379,7 +379,7 @@
                 this.email='';  
                 this.whom_to_meet='';  
                 this.entry_time='';  
-                this.date_of_visit='';  
+                this.local_date_of_visit='';  
                 this.exit_time='';  
                 this.remark='';  
             }, 
@@ -404,7 +404,7 @@
                 formData.append('contact_number',this.contact_number);          
                 formData.append('address',this.address);                    
                 formData.append('email',this.email);                    
-                formData.append('date_of_visit',this.date_of_visit);          
+                formData.append('date_of_visit',this.local_date_of_visit);          
                 formData.append('entry_time',this.entry_time);          
                 formData.append('exit_time',this.exit_time);          
                 formData.append('remark',this.remark);          

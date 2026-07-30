@@ -1,57 +1,42 @@
 <template>
-  <!-- <div class="lg:h-screen"> -->
   <div>
-  <div class="mt-5">
- <h2 class="text-gray-700 text-lg font-semibold italic">Photos ({{Object.keys(this.photos).length}})</h2>
- </div>
+    <div class="mt-5">
+      <h2 class="text-gray-700 text-lg font-semibold italic">Photos ({{ Object.keys(photos).length }})</h2>
+    </div>
     <div class="w-full">
-      <div class="flex my-4"> 
-      
-        <div class="" @click="getshowSlider()">
-          <div class="flex justify-center" v-if="Object.keys(photos).length>0">
-            <img v-bind:src='photos[0].path' class="w-32 h-32 border border-gray-500 p-1 cursor-pointer" >
+      <div class="flex my-4">
+        <div @click="getshowSlider()">
+          <div class="flex justify-center" v-if="Object.keys(photos).length > 0">
+            <img v-bind:src="photos[0].path" class="w-32 h-32 border border-gray-500 p-1 cursor-pointer">
           </div>
-         <!--  <p class="font-semibold text-center my-1"><span class="ml-6">{{Object.keys(photos).length}}</span></p> -->
-        
         </div>
       </div>
     </div>
 
-  
-
-
-       <div  v-if="this.showImage">    
- 
-    <div class="modal-mask">
-      <div class="modal-wrapper px-4">
-        <div class="modal-container w-full  max-w-3xl px-8 mx-auto">
-          <div class="modal-header flex justify-between items-center">
-          <h2 class="text-gray-700 text-base font-semibold italic">Photos</h2>
-             <button class="modal-default-button text-2xl py-1"  @click="closeModal()">
-                &times;
-            </button>
-          </div>
-
-
-          <div class="modal-body">
-          <carousel :wrap-around="true" class="mt-0 my-custom-class" :items-to-show="1" :autoplay="3000">
-        <slide v-for="slider in photos" v-bind:key="slider.id">
-            <div class="p-0">
-              <img :src="slider.path" class="w-full">
+    <div v-if="showImage">
+      <div class="modal-mask">
+        <div class="modal-wrapper px-4">
+          <div class="modal-container w-full max-w-3xl px-8 mx-auto">
+            <div class="modal-header flex justify-between items-center">
+              <h2 class="text-gray-700 text-base font-semibold italic">Photos</h2>
+              <button class="modal-default-button text-2xl py-1" @click="closeModal()">&times;</button>
             </div>
-        </slide>
-        <template #addons>
-          <Navigation v-if="navigationEnabled" />
-        </template>
-      </carousel>
-       
+            <div class="modal-body">
+              <carousel :wrap-around="true" class="mt-0 my-custom-class" :items-to-show="1" :autoplay="3000">
+                <slide v-for="slider in photos" v-bind:key="slider.id">
+                  <div class="p-0">
+                    <img :src="slider.path" class="w-full">
+                  </div>
+                </slide>
+                <template #addons>
+                  <Navigation v-if="navigationEnabled" />
+                </template>
+              </carousel>
+            </div>
           </div>
-  </div>
- </div>
-</div>
-          
         </div>
       </div>
+    </div>
   </div>
 </template>
 

@@ -305,7 +305,6 @@
                     <div class="lg:mr-6 md:mr-6">
                         <label
                             for="attachment"
-                            v-model="attachment"
                             class="text-sm font-medium text-gray-700"
                             >Attachment</label
                         >

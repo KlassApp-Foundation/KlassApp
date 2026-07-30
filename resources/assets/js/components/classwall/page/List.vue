@@ -26,9 +26,7 @@
          			<div class="">
 		            	<img class="card-img-top  h-40 w-full" :src="page.cover_image">
 		        	</div> 
-		        	<p class="text-sm text-gray-700 flex items-center py-2" v-html="page.description">
-		            	{{ trim(page.description) }}
-		          	</p>
+		        	<p class="text-sm text-gray-700 flex items-center py-2" v-html="page.description"></p>
 		          	<ul class="list-reset leading-loose my-2 text-xs">
 		          		<li class="flex py-1 items-center justify-between">
 		          		<div class="flex items-center">

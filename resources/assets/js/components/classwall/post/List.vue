@@ -37,7 +37,7 @@
                 </div>
                 <div class="flex text-xs justify-between flex-col lg:flex-row w-11/12">
                     <div class="py-2 lg:py-2">
-                        <p class="text-gray-800 text-sm" v-html="post.description">{{ post.description }}</p>
+                        <p class="text-gray-800 text-sm" v-html="post.description"></p>
                     </div>   
                 </div>
 

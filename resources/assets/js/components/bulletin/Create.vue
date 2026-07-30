@@ -33,7 +33,7 @@
             <div class="my-5">
                 <div class="">
                     <div class="w-full lg:w-1/4">
-                        <label for="cover_image" v-model="cover_image" class="tw-form-label">Upload Cover Image</label>
+                        <label for="cover_image" class="tw-form-label">Upload Cover Image</label>
                     </div>
                     <div class="w-full lg:w-2/5 my-2">
                         <input type="file" name="cover_image" @change="OnImageSelected" id="cover_image" class="tw-form-control w-full">
@@ -45,7 +45,7 @@
             <div class="my-5">
                 <div class="">
                     <div class="w-full lg:w-1/4">
-                        <label for="bulletin_file" v-model="bulletin_file" class="tw-form-label">Upload Magazine File</label>
+                        <label for="bulletin_file" class="tw-form-label">Upload Magazine File</label>
                     </div>
                     <div class="w-full lg:w-2/5 my-2">
                         <input type="file" name="bulletin_file" @change="OnFileSelected" id="bulletin_file" class="tw-form-control w-full">

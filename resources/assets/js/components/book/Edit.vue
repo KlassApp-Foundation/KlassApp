@@ -182,7 +182,6 @@
                         <div class="w-full lg:w-1/4">
                             <label
                                 for="cover_image"
-                                v-model="cover_image"
                                 class="tw-form-label"
                                 >Upload Cover Image</label
                             >

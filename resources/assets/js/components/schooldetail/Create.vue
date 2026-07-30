@@ -213,7 +213,6 @@
                     <div class="mb-2">
                         <label
                             for="school_logo"
-                            v-model="school_logo"
                             class="tw-form-label"
                             >School Logo<span class="text-red-500"
                                 >*</span

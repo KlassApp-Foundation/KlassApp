@@ -101,8 +101,7 @@
 
     </div>
 <!-- End modal -->
-  </div>
-</template>
+  </template>
 
 <script>
 

@@ -25,9 +25,7 @@
          			<div class="py-2">
 		            	<img class="card-img-top w-20 h-20" :src="page.cover_image">
 		        	</div> 
-		        	<p class="text-sm text-gray-700 flex items-center py-2" v-html="page.description">
-		            	{{ page.description }}
-		          	</p>
+		        	<p class="text-sm text-gray-700 flex items-center py-2" v-html="page.description"></p>
 		          	<ul class="list-reset leading-loose my-2 text-xs">
 		          		<li class="flex py-1 items-center justify-between">
 		          		<div class="flex items-center">

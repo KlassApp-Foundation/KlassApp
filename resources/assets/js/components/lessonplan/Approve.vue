@@ -10,7 +10,7 @@
               <label for="status" class="tw-form-label">Status</label>
             </div>
             <div class="mb-2">
-              <input type="text" name="status" id="status" v-model="status" class="tw-form-control w-full"
+              <input type="text" name="status" id="status" :value="status" class="tw-form-control w-full"
               readonly>
             </div>
             <span v-if="errors.status" class="text-red-500 text-xs font-semibold">{{errors.status[0]}}</span>

@@ -104,7 +104,7 @@
                 <label for="call_date" class="tw-form-label">Date<span class="text-red-500">*</span></label>
             </div>
             <div class="mb-2">
-              <input type="date"  name="call_date" v-model="call_date" class="tw-form-control w-full" id="call_date">
+              <input type="date"  name="call_date" v-model="local_call_date" class="tw-form-control w-full" id="call_date">
               <span v-if="errors.call_date" class="text-red-500 text-xs font-semibold">{{errors.call_date[0]}}</span>
             </div>
           </div>
@@ -175,7 +175,7 @@
         name:'',
         incoming_number:'',
         outgoing_number:'',
-        //call_date:'',
+        local_call_date: this.call_date,
         start_time:'',
         end_time:'',
         description:'',
@@ -194,7 +194,7 @@
         this.name='';
         this.incoming_number='';  
         this.outgoing_number='';  
-        this.call_date='';  
+        this.local_call_date='';  
         this.start_time='';  
         this.end_time='';  
         this.description='';  
@@ -213,13 +213,13 @@
         formData.append('name',this.name);                 
         formData.append('incoming_number',this.incoming_number);                 
         formData.append('outgoing_number',this.outgoing_number);          
-        formData.append('call_date',this.call_date);          
+        formData.append('call_date',this.local_call_date);          
         formData.append('start_time',this.start_time);          
         formData.append('end_time',this.end_time);          
         formData.append('description',this.description);                    
                  
               
-        axios.post(this.url+'/'+this.mode+'/calllog/add',formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {     
+        axios.post(this.url+'/'+this.mode+'/calllog/add',formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {       
           this.success = response.data.success;
           this.reset();
         }).catch(error => {
@@ -232,7 +232,7 @@
         axios.get(this.url+'/'+this.mode+'/visitorlog/list').then(response => {
           this.studentlist = response.data.studentlist;
           this.classlists = response.data.standardlist;
-          this.call_date=this.call_date;
+          this.local_call_date = this.call_date;
           //console.log(this.studentlist);
           this.teacherlist  = response.data.teacherlist;
           //console.log(this.list);
