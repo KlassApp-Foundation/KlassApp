@@ -10,10 +10,10 @@
         <ul class="navbar-nav ml-auto flex items-center">
             @guest
                 <li class="nav-item px-2">
-                    <a class="text-sm lg:text-base px-3 py-1 rounded bg-white border border-gray-300 hover:bg-gray-300 hover:text-gray-900" href="{{ route('register') }}" id="register">{{ __('Free Sign Up') }}</a>
+                    <a class="text-sm lg:text-base px-3 py-1 rounded bg-white border hover:bg-gray-300 hover:text-gray-900" href="{{ route('register') }}" id="register">{{ __('Free Sign Up') }}</a>
                 </li>
                 <li class="nav-item px-2">
-                    <a class="text-sm lg:text-base px-3 py-1 rounded bg-white border border-gray-300 hover:bg-gray-300 hover:text-gray-900" href="{{ route('login') }}" id="login">{{ __('Login') }}</a>
+                    <a class="text-sm lg:text-base px-3 py-1 rounded bg-white border hover:bg-gray-300 hover:text-gray-900" href="{{ route('login') }}" id="login">{{ __('Login') }}</a>
                 </li>
             @endguest
             @auth
@@ -21,7 +21,7 @@
                     <a class="text-sm lg:text-base px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 hover:text-white" href="{{ route('dashboard') }}" id="dashboard">{{ __('Dashboard') }}</a>
                 </li>
                 <li class="">
-                    <a class="text-sm lg:text-base  px-3 py-1 rounded bg-white border border-gray-300 hover:bg-gray-300 hover:text-gray-900" dusk="logout-link" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">{{ __('Logout') }}</a>
+                    <a class="text-sm lg:text-base  px-3 py-1 rounded bg-white border hover:bg-gray-300 hover:text-gray-900" dusk="logout-link" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">{{ __('Logout') }}</a>
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                         @csrf
                     </form>
