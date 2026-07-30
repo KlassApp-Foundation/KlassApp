@@ -43,7 +43,7 @@
 - **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared earlier (`7f29e37` / `5a7cc45` / `8a2938d`) — required so Vite does not hard-fail where Mix softened.
 - **Main hygiene (pushed pre-Vite)**: `vue-upload-multiple-image` removed (`e2b0112`).
 - **Phase 3 history on `migration/vite`**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** → **✅ 3.1 ESM** → **✅ 3.5 Mix removal** (`3bc5c70`) → rules `c470c39` → merge to main `9bdf185`.
-- **Scoped tech debt**: `.npmrc` `legacy-peer-deps=true` — **7 direct packages** declare Vue 2 peers that reject Vue 3.5.40 (first ERESOLVE: `@fullcalendar/vue@5`).
+- **Scoped tech debt**: `.npmrc` `legacy-peer-deps=true` — **7 direct** Vue-2 peer packages reject Vue 3.5.40 (Jul 30 audit): `@fullcalendar/vue@5` (`^2.6.12`), `@kevinfaguiar/vue-twemoji-picker`, `ckeditor4-vue`, `qrcode.vue@1`, `vue-loading-overlay@3`, `vue-qart`, `vue-select@3`. **Transitive**: `vue-clickaway` (via twemoji-picker), `vodal` (via vue-image-upload-croppie). Not “needed for `@vue/compat` in general” — keep until those are upgraded/replaced. Full table in Phase 3.5 session log.
 - **Pushed** to `origin/main` — includes deferred-bugs merge **`536603c`** + knowledge closeout **`d8dc818`** (status correction on this tip).
 ## Current Status: July 28, 2026
 
@@ -148,13 +148,14 @@
   - **Audit note (kept)**: 183 active `Vue.component` sites / 0 `app.component`; sole Mix entry `app.js` — one-line interop fix restores full surface.
   - **✅ CLOSED Jul 31 (deferred item 2) @ `5b5540f`**: `str_limit()` at `AcademicYear.php:21` (and sibling resources) → `Str::limit()`. Undefined `$school` in `AcademicYearController@index` (unused by view) remains a separate unused-var note, not part of the deferred five.
   - **Phase 3 / Vite attribution (Jul 30, `migration/vite`)**: Academics page `Object.keys` TypeError under Vite was the **same known deferred #2 bug** (now closed). Historical: `GET /admin/academic/list` → 500 `Call to undefined function App\Http\Resources\str_limit()` at `AcademicYear.php:21` → `List.vue` `Object.keys(this.academic_years)` throws.
-- **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No Tailwind regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill. **Jul 31**: all five deferred app bugs (`activity()`, promotion/`exam_type`, `str_limit`, ClassWall/blockedstudents `count(null)`) **CLOSED on `main`** @ merge `536603c`. Remaining deferred: `home_navigation` / `minimal`. **Phase 1 Vue boot regression CLOSED** (both branches verified). Dashboard env recurrence **resolved**; Priority 2 HTTP smoke routes **verified 200**.
+- **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No Tailwind regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill. **Jul 31**: all five deferred app bugs (`activity()`, promotion/`exam_type`, `str_limit`, ClassWall/blockedstudents `count(null)`) **CLOSED on `main`** @ merge `536603c`. **`home_navigation` FIXED** on `chore/cleanup-loose-ends` (`099b58e`) — gate removed so nav renders on all `layouts.main` pages. **`layouts/minimal` + welcome-era views left as orphaned** (docs-only; no delete). **Phase 1 Vue boot regression CLOSED** (both branches verified). Dashboard env recurrence **resolved**; Priority 2 HTTP smoke routes **verified 200**.
 
 ### Confirmed Orphaned Welcome-Era Files
-- **`resources/views/welcome/welcome.blade.php` and `resources/views/welcome/_modules_list_section.blade.php` are both currently orphaned/dead**.
-  - `welcome.blade.php`: already known to be effectively dead/orphaned because the old minimal-layout welcome route is no longer part of the live homepage path.
-  - `_modules_list_section.blade.php`: confirmed orphaned after a stronger sweep across direct Blade references, dynamic include/view patterns, Livewire `render()` methods, and JS/Vue-side references. No current consumer found.
-  - **Pattern note**: both files live under `resources/views/welcome/`, which likely reflects an older landing-page iteration rather than two unrelated leftovers. Treat that directory as suspect during future cleanup/audit work.
+- **Three dead/orphaned surfaces (left as-is — do not wire without product intent):**
+  1. **`resources/views/welcome.blade.php`** (views root, **not** `welcome/welcome.blade.php` — that path does not exist) — `@extends('layouts.minimal')`; `/` route in `web.php` has `//return view('welcome');` commented; live homepage is `landing` via WelcomeController. **Orphaned/dead.**
+  2. **`resources/views/welcome/_modules_list_section.blade.php`** — confirmed orphaned (no Blade include/view/Livewire/JS consumer). Other `welcome/_*.blade.php` partials are the same era; treat the directory as suspect on future cleanup.
+  3. **`resources/views/layouts/minimal.blade.php`** — **orphaned layout**: sole consumer was `welcome.blade.php` (dead). No live route renders through it (`mapStaticRoutes` / welcome path unused). Loads `app.css` only — no dedicated Tailwind v4 `@vite` link. Leave as-is unless a new route intentionally uses it.
+  - **Jul 31 cleanup (`chore/cleanup-loose-ends`)**: confirmed documented; files **not** deleted.
 
 ### Toshi Layout History (app.blade.php)
 
@@ -294,7 +295,7 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **ESM** | ✅ Phase 3.1 — `app.js` + `bootstrap.js` ESM; `vite`/`dev` boots Vue 3.5.40 |
 | **Packages (3.4)** | portal-vue / vuejs-datetimepicker / vue-flash-message **works-as-is**; vue-upload-multiple-image **clean** |
 | **Pusher** | `VITE_PUSHER_*` only — Mix dual-read removed in 3.5 |
-| **Scoped tech debt** | `.npmrc` `legacy-peer-deps=true` — Vue-2 peer packages listed in Phase 3.5 closeout |
+| **Scoped tech debt** | `.npmrc` `legacy-peer-deps=true` — 7 direct (`@fullcalendar/vue@5` + 6) + 2 transitive (`vue-clickaway`, `vodal`); see Current Status / Phase 3.5 log |
 | **Deferred docs** | `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, `DESIGN_SYSTEM.md` still mention Mix — low priority |
 | **Risk level** | **Low** — prod deploy verification next; package peer upgrades separate |
 | **Effort** | Phase 3 closed + pushed on `main`; prod deploy next |
@@ -5111,10 +5112,7 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
    - **v4 preflight change**: bare `border` now defaults to `currentColor` (v1: `#e2e8f0`). `.dashboard-kpi-card` protected by its own border in dashboard-refresh.css (loaded after tailwind.css). Other bare-border dividers (e.g. `border-r` in admin dashboard) now render dark instead of light gray. ⚠️
    - **`layouts/empty` regression**: wrapper `<div class="flex items-center justify-center min-h-screen px-4 py-8">` lost all utilities → login/register/verify/password-reset pages render top-left instead of centered. ✅ RESOLVED in `355a838`.
    - **`layouts/main` regression**: 35 public marketing pages (privacypolicy, terms, 17 usecases, teachers-app, modules/*) are saturated with Tailwind (`container mx-auto`, `bg-red-600`, `py-16`) — all dead. ✅ RESOLVED in `355a838`.
-- **Deferred**: `layouts/main`'s `home_navigation` include is dead code (or a bug — intent unconfirmed).
-  - **Detail**: `resources/views/layouts/main.blade.php` includes the `home_navigation` partial, but `resources/views/layouts/partials/home_navigation.blade.php` is gated to only render on `/`. The `/` route does not use `layouts.main` — it routes to `landing.blade.php` via `WelcomeController` (Tailwind Play CDN, unrelated layout). Result: none of the ~35 pages using `layouts.main` can ever actually display this nav include. Pre-existing, unrelated to the Tailwind v4 migration — surfaced during Phase 2c visual verification (commit `355a838`).
-  - **Needs**: Confirm intent — either relax `home_navigation`'s gating so it renders on all `layouts.main` pages (if nav was meant to appear there), or remove the dead include from `layouts.main` (if it was never supposed to render there).
-  - **Scope**: `resources/views/layouts/main.blade.php`, `resources/views/layouts/partials/home_navigation.blade.php`
+- **Deferred → ✅ FIXED Jul 31 (`099b58e` on `chore/cleanup-loose-ends`)**: `home_navigation` was gated to `request()->is('/')` while `/` never uses `layouts.main` — nav never rendered. **Fix**: removed the gate; nav now renders on all `layouts.main` pages. Also added explicit `border-gray-300` on Register/Login/Logout buttons (Tailwind v4 preflight bare-`border` → `currentColor`). Verified: `/privacy-policy`, `/terms-of-service` (HTTP 200 + screenshot); usecase views render nav via Blade (HTTP routes still off — `mapStaticRoutes` commented in RouteServiceProvider).
 
 #### Environment fixes
 - **`.env` `DB_DATABASE=homestead` → `klassapp_local`** — was pointing to wrong database. `.env` is gitignored. `php artisan serve` launched on port 8000. Login at `/login` with `siteadmin@gmail.com / password`.
@@ -5135,7 +5133,7 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 #### Handoff state
 - **Branch**: `migration/tailwind4` at `355a838` (empty/main fix applied). Not merged to `main`.
 - **For Cursor**: Boost MCP wired via `.cursor/mcp.json`. `AGENTS.md` provides Laravel guidelines. `.cursor/rules/` has migration-specific warnings.
-- **Unresolved**: `layouts/main` `home_navigation` dead include needs intent check. `layouts/minimal` — no live route renders through it (`welcome` is dead code), no fix needed unless `welcome` or a new route starts using it.
+- **Resolved Jul 31**: `home_navigation` gate fixed (`099b58e`). `layouts/minimal` + welcome-era orphans confirmed documented / left as-is.
 - **Status**: ✅ Phase 2c closeout complete on sampled/audited surfaces (see Current Status); Jul 28 session log below is the pre-closeout handoff record.
 
 ### 2026-07-28: Phase 1b.1 replace-now package swaps (`migration/vue3-runtime`)
@@ -5434,7 +5432,7 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
   - **Transitive** (same class): `vue-clickaway@2.2.2` (`^2.0.0`, via twemoji-picker), `vodal@2.4.0` (`^2.5.21`, via `vue-image-upload-croppie`).
   - **Not culprits** (peers allow Vue 3): e.g. `emoji-mart-vue-fast` (`>2.0.0`), `vue-google-autocomplete` (`>=2`), `highcharts-vue` (`>=1.0.0`), Vue-3 replacements (`@vueup/vue-quill`, `dropzone-vue3`, `floating-vue`, …).
   - **Scoped tech debt** (like Phase 1b `--legacy-peer-deps` notes): keep `.npmrc` until those 7 directs (and transitive Vue-2 peers) are upgraded/replaced — **not** “needed for `@vue/compat` in general.”
-- **Deferred Mix docs (low priority)**: `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, and `resources/views/components/DESIGN_SYSTEM.md` still reference Mix / Tailwind v1 / `npm run production` — **not** rewritten in this closeout (historical plans; quick Vite rewrite deferred).
+- **Deferred Mix docs → ✅ UPDATED Jul 31 (`454940c` on `chore/cleanup-loose-ends`)**: `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, and `resources/views/components/DESIGN_SYSTEM.md` retargeted to Vite 8 + Tailwind v4; superseded Mix notes retained with pointer to `.cursor/rules/frontend.mdc`.
 - **Step 8**: Updated `.cursor/rules/frontend.mdc`, `known-pitfalls.mdc`, and `project-context.mdc` on `migration/vite` — Mix guidance removed; Vite ESM / `npm run dev|build` / `VITE_*` Pusher / `@vite` Blade / `legacy-peer-deps` scoped debt added.
 - **Step 9**: This closeout — stack table, Current Status, Mix→Vite assessment, session log. Canonical sync: `/Users/mac/projects/KlassApp/knowledge.md` ← checkout.
 - **Final state on branch**: Vite sole bundler; Vue 3.5.40 `@vue/compat` MODE 2; Tailwind v4 via `@tailwindcss/vite`; no Mix.
@@ -5456,3 +5454,13 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
   - PHPUnit: 5 failed, 1 skipped, 220 passed (LoginRegression, RegistrationMinistryCode ×2, RegistrationFlow activity(), ToshiE2E LLM).
 - **Key decisions**: Prefer dedicated merge worktree over checking out main in an existing dirty tree. Prefer new knowledge commit (not amend merge).
 - **Status**: ✅ Phase 3 **CLOSED on `main`** — **pushed** (knowledge tip historically `3e93bc3`; superseded by later `origin/main` tip)
+
+### 2026-07-31: chore/cleanup-loose-ends (nav fix + docs)
+- **Work done**: Branch `chore/cleanup-loose-ends` from `origin/main` @ `354fd4a` in worktree `/Users/mac/projects/KlassApp-main-merge`.
+  1. **REAL FIX** (`099b58e`): Removed `request()->is('/')` gate on `home_navigation` so nav renders on all `layouts.main` pages; added `border-gray-300` on guest/auth outline buttons (Tailwind v4 preflight). Smoke: privacy-policy + terms-of-service HTTP 200 + Chrome screenshots; usecase Blade renders include nav (HTTP routes still disabled via commented `mapStaticRoutes`).
+  2. **Orphans left as-is**: Confirmed/corrected docs for `welcome.blade.php` (views root), `welcome/_modules_list_section.blade.php`, `layouts/minimal.blade.php` — all orphaned/dead; no deletes.
+  3. **Mix docs** (`454940c`): Updated `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, `resources/views/components/DESIGN_SYSTEM.md` → Vite SoT (`.cursor/rules/frontend.mdc`).
+  4. **legacy-peer-deps**: Tightened Current Status + stack table to list 7 directs + 2 transitive from Jul 30 audit (already had full table in Phase 3.5 log).
+- **Verify**: `npm run build` PASS (Vite 8.1.5, ~4.4s). PHPUnit: **1 failed, 1 skipped, 234 passed** (ToshiE2E LLM null — same baseline).
+- **Key decisions**: Relax nav gate (not remove include). Leave welcome/minimal files. Docs update not delete. No merge / no push.
+- **Status**: ✅ Ready for review on `chore/cleanup-loose-ends` (not merged)
