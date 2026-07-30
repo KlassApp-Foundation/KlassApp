@@ -26,8 +26,8 @@
 - **Verify**: `npm run production` PASS; `Vue.version` 3.5.40; tests 5 failed (baseline); shell smoke PASS on `:8010`.
 - **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared — **19** v-model on `<label>`, **10** empty v-html, **9** invalid end tags, **4** v-model-on-prop. Merge `5a7cc45`, fix `7f29e37`, Mix asset rebuild `8a2938d` (pushed to `origin/main`). **Why it mattered**: Vite hard-fails on these where Mix’s `VueCompatSoftCompilerErrorsPlugin` was silently softening them.
 - **Main hygiene (pushed)**: `vue-upload-multiple-image` removed (`e2b0112`); `frontend.mdc` updated for Vue 3.5.40 / `@vue/compat` / Mix 6 / Tailwind v4 (`5de4e1f`).
-- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`, local only — not pushed)**: 🚧 **In progress — Mix still owns production Blade assets.** Scaffold `1b86a9b` → extensionless `.vue` `d06859e` → vue-multiselect CSS `70d0281` → **`VITE_PUSHER_*` Fix 1** → **`$swal` Fix 2**. Rolldown CJS interop → ~179 ESM conversion (3.1) is **OPTIONAL**, not a hard blocker.
-- **Runtime gaps**: (1) ✅ **`MIX_PUSHER` → `import.meta.env.VITE_PUSHER_*`**. (2) ✅ **`$swal` on instances via `Vue.prototype.$swal`** (compat; not singleton-only gp). (3) Academics `Object.keys` — **same** `str_limit` bug; deferred. Remaining: Blade `@vite()` cutover.
+- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`, local only — not pushed)**: 🚧 **In progress — Mix still owns production Blade assets.** Scaffold `1b86a9b` → extensionless `.vue` `d06859e` → vue-multiselect CSS `70d0281` → **`VITE_PUSHER_*` Fix 1** → **`$swal` Fix 2** → **Mix dual-read** (Vite-only `import.meta.env` broke Mix). Rolldown CJS interop → ~179 ESM conversion (3.1) is **OPTIONAL**, not a hard blocker.
+- **Runtime gaps**: (1) ✅ **Pusher dual-read** `import.meta.env.VITE_PUSHER_*` (guarded) `|| process.env.MIX_PUSHER_*` — Mix+Vite safe. (2) ✅ **`$swal` on instances via `Vue.prototype.$swal`** under `@vue/compat` MODE 2 (not native Vue 3 `globalProperties` — revisit if MODE 3 / compat removed). (3) Academics `Object.keys` — **same** `str_limit` bug; deferred. Remaining: Blade `@vite()` cutover.
 - **Process**: Log Phase 3 progress into `knowledge.md` at **each sub-phase checkpoint** (same discipline as Phase 1/2) — not batched catch-ups.
 ## Current Status: July 28, 2026
 
@@ -296,7 +296,7 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Blade asset helpers** | Still Mix/`asset('js/app.js')` — cutover to `@vite(...)` is a later Phase 3 step |
 | **Vue compatibility** | Vue 3.5.40 (`@vue/compat` MODE 2) on `main` — using **`@vitejs/plugin-vue`** (compat); `@vitejs/plugin-vue2` not needed |
 | **Build blockers cleared** | Extensionless `.vue` resolve (`d06859e`); Birthday/BirthdayTeacher/WorkAnniversary `<style src>` vue-multiselect CSS removed (`70d0281`) — global import remains in `app.js`; `npx vite build` PASS without ESM-converting `require()` |
-| **Runtime verify** | ✅ No `{}.MIX_PUSHER` (Fix 1). ✅ `this.$swal` callable on Options API instances via `Vue.prototype.$swal` (Fix 2); `window.Swal.fire` OK; mounted app gp includes `$swal`. **3.1 ESM = OPTIONAL.** Open: Blade `@vite()` cutover, academics `str_limit` |
+| **Runtime verify** | ✅ Pusher dual-read Mix+Vite (Fix 1 follow-up). ✅ `this.$swal` via `Vue.prototype.$swal` (Fix 2; MODE 2 compat bridge — revisit if compat off). **3.1 ESM = OPTIONAL.** Open: Blade `@vite()` cutover, academics `str_limit` |
 | **Feature gap: versioning** | Mix `version()` → Vite handles this automatically via hashed filenames |
 | **Feature gap: PurgeCSS** | Currently uses `laravel-mix-purgecss` — Vite equivalent is `@fullhuman/postcss-purgecss` PostCSS plugin |
 | **Risk level** | **Low-Medium** for remaining Blade `@vite()` cutover + env (`VITE_PUSHER_*`); Vue major settled |
@@ -321,7 +321,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **axios 1.x** — done.
 - **Phase 1a (SFC compile fixes)** — done and merged.
 - **Phase 1b (Vue 3 runtime)** — **done on `main`** (`50f5c4d`).
-- **Mix→Vite (Phase 3)**: 🚧 scaffold + `vite build` path on `migration/vite`; production still Mix. Open: `VITE_PUSHER_*` / MIX_PUSHER, Blade `@vite()` cutover, optional ESM cleanup. `$swal` / academics are separate (not Vite-build blockers).
+- **Mix→Vite (Phase 3)**: 🚧 scaffold + `vite build` path on `migration/vite`; production still Mix. Pusher env dual-read done; open: Blade `@vite()` cutover, optional ESM cleanup. `$swal` / academics are separate (not Vite-build blockers).
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
@@ -5280,6 +5280,15 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
   - Post-mount `document.querySelector('#app').__vue_app__.config.globalProperties.$swal=…` → mounted gp had `$swal`, but Options API `this.$swal` still undefined on probes until prototype path.
   - **Chosen**: `Vue.prototype.$swal = (...args) => Swal.fire(...args)` before `new Vue({ el:'#app' })`.
 - **Verify** (Vite build + temp `@vite` layout on `:8013`): Options API `vm.$swal` typeof `function`, call returns promise/OK; `window.Swal.fire` OK; mounted app gp keys include `$flashStorage` + `$swal`; **not** singleton-only (`onlyOnSingleton: false`). Blade restored to Mix `asset('js/app.js')` after verify.
+- **Note**: `$swal` fix relies on `@vue/compat` MODE 2 `Vue.prototype` bridging to instances, not native Vue 3 `globalProperties` — revisit if compat disabled (MODE 3) or removed in full-native Vue 3 cleanup.
 - **Files modified**: `resources/assets/js/app.js`, `knowledge.md`
 - **Status**: ✅ Fix 2 done on `migration/vite` (local only)
+
+### 2026-07-30: Phase 3 Mix verify + Pusher dual-read (Mix+Vite coexistence)
+- **Work done**: Ran `npm run production` on `migration/vite`. Confirmed Vite-only `import.meta.env.VITE_PUSHER_*` is **not** Mix-safe — Mix/webpack rewrote to `(void 0).VITE_PUSHER_*` (would throw on property access). Source had **no** remaining `process.env.MIX_PUSHER_*` after Fix 1. Added dual-read in `bootstrap.js`: guarded `import.meta.env.VITE_*` then `|| process.env.MIX_PUSHER_*`, keep empty-key Echo skip.
+- **Mix bundle evidence**: After dual-read, empty local keys → Echo init DCE'd (no `window.Echo=new` / no bare `(void 0).VITE_*`); `Vue.prototype.$swal` present.
+- **Mix runtime** (`:8014`, Blade `asset('js/app.js')`): Vue **3.5.40**; Mix script only; `vm.$swal` typeof `function` / callable; `window.Echo` undefined (empty key); **no** “must pass your app key”. Dashboard still logs `listenForNotifications` → `Echo.channel` TypeError when Echo skipped (known empty-key side effect).
+- **Vite rebuild**: PASS; VITE keys inlined; `process.env.MIX_*` may appear as `{}.MIX_PUSHER_*` residue but `||` + truthy guard makes it `undefined` (no throw / no Echo with empty key).
+- **Files modified**: `resources/assets/js/bootstrap.js`, `knowledge.md` (canonical + checkout sync)
+- **Status**: ✅ Dual-read required and done; both fixes safe on Mix-serving Blade path
 

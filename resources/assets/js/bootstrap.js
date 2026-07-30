@@ -53,10 +53,22 @@ import Echo from "laravel-echo";
 
 window.Pusher = require("pusher-js");
 
-// Vite injects VITE_* at build time (see Laravel Vite env docs). Skip Echo when
-// key is empty — local .env often has blank PUSHER_APP_KEY; Pusher throws otherwise.
-const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY;
-const pusherCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER;
+// Dual-read for Mix + Vite coexistence (Blade still serves Mix until @vite cutover).
+// - Vite: injects VITE_* via import.meta.env at build time
+// - Mix: injects MIX_* via DefinePlugin; does NOT understand import.meta.env.VITE_*
+//   (webpack rewrites import.meta.env → void 0 — bare .VITE_* access throws).
+// Guard import.meta.env before property access so Mix short-circuits safely.
+const vitePusherKey =
+    typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_PUSHER_APP_KEY;
+const vitePusherCluster =
+    typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_PUSHER_APP_CLUSTER;
+const pusherKey = vitePusherKey || process.env.MIX_PUSHER_APP_KEY;
+const pusherCluster = vitePusherCluster || process.env.MIX_PUSHER_APP_CLUSTER;
+// Skip Echo when key is empty — local .env often has blank PUSHER_APP_KEY.
 if (pusherKey) {
     window.Echo = new Echo({
         broadcaster: "pusher",
@@ -68,8 +80,8 @@ if (pusherKey) {
 
 // window.Echo = new Echo({
 //     broadcaster: "pusher",
-//     key: import.meta.env.VITE_PUSHER_APP_KEY,
-//     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+//     key: import.meta.env && import.meta.env.VITE_PUSHER_APP_KEY || process.env.MIX_PUSHER_APP_KEY,
+//     cluster: import.meta.env && import.meta.env.VITE_PUSHER_APP_CLUSTER || process.env.MIX_PUSHER_APP_CLUSTER,
 //     wsHost: window.location.hostname,
 //     wsPort: 6001,
 //     encrypted: false,
