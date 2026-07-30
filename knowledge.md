@@ -19,7 +19,7 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs CLOSED on `main`**)
+## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs** + **cleanup-loose-ends CLOSED on `main`**)
 
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
@@ -31,6 +31,18 @@
   | 3 | ClassWall `Post` `count(null)` on `attachment_file` | `b21c04f` | `count($this->attachment_file ?? [])` |
   | 4 | `blockedstudents` `count(null)` on query string | `b21c04f` | `count((array) getQueryString())` |
   | 5 | `admin/promotion/list` unknown column `exam_type` | `e993196` | Query → `whereRelation('examType','code','FINAL')` (no migration) |
+- **✅ cleanup-loose-ends CLOSED on `main`**: merge commit **`08b3886bf6dd8f24e12b57a25afeb694db49d886`** — `merge: bring chore/cleanup-loose-ends into main` (no-ff). Tip merged: `chore/cleanup-loose-ends` @ `3779e1b`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
+  | # | Item | Status on main | Ref |
+  |---|---|---|---|
+  | 1 | `home_navigation` gate removed (nav on all `layouts.main`) | ✅ CLOSED | fix `099b58e`; border revert `14b9e33` |
+  | 2 | Orphan welcome/minimal surfaces documented (not deleted) | ✅ CLOSED | docs in knowledge |
+  | 3 | Mix-era docs retargeted to Vite SoT | ✅ CLOSED | `454940c` |
+  | 4 | `legacy-peer-deps` package list tightened (7 direct + 2 transitive) | ✅ CLOSED | knowledge |
+  | 5 | Visual smoke + usecase 404 noted pre-existing | ✅ CLOSED | `3779e1b` |
+- **Post-merge verify (cleanup @ `08b3886`)**:
+  - Pre-merge: `chore/cleanup-loose-ends` **0 behind / 5 ahead** of `origin/main`; working tree clean; `npm run build` PASS; PHPUnit **234 passed / 1 skipped / 1 failed** (`ToshiE2E` LLM null — expected).
+  - Post-merge PHPUnit: **234 passed / 1 skipped / 1 failed** (same `ToshiE2E`). `npm run build` PASS; no `public/hot`.
+  - Nav smoke (`:8010`, built assets): `/privacy-policy` + `/terms-of-service` **200**; markup has `<nav class="navbar">` + KlassApp logo + `#register` Free Sign Up + `#login` Login; screenshots `tmp/nav-smoke/privacy-postmerge.png` + `terms-postmerge.png`.
 - **Post-merge verify (on merged main @ `536603c`)**:
   - Pre-merge: `fix/deferred-bugs` **0 behind / 5 ahead** of `origin/main`; working tree clean; `npm run build` PASS; PHPUnit **234 passed / 1 skipped / 1 failed** (`ToshiE2E` LLM null — expected).
   - Post-merge PHPUnit: **234 passed / 1 skipped / 1 failed** (same `ToshiE2E`).
@@ -148,7 +160,7 @@
   - **Audit note (kept)**: 183 active `Vue.component` sites / 0 `app.component`; sole Mix entry `app.js` — one-line interop fix restores full surface.
   - **✅ CLOSED Jul 31 (deferred item 2) @ `5b5540f`**: `str_limit()` at `AcademicYear.php:21` (and sibling resources) → `Str::limit()`. Undefined `$school` in `AcademicYearController@index` (unused by view) remains a separate unused-var note, not part of the deferred five.
   - **Phase 3 / Vite attribution (Jul 30, `migration/vite`)**: Academics page `Object.keys` TypeError under Vite was the **same known deferred #2 bug** (now closed). Historical: `GET /admin/academic/list` → 500 `Call to undefined function App\Http\Resources\str_limit()` at `AcademicYear.php:21` → `List.vue` `Object.keys(this.academic_years)` throws.
-- **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No Tailwind regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill. **Jul 31**: all five deferred app bugs (`activity()`, promotion/`exam_type`, `str_limit`, ClassWall/blockedstudents `count(null)`) **CLOSED on `main`** @ merge `536603c`. **`home_navigation` FIXED** on `chore/cleanup-loose-ends` (`099b58e`) — gate removed so nav renders on all `layouts.main` pages. **`layouts/minimal` + welcome-era views left as orphaned** (docs-only; no delete). **Phase 1 Vue boot regression CLOSED** (both branches verified). Dashboard env recurrence **resolved**; Priority 2 HTTP smoke routes **verified 200**.
+- **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No Tailwind regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill. **Jul 31**: all five deferred app bugs (`activity()`, promotion/`exam_type`, `str_limit`, ClassWall/blockedstudents `count(null)`) **CLOSED on `main`** @ merge `536603c`. **`home_navigation` CLOSED on `main`** @ merge `08b3886` (fix `099b58e`) — gate removed so nav renders on all `layouts.main` pages. **`layouts/minimal` + welcome-era views left as orphaned** (docs-only; no delete). **Phase 1 Vue boot regression CLOSED** (both branches verified). Dashboard env recurrence **resolved**; Priority 2 HTTP smoke routes **verified 200**.
 
 ### Confirmed Orphaned Welcome-Era Files
 - **Three dead/orphaned surfaces (left as-is — do not wire without product intent):**
@@ -296,7 +308,7 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Packages (3.4)** | portal-vue / vuejs-datetimepicker / vue-flash-message **works-as-is**; vue-upload-multiple-image **clean** |
 | **Pusher** | `VITE_PUSHER_*` only — Mix dual-read removed in 3.5 |
 | **Scoped tech debt** | `.npmrc` `legacy-peer-deps=true` — 7 direct (`@fullcalendar/vue@5` + 6) + 2 transitive (`vue-clickaway`, `vodal`); see Current Status / Phase 3.5 log |
-| **Deferred docs** | `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, `DESIGN_SYSTEM.md` still mention Mix — low priority |
+| **Deferred docs** | ✅ CLOSED on `main` (`08b3886` / `454940c`) — Vite SoT; Mix notes superseded |
 | **Risk level** | **Low** — prod deploy verification next; package peer upgrades separate |
 | **Effort** | Phase 3 closed + pushed on `main`; prod deploy next |
 
@@ -5113,7 +5125,7 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
    - **v4 preflight change**: bare `border` now defaults to `currentColor` (v1: `#e2e8f0`). `.dashboard-kpi-card` protected by its own border in dashboard-refresh.css (loaded after tailwind.css). Other bare-border dividers (e.g. `border-r` in admin dashboard) now render dark instead of light gray. ⚠️
    - **`layouts/empty` regression**: wrapper `<div class="flex items-center justify-center min-h-screen px-4 py-8">` lost all utilities → login/register/verify/password-reset pages render top-left instead of centered. ✅ RESOLVED in `355a838`.
    - **`layouts/main` regression**: 35 public marketing pages (privacypolicy, terms, 17 usecases, teachers-app, modules/*) are saturated with Tailwind (`container mx-auto`, `bg-red-600`, `py-16`) — all dead. ✅ RESOLVED in `355a838`.
-- **Deferred → ✅ FIXED Jul 31 (`099b58e` on `chore/cleanup-loose-ends`)**: `home_navigation` was gated to `request()->is('/')` while `/` never uses `layouts.main` — nav never rendered. **Fix**: removed the gate; nav now renders on all `layouts.main` pages. Speculative `border-gray-300` was later **reverted** (`14b9e33`) — CDP shows bare `border` → `rgb(0,0,0)` via `currentColor` and is visually fine. Verified: `/privacy-policy`, `/terms-of-service`, `/contact` (HTTP 200 + screenshots); `/usecases/*` HTTP 404 is pre-existing (`mapStaticRoutes` commented on main too).
+- **Deferred → ✅ CLOSED on `main` Jul 31** (merge `08b3886`; fix `099b58e`): `home_navigation` was gated to `request()->is('/')` while `/` never uses `layouts.main` — nav never rendered. **Fix**: removed the gate; nav now renders on all `layouts.main` pages. Speculative `border-gray-300` was later **reverted** (`14b9e33`) — CDP shows bare `border` → `rgb(0,0,0)` via `currentColor` and is visually fine. Verified post-merge: `/privacy-policy`, `/terms-of-service` (HTTP 200 + screenshots); `/usecases/*` HTTP 404 is pre-existing (`mapStaticRoutes` commented on main too).
 
 #### Environment fixes
 - **`.env` `DB_DATABASE=homestead` → `klassapp_local`** — was pointing to wrong database. `.env` is gitignored. `php artisan serve` launched on port 8000. Login at `/login` with `siteadmin@gmail.com / password`.
@@ -5433,7 +5445,7 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
   - **Transitive** (same class): `vue-clickaway@2.2.2` (`^2.0.0`, via twemoji-picker), `vodal@2.4.0` (`^2.5.21`, via `vue-image-upload-croppie`).
   - **Not culprits** (peers allow Vue 3): e.g. `emoji-mart-vue-fast` (`>2.0.0`), `vue-google-autocomplete` (`>=2`), `highcharts-vue` (`>=1.0.0`), Vue-3 replacements (`@vueup/vue-quill`, `dropzone-vue3`, `floating-vue`, …).
   - **Scoped tech debt** (like Phase 1b `--legacy-peer-deps` notes): keep `.npmrc` until those 7 directs (and transitive Vue-2 peers) are upgraded/replaced — **not** “needed for `@vue/compat` in general.”
-- **Deferred Mix docs → ✅ UPDATED Jul 31 (`454940c` on `chore/cleanup-loose-ends`)**: `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, and `resources/views/components/DESIGN_SYSTEM.md` retargeted to Vite 8 + Tailwind v4; superseded Mix notes retained with pointer to `.cursor/rules/frontend.mdc`.
+- **Deferred Mix docs → ✅ CLOSED on `main` Jul 31** (merge `08b3886`; docs `454940c`): `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, and `resources/views/components/DESIGN_SYSTEM.md` retargeted to Vite 8 + Tailwind v4; superseded Mix notes retained with pointer to `.cursor/rules/frontend.mdc`.
 - **Step 8**: Updated `.cursor/rules/frontend.mdc`, `known-pitfalls.mdc`, and `project-context.mdc` on `migration/vite` — Mix guidance removed; Vite ESM / `npm run dev|build` / `VITE_*` Pusher / `@vite` Blade / `legacy-peer-deps` scoped debt added.
 - **Step 9**: This closeout — stack table, Current Status, Mix→Vite assessment, session log. Canonical sync: `/Users/mac/projects/KlassApp/knowledge.md` ← checkout.
 - **Final state on branch**: Vite sole bundler; Vue 3.5.40 `@vue/compat` MODE 2; Tailwind v4 via `@tailwindcss/vite`; no Mix.
@@ -5463,5 +5475,14 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
   3. **Mix docs** (`454940c`): Updated `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, `resources/views/components/DESIGN_SYSTEM.md` → Vite SoT (`.cursor/rules/frontend.mdc`).
   4. **legacy-peer-deps**: Tightened Current Status + stack table to list 7 directs + 2 transitive from Jul 30 audit (already had full table in Phase 3.5 log).
 - **Verify (pre-merge visual smoke, Jul 31)**: Served `:8011`. Screenshots in `tmp/nav-smoke/`. Privacy/terms: KlassApp logo + Free Sign Up + Login visible, layout OK. Contact: landing nav (Get Started) + contact form OK. Login nav link → real login page (password field). Usecase URLs 404 — pre-existing (`mapStaticRoutes` identical on `origin/main`). CDP `#register/#login` `borderTopColor=rgb(0,0,0)` — leave bare `border`.
-- **Key decisions**: Relax nav gate (not remove include). Leave bare outline borders. Usecase 404 unrelated to nav. No merge / no push.
-- **Status**: ✅ Ready for merge on `chore/cleanup-loose-ends` (not merged yet)
+- **Key decisions**: Relax nav gate (not remove include). Leave bare outline borders. Usecase 404 unrelated to nav.
+- **Status**: ✅ **CLOSED on `main`** @ merge `08b3886` (see merge session below)
+
+### 2026-07-31: Merge chore/cleanup-loose-ends → main (5 cleanup items CLOSED)
+- **Work done**: Pre-merge checks (fetch; **0 behind / 5 ahead** vs `origin/main`; PHPUnit **234/1/1**; `npm run build` PASS; clean tree) then no-ff merge into `main`. Post-merge PHPUnit + build + nav smoke (privacy/terms). Marked all 5 cleanup items **CLOSED on `main`** with merge SHA. Synced to `/Users/mac/projects/KlassApp/knowledge.md`.
+- **Merge SHA**: `08b3886bf6dd8f24e12b57a25afeb694db49d886` — `merge: bring chore/cleanup-loose-ends into main`
+- **Tip merged**: `chore/cleanup-loose-ends` @ `3779e1b` (includes `099b58e` nav, `14b9e33` border revert, `454940c` Mix docs, knowledge notes)
+- **CLOSED on main**: (1) `home_navigation` fix · (2) orphans documented · (3) Mix→Vite docs · (4) legacy-peer-deps list · (5) visual smoke / usecase 404 note
+- **Post-merge verify**: PHPUnit **234 passed / 1 skipped / 1 failed** (`ToshiE2E`); `npm run build` PASS; no `public/hot`; `/privacy-policy` + `/terms-of-service` **200** with navbar (logo + Free Sign Up + Login); screenshots `tmp/nav-smoke/*-postmerge.png`
+- **Key decisions**: Separate knowledge commit (not amend merge). **Do not push** — leave local `main` ahead of `origin/main`.
+- **Status**: ✅ Merged locally — **NOT PUSHED**
