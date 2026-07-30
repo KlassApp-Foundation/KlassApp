@@ -35,6 +35,12 @@ opencode.json
 AGENTS.md
 CLAUDE.md
 GEMINI.md
+# Boost-generated (run `php artisan boost:install` / `boost:update` locally).
+# Keep .cursor/rules/*.mdc tracked — those are KlassApp-specific.
+.cursor/mcp.json
+.cursor/skills/
+.claude/
+.junie/
 
 test-results/
 
