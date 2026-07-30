@@ -181,4 +181,4 @@
     margin-left: 5px;
   }
 </style>
-<style src="vue-multiselect/dist/vue-multiselect.css"></style>
+<!-- Multiselect CSS via app.js import (Vite: do not use SFC <style src> for plain CSS) -->
