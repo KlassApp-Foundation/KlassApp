@@ -321,7 +321,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **axios 1.x** — done.
 - **Phase 1a (SFC compile fixes)** — done and merged.
 - **Phase 1b (Vue 3 runtime)** — **done on `main`** (`50f5c4d`).
-- **Mix→Vite (Phase 3)**: 🚧 scaffold + CSS entries (3.2) + `vite build` on `migration/vite` (pushed); production still Mix. Pusher env dual-read done; open: Blade `@vite()` cutover (3.3), optional ESM cleanup. `$swal` / academics are separate (not Vite-build blockers).
+- **Mix→Vite (Phase 3)**: ✅ Phase 3.3 Blade `@vite()` cutover on `migration/vite` (empty/minimal/main/superadmin-app/app). Production path = `vite:build` + no `public/hot`. HMR blocked on `require()` until optional ESM (3.1). Pusher dual-read still transitional until Mix removed (3.5). Academics `str_limit` deferred.
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
