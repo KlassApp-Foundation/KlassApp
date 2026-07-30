@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Str;
 
 class Discipline extends JsonResource
 {
@@ -19,7 +20,7 @@ class Discipline extends JsonResource
             //
             'id'                =>  $this->id,
             'incident_date'     =>  date('d-m-Y H:i:s',strtotime($this->incident_date)),
-            'incident_detail'   =>  str_limit($this->incident_detail,10,'...'),
+            'incident_detail'   =>  Str::limit($this->incident_detail,10,'...'),
             'teacher_username'  =>  $this->teacher->name,
             'teacher_name'      =>  ucwords($this->teacher->FullName),
             'attachment'        =>  $this->attachments == null ? null:$this->AttachmentPath,

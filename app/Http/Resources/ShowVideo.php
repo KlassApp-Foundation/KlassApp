@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Str;
 use App\Traits\Common;
 
 class ShowVideo extends JsonResource
@@ -43,8 +44,8 @@ class ShowVideo extends JsonResource
             'id'            =>  $this->id,
             'standard'      =>  $this->standardLink->StandardSection,
             'media'         =>  ucwords(str_replace('_', ' ', $this->media)),        
-            'name'          =>  str_limit($this->name,20,'....'),        
-            'description'   =>  str_limit($this->description,20,'....'),
+            'name'          =>  Str::limit($this->name,20,'....'),        
+            'description'   =>  Str::limit($this->description,20,'....'),
             'type'          =>  $this->type,
             'media_type'    =>  $this->media_type,
             'url'           =>  $url,

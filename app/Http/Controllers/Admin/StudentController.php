@@ -429,7 +429,8 @@ class StudentController extends Controller
 
         $lowest_standard = Standard::where('school_id',$school_id)->orderBy('order')->first();
 
-        if(count(\Request::getQueryString()) == 0)
+        $birthday = null;
+        if(count((array)\Request::getQueryString()) == 0)
         {
             $standard = StandardLink::where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->first();
         }

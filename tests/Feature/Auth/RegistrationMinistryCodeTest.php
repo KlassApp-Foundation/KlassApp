@@ -6,6 +6,7 @@ use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\Plan;
 use App\Models\School;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class RegistrationMinistryCodeTest extends TestCase
@@ -17,6 +18,11 @@ class RegistrationMinistryCodeTest extends TestCase
         parent::setUp();
 
         $this->withoutMiddleware(VerifyCsrfToken::class);
+
+        DB::table('usergroups')->insert([
+            ['id' => 1, 'name' => 'superadmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
+        ]);
 
         Plan::create([
             'cycle' => 1,
@@ -38,6 +44,7 @@ class RegistrationMinistryCodeTest extends TestCase
             'email' => $unique . '@example.com',
             'mobile_no' => '712345678',
             'country' => 'Uganda',
+            'curriculum' => 'uneb',
             'student_size' => '100-500',
             'password' => 'Secret123!',
             'password_confirmation' => 'Secret123!',
@@ -46,6 +53,7 @@ class RegistrationMinistryCodeTest extends TestCase
         ]);
 
         $response->assertStatus(302);
+        $response->assertSessionHasNoErrors();
 
         $school = School::where('name', $unique . ' School')->first();
         $this->assertNotNull($school, 'School was not created');
@@ -62,6 +70,7 @@ class RegistrationMinistryCodeTest extends TestCase
             'email' => $unique . '@example.com',
             'mobile_no' => '712345679',
             'country' => 'Uganda',
+            'curriculum' => 'uneb',
             'student_size' => '100-500',
             'password' => 'Secret123!',
             'password_confirmation' => 'Secret123!',
@@ -69,6 +78,7 @@ class RegistrationMinistryCodeTest extends TestCase
         ]);
 
         $response->assertStatus(302);
+        $response->assertSessionHasNoErrors();
 
         $school = School::where('name', $unique . ' School')->first();
         $this->assertNotNull($school, 'School was not created');

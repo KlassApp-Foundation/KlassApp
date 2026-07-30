@@ -32,8 +32,15 @@
 - **Main hygiene (pushed pre-Vite)**: `vue-upload-multiple-image` removed (`e2b0112`).
 - **Phase 3 history on `migration/vite`**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** → **✅ 3.1 ESM** → **✅ 3.5 Mix removal** (`3bc5c70`) → rules `c470c39` → merge to main `9bdf185`.
 - **Scoped tech debt**: `.npmrc` `legacy-peer-deps=true` — **7 direct packages** declare Vue 2 peers that reject Vue 3.5.40 (first ERESOLVE: `@fullcalendar/vue@5`).
-- **5 pre-existing app bugs** remain separately tracked (do not re-litigate): `activity()` helper; `admin/promotion/list` `exam_type`; academics `str_limit` / `Object.keys`; ClassWall `Post.php:83` null `attachment_file`; `blockedstudents` `count(null)` query string.
-- **NOT PUSHED** — awaiting user decision to push `main`.
+- **5 pre-existing app bugs** (deferred track) — ✅ **ALL CLOSED** on `fix/deferred-bugs` (tip `e993196`; not merged to `main` yet):
+  | # | Bug | Commit | Fix |
+  |---|---|---|---|
+  | 1 | `activity()` undefined (login/registration) | `77d1fbe` | Spatie-compatible helper → `ActivityLogger` / `ActivityLog` |
+  | 2 | `str_limit()` removed (academic list 500) | `5b5540f` | `Str::limit()` in resources + Blade |
+  | 3 | ClassWall `Post` `count(null)` on `attachment_file` | `b21c04f` | `count($this->attachment_file ?? [])` |
+  | 4 | `blockedstudents` `count(null)` on query string | `b21c04f` | `count((array) getQueryString())` |
+  | 5 | `admin/promotion/list` unknown column `exam_type` | `e993196` | Query → `whereRelation('examType','code','FINAL')` (no migration) |
+- **NOT PUSHED** — awaiting user decision to push `main` / merge deferred-bugs.
 ## Current Status: July 28, 2026
 
 ### Git
@@ -44,44 +51,25 @@
   - **Exact class-token recount** across `resources/views/**/*.blade.php`: `.custom-table` = **16 files**, `.submit-btn` = **19 files**.
   - **Why the earlier recount said `16` for `.submit-btn`**: that was a narrower "user-visible submit control" subset that excluded some Livewire loading-state wrappers even though those wrappers still carry the literal `submit-btn` class token in markup.
   - **Use going forward**: treat **19/16** as the canonical exact-token counts unless a future audit intentionally switches to a different counting rule.
-- **Separate reproducible finding (Jul 28)**: `GET /admin/promotion/list` throws HTTP 500 — **not** a Tailwind migration issue; pre-existing app/schema bug surfaced during Phase 2c sampling (the route that failed during the earlier comparison pass was this one, not a transient dual-server artifact).
+- **Separate reproducible finding (Jul 28) — ✅ CLOSED Jul 31 (deferred item 5) @ `e993196`**: `GET /admin/promotion/list` threw HTTP 500 — **not** a Tailwind migration issue; pre-existing app/schema bug surfaced during Phase 2c sampling.
   - **Route**: `admin/promotion/list` (`Admin\PromotionController@index`)
-  - **Error**: `Illuminate\Database\QueryException` — `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'exam_type' in 'where clause'` (query on `exams` with `school_id`, `academic_year_id`, and `exam_type = final`).
-  - **Observed result**: framework "Server Error" page (HTTP 500).
-  - **Reproduction (standalone)**:
-    1. On branch `migration/tailwind4`, with local DB `klassapp_local`.
-    2. Authenticate as seeded school admin `admin@testschoolone.sch.ug` (password `password`).
-    3. `GET /admin/promotion/list` (browser or in-app request).
-    4. Result: reproducible 500 without running a second dev server or tab-switching.
-  - **Scope**: track as its own bug ticket; unrelated to OKLCH/Tailwind v4 CSS work.
-- **🚨 Higher-priority deferred (Jul 28 pre-merge)**: PHPUnit auth/registration failures from missing `activity()` helper — **not** introduced by Tailwind v4 / Vue boot work tonight; confirmed identical on **`main` and `migration/tailwind4`**.
-  - **Failing tests**: `LoginRegressionTest` (login succeeds…), `RegistrationMinistryCodeTest` ×2, `RegistrationFlowTest` (`admin_name_is_set_on_manual_registration`).
-  - **Error**: `Call to undefined function App\Traits\activity()` at `app/Traits/LogActivity.php:19` (spaceless activity-log helper expected from a package / global helper that is not loaded in the test — or app — runtime).
-  - **Observed result**: login/registration feature tests fail (redirect/user assertions); stack traces show the undefined call during the auth/register HTTP path.
-  - **Also seen same suite run**: `ToshiE2EVerificationTest` LLM null (API timeout/error) — separate from `activity()`; keep as E2E/env noise unless it starts failing offline mocks.
-  - **Stakes**: blocks account creation / login regression coverage — **higher priority than** `admin/promotion/list` (`exam_type`) and `str_limit` on academic-year list (list/API views only).
-  - **Scope**: pre-existing app/test infra bug; fix before treating merge suite as green. Pre-merge suite baseline on both tips: **5 failed, 1 skipped, 220 passed**.
-- **Separate reproducible finding (Jul 30) — 4th deferred pre-existing**: `GET /admin/classwall/post/editList/{id}` throws HTTP 500 when `posts.attachment_file` is null — **not** a Vue 3 / `@vue/compat` / Phase 1b regression; confirmed identical on **`main` @ `02a1c52` and `migration/vue3-runtime`**.
-  - **Route**: `admin/classwall/post/editList/{id}` (`Admin\PostEditController@editList`) — also surfaces as broken ClassWall post edit UI (`edit-post` never gets list payload).
-  - **Error**: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given` at `app/Models/Post.php:83` (`getAttachmentPathAttribute` → `count($this->attachment_file)`).
-  - **Observed result**: HTTP **500** (framework "Server Error"); Vue client then `Cannot read properties of undefined (reading 'length')`.
-  - **Reproduction (standalone)**:
-    1. Local DB `klassapp_local`; post id **1** has `attachment_file = NULL`, `created_by = 5`.
-    2. Authenticate as that creator (user id 5) — or any user matching `created_by` (else 403).
-    3. `GET /admin/classwall/post/editList/1` via authenticated kernel request (same method as `admin/promotion/list`).
-    4. Result: **500** on `main` and on `migration/vue3-runtime`; `git diff main -- app/Models/Post.php` is empty.
-  - **Scope**: pre-existing PHP accessor null-safety bug; track as its own ticket. **Waive for Phase 1b.4 close** (not introduced by Vue runtime switch).
-- **Separate reproducible finding (Jul 30) — 5th deferred pre-existing**: `GET /admin/students/blockedstudents` throws HTTP 500 when the request has no query string — **not** a Vue 3 / `@vue/compat` / Phase 1b regression; confirmed identical on **`main` @ `02a1c52` and `migration/vue3-runtime`**.
+  - **Error (historical)**: `Illuminate\Database\QueryException` — `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'exam_type' in 'where clause'` (query on `exams` with `exam_type = final`).
+  - **Diagnosis (investigation evidence)**: `exams.exam_type` **never existed** — not created-then-dropped. `create_exams_table` (2026_03_14) has no type column; `add_exam_types_on_exams_table` (2026_05_04) adds only `exam_type_id` FK → `exam_types`. Live schema: `hasColumn('exams','exam_type')=false`, `exam_type_id=true`. Bad `where exam_type=final` was in `PromotionController` since first commit (`a6784c3`); dead one-off query vs real `exam_type_id` model used everywhere else (Exam model, seeders, MarksController, Toshi, etc.).
+  - **Recommendation / applied fix**: **Query fix, not migration** — `whereRelation('examType', 'code', 'FINAL')` + missing `App\Http\Resources\Exam` (id/name/subjects/standard_id). Do **not** add an `exam_type` column.
+  - **Verify (Jul 31 re-check)**: `GET /admin/promotion/list` → **200** with `examlist` key (admin@testschoolone.sch.ug); PHPUnit **234 passed / 1 skipped / 1 failed** (`ToshiE2E` LLM null — unrelated).
+- **✅ CLOSED Jul 31 (deferred item 1) @ `77d1fbe`**: PHPUnit auth/registration failures from missing `activity()` helper — **not** introduced by Tailwind v4 / Vue boot work; confirmed identical on **`main` and `migration/tailwind4`** before the fix.
+  - **Failing tests (historical)**: `LoginRegressionTest`, `RegistrationMinistryCodeTest` ×2, `RegistrationFlowTest` (`admin_name_is_set_on_manual_registration`).
+  - **Error (historical)**: `Call to undefined function App\Traits\activity()` at `app/Traits/LogActivity.php:19`.
+  - **Fix**: Spatie-compatible global `activity()` helper + `App\Services\ActivityLogger` → `App\Models\ActivityLog` (package not re-added).
+  - **Also seen same suite run**: `ToshiE2EVerificationTest` LLM null (API timeout/error) — separate from `activity()`; still open as E2E/env noise.
+- **Separate reproducible finding (Jul 30) — ✅ CLOSED Jul 31 (deferred item 3) @ `b21c04f`**: `GET /admin/classwall/post/editList/{id}` threw HTTP 500 when `posts.attachment_file` is null — **not** a Vue 3 / `@vue/compat` / Phase 1b regression; confirmed identical on **`main` @ `02a1c52` and `migration/vue3-runtime`** before the fix.
+  - **Route**: `admin/classwall/post/editList/{id}` (`Admin\PostEditController@editList`)
+  - **Error (historical)**: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given` at `app/Models/Post.php:83` (`getAttachmentPathAttribute` → `count($this->attachment_file)`).
+  - **Fix**: `count($this->attachment_file ?? [])` in `Post::getAttachmentPathAttribute`.
+- **Separate reproducible finding (Jul 30) — ✅ CLOSED Jul 31 (deferred item 4) @ `b21c04f`**: `GET /admin/students/blockedstudents` threw HTTP 500 when the request has no query string — **not** a Vue 3 / `@vue/compat` / Phase 1b regression; confirmed identical on **`main` @ `02a1c52` and `migration/vue3-runtime`** before the fix.
   - **Route**: `admin/students/blockedstudents` (`Admin\StudentController@blockedstudents`)
-  - **Error**: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given` at `app/Http/Controllers/Admin/StudentController.php:432` (`count(\Request::getQueryString())` when `getQueryString()` returns `null`).
-  - **Observed result**: HTTP **500** (framework "Server Error" — `APP_DEBUG=false`); direct controller invoke throws the same `TypeError` at `:432`.
-  - **Reproduction (standalone)**:
-    1. Local DB `klassapp_local`; worktrees `/Users/mac/projects/KlassApp-main-review` (`migration/vue3-runtime`) and `/Users/mac/projects/KlassApp-main-checkout` (`main` @ `02a1c52`).
-    2. Authenticate as school admin `admin@testschoolone.sch.ug` / `password`.
-    3. `GET /admin/students/blockedstudents` with **no** query string (session cookie login against live PHP servers `:8010` / `:8011`, or direct `StudentController@blockedstudents` after `Request::swap` empty GET).
-    4. Result: **500** on both tips; `diff` of `StudentController@blockedstudents` vs main is empty.
-  - **Connection to 4th deferred (ClassWall `Post.php:83`)**: same underlying pattern — `count()` on a value that can be `NULL`, with no null-check / `(array)` cast / default. Different controllers (`StudentController` query-string vs `Post` accessor `attachment_file`). **Potential systemic pattern** worth a broader `count(` grep someday — not two coincidental one-offs. (Contrast: several other controllers already use `count((array)\Request::getQueryString())` or `!= null` checks.)
-  - **Scope**: pre-existing PHP null-safety bug; track as its own ticket. **Do not fix in Phase 1b** (log only). Not a compat/S3 regression.
+  - **Error (historical)**: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given` at `StudentController.php:432` (`count(\Request::getQueryString())` when null).
+  - **Fix**: `count((array) \Request::getQueryString())` (+ `$birthday = null` init). Same commit as item 3 — same `count(null)` mistake class.
 - **Recurrence (Jul 28)**: `GET /admin/dashboard` HTTP 500 — **same homestead vs `klassapp_local` mismatch** already fixed in `.env` earlier this session (`DB_DATABASE=homestead` → `klassapp_local`; see Environment fixes below). **Not** a new schema bug or Tailwind regression.
   - **Route**: `GET /admin/dashboard` (`Admin\DashboardController@index`)
   - **Surface error**: `Illuminate\Database\QueryException` — `Table 'homestead.approvals' doesn't exist` at `DashboardController` ~line 84 (pending-approvals `whereHas`).
@@ -154,8 +142,8 @@
     | `/admin/discipline/add` + multiselect | **PASS** — `Vue.options.components.multiselect === true`; teacher options populated |
     | Boot checks (Vue fn, `new Vue()`, `#app.__vue__`, `$swal`, year dropdown) | **PASS** |
   - **Audit note (kept)**: 183 active `Vue.component` sites / 0 `app.component`; sole Mix entry `app.js` — one-line interop fix restores full surface.
-  - **Still deferred**: `str_limit()` at `AcademicYear.php:21` (promotion/list-class); undefined `$school` in `AcademicYearController@index` (unused by view).
-  - **Phase 3 / Vite attribution (Jul 30, `migration/vite`)**: Academics page `Object.keys` TypeError under Vite is the **same known deferred bug**, not new Phase 3 scope. `GET /admin/academic/list` → 500 `Call to undefined function App\Http\Resources\str_limit()` at `app/Http/Resources/AcademicYear.php:21` → `List.vue` assigns `response.data.academic_years` (undefined on HTML error body; axios `validateStatus: null`) → template `Object.keys(this.academic_years)` throws. Same chain already documented under Mix / Phase 1b; Vite only re-surfaces it.
+  - **✅ CLOSED Jul 31 (deferred item 2) @ `5b5540f`**: `str_limit()` at `AcademicYear.php:21` (and sibling resources) → `Str::limit()`. Undefined `$school` in `AcademicYearController@index` (unused by view) remains a separate unused-var note, not part of the deferred five.
+  - **Phase 3 / Vite attribution (Jul 30, `migration/vite`)**: Academics page `Object.keys` TypeError under Vite was the **same known deferred #2 bug** (now closed). Historical: `GET /admin/academic/list` → 500 `Call to undefined function App\Http\Resources\str_limit()` at `AcademicYear.php:21` → `List.vue` `Object.keys(this.academic_years)` throws.
 - **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No Tailwind regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill. Open (priority order): **`activity()` undefined** (login/registration tests — higher stakes), `admin/promotion/list` 500, `str_limit` on academic list API, `home_navigation` / `minimal` deferred. **Phase 1 Vue boot regression CLOSED** (both branches verified). Dashboard env recurrence **resolved**; Priority 2 HTTP smoke routes **verified 200**.
 
 ### Confirmed Orphaned Welcome-Era Files
@@ -326,7 +314,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **axios 1.x** — done.
 - **Phase 1a (SFC compile fixes)** — done and merged.
 - **Phase 1b (Vue 3 runtime)** — **done on `main`** (`50f5c4d`).
-- **Mix→Vite (Phase 3)** — ✅ **CLOSED on `main`** (`9bdf185`): 3.3 Blade `@vite()` → 3.4 packages → 3.1 ESM → 3.5 Mix removal (`3bc5c70`). Scripts `npm run dev`/`build`; Pusher `VITE_*`-only; no Mix. Academics `str_limit` remains deferred (pre-existing). Push + prod deploy next.
+- **Mix→Vite (Phase 3)** — ✅ **CLOSED on `main`** (`9bdf185`): 3.3 Blade `@vite()` → 3.4 packages → 3.1 ESM → 3.5 Mix removal (`3bc5c70`). Scripts `npm run dev`/`build`; Pusher `VITE_*`-only; no Mix. Academics `str_limit` ✅ CLOSED @ `5b5540f` on `fix/deferred-bugs`. Push + prod deploy next.
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
@@ -385,6 +373,41 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-07-31: Deferred track closeout — all 5 CLOSED with commit refs
+- **Work done**: Investigate-before-fix re-verify of item 5 (`exam_type`); confirmed fix `e993196` correct (query not migration); marked all five deferred bugs **CLOSED** with SHAs in Current Status + findings. Synced `knowledge.md` to canonical `/Users/mac/projects/KlassApp/knowledge.md` + checkout/merge worktrees.
+- **Evidence**: `exams.exam_type` never in migrations (create + `exam_type_id` add only); live `Schema::hasColumn` false/true; `GET /admin/promotion/list` → 200 `examlist`; PHPUnit **234 passed / 1 skipped / 1 failed** (`ToshiE2E` unrelated).
+- **CLOSED refs**: #1 `77d1fbe` · #2 `5b5540f` · #3+#4 `b21c04f` · #5 `e993196`
+- **Status**: ✅ Done — deferred track closed on `fix/deferred-bugs` (not pushed / not merged to main)
+- **Edge cases flagged**: Branch tip still ahead of `main`; merge/push only on user ask.
+
+### 2026-07-31: Deferred bug #5 — promotion/list exam_type
+- **Work done**: Stopped referencing dead `exams.exam_type`; filter FINAL exams via `exam_types.code` (`whereRelation`). Added missing `App\Http\Resources\Exam` for promotion JSON (`id`, `name`, `subjects`, `standard_id`). Tests in `PromotionListExamTypeTest`. Commit **`e993196`**.
+- **Files modified**: `app/Http/Controllers/Admin/PromotionController.php`, `app/Http/Resources/Exam.php` (new), `tests/Feature/PromotionListExamTypeTest.php`, `knowledge.md`
+- **Key decisions**: **Query fix, not migration** — `exam_type` string column never existed; `exam_type_id` + `exam_types` (seeded `FINAL`) is the real model. Resource was imported but missing since first commit (masked by the earlier QueryException).
+- **Status**: ✅ CLOSED @ `e993196`
+- **Edge cases flagged**: Live `examlist` may be empty if school has no FINAL exams (still 200). Full suite 234 passed / 1 skipped / 1 failed (`ToshiE2EVerificationTest` LLM null — unrelated). SQLite PHPUnit cannot hit full HTTP path (MySQL-only `FIELD()` in SiteHelper / controller); covered query+resource shape + live MySQL kernel request.
+
+### 2026-07-31: Deferred bugs #3–4 — count(null) Post + blockedstudents
+- **Work done**: Null-safe `count()` at `Post::getAttachmentPathAttribute` (`attachment_file ?? []`) and `StudentController@blockedstudents` (`count((array) getQueryString())`, plus `$birthday = null` init). Tests in `CountNullSafetyTest`. Commit **`b21c04f`**.
+- **Files modified**: `app/Models/Post.php`, `app/Http/Controllers/Admin/StudentController.php`, `tests/Feature/CountNullSafetyTest.php`
+- **Key decisions**: Call-site null-safety (not migration/backfill) — null is valid empty for posts without attachments and for requests with no query string. Laravel array casts leave DB null as null. Same mistake class, one commit. Light grep: bare `count(getQueryString())` only this StudentController site (others already `(array)`); `count($this->attachment_file)` only Post — similar homework/assignment accessors left out of scope.
+- **Status**: ✅ CLOSED @ `b21c04f` (items 3 and 4)
+- **Edge cases flagged**: Verified `GET /admin/classwall/post/editList/1` → 200 `attachment:[]`; `GET /admin/students/blockedstudents` → 200. Full suite 232 passed / 1 skipped / 1 failed (`ToshiE2EVerificationTest` LLM null — unrelated).
+
+### 2026-07-31: Deferred bug #2 — str_limit → Str::limit
+- **Work done**: Replaced all non-vendor `str_limit(` with `Str::limit(...)` (+ `use Illuminate\Support\Str` in PHP resources; FQCN in Blade). Commit **`5b5540f`** on `fix/deferred-bugs`.
+- **Files modified**: `app/Http/Resources/{AcademicYear,ShowVideo,ShowEvent,Discipline,Classwall/Page,API/ShowVideo}.php`, `resources/views/admin/{feedbacks,discipline}/list.blade.php`
+- **Key decisions**: Leave Item 1 activity() shim alone; no helpers package; match existing Blade `\Illuminate\Support\Str::limit` pattern.
+- **Status**: ✅ CLOSED @ `5b5540f`
+- **Edge cases flagged**: Full suite 228 passed / 1 skipped / 1 failed (`ToshiE2EVerificationTest` LLM null — unrelated API timeout). Verified `GET /admin/academic/list` 200 with real years.
+
+### 2026-07-31: Deferred bug #1 — restore activity() helper
+- **Work done**: Restored Spatie-compatible global `activity()` helper + `App\Services\ActivityLogger` writing to `App\Models\ActivityLog` (package not re-added). Fixed `RegistrationMinistryCodeTest` fixtures (`curriculum` + usergroups). Branch `fix/deferred-bugs` @ **`77d1fbe`**.
+- **Files modified**: `app/Helpers/activity.php`, `app/Services/ActivityLogger.php`, `composer.json` (autoload), `config/activitylog.php`, `tests/Feature/ActivityLoggerTest.php`, `tests/Feature/Auth/RegistrationMinistryCodeTest.php`
+- **Key decisions**: Prefer app-owned fluent helper over reintroducing `spatie/laravel-activitylog` (dependency change needs approval; app already uses custom ActivityLog + ToshiAuditService).
+- **Status**: ✅ CLOSED @ `77d1fbe`
+- **Edge cases flagged**: Login activity may be queued (`LogSuccessfulLogin` ShouldQueue) so live DB may lag without a worker; PHPUnit uses sync and covers the path.
 
 ### 2026-07-08: Reports functional audit + fixes
 - **Work done**: Click-verified all report endpoints at `/admin/reports`. 11/15 endpoints passed immediately. 4 had 500 errors. Also fixed superadmin reports: created landing page at `/superadmin/reports`, fixed sidebar link, fixed subscription detail 500 error.

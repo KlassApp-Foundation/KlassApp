@@ -80,11 +80,13 @@ class Post extends Model implements HasMedia
 
     public function getAttachmentPathAttribute()
     {
-        $count = count($this->attachment_file);
+        $attachmentFile = $this->attachment_file ?? [];
+        $attachment = [];
+        $count = count($attachmentFile);
         for($i=0 ; $i < $count ; $i++)
         {
-            $attachment[$i]['original_path']    = $this->attachment_file[$i];
-            $attachment[$i]['path']             = $this->getFilePath($this->attachment_file[$i]);
+            $attachment[$i]['original_path']    = $attachmentFile[$i];
+            $attachment[$i]['path']             = $this->getFilePath($attachmentFile[$i]);
             $attachment[$i]['id']               = $i;
         }
         return $attachment;

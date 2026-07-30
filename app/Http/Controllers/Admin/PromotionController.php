@@ -65,7 +65,13 @@ class PromotionController extends Controller
         
         $next_academic_year = AcademicYear::where([['school_id',Auth::user()->school_id],['status',2]])->first();
 
-        $exam = Exam::where([['school_id',Auth::user()->school_id],['academic_year_id',$curr_academic_year->id],['exam_type','final']])->get();
+        // exams.exam_type never existed — type lives on exam_types via exam_type_id (code FINAL = End Of Year)
+        $exam = Exam::query()
+            ->with(['examType', 'subject'])
+            ->where('school_id', Auth::user()->school_id)
+            ->where('academic_year_id', $curr_academic_year->id)
+            ->whereRelation('examType', 'code', 'FINAL')
+            ->get();
         $exam = ExamResource::collection($exam)->groupby('standard_id');
 
         $array=[];
