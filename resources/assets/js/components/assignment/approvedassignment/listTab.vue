@@ -23,7 +23,7 @@
 
 <script>
     import PortalVue from "portal-vue";
-    import { bus } from "../../../app";
+    import { bus } from "../../../event-bus";
     import AssignmentList from './List';
 
     export default {

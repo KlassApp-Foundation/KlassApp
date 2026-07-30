@@ -251,7 +251,7 @@
 </template>
 
 <script>
-import { bus } from "../../app";
+import { bus } from "../../event-bus";
 import PortalVue from "portal-vue";
 import datetime from "vuejs-datetimepicker";
 export default {

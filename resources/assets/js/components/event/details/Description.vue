@@ -7,7 +7,7 @@
         </div>
         </template>
 <script>
-import { bus } from "../../../app";
+import { bus } from "../../../event-bus";
 
   export default {
       props:['url','id'],

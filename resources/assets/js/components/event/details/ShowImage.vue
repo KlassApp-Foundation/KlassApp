@@ -21,7 +21,7 @@
   </div>
 </template>
 <script>
-   import { bus } from "../../../app";
+   import { bus } from "../../../event-bus";
    import PhotosSlider from './PhotosSlider'
    import  VueUploadMultipleImage from '../../VueUploadMultipleImage'
 import Loading from 'vue-loading-overlay';

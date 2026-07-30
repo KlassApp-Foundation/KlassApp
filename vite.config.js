@@ -17,8 +17,8 @@ import path from 'path';
  *   @import "tailwindcss", so @tailwindcss/vite does not utility-scan it.
  *   Wire into Blade only where Mix landing.css was used (not app layouts).
  *
- * HMR note: vite:dev still hits require() in app.js until optional ESM (3.1);
- * production vite build uses Rolldown CJS interop and is the supported path.
+ * Phase 3.1: app.js + bootstrap.js are ESM (no require). vite:dev and vite:build
+ * both supported; production path remains vite:build without public/hot.
  */
 export default defineConfig({
     plugins: [
@@ -61,5 +61,33 @@ export default defineConfig({
         __VUE_OPTIONS_API__: true,
         __VUE_PROD_DEVTOOLS__: false,
         __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+    },
+    // date-fns@1 (via vuejs-datetimepicker) is CJS; Vite ESM needs prebundle + needsInterop
+    // for default export. FullCalendar v5 plugins must resolve after core is prebundled.
+    optimizeDeps: {
+        include: [
+            'date-fns/start_of_month',
+            'date-fns/end_of_month',
+            'date-fns/each_day',
+            'date-fns/get_day',
+            'date-fns/format',
+            'date-fns/start_of_day',
+            'date-fns/is_equal',
+            '@fullcalendar/core',
+            '@fullcalendar/vue',
+            '@fullcalendar/common',
+            '@fullcalendar/daygrid',
+            '@fullcalendar/timegrid',
+            '@fullcalendar/interaction',
+        ],
+        needsInterop: [
+            'date-fns/start_of_month',
+            'date-fns/end_of_month',
+            'date-fns/each_day',
+            'date-fns/get_day',
+            'date-fns/format',
+            'date-fns/start_of_day',
+            'date-fns/is_equal',
+        ],
     },
 });

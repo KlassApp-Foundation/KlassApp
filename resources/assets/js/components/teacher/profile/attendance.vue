@@ -18,7 +18,7 @@
 </template>
 
 <script>
-  import { bus } from "../../../app";
+  import { bus } from "../../../event-bus";
   import monthly from "./monthlyRecord";
   import staff from "./staffRecord";
 

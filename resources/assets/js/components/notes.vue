@@ -39,7 +39,7 @@
 </template>
 
 <script>
-  import { bus } from "../app";
+  import { bus } from "../event-bus";
   export default {
     props:['url','entity_id','entity_name','school_id'],
     data () {

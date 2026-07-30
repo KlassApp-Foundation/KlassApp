@@ -590,7 +590,7 @@
 </template>
 
 <script>
-import { bus } from "../../app";
+import { bus } from "../../event-bus";
 import PortalVue from "portal-vue";
 import VueImageUploadCroppi from "vue-image-upload-croppie";
 export default {

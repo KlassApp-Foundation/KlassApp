@@ -57,7 +57,7 @@
 </template>
 
 <script>
-    import { bus } from "../../app";
+    import { bus } from "../../event-bus";
     import { QuillEditor } from '@vueup/vue-quill'
     import '@vueup/vue-quill/dist/vue-quill.snow.css'
 

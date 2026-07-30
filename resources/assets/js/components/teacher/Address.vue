@@ -122,7 +122,7 @@
 </template>
 
 <script>
-import { bus } from "../../app";
+import { bus } from "../../event-bus";
 import PortalVue from "portal-vue";
 export default {
     props: ["type", "teacher_name"],

@@ -114,6 +114,10 @@
 
             listenForNotifications() 
             {
+                // Skip when Echo was not created (empty Pusher key / vite:dev dual-read).
+                if (!window.Echo || typeof window.Echo.channel !== 'function') {
+                    return;
+                }
                 window.Echo.channel('notification').listen('AfterNotification', (data) => {                      
                     this.getNotifications();           
                 });

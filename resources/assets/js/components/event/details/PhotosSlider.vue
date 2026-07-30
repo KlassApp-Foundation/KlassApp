@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import { bus } from "../../../app";
+import { bus } from "../../../event-bus";
   import { Carousel, Slide, Navigation, Pagination } from 'vue3-carousel'
   import 'vue3-carousel/dist/carousel.css'
 

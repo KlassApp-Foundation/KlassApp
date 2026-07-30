@@ -90,7 +90,7 @@
 
 <script>
 
-  import { bus } from "../../app";
+  import { bus } from "../../event-bus";
   import PortalVue from "portal-vue";
   export default {
     props:['url'],

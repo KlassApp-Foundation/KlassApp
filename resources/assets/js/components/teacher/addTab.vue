@@ -40,7 +40,7 @@
 
 <script>
   import PortalVue from "portal-vue";
-  import { bus } from "../../app";
+  import { bus } from "../../event-bus";
   import createTeacher from './Create';
   import editTeacher from './Edit';
   import addressTab from './Address';

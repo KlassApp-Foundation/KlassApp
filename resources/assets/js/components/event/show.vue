@@ -1,10 +1,14 @@
 <script>
+    import '@fullcalendar/core/vdom' // Vite ESM: before plugins (FullCalendar v5)
+    // Vite ESM can evaluate plugins before @fullcalendar/vue re-exports core;
+    // import core first so FullCalendarVDom is registered (FC v5).
+    import '@fullcalendar/core'
     import FullCalendar from '@fullcalendar/vue'
     import dayGridPlugin from '@fullcalendar/daygrid'
     import interactionPlugin from '@fullcalendar/interaction'
     import timeGridPlugin from '@fullcalendar/timegrid'
     import { INITIAL_EVENTS, createEventId } from './event-utils'
-    import { bus } from "../../app";
+    import { bus } from "../../event-bus";
     import PortalVue from "portal-vue";
     export default {
         components: {

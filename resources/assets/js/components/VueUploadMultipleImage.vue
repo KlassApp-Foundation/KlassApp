@@ -105,7 +105,7 @@
 import { forEach, findIndex, orderBy, cloneDeep } from 'lodash'
 import { Dropdown as Popper } from 'floating-vue'
 import 'floating-vue/dist/style.css'
-import { bus } from "../app";
+import { bus } from "../event-bus";
 
 
 import VueEasyLightbox from 'vue-easy-lightbox'

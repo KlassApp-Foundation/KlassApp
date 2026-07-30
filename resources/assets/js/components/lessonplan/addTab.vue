@@ -40,7 +40,7 @@
 
 <script>
   import PortalVue from "portal-vue";
-  import { bus } from "../../app";
+  import { bus } from "../../event-bus";
   import stepOne from './stepOne';
   import stepTwo from './stepTwo';
   import stepThree from './stepThree';

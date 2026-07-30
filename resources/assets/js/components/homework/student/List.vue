@@ -300,7 +300,7 @@
 <script>
     import vueDropzone from 'dropzone-vue3'
     // dropzone CSS bundled via dropzone-vue3
-    import { bus } from "../../../app";
+    import { bus } from "../../../event-bus";
     export default {
         props:['url' , 'scope' , 'hidecolumns', 'searchquery' , 'mode'],
         components:{ 
