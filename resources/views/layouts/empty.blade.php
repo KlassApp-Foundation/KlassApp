@@ -8,8 +8,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @include('layouts.partials.favicon')
     <title>{{ config('app.name', 'KlassApp') }}</title>
-    <link href="{{ asset('css/tailwind.css') }}?v={{ filemtime(public_path('css/tailwind.css')) }}" rel="stylesheet">
-    <link href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}" rel="stylesheet">
+    @vite([
+        'resources/assets/js/app.js',
+        'resources/assets/sass/app.scss',
+        'resources/css/tailwind.css',
+    ])
     <link href="{{ asset('css/dashboard-refresh.css') }}?v={{ filemtime(public_path('css/dashboard-refresh.css')) }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     @stack('styles')
@@ -22,7 +25,6 @@
         </div>
       </main>
     </div>
-    <script src="{{ asset('js/app.js') }}" defer></script>
     @stack('scripts')
   </body>
 </html>

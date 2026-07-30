@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
 /**
- * Phase 3.2 CSS entries — Mix remains the production pipeline until Blade cutover (3.3).
+ * Phase 3.3 — Blade layouts use @vite() for app.js / app.scss / tailwind.css.
  * Vue 3.5.40 @vue/compat MODE 2: alias vue → @vue/compat + compiler compatConfig
  * (official migration-build Vite example) + runtime configureCompat in app.js.
  *
@@ -14,7 +14,11 @@ import path from 'path';
  * - resources/assets/sass/app.scss → Vite built-in Sass (Phase 2b: plain CSS in
  *   adminstyle/style — no @apply reintroduction)
  * - resources/css/landing.css → plain CSS entry (Mix mix.styles concat); no
- *   @import "tailwindcss", so @tailwindcss/vite does not utility-scan it
+ *   @import "tailwindcss", so @tailwindcss/vite does not utility-scan it.
+ *   Wire into Blade only where Mix landing.css was used (not app layouts).
+ *
+ * HMR note: vite:dev still hits require() in app.js until optional ESM (3.1);
+ * production vite build uses Rolldown CJS interop and is the supported path.
  */
 export default defineConfig({
     plugins: [
