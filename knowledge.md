@@ -12,7 +12,7 @@
 | **Vue** | **3.5.40** at runtime via **`@vue/compat` MODE 2** (`Vue.version` in browser; `package.json` `vue` + `@vue/compat` 3.5.40). Merged to `main` **`50f5c4d`**. |
 | **Tailwind CSS** | 4.3.3 | `package.json` — v4, CSS-first config, no `tailwind.config.js` |
 | **Laravel Mix** | 6.0.49 | `package.json` — still available for dual-path / rebuild; **Blade cutover layouts now use `@vite()`** (Phase 3.3 on `migration/vite`) |
-| **Vite (Phase 3)** | 🚧 Phase 3.4 package firefight done on `migration/vite` | `@vite([...])` Blade cutover (3.3); package smoke PASS on `vite:build` path (3.4); next **3.1 ESM** then **3.5** Mix removal |
+| **Vite (Phase 3)** | 🚧 Phase 3.1 Step 1 bootstrap ESM done on `migration/vite` | `@vite` (3.3); packages (3.4); **3.1 Step 1** bootstrap ESM; **Step 2** app.js Vue/components next; then **3.5** Mix removal |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
 | **Production host** | Docker on Hetzner VPS (46.101.111.131) | `scripts/deploy-manual.sh` |
@@ -26,8 +26,8 @@
 - **Verify**: `npm run production` PASS; `Vue.version` 3.5.40; tests 5 failed (baseline); shell smoke PASS on `:8010`.
 - **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared — **19** v-model on `<label>`, **10** empty v-html, **9** invalid end tags, **4** v-model-on-prop. Merge `5a7cc45`, fix `7f29e37`, Mix asset rebuild `8a2938d` (pushed to `origin/main`). **Why it mattered**: Vite hard-fails on these where Mix’s `VueCompatSoftCompilerErrorsPlugin` was silently softening them.
 - **Main hygiene (pushed)**: `vue-upload-multiple-image` removed (`e2b0112`); `frontend.mdc` updated for Vue 3.5.40 / `@vue/compat` / Mix 6 / Tailwind v4 (`5de4e1f`).
-- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`)**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** (`portal-vue` / `vuejs-datetimepicker` / `vue-flash-message` **works-as-is**; `vue-upload-multiple-image` **clean**). No `optimizeDeps` change. **Next: 3.1 ESM** (required for `vite:dev` / pre-3.5), then **3.5** Mix removal. Pre-3.3 tip pushed `624c7dd`; later commits local until asked to push.
-- **Runtime gaps**: (1) ✅ Pusher dual-read. (2) ✅ `$swal` via `Vue.prototype`. (3) Academics `str_limit` / `Object.keys` — deferred. (4) Empty Pusher key → Echo skip → `listenForNotifications` `channel` TypeError (known). (5) `vite:dev` = **A hard failure** until ESM (3.1): `typeof window.Vue === "undefined"`, Vue components unresolved; Blade HTML still renders.
+- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`)**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** (`portal-vue` / `vuejs-datetimepicker` / `vue-flash-message` **works-as-is**; `vue-upload-multiple-image` **clean**). No `optimizeDeps` change. **3.1 Step 1** bootstrap ESM done (`vite:dev` past bootstrap; fails at `require('vue')`). **Next: 3.1 Step 2** app.js Vue + registrations, then **3.5** Mix removal. Tip pushed through `a15d460` (3.4); Step 1+ local until asked to push.
+- **Runtime gaps**: (1) ✅ Pusher dual-read (+ process guard for Vite ESM). (2) ✅ `$swal` via `Vue.prototype`. (3) Academics `str_limit` / `Object.keys` — deferred. (4) Empty Pusher key → Echo skip → `listenForNotifications` `channel` TypeError (known). (5) `vite:dev` after 3.1 Step 1: **past bootstrap**; still fails at `app.js` `require('vue')` until Step 2.
 - **Process**: Log Phase 3 progress into `knowledge.md` at **each sub-phase checkpoint** (same discipline as Phase 1/2) — not batched catch-ups.
 ## Current Status: July 28, 2026
 
@@ -5352,3 +5352,13 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Files modified**: `knowledge.md` only (canonical + checkout sync). No vite config commit.
 - **Ordering**: **3.4 done → next 3.1 ESM → then 3.5 Mix removal**.
 - **Status**: ✅ Phase 3.4 done on `migration/vite`
+
+### 2026-07-30: Phase 3.1 Step 1 — bootstrap.js ESM (`vite:dev` past bootstrap)
+- **Work done**: Converted `resources/assets/js/bootstrap.js` from `require()` to ESM `import`. Added `jquery-global.js` so `window.$` is set before Bootstrap 4 side-effect import (ESM dependency order). `app.js`: only `require('./bootstrap')` → `import './bootstrap'` (Vue + ~179 `Vue.component` requires left for Step 2). Guarded Mix dual-read: `mixEnv = typeof process !== 'undefined' && process.env ? process.env : {}` then `VITE_* || mixEnv.MIX_*` (Vite ESM browser has no `process` — unguarded access threw after lodash/jquery/axios/pusher set).
+- **Gate (`npm run vite:dev`, `public/hot` present, `:8010`)**:
+  - `/login`: axios/jQuery/Pusher/lodash **function**; `typeof Vue === "undefined"`; pageerror **`require is not defined`** at remaining `app.js` `require('vue')` — **progressed past bootstrap**.
+  - Authenticated `/admin/dashboard` (`admin@testschoolone.sch.ug`): same — bootstrap globals OK, Vue undefined, `require is not defined`.
+- **Not done**: Step 2 app.js Vue + component registrations; Mix still present (3.5 not started).
+- **Files modified**: `resources/assets/js/bootstrap.js`, `resources/assets/js/jquery-global.js` (new), `resources/assets/js/app.js` (bootstrap import only), `knowledge.md`
+- **Status**: ✅ Step 1 done on `migration/vite` (commit this entry); Step 2 next
+

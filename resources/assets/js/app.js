@@ -5,7 +5,7 @@
  * building robust, powerful web applications using Vue and Laravel.
  */
 
-require('./bootstrap');
+import './bootstrap';
 
 // Vue 3 migration build (@vue/compat via webpack alias). Compat CJS export is the
 // constructor itself (no .default); keep fallback for ESM interop.
