@@ -12,7 +12,7 @@
 | **Vue** | **3.5.40** at runtime via **`@vue/compat` MODE 2** (`Vue.version` in browser; `package.json` `vue` + `@vue/compat` 3.5.40). Merged to `main` **`50f5c4d`**. |
 | **Tailwind CSS** | 4.3.3 | `package.json` — v4, CSS-first config, no `tailwind.config.js` |
 | **Laravel Mix** | 6.0.49 | `package.json` — still available for dual-path / rebuild; **Blade cutover layouts now use `@vite()`** (Phase 3.3 on `migration/vite`) |
-| **Vite (Phase 3)** | 🚧 Phase 3.3 Blade cutover done on `migration/vite` | `@vite([app.js, app.scss, tailwind.css])` in empty/minimal/main/superadmin-app/app; `npm run vite:build` ships `public/build` |
+| **Vite (Phase 3)** | 🚧 Phase 3.4 package firefight done on `migration/vite` | `@vite([...])` Blade cutover (3.3); package smoke PASS on `vite:build` path (3.4); next **3.1 ESM** then **3.5** Mix removal |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
 | **Production host** | Docker on Hetzner VPS (46.101.111.131) | `scripts/deploy-manual.sh` |
@@ -26,7 +26,7 @@
 - **Verify**: `npm run production` PASS; `Vue.version` 3.5.40; tests 5 failed (baseline); shell smoke PASS on `:8010`.
 - **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared — **19** v-model on `<label>`, **10** empty v-html, **9** invalid end tags, **4** v-model-on-prop. Merge `5a7cc45`, fix `7f29e37`, Mix asset rebuild `8a2938d` (pushed to `origin/main`). **Why it mattered**: Vite hard-fails on these where Mix’s `VueCompatSoftCompilerErrorsPlugin` was silently softening them.
 - **Main hygiene (pushed)**: `vue-upload-multiple-image` removed (`e2b0112`); `frontend.mdc` updated for Vue 3.5.40 / `@vue/compat` / Mix 6 / Tailwind v4 (`5de4e1f`).
-- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`)**: Scaffold → CSS entries (3.2) → **✅ Phase 3.3 Blade `@vite()` cutover** (empty → minimal → main → superadmin-app → app). Pre-3.3 tip **pushed** at `624c7dd`; 3.3 commit local until asked to push. **3.1 dual**: optional for production `vite:build` (Rolldown CJS interop OK); **required for workable `vite:dev` / before Mix removal (3.5)** — hard Vue boot failure (`ReferenceError: require is not defined` at `app.js:8` → `window.Vue` never set; Vue components empty), not soft HMR-only. **3.4 can proceed first** on the build path.
+- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`)**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** (`portal-vue` / `vuejs-datetimepicker` / `vue-flash-message` **works-as-is**; `vue-upload-multiple-image` **clean**). No `optimizeDeps` change. **Next: 3.1 ESM** (required for `vite:dev` / pre-3.5), then **3.5** Mix removal. Pre-3.3 tip pushed `624c7dd`; later commits local until asked to push.
 - **Runtime gaps**: (1) ✅ Pusher dual-read. (2) ✅ `$swal` via `Vue.prototype`. (3) Academics `str_limit` / `Object.keys` — deferred. (4) Empty Pusher key → Echo skip → `listenForNotifications` `channel` TypeError (known). (5) `vite:dev` = **A hard failure** until ESM (3.1): `typeof window.Vue === "undefined"`, Vue components unresolved; Blade HTML still renders.
 - **Process**: Log Phase 3 progress into `knowledge.md` at **each sub-phase checkpoint** (same discipline as Phase 1/2) — not batched catch-ups.
 ## Current Status: July 28, 2026
@@ -296,11 +296,11 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Blade asset helpers** | Still Mix/`asset('js/app.js')` — cutover to `@vite(...)` is a later Phase 3 step |
 | **Vue compatibility** | Vue 3.5.40 (`@vue/compat` MODE 2) on `main` — using **`@vitejs/plugin-vue`** (compat); `@vitejs/plugin-vue2` not needed |
 | **Build blockers cleared** | Extensionless `.vue` resolve (`d06859e`); Birthday/BirthdayTeacher/WorkAnniversary `<style src>` vue-multiselect CSS removed (`70d0281`) — global import remains in `app.js`; `npx vite build` PASS without ESM-converting `require()` |
-| **Runtime verify** | ✅ Pusher dual-read Mix+Vite (Fix 1 follow-up). ✅ `this.$swal` via `Vue.prototype.$swal` (Fix 2; MODE 2 compat bridge — revisit if compat off). **3.1 ESM**: optional for `vite:build`; **required** for `vite:dev` / pre-3.5 (supersedes earlier “OPTIONAL cleanup only”). Open: 3.4+, academics `str_limit` |
+| **Runtime verify** | ✅ Pusher dual-read. ✅ `$swal`. ✅ **3.4 packages** (portal / datetime / flash works-as-is; upload clean). **3.1 ESM**: optional for `vite:build`; **required** for `vite:dev` / pre-3.5. Open: academics `str_limit` |
 | **Feature gap: versioning** | Mix `version()` → Vite handles this automatically via hashed filenames |
 | **Feature gap: PurgeCSS** | Currently uses `laravel-mix-purgecss` — Vite equivalent is `@fullhuman/postcss-purgecss` PostCSS plugin |
-| **Risk level** | **Low-Medium** for remaining Blade `@vite()` cutover + env (`VITE_PUSHER_*`); Vue major settled |
-| **Effort** | Scaffold/build path largely done; remaining = 3.4+ on build path; **3.1 ESM required before 3.5** for vite:dev (optional only if staying build-only) |
+| **Risk level** | **Low-Medium** for remaining ESM (3.1) + Mix removal (3.5); Vue major settled |
+| **Effort** | 3.3–3.4 done on build path; **3.1 ESM required before 3.5** for vite:dev (optional only if staying build-only) |
 
 ---
 
@@ -313,7 +313,7 @@ Phase A: Laravel 12 + axios 1.x ✅ (completed)
        ↓
 Phase B: Mix→Vite + Vue 3 runtime
   ├─ Phase 1b: Vue 3 / @vue/compat runtime — **done on `main`** (`50f5c4d`)
-  └─ Phase 3: Vite migration — 🚧 **in progress on `migration/vite`** (scaffold `1b86a9b`…`70d0281`; Mix still ships prod Blade assets; Blade `@vite()` cutover not done)
+  └─ Phase 3: Vite migration — 🚧 **in progress on `migration/vite`** (3.3 Blade `@vite()` + 3.4 packages done; next 3.1 ESM → 3.5 Mix removal)
 ```
 
 **Rationale (updated Jul 30):**
@@ -321,7 +321,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **axios 1.x** — done.
 - **Phase 1a (SFC compile fixes)** — done and merged.
 - **Phase 1b (Vue 3 runtime)** — **done on `main`** (`50f5c4d`).
-- **Mix→Vite (Phase 3)**: ✅ Phase 3.3 Blade `@vite()` cutover on `migration/vite` (empty/minimal/main/superadmin-app/app). Production path = `vite:build` + no `public/hot` (Rolldown CJS interop OK without 3.1). `vite:dev` = **hard failure** until ESM (3.1) — `require` undefined, `window.Vue` never set. **3.1 required before 3.5** for Vite-served local workflow; **3.4 can proceed first**. Pusher dual-read transitional until Mix removed (3.5). Academics `str_limit` deferred.
+- **Mix→Vite (Phase 3)**: ✅ 3.3 Blade `@vite()` + ✅ **3.4 package firefight** on `migration/vite`. Production path = `vite:build` + no `public/hot`. `vite:dev` = **hard failure** until ESM (**3.1 next**, then **3.5**). Pusher dual-read transitional until Mix removed. Academics `str_limit` deferred.
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
@@ -5338,3 +5338,17 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Sequencing**: **3.1 ESM conversion is required before 3.5 (Mix removal)** for a workable Vite-served local workflow; still **optional for prod build-only**. **3.4 can proceed first** on the build path.
 - **Supersedes**: Earlier “3.1 OPTIONAL cleanup” / “not a hard blocker” wording (runtime-verify session) implied no hard need — clarify the dual: optional for build, required for `vite:dev` / pre-3.5.
 - **Status**: 📝 Knowledge checkpoint only (no code change in this commit)
+
+### 2026-07-30: Phase 3.4 package firefight (`vite:build` path)
+- **Work done**: Smoke-tested quarantined / load-bearing npm packages under production Vite serving (`npm run vite:build`, no `public/hot`, `php artisan serve :8015`, `@vite` layouts). **No `optimizeDeps` / vite.config changes** — no evidence they were needed.
+- **Build**: `vite:build` PASS (~1175 modules, ~3.6s). No package-specific warnings for portal-vue / vuejs-datetimepicker / vue-flash-message (only chunk-size + unresolved `/uploads/*` runtime asset refs).
+- **Verdicts**:
+  | Package | Verdict | Evidence |
+  |---|---|---|
+  | `portal-vue@^1.5.1` | **works-as-is** | `Portal`/`PortalTarget` registered. Teachers list `#show-detail`: open `hide-menu`→`block` (content e.g. teacher name + detail), close → `hide-menu`/`display:none`. Auto-install via `window.Vue` still works under Vite build. ClassWall page portal N/A (no pages in test school). |
+  | `vuejs-datetimepicker@^1.1.13` | **works-as-is** | `main` = raw `./src/datetime_picker.vue` — compiled fine via `@vitejs/plugin-vue` (no optimizeDeps). ClassWall `/admin/classwall/post/add`: open calendar (`.port`), OK → input value set; POST includes `posted_at`. Discipline `/admin/discipline/add`: pick+OK → POST `incident_date=16-07-2026 08:27:00` (parent v-model binds). Console noise: `'set' on proxy: trap returned falsish for property 'value'` on pick (non-blocking; value still binds). No new MODE 2 warning density vs Mix 1b.5 (datetime compatConfig still in `app.js`). |
+  | `vue-flash-message@^0.7.2` | **works-as-is** | Minified CJS `main` interops under Rolldown. Change-credential (`/admin/teacher/show/{name}`): Credentials modal opens; `$flashStorage.flash(...)` → `.flash__message` DOM. Create-leave (`/teacher/leave/add`, teacher login): storage flash → `.flash__message` DOM. Empty-submit “Please fill…” path unreliable under global `axios.validateStatus=null` (422 hits `.then` not `.catch`) — pre-existing, not Vite. |
+  | `vue-upload-multiple-image` | **clean** | Absent from `package.json` / lockfile; zero source imports of package name. Local SFC `VueUploadMultipleImage.vue` remains (event ShowImage) — unrelated. |
+- **Files modified**: `knowledge.md` only (canonical + checkout sync). No vite config commit.
+- **Ordering**: **3.4 done → next 3.1 ESM → then 3.5 Mix removal**.
+- **Status**: ✅ Phase 3.4 done on `migration/vite`
