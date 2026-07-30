@@ -7,7 +7,7 @@
 | **PHP** | 8.4.23 | `ssh root@46.101.111.131 docker exec sms-app php -v` |
 | **Laravel** | 12.63.0 | `php artisan --version` on production |
 | **Livewire** | 3.x | `composer.json` require `^3.4` |
-| **Vue** | **2.7.16** at runtime (`Vue.version` in browser; `npm ls vue`) — `package.json` still says `^2.6.12`. **Not Vue 3** — see Phase 1 status correction below. |
+| **Vue** | **3.5.40** at runtime via **`@vue/compat` MODE 2** (`Vue.version` in browser; `package.json` `vue` + `@vue/compat` 3.5.40). Merged to `main` **`50f5c4d`**. |
 | **Tailwind CSS** | 4.3.3 | `package.json` — v4, CSS-first config, no `tailwind.config.js` |
 | **Laravel Mix** | 6.0.49 | `package.json` — NOT Vite (webpack 5 via Mix 6) |
 | **MySQL** | 8.0 | `docker-compose.yml` |
@@ -16,6 +16,11 @@
 
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
+
+## Current Status: July 30, 2026 (Vue 3 runtime on `main`)
+
+- **Merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). **Not pushed.**
+- **Verify**: `npm run production` PASS; `Vue.version` 3.5.40; tests 5 failed (baseline); shell smoke PASS on `:8010`.
 
 ## Current Status: July 28, 2026
 
@@ -88,7 +93,7 @@
     - Large SFC compile-error sweep (~**3,381** errors at peak) — `v-model-on-prop`, deprecated **`slot`** → **`v-slot`**, and related template fixes across the Vue tree.
     - **Mix 4→6 / webpack 5 prerequisite** (`d295517`, `build(mix): upgrade Laravel Mix 4→6`) — genuinely merged; required for the stricter compile path that surfaced the SFC issues.
     - These fixes were **necessary regardless of which Vue version runs** — Vue 3’s stricter compiler (and webpack 5 / vue-loader path) is what surfaced them; the remediated SFCs remain valid on Vue 2.7.
-  - **🚧 Phase 1b: runtime switch to Vue 3 / `@vue/compat` — in progress on `migration/vue3-runtime`**:
+  - **✅ Phase 1b: runtime switch to Vue 3 / `@vue/compat` — CLOSED on `main` (merge `50f5c4d` Jul 30, 2026)**:
     - **1b.1 replace-now (Jul 28, accepted option 1)**: Vue 2 UI packages swapped + source migrated.
     - **1b.2 Task 1 (Jul 29, `dd13fc5`)**: alias `vue`/`vue$` → `@vue/compat`; vue-loader `compatConfig: { MODE: 2 }`; `configureCompat({ MODE: 2 })` in `app.js`; production build PASS; browser `Vue.version` = `3.5.40`. Soft-warn plugin for remaining SFC compiler strictness (invalid end tags / label v-model / v-html children).
     - **Replace-now done**: `@vueup/vue-quill`, `dropzone-vue3`, `vue-good-table-next`, `emoji-mart-vue-fast`, `vue3-carousel`, `sweetalert2`/`vue-sweetalert2`, `vue-simple-uploader@1`, `vue-easy-lightbox`+`floating-vue`, `vue-multiselect@3`.
@@ -107,8 +112,8 @@
       - **Recommend**: **CLOSE 1b.4** — create-leave + discipline datetime PASS; ClassWall edit 500 is pre-existing on main (deferred); blockedstudents is non-compat pre-existing (deferred, log-only). **⏸️ was STOP before 1b.5** → **1b.5 CLOSED Jul 30**.
     - **Cleanup candidate (confirmed dead direct dep, Jul 29)**: `vue-upload-multiple-image` — **zero** source imports/requires of the npm package name across `resources/**/*.vue|js` and app JS; only listed in `package.json` / lockfile. App uses the **local** SFC `resources/assets/js/components/VueUploadMultipleImage.vue` (imported by `event/details/ShowImage.vue` as `../../VueUploadMultipleImage`), which depends on `vue-easy-lightbox` + `floating-vue` — not the npm package. Cleanup (do **not** run until scheduled): `npm uninstall vue-upload-multiple-image --legacy-peer-deps` (also drops transitive `vue-image-lightbox-carousel` / nested `vue-popperjs`).
     - **Older note (pre-1b branch work)**: on `main` @ `753697f`, runtime was still Vue 2.7.16; `@vue/compat` unwired until 1b.2 Task 1.
-  - **Nothing is currently broken because of this gap**: Vue 2.7 boots correctly on `main`. Tonight’s verification (academics mount, attendance/add, discipline/add + `Vue.options.components.multiselect`, event bus, `$swal`, nav academic-year dropdown) is **valid confirmation that Vue 2.7 runs correctly** — not evidence of Vue 3 at runtime.
-  - **Inaccurate status label**: ~~“Phase 1: Vue 2→3 migration — complete”~~ → use **Phase 1a complete / Phase 1b open** as above.
+  - **Post-merge on `main` @ `50f5c4d` (Jul 30)**: `npm run production` PASS (42 webpack warnings — known invalid end-tag SFCs); browser `Vue.version` = **3.5.40**; PHPUnit **5 failed** (same baseline as pre-merge); post-merge shell smoke (8010, `klassapp_local`): boot, academics, attendance/add, discipline/add + `Vue.resolveComponent('multiselect')`, nav dropdown — **PASS**.
+  - **Status label**: **Phase 1a complete / Phase 1b complete on `main`** — prior Jul 28 correction that runtime was still Vue 2.7.16 is **superseded** by this merge.
   - **⏸️ Decision point (user — not assumed)** — how to sequence Vue runtime vs Vite:
     - **(a)** Complete the **Vue 3 / `@vue/compat` runtime switch** as its own dedicated phase **before or alongside** Phase 3 (Vite).
     - **(b)** **Stay on Vue 2.7** for Phase 3 — Mix→Vite with **`@vitejs/plugin-vue2`**, treat Vue 3 runtime switch as a **future Phase 4**.
@@ -254,7 +259,7 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | Sub-phase | Status | Notes |
 |---|---|---|
 | **Phase 1a — SFC compile remediation** | ✅ **Complete (merged)** | ~3,381 compile errors fixed; `v-model-on-prop`, `slot`→`v-slot`; Mix 4→6 prerequisite (`d295517`). |
-| **Phase 1b — Vue 3 / `@vue/compat` runtime** | 🚧 **1b.2 Task 1 done; Task 2 smoke open** | On `migration/vue3-runtime`: alias `vue`/`vue$` → `@vue/compat`, vue-loader `compatConfig: { MODE: 2 }`, `configureCompat({ MODE: 2 })` in `app.js`. Production build PASS; browser `Vue.version` = `3.5.40`. Soft-warn plugin for strict SFC compiler errors (template cleanup later). |
+| **Phase 1b — Vue 3 / `@vue/compat` runtime** | ✅ **Closed on `main`** (`merge 50f5c4d`) | Alias `vue`/`vue$` → `@vue/compat`, vue-loader `compatConfig: { MODE: 2 }`, `configureCompat({ MODE: 2 })` in `app.js`; 1b.5 harden applied. Production build PASS; browser `Vue.version` = `3.5.40`. |
 
 | Dimension | Assessment |
 |---|---|
@@ -263,7 +268,7 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Third-party plugins** | ckeditor4-vue, vue-carousel, vue-cookies, vue-croppie, vue-good-table, portal-vue, vue-flash-message, emoji-mart-vue, v-select2-component, etc. — many may lack Vue 3 versions |
 | **Breaking changes (Phase 1b only)** | `Vue.prototype` → `app.config.globalProperties`, `Vue.component` → `app.component`, `new Vue()` → `createApp()`, `$listeners` removed, `v-model` binding changes |
 | **Risk level (Phase 1b)** | **Medium-High** — plugin audit + alias to `@vue/compat` + bootstrap rewrite |
-| **Effort (Phase 1b)** | ~2 weeks (migration + testing/plugin remediation) — **not started** |
+| **Effort (Phase 1b)** | ~2 weeks — **complete on `main`** (branch `migration/vue3-runtime` merged Jul 30) |
 
 #### 3. Laravel 11 → 12 ✅ (completed)
 | Dimension | Assessment |
@@ -280,7 +285,7 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Current config** | Zero custom webpack.mix.js — uses Laravel Mix 4 defaults from `node_modules/laravel-mix/setup/webpack.config.js` |
 | **Entry points** | `resources/assets/js/app.js` (Vue components) + `resources/assets/sass/app.scss` (styles) — both Mix defaults |
 | **Blade asset helpers** | Uses `mix('js/app.js')` and `mix('css/app.css')` — must change to `@vite('resources/js/app.js')` |
-| **Vue compatibility** | **Today: Vue 2.7.16** — Phase 3 Vite needs **`@vitejs/plugin-vue2`** unless Phase 1b (Vue 3 / `@vue/compat`) is done first. **User decision** — see Current Status Phase 1 correction (options a/b/c). |
+| **Vue compatibility** | **Today: Vue 3.5.40 (`@vue/compat` MODE 2) on `main`** — Phase 3 Vite can use **`@vitejs/plugin-vue`** (compat) or native Vue 3 SFC path; `@vitejs/plugin-vue2` no longer required for runtime major version. |
 | **Feature gap: versioning** | Mix `version()` → Vite handles this automatically via hashed filenames |
 | **Feature gap: PurgeCSS** | Currently uses `laravel-mix-purgecss` — Vite equivalent is `@fullhuman/postcss-purgecss` PostCSS plugin |
 | **Risk level** | **Low-Medium** for Vite config + Blade `@vite()` — **higher** if bundled with Phase 1b without a settled Vue major-version choice |
@@ -297,7 +302,7 @@ Phase A: Laravel 12 + axios 1.x ✅ (completed)
        ↓
 Phase B: Mix→Vite + (optional) Vue 3 runtime — **user must choose sequencing** (Jul 28)
   ├─ Phase 3: Vite migration — vite.config.js, Blade @vite(), Tailwind v4 + @tailwindcss/vite (audit recommendation)
-  ├─ Phase 1b (optional / separate): Vue 3 / @vue/compat runtime — alias, app.js bootstrap, plugin audit — **not done; runtime is Vue 2.7.16 today**
+  ├─ Phase 1b: Vue 3 / @vue/compat runtime — **done on `main`** (`50f5c4d`)
   └─ Doing Vite twice (plugin-vue2 then plugin-vue) is wasteful **if** Phase 1b follows soon — but staying on Vue 2.7 for Phase 3 is valid (option b)
 ```
 
@@ -305,7 +310,7 @@ Phase B: Mix→Vite + (optional) Vue 3 runtime — **user must choose sequencing
 - **Laravel 12 first** — done.
 - **axios 1.x** — done.
 - **Phase 1a (SFC compile fixes)** — done and merged; **does not mean Vue 3 runs in the browser**.
-- **Mix→Vite (Phase 3)** vs **Vue 3 runtime (Phase 1b)** — **user decision** (see Current Status). Prior doc assumed bundling both; that assumed Vue 3 was already live — **it is not**.
+- **Mix→Vite (Phase 3)**: Vue 3 runtime (Phase 1b) is **live on `main`** — Phase 3 can proceed without a separate Vue 2.7 / plugin-vue2 detour.
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
@@ -5185,4 +5190,9 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Applied**: see commit after this log. Post-harden DEV re-smoke (login→academics→attendance→discipline): portal/GLOBAL/datetime/multiselect/feature-flag/provide/CONFIG_WHITESPACE noise **cleared**. Remaining on that path: academicyear List unhandled render/update (#14/#15) + `Object.keys` pageerror from deferred `/admin/academic/list` 500. Flash still works via `Vue.prototype.$flashStorage.flash(...)`.
 - **Recommend**: **CLOSE 1b.5**. Open follow-ups (not blocking close): createApp migration (clears intentional GLOBAL_MOUNT suppress), portal-vue → Teleport, datetimepicker replace, broader `count(` null-safety grep, academicyear `str_limit`, incidental `INSTANCE_EVENT_EMITTER` on profile tabs outside original inventory.
 - **Status**: ✅ 1b.5 harden applied / recommend CLOSE / not pushed
+
+### 2026-07-30: Merge `migration/vue3-runtime` → `main`
+- **Work done**: No-ff merge on worktree `/Users/mac/projects/KlassApp-main-checkout` — commit **`50f5c4d1926111e787a16d2b04bd0054b4ff671d`** (`merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main`). **Not pushed.**
+- **Post-merge verify**: `npm run production` PASS (42 webpack warnings); `node_modules/vue` + browser `Vue.version` = **3.5.40**; `php artisan test --compact` → **5 failed, 1 skipped, 220 passed** (LoginRegressionTest, RegistrationMinistryCodeTest ×2, RegistrationFlowTest activity(), ToshiE2EVerificationTest LLM); shell smoke on `http://127.0.0.1:8010` (main-checkout serve, `klassapp_local`): boot, academics, attendance/add, discipline/add + multiselect resolve, nav dropdown — **PASS**.
+- **Status**: ✅ **Phase 1b CLOSED on `main`**
 
