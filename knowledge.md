@@ -5290,5 +5290,6 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Mix runtime** (`:8014`, Blade `asset('js/app.js')`): Vue **3.5.40**; Mix script only; `vm.$swal` typeof `function` / callable; `window.Echo` undefined (empty key); **no** “must pass your app key”. Dashboard still logs `listenForNotifications` → `Echo.channel` TypeError when Echo skipped (known empty-key side effect).
 - **Vite rebuild**: PASS; VITE keys inlined; `process.env.MIX_*` may appear as `{}.MIX_PUSHER_*` residue but `||` + truthy guard makes it `undefined` (no throw / no Echo with empty key).
 - **Files modified**: `resources/assets/js/bootstrap.js`, `knowledge.md` (canonical + checkout sync)
+- **Transitional**: The `VITE_* || MIX_*` dual-read in `bootstrap.js` is scaffolding for the Mix/Vite coexistence period — should be simplified to `VITE_*`-only once Mix is fully removed in Phase 3.5, not left as permanent dual-path logic.
 - **Status**: ✅ Dual-read required and done; both fixes safe on Mix-serving Blade path
 
