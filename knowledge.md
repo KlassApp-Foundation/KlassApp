@@ -1243,6 +1243,7 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 2. **Landing v2** — Has different navbar JS (direction-aware). Not aligned with v1 style.
 3. **Toshi assistant mode** — Placeholder only. No handleGeneralQuery() yet. Cannot answer questions or run reports.
 4. **Landing pages** — Both have broken HTML artifacts from previous merges (stray `</nav>` tags, duplicate mobile menus, garbled WhatsApp link fragments). Have been cleaned up but v2 navbar scroll direction still differs from v1.
+5. **`/usecases/*` HTTP 404 is pre-existing** — `mapStaticRoutes()` commented identically on `main` and feature branches; Blade views exist in `routes/static.php` but are not registered.
 
 ---
 
@@ -5112,7 +5113,7 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
    - **v4 preflight change**: bare `border` now defaults to `currentColor` (v1: `#e2e8f0`). `.dashboard-kpi-card` protected by its own border in dashboard-refresh.css (loaded after tailwind.css). Other bare-border dividers (e.g. `border-r` in admin dashboard) now render dark instead of light gray. ⚠️
    - **`layouts/empty` regression**: wrapper `<div class="flex items-center justify-center min-h-screen px-4 py-8">` lost all utilities → login/register/verify/password-reset pages render top-left instead of centered. ✅ RESOLVED in `355a838`.
    - **`layouts/main` regression**: 35 public marketing pages (privacypolicy, terms, 17 usecases, teachers-app, modules/*) are saturated with Tailwind (`container mx-auto`, `bg-red-600`, `py-16`) — all dead. ✅ RESOLVED in `355a838`.
-- **Deferred → ✅ FIXED Jul 31 (`099b58e` on `chore/cleanup-loose-ends`)**: `home_navigation` was gated to `request()->is('/')` while `/` never uses `layouts.main` — nav never rendered. **Fix**: removed the gate; nav now renders on all `layouts.main` pages. Also added explicit `border-gray-300` on Register/Login/Logout buttons (Tailwind v4 preflight bare-`border` → `currentColor`). Verified: `/privacy-policy`, `/terms-of-service` (HTTP 200 + screenshot); usecase views render nav via Blade (HTTP routes still off — `mapStaticRoutes` commented in RouteServiceProvider).
+- **Deferred → ✅ FIXED Jul 31 (`099b58e` on `chore/cleanup-loose-ends`)**: `home_navigation` was gated to `request()->is('/')` while `/` never uses `layouts.main` — nav never rendered. **Fix**: removed the gate; nav now renders on all `layouts.main` pages. Speculative `border-gray-300` was later **reverted** (`14b9e33`) — CDP shows bare `border` → `rgb(0,0,0)` via `currentColor` and is visually fine. Verified: `/privacy-policy`, `/terms-of-service`, `/contact` (HTTP 200 + screenshots); `/usecases/*` HTTP 404 is pre-existing (`mapStaticRoutes` commented on main too).
 
 #### Environment fixes
 - **`.env` `DB_DATABASE=homestead` → `klassapp_local`** — was pointing to wrong database. `.env` is gitignored. `php artisan serve` launched on port 8000. Login at `/login` with `siteadmin@gmail.com / password`.
@@ -5457,10 +5458,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 
 ### 2026-07-31: chore/cleanup-loose-ends (nav fix + docs)
 - **Work done**: Branch `chore/cleanup-loose-ends` from `origin/main` @ `354fd4a` in worktree `/Users/mac/projects/KlassApp-main-merge`.
-  1. **REAL FIX** (`099b58e`): Removed `request()->is('/')` gate on `home_navigation` so nav renders on all `layouts.main` pages; added `border-gray-300` on guest/auth outline buttons (Tailwind v4 preflight). Smoke: privacy-policy + terms-of-service HTTP 200 + Chrome screenshots; usecase Blade renders include nav (HTTP routes still disabled via commented `mapStaticRoutes`).
+  1. **REAL FIX** (`099b58e`): Removed `request()->is('/')` gate on `home_navigation` so nav renders on all `layouts.main` pages. Speculative `border-gray-300` **reverted** in `14b9e33` after visual/CDP check (bare `border` → black `currentColor`, still visible).
   2. **Orphans left as-is**: Confirmed/corrected docs for `welcome.blade.php` (views root), `welcome/_modules_list_section.blade.php`, `layouts/minimal.blade.php` — all orphaned/dead; no deletes.
   3. **Mix docs** (`454940c`): Updated `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, `resources/views/components/DESIGN_SYSTEM.md` → Vite SoT (`.cursor/rules/frontend.mdc`).
   4. **legacy-peer-deps**: Tightened Current Status + stack table to list 7 directs + 2 transitive from Jul 30 audit (already had full table in Phase 3.5 log).
-- **Verify**: `npm run build` PASS (Vite 8.1.5, ~4.4s). PHPUnit: **1 failed, 1 skipped, 234 passed** (ToshiE2E LLM null — same baseline).
-- **Key decisions**: Relax nav gate (not remove include). Leave welcome/minimal files. Docs update not delete. No merge / no push.
-- **Status**: ✅ Ready for review on `chore/cleanup-loose-ends` (not merged)
+- **Verify (pre-merge visual smoke, Jul 31)**: Served `:8011`. Screenshots in `tmp/nav-smoke/`. Privacy/terms: KlassApp logo + Free Sign Up + Login visible, layout OK. Contact: landing nav (Get Started) + contact form OK. Login nav link → real login page (password field). Usecase URLs 404 — pre-existing (`mapStaticRoutes` identical on `origin/main`). CDP `#register/#login` `borderTopColor=rgb(0,0,0)` — leave bare `border`.
+- **Key decisions**: Relax nav gate (not remove include). Leave bare outline borders. Usecase 404 unrelated to nav. No merge / no push.
+- **Status**: ✅ Ready for merge on `chore/cleanup-loose-ends` (not merged yet)
