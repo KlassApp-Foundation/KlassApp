@@ -32,7 +32,7 @@
 - **Main hygiene (pushed pre-Vite)**: `vue-upload-multiple-image` removed (`e2b0112`).
 - **Phase 3 history on `migration/vite`**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** → **✅ 3.1 ESM** → **✅ 3.5 Mix removal** (`3bc5c70`) → rules `c470c39` → merge to main `9bdf185`.
 - **Scoped tech debt**: `.npmrc` `legacy-peer-deps=true` — **7 direct packages** declare Vue 2 peers that reject Vue 3.5.40 (first ERESOLVE: `@fullcalendar/vue@5`).
-- **5 pre-existing app bugs** remain separately tracked (do not re-litigate): `activity()` helper; `admin/promotion/list` `exam_type`; academics `str_limit` / `Object.keys`; ClassWall `Post.php:83` null `attachment_file`; `blockedstudents` `count(null)` query string.
+- **5 pre-existing app bugs** (deferred track): ✅ `activity()` helper; ✅ `admin/promotion/list` `exam_type` (query→`exam_types.code=FINAL`, no column migration); ✅ academics `str_limit` / `Object.keys`; ✅ ClassWall `Post.php` null `attachment_file`; ✅ `blockedstudents` `count(null)` query string.
 - **NOT PUSHED** — awaiting user decision to push `main`.
 ## Current Status: July 28, 2026
 
@@ -44,16 +44,11 @@
   - **Exact class-token recount** across `resources/views/**/*.blade.php`: `.custom-table` = **16 files**, `.submit-btn` = **19 files**.
   - **Why the earlier recount said `16` for `.submit-btn`**: that was a narrower "user-visible submit control" subset that excluded some Livewire loading-state wrappers even though those wrappers still carry the literal `submit-btn` class token in markup.
   - **Use going forward**: treat **19/16** as the canonical exact-token counts unless a future audit intentionally switches to a different counting rule.
-- **Separate reproducible finding (Jul 28)**: `GET /admin/promotion/list` throws HTTP 500 — **not** a Tailwind migration issue; pre-existing app/schema bug surfaced during Phase 2c sampling (the route that failed during the earlier comparison pass was this one, not a transient dual-server artifact).
+- **Separate reproducible finding (Jul 28) — ✅ CLOSED Jul 31 (deferred item 5)**: `GET /admin/promotion/list` threw HTTP 500 — **not** a Tailwind migration issue; pre-existing app/schema bug surfaced during Phase 2c sampling.
   - **Route**: `admin/promotion/list` (`Admin\PromotionController@index`)
-  - **Error**: `Illuminate\Database\QueryException` — `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'exam_type' in 'where clause'` (query on `exams` with `school_id`, `academic_year_id`, and `exam_type = final`).
-  - **Observed result**: framework "Server Error" page (HTTP 500).
-  - **Reproduction (standalone)**:
-    1. On branch `migration/tailwind4`, with local DB `klassapp_local`.
-    2. Authenticate as seeded school admin `admin@testschoolone.sch.ug` (password `password`).
-    3. `GET /admin/promotion/list` (browser or in-app request).
-    4. Result: reproducible 500 without running a second dev server or tab-switching.
-  - **Scope**: track as its own bug ticket; unrelated to OKLCH/Tailwind v4 CSS work.
+  - **Error (historical)**: `Illuminate\Database\QueryException` — `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'exam_type' in 'where clause'` (query on `exams` with `exam_type = final`).
+  - **Diagnosis**: `exams.exam_type` **never existed** in migrations. Schema uses `exam_type_id` FK → `exam_types` (`code` `FINAL` = End Of Year). Do **not** add an `exam_type` column.
+  - **Fix**: `whereRelation('examType', 'code', 'FINAL')` + missing `App\Http\Resources\Exam` (id/name/subjects/standard_id) so the JSON payload can serialize. Verified `GET /admin/promotion/list` → **200** with `examlist` key (admin@testschoolone.sch.ug).
 - **🚨 Higher-priority deferred (Jul 28 pre-merge)**: PHPUnit auth/registration failures from missing `activity()` helper — **not** introduced by Tailwind v4 / Vue boot work tonight; confirmed identical on **`main` and `migration/tailwind4`**.
   - **Failing tests**: `LoginRegressionTest` (login succeeds…), `RegistrationMinistryCodeTest` ×2, `RegistrationFlowTest` (`admin_name_is_set_on_manual_registration`).
   - **Error**: `Call to undefined function App\Traits\activity()` at `app/Traits/LogActivity.php:19` (spaceless activity-log helper expected from a package / global helper that is not loaded in the test — or app — runtime).
@@ -385,6 +380,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-07-31: Deferred bug #5 — promotion/list exam_type
+- **Work done**: Stopped referencing dead `exams.exam_type`; filter FINAL exams via `exam_types.code` (`whereRelation`). Added missing `App\Http\Resources\Exam` for promotion JSON (`id`, `name`, `subjects`, `standard_id`). Tests in `PromotionListExamTypeTest`.
+- **Files modified**: `app/Http/Controllers/Admin/PromotionController.php`, `app/Http/Resources/Exam.php` (new), `tests/Feature/PromotionListExamTypeTest.php`, `knowledge.md`
+- **Key decisions**: **Query fix, not migration** — `exam_type` string column never existed; `exam_type_id` + `exam_types` (seeded `FINAL`) is the real model. Resource was imported but missing since first commit (masked by the earlier QueryException).
+- **Status**: ✅ Done for item 5 — deferred track complete for the original five
+- **Edge cases flagged**: Live `examlist` may be empty if school has no FINAL exams (still 200). Full suite 234 passed / 1 skipped / 1 failed (`ToshiE2EVerificationTest` LLM null — unrelated). SQLite PHPUnit cannot hit full HTTP path (MySQL-only `FIELD()` in SiteHelper / controller); covered query+resource shape + live MySQL kernel request.
 
 ### 2026-07-31: Deferred bugs #3–4 — count(null) Post + blockedstudents
 - **Work done**: Null-safe `count()` at `Post::getAttachmentPathAttribute` (`attachment_file ?? []`) and `StudentController@blockedstudents` (`count((array) getQueryString())`, plus `$birthday = null` init). Tests in `CountNullSafetyTest`.
