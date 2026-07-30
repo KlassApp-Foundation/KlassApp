@@ -53,17 +53,23 @@ import Echo from "laravel-echo";
 
 window.Pusher = require("pusher-js");
 
-window.Echo = new Echo({
-    broadcaster: "pusher",
-    key: process.env.MIX_PUSHER_APP_KEY,
-    cluster: process.env.MIX_PUSHER_APP_CLUSTER,
-    forceTLS: true
-});
+// Vite injects VITE_* at build time (see Laravel Vite env docs). Skip Echo when
+// key is empty — local .env often has blank PUSHER_APP_KEY; Pusher throws otherwise.
+const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY;
+const pusherCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER;
+if (pusherKey) {
+    window.Echo = new Echo({
+        broadcaster: "pusher",
+        key: pusherKey,
+        cluster: pusherCluster,
+        forceTLS: true
+    });
+}
 
 // window.Echo = new Echo({
 //     broadcaster: "pusher",
-//     key: process.env.MIX_PUSHER_APP_KEY,
-//     cluster: process.env.MIX_PUSHER_APP_CLUSTER,
+//     key: import.meta.env.VITE_PUSHER_APP_KEY,
+//     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
 //     wsHost: window.location.hostname,
 //     wsPort: 6001,
 //     encrypted: false,

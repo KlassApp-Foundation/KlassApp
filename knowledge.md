@@ -1,5 +1,7 @@
 # KlassApp Project Knowledge
 
+> **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
+
 ## Verified Stack (production — July 26, 2026)
 
 | Layer | Version | Source |
@@ -9,7 +11,8 @@
 | **Livewire** | 3.x | `composer.json` require `^3.4` |
 | **Vue** | **3.5.40** at runtime via **`@vue/compat` MODE 2** (`Vue.version` in browser; `package.json` `vue` + `@vue/compat` 3.5.40). Merged to `main` **`50f5c4d`**. |
 | **Tailwind CSS** | 4.3.3 | `package.json` — v4, CSS-first config, no `tailwind.config.js` |
-| **Laravel Mix** | 6.0.49 | `package.json` — NOT Vite (webpack 5 via Mix 6) |
+| **Laravel Mix** | 6.0.49 | `package.json` — **production still ships via Mix** (`asset('js/app.js')` / Mix-built `public/js/app.js`); webpack 5 via Mix 6 |
+| **Vite (Phase 3)** | 🚧 In progress on `migration/vite` | Scaffold + build path exist (`vite.config.js`, `npm run vite:dev` / `vite:build`); **not** production — Blade still Mix assets |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
 | **Production host** | Docker on Hetzner VPS (46.101.111.131) | `scripts/deploy-manual.sh` |
@@ -17,11 +20,15 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Current Status: July 30, 2026 (Vue 3 runtime on `main`)
+## Current Status: July 30, 2026 (Vue 3 runtime on `main` + Phase 3 Vite in progress)
 
-- **Merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). **Not pushed.**
+- **Merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). On `origin/main` with follow-ups through `8a2938d`.
 - **Verify**: `npm run production` PASS; `Vue.version` 3.5.40; tests 5 failed (baseline); shell smoke PASS on `:8010`.
-
+- **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared — **19** v-model on `<label>`, **10** empty v-html, **9** invalid end tags, **4** v-model-on-prop. Merge `5a7cc45`, fix `7f29e37`, Mix asset rebuild `8a2938d` (pushed to `origin/main`). **Why it mattered**: Vite hard-fails on these where Mix’s `VueCompatSoftCompilerErrorsPlugin` was silently softening them.
+- **Main hygiene (pushed)**: `vue-upload-multiple-image` removed (`e2b0112`); `frontend.mdc` updated for Vue 3.5.40 / `@vue/compat` / Mix 6 / Tailwind v4 (`5de4e1f`).
+- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`, local only — not pushed)**: 🚧 **In progress — Mix still owns production Blade assets.** Scaffold `1b86a9b` → extensionless `.vue` `d06859e` → vue-multiselect CSS `70d0281` → **`VITE_PUSHER_*` Fix 1**. Rolldown CJS interop → ~179 ESM conversion (3.1) is **OPTIONAL**, not a hard blocker.
+- **Runtime gaps**: (1) ✅ **`MIX_PUSHER` → `import.meta.env.VITE_PUSHER_*`** fixed (bootstrap + `.env` / `.env.example`; no vite `define` bridge; empty local key skips Echo). (2) `$swal` missing on mounted app — still open. (3) Academics `Object.keys` — **same** `str_limit` bug; deferred.
+- **Process**: Log Phase 3 progress into `knowledge.md` at **each sub-phase checkpoint** (same discipline as Phase 1/2) — not batched catch-ups.
 ## Current Status: July 28, 2026
 
 ### Git
@@ -110,9 +117,9 @@
       3. **ClassWall edit**: **FAIL** on branch (page heading mounts; Quill/dropzone/datetime do not stay) — **waived for 1b.4**: same `editList/1` **500** reproduces on **`main`** (see deferred finding below). Not a Vue 3 / Phase 1b regression. `git diff main..migration/vue3-runtime -- app/Models/Post.php` empty.
       4. **students/blockedstudents 500**: **NOT S3**. Exact: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given at StudentController.php:432` — `count(\Request::getQueryString())` when query string is null. **Compat-related? NO.** **Confirmed on main** → **5th deferred pre-existing** (same `count(null)` pattern as ClassWall `Post.php:83`).
       - **Recommend**: **CLOSE 1b.4** — create-leave + discipline datetime PASS; ClassWall edit 500 is pre-existing on main (deferred); blockedstudents is non-compat pre-existing (deferred, log-only). **⏸️ was STOP before 1b.5** → **1b.5 CLOSED Jul 30**.
-    - **Cleanup candidate (confirmed dead direct dep, Jul 29)**: `vue-upload-multiple-image` — **zero** source imports/requires of the npm package name across `resources/**/*.vue|js` and app JS; only listed in `package.json` / lockfile. App uses the **local** SFC `resources/assets/js/components/VueUploadMultipleImage.vue` (imported by `event/details/ShowImage.vue` as `../../VueUploadMultipleImage`), which depends on `vue-easy-lightbox` + `floating-vue` — not the npm package. Cleanup (do **not** run until scheduled): `npm uninstall vue-upload-multiple-image --legacy-peer-deps` (also drops transitive `vue-image-lightbox-carousel` / nested `vue-popperjs`).
+    - **✅ Cleanup done (Jul 30, `e2b0112` on `main`)**: Removed unused npm dep `vue-upload-multiple-image` (confirmed dead Jul 29 — zero source imports of the package name). App still uses the **local** SFC `resources/assets/js/components/VueUploadMultipleImage.vue` (imported by `event/details/ShowImage.vue`), which depends on `vue-easy-lightbox` + `floating-vue` — not the removed package.
     - **Older note (pre-1b branch work)**: on `main` @ `753697f`, runtime was still Vue 2.7.16; `@vue/compat` unwired until 1b.2 Task 1.
-  - **Post-merge on `main` @ `50f5c4d` (Jul 30)**: `npm run production` PASS (42 webpack warnings — known invalid end-tag SFCs); browser `Vue.version` = **3.5.40**; PHPUnit **5 failed** (same baseline as pre-merge); post-merge shell smoke (8010, `klassapp_local`): boot, academics, attendance/add, discipline/add + `Vue.resolveComponent('multiselect')`, nav dropdown — **PASS**.
+  - **Post-merge on `main` @ `50f5c4d` (Jul 30)**: `npm run production` PASS (initially 42 soft webpack warnings — known invalid end-tag / label v-model / empty v-html / v-model-on-prop SFCs softened by Mix `VueCompatSoftCompilerErrorsPlugin`); browser `Vue.version` = **3.5.40**; PHPUnit **5 failed** (same baseline as pre-merge); post-merge shell smoke (8010, `klassapp_local`): boot, academics, attendance/add, discipline/add + `Vue.resolveComponent('multiselect')`, nav dropdown — **PASS**. **Follow-up on `main`**: those 42 soft errors were **fixed** (`7f29e37` / merge `5a7cc45` / rebuild `8a2938d`) so Vite will not hard-fail where Mix had been silent — see Session Log.
   - **Status label**: **Phase 1a complete / Phase 1b complete on `main`** — prior Jul 28 correction that runtime was still Vue 2.7.16 is **superseded** by this merge.
   - **⏸️ Decision point (user — not assumed)** — how to sequence Vue runtime vs Vite:
     - **(a)** Complete the **Vue 3 / `@vue/compat` runtime switch** as its own dedicated phase **before or alongside** Phase 3 (Vite).
@@ -143,6 +150,7 @@
     | Boot checks (Vue fn, `new Vue()`, `#app.__vue__`, `$swal`, year dropdown) | **PASS** |
   - **Audit note (kept)**: 183 active `Vue.component` sites / 0 `app.component`; sole Mix entry `app.js` — one-line interop fix restores full surface.
   - **Still deferred**: `str_limit()` at `AcademicYear.php:21` (promotion/list-class); undefined `$school` in `AcademicYearController@index` (unused by view).
+  - **Phase 3 / Vite attribution (Jul 30, `migration/vite`)**: Academics page `Object.keys` TypeError under Vite is the **same known deferred bug**, not new Phase 3 scope. `GET /admin/academic/list` → 500 `Call to undefined function App\Http\Resources\str_limit()` at `app/Http/Resources/AcademicYear.php:21` → `List.vue` assigns `response.data.academic_years` (undefined on HTML error body; axios `validateStatus: null`) → template `Object.keys(this.academic_years)` throws. Same chain already documented under Mix / Phase 1b; Vite only re-surfaces it.
 - **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No Tailwind regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill. Open (priority order): **`activity()` undefined** (login/registration tests — higher stakes), `admin/promotion/list` 500, `str_limit` on academic list API, `home_navigation` / `minimal` deferred. **Phase 1 Vue boot regression CLOSED** (both branches verified). Dashboard env recurrence **resolved**; Priority 2 HTTP smoke routes **verified 200**.
 
 ### Confirmed Orphaned Welcome-Era Files
@@ -279,17 +287,20 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Risk level** | **Low** — incremental release. |
 | **Effort** | ~2-3 hours |
 
-#### 4. Mix (Laravel Mix 4) → Vite
+#### 4. Mix (Laravel Mix 6) → Vite — 🚧 Phase 3 in progress on `migration/vite`
 | Dimension | Assessment |
 |---|---|
-| **Current config** | Zero custom webpack.mix.js — uses Laravel Mix 4 defaults from `node_modules/laravel-mix/setup/webpack.config.js` |
-| **Entry points** | `resources/assets/js/app.js` (Vue components) + `resources/assets/sass/app.scss` (styles) — both Mix defaults |
-| **Blade asset helpers** | Uses `mix('js/app.js')` and `mix('css/app.css')` — must change to `@vite('resources/js/app.js')` |
-| **Vue compatibility** | **Today: Vue 3.5.40 (`@vue/compat` MODE 2) on `main`** — Phase 3 Vite can use **`@vitejs/plugin-vue`** (compat) or native Vue 3 SFC path; `@vitejs/plugin-vue2` no longer required for runtime major version. |
+| **Current config (prod)** | Mix 6 still builds/ships production assets; Blade still `asset('js/app.js')` (not `@vite()` yet) |
+| **Vite scaffold (Jul 30)** | Branch `migration/vite` (**local only**): `vite.config.js` with `@vitejs/plugin-vue` + `@vue/compat` MODE 2 + Tailwind plugin; scripts `vite:dev` / `vite:build` (`1b86a9b` → `d06859e` → `70d0281`) |
+| **Entry points** | Same Mix entry `resources/assets/js/app.js` (+ sass) — Vite can build it; production path unchanged until Blade cutover |
+| **Blade asset helpers** | Still Mix/`asset('js/app.js')` — cutover to `@vite(...)` is a later Phase 3 step |
+| **Vue compatibility** | Vue 3.5.40 (`@vue/compat` MODE 2) on `main` — using **`@vitejs/plugin-vue`** (compat); `@vitejs/plugin-vue2` not needed |
+| **Build blockers cleared** | Extensionless `.vue` resolve (`d06859e`); Birthday/BirthdayTeacher/WorkAnniversary `<style src>` vue-multiselect CSS removed (`70d0281`) — global import remains in `app.js`; `npx vite build` PASS without ESM-converting `require()` |
+| **Runtime verify** | ✅ No `{}.MIX_PUSHER` death pattern after Fix 1 (`import.meta.env.VITE_PUSHER_*`). With key set, bundle inlines `key:\`…\`,cluster:\`mt1\``. Empty local key → skip Echo. Vue 3.5.40 mounts via temp `@vite` smoke. **3.1 ESM = OPTIONAL.** Open: `$swal`, Blade `@vite()` cutover, academics `str_limit` |
 | **Feature gap: versioning** | Mix `version()` → Vite handles this automatically via hashed filenames |
 | **Feature gap: PurgeCSS** | Currently uses `laravel-mix-purgecss` — Vite equivalent is `@fullhuman/postcss-purgecss` PostCSS plugin |
-| **Risk level** | **Low-Medium** for Vite config + Blade `@vite()` — **higher** if bundled with Phase 1b without a settled Vue major-version choice |
-| **Effort** | ~1 day config + ~2 days Blade template audit (find/replace `asset('js/app.js')` / CSS links with `@vite()` across layouts) |
+| **Risk level** | **Low-Medium** for remaining Blade `@vite()` cutover + env (`VITE_PUSHER_*`); Vue major settled |
+| **Effort** | Scaffold/build path largely done; remaining = env define, optional ESM cleanup, Blade `@vite()` cutover |
 
 ---
 
@@ -300,17 +311,17 @@ Phase A: Laravel 12 + axios 1.x ✅ (completed)
   ├─ Laravel 11→12: composer bump, test suite, deploy
   └─ axios 0.x→1.x: bootstrap.js config, error handler audit, npm bump
        ↓
-Phase B: Mix→Vite + (optional) Vue 3 runtime — **user must choose sequencing** (Jul 28)
-  ├─ Phase 3: Vite migration — vite.config.js, Blade @vite(), Tailwind v4 + @tailwindcss/vite (audit recommendation)
+Phase B: Mix→Vite + Vue 3 runtime
   ├─ Phase 1b: Vue 3 / @vue/compat runtime — **done on `main`** (`50f5c4d`)
-  └─ Doing Vite twice (plugin-vue2 then plugin-vue) is wasteful **if** Phase 1b follows soon — but staying on Vue 2.7 for Phase 3 is valid (option b)
+  └─ Phase 3: Vite migration — 🚧 **in progress on `migration/vite`** (scaffold `1b86a9b`…`70d0281`; Mix still ships prod Blade assets; Blade `@vite()` cutover not done)
 ```
 
-**Rationale (updated Jul 28):**
+**Rationale (updated Jul 30):**
 - **Laravel 12 first** — done.
 - **axios 1.x** — done.
-- **Phase 1a (SFC compile fixes)** — done and merged; **does not mean Vue 3 runs in the browser**.
-- **Mix→Vite (Phase 3)**: Vue 3 runtime (Phase 1b) is **live on `main`** — Phase 3 can proceed without a separate Vue 2.7 / plugin-vue2 detour.
+- **Phase 1a (SFC compile fixes)** — done and merged.
+- **Phase 1b (Vue 3 runtime)** — **done on `main`** (`50f5c4d`).
+- **Mix→Vite (Phase 3)**: 🚧 scaffold + `vite build` path on `migration/vite`; production still Mix. Open: `VITE_PUSHER_*` / MIX_PUSHER, Blade `@vite()` cutover, optional ESM cleanup. `$swal` / academics are separate (not Vite-build blockers).
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
@@ -5133,6 +5144,13 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **Smoke**: **PASS** — Vue 3.5.40, Add Notice form mounts, Quill `.ql-editor` present (1), no page errors / no Invalid end tag. (Vue 3 replaces `<create-circular>` tag with component root.)
 - **Status**: ✅ Done / ⏸️ STOP — did not re-run full 1b.4 or start 1b.5; not pushed
 
+### 2026-07-29: Localhost 419 login — session files not persisted by stale artisan serve
+- **Work done**: Diagnosed 419 Page Expired on http://127.0.0.1:8010 (KlassApp-main-review / migration/vue3-runtime). Confirmed curl also 419 (not browser-only). Session cookie was set but no matching file under `storage/framework/sessions` on the live php -S worker; CLI Kernel::handle+terminate wrote sessions fine. Killed stale serve (started ~09:49), fixed env/config, restarted serve — curl login now 302 → `/admin/dashboard`.
+- **Files modified**: `/Users/mac/projects/KlassApp/.env` (shared symlink; `APP_URL=http://127.0.0.1:8010`, `SESSION_SAME_SITE=lax`); `KlassApp-main-review/config/session.php` (`same_site` now `env('SESSION_SAME_SITE', 'lax')` instead of hardcoded `null`).
+- **Key decisions**: Minimal fix — restart + APP_URL/same_site; left `SESSION_DRIVER=file` and `SESSION_SECURE_COOKIE=false`. Root cause was stale serve not saving sessions, not Secure-cookie or missing sessions table (table exists but driver is file locally).
+- **Status**: ✅ Done
+- **Edge cases flagged**: Long-lived `artisan serve` can stop persisting file sessions while still setting cookies → systemic 419; `config/session.php` previously ignored `SESSION_SAME_SITE` env; shared `.env` APP_URL now points at :8010 (affects other worktrees using the symlink).
+
 ### 2026-07-30: 1b.4 flash audit re-verify + interactive smoke redo
 - **Work done**: (Part A) Exhaustive re-grep from code (not docs-only). (Part B) `npm run development` interactive Playwright smoke on `:8010` (`SESSION_DRIVER=file`, `klassapp_local`); restored `npm run production` after.
 - **Part A disposition (unchanged, re-confirmed)**:
@@ -5192,7 +5210,66 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Status**: ✅ 1b.5 harden applied / recommend CLOSE / not pushed
 
 ### 2026-07-30: Merge `migration/vue3-runtime` → `main`
-- **Work done**: No-ff merge on worktree `/Users/mac/projects/KlassApp-main-checkout` — commit **`50f5c4d1926111e787a16d2b04bd0054b4ff671d`** (`merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main`). **Not pushed.**
-- **Post-merge verify**: `npm run production` PASS (42 webpack warnings); `node_modules/vue` + browser `Vue.version` = **3.5.40**; `php artisan test --compact` → **5 failed, 1 skipped, 220 passed** (LoginRegressionTest, RegistrationMinistryCodeTest ×2, RegistrationFlowTest activity(), ToshiE2EVerificationTest LLM); shell smoke on `http://127.0.0.1:8010` (main-checkout serve, `klassapp_local`): boot, academics, attendance/add, discipline/add + multiselect resolve, nav dropdown — **PASS**.
+- **Work done**: No-ff merge on worktree `/Users/mac/projects/KlassApp-main-checkout` — commit **`50f5c4d1926111e787a16d2b04bd0054b4ff671d`** (`merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main`). Later pushed to `origin/main` with soft-SFC + hygiene follow-ups through `8a2938d`.
+- **Post-merge verify**: `npm run production` PASS (42 soft webpack warnings at merge time — cleared later by `7f29e37`); `node_modules/vue` + browser `Vue.version` = **3.5.40**; `php artisan test --compact` → **5 failed, 1 skipped, 220 passed** (LoginRegressionTest, RegistrationMinistryCodeTest ×2, RegistrationFlowTest activity(), ToshiE2EVerificationTest LLM); shell smoke on `http://127.0.0.1:8010` (main-checkout serve, `klassapp_local`): boot, academics, attendance/add, discipline/add + multiselect resolve, nav dropdown — **PASS**.
 - **Status**: ✅ **Phase 1b CLOSED on `main`**
+
+### 2026-07-30: Soft SFC template fixes on `main` (42 errors)
+- **Work done**: Cleared **42** soft Vue SFC compiler errors that Mix had been silently softening via `VueCompatSoftCompilerErrorsPlugin` (Vite hard-fails on the same templates). Breakdown: **19** v-model on `<label>`, **10** empty v-html, **9** invalid end tags, **4** v-model-on-prop.
+- **Commits (on `main`, pushed to `origin/main`)**: fix `7f29e37` → merge `5a7cc45` → Mix asset rebuild `8a2938d`.
+- **Key decisions**: Fix on Mix/`main` before relying on Vite compile path; do not depend on the soft-warn plugin for correctness.
+- **Status**: ✅ Done on `main` / pushed
+
+### 2026-07-30: Main hygiene — dead upload dep + frontend.mdc
+- **Work done**: Removed unused `vue-upload-multiple-image` (`e2b0112`). Updated `.cursor/rules/frontend.mdc` for Vue 3.5.40 / `@vue/compat` / Mix 6 / Tailwind v4 (`5de4e1f`). Both on `main`, pushed.
+- **Status**: ✅ Done / pushed
+
+### 2026-07-30: Phase 3.0 Vite scaffold (`1b86a9b`)
+- **Work done**: Created branch `migration/vite` off `main` (**local only — not pushed**); worktree `/Users/mac/projects/KlassApp-main-checkout`. Scaffolded `vite.config.js` with `@vitejs/plugin-vue` targeting `@vue/compat` **MODE 2** (alias `@vue/compat`), Tailwind plugin, npm scripts `vite:dev` / `vite:build`. **Mix still owns production** — Blade still `asset('js/app.js')`. Soft SFCs that Mix softened via `VueCompatSoftCompilerErrorsPlugin` initially hard-failed Vite (cleared on `main` by `7f29e37` before/alongside Vite progress; see soft-SFC session entry).
+- **Commit**: `1b86a9b` — `build(vite): Phase 3.0 scaffold — Vite + plugin-vue compat MODE 2`
+- **Key decisions**: Use `@vitejs/plugin-vue` (compat) not `plugin-vue2` (Phase 1b already on Vue 3.5.40); keep Mix as the shipping bundler until Blade `@vite()` cutover.
+- **Status**: ✅ Scaffold landed / 🚧 Phase 3 in progress (branch-local)
+
+### 2026-07-30: Vite resolve `.vue` extensions (`d06859e`)
+- **Work done**: Added `resolve.extensions` webpack-parity so extensionless `.vue` imports resolve under Vite the same way Mix/webpack did.
+- **Commit**: `d06859e` — `build(vite): resolve extensionless .vue imports like Mix/webpack`
+- **Status**: ✅ Done (unblocks large class of Vite resolve failures)
+
+### 2026-07-30: Birthday `<style src>` vue-multiselect CSS fix (`70d0281`)
+- **Work done**: Fixed `<style src>` vue-multiselect CSS in **3** dashboard SFCs (Birthday / BirthdayTeacher / WorkAnniversary). Global import remains in `app.js`. After this, `npx vite build` succeeded **without** ESM-converting the existing `require()` graph.
+- **Commit**: `70d0281` — `fix(vite): stop routing vue-multiselect.css through SFC style src` (**branch-local on `migration/vite`, not pushed**)
+- **Key decisions**: Keep CJS `require()` as-is for now; treat full ESM conversion as optional later cleanup (see runtime verify).
+- **Status**: ✅ Done — Vite production build path green
+
+### 2026-07-30: Phase 3 Vite runtime verify verdict
+- **Work done**: Runtime smoke of Vite-built bundle on `migration/vite` (after scaffold + extension + Birthday CSS fixes). **No production Blade cutover.** Branch remains **local only**.
+- **Verdict**:
+  - Pristine Vite build **dies** on `{}.MIX_PUSHER_*` (Echo/Pusher key) — same root cause detailed in the investigation entry below.
+  - With **temporary** `define` for MIX_PUSHER vars: Vue **3.5.40** mounts; ~**179** `require().default` components register via Rolldown CJS interop; attendance + discipline OK.
+  - **Key finding**: Rolldown CJS interop → originally planned ~179 ESM conversion (Phase 3.1) is **OPTIONAL cleanup**, not a hard blocker; `require()` graph works at runtime under Vite 8/Rolldown.
+  - `$swal` instance gap and academics `str_limit` / `Object.keys` = **separate** issues (see investigation entry; not Vite-build blockers).
+- **Status**: 🚧 Vite build path verified; Mix still ships prod; open: MIX_PUSHER env, Blade `@vite()` cutover, optional ESM
+
+### 2026-07-30: Phase 3 Vite investigation — MIX_PUSHER / $swal / academics attribution (no fixes)
+- **Work done**: Investigated three Vite-smoke findings on `migration/vite` worktree `/Users/mac/projects/KlassApp-main-checkout` (after scaffold/`vite build` path above). **No code fixes** for MIX_PUSHER or `$swal`; academics confirmed same deferred bug (knowledge only). Cross-ref: runtime verify verdict above.
+- **MIX_PUSHER**: Sole live refs `resources/assets/js/bootstrap.js:58-59` (`process.env.MIX_PUSHER_APP_KEY/CLUSTER`). Mix injects via `MixDefinitionsPlugin` → webpack `EnvironmentPlugin` for `MIX_*`. Vite has no equivalent → pristine build contains death pattern `key:{}.MIX_PUSHER_APP_KEY,cluster:{}.MIX_PUSHER_APP_CLUSTER` in `public/build/assets/app-C_0tnEHz.js` (aborts Echo/Pusher: “You must pass your app key…”). `.env` has `PUSHER_*` + `MIX_PUSHER_*`; `.env.example` has neither / no `VITE_PUSHER_*`. Need `import.meta.env.VITE_PUSHER_*` + `.env` (prefer over raw `define`) — **not yet fixed**.
+- **`$swal`**: Missing on mounted app. `app.js:391-393` sets `Vue.config.globalProperties.$swal`; `app.js:395-397` mounts `new Vue({ el:'#app' })`. Under `@vue/compat`, that assignment lands on the **singleton** `Vue.config.globalProperties` and is **not** copied into the mounted app’s `appContext.config.globalProperties` (leftover from 1b.5). Contrast: `Vue.use(VueFlashMessage)` / `Vue.prototype.$flashStorage` **does** appear on the mounted instance. Proven: `Vue.config.gp.$swal` = function, mounted ctx gp keys = `[$flashStorage]` only. Most call sites use `Swal.fire` / `window.Swal` (no `this.$swal`), so deletes often still work — **needs a real fix**.
+- **Academics `Object.keys`**: **SAME as logged `str_limit` bug — no new fix.** `GET /admin/academic/list` → 500 `str_limit()` at `AcademicYear.php:21` → `List.vue` `Object.keys(this.academic_years)` TypeError. Reconfirmed `:8013` list_http=500 + log. Not new Phase 3 scope.
+- **Status**: ⏸️ Findings only — parent decides MIX_PUSHER / `$swal` fixes; academics stays deferred
+- **Files modified**: `knowledge.md` only
+
+### 2026-07-30: Knowledge catch-up (soft SFCs, main hygiene, Phase 3) + process note
+- **Work done**: Catch-up of `knowledge.md` since last knowledge commit `faad3d9` — soft SFC fixes on `main`, main hygiene commits, Phase 3 Vite branch-local status, and the three runtime gaps. Synced identical body to `/Users/mac/projects/KlassApp-main-checkout/knowledge.md`.
+- **Process (explicit)**: Going forward, log Phase 3 progress into `knowledge.md` at **each sub-phase checkpoint** (matching Phase 1/2 discipline), **not** batched catch-ups — that gap caused this catch-up.
+- **Status**: ✅ Knowledge SoT updated (commit on `main` only; no Phase 3 code in this commit)
+
+### 2026-07-30: Phase 3 Fix 1 — VITE_PUSHER env (no MIX death pattern)
+- **Work done**: Replaced `process.env.MIX_PUSHER_APP_KEY/CLUSTER` with `import.meta.env.VITE_PUSHER_APP_KEY/CLUSTER` in `resources/assets/js/bootstrap.js` (live + commented). Added `VITE_PUSHER_*` (and documented `PUSHER_*` / `MIX_PUSHER_*`) to `.env.example`; mirrored in local `.env` (gitignored). **No** `define` MIX bridge in `vite.config.js`. Guard: skip `new Echo(...)` when key is empty (local `.env` has blank `PUSHER_APP_KEY`).
+- **Verify**:
+  - Bundle: **no** `{}.MIX_PUSHER` / `MIX_PUSHER` strings.
+  - With temp `.env.local` key `smoke-test-key-abc`: inlined `key:\`smoke-test-key-abc\`,cluster:\`mt1\`` in production chunk.
+  - Browser (`:8013`, temp `@vite` in `layouts/app.blade.php`, no `public/hot`): Vite module loads; `window.Vue` = function; `Vue.version` **3.5.40**; **no** “must pass your app key” / MIX rewrite errors. (Empty key → `window.Echo` undefined; dashboard `listenForNotifications` may log `channel` TypeError — expected until real Pusher keys.)
+- **Files modified**: `resources/assets/js/bootstrap.js`, `.env.example`, `knowledge.md` (+ local `.env` not committed). Blade `@vite` smoke **not** committed (restored after Fix 2 verify).
+- **Key decisions**: Prefer Laravel Vite `VITE_*` + `import.meta.env` over webpack-style `define`; empty-key Echo skip avoids boot abort without inventing fake keys.
+- **Status**: ✅ Fix 1 done on `migration/vite` (local only)
 
