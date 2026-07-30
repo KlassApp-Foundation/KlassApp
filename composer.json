@@ -74,7 +74,8 @@
     },
     "files": [
       "config/school-plus.php",
-      "app/Helpers/SiteHelper.php"
+      "app/Helpers/SiteHelper.php",
+      "app/Helpers/activity.php"
     ]
   },
   "autoload-dev": {
