@@ -5293,11 +5293,12 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Transitional**: The `VITE_* || MIX_*` dual-read in `bootstrap.js` is scaffolding for the Mix/Vite coexistence period — should be simplified to `VITE_*`-only once Mix is fully removed in Phase 3.5, not left as permanent dual-path logic.
 - **Status**: ✅ Dual-read required and done; both fixes safe on Mix-serving Blade path
 
-### 2026-07-30: Phase 3.2 Vite CSS entries (tailwind / app.scss / landing)
+### 2026-07-30: Phase 3.2 Vite CSS entries (`4988b01`)
 - **Work done**: First-pushed `migration/vite` to `origin` at tip **`c904435`** (`LOCAL` = `REMOTE`). Then wired Phase 3.2 CSS entries in `vite.config.js` (Blade **untouched** — still Mix `asset(...)`; `@vite()` is Phase 3.3):
   1. `resources/css/tailwind.css` — already present; via `@tailwindcss/vite` (`@import "tailwindcss"`)
   2. `resources/assets/sass/app.scss` — already present; Vite built-in Sass. Phase 2b plain CSS in `adminstyle.scss`/`style.scss` preserved (no `@apply` in Vite output)
   3. `resources/css/landing.css` — **added** as its own laravel-vite-plugin `input` (plain CSS; Mix `mix.styles()` parity). No `@import "tailwindcss"` → no Tailwind utility scan / no `--tw-` contamination
+- **Commit**: `4988b01` — `build(vite): Phase 3.2 wire CSS entries (tailwind, sass, landing)` (**local-ahead** of `origin/migration/vite`; not pushed unless asked)
 - **Verify**: `npx vite build` PASS. Size (entry CSS only):
 
   | Asset | Mix | Vite | Δ |
@@ -5309,5 +5310,5 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
   Selector spot-check **PASS**: `.admin-h1`, `.tw-form-control`, `.submit-btn`, `.custom-table` (sass); `.flex`, `.hidden`, `.md:flex` (tailwind); `.ka-container` + `--brand-blue` (landing). Mix splits some Phase 2b rules into 2 blocks; Vite Lightning merges — **content-equivalent**. Landing Vite output has **no** `.flex` utility / no `--tw-`.
 - **Files modified**: `vite.config.js`, `knowledge.md` (canonical + checkout sync). **Not** Blade. **Not** `public/build/` (left untracked).
 - **Key decisions**: Keep landing as a separate Vite CSS entry (not imported into JS or routed through Tailwind content scanning); leave Blade Mix until 3.3; do not push 3.2 commit unless asked (branch tip after push was pre-3.2).
-- **Status**: ✅ Phase 3.2 done on `migration/vite` (commit local-ahead after push of `c904435`)
+- **Status**: ✅ Phase 3.2 done on `migration/vite` (`4988b01` local-ahead)
 
