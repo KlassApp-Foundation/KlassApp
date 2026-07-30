@@ -12,7 +12,7 @@
 | **Vue** | **3.5.40** at runtime via **`@vue/compat` MODE 2** (`Vue.version` in browser; `package.json` `vue` + `@vue/compat` 3.5.40). Merged to `main` **`50f5c4d`**. |
 | **Tailwind CSS** | 4.3.3 | `package.json` — v4, CSS-first config, no `tailwind.config.js` |
 | **Laravel Mix** | 6.0.49 | `package.json` — **production still ships via Mix** (`asset('js/app.js')` / Mix-built `public/js/app.js`); webpack 5 via Mix 6 |
-| **Vite (Phase 3)** | 🚧 In progress on `migration/vite` | Scaffold + build path exist (`vite.config.js`, `npm run vite:dev` / `vite:build`); **not** production — Blade still Mix assets |
+| **Vite (Phase 3)** | 🚧 In progress on `migration/vite` (pushed) | Scaffold + CSS entries (`vite.config.js`, `npm run vite:dev` / `vite:build`); **not** production — Blade still Mix assets |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
 | **Production host** | Docker on Hetzner VPS (46.101.111.131) | `scripts/deploy-manual.sh` |
@@ -26,8 +26,8 @@
 - **Verify**: `npm run production` PASS; `Vue.version` 3.5.40; tests 5 failed (baseline); shell smoke PASS on `:8010`.
 - **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared — **19** v-model on `<label>`, **10** empty v-html, **9** invalid end tags, **4** v-model-on-prop. Merge `5a7cc45`, fix `7f29e37`, Mix asset rebuild `8a2938d` (pushed to `origin/main`). **Why it mattered**: Vite hard-fails on these where Mix’s `VueCompatSoftCompilerErrorsPlugin` was silently softening them.
 - **Main hygiene (pushed)**: `vue-upload-multiple-image` removed (`e2b0112`); `frontend.mdc` updated for Vue 3.5.40 / `@vue/compat` / Mix 6 / Tailwind v4 (`5de4e1f`).
-- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`, local only — not pushed)**: 🚧 **In progress — Mix still owns production Blade assets.** Scaffold `1b86a9b` → extensionless `.vue` `d06859e` → vue-multiselect CSS `70d0281` → **`VITE_PUSHER_*` Fix 1** → **`$swal` Fix 2** → **Mix dual-read** (Vite-only `import.meta.env` broke Mix). Rolldown CJS interop → ~179 ESM conversion (3.1) is **OPTIONAL**, not a hard blocker.
-- **Runtime gaps**: (1) ✅ **Pusher dual-read** `import.meta.env.VITE_PUSHER_*` (guarded) `|| process.env.MIX_PUSHER_*` — Mix+Vite safe. (2) ✅ **`$swal` on instances via `Vue.prototype.$swal`** under `@vue/compat` MODE 2 (not native Vue 3 `globalProperties` — revisit if MODE 3 / compat removed). (3) Academics `Object.keys` — **same** `str_limit` bug; deferred. Remaining: Blade `@vite()` cutover.
+- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`, **pushed** `origin/migration/vite` @ `c904435`+)**: 🚧 **In progress — Mix still owns production Blade assets.** Scaffold `1b86a9b` → extensionless `.vue` `d06859e` → vue-multiselect CSS `70d0281` → **`VITE_PUSHER_*` Fix 1** → **`$swal` Fix 2** → **Mix dual-read** → **Phase 3.2 CSS entries** (tailwind / app.scss / landing). Rolldown CJS interop → ~179 ESM conversion (3.1) is **OPTIONAL**, not a hard blocker.
+- **Runtime gaps**: (1) ✅ **Pusher dual-read** `import.meta.env.VITE_PUSHER_*` (guarded) `|| process.env.MIX_PUSHER_*` — Mix+Vite safe. (2) ✅ **`$swal` on instances via `Vue.prototype.$swal`** under `@vue/compat` MODE 2 (not native Vue 3 `globalProperties` — revisit if MODE 3 / compat removed). (3) Academics `Object.keys` — **same** `str_limit` bug; deferred. Remaining: Blade `@vite()` cutover (**Phase 3.3**).
 - **Process**: Log Phase 3 progress into `knowledge.md` at **each sub-phase checkpoint** (same discipline as Phase 1/2) — not batched catch-ups.
 ## Current Status: July 28, 2026
 
@@ -291,8 +291,8 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | Dimension | Assessment |
 |---|---|
 | **Current config (prod)** | Mix 6 still builds/ships production assets; Blade still `asset('js/app.js')` (not `@vite()` yet) |
-| **Vite scaffold (Jul 30)** | Branch `migration/vite` (**local only**): `vite.config.js` with `@vitejs/plugin-vue` + `@vue/compat` MODE 2 + Tailwind plugin; scripts `vite:dev` / `vite:build` (`1b86a9b` → `d06859e` → `70d0281`) |
-| **Entry points** | Same Mix entry `resources/assets/js/app.js` (+ sass) — Vite can build it; production path unchanged until Blade cutover |
+| **Vite scaffold (Jul 30)** | Branch `migration/vite` (**pushed**): `vite.config.js` with `@vitejs/plugin-vue` + `@vue/compat` MODE 2 + `@tailwindcss/vite`; scripts `vite:dev` / `vite:build` (`1b86a9b` → … → Phase 3.2 CSS) |
+| **Entry points (3.2)** | `resources/assets/js/app.js` + `resources/assets/sass/app.scss` + `resources/css/tailwind.css` + `resources/css/landing.css` — mirrors Mix; Blade still Mix until 3.3 |
 | **Blade asset helpers** | Still Mix/`asset('js/app.js')` — cutover to `@vite(...)` is a later Phase 3 step |
 | **Vue compatibility** | Vue 3.5.40 (`@vue/compat` MODE 2) on `main` — using **`@vitejs/plugin-vue`** (compat); `@vitejs/plugin-vue2` not needed |
 | **Build blockers cleared** | Extensionless `.vue` resolve (`d06859e`); Birthday/BirthdayTeacher/WorkAnniversary `<style src>` vue-multiselect CSS removed (`70d0281`) — global import remains in `app.js`; `npx vite build` PASS without ESM-converting `require()` |
@@ -321,7 +321,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **axios 1.x** — done.
 - **Phase 1a (SFC compile fixes)** — done and merged.
 - **Phase 1b (Vue 3 runtime)** — **done on `main`** (`50f5c4d`).
-- **Mix→Vite (Phase 3)**: 🚧 scaffold + `vite build` path on `migration/vite`; production still Mix. Pusher env dual-read done; open: Blade `@vite()` cutover, optional ESM cleanup. `$swal` / academics are separate (not Vite-build blockers).
+- **Mix→Vite (Phase 3)**: 🚧 scaffold + CSS entries (3.2) + `vite build` on `migration/vite` (pushed); production still Mix. Pusher env dual-read done; open: Blade `@vite()` cutover (3.3), optional ESM cleanup. `$swal` / academics are separate (not Vite-build blockers).
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
@@ -5292,4 +5292,22 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Files modified**: `resources/assets/js/bootstrap.js`, `knowledge.md` (canonical + checkout sync)
 - **Transitional**: The `VITE_* || MIX_*` dual-read in `bootstrap.js` is scaffolding for the Mix/Vite coexistence period — should be simplified to `VITE_*`-only once Mix is fully removed in Phase 3.5, not left as permanent dual-path logic.
 - **Status**: ✅ Dual-read required and done; both fixes safe on Mix-serving Blade path
+
+### 2026-07-30: Phase 3.2 Vite CSS entries (tailwind / app.scss / landing)
+- **Work done**: First-pushed `migration/vite` to `origin` at tip **`c904435`** (`LOCAL` = `REMOTE`). Then wired Phase 3.2 CSS entries in `vite.config.js` (Blade **untouched** — still Mix `asset(...)`; `@vite()` is Phase 3.3):
+  1. `resources/css/tailwind.css` — already present; via `@tailwindcss/vite` (`@import "tailwindcss"`)
+  2. `resources/assets/sass/app.scss` — already present; Vite built-in Sass. Phase 2b plain CSS in `adminstyle.scss`/`style.scss` preserved (no `@apply` in Vite output)
+  3. `resources/css/landing.css` — **added** as its own laravel-vite-plugin `input` (plain CSS; Mix `mix.styles()` parity). No `@import "tailwindcss"` → no Tailwind utility scan / no `--tw-` contamination
+- **Verify**: `npx vite build` PASS. Size (entry CSS only):
+
+  | Asset | Mix | Vite | Δ |
+  |---|---:|---:|---:|
+  | `tailwind.css` | 115796 | 120302 | +3.9% |
+  | `app.css` (sass) | 25169 | 25164 | ≈0 |
+  | `landing.css` | 17544 | 16142 | −8.0% (Lightning minify) |
+
+  Selector spot-check **PASS**: `.admin-h1`, `.tw-form-control`, `.submit-btn`, `.custom-table` (sass); `.flex`, `.hidden`, `.md:flex` (tailwind); `.ka-container` + `--brand-blue` (landing). Mix splits some Phase 2b rules into 2 blocks; Vite Lightning merges — **content-equivalent**. Landing Vite output has **no** `.flex` utility / no `--tw-`.
+- **Files modified**: `vite.config.js`, `knowledge.md` (canonical + checkout sync). **Not** Blade. **Not** `public/build/` (left untracked).
+- **Key decisions**: Keep landing as a separate Vite CSS entry (not imported into JS or routed through Tailwind content scanning); leave Blade Mix until 3.3; do not push 3.2 commit unless asked (branch tip after push was pre-3.2).
+- **Status**: ✅ Phase 3.2 done on `migration/vite` (commit local-ahead after push of `c904435`)
 
