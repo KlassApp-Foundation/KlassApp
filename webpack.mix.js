@@ -1,6 +1,7 @@
 process.env.DISABLE_NOTIFIER = "true";
 
 const path = require("path");
+const webpack = require("webpack");
 const mix = require("laravel-mix");
 
 mix.disableNotifications();
@@ -49,6 +50,8 @@ mix.js("resources/assets/js/app.js", "public/js")
     .vue({
         options: {
             compilerOptions: {
+                // Explicit value silences CONFIG_WHITESPACE deprecation (Vue 3 default → condense).
+                whitespace: "preserve",
                 compatConfig: {
                     MODE: 2,
                 },
@@ -71,7 +74,14 @@ mix.styles(["resources/css/landing.css"], "public/css/landing.css");
 
 // Vue 3 migration build: resolve `vue` → @vue/compat (MODE 2).
 mix.webpackConfig({
-    plugins: [new VueCompatSoftCompilerErrorsPlugin()],
+    plugins: [
+        new VueCompatSoftCompilerErrorsPlugin(),
+        new webpack.DefinePlugin({
+            __VUE_OPTIONS_API__: "true",
+            __VUE_PROD_DEVTOOLS__: "false",
+            __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: "false",
+        }),
+    ],
     resolve: {
         alias: {
             vue: "@vue/compat",

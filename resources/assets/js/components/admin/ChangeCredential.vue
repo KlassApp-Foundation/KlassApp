@@ -59,9 +59,7 @@
 
 <script>
 
-    import 'vue-flash-message/dist/vue-flash-message.min.css';
-    import VueFlashMessage from 'vue-flash-message';
-    Vue.use(VueFlashMessage);
+    // vue-flash-message installed once in app.js
   export default {
     props:['url' , 'name'],
     data () {

@@ -11,7 +11,45 @@ require('./bootstrap');
 // constructor itself (no .default); keep fallback for ESM interop.
 window.Vue = require('vue').default || require('vue');
 const { configureCompat } = require('vue');
-configureCompat({ MODE: 2 });
+// MODE 2 + suppress only proven third-party / intentional-boot noise (see knowledge 1b.5 dispositions).
+// Do NOT globally suppress COMPONENT_V_MODEL — app-owned v-model debt must stay visible.
+configureCompat({
+    MODE: 2,
+    GLOBAL_EXTEND: 'suppress-warning',
+    GLOBAL_MOUNT: 'suppress-warning',
+    GLOBAL_PROTOTYPE: 'suppress-warning',
+    RENDER_FUNCTION: 'suppress-warning',
+    INSTANCE_SET: 'suppress-warning',
+    OPTIONS_BEFORE_DESTROY: 'suppress-warning',
+    INSTANCE_SCOPED_SLOTS: 'suppress-warning',
+    CONFIG_WHITESPACE: 'suppress-warning',
+});
+
+// Runtime compiler (inline / third-party templates): explicit whitespace silences CONFIG_WHITESPACE.
+Vue.config.compilerOptions = Object.assign({}, Vue.config.compilerOptions || {}, {
+    whitespace: 'preserve',
+});
+
+// Quarantined vuejs-datetimepicker: silence its deprecations on the shared module export
+// without globally suppressing COMPONENT_V_MODEL / OPTIONS_DESTROYED for app code.
+try {
+    const datetimepicker = require('vuejs-datetimepicker');
+    const dt = datetimepicker.default || datetimepicker;
+    dt.compatConfig = Object.assign({}, dt.compatConfig || {}, {
+        COMPONENT_V_MODEL: 'suppress-warning',
+        OPTIONS_DESTROYED: 'suppress-warning',
+    });
+} catch (e) { /* optional at build time if package absent */ }
+
+// Single global multiselect registration (SFCs previously re-registered on every require).
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.css';
+Vue.component('multiselect', Multiselect);
+
+// vue-flash-message once (ChangeCredential + create-leave previously each Vue.use'd at module load).
+import VueFlashMessage from 'vue-flash-message';
+import 'vue-flash-message/dist/vue-flash-message.min.css';
+Vue.use(VueFlashMessage);
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
@@ -347,10 +385,12 @@ Vue.component('nav-bar', require('./components/Navigation.vue').default);
 export const bus = new Vue();
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
-import VueSweetalert2 from 'vue-sweetalert2';
-// Phase 1b.1: global Swal for Options API call sites; Vue.use kept until createApp (1b.2)
+// Avoid Vue.use(vue-sweetalert2): its install() calls provide() outside setup under
+// compat Vue.use and emits a non-compat warn. Mirror the gp + window wiring Task 2 verified.
 window.Swal = Swal;
-try { Vue.use(VueSweetalert2); } catch (e) { /* Vue 3 createApp path comes in 1b.2 */ }
+Vue.config.globalProperties.$swal = function (...args) {
+    return Swal.fire(...args);
+};
 
 const app = new Vue({
     el: '#app'

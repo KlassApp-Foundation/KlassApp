@@ -136,8 +136,7 @@
 <script> 
     import datetime from 'vuejs-datetimepicker';
     import Multiselect from 'vue-multiselect'
-    // register globally
-    Vue.component('multiselect', Multiselect)
+    // registered once in app.js
     export default {
         props:['url' , 'id'],
         components: {

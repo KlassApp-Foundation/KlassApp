@@ -98,6 +98,7 @@
     - **✅ 1b.2 Task 2 shell smoke** (Jul 29): boot + attendance/discipline/year-nav PASS; academics PASS* (list API 500); multiselect registered but discipline uses native teacher `<select>`. Production bundle emitted **0** compat warnings.
     - **✅ 1b follow-ups pre-1b.4** (Jul 29): Vue.prototype audit + **DEV** smoke warning inventory (17 unique MODE 2 messages).
     - **✅ 1b.4 plugin-surface DEV smoke** (Jul 29 + **re-run Jul 30**): ClassWall create (Quill+dropzone-vue3+datetime pick) PASS; homework Quill+file input PASS (dropzone-vue3 lives on student `Attachment.vue`, exercised via ClassWall); noticeboard list + **create** PASS (Invalid end tag recovery held); telephone `vue-good-table-next` search PASS; teachers list portal-vue side panel open (`#show-detail` hide-menu→block) + close PASS; student show profile portal tabs PASS; discipline + notice datetime calendars PASS; change-credential flash DOM PASS via `$flashStorage`. **⏸️ STOP before 1b.5**.
+    - **✅ 1b.5 harden (Jul 30)**: dispositions for all **17** DEV MODE 2 unique warns (see session log). App-owned fixes: single `multiselect` register, Vue feature-flag DefinePlugin, explicit whitespace, `$swal` via `globalProperties` (no `Vue.use` sweetalert), single `Vue.use(VueFlashMessage)`, `PhotosSlider` `destroyed`→`unmounted`. Suppress-warning via `configureCompat` for portal-vue / flash / MODE 2 boot flags; per-module `compatConfig` on `vuejs-datetimepicker` (not global `COMPONENT_V_MODEL`). Post-harden DEV smoke (same Task 2 routes): original portal/GLOBAL/datetime/multiselect/feature-flag noise **gone**; remaining = academicyear `List` unhandled errors from deferred `str_limit` 500. **Recommend CLOSE 1b.5**.
     - **1b.4 targeted re-run (Jul 30 night — four items only)**:
       1. **create-leave flash**: **PASS** (after fixing empty webpack module). Teacher `teacher_test_school_one@testschoolone.edu` → `/teacher/leave/add`; empty Submit → axios 422 → `this.flash(...)` → `.flash__message` / `.error.flash__message` with “Please fill all fields”. Prior FAIL root cause: duplicate `</script>` in `leave/teacher/Create.vue` made webpack module `()=>{}` so `<create-leave>` never mounted.
       2. **discipline datetime**: **PASS**. Same `v-model` + `value`/`$emit('input')` as ClassWall. Calendar open → day → OK updates parent (`FormData incident_date` set). Console noise: `TypeError: 'set' on proxy: trap returned falsish for property 'value'` from picker watcher `this.value = newVal` (illegal prop mutate under Vue 3) — does **not** block select.
@@ -5151,4 +5152,37 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **Recommend**: **CLOSE 1b.4** — Vue plugin surfaces for the four re-run items are green or waived; do not start 1b.5 from this closeout.
 - **Files modified**: `knowledge.md`; `config/session.php`.
 - **Status**: ✅ 1b.4 closeout complete / ⏸️ STOP before 1b.5 / not pushed
+
+### 2026-07-30: Phase A — blockedstudents confirmed on main (5th deferred)
+- **Work done**: Reproduced `GET /admin/students/blockedstudents` on `migration/vue3-runtime` and `main` @ `02a1c52`, same DB/auth. Both **500** / `StudentController.php:432` `count(null)` on `getQueryString()`. Logged as **5th deferred**; linked to ClassWall `Post.php:83` as same pattern. PHP not fixed.
+- **Commit**: `ae590b6`
+- **Status**: ✅ Phase A done
+
+### 2026-07-30: 1b.5 dispositions (BEFORE suppress/fix apply)
+Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login→dashboard→academics→attendance→discipline).
+
+| # | Warning (unique msg) | Source | Classify | Rationale |
+|---|---|---|---|---|
+| 1 | Component "multiselect" already registered | App: 5 SFCs each `Vue.component('multiselect')` at module load | **fix** | Register once in `app.js`; drop duplicate global registers |
+| 2 | `__VUE_PROD_HYDRATION_MISMATCH_DETAILS__` feature flag | Bundler missing DefinePlugin | **fix** | Inject Vue 3 feature flags in `webpack.mix.js` |
+| 3 | `GLOBAL_EXTEND` | portal-vue wormhole `Vue.extend` (+ MODE 2) | **suppress-warning** | Quarantined third-party; keep Vue 2 extend behavior |
+| 4 | `GLOBAL_MOUNT` | App `new Vue({ el })` + `bus = new Vue()` | **suppress-warning** | Intentional MODE 2 boot until createApp migration (not feasible this pass) |
+| 5 | `GLOBAL_PROTOTYPE` | `vue-flash-message` → `Vue.prototype.$flashStorage` | **suppress-warning** | Confirmed third-party; load-bearing under MODE 2 |
+| 6 | `provide() can only be used inside setup()` | `vue-sweetalert2` install via `Vue.use` | **fix** | Stop `Vue.use`; set `Vue.config.globalProperties.$swal` + `window.Swal` (already present) |
+| 7 | `CONFIG_WHITESPACE` | Compiler default migrate notice | **fix** | Explicit `compilerOptions.whitespace: 'preserve'` |
+| 8 | `RENDER_FUNCTION` @ PortalTarget | portal-vue | **suppress-warning** | Quarantined third-party (highest density) |
+| 9 | `INSTANCE_SET` @ PortalTarget | portal-vue | **suppress-warning** | Quarantined third-party |
+| 10 | `OPTIONS_BEFORE_DESTROY` @ PortalTarget | portal-vue | **suppress-warning** | Quarantined third-party |
+| 11 | `RENDER_FUNCTION` @ Portal | portal-vue | **suppress-warning** | Same flag as #8 |
+| 12 | `OPTIONS_BEFORE_DESTROY` @ Portal | portal-vue | **suppress-warning** | Same flag as #10 |
+| 13 | `INSTANCE_SCOPED_SLOTS` | portal-vue `$scopedSlots` | **suppress-warning** | Quarantined third-party (zero app `$scopedSlots`) |
+| 14 | Unhandled error during render @ List | academicyear `List.vue` after `/admin/academic/list` 500 | **leave** | Real error from deferred `str_limit` bug — not compat noise; do not suppress |
+| 15 | Unhandled error during component update @ List | same | **leave** | same as #14 |
+| 16 | `COMPONENT_V_MODEL` @ DatetimePicker | vuejs-datetimepicker | **suppress-warning** (per-module `compatConfig` on package export) | Quarantined third-party; **not** global — preserve app-owned v-model deprecation signal |
+| 17 | `OPTIONS_DESTROYED` @ DatetimePicker | vuejs-datetimepicker | **suppress-warning** (per-module) + **fix** app `PhotosSlider.vue` `destroyed`→`unmounted` | Third-party picker + one app-owned rename |
+
+- **Bonus fix discovered during apply**: `flash-message` already registered (ChangeCredential + create-leave each `Vue.use`) — **fix**: single `Vue.use(VueFlashMessage)` in `app.js`.
+- **Applied**: see commit after this log. Post-harden DEV re-smoke (login→academics→attendance→discipline): portal/GLOBAL/datetime/multiselect/feature-flag/provide/CONFIG_WHITESPACE noise **cleared**. Remaining on that path: academicyear List unhandled render/update (#14/#15) + `Object.keys` pageerror from deferred `/admin/academic/list` 500. Flash still works via `Vue.prototype.$flashStorage.flash(...)`.
+- **Recommend**: **CLOSE 1b.5**. Open follow-ups (not blocking close): createApp migration (clears intentional GLOBAL_MOUNT suppress), portal-vue → Teleport, datetimepicker replace, broader `count(` null-safety grep, academicyear `str_limit`, incidental `INSTANCE_EVENT_EMITTER` on profile tabs outside original inventory.
+- **Status**: ✅ 1b.5 harden applied / recommend CLOSE / not pushed
 

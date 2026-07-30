@@ -104,7 +104,7 @@ import { bus } from "../../../app";
 
     },
 
-    destroyed() {
+    unmounted() {
       window.removeEventListener('resize', this.handleResize)
     },
     
