@@ -72,7 +72,7 @@
                 <div class="tw-form-group w-full lg:w-3/5">
                     <div class="lg:mr-8 md:mr-8 flex flex-col lg:flex-row md:flex-row lg:items-center md:items-center w-full">
                         <div class="w-full w-full lg:w-1/4 md:w-1/3">
-                            <label for="attachment" v-model="attachment" class="tw-form-label">Attachment</label>
+                            <label for="attachment" class="tw-form-label">Attachment</label>
                         </div>
                         <div class="mb-2 w-full lg:w-3/4 md:w-2/3">
                             <input type="file" name="attachment" @change="OnFileSelected" id="attachment" class="tw-form-control w-full">
@@ -90,7 +90,7 @@
                             <label for="date" class="tw-form-label">Date<span class="text-red-500">*</span></label>
                         </div>
                         <div class="mb-2 w-full lg:w-3/4 md:w-2/3">
-                            <input type="date" name="date" v-model="date" class="tw-form-control w-full" id="date">
+                            <input type="date" name="date" v-model="local_date" class="tw-form-control w-full" id="date">
                             <span v-if="errors.date" class="text-red-500 text-xs font-semibold">{{errors.date[0]}}</span>
                         </div>
                     </div>
@@ -136,6 +136,7 @@
                 teacher_id:'',
                 description:'',
                 attachment:'',
+                local_date: this.date,
                 editorOption:{
                     theme: 'snow',
                     modules: {
@@ -164,7 +165,7 @@
                 this.teacher_id='',
                 this.description='';  
                 this.attachment='';  
-                this.date='';  
+                this.local_date='';  
             }, 
 
             checkForm()
@@ -180,7 +181,7 @@
                 formData.append('teacher_id',this.teacher_id);                 
                 formData.append('description',this.description);          
                 formData.append('attachment',this.attachment);          
-                formData.append('date',this.date);
+                formData.append('date',this.local_date);
                 formData.append('submission_date',this.submission_date);           
                       
                 axios.post('/'+this.mode+'/homework/add',formData,{headers: {'Content-Type': 'multipart/form-data'}}).then(response => {     

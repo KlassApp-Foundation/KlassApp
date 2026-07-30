@@ -32,9 +32,7 @@
                                 </div>
                             </div>
                             <div class="py-2">
-                                <p v-html="reply.comments">
-                                    <i>{{ reply.comments }}</i>
-                                </p>
+                                <p v-html="reply.comments"></p>
                                 <img :src="reply.attachment_file" class="w-24 h-24" v-if="reply.attachment_file != null">
                             </div>
                             <ul class="list-reset leading-loose my-2 text-xs">
@@ -110,9 +108,7 @@
                                     </div>
                                 </div>
                                 <div class="py-2">
-                                    <p v-html="commentlist[index-1].comments">
-                                        <i>{{ commentlist[index-1].comments }}</i>
-                                    </p>
+                                    <p v-html="commentlist[index-1].comments"></p>
                                     <img :src="commentlist[index-1].attachment_file" class="w-24 h-24" v-if="commentlist[index-1].attachment_file !== null">
                                 </div>
                                 <ul class="list-reset leading-loose my-2 text-xs">
@@ -299,9 +295,7 @@
                                 </div>
                             </div>
                             <div class="py-2">
-                                <p v-html="comment.reply_comments">
-                                    <i>{{ comment.reply_comments }}</i>
-                                </p>
+                                <p v-html="comment.reply_comments"></p>
                                 <img :src="comment.reply_attachment" class="w-24 h-24" v-if="comment.reply_attachment != null">
                             </div>
                             <ul class="list-reset leading-loose my-2 text-xs">
@@ -389,9 +383,7 @@
                                 </div>
                             </div>
                             <div class="py-2">
-                                <p v-html="comment.reply_comments">
-                                    <i>{{ comment.reply_comments }}</i>
-                                </p>
+                                <p v-html="comment.reply_comments"></p>
                                 <img :src="comment.reply_attachment" class="w-24 h-24" v-if="comment.reply_attachment != null">
                             </div>
                             <ul class="list-reset leading-loose my-2 text-xs">

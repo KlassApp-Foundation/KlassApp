@@ -71,7 +71,7 @@
                 <div class="tw-form-group w-full lg:w-3/5 md:w-3/4">
                     <div class="lg:mr-8 md:mr-8 flex flex-col lg:flex-row md:flex-row lg:items-center md:items-center w-full">
                         <div class="w-full w-full lg:w-1/4 md:w-1/4">
-                            <label for="attachment" v-model="attachment" class="tw-form-label">Attachment</label>
+                            <label for="attachment" class="tw-form-label">Attachment</label>
                         </div>
                         <div class="mb-2 w-full lg:w-3/4 md:w-2/3">
                             <input type="file" name="attachment" @change="OnFileSelected" id="attachment" class="tw-form-control w-full">

@@ -39,7 +39,7 @@
 	    		</div>
 	    			<div class="flex text-xs justify-between flex-col lg:flex-row w-4/5">
 					    <div class="my-2 lg:my-0">
-					      	<p class="text-gray-800 text-sm" v-html="post.description">{{ post.description }}</p>
+					      	<p class="text-gray-800 text-sm" v-html="post.description"></p>
 					    </div>   
 		    		</div>
 	    		<div class="flex my-3 flex-col lg:flex-row md:flex-row" v-if="post.attachments != null">

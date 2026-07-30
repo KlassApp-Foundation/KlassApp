@@ -40,7 +40,7 @@
                         <span class="text-gray-700 font-medium mx-2">Description : </span>
                     </div>
                     <div>
-                        <p v-html="homework.description">{{ homework.description }}</p>
+                        <p v-html="homework.description"></p>
                     </div>
                 </li>
             </ul>
