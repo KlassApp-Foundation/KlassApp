@@ -11,7 +11,7 @@
 | **Livewire** | 3.x | `composer.json` require `^3.4` |
 | **Vue** | **3.5.40** at runtime via **`@vue/compat` MODE 2** (`Vue.version` in browser; `package.json` `vue` + `@vue/compat` 3.5.40). Merged to `main` **`50f5c4d`**. |
 | **Tailwind CSS** | 4.3.3 | `package.json` — v4, CSS-first config, no `tailwind.config.js` |
-| **Bundler** | **Vite 8** (sole) | Phase 3.5 — Mix removed (`3bc5c70` on `migration/vite`). Scripts: `npm run dev` / `npm run build`. Blade `@vite([...])`. |
+| **Bundler** | **Vite 8** (sole) | Phase 3 **CLOSED on `main`** — merge `9bdf185` (from `migration/vite` / `3bc5c70`). Scripts: `npm run dev` / `npm run build`. Blade `@vite([...])`. |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
 | **Production host** | Docker on Hetzner VPS (46.101.111.131) | `scripts/deploy-manual.sh` |
@@ -19,20 +19,21 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Current Status: July 30, 2026 (Vue 3 runtime on `main` + Phase 3 Vite **closeout pending merge**)
+## Current Status: July 30, 2026 (Vue 3 + Phase 3 Vite **CLOSED on `main`**)
 
-- **Merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). On `origin/main` with follow-ups through `8a2938d`.
-- **Verify (Vue 3 on main)**: `Vue.version` 3.5.40; tests **5 failed** (baseline — pre-existing, separately tracked); shell smoke PASS.
-- **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared — **19** v-model on `<label>`, **10** empty v-html, **9** invalid end tags, **4** v-model-on-prop. Merge `5a7cc45`, fix `7f29e37`, Mix asset rebuild `8a2938d` (pushed to `origin/main`). **Why it mattered**: Vite hard-fails on these where Mix’s `VueCompatSoftCompilerErrorsPlugin` was silently softening them.
-- **Main hygiene (pushed)**: `vue-upload-multiple-image` removed (`e2b0112`).
-- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`)**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** → **✅ 3.1 ESM** → **✅ 3.5 Mix removal** (`3bc5c70`). Vite is sole bundler. Closeout Steps 8–9: rules `c470c39`; knowledge closeout this commit.
-- **Phase 3.5 closeout (Jul 30)** — see Session Log “Phase 3.5 closeout”:
-  - **Closed**: Mix / `webpack.mix.js` / Mix scripts; Pusher dual-read → `VITE_*`-only; deploy script → `npm run build`; ESM app graph; Blade `@vite`.
-  - **Surfaced / scoped tech debt**: `.npmrc` `legacy-peer-deps=true` required because **7 direct packages** declare Vue 2 peers that reject Vue 3.5.40 (first ERESOLVE: `@fullcalendar/vue@5` `peer vue@^2.6.12`). Not vague “needed for compat.”
-  - **Deferred docs (low priority)**: `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, `resources/views/components/DESIGN_SYSTEM.md` still reference Mix / Tailwind v1 — cleanup deferred.
-  - **5 pre-existing app bugs** remain separately tracked (do not re-litigate): `activity()` helper; `admin/promotion/list` `exam_type`; academics `str_limit` / `Object.keys`; ClassWall `Post.php:83` null `attachment_file`; `blockedstudents` `count(null)` query string.
-- **Runtime gaps (remaining)**: Academics `str_limit` / `Object.keys` — deferred (pre-existing). Pusher empty key → Echo skip (by design) — callers must guard `window.Echo`.
-- **Process**: Log Phase 3 progress into `knowledge.md` at **each sub-phase checkpoint** (same discipline as Phase 1/2) — not batched catch-ups.
+- **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
+- **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
+- **Post-merge verify (on merged main @ `9bdf185`)**:
+  - `npm run build` — **PASS** (Vite 8.1.5, ~6.8s).
+  - `npm run dev` + artisan `:8010` — `Vue.version === '3.5.40'`, Vite client from `public/hot`; shell smoke PASS (boot, academics, attendance/add + multiselect, discipline/add + multiselect, ACADEMICS sidebar nav). Login `admin@testschoolone.sch.ug` / `password`. `public/hot` cleaned after.
+  - PHPUnit `php artisan test --compact` — **5 failed, 1 skipped, 220 passed** (same baseline): `LoginRegressionTest::test_login_succeeds_with_valid_credentials`; `RegistrationMinistryCodeTest` ×2; `RegistrationFlowTest::admin_name_is_set_on_manual_registration`; `ToshiE2EVerificationTest::llm_responds_and_route_tool_fails_authentication_gracefully`.
+  - Phase 3.4 re-smoke — **PASS**: portal-vue teachers `#show-detail` open (`hide-menu`→`block`) + close; vuejs-datetimepicker discipline + ClassWall `.port` calendars; change-credential on teacher show (`$flashStorage` + Credentials UI); create-leave `/teacher/leave/add` mounts (Vue 3.5.40).
+- **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared earlier (`7f29e37` / `5a7cc45` / `8a2938d`) — required so Vite does not hard-fail where Mix softened.
+- **Main hygiene (pushed pre-Vite)**: `vue-upload-multiple-image` removed (`e2b0112`).
+- **Phase 3 history on `migration/vite`**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** → **✅ 3.1 ESM** → **✅ 3.5 Mix removal** (`3bc5c70`) → rules `c470c39` → merge to main `9bdf185`.
+- **Scoped tech debt**: `.npmrc` `legacy-peer-deps=true` — **7 direct packages** declare Vue 2 peers that reject Vue 3.5.40 (first ERESOLVE: `@fullcalendar/vue@5`).
+- **5 pre-existing app bugs** remain separately tracked (do not re-litigate): `activity()` helper; `admin/promotion/list` `exam_type`; academics `str_limit` / `Object.keys`; ClassWall `Post.php:83` null `attachment_file`; `blockedstudents` `count(null)` query string.
+- **NOT PUSHED** — awaiting user decision to push `main`.
 ## Current Status: July 28, 2026
 
 ### Git
@@ -291,10 +292,10 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Risk level** | **Low** — incremental release. |
 | **Effort** | ~2-3 hours |
 
-#### 4. Mix (Laravel Mix 6) → Vite — ✅ Phase 3 complete on `migration/vite` (pending merge to `main`)
+#### 4. Mix (Laravel Mix 6) → Vite — ✅ Phase 3 **CLOSED on `main`** (`9bdf185`)
 | Dimension | Assessment |
 |---|---|
-| **Final state** | Vite 8 sole bundler — Mix / `webpack.mix.js` / Mix npm scripts **removed** (`3bc5c70`). Scripts: `npm run dev` / `npm run build`. |
+| **Final state** | Vite 8 sole bundler on **`main`** — Mix / `webpack.mix.js` / Mix npm scripts **removed** (`3bc5c70` via merge `9bdf185`). Scripts: `npm run dev` / `npm run build`. |
 | **Vite config** | `vite.config.js`: `@vitejs/plugin-vue` + `@vue/compat` MODE 2 + `@tailwindcss/vite` + `laravel-vite-plugin` |
 | **Entry points** | `resources/assets/js/app.js` + `resources/assets/sass/app.scss` + `resources/css/tailwind.css` + `resources/css/landing.css` |
 | **Blade** | `@vite([...])` on cutover layouts (Phase 3.3) |
@@ -303,8 +304,8 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Pusher** | `VITE_PUSHER_*` only — Mix dual-read removed in 3.5 |
 | **Scoped tech debt** | `.npmrc` `legacy-peer-deps=true` — Vue-2 peer packages listed in Phase 3.5 closeout |
 | **Deferred docs** | `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, `DESIGN_SYSTEM.md` still mention Mix — low priority |
-| **Risk level** | **Low** remaining — merge + deploy verification; package peer upgrades separate |
-| **Effort** | Phase 3 closed on branch; merge to `main` + prod deploy next |
+| **Risk level** | **Low** — prod deploy verification next; package peer upgrades separate |
+| **Effort** | Phase 3 closed on `main`; push + prod deploy next |
 
 ---
 
@@ -317,15 +318,15 @@ Phase A: Laravel 12 + axios 1.x ✅ (completed)
        ↓
 Phase B: Mix→Vite + Vue 3 runtime
   ├─ Phase 1b: Vue 3 / @vue/compat runtime — **done on `main`** (`50f5c4d`)
-  └─ Phase 3: Vite migration — ✅ **complete on `migration/vite`** (3.1–3.5; pending merge)
+  └─ Phase 3: Vite migration — ✅ **CLOSED on `main`** (`9bdf185`, 3.1–3.5)
 ```
 
-**Rationale (updated Jul 30 Phase 3.5 closeout):**
+**Rationale (updated Jul 30 Phase 3 merge to main):**
 - **Laravel 12 first** — done.
 - **axios 1.x** — done.
 - **Phase 1a (SFC compile fixes)** — done and merged.
 - **Phase 1b (Vue 3 runtime)** — **done on `main`** (`50f5c4d`).
-- **Mix→Vite (Phase 3)** — ✅ **closed on `migration/vite`**: 3.3 Blade `@vite()` → 3.4 packages → 3.1 ESM → 3.5 Mix removal (`3bc5c70`). Scripts `npm run dev`/`build`; Pusher `VITE_*`-only; no Mix. Academics `str_limit` remains deferred (pre-existing). Merge to `main` + deploy next.
+- **Mix→Vite (Phase 3)** — ✅ **CLOSED on `main`** (`9bdf185`): 3.3 Blade `@vite()` → 3.4 packages → 3.1 ESM → 3.5 Mix removal (`3bc5c70`). Scripts `npm run dev`/`build`; Pusher `VITE_*`-only; no Mix. Academics `str_limit` remains deferred (pre-existing). Push + prod deploy next.
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
@@ -5404,3 +5405,13 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Work done**: `git fetch origin` + merge commit of `origin/main` (`56840a0`) into `migration/vite`. Sole conflict: `knowledge.md`. Resolved keeping Phase 3.5 closeout / Vite-as-sole-bundler truth from `migration/vite`; main's catch-up (`56840a0`) status wording was superseded (already present as session-log history). Synced resolved body to `/Users/mac/projects/KlassApp/knowledge.md`.
 - **Key decisions**: Prefer merge commit (not rebase). Do **not** merge `migration/vite` into `main` yet; do not push.
 - **Status**: ✅ Merge complete on `migration/vite`; branch 0 behind main
+
+### 2026-07-30: Merge migration/vite → main (Phase 3 CLOSED)
+- **Work done**: Created clean worktree `/Users/mac/projects/KlassApp-main-merge` on `main` @ `56840a0` (= `origin/main`). Merged `migration/vite` @ `73ee046` with no-ff merge commit **`9bdf185`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)`. Did not touch `KlassApp` (`migration/tailwind4`) or other dirty worktrees. Post-merge: `composer install` + `npm install` + `npm run build` PASS; `npm run dev` (:5174) + `php artisan serve` (:8010); Playwright shell + Phase 3.4 re-smoke; PHPUnit baseline unchanged (5 failures). Knowledge closeout on main (this entry); synced to `/Users/mac/projects/KlassApp/knowledge.md`.
+- **Verify**:
+  - Build: Vite 8.1.5 clean (~6.8s).
+  - Shell: `Vue.version` 3.5.40; Vite client; academics / attendance+multiselect / discipline+multiselect / ACADEMICS sidebar nav PASS.
+  - Phase 3.4: teachers portal `#show-detail` open/close; datetimepicker discipline + ClassWall; change-credential + create-leave mount / `$flashStorage`.
+  - PHPUnit: 5 failed, 1 skipped, 220 passed (LoginRegression, RegistrationMinistryCode ×2, RegistrationFlow activity(), ToshiE2E LLM).
+- **Key decisions**: Prefer dedicated merge worktree over checking out main in an existing dirty tree. Prefer new knowledge commit (not amend merge). **Do not push** — user decides.
+- **Status**: ✅ Phase 3 **CLOSED on `main`** locally; awaiting push decision
