@@ -44,7 +44,7 @@
 - **Main hygiene (pushed pre-Vite)**: `vue-upload-multiple-image` removed (`e2b0112`).
 - **Phase 3 history on `migration/vite`**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** → **✅ 3.1 ESM** → **✅ 3.5 Mix removal** (`3bc5c70`) → rules `c470c39` → merge to main `9bdf185`.
 - **Scoped tech debt**: `.npmrc` `legacy-peer-deps=true` — **7 direct packages** declare Vue 2 peers that reject Vue 3.5.40 (first ERESOLVE: `@fullcalendar/vue@5`).
-- **Pushed** to `origin/main` — tip **`d8dc818`** (deferred-bugs merge `536603c` + knowledge closeout).
+- **Pushed** to `origin/main` — includes deferred-bugs merge **`536603c`** + knowledge closeout **`d8dc818`** (status correction on this tip).
 ## Current Status: July 28, 2026
 
 ### Git
@@ -389,7 +389,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Merge commit**: **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)`
 - **Tip merged**: `fix/deferred-bugs` @ `a0db768` (fix commits `77d1fbe` / `5b5540f` / `b21c04f` / `e993196` + docs)
 - **Post-merge smoke**: login+dashboard, `/admin/academic/list`, ClassWall `editList/1`, `/admin/students/blockedstudents`, `/admin/promotion/list` — all **200**; `activity()` OK; targeted feature tests **12 passed**
-- **Status**: ✅ Done — **pushed** to `origin/main` @ **`d8dc818`**
+- **Status**: ✅ Done — **pushed** to `origin/main` (merge `536603c` / knowledge `d8dc818`)
 - **Edge cases flagged**: Only expected failure remains `ToshiE2EVerificationTest` LLM null (API/env).
 
 ### 2026-07-31: Deferred track closeout — all 5 CLOSED with commit refs
