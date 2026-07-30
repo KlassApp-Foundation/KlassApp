@@ -1,14 +1,17 @@
 # KlassApp Design System
 
+> **Stack row superseded.** Canonical tooling SoT: `.cursor/rules/frontend.mdc` (Vite 8 sole bundler, Tailwind v4.3.3, Vue 3.5.40 `@vue/compat`). Component API docs below remain valid.
+
 ## Stack Context
 
 | Layer | Technology | Notes |
 |---|---|---|
-| CSS framework | Tailwind CSS v1.4.6 | No JIT, no arbitrary values, no DaisyUI |
-| Build | Laravel Mix + `laravel-mix-tailwind` | |
-| Components | Laravel 10 anonymous Blade components | `resources/views/components/*.blade.php` auto-register as `x-*` |
+| CSS framework | Tailwind CSS **v4.3.3** | CSS-first `@theme` in `resources/css/tailwind.css`; Vite plugin `@tailwindcss/vite` |
+| Build | **Vite 8** + `laravel-vite-plugin` | `npm run dev` / `npm run build` — **no** Mix / `npm run production` |
+| Components | Laravel anonymous Blade components | `resources/views/components/*.blade.php` auto-register as `x-*` |
 | Design tokens | CSS custom properties in `dashboard-refresh.css` | Colors, fonts, shadows in `:root` block |
 | Fonts | Sora (headings), DM Sans (body) | Google Fonts via `@import` |
+| Vue (app shell) | Vue 3.5.40 via `@vue/compat` MODE 2 | Options API; alias `vue` → `@vue/compat` |
 
 ## Available Components
 
