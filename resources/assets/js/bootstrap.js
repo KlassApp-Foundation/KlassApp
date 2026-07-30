@@ -1,17 +1,14 @@
-window._ = require("lodash");
-window.Popper = require("popper.js").default;
+import _ from 'lodash';
+import Popper from 'popper.js';
+import axios from 'axios';
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+// jquery-global sets window.$ before bootstrap evaluates (ESM dependency order).
+import './jquery-global.js';
+import 'bootstrap';
 
-/**
- * We'll load jQuery and the Bootstrap jQuery plugin which provides support
- * for JavaScript based Bootstrap features such as modals and tabs. This
- * code may be modified to fit the specific needs of your application.
- */
-
-try {
-    window.$ = window.jQuery = require("jquery");
-
-    require("bootstrap");
-} catch (e) {}
+window._ = _;
+window.Popper = Popper;
 
 /**
  * We'll load the axios HTTP library which allows us to easily issue requests
@@ -19,9 +16,9 @@ try {
  * CSRF token as a header based on the value of the "XSRF" token cookie.
  */
 
-window.axios = require("axios").default || require("axios");
+window.axios = axios;
 
-window.axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
+window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 // Preserve pre-1.x validateStatus behavior (accept all HTTP status codes)
 // to avoid breaking components that handle errors via response status checks
@@ -29,17 +26,17 @@ window.axios.defaults.validateStatus = null;
 
 /**
  * Next we will register the CSRF Token as a common header with Axios so that
- * all outgoing HTTP requests automatically have it attached. This is just
- * a simple convenience so we don't have to attach every token manually.
+ * all outgoing HTTP requests automatically have it attached. This is just a
+ * simple convenience so we don't have to attach every token manually.
  */
 
 let token = document.head.querySelector('meta[name="csrf-token"]');
 
 if (token) {
-    window.axios.defaults.headers.common["X-CSRF-TOKEN"] = token.content;
+    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
 } else {
     console.error(
-        "CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token"
+        'CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token'
     );
 }
 
@@ -49,24 +46,17 @@ if (token) {
  * allows your team to easily build robust real-time web applications.
  */
 
-import Echo from "laravel-echo";
+window.Pusher = Pusher;
 
-window.Pusher = require("pusher-js");
-
-window.Echo = new Echo({
-    broadcaster: "pusher",
-    key: process.env.MIX_PUSHER_APP_KEY,
-    cluster: process.env.MIX_PUSHER_APP_CLUSTER,
-    forceTLS: true
-});
-
-// window.Echo = new Echo({
-//     broadcaster: "pusher",
-//     key: process.env.MIX_PUSHER_APP_KEY,
-//     cluster: process.env.MIX_PUSHER_APP_CLUSTER,
-//     wsHost: window.location.hostname,
-//     wsPort: 6001,
-//     encrypted: false,
-//     disableStats: true,
-//     forceTLS: false
-// });
+// Vite injects VITE_* via import.meta.env at build time.
+const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY;
+const pusherCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER;
+// Skip Echo when key is empty — local .env often has blank PUSHER_APP_KEY.
+if (pusherKey) {
+    window.Echo = new Echo({
+        broadcaster: 'pusher',
+        key: pusherKey,
+        cluster: pusherCluster,
+        forceTLS: true
+    });
+}

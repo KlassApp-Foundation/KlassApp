@@ -12,8 +12,11 @@
         <!-- Styles -->
 
          @filamentStyles
-         <link href="{{ asset('css/tailwind.css') }}?v={{ filemtime(public_path('css/tailwind.css')) }}" rel="stylesheet">
-         <link href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}" rel="stylesheet">
+         @vite([
+             'resources/assets/js/app.js',
+             'resources/assets/sass/app.scss',
+             'resources/css/tailwind.css',
+         ])
         <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
         <link href="{{ asset('css/dashboard-refresh.css') }}" rel="stylesheet">
         <link href="{{ asset('vendor/toshi-ui/toshi-ui.css') }}?v={{ filemtime(public_path('vendor/toshi-ui/toshi-ui.css')) }}" rel="stylesheet">
@@ -56,7 +59,7 @@
         <!-- Scripts -->
         @filamentScripts
 
-        <script src="{{ asset('js/app.js') }}" defer></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
         <script src="{{ asset('js/custom.js') }}" defer></script>
         @stack('scripts')
 

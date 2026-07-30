@@ -18,7 +18,7 @@
 
 <script>
   import PortalVue from "portal-vue";
-  import { bus } from "../../../../app";
+  import { bus } from "../../../../event-bus";
  
   export default {
     props:['url' , 'id' , 'entity_id' , 'entity_name' , 'mode'],

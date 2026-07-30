@@ -34,7 +34,7 @@
 
 <script>
   import PortalVue from "portal-vue";
-  import { bus } from "../../../app";
+  import { bus } from "../../../event-bus";
   import notes from '../../notes';
   import myprofile from './myprofile';
   import timeline from './timeline';

@@ -5,17 +5,20 @@ globs: "**/*.{blade.php,vue,js,css,scss}"
 
 # KlassApp — Frontend Conventions
 
-## Tooling (current `main` — Jul 2026)
+## Tooling (Phase 3.5 — Vite sole bundler, Jul 2026)
 
-- **Laravel Mix 6.0.49** (webpack 5) — `npm run dev` / `npm run production`. **Not Vite yet** (Phase 3 = `migration/vite`).
-- **Vue 3.5.40** via **`@vue/compat` MODE 2** — Options API, `Vue.component()` registration. Browser `Vue.version` must start with `3`. Alias `vue` → `@vue/compat` in `webpack.mix.js`; runtime `configureCompat({ MODE: 2, … })` in `resources/assets/js/app.js`.
-- **Install**: `npm install --legacy-peer-deps` (required for Vue 3 / peer graph).
-- **Tailwind v4.3.3** — CSS-first `@theme` in `resources/css/tailwind.css` (no `tailwind.config.js`). Mix PostCSS: `@tailwindcss/postcss` + `lightningcss`. `@apply` uses no-dot syntax (`@apply text-sm`).
+- **Vite 8** + `laravel-vite-plugin` — sole bundler. Scripts: `npm run dev` (= Vite HMR) / `npm run build` (= production). There is **no** Laravel Mix / `webpack.mix.js` / `npm run production`.
+- **Vue 3.5.40** via **`@vue/compat` MODE 2** — Options API, `Vue.component()` registration. Browser `Vue.version` must start with `3`. Alias `vue` → `@vue/compat` in `vite.config.js`; runtime `configureCompat({ MODE: 2, … })` via `resources/assets/js/vue-compat.js`.
+- **ESM only (Phase 3.1)**: `resources/assets/js/app.js` + `bootstrap.js` use `import`/`export`. Do **not** reintroduce `require()` — Vite-served `npm run dev` runs native ESM (`require is not defined`). Prefer new shared modules (`vue-compat.js`, `event-bus.js`, `jquery-global.js`) over circular imports from `app.js`.
+- **Install**: `npm install` (`.npmrc` has `legacy-peer-deps=true`). **Scoped debt**: several Vue-2-era packages still declare `peerDependencies.vue` that reject Vue 3 — see knowledge.md Phase 3.5 closeout. Do not remove the flag without replacing those packages.
+- **Tailwind v4.3.3** — CSS-first `@theme` in `resources/css/tailwind.css` (no `tailwind.config.js`). Vite plugin: `@tailwindcss/vite`. Sass entry `resources/assets/sass/app.scss` is plain CSS post–Phase 2b (`@apply` not reintroduced in SCSS).
+- **Pusher / Echo**: `import.meta.env.VITE_PUSHER_APP_KEY` / `VITE_PUSHER_APP_CLUSTER` only (Mix dual-read removed in 3.5). Empty key → skip `new Echo(...)`.
+- **Blade**: layouts use `@vite([...])` for JS/CSS entries — not `mix()` / not bare `asset('js/app.js')` for the app bundle. Production must **not** leave `public/hot` (dev server pointer).
 - **Playwright** available in `node_modules` for E2E testing.
 
 ## Soft SFC compiler diagnostics
 
-`VueCompatSoftCompilerErrorsPlugin` in `webpack.mix.js` downgrades known Vue 3 template compiler errors to warnings (~42). Categories: `v-model` on `<label>`, `v-html` with children, invalid end tags, `v-model` on props. Vite migration will need a softener **or** a template cleanup pass.
+Mix’s `VueCompatSoftCompilerErrorsPlugin` is gone with Mix. Soft SFCs that previously only warned under Mix were cleaned on `main` (~42) so Vite’s strict SFC compiler can build. New template compiler errors hard-fail `npm run build` / `npm run dev` — fix the SFC; do not reintroduce a Mix softener.
 
 ## ds-* Pattern Library
 
@@ -54,25 +57,23 @@ Not all layouts load the same Tailwind source — **check which layout a page re
 
 | Layout | Tailwind source |
 |---|---|
-| `layouts/app.blade.php` | Local `tailwind.css` v4 build |
-| `layouts/superadmin-app.blade.php` | Local `tailwind.css` v4 build |
-| `layouts/empty.blade.php` | Local `tailwind.css` v4 build |
-| `layouts/main.blade.php` | Local `tailwind.css` v4 build |
+| `layouts/app.blade.php` | Local `tailwind.css` v4 via `@vite` |
+| `layouts/superadmin-app.blade.php` | Local `tailwind.css` v4 via `@vite` |
+| `layouts/empty.blade.php` | Local `tailwind.css` v4 via `@vite` |
+| `layouts/main.blade.php` | Local `tailwind.css` v4 via `@vite` |
 | `layouts/minimal.blade.php` | `app.css` only — **no** dedicated `tailwind.css` link |
 | `layouts/admission.blade.php` | CDN v1.1.3 + `app.css` — **no** local v4 Tailwind link |
 | `layouts/video.blade.php` | CDN v1.1.3 + `app.css` — **no** local v4 Tailwind link |
 
 Landing pages (`landing.blade.php`, `landing2.blade.php`) use Tailwind Play CDN (`cdn.tailwindcss.com`) — self-configured.
 
-Layouts load JS via `asset('js/app.js')` (not `mix()`).
-
 ### @Apply → Hardcoded CSS
 
-The `@apply` rules in `adminstyle.scss` / `style.scss` were replaced with hardcoded CSS in Phase 2b (sass-loader cannot resolve Tailwind’s CSS-first entry). Selectors like `.admin-h1`, `.tw-form-control`, `.submit-btn` are plain CSS. Prefer raw CSS values when editing them, or `@apply` only inside `resources/css/tailwind.css`.
+The `@apply` rules in `adminstyle.scss` / `style.scss` were replaced with hardcoded CSS in Phase 2b (sass-loader / Vite Sass cannot resolve Tailwind’s CSS-first entry). Selectors like `.admin-h1`, `.tw-form-control`, `.submit-btn` are plain CSS. Prefer raw CSS values when editing them, or `@apply` only inside `resources/css/tailwind.css`.
 
 ### Regression Risk: Silent Property Drops
 
-SCSS strips `//` comments on compile. If investigating missing CSS, grep `// UNKNOWN:` under `resources/assets/sass/` — not compiled `public/css/app.css`.
+SCSS strips `//` comments on compile. If investigating missing CSS, grep `// UNKNOWN:` under `resources/assets/sass/` — not compiled CSS artifacts.
 
 ### v4 Preflight: Border Color Change
 

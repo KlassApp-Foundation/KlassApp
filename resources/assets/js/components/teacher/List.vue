@@ -123,7 +123,7 @@
 
 <script>
 
-  import { bus } from "../../app";
+  import { bus } from "../../event-bus";
   import PortalVue from "portal-vue";
   import teacherdetails from './Detail';
   import datetime from 'vuejs-datetimepicker';

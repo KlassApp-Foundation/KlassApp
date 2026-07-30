@@ -28,8 +28,8 @@ bash scripts/check-conflict-markers.sh
 echo "[Pre] Conflict marker check passed."
 
 # ---- Local build step ----
-echo "[Local] Rebuilding frontend assets..."
-NODE_OPTIONS=--openssl-legacy-provider npm run production
+echo "[Local] Rebuilding frontend assets (Vite)..."
+npm run build
 echo "[Local] Assets rebuilt. Remember to commit if running manually."
 
 ssh "$APP_SERVER" -i ~/.ssh/id_ed25519_do << REMOTE_SCRIPT

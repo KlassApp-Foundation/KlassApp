@@ -175,4 +175,4 @@
 
 </script>
 
-<style src="vue-multiselect/dist/vue-multiselect.css"></style>
+<!-- Multiselect CSS: global import in app.js (plain CSS must not use SFC style src under Vite) -->

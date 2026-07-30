@@ -10,8 +10,11 @@
         <!-- Favicon -->
         @include('layouts.partials.favicon')
         <title>KlassApp</title>
-        <!-- Styles -->
-        <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+        <!-- Styles / Scripts (Vite) — minimal historically only Mix app.css, not tailwind -->
+        @vite([
+            'resources/assets/js/app.js',
+            'resources/assets/sass/app.scss',
+        ])
         <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
     </head>
@@ -24,12 +27,18 @@
 
         </div>
         <!-- Scripts -->
-        <script src="{{ asset('js/app.js') }}"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
         <script src="{{ asset('js/custom.js') }}" ></script>
         @stack('scripts')
         <script>
-        // Guard jQuery usage — only run if jQuery is present
-        if (window.$) {
+        (function waitForJquery(run) {
+            if (window.$) { run(window.$); return; }
+            var n = 0;
+            var t = setInterval(function () {
+                if (window.$) { clearInterval(t); run(window.$); }
+                else if (++n > 100) { clearInterval(t); }
+            }, 50);
+        })(function ($) {
             $(document).ready(function(){
                 $('ul.course_tabs li').click(function(){
                     var tab_id = $(this).attr('data-tab');
@@ -39,44 +48,14 @@
                     $("#"+tab_id).addClass('current');
                 });
             });
-        }
+            $(window).scroll(function(){
+                if($(this).scrollTop() > 100){
+                    $('.home-navbar').addClass('sticky');
+                } else {
+                    $('.home-navbar').removeClass('sticky');
+                }
+            });
+        });
         </script>
-<!-- <script>
-    $(document).ready(function(){
-
-    $('ul.course_tabs li').click(function(){
-        var tab_id = $(this).attr('data-tab');
-
-        $('ul.course_tabs li').removeClass('current');
-        $('.tab-content').removeClass('current');
-
-        $(this).addClass('current');
-        $("#"+tab_id).addClass('current');
-    })
-
-})
-
-        </script> -->
-        <script>
-  $(window).scroll(function(){
-    if($(this).scrollTop() > 100){
-      $('.home-navbar').addClass('sticky')
-      } else{
-      $('.home-navbar').removeClass('sticky')
-      }
-  });
-/*  function checkscroll() {
-  console.log (window.pageYPffset);
-if (window.pageYOffset > 1000) {
-console.log("Show time");
-return
-{
-stickyNavBar: true}
-}
-else {
-return { stickyNavBar : false }
-}
-}*/
-</script>
     </body>
 </html>

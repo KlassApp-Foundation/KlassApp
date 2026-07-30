@@ -613,7 +613,7 @@
 </template>
 
 <script>
-import { bus } from "../../app";
+import { bus } from "../../event-bus";
 import PortalVue from "portal-vue";
 import memberdetails from "./Detail";
 import datetime from "vuejs-datetimepicker";

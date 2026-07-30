@@ -252,7 +252,7 @@
 </template>
 
 <script>
-    import { bus } from "../../../app";
+    import { bus } from "../../../event-bus";
     export default {
         props:['url' , 'role' , 'type' , 'scope' , 'hidecolumns', 'searchquery'],
         data () {

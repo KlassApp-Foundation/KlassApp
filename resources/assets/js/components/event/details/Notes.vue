@@ -95,7 +95,7 @@
 
 <script>
     //import Vue from 'vue'
-    import { bus } from "../../../app";
+    import { bus } from "../../../event-bus";
     export default {
         props:['url','id','entity'],
       data () {

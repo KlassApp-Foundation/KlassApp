@@ -28,7 +28,7 @@
 
 <script>
   import PortalVue from "portal-vue";
-  import { bus } from "../../../app";
+  import { bus } from "../../../event-bus";
   import notes from '../../notes';
   import eventdescription from './Description';
   import eventgallery from './Gallery';

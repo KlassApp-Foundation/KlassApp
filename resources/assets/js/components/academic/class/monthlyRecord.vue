@@ -108,7 +108,7 @@
 </template>
 
 <script>
-  import { bus } from "../../../app";
+  import { bus } from "../../../event-bus";
   import {Chart} from 'highcharts-vue'
   export default {
     components: {
