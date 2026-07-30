@@ -5399,3 +5399,8 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Still separately tracked (5 pre-existing — do not re-litigate)**: (1) `activity()` undefined (login/registration tests); (2) `admin/promotion/list` missing `exam_type`; (3) academics `str_limit` → `Object.keys`; (4) ClassWall `Post.php:83` null `attachment_file`; (5) `blockedstudents` `count(null)` query string.
 - **Status**: ✅ Phase 3.5 code on branch (`3bc5c70`); Step 8 rules committed (`c470c39`); Step 9 this knowledge closeout
 
+
+### 2026-07-30: Merge origin/main into migration/vite (pre-merge catch-up)
+- **Work done**: `git fetch origin` + merge commit of `origin/main` (`56840a0`) into `migration/vite`. Sole conflict: `knowledge.md`. Resolved keeping Phase 3.5 closeout / Vite-as-sole-bundler truth from `migration/vite`; main's catch-up (`56840a0`) status wording was superseded (already present as session-log history). Synced resolved body to `/Users/mac/projects/KlassApp/knowledge.md`.
+- **Key decisions**: Prefer merge commit (not rebase). Do **not** merge `migration/vite` into `main` yet; do not push.
+- **Status**: ✅ Merge complete on `migration/vite`; branch 0 behind main
