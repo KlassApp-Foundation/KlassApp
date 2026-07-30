@@ -12,9 +12,9 @@ alwaysApply: true
 | **PHP** | 8.4.23 (production), 8.4.19 (local) |
 | **Laravel Framework** | 12.63.0 |
 | **Livewire** | 3.x |
-| **Vue** | 2.6.12 |
-| **Tailwind CSS** | 1.4.6 |
-| **Laravel Mix** | 4.x (NOT Vite) |
+| **Vue** | 3.5.40 via `@vue/compat` MODE 2 |
+| **Tailwind CSS** | 4.3.3 (CSS-first) |
+| **Bundler** | Vite 8 + `laravel-vite-plugin` (Mix removed Phase 3.5) |
 | **MySQL** | 8.0 |
 | **Redis** | 7.x |
 | **Node** | per `.nvmrc` or local install |
@@ -32,9 +32,9 @@ alwaysApply: true
 ## Architecture Patterns
 
 - **Service layer**: Business logic lives in `app/Services/` — controllers delegate to services
-- **Blade + Vue 2 hybrid**: Vue components via `window.Vue = require('vue')` and `Vue.component()` in `resources/assets/js/app.js`. Options API throughout.
+- **Blade + Vue 3 (@vue/compat) hybrid**: Vue components via ESM `import` + `Vue.component()` in `resources/assets/js/app.js`. Options API throughout; alias `vue` → `@vue/compat`.
 - **Livewire 3**: For reactive components (Toshi assistant, reports tables, forms). Mounted via `@livewire('component-name')` in Blade.
-- **Laravel Mix 4**: Builds frontend assets via `webpack.mix.js`. Uses `mix('js/app.js')` and `mix('css/app.css')` in Blade templates.
+- **Vite**: Builds frontend assets via `vite.config.js`. Blade uses `@vite([...])`. Scripts: `npm run dev` / `npm run build`.
 
 ## WhatsApp Integration (Evolution API)
 

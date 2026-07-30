@@ -47,6 +47,21 @@ alwaysApply: true
 - **Affects**: Dividers (`border-r`, `border-b`, `border-t`, `border-l`), card borders, and any element using just `border` or `border-{side}` without a color utility.
 - **Fix**: Add an explicit `border-gray-200`/`border-gray-300` utility alongside any bare `border` class, or define the color in CSS. The `dashboard-refresh.css` file already protects `.dashboard-kpi-card` with an explicit border declaration — follow that pattern.
 
+### 8. Vite Dev vs Build / Stale `public/hot`
+- **`npm run dev`** writes `public/hot` and serves ESM from the Vite server. Blade `@vite` then points at the HMR URL.
+- **`npm run build`** writes hashed assets under `public/build/` + `manifest.json`. Production / deploy must **not** leave `public/hot` behind — Laravel will prefer the hot file and hit a dead Vite server.
+- **Do not use** `npm run production`, `mix()`, or `webpack.mix.js` — Mix was removed in Phase 3.5.
+- **ESM**: Reintroducing `require()` in `app.js` / `bootstrap.js` breaks `npm run dev` (`require is not defined`) even if a production-ish path once interop'd.
+
+### 9. Pusher Env Is `VITE_*` Only
+- Echo/Pusher reads `import.meta.env.VITE_PUSHER_APP_KEY` / `VITE_PUSHER_APP_CLUSTER` only.
+- `MIX_PUSHER_*` / `process.env.MIX_*` dual-read was removed with Mix. Empty `VITE_PUSHER_APP_KEY` → Echo is skipped (guard any `window.Echo.channel(...)` callers).
+
+### 10. `legacy-peer-deps` Is Scoped Package Debt
+- `.npmrc` sets `legacy-peer-deps=true` so `npm install` succeeds with Vue 3.5.40 + `@vue/compat` while Vue-2-era packages still declare Vue 2 peers.
+- **Direct peers that reject Vue 3** (verified Jul 30 — `npm install --no-legacy-peer-deps` ERESOLVE first hit `@fullcalendar/vue`; full list from package peer ranges): `@fullcalendar/vue@5` (`^2.6.12`), `@kevinfaguiar/vue-twemoji-picker` (`^2.6.11`), `ckeditor4-vue` (`^2.5.17`), `qrcode.vue@1` (`^2.0.0`), `vue-loading-overlay@3` (`^2.7.0`), `vue-qart` (`^2.5.0`), `vue-select@3` (`2.x`). Transitive: `vue-clickaway`, `vodal`.
+- **Not** “needed for compat in general” — needed until those packages are upgraded/replaced. Do not delete `.npmrc` without a package pass.
+
 ## Verification Discipline
 
 > **"Verify with real evidence before reporting done."**
@@ -54,7 +69,7 @@ alwaysApply: true
 This is the single most important rule this project has learned:
 
 1. **After every change**: Run `php artisan optimize:clear` inside the container
-2. **CSS changes**: `vendor:publish --force` then hard-refresh browser
+2. **CSS / published assets**: `vendor:publish --force` (e.g. toshi-ui) then hard-refresh browser; for app CSS/JS run `npm run build` (or `npm run dev` locally) — not Mix
 3. **Responsive layout**: Take real screenshots at 375px, 414px, 768px, 1280px — do NOT trust computed values
 4. **Database changes**: Run migrations and confirm with `SELECT` queries, not assumptions
 5. **Before reporting "done"**: Confirm with a tool output, a screenshot, or a log — never "should work"
