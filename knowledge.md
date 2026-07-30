@@ -54,6 +54,17 @@
     3. `GET /admin/classwall/post/editList/1` via authenticated kernel request (same method as `admin/promotion/list`).
     4. Result: **500** on `main` and on `migration/vue3-runtime`; `git diff main -- app/Models/Post.php` is empty.
   - **Scope**: pre-existing PHP accessor null-safety bug; track as its own ticket. **Waive for Phase 1b.4 close** (not introduced by Vue runtime switch).
+- **Separate reproducible finding (Jul 30) — 5th deferred pre-existing**: `GET /admin/students/blockedstudents` throws HTTP 500 when the request has no query string — **not** a Vue 3 / `@vue/compat` / Phase 1b regression; confirmed identical on **`main` @ `02a1c52` and `migration/vue3-runtime`**.
+  - **Route**: `admin/students/blockedstudents` (`Admin\StudentController@blockedstudents`)
+  - **Error**: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given` at `app/Http/Controllers/Admin/StudentController.php:432` (`count(\Request::getQueryString())` when `getQueryString()` returns `null`).
+  - **Observed result**: HTTP **500** (framework "Server Error" — `APP_DEBUG=false`); direct controller invoke throws the same `TypeError` at `:432`.
+  - **Reproduction (standalone)**:
+    1. Local DB `klassapp_local`; worktrees `/Users/mac/projects/KlassApp-main-review` (`migration/vue3-runtime`) and `/Users/mac/projects/KlassApp-main-checkout` (`main` @ `02a1c52`).
+    2. Authenticate as school admin `admin@testschoolone.sch.ug` / `password`.
+    3. `GET /admin/students/blockedstudents` with **no** query string (session cookie login against live PHP servers `:8010` / `:8011`, or direct `StudentController@blockedstudents` after `Request::swap` empty GET).
+    4. Result: **500** on both tips; `diff` of `StudentController@blockedstudents` vs main is empty.
+  - **Connection to 4th deferred (ClassWall `Post.php:83`)**: same underlying pattern — `count()` on a value that can be `NULL`, with no null-check / `(array)` cast / default. Different controllers (`StudentController` query-string vs `Post` accessor `attachment_file`). **Potential systemic pattern** worth a broader `count(` grep someday — not two coincidental one-offs. (Contrast: several other controllers already use `count((array)\Request::getQueryString())` or `!= null` checks.)
+  - **Scope**: pre-existing PHP null-safety bug; track as its own ticket. **Do not fix in Phase 1b** (log only). Not a compat/S3 regression.
 - **Recurrence (Jul 28)**: `GET /admin/dashboard` HTTP 500 — **same homestead vs `klassapp_local` mismatch** already fixed in `.env` earlier this session (`DB_DATABASE=homestead` → `klassapp_local`; see Environment fixes below). **Not** a new schema bug or Tailwind regression.
   - **Route**: `GET /admin/dashboard` (`Admin\DashboardController@index`)
   - **Surface error**: `Illuminate\Database\QueryException` — `Table 'homestead.approvals' doesn't exist` at `DashboardController` ~line 84 (pending-approvals `whereHas`).
