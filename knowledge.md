@@ -19,28 +19,32 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Current Status: July 30, 2026 (Vue 3 + Phase 3 Vite **CLOSED on `main`**)
+## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs CLOSED on `main`**)
 
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
-- **Post-merge verify (on merged main @ `9bdf185`)**:
-  - `npm run build` — **PASS** (Vite 8.1.5, ~6.8s).
-  - `npm run dev` + artisan `:8010` — `Vue.version === '3.5.40'`, Vite client from `public/hot`; shell smoke PASS (boot, academics, attendance/add + multiselect, discipline/add + multiselect, ACADEMICS sidebar nav). Login `admin@testschoolone.sch.ug` / `password`. `public/hot` cleaned after.
-  - PHPUnit `php artisan test --compact` — **5 failed, 1 skipped, 220 passed** (same baseline): `LoginRegressionTest::test_login_succeeds_with_valid_credentials`; `RegistrationMinistryCodeTest` ×2; `RegistrationFlowTest::admin_name_is_set_on_manual_registration`; `ToshiE2EVerificationTest::llm_responds_and_route_tool_fails_authentication_gracefully`.
-  - Phase 3.4 re-smoke — **PASS**: portal-vue teachers `#show-detail` open (`hide-menu`→`block`) + close; vuejs-datetimepicker discipline + ClassWall `.port` calendars; change-credential on teacher show (`$flashStorage` + Credentials UI); create-leave `/teacher/leave/add` mounts (Vue 3.5.40).
-- **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared earlier (`7f29e37` / `5a7cc45` / `8a2938d`) — required so Vite does not hard-fail where Mix softened.
-- **Main hygiene (pushed pre-Vite)**: `vue-upload-multiple-image` removed (`e2b0112`).
-- **Phase 3 history on `migration/vite`**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** → **✅ 3.1 ESM** → **✅ 3.5 Mix removal** (`3bc5c70`) → rules `c470c39` → merge to main `9bdf185`.
-- **Scoped tech debt**: `.npmrc` `legacy-peer-deps=true` — **7 direct packages** declare Vue 2 peers that reject Vue 3.5.40 (first ERESOLVE: `@fullcalendar/vue@5`).
-- **5 pre-existing app bugs** (deferred track) — ✅ **ALL CLOSED** on `fix/deferred-bugs` (tip `e993196`; not merged to `main` yet):
-  | # | Bug | Commit | Fix |
+- **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
+  | # | Bug | Fix commit | Fix |
   |---|---|---|---|
   | 1 | `activity()` undefined (login/registration) | `77d1fbe` | Spatie-compatible helper → `ActivityLogger` / `ActivityLog` |
   | 2 | `str_limit()` removed (academic list 500) | `5b5540f` | `Str::limit()` in resources + Blade |
   | 3 | ClassWall `Post` `count(null)` on `attachment_file` | `b21c04f` | `count($this->attachment_file ?? [])` |
   | 4 | `blockedstudents` `count(null)` on query string | `b21c04f` | `count((array) getQueryString())` |
   | 5 | `admin/promotion/list` unknown column `exam_type` | `e993196` | Query → `whereRelation('examType','code','FINAL')` (no migration) |
-- **NOT PUSHED** — awaiting user decision to push `main` / merge deferred-bugs.
+- **Post-merge verify (on merged main @ `536603c`)**:
+  - Pre-merge: `fix/deferred-bugs` **0 behind / 5 ahead** of `origin/main`; working tree clean; `npm run build` PASS; PHPUnit **234 passed / 1 skipped / 1 failed** (`ToshiE2E` LLM null — expected).
+  - Post-merge PHPUnit: **234 passed / 1 skipped / 1 failed** (same `ToshiE2E`).
+  - Manual smoke (`admin@testschoolone.sch.ug` / `password`, `:8010`): login+dashboard **200**; `/admin/academic/list` **200**; ClassWall `editList/1` **200**; `/admin/students/blockedstudents` **200**; `/admin/promotion/list` **200**; `activity()` helper exists + logs.
+- **Post-merge verify (historical, Vite @ `9bdf185`)**:
+  - `npm run build` — **PASS** (Vite 8.1.5, ~6.8s).
+  - `npm run dev` + artisan `:8010` — `Vue.version === '3.5.40'`, Vite client from `public/hot`; shell smoke PASS (boot, academics, attendance/add + multiselect, discipline/add + multiselect, ACADEMICS sidebar nav). Login `admin@testschoolone.sch.ug` / `password`. `public/hot` cleaned after.
+  - PHPUnit then: **5 failed, 1 skipped, 220 passed** (pre-activity() baseline) — now superseded by 234/1/1 after deferred merge.
+  - Phase 3.4 re-smoke — **PASS**: portal-vue teachers `#show-detail` open (`hide-menu`→`block`) + close; vuejs-datetimepicker discipline + ClassWall `.port` calendars; change-credential on teacher show (`$flashStorage` + Credentials UI); create-leave `/teacher/leave/add` mounts (Vue 3.5.40).
+- **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared earlier (`7f29e37` / `5a7cc45` / `8a2938d`) — required so Vite does not hard-fail where Mix softened.
+- **Main hygiene (pushed pre-Vite)**: `vue-upload-multiple-image` removed (`e2b0112`).
+- **Phase 3 history on `migration/vite`**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** → **✅ 3.1 ESM** → **✅ 3.5 Mix removal** (`3bc5c70`) → rules `c470c39` → merge to main `9bdf185`.
+- **Scoped tech debt**: `.npmrc` `legacy-peer-deps=true` — **7 direct packages** declare Vue 2 peers that reject Vue 3.5.40 (first ERESOLVE: `@fullcalendar/vue@5`).
+- **NOT PUSHED** — local `main` ahead of `origin/main` (merge + docs); push only on user ask.
 ## Current Status: July 28, 2026
 
 ### Git
@@ -144,7 +148,7 @@
   - **Audit note (kept)**: 183 active `Vue.component` sites / 0 `app.component`; sole Mix entry `app.js` — one-line interop fix restores full surface.
   - **✅ CLOSED Jul 31 (deferred item 2) @ `5b5540f`**: `str_limit()` at `AcademicYear.php:21` (and sibling resources) → `Str::limit()`. Undefined `$school` in `AcademicYearController@index` (unused by view) remains a separate unused-var note, not part of the deferred five.
   - **Phase 3 / Vite attribution (Jul 30, `migration/vite`)**: Academics page `Object.keys` TypeError under Vite was the **same known deferred #2 bug** (now closed). Historical: `GET /admin/academic/list` → 500 `Call to undefined function App\Http\Resources\str_limit()` at `AcademicYear.php:21` → `List.vue` `Object.keys(this.academic_years)` throws.
-- **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No Tailwind regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill. Open (priority order): **`activity()` undefined** (login/registration tests — higher stakes), `admin/promotion/list` 500, `str_limit` on academic list API, `home_navigation` / `minimal` deferred. **Phase 1 Vue boot regression CLOSED** (both branches verified). Dashboard env recurrence **resolved**; Priority 2 HTTP smoke routes **verified 200**.
+- **Phase 2c closeout (Jul 28)**: Priorities 2–4 finished on the agreed checklist (responsive templates, sampled `.submit-btn` / `.custom-table` pages vs `main`, Priority 4 `text-gray-700` / `border-gray-300` on real pages). **No Tailwind regressions found in sampled/audited surfaces** versus `main` — not an unqualified clean bill. **Jul 31**: all five deferred app bugs (`activity()`, promotion/`exam_type`, `str_limit`, ClassWall/blockedstudents `count(null)`) **CLOSED on `main`** @ merge `536603c`. Remaining deferred: `home_navigation` / `minimal`. **Phase 1 Vue boot regression CLOSED** (both branches verified). Dashboard env recurrence **resolved**; Priority 2 HTTP smoke routes **verified 200**.
 
 ### Confirmed Orphaned Welcome-Era Files
 - **`resources/views/welcome/welcome.blade.php` and `resources/views/welcome/_modules_list_section.blade.php` are both currently orphaned/dead**.
@@ -314,7 +318,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **axios 1.x** — done.
 - **Phase 1a (SFC compile fixes)** — done and merged.
 - **Phase 1b (Vue 3 runtime)** — **done on `main`** (`50f5c4d`).
-- **Mix→Vite (Phase 3)** — ✅ **CLOSED on `main`** (`9bdf185`): 3.3 Blade `@vite()` → 3.4 packages → 3.1 ESM → 3.5 Mix removal (`3bc5c70`). Scripts `npm run dev`/`build`; Pusher `VITE_*`-only; no Mix. Academics `str_limit` ✅ CLOSED @ `5b5540f` on `fix/deferred-bugs`. Push + prod deploy next.
+- **Mix→Vite (Phase 3)** — ✅ **CLOSED on `main`** (`9bdf185`): 3.3 Blade `@vite()` → 3.4 packages → 3.1 ESM → 3.5 Mix removal (`3bc5c70`). Scripts `npm run dev`/`build`; Pusher `VITE_*`-only; no Mix. Academics `str_limit` ✅ CLOSED on `main` via deferred merge `536603c` (fix commit `5b5540f`). Push + prod deploy next.
+- **5 deferred app bugs** — ✅ **CLOSED on `main`** (`536603c` from `fix/deferred-bugs` @ `a0db768`).
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
@@ -374,11 +379,19 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-07-31: Merge fix/deferred-bugs → main (5 bugs CLOSED on main)
+- **Work done**: Pre-merge checks (fetch; 0 behind / 5 ahead vs `origin/main`; PHPUnit 234/1/1; `npm run build` PASS; clean tree) then no-ff merge into `main`. Post-merge PHPUnit + authenticated HTTP smoke of all 5 surfaces. Updated knowledge: all 5 **CLOSED on `main`** with merge SHA. Synced to `/Users/mac/projects/KlassApp/knowledge.md`.
+- **Merge commit**: **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)`
+- **Tip merged**: `fix/deferred-bugs` @ `a0db768` (fix commits `77d1fbe` / `5b5540f` / `b21c04f` / `e993196` + docs)
+- **Post-merge smoke**: login+dashboard, `/admin/academic/list`, ClassWall `editList/1`, `/admin/students/blockedstudents`, `/admin/promotion/list` — all **200**; `activity()` OK; targeted feature tests **12 passed**
+- **Status**: ✅ Done on local `main` — **NOT PUSHED**
+- **Edge cases flagged**: Only expected failure remains `ToshiE2EVerificationTest` LLM null (API/env). Push `main` only on user ask.
+
 ### 2026-07-31: Deferred track closeout — all 5 CLOSED with commit refs
 - **Work done**: Investigate-before-fix re-verify of item 5 (`exam_type`); confirmed fix `e993196` correct (query not migration); marked all five deferred bugs **CLOSED** with SHAs in Current Status + findings. Synced `knowledge.md` to canonical `/Users/mac/projects/KlassApp/knowledge.md` + checkout/merge worktrees.
 - **Evidence**: `exams.exam_type` never in migrations (create + `exam_type_id` add only); live `Schema::hasColumn` false/true; `GET /admin/promotion/list` → 200 `examlist`; PHPUnit **234 passed / 1 skipped / 1 failed** (`ToshiE2E` unrelated).
 - **CLOSED refs**: #1 `77d1fbe` · #2 `5b5540f` · #3+#4 `b21c04f` · #5 `e993196`
-- **Status**: ✅ Done — deferred track closed on `fix/deferred-bugs` (not pushed / not merged to main)
+- **Status**: ✅ Superseded — later merged to `main` @ `536603c`
 - **Edge cases flagged**: Branch tip still ahead of `main`; merge/push only on user ask.
 
 ### 2026-07-31: Deferred bug #5 — promotion/list exam_type
