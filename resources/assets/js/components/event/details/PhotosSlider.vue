@@ -34,12 +34,15 @@
 
 
           <div class="modal-body">
-          <carousel class="mt-0 my-custom-class" :per-page="1" :autoplay="true" :paginationEnabled="false" :autoplayHoverPause="true" :navigationClickTargetSize="25" :mouse-drag="false" :navigationEnabled="this.navigationEnabled" navigationPrevLabel="<img src='../../../../uploads/static/arrow-l.svg' class='btn btn-primary w-6 h-6'>" navigationNextLabel="<img src='../../../../uploads/static/arrow-r.svg' class='btn btn-primary w-6 h-6'>">
+          <carousel :wrap-around="true" class="mt-0 my-custom-class" :items-to-show="1" :autoplay="3000">
         <slide v-for="slider in photos" v-bind:key="slider.id">
             <div class="p-0">
               <img :src="slider.path" class="w-full">
             </div>
         </slide>
+        <template #addons>
+          <Navigation v-if="navigationEnabled" />
+        </template>
       </carousel>
        
           </div>
@@ -54,10 +57,11 @@
 
 <script>
 import { bus } from "../../../app";
-  import VueCarousel from 'vue-carousel';
-  Vue.use(VueCarousel);
+  import { Carousel, Slide, Navigation, Pagination } from 'vue3-carousel'
+  import 'vue3-carousel/dist/carousel.css'
 
-  export default { 
+  export default {
+      components: { Carousel, Slide, Navigation, Pagination }, 
       props:['url','event_id'],
       data(){
         return {
@@ -100,7 +104,7 @@ import { bus } from "../../../app";
 
     },
 
-    destroyed() {
+    unmounted() {
       window.removeEventListener('resize', this.handleResize)
     },
     

@@ -93,7 +93,7 @@
             </div>
             <div class="mb-2 w-full lg:w-1/2 md:w-1/2">
              <!--  <textarea type="text" name="description" id="description" v-model="description" class="tw-form-control w-full" rows="3" @keyup='remaincharCount(255)' maxlength="255"></textarea> -->
-             <quill-editor ref="myQuillEditor" v-model="description" :options="editorOption"/>
+             <quill-editor ref="myQuillEditor" v-model:content="description" :options="editorOption" contentType="html" />
               <span v-if="errors.description" class="text-red-500 text-xs font-semibold">{{errors.description[0]}}</span>
             </div>
           </div>
@@ -237,8 +237,7 @@
                                     </div>
                                     </a>
                         </li>   
-                         </ul> 
-                         </div>  
+                         </ul>
           </div>
         </div>
       </div>
@@ -254,17 +253,14 @@
 
 import datetime from 'vuejs-datetimepicker';
   import Vue from 'vue'
-  import VueQuillEditor from 'vue-quill-editor'
-  import 'quill/dist/quill.core.css' // import styles
-  import 'quill/dist/quill.snow.css' // for snow theme
-  import 'quill/dist/quill.bubble.css' // for bubble theme
-  Vue.use(VueQuillEditor)
-
+  import { QuillEditor } from '@vueup/vue-quill'
+    import '@vueup/vue-quill/dist/vue-quill.snow.css'
 export default {
 
   props:['id','url'],
 
-  components: { datetime },
+  components: {
+            QuillEditor, datetime },
 
   data(){
     return{

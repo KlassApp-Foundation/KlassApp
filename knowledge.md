@@ -44,6 +44,27 @@
   - **Also seen same suite run**: `ToshiE2EVerificationTest` LLM null (API timeout/error) — separate from `activity()`; keep as E2E/env noise unless it starts failing offline mocks.
   - **Stakes**: blocks account creation / login regression coverage — **higher priority than** `admin/promotion/list` (`exam_type`) and `str_limit` on academic-year list (list/API views only).
   - **Scope**: pre-existing app/test infra bug; fix before treating merge suite as green. Pre-merge suite baseline on both tips: **5 failed, 1 skipped, 220 passed**.
+- **Separate reproducible finding (Jul 30) — 4th deferred pre-existing**: `GET /admin/classwall/post/editList/{id}` throws HTTP 500 when `posts.attachment_file` is null — **not** a Vue 3 / `@vue/compat` / Phase 1b regression; confirmed identical on **`main` @ `02a1c52` and `migration/vue3-runtime`**.
+  - **Route**: `admin/classwall/post/editList/{id}` (`Admin\PostEditController@editList`) — also surfaces as broken ClassWall post edit UI (`edit-post` never gets list payload).
+  - **Error**: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given` at `app/Models/Post.php:83` (`getAttachmentPathAttribute` → `count($this->attachment_file)`).
+  - **Observed result**: HTTP **500** (framework "Server Error"); Vue client then `Cannot read properties of undefined (reading 'length')`.
+  - **Reproduction (standalone)**:
+    1. Local DB `klassapp_local`; post id **1** has `attachment_file = NULL`, `created_by = 5`.
+    2. Authenticate as that creator (user id 5) — or any user matching `created_by` (else 403).
+    3. `GET /admin/classwall/post/editList/1` via authenticated kernel request (same method as `admin/promotion/list`).
+    4. Result: **500** on `main` and on `migration/vue3-runtime`; `git diff main -- app/Models/Post.php` is empty.
+  - **Scope**: pre-existing PHP accessor null-safety bug; track as its own ticket. **Waive for Phase 1b.4 close** (not introduced by Vue runtime switch).
+- **Separate reproducible finding (Jul 30) — 5th deferred pre-existing**: `GET /admin/students/blockedstudents` throws HTTP 500 when the request has no query string — **not** a Vue 3 / `@vue/compat` / Phase 1b regression; confirmed identical on **`main` @ `02a1c52` and `migration/vue3-runtime`**.
+  - **Route**: `admin/students/blockedstudents` (`Admin\StudentController@blockedstudents`)
+  - **Error**: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given` at `app/Http/Controllers/Admin/StudentController.php:432` (`count(\Request::getQueryString())` when `getQueryString()` returns `null`).
+  - **Observed result**: HTTP **500** (framework "Server Error" — `APP_DEBUG=false`); direct controller invoke throws the same `TypeError` at `:432`.
+  - **Reproduction (standalone)**:
+    1. Local DB `klassapp_local`; worktrees `/Users/mac/projects/KlassApp-main-review` (`migration/vue3-runtime`) and `/Users/mac/projects/KlassApp-main-checkout` (`main` @ `02a1c52`).
+    2. Authenticate as school admin `admin@testschoolone.sch.ug` / `password`.
+    3. `GET /admin/students/blockedstudents` with **no** query string (session cookie login against live PHP servers `:8010` / `:8011`, or direct `StudentController@blockedstudents` after `Request::swap` empty GET).
+    4. Result: **500** on both tips; `diff` of `StudentController@blockedstudents` vs main is empty.
+  - **Connection to 4th deferred (ClassWall `Post.php:83`)**: same underlying pattern — `count()` on a value that can be `NULL`, with no null-check / `(array)` cast / default. Different controllers (`StudentController` query-string vs `Post` accessor `attachment_file`). **Potential systemic pattern** worth a broader `count(` grep someday — not two coincidental one-offs. (Contrast: several other controllers already use `count((array)\Request::getQueryString())` or `!= null` checks.)
+  - **Scope**: pre-existing PHP null-safety bug; track as its own ticket. **Do not fix in Phase 1b** (log only). Not a compat/S3 regression.
 - **Recurrence (Jul 28)**: `GET /admin/dashboard` HTTP 500 — **same homestead vs `klassapp_local` mismatch** already fixed in `.env` earlier this session (`DB_DATABASE=homestead` → `klassapp_local`; see Environment fixes below). **Not** a new schema bug or Tailwind regression.
   - **Route**: `GET /admin/dashboard` (`Admin\DashboardController@index`)
   - **Surface error**: `Illuminate\Database\QueryException` — `Table 'homestead.approvals' doesn't exist` at `DashboardController` ~line 84 (pending-approvals `whereHas`).
@@ -67,10 +88,25 @@
     - Large SFC compile-error sweep (~**3,381** errors at peak) — `v-model-on-prop`, deprecated **`slot`** → **`v-slot`**, and related template fixes across the Vue tree.
     - **Mix 4→6 / webpack 5 prerequisite** (`d295517`, `build(mix): upgrade Laravel Mix 4→6`) — genuinely merged; required for the stricter compile path that surfaced the SFC issues.
     - These fixes were **necessary regardless of which Vue version runs** — Vue 3’s stricter compiler (and webpack 5 / vue-loader path) is what surfaced them; the remediated SFCs remain valid on Vue 2.7.
-  - **🚧 Phase 1b: runtime switch to Vue 3 / `@vue/compat` — NOT done**:
-    - **Actual runtime today**: **Vue 2.7.16** — `require.resolve('vue')` → `vue/dist/vue.runtime.common.js`; webpack alias **`vue$: "vue/dist/vue.esm.js"`** (Vue **2** full ESM build, header `Vue.js v2.7.16`).
-    - **`@vue/compat@3.5.40` is installed** but **not wired** — no alias to `@vue/compat`; bundle and browser **`Vue.version === "2.7.16"`** (`main` @ `753697f`, verified Jul 28 on `:8082` `/admin/dashboard`).
-    - **Not caught during Phase 1 verification** — discovered during Phase 3 (Vite) audit, not because production was silently broken.
+  - **🚧 Phase 1b: runtime switch to Vue 3 / `@vue/compat` — in progress on `migration/vue3-runtime`**:
+    - **1b.1 replace-now (Jul 28, accepted option 1)**: Vue 2 UI packages swapped + source migrated.
+    - **1b.2 Task 1 (Jul 29, `dd13fc5`)**: alias `vue`/`vue$` → `@vue/compat`; vue-loader `compatConfig: { MODE: 2 }`; `configureCompat({ MODE: 2 })` in `app.js`; production build PASS; browser `Vue.version` = `3.5.40`. Soft-warn plugin for remaining SFC compiler strictness (invalid end tags / label v-model / v-html children).
+    - **Replace-now done**: `@vueup/vue-quill`, `dropzone-vue3`, `vue-good-table-next`, `emoji-mart-vue-fast`, `vue3-carousel`, `sweetalert2`/`vue-sweetalert2`, `vue-simple-uploader@1`, `vue-easy-lightbox`+`floating-vue`, `vue-multiselect@3`.
+    - **Quarantine (not replaced)**: `portal-vue`, `vuejs-paginate`, `vuejs-datetimepicker`.
+    - **1b.4 MODE 2 watch (load-bearing, not quarantined)** — **re-verified Jul 30 from code + interactive smoke**: `vue-flash-message` — `Vue.use(VueFlashMessage)` + `<flash-message>` + `this.flash()` / `$flashStorage.flash()` in `change-credential` (admin teacher/staff/parent/member show) and `create-leave` (teacher leave create). Call sites: 2 SFCs; Blade mounts on 4 show pages + teacher leave create. Interactive proof: Credentials modal opens; `Vue.prototype.$flashStorage.flash(...)` renders `.flash__message` DOM. Success UX often races reload/redirect; error flash stays on leave create.
+    - **Dead (quarantined in knowledge, not deferred limbo)**: `this.$message` only in unregistered `EleUploadVideo.vue` — no Element UI Message installer; **zero** `Vue.component` registration in `app.js`; never mounted.
+    - **✅ 1b.2 Task 2 shell smoke** (Jul 29): boot + attendance/discipline/year-nav PASS; academics PASS* (list API 500); multiselect registered but discipline uses native teacher `<select>`. Production bundle emitted **0** compat warnings.
+    - **✅ 1b follow-ups pre-1b.4** (Jul 29): Vue.prototype audit + **DEV** smoke warning inventory (17 unique MODE 2 messages).
+    - **✅ 1b.4 plugin-surface DEV smoke** (Jul 29 + **re-run Jul 30**): ClassWall create (Quill+dropzone-vue3+datetime pick) PASS; homework Quill+file input PASS (dropzone-vue3 lives on student `Attachment.vue`, exercised via ClassWall); noticeboard list + **create** PASS (Invalid end tag recovery held); telephone `vue-good-table-next` search PASS; teachers list portal-vue side panel open (`#show-detail` hide-menu→block) + close PASS; student show profile portal tabs PASS; discipline + notice datetime calendars PASS; change-credential flash DOM PASS via `$flashStorage`. **⏸️ STOP before 1b.5**.
+    - **✅ 1b.5 harden (Jul 30)**: dispositions for all **17** DEV MODE 2 unique warns (see session log). App-owned fixes: single `multiselect` register, Vue feature-flag DefinePlugin, explicit whitespace, `$swal` via `globalProperties` (no `Vue.use` sweetalert), single `Vue.use(VueFlashMessage)`, `PhotosSlider` `destroyed`→`unmounted`. Suppress-warning via `configureCompat` for portal-vue / flash / MODE 2 boot flags; per-module `compatConfig` on `vuejs-datetimepicker` (not global `COMPONENT_V_MODEL`). Post-harden DEV smoke (same Task 2 routes): original portal/GLOBAL/datetime/multiselect/feature-flag noise **gone**; remaining = academicyear `List` unhandled errors from deferred `str_limit` 500. **Recommend CLOSE 1b.5**.
+    - **1b.4 targeted re-run (Jul 30 night — four items only)**:
+      1. **create-leave flash**: **PASS** (after fixing empty webpack module). Teacher `teacher_test_school_one@testschoolone.edu` → `/teacher/leave/add`; empty Submit → axios 422 → `this.flash(...)` → `.flash__message` / `.error.flash__message` with “Please fill all fields”. Prior FAIL root cause: duplicate `</script>` in `leave/teacher/Create.vue` made webpack module `()=>{}` so `<create-leave>` never mounted.
+      2. **discipline datetime**: **PASS**. Same `v-model` + `value`/`$emit('input')` as ClassWall. Calendar open → day → OK updates parent (`FormData incident_date` set). Console noise: `TypeError: 'set' on proxy: trap returned falsish for property 'value'` from picker watcher `this.value = newVal` (illegal prop mutate under Vue 3) — does **not** block select.
+      3. **ClassWall edit**: **FAIL** on branch (page heading mounts; Quill/dropzone/datetime do not stay) — **waived for 1b.4**: same `editList/1` **500** reproduces on **`main`** (see deferred finding below). Not a Vue 3 / Phase 1b regression. `git diff main..migration/vue3-runtime -- app/Models/Post.php` empty.
+      4. **students/blockedstudents 500**: **NOT S3**. Exact: `TypeError: count(): Argument #1 ($value) must be of type Countable|array, null given at StudentController.php:432` — `count(\Request::getQueryString())` when query string is null. **Compat-related? NO.** **Confirmed on main** → **5th deferred pre-existing** (same `count(null)` pattern as ClassWall `Post.php:83`).
+      - **Recommend**: **CLOSE 1b.4** — create-leave + discipline datetime PASS; ClassWall edit 500 is pre-existing on main (deferred); blockedstudents is non-compat pre-existing (deferred, log-only). **⏸️ was STOP before 1b.5** → **1b.5 CLOSED Jul 30**.
+    - **Cleanup candidate (confirmed dead direct dep, Jul 29)**: `vue-upload-multiple-image` — **zero** source imports/requires of the npm package name across `resources/**/*.vue|js` and app JS; only listed in `package.json` / lockfile. App uses the **local** SFC `resources/assets/js/components/VueUploadMultipleImage.vue` (imported by `event/details/ShowImage.vue` as `../../VueUploadMultipleImage`), which depends on `vue-easy-lightbox` + `floating-vue` — not the npm package. Cleanup (do **not** run until scheduled): `npm uninstall vue-upload-multiple-image --legacy-peer-deps` (also drops transitive `vue-image-lightbox-carousel` / nested `vue-popperjs`).
+    - **Older note (pre-1b branch work)**: on `main` @ `753697f`, runtime was still Vue 2.7.16; `@vue/compat` unwired until 1b.2 Task 1.
   - **Nothing is currently broken because of this gap**: Vue 2.7 boots correctly on `main`. Tonight’s verification (academics mount, attendance/add, discipline/add + `Vue.options.components.multiselect`, event bus, `$swal`, nav academic-year dropdown) is **valid confirmation that Vue 2.7 runs correctly** — not evidence of Vue 3 at runtime.
   - **Inaccurate status label**: ~~“Phase 1: Vue 2→3 migration — complete”~~ → use **Phase 1a complete / Phase 1b open** as above.
   - **⏸️ Decision point (user — not assumed)** — how to sequence Vue runtime vs Vite:
@@ -218,7 +254,7 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | Sub-phase | Status | Notes |
 |---|---|---|
 | **Phase 1a — SFC compile remediation** | ✅ **Complete (merged)** | ~3,381 compile errors fixed; `v-model-on-prop`, `slot`→`v-slot`; Mix 4→6 prerequisite (`d295517`). |
-| **Phase 1b — Vue 3 / `@vue/compat` runtime** | 🚧 **Not done** | Runtime is **Vue 2.7.16**; `@vue/compat` 3.5.40 installed but **alias still `vue/dist/vue.esm.js`**. See Current Status (Jul 28 correction). |
+| **Phase 1b — Vue 3 / `@vue/compat` runtime** | 🚧 **1b.2 Task 1 done; Task 2 smoke open** | On `migration/vue3-runtime`: alias `vue`/`vue$` → `@vue/compat`, vue-loader `compatConfig: { MODE: 2 }`, `configureCompat({ MODE: 2 })` in `app.js`. Production build PASS; browser `Vue.version` = `3.5.40`. Soft-warn plugin for strict SFC compiler errors (template cleanup later). |
 
 | Dimension | Assessment |
 |---|---|
@@ -5039,3 +5075,114 @@ This is a substantial build (est. 2-3 hours) and would benefit from its own dedi
 - **For Cursor**: Boost MCP wired via `.cursor/mcp.json`. `AGENTS.md` provides Laravel guidelines. `.cursor/rules/` has migration-specific warnings.
 - **Unresolved**: `layouts/main` `home_navigation` dead include needs intent check. `layouts/minimal` — no live route renders through it (`welcome` is dead code), no fix needed unless `welcome` or a new route starts using it.
 - **Status**: ✅ Phase 2c closeout complete on sampled/audited surfaces (see Current Status); Jul 28 session log below is the pre-closeout handoff record.
+
+### 2026-07-28: Phase 1b.1 replace-now package swaps (`migration/vue3-runtime`)
+- **Work done**: Accepted 1b.1 recommendations (option **1** — replace now). Installed Vue 3 replacements and migrated call sites. Did **not** flip webpack vue$ alias; did **not** start 1b.2.
+- **Commits**: `d49b323` (deps), `746fc90` (quill+dropzone), `b209243` (carousel/emoji/tables/multiselect), `8c1f8c9` (sweetalert2), `8fd9616` (lightbox+popper).
+- **Key decisions**:
+  - Keep alias pointing at vue.esm.js until 1b.2 (user explicit).
+  - Prefer `dropzone-vue3` (vue2-dropzone API port) over `vue3-dropzone` (react-dropzone-style).
+  - Quarantine: portal-vue, vuejs-paginate, vuejs-datetimepicker. (1b.1 said Defer `vue-flash-message` — **superseded Jul 29 1b.4**: load-bearing MODE 2 watch, not quarantined.)
+- **Verification**: Old Vue2 package imports gone from `resources/assets/js`; `package.json` no longer depends on replaced packages. `npm run production` fails with missing `vue/dist/vue.esm.js` — expected until alias flip.
+- **Status**: ✅ 1b.1 replace-now complete / 🚧 1b.2 (alias + createApp bootstrap) not started
+
+### 2026-07-28: Phase 1b.1 resume/verify after PING timeout
+- **Work done**: Inspected `KlassApp-main-review` (`migration/vue3-runtime`) after agent `228a2786` timeout. Prior agent had already finished replace-now: deps + SFC migrations + knowledge log. No further package/SFC edits required; did not push; did not start 1b.2.
+- **Confirmed**: `vue$: "vue/dist/vue.esm.js"` unchanged; quarantine/defer packages left; `node_modules` has all replace-now packages; `vue/dist/vue.esm.js` absent under Vue 3.5.40 (build blocker until 1b.2).
+- **Status**: ✅ Verified complete
+
+### 2026-07-29: Phase 1b.2 Task 1 — `@vue/compat` alias + MODE 2 boot
+- **Work done**: Flipped webpack alias to `@vue/compat`; wired Mix `.vue({ options: { compilerOptions: { compatConfig: { MODE: 2 } } } })`; added `configureCompat({ MODE: 2 })` after `window.Vue` boot; production rebuild; browser-verified `Vue.version`.
+- **Files modified**: `webpack.mix.js`, `resources/assets/js/app.js`, `public/js/app.js`, `public/js/app.js.map`, `public/js/601.js` (+map), `public/mix-manifest.json`
+- **Commit**: `dd13fc5`
+- **Key decisions**:
+  - Compat CJS export is the constructor (no `.default`); kept `.default || require('vue')` fallback.
+  - Soft-downgrade VueCompilerError (invalid end tags, v-model on `<label>`, v-html+children) to webpack warnings via plugin — build-blocking strictness only; full template cleanup deferred to later smoke/fix tasks.
+- **Verification**: `npm run production` exit 0 (41 warnings). Playwright on `/login` → `Vue.version === "3.5.40"`, `configureCompat` present.
+- **Status**: ✅ Task 1 done / ⏸️ STOP — Task 2 smoke suite not run
+
+### 2026-07-29: Confirm dead `vue-upload-multiple-image` + re-verify 1b.2 Task 1
+- **Work done**: Grep confirmed **zero** source imports of npm package `vue-upload-multiple-image` (only `package.json` / lockfile). Documented local `VueUploadMultipleImage.vue` usage. Re-verified Task 1 already done (`dd13fc5`); `npm run production` PASS; browser `Vue.version` starts with `3`. Did **not** uninstall. Did **not** run Task 2 smoke.
+- **Files modified**: `knowledge.md` only
+- **Key decisions**: Keep dead dep until scheduled cleanup; cleanup cmd = `npm uninstall vue-upload-multiple-image --legacy-peer-deps`
+- **Status**: ✅ Done / ⏸️ STOP before Task 2
+
+### 2026-07-29: Phase 1b follow-ups — Vue.prototype audit + DEV compat warning inventory
+- **Work done**: (1) Grep audit of `Vue.prototype` / plugin `$` installs in frontend source. (2) `npm run development` shell smoke (same Task 2 checklist) with Playwright console listener — captured MODE 2 warning catalog. Restored `npm run production` afterward (tree clean).
+- **Prototype audit**: No direct `Vue.prototype.$X` assignments in app source. `$swal` via `Vue.use(VueSweetalert2)` → `Vue.config.globalProperties` (Task 2 verified). `$flashStorage` via `Vue.use(VueFlashMessage)` in globally registered `change-credential` + `create-leave` → **prototype only** (NOT Task 2 verified). Event bus = `export const bus = new Vue()` (not `$bus`). No `$http`/`$bus` prototype. `this.$message` in `EleUploadVideo.vue` has no installer.
+- **Dev smoke**: Boot / attendance / discipline+multiselect-reg / year nav PASS; academics PASS* (mount + headings; list still hits `/admin/academic/list` 500 → Object.keys). Compat inventory: 17 unique messages (GLOBAL_*, INSTANCE_*, RENDER_FUNCTION, COMPONENT_V_MODEL, portal-vue lifecycle, multiselect re-register, feature-flag noise).
+- **Status**: ✅ Audit + DEV warning log done / ⏸️ STOP before 1b.4 — no hardening
+
+### 2026-07-29: Phase 1b.4 — flash audit + plugin-surface DEV smoke
+- **Work done**: (Part A) Exhaustive grep for `vue-flash-message` / `$flashStorage` / `this.flash` / `this.$message`. (Part B) `npm run development` then Playwright interaction smoke on ClassWall create, homework create, noticeboard, students/teachers portal, phonenumbers good-table, discipline datetime, change-credential. Restored `npm run production`.
+- **Part A disposition (final)**:
+  - `vue-flash-message` / `$flashStorage` / `this.flash()` — **load-bearing** (change-credential + create-leave). **MODE 2 watch item for 1b.4/1b.5. NOT quarantined. NOT deferred limbo.**
+  - `this.$message` in `EleUploadVideo.vue` — **dead** (no Element UI Message installer; component never registered/mounted).
+- **Part B**: See overview bullet “1b.4 plugin-surface DEV smoke”. Notable hard fail: `admin/notice/add` → `<create-circular>` fails to resolve (compiler Invalid end tag in `noticeboard/Create.vue` @ L249 — extra `</div>` after imgpopup modal).
+- **Files modified**: `knowledge.md` only (disposition + session log). Bundle restored to production after DEV smoke.
+- **Status**: ✅ 1b.4 Part A landed / Part B smoke logged / ⏸️ STOP before 1b.5 harden (noticeboard create fix is a recovery follow-up, not 1b.5)
+
+### 2026-07-29: Noticeboard create Invalid end tag recovery
+- **Work done**: Removed stray `</div>` after imgpopup `</ul>` in `noticeboard/Create.vue` + `Edit.vue`; production rebuild; Playwright re-smoke `admin/notice/add` only.
+- **Commits**: `1048b62` (SFC fix), `d18f991` (assets).
+- **Smoke**: **PASS** — Vue 3.5.40, Add Notice form mounts, Quill `.ql-editor` present (1), no page errors / no Invalid end tag. (Vue 3 replaces `<create-circular>` tag with component root.)
+- **Status**: ✅ Done / ⏸️ STOP — did not re-run full 1b.4 or start 1b.5; not pushed
+
+### 2026-07-30: 1b.4 flash audit re-verify + interactive smoke redo
+- **Work done**: (Part A) Exhaustive re-grep from code (not docs-only). (Part B) `npm run development` interactive Playwright smoke on `:8010` (`SESSION_DRIVER=file`, `klassapp_local`); restored `npm run production` after.
+- **Part A disposition (unchanged, re-confirmed)**:
+  - `vue-flash-message` / `$flashStorage` / `this.flash()` — **load-bearing** MODE 2 watch. **NOT quarantined. NOT deferred limbo.**
+    - Install: `Vue.use(VueFlashMessage)` inside `ChangeCredential.vue` + `leave/teacher/Create.vue` (sets `Vue.prototype.$flashStorage`, mixin `flash()`, registers `<flash-message>`).
+    - Call sites: `this.flash(...)` ×1 success in change-credential; ×1 success + ×1 error in create-leave.
+    - Blade mounts: `admin/{teacher,staff,parent,member}/show` + `teacher/leave/create`.
+  - `this.$message` — **dead** → quarantined here: only `EleUploadVideo.vue` (4 calls); never registered in `app.js`.
+- **Part B** (Vue 3.5.40 DEV build): see overview 1b.4 bullet. Notable: `/admin/students/blockedstudents` still **500** — later re-run showed cause is `count(null)` on query string in `StudentController@blockedstudents` (not S3); used `/admin/teachers` person-card portal + `/admin/student/show/{name}` instead. Browser MCP could not open tabs (auth ok, navigate failed) — used existing Playwright Chromium via `PLAYWRIGHT_BROWSERS_PATH`.
+- **Files modified**: `knowledge.md` only (disposition clarity + session log).
+- **Status**: ✅ 1b.4 re-verify complete / ⏸️ STOP before 1b.5 / not pushed
+
+### 2026-07-30: 1b.4 targeted re-run — four items only
+- **Work done**: Playwright smoke on `:8010` / `klassapp_local` / Vue 3.5.40 for (1) teacher create-leave flash UI path, (2) discipline datetime root-cause dig vs ClassWall, (3) ClassWall post edit, (4) blockedstudents 500 exact exception. Fixed duplicate `</script>` in `leave/teacher/Create.vue` so create-leave compiles (was empty webpack module). Rebuilt production bundle. Did **not** start 1b.5; did **not** push.
+- **Outcomes**: create-leave flash **PASS**; discipline datetime **PASS** (prop-mutate console noise only); ClassWall edit **FAIL** (`Post.php:83` AttachmentPath `count(null)`); blockedstudents **NOT S3** (`StudentController.php:432` `count(\Request::getQueryString())` on null) — **compat? NO**.
+- **Recommend**: was hold for ClassWall; superseded by closeout below after main comparison.
+- **Files modified**: `knowledge.md`; `resources/assets/js/components/leave/teacher/Create.vue` (duplicate `</script>` removed); rebuilt `public/js/app.js` (+map).
+- **Status**: ✅ Four-item re-run done / ⏸️ STOP before 1b.5
+
+### 2026-07-30: 1b.4 closeout — ClassWall pre-existing + SESSION_SAME_SITE
+- **Work done**: (1) Compared ClassWall `editList/1` `count(null)` on `migration/vue3-runtime` vs `main` @ `02a1c52` (worktree `/Users/mac/projects/KlassApp-main-checkout`, same DB `klassapp_local`, post id=1). Both return HTTP **500** with identical `TypeError` at `Post.php:83`; Post model diff vs main empty. Logged as **4th deferred pre-existing** finding; waived for 1b.4. (2) Kept `config/session.php` `same_site` → `env('SESSION_SAME_SITE', 'lax')` as intentional localhost CSRF/419 fix (`.env` already had `SESSION_SAME_SITE=lax` but config was hardcoded `null`).
+- **Recommend**: **CLOSE 1b.4** — Vue plugin surfaces for the four re-run items are green or waived; do not start 1b.5 from this closeout.
+- **Files modified**: `knowledge.md`; `config/session.php`.
+- **Status**: ✅ 1b.4 closeout complete / ⏸️ STOP before 1b.5 / not pushed
+
+### 2026-07-30: Phase A — blockedstudents confirmed on main (5th deferred)
+- **Work done**: Reproduced `GET /admin/students/blockedstudents` on `migration/vue3-runtime` and `main` @ `02a1c52`, same DB/auth. Both **500** / `StudentController.php:432` `count(null)` on `getQueryString()`. Logged as **5th deferred**; linked to ClassWall `Post.php:83` as same pattern. PHP not fixed.
+- **Commit**: `ae590b6`
+- **Status**: ✅ Phase A done
+
+### 2026-07-30: 1b.5 dispositions (BEFORE suppress/fix apply)
+Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login→dashboard→academics→attendance→discipline).
+
+| # | Warning (unique msg) | Source | Classify | Rationale |
+|---|---|---|---|---|
+| 1 | Component "multiselect" already registered | App: 5 SFCs each `Vue.component('multiselect')` at module load | **fix** | Register once in `app.js`; drop duplicate global registers |
+| 2 | `__VUE_PROD_HYDRATION_MISMATCH_DETAILS__` feature flag | Bundler missing DefinePlugin | **fix** | Inject Vue 3 feature flags in `webpack.mix.js` |
+| 3 | `GLOBAL_EXTEND` | portal-vue wormhole `Vue.extend` (+ MODE 2) | **suppress-warning** | Quarantined third-party; keep Vue 2 extend behavior |
+| 4 | `GLOBAL_MOUNT` | App `new Vue({ el })` + `bus = new Vue()` | **suppress-warning** | Intentional MODE 2 boot until createApp migration (not feasible this pass) |
+| 5 | `GLOBAL_PROTOTYPE` | `vue-flash-message` → `Vue.prototype.$flashStorage` | **suppress-warning** | Confirmed third-party; load-bearing under MODE 2 |
+| 6 | `provide() can only be used inside setup()` | `vue-sweetalert2` install via `Vue.use` | **fix** | Stop `Vue.use`; set `Vue.config.globalProperties.$swal` + `window.Swal` (already present) |
+| 7 | `CONFIG_WHITESPACE` | Compiler default migrate notice | **fix** | Explicit `compilerOptions.whitespace: 'preserve'` |
+| 8 | `RENDER_FUNCTION` @ PortalTarget | portal-vue | **suppress-warning** | Quarantined third-party (highest density) |
+| 9 | `INSTANCE_SET` @ PortalTarget | portal-vue | **suppress-warning** | Quarantined third-party |
+| 10 | `OPTIONS_BEFORE_DESTROY` @ PortalTarget | portal-vue | **suppress-warning** | Quarantined third-party |
+| 11 | `RENDER_FUNCTION` @ Portal | portal-vue | **suppress-warning** | Same flag as #8 |
+| 12 | `OPTIONS_BEFORE_DESTROY` @ Portal | portal-vue | **suppress-warning** | Same flag as #10 |
+| 13 | `INSTANCE_SCOPED_SLOTS` | portal-vue `$scopedSlots` | **suppress-warning** | Quarantined third-party (zero app `$scopedSlots`) |
+| 14 | Unhandled error during render @ List | academicyear `List.vue` after `/admin/academic/list` 500 | **leave** | Real error from deferred `str_limit` bug — not compat noise; do not suppress |
+| 15 | Unhandled error during component update @ List | same | **leave** | same as #14 |
+| 16 | `COMPONENT_V_MODEL` @ DatetimePicker | vuejs-datetimepicker | **suppress-warning** (per-module `compatConfig` on package export) | Quarantined third-party; **not** global — preserve app-owned v-model deprecation signal |
+| 17 | `OPTIONS_DESTROYED` @ DatetimePicker | vuejs-datetimepicker | **suppress-warning** (per-module) + **fix** app `PhotosSlider.vue` `destroyed`→`unmounted` | Third-party picker + one app-owned rename |
+
+- **Bonus fix discovered during apply**: `flash-message` already registered (ChangeCredential + create-leave each `Vue.use`) — **fix**: single `Vue.use(VueFlashMessage)` in `app.js`.
+- **Applied**: see commit after this log. Post-harden DEV re-smoke (login→academics→attendance→discipline): portal/GLOBAL/datetime/multiselect/feature-flag/provide/CONFIG_WHITESPACE noise **cleared**. Remaining on that path: academicyear List unhandled render/update (#14/#15) + `Object.keys` pageerror from deferred `/admin/academic/list` 500. Flash still works via `Vue.prototype.$flashStorage.flash(...)`.
+- **Recommend**: **CLOSE 1b.5**. Open follow-ups (not blocking close): createApp migration (clears intentional GLOBAL_MOUNT suppress), portal-vue → Teleport, datetimepicker replace, broader `count(` null-safety grep, academicyear `str_limit`, incidental `INSTANCE_EVENT_EMITTER` on profile tabs outside original inventory.
+- **Status**: ✅ 1b.5 harden applied / recommend CLOSE / not pushed
+

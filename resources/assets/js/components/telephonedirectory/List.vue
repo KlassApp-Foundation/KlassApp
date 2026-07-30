@@ -42,8 +42,8 @@
 </template>
 
 <script>
-    import 'vue-good-table/dist/vue-good-table.css'
-    import { VueGoodTable } from 'vue-good-table';
+    import 'vue-good-table-next/dist/vue-good-table-next.css'
+    import { VueGoodTable } from 'vue-good-table-next';
     export default {
         props:['url'],
         components: {
@@ -103,17 +103,16 @@
             deleteNumber(id) 
             {
                 var thisswal = this;
-                swal({
+                Swal.fire({
                     title: 'Are you sure',
                     text: 'Do you want to delete this Phone Number ?',
                     icon: "info",
-                    buttons: [
-                        'No',
-                        'Yes'
-                    ],
-                    dangerMode: true,
-                }).then(function(isConfirm) {
-                    if (isConfirm) 
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+                    
+                }).then(function(result) {
+                    if (result.isConfirmed) 
                     {
                         axios.get(thisswal.url+ '/admin/phonenumber/delete/'+ id).then(response => {
                             thisswal.success = response.data.success;
@@ -122,7 +121,7 @@
                     }
                     else 
                     {
-                        swal("Cancelled");
+                        Swal.fire("Cancelled");
                     }
                 });
             },

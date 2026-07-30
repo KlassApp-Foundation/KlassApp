@@ -200,17 +200,16 @@ export default {
     deletetopic(id) 
     {
       var thisswal = this;
-      swal({
+      Swal.fire({
         title: 'Are you sure',
         text: 'Do you want to delete this Transaction ?',
         icon: "info",
-        buttons: [
-          'No',
-          'Yes'
-        ],
-        dangerMode: true,
-      }).then(function(isConfirm) {
-        if (isConfirm) 
+        showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+        
+      }).then(function(result) {
+        if (result.isConfirmed) 
         {
           axios.delete(thisswal.url+'/accountant/payroll/transaction/'+id+'/delete').then(response => {
              thisswal.success    = response.data.message;
@@ -219,7 +218,7 @@ export default {
         }
         else 
         {
-          swal("Cancelled");
+          Swal.fire("Cancelled");
         }
       });
     },

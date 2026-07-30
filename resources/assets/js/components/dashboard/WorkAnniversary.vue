@@ -60,8 +60,7 @@
 
 <script>
   import Multiselect from 'vue-multiselect'
-  // register globally
-  Vue.component('multiselect', Multiselect)
+  // registered once in app.js
   export default {
     props:['url'],
   components: {
@@ -174,4 +173,4 @@
 
 </script>
 
-<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+<style src="vue-multiselect/dist/vue-multiselect.css"></style>

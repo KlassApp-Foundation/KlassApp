@@ -1,21 +1,27 @@
 <template>
 
     <div class="w-full rounded h-64">
-        <carousel :per-page="1" :mouse-drag="false" :navigationClickTargetSize="25" :navigationEnabled="true" :autoplay="false" :paginationEnabled="false" :autoplayHoverPause="true">
+        <carousel :wrap-around="true" :items-to-show="1" :autoplay="0">
             <slide v-for="list in feeds" v-bind:key="list.id" class="w-84">
                 <img :src="list.path" class="object-cover h-64 w-full">
             </slide>
+            <template #addons>
+              <Navigation />
+            </template>
         </carousel>
     </div>
 </template>
 
 <script>
-    import { Carousel, Slide } from 'vue-carousel';
+    import { Carousel, Slide, Navigation, Pagination } from 'vue3-carousel'
+    import 'vue3-carousel/dist/carousel.css';
     export default {
         props:['url','id','mode','left','right'],
         components: {
             Carousel,
-            Slide
+            Slide,
+            Navigation,
+            Pagination
         },
         data() {
             return {

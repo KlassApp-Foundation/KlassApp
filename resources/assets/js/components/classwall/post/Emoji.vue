@@ -3,7 +3,7 @@
         <div v-if="this.success != null" class="alert alert-success" id="success-alert">{{ this.success }}</div>
         <div class="textarea-emoji-picker">
             <textarea ref="textarea" class="tw-form-control w-full" :value="value" @input="$emit('input', $event.target.value)" rows="1"></textarea>
-            <picker v-show="showEmojiPicker" title="Pick your emoji..." emoji="point_up" @select="addEmoji"></picker>
+            <picker :data="emojiIndex" v-show="showEmojiPicker" title="Pick your emoji..." emoji="point_up" @select="addEmoji"></picker>
             <span class="emoji-trigger" :class="{ 'triggered': showEmojiPicker }" @mousedown.prevent="toggleEmojiPicker">
                 <!--  <svg style="width:20px;height:20px" viewBox="0 0 24 24"><path fill="#888888" d="M20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12M22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2A10,10 0 0,1 22,12M10,9.5C10,10.3 9.3,11 8.5,11C7.7,11 7,10.3 7,9.5C7,8.7 7.7,8 8.5,8C9.3,8 10,8.7 10,9.5M17,9.5C17,10.3 16.3,11 15.5,11C14.7,11 14,10.3 14,9.5C14,8.7 14.7,8 15.5,8C16.3,8 17,8.7 17,9.5M12,17.23C10.25,17.23 8.71,16.5 7.81,15.42L9.23,14C9.68,14.72 10.75,15.23 12,15.23C13.25,15.23 14.32,14.72 14.77,14L16.19,15.42C15.29,16.5 13.75,17.23 12,17.23Z"/></svg> -->
                 <svg class="w-4 h-4 fill-current text-gray-600 mt-1" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve"><g><g><path d="M437.02,74.98C388.667,26.629,324.38,0,256,0S123.333,26.629,74.98,74.98C26.629,123.333,0,187.62,0,256 s26.629,132.668,74.98,181.02C123.333,485.371,187.62,512,256,512s132.667-26.629,181.02-74.98 C485.371,388.668,512,324.38,512,256S485.371,123.333,437.02,74.98z M256,472c-119.103,0-216-96.897-216-216S136.897,40,256,40 s216,96.897,216,216S375.103,472,256,472z"/></g></g><g><g><path d="M368.993,285.776c-0.072,0.214-7.298,21.626-25.02,42.393C321.419,354.599,292.628,368,258.4,368 c-34.475,0-64.195-13.561-88.333-40.303c-18.92-20.962-27.272-42.54-27.33-42.691l-37.475,13.99 c0.42,1.122,10.533,27.792,34.013,54.273C171.022,389.074,212.215,408,258.4,408c46.412,0,86.904-19.076,117.099-55.166 c22.318-26.675,31.165-53.55,31.531-54.681L368.993,285.776z"/></g></g><g><g><circle cx="168" cy="180.12" r="32"/></g></g><g><g><circle cx="344" cy="180.12" r="32"/></g></g></svg>
@@ -13,7 +13,10 @@
 </template>
 
 <script>
-    import { Picker } from 'emoji-mart-vue'
+    import data from 'emoji-mart-vue-fast/data/all.json'
+    import 'emoji-mart-vue-fast/css/emoji-mart.css'
+    import { Picker, EmojiIndex } from 'emoji-mart-vue-fast/src'
+    const emojiIndex = new EmojiIndex(data)
     export default {
         components: { Picker },
         props: {
@@ -24,6 +27,7 @@
         },
         data(){
             return{
+                emojiIndex,
                 showEmojiPicker: false,
                 success:null,
                 errors:[],      

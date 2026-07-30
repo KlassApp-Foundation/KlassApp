@@ -33,7 +33,7 @@
             <label for="description" class="tw-form-label">Description</label>
           </div>
           <div class="mb-1">
-            <quill-editor ref="myQuillEditor" v-model="description" name="description" :options="option"/>
+            <quill-editor ref="myQuillEditor" v-model:content="description" name="description" :options="option" contentType="html" />
             <!-- <div class="text-gray-700 text-xs my-1" v-text="(500 - description.length)+'/'+500" style="text-align: right"></div>  -->              
           </div>
           <span v-if="errors.description" class="text-red-500 text-xs font-semibold">{{errors.description[0]}}</span>
@@ -145,16 +145,15 @@
 
 <script> 
   import datetime from 'vuejs-datetimepicker';
-  import vue2Dropzone from 'vue2-dropzone'
-  import 'vue2-dropzone/dist/vue2Dropzone.min.css'
-  import VueQuillEditor from 'vue-quill-editor'
-  import 'quill/dist/quill.core.css' // import styles
-  import 'quill/dist/quill.snow.css' // for snow theme
-  import 'quill/dist/quill.bubble.css' // for bubble theme
+  import vueDropzone from 'dropzone-vue3'
+  // dropzone CSS bundled via dropzone-vue3
+  import { QuillEditor } from '@vueup/vue-quill'
+    import '@vueup/vue-quill/dist/vue-quill.snow.css'
   export default {
-    components:{ 
+    components: {
+            QuillEditor, 
       datetime ,
-      vueDropzone: vue2Dropzone,
+      vueDropzone,
     },
     props:['url' , 'entity_id' , 'entity_name' , 'mode'],
     data(){

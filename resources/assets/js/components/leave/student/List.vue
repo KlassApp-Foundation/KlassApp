@@ -116,23 +116,22 @@
             approveleave(id) 
             {
                 var thisswal = this;
-                swal({
+                Swal.fire({
                     title: 'Are you sure',
                     text: 'Do you want to approve this leave ?',
                     icon: "info",
-                    buttons: [
-                        'No',
-                        'Yes'
-                    ],
-                    dangerMode: true,
-                }).then(function(isConfirm) {
-                    if (isConfirm) 
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+                    
+                }).then(function(result) {
+                    if (result.isConfirmed) 
                     {
                         window.location.href = thisswal.url+ '/teacher/studentLeave/approve/'+ id;
                     }
                     else 
                     {
-                        swal("Cancelled");
+                        Swal.fire("Cancelled");
                     }
                 });
             },
@@ -140,23 +139,22 @@
             rejectleave(id) 
             {
                 var thisswal = this;
-                swal({
+                Swal.fire({
                     title: 'Are you sure',
                     text: 'Do you want to reject this leave ?',
                     icon: "info",
-                    buttons: [
-                        'No',
-                        'Yes'
-                    ],
-                    dangerMode: true,
-                }).then(function(isConfirm) {
-                    if (isConfirm) 
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+                    
+                }).then(function(result) {
+                    if (result.isConfirmed) 
                     {
                         window.location.href = thisswal.url+ '/teacher/studentLeave/reject/'+ id;  
                     }
                     else 
                     {
-                        swal("Cancelled");
+                        Swal.fire("Cancelled");
                     }
                 });
             },

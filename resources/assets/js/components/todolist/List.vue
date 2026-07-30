@@ -355,17 +355,16 @@
             deleteTask(id) 
             {
                 var thisswal = this;
-                swal({
+                Swal.fire({
                     title: 'Are you sure',
                     text: 'Do you want to delete this task ?',
                     icon: "info",
-                    buttons: [
-                        'No',
-                        'Yes'
-                    ],
-                    dangerMode: true,
-                }).then(function(isConfirm) {
-                    if (isConfirm) 
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+                    
+                }).then(function(result) {
+                    if (result.isConfirmed) 
                     {
                         axios.get('/'+thisswal.mode+'/task/'+id+'/delete').then(response => {
                             thisswal.success    = response.data.success;
@@ -374,7 +373,7 @@
                     }
                     else 
                     {
-                        swal("Cancelled");
+                        Swal.fire("Cancelled");
                     }
                 });
             },
