@@ -44,7 +44,7 @@
 - **Main hygiene (pushed pre-Vite)**: `vue-upload-multiple-image` removed (`e2b0112`).
 - **Phase 3 history on `migration/vite`**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** → **✅ 3.1 ESM** → **✅ 3.5 Mix removal** (`3bc5c70`) → rules `c470c39` → merge to main `9bdf185`.
 - **Scoped tech debt**: `.npmrc` `legacy-peer-deps=true` — **7 direct packages** declare Vue 2 peers that reject Vue 3.5.40 (first ERESOLVE: `@fullcalendar/vue@5`).
-- **NOT PUSHED** — local `main` ahead of `origin/main` (merge + docs); push only on user ask.
+- **Pushed** to `origin/main` — tip **`d8dc818`** (deferred-bugs merge `536603c` + knowledge closeout).
 ## Current Status: July 28, 2026
 
 ### Git
@@ -297,7 +297,7 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Scoped tech debt** | `.npmrc` `legacy-peer-deps=true` — Vue-2 peer packages listed in Phase 3.5 closeout |
 | **Deferred docs** | `docs/build-safeguards.md`, `docs/css-consolidation-plan.md`, `DESIGN_SYSTEM.md` still mention Mix — low priority |
 | **Risk level** | **Low** — prod deploy verification next; package peer upgrades separate |
-| **Effort** | Phase 3 closed on `main`; push + prod deploy next |
+| **Effort** | Phase 3 closed + pushed on `main`; prod deploy next |
 
 ---
 
@@ -318,7 +318,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **axios 1.x** — done.
 - **Phase 1a (SFC compile fixes)** — done and merged.
 - **Phase 1b (Vue 3 runtime)** — **done on `main`** (`50f5c4d`).
-- **Mix→Vite (Phase 3)** — ✅ **CLOSED on `main`** (`9bdf185`): 3.3 Blade `@vite()` → 3.4 packages → 3.1 ESM → 3.5 Mix removal (`3bc5c70`). Scripts `npm run dev`/`build`; Pusher `VITE_*`-only; no Mix. Academics `str_limit` ✅ CLOSED on `main` via deferred merge `536603c` (fix commit `5b5540f`). Push + prod deploy next.
+- **Mix→Vite (Phase 3)** — ✅ **CLOSED on `main`** (`9bdf185`): 3.3 Blade `@vite()` → 3.4 packages → 3.1 ESM → 3.5 Mix removal (`3bc5c70`). Scripts `npm run dev`/`build`; Pusher `VITE_*`-only; no Mix. Academics `str_limit` ✅ CLOSED on `main` via deferred merge `536603c` (fix commit `5b5540f`). On `origin/main` (knowledge tip historically `3e93bc3`; current tip includes deferred closeout). Prod deploy next.
 - **5 deferred app bugs** — ✅ **CLOSED on `main`** (`536603c` from `fix/deferred-bugs` @ `a0db768`).
 
 **Deferred indefinitely (no current plan):**
@@ -379,20 +379,25 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-07-31: Knowledge — mark deferred-bugs tip pushed on origin/main
+- **Work done**: Corrected stale **NOT PUSHED** Current Status / session-log wording after confirming `origin/main` == `d8dc818` (includes merge `536603c`). Also cleared leftover Phase 3 “awaiting push” language post-`3e93bc3`. Synced KlassApp + main-merge copies.
+- **Status**: ✅ Done
+- **Edge cases flagged**: None
+
 ### 2026-07-31: Merge fix/deferred-bugs → main (5 bugs CLOSED on main)
 - **Work done**: Pre-merge checks (fetch; 0 behind / 5 ahead vs `origin/main`; PHPUnit 234/1/1; `npm run build` PASS; clean tree) then no-ff merge into `main`. Post-merge PHPUnit + authenticated HTTP smoke of all 5 surfaces. Updated knowledge: all 5 **CLOSED on `main`** with merge SHA. Synced to `/Users/mac/projects/KlassApp/knowledge.md`.
 - **Merge commit**: **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)`
 - **Tip merged**: `fix/deferred-bugs` @ `a0db768` (fix commits `77d1fbe` / `5b5540f` / `b21c04f` / `e993196` + docs)
 - **Post-merge smoke**: login+dashboard, `/admin/academic/list`, ClassWall `editList/1`, `/admin/students/blockedstudents`, `/admin/promotion/list` — all **200**; `activity()` OK; targeted feature tests **12 passed**
-- **Status**: ✅ Done on local `main` — **NOT PUSHED**
-- **Edge cases flagged**: Only expected failure remains `ToshiE2EVerificationTest` LLM null (API/env). Push `main` only on user ask.
+- **Status**: ✅ Done — **pushed** to `origin/main` @ **`d8dc818`**
+- **Edge cases flagged**: Only expected failure remains `ToshiE2EVerificationTest` LLM null (API/env).
 
 ### 2026-07-31: Deferred track closeout — all 5 CLOSED with commit refs
 - **Work done**: Investigate-before-fix re-verify of item 5 (`exam_type`); confirmed fix `e993196` correct (query not migration); marked all five deferred bugs **CLOSED** with SHAs in Current Status + findings. Synced `knowledge.md` to canonical `/Users/mac/projects/KlassApp/knowledge.md` + checkout/merge worktrees.
 - **Evidence**: `exams.exam_type` never in migrations (create + `exam_type_id` add only); live `Schema::hasColumn` false/true; `GET /admin/promotion/list` → 200 `examlist`; PHPUnit **234 passed / 1 skipped / 1 failed** (`ToshiE2E` unrelated).
 - **CLOSED refs**: #1 `77d1fbe` · #2 `5b5540f` · #3+#4 `b21c04f` · #5 `e993196`
 - **Status**: ✅ Superseded — later merged to `main` @ `536603c`
-- **Edge cases flagged**: Branch tip still ahead of `main`; merge/push only on user ask.
+- **Edge cases flagged**: Historical pre-merge note — later merged @ `536603c` and pushed on `origin/main`.
 
 ### 2026-07-31: Deferred bug #5 — promotion/list exam_type
 - **Work done**: Stopped referencing dead `exams.exam_type`; filter FINAL exams via `exam_types.code` (`whereRelation`). Added missing `App\Http\Resources\Exam` for promotion JSON (`id`, `name`, `subjects`, `standard_id`). Tests in `PromotionListExamTypeTest`. Commit **`e993196`**.
@@ -5449,5 +5454,5 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
   - Shell: `Vue.version` 3.5.40; Vite client; academics / attendance+multiselect / discipline+multiselect / ACADEMICS sidebar nav PASS.
   - Phase 3.4: teachers portal `#show-detail` open/close; datetimepicker discipline + ClassWall; change-credential + create-leave mount / `$flashStorage`.
   - PHPUnit: 5 failed, 1 skipped, 220 passed (LoginRegression, RegistrationMinistryCode ×2, RegistrationFlow activity(), ToshiE2E LLM).
-- **Key decisions**: Prefer dedicated merge worktree over checking out main in an existing dirty tree. Prefer new knowledge commit (not amend merge). **Do not push** — user decides.
-- **Status**: ✅ Phase 3 **CLOSED on `main`** locally; awaiting push decision
+- **Key decisions**: Prefer dedicated merge worktree over checking out main in an existing dirty tree. Prefer new knowledge commit (not amend merge).
+- **Status**: ✅ Phase 3 **CLOSED on `main`** — **pushed** (knowledge tip historically `3e93bc3`; superseded by later `origin/main` tip)
