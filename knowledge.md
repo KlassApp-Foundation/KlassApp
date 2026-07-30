@@ -26,8 +26,8 @@
 - **Verify**: `npm run production` PASS; `Vue.version` 3.5.40; tests 5 failed (baseline); shell smoke PASS on `:8010`.
 - **Soft SFC template fixes on `main`**: **42** soft compiler errors cleared — **19** v-model on `<label>`, **10** empty v-html, **9** invalid end tags, **4** v-model-on-prop. Merge `5a7cc45`, fix `7f29e37`, Mix asset rebuild `8a2938d` (pushed to `origin/main`). **Why it mattered**: Vite hard-fails on these where Mix’s `VueCompatSoftCompilerErrorsPlugin` was silently softening them.
 - **Main hygiene (pushed)**: `vue-upload-multiple-image` removed (`e2b0112`); `frontend.mdc` updated for Vue 3.5.40 / `@vue/compat` / Mix 6 / Tailwind v4 (`5de4e1f`).
-- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`)**: Scaffold → CSS entries (3.2) → **✅ Phase 3.3 Blade `@vite()` cutover** (empty → minimal → main → superadmin-app → app). Pre-3.3 tip **pushed** at `624c7dd`; 3.3 commit local until asked to push. Rolldown CJS → ESM (3.1) still **OPTIONAL** for production builds; **required for `vite:dev` HMR** (`require is not defined` in raw ESM).
-- **Runtime gaps**: (1) ✅ Pusher dual-read. (2) ✅ `$swal` via `Vue.prototype`. (3) Academics `str_limit` / `Object.keys` — deferred. (4) Empty Pusher key → Echo skip → `listenForNotifications` `channel` TypeError (known). (5) HMR blocked until optional ESM conversion of `app.js` `require()` graph.
+- **Phase 3 Vite (`migration/vite`, worktree `/Users/mac/projects/KlassApp-main-checkout`)**: Scaffold → CSS entries (3.2) → **✅ Phase 3.3 Blade `@vite()` cutover** (empty → minimal → main → superadmin-app → app). Pre-3.3 tip **pushed** at `624c7dd`; 3.3 commit local until asked to push. **3.1 dual**: optional for production `vite:build` (Rolldown CJS interop OK); **required for workable `vite:dev` / before Mix removal (3.5)** — hard Vue boot failure (`ReferenceError: require is not defined` at `app.js:8` → `window.Vue` never set; Vue components empty), not soft HMR-only. **3.4 can proceed first** on the build path.
+- **Runtime gaps**: (1) ✅ Pusher dual-read. (2) ✅ `$swal` via `Vue.prototype`. (3) Academics `str_limit` / `Object.keys` — deferred. (4) Empty Pusher key → Echo skip → `listenForNotifications` `channel` TypeError (known). (5) `vite:dev` = **A hard failure** until ESM (3.1): `typeof window.Vue === "undefined"`, Vue components unresolved; Blade HTML still renders.
 - **Process**: Log Phase 3 progress into `knowledge.md` at **each sub-phase checkpoint** (same discipline as Phase 1/2) — not batched catch-ups.
 ## Current Status: July 28, 2026
 
@@ -296,11 +296,11 @@ Laravel was upgraded from ^11.0 to **12.63.0** (production confirmed). The plann
 | **Blade asset helpers** | Still Mix/`asset('js/app.js')` — cutover to `@vite(...)` is a later Phase 3 step |
 | **Vue compatibility** | Vue 3.5.40 (`@vue/compat` MODE 2) on `main` — using **`@vitejs/plugin-vue`** (compat); `@vitejs/plugin-vue2` not needed |
 | **Build blockers cleared** | Extensionless `.vue` resolve (`d06859e`); Birthday/BirthdayTeacher/WorkAnniversary `<style src>` vue-multiselect CSS removed (`70d0281`) — global import remains in `app.js`; `npx vite build` PASS without ESM-converting `require()` |
-| **Runtime verify** | ✅ Pusher dual-read Mix+Vite (Fix 1 follow-up). ✅ `this.$swal` via `Vue.prototype.$swal` (Fix 2; MODE 2 compat bridge — revisit if compat off). **3.1 ESM = OPTIONAL.** Open: Blade `@vite()` cutover, academics `str_limit` |
+| **Runtime verify** | ✅ Pusher dual-read Mix+Vite (Fix 1 follow-up). ✅ `this.$swal` via `Vue.prototype.$swal` (Fix 2; MODE 2 compat bridge — revisit if compat off). **3.1 ESM**: optional for `vite:build`; **required** for `vite:dev` / pre-3.5 (supersedes earlier “OPTIONAL cleanup only”). Open: 3.4+, academics `str_limit` |
 | **Feature gap: versioning** | Mix `version()` → Vite handles this automatically via hashed filenames |
 | **Feature gap: PurgeCSS** | Currently uses `laravel-mix-purgecss` — Vite equivalent is `@fullhuman/postcss-purgecss` PostCSS plugin |
 | **Risk level** | **Low-Medium** for remaining Blade `@vite()` cutover + env (`VITE_PUSHER_*`); Vue major settled |
-| **Effort** | Scaffold/build path largely done; remaining = env define, optional ESM cleanup, Blade `@vite()` cutover |
+| **Effort** | Scaffold/build path largely done; remaining = 3.4+ on build path; **3.1 ESM required before 3.5** for vite:dev (optional only if staying build-only) |
 
 ---
 
@@ -321,7 +321,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **axios 1.x** — done.
 - **Phase 1a (SFC compile fixes)** — done and merged.
 - **Phase 1b (Vue 3 runtime)** — **done on `main`** (`50f5c4d`).
-- **Mix→Vite (Phase 3)**: ✅ Phase 3.3 Blade `@vite()` cutover on `migration/vite` (empty/minimal/main/superadmin-app/app). Production path = `vite:build` + no `public/hot`. HMR blocked on `require()` until optional ESM (3.1). Pusher dual-read still transitional until Mix removed (3.5). Academics `str_limit` deferred.
+- **Mix→Vite (Phase 3)**: ✅ Phase 3.3 Blade `@vite()` cutover on `migration/vite` (empty/minimal/main/superadmin-app/app). Production path = `vite:build` + no `public/hot` (Rolldown CJS interop OK without 3.1). `vite:dev` = **hard failure** until ESM (3.1) — `require` undefined, `window.Vue` never set. **3.1 required before 3.5** for Vite-served local workflow; **3.4 can proceed first**. Pusher dual-read transitional until Mix removed (3.5). Academics `str_limit` deferred.
 
 **Deferred indefinitely (no current plan):**
 - Replacing spatie/laravel-activitylog and laravel-notification-channels/fcm (removed during L10→11 upgrade, no L11-compatible versions available) — evaluate when these packages publish L11-compatible releases
@@ -5246,9 +5246,9 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Verdict**:
   - Pristine Vite build **dies** on `{}.MIX_PUSHER_*` (Echo/Pusher key) — same root cause detailed in the investigation entry below.
   - With **temporary** `define` for MIX_PUSHER vars: Vue **3.5.40** mounts; ~**179** `require().default` components register via Rolldown CJS interop; attendance + discipline OK.
-  - **Key finding**: Rolldown CJS interop → originally planned ~179 ESM conversion (Phase 3.1) is **OPTIONAL cleanup**, not a hard blocker; `require()` graph works at runtime under Vite 8/Rolldown.
+  - **Key finding (superseded Jul 30 — see Session Log “3.1 dual gate”)**: Rolldown CJS interop → ~179 ESM conversion (Phase 3.1) is **optional for production `vite:build` only** (`require()` graph works under Vite 8/Rolldown build). **Not optional for `vite:dev`**: native ESM serves `app.js` → hard `require is not defined` (module dies; Vue never boots).
   - `$swal` instance gap and academics `str_limit` / `Object.keys` = **separate** issues (see investigation entry; not Vite-build blockers).
-- **Status**: 🚧 Vite build path verified; Mix still ships prod; open: MIX_PUSHER env, Blade `@vite()` cutover, optional ESM
+- **Status**: 🚧 Vite build path verified (3.1 optional for build); Mix still shipped prod then; open then: MIX_PUSHER, Blade `@vite()`, ESM for vite:dev — later cutover/fixes landed; see “3.1 dual gate” checkpoint
 
 ### 2026-07-30: Phase 3 Vite investigation — MIX_PUSHER / $swal / academics attribution (no fixes)
 - **Work done**: Investigated three Vite-smoke findings on `migration/vite` worktree `/Users/mac/projects/KlassApp-main-checkout` (after scaffold/`vite build` path above). **No code fixes** for MIX_PUSHER or `$swal`; academics confirmed same deferred bug (knowledge only). Cross-ref: runtime verify verdict above.
@@ -5326,9 +5326,15 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
   - main `/terms-of-service`: Vue 3.5.40, Vite module, custom.js, no `$` pageerrors after jQuery CDN — **PASS**
   - superadmin `/superadmin/dashboard` (`siteadmin@gmail.com` / `password`): Vue 3.5.40, `body#superadmin-body`, Vite module — **PASS**
   - app checklist (`admin@testschoolone.sch.ug` / `password`): boot, academics shell (known list 500/`Object.keys`), attendance/add, discipline/add, nav `.profile-click` open — **PASS** shell; no Vite/module errors. Known: Echo `channel` TypeError (empty Pusher key); academics `str_limit`.
-- **HMR**: `npm run vite:dev` writes `public/hot`, `@vite/client` 200, Blade points at `:5173` — but `app.js` still `require('./bootstrap')` → **`ReferenceError: require is not defined`**. Production `vite build` OK via Rolldown CJS interop. ESM conversion (3.1) now gates HMR.
+- **`vite:dev` severity (verified Jul 30)**: **A — hard failure**. `npm run vite:dev` writes `public/hot`, `@vite/client` 200, but `app.js:8` `require('./bootstrap')` → **`ReferenceError: require is not defined`** → `typeof window.Vue === "undefined"`, no `__vue_app__`, `<create-attendance>` empty. Blade chrome still renders; Vue app never boots. Full refresh does not help while `public/hot` exists. Production `vite:build` OK via Rolldown CJS interop. **3.1 ESM required for workable Vite HMR workflow**; **3.4 can proceed** on build path; do not treat 3.1 as soft/optional if local Vite-served dev is needed before 3.5.
 - **PHPUnit**: `5 failed, 1 skipped, 220 passed` — same baseline: LoginRegressionTest, RegistrationMinistryCodeTest ×2, RegistrationFlowTest `activity()`, ToshiE2EVerificationTest LLM.
 - **Push Part A**: `origin/migration/vite` = `624c7dd` (includes `4988b01` + knowledge SHA). Part B commit **not pushed** unless asked.
 - **Files modified**: five layouts above, `knowledge.md` (canonical + checkout sync). `public/build/` untracked.
-- **Status**: ✅ Phase 3.3 cutover done on `migration/vite` (commit SHA below after commit)
+- **Status**: ✅ Phase 3.3 cutover done on `migration/vite` — commit **`8632ccc`** (`build(vite): Phase 3.3 Blade @vite() cutover for Mix CSS/JS`); local-ahead of `origin/migration/vite` (not pushed unless asked)
 
+### 2026-07-30: Phase 3.1 dual gate — `vite:dev` hard failure vs build-optional (checkpoint)
+- **Severity**: Under `npm run vite:dev`, `require is not defined` is a **hard failure** — module dies at `require('./bootstrap')`; `window.Vue` never set; Vue components empty. **Not** soft “HMR only.”
+- **Production**: `vite:build` still OK via Rolldown CJS interop (no ESM conversion required for build-only).
+- **Sequencing**: **3.1 ESM conversion is required before 3.5 (Mix removal)** for a workable Vite-served local workflow; still **optional for prod build-only**. **3.4 can proceed first** on the build path.
+- **Supersedes**: Earlier “3.1 OPTIONAL cleanup” / “not a hard blocker” wording (runtime-verify session) implied no hard need — clarify the dual: optional for build, required for `vite:dev` / pre-3.5.
+- **Status**: 📝 Knowledge checkpoint only (no code change in this commit)
