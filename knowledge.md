@@ -19,8 +19,33 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
+## Superadmin audit (Jul 31, 2026) — Phase 1 inventory + pre–Phase 2 findings
+
+> **Scope**: Platform `/superadmin` surface inventory only. **Phase 2 testing has NOT started.**
+
+### Phase 1 inventory (pointer)
+
+- **Worktree / tip**: `/Users/mac/projects/KlassApp-main-merge` on `main` @ `1f8ea30` (inventory session).
+- **Routes**: **41** inventoried (`40` registered `GET` under `/superadmin` + `1` related `schooladmin/{id}/impersonate`). Almost all are Livewire-backed closures in `routes/web.php` (`middleware` `superadmin`+`auth`, `prefix` `superadmin`). Dead stub: empty `routes/superadmin.php` still mapped by `RouteServiceProvider` (adds zero routes).
+- **Livewire mutate surface**: Per-route map of Blade → Livewire components → public mutating methods completed in the same audit pass (layout-shared `agent-toshi` + page components). Full tables live in the Phase 1 agent report (not duplicated here).
+- **Toshi**: Uses **Laravel AI SDK** (`laravel/ai` ^0.9; `ToshiOrchestrator` / `ToshiSdkV2Service` — **not** LarAgent). School/onboarding-focused: **1 covered / 32 gap / 8 N/A** across the 41 routes (only school create overlaps meaningfully with AgentToshi onboarding / `commitAll`).
+
+### Pre–Phase 2 findings (logged before any testing)
+
+| # | Finding | One-line verdict | Evidence |
+|---|---|---|---|
+| 1 | Dead `/superadmin/users` link | **Cosmetic broken nav** leftover from dashboard redesign — not a removed/never-finished platform user-management feature. | Link only at `resources/views/superadmin/dashboard.blade.php:339` (“Recent Users” → “View all”). **No route ever registered** for `/superadmin/users` (`git log -S` on `routes/` empty). KPI card fixed to schools in `3ae8517` (Jul 3); this “View all” was missed. School-scoped `UserList` Livewire + route `superadmin/academics/school/user/list/{id}` still exist. Link invented in dashboard redesign `34e264c` (Jul 1). |
+| 2 | Country create route commented out | **Intentionally disabled since first commit** — **real gap**: cannot create a country. | `routes/web.php:259–261` commented `superadmin.setting.countries.create` since `a6784c3` (blame/log-L; never uncommented). `CountryForm` is **update-only** (`Country::…->update`; `mount($id)` requires existing row). Filament `CreateAction::make()` on `Countries` list has **no form schema** — stub, does not create. Cities/plans still have working create routes for contrast. |
+
+### Phase 2 status
+
+- **Not started.** Suggested batch order from Phase 1 inventory still applies (smoke core → school write → people → billing → reports → settings → geo → account → impersonate → dead-link fix).
+
+---
+
 ## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs** + **cleanup-loose-ends CLOSED on `main`**)
 
+- **Superadmin audit**: Phase 1 inventory done (41 routes + Livewire mutate surface); two findings logged above; **Phase 2 not started**. See **Superadmin audit** section.
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
 - **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
@@ -5486,3 +5511,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Post-merge verify**: PHPUnit **234 passed / 1 skipped / 1 failed** (`ToshiE2E`); `npm run build` PASS; no `public/hot`; `/privacy-policy` + `/terms-of-service` **200** with navbar (logo + Free Sign Up + Login); screenshots `tmp/nav-smoke/*-postmerge.png`
 - **Key decisions**: Separate knowledge commit (not amend merge). **Do not push** — leave local `main` ahead of `origin/main`.
 - **Status**: ✅ Merged locally — **NOT PUSHED**
+
+### 2026-07-31: Superadmin audit — Phase 1 findings logged (pre–Phase 2)
+- **Work done**: Investigated two Phase 1 inventory findings and logged a **Superadmin audit** section + Current Status pointer. Synced `knowledge.md` to canonical KlassApp workspace copy. **No Phase 2 testing.**
+- **Finding 1 — `/superadmin/users`**: Cosmetic broken “View all” on dashboard Recent Users (`dashboard.blade.php:339`). Never a registered route; school-scoped `UserList` still exists. KPI fixed in `3ae8517`; link from redesign `34e264c`.
+- **Finding 2 — country create**: Intentionally commented since `a6784c3`; `CountryForm` update-only; Filament `CreateAction` stub without form — **cannot create a country** (real gap).
+- **Phase 1 pointer**: 41 routes; Livewire mutate surface mapped; Toshi = Laravel AI SDK, school-focused, **1 covered / 32 gap**.
+- **Status**: ✅ Docs logged — Phase 2 **not started** — **NOT PUSHED**
