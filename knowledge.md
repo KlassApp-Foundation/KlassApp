@@ -225,18 +225,22 @@
 | **HIGH** | `submitPassword` validation `same:password` vs `new_password` — cannot change siteadmin password via UI | A |
 | **MEDIUM** | Country create route commented + CreateAction stub (create impossible even after list fix) | Phase1 / B |
 | **MEDIUM** | Stop-impersonate leaves siteadmin on `/admin/*` (ug1 redirect commented) | E |
-| **MEDIUM** | Toshi SDK unavailable for platform siteadmin (`per_school_gate` + null school) → ask null / fallback | D |
 | **LOW** | `submitPlan` update redirect `/plans{id}` missing `/` | A |
 | **LOW** | `submitAvatar` redirects into `/admin/*` | A |
 | **LOW / cosmetic** | Dead `/superadmin/users` “View all” link (no route) | Phase1 |
 | **note** | Subscription form status enum drift; admin email unique validates wrong table; users.name mangling | A |
-| **gap** | Toshi platform CRUD coverage still **1/32** vs Livewire surface | Phase1 / D |
+
+### Decided-deferred (roadmap — NOT active triage)
+
+| Item | Decision | Why not triage-now |
+|---|---|---|
+| **Toshi platform-scope for superadmin** | **Decided-deferred roadmap** — remove from active triage queue | Root: `per_school_gate` needs a school with `toshi_enabled`; siteadmin `school_id=null` → `isAvailable()` false → NL soft-fails via `fallbackMessage()`. Panel still renders (greeting + `/help` work). **Do not** just remove the school check — platform-scope needs its own authorization model (higher blast radius; keep confirmation-before-write). Gap vs Livewire surface (**1/32**) stays a product roadmap item, not a hotfix. |
 
 ---
 
 ## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs** + **cleanup-loose-ends CLOSED on `main`**)
 
-- **Superadmin audit**: Phase 1 + **Phase 2 Batches A–E CLOSED** (catalogue only — **fixes deferred**). See **Superadmin audit** section. Triage: **hasSummary ×4 HIGH**, **password HIGH**, plus MEDIUM stop-impersonate / Toshi platform SDK gate / country create.
+- **Superadmin audit**: Phase 1 + **Phase 2 Batches A–E CLOSED** (catalogue only — **fixes deferred**). See **Superadmin audit** section. Active triage: **hasSummary ×4 HIGH**, **password HIGH**, plus MEDIUM stop-impersonate / country create. **Toshi platform-scope** = decided-deferred roadmap (not active triage).
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
 - **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
@@ -5737,6 +5741,11 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Work done**: Catalogue-only browser+DB verification on `:8010` (serve + Vite from `KlassApp-main-merge`). Synced knowledge to canonical KlassApp copy. Committed + pushed `main`.
 - **Batch D**: `show()` **pass**; `/help` **pass**; NL `send` Livewire OK but SDK **partial/fail** — `isAvailable(siteadmin,null)=false` (`per_school_gate` needs school/`toshi_enabled`); `ask()` null → `fallbackMessage()`. Onboarding/`commitAll` **skipped** (destructive). Platform Toshi CAN: panel + slash cmds + fallbacks; cannot do real SDK Q&A or most platform CRUD. School-admin Toshi path already in knowledge (E2E / commitAll) — not re-run.
 - **Batch E**: `/schooladmin/169/impersonate` **pass** (→ `/admin/academics`, school name, Stop link). Stop clears session (**pass**) but leaves siteadmin on `/admin/academics` (**partial** — ug1 redirect commented). `/superadmin/dashboard` OK after stop.
-- **Phase 2**: **CLOSED** (A–E catalogue done — fixes deferred). Triage list: hasSummary×4 HIGH, password HIGH, country create MEDIUM, stop-impersonate MEDIUM, Toshi platform SDK gate MEDIUM, plan/avatar redirects LOW, dead users link LOW.
+- **Phase 2**: **CLOSED** (A–E catalogue done — fixes deferred). Triage list: hasSummary×4 HIGH, password HIGH, country create MEDIUM, stop-impersonate MEDIUM, plan/avatar redirects LOW, dead users link LOW. **Toshi platform SDK gate** moved to **decided-deferred roadmap** (not active triage).
 - **Artifacts**: `tmp/superadmin-batch-d/`, `tmp/superadmin-batch-e/`.
 - **Status**: ✅ Phase 2 CLOSED — pushed with this knowledge commit
+
+### 2026-07-31: Superadmin triage — defer Toshi platform-scope + HIGH fixes
+- **Work done**: (1) Marked Toshi platform-scope for superadmin as **decided-deferred roadmap** (not active triage) — `per_school_gate` + null `school_id`; real feature needs own auth model, not gate removal. (2) Fixed Filament `hasSummary()` arity by removing stale published `resources/views/vendor/filament-tables` (package v3.3.54 views already pass `$this->getAllTableSummaryQuery()`). Verified all 4 lists. (3) Fixed `ChangePassword` `same:password` → `same:new_password`; verified via disposable co-admin password change + login.
+- **Branch**: `fix/superadmin-audit-triage` off `main`
+- **Status**: 🚧 In progress (this session)
