@@ -27,20 +27,19 @@
 > **Browser note**: Playwright (`channel: 'chrome'`) + Livewire `$wire` set/call. Artifacts: `KlassApp/tmp/superadmin-batch-{a,b,c,d,e}/`.
 > **Phase 2 status**: **CLOSED** — Batches A–E catalogue complete; **fixes deferred** to triage.
 
-### Systemic bug — Filament `Table::hasSummary()` arity (**1 bug × 4 list occurrences**)
+### Systemic bug — Filament `Table::hasSummary()` arity (**FIXED** — was 1 bug × 4 list occurrences)
 
-> **Catalogue-first — do not dig root further until triage.** Subscriptions list 500 and countries list 500 are **the same root cause**, not two independent bugs. Cities list (quick check) and plans list (Batch C) are additional occurrences of the **same** skew.
+> **Fixed on `fix/superadmin-audit-triage`**: removed stale published `resources/views/vendor/filament-tables/` so package `filament/tables` v3.3.54 views are used (`$hasSummary($this->getAllTableSummaryQuery())`). No app customizations in the published copy.
 
 | # | Filament list | URI | Evidence |
 |---|---|---|---|
-| 1 | Subscriptions (Batch A) | `/superadmin/reports/subscriptions` | Browser HTTP 500; `Livewire::test(Subscriptions::class)` → `Too few arguments to function Filament\Tables\Table::hasSummary(), 0 passed … exactly 1 expected` via published `resources/views/vendor/filament-tables/index.blade.php` |
-| 2 | Countries (Batch B) | `/superadmin/setting/countries` | Same message / same published vendor view (not a separate bug) |
-| 3 | Cities (confirmed) | `/superadmin/setting/cities` | **Same** `hasSummary()` arity — `Livewire::test(Cities::class)` identical exception stack (`CanSummarizeRecords.php` + compiled vendor `index.blade.php`). **3rd occurrence** of one systemic bug. |
-| 4 | Plans (Batch C) | `/superadmin/setting/plans` | Browser HTTP 500; `Livewire::test(PlanList::class)` → **SAME** `hasSummary()`. **4th occurrence.** |
+| 1 | Subscriptions | `/superadmin/reports/subscriptions` | Was HTTP 500; **now HTTP 200** + `Livewire::test` mount OK |
+| 2 | Countries | `/superadmin/setting/countries` | Was HTTP 500; **now HTTP 200** + mount OK |
+| 3 | Cities | `/superadmin/setting/cities` | Was HTTP 500; **now HTTP 200** + mount OK |
+| 4 | Plans | `/superadmin/setting/plans` | Was HTTP 500; **now HTTP 200** + mount OK |
 
-- **Root**: Published Filament tables view calls `$this->getTable()->hasSummary()` with **0 args**; package `hasSummary()` requires **exactly 1**. Version skew between published `resources/views/vendor/filament-tables/` and installed `filament/tables`.
-- **Not Filament**: School list (`SchoolList`) is plain Livewire — **HTTP 200** (Batch C). Detail/form routes for the broken domains still work.
-- **Triage priority**: Raise to **HIGH / systemic** — one vendor-view republish (or align Filament package) unblocks **all four** lists (approve subscription, countries CreateAction UI, cities Edit from list, plans list). Catalogue only — **not fixed** in Batches A–C.
+- **Root**: Published Filament tables view called `$hasSummary()` with **0 args**; package `hasSummary(Builder\|Closure\|null $query)` requires **exactly 1**. Version skew between published views and installed `filament/tables` v3.3.54.
+- **Fix**: Delete published copy (prefer vendor) rather than hand-patching one line — entire tree was outdated.
 
 ### Phase 1 inventory (pointer)
 
@@ -217,12 +216,12 @@
 | D | Toshi panel/show/help **pass**; SDK send **partial/fail** (per_school_gate / null ask); onboarding skipped |
 | E | Impersonate **pass**; stop session clear **pass**, stop redirect **partial** |
 
-### Remaining findings for triage (Phase 2 CLOSED — fixes deferred)
+### Remaining findings for triage (Phase 2 CLOSED — HIGH fixes on `fix/superadmin-audit-triage`)
 
 | Priority | Finding | Source |
 |---|---|---|
-| **HIGH / systemic** | Filament `hasSummary()` arity — **1 bug × 4 lists** (subscriptions, countries, cities, plans) | A/B/C |
-| **HIGH** | `submitPassword` validation `same:password` vs `new_password` — cannot change siteadmin password via UI | A |
+| ~~**HIGH / systemic**~~ | ~~Filament `hasSummary()` arity ×4~~ — **FIXED** (removed stale published filament-tables) | A/B/C |
+| ~~**HIGH**~~ | ~~`submitPassword` `same:password`~~ — **FIXED** (`same:new_password`) | A |
 | **MEDIUM** | Country create route commented + CreateAction stub (create impossible even after list fix) | Phase1 / B |
 | **MEDIUM** | Stop-impersonate leaves siteadmin on `/admin/*` (ug1 redirect commented) | E |
 | **LOW** | `submitPlan` update redirect `/plans{id}` missing `/` | A |
@@ -240,7 +239,7 @@
 
 ## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs** + **cleanup-loose-ends CLOSED on `main`**)
 
-- **Superadmin audit**: Phase 1 + **Phase 2 Batches A–E CLOSED** (catalogue only — **fixes deferred**). See **Superadmin audit** section. Active triage: **hasSummary ×4 HIGH**, **password HIGH**, plus MEDIUM stop-impersonate / country create. **Toshi platform-scope** = decided-deferred roadmap (not active triage).
+- **Superadmin audit**: Phase 1 + **Phase 2 Batches A–E CLOSED**. HIGH triage fixed on `fix/superadmin-audit-triage` (hasSummary ×4 + password). Remaining active triage: MEDIUM stop-impersonate / country create + LOWs. **Toshi platform-scope** = decided-deferred roadmap.
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
 - **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
@@ -5746,6 +5745,8 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Status**: ✅ Phase 2 CLOSED — pushed with this knowledge commit
 
 ### 2026-07-31: Superadmin triage — defer Toshi platform-scope + HIGH fixes
-- **Work done**: (1) Marked Toshi platform-scope for superadmin as **decided-deferred roadmap** (not active triage) — `per_school_gate` + null `school_id`; real feature needs own auth model, not gate removal. (2) Fixed Filament `hasSummary()` arity by removing stale published `resources/views/vendor/filament-tables` (package v3.3.54 views already pass `$this->getAllTableSummaryQuery()`). Verified all 4 lists. (3) Fixed `ChangePassword` `same:password` → `same:new_password`; verified via disposable co-admin password change + login.
+- **Work done**: (1) Marked Toshi platform-scope for superadmin as **decided-deferred roadmap** (not active triage) — `per_school_gate` + null `school_id`; real feature needs own auth model, not gate removal. (2) Fixed Filament `hasSummary()` arity by removing stale published `resources/views/vendor/filament-tables` (package v3.3.54 views already pass `$this->getAllTableSummaryQuery()`). Verified all 4 lists HTTP 200 + Livewire mount. (3) Fixed `ChangePassword` `same:password` → `same:new_password`; verified via disposable co-admin (id 172 soft-deleted) password change + `Auth::attempt` with new password.
+- **Tests**: `tests/Feature/Superadmin/FilamentTablesHasSummaryTest.php` (4 mounts), `ChangePasswordTest.php` (match + mismatch) — 6 passed.
 - **Branch**: `fix/superadmin-audit-triage` off `main`
-- **Status**: 🚧 In progress (this session)
+- **STOPPED before MEDIUM/LOW** (country create, stop-impersonate, redirects, dead link)
+- **Status**: ✅ HIGH triage done — not pushed
