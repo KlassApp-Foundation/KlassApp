@@ -19,12 +19,12 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Superadmin audit (Jul 31, 2026) — Phase 1 inventory + Phase 2 Batch A
+## Superadmin audit (Jul 31, 2026) — Phase 1 inventory + Phase 2 Batch A + Batch B (GEO)
 
-> **Scope**: Platform `/superadmin` surface. Phase 1 = inventory. Phase 2 Batch A = browser+DB mutator verification (**catalogue only — no fixes**).
-> **Worktree**: `/Users/mac/projects/KlassApp-main-merge` on `main` @ `39fda6a`+.
+> **Scope**: Platform `/superadmin` surface. Phase 1 = inventory. Phase 2 = browser+DB mutator verification (**catalogue only — no fixes**).
+> **Worktree**: `/Users/mac/projects/KlassApp-main-merge` on `main` @ `6a294e2` (Batch B tip; Batch A logged under earlier tip).
 > **Login**: `siteadmin@gmail.com` / `password` @ `http://127.0.0.1:8010`.
-> **Browser note**: Cursor browser MCP tabs failed to stick in subagent session; used Playwright (`channel: 'chrome'`) for real Livewire `$wire` set/call + navigation. Artifacts under `KlassApp/tmp/superadmin-batch-a/`.
+> **Browser note**: Playwright (`channel: 'chrome'`) + Livewire `$wire` set/call. Artifacts: `KlassApp/tmp/superadmin-batch-a/`, `KlassApp/tmp/superadmin-batch-b/`.
 
 ### Phase 1 inventory (pointer)
 
@@ -76,14 +76,39 @@
 
 ### Phase 2 status
 
-- **Batch A COMPLETE** (catalogue only). **STOPPED before Batch B.**
-- Suggested remaining batches from Phase 1 still apply (reports → geo → impersonate → dead-link, etc.).
+- **Batch A COMPLETE** (catalogue only).
+- **Batch B (GEO) COMPLETE** (catalogue only, no fixes).
+- **STOPPED before Batch C.**
+
+### Phase 2 Batch B results (GEO — COMPLETE, catalogue only, no fixes)
+
+> **Domain confirmation**: Batch B = **geo** (`cities` / `countries` under `/superadmin/setting/*`). Not reports, not impersonate, not schools.
+> **Artifacts**: `KlassApp/tmp/superadmin-batch-b/`. Playwright `channel: 'chrome'` + Livewire `$wire` (same harness as Batch A). Native nested `<input type="submit">` click often did not fire Livewire submit; `$wire.call` used as confirmed browser trigger (same pattern as Batch A fallbacks).
+
+| Mutator | Expected | Browser result | DB result | Status | Toshi |
+|---|---|---|---|---|---|
+| `submitCity` create | New `cities` row | `$wire.set` + `$wire.call('submitCity')` → `/superadmin/setting/cities` (list itself 500s after redirect) | Row **id=140** `BatchB City 1785461404029` → later updated; country_id=10 status=1 | **pass** | gap |
+| `submitCity` update | Update city 140 name | `$wire.set` + `$wire.call('submitCity')` → cities URL | name=`BatchB City Updated 1785461527055`, updated_at=`2026-07-31 04:32:30` | **pass** | gap |
+| `submitCountry` update | Update country 10 fields | `$wire.set` + `$wire.call('submitCountry')` → countries URL (list 500s); restored to Other after | Mid-state: name=`BatchB Other 1785461642142`, short=`BB2142`, iso=`B42`, tel=`+9992142`; restored Other/OT/OT/20 | **pass** | gap |
+| Filament countries `CreateAction` | Create country (expect stub/fail) | **HTTP 500** on `/superadmin/setting/countries` — CreateAction never reachable | countries still **count=10**, max id=10 | **fail** | gap |
+| Cities list Filament Edit | Navigate-only (not mutator) | Cities list also **HTTP 500** (same hasSummary); Edit from list N/A; direct update URL works | N/A | **N/A** (list blocked) | gap |
+
+#### Batch B failures / partials detail
+
+1. **Filament countries list 500 (blocks CreateAction)** — **Severity: MEDIUM** (geo list UI broken; country **update form still works** via direct `/setting/country/update/{id}`; **create route intentionally commented out** since first commit + bare `CreateAction::make()` has no form schema — even if list rendered, create would be a stub). Same root cause as Batch A subscriptions: `Too few arguments to function Filament\Tables\Table::hasSummary(), 0 passed … exactly 1 expected` in published `resources/views/vendor/filament-tables/index.blade.php`. Reproduced in browser (HTTP 500) and `Livewire::test(Countries::class)`. **Not fixed in Batch B.**
+2. **Collateral: Filament cities list also 500** — same hasSummary skew. City create/update forms OK via direct routes; list + Filament Edit action unreachable from UI. **Not fixed.**
+3. **Country create path still absent** (Phase 1 finding confirmed): `routes/web.php` create route commented; `CountryForm` update-only; Filament CreateAction stub + list 500.
+
+#### Batch B notes
+
+- Form mutators (`submitCity` / `submitCountry`) **pass** when hit via Livewire component routes; post-submit list pages 500 but DB writes succeed.
+- Plans CreateAction was Batch A adjacent — Batch B focused countries CreateAction only (as requested).
 
 ---
 
 ## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs** + **cleanup-loose-ends CLOSED on `main`**)
 
-- **Superadmin audit**: Phase 1 inventory done; **Phase 2 Batch A COMPLETE** (browser+DB catalogue, no fixes) — see **Superadmin audit** section. **STOPPED before Batch B.**
+- **Superadmin audit**: Phase 1 inventory done; **Phase 2 Batch A COMPLETE**; **Phase 2 Batch B (GEO) COMPLETE** (browser+DB catalogue, no fixes) — see **Superadmin audit** section. **STOPPED before Batch C.**
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
 - **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
@@ -5564,3 +5589,12 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Fail**: Filament subscriptions list **500** (`hasSummary()` arity) blocks approve; `submitPassword` `same:password` vs `new_password` validation bug (hash unchanged).
 - **Test data left**: school 35, user 169, plan 8, subscription 11 (pending), co-admin 170 soft-deleted, sitename restored to School-Plus, whatsapp toggle restored off.
 - **Status**: ✅ Batch A complete — **STOPPED before Batch B** — commit knowledge only
+
+### 2026-07-31: Superadmin audit — Phase 2 Batch B (GEO browser+DB mutators)
+- **Work done**: Verified Batch B geo mutators as siteadmin on `:8010` with Playwright + Boost/DB. Catalogue only — **no code fixes**. Domain = cities/countries. Synced to `/Users/mac/projects/KlassApp/knowledge.md`.
+- **Pass**: `submitCity` create (city **id=140**), `submitCity` update, `submitCountry` update (country 10 mid-state then restored to Other).
+- **Fail**: Filament countries list **HTTP 500** (`hasSummary()` same as Batch A subscriptions) — `CreateAction` unreachable; country count still 10. Cities Filament list also 500 (collateral).
+- **N/A**: Cities list Filament Edit navigate-only — list blocked by same 500; direct update URL works.
+- **Toshi**: gap for all (expected).
+- **Test data left**: city 140 `BatchB City Updated …` under country Other; country 10 restored.
+- **Status**: ✅ Batch B complete — **STOPPED before Batch C** — commit knowledge only
