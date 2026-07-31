@@ -10,7 +10,6 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\ViewColumn;
-use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use App\Models\Country;
@@ -26,9 +25,6 @@ class Countries extends Component implements HasForms, HasTable
 
        return $table
             ->query($query)
-            ->headerActions([
-	            CreateAction::make(),
-	       	])
             ->columns([
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('tel_prefix'),

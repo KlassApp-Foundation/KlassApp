@@ -256,9 +256,9 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
         return view('superadmin.setting.countries');
     })->name('superadmin.setting.countries');
 
-   /*Route::get('setting/country/create', function () {
-        return view('superadmin.setting.countryform');
-    })->name('superadmin.setting.countries.create');*/
+   Route::get('setting/country/create', function () {
+        return view('superadmin.setting.countryform', ['id' => '']);
+    })->name('superadmin.setting.countries.create');
 
     Route::get('setting/country/update/{id}', function ($id) {
         return view('superadmin.setting.countryform', compact('id'));

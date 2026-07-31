@@ -336,7 +336,6 @@
         <div class="dashboard-panel-card p-5">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="dashboard-section-title">Recent Users</h3>
-                <a href="{{ url('/superadmin/users') }}" class="text-xs font-semibold" style="color: #1E6FD9;">View all →</a>
             </div>
             <div class="space-y-2">
                 @forelse($stats['recentUsers'] as $user)

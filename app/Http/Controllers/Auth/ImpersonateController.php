@@ -125,42 +125,43 @@ class ImpersonateController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * Stop impersonation and return the real (session) user to their home dashboard.
+     *
+     * Impersonation uses Auth::onceUsingId in middleware, so Auth::user() is the
+     * impersonated account. The real user id remains in the session login key.
      *
      * @return \Illuminate\Http\Response
      */
     public function stopImpersonate()
     {  
         try
-        {      
-            $user = User::where('id', Auth::user()->id)->first();
-            Auth::user()->stopImpersonating();
-           // dd($user->usergroup_id);
-            if ($user->usergroup_id == 5)
-            {
-                return redirect('/teacher/dashboard');
-            } 
-            elseif ($user->usergroup_id == 3)
-            {
-                return redirect('/admin/dashboard');
+        {
+            $impersonatorId = session()->get(Auth::getName());
+
+            if (Auth::check() && Auth::user()->isImpersonating()) {
+                Auth::user()->stopImpersonating();
             }
-            elseif ($user->usergroup_id == 6)   
-            {
-                return redirect('/student/dashboard');
-            } 
-            elseif ($user->usergroup_id == 8)   
-            {
-                return redirect('/library/dashboard');
-            } 
-            /*elseif ($user->usergroup_id == 1)   
-            {
-                return redirect('/superadmin/dashboard');
-            } */
+
+            $user = User::find($impersonatorId);
+
+            if ($user === null) {
+                return redirect('/');
+            }
+
+            return match ((int) $user->usergroup_id) {
+                1 => redirect('/superadmin/dashboard'),
+                3 => redirect('/admin/dashboard'),
+                5 => redirect('/teacher/dashboard'),
+                6 => redirect('/student/dashboard'),
+                8 => redirect('/library/dashboard'),
+                default => redirect('/'),
+            };
         }
         catch(Exception $e)
         {
             Log::info($e->getMessage());
-            //dd($e->getMessage());
+
+            return redirect('/');
         } 
     }
 }

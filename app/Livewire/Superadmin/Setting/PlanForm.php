@@ -130,8 +130,7 @@ class PlanForm extends Component
 			$this->alert('success', 'Plan updated successfully');
 		}
 
-		// return redirect(url('/superadmin/setting/plan/detail/'.$this->planEditId));
-		return redirect(url('/superadmin/setting/plans'.$this->planEditId));
+		return redirect(url('/superadmin/setting/plans'));
 	}
 
     public function render()

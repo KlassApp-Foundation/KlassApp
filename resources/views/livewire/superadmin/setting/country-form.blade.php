@@ -11,7 +11,11 @@
         </div>
 
         <div class="text-xl ml-3 font-bold">
-             Update Country
+            @if($countryEditId != '')
+              Update Country
+            @else
+              Create Country
+            @endif
         </div>
     </div>
 

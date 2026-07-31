@@ -23,7 +23,7 @@ class ChangePassword extends Component
 	#[Rule('required|min:6')]
 	public $new_password;
 
-	#[Rule('required|min:6|same:password')]
+	#[Rule('required|min:6|same:new_password')]
 	public $confirm_password;
 
 	public function submitPassword()
