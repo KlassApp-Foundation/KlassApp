@@ -236,7 +236,7 @@
 
 | Item | Decision | Why not triage-now |
 |---|---|---|
-| **Toshi platform-scope for superadmin** | **Decided-deferred roadmap** — remove from active triage queue | Root: `per_school_gate` needs a school with `toshi_enabled`; siteadmin `school_id=null` → `isAvailable()` false → NL soft-fails via `fallbackMessage()`. Panel still renders (greeting + `/help` work). **Do not** just remove the school check — platform-scope needs its own authorization model (higher blast radius; keep confirmation-before-write). Gap vs Livewire surface (**1/32**) stays a product roadmap item, not a hotfix. |
+| **Toshi platform-scope for superadmin** | **Phase 0 in progress** — `feature/toshi-platform-gate` | Auth scaffolding landed (config `platform_gate` + `ToshiScope::Platform`); school `per_school_gate` unchanged. Still no platform business tools (Phase 1). |
 
 ---
 
@@ -613,6 +613,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-07-31: Toshi Phase 0 — platform-scope authorization scaffolding
+- **Work done**: Added `ToshiScope` (School|Platform), `ToshiAvailabilityGate`, wired `ToshiSdkV2Service::isAvailable/ask/askStreamed` with default School scope (byte-identical school behaviour). AgentToshi passes Platform when `$this->scope === 'platform'`. Config `toshi.platform_gate` (enabled + optional user_ids allowlist). **No** business tools; **no** bypass of `per_school_gate`.
+- **Gate decision**: **Config allowlist** (`TOSHI_PLATFORM_GATE_ENABLED` + optional `TOSHI_PLATFORM_USER_IDS`) — not a users column (none exists), not FeatureToggles (school_id-scoped only).
+- **Files modified**: `app/Enums/ToshiScope.php`, `app/Services/Toshi/ToshiAvailabilityGate.php`, `app/AiAgents/ToshiSdkV2Service.php`, `app/Livewire/AgentToshi.php`, `config/toshi.php`, `.env.example`, `tests/Feature/Toshi/ToshiAvailabilityGateTest.php`
+- **Branch**: `feature/toshi-platform-gate` off `main` @ `e5db3b3`+ (worktree KlassApp-main-merge)
+- **Status**: ⏸️ STOP for Phase 0 review — not pushed; Phase 1 (platform tools) not started
 
 ### 2026-07-31: Merge fix/superadmin-audit-triage → main (audit CLOSED on main)
 - **Work done**: Pre-merge gate (fetch; **0 behind / 3 ahead** vs `origin/main`; PHPUnit **247 passed / 1 skipped / 1 failed** ToshiE2E; `npm run build` PASS; clean tree after discarding `public/build` junk) then no-ff merge into `main`. Post-merge PHPUnit same; build PASS. High-stakes verify as siteadmin: ChangePassword → real HTTP login with new password → restore; all 4 Filament lists HTTP **200**; country create Livewire → DB row **id=12** `TriageLand…`. Soft-deleted disposable co-admin **id=173**. Knowledge closeout + sync to KlassApp (this commit).

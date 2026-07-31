@@ -2,7 +2,9 @@
 
 namespace App\AiAgents;
 
+use App\Enums\ToshiScope;
 use App\Models\User;
+use App\Services\Toshi\ToshiAvailabilityGate;
 use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Streaming\Events\TextDelta;
 
@@ -20,26 +22,26 @@ class ToshiSdkV2Service
 {
     private bool $enabled;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly ToshiAvailabilityGate $availabilityGate,
+    ) {
         $this->enabled = config('toshi.sdk_v2_enabled', false);
     }
 
     /**
      * Check if the SDK v2 path is available for this user.
+     *
+     * Default scope is School so existing call sites keep identical behaviour.
+     * Pass ToshiScope::Platform for siteadmin platform-scope (independent of school_id).
      */
-    public function isAvailable(User $user, ?int $schoolId): bool
+    public function isAvailable(User $user, ?int $schoolId, ToshiScope $scope = ToshiScope::School): bool
     {
         if (!$this->enabled) {
             return false;
         }
 
-        // Per-school gate: check toshi_enabled flag
-        if (config('toshi.per_school_gate', true)) {
-            $school = $schoolId ? \App\Models\School::find($schoolId) : $user->school;
-            if (!$school || !$school->toshi_enabled) {
-                return false;
-            }
+        if (!$this->availabilityGate->allows($user, $scope, $schoolId)) {
+            return false;
         }
 
         if (empty(config('ai.providers.openai-compatible.key'))) {
@@ -58,9 +60,9 @@ class ToshiSdkV2Service
      * (bypassed the LLM loop that might reformat it). We detect that here
      * and return the __tier2_confirm JSON to the Livewire component.
      */
-    public function ask(User $user, ?int $schoolId, string $query, array $history = []): ?string
+    public function ask(User $user, ?int $schoolId, string $query, array $history = [], ToshiScope $scope = ToshiScope::School): ?string
     {
-        if (!$this->isAvailable($user, $schoolId)) {
+        if (!$this->isAvailable($user, $schoolId, $scope)) {
             return null;
         }
 
@@ -74,6 +76,7 @@ class ToshiSdkV2Service
             Log::info('SDK v2 path: orchestrator dispatched', [
                 'user_id' => $user->id,
                 'query' => substr($query, 0, 100),
+                'scope' => $scope->value,
             ]);
 
             // Check if a write tool stored a confirmation payload
@@ -118,8 +121,9 @@ class ToshiSdkV2Service
         string $query,
         array $history,
         callable $onChunk,
+        ToshiScope $scope = ToshiScope::School,
     ): ?string {
-        if (!$this->isAvailable($user, $schoolId)) {
+        if (!$this->isAvailable($user, $schoolId, $scope)) {
             return null;
         }
 
@@ -149,6 +153,7 @@ class ToshiSdkV2Service
             Log::info('SDK v2 path: streamed', [
                 'user_id' => $user->id,
                 'query' => substr($query, 0, 100),
+                'scope' => $scope->value,
             ]);
 
             // Check for pending tool confirmation
