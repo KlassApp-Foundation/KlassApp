@@ -19,12 +19,27 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Superadmin audit (Jul 31, 2026) — Phase 1 inventory + Phase 2 Batch A + Batch B (GEO)
+## Superadmin audit (Jul 31, 2026) — Phase 1 inventory + Phase 2 Batch A + Batch B (GEO) + Batch C (read-only smoke)
 
-> **Scope**: Platform `/superadmin` surface. Phase 1 = inventory. Phase 2 = browser+DB mutator verification (**catalogue only — no fixes**).
-> **Worktree**: `/Users/mac/projects/KlassApp-main-merge` on `main` @ `6a294e2` (Batch B tip; Batch A logged under earlier tip).
+> **Scope**: Platform `/superadmin` surface. Phase 1 = inventory. Phase 2 = browser+DB verification (**catalogue only — no fixes**).
+> **Worktree**: `/Users/mac/projects/KlassApp-main-merge` on `main` (Batch C tip after this note; prior Batch B tip `8647379` / severity tags `6a294e2`).
 > **Login**: `siteadmin@gmail.com` / `password` @ `http://127.0.0.1:8010`.
-> **Browser note**: Playwright (`channel: 'chrome'`) + Livewire `$wire` set/call. Artifacts: `KlassApp/tmp/superadmin-batch-a/`, `KlassApp/tmp/superadmin-batch-b/`.
+> **Browser note**: Playwright (`channel: 'chrome'`) + Livewire `$wire` set/call. Artifacts: `KlassApp/tmp/superadmin-batch-a/`, `KlassApp/tmp/superadmin-batch-b/`, `KlassApp/tmp/superadmin-batch-c/`.
+
+### Systemic bug — Filament `Table::hasSummary()` arity (**1 bug × 4 list occurrences**)
+
+> **Catalogue-first — do not dig root further until triage.** Subscriptions list 500 and countries list 500 are **the same root cause**, not two independent bugs. Cities list (quick check) and plans list (Batch C) are additional occurrences of the **same** skew.
+
+| # | Filament list | URI | Evidence |
+|---|---|---|---|
+| 1 | Subscriptions (Batch A) | `/superadmin/reports/subscriptions` | Browser HTTP 500; `Livewire::test(Subscriptions::class)` → `Too few arguments to function Filament\Tables\Table::hasSummary(), 0 passed … exactly 1 expected` via published `resources/views/vendor/filament-tables/index.blade.php` |
+| 2 | Countries (Batch B) | `/superadmin/setting/countries` | Same message / same published vendor view (not a separate bug) |
+| 3 | Cities (confirmed) | `/superadmin/setting/cities` | **Same** `hasSummary()` arity — `Livewire::test(Cities::class)` identical exception stack (`CanSummarizeRecords.php` + compiled vendor `index.blade.php`). **3rd occurrence** of one systemic bug. |
+| 4 | Plans (Batch C) | `/superadmin/setting/plans` | Browser HTTP 500; `Livewire::test(PlanList::class)` → **SAME** `hasSummary()`. **4th occurrence.** |
+
+- **Root**: Published Filament tables view calls `$this->getTable()->hasSummary()` with **0 args**; package `hasSummary()` requires **exactly 1**. Version skew between published `resources/views/vendor/filament-tables/` and installed `filament/tables`.
+- **Not Filament**: School list (`SchoolList`) is plain Livewire — **HTTP 200** (Batch C). Detail/form routes for the broken domains still work.
+- **Triage priority**: Raise to **HIGH / systemic** — one vendor-view republish (or align Filament package) unblocks **all four** lists (approve subscription, countries CreateAction UI, cities Edit from list, plans list). Catalogue only — **not fixed** in Batches A–C.
 
 ### Phase 1 inventory (pointer)
 
@@ -61,7 +76,7 @@
 
 #### Batch A failures / partials detail
 
-1. **Filament subscriptions list 500 (blocks approve)** — **Severity: MEDIUM-HIGH** (if only approve path, revenue-adjacent workflow broken). `Too few arguments to function Filament\Tables\Table::hasSummary(), 0 passed … exactly 1 expected` in published `resources/views/vendor/filament-tables/index.blade.php`. Reproduced in browser and `Livewire::test(Subscriptions::class)`. Approve Action code exists (`status=approved`, start/end dates) but is unreachable until vendor view / Filament version skew is fixed. **Not fixed in Batch A.**
+1. **Filament subscriptions list 500 (blocks approve)** — **Severity: MEDIUM-HIGH alone; see systemic note → HIGH as cluster (1 bug × N lists)**. `Too few arguments to function Filament\Tables\Table::hasSummary(), 0 passed … exactly 1 expected` in published `resources/views/vendor/filament-tables/index.blade.php`. Reproduced in browser and `Livewire::test(Subscriptions::class)`. Approve Action code exists (`status=approved`, start/end dates) but is unreachable until vendor view / Filament version skew is fixed. **Same root cause as countries/cities/plans lists — not a subscriptions-only bug.** **Not fixed in Batch A.**
 2. **`submitPlan` update redirect** — **Severity: LOW** (data OK, UX only). `url('/superadmin/setting/plans'.$this->planEditId)` → `/plans8` (missing `/`). Create OK because id empty.
 3. **`submitPassword` validation bug** — **Severity: HIGH** (may mean superadmins can't change password via this flow; operational/security-adjacent). `#[Rule('…|same:password')]` on `confirm_password` but property is `new_password`. Browser shows mismatch error; password hash unchanged. Siteadmin left on `password`.
 4. **`submitAvatar` redirect** — **Severity: LOW** (data OK, UX only). code `redirect(url('/admin/dashboard'))`; observed landing `/admin/academics`. Avatar write succeeded.
@@ -73,12 +88,6 @@
 - **City dropdown on school create**: bare `wire:model="country"` + `wire:change="changeCity"` — city options did not populate via native select alone in Playwright; `$wire.set` + `changeCity` worked (deferred-model race candidate).
 - **`users.name` mangling** on admin create: submitted `BatchA Admin {stamp}` → stored `batcha admin {stamp}{extra}`; `userprofiles.firstname` kept intended value.
 - **Browser harness**: Cursor IDE browser MCP tabs did not stick in this subagent; Playwright `channel: 'chrome'` + Livewire `$wire` used. Artifacts: `KlassApp/tmp/superadmin-batch-a/`.
-
-### Phase 2 status
-
-- **Batch A COMPLETE** (catalogue only).
-- **Batch B (GEO) COMPLETE** (catalogue only, no fixes).
-- **STOPPED before Batch C.**
 
 ### Phase 2 Batch B results (GEO — COMPLETE, catalogue only, no fixes)
 
@@ -95,8 +104,8 @@
 
 #### Batch B failures / partials detail
 
-1. **Filament countries list 500 (blocks CreateAction)** — **Severity: MEDIUM** (geo list UI broken; country **update form still works** via direct `/setting/country/update/{id}`; **create route intentionally commented out** since first commit + bare `CreateAction::make()` has no form schema — even if list rendered, create would be a stub). Same root cause as Batch A subscriptions: `Too few arguments to function Filament\Tables\Table::hasSummary(), 0 passed … exactly 1 expected` in published `resources/views/vendor/filament-tables/index.blade.php`. Reproduced in browser (HTTP 500) and `Livewire::test(Countries::class)`. **Not fixed in Batch B.**
-2. **Collateral: Filament cities list also 500** — same hasSummary skew. City create/update forms OK via direct routes; list + Filament Edit action unreachable from UI. **Not fixed.**
+1. **Filament countries list 500 (blocks CreateAction)** — **Severity: MEDIUM alone; see systemic note → HIGH as cluster**. Same root cause as Batch A subscriptions (`hasSummary()` arity / published `filament-tables/index.blade.php`) — **not a second bug**. Country **update form still works** via direct `/setting/country/update/{id}`; create route intentionally commented + CreateAction stub. **Not fixed in Batch B.**
+2. **Filament cities list 500** — **3rd occurrence of same systemic `hasSummary` bug** (confirmed via `Livewire::test(Cities::class)` identical exception). City create/update forms OK via direct routes; list + Filament Edit unreachable. **Not fixed.**
 3. **Country create path still absent** (Phase 1 finding confirmed): `routes/web.php` create route commented; `CountryForm` update-only; Filament CreateAction stub + list 500.
 
 #### Batch B notes
@@ -104,11 +113,55 @@
 - Form mutators (`submitCity` / `submitCountry`) **pass** when hit via Livewire component routes; post-submit list pages 500 but DB writes succeed.
 - Plans CreateAction was Batch A adjacent — Batch B focused countries CreateAction only (as requested).
 
+### Phase 2 status
+
+- **Batch A COMPLETE** (catalogue only).
+- **Batch B (GEO) COMPLETE** (catalogue only, no fixes).
+- **Batch C (read-only smoke) COMPLETE** (catalogue only, no fixes).
+- **STOPPED before Batch D (Toshi).**
+
+### Phase 2 Batch C results (read-only HTTP smoke — COMPLETE, catalogue only, no fixes)
+
+> **Scope**: Dashboard + hubs + representative list/detail pages. **No mutators.** Playwright login as siteadmin @ `:8010`. Artifacts: `KlassApp/tmp/superadmin-batch-c/smoke-results.json`.
+> **Sample IDs**: school **35**, admin/user **169**, userprofile **161**, plan **8**, city **140**, country **10**, subscription **11**.
+
+| URI | HTTP | Content OK | Notes |
+|---|---|---|---|
+| `/superadmin/dashboard` | 200 | yes | |
+| `/superadmin/reports` | 200 | yes | reports hub |
+| `/superadmin/settings` | 200 | yes | settings hub |
+| `/superadmin/settings/locations` | 200 | yes | locations hub |
+| `/superadmin/settings/system` | 200 | yes | |
+| `/superadmin/settings/co-admins` | 200 | yes | |
+| `/superadmin/settings/features` | 200 | yes | |
+| `/superadmin/settings/emis` | 200 | yes | EMIS list (read-only) |
+| `/superadmin/academics/schools` | 200 | yes | school-list — **not** Filament / not hasSummary |
+| `/superadmin/academics/school/detail/35` | 200 | yes | |
+| `/superadmin/academics/school/admin/list/35` | 200 | yes | |
+| `/superadmin/academics/school/admin/detail/169` | 200 | yes | |
+| `/superadmin/academics/school/user/list/35` | 200 | yes | |
+| `/superadmin/academics/school/user/detail/169` | 200 | yes | |
+| `/superadmin/academics/school/userprofile/detail/161` | 200 | yes | |
+| `/superadmin/setting/plans` | **500** | no | Filament PlanList — **hasSummary (4th occurrence)** |
+| `/superadmin/setting/plan/detail/8` | 200 | yes | |
+| `/superadmin/setting/cities` | **500** | no | Filament Cities — **hasSummary (3rd)** |
+| `/superadmin/setting/city/detail/140` | 200 | yes | |
+| `/superadmin/setting/countries` | **500** | no | Filament Countries — **hasSummary (2nd)** |
+| `/superadmin/setting/country/detail/10` | 200 | yes | |
+| `/superadmin/reports/subscriptions` | **500** | no | Filament Subscriptions — **hasSummary (1st)** |
+| `/superadmin/reports/subscription/detail/11` | 200 | yes | |
+| `/superadmin/reports/contact` | 200 | yes | contact list |
+| `/superadmin/mail-list` | 200 | yes | |
+| `/superadmin/changepassword` | 200 | yes | form page only (no mutate) |
+| `/superadmin/changeavatar` | 200 | yes | form page only (no mutate) |
+
+**Batch C summary**: 27 routes smoked → **23× HTTP 200 + content OK**; **4× HTTP 500** — all Filament table lists, all same systemic `hasSummary` bug. Detail pages for those domains remain healthy.
+
 ---
 
 ## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs** + **cleanup-loose-ends CLOSED on `main`**)
 
-- **Superadmin audit**: Phase 1 inventory done; **Phase 2 Batch A COMPLETE**; **Phase 2 Batch B (GEO) COMPLETE** (browser+DB catalogue, no fixes) — see **Superadmin audit** section. **STOPPED before Batch C.**
+- **Superadmin audit**: Phase 1 inventory done; **Phase 2 Batch A + Batch B (GEO) + Batch C (read-only smoke) COMPLETE** (catalogue only, no fixes) — see **Superadmin audit** section. **Systemic Filament `hasSummary` = 1 bug × 4 lists** (subscriptions, countries, cities, plans) — triage HIGH. **STOPPED before Batch D (Toshi).**
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
 - **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
@@ -5598,3 +5651,9 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Toshi**: gap for all (expected).
 - **Test data left**: city 140 `BatchB City Updated …` under country Other; country 10 restored.
 - **Status**: ✅ Batch B complete — **STOPPED before Batch C** — commit knowledge only
+
+### 2026-07-31: Superadmin audit — hasSummary linkage + cities check + Phase 2 Batch C
+- **Work done**: (1) Pushed `main` → `origin/main` tip **`8647379`** (includes `6a294e2`). (2) Linked Batch A subscriptions 500 + Batch B countries 500 as **one systemic bug**. (3) Cities quick check: `Livewire::test(Cities::class)` → identical `hasSummary()` arity (**3rd occurrence**). (4) Batch C read-only smoke (27 URIs) — catalogue only. Synced knowledge to canonical KlassApp copy.
+- **Systemic**: Filament lists dying = **1 bug × 4 occurrences** — subscriptions, countries, cities, **plans** (Batch C new). School list OK (not Filament). Triage priority **HIGH / systemic**.
+- **Batch C**: 23× 200+content OK; 4× 500 (all hasSummary Filament lists). Hubs/dashboard/details/mail-list/EMIS/contact OK.
+- **Status**: ✅ Batch C complete — **STOPPED before Batch D (Toshi)** — knowledge commit local (do not push unless asked)
