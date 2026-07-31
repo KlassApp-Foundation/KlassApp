@@ -30,6 +30,8 @@
 ### Systemic bug — Filament `Table::hasSummary()` arity (**FIXED** — was 1 bug × 4 list occurrences)
 
 > **Fixed on `fix/superadmin-audit-triage`**: removed stale published `resources/views/vendor/filament-tables/` so package `filament/tables` v3.3.54 views are used (`$hasSummary($this->getAllTableSummaryQuery())`). No app customizations in the published copy.
+>
+> **Worktree reminder (not a bug)**: this hasSummary fix (deleted stale Filament published views) applies to this branch/worktree (`KlassApp-main-merge` / `fix/superadmin-audit-triage`); other local KlassApp worktrees may still have the stale published tree until they pull/merge this branch.
 
 | # | Filament list | URI | Evidence |
 |---|---|---|---|
@@ -222,11 +224,11 @@
 |---|---|---|
 | ~~**HIGH / systemic**~~ | ~~Filament `hasSummary()` arity ×4~~ — **FIXED** (removed stale published filament-tables) | A/B/C |
 | ~~**HIGH**~~ | ~~`submitPassword` `same:password`~~ — **FIXED** (`same:new_password`) | A |
-| **MEDIUM** | Country create route commented + CreateAction stub (create impossible even after list fix) | Phase1 / B |
-| **MEDIUM** | Stop-impersonate leaves siteadmin on `/admin/*` (ug1 redirect commented) | E |
-| **LOW** | `submitPlan` update redirect `/plans{id}` missing `/` | A |
-| **LOW** | `submitAvatar` redirects into `/admin/*` | A |
-| **LOW / cosmetic** | Dead `/superadmin/users` “View all” link (no route) | Phase1 |
+| ~~**MEDIUM**~~ | ~~Country create~~ — **FIXED** (uncomment route + CountryForm create like CityForm; Create Country button) | Phase1 / B |
+| ~~**MEDIUM**~~ | ~~Stop-impersonate landing~~ — **FIXED** (redirect by session impersonator usergroup; ug1 → `/superadmin/dashboard`) | E |
+| ~~**LOW**~~ | ~~`submitPlan` update redirect~~ — **FIXED** (`/superadmin/setting/plans`) | A |
+| ~~**LOW**~~ | ~~`submitAvatar` redirect~~ — **FIXED** (`/superadmin/dashboard`) | A |
+| ~~**LOW / cosmetic**~~ | ~~Dead `/superadmin/users` “View all”~~ — **FIXED** (removed; no platform users route) | Phase1 |
 | **note** | Subscription form status enum drift; admin email unique validates wrong table; users.name mangling | A |
 
 ### Decided-deferred (roadmap — NOT active triage)
@@ -237,9 +239,9 @@
 
 ---
 
-## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs** + **cleanup-loose-ends CLOSED on `main`**)
+## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **superadmin triage CLOSED on branch** + **cleanup-loose-ends CLOSED on `main`**)
 
-- **Superadmin audit**: Phase 1 + **Phase 2 Batches A–E CLOSED**. HIGH triage fixed on `fix/superadmin-audit-triage` (hasSummary ×4 + password). Remaining active triage: MEDIUM stop-impersonate / country create + LOWs. **Toshi platform-scope** = decided-deferred roadmap.
+- **Superadmin audit**: Phase 1 + **Phase 2 Batches A–E CLOSED**. **Triage CLOSED** on `fix/superadmin-audit-triage` (HIGH + MEDIUM + LOW fixed). **Toshi platform-scope** = decided-deferred roadmap. **READY FOR MERGE REVIEW — not merged to main.**
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
 - **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
@@ -5750,3 +5752,13 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Branch**: `fix/superadmin-audit-triage` off `main`
 - **STOPPED before MEDIUM/LOW** (country create, stop-impersonate, redirects, dead link)
 - **Status**: ✅ HIGH triage done — not pushed
+
+### 2026-07-31: Superadmin triage — MEDIUM/LOW fixes (country, stop-impersonate, redirects, dead link)
+- **Work done**: Closed remaining active triage on `fix/superadmin-audit-triage` (worktree `KlassApp-main-merge`). Synced knowledge outcomes here.
+- **Worktree note**: hasSummary fix (deleted stale Filament published views) applies to this branch/worktree; other local KlassApp worktrees may still have the stale published tree until they pull/merge this branch. Not a bug — worktree reminder.
+- **Country create (MEDIUM)**: Effort = low/mechanical (mirror CityForm). Uncommented `superadmin.setting.countries.create` with `id => ''`; `CountryForm` create+update; blade Create/Update title; list “Create Country” button (removed stub Filament `CreateAction`). Verified: Livewire create → country **id=11** `TriageLand …`; HTTP create page 200 + list button.
+- **Stop-impersonate (MEDIUM)**: Root = redirect used impersonated `Auth::user()` (middleware `onceUsingId`); ug1 branch commented. Fix = redirect by **session login** impersonator usergroup (`match`: 1→`/superadmin/dashboard`, 3→`/admin/dashboard`, …). Verified: start `/schooladmin/169/impersonate` → `/admin/academics`; stop → `/superadmin/dashboard` (not stuck `/admin/*`).
+- **Plan/avatar redirects (LOW)**: `PlanForm` → `/superadmin/setting/plans` (was `/plans{id}`); `ChangeAvatar` → `/superadmin/dashboard` (was `/admin/dashboard`). Livewire redirect verified.
+- **Dead users link (LOW)**: Removed dashboard “View all” → `/superadmin/users` (no platform users route; school-scoped lists need school id).
+- **Tests**: `CountryCreateTest`, `PlanAvatarRedirectTest`, updated `ImpersonateControllerTest` — 9 relevant pass. Full suite: **247 passed**, 1 skipped, **1 failed** (`ToshiE2EVerificationTest` LLM null — pre-existing flake, unrelated).
+- **Status**: ✅ MEDIUM/LOW triage done — **READY FOR MERGE REVIEW (not merged, not pushed)**

@@ -10,6 +10,17 @@
 		<div class="">
 		    <p style="font-size:1.25rem; font-weight:700;">Countries</p>
 		</div>
+		<x-filament::button
+			size="lg"
+			color=""
+			style="background-color:green; padding-bottom: 10px !important;
+			padding-top: 10px !important; padding-left: 14px !important;
+			padding-right: 14px !important; background-color: rgba(5,122,85,var(--tw-bg-opacity));"
+			href="{{ url('/superadmin/setting/country/create') }}"
+			tag="a"
+		>
+			Create Country
+		</x-filament::button>
 	</div>
 
     {{ $this->table }}

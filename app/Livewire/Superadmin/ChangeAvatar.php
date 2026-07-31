@@ -44,8 +44,7 @@ class ChangeAvatar extends Component
 
 		//$this->alert('success', 'Changed avatar successfully');
 
-		//return back();
-		return redirect(url('/admin/dashboard'));
+		return redirect(url('/superadmin/dashboard'));
 	}
 	
     public function render()

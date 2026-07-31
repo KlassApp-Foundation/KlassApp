@@ -28,16 +28,18 @@ class CountryForm extends Component
 
 	public $countryEditId;
 
-	public function mount($id)
+	public function mount($id = '')
 	{
 		$this->countryEditId = $id;
 
-		$countryEdit = Country::where('id', $this->countryEditId)->first();
-		$this->name = $countryEdit->name;
-		$this->short_name = $countryEdit->short_name;
-		$this->iso_code = $countryEdit->iso_code;
-		$this->tel_prefix = $countryEdit->tel_prefix;
-		$this->status = $countryEdit->status;
+		if ($this->countryEditId != '') {
+			$countryEdit = Country::where('id', $this->countryEditId)->first();
+			$this->name = $countryEdit->name;
+			$this->short_name = $countryEdit->short_name;
+			$this->iso_code = $countryEdit->iso_code;
+			$this->tel_prefix = $countryEdit->tel_prefix;
+			$this->status = $countryEdit->status;
+		}
 	}
 
 	public function submitCountry()
@@ -52,11 +54,15 @@ class CountryForm extends Component
 			'status' => $this->status,
 		];
 
-		Country::where('id', $this->countryEditId)->update($data);
+		if ($this->countryEditId == '') {
+			Country::create($data);
 
-		//session()->flash('message', 'Country updated successfully');
+			$this->alert('success', 'Country added successfully');
+		} else {
+			Country::where('id', $this->countryEditId)->update($data);
 
-		$this->alert('success', 'Country updated successfully');
+			$this->alert('success', 'Country updated successfully');
+		}
 
 		return redirect(url('/superadmin/setting/countries'));
 	}

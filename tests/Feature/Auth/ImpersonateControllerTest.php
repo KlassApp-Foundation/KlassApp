@@ -13,6 +13,7 @@ class ImpersonateControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $superadmin;
     private User $admin;
     private User $otherAdmin;
     private User $teacher;
@@ -23,14 +24,28 @@ class ImpersonateControllerTest extends TestCase
 
         $this->withoutMiddleware(VerifyCsrfToken::class);
 
-        // Seed usergroups
         DB::table('usergroups')->insert([
             ['id' => 1, 'name' => 'superadmin'],
             ['id' => 3, 'name' => 'schooladmin'],
             ['id' => 5, 'name' => 'teacher'],
         ]);
 
-        // Create a school admin (will be the impersonator)
+        $this->superadmin = User::factory()->create([
+            'usergroup_id' => 1,
+            'school_id' => null,
+            'email' => 'impersonate-superadmin@test.sch.ug',
+            'password' => bcrypt('password'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ]);
+        Userprofile::create([
+            'user_id' => $this->superadmin->id,
+            'usergroup_id' => 1,
+            'firstname' => 'Site',
+            'lastname' => 'Admin',
+            'status' => 'active',
+        ]);
+
         $this->admin = User::factory()->create([
             'usergroup_id' => 3,
             'school_id' => null,
@@ -47,8 +62,6 @@ class ImpersonateControllerTest extends TestCase
             'status' => 'active',
         ]);
 
-        // Create another school admin (to be impersonated — this tests 
-        // the usergroup_id=3 branch where the old bug redirected to /superadmin/dashboard)
         $this->otherAdmin = User::factory()->create([
             'usergroup_id' => 3,
             'school_id' => null,
@@ -65,7 +78,6 @@ class ImpersonateControllerTest extends TestCase
             'status' => 'active',
         ]);
 
-        // Create a teacher (will be impersonated)
         $this->teacher = User::factory()->create([
             'usergroup_id' => 5,
             'school_id' => null,
@@ -84,39 +96,44 @@ class ImpersonateControllerTest extends TestCase
     }
 
     /** @test */
-    public function school_admin_impersonating_teacher_redirects_to_teacher_dashboard_on_stop(): void
+    public function school_admin_impersonating_teacher_returns_to_admin_dashboard_on_stop(): void
     {
-        $this->actingAs($this->admin);
+        // Auth::login stores the real user id in the session (actingAs does not).
+        \Illuminate\Support\Facades\Auth::login($this->admin);
 
-        // Start impersonating the teacher
         $this->admin->setImpersonating($this->teacher->id);
         $this->assertTrue($this->admin->isImpersonating(), 'Impersonation must be active');
 
-        // Stop impersonation
         $response = $this->get('/teacher/impersonate/stop');
 
-        // The original code reads Auth::user()->id BEFORE stopImpersonating(),
-        // which returns the impersonated user's ID (teacher), so $user is the teacher.
-        // Redirect goes to the impersonated user's dashboard.
-        $response->assertRedirect('/teacher/dashboard');
+        $response->assertRedirect('/admin/dashboard');
         $this->assertFalse($this->admin->isImpersonating(), 'Impersonation must be stopped');
     }
 
     /** @test */
     public function school_admin_impersonating_admin_redirects_to_admin_dashboard_not_superadmin(): void
     {
-        $this->actingAs($this->admin);
+        \Illuminate\Support\Facades\Auth::login($this->admin);
 
-        // Impersonate another school admin (same usergroup_id)
         $this->admin->setImpersonating($this->otherAdmin->id);
         $this->assertTrue($this->admin->isImpersonating());
 
         $response = $this->get('/teacher/impersonate/stop');
 
-        // $user will be the impersonated admin (usergroup_id=3).
-        // The OLD code would redirect to /superadmin/dashboard (bug).
-        // The FIX redirects to /admin/dashboard.
         $response->assertRedirect('/admin/dashboard');
     }
 
+    /** @test */
+    public function superadmin_impersonating_school_admin_returns_to_superadmin_dashboard_on_stop(): void
+    {
+        \Illuminate\Support\Facades\Auth::login($this->superadmin);
+
+        $this->superadmin->setImpersonating($this->admin->id);
+        $this->assertTrue($this->superadmin->isImpersonating());
+
+        $response = $this->get('/teacher/impersonate/stop');
+
+        $response->assertRedirect('/superadmin/dashboard');
+        $this->assertFalse($this->superadmin->isImpersonating());
+    }
 }
