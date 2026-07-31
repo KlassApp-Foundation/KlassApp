@@ -19,9 +19,12 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Superadmin audit (Jul 31, 2026) — Phase 1 inventory + pre–Phase 2 findings
+## Superadmin audit (Jul 31, 2026) — Phase 1 inventory + Phase 2 Batch A
 
-> **Scope**: Platform `/superadmin` surface inventory only. **Phase 2 testing has NOT started.**
+> **Scope**: Platform `/superadmin` surface. Phase 1 = inventory. Phase 2 Batch A = browser+DB mutator verification (**catalogue only — no fixes**).
+> **Worktree**: `/Users/mac/projects/KlassApp-main-merge` on `main` @ `39fda6a`+.
+> **Login**: `siteadmin@gmail.com` / `password` @ `http://127.0.0.1:8010`.
+> **Browser note**: Cursor browser MCP tabs failed to stick in subagent session; used Playwright (`channel: 'chrome'`) for real Livewire `$wire` set/call + navigation. Artifacts under `KlassApp/tmp/superadmin-batch-a/`.
 
 ### Phase 1 inventory (pointer)
 
@@ -37,15 +40,50 @@
 | 1 | Dead `/superadmin/users` link | **Cosmetic broken nav** leftover from dashboard redesign — not a removed/never-finished platform user-management feature. | Link only at `resources/views/superadmin/dashboard.blade.php:339` (“Recent Users” → “View all”). **No route ever registered** for `/superadmin/users` (`git log -S` on `routes/` empty). KPI card fixed to schools in `3ae8517` (Jul 3); this “View all” was missed. School-scoped `UserList` Livewire + route `superadmin/academics/school/user/list/{id}` still exist. Link invented in dashboard redesign `34e264c` (Jul 1). |
 | 2 | Country create route commented out | **Intentionally disabled since first commit** — **real gap**: cannot create a country. | `routes/web.php:259–261` commented `superadmin.setting.countries.create` since `a6784c3` (blame/log-L; never uncommented). `CountryForm` is **update-only** (`Country::…->update`; `mount($id)` requires existing row). Filament `CreateAction::make()` on `Countries` list has **no form schema** — stub, does not create. Cities/plans still have working create routes for contrast. |
 
+### Phase 2 Batch A results (COMPLETE — catalogue only, no fixes)
+
+| Mutator | Expected | Browser result | DB result | Status | Toshi |
+|---|---|---|---|---|---|
+| `submitSchool` create | New `schools` row | Redirect → `/superadmin/academics/schools` | Row **id=35** email `batcha.school.1785458202915@example.com` | **pass** | gap (onboarding `commitAll` separate) |
+| `submitSchool` update | Update school 35 address/phone | Redirect → schools list | phone=`0700987654`, address=`Updated BatchA Addr 1785458830717` | **pass** | gap |
+| `submitAdmin` create | User + userprofile for school 35 | Redirect → `/school/detail/35` | user **id=169**, profile **id=161**, usergroup 3 | **pass** | gap |
+| `submitUserprofile` update | Update profile 161 fields | Redirect → schools list | firstname=`BatchAFirst…`, lastname=`Updated`, address/LIN/aadhar set | **pass** | gap |
+| `submitPlan` create | New `plans` row | Redirect → `/superadmin/setting/plans` | plan **id=8** created amount 12345 | **pass** | gap |
+| `submitPlan` update | Update plan 8 | Mutator OK; redirect → **`/setting/plans8`** (404 path) | name/amount updated (`54321`) | **partial** (DB pass, redirect fail) | gap |
+| `submitSubscription` create | New pending subscription | Redirect → subscriptions URL (list itself 500s) | sub **id=11** pending, user 46 / plan 4 / school 1 | **pass** (create) | gap |
+| Filament `approve` on list | pending → approved + dates | **HTTP 500** on `/reports/subscriptions` — Approve never reachable | sub 11 still `pending`, dates null | **fail** | gap |
+| `CoAdmins.save` | Create disposable co-admin | Form save via `$wire.call('save')`; email on page | user **id=170** usergroup 2 | **pass** | gap |
+| `CoAdmins.delete` | Soft-delete disposable | `$wire.call('delete', 170)`; email gone from UI | `deleted_at=2026-07-31 04:08:54` | **pass** | gap |
+| `FeatureToggles.toggle` | Flip whatsapp for school 35 then restore | `$wire.call('toggle', 35, 'whatsapp', true/false)` | enabled **1** then **0** on `school_feature_toggles` id=2 | **pass** | gap |
+| `SystemSettings.save` | Change `sitename` then restore | set → `BatchA-Temp-…` then restore `School-Plus` | DB confirmed both mid-state and restore | **pass** | gap |
+| `submitPassword` | Change siteadmin password | Validation error: *"The confirm password and password must match."* | hash unchanged (`$2y$10$92IX…`) | **fail** (rule bug) | gap |
+| `submitAvatar` | Upload avatar for siteadmin | Upload + call OK; landed `/admin/academics` (wrong area) | `userprofiles.avatar` → `avatars/S1rNks….png`; file on disk under `public/avatars/` | **partial** (DB pass, redirect wrong) | gap |
+
+#### Batch A failures / partials detail
+
+1. **Filament subscriptions list 500 (blocks approve)** — `Too few arguments to function Filament\Tables\Table::hasSummary(), 0 passed … exactly 1 expected` in published `resources/views/vendor/filament-tables/index.blade.php`. Reproduced in browser and `Livewire::test(Subscriptions::class)`. Approve Action code exists (`status=approved`, start/end dates) but is unreachable until vendor view / Filament version skew is fixed. **Not fixed in Batch A.**
+2. **`submitPlan` update redirect** — `url('/superadmin/setting/plans'.$this->planEditId)` → `/plans8` (missing `/`). Create OK because id empty.
+3. **`submitPassword` validation bug** — `#[Rule('…|same:password')]` on `confirm_password` but property is `new_password`. Browser shows mismatch error; password hash unchanged. Siteadmin left on `password`.
+4. **`submitAvatar` redirect** — code `redirect(url('/admin/dashboard'))`; observed landing `/admin/academics`. Avatar write succeeded.
+5. **Subscription form status enum drift** (create still worked with `pending`) — UI options `approve`/`cancel` vs DB enum `approved`/`canceled`. User dropdown is `usergroup_id=6` (Student), not school admins.
+6. **`submitAdmin` email unique** validates `unique:` against `School::class` not `User` (wrong table; create still succeeded).
+
+#### Batch A notes / code smells (not fixed)
+
+- **City dropdown on school create**: bare `wire:model="country"` + `wire:change="changeCity"` — city options did not populate via native select alone in Playwright; `$wire.set` + `changeCity` worked (deferred-model race candidate).
+- **`users.name` mangling** on admin create: submitted `BatchA Admin {stamp}` → stored `batcha admin {stamp}{extra}`; `userprofiles.firstname` kept intended value.
+- **Browser harness**: Cursor IDE browser MCP tabs did not stick in this subagent; Playwright `channel: 'chrome'` + Livewire `$wire` used. Artifacts: `KlassApp/tmp/superadmin-batch-a/`.
+
 ### Phase 2 status
 
-- **Not started.** Suggested batch order from Phase 1 inventory still applies (smoke core → school write → people → billing → reports → settings → geo → account → impersonate → dead-link fix).
+- **Batch A COMPLETE** (catalogue only). **STOPPED before Batch B.**
+- Suggested remaining batches from Phase 1 still apply (reports → geo → impersonate → dead-link, etc.).
 
 ---
 
 ## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs** + **cleanup-loose-ends CLOSED on `main`**)
 
-- **Superadmin audit**: Phase 1 inventory done (41 routes + Livewire mutate surface); two findings logged above; **Phase 2 not started**. See **Superadmin audit** section.
+- **Superadmin audit**: Phase 1 inventory done; **Phase 2 Batch A COMPLETE** (browser+DB catalogue, no fixes) — see **Superadmin audit** section. **STOPPED before Batch B.**
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
 - **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
@@ -5518,3 +5556,11 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Finding 2 — country create**: Intentionally commented since `a6784c3`; `CountryForm` update-only; Filament `CreateAction` stub without form — **cannot create a country** (real gap).
 - **Phase 1 pointer**: 41 routes; Livewire mutate surface mapped; Toshi = Laravel AI SDK, school-focused, **1 covered / 32 gap**.
 - **Status**: ✅ Docs logged — Phase 2 **not started** — **NOT PUSHED**
+
+### 2026-07-31: Superadmin audit — Phase 2 Batch A (browser+DB mutators)
+- **Work done**: Verified Batch A mutators as siteadmin on `:8010` with Playwright + Boost/DB. Catalogue only — **no code fixes**. Logged full results table under **Superadmin audit**. Synced to `/Users/mac/projects/KlassApp/knowledge.md`.
+- **Pass**: `submitSchool` create+update, `submitAdmin` create, `submitUserprofile` update, `submitPlan` create, `submitSubscription` create, `CoAdmins` save+delete, `FeatureToggles.toggle`, `SystemSettings.save`.
+- **Partial**: `submitPlan` update (DB OK, redirect `/plans{id}`), `submitAvatar` (DB OK, wrong `/admin/*` redirect).
+- **Fail**: Filament subscriptions list **500** (`hasSummary()` arity) blocks approve; `submitPassword` `same:password` vs `new_password` validation bug (hash unchanged).
+- **Test data left**: school 35, user 169, plan 8, subscription 11 (pending), co-admin 170 soft-deleted, sitename restored to School-Plus, whatsapp toggle restored off.
+- **Status**: ✅ Batch A complete — **STOPPED before Batch B** — commit knowledge only
