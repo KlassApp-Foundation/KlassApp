@@ -19,19 +19,20 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Superadmin audit (Jul 31, 2026) — Phase 1 inventory + Phase 2 Batches A–E **CLOSED** (catalogue only)
+## Superadmin audit (Jul 31, 2026) — Phase 1 + Phase 2 + triage **CLOSED on `main`**
 
-> **Scope**: Platform `/superadmin` surface. Phase 1 = inventory. Phase 2 = browser+DB verification (**catalogue only — no fixes**).
-> **Worktree**: `/Users/mac/projects/KlassApp-main-merge` on `main` (Phase 2 closeout tip after this note; prior Batch C tip `5952776`).
+> **Scope**: Platform `/superadmin` surface. Phase 1 = inventory. Phase 2 = browser+DB verification (catalogue). Triage = HIGH + MEDIUM + LOW fixes.
+> **Worktree**: `/Users/mac/projects/KlassApp-main-merge` on `main`.
+> **Merge**: **`32a3bb4333f8645a2752d760fcd76287f57f5fa8`** — `Merge branch 'fix/superadmin-audit-triage'` (no-ff). Tip merged: `fix/superadmin-audit-triage` @ `8c93693`.
 > **Login**: `siteadmin@gmail.com` / `password` @ `http://127.0.0.1:8010`.
 > **Browser note**: Playwright (`channel: 'chrome'`) + Livewire `$wire` set/call. Artifacts: `KlassApp/tmp/superadmin-batch-{a,b,c,d,e}/`.
-> **Phase 2 status**: **CLOSED** — Batches A–E catalogue complete; **fixes deferred** to triage.
+> **Status**: **CLOSED on `main`** — Phase 1 + Batches A–E catalogue + triage fixes. **Toshi platform-scope** remains decided-deferred roadmap (not a hotfix).
 
-### Systemic bug — Filament `Table::hasSummary()` arity (**FIXED** — was 1 bug × 4 list occurrences)
+### Systemic bug — Filament `Table::hasSummary()` arity (**FIXED on `main`** — was 1 bug × 4 list occurrences)
 
-> **Fixed on `fix/superadmin-audit-triage`**: removed stale published `resources/views/vendor/filament-tables/` so package `filament/tables` v3.3.54 views are used (`$hasSummary($this->getAllTableSummaryQuery())`). No app customizations in the published copy.
+> **Fixed** (merged via `32a3bb4`): removed stale published `resources/views/vendor/filament-tables/` so package `filament/tables` v3.3.54 views are used (`$hasSummary($this->getAllTableSummaryQuery())`). No app customizations in the published copy.
 >
-> **Worktree reminder (not a bug)**: this hasSummary fix (deleted stale Filament published views) applies to this branch/worktree (`KlassApp-main-merge` / `fix/superadmin-audit-triage`); other local KlassApp worktrees may still have the stale published tree until they pull/merge this branch.
+> **Post-merge verify (Jul 31)**: all 4 Filament lists HTTP **200** as siteadmin @ `:8010`.
 
 | # | Filament list | URI | Evidence |
 |---|---|---|---|
@@ -218,18 +219,18 @@
 | D | Toshi panel/show/help **pass**; SDK send **partial/fail** (per_school_gate / null ask); onboarding skipped |
 | E | Impersonate **pass**; stop session clear **pass**, stop redirect **partial** |
 
-### Remaining findings for triage (Phase 2 CLOSED — HIGH fixes on `fix/superadmin-audit-triage`)
+### Triage findings (**CLOSED on `main`** @ `32a3bb4` — was `fix/superadmin-audit-triage` @ `8c93693`)
 
 | Priority | Finding | Source |
 |---|---|---|
-| ~~**HIGH / systemic**~~ | ~~Filament `hasSummary()` arity ×4~~ — **FIXED** (removed stale published filament-tables) | A/B/C |
-| ~~**HIGH**~~ | ~~`submitPassword` `same:password`~~ — **FIXED** (`same:new_password`) | A |
-| ~~**MEDIUM**~~ | ~~Country create~~ — **FIXED** (uncomment route + CountryForm create like CityForm; Create Country button) | Phase1 / B |
-| ~~**MEDIUM**~~ | ~~Stop-impersonate landing~~ — **FIXED** (redirect by session impersonator usergroup; ug1 → `/superadmin/dashboard`) | E |
-| ~~**LOW**~~ | ~~`submitPlan` update redirect~~ — **FIXED** (`/superadmin/setting/plans`) | A |
-| ~~**LOW**~~ | ~~`submitAvatar` redirect~~ — **FIXED** (`/superadmin/dashboard`) | A |
-| ~~**LOW / cosmetic**~~ | ~~Dead `/superadmin/users` “View all”~~ — **FIXED** (removed; no platform users route) | Phase1 |
-| **note** | Subscription form status enum drift; admin email unique validates wrong table; users.name mangling | A |
+| ~~**HIGH / systemic**~~ | ~~Filament `hasSummary()` arity ×4~~ — **FIXED on main** (removed stale published filament-tables) | A/B/C |
+| ~~**HIGH**~~ | ~~`submitPassword` `same:password`~~ — **FIXED on main** (`same:new_password`) | A |
+| ~~**MEDIUM**~~ | ~~Country create~~ — **FIXED on main** (uncomment route + CountryForm create like CityForm; Create Country button) | Phase1 / B |
+| ~~**MEDIUM**~~ | ~~Stop-impersonate landing~~ — **FIXED on main** (redirect by session impersonator usergroup; ug1 → `/superadmin/dashboard`) | E |
+| ~~**LOW**~~ | ~~`submitPlan` update redirect~~ — **FIXED on main** (`/superadmin/setting/plans`) | A |
+| ~~**LOW**~~ | ~~`submitAvatar` redirect~~ — **FIXED on main** (`/superadmin/dashboard`) | A |
+| ~~**LOW / cosmetic**~~ | ~~Dead `/superadmin/users` “View all”~~ — **FIXED on main** (removed; no platform users route) | Phase1 |
+| **note** | Subscription form status enum drift; admin email unique validates wrong table; users.name mangling — left as notes (not triage blockers) | A |
 
 ### Decided-deferred (roadmap — NOT active triage)
 
@@ -239,9 +240,9 @@
 
 ---
 
-## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **superadmin triage CLOSED on branch** + **cleanup-loose-ends CLOSED on `main`**)
+## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **superadmin audit CLOSED on `main`** + **cleanup-loose-ends CLOSED on `main`**)
 
-- **Superadmin audit**: Phase 1 + **Phase 2 Batches A–E CLOSED**. **Triage CLOSED** on `fix/superadmin-audit-triage` (HIGH + MEDIUM + LOW fixed). **Toshi platform-scope** = decided-deferred roadmap. **READY FOR MERGE REVIEW — not merged to main.**
+- **✅ Superadmin audit CLOSED on `main`**: merge commit **`32a3bb4333f8645a2752d760fcd76287f57f5fa8`** — `Merge branch 'fix/superadmin-audit-triage'` (no-ff). Tip merged: `fix/superadmin-audit-triage` @ `8c93693` (HIGH `2ce1ede` + MEDIUM/LOW `8c93693`; Toshi platform-scope deferred `731aeaa`). Phase 1 + Phase 2 Batches A–E catalogue + triage fixes. **Toshi platform-scope** = decided-deferred roadmap. **NOT PUSHED** yet.
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
 - **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
@@ -612,6 +613,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-07-31: Merge fix/superadmin-audit-triage → main (audit CLOSED on main)
+- **Work done**: Pre-merge gate (fetch; **0 behind / 3 ahead** vs `origin/main`; PHPUnit **247 passed / 1 skipped / 1 failed** ToshiE2E; `npm run build` PASS; clean tree after discarding `public/build` junk) then no-ff merge into `main`. Post-merge PHPUnit same; build PASS. High-stakes verify as siteadmin: ChangePassword → real HTTP login with new password → restore; all 4 Filament lists HTTP **200**; country create Livewire → DB row **id=12** `TriageLand…`. Soft-deleted disposable co-admin **id=173**. Knowledge closeout + sync to KlassApp (this commit).
+- **Merge commit**: **`32a3bb4333f8645a2752d760fcd76287f57f5fa8`**
+- **Tip merged**: `fix/superadmin-audit-triage` @ `8c93693`
+- **Status**: ✅ Done — **NOT PUSHED**
+- **Edge cases flagged**: Co-admin (ug2) HTTP login blocked by `checkschool` (needs active `school_id`) — used careful siteadmin change+restore for real-login proof instead. Only expected test failure remains `ToshiE2EVerificationTest` LLM null.
 
 ### 2026-07-31: Knowledge — mark deferred-bugs tip pushed on origin/main
 - **Work done**: Corrected stale **NOT PUSHED** Current Status / session-log wording after confirming `origin/main` == `d8dc818` (includes merge `536603c`). Also cleared leftover Phase 3 “awaiting push” language post-`3e93bc3`. Synced KlassApp + main-merge copies.
