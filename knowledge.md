@@ -61,10 +61,10 @@
 
 #### Batch A failures / partials detail
 
-1. **Filament subscriptions list 500 (blocks approve)** — `Too few arguments to function Filament\Tables\Table::hasSummary(), 0 passed … exactly 1 expected` in published `resources/views/vendor/filament-tables/index.blade.php`. Reproduced in browser and `Livewire::test(Subscriptions::class)`. Approve Action code exists (`status=approved`, start/end dates) but is unreachable until vendor view / Filament version skew is fixed. **Not fixed in Batch A.**
-2. **`submitPlan` update redirect** — `url('/superadmin/setting/plans'.$this->planEditId)` → `/plans8` (missing `/`). Create OK because id empty.
-3. **`submitPassword` validation bug** — `#[Rule('…|same:password')]` on `confirm_password` but property is `new_password`. Browser shows mismatch error; password hash unchanged. Siteadmin left on `password`.
-4. **`submitAvatar` redirect** — code `redirect(url('/admin/dashboard'))`; observed landing `/admin/academics`. Avatar write succeeded.
+1. **Filament subscriptions list 500 (blocks approve)** — **Severity: MEDIUM-HIGH** (if only approve path, revenue-adjacent workflow broken). `Too few arguments to function Filament\Tables\Table::hasSummary(), 0 passed … exactly 1 expected` in published `resources/views/vendor/filament-tables/index.blade.php`. Reproduced in browser and `Livewire::test(Subscriptions::class)`. Approve Action code exists (`status=approved`, start/end dates) but is unreachable until vendor view / Filament version skew is fixed. **Not fixed in Batch A.**
+2. **`submitPlan` update redirect** — **Severity: LOW** (data OK, UX only). `url('/superadmin/setting/plans'.$this->planEditId)` → `/plans8` (missing `/`). Create OK because id empty.
+3. **`submitPassword` validation bug** — **Severity: HIGH** (may mean superadmins can't change password via this flow; operational/security-adjacent). `#[Rule('…|same:password')]` on `confirm_password` but property is `new_password`. Browser shows mismatch error; password hash unchanged. Siteadmin left on `password`.
+4. **`submitAvatar` redirect** — **Severity: LOW** (data OK, UX only). code `redirect(url('/admin/dashboard'))`; observed landing `/admin/academics`. Avatar write succeeded.
 5. **Subscription form status enum drift** (create still worked with `pending`) — UI options `approve`/`cancel` vs DB enum `approved`/`canceled`. User dropdown is `usergroup_id=6` (Student), not school admins.
 6. **`submitAdmin` email unique** validates `unique:` against `School::class` not `User` (wrong table; create still succeeded).
 
