@@ -19,12 +19,13 @@
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Superadmin audit (Jul 31, 2026) — Phase 1 inventory + Phase 2 Batch A + Batch B (GEO) + Batch C (read-only smoke)
+## Superadmin audit (Jul 31, 2026) — Phase 1 inventory + Phase 2 Batches A–E **CLOSED** (catalogue only)
 
 > **Scope**: Platform `/superadmin` surface. Phase 1 = inventory. Phase 2 = browser+DB verification (**catalogue only — no fixes**).
-> **Worktree**: `/Users/mac/projects/KlassApp-main-merge` on `main` (Batch C tip after this note; prior Batch B tip `8647379` / severity tags `6a294e2`).
+> **Worktree**: `/Users/mac/projects/KlassApp-main-merge` on `main` (Phase 2 closeout tip after this note; prior Batch C tip `5952776`).
 > **Login**: `siteadmin@gmail.com` / `password` @ `http://127.0.0.1:8010`.
-> **Browser note**: Playwright (`channel: 'chrome'`) + Livewire `$wire` set/call. Artifacts: `KlassApp/tmp/superadmin-batch-a/`, `KlassApp/tmp/superadmin-batch-b/`, `KlassApp/tmp/superadmin-batch-c/`.
+> **Browser note**: Playwright (`channel: 'chrome'`) + Livewire `$wire` set/call. Artifacts: `KlassApp/tmp/superadmin-batch-{a,b,c,d,e}/`.
+> **Phase 2 status**: **CLOSED** — Batches A–E catalogue complete; **fixes deferred** to triage.
 
 ### Systemic bug — Filament `Table::hasSummary()` arity (**1 bug × 4 list occurrences**)
 
@@ -113,12 +114,15 @@
 - Form mutators (`submitCity` / `submitCountry`) **pass** when hit via Livewire component routes; post-submit list pages 500 but DB writes succeed.
 - Plans CreateAction was Batch A adjacent — Batch B focused countries CreateAction only (as requested).
 
-### Phase 2 status
+### Phase 2 status — **CLOSED** (catalogue done — fixes deferred)
 
-- **Batch A COMPLETE** (catalogue only).
-- **Batch B (GEO) COMPLETE** (catalogue only, no fixes).
-- **Batch C (read-only smoke) COMPLETE** (catalogue only, no fixes).
-- **STOPPED before Batch D (Toshi).**
+| Batch | Domain | Status |
+|---|---|---|
+| A | Schools / plans / subscriptions / co-admins / features / settings / password / avatar | **COMPLETE** |
+| B | GEO (cities / countries) | **COMPLETE** |
+| C | Read-only HTTP smoke (27 routes) | **COMPLETE** |
+| D | Shared Toshi (superadmin shell) | **COMPLETE** |
+| E | Impersonate school admin | **COMPLETE** |
 
 ### Phase 2 Batch C results (read-only HTTP smoke — COMPLETE, catalogue only, no fixes)
 
@@ -157,11 +161,82 @@
 
 **Batch C summary**: 27 routes smoked → **23× HTTP 200 + content OK**; **4× HTTP 500** — all Filament table lists, all same systemic `hasSummary` bug. Detail pages for those domains remain healthy.
 
+### Phase 2 Batch D results (Shared Toshi — COMPLETE, catalogue only, no fixes)
+
+> **Scope**: AgentToshi on `layouts/superadmin-app.blade.php` (`@livewire('agent-toshi')`). Laravel AI SDK (`laravel/ai` / `ToshiSdkV2Service`). No code fixes.
+> **Artifacts**: `KlassApp/tmp/superadmin-batch-d/batch-d-results.json` (+ screenshots).
+> **Note**: bare `/superadmin` is **404**; canonical shell is `/superadmin/dashboard`.
+
+| Probe | Expected | Browser / DB result | Status |
+|---|---|---|---|
+| Mount | `agent-toshi` Livewire on dashboard | Found `name=agent-toshi`; scope=`platform`, mode=`assistant`, step=99 | **pass** |
+| `show()` | Open panel | `$wire.call('show')` → `visible=true`; DOM `.toshi-root` visible; greeting: platform administrator assistant | **pass** |
+| `send` `/help` | Slash help (no LLM) | User+bot; lists `/create`, `/agent`, `/status`, `/help`, reset | **pass** |
+| `send` NL probe | SDK / LLM answer | Livewire send OK (~2s); bot = `fallbackMessage()` (“I'm not sure… **📊 Info** — show report”) | **partial/fail** (SDK) |
+| Onboarding / `commitAll` | Skip if destructive | **Skipped** — creates schools/users/subscriptions | **N/A skipped** |
+
+#### Batch D SDK / env note (partial/fail detail)
+
+- `config('toshi.sdk_v2_enabled')` = **true** locally; `streaming_enabled` = false.
+- `ToshiSdkV2Service::isAvailable(siteadmin, null)` = **false** — `per_school_gate` requires a school with `toshi_enabled`; siteadmin `school_id=null` → no school → gate fails.
+- `ask(...)` returns **null** → Livewire falls through to `fallbackMessage()`. Same failure class as `ToshiE2EVerificationTest` LLM null / env gate — **not fixed**.
+- Platform gap for CRUD still stands (Phase 1: **1 covered / 32 gap / 8 N/A**).
+
+#### What Toshi CAN do from superadmin shell
+
+- UI: open/close panel, slash commands (`/help`, `/create`/`/school`, `/agent`, `/status`), keyword/fallback capability list.
+- Claimed platform actions: `create_school`, `platform_reports`, `list_schools` (greeting mentions platform stats/schools/users/system management).
+- **Cannot** (from this shell without a gated school): real Laravel AI SDK Q&A; most platform CRUD (still gap vs Livewire superadmin forms).
+
+#### School-admin Toshi path (not re-run)
+
+- Already verified elsewhere in knowledge: Toshi E2E + `commitAll` fixes (2026-06-30 session); school-scoped assistant/onboarding. Not re-audited in Batch D.
+
+### Phase 2 Batch E results (Impersonate — COMPLETE, catalogue only, no fixes)
+
+> **Artifacts**: `KlassApp/tmp/superadmin-batch-e/batch-e-results.json`, `batch-e-session-probe.json`.
+> **Target**: `GET /schooladmin/169/impersonate` (school 35 BatchA admin `batcha.admin…@example.com`).
+
+| Step | Expected | Result | Status |
+|---|---|---|---|
+| Start impersonate | Become school admin session | Redirect → `/admin/academics`; school name **BatchA Audit School…** in UI; admin sidebar (ACADEMICS/…); **Stop Impersonating** link → `/teacher/impersonate/stop` | **pass** |
+| Stop impersonate | Clear session; return to siteadmin | Session cleared (`Stop Impersonating` gone); final URL stayed `/admin/academics` (not `/superadmin/*`); siteadmin can still open `/superadmin/dashboard` (200) | **partial** |
+
+#### Batch E notes / failures
+
+1. **Stop redirect for siteadmin** — **Severity: MEDIUM**. `ImpersonateController@stopImpersonate` reads `Auth::user()` **before** `stopImpersonating()` (middleware `Auth::onceUsingId` → impersonated ug3), so redirect uses school-admin branch → `/admin/dashboard` (lands `/admin/academics`). Superadmin (ug1) redirect branch is **commented out**. Session key `impersonate` is cleared (UI evidence). Catalogue only — not fixed.
+2. Auth remains siteadmin after stop (can access `/superadmin/dashboard`).
+
+### Phase 2 summary table (A–E)
+
+| Batch | Result headline |
+|---|---|
+| A | Most school/plan/admin/settings mutators **pass**; password **fail** HIGH; plan/avatar redirects **partial** LOW; subscriptions list 500 blocks approve |
+| B | City/country form mutators **pass**; countries CreateAction blocked by list 500; country create route still absent |
+| C | 23/27 smoke **200**; 4 Filament lists **500** = hasSummary ×4 |
+| D | Toshi panel/show/help **pass**; SDK send **partial/fail** (per_school_gate / null ask); onboarding skipped |
+| E | Impersonate **pass**; stop session clear **pass**, stop redirect **partial** |
+
+### Remaining findings for triage (Phase 2 CLOSED — fixes deferred)
+
+| Priority | Finding | Source |
+|---|---|---|
+| **HIGH / systemic** | Filament `hasSummary()` arity — **1 bug × 4 lists** (subscriptions, countries, cities, plans) | A/B/C |
+| **HIGH** | `submitPassword` validation `same:password` vs `new_password` — cannot change siteadmin password via UI | A |
+| **MEDIUM** | Country create route commented + CreateAction stub (create impossible even after list fix) | Phase1 / B |
+| **MEDIUM** | Stop-impersonate leaves siteadmin on `/admin/*` (ug1 redirect commented) | E |
+| **MEDIUM** | Toshi SDK unavailable for platform siteadmin (`per_school_gate` + null school) → ask null / fallback | D |
+| **LOW** | `submitPlan` update redirect `/plans{id}` missing `/` | A |
+| **LOW** | `submitAvatar` redirects into `/admin/*` | A |
+| **LOW / cosmetic** | Dead `/superadmin/users` “View all” link (no route) | Phase1 |
+| **note** | Subscription form status enum drift; admin email unique validates wrong table; users.name mangling | A |
+| **gap** | Toshi platform CRUD coverage still **1/32** vs Livewire surface | Phase1 / D |
+
 ---
 
 ## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **5 deferred bugs** + **cleanup-loose-ends CLOSED on `main`**)
 
-- **Superadmin audit**: Phase 1 inventory done; **Phase 2 Batch A + Batch B (GEO) + Batch C (read-only smoke) COMPLETE** (catalogue only, no fixes) — see **Superadmin audit** section. **Systemic Filament `hasSummary` = 1 bug × 4 lists** (subscriptions, countries, cities, plans) — triage HIGH. **STOPPED before Batch D (Toshi).**
+- **Superadmin audit**: Phase 1 + **Phase 2 Batches A–E CLOSED** (catalogue only — **fixes deferred**). See **Superadmin audit** section. Triage: **hasSummary ×4 HIGH**, **password HIGH**, plus MEDIUM stop-impersonate / Toshi platform SDK gate / country create.
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
 - **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
@@ -5656,4 +5731,12 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Work done**: (1) Pushed `main` → `origin/main` tip **`8647379`** (includes `6a294e2`). (2) Linked Batch A subscriptions 500 + Batch B countries 500 as **one systemic bug**. (3) Cities quick check: `Livewire::test(Cities::class)` → identical `hasSummary()` arity (**3rd occurrence**). (4) Batch C read-only smoke (27 URIs) — catalogue only. Synced knowledge to canonical KlassApp copy.
 - **Systemic**: Filament lists dying = **1 bug × 4 occurrences** — subscriptions, countries, cities, **plans** (Batch C new). School list OK (not Filament). Triage priority **HIGH / systemic**.
 - **Batch C**: 23× 200+content OK; 4× 500 (all hasSummary Filament lists). Hubs/dashboard/details/mail-list/EMIS/contact OK.
-- **Status**: ✅ Batch C complete — **STOPPED before Batch D (Toshi)** — knowledge commit local (do not push unless asked)
+- **Status**: ✅ Batch C complete — continued to Batch D/E (see next entry)
+
+### 2026-07-31: Superadmin audit — Phase 2 Batch D (Toshi) + Batch E (impersonate) + Phase 2 CLOSED
+- **Work done**: Catalogue-only browser+DB verification on `:8010` (serve + Vite from `KlassApp-main-merge`). Synced knowledge to canonical KlassApp copy. Committed + pushed `main`.
+- **Batch D**: `show()` **pass**; `/help` **pass**; NL `send` Livewire OK but SDK **partial/fail** — `isAvailable(siteadmin,null)=false` (`per_school_gate` needs school/`toshi_enabled`); `ask()` null → `fallbackMessage()`. Onboarding/`commitAll` **skipped** (destructive). Platform Toshi CAN: panel + slash cmds + fallbacks; cannot do real SDK Q&A or most platform CRUD. School-admin Toshi path already in knowledge (E2E / commitAll) — not re-run.
+- **Batch E**: `/schooladmin/169/impersonate` **pass** (→ `/admin/academics`, school name, Stop link). Stop clears session (**pass**) but leaves siteadmin on `/admin/academics` (**partial** — ug1 redirect commented). `/superadmin/dashboard` OK after stop.
+- **Phase 2**: **CLOSED** (A–E catalogue done — fixes deferred). Triage list: hasSummary×4 HIGH, password HIGH, country create MEDIUM, stop-impersonate MEDIUM, Toshi platform SDK gate MEDIUM, plan/avatar redirects LOW, dead users link LOW.
+- **Artifacts**: `tmp/superadmin-batch-d/`, `tmp/superadmin-batch-e/`.
+- **Status**: ✅ Phase 2 CLOSED — pushed with this knowledge commit
