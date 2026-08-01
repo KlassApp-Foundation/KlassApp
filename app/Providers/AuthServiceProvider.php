@@ -57,6 +57,24 @@ class AuthServiceProvider extends ServiceProvider
         return $user->school_id == $event->school_id;
       });
 
+      // Destroy is ug1 (SiteAdmin) unscoped or ug3 (SchoolAdmin) school-scoped.
+      // Keep the school_id-only `event` Gate unchanged for five-role details reads.
+      Gate::define('event-destroy', function ($user, $event) {
+        if ($event === null) {
+          return false;
+        }
+
+        if ((int) $user->usergroup_id === 1) {
+          return true;
+        }
+
+        if ((int) $user->usergroup_id === 3) {
+          return (int) $user->school_id === (int) $event->school_id;
+        }
+
+        return false;
+      });
+
       Gate::define('member', function ($user, $member) {
         return $user->school_id == $member->school_id;
       });
