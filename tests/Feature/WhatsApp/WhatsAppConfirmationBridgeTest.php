@@ -345,11 +345,42 @@ class WhatsAppConfirmationBridgeTest extends TestCase
 
     public function test_bare_yes_is_not_consumed(): void
     {
-        $this->seedPending('bareyes1');
+        $pending = $this->seedPending('bareyes1');
 
         $handled = $this->bridge()->handleInbound($this->waUser, $this->phone, 'yes');
 
         $this->assertFalse($handled);
+        $this->assertSame(
+            WhatsAppPendingConfirmation::STATUS_PENDING,
+            $pending->fresh()->status,
+            'Bare yes must leave the pending confirmation open'
+        );
+    }
+
+    /**
+     * Precedence: pending check looks for button OR coded YES/NO only.
+     * Free-form that does not match must fall through (handleInbound false)
+     * so keywords / menu / Track-1 Toshi can continue — without resolving.
+     */
+    public function test_free_form_while_pending_falls_through_without_resolving(): void
+    {
+        $pending = $this->seedPending('freefrm1');
+
+        $handled = $this->bridge()->handleInbound(
+            $this->waUser,
+            $this->phone,
+            'what are my fees?'
+        );
+
+        $this->assertFalse(
+            $handled,
+            'Non-coded free-form must not be consumed by the confirmation bridge'
+        );
+        $this->assertSame(
+            WhatsAppPendingConfirmation::STATUS_PENDING,
+            $pending->fresh()->status,
+            'Pending must stay open until coded YES/NO or ty_/tn_ button'
+        );
     }
 
     /**
