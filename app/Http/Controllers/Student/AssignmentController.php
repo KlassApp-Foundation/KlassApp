@@ -176,6 +176,11 @@ class AssignmentController extends Controller
     {
         //
         $studentAssignment     =   StudentAssignment::where('id',$id)->first();
+
+        if ($studentAssignment === null || Gate::denies('studentassignment', $studentAssignment)) {
+            abort(403);
+        }
+
         $array = [];
 
         $array['assignment_file']   =   $studentAssignment->AssignmentFilePath;
@@ -194,45 +199,42 @@ class AssignmentController extends Controller
     public function destroy($id)
     {
         //
+        $studentAssignment = StudentAssignment::where('id',$id)->first();
+
+        if ($studentAssignment === null || Gate::denies('studentassignment', $studentAssignment)) {
+            abort(403);
+        }
+
         try
         {
-            $studentAssignment = StudentAssignment::where('id',$id)->first();
+            $assignment = Assignment::where('id',$studentAssignment->assignment_id)->first();
+            $student = User::where('id',$studentAssignment->user_id)->first();
+            $teacher = User::where('id',$assignment->teacher_id)->first();
 
-            if(Gate::allows('studentassignment',$studentAssignment))
-            {
-                $assignment = Assignment::where('id',$studentAssignment->assignment_id)->first();
-                $student = User::where('id',$studentAssignment->user_id)->first();
-                $teacher = User::where('id',$assignment->teacher_id)->first();
+            $studentAssignment->status     =   'cancel';
+            $studentAssignment->save();
 
-                $studentAssignment->status     =   'cancel';
-                $studentAssignment->save();
+            $studentAssignment->delete();
 
-                $studentAssignment->delete();
+            $data = [];
 
-                $data = [];
+            $data['user']       =   $teacher;
+            $data['details']    =   trans('notification.student_assignment_delete_msg',['student' => $student->FullName]);
 
-                $data['user']       =   $teacher;
-                $data['details']    =   trans('notification.student_assignment_delete_msg',['student' => $student->FullName]);
+            event(new SingleNotificationEvent($data));
 
-                event(new SingleNotificationEvent($data));
+            $message=trans('messages.delete_success_msg',['module' => 'Assignment File']);
 
-                $message=trans('messages.delete_success_msg',['module' => 'Assignment File']);
-
-                $ip= $this->getRequestIP();
-                $this->doActivityLog(
-                    $studentAssignment,
-                    Auth::user(),
-                    ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                    LOGNAME_DELETE_STUDENT_ASSIGNMENT,
-                    $message
-                );
-                $res['success'] = $message;
-                return $res;
-            }
-            else
-            {
-                abort(403);
-            }
+            $ip= $this->getRequestIP();
+            $this->doActivityLog(
+                $studentAssignment,
+                Auth::user(),
+                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
+                LOGNAME_DELETE_STUDENT_ASSIGNMENT,
+                $message
+            );
+            $res['success'] = $message;
+            return $res;
         }
         catch(Exception $e)
         {

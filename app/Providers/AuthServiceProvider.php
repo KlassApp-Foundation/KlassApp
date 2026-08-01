@@ -146,11 +146,21 @@ class AuthServiceProvider extends ServiceProvider
       });
 
       Gate::define('studentassignment', function ($user, $studentassignment) {
-        return $user->school_id == $studentassignment->assignment->school_id;
+        if ($studentassignment === null || $studentassignment->assignment === null) {
+          return false;
+        }
+
+        return (int) $user->id === (int) $studentassignment->user_id
+          && (int) $user->school_id === (int) $studentassignment->assignment->school_id;
       });
 
       Gate::define('studentHomework', function ($user, $studentHomework) {
-        return $user->school_id == $studentHomework->homework->school_id;
+        if ($studentHomework === null || $studentHomework->homework === null) {
+          return false;
+        }
+
+        return (int) $user->id === (int) $studentHomework->user_id
+          && (int) $user->school_id === (int) $studentHomework->homework->school_id;
       });
 
       Gate::define('subscription', function ($user, $subscription) {
