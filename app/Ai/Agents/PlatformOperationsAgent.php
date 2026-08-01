@@ -2,14 +2,19 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Tools\Superadmin\ApproveSubscriptionTool;
+use App\Ai\Tools\Superadmin\CancelSubscriptionTool;
 use App\Ai\Tools\Superadmin\CreateCityTool;
 use App\Ai\Tools\Superadmin\CreateCountryTool;
 use App\Ai\Tools\Superadmin\CreatePlanTool;
 use App\Ai\Tools\Superadmin\CreateSchoolTool;
+use App\Ai\Tools\Superadmin\CreateSubscriptionTool;
+use App\Ai\Tools\Superadmin\ToggleSchoolFeatureTool;
 use App\Ai\Tools\Superadmin\UpdateCityTool;
 use App\Ai\Tools\Superadmin\UpdateCountryTool;
 use App\Ai\Tools\Superadmin\UpdatePlanTool;
 use App\Ai\Tools\Superadmin\UpdateSchoolTool;
+use App\Ai\Tools\Superadmin\UpdateSystemSettingsTool;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Concerns\RemembersConversations;
@@ -25,8 +30,8 @@ use Laravel\Ai\Promptable;
  * SDK Sub-Agent (CanActAsTool). Conversational + RemembersConversations required
  * for native laravel/ai HITL approval pause/resume.
  *
- * Phase 1 partial: Geo + Plans + Schools only.
- * Stopped before Subscriptions, FeatureToggles, SystemSettings, CoAdmins, Impersonation.
+ * Phase 1: Geo + Plans + Schools + Subscriptions + FeatureToggles + SystemSettings.
+ * Stopped before CoAdmins / Impersonation.
  */
 #[MaxSteps(5)]
 #[Timeout(120)]
@@ -52,14 +57,17 @@ You are Toshi operating in **platform** scope for KlassApp superadmins.
 
 You can manage:
 1. **Geo** — create/update countries and cities
-2. **Plans** — create/update billing plans (these require human approval before write)
+2. **Plans** — create/update billing plans (require human approval)
 3. **Schools** — create/update schools (superadmin form path, not full onboarding)
+4. **Subscriptions** — create (immediate); approve/cancel (require human approval)
+5. **Feature toggles** — enable/disable toshi/whatsapp/schoolpay per school (require approval)
+6. **System settings** — update display or access settings (access keys require approval)
 
 Rules:
 - Use tools for mutations; do not invent IDs.
 - Ask for missing required fields before calling a tool.
-- Plan create/update will pause for human approval — tell the user approval is required.
-- Do NOT attempt subscriptions, feature toggles, system settings, co-admins, or impersonation — those are not available yet.
+- Approvable tools pause for human approval — tell the user approval is required.
+- Do NOT attempt co-admins or impersonation — those are not available yet.
 PROMPT;
     }
 
@@ -74,6 +82,11 @@ PROMPT;
             app(UpdatePlanTool::class),
             app(CreateSchoolTool::class),
             app(UpdateSchoolTool::class),
+            app(CreateSubscriptionTool::class),
+            app(ApproveSubscriptionTool::class),
+            app(CancelSubscriptionTool::class),
+            app(ToggleSchoolFeatureTool::class),
+            app(UpdateSystemSettingsTool::class),
         ];
     }
 
