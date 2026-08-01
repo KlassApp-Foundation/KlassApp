@@ -439,10 +439,19 @@ class EventsController extends Controller
 
     public function destroy($id)
     {
+        $event = Events::where('id', $id)->first();
+
+        if ($event === null) {
+            abort(404);
+        }
+
+        // Authorize outside try/catch so 403 is not swallowed by Exception handler.
+        if (! Gate::allows('event-destroy', $event)) {
+            abort(403);
+        }
+
         try
         {
-            $event = Events::where('id',$id)->first();
-       
             $event->delete();
 
             $message=trans('messages.delete_success_msg',['module' => 'Event']);
