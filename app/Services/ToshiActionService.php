@@ -237,10 +237,13 @@ class ToshiActionService
                     'view_class_wall', 'manage_conversations',
                 ],
             ],
-            7 => [ // Parent — API-only (no web dashboard). No route group registered.
-                'scope'   => 'none',
+            7 => [ // Parent — WhatsApp / API channel (no web dashboard).
+                'scope'   => 'children',
                 'label'   => 'parent',
-                'actions' => [],
+                'actions' => [
+                    'view_fee_balance', 'view_grades', 'view_attendance',
+                    'view_events', 'view_health', 'list_children',
+                ],
             ],
             8 => [ // Librarian
                 'scope'   => 'school',

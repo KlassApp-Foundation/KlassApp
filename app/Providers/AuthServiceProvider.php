@@ -332,5 +332,21 @@ class AuthServiceProvider extends ServiceProvider
 
             return \Illuminate\Auth\Access\Response::deny('You are not authorized for this student action.');
         });
+
+        // Parent-scoped Toshi tools only (ug7). Children ownership is enforced in ParentActionService.
+        Gate::define('toshi-parent-action', function (User $user): \Illuminate\Auth\Access\Response {
+            if ($user->usergroup_id === 7 && $user->school_id) {
+                return \Illuminate\Auth\Access\Response::allow();
+            }
+
+            if ($user->usergroup_id === 1 && $user->isImpersonating()) {
+                $impersonated = User::find(\Session::get('impersonate'));
+                if ($impersonated && $impersonated->usergroup_id === 7 && $impersonated->school_id) {
+                    return \Illuminate\Auth\Access\Response::allow();
+                }
+            }
+
+            return \Illuminate\Auth\Access\Response::deny('You are not authorized for this parent action.');
+        });
     }
 }

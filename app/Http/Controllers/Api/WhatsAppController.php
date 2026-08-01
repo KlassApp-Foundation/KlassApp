@@ -1612,8 +1612,23 @@ class WhatsAppController extends Controller
             return;
         }
 
+        // Option B: unmatched free-form → Toshi (read-only channel). Keywords/OTP/link unchanged.
+        $toshiChannel = app(\App\Services\WhatsApp\WhatsAppToshiChannelService::class);
+        if ($toshiChannel->isAvailableFor($user->user)) {
+            $reply = $toshiChannel->ask($user, $body);
+            if (is_string($reply) && $reply !== '') {
+                $whatsAppService->sendText(
+                    $phone,
+                    $reply,
+                    'toshi_reply',
+                    $user->user_id,
+                );
+
+                return;
+            }
+        }
+
         // Unknown keyword — send the actual menu with buttons
-        // (Track 1 free-form Toshi would slot in above this fallthrough when merged.)
         $whatsAppService->sendText(
             $phone,
             "🤔 Sorry, I didn't understand \"{$body}\".",
