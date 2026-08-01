@@ -91,7 +91,6 @@ class ToshiSdkV2Service
             Log::info('SDK v2 path: agent dispatched', [
                 'user_id' => $user->id,
                 'usergroup_id' => $user->usergroup_id,
-                'agent' => $agent::class,
                 'query' => substr($query, 0, 100),
                 'scope' => $scope->value,
                 'agent' => $agent::class,
@@ -178,7 +177,6 @@ class ToshiSdkV2Service
             Log::info('SDK v2 path: streamed', [
                 'user_id' => $user->id,
                 'usergroup_id' => $user->usergroup_id,
-                'agent' => $agent::class,
                 'query' => substr($query, 0, 100),
                 'scope' => $scope->value,
                 'agent' => $agent::class,
