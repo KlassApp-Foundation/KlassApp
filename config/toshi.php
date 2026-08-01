@@ -33,12 +33,13 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | WhatsApp channel (Part B / Track 1 — read-only free-form → Toshi)
+    | WhatsApp channel (free-form → Toshi; wave-1 task writes allowlisted)
     |--------------------------------------------------------------------------
     |
     | When enabled (and sdk_v2_enabled is true), unmatched inbound WhatsApp text
     | after the keyword/OTP/link pipeline is routed to the role OperationsAgent
-    | with structural write-tool exclusion. Confirmation bridge is Track 2.
+    | with WhatsAppWriteExclusion (ConfirmsBeforeWrite AND NOT allowlisted).
+    | Wave-1 allowlist: CreateTask / ManageTasks → WhatsAppConfirmationBridge.
     */
     'whatsapp_channel_enabled' => env('TOSHI_WHATSAPP_CHANNEL_ENABLED', false),
 

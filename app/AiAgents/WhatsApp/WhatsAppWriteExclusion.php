@@ -4,20 +4,32 @@ namespace App\AiAgents\WhatsApp;
 
 use App\Ai\Tools\Superadmin\ImpersonateSchoolAdminTool;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
+use App\AiAgents\Tools\Accountant\CreateTaskTool as AccountantCreateTaskTool;
 use App\AiAgents\Tools\Accountant\ManagePayrollTool;
+use App\AiAgents\Tools\Librarian\CreateTaskTool as LibrarianCreateTaskTool;
+use App\AiAgents\Tools\Receptionist\CreateTaskTool as ReceptionistCreateTaskTool;
+use App\AiAgents\Tools\Student\ManageTasksTool;
+use App\AiAgents\Tools\Teacher\CreateTaskTool as TeacherCreateTaskTool;
 use Laravel\Ai\Contracts\Tool;
 
 /**
- * Structural write exclusion for the WhatsApp Toshi channel (v1 read-only).
+ * Structural write exclusion for the WhatsApp Toshi channel.
  *
- * Tools that use ConfirmsBeforeWrite, skill routers that embed writes, and
- * hard-denied surfaces (payroll / impersonation) are never exposed over WhatsApp
- * — even when the underlying web OperationsAgent registers them.
+ * Mechanism (wave 1):
+ *   exclude if ConfirmsBeforeWrite AND NOT in named WRITE_ALLOWLIST
+ *
+ * HARD_DENY (payroll / impersonation) is checked first and always wins —
+ * even if a class were somehow listed in WRITE_ALLOWLIST.
+ *
+ * Do NOT strip ConfirmsBeforeWrite from the tools themselves; the trait stays.
+ * Detection of ConfirmsBeforeWrite is unchanged — only the allowlist AND-NOT
+ * softens the denylist default for the five wave-1 task tools.
  */
 class WhatsAppWriteExclusion
 {
     /**
-     * Hard denylist — never expose on WhatsApp even after confirmation bridge.
+     * Hard denylist — never expose on WhatsApp even after confirmation bridge,
+     * and even if somehow listed in WRITE_ALLOWLIST.
      *
      * @var list<class-string>
      */
@@ -26,14 +38,41 @@ class WhatsAppWriteExclusion
         ImpersonateSchoolAdminTool::class,
     ];
 
+    /**
+     * Named wave-1 WhatsApp write allowlist (CreateTask / ManageTasks).
+     * School Admin + Parent are intentionally excluded from this wave.
+     *
+     * @var list<class-string>
+     */
+    public const WRITE_ALLOWLIST = [
+        TeacherCreateTaskTool::class,
+        AccountantCreateTaskTool::class,
+        LibrarianCreateTaskTool::class,
+        ReceptionistCreateTaskTool::class,
+        ManageTasksTool::class,
+    ];
+
+    public static function isHardDenied(string $toolClass): bool
+    {
+        return in_array($toolClass, self::HARD_DENY, true);
+    }
+
+    public static function isAllowlisted(string $toolClass): bool
+    {
+        return in_array($toolClass, self::WRITE_ALLOWLIST, true);
+    }
+
     public static function isDenied(object $tool): bool
     {
-        if (in_array($tool::class, self::HARD_DENY, true)) {
+        // HARD_DENY always wins — checked before allowlist.
+        if (self::isHardDenied($tool::class)) {
             return true;
         }
 
         $traits = class_uses_recursive($tool);
-        if (isset($traits[ConfirmsBeforeWrite::class])) {
+
+        // exclude if ConfirmsBeforeWrite AND NOT allowlisted
+        if (isset($traits[ConfirmsBeforeWrite::class]) && ! self::isAllowlisted($tool::class)) {
             return true;
         }
 
@@ -69,7 +108,8 @@ class WhatsAppWriteExclusion
      */
     public static function allowsClass(string $toolClass): bool
     {
-        if (in_array($toolClass, self::HARD_DENY, true)) {
+        // HARD_DENY always wins — checked before allowlist.
+        if (self::isHardDenied($toolClass)) {
             return false;
         }
 
@@ -83,6 +123,11 @@ class WhatsAppWriteExclusion
 
         $traits = class_uses_recursive($toolClass);
 
-        return ! isset($traits[ConfirmsBeforeWrite::class]);
+        // exclude if ConfirmsBeforeWrite AND NOT allowlisted
+        if (isset($traits[ConfirmsBeforeWrite::class]) && ! self::isAllowlisted($toolClass)) {
+            return false;
+        }
+
+        return true;
     }
 }

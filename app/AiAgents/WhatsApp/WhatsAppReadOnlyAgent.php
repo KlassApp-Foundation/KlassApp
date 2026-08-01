@@ -10,7 +10,10 @@ use Laravel\Ai\Promptable;
 use Stringable;
 
 /**
- * Proxies an OperationsAgent while structurally stripping write tools for WhatsApp v1.
+ * Proxies an OperationsAgent while applying WhatsAppWriteExclusion.
+ *
+ * Wave 1: most ConfirmsBeforeWrite tools stay stripped; WRITE_ALLOWLIST
+ * (CreateTask / ManageTasks) passes through for confirmation via the bridge.
  */
 #[MaxSteps(5)]
 #[Timeout(120)]
@@ -53,7 +56,7 @@ class WhatsAppReadOnlyAgent implements Agent, HasTools
         $base = $this->inner->instructions();
         $suffix = $this->channelInstructionsSuffix !== ''
             ? $this->channelInstructionsSuffix
-            : "\n\nWhatsApp channel constraint: you only have read-only tools. Do not attempt writes, payments, payroll, or impersonation.";
+            : "\n\nWhatsApp channel: prefer read tools. Personal task create/manage tools may be used when the user asks — they require WhatsApp Approve/Reject confirmation before executing. Never attempt payroll, payments, attendance, grades, lending, submissions, or impersonation.";
 
         return rtrim((string) $base)."\n".$suffix;
     }
