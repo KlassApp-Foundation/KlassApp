@@ -76,6 +76,11 @@ class AgentToshi extends Component
         'toolReceptionistManageCallLog' => \App\AiAgents\Tools\Receptionist\ManageCallLogTool::class,
         'toolReceptionistManagePostalRecord' => \App\AiAgents\Tools\Receptionist\ManagePostalRecordTool::class,
         'toolReceptionistCreateTask' => \App\AiAgents\Tools\Receptionist\CreateTaskTool::class,
+        // StudentOperationsAgent confirm keys (ug6) — writes only
+        'toolStudentSubmitAssignment' => \App\AiAgents\Tools\Student\SubmitAssignmentTool::class,
+        'toolStudentSubmitHomework' => \App\AiAgents\Tools\Student\SubmitHomeworkTool::class,
+        'toolStudentManageTasks' => \App\AiAgents\Tools\Student\ManageTasksTool::class,
+        'toolStudentManageConversations' => \App\AiAgents\Tools\Student\ManageConversationsTool::class,
     ];
 
     public $step = 0;

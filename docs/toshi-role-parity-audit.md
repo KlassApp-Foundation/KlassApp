@@ -334,7 +334,7 @@ Caps claim (after Part B hygiene): `manage_visitor_log`, `manage_call_log`, `man
 | Siteadmin | 1 | yes | platform path (separate branch) | 3 | platform tools on feature branch | n/a |
 | School Admin | 3 | yes | school `toshi_enabled` | 16 | ~26 tools cover 16 | mounts |
 | Teacher | 5 | **yes** (teacher/accountant/librarian branches) | school flag; `toshi-teacher-action` | 12 | 12 | resolved on teacher branch |
-| Student | 6 | **no** | school flag; Gate denies; scope=`self` | 11 | 0 (admin tools ≠ self) | **intentional** |
+| Student | 6 | **yes** (`feature/toshi-student-role`) | school flag; `toshi-student-action`; scope=`self` | 11 | 13 tools (submit split) | resolved on student branch |
 | Librarian | **8** | **yes** (`feature/toshi-librarian-role`) | school flag; `toshi-librarian-action` | 6 | 6 | resolved on librarian branch |
 | Receptionist | **10** | **yes** (`feature/toshi-receptionist-role`) | school flag; `toshi-receptionist-action` | 7 | 7 | resolved on receptionist branch |
 | Accountant | 11 | **yes** (`feature/toshi-accountant-role`) | school flag; `toshi-accountant-action` | 6 | 6 | resolved on accountant branch |
@@ -347,6 +347,7 @@ Caps claim (after Part B hygiene): `manage_visitor_log`, `manage_call_log`, `man
 
 ### Backlog (advisory/panel mismatches)
 
+- **HIGH — Legacy portal IDOR (studentassignment / studentHomework / event / post Gates + show/destroy):** school_id-only authorization on classic portal controllers. **Do not fix on Toshi role branches.** Tracked under clearly labeled section **HIGH backlog — Legacy portal IDOR** below; schedule after role rollout.
 - **Shipped (librarian Part B):** view-only `/library/cards` + ug8 `LibrarianOperationsAgent` route; advisory key renamed `manage_library_cards` → `view_library_cards`.
 - **Follow-up — library card issue/return CRUD:** create/renew/deactivate/edit card fields as a scoped build (Approvable / Tier-2 confirm judgment later). Keep admin URL.
 - **Receptionist `manage_email_record`**: **DROPPED** (Part B 2026-08-01) — not a follow-up; abandoned scaffold left as dead controller. Advisory rename `manage_noticeboard` → `view_noticeboard` **shipped**.
@@ -563,6 +564,31 @@ Why not build routes now:
 ### Receptionist Part B status — **shipped** on `feature/toshi-receptionist-role`
 
 `ReceptionistOperationsAgent` + `toshi-receptionist-action` Gate + scope router ug10 + Blade `[1, 3, 5, 8, 10, 11]` + isolation/audit tests green. Email capability **dropped** (not follow-up); noticeboard renamed and shipped.
+
+### Student Part B status — **shipped** on `feature/toshi-student-role`
+
+`StudentOperationsAgent` + `StudentActionService` + Gate `toshi-student-action` + scope router ug6 + Blade `[1, 3, 5, 6, 8, 10, 11]` + isolation/cross-student tests green. Auth-only identity (no LLM `student_id`); classwall read-only; Tier-2 on submit/tasks/conversations.
+
+---
+
+## HIGH backlog — Legacy portal IDOR (application-level, independent of Toshi)
+
+> **Priority: HIGH** · **Owner: after role rollout** · **Do not “fix” on Toshi role branches**
+
+These gaps live in the classic `/student/*` (and related) controllers + school-only Gates. They are **not** Toshi bugs; Toshi student tools deliberately avoid these Gates and enforce auth-user ownership in `StudentActionService`. Schedule a dedicated security pass after the role rollout:
+
+| Surface | Gate / path | Weakness | Impact |
+|---|---|---|---|
+| `studentassignment` Gate | `AuthServiceProvider` — `$user->school_id == $studentassignment->assignment->school_id` | Same-school peer passes | Destroy/show another student’s submission |
+| `studentHomework` Gate | school_id only | Same as above | Destroy/show peer homework submission |
+| `event` Gate | school_id only | Same-school | Destroy school events beyond intended actor |
+| `post` Gate | school_id only | Same-school | Destroy classwall posts beyond ownership |
+| `AssignmentController@show` / `@destroy` | Portal controllers | Load by PK / Gate school-only | Cross-student IDOR |
+| `HomeworkController@show` / `@destroy` | Portal controllers | Same | Cross-student IDOR |
+| `ConversationController@show` | Route-model bind | No participant membership assert | Read peer threads |
+
+**Toshi Part B mitigation (already shipped):** tools never call these Gates; resource IDs re-checked against `auth()->user()` (class membership, `user_id` stamp, conversation_user pivot).
+
 ---
 
 ## Part A — Student self-scope authorization design (2026-08-01)
@@ -713,13 +739,19 @@ Agent: `StudentOperationsAgent` (ug6). Gate: `toshi-student-action`. Service: `S
 
 ---
 
-## Stop — awaiting approval before Part B
+## Student Part B — implemented (2026-08-01)
 
-No agent, Gate, tools, Blade mounts, or capability renames on this branch. Approve:
+Branch: `feature/toshi-student-role`.
 
-1. Outer Gate + auth-only student identity (no LLM `student_id`)
-2. Split submit tools vs pure views for assignments/homework
-3. Classwall read-only v1; conversations Tier-2 + membership
-4. Proposed 13-tool set (or request 11:1 merge)
+| Deliverable | Status |
+|---|---|
+| `StudentOperationsAgent` (13 tools) | ✅ |
+| `StudentActionService` hard self-scope | ✅ |
+| Gate `toshi-student-action` (ug6 + school_id; ug1→ug6 impersonation) | ✅ |
+| Scope router ug6 → student agent | ✅ |
+| Isolation vs five other Gates + cross-student A/B | ✅ `tests/Feature/Toshi/Student/StudentOperationsToolsTest.php` |
+| Audit `acting_user_id` / `approver_id` (null on reads; set on Tier-2 confirm) | ✅ |
+| Blade allowlist `[1, 3, 5, 6, 8, 10, 11]` | ✅ |
+| Legacy IDOR Gates fixed | ❌ **explicitly deferred** — see **HIGH backlog — Legacy portal IDOR** above |
 
-Then Part B may implement on this branch (or continue here after approval).
+Classwall mutations remain deferred.

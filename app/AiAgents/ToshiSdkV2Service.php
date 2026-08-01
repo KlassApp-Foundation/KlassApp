@@ -74,7 +74,8 @@ class ToshiSdkV2Service
             // Scope router (deterministic PHP — not SDK Sub-Agents / CanActAsTool):
             // Platform → PlatformOperationsAgent; ug5 → TeacherOperationsAgent;
             // ug11 → AccountantOperationsAgent; ug8 → LibrarianOperationsAgent;
-            // ug10 → ReceptionistOperationsAgent; else school-admin ToshiOrchestrator.
+            // ug10 → ReceptionistOperationsAgent; ug6 → StudentOperationsAgent;
+            // else school-admin ToshiOrchestrator.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
                 : match ((int) $user->usergroup_id) {
@@ -82,6 +83,7 @@ class ToshiSdkV2Service
                     11 => new AccountantOperationsAgent,
                     8 => new LibrarianOperationsAgent,
                     10 => new ReceptionistOperationsAgent,
+                    6 => new StudentOperationsAgent,
                     default => new ToshiOrchestrator,
                 };
             $response = $agent->run($query);
@@ -89,6 +91,7 @@ class ToshiSdkV2Service
             Log::info('SDK v2 path: agent dispatched', [
                 'user_id' => $user->id,
                 'usergroup_id' => $user->usergroup_id,
+                'agent' => $agent::class,
                 'query' => substr($query, 0, 100),
                 'scope' => $scope->value,
                 'agent' => $agent::class,
@@ -153,6 +156,7 @@ class ToshiSdkV2Service
                     11 => new AccountantOperationsAgent,
                     8 => new LibrarianOperationsAgent,
                     10 => new ReceptionistOperationsAgent,
+                    6 => new StudentOperationsAgent,
                     default => new ToshiOrchestrator,
                 };
             $fullText = '';
@@ -174,6 +178,7 @@ class ToshiSdkV2Service
             Log::info('SDK v2 path: streamed', [
                 'user_id' => $user->id,
                 'usergroup_id' => $user->usergroup_id,
+                'agent' => $agent::class,
                 'query' => substr($query, 0, 100),
                 'scope' => $scope->value,
                 'agent' => $agent::class,
