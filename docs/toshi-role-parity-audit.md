@@ -334,7 +334,7 @@ Caps claim (after Part B hygiene): `manage_visitor_log`, `manage_call_log`, `man
 | Siteadmin | 1 | yes | platform path (separate branch) | 3 | platform tools on feature branch | n/a |
 | School Admin | 3 | yes | school `toshi_enabled` | 16 | ~26 tools cover 16 | mounts |
 | Teacher | 5 | **yes** (teacher/accountant/librarian branches) | school flag; `toshi-teacher-action` | 12 | 12 | resolved on teacher branch |
-| Student | 6 | **no** | school flag; Gate denies; scope=`self` | 11 | 0 (admin tools ≠ self) | **intentional** |
+| Student | 6 | **yes** (`feature/toshi-student-role`) | school flag; `toshi-student-action`; scope=`self` | 11 | 13 tools (submit split) | resolved on student branch |
 | Librarian | **8** | **yes** (`feature/toshi-librarian-role`) | school flag; `toshi-librarian-action` | 6 | 6 | resolved on librarian branch |
 | Receptionist | **10** | **yes** (`feature/toshi-receptionist-role`) | school flag; `toshi-receptionist-action` | 7 | 7 | resolved on receptionist branch |
 | Accountant | 11 | **yes** (`feature/toshi-accountant-role`) | school flag; `toshi-accountant-action` | 6 | 6 | resolved on accountant branch |
@@ -347,6 +347,7 @@ Caps claim (after Part B hygiene): `manage_visitor_log`, `manage_call_log`, `man
 
 ### Backlog (advisory/panel mismatches)
 
+- **HIGH — Legacy portal IDOR (studentassignment / studentHomework / event / post Gates + show/destroy):** school_id-only authorization on classic portal controllers. **Do not fix on Toshi role branches.** Tracked under clearly labeled section **HIGH backlog — Legacy portal IDOR** below; schedule after role rollout.
 - **Shipped (librarian Part B):** view-only `/library/cards` + ug8 `LibrarianOperationsAgent` route; advisory key renamed `manage_library_cards` → `view_library_cards`.
 - **Follow-up — library card issue/return CRUD:** create/renew/deactivate/edit card fields as a scoped build (Approvable / Tier-2 confirm judgment later). Keep admin URL.
 - **Receptionist `manage_email_record`**: **DROPPED** (Part B 2026-08-01) — not a follow-up; abandoned scaffold left as dead controller. Advisory rename `manage_noticeboard` → `view_noticeboard` **shipped**.
@@ -563,3 +564,194 @@ Why not build routes now:
 ### Receptionist Part B status — **shipped** on `feature/toshi-receptionist-role`
 
 `ReceptionistOperationsAgent` + `toshi-receptionist-action` Gate + scope router ug10 + Blade `[1, 3, 5, 8, 10, 11]` + isolation/audit tests green. Email capability **dropped** (not follow-up); noticeboard renamed and shipped.
+
+### Student Part B status — **shipped** on `feature/toshi-student-role`
+
+`StudentOperationsAgent` + `StudentActionService` + Gate `toshi-student-action` + scope router ug6 + Blade `[1, 3, 5, 6, 8, 10, 11]` + isolation/cross-student tests green. Auth-only identity (no LLM `student_id`); classwall read-only; Tier-2 on submit/tasks/conversations.
+
+---
+
+## HIGH backlog — Legacy portal IDOR (application-level, independent of Toshi)
+
+> **Priority: HIGH** · **Owner: after role rollout** · **Do not “fix” on Toshi role branches**
+
+These gaps live in the classic `/student/*` (and related) controllers + school-only Gates. They are **not** Toshi bugs; Toshi student tools deliberately avoid these Gates and enforce auth-user ownership in `StudentActionService`. Schedule a dedicated security pass after the role rollout:
+
+| Surface | Gate / path | Weakness | Impact |
+|---|---|---|---|
+| `studentassignment` Gate | `AuthServiceProvider` — `$user->school_id == $studentassignment->assignment->school_id` | Same-school peer passes | Destroy/show another student’s submission |
+| `studentHomework` Gate | school_id only | Same as above | Destroy/show peer homework submission |
+| `event` Gate | school_id only | Same-school | Destroy school events beyond intended actor |
+| `post` Gate | school_id only | Same-school | Destroy classwall posts beyond ownership |
+| `AssignmentController@show` / `@destroy` | Portal controllers | Load by PK / Gate school-only | Cross-student IDOR |
+| `HomeworkController@show` / `@destroy` | Portal controllers | Same | Cross-student IDOR |
+| `ConversationController@show` | Route-model bind | No participant membership assert | Read peer threads |
+
+**Toshi Part B mitigation (already shipped):** tools never call these Gates; resource IDs re-checked against `auth()->user()` (class membership, `user_id` stamp, conversation_user pivot).
+
+---
+
+## Part A — Student self-scope authorization design (2026-08-01)
+
+Branch: `feature/toshi-student-role` (docs only — **no** `StudentOperationsAgent`, Gates, tools, Blade mounts, or capability renames until Part B approval).
+
+Ground truth reconfirmed from `ToshiActionService::getRoleCapabilities(6)`:
+
+| Field | Value |
+|---|---|
+| ug | **6** |
+| `scope` | **`self`** (unique among live roles — others use `school` / `platform`) |
+| `label` | `student` |
+| Routes | **77** `Route::` registrations in `routes/student.php` (classwall-heavy); middleware `['web','auth','student']` → `MustBeStudent` (ug6 only) |
+| Advisory actions (11) | `view_dashboard`, `view_assignments`, `view_homework`, `manage_tasks`, `view_events`, `view_notices`, `view_marks`, `view_attendance`, `view_library_activity`, `view_class_wall`, `manage_conversations` |
+
+Prior role Gates (`toshi-*-action`) check **ug + school_id** only. That is **insufficient** for student: same-school peers must not read/mutate each other's marks, attendance, submissions, library lends, or tasks. Product requirement: propose Gate + ownership shape **before** tools.
+
+---
+
+## Existing /student ownership pattern (evidence)
+
+### Outer boundary (role gate — reusable)
+
+- `RouteServiceProvider`: `prefix('student')` + middleware `student` → `MustBeStudent` requires `usergroup_id == 6` (others redirect/abort).
+- Controllers live under `App\Http\Controllers\Student\*`.
+- **Reusable for Toshi outer Gate:** same ug6 + `school_id` present pattern as `toshi-teacher-action` / librarian / accountant / receptionist — **not** greenfield. Name: `toshi-student-action`.
+
+### Inner ownership (self-scope — partial reuse, must tighten for LLM)
+
+Portal does **not** use Laravel Policies for student identity. Pattern is ad-hoc `Auth::id()` / `Auth::user()` in queries and writes:
+
+| Pattern | Evidence | Strength |
+|---|---|---|
+| **Resolve self from session** | `DashboardController@index`: `$student_id = Auth::id()` then `studentDashboard($school_id, $student, …)` — marks/attendance filtered `user_id = $user_id->id` in `Dashboard` trait | Strong for reads that never take a student id arg |
+| **Class-scoped lists** | Assignments/homework list: `school_id` + `academic_year_id` + `Auth::user()->studentAcademicLatest->standardLink_id` | Own class feeds, not other students' rows |
+| **Writes stamp Auth::id()** | `AssignmentController@store` / `HomeworkController@store`: `user_id = Auth::id()` | Good create path |
+| **Library** | `LibraryActivityController`: `BookLending::…->where('user_id', Auth::user()->id)` | Strong self filter |
+| **Tasks list** | `Task::…->ByType($type, Auth::id())` | Scoped to acting user |
+| **Conversations list** | `$request->user()->conversations()` | Participant pivot — good for index |
+| **Legacy school-only Gates** | `Gate::define('studentassignment'…)` / `studentHomework` / `event` / `post`: **`$user->school_id == $model->…school_id` only** — used on destroy paths | **Weak for self-scope** — any same-school student passes |
+
+### Gaps / IDOR-shaped portal debt (do **not** copy into Toshi)
+
+1. `AssignmentController@show($id)` / `HomeworkController@show($id)` — load by primary key **with no** `user_id === Auth::id()` check.
+2. `AssignmentController@destroy` / `HomeworkController@destroy` — Gate allows if **same school**, not same owner.
+3. `ConversationController@show(Conversation $conversation)` — route-model bind; **no** participant membership assert (index is safe; show is not).
+4. Classwall `PostsController@indexList` — school+year posts for **all classes** (visibility filter commented out); social feed is inherently multi-actor.
+5. `TaskController@edit` / `update` / `show` — load task by id without obvious owner assert in controller (relies on list UI).
+
+**Verdict:** Reuse **outer** ug6 Gate + service-layer “always `auth()->user()` as the student”. Treat portal Gates as **insufficient** ownership — Part B tools must enforce `user_id === auth id` (or conversation membership) explicitly. **Greenfield for ownership helpers**; **reusable** for Gate/agent/tool wiring pattern from Teacher/Librarian (`Authorizes*ToshiAction` + `*ActionService`).
+
+---
+
+## 11 capabilities: read vs write table
+
+Verified against `getRoleCapabilities(6)` and `/student/*` controllers:
+
+| # | Capability | Kind | Portal behavior | Notes |
+|---|---|---|---|---|
+| 1 | `view_dashboard` | **Read** | Aggregates own attendance %, marks sample, notices, event counts | Pure own-data |
+| 2 | `view_assignments` | **Read + write** (name lies) | List class assignments; **POST submit** (`store`); cancel submission (`destroy`) | Cap is `view_*` but panel mutates submissions |
+| 3 | `view_homework` | **Read + write** (name lies) | List; **POST submit** / reply; delete submission | Same advisory mismatch |
+| 4 | `manage_tasks` | **Write** (CRUD) | Full task CRUD + snooze/status | Not a view |
+| 5 | `view_events` | **Read** | School/year calendar | School-scoped shared data (OK — not peer PII) |
+| 6 | `view_notices` | **Read** | School + class notices | Shared broadcast data |
+| 7 | `view_marks` | **Read** | Via dashboard (`Mark::where user_id`) — no dedicated marks route | Pure own-data |
+| 8 | `view_attendance` | **Read** | Via dashboard attendance aggregates | Pure own-data |
+| 9 | `view_library_activity` | **Read** | Own `BookLending` rows | Pure own-data |
+| 10 | `view_class_wall` | **Read + social write** | Feed of school posts; like/dislike/save/comment/reply | Cap says view; panel has many mutators |
+| 11 | `manage_conversations` | **Write** (messaging) | Index/create/show private conversations | Involves other participants' thread content |
+
+**Not pure views:** `manage_tasks`, `manage_conversations`, and (despite names) assignment/homework **submission** paths + classwall engagement writes.
+
+---
+
+## Recommended auth shape (Gate + ownership)
+
+### Outer: `toshi-student-action` Gate
+
+Mirror sibling roles:
+
+```
+allow if usergroup_id === 6 && school_id present
+allow if ug1 impersonating ug6 with school_id
+else deny
+```
+
+Do **not** widen `toshi-school-action`. Structural isolation via future `StudentOperationsAgent::tools()` + scope router ug6 → student agent (same as teacher/accountant).
+
+### Inner: ownership — resolve student **only** from `auth()->user()`
+
+| Rule | Rationale |
+|---|---|
+| **Never** accept `student_id` / `user_id` as an LLM-suppliable tool argument for self-data tools | Prevents prompt injection / confused-deputy reads of peers |
+| Service methods take `User $actor` from auth; queries hard-filter `user_id = $actor->id` (or membership) | Matches strong portal patterns (dashboard, library) |
+| Resource ids that **are** allowed (`assignment_id`, `homework_id`, `task_id`, `conversation_id`, `post_id`) must be re-checked: belongs to actor's class / owned submission / participant | LLM can supply sibling IDs within school |
+| Optional helper (Part B): `StudentSelfScope::assertOwns($actor, $model)` / `assertConversationMember` — **do not** reuse school-only `studentassignment` Gate | Portal Gates are school-scoped only |
+
+### Gate vs per-tool vs both — recommendation
+
+**Both (required):**
+
+1. **Gate** (`toshi-student-action`) — role admission; matches `AuthorizesTeacherToshiAction` pattern; cheap deny for wrong ug.
+2. **Per-tool / ActionService ownership** — every query/mutation binds to `$actor->id`; no trust of LLM student identifiers.
+
+Gate alone fails self-scope (ug6 peer in same school passes). Per-tool alone without Gate risks accidental registration of student tools on school/teacher agents. Prior roles already use both; student needs a **stricter** inner layer than teacher (teacher tools *intentionally* take other students' ids for attendance/marks).
+
+---
+
+## Capabilities needing special handling
+
+| Capability | Issue | Proposed handling |
+|---|---|---|
+| `view_class_wall` | Feed is multi-student/teacher content; comments/likes are writes; visibility filtering weak in panel | Part B: **read-only feed summary** for own class (filter `standardLink` / visibility) **or** rename later to `manage_class_wall` if engagement writes ship. Default Part B: **read tool only**; defer like/comment mutators |
+| `manage_conversations` | Threads include other users' messages; create implies choosing recipients | List/show **only** conversations where `$actor` is pivot member; create needs explicit recipient allowlist (classmates/teachers?) — product decision. Tier-2 for send/create. Never accept arbitrary `conversation_id` without membership check |
+| `view_assignments` / `view_homework` | Cap name = view; panel submits files | Split in tools: `ViewAssignmentsTool` (read) + optional `SubmitAssignmentTool` / `SubmitHomeworkTool` (writes, Tier-2). Or keep one tool with read default and gated submit — prefer **split** for audit clarity |
+| `view_events` / `view_notices` | Shared school data (not peer PII) | OK under Gate + school_id; no per-student row filter beyond class notice `standardLink_id` |
+| Dashboard marks/attendance | Embedded only; no `/student/marks` route | Tools call same filters as `studentDashboard` — fine |
+
+---
+
+## Proposed Part B tool set (+ Tier-2 Y/N)
+
+Agent: `StudentOperationsAgent` (ug6). Gate: `toshi-student-action`. Service: `StudentActionService` mirroring panel queries with hard self-scope. Blade allowlist widen **after** tools+tests (graduated sequence — student after receptionist).
+
+| # | Proposed tool | ← capability | Tier-2? | Notes |
+|---|---|---|---|---|
+| 1 | `ViewDashboardTool` | `view_dashboard` | **N** | Own KPI summary |
+| 2 | `ViewAssignmentsTool` | `view_assignments` (read) | **N** | Class list + own submission status |
+| 3 | `SubmitAssignmentTool` | (write half of assignments) | **Y** | File/metadata submit; stamps `Auth::id()` |
+| 4 | `ViewHomeworkTool` | `view_homework` (read) | **N** | |
+| 5 | `SubmitHomeworkTool` | (write half of homework) | **Y** | Include reply-as-write |
+| 6 | `ManageTasksTool` / `CreateTaskTool` | `manage_tasks` | **Y** | Match librarian/receptionist naming for writes |
+| 7 | `ViewEventsTool` | `view_events` | **N** | |
+| 8 | `ViewNoticesTool` | `view_notices` | **N** | |
+| 9 | `ViewMarksTool` | `view_marks` | **N** | |
+| 10 | `ViewAttendanceTool` | `view_attendance` | **N** | |
+| 11 | `ViewLibraryActivityTool` | `view_library_activity` | **N** | |
+| 12 | `ViewClassWallTool` | `view_class_wall` | **N** | Read-only first; engagement writes deferred |
+| 13 | `ManageConversationsTool` | `manage_conversations` | **Y** | Membership-scoped; Tier-2 for create/send |
+
+**Counts:** 11 advisory keys → **13 tools** if assignment/homework submit are split out (recommended). If product insists 1:1 advisory mapping, merge submit into view tools but still Tier-2 the write path — worse audit story.
+
+**Do not implement in Part B without separate approval:** classwall like/comment/reply mutators; conversation recipient policy beyond “existing classmates/teachers”.
+
+**Isolation tests (Part B checklist):** ug6 denied on `toshi-school-action` / teacher / etc.; ug3 denied on `toshi-student-action`; tool with forged peer `user_id` in service layer ignored; conversation non-member id denied.
+
+---
+
+## Student Part B — implemented (2026-08-01)
+
+Branch: `feature/toshi-student-role`.
+
+| Deliverable | Status |
+|---|---|
+| `StudentOperationsAgent` (13 tools) | ✅ |
+| `StudentActionService` hard self-scope | ✅ |
+| Gate `toshi-student-action` (ug6 + school_id; ug1→ug6 impersonation) | ✅ |
+| Scope router ug6 → student agent | ✅ |
+| Isolation vs five other Gates + cross-student A/B | ✅ `tests/Feature/Toshi/Student/StudentOperationsToolsTest.php` |
+| Audit `acting_user_id` / `approver_id` (null on reads; set on Tier-2 confirm) | ✅ |
+| Blade allowlist `[1, 3, 5, 6, 8, 10, 11]` | ✅ |
+| Legacy IDOR Gates fixed | ❌ **explicitly deferred** — see **HIGH backlog — Legacy portal IDOR** above |
+
+Classwall mutations remain deferred.

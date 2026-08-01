@@ -260,5 +260,21 @@ class AuthServiceProvider extends ServiceProvider
 
             return \Illuminate\Auth\Access\Response::deny('You are not authorized for this receptionist action.');
         });
+
+        // Student-scoped Toshi tools only (ug6). Self-scope ownership is enforced in tools/service.
+        Gate::define('toshi-student-action', function (User $user): \Illuminate\Auth\Access\Response {
+            if ($user->usergroup_id === 6 && $user->school_id) {
+                return \Illuminate\Auth\Access\Response::allow();
+            }
+
+            if ($user->usergroup_id === 1 && $user->isImpersonating()) {
+                $impersonated = User::find(\Session::get('impersonate'));
+                if ($impersonated && $impersonated->usergroup_id === 6 && $impersonated->school_id) {
+                    return \Illuminate\Auth\Access\Response::allow();
+                }
+            }
+
+            return \Illuminate\Auth\Access\Response::deny('You are not authorized for this student action.');
+        });
     }
 }

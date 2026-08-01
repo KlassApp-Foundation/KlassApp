@@ -5845,6 +5845,20 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Tests**: `CountryCreateTest`, `PlanAvatarRedirectTest`, updated `ImpersonateControllerTest` — 9 relevant pass. Full suite: **247 passed**, 1 skipped, **1 failed** (`ToshiE2EVerificationTest` LLM null — pre-existing flake, unrelated).
 - **Status**: ✅ MEDIUM/LOW triage done — **READY FOR MERGE REVIEW (not merged, not pushed)**
 
+### 2026-08-01: Toshi Student Part A — self-scope authorization design
+- **Work done**: Docs-only design on `feature/toshi-student-role` (off `origin/main`). Confirmed ug6 advisory 11 caps + `scope: self`. Audited `/student/*` ownership (`Auth::id()` patterns vs school-only Gates). Proposed `toshi-student-action` + auth-only student identity (no LLM `student_id`); 13-tool Part B shape with Tier-2 on writes. Appended full report to `docs/toshi-role-parity-audit.md`.
+- **Files modified**: `docs/toshi-role-parity-audit.md`, `knowledge.md`
+- **Key decisions**: Both Gate + per-tool ownership required; portal `studentassignment`/`studentHomework` Gates insufficient (school_id only); classwall read-only v1; split assignment/homework submit tools; conversations Tier-2 + membership.
+- **Status**: ⏸️ Stop — awaiting approval before Part B (no agent/Gates/tools/Blade)
+- **Edge cases flagged**: Portal IDOR-shaped gaps on assignment/homework show+destroy and conversation show; do not copy into Toshi
+
+### 2026-08-01: Toshi Student Part B — StudentOperationsAgent (self-scope)
+- **Work done**: Implemented ug6 `StudentOperationsAgent` + `StudentActionService` (13 tools). Outer Gate `toshi-student-action`; ported sibling role Gates for isolation; scope router ug6; Blade `[1, 3, 5, 6, 8, 10, 11]`. Audit identity `acting_user_id` + Tier-2 `approver_id`. Cross-student A/B isolation tests (library read, both submits, tasks, conversations). Documented **HIGH backlog — Legacy portal IDOR** for school-only `studentassignment`/`studentHomework`/`event`/`post` Gates (not fixed on this branch).
+- **Files modified**: `app/AiAgents/StudentOperationsAgent.php`, `app/AiAgents/Concerns/AuthorizesStudentToshiAction.php`, `app/AiAgents/Tools/Student/*` (13), `app/Services/Toshi/StudentActionService.php`, `app/Providers/AuthServiceProvider.php`, `app/AiAgents/ToshiSdkV2Service.php`, `app/Livewire/AgentToshi.php`, `app/Services/ToshiAuditService.php`, `resources/views/layouts/app.blade.php`, `tests/Feature/Toshi/Student/StudentOperationsToolsTest.php`, `docs/toshi-role-parity-audit.md`, `knowledge.md`
+- **Key decisions**: Never trust LLM `student_id`/`user_id`; resource ownership in service (not legacy Gates); classwall mutations deferred; conversations via `conversation_chat` + membership pivot
+- **Tests**: `StudentOperationsToolsTest` — 14 passed (83 assertions); `ToshiAuditTrailTest` — 6 passed
+- **Status**: ✅ Done (not pushed)
+- **Edge cases flagged**: Legacy portal IDOR backlog remains HIGH after role rollout; Conversation Eloquent table (`conversations` vs `conversation_chat`) still inconsistent in portal code
 ### 2026-08-01: Receptionist Part A — EmailRecord + capability hygiene
 - **Work done**: Docs-only investigation on `feature/toshi-receptionist-role` (worktree `KlassApp-main-merge`). Confirmed `manage_email_record` is an abandoned scaffold: controller only — no model, migration, Request, Resource, views, routes, or LOGNAME constants. DB has no email_record table. Recommend **drop** capability (not build routes). Other 7 actions audited; `manage_noticeboard` is read-only → rename to `view_noticeboard`. Proposed Part B: **7 tools**.
 - **Files modified**: `docs/toshi-role-parity-audit.md` (brought from librarian branch baseline + Part A appendix), `knowledge.md` (this log)
