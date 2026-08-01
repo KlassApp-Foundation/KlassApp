@@ -239,6 +239,10 @@ class HomeworkController extends Controller
         //
         $studentHomework = StudentHomework::where('id',$id)->first();
 
+        if ($studentHomework === null || Gate::denies('studentHomework', $studentHomework)) {
+            abort(403);
+        }
+
         $array=[];
 
         $array['standardLink_name'] =   $studentHomework->homework->standardLink->StandardSection;
@@ -259,58 +263,55 @@ class HomeworkController extends Controller
     public function destroy($id)
     {
         //
+        $studentHomework = StudentHomework::with('homework')->where('id',$id)->first();
+
+        if ($studentHomework === null || Gate::denies('studentHomework', $studentHomework)) {
+            abort(403);
+        }
+
         try
         {
-            $studentHomework = StudentHomework::with('homework')->where('id',$id)->first();
+            $standardLink = StandardLink::where('id',Auth::user()->studentAcademicLatest->standardLink_id)->first();
+             $homework=Homework::find($studentHomework->homework_id);
+            //$teacher = User::where('id',$standardLink->class_teacher_id)->first();
+                if($homework->teacher_id==null){
+                $teacher = User::where('id',$standardLink->class_teacher_id)->first();
+                }
+                else{
+                $teacher = User::where('id',$homework->teacher_id)->first(); 
+                }   
 
-            if(Gate::allows('studentHomework',$studentHomework))
-            {
-                $standardLink = StandardLink::where('id',Auth::user()->studentAcademicLatest->standardLink_id)->first();
-                 $homework=Homework::find($studentHomework->homework_id);
-                //$teacher = User::where('id',$standardLink->class_teacher_id)->first();
-                    if($homework->teacher_id==null){
-                    $teacher = User::where('id',$standardLink->class_teacher_id)->first();
-                    }
-                    else{
-                    $teacher = User::where('id',$homework->teacher_id)->first(); 
-                    }   
+            $studentHomework->delete();
+            $student = Auth::user();
 
-                $studentHomework->delete();
-                $student = Auth::user();
+            $array = [];
 
-                $array = [];
+            $array['school_id'] = $student->school_id;
+            $array['user_id']   = $teacher->id;
+            $array['message']   = $student->FullName.' Deleted Homework File';
+            $array['type']      = 'homework';
 
-                $array['school_id'] = $student->school_id;
-                $array['user_id']   = $teacher->id;
-                $array['message']   = $student->FullName.' Deleted Homework File';
-                $array['type']      = 'homework';
+            event(new SinglePushEvent($array));
 
-                event(new SinglePushEvent($array));
+            $data = [];
 
-                $data = [];
+            $data['user']       =   $teacher;
+            $data['details']    =   trans('notification.student_homework_delete_msg',['student' => $student->FullName]);
 
-                $data['user']       =   $teacher;
-                $data['details']    =   trans('notification.student_homework_delete_msg',['student' => $student->FullName]);
+            event(new SingleNotificationEvent($data));
 
-                event(new SingleNotificationEvent($data));
+            $message=trans('messages.delete_success_msg',['module' => 'Homework File']);
 
-                $message=trans('messages.delete_success_msg',['module' => 'Homework File']);
-
-                $ip= $this->getRequestIP();
-                $this->doActivityLog(
-                    $studentHomework,
-                    Auth::user(),
-                    ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                    LOGNAME_DELETE_STUDENT_HOMEWORK,
-                    $message
-                );
-                $res['success'] = $message;
-                return $res;
-            }
-            else
-            {
-                abort(403);
-            }
+            $ip= $this->getRequestIP();
+            $this->doActivityLog(
+                $studentHomework,
+                Auth::user(),
+                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
+                LOGNAME_DELETE_STUDENT_HOMEWORK,
+                $message
+            );
+            $res['success'] = $message;
+            return $res;
         }
         catch(Exception $e)
         {

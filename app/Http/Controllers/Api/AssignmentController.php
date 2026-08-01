@@ -184,10 +184,16 @@ class AssignmentController extends Controller
      */
     public function show($student_id,$id)
     {
-        //
+        // Never trust route {student_id} — bind to the authenticated student.
+        $student_id = Auth::id();
         $studentAssignment     =   StudentAssignment::where([['id',$id],['user_id',$student_id]])->first();
+
+        if ($studentAssignment === null || Gate::denies('studentassignment', $studentAssignment)) {
+            abort(403);
+        }
+
         $file = [];
-        foreach ($studentAssignment->AttachmentPath as $id => $attachments) 
+        foreach ($studentAssignment->AssignmentFilePath as $id => $attachments) 
         {
             foreach ($attachments as $key => $value) 
             {
@@ -300,58 +306,56 @@ class AssignmentController extends Controller
      */
     public function destroy($id,$student_id)
     {
-        //
+        // Never trust route {student_id} — bind to the authenticated student.
+        $student_id = Auth::id();
+        $studentassignment = StudentAssignment::where('id',$id)->first();
+
+        if ($studentassignment === null || Gate::denies('studentassignment', $studentassignment)) {
+            abort(403);
+        }
+
         try
         {
-            $studentassignment = StudentAssignment::where('id',$id)->first();
+            $assignment = Assignment::where('id',$studentassignment->assignment_id)->first();
+            $student = User::where('id',$student_id)->first();
+            $teacher = User::where('id',$assignment->teacher_id)->first();
 
-            if(Gate::allows('studentassignment',$studentassignment))
-            {
-                $assignment = Assignment::where('id',$studentassignment->assignment_id)->first();
-                $student = User::where('id',$student_id)->first();
-                $teacher = User::where('id',$assignment->teacher_id)->first();
+            $studentassignment->status     =   'cancel';
+            $studentassignment->save();
 
-                $studentassignment->status     =   'cancel';
-                $studentassignment->save();
+            $studentassignment->delete();
 
-                $studentassignment->delete();
+            $array = [];
 
-                $array = [];
+            $array['school_id'] = $student->school_id;
+            $array['user_id']   = $teacher->id;
+            $array['message']   = $student->FullName.' Deleted Assignment File';
+            $array['type']      = 'assignment';
 
-                $array['school_id'] = $student->school_id;
-                $array['user_id']   = $teacher->id;
-                $array['message']   = $student->FullName.' Deleted Assignment File';
-                $array['type']      = 'assignment';
+            event(new SinglePushEvent($array));
 
-                event(new SinglePushEvent($array));
+            $data = [];
 
-                $data = [];
+            $data['user']       =   $teacher;
+            $data['details']    =   trans('notification.student_assignment_delete_msg',['student' => $student->FullName]);
 
-                $data['user']       =   $teacher;
-                $data['details']    =   trans('notification.student_assignment_delete_msg',['student' => $student->FullName]);
+            event(new SingleNotificationEvent($data));
 
-                event(new SingleNotificationEvent($data));
+            $message=trans('messages.delete_success_msg',['module' => 'Assignment File']);
 
-                $message=trans('messages.delete_success_msg',['module' => 'Assignment File']);
+            $ip= $this->getRequestIP();
+            $this->doActivityLog(
+                $studentassignment,
+                Auth::user(),
+                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
+                LOGNAME_DELETE_STUDENT_ASSIGNMENT,
+                $message
+            );
 
-                $ip= $this->getRequestIP();
-                $this->doActivityLog(
-                    $studentassignment,
-                    Auth::user(),
-                    ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                    LOGNAME_DELETE_STUDENT_ASSIGNMENT,
-                    $message
-                );
-
-                return response()->json([
-                    'success'   =>  true,
-                    'message'   =>  $message,
-                ],200);
-            }
-            else
-            {
-                abort(403);
-            }
+            return response()->json([
+                'success'   =>  true,
+                'message'   =>  $message,
+            ],200);
         }
         catch(Exception $e)
         {

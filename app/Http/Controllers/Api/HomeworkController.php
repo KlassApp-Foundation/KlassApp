@@ -175,8 +175,13 @@ class HomeworkController extends Controller
      */
     public function show($student_id,$id)
     {
-        //
+        // Never trust route {student_id} — bind to the authenticated student.
+        $student_id = Auth::id();
         $homework = Homework::where('id',$id)->first();
+
+        if ($homework === null || (int) Auth::user()->school_id !== (int) $homework->school_id) {
+            abort(403);
+        }
 
         $array = [];
 
@@ -191,6 +196,10 @@ class HomeworkController extends Controller
             $studentHomework = StudentHomework::where([['homework_id',$homework->id],['user_id',$student_id]])->first();
             if($studentHomework != null)
             {
+                if (Gate::denies('studentHomework', $studentHomework)) {
+                    abort(403);
+                }
+
                 if ($studentHomework->status == 'checked') 
                 {
                     $studentHomeworkStatus = 1;
@@ -381,62 +390,60 @@ class HomeworkController extends Controller
      */
     public function destroy($id,$student_id)
     {
-        //
+        // Never trust route {student_id} — bind to the authenticated student.
+        $student_id = Auth::id();
+        $studentHomework = StudentHomework::where('id',$id)->first();
+
+        if ($studentHomework === null || Gate::denies('studentHomework', $studentHomework)) {
+            abort(403);
+        }
+
         try
         {
-            $studentHomework = StudentHomework::where('id',$id)->first();
+            $student = User::where('id',$student_id)->first();
+            $standardLink = StandardLink::where('id',$student->studentAcademicLatest->standardLink_id)->first();
+            $homework=Homework::find($studentHomework->homework_id);
+            //$teacher = User::where('id',$standardLink->class_teacher_id)->first();
+                if($homework->teacher_id==null){
+                $teacher = User::where('id',$standardLink->class_teacher_id)->first();
+                }
+                else{
+                $teacher = User::where('id',$homework->teacher_id)->first(); 
+                }   
 
-            if(Gate::allows('studentHomework',$studentHomework))
-            {
-                $student = User::where('id',$student_id)->first();
-                $standardLink = StandardLink::where('id',$student->studentAcademicLatest->standardLink_id)->first();
-                $homework=Homework::find($studentHomework->homework_id);
-                //$teacher = User::where('id',$standardLink->class_teacher_id)->first();
-                    if($homework->teacher_id==null){
-                    $teacher = User::where('id',$standardLink->class_teacher_id)->first();
-                    }
-                    else{
-                    $teacher = User::where('id',$homework->teacher_id)->first(); 
-                    }   
+            $studentHomework->delete();
 
-                $studentHomework->delete();
+            $array = [];
 
-                $array = [];
+            $array['school_id'] = $student->school_id;
+            $array['user_id']   = $teacher->id;
+            $array['message']   = $student->FullName.' Deleted Homework File';
+            $array['type']      = 'homework';
 
-                $array['school_id'] = $student->school_id;
-                $array['user_id']   = $teacher->id;
-                $array['message']   = $student->FullName.' Deleted Homework File';
-                $array['type']      = 'homework';
+            event(new SinglePushEvent($array));
 
-                event(new SinglePushEvent($array));
+            $data = [];
 
-                $data = [];
+            $data['user']       =   $teacher;
+            $data['details']    =   trans('notification.student_homework_delete_msg',['student' => $student->FullName]);
 
-                $data['user']       =   $teacher;
-                $data['details']    =   trans('notification.student_homework_delete_msg',['student' => $student->FullName]);
+            event(new SingleNotificationEvent($data));
 
-                event(new SingleNotificationEvent($data));
+            $message=trans('messages.delete_success_msg',['module' => 'Homework File']);
 
-                $message=trans('messages.delete_success_msg',['module' => 'Homework File']);
+            $ip= $this->getRequestIP();
+            $this->doActivityLog(
+                $studentHomework,
+                Auth::user(),
+                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
+                LOGNAME_DELETE_STUDENT_HOMEWORK,
+                $message
+            );
 
-                $ip= $this->getRequestIP();
-                $this->doActivityLog(
-                    $studentHomework,
-                    Auth::user(),
-                    ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                    LOGNAME_DELETE_STUDENT_HOMEWORK,
-                    $message
-                );
-
-                return response()->json([
-                    'success'   =>  true,
-                    'message'   =>  $message,
-                ],200);
-            }
-            else
-            {
-                abort(403);
-            }
+            return response()->json([
+                'success'   =>  true,
+                'message'   =>  $message,
+            ],200);
         }
         catch(Exception $e)
         {
