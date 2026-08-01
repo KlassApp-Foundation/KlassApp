@@ -14,10 +14,12 @@ use App\Models\User;
  * school-scoping. This is the only path that writes to activity_log for Toshi —
  * no stray logging in individual tools or elsewhere.
  *
- * Identity fields (platform HITL):
+ * Identity fields (platform HITL + Tier-2 ConfirmsBeforeWrite):
  * - causer_id / acting_user_id — conversation participant (forUser / continue as:)
- * - approver_id — authenticated user who resolved an approval (null when N/A)
+ * - approver_id — authenticated user who confirmed/resolved (null for read-only / cancel / pending)
  * These must stay distinguishable even under self-approve (same person, two fields).
+ * Tier-2 cards set both on confirmYes → executeConfirmedTool; native Approvable sets
+ * approver_id via LogToolApprovalResolved.
  *
  * @see \App\Livewire\AgentToshi::executeConfirmedTool()  — the single execution point
  * @see \App\Livewire\AgentToshi::confirmNo()              — the single cancel point

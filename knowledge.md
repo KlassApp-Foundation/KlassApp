@@ -661,6 +661,18 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `app/Enums/ToshiScope.php`, `app/Services/Toshi/ToshiAvailabilityGate.php`, `app/AiAgents/ToshiSdkV2Service.php`, `app/Livewire/AgentToshi.php`, `config/toshi.php`, `.env.example`, `tests/Feature/Toshi/ToshiAvailabilityGateTest.php`
 - **Branch**: folded into `feature/toshi-platform-tools` (gate commit `cc35f38`)
 - **Status**: ✅ Done — included in pushed feature branch
+### 2026-08-01: Tier-2 ConfirmsBeforeWrite — set approver_id on confirm
+- **Work done**: Investigated `AgentToshi::executeConfirmedTool` — previously passed `approver: null` even after Tier-2 `confirmYes`. Fixed to pass confirming user as `approver` (self-approve: same id as `acting_user_id`). Tests: Tier-2 confirm sets `approver_id`; unconfirmed/read-only path keeps null. Clarified `ViewTimetableTool::description()` (Teacherlink basis, not period grid). Backlog line in `docs/toshi-role-parity-audit.md` for converging ConfirmsBeforeWrite + native Approvable.
+- **Files modified**: `AgentToshi.php`, `ToshiAuditService.php`, `ViewTimetableTool.php`, `TeacherOperationsToolsTest.php`, `ToshiAuditTrailTest.php`, `docs/toshi-role-parity-audit.md`, `knowledge.md`
+- **Key decisions**: Same audit identity fields as platform HITL (`acting_user_id` + `approver_id`); different mechanism (Tier-2 card vs native Approvable). Convergence deferred.
+- **Status**: ✅ Done on `feature/toshi-teacher-role` — not pushed / not merged
+- **Edge cases flagged**: None — Accountant not started
+
+### 2026-08-01: TeacherOperationsAgent (ug5) — first non-admin Toshi role
+- **Work done**: Branch `feature/toshi-teacher-role` off `main`. `TeacherOperationsAgent` + 12 tools (`app/AiAgents/Tools/Teacher/*`) via `TeacherActionService`. Gate `toshi-teacher-action` (ug5); `toshi-school-action` unchanged (ug3-only). Scope router in `ToshiSdkV2Service` (ug5 → TeacherOperationsAgent). Ported audit identity fields (`acting_user_id` / `approver_id`) + AI event listeners from platform work. Blade allowlist `[1,3,5]`. Tests: `TeacherOperationsToolsTest` 9 passed (isolation + Gate + happy/validation + audit identity).
+- **Approvable judgment**: Writes use `ConfirmsBeforeWrite` (AgentToshi Tier-2) — attendance, marks, lesson plans, assignments, homework, leave, class wall, tasks. Views non-confirm. Native Approvable HTTP ops UI remains platform-scope only (design delta).
+- **Design deltas**: ConfirmsBeforeWrite not native HITL resume; timetable view returns Teacherlink basis (not full period grid).
+- **Status**: ✅ Done on branch — not pushed / not merged
 
 ### 2026-07-31: Merge fix/superadmin-audit-triage → main (audit CLOSED on main)
 - **Work done**: Pre-merge gate (fetch; **0 behind / 3 ahead** vs `origin/main`; PHPUnit **247 passed / 1 skipped / 1 failed** ToshiE2E; `npm run build` PASS; clean tree after discarding `public/build` junk) then no-ff merge into `main`. Post-merge PHPUnit same; build PASS. High-stakes verify as siteadmin: ChangePassword → real HTTP login with new password → restore; all 4 Filament lists HTTP **200**; country create Livewire → DB row **id=12** `TriageLand…`. Soft-deleted disposable co-admin **id=173**. Knowledge closeout + sync to KlassApp (this commit).

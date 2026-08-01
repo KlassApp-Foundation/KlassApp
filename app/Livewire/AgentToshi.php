@@ -53,6 +53,15 @@ class AgentToshi extends Component
         'toolSetCurriculum'       => \App\AiAgents\Tools\SetCurriculumTool::class,
         'toolCreateStream'        => \App\AiAgents\Tools\CreateStreamTool::class,
         'toolAssignStudentsToStream' => \App\AiAgents\Tools\AssignStudentsToStreamTool::class,
+        // TeacherOperationsAgent confirm keys (ug5)
+        'toolTeacherMarkAttendance' => \App\AiAgents\Tools\Teacher\MarkAttendanceTool::class,
+        'toolTeacherEnterMarks' => \App\AiAgents\Tools\Teacher\EnterMarksTool::class,
+        'toolTeacherCreateLessonPlan' => \App\AiAgents\Tools\Teacher\CreateLessonPlanTool::class,
+        'toolTeacherCreateAssignment' => \App\AiAgents\Tools\Teacher\CreateAssignmentTool::class,
+        'toolTeacherCreateHomework' => \App\AiAgents\Tools\Teacher\CreateHomeworkTool::class,
+        'toolTeacherApplyLeave' => \App\AiAgents\Tools\Teacher\ApplyLeaveTool::class,
+        'toolTeacherCreateClassWallPost' => \App\AiAgents\Tools\Teacher\CreateClassWallPostTool::class,
+        'toolTeacherCreateTask' => \App\AiAgents\Tools\Teacher\CreateTaskTool::class,
     ];
 
     public $step = 0;
@@ -1052,13 +1061,18 @@ class AgentToshi extends Component
 
             // Audit trail — log every write action at the single execution point.
             // School may be null during initial create-onboarding before schoolId is set.
+            // Tier-2 ConfirmsBeforeWrite: confirming user is the approver (self-approve OK —
+            // same person may fill both fields, but both must be populated on confirm).
             $school = $this->schoolId ? \App\Models\School::find($this->schoolId) : null;
+            $actor = auth()->user() ?? auth('web')->user();
             \App\Services\ToshiAuditService::logExecution(
-                user: auth()->user() ?? auth('web')->user(),
+                user: $actor,
                 school: $school,
                 toolName: $toolName,
                 arguments: $args,
                 result: $result,
+                approver: $actor,
+                actingUser: $actor,
             );
 
             return $result;

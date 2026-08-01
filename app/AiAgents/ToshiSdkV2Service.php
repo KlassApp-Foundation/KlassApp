@@ -71,15 +71,18 @@ class ToshiSdkV2Service
             // Reset the side-channel before each query
             \App\Services\ToshiActionService::$pendingConfirmPayload = null;
 
-            // Scope router: Platform → PlatformOperationsAgent (Geo/Plans/Schools).
-            // School → ToshiOrchestrator (unchanged). Not laravel/ai Sub-Agents / CanActAsTool.
+            // Scope router (deterministic PHP — not SDK Sub-Agents / CanActAsTool):
+            // Platform → PlatformOperationsAgent; ug5 → TeacherOperationsAgent; else school-admin ToshiOrchestrator.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
-                : new ToshiOrchestrator;
+                : ((int) $user->usergroup_id === 5
+                    ? new TeacherOperationsAgent
+                    : new ToshiOrchestrator);
             $response = $agent->run($query);
 
-            Log::info('SDK v2 path: orchestrator dispatched', [
+            Log::info('SDK v2 path: agent dispatched', [
                 'user_id' => $user->id,
+                'usergroup_id' => $user->usergroup_id,
                 'query' => substr($query, 0, 100),
                 'scope' => $scope->value,
                 'agent' => $agent::class,
@@ -139,7 +142,9 @@ class ToshiSdkV2Service
             // Scope router (same as ask()) — not an SDK Sub-Agent.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
-                : new ToshiOrchestrator;
+                : ((int) $user->usergroup_id === 5
+                    ? new TeacherOperationsAgent
+                    : new ToshiOrchestrator);
             $fullText = '';
 
             $agent
@@ -149,11 +154,8 @@ class ToshiSdkV2Service
                         $fullText .= $event->delta;
                         $onChunk($event->delta);
                     }
-                    // ToolCall and ToolResult events are handled internally
-                    // by the orchestrator — we only care about text deltas.
                 })
                 ->then(function ($response) use (&$fullText) {
-                    // If the streamed response has a full text, prefer it
                     if (!empty($response->text)) {
                         $fullText = $response->text;
                     }
@@ -161,6 +163,7 @@ class ToshiSdkV2Service
 
             Log::info('SDK v2 path: streamed', [
                 'user_id' => $user->id,
+                'usergroup_id' => $user->usergroup_id,
                 'query' => substr($query, 0, 100),
                 'scope' => $scope->value,
                 'agent' => $agent::class,

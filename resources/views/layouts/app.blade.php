@@ -62,7 +62,7 @@
                     @yield('base-content')
                 </div>
                 @auth
-                    @if(in_array(auth()->user()->usergroup_id, [1, 3]))
+                    @if(in_array(auth()->user()->usergroup_id, [1, 3, 5]))
                         <div v-pre>@livewire('agent-toshi')</div>
                         <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper">
                             <div id="toshi-toggle" class="toshi-toggle" title="Open Toshi" onclick="document.body.classList.toggle('toshi-collapsed');var t=document.getElementById('toshi-toggle');t.textContent=document.body.classList.contains('toshi-collapsed')?'◀':'▶'">▶</div>
@@ -74,7 +74,7 @@
         </div>
 
         @auth
-            @if(in_array(auth()->user()->usergroup_id, [1, 3]))
+            @if(in_array(auth()->user()->usergroup_id, [1, 3, 5]))
                 <script>
                 document.addEventListener('click', function(e) {
                     if (document.body.classList.contains('toshi-collapsed') && e.target.closest('.toshi-pill')) {
