@@ -75,7 +75,7 @@ class ToshiSdkV2Service
             // Platform → PlatformOperationsAgent; ug5 → TeacherOperationsAgent;
             // ug11 → AccountantOperationsAgent; ug8 → LibrarianOperationsAgent;
             // ug10 → ReceptionistOperationsAgent; ug6 → StudentOperationsAgent;
-            // else school-admin ToshiOrchestrator.
+            // ug7 → ParentOperationsAgent; else school-admin ToshiOrchestrator.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
                 : match ((int) $user->usergroup_id) {
@@ -84,9 +84,12 @@ class ToshiSdkV2Service
                     8 => new LibrarianOperationsAgent,
                     10 => new ReceptionistOperationsAgent,
                     6 => new StudentOperationsAgent,
+                    7 => new ParentOperationsAgent,
                     default => new ToshiOrchestrator,
                 };
-            $response = $agent->run($query);
+            $response = method_exists($agent, 'run')
+                ? $agent->run($query)
+                : $agent->prompt($query)->text;
 
             Log::info('SDK v2 path: agent dispatched', [
                 'user_id' => $user->id,
@@ -156,6 +159,7 @@ class ToshiSdkV2Service
                     8 => new LibrarianOperationsAgent,
                     10 => new ReceptionistOperationsAgent,
                     6 => new StudentOperationsAgent,
+                    7 => new ParentOperationsAgent,
                     default => new ToshiOrchestrator,
                 };
             $fullText = '';

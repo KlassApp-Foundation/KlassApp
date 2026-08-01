@@ -32,6 +32,17 @@ return [
     'sdk_v2_enabled' => env('TOSHI_SDK_V2_ENABLED', false),
 
     /*
+    |--------------------------------------------------------------------------
+    | WhatsApp channel (Part B / Track 1 — read-only free-form → Toshi)
+    |--------------------------------------------------------------------------
+    |
+    | When enabled (and sdk_v2_enabled is true), unmatched inbound WhatsApp text
+    | after the keyword/OTP/link pipeline is routed to the role OperationsAgent
+    | with structural write-tool exclusion. Confirmation bridge is Track 2.
+    */
+    'whatsapp_channel_enabled' => env('TOSHI_WHATSAPP_CHANNEL_ENABLED', false),
+
+    /*
     | Per-school Toshi enablement flag (School scope only).
     | When toshi_enabled is true on the schools table AND sdk_v2_enabled is true
     | in the environment, Toshi SDK v2 features are active for that school.
