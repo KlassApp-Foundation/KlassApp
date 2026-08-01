@@ -17,6 +17,14 @@ class EventServiceProvider extends ServiceProvider
             'App\Listeners\EventListener',
         ],
 
+        \Laravel\Ai\Events\ToolInvoked::class => [
+            \App\Listeners\Toshi\LogToolInvoked::class,
+        ],
+
+        \App\Ai\Events\ToolApprovalRequested::class => [
+            \App\Listeners\Toshi\LogToolApprovalRequested::class,
+        ],
+
         'Illuminate\Auth\Events\Login' => [
             'App\Listeners\LogSuccessfulLogin',
         ],

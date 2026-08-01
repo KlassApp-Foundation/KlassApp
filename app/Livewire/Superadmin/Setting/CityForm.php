@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Country;
 use Livewire\Attributes\Rule;
 use App\Models\City;
+use App\Services\Superadmin\CityService;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 class CityForm extends Component
@@ -46,9 +47,11 @@ class CityForm extends Component
 			'status' => $this->status,
 		];
 
+		$service = app(CityService::class);
+
 		if($this->cityEditId == '')
 		{
-			City::create($data);
+			$service->create($data);
 
 			//session()->flash('message', 'City added successfully');
 
@@ -56,7 +59,7 @@ class CityForm extends Component
 		}
 		else
 		{
-			City::where('id', $this->cityEditId)->update($data);
+			$service->update((int) $this->cityEditId, $data);
 
 			//session()->flash('message', 'City updated successfully');
 

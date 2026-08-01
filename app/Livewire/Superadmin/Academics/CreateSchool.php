@@ -7,6 +7,7 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\EmisSchool;
 use App\Models\School;
+use App\Services\Superadmin\SchoolService;
 use Livewire\Attributes\Rule;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 
@@ -120,16 +121,18 @@ class CreateSchool extends Component
             'status' => $this->status,
         ];
 
+        $service = app(SchoolService::class);
+
         if ($this->schoolId == '') {
-            $validatedData = $this->validate([
+            $this->validate([
                 'email' => 'required|unique:' . School::class,
             ]);
 
-            School::create($data);
+            $service->create($data);
 
             $this->alert('success', 'School created successfully');
         } else {
-            School::where('id', $this->schoolId)->update($data);
+            $service->update((int) $this->schoolId, $data);
 
             $this->alert('success', 'School updated successfully');
         }

@@ -2,6 +2,7 @@
 
 namespace App\AiAgents;
 
+use App\Ai\Agents\PlatformOperationsAgent;
 use App\Enums\ToshiScope;
 use App\Models\User;
 use App\Services\Toshi\ToshiAvailabilityGate;
@@ -70,13 +71,18 @@ class ToshiSdkV2Service
             // Reset the side-channel before each query
             \App\Services\ToshiActionService::$pendingConfirmPayload = null;
 
-            $orchestrator = new ToshiOrchestrator;
-            $response = $orchestrator->run($query);
+            // Platform scope → PlatformOperationsAgent (Geo/Plans/Schools).
+            // School scope → ToshiOrchestrator (unchanged).
+            $agent = $scope === ToshiScope::Platform
+                ? new PlatformOperationsAgent
+                : new ToshiOrchestrator;
+            $response = $agent->run($query);
 
             Log::info('SDK v2 path: orchestrator dispatched', [
                 'user_id' => $user->id,
                 'query' => substr($query, 0, 100),
                 'scope' => $scope->value,
+                'agent' => $agent::class,
             ]);
 
             // Check if a write tool stored a confirmation payload
@@ -130,10 +136,12 @@ class ToshiSdkV2Service
         try {
             \App\Services\ToshiActionService::$pendingConfirmPayload = null;
 
-            $orchestrator = new ToshiOrchestrator;
+            $agent = $scope === ToshiScope::Platform
+                ? new PlatformOperationsAgent
+                : new ToshiOrchestrator;
             $fullText = '';
 
-            $orchestrator
+            $agent
                 ->stream($query)
                 ->each(function ($event) use ($onChunk, &$fullText) {
                     if ($event instanceof TextDelta) {
@@ -154,6 +162,7 @@ class ToshiSdkV2Service
                 'user_id' => $user->id,
                 'query' => substr($query, 0, 100),
                 'scope' => $scope->value,
+                'agent' => $agent::class,
             ]);
 
             // Check for pending tool confirmation

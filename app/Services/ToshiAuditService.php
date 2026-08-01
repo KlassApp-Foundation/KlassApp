@@ -71,6 +71,30 @@ class ToshiAuditService
     }
 
     /**
+     * Log an Approvable tool pausing for human approval (platform Plan tools).
+     *
+     * School executeConfirmedTool() call sites are unchanged — this is additive
+     * for PlatformToolInvoker / ToolApprovalRequested listeners.
+     */
+    public static function logApprovalRequested(
+        User $user,
+        ?School $school,
+        string $toolName,
+        array $arguments,
+        ?string $reason = null,
+    ): ActivityLog {
+        return self::write(
+            user: $user,
+            school: $school,
+            toolName: $toolName,
+            description: "Approval requested for {$toolName}",
+            arguments: $arguments,
+            status: 'pending_approval',
+            result: $reason ?? 'Approval required before mutation.',
+        );
+    }
+
+    /**
      * Core write — single place that inserts into activity_log.
      */
     private static function write(
