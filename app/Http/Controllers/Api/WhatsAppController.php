@@ -19,6 +19,7 @@ use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
 use App\Services\OutboundWhatsAppService;
+use App\Services\WhatsApp\WhatsAppConfirmationBridge;
 use App\Services\WhatsAppBusinessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -1604,7 +1605,15 @@ class WhatsAppController extends Controller
             }
         }
 
+        // Pending WhatsApp confirmation (buttons ty_/tn_ or coded YES|NO {token}).
+        // After keywords so menu/FEES/opt-out stay reachable; before free-form Toshi / fallthrough.
+        if (app(WhatsAppConfirmationBridge::class)
+            ->handleInbound($user, $phone, $trimmed)) {
+            return;
+        }
+
         // Unknown keyword — send the actual menu with buttons
+        // (Track 1 free-form Toshi would slot in above this fallthrough when merged.)
         $whatsAppService->sendText(
             $phone,
             "🤔 Sorry, I didn't understand \"{$body}\".",
