@@ -347,7 +347,7 @@ Controllers: `BookController`, `BookCategoryController`, `BookLendingController`
 
 ### Backlog (advisory/panel mismatches — do not fix on teacher branch)
 
-- **Librarian `manage_library_cards`**: advisory overclaim — library cards live under `/admin/library/cards` only; no `/library/*` card CRUD for ug8.
+- **Librarian `manage_library_cards`**: advisory overclaim — library cards live under `/admin/library/cards` only; no `/library/*` card CRUD for ug8. **Part A investigation complete** (see section below) — recommend Option A `/library/cards` + MustBeLibrarian; awaiting approval before Part B.
 - **Receptionist `manage_email_record`**: dead/orphan — `EmailRecordController` exists but no `/receptionist/*email*` routes registered.
 - **Converge ConfirmsBeforeWrite (Tier-2) + native Approvable into one confirmation mechanism** — deferred/tracked; both currently populate the same audit identity fields (`acting_user_id` + `approver_id`) via different paths.
 
