@@ -228,5 +228,21 @@ class AuthServiceProvider extends ServiceProvider
 
             return \Illuminate\Auth\Access\Response::deny('You are not authorized for this accountant action.');
         });
+
+        // Librarian-scoped Toshi tools only (ug8). Do not widen school/teacher/accountant Gates.
+        Gate::define('toshi-librarian-action', function (User $user): \Illuminate\Auth\Access\Response {
+            if ($user->usergroup_id === 8 && $user->school_id) {
+                return \Illuminate\Auth\Access\Response::allow();
+            }
+
+            if ($user->usergroup_id === 1 && $user->isImpersonating()) {
+                $impersonated = User::find(\Session::get('impersonate'));
+                if ($impersonated && $impersonated->usergroup_id === 8 && $impersonated->school_id) {
+                    return \Illuminate\Auth\Access\Response::allow();
+                }
+            }
+
+            return \Illuminate\Auth\Access\Response::deny('You are not authorized for this librarian action.');
+        });
     }
 }

@@ -21,6 +21,9 @@ Route::get( '/books/edit/{id}', 'BookController@edit' );
 Route::post( '/books/update/{id}', 'BookController@update' );
 //delete
 Route::get( '/books/delete/{id}', 'BookController@destroy' );
+// library cards (view-only lookup — no issue/return/create/update)
+Route::get('/cards', 'LibraryCardController@index')->name('library.cards');
+
 //books lending
 Route::get( '/booklending/index', 'BookLendingController@index' );
 Route::get( '/booklending/add', 'BookLendingController@create' );

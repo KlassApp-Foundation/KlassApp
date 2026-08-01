@@ -247,7 +247,8 @@ class ToshiActionService
                 'label'   => 'librarian',
                 'actions' => [
                     'manage_books', 'manage_book_categories', 'manage_lending',
-                    'manage_library_cards', 'view_dashboard', 'manage_tasks',
+                    // Renamed from manage_library_cards (view-only lookup; issue CRUD is follow-up)
+                    'view_library_cards', 'view_dashboard', 'manage_tasks',
                 ],
             ],
             9 => [ // OldStudent

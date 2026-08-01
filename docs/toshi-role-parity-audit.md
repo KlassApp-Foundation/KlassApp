@@ -209,38 +209,38 @@ Caps claim: `record_payment`, `manage_payroll`, `view_unpaid_reports`, `view_fee
 
 ### (a) Does the pill/panel render?
 
-**No.** `layouts.library.layout` → `layouts.app`; Blade `@if(usergroup_id ∈ [1, 3])` excludes ug=8. Only mounts found under `layouts/app.blade.php` and `layouts/superadmin-app.blade.php`.
+**Yes (on `feature/toshi-librarian-role`).** Blade allowlist is `[1, 3, 5, 8, 11]` in `layouts.app`. Librarian layout extends `layouts.app`, so ug8 mounts `@livewire('agent-toshi')`.
 
 ### (b) `isAvailable()`?
 
-**UI N/A.** Hypothetical: same `toshi_enabled` school gate. Local librarian id=6 on school 1 → `toshi_enabled=0` → false. No librarian found on a `toshi_enabled=1` school in local DB. Even if available, Gate `toshi-school-action` **denies ug8**.
+Same school-flag rules as other roles. Gate `toshi-librarian-action` allows ug8 with `school_id` (and ug1→ug8 impersonation). `toshi-school-action`, `toshi-teacher-action`, and `toshi-accountant-action` still deny ug8.
 
 ### (c) NL / tool reachability
 
-**Cannot run via UI.** Zero library/book tools under `app/AiAgents/Tools/`. Advisory caps are aspirational.
+Caps claim (after rename): `manage_books`, `manage_book_categories`, `manage_lending`, `view_library_cards`, `view_dashboard`, `manage_tasks`. Implemented via `LibrarianOperationsAgent` + `LibrarianActionService`.
+
+**Write vs read (flagged):** books / categories / lending / tasks are **panel writes** → Tier-2 ConfirmsBeforeWrite. Dashboard + library cards are **read-only**.
 
 ### Route inventory (prefix `library/`)
 
-~**40** routes, ~**10** mutators, **9** domains. Top: task(11), bookscategory(9), booklending(7), books(7), holidays(2), dashboard/activity.
-
-Controllers: `BookController`, `BookCategoryController`, `BookLendingController`, `TaskController`, dashboard/holidays/activity. **No** librarian-scoped library-card CRUD under `/library/*` (cards exist only under **admin** `/admin/library/cards`).
+~**41** routes including view-only `GET /library/cards` (`library.cards`, `MustBeLibrarian`). Shared lookup: `LibraryCardLookupService` (also used by admin `cardIndex`). Admin `/admin/library/cards` retained.
 
 ### Capability map vs gap list
 
 | Capability claim | Toshi? | Panel (`/library/*`)? |
 |---|---|---|
-| `manage_books` | ❌ | ✅ books CRUD |
-| `manage_book_categories` | ❌ | ✅ bookscategory CRUD |
-| `manage_lending` | ❌ | ✅ booklending CRUD |
-| `manage_library_cards` | ❌ | ⚠️ **advisory overclaim** — cards are admin-only route today |
-| `view_dashboard` | ❌ | ✅ |
-| `manage_tasks` | ❌ | ✅ task CRUD |
+| `manage_books` | ✅ `ManageBooksTool` (Tier-2 write) | ✅ books CRUD |
+| `manage_book_categories` | ✅ `ManageBookCategoriesTool` (Tier-2 write) | ✅ bookscategory CRUD |
+| `manage_lending` | ✅ `ManageLendingTool` (Tier-2 write) | ✅ booklending CRUD |
+| `view_library_cards` | ✅ `ViewLibraryCardsTool` (read-only) | ✅ `/library/cards` view-only |
+| `view_dashboard` | ✅ `ViewDashboardTool` (read-only) | ✅ |
+| `manage_tasks` | ✅ `CreateTaskTool` (Tier-2 write) | ✅ task CRUD |
 
-**Gap:** 100% of Toshi advisory set; plus advisory/`panel` mismatch on `manage_library_cards`.
+**Gap:** closed for advisory set on librarian branch (view-only cards). Issue/return/create/update card CRUD is **follow-up**.
 
 ### UI-absence flag
 
-**Intentional** — same `7c4b314` / Blade `[1, 3]` allowlist.
+**Resolved on librarian branch** — Blade `[1, 3, 5, 8, 11]`.
 
 ---
 
@@ -333,9 +333,9 @@ Controllers: `BookController`, `BookCategoryController`, `BookLendingController`
 |---|---|---|---|---|---|---|
 | Siteadmin | 1 | yes | platform path (separate branch) | 3 | platform tools on feature branch | n/a |
 | School Admin | 3 | yes | school `toshi_enabled` | 16 | ~26 tools cover 16 | mounts |
-| Teacher | 5 | **yes** (teacher/accountant branches) | school flag; `toshi-teacher-action` | 12 | 12 | resolved on teacher branch |
+| Teacher | 5 | **yes** (teacher/accountant/librarian branches) | school flag; `toshi-teacher-action` | 12 | 12 | resolved on teacher branch |
 | Student | 6 | **no** | school flag; Gate denies; scope=`self` | 11 | 0 (admin tools ≠ self) | **intentional** |
-| Librarian | **8** | **no** | school flag; Gate denies | 6 | 0 | **intentional** |
+| Librarian | **8** | **yes** (`feature/toshi-librarian-role`) | school flag; `toshi-librarian-action` | 6 | 6 | resolved on librarian branch |
 | Receptionist | 10 | **no** | school flag; Gate denies | 8 | 0 | **intentional** |
 | Accountant | 11 | **yes** (`feature/toshi-accountant-role`) | school flag; `toshi-accountant-action` | 6 | 6 | resolved on accountant branch |
 
@@ -345,9 +345,10 @@ Controllers: `BookController`, `BookCategoryController`, `BookLendingController`
 
 **Confirmed:** Toshi extends to **all users**, not admin-only. Reverse `[1, 3]` in a **graduated** sequence (Teacher first), not a blanket Blade flip.
 
-### Backlog (advisory/panel mismatches — do not fix on teacher branch)
+### Backlog (advisory/panel mismatches)
 
-- **Librarian `manage_library_cards`**: advisory overclaim — library cards live under `/admin/library/cards` only; no `/library/*` card CRUD for ug8.
+- **Shipped (librarian Part B):** view-only `/library/cards` + ug8 `LibrarianOperationsAgent` route; advisory key renamed `manage_library_cards` → `view_library_cards`.
+- **Follow-up — library card issue/return CRUD:** create/renew/deactivate/edit card fields as a scoped build (Approvable / Tier-2 confirm judgment later). Keep admin URL.
 - **Receptionist `manage_email_record`**: dead/orphan — `EmailRecordController` exists but no `/receptionist/*email*` routes registered.
 - **Converge ConfirmsBeforeWrite (Tier-2) + native Approvable into one confirmation mechanism** — deferred/tracked; both currently populate the same audit identity fields (`acting_user_id` + `approver_id`) via different paths.
 
@@ -358,8 +359,6 @@ Controllers: `BookController`, `BookCategoryController`, `BookLendingController`
 3. Blade allowlist widened to `[1, 3, 5]` after tools+tests green.
 4. Isolation: `AddCoAdminTool` absent from `tools()`; `toshi-school-action` still denies ug5.
 
-Accountant / Librarian / Receptionist / Student builds wait until Teacher boundary holds.
-
 ### Accountant Part B (implemented on `feature/toshi-accountant-role`)
 
 1. `AccountantOperationsAgent` — 6 tools matching advisory actions; `toshi-accountant-action` Gate; scope router ug11 → accountant agent (ug5 → teacher retained).
@@ -369,4 +368,109 @@ Accountant / Librarian / Receptionist / Student builds wait until Teacher bounda
 5. Money tools (`record_payment`, `manage_payroll`) use Tier-2 ConfirmsBeforeWrite — **stricter bar than Teacher** (payroll/money blast radius).
 6. Tier-2 confirm sets `acting_user_id` + `approver_id` (AgentToshi fix verified in accountant tests).
 
-Librarian / Receptionist / Student builds wait until Accountant boundary holds.
+### Librarian Part B (implemented on `feature/toshi-librarian-role`)
+
+1. View-only `GET /library/cards` (`library.cards`, MustBeLibrarian) via `LibraryCardLookupService` shared with admin `cardIndex`.
+2. `LibrarianOperationsAgent` — 6 tools; Gate `toshi-librarian-action`; scope router ug8 → librarian (ug11/ug5 retained).
+3. Capability rename: `manage_library_cards` → `view_library_cards`.
+4. Writes (books, categories, lending, tasks) use Tier-2 ConfirmsBeforeWrite — **flagged** (panel mutators, not pure reads).
+5. Blade allowlist widened to `[1, 3, 5, 8, 11]` after tools+tests green.
+6. Isolation: `AddCoAdminTool` absent; school+teacher+accountant Gates deny ug8; librarian Gate allows; read-only audit asserts `approver_id` explicitly null.
+
+Receptionist / Student builds wait until Librarian boundary holds.
+
+---
+
+## Part A — Library cards access investigation (2026-08-01) — superseded by Part B above
+
+> Branch: `feature/toshi-librarian-role` off `origin/main`  
+> Scope: **docs / findings only** — no LibrarianOperationsAgent, Gates, tools, or Blade mounts.  
+> Product decision (this session): extend **real** librarian-scoped HTTP access to card management (not a Toshi tool bypassing the HTTP boundary).
+
+### What is a library card (schema)
+
+Table `library_card` (migration `2020_04_10_105100_create_library_card_table.php`; live DB matches):
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | int unsigned PK | |
+| `school_id` | bigint unsigned FK → schools | tenant scope |
+| `user_id` | int unsigned FK → users, nullable | borrower (student) |
+| `library_card_no` | int, **unique** | physical/logical card number used at checkout |
+| `book_limit` | int | concurrent borrow cap (factory default `5`) |
+| `status` | boolean / tinyint(1), default `0` | active flag (Blade sometimes compares to string `'active'` — schema is boolean) |
+| `expiry_date` | date | required in schema |
+| timestamps | | |
+
+**Not in schema:** fees, deposits, RFID, barcode, digital-vs-physical flag, fine balance.
+
+Model `App\Models\LibraryCard` — fillable mirrors columns; `User::librarycard()` hasOne. Used as borrower identity on `books_lending.library_card_no`. Production create path found only in seeders (`UsersStudentTableSeeder` `firstOrCreate`); **no HTTP issue/revoke/edit UI** anywhere today.
+
+### Current code map (routes, controller methods, model)
+
+**Admin (ug3 `schooladmin` + `privilegeconditions`)** — `RouteServiceProvider::mapAdminRoutes()` → prefix `admin`, `routes/admin.php`:
+
+```
+// Library module — school admin book management   (comment @ routes/admin.php:903)
+Route::prefix('library')->name('admin.library.')->group(...)
+  GET  /admin/library/cards  → LibraryController@cardIndex  name: admin.library.cards
+```
+
+- Controller: `App\Http\Controllers\Admin\LibraryController` (commit `b4807e0`)
+  - `cardIndex` — **read-only**: pick student (`usergroup_id=6`), show card + lending history
+  - Also owns books CRUD + lend check-out/return (separate from librarian module)
+- View: `resources/views/admin/library/cards/index.blade.php` (“View library cards and lending history per student”)
+- Sidebar: admin menu links to `admin.library.books` only (cards reachable by URL / in-module nav if added later)
+
+**Librarian (ug8 `MustBeLibrarian`)** — `mapLibrarianRoutes()` → prefix `library`, `routes/librarian.php`:
+
+- Books, book categories, book lending, holidays, activity, tasks, dashboard
+- Lending **looks up** `LibraryCard` by `library_card_no` + `school_id` in `Librarian\BookLendingController` — no card CRUD routes
+- **No** `/library/cards` (or members/issue) registered
+- Sidebar (`layouts/library/menu.blade.php`) links `/library/members` etc. — **dead URLs** vs `librarian.php` (separate UX debt)
+
+**Capability claim:** `ToshiActionService::getRoleCapabilities(8)` includes `manage_library_cards` since `a98590f` (2026-07-12) — advisory overclaim vs panel.
+
+### Why admin-only (deliberate / oversight + evidence)
+
+| Claim | Verdict | Evidence |
+|---|---|---|
+| Admin library module (incl. cards **view**) under `/admin/library/*` | **Deliberate** | Commit `b4807e0` (2026-07-11): *“feat: admin library module…”* — “Add Admin LibraryController with book CRUD, check-out/check-in, and **card history views**”; route comment *“Library module — school admin book management”*; `knowledge.md` session: dead `/admin/library` sidebar → **Decision: BUILD** thin admin layer because school admins hit librarian middleware redirect. |
+| Cards living **only** under admin, not `/library/*` | **Oversight** (vs librarian role + advisory) | `routes/librarian.php` never gained card routes (`git log -S library_card -- routes/librarian.php` empty). Librarian module always treated cards as lending lookup key only. |
+| `manage_library_cards` in ug8 capabilities | **Aspirational overclaim** | Commit `a98590f` (2026-07-12, day after admin module): populated Librarian actions including `manage_library_cards` “despite having real routes” for other domains — cards had admin view only, no ug8 HTTP. No commit/comment saying “cards must stay ug3-only.” |
+
+**Summary:** Putting a school-admin card **viewer** on admin routes was intentional. Keeping librarians **out** of card management was not a documented product lock — it is gap vs capability list + day-to-day library work.
+
+### Recommended auth shape + tradeoffs
+
+**Recommend Option A:** librarian-scoped `/library/cards*` under `routes/librarian.php` + `MustBeLibrarian`, reusing shared query/service (extract from `Admin\LibraryController@cardIndex` / future issue logic). Librarian Blade layout + menu link. Keep `/admin/library/cards` for ug3.
+
+| Option | Pros | Cons |
+|---|---|---|
+| **A — `/library/cards` + MustBeLibrarian (recommended)** | Matches role prefix pattern (`mapLibrarianRoutes`); keeps HTTP boundary role-clean; Toshi later mirrors panel; Laravel route-group middleware stays single-role ([docs](https://laravel.com/docs/12.x/routing#route-group-middleware)) | Small duplication of view/controller method unless extracted to service |
+| **B — duplicate librarian-specific controller** | Clear ug8 namespace (`Librarian\LibraryCardController`) | More code for currently thin read (+ later issue); drifts from admin view |
+| **C — widen admin middleware to include MustBeLibrarian** | One URL | Mixes `schooladmin`+`privilegeconditions` with ug8; breaks impersonation/redirect mental model; librarians on `/admin/*` UI |
+
+**Do not** implement card management as a Toshi-only path.
+
+### Scope split: day-to-day vs admin-only config?
+
+Current admin cards page is **100% day-to-day lookup** (student → card no / limit / expiry / lending history). There is **no** admin-only fee/deposit/RFID config surface — those fields do not exist.
+
+| Day-to-day (ug8 should get) | Config / policy (ug3-only if ever built) |
+|---|---|
+| View card by student / card no | School-wide default `book_limit` / default loan days (not in schema today) |
+| Issue / renew / deactivate card (when UI exists) | Fee/deposit rules (not in schema) |
+| Adjust per-card `book_limit` / `expiry_date` / `status` | Cross-school card number policy |
+
+No need to split the existing `cardIndex` surface — give librarians the same read (and later issue) under `/library/cards`.
+
+### Size: fold into librarian branch vs defer cards?
+
+- **View-only `/library/cards`** mirroring `cardIndex`: **small** (~1 route, thin controller method, 1 Blade under `library/`, menu link). Safe to fold into the librarian HTTP/Toshi branch as panel parity for `manage_library_cards` (read).
+- **Issue / revoke / edit** card fields: **medium** — no production create UI today (seeder-only); needs validation (unique `library_card_no`, school scope), forms, tests. Prefer **follow-up**.
+- **Toshi:** ship **5 confirmed panel-backed tools first** (`manage_books`, `manage_book_categories`, `manage_lending`, `view_dashboard`, `manage_tasks`). Add `manage_library_cards` tool only **after** ug8 HTTP exists (view minimum; issue when built). Do not claim the 6th tool against admin-only routes.
+
+**Recommendation:** same librarian branch may include thin `/library/cards` view for advisory/panel honesty; defer issue CRUD + Toshi card tool to a cards follow-up PR if schedule is tight.
+
+Historical findings: cards were admin-only view under `/admin/library/cards`; ug8 had no `/library/cards`; capability `manage_library_cards` was aspirational. **Approved Option A shipped in Part B** as view-only librarian cards + shared lookup service. Issue/return/create/update remains follow-up.

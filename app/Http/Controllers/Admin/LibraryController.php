@@ -235,33 +235,16 @@ class LibraryController extends Controller
     }
 
     /**
-     * Library card view — search by student name.
+     * Library card view — search by student or card number.
      */
     public function cardIndex(Request $request)
     {
-        $schoolId = Auth::user()->school_id;
-        $card = null;
-        $lends = collect();
-        $student = null;
+        $schoolId = (int) Auth::user()->school_id;
+        $userId = $request->filled('user_id') ? (int) $request->get('user_id') : null;
+        $cardNo = $request->filled('library_card_no') ? (string) $request->get('library_card_no') : null;
 
-        if ($userId = $request->get('user_id')) {
-            $student = User::where('school_id', $schoolId)->find($userId);
-            if ($student) {
-                $card = LibraryCard::where('school_id', $schoolId)
-                    ->where('user_id', $userId)
-                    ->first();
-                $lends = BookLending::where('user_id', $userId)
-                    ->with('book')
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-            }
-        }
+        $data = \App\Services\Library\LibraryCardLookupService::lookup($schoolId, $userId, $cardNo);
 
-        $students = User::where('school_id', $schoolId)
-            ->where('usergroup_id', 6) // Student role
-            ->orderBy('name')
-            ->get(['id', 'name', 'registration_number']);
-
-        return view('admin.library.cards.index', compact('card', 'lends', 'student', 'students'));
+        return view('admin.library.cards.index', $data);
     }
 }
