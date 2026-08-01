@@ -334,8 +334,22 @@ class EventsController extends Controller
     {
       $event=Events::where('id',$id)->first();
 
-      if(Gate::allows('event',$event))
+      if($event === null || !Gate::allows('event',$event))
       {
+        abort(403);
+      }
+
+      // Class-scoped events: student must be enrolled in that StandardLink.
+      // School-wide / alumni remain school_id-only via the event Gate above.
+      if($event->select_type === 'class')
+      {
+        $studentStandardLinkId = Auth::user()->studentAcademicLatest()->value('standardLink_id');
+        if((int) $studentStandardLinkId !== (int) $event->standard_id)
+        {
+          abort(403);
+        }
+      }
+
         $array=[];
         if($event->category == 'holidays')
         {
@@ -367,10 +381,5 @@ class EventsController extends Controller
         }
 
         return $array;
-      }
-      else
-      {
-        abort(403);
-      }
     }
 }
