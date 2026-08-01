@@ -614,6 +614,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-01: PlatformOperationsAgent human approval UI (Complete Approval Flow)
+- **Work done**: Added GET/POST `/superadmin/toshi/ops/{conversation}` matching laravel/ai Complete Approval Flow; `PlatformOpsConversationController` + `PlatformOpsConversationService`; Livewire `PlatformApprovalGate` review-gate UI (approve / reject / edit-and-approve); `EnsurePlatformToshiAccess` middleware + `ConversationPolicy` (`view` = participant + `ToshiAvailabilityGate` Platform); `User` uses `HasConversations`. Feature test `PlatformOpsApprovalUiTest` (7 passed: GET pending visible, POST approve mutates, POST reject no mutation, edit, auth denials). CoAdmins / Impersonation **still not started**.
+- **Doc vs package mismatches**: (1) Docs `prohibited_with` — **not in Laravel 12**; used `prohibits` for XOR. (2) Doc `$validated->collect(...)` — `validate()` returns array; used `collect($validated['decisions'])`. (3) Doc validation approve/reject only; package has `Decision::edit()` — extended with `edit` + `arguments`. (4) Docs under 13.x path; app Laravel 12 + `laravel/ai` 0.10.2.
+- **Files**: controller, middleware, policy, service, Livewire + views, routes, AuthServiceProvider, Kernel, User trait, settings index note, test.
+- **Branch**: `feature/toshi-platform-tools` — not pushed
+- **Status**: ✅ Done for approval UI slice
+
 ### 2026-08-01: Toshi Phase 1 continued — Subscriptions + FeatureToggles/SystemSettings tools
 - **Work done**: Added `SubscriptionService` + `SystemSettingsService`; tools `CreateSubscriptionTool` (N), `ApproveSubscriptionTool` (Y), `CancelSubscriptionTool` (Y), `ToggleSchoolFeatureTool` (Y — toshi/whatsapp/schoolpay), `UpdateSystemSettingsTool` (conditional: access keys Y, display keys N). Registered on `PlatformOperationsAgent`. Livewire SubscriptionForm / Subscriptions approve / SystemSettings wired through services. Tests: `PlatformSubscriptionToolsTest` + `PlatformSettingsToolsTest` (18 passed). CoAdmins / Impersonation **not** built.
 - **Approvable judgment**: create sub = not destructive; approve/cancel = billing access; all feature toggles = access/integrations; system settings access trio (`maintenance`/`login_status`/`register_status`) = HITL, cosmetic display keys skip.

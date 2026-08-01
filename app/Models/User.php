@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Laracasts\Presenter\PresentableTrait;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Ai\Concerns\HasConversations;
 
 use Spatie\MediaLibrary\Models\Media;
 use Laravel\Sanctum\HasApiTokens;
@@ -33,6 +34,7 @@ class User extends Authenticatable implements HasMedia
     use SoftDeletes;
     use Notifiable;
     use HasFactory;
+    use HasConversations;
     protected $presenter = "App\Presenters\UserprofilePresenter";
 
     /**

@@ -69,5 +69,10 @@
             <div><p class="font-semibold text-sm">EMIS</p><p class="text-xs text-gray-500">Education data integration</p></div>
         </a>
     </div>
+    <p class="mt-6 text-xs text-gray-500">
+        Platform tool approvals open at
+        <code class="rounded bg-gray-100 px-1">/superadmin/toshi/ops/{conversation}</code>
+        when Toshi pauses an Approvable tool (Plans, subscription approve/cancel, feature toggles, access settings).
+    </p>
 </div>
 @endsection

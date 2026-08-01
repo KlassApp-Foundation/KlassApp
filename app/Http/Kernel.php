@@ -67,6 +67,7 @@ class Kernel extends HttpKernel
         'throttle'              =>  \Illuminate\Routing\Middleware\ThrottleRequests::class,
          'superadmin'            =>  \App\Http\Middleware\MustBeSuperadmin::class,
         'siteadmin'             =>  \App\Http\Middleware\MustBeSiteAdmin::class,
+        'platform.toshi'        =>  \App\Http\Middleware\EnsurePlatformToshiAccess::class,
         'designation'           =>  \App\Http\Middleware\MustHaveDesignation::class,
 
         'schooladmin'           =>  \App\Http\Middleware\MustBeSchoolAdmin::class,

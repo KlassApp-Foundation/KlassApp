@@ -341,6 +341,15 @@ Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'nam
     Route::get('/settings/emis', function () {
         return view('superadmin.settings.emis-schools');
     })->name('superadmin.settings.emis');
+
+    // PlatformOperationsAgent human approval review gate (Complete Approval Flow)
+    Route::get('toshi/ops/{conversation}', [\App\Http\Controllers\Superadmin\PlatformOpsConversationController::class, 'show'])
+        ->middleware('platform.toshi')
+        ->name('superadmin.toshi.ops.show');
+
+    Route::post('toshi/ops/{conversation}', [\App\Http\Controllers\Superadmin\PlatformOpsConversationController::class, 'store'])
+        ->middleware('platform.toshi')
+        ->name('superadmin.toshi.ops.store');
 });
 
 
