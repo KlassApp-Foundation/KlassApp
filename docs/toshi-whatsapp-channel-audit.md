@@ -11,7 +11,7 @@
 
 **Extend, do not replace.** Keep the existing keyword / interactive-list / OTP / name-link pipeline as the deterministic first pass. Route only unmatched free-form text to Toshi (role-scoped OperationsAgent via phone→`WhatsAppUser`→usergroup).
 
-**WhatsApp v1 should be read-only for Toshi tool writes.** Native Approvable HITL and Livewire Tier-2 `ConfirmsBeforeWrite` have no WhatsApp resume path today. Until a `sendButtons` confirmation bridge maps inbound taps to `Decision::approve()`/`reject()` (platform) or Tier-2 `bypassConfirm` resume (school roles) with the same audit identity (`acting_user_id`, `approver_id`), do not expose write tools over WhatsApp. See **§ WhatsApp button→Approvable confirmation (Part A)** below for the full design.
+**WhatsApp v1 should be read-only for Toshi tool writes.** Native Approvable HITL and Livewire Tier-2 `ConfirmsBeforeWrite` have no WhatsApp resume path today. Until a confirmation bridge maps **button taps or typed replies** to `Decision::approve()`/`reject()` (platform) or Tier-2 `bypassConfirm` resume (school roles) with the same audit identity (`acting_user_id`, `approver_id`), do not expose write tools over WhatsApp. See **§ WhatsApp confirmation bridge (Part A)** below for the full design (buttons + text as first-class paths).
 
 **Ship Part B read-only in parallel** with the confirmation bridge design/build — do **not** hold NL reads waiting for writes. Writes stay gated until the bridge is proven.
 
@@ -127,14 +127,17 @@ Inbound `sendFees` / `sendAttendance` / `sendGrades` currently build messages **
 3. The unknown-keyword path (`:1607–1614`) is exactly the gap Toshi fills: natural language without throwing away working infra.
 4. Staff/student OperationsAgents already exist; WhatsApp becomes a transport, not a second product.
 
-**Interaction sketch (Part B):**
+**Interaction sketch (Part B + confirmation bridge):**
 
 ```
 processMetaMessage / routeInbound
-  → (existing) optin, codes, keywords, lists, greetings
+  → (existing) optin, codes, role keywords, lists, greetings
+  → else if pending-approval match for this phone
+       (button ty_*/tn_*  OR  typed YES|NO <token>)
+       → resolve / reject / expired UX  (does not reach Toshi)
   → else if toshi_whatsapp_enabled && identified
        → resolve OperationsAgent by usergroup
-       → ask(free-form) → sendText / sendButtons
+       → ask(free-form) → sendText / sendButtons(+text fallback copy)
   → else
        → current “didn’t understand” + menu
 ```
@@ -145,7 +148,7 @@ Optional later: promote high-confidence NL (“how much do I owe?”) while keep
 
 ## 4. Approval-over-WhatsApp proposal
 
-> **Superseded in detail by § WhatsApp button→Approvable confirmation (Part A)** above. Short summary retained for continuity.
+> **Superseded in detail by § WhatsApp confirmation bridge (Part A)** above. Short summary retained for continuity.
 
 ### Gap (confirmed)
 
@@ -154,7 +157,7 @@ Optional later: promote high-confidence NL (“how much do I owe?”) while keep
 | Native `Laravel\Ai\Contracts\Approvable` + HITL resume | Platform ops web (`PlatformApprovalGate`, `continue` as Decisions) | **No** |
 | Tier-2 `ConfirmsBeforeWrite` → `__tier2_confirm` JSON → Livewire card → `confirmYes()` / `executeConfirmedTool()` | `AgentToshi` only | **No** |
 
-**Design choice (Part A):** opaque token in `sendButtons` id (`ty_*` / `tn_*`) + pending confirmation row; resume via `Decision::approve()`/`reject()` (Approvable) or Tier-2 `bypassConfirm` (school). Self-approve on same WhatsApp phone. See full section for payload evidence, Meta id limits (256), write candidates, and sequencing.
+**Design choice (Part A):** opaque token + pending confirmation row; resume via **button** (`ty_*` / `tn_*`) **or typed** (`YES|NO <token>`) → `Decision::approve()`/`reject()` (Approvable) or Tier-2 `bypassConfirm` (school). Self-approve on same WhatsApp phone. Same token/TTL for both paths. See full section.
 
 ### Conclusion: writes on WhatsApp v1?
 
@@ -264,10 +267,11 @@ Given §4: **v1 ParentOperationsAgent = read-only tools.** Flag `initiate_paymen
 
 ---
 
-## WhatsApp button→Approvable confirmation (Part A)
+## WhatsApp confirmation bridge (Part A) — buttons + text
 
-> **Status:** docs-only design. Ground truth: `sendButtons()` / `sendList()` already work in production for keyword/menu; inbound already parses button/list taps. **Missing:** map tap → specific pending Approvable / Tier-2 decision → resume paused agent → reply on WhatsApp.  
+> **Status:** docs-only design. Ground truth: `sendButtons()` / `sendList()` already work in production for keyword/menu; inbound already parses button/list taps **and** free text. **Missing:** map Approve/Reject (tap **or** typed reply) → specific pending Approvable / Tier-2 decision → resume paused agent → reply on WhatsApp.  
 > **Self-approve:** same `WhatsAppUser` phone that triggered the pending action resolves it — no new identity model.  
+> **First-class dual path:** interactive buttons and human-typed confirmation share one token, one pending row, and one TTL. Text is not a “nice to have” — Meta clients, accessibility, and broken button UX all need it.  
 > **Deliberate exclusions:** payroll + impersonation stay **web-only** even after this works.
 
 ### Inbound payload shape (evidence)
@@ -351,38 +355,113 @@ Sources: [Meta interactive reply buttons](https://developers.facebook.com/docs/w
 
 ### Recommended correlation mechanism
 
-**Recommend: short opaque token in button `reply.id` + pending confirmation row (phone-bound).**
+**Recommend: short opaque token in button `reply.id` + pending confirmation row (phone-bound) — same token used for typed replies.**
 
 | Option | How | Pros | Cons |
 |---|---|---|---|
 | **A — Encode IDs in button id** | e.g. `t1a:{conversationId}:{toolCallId}` | No new table; Meta 256 OK; matches `link_{id}` pattern | Leaks UUIDs; hard TTL/revoke; Tier-2 has no `approval_state` to resume from encode alone |
-| **B — Phone + “latest pending” lookup** | Tap → find newest pending for phone | Simple | Concurrent pending / stale taps race; ambiguous |
-| **C — Opaque token + table (recommended)** | Buttons `ty_{token}` / `tn_{token}` (yes/no); row holds conversation_id, approval_id, mechanism, phone, user_id, outbound_wamid, expires_at | Unifies **Approvable + Tier-2**; TTL; revoke; phone bind; ≤25-char ids | One small table/Redis |
+| **B — Phone + “latest pending” lookup** | Tap / bare yes → find newest pending for phone | Simple | Concurrent pending / stale taps race; ambiguous |
+| **C — Opaque token + table (recommended)** | Buttons `ty_{token}` / `tn_{token}` (yes/no); typed `YES {token}` / `NO {token}`; row holds conversation_id, approval_id, mechanism, phone, user_id, outbound_wamid, expires_at | Unifies **Approvable + Tier-2**; TTL; revoke; phone bind; multi-pending safe; ≤25-char ids | One small table/Redis |
 
-**Why C:** School-role writes use Livewire `ConfirmsBeforeWrite` (`__tier2_confirm` + `ToshiActionService::$bypassConfirm`), **not** native `Approvable` pause state. Platform uses native `agent_conversation_messages.approval_state` + `Decision::*`. One WhatsApp bridge should cover both without two correlation schemes. Token stays well under Meta’s 256 limit; titles stay “Approve” / “Reject”.
+**Why C:** School-role writes use Livewire `ConfirmsBeforeWrite` (`__tier2_confirm` + `ToshiActionService::$bypassConfirm`), **not** native `Approvable` pause state. Platform uses native `agent_conversation_messages.approval_state` + `Decision::*`. One WhatsApp bridge should cover both without two correlation schemes. Token stays well under Meta’s 256 limit; titles stay “Approve” / “Reject”. Typed path reuses the **same** token so button and text stay one decision surface.
 
-**Optional secondary check:** persist outbound wamid on the pending row; on inbound, if `context.id` present, require match. Parser must start reading `context` (today it does not).
+**Optional secondary check:** persist outbound wamid on the pending row; on inbound, if `context.id` present, require match. Parser must start reading `context` (today it does not). Soft log-only at first is fine.
 
 **Do not use title as the correlation key** — titles are truncated, localized, and non-unique across messages.
+
+### Text confirmation as a first-class path
+
+Buttons alone are insufficient: some WhatsApp clients mishandle interactive replies, screen readers / low-literacy flows favour typing, and users often reply in the thread as plain text. Text confirmation is therefore **required in v1 of the bridge**, not a later fallback.
+
+#### Design question: reply format
+
+| Option | Format | Multi-pending for one phone? |
+|---|---|---|
+| **A — Coded reply (recommended)** | Body copy: `Reply YES a7f3k2 or NO a7f3k2 — or tap Approve / Reject`. Parser accepts case-insensitive `YES|APPROVE|Y` / `NO|REJECT|N` + whitespace + **same opaque token** as `ty_`/`tn_`. | **Safe** — each pending has its own token; concurrent confirms disambiguate |
+| **B — Bare yes/no** | `yes` / `no` → newest pending for phone | **Unsafe** — two open confirms → wrong tool executes; race with stale “yes” after a later request |
+
+**Recommendation: Option A (coded reply sharing the opaque token).**
+
+Reasons:
+
+1. Part A already rejected phone+“latest pending” for **buttons** (correlation option B) for the same race — bare text would reintroduce it.
+2. Multi-pending is realistic (teacher confirms a task, then a second tool pauses before the first reply).
+3. One token for button id suffix and typed code keeps TTL/invalidate logic identical: first valid response (either channel) resolves and clears the row.
+4. Token length stays short (8–12 chars alphanumeric) so it is human-typeable on mobile; show it in the confirmation **body** (≤1024), not only in button ids.
+
+**Accepted text patterns (normalize before match):**
+
+```
+(?i)^\s*(yes|approve|y)\s+([a-z0-9]{6,16})\s*$
+(?i)^\s*(no|reject|n)\s+([a-z0-9]{6,16})\s*$
+```
+
+Synonyms beyond this set go to Toshi / “didn’t understand” — do **not** treat bare `yes`/`ok`/`sure` as approval.
+
+**Outbound body template (illustrative):**
+
+```
+Confirm: Create task "Collect homework for P.5"?
+Reply YES a7f3k2 or NO a7f3k2
+Or tap a button below.
+[Approve] [Reject]     ← ids ty_a7f3k2 / tn_a7f3k2
+```
+
+#### Multi-pending handling
+
+- **Allow N open pending rows per phone** (one per outstanding tool pause), each with a unique token.
+- Button tap or coded text resolves **exactly one** row; other open rows remain valid until used or expired.
+- **Do not** collapse to “one pending per phone” as a substitute for codes — that still loses the second confirm when two arrive close together, and forces silent discard of the older request.
+- Optional UX: if phone has >1 open pending and user sends bare `yes`/`no` (no token), reply with a short list: `You have 2 open confirms. Reply YES <code> for the one you mean:` + one-line previews — still **no** silent latest-pending approve.
 
 ### Resume path (step-by-step)
 
 Two mechanisms exist today; WhatsApp must branch on `pending.mechanism`.
 
-#### Shared inbound front-door
+#### Inbound precedence (updated)
+
+Slots into the existing recognized-user pipeline **after** deterministic keyword/menu handling and **before** free-form Toshi:
 
 ```
 POST /api/whatsapp/inbound
   → handleMetaInbound
-  → extract $body (= button/list id), phone, optional context.id
-  → if $body matches ty_* / tn_* (or prefix confirm_*)
-       → load pending by token
-       → verify phone === pending.phone AND WhatsAppUser.user_id === pending.user_id
-       → if expired / missing → sendText “Confirmation expired” + clear
-       → else dispatch by mechanism (below)
-       → clear pending; sendText result
-  → else existing processMetaMessage / routeInbound / (Part B) Toshi fall-through
+  → extract $body (button/list id | text), phone, optional context.id
+  → processMetaMessage (opt-in / unrecognized / link / OTP as today)
+  → routeInbound (recognized):
+       1. emoji strip
+       2. 10-digit / link-another-student codes
+       3. universal keywords (menu|help|optin|optout|events|…)
+       4. role keyword tables (FEES, GRADES, …) + greetings
+       5. ★ PENDING-APPROVAL CHECK (this phone) ★
+            a. button/list id matches ty_{token} | tn_{token}
+               OR text matches YES|NO <token> regex
+            b. load pending by token
+            c. verify phone === pending.phone AND WhatsAppUser.user_id === pending.user_id
+            d. if missing / already resolved / expired
+                 → sendText “This request has expired. Please ask again.”
+                 → clear/ignore stale row; STOP (do not fall through to Toshi)
+            e. else dispatch by mechanism (Approvable | Tier-2 below)
+            f. mark pending resolved; invalidate token (first valid response wins)
+            g. sendText result; STOP
+       6. else if toshi_whatsapp_enabled → free-form Toshi NL (Part B)
+       7. else “didn’t understand” + sendMenuButtons
 ```
+
+**Why keywords before pending?** Keeps FEES/menu/opt-out reachable while a confirm is open (escape hatch). Button `ty_*`/`tn_*` and coded `YES|NO <token>` never collide with role keywords, so step 5 is the only consumer. Bare `yes` is **not** an approval — it falls through to Toshi / menu, avoiding accidental writes.
+
+**Early intercept note:** Implementation may short-circuit `ty_*`/`tn_*` as soon as `$body` is parsed (before role tables) for clarity; behaviour is equivalent because those ids are not keywords. Typed confirms must stay **after** keyword tables so `fees` / `menu` still work.
+
+#### Shared resolve / TTL rules (button = text)
+
+| Rule | Behaviour |
+|---|---|
+| Same token | `ty_{t}` / `tn_{t}` / `YES t` / `NO t` address one pending row |
+| First valid wins | First successful approve **or** reject (either channel) executes resume, then **invalidates** the token |
+| Second response | Treat as expired/missing → explicit expiry copy (not silent ignore) |
+| Wrong phone / wrong user | Fail closed; do not reveal whether token exists |
+| TTL | `expires_at` on pending row (recommend 10–15 min, align with web HITL patience); Redis TTL or MySQL sweep both OK |
+| Expiry UX | Always `sendText`: **“This request has expired. Please ask again.”** — never silent fail |
+| Clock skew | Compare server time only; do not trust client timestamps |
 
 #### Path 1 — Native Approvable (platform / any Conversational agent with HITL)
 
@@ -397,10 +476,10 @@ Pause state lives on **`agent_conversation_messages`**:
 
 Resume (mirror web gate):
 
-1. When agent `prompt()` returns `hasPendingApprovals()`, create pending row(s); `sendButtons` with Approve/Reject tokens; body = tool name + reason + safe arg preview (≤1024).
-2. On Approve tap:  
+1. When agent `prompt()` returns `hasPendingApprovals()`, create pending row(s); `sendButtons` with Approve/Reject tokens **and** body copy that includes `Reply YES {token} or NO {token}`; body = tool name + reason + safe arg preview + reply hint (≤1024).
+2. On Approve (button `ty_*` **or** typed `YES {token}`):  
    `(new Agent)->continue($conversationId, as: $user)->prompt(Decisions::from([$approvalId => Decision::approve()]))`
-3. On Reject tap:  
+3. On Reject (button `tn_*` **or** typed `NO {token}`):  
    `Decision::reject('Rejected via WhatsApp')` (optional short reason; WhatsApp won’t collect free-text easily in v1).
 4. Send `$response->text` (or a fixed “Approved / Rejected” summary) via `sendText`.
 5. Audit: keep existing listeners (`LogToolApprovalRequested` / resolved) — `acting_user_id` = conversation participant; `approver_id` = same WhatsApp-linked user (self-approve).
@@ -414,22 +493,22 @@ Evidence: `ConfirmsBeforeWrite` → `__tier2_confirm` JSON; `AgentToshi::confirm
 There is **no** `approval_state` row — payload is Livewire/session side-channel today (`ToshiActionService::$pendingConfirmPayload`). For WhatsApp:
 
 1. On `__tier2_confirm`, persist `{ tool, args, preview, user_id, phone }` in pending table (mechanism=`tier2`).
-2. `sendButtons` Approve/Reject.
-3. Approve → set `bypassConfirm`, run same `TOOL_CLASS_MAP` / `executeConfirmedTool` path with auth bound to WhatsApp user; audit `acting_user_id` + `approver_id` = that user.
-4. Reject → `logCancellation`, clear pending, `sendText` cancelled.
+2. `sendButtons` Approve/Reject **plus** typed `YES|NO {token}` copy in body.
+3. Approve (tap or text) → set `bypassConfirm`, run same `TOOL_CLASS_MAP` / `executeConfirmedTool` path with auth bound to WhatsApp user; audit `acting_user_id` + `approver_id` = that user.
+4. Reject (tap or text) → `logCancellation`, clear pending, `sendText` cancelled.
 
 **Auth binding (both paths):** webhook must establish `auth()->user()` / `forUser($user)` / `continue(..., as: $user)` from `WhatsAppUser.user_id` before resume — same requirement as Part B reads.
 
 ### Self-approve / phone identity
 
 - **Requester:** `WhatsAppUser` for inbound phone → `user_id` (already required for recognized routing).
-- **Approver:** same phone must tap; reject if pending.phone ≠ inbound phone or pending.user_id ≠ linked user.
+- **Approver:** same phone must tap **or** type the coded reply; reject if pending.phone ≠ inbound phone or pending.user_id ≠ linked user.
 - **No second-party HITL on WhatsApp v1** (no “ask another admin”). Platform second-party review stays on web `PlatformApprovalGate`.
 - **Dual-SIM / shared phone:** out of scope; phone↔user link is the trust boundary (same as today’s keyword bot).
 
 ### v1 write candidates per role (one low-risk each)
 
-Enable **only after** button→resume is proven end-to-end (happy + reject + expired + wrong-phone). One write counterpart per role — not a flood.
+Enable **only after** confirmation bridge (button **and** text) is proven end-to-end (happy + reject + expired + wrong-phone + multi-pending disambiguation). One write counterpart per role — not a flood.
 
 | Role | ug | Existing read / keyword surface | **v1 write candidate** | Why low-risk |
 |---|---:|---|---|---|
@@ -457,13 +536,13 @@ Enable **only after** button→resume is proven end-to-end (happy + reject + exp
 
 ### Sequencing: Part B read-only now vs wait for writes
 
-**Recommend: ship Part B read-only as planned; design/build button→Approvable in parallel; do not hold Part B.**
+**Recommend: ship Part B read-only as planned; design/build confirmation bridge (buttons + coded text) in parallel; do not hold Part B.**
 
 Reasoning:
 
 1. Reads need auth-binding + agent routing only — **not** Decision resume.
 2. Parents’ primary WhatsApp value is NL fees/grades/attendance; delaying that for write UX costs adoption with no safety gain (writes stay off).
-3. Confirmation bridge is a discrete spike (pending table + early inbound intercept + resume adapters) that can land behind a feature flag after Part B.
+3. Confirmation bridge is a discrete spike (pending table + inbound pending check after keywords + resume adapters for **button and text**) that can land behind a feature flag after Part B.
 4. Coupling reads+writes into one release risks blocking on Approvable/Tier-2 dual-path complexity.
 
 **Hold Part B only if** product insists the first WhatsApp Toshi demo must include a confirmed write — otherwise parallel is safer.
@@ -471,11 +550,12 @@ Reasoning:
 ### Open questions
 
 1. Prefer Redis TTL vs MySQL `whatsapp_pending_confirmations` for pending tokens?
-2. Should inbound start requiring `context.id` match as hard fail, or soft log-only at first?
+2. Should inbound start requiring `context.id` match as hard fail, or soft log-only at first? (**Lean soft log-only.**)
 3. Platform WhatsApp approvals ever in scope, or school Tier-2 only?
 4. Reject-with-reason on WhatsApp (follow-up free-text) vs fixed reject string?
-5. Multi-pending: allow only one open confirmation per phone (simpler) vs N tokens?
+5. ~~Multi-pending: allow only one open confirmation per phone vs N tokens?~~ **Resolved: N tokens + coded text (Option A); bare yes/no never auto-approves.**
 6. Confirm Parent first-write is deferred (no payment) for the first post-bridge slice?
+7. Token alphabet / length for typeability (recommend 8 lowercase alphanumeric, avoid `0/O`/`1/l`)?
 
 ---
 
@@ -502,12 +582,12 @@ Reasoning:
 | Parent **read** tools (fees, grades, attendance, events, list children; optional health) | Parent writes (`initiate_payment`, etc.) |
 | Staff/student free-form → existing OperationsAgents (read tools only until confirm bridge) | Staff write tools over WhatsApp |
 | Phone → WhatsAppUser → usergroup → agent map (incl. new ug7 arm) | ug4 Toshi enablement |
-| Button→Approvable design (this §) | Ship write confirmation / enable write tools |
+| Button→Approvable design (this §) — **buttons + coded text** | Ship write confirmation / enable write tools |
 | Docs/knowledge update: n8n is not live | Product dependency on n8n |
 
-**Success criteria for Part B (when approved):** parent can ask in natural language “what’s the fee balance?” after linking and get the same data as FEES; unmatched staff questions hit the correct role agent; no write executes without an audited Confirm button path (or writes remain disabled).
+**Success criteria for Part B (when approved):** parent can ask in natural language “what’s the fee balance?” after linking and get the same data as FEES; unmatched staff questions hit the correct role agent; no write executes without an audited Confirm path (button **or** coded text) — or writes remain disabled.
 
-**Success criteria for confirmation bridge (post–Part B):** Approve/Reject on WhatsApp resumes the same pending tool call as web (`Decision::approve`/`reject` or Tier-2 `bypassConfirm`), self-approve phone check passes, wrong-phone/expired taps fail closed, payroll/impersonation never offered.
+**Success criteria for confirmation bridge (post–Part B):** Approve/Reject on WhatsApp (tap **or** `YES|NO {token}`) resumes the same pending tool call as web (`Decision::approve`/`reject` or Tier-2 `bypassConfirm`); first valid response invalidates the token; expired/stale replies get an explicit “This request has expired” message (never silent); self-approve phone check passes; wrong-phone fails closed; multi-pending disambiguates by token; bare `yes`/`no` never approves; payroll/impersonation never offered.
 
 ---
 
