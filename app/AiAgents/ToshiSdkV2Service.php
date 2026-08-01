@@ -74,13 +74,14 @@ class ToshiSdkV2Service
             // Scope router (deterministic PHP — not SDK Sub-Agents / CanActAsTool):
             // Platform → PlatformOperationsAgent; ug5 → TeacherOperationsAgent;
             // ug11 → AccountantOperationsAgent; ug8 → LibrarianOperationsAgent;
-            // else school-admin ToshiOrchestrator.
+            // ug10 → ReceptionistOperationsAgent; else school-admin ToshiOrchestrator.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
                 : match ((int) $user->usergroup_id) {
                     5 => new TeacherOperationsAgent,
                     11 => new AccountantOperationsAgent,
                     8 => new LibrarianOperationsAgent,
+                    10 => new ReceptionistOperationsAgent,
                     default => new ToshiOrchestrator,
                 };
             $response = $agent->run($query);
@@ -151,6 +152,7 @@ class ToshiSdkV2Service
                     5 => new TeacherOperationsAgent,
                     11 => new AccountantOperationsAgent,
                     8 => new LibrarianOperationsAgent,
+                    10 => new ReceptionistOperationsAgent,
                     default => new ToshiOrchestrator,
                 };
             $fullText = '';

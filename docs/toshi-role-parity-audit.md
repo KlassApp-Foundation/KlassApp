@@ -248,40 +248,40 @@ Caps claim (after rename): `manage_books`, `manage_book_categories`, `manage_len
 
 ### (a) Does the pill/panel render?
 
-**No.** `layouts.reception.layout` → `layouts.app`; excluded by `[1, 3]`.
+**Yes (on `feature/toshi-receptionist-role`).** Blade allowlist is `[1, 3, 5, 8, 10, 11]` in `layouts.app`. Reception layout extends `layouts.app`, so ug10 mounts `@livewire('agent-toshi')`.
 
 ### (b) `isAvailable()`?
 
-**UI N/A.** Local receptionist id=7 on school 1 → `toshi_enabled=0` → false. Gate would deny ug10 on school tools.
+Same school-flag rules as other roles. Gate `toshi-receptionist-action` allows ug10 with `school_id` (and ug1→ug10 impersonation). `toshi-school-action`, `toshi-teacher-action`, `toshi-accountant-action`, and `toshi-librarian-action` still deny ug10.
 
 ### (c) NL / tool reachability
 
-**Cannot run via UI.** No visitor/call/postal/notice tools in SDK tool tree.
+Caps claim (after Part B hygiene): `manage_visitor_log`, `manage_call_log`, `manage_postal_record`, `view_dashboard`, `view_events`, `view_noticeboard`, `manage_tasks`. Implemented via `ReceptionistOperationsAgent` + `ReceptionistActionService` (receptionist panel paths — not ug3 `ToshiActionService`). **`manage_email_record` dropped** (not follow-up).
 
 ### Route inventory (prefix `receptionist/`)
 
 ~**75** routes, ~**16** mutators, **18** domains. Top: dashboard(15), task(11), visitorlog(11), calllog(9), postalrecord(9), events(4), notices, notifications, holidays, profile.
 
-`EmailRecordController.php` exists under `app/Http/Controllers/Receptionist/`, but **no matching `/receptionist/*email*` routes** registered in `route:list` at audit time — treat `manage_email_record` as likely dead/orphan advisory until routes are confirmed elsewhere.
+`EmailRecordController.php` remains dead code (no routes) — capability removed from advisory set.
 
 ### Capability map vs gap list
 
 | Capability claim | Toshi? | Panel? |
 |---|---|---|
-| `manage_visitor_log` | ❌ | ✅ visitorlog CRUD |
-| `manage_call_log` | ❌ | ✅ calllog CRUD |
-| `manage_postal_record` | ❌ | ✅ postalrecord CRUD |
-| `manage_email_record` | ❌ | ⚠️ controller present, **routes not found** under prefix |
-| `view_dashboard` | ❌ | ✅ |
-| `view_events` | ❌ | ✅ events |
-| `manage_noticeboard` | ❌ | ✅ notices (read/list surface) |
-| `manage_tasks` | ❌ | ✅ |
+| `manage_visitor_log` | ✅ Tier-2 | ✅ visitorlog CRUD |
+| `manage_call_log` | ✅ Tier-2 | ✅ calllog CRUD |
+| `manage_postal_record` | ✅ Tier-2 | ✅ postalrecord CRUD |
+| `manage_email_record` | ❌ **DROPPED** | ❌ abandoned scaffold |
+| `view_dashboard` | ✅ read | ✅ |
+| `view_events` | ✅ read | ✅ events (read-only) |
+| `view_noticeboard` | ✅ read (renamed) | ✅ list/index only |
+| `manage_tasks` | ✅ Tier-2 | ✅ task CRUD |
 
-**Gap:** full advisory set for Toshi; possible panel gap/orphan on email records.
+**Gap:** resolved on receptionist Part B (7 tools).
 
 ### UI-absence flag
 
-**Intentional** — same Blade allowlist.
+**Resolved on receptionist branch** — Blade `[1, 3, 5, 8, 10, 11]`.
 
 ---
 
@@ -336,7 +336,7 @@ Caps claim (after rename): `manage_books`, `manage_book_categories`, `manage_len
 | Teacher | 5 | **yes** (teacher/accountant/librarian branches) | school flag; `toshi-teacher-action` | 12 | 12 | resolved on teacher branch |
 | Student | 6 | **no** | school flag; Gate denies; scope=`self` | 11 | 0 (admin tools ≠ self) | **intentional** |
 | Librarian | **8** | **yes** (`feature/toshi-librarian-role`) | school flag; `toshi-librarian-action` | 6 | 6 | resolved on librarian branch |
-| Receptionist | 10 | **no** | school flag; Gate denies | 8 | 0 | **intentional** |
+| Receptionist | **10** | **yes** (`feature/toshi-receptionist-role`) | school flag; `toshi-receptionist-action` | 7 | 7 | resolved on receptionist branch |
 | Accountant | 11 | **yes** (`feature/toshi-accountant-role`) | school flag; `toshi-accountant-action` | 6 | 6 | resolved on accountant branch |
 
 ---
@@ -349,7 +349,7 @@ Caps claim (after rename): `manage_books`, `manage_book_categories`, `manage_len
 
 - **Shipped (librarian Part B):** view-only `/library/cards` + ug8 `LibrarianOperationsAgent` route; advisory key renamed `manage_library_cards` → `view_library_cards`.
 - **Follow-up — library card issue/return CRUD:** create/renew/deactivate/edit card fields as a scoped build (Approvable / Tier-2 confirm judgment later). Keep admin URL.
-- **Receptionist `manage_email_record`**: dead/orphan — `EmailRecordController` exists but no `/receptionist/*email*` routes registered.
+- **Receptionist `manage_email_record`**: **DROPPED** (Part B 2026-08-01) — not a follow-up; abandoned scaffold left as dead controller. Advisory rename `manage_noticeboard` → `view_noticeboard` **shipped**.
 - **Converge ConfirmsBeforeWrite (Tier-2) + native Approvable into one confirmation mechanism** — deferred/tracked; both currently populate the same audit identity fields (`acting_user_id` + `approver_id`) via different paths.
 
 ### Teacher Part B (implemented on `feature/toshi-teacher-role`)
@@ -377,7 +377,15 @@ Caps claim (after rename): `manage_books`, `manage_book_categories`, `manage_len
 5. Blade allowlist widened to `[1, 3, 5, 8, 11]` after tools+tests green.
 6. Isolation: `AddCoAdminTool` absent; school+teacher+accountant Gates deny ug8; librarian Gate allows; read-only audit asserts `approver_id` explicitly null.
 
-Receptionist / Student builds wait until Librarian boundary holds.
+### Receptionist Part B (implemented on `feature/toshi-receptionist-role`)
+
+1. Capability hygiene: drop `manage_email_record`; rename `manage_noticeboard` → `view_noticeboard` (7 advisory actions).
+2. `ReceptionistOperationsAgent` — 7 tools; Gate `toshi-receptionist-action`; scope router ug10 → receptionist (ug8/ug11/ug5 retained).
+3. Writes (visitor/call/postal logs, tasks) use Tier-2 ConfirmsBeforeWrite; reads (dashboard/events/noticeboard) leave `approver_id` explicitly null.
+4. Blade allowlist widened to `[1, 3, 5, 8, 10, 11]` after tools+tests green.
+5. Isolation: `AddCoAdminTool` absent + count 7; school+teacher+accountant+librarian Gates deny ug10; receptionist Gate allows.
+
+Student builds still deferred.
 
 ---
 
@@ -474,3 +482,84 @@ No need to split the existing `cardIndex` surface — give librarians the same r
 **Recommendation:** same librarian branch may include thin `/library/cards` view for advisory/panel honesty; defer issue CRUD + Toshi card tool to a cards follow-up PR if schedule is tight.
 
 Historical findings: cards were admin-only view under `/admin/library/cards`; ug8 had no `/library/cards`; capability `manage_library_cards` was aspirational. **Approved Option A shipped in Part B** as view-only librarian cards + shared lookup service. Issue/return/create/update remains follow-up.
+
+---
+
+## Part A — Receptionist EmailRecord + capability hygiene (2026-08-01)
+
+Branch: `feature/toshi-receptionist-role` (docs only at Part A — **no** `ReceptionistOperationsAgent`, Gates, tools, Blade mounts, or email routes until Part B).
+
+Ground truth reconfirmed: ug10, ~75 `/receptionist/*` routes (`routes/receptionist.php` has 84 `Route::` lines; birthday/feed inflate dashboard domain), ~16 primary mutators on visitor/call/postal/task (+ birthday message POSTs), 8 advisory actions in `getRoleCapabilities(10)` before Part B hygiene.
+
+### EmailRecord: intended purpose (schema + controller)
+
+**No schema exists.** Local DB has `visitor_log`, `call_log`, `postal_record` — **zero** `email_record` / `email_records` table (`information_schema` query). No migration file ever committed under any name matching email records.
+
+Controller-inferred purpose (cite `EmailRecordController@store`): a **front-desk email correspondence registry** parallel to postal record — not an SMTP client and not WhatsApp transport:
+
+| Field written | Source |
+|---|---|
+| `school_id`, `academic_year_id` | Auth + `SiteHelper::getAcademicYear` |
+| `type` | `$request->type` (inbound/outbound style, same pattern as postal `type`) |
+| `subject` | `$request->subject` |
+| `sender_email`, `receiver_email` | `$request->sender_email` / `receiver_email` |
+| `date`, `time` | `$request->date` / `time` |
+| `attachment` | optional upload to `{school_slug}/emailrecord/` |
+
+Views referenced but **missing**: `/reception/emailrecord/{index,create,edit}`. Imports that **do not resolve**: `App\Models\EmailRecord`, `EmailRecordRequest`, `EmailRecord` Resource. Activity constants `LOGNAME_ADD_EMAIL_RECORD` / `LOGNAME_DELETE_EMAIL_RECORD` are **undefined** in `config/school-plus.php`; `update()` even logs `LOGNAME_EDIT_POSTAL_RECORD` (copy-paste from postal sibling).
+
+Sibling postal completeness: `PostalRecord` model + `postal_record` migration (2020-07-28) + Request/Resource + views + 9 routes. Email has **controller only**.
+
+### Why unwired (deliberate / abandoned / superseded / oversight + evidence)
+
+**Verdict: abandoned mid-build** (incomplete GegoK12 scaffold), later **overclaimed** into Toshi advisory. Not a deliberate product cut; not a missed route wire-up of a finished feature.
+
+| Evidence | Detail |
+|---|---|
+| First commit | `a6784c3` (2025-07-11) added `EmailRecordController.php` alone — never model/migration/views/routes in same or later commits |
+| Routes | `routes/receptionist.php` from first commit through HEAD: visitor/call/postal blocks present; **no `emailrecord` lines ever** (`git log -S 'emailrecord' -- routes/receptionist.php` empty) |
+| Git history of dependents | `git log --all -- app/Models/EmailRecord.php`, views, migrations: **empty** — artifacts never existed in repo |
+| Nav | Reception menu has no Email Record item; no Vue `*email*record*` components |
+| Capability intro | `a98590f` (2026-07-12) populated ug10 actions including `manage_email_record` by mirroring controller filename inventory — same day as school-id leak fixes (`7eecd78`) which **scoped the dead controller** without noticing it was unroutable |
+| WhatsApp / messaging | **Not a documented supersession.** No commit removed email routes (none existed). `MessageDeliveryLog` / Evolution WhatsApp is outbound delivery plumbing, not a front-desk correspondence ledger. Postal (physical mail log) remains live — email ledger was the unfinished digital twin |
+
+### Recommendation: build routes vs drop capability
+
+**DROP `manage_email_record` from `getRoleCapabilities(10)`** (and leave controller as dead code / optional later cleanup — out of Part B scope). **Not a follow-up.**
+
+Why not build routes now:
+1. Finishing the feature requires model + migration + Request + Resource + views + Vue list/form + routes + LOGNAME constants + nav — full greenfield, not “wire three routes.”
+2. Advisory overclaim correction matches library-cards Part A discipline (claim only what panel can do).
+3. Operational parent messaging already lives in WhatsApp stack; resurrecting an email ledger adds Toshi surface with no live panel users.
+
+### Other 7 actions: clean / surprises
+
+| Advisory key | Routes? | Mutators work? | Boundary / surprises |
+|---|---|---|---|
+| `manage_visitor_log` | ✅ 11 routes under `/receptionist/visitorlog` | ✅ store/update/destroy | Clean for ug10. Also on **admin** + **teacher** prefixes (shared domain, role-scoped controllers) — not admin-only leakage into receptionist. |
+| `manage_call_log` | ✅ 9 routes | ✅ CRUD | Same shared admin/teacher pattern. Clean. |
+| `manage_postal_record` | ✅ 9 routes | ✅ CRUD | Same. Clean. |
+| `view_dashboard` | ✅ `/dashboard` + widgets | N/A (read + birthday POSTs) | Clean. Birthday/work-anniversary message POSTs exist but are **not** in advisory set (out of Part B unless expanded). |
+| `view_events` | ✅ 4 GET routes | Read-only (correct for `view_*`) | Clean. |
+| `manage_noticeboard` | ✅ `/notices` + `/notice/show/list` only | **No** store/update/destroy on receptionist | **Surprise (rename):** controller is list+index only. Admin owns notice CRUD. Orphan blades `reception/noticeboard/{create,edit}` link to `/admin/notices` and are unrouted. Same pattern as library `manage_library_cards` → `view_*`. |
+| `manage_tasks` | ✅ full task CRUD (+ snooze/status) | ✅ | Clean. |
+
+**Extra hygiene (not advisory keys, flag only):** `layouts/reception/menu.blade.php` links to `reception/{students,parents,visitors,appointments,messages,calls}` — wrong prefix (`reception` vs `receptionist`) and several paths have **no** matching routes (students/parents/appointments/messages). Dashboard KPIs also use `/reception/events`. Panel CRUD views correctly use `/receptionist/...`. Menu drift is separate from Toshi Part B but explains why “Messages” looks like a WhatsApp stand-in without being wired.
+
+### Proposed Part B tool set (exact list)
+
+**7 tools** after dropping the 8th and renaming noticeboard:
+
+1. `ManageVisitorLogTool` ← `manage_visitor_log` (Tier-2 write)
+2. `ManageCallLogTool` ← `manage_call_log` (Tier-2 write)
+3. `ManagePostalRecordTool` ← `manage_postal_record` (Tier-2 write)
+4. `ViewDashboardTool` ← `view_dashboard` (read)
+5. `ViewEventsTool` ← `view_events` (read)
+6. `ViewNoticeboardTool` ← **`view_noticeboard`** (rename from `manage_noticeboard`; read-only)
+7. `CreateTaskTool` ← `manage_tasks` (Tier-2 write; match librarian naming)
+
+**Drop / do not implement:** `manage_email_record` / any `ManageEmailRecordTool`.
+
+### Receptionist Part B status — **shipped** on `feature/toshi-receptionist-role`
+
+`ReceptionistOperationsAgent` + `toshi-receptionist-action` Gate + scope router ug10 + Blade `[1, 3, 5, 8, 10, 11]` + isolation/audit tests green. Email capability **dropped** (not follow-up); noticeboard renamed and shipped.

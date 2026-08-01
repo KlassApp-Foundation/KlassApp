@@ -5844,3 +5844,17 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Dead users link (LOW)**: Removed dashboard “View all” → `/superadmin/users` (no platform users route; school-scoped lists need school id).
 - **Tests**: `CountryCreateTest`, `PlanAvatarRedirectTest`, updated `ImpersonateControllerTest` — 9 relevant pass. Full suite: **247 passed**, 1 skipped, **1 failed** (`ToshiE2EVerificationTest` LLM null — pre-existing flake, unrelated).
 - **Status**: ✅ MEDIUM/LOW triage done — **READY FOR MERGE REVIEW (not merged, not pushed)**
+
+### 2026-08-01: Receptionist Part A — EmailRecord + capability hygiene
+- **Work done**: Docs-only investigation on `feature/toshi-receptionist-role` (worktree `KlassApp-main-merge`). Confirmed `manage_email_record` is an abandoned scaffold: controller only — no model, migration, Request, Resource, views, routes, or LOGNAME constants. DB has no email_record table. Recommend **drop** capability (not build routes). Other 7 actions audited; `manage_noticeboard` is read-only → rename to `view_noticeboard`. Proposed Part B: **7 tools**.
+- **Files modified**: `docs/toshi-role-parity-audit.md` (brought from librarian branch baseline + Part A appendix), `knowledge.md` (this log)
+- **Key decisions**: Drop email capability; rename noticeboard; no Part B implementation until approval; no push
+- **Status**: ✅ Superseded by Part B below
+- **Edge cases flagged**: Reception menu uses wrong `reception/*` URLs and dead aspirational links (students/parents/appointments/messages); separate from Toshi Part B
+
+### 2026-08-01: Receptionist Part B — ReceptionistOperationsAgent
+- **Work done**: Cherry-picked teacher→librarian stack onto `feature/toshi-receptionist-role`, then shipped ug10 operator: drop `manage_email_record`, rename `manage_noticeboard`→`view_noticeboard`; `ReceptionistOperationsAgent` (7 tools) + `ReceptionistActionService`; Gate `toshi-receptionist-action` (impersonation); scope router ug10; Blade `[1, 3, 5, 8, 10, 11]`; isolation + audit tests (10 passed).
+- **Files modified**: `app/AiAgents/ReceptionistOperationsAgent.php`, `app/AiAgents/Concerns/AuthorizesReceptionistToshiAction.php`, `app/AiAgents/Tools/Receptionist/*`, `app/Services/Toshi/ReceptionistActionService.php`, `app/Providers/AuthServiceProvider.php`, `app/AiAgents/ToshiSdkV2Service.php`, `app/Livewire/AgentToshi.php`, `app/Services/ToshiActionService.php`, `resources/views/layouts/app.blade.php`, `tests/Feature/Toshi/Receptionist/ReceptionistOperationsToolsTest.php`, `docs/toshi-role-parity-audit.md`, `knowledge.md`
+- **Key decisions**: Email capability dropped permanently (not follow-up); noticeboard view-only; Tier-2 on log/task writes; `approver_id` null on 3 reads; did not widen other role Gates
+- **Status**: ✅ Done — committed, not pushed
+- **Edge cases flagged**: Visitor create defaults `relation=other` (parent-linked path not in Toshi tool); postal `attachment` empty string when no file (NOT NULL column)
