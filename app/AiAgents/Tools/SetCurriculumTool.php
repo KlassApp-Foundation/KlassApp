@@ -31,7 +31,8 @@ class SetCurriculumTool implements Tool, VerifiableTool
     public function handle(Request $request): string
     {
         $user = auth()->user() ?? request()->user();
-        $error = $this->authorizeOrMessage($user);
+        // Settings / academic-year curriculum config — school admin only, not deputies.
+        $error = $this->authorizeSchoolAdminOrMessage($user);
         if ($error) return $error;
 
         $schoolId = ToshiActionService::getEffectiveSchoolId($user);

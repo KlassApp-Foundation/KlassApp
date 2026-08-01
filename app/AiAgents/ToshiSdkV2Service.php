@@ -72,13 +72,15 @@ class ToshiSdkV2Service
             \App\Services\ToshiActionService::$pendingConfirmPayload = null;
 
             // Scope router (deterministic PHP — not SDK Sub-Agents / CanActAsTool):
-            // Platform → PlatformOperationsAgent; ug5 → TeacherOperationsAgent;
-            // ug11 → AccountantOperationsAgent; ug8 → LibrarianOperationsAgent;
-            // ug10 → ReceptionistOperationsAgent; ug6 → StudentOperationsAgent;
-            // ug7 → ParentOperationsAgent; else school-admin ToshiOrchestrator.
+            // Platform → PlatformOperationsAgent; ug4 → DeputyAdminOperationsAgent;
+            // ug5 → TeacherOperationsAgent; ug11 → AccountantOperationsAgent;
+            // ug8 → LibrarianOperationsAgent; ug10 → ReceptionistOperationsAgent;
+            // ug6 → StudentOperationsAgent; ug7 → ParentOperationsAgent;
+            // else school-admin ToshiOrchestrator.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
                 : match ((int) $user->usergroup_id) {
+                    4 => new DeputyAdminOperationsAgent,
                     5 => new TeacherOperationsAgent,
                     11 => new AccountantOperationsAgent,
                     8 => new LibrarianOperationsAgent,
@@ -154,6 +156,7 @@ class ToshiSdkV2Service
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
                 : match ((int) $user->usergroup_id) {
+                    4 => new DeputyAdminOperationsAgent,
                     5 => new TeacherOperationsAgent,
                     11 => new AccountantOperationsAgent,
                     8 => new LibrarianOperationsAgent,

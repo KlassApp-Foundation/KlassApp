@@ -31,7 +31,8 @@ class AddCoAdminTool implements Tool, VerifiableTool
     public function handle(Request $request): string
     {
         $user = auth()->user() ?? request()->user();
-        $error = $this->authorizeOrMessage($user);
+        // Owner-level governance (creating ug3 co-admins) — school admin only, not deputies.
+        $error = $this->authorizeSchoolAdminOrMessage($user);
         if ($error) return $error;
 
         $args = [

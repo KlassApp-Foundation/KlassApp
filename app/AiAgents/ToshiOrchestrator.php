@@ -158,6 +158,7 @@ PROMPT;
         return match ($user->usergroup_id) {
             1 => 'Super Admin',
             3 => 'School Admin',
+            4 => 'Deputy Admin',
             5 => 'Teacher',
             6 => 'Student',
             7 => 'Parent',
