@@ -5872,3 +5872,24 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Key decisions**: Email capability dropped permanently (not follow-up); noticeboard view-only; Tier-2 on log/task writes; `approver_id` null on 3 reads; did not widen other role Gates
 - **Status**: ✅ Done — committed, not pushed
 - **Edge cases flagged**: Visitor create defaults `relation=other` (parent-linked path not in Toshi tool); postal `attachment` empty string when no file (NOT NULL column)
+
+### 2026-08-01: Toshi WhatsApp channel Part A — design audit
+- **Work done**: Docs-only audit on `audit/toshi-whatsapp-channel` (worktree off `origin/main` @ `212418d`). Evidence: n8n is design-doc/docker stub only (no Laravel→n8n HTTP). Documented live `handleInbound`/`routeInbound` (keywords, lists, OTP, name link). Recommended extend (Toshi on unmatched free-form only). Proposed WhatsApp Tier-2 via sendButtons mapped to same audit identity; v1 read-only for writes. Staff/student → existing OperationsAgents; new ParentOperationsAgent (restore scope=children); ug4 has no Toshi access.
+- **Files modified**: `docs/toshi-whatsapp-channel-audit.md` (new), `knowledge.md` (this log)
+- **Key decisions**: Extend not replace; WhatsApp Toshi v1 read-only until confirmation bridge; Parent is primary WhatsApp persona
+- **Status**: ✅ Done — commit + draft PR
+- **Edge cases flagged**: WhatsAppHmac unused despite docs; identify ug4→unknown; sendFees doesn't call composeFeeBalance; auth binding required for webhook→tools
+
+### 2026-08-01: WhatsApp button→Approvable confirmation design (Part A)
+- **Work done**: Docs-only expansion of `docs/toshi-whatsapp-channel-audit.md` with full button→Approvable section: inbound payload shape (Meta docs + parser; no local tap rows in DB), Meta id ≤256 + `sendButtons` constraints, recommended opaque token + pending row (unifies Approvable + Tier-2), resume via `Decision::*` / `bypassConfirm`, self-approve phone identity, per-role low-risk write candidates, web-only exclusions (payroll/impersonation), sequencing = ship Part B reads in parallel.
+- **Files modified**: `docs/toshi-whatsapp-channel-audit.md`, `knowledge.md` (this log)
+- **Key decisions**: Opaque token (`ty_`/`tn_`) over phone-latest lookup; do **not** hold Part B for writes; payroll+impersonation stay web-only after bridge
+- **Status**: ✅ Done — pushed to `audit/toshi-whatsapp-channel` / PR #133
+- **Edge cases flagged**: SchoolPay list rows omit `id` → UUID body (title “Link Another Student” never preferred); inbound ignores Meta `context.id`; MessageDeliveryLog has no approval correlation fields
+
+### 2026-08-01: WhatsApp text-confirmation fallback (Part A docs)
+- **Work done**: Docs-only extension treating typed confirmation as first-class beside buttons. Recommended coded `YES|NO {token}` (same opaque token as `ty_`/`tn_`); rejected bare yes/no. Documented inbound precedence: keywords → pending check (button or text) → Toshi NL. Same TTL/first-wins/expiry UX for both channels. Multi-pending = N tokens. Updated PR #133 description.
+- **Files modified**: `docs/toshi-whatsapp-channel-audit.md`, `knowledge.md` (this log)
+- **Key decisions**: Option A coded replies (not bare yes/no); allow N open pendings per phone; expiry always replies “This request has expired. Please ask again.”
+- **Status**: ✅ Done — docs commit + push to `audit/toshi-whatsapp-channel`
+- **Edge cases flagged**: Bare yes with multiple pendings must not auto-approve (offer list of codes); keyword escape hatch while confirm open is intentional
