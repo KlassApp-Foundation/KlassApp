@@ -5844,3 +5844,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Dead users link (LOW)**: Removed dashboard “View all” → `/superadmin/users` (no platform users route; school-scoped lists need school id).
 - **Tests**: `CountryCreateTest`, `PlanAvatarRedirectTest`, updated `ImpersonateControllerTest` — 9 relevant pass. Full suite: **247 passed**, 1 skipped, **1 failed** (`ToshiE2EVerificationTest` LLM null — pre-existing flake, unrelated).
 - **Status**: ✅ MEDIUM/LOW triage done — **READY FOR MERGE REVIEW (not merged, not pushed)**
+
+### 2026-08-01: Receptionist Part A — EmailRecord + capability hygiene
+- **Work done**: Docs-only investigation on `feature/toshi-receptionist-role` (worktree `KlassApp-main-merge`). Confirmed `manage_email_record` is an abandoned scaffold: controller only — no model, migration, Request, Resource, views, routes, or LOGNAME constants. DB has no email_record table. Recommend **drop** capability (not build routes). Other 7 actions audited; `manage_noticeboard` is read-only → rename to `view_noticeboard`. Proposed Part B: **7 tools**.
+- **Files modified**: `docs/toshi-role-parity-audit.md` (brought from librarian branch baseline + Part A appendix), `knowledge.md` (this log)
+- **Key decisions**: Drop email capability; rename noticeboard; no Part B implementation until approval; no push
+- **Status**: ⏸️ Stopped — awaiting approval before Part B
+- **Edge cases flagged**: Reception menu uses wrong `reception/*` URLs and dead aspirational links (students/parents/appointments/messages); separate from Toshi Part B

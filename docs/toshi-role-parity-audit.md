@@ -262,7 +262,7 @@ Caps claim (after rename): `manage_books`, `manage_book_categories`, `manage_len
 
 ~**75** routes, ~**16** mutators, **18** domains. Top: dashboard(15), task(11), visitorlog(11), calllog(9), postalrecord(9), events(4), notices, notifications, holidays, profile.
 
-`EmailRecordController.php` exists under `app/Http/Controllers/Receptionist/`, but **no matching `/receptionist/*email*` routes** registered in `route:list` at audit time — treat `manage_email_record` as likely dead/orphan advisory until routes are confirmed elsewhere.
+`EmailRecordController.php` exists under `app/Http/Controllers/Receptionist/`, but **no matching `/receptionist/*email*` routes** registered — **confirmed dead** in Part A (2026-08-01): no model, migration, Request, Resource, views, LOGNAME constants, or nav entry. See appendix below → **prefer drop** `manage_email_record`.
 
 ### Capability map vs gap list
 
@@ -271,13 +271,13 @@ Caps claim (after rename): `manage_books`, `manage_book_categories`, `manage_len
 | `manage_visitor_log` | ❌ | ✅ visitorlog CRUD |
 | `manage_call_log` | ❌ | ✅ calllog CRUD |
 | `manage_postal_record` | ❌ | ✅ postalrecord CRUD |
-| `manage_email_record` | ❌ | ⚠️ controller present, **routes not found** under prefix |
+| `manage_email_record` | ❌ | ❌ **drop** — abandoned scaffold (Part A) |
 | `view_dashboard` | ❌ | ✅ |
-| `view_events` | ❌ | ✅ events |
-| `manage_noticeboard` | ❌ | ✅ notices (read/list surface) |
-| `manage_tasks` | ❌ | ✅ |
+| `view_events` | ❌ | ✅ events (read-only) |
+| `manage_noticeboard` | ❌ | ⚠️ **read-only** list/index — rename → `view_noticeboard` |
+| `manage_tasks` | ❌ | ✅ task CRUD |
 
-**Gap:** full advisory set for Toshi; possible panel gap/orphan on email records.
+**Gap:** full advisory set for Toshi; email overclaim + noticeboard manage/view mismatch (library-cards pattern).
 
 ### UI-absence flag
 
@@ -349,7 +349,7 @@ Caps claim (after rename): `manage_books`, `manage_book_categories`, `manage_len
 
 - **Shipped (librarian Part B):** view-only `/library/cards` + ug8 `LibrarianOperationsAgent` route; advisory key renamed `manage_library_cards` → `view_library_cards`.
 - **Follow-up — library card issue/return CRUD:** create/renew/deactivate/edit card fields as a scoped build (Approvable / Tier-2 confirm judgment later). Keep admin URL.
-- **Receptionist `manage_email_record`**: dead/orphan — `EmailRecordController` exists but no `/receptionist/*email*` routes registered.
+- **Receptionist `manage_email_record`**: **DROP** (Part A 2026-08-01) — abandoned mid-build scaffold; do not build routes for Part B. Also rename `manage_noticeboard` → `view_noticeboard` (receptionist panel is list/index only).
 - **Converge ConfirmsBeforeWrite (Tier-2) + native Approvable into one confirmation mechanism** — deferred/tracked; both currently populate the same audit identity fields (`acting_user_id` + `approver_id`) via different paths.
 
 ### Teacher Part B (implemented on `feature/toshi-teacher-role`)
@@ -377,7 +377,7 @@ Caps claim (after rename): `manage_books`, `manage_book_categories`, `manage_len
 5. Blade allowlist widened to `[1, 3, 5, 8, 11]` after tools+tests green.
 6. Isolation: `AddCoAdminTool` absent; school+teacher+accountant Gates deny ug8; librarian Gate allows; read-only audit asserts `approver_id` explicitly null.
 
-Receptionist / Student builds wait until Librarian boundary holds.
+Receptionist Part A (EmailRecord + capability hygiene) complete on `feature/toshi-receptionist-role` — awaiting approval before Part B. Student builds still deferred.
 
 ---
 
