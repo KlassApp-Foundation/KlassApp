@@ -7,10 +7,12 @@ namespace App\Http\Controllers\Auth;
 
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\Services\Superadmin\ImpersonationService;
 use Illuminate\Http\Request;
 use App\Traits\Common;
 use App\Models\User;
 use Exception;
+use Illuminate\Validation\ValidationException;
 use Log;
 
 class ImpersonateController extends Controller
@@ -103,19 +105,21 @@ class ImpersonateController extends Controller
     {
         try
         {
-            $user = User::findOrFail($id);
-
-            $is_admin = $this->is_admin($user->id);
-            if($is_admin == true)
-            {
-                Auth::user()->setImpersonating($user->id);
-            }
-            else
-            {
-                \Session::put('Impersonate disabled for this user.');
-            }
+            app(ImpersonationService::class)->startSchoolAdminImpersonation(
+                Auth::user(),
+                (int) $id
+            );
 
             return redirect('/admin/dashboard');
+        }
+        catch (ValidationException $e)
+        {
+            \Session::put('Impersonate disabled for this user.');
+
+            return redirect()->back()->with(
+                'errormessage',
+                collect($e->errors())->flatten()->first() ?? 'Failed to impersonate user.'
+            );
         }
         catch(Exception $e)
         {

@@ -65,6 +65,8 @@ class ToshiAuditTrailTest extends TestCase
         $this->assertEquals('success', $log->properties['status']);
         $this->assertEquals('toolRecordAttendance', $log->properties['tool']);
         $this->assertEquals(['student' => 'Alice', 'date' => '2026-07-15'], $log->properties['arguments']);
+        $this->assertEquals($user->id, $log->properties['acting_user_id']);
+        $this->assertNull($log->properties['approver_id']);
     }
 
     /** @test */

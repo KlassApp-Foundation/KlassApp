@@ -32,11 +32,40 @@ return [
     'sdk_v2_enabled' => env('TOSHI_SDK_V2_ENABLED', false),
 
     /*
-    | Per-school Toshi enablement flag.
+    | Per-school Toshi enablement flag (School scope only).
     | When toshi_enabled is true on the schools table AND sdk_v2_enabled is true
     | in the environment, Toshi SDK v2 features are active for that school.
+    |
+    | Do NOT disable or bypass this for school-scoped calls. Platform scope uses
+    | platform_gate below and never consults schools.toshi_enabled.
     */
     'per_school_gate' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Platform-scope gate (siteadmin / usergroup 1)
+    |--------------------------------------------------------------------------
+    |
+    | Independent of per_school_gate and school_id. Phase 0 scaffolding +
+    | Phase 1 partial tools (Geo/Plans/Schools via PlatformOperationsAgent).
+    | Unlock isAvailable(Platform); business tools grow on PlatformOperationsAgent.
+    |
+    | Capability model: config allowlist (not a users column, not FeatureToggles).
+    | FeatureToggleService is school_id-scoped; users/usergroups have no capability
+    | attribute. Env/config is auditable without a migration for the few operators.
+    |
+    | enabled  — master capability flag (TOSHI_PLATFORM_GATE_ENABLED)
+    | user_ids — optional ID allowlist (TOSHI_PLATFORM_USER_IDS=1,2,3).
+    |            Empty array = all usergroup 1 users when enabled=true.
+    |            Non-empty = must be usergroup 1 AND listed.
+    */
+    'platform_gate' => [
+        'enabled' => env('TOSHI_PLATFORM_GATE_ENABLED', false),
+        'user_ids' => array_values(array_filter(array_map(
+            'intval',
+            explode(',', (string) env('TOSHI_PLATFORM_USER_IDS', '')),
+        ))),
+    ],
 
     /*
     | The OpenAI-compatible API endpoint.

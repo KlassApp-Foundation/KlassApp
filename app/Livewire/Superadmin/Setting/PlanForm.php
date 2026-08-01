@@ -4,6 +4,7 @@ namespace App\Livewire\Superadmin\Setting;
 
 use Livewire\Component;
 use App\Models\Plan;
+use App\Services\Superadmin\PlanService;
 use Livewire\Attributes\Rule;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 
@@ -113,9 +114,11 @@ class PlanForm extends Component
 			'no_of_groups' => $this->no_of_groups,
 		];
 
+		$service = app(PlanService::class);
+
 		if($this->planEditId == '')
 		{
-			Plan::create($data);
+			$service->create($data);
 
 			//session()->flash('message', 'Plan added successfully');
 
@@ -123,7 +126,7 @@ class PlanForm extends Component
 		}
 		else
 		{
-			Plan::where('id', $this->planEditId)->update($data);
+			$service->update((int) $this->planEditId, $data);
 
 			//session()->flash('message', 'Plan updated successfully');
 

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Gate;
 use App\Policies\ApiTokenPolicy;
 use App\Models\Plan;
 use App\Models\User;
+use App\Policies\ConversationPolicy;
+use Laravel\Ai\Models\Conversation;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -39,6 +41,7 @@ class AuthServiceProvider extends ServiceProvider
       'App\Models\User'             => 'App\Policies\UserPolicy',
       'App\Models\Userprofile'      => 'App\Policies\UserprofilePolicy',
       PersonalAccessToken::class    => ApiTokenPolicy::class,
+      Conversation::class           => ConversationPolicy::class,
     ];
 
     /**

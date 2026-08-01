@@ -49,7 +49,7 @@
 - **Worktree / tip**: `/Users/mac/projects/KlassApp-main-merge` on `main` @ `1f8ea30` (inventory session).
 - **Routes**: **41** inventoried (`40` registered `GET` under `/superadmin` + `1` related `schooladmin/{id}/impersonate`). Almost all are Livewire-backed closures in `routes/web.php` (`middleware` `superadmin`+`auth`, `prefix` `superadmin`). Dead stub: empty `routes/superadmin.php` still mapped by `RouteServiceProvider` (adds zero routes).
 - **Livewire mutate surface**: Per-route map of Blade → Livewire components → public mutating methods completed in the same audit pass (layout-shared `agent-toshi` + page components). Full tables live in the Phase 1 agent report (not duplicated here).
-- **Toshi**: Uses **Laravel AI SDK** (`laravel/ai` ^0.9; `ToshiOrchestrator` / `ToshiSdkV2Service` — **not** LarAgent). School/onboarding-focused: **1 covered / 32 gap / 8 N/A** across the 41 routes (only school create overlaps meaningfully with AgentToshi onboarding / `commitAll`).
+- **Toshi**: Uses **Laravel AI SDK** (`laravel/ai` **^0.10** / 0.10.2; `ToshiOrchestrator` / `ToshiSdkV2Service` — **not** LarAgent). School/onboarding still school-scoped. **Platform scope** (siteadmin): Phase 0–1 on `feature/toshi-platform-tools` — `ToshiAvailabilityGate` + `PlatformOperationsAgent` tools covering the prior 32-gap mutators + HITL review UI at `/superadmin/toshi/ops/{conversation}`. Audit props: `acting_user_id` + `approver_id`.
 
 ### Pre–Phase 2 findings (logged before any testing)
 
@@ -236,13 +236,14 @@
 
 | Item | Decision | Why not triage-now |
 |---|---|---|
-| **Toshi platform-scope for superadmin** | **Decided-deferred roadmap** — remove from active triage queue | Root: `per_school_gate` needs a school with `toshi_enabled`; siteadmin `school_id=null` → `isAvailable()` false → NL soft-fails via `fallbackMessage()`. Panel still renders (greeting + `/help` work). **Do not** just remove the school check — platform-scope needs its own authorization model (higher blast radius; keep confirmation-before-write). Gap vs Livewire surface (**1/32**) stays a product roadmap item, not a hotfix. |
+| **Toshi platform-scope for superadmin** | **Phase 0–1 COMPLETE on branch** — `feature/toshi-platform-tools` @ `edc07e5`+ (pushed) | Platform gate + full tool set (Geo/Plans/Schools/Subscriptions/FeatureToggles/SystemSettings/CoAdmins/Impersonation) + native HITL approval UI. **Not merged to `main` yet.** Next: Phase 2 role audits; Phase 3 connectors. |
 
 ---
 
-## Current Status: July 31, 2026 (Vue 3 + Phase 3 Vite + **superadmin audit CLOSED on `main`** + **cleanup-loose-ends CLOSED on `main`**)
+## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch**)
 
-- **✅ Superadmin audit CLOSED on `main`**: merge commit **`32a3bb4333f8645a2752d760fcd76287f57f5fa8`** — `Merge branch 'fix/superadmin-audit-triage'` (no-ff). Tip merged: `fix/superadmin-audit-triage` @ `8c93693` (HIGH `2ce1ede` + MEDIUM/LOW `8c93693`; Toshi platform-scope deferred `731aeaa`). Phase 1 + Phase 2 Batches A–E catalogue + triage fixes. **Toshi platform-scope** = decided-deferred roadmap. **NOT PUSHED** yet.
+- **✅ Toshi Autonomous Operator Phase 0–1 on `feature/toshi-platform-tools`** (worktree `KlassApp-main-merge`): tip **`edc07e5`** + knowledge push closeout. **Pushed to origin** (not merged to `main`). Includes: platform gate (`TOSHI_PLATFORM_GATE_ENABLED`), scope router in `ToshiSdkV2Service` (Platform → `PlatformOperationsAgent`, School → `ToshiOrchestrator`), native `laravel/ai` 0.10.2 HITL (`approval_state` column), ops review UI, full superadmin mutator tools, audit `acting_user_id`/`approver_id`. Enable locally: `TOSHI_PLATFORM_GATE_ENABLED=true`.
+- **✅ Superadmin audit CLOSED on `main`**: merge commit **`32a3bb4333f8645a2752d760fcd76287f57f5fa8`** — `Merge branch 'fix/superadmin-audit-triage'` (no-ff). Tip merged: `fix/superadmin-audit-triage` @ `8c93693`. Phase 1 + Phase 2 Batches A–E catalogue + triage fixes. Toshi platform-scope built on feature branch (above) — was decided-deferred during triage.
 - **Vue 3 merge**: `50f5c4d1926111e787a16d2b04bd0054b4ff671d` — `merge: bring migration/vue3-runtime (Vue 3.5.40 @vue/compat MODE 2) into main` (no-ff). Follow-ups through `8a2938d` on `origin/main` pre-Vite.
 - **✅ Phase 3 Vite CLOSED on `main`**: merge commit **`9bdf185571c8f8a5b0bae198034df3aebb1ff3bd`** — `merge: bring migration/vite into main (Phase 3 Vite sole bundler)` (no-ff). Tip merged: `migration/vite` @ `73ee046`. Worktree used for merge: `/Users/mac/projects/KlassApp-main-merge` (did not disturb `KlassApp`/`migration/tailwind4` or other dirty worktrees).
 - **✅ 5 deferred app bugs CLOSED on `main`**: merge commit **`536603cc38c2b0c37af4de3df1c860e80473f39a`** — `merge: bring fix/deferred-bugs into main (5 deferred app bugs)` (no-ff). Tip merged: `fix/deferred-bugs` @ `a0db768`. Worktree: `/Users/mac/projects/KlassApp-main-merge`.
@@ -613,6 +614,53 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-01: Push `feature/toshi-platform-tools` + knowledge closeout (Phase 0–1)
+- **Work done**: Updated Current Status / decided-deferred / Superadmin Toshi inventory notes to reflect Phase 0–1 complete on branch. Pushed `feature/toshi-platform-tools` to `origin`. Synced `knowledge.md` to canonical KlassApp workspace. Did **not** merge to `main`.
+- **Branch tip before knowledge commit**: `edc07e5` (CoAdmins + Impersonation + audit identity)
+- **Key stack**: `laravel/ai` **0.10.2**; `agent_conversation_messages.approval_state`; scope router (not SDK Sub-Agents); HITL at `GET|POST /superadmin/toshi/ops/{conversation}`; audit `acting_user_id` + `approver_id`
+- **Tool inventory (PlatformOperationsAgent)**: Geo×4, Plans×2 (Approvable), Schools×2, Subscriptions create/approve/cancel (approve+cancel Y), FeatureToggles Y, SystemSettings conditional, CoAdmins create N / delete+password-reset Y, Impersonation Y mandatory
+- **Env**: `TOSHI_PLATFORM_GATE_ENABLED`, optional `TOSHI_PLATFORM_USER_IDS`
+- **Next**: Phase 2 role coverage audits; Phase 3 connectors (WhatsApp first); merge review when ready
+- **Status**: ✅ Pushed to origin — **not merged to `main`**
+
+### 2026-08-01: CoAdmins + Impersonation tools + audit identity prerequisite
+- **Work done**: Prerequisite audit identity fix — `ToshiAuditService` + Toshi listeners now record distinguishable `properties.acting_user_id` (conversation participant from `forUser` / `continue(..., as:)`) and `properties.approver_id` (auth user on resolve; null on pending). Extracted `CoAdminService` + `ImpersonationService`; Livewire CoAdmins + `ImpersonateController@schoolAdminimpersonate` wired through services. Tools: `CreateCoAdminTool` (N), `DeleteCoAdminTool` (Y), `ResetCoAdminPasswordTool` (Y), `ImpersonateSchoolAdminTool` (Y, never withoutApproval). Registered on `PlatformOperationsAgent`. Tests: `PlatformCoAdminToolsTest` + `PlatformImpersonationToolsTest` + audit trail identity assert (19 passed in that set; ImpersonateController + Ops UI + Subscriptions regression 18 passed).
+- **Impersonation reject zero-trace**: `Decision::reject()` via HTTP approval flow leaves no `session('impersonate')`, no `isImpersonating()`, Auth id unchanged, no `success` audit — only `approval_rejected`.
+- **Spot-check vs Batch E**: Original audit verified start via GET `/schooladmin/{id}/impersonate` (session + Stop UI) and stop clearing `impersonate` → ug1 `/superadmin/dashboard`. Tests assert the same session key / `isImpersonating()` through `ImpersonationService` (controller-wired).
+- **ConversationPolicy**: unchanged.
+- **Doc vs package**: HITL/Events match `laravel/ai` 0.10.x; docs under 13.x path, app Laravel 12 — no blocking mismatch for this slice.
+- **Branch**: `feature/toshi-platform-tools` @ `edc07e5` — see push closeout above
+- **Status**: ✅ Done for CoAdmins + Impersonation slice
+
+### 2026-08-01: PlatformOperationsAgent human approval UI (Complete Approval Flow)
+- **Work done**: Added GET/POST `/superadmin/toshi/ops/{conversation}` matching laravel/ai Complete Approval Flow; `PlatformOpsConversationController` + `PlatformOpsConversationService`; Livewire `PlatformApprovalGate` review-gate UI (approve / reject / edit-and-approve); `EnsurePlatformToshiAccess` middleware + `ConversationPolicy` (`view` = participant + `ToshiAvailabilityGate` Platform); `User` uses `HasConversations`. Feature test `PlatformOpsApprovalUiTest` (7 passed: GET pending visible, POST approve mutates, POST reject no mutation, edit, auth denials).
+- **Doc vs package mismatches**: (1) Docs `prohibited_with` — **not in Laravel 12**; used `prohibits` for XOR. (2) Doc `$validated->collect(...)` — `validate()` returns array; used `collect($validated['decisions'])`. (3) Doc validation approve/reject only; package has `Decision::edit()` — extended with `edit` + `arguments`. (4) Docs under 13.x path; app Laravel 12 + `laravel/ai` 0.10.2.
+- **Files**: controller, middleware, policy, service, Livewire + views, routes, AuthServiceProvider, Kernel, User trait, settings index note, test.
+- **Status**: ✅ Done for approval UI slice
+
+### 2026-08-01: Toshi Phase 1 continued — Subscriptions + FeatureToggles/SystemSettings tools
+- **Work done**: Added `SubscriptionService` + `SystemSettingsService`; tools `CreateSubscriptionTool` (N), `ApproveSubscriptionTool` (Y), `CancelSubscriptionTool` (Y), `ToggleSchoolFeatureTool` (Y — toshi/whatsapp/schoolpay), `UpdateSystemSettingsTool` (conditional: access keys Y, display keys N). Registered on `PlatformOperationsAgent`. Livewire SubscriptionForm / Subscriptions approve / SystemSettings wired through services. Tests: `PlatformSubscriptionToolsTest` + `PlatformSettingsToolsTest` (18 passed).
+- **Approvable judgment**: create sub = not destructive; approve/cancel = billing access; all feature toggles = access/integrations; system settings access trio (`maintenance`/`login_status`/`register_status`) = HITL, cosmetic display keys skip.
+- **Status**: ✅ Done
+
+### 2026-08-01: Toshi Phase 1.5 — migrate Approvable polyfill → native laravel/ai ^0.10 HITL
+- **Work done**: Bumped `laravel/ai` **0.9.0 → 0.10.2**. Published + ran `agent_conversations` / `agent_conversation_messages` migration. Plan tools (`CreatePlanTool` / `UpdatePlanTool`) use native `Laravel\Ai\Contracts\Approvable` + `InteractsWithApprovals` + `needsApproval()` / `Approval::required()`. Listeners switched to native `ToolApprovalRequested`, `ToolApprovalResolved`, `InvokingTool`, `ToolInvoked`. Platform tool tests rewritten against agent ToolCall fake + resume via `Decisions::from` / `Decision::approve()` (17 passed). Scope-router comments fixed (not SDK Sub-Agents). Polyfill under `App\Ai\{Contracts,Concerns,Approvals,Events}` and `PlatformToolInvoker` removed after green tests.
+- **(a) Migration column**: `agent_conversation_messages.approval_state` (nullable text) — confirmed from published vendor migration.
+- **(b) Custom ConversationStore**: none — default `DatabaseConversationStore` already implements `storeApprovalResults`.
+- **(c) Doc vs package**: no blocking mismatch; `approval_state` matches both. Doc Events list matches package. Fake gateway skips real tool resume (`resumesAgainstRealGateway`) — tests clear fake + Http::fake for post-approve continuation.
+- **Status**: ✅ Done (superseded by later Phase 1 slices on same branch)
+
+### 2026-08-01: Toshi Phase 1 PARTIAL — Geo + Plans + Schools tools (STOP before Subscriptions+)
+- **Work done**: Extracted `CountryService` / `CityService` / `PlanService` / `SchoolService` from Livewire mutators. Added `app/Ai/Tools/Superadmin/*` (8 tools), `PlatformOperationsAgent`. Wired platform scope in `ToshiSdkV2Service` → `PlatformOperationsAgent` (AgentToshi unchanged — already passes `ToshiScope::Platform`). Later Phase 1.5 replaced polyfill with native HITL. Tests: Geo/Plans/Schools (16 passed initially).
+- **Status**: ✅ Absorbed into full Phase 1 on branch
+
+### 2026-07-31: Toshi Phase 0 — platform-scope authorization scaffolding
+- **Work done**: Added `ToshiScope` (School|Platform), `ToshiAvailabilityGate`, wired `ToshiSdkV2Service::isAvailable/ask/askStreamed` with default School scope (byte-identical school behaviour). AgentToshi passes Platform when `$this->scope === 'platform'`. Config `toshi.platform_gate` (enabled + optional user_ids allowlist). **No** business tools; **no** bypass of `per_school_gate`.
+- **Gate decision**: **Config allowlist** (`TOSHI_PLATFORM_GATE_ENABLED` + optional `TOSHI_PLATFORM_USER_IDS`) — not a users column (none exists), not FeatureToggles (school_id-scoped only).
+- **Files modified**: `app/Enums/ToshiScope.php`, `app/Services/Toshi/ToshiAvailabilityGate.php`, `app/AiAgents/ToshiSdkV2Service.php`, `app/Livewire/AgentToshi.php`, `config/toshi.php`, `.env.example`, `tests/Feature/Toshi/ToshiAvailabilityGateTest.php`
+- **Branch**: folded into `feature/toshi-platform-tools` (gate commit `cc35f38`)
+- **Status**: ✅ Done — included in pushed feature branch
 
 ### 2026-07-31: Merge fix/superadmin-audit-triage → main (audit CLOSED on main)
 - **Work done**: Pre-merge gate (fetch; **0 behind / 3 ahead** vs `origin/main`; PHPUnit **247 passed / 1 skipped / 1 failed** ToshiE2E; `npm run build` PASS; clean tree after discarding `public/build` junk) then no-ff merge into `main`. Post-merge PHPUnit same; build PASS. High-stakes verify as siteadmin: ChangePassword → real HTTP login with new password → restore; all 4 Filament lists HTTP **200**; country create Livewire → DB row **id=12** `TriageLand…`. Soft-deleted disposable co-admin **id=173**. Knowledge closeout + sync to KlassApp (this commit).

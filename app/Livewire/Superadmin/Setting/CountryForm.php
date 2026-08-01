@@ -4,6 +4,7 @@ namespace App\Livewire\Superadmin\Setting;
 
 use Livewire\Component;
 use App\Models\Country;
+use App\Services\Superadmin\CountryService;
 use Livewire\Attributes\Rule;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 
@@ -54,12 +55,14 @@ class CountryForm extends Component
 			'status' => $this->status,
 		];
 
+		$service = app(CountryService::class);
+
 		if ($this->countryEditId == '') {
-			Country::create($data);
+			$service->create($data);
 
 			$this->alert('success', 'Country added successfully');
 		} else {
-			Country::where('id', $this->countryEditId)->update($data);
+			$service->update((int) $this->countryEditId, $data);
 
 			$this->alert('success', 'Country updated successfully');
 		}

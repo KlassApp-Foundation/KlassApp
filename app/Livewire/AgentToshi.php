@@ -983,6 +983,7 @@ class AgentToshi extends Component
         \App\Models\User $user,
         string $text,
         array $history,
+        \App\Enums\ToshiScope $scope = \App\Enums\ToshiScope::School,
     ): ?string {
         // Generate a stable stream ID for the x-stream key
         $this->streamingMessageId = 'ts-' . md5($text . microtime());
@@ -1003,6 +1004,7 @@ class AgentToshi extends Component
             $text,
             $history,
             fn (string $chunk) => $this->stream($this->streamingMessageId, $chunk, false),
+            $scope,
         );
 
         if ($response !== null) {
@@ -2446,14 +2448,20 @@ class AgentToshi extends Component
         if (config('toshi.sdk_v2_enabled', false)) {
             try {
                 $service = app(\App\AiAgents\ToshiSdkV2Service::class);
-                if ($service->isAvailable($user, $this->schoolId) && $service->consumeBudget($user, $this->schoolId)) {
+                // Platform scope for siteadmin; school scope otherwise (default).
+                // getRoleCapabilities() scope is advisory UI context — the real
+                // auth boundary is ToshiAvailabilityGate via isAvailable($scope).
+                $sdkScope = $this->scope === 'platform'
+                    ? \App\Enums\ToshiScope::Platform
+                    : \App\Enums\ToshiScope::School;
+                if ($service->isAvailable($user, $this->schoolId, $sdkScope) && $service->consumeBudget($user, $this->schoolId)) {
 
                     // Streaming path: pushes tokens to the browser in real-time
                     // via Livewire's stream() + Alpine x-stream.
                     if (config('toshi.streaming_enabled', false)) {
-                        $response = $this->handleStreamedQuery($service, $user, $text, $history);
+                        $response = $this->handleStreamedQuery($service, $user, $text, $history, $sdkScope);
                     } else {
-                        $response = $service->ask($user, $this->schoolId, $text, $history);
+                        $response = $service->ask($user, $this->schoolId, $text, $history, $sdkScope);
                     }
 
                     if ($response !== null) {

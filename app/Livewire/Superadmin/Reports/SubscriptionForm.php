@@ -7,6 +7,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Models\Plan;
 use App\Models\School;
+use App\Services\Superadmin\SubscriptionService;
 use Livewire\Attributes\Rule;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 
@@ -61,9 +62,11 @@ class SubscriptionForm extends Component
 			'status' => $this->status,
 		];
 
+		$service = app(SubscriptionService::class);
+
 		if($this->subscriptionEditId == '')
 		{
-			Subscription::create($data);
+			$service->create($data);
 
 			//session()->flash('message', 'Subscription added successfully');
 
@@ -71,7 +74,7 @@ class SubscriptionForm extends Component
 		}
 		else
 		{
-			Subscription::where('id', $this->subscriptionEditId)->update($data);
+			$service->update((int) $this->subscriptionEditId, $data);
 
 			//session()->flash('message', 'Subscription updated successfully');
 

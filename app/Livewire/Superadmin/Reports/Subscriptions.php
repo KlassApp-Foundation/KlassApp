@@ -11,7 +11,6 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\Action;
 use App\Models\Subscription;
-use Carbon\Carbon;
 
 class Subscriptions extends Component implements HasForms, HasTable
 {	
@@ -100,13 +99,7 @@ class Subscriptions extends Component implements HasForms, HasTable
                 Action::make('approve')
                 ->visible(fn (Subscription $record) => $record->status === 'pending')
                 ->action(function (Subscription $record) {
-                $startDate = Carbon::today();
-
-                $record->update([
-                    'status' => 'approved',
-                    'start_date' => $startDate,
-                    'end_date' => $startDate->copy()->addMonth(),
-                ]);
+                    app(\App\Services\Superadmin\SubscriptionService::class)->approve($record->id);
                     session()->flash('message', 'Subscription approved successfully.');
                 })
                 ->color('success')

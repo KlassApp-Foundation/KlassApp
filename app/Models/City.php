@@ -24,7 +24,7 @@ class City extends Model
      * @var array
      */
     protected $fillable = [
-        'country_id' , 'name' , 'status'
+        'country_id' , 'state_id' , 'name' , 'status'
     ];
 
     public function country()

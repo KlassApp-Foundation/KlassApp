@@ -3,7 +3,7 @@
 namespace App\Livewire\Superadmin\Settings;
 
 use Livewire\Component;
-use App\Models\Setting;
+use App\Services\Superadmin\SystemSettingsService;
 
 class SystemSettings extends Component
 {
@@ -17,19 +17,23 @@ class SystemSettings extends Component
 
     public function mount()
     {
-        foreach (['sitetitle', 'sitename', 'sitelogo', 'favicon', 'maintenance', 'login_status', 'register_status'] as $key) {
-            $setting = Setting::where('key', $key)->first();
-            $this->$key = $setting ? $setting->value : '';
+        $values = app(SystemSettingsService::class)->all();
+        foreach ($values as $key => $value) {
+            $this->$key = $value !== '' ? $value : $this->$key;
         }
     }
 
     public function save()
     {
-        foreach (['sitetitle', 'sitename', 'sitelogo', 'favicon', 'maintenance', 'login_status', 'register_status'] as $key) {
-            Setting::updateOrCreate(['key' => $key], ['value' => $this->$key]);
-        }
-        // Clear cached config so changes take effect immediately
-        \Illuminate\Support\Facades\Config::set('settings.login_status', $this->login_status);
+        app(SystemSettingsService::class)->save([
+            'sitetitle' => $this->sitetitle,
+            'sitename' => $this->sitename,
+            'sitelogo' => $this->sitelogo,
+            'favicon' => $this->favicon,
+            'maintenance' => $this->maintenance,
+            'login_status' => $this->login_status,
+            'register_status' => $this->register_status,
+        ]);
         session()->flash('message', 'Settings saved.');
     }
 
