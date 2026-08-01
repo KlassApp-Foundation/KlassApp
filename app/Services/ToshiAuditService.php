@@ -14,6 +14,11 @@ use App\Models\User;
  * school-scoping. This is the only path that writes to activity_log for Toshi —
  * no stray logging in individual tools or elsewhere.
  *
+ * Identity fields (platform HITL):
+ * - causer_id / acting_user_id — conversation participant (forUser / continue as:)
+ * - approver_id — authenticated user who resolved an approval (null when N/A)
+ * These must stay distinguishable even under self-approve (same person, two fields).
+ *
  * @see \App\Livewire\AgentToshi::executeConfirmedTool()  — the single execution point
  * @see \App\Livewire\AgentToshi::confirmNo()              — the single cancel point
  */
@@ -33,8 +38,10 @@ class ToshiAuditService
         string $toolName,
         array $arguments,
         string $result,
+        ?User $approver = null,
+        ?User $actingUser = null,
     ): ActivityLog {
-        $success = !str_starts_with($result, '❌');
+        $success = ! str_starts_with($result, '❌');
 
         return self::write(
             user: $user,
@@ -44,6 +51,8 @@ class ToshiAuditService
             arguments: $arguments,
             status: $success ? 'success' : 'failed',
             result: $result,
+            actingUser: $actingUser ?? $user,
+            approver: $approver,
         );
     }
 
@@ -58,6 +67,7 @@ class ToshiAuditService
         ?School $school,
         string $toolName,
         array $arguments,
+        ?User $actingUser = null,
     ): ActivityLog {
         return self::write(
             user: $user,
@@ -67,6 +77,8 @@ class ToshiAuditService
             arguments: $arguments,
             status: 'cancelled',
             result: 'User cancelled — no changes made.',
+            actingUser: $actingUser ?? $user,
+            approver: null,
         );
     }
 
@@ -81,6 +93,7 @@ class ToshiAuditService
         string $toolName,
         array $arguments,
         ?string $reason = null,
+        ?User $actingUser = null,
     ): ActivityLog {
         return self::write(
             user: $user,
@@ -90,6 +103,8 @@ class ToshiAuditService
             arguments: $arguments,
             status: 'pending_approval',
             result: $reason ?? 'Approval required before mutation.',
+            actingUser: $actingUser ?? $user,
+            approver: null,
         );
     }
 
@@ -103,6 +118,8 @@ class ToshiAuditService
         array $arguments,
         string $result,
         bool $denied = false,
+        ?User $approver = null,
+        ?User $actingUser = null,
     ): ActivityLog {
         return self::write(
             user: $user,
@@ -112,6 +129,8 @@ class ToshiAuditService
             arguments: $arguments,
             status: $denied ? 'approval_rejected' : 'approval_resolved',
             result: $result,
+            actingUser: $actingUser ?? $user,
+            approver: $approver,
         );
     }
 
@@ -123,6 +142,8 @@ class ToshiAuditService
         ?School $school,
         string $toolName,
         array $arguments,
+        ?User $actingUser = null,
+        ?User $approver = null,
     ): ActivityLog {
         return self::write(
             user: $user,
@@ -132,6 +153,8 @@ class ToshiAuditService
             arguments: $arguments,
             status: 'invoking',
             result: 'Tool invocation started.',
+            actingUser: $actingUser ?? $user,
+            approver: $approver,
         );
     }
 
@@ -146,22 +169,29 @@ class ToshiAuditService
         array $arguments,
         string $status,
         string $result,
+        ?User $actingUser = null,
+        ?User $approver = null,
     ): ActivityLog {
+        $acting = $actingUser ?? $user;
+
         return ActivityLog::create([
-            'log_name'    => self::LOG_NAME,
+            'log_name' => self::LOG_NAME,
             'description' => $description,
-            'causer_id'   => $user->id,
+            'causer_id' => $acting->id,
             'causer_type' => User::class,
-            'school_id'   => $school?->id,
-            'subject_id'  => null,
-            'subject_type'=> null,
-            'properties'  => [
-                'tool'      => $toolName,
+            'school_id' => $school?->id,
+            'subject_id' => null,
+            'subject_type' => null,
+            'properties' => [
+                'tool' => $toolName,
                 'arguments' => $arguments,
-                'status'    => $status,
-                'result'    => $result,
+                'status' => $status,
+                'result' => $result,
+                // Distinguishable identity fields (self-approve may share the same id).
+                'acting_user_id' => $acting->id,
+                'approver_id' => $approver?->id,
             ],
-            'batch_uuid'  => null,
+            'batch_uuid' => null,
         ]);
     }
 }

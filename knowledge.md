@@ -236,7 +236,7 @@
 
 | Item | Decision | Why not triage-now |
 |---|---|---|
-| **Toshi platform-scope for superadmin** | **Phase 1 continued** — `feature/toshi-platform-tools` | Phase 0 gate + Geo/Plans/Schools + native HITL + **Subscriptions + FeatureToggles + SystemSettings**. STOPPED before CoAdmins/Impersonation. |
+| **Toshi platform-scope for superadmin** | **Phase 1 continued** — `feature/toshi-platform-tools` | Phase 0 gate + Geo/Plans/Schools + native HITL + Subscriptions/FeatureToggles/SystemSettings + **CoAdmins + Impersonation** (audit identity fields + tools). |
 
 ---
 
@@ -613,6 +613,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-01: CoAdmins + Impersonation tools + audit identity prerequisite
+- **Work done**: Prerequisite audit identity fix — `ToshiAuditService` + Toshi listeners now record distinguishable `properties.acting_user_id` (conversation participant from `forUser` / `continue(..., as:)`) and `properties.approver_id` (auth user on resolve; null on pending). Extracted `CoAdminService` + `ImpersonationService`; Livewire CoAdmins + `ImpersonateController@schoolAdminimpersonate` wired through services. Tools: `CreateCoAdminTool` (N), `DeleteCoAdminTool` (Y), `ResetCoAdminPasswordTool` (Y), `ImpersonateSchoolAdminTool` (Y, never withoutApproval). Registered on `PlatformOperationsAgent`. Tests: `PlatformCoAdminToolsTest` + `PlatformImpersonationToolsTest` + audit trail identity assert (19 passed in that set; ImpersonateController + Ops UI + Subscriptions regression 18 passed).
+- **Impersonation reject zero-trace**: `Decision::reject()` via HTTP approval flow leaves no `session('impersonate')`, no `isImpersonating()`, Auth id unchanged, no `success` audit — only `approval_rejected`.
+- **Spot-check vs Batch E**: Original audit verified start via GET `/schooladmin/{id}/impersonate` (session + Stop UI) and stop clearing `impersonate` → ug1 `/superadmin/dashboard`. Tests assert the same session key / `isImpersonating()` through `ImpersonationService` (controller-wired).
+- **ConversationPolicy**: unchanged.
+- **Doc vs package**: HITL/Events match `laravel/ai` 0.10.x; docs under 13.x path, app Laravel 12 — no blocking mismatch for this slice.
+- **Branch**: `feature/toshi-platform-tools` — not pushed
+- **Status**: ✅ Done for CoAdmins + Impersonation slice
 
 ### 2026-08-01: PlatformOperationsAgent human approval UI (Complete Approval Flow)
 - **Work done**: Added GET/POST `/superadmin/toshi/ops/{conversation}` matching laravel/ai Complete Approval Flow; `PlatformOpsConversationController` + `PlatformOpsConversationService`; Livewire `PlatformApprovalGate` review-gate UI (approve / reject / edit-and-approve); `EnsurePlatformToshiAccess` middleware + `ConversationPolicy` (`view` = participant + `ToshiAvailabilityGate` Platform); `User` uses `HasConversations`. Feature test `PlatformOpsApprovalUiTest` (7 passed: GET pending visible, POST approve mutates, POST reject no mutation, edit, auth denials). CoAdmins / Impersonation **still not started**.

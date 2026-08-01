@@ -2,10 +2,11 @@
 
 namespace App\Livewire\Superadmin\Settings;
 
+use App\Services\Superadmin\CoAdminService;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 
 class CoAdmins extends Component
 {
@@ -35,27 +36,34 @@ class CoAdmins extends Component
 
     public function save()
     {
-        if ($this->editingId) {
-            $this->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|max:255|unique:users,email,' . $this->editingId,
-                'password' => 'nullable|min:6',
-            ]);
-            $data = ['name' => $this->name, 'email' => $this->email];
-            if ($this->password) $data['password'] = Hash::make($this->password);
-            User::find($this->editingId)->update($data);
-            session()->flash('message', 'Co-admin updated.');
-        } else {
-            $this->validate();
-            User::create([
-                'name' => $this->name,
-                'email' => $this->email,
-                'password' => Hash::make($this->password),
-                'usergroup_id' => 2,
-                'status' => 'active',
-            ]);
-            session()->flash('message', 'Co-admin created.');
+        $service = app(CoAdminService::class);
+
+        try {
+            if ($this->editingId) {
+                $service->update((int) $this->editingId, [
+                    'name' => $this->name,
+                    'email' => $this->email,
+                    'password' => $this->password ?: null,
+                ]);
+                session()->flash('message', 'Co-admin updated.');
+            } else {
+                $service->create([
+                    'name' => $this->name,
+                    'email' => $this->email,
+                    'password' => $this->password,
+                ]);
+                session()->flash('message', 'Co-admin created.');
+            }
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $field => $messages) {
+                foreach ($messages as $message) {
+                    $this->addError($field, $message);
+                }
+            }
+
+            return;
         }
+
         $this->reset(['showForm', 'name', 'email', 'password', 'editingId']);
     }
 
@@ -68,26 +76,12 @@ class CoAdmins extends Component
 
     public function delete($id)
     {
-        $currentUser = auth()->user();
-        $target = User::find($id);
-
-        if (!$target) {
-            session()->flash('error', 'User not found.');
-            return;
+        try {
+            app(CoAdminService::class)->delete((int) $id, auth()->user());
+            session()->flash('message', 'Co-admin removed.');
+        } catch (ValidationException $e) {
+            session()->flash('error', collect($e->errors())->flatten()->first() ?? 'Unable to remove co-admin.');
         }
-
-        if ($target->id === $currentUser->id) {
-            session()->flash('error', 'You cannot remove yourself.');
-            return;
-        }
-
-        if ($target->usergroup_id === 1) {
-            session()->flash('error', 'Cannot remove a super admin through this panel.');
-            return;
-        }
-
-        $target->delete();
-        session()->flash('message', 'Co-admin removed.');
     }
 
     public function render()

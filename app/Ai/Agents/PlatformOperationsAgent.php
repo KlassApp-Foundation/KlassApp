@@ -5,10 +5,14 @@ namespace App\Ai\Agents;
 use App\Ai\Tools\Superadmin\ApproveSubscriptionTool;
 use App\Ai\Tools\Superadmin\CancelSubscriptionTool;
 use App\Ai\Tools\Superadmin\CreateCityTool;
+use App\Ai\Tools\Superadmin\CreateCoAdminTool;
 use App\Ai\Tools\Superadmin\CreateCountryTool;
 use App\Ai\Tools\Superadmin\CreatePlanTool;
 use App\Ai\Tools\Superadmin\CreateSchoolTool;
 use App\Ai\Tools\Superadmin\CreateSubscriptionTool;
+use App\Ai\Tools\Superadmin\DeleteCoAdminTool;
+use App\Ai\Tools\Superadmin\ImpersonateSchoolAdminTool;
+use App\Ai\Tools\Superadmin\ResetCoAdminPasswordTool;
 use App\Ai\Tools\Superadmin\ToggleSchoolFeatureTool;
 use App\Ai\Tools\Superadmin\UpdateCityTool;
 use App\Ai\Tools\Superadmin\UpdateCountryTool;
@@ -30,8 +34,8 @@ use Laravel\Ai\Promptable;
  * SDK Sub-Agent (CanActAsTool). Conversational + RemembersConversations required
  * for native laravel/ai HITL approval pause/resume.
  *
- * Phase 1: Geo + Plans + Schools + Subscriptions + FeatureToggles + SystemSettings.
- * Stopped before CoAdmins / Impersonation.
+ * Domains: Geo + Plans + Schools + Subscriptions + FeatureToggles + SystemSettings
+ * + CoAdmins + Impersonation.
  */
 #[MaxSteps(5)]
 #[Timeout(120)]
@@ -62,12 +66,14 @@ You can manage:
 4. **Subscriptions** — create (immediate); approve/cancel (require human approval)
 5. **Feature toggles** — enable/disable toshi/whatsapp/schoolpay per school (require approval)
 6. **System settings** — update display or access settings (access keys require approval)
+7. **Co-admins** — create (immediate); soft-delete and password reset (require approval)
+8. **Impersonation** — impersonate a school admin (always requires approval)
 
 Rules:
 - Use tools for mutations; do not invent IDs.
 - Ask for missing required fields before calling a tool.
 - Approvable tools pause for human approval — tell the user approval is required.
-- Do NOT attempt co-admins or impersonation — those are not available yet.
+- Impersonation is high-risk: always name the target account and wait for approval.
 PROMPT;
     }
 
@@ -87,6 +93,10 @@ PROMPT;
             app(CancelSubscriptionTool::class),
             app(ToggleSchoolFeatureTool::class),
             app(UpdateSystemSettingsTool::class),
+            app(CreateCoAdminTool::class),
+            app(DeleteCoAdminTool::class),
+            app(ResetCoAdminPasswordTool::class),
+            app(ImpersonateSchoolAdminTool::class),
         ];
     }
 

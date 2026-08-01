@@ -2,6 +2,7 @@
 
 namespace App\Listeners\Toshi;
 
+use App\Listeners\Toshi\Concerns\ResolvesToshiAuditIdentity;
 use App\Services\ToshiAuditService;
 use Laravel\Ai\Events\ToolApprovalRequested;
 
@@ -10,11 +11,12 @@ use Laravel\Ai\Events\ToolApprovalRequested;
  */
 class LogToolApprovalRequested
 {
+    use ResolvesToshiAuditIdentity;
+
     public function handle(ToolApprovalRequested $event): void
     {
-        $user = auth()->user()
-            ?? request()->user()
-            ?? $event->conversationUser;
+        $actingUser = $this->conversationUserFromEvent($event->conversationUser, $event->agent);
+        $user = $actingUser ?? $this->authUser();
 
         if (! $user) {
             return;
@@ -27,6 +29,7 @@ class LogToolApprovalRequested
                 toolName: $pending->tool,
                 arguments: $pending->arguments,
                 reason: $pending->reason,
+                actingUser: $actingUser ?? $user,
             );
         }
     }
