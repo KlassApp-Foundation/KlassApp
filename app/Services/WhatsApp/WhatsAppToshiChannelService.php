@@ -13,27 +13,37 @@ use App\AiAgents\WhatsApp\WhatsAppReadOnlyAgent;
 use App\AiAgents\WhatsApp\WhatsAppWriteExclusion;
 use App\Enums\ToshiScope;
 use App\Models\User;
+use App\Models\WhatsAppPendingConfirmation;
 use App\Models\WhatsAppUser;
 use App\Services\Toshi\ToshiAvailabilityGate;
+use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\HasTools;
 
 /**
- * WhatsApp → Toshi channel (Track 1 / Part B read-only).
+ * WhatsApp → Toshi channel (reads + wave-1 allowlisted task writes).
  *
  * Extends the keyword router: only unmatched free-form text reaches here.
  * Maps WhatsAppUser → role OperationsAgent (mirrors ToshiSdkV2Service + Parent).
- * Structural write exclusion via WhatsAppWriteExclusion / WhatsAppReadOnlyAgent.
+ * Structural filtering via WhatsAppWriteExclusion / WhatsAppReadOnlyAgent.
  *
- * Track 2 hook: tryHandlePendingApproval() — confirmation bridge
- * (ty_/tn_ buttons + YES/NO coded token) is intentionally not implemented here.
+ * Wave-1 writes: WRITE_ALLOWLIST tools may return __tier2_confirm; ask() then
+ * dispatches via existing WhatsAppConfirmationBridge::sendConfirmation (no new bridge).
+ * Inbound Approve/Reject is handled by the bridge (controller + tryHandlePendingApproval).
  */
 class WhatsAppToshiChannelService
 {
+    /**
+     * ask() return sentinel: confirmation buttons already sent via the bridge;
+     * the webhook must not fall through to "unknown keyword".
+     */
+    public const CONFIRMATION_DISPATCHED = '__toshi_wa_confirm_dispatched__';
+
     public function __construct(
         private readonly ToshiAvailabilityGate $availabilityGate,
+        private readonly WhatsAppConfirmationBridge $confirmationBridge,
     ) {}
 
     public function isEnabled(): bool
@@ -65,20 +75,19 @@ class WhatsAppToshiChannelService
     }
 
     /**
-     * Track 2 hook — pending approval (button ty_/tn_ ids or typed YES/NO coded reply).
-     * Always returns false in Track 1 so free-form can proceed to Toshi reads.
+     * Track 2 — pending approval (button ty_/tn_ ids or typed YES/NO coded reply).
+     * Delegates to WhatsAppConfirmationBridge (no new bridge logic).
      */
     public function tryHandlePendingApproval(WhatsAppUser $whatsAppUser, string $phone, string $body): bool
     {
-        // TODO(Track 2): resolve opaque token from ty_/tn_ button ids or YES/NO coded reply,
-        // verify phone + user_id, resume Approvable / Tier-2 bypassConfirm, reply, STOP.
-        unset($whatsAppUser, $phone, $body);
-
-        return false;
+        return $this->confirmationBridge->handleInbound($whatsAppUser, $phone, $body);
     }
 
     /**
-     * Ask Toshi for unmatched free-form text. Returns reply text or null on miss/failure.
+     * Ask Toshi for unmatched free-form text.
+     *
+     * Returns reply text, CONFIRMATION_DISPATCHED when a wave-1 write was
+     * routed to the confirmation bridge, or null on miss/failure.
      */
     public function ask(WhatsAppUser $whatsAppUser, string $query): ?string
     {
@@ -105,13 +114,26 @@ class WhatsAppToshiChannelService
                 'query' => substr($query, 0, 100),
             ]);
 
+            // Reset side-channel before each query (mirrors ToshiSdkV2Service).
+            ToshiActionService::$pendingConfirmPayload = null;
+
             if (method_exists($agent, 'run')) {
-                return $agent->run($query);
+                $text = $agent->run($query);
+            } else {
+                $text = $agent->prompt($query)->text;
             }
 
-            $response = $agent->prompt($query);
+            $dispatched = $this->dispatchTier2ConfirmationIfPending($whatsAppUser, $user);
+            if ($dispatched) {
+                return self::CONFIRMATION_DISPATCHED;
+            }
 
-            return $response->text;
+            // Fallback: parse __tier2_confirm from response text if side-channel missed.
+            if (is_string($text) && $this->dispatchTier2ConfirmationFromText($whatsAppUser, $user, $text)) {
+                return self::CONFIRMATION_DISPATCHED;
+            }
+
+            return is_string($text) ? $text : null;
         } catch (\Throwable $e) {
             Log::warning('WhatsApp Toshi channel failed', [
                 'whatsapp_user_id' => $whatsAppUser->id,
@@ -122,11 +144,53 @@ class WhatsAppToshiChannelService
             return null;
         } finally {
             Auth::logout();
+            ToshiActionService::$pendingConfirmPayload = null;
         }
     }
 
     /**
-     * Build the WhatsApp-scoped agent for a user (read-only wrapper applied).
+     * If a ConfirmsBeforeWrite tool stored a pending payload, send Approve/Reject
+     * via the existing confirmation bridge. Returns true when dispatched.
+     */
+    public function dispatchTier2ConfirmationIfPending(WhatsAppUser $whatsAppUser, User $user): bool
+    {
+        $payload = ToshiActionService::$pendingConfirmPayload;
+        if ($payload === null || ! isset($payload['tool'])) {
+            return false;
+        }
+
+        ToshiActionService::$pendingConfirmPayload = null;
+
+        return $this->sendTier2Confirmation($whatsAppUser, $user, $payload);
+    }
+
+    /**
+     * @param  array{tool: string, args?: array<string, mixed>, preview?: string}  $payload
+     */
+    public function sendTier2Confirmation(WhatsAppUser $whatsAppUser, User $user, array $payload): bool
+    {
+        $toolName = (string) ($payload['tool'] ?? '');
+        if ($toolName === '' || $this->confirmationBridge->isBlockedTool($toolName)) {
+            return false;
+        }
+
+        $this->confirmationBridge->sendConfirmation(
+            $whatsAppUser->phone,
+            $user,
+            WhatsAppPendingConfirmation::MECHANISM_TIER2,
+            [
+                'tool' => $toolName,
+                'args' => is_array($payload['args'] ?? null) ? $payload['args'] : [],
+                'preview' => (string) ($payload['preview'] ?? 'Confirm this action?'),
+                'school_id' => $user->school_id,
+            ],
+        );
+
+        return true;
+    }
+
+    /**
+     * Build the WhatsApp-scoped agent for a user (write exclusion applied).
      */
     public function makeAgent(User $user): ?Agent
     {
@@ -205,6 +269,28 @@ class WhatsAppToshiChannelService
         }
 
         return in_array($toolClass, $this->exposedToolClasses($user), true);
+    }
+
+    /**
+     * @param  array{tool?: string, args?: array<string, mixed>, preview?: string}  $decoded
+     */
+    private function dispatchTier2ConfirmationFromText(WhatsAppUser $whatsAppUser, User $user, string $text): bool
+    {
+        $trimmed = ltrim($text);
+        if (! str_starts_with($trimmed, '{"__tier2_confirm')) {
+            return false;
+        }
+
+        $decoded = json_decode($trimmed, true);
+        if (! is_array($decoded) || empty($decoded['__tier2_confirm']) || empty($decoded['tool'])) {
+            return false;
+        }
+
+        return $this->sendTier2Confirmation($whatsAppUser, $user, [
+            'tool' => (string) $decoded['tool'],
+            'args' => is_array($decoded['args'] ?? null) ? $decoded['args'] : [],
+            'preview' => (string) ($decoded['preview'] ?? 'Confirm this action?'),
+        ]);
     }
 
     private function bindAuth(User $user): void

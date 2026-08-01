@@ -26,6 +26,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Ai\Tools\Request;
+use Mockery;
 use Tests\TestCase;
 
 class WhatsAppToshiChannelTest extends TestCase
@@ -240,10 +241,11 @@ class WhatsAppToshiChannelTest extends TestCase
         $this->assertStringContainsString('Fee Balance', $result);
     }
 
-    public function test_write_exclusion_denies_payroll_impersonation_and_confirms_tools(): void
+    public function test_write_exclusion_denies_payroll_impersonation_and_non_allowlisted_confirms(): void
     {
         $this->assertFalse(WhatsAppWriteExclusion::allowsClass(ManagePayrollTool::class));
         $this->assertFalse(WhatsAppWriteExclusion::allowsClass(ImpersonateSchoolAdminTool::class));
+        // Fail-closed: non-allowlisted ConfirmsBeforeWrite still excluded after allowlist lands.
         $this->assertFalse(WhatsAppWriteExclusion::allowsClass(MarkAttendanceTool::class));
         $this->assertFalse(WhatsAppWriteExclusion::allowsClass(RecordPaymentTool::class));
         $this->assertFalse(WhatsAppWriteExclusion::allowsClass(SubmitAssignmentTool::class));
@@ -283,19 +285,27 @@ class WhatsAppToshiChannelTest extends TestCase
         $this->assertTrue($channel->isAvailableFor($this->parent));
     }
 
-    public function test_pending_approval_hook_is_noop_in_track_1(): void
+    public function test_pending_approval_hook_delegates_to_confirmation_bridge(): void
     {
         $channel = app(WhatsAppToshiChannelService::class);
 
+        // Non-coded free-form must not be consumed (bridge returns false).
         $this->assertFalse($channel->tryHandlePendingApproval(
             $this->parentWa,
             $this->parentWa->phone,
-            'YES a7f3k2',
+            'what are my fees?',
         ));
-        $this->assertFalse($channel->tryHandlePendingApproval(
+
+        // Coded YES for a missing token is consumed (fail-closed expiry path).
+        $wa = Mockery::mock(\App\Services\WhatsAppBusinessService::class);
+        $wa->shouldReceive('sendText')->once()->andReturn(['success' => true, 'message_id' => 'x']);
+        $this->app->instance(\App\Services\WhatsAppBusinessService::class, $wa);
+
+        $channel = app(WhatsAppToshiChannelService::class);
+        $this->assertTrue($channel->tryHandlePendingApproval(
             $this->parentWa,
             $this->parentWa->phone,
-            'ty_a7f3k2',
+            'YES a7f3k2xy',
         ));
     }
 

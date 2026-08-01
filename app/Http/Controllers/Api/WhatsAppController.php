@@ -1612,10 +1612,14 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // Option B: unmatched free-form → Toshi (read-only channel). Keywords/OTP/link unchanged.
+        // Option B: unmatched free-form → Toshi (reads + wave-1 allowlisted task writes).
         $toshiChannel = app(\App\Services\WhatsApp\WhatsAppToshiChannelService::class);
         if ($toshiChannel->isAvailableFor($user->user)) {
             $reply = $toshiChannel->ask($user, $body);
+            if ($reply === \App\Services\WhatsApp\WhatsAppToshiChannelService::CONFIRMATION_DISPATCHED) {
+                // Approve/Reject buttons already sent via WhatsAppConfirmationBridge.
+                return;
+            }
             if (is_string($reply) && $reply !== '') {
                 $whatsAppService->sendText(
                     $phone,

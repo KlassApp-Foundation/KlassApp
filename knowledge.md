@@ -5893,3 +5893,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Key decisions**: Option A coded replies (not bare yes/no); allow N open pendings per phone; expiry always replies “This request has expired. Please ask again.”
 - **Status**: ✅ Done — docs commit + push to `audit/toshi-whatsapp-channel`
 - **Edge cases flagged**: Bare yes with multiple pendings must not auto-approve (offer list of codes); keyword escape hatch while confirm open is intentional
+
+### 2026-08-02: WhatsApp writes wave 1 (CreateTask / ManageTasks)
+- **Work done**: Allowlisted five ConfirmsBeforeWrite task tools through `WhatsAppWriteExclusion` (`exclude if ConfirmsBeforeWrite AND NOT allowlisted`; HARD_DENY still wins). Wired channel `ask()` to dispatch `__tier2_confirm` via existing `WhatsAppConfirmationBridge`; `tryHandlePendingApproval` delegates to bridge. Fail-closed + per-role happy/reject/expired/audit tests.
+- **Files modified**: `WhatsAppWriteExclusion.php`, `WhatsAppReadOnlyAgent.php`, `WhatsAppToshiChannelService.php`, `WhatsAppController.php`, `config/toshi.php`, `WhatsAppToshiChannelTest.php`, `WhatsAppWritesWave1Test.php` (new), `knowledge.md`
+- **Key decisions**: Named class allowlist (not dropping ConfirmsBeforeWrite from tools); no new bridge; School Admin + Parent excluded from wave 1
+- **Status**: ✅ Done — local branch only, not pushed
+- **Edge cases flagged**: `ask()` returns `CONFIRMATION_DISPATCHED` sentinel so webhook does not fall through to unknown-keyword after buttons send
