@@ -62,6 +62,10 @@ class AgentToshi extends Component
         'toolTeacherApplyLeave' => \App\AiAgents\Tools\Teacher\ApplyLeaveTool::class,
         'toolTeacherCreateClassWallPost' => \App\AiAgents\Tools\Teacher\CreateClassWallPostTool::class,
         'toolTeacherCreateTask' => \App\AiAgents\Tools\Teacher\CreateTaskTool::class,
+        // AccountantOperationsAgent confirm keys (ug11)
+        'toolAccountantRecordPayment' => \App\AiAgents\Tools\Accountant\RecordPaymentTool::class,
+        'toolAccountantManagePayroll' => \App\AiAgents\Tools\Accountant\ManagePayrollTool::class,
+        'toolAccountantCreateTask' => \App\AiAgents\Tools\Accountant\CreateTaskTool::class,
     ];
 
     public $step = 0;

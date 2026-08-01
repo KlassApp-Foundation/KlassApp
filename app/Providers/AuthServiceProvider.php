@@ -211,5 +211,22 @@ class AuthServiceProvider extends ServiceProvider
 
             return \Illuminate\Auth\Access\Response::deny('You are not authorized for this teacher action.');
         });
+
+        // Accountant-scoped Toshi tools only (ug11). Do not widen toshi-school-action
+        // or toshi-teacher-action — isolation via AccountantOperationsAgent::tools().
+        Gate::define('toshi-accountant-action', function (User $user): \Illuminate\Auth\Access\Response {
+            if ($user->usergroup_id === 11 && $user->school_id) {
+                return \Illuminate\Auth\Access\Response::allow();
+            }
+
+            if ($user->usergroup_id === 1 && $user->isImpersonating()) {
+                $impersonated = User::find(\Session::get('impersonate'));
+                if ($impersonated && $impersonated->usergroup_id === 11 && $impersonated->school_id) {
+                    return \Illuminate\Auth\Access\Response::allow();
+                }
+            }
+
+            return \Illuminate\Auth\Access\Response::deny('You are not authorized for this accountant action.');
+        });
     }
 }
