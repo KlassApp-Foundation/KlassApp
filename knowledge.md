@@ -614,6 +614,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-01: Toshi Phase 1 PARTIAL — Geo + Plans + Schools tools (STOP before Subscriptions+)
+- **Work done**: Extracted `CountryService` / `CityService` / `PlanService` / `SchoolService` from Livewire mutators. Added `app/Ai/Tools/Superadmin/*` (8 tools), `PlatformOperationsAgent`, `PlatformToolInvoker` with Approvable polyfill for Plans (`Decision::approve`/`reject`). Wired platform scope in `ToshiSdkV2Service` → `PlatformOperationsAgent` (AgentToshi unchanged — already passes `ToshiScope::Platform`). `ToolInvoked` + `ToolApprovalRequested` → `ToshiAuditService`. Tests: Geo/Plans/Schools (16 passed).
+- **Approvable note**: Installed `laravel/ai` is **0.9** (no native Approvable). Polyfill under `App\Ai\{Contracts,Concerns,Approvals}` mirrors 0.10 API. Bump to ^0.10 needed for agent-loop pause/resume.
+- **STOP**: Subscriptions, FeatureToggles, SystemSettings, CoAdmins, Impersonation **not** implemented.
+- **Branch**: `feature/toshi-platform-tools` (from `feature/toshi-platform-gate` @ `cc35f38`) — commit `e4819e3`
+- **Status**: ⏸️ STOP for Tool/Approvable pattern review — not pushed
+
 ### 2026-07-31: Toshi Phase 0 — platform-scope authorization scaffolding
 - **Work done**: Added `ToshiScope` (School|Platform), `ToshiAvailabilityGate`, wired `ToshiSdkV2Service::isAvailable/ask/askStreamed` with default School scope (byte-identical school behaviour). AgentToshi passes Platform when `$this->scope === 'platform'`. Config `toshi.platform_gate` (enabled + optional user_ids allowlist). **No** business tools; **no** bypass of `per_school_gate`.
 - **Gate decision**: **Config allowlist** (`TOSHI_PLATFORM_GATE_ENABLED` + optional `TOSHI_PLATFORM_USER_IDS`) — not a users column (none exists), not FeatureToggles (school_id-scoped only).
