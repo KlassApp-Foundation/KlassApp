@@ -114,10 +114,17 @@ class PostsController extends Controller
      */
     public function show($id)
     {
-        //
-        $post = Post::where('id',$id)->first();
+        $post = Post::where('id', $id)->first();
 
-        return view('/admin/classwall/post/show' , ['post' => $post]);
+        if ($post === null) {
+            abort(404);
+        }
+
+        if (! Gate::allows('post', $post)) {
+            abort(403);
+        }
+
+        return view('/admin/classwall/post/show', ['post' => $post]);
     }
 
     /**
@@ -128,45 +135,37 @@ class PostsController extends Controller
      */
     public function destroy($id)
     {
-        //
-        try
-        {
-            $post = Post::where('id',$id)->first();
-            if(Gate::allows('post',$post))
-            {
-                if($post->created_by == Auth::id())
-                {
-                    $post->status  = 'cancelled';
-                    $post->save();
+        $post = Post::where('id', $id)->first();
 
-                    $post->delete();
-
-                    $message=trans('messages.delete_success_msg',['module' => 'Post']);
-
-
-                    $ip= $this->getRequestIP();
-                    $this->doActivityLog(
-                        $post,
-                        Auth::user(),
-                        ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                        LOGNAME_DELETE_POST,
-                        $message
-                    );
-                    $res['success'] = $message;
-                    return $res;
-                }
-                else
-                {
-                    abort(403);
-                }
-            }
-            else
-            {
-                abort(403);
-            }
+        if ($post === null) {
+            abort(404);
         }
-        catch(Exception $e)
-        {
+
+        // Authorize outside try/catch so 403 is not swallowed by Exception handler.
+        if (! Gate::allows('post-destroy', $post)) {
+            abort(403);
+        }
+
+        try {
+            $post->status = 'cancelled';
+            $post->save();
+
+            $post->delete();
+
+            $message = trans('messages.delete_success_msg', ['module' => 'Post']);
+
+            $ip = $this->getRequestIP();
+            $this->doActivityLog(
+                $post,
+                Auth::user(),
+                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT']],
+                LOGNAME_DELETE_POST,
+                $message
+            );
+            $res['success'] = $message;
+
+            return $res;
+        } catch (Exception $e) {
             //dd($e->getMessage());
         }
     }

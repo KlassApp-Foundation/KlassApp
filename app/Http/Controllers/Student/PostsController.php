@@ -8,6 +8,7 @@ namespace App\Http\Controllers\Student;
 use App\Http\Resources\Classwall\Post as PostResource;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
 use App\Helpers\SiteHelper;
 use App\Models\PostComment;
@@ -110,10 +111,17 @@ class PostsController extends Controller
      */
     public function show($id)
     {
-        //
-        $post = Post::where('id',$id)->first();
+        $post = Post::where('id', $id)->first();
 
-        return view('/student/classwall/post/show' , ['post' => $post]);
+        if ($post === null) {
+            abort(404);
+        }
+
+        if (! Gate::allows('post', $post)) {
+            abort(403);
+        }
+
+        return view('/student/classwall/post/show', ['post' => $post]);
     }
 
     /**

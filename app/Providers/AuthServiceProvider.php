@@ -99,8 +99,36 @@ class AuthServiceProvider extends ServiceProvider
         return $user->school_id == $notice->school_id;
       });
 
+      // Read/show: school_id match for any role that can view classwall.
       Gate::define('post', function ($user, $post) {
-        return $user->school_id == $post->school_id;
+        if ($post === null) {
+          return false;
+        }
+
+        return (int) $user->school_id === (int) $post->school_id;
+      });
+
+      // Destroy: author, or ug3 moderate-delete in same school, or ug1 unscoped.
+      // ug1 evidence: MustBeSchoolAdmin lets SiteAdmin onto /admin/* (including
+      // classwall post destroy); MustBeTeacher redirects ug1 away from /teacher/*.
+      Gate::define('post-destroy', function ($user, $post) {
+        if ($post === null) {
+          return false;
+        }
+
+        if ((int) $post->created_by === (int) $user->id) {
+          return true;
+        }
+
+        if ((int) $user->usergroup_id === 1) {
+          return true;
+        }
+
+        if ((int) $user->usergroup_id === 3) {
+          return (int) $user->school_id === (int) $post->school_id;
+        }
+
+        return false;
       });
 
       Gate::define('post_reply', function ($user, $post) {
