@@ -71,8 +71,8 @@ class ToshiSdkV2Service
             // Reset the side-channel before each query
             \App\Services\ToshiActionService::$pendingConfirmPayload = null;
 
-            // Platform scope → PlatformOperationsAgent (Geo/Plans/Schools).
-            // School scope → ToshiOrchestrator (unchanged).
+            // Scope router: Platform → PlatformOperationsAgent (Geo/Plans/Schools).
+            // School → ToshiOrchestrator (unchanged). Not laravel/ai Sub-Agents / CanActAsTool.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
                 : new ToshiOrchestrator;
@@ -136,6 +136,7 @@ class ToshiSdkV2Service
         try {
             \App\Services\ToshiActionService::$pendingConfirmPayload = null;
 
+            // Scope router (same as ask()) — not an SDK Sub-Agent.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
                 : new ToshiOrchestrator;

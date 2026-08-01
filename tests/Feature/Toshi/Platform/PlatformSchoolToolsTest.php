@@ -10,9 +10,9 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\School;
 use App\Models\User;
-use App\Services\Toshi\PlatformToolInvoker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Laravel\Ai\Responses\Data\ToolCall;
 use Laravel\Ai\Tools\Request;
 use Tests\TestCase;
 
@@ -82,15 +82,17 @@ class PlatformSchoolToolsTest extends TestCase
         $this->actingAs($this->siteadmin);
 
         $args = $this->schoolArgs();
-        $outcome = app(PlatformToolInvoker::class)->invoke(
-            app(CreateSchoolTool::class),
-            $args,
-            null,
-            new PlatformOperationsAgent,
-        );
 
-        $this->assertSame('executed', $outcome['status']);
-        $this->assertStringContainsString('School created', $outcome['result']);
+        PlatformOperationsAgent::fake([
+            new ToolCall('call_school_1', 'CreateSchoolTool', $args),
+            'School created.',
+        ]);
+
+        $response = (new PlatformOperationsAgent)
+            ->forUser($this->siteadmin)
+            ->prompt('Create school BatchA Audit School.');
+
+        $this->assertFalse($response->hasPendingApprovals());
         $this->assertDatabaseHas('schools', [
             'name' => 'BatchA Audit School',
             'email' => $args['email'],
@@ -130,13 +132,8 @@ class PlatformSchoolToolsTest extends TestCase
         $this->actingAs($this->siteadmin);
 
         $createArgs = $this->schoolArgs(['email' => 'update.school.'.uniqid().'@example.com']);
-        $create = app(PlatformToolInvoker::class)->invoke(
-            app(CreateSchoolTool::class),
-            $createArgs,
-            null,
-            new PlatformOperationsAgent,
-        );
-        $this->assertSame('executed', $create['status']);
+        $create = (string) app(CreateSchoolTool::class)->handle(new Request($createArgs));
+        $this->assertStringContainsString('School created', $create);
 
         $school = School::where('email', $createArgs['email'])->firstOrFail();
 

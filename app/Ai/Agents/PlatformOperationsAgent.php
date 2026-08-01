@@ -21,6 +21,10 @@ use Laravel\Ai\Promptable;
 /**
  * Platform-scope Toshi agent (siteadmin).
  *
+ * Selected by ToshiSdkV2Service scope router when ToshiScope::Platform — not an
+ * SDK Sub-Agent (CanActAsTool). Conversational + RemembersConversations required
+ * for native laravel/ai HITL approval pause/resume.
+ *
  * Phase 1 partial: Geo + Plans + Schools only.
  * Stopped before Subscriptions, FeatureToggles, SystemSettings, CoAdmins, Impersonation.
  */

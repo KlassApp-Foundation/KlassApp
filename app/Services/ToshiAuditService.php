@@ -73,8 +73,7 @@ class ToshiAuditService
     /**
      * Log an Approvable tool pausing for human approval (platform Plan tools).
      *
-     * School executeConfirmedTool() call sites are unchanged — this is additive
-     * for PlatformToolInvoker / ToolApprovalRequested listeners.
+     * Listens to native Laravel\Ai\Events\ToolApprovalRequested.
      */
     public static function logApprovalRequested(
         User $user,
@@ -91,6 +90,48 @@ class ToshiAuditService
             arguments: $arguments,
             status: 'pending_approval',
             result: $reason ?? 'Approval required before mutation.',
+        );
+    }
+
+    /**
+     * Log a resolved HITL approval (native Laravel\Ai\Events\ToolApprovalResolved).
+     */
+    public static function logApprovalResolved(
+        User $user,
+        ?School $school,
+        string $toolName,
+        array $arguments,
+        string $result,
+        bool $denied = false,
+    ): ActivityLog {
+        return self::write(
+            user: $user,
+            school: $school,
+            toolName: $toolName,
+            description: $denied ? "Approval rejected for {$toolName}" : "Approval resolved for {$toolName}",
+            arguments: $arguments,
+            status: $denied ? 'approval_rejected' : 'approval_resolved',
+            result: $result,
+        );
+    }
+
+    /**
+     * Log native Laravel\Ai\Events\InvokingTool (pre-execute).
+     */
+    public static function logInvoking(
+        User $user,
+        ?School $school,
+        string $toolName,
+        array $arguments,
+    ): ActivityLog {
+        return self::write(
+            user: $user,
+            school: $school,
+            toolName: $toolName,
+            description: "Invoking {$toolName}",
+            arguments: $arguments,
+            status: 'invoking',
+            result: 'Tool invocation started.',
         );
     }
 

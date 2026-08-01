@@ -2,20 +2,19 @@
 
 namespace App\Ai\Tools\Superadmin;
 
-use App\Ai\Approvals\Approval;
 use App\Ai\Concerns\AuthorizesPlatformAction;
-use App\Ai\Concerns\InteractsWithApprovals;
-use App\Ai\Contracts\Approvable;
 use App\Services\Superadmin\PlanService;
-use App\Services\Toshi\PlatformToolInvoker;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Validation\ValidationException;
+use Laravel\Ai\Approvals\Approval;
+use Laravel\Ai\Concerns\InteractsWithApprovals;
+use Laravel\Ai\Contracts\Approvable;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
 
 /**
- * Updates a billing plan. Approvable — plan mutation is in the Phase 1 approval set.
+ * Updates a billing plan. Approvable — plan mutation is in the Phase 1.5 approval set.
  * Do not use withoutApproval() on this tool.
  */
 class UpdatePlanTool implements Approvable, Tool
@@ -64,10 +63,6 @@ class UpdatePlanTool implements Approvable, Tool
 
     public function handle(Request $request): Stringable|string
     {
-        if (! PlatformToolInvoker::isExecutionApproved()) {
-            return '❌ Plan update requires human approval before execution (Decision::approve).';
-        }
-
         $user = auth()->user() ?? request()->user();
         if ($error = $this->authorizeOrMessage($user)) {
             return $error;

@@ -3,16 +3,21 @@
 namespace Tests\Feature\Toshi\Platform;
 
 use App\Ai\Agents\PlatformOperationsAgent;
-use App\Ai\Approvals\Decision;
 use App\Ai\Tools\Superadmin\CreatePlanTool;
 use App\Ai\Tools\Superadmin\UpdatePlanTool;
 use App\Models\ActivityLog;
 use App\Models\Plan;
 use App\Models\User;
-use App\Services\Toshi\PlatformToolInvoker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Laravel\Ai\Ai;
+use Laravel\Ai\Approvals\Decision;
+use Laravel\Ai\Approvals\Decisions;
+use Laravel\Ai\Prompts\AgentPrompt;
+use Laravel\Ai\Responses\Data\ToolCall;
 use Laravel\Ai\Tools\Request;
+use ReflectionProperty;
 use Tests\TestCase;
 
 class PlatformPlanToolsTest extends TestCase
@@ -57,15 +62,20 @@ class PlatformPlanToolsTest extends TestCase
     {
         $this->actingAs($this->siteadmin);
 
-        $tool = app(CreatePlanTool::class);
         $args = $this->planArgs();
-        $agent = new PlatformOperationsAgent;
 
-        $pending = app(PlatformToolInvoker::class)->invoke($tool, $args, null, $agent);
+        PlatformOperationsAgent::fake([
+            new ToolCall('call_plan_pending', 'CreatePlanTool', $args),
+        ]);
 
-        $this->assertSame('pending_approval', $pending['status']);
-        $this->assertNotNull($pending['pending']);
-        $this->assertStringContainsString('billing', strtolower((string) $pending['pending']->reason));
+        $response = (new PlatformOperationsAgent)
+            ->forUser($this->siteadmin)
+            ->prompt('Create billing plan BatchA Plan.');
+
+        $this->assertTrue($response->hasPendingApprovals());
+        $pending = $response->pendingApprovals->first();
+        $this->assertSame('CreatePlanTool', $pending->tool);
+        $this->assertStringContainsString('billing', strtolower((string) $pending->reason));
         $this->assertSame(0, Plan::where('name', 'BatchA Plan')->count());
 
         $this->assertTrue(
@@ -77,23 +87,37 @@ class PlatformPlanToolsTest extends TestCase
         );
     }
 
-    public function test_create_plan_mutates_only_after_decision_approve(): void
+    public function test_create_plan_mutates_only_after_decision_approve_resume(): void
     {
         $this->actingAs($this->siteadmin);
 
-        $tool = app(CreatePlanTool::class);
         $args = $this->planArgs(['name' => 'Approved Plan', 'amount' => 99]);
-        $agent = new PlatformOperationsAgent;
-        $invoker = app(PlatformToolInvoker::class);
 
-        $before = $invoker->invoke($tool, $args, null, $agent);
-        $this->assertSame('pending_approval', $before['status']);
+        PlatformOperationsAgent::fake([
+            new ToolCall('call_plan_approve', 'CreatePlanTool', $args),
+        ]);
+
+        $paused = (new PlatformOperationsAgent)
+            ->forUser($this->siteadmin)
+            ->prompt('Create Approved Plan.');
+
+        $this->assertTrue($paused->hasPendingApprovals());
         $this->assertDatabaseMissing('plans', ['name' => 'Approved Plan']);
+        $this->assertNotNull($paused->conversationId);
 
-        $after = $invoker->invoke($tool, $args, Decision::approve(), $agent);
+        $approvalId = $paused->pendingApprovals->first()->id;
 
-        $this->assertSame('executed', $after['status']);
-        $this->assertStringContainsString('Plan created', $after['result']);
+        // Agent::fake skips real tool resume; clear fake + stub provider for post-approve continuation.
+        $this->clearAgentFake(PlatformOperationsAgent::class);
+        $this->fakeOpenAiCompatibleCompletion('Plan created after approval.');
+
+        $resumed = (new PlatformOperationsAgent)
+            ->continue($paused->conversationId, as: $this->siteadmin)
+            ->prompt(Decisions::from([
+                $approvalId => Decision::approve(),
+            ]));
+
+        $this->assertFalse($resumed->hasPendingApprovals());
         $this->assertDatabaseHas('plans', [
             'name' => 'Approved Plan',
             'amount' => 99,
@@ -106,59 +130,74 @@ class PlatformPlanToolsTest extends TestCase
                 ->where('properties->status', 'success')
                 ->exists()
         );
+        $this->assertTrue(
+            ActivityLog::where('log_name', 'toshi')
+                ->where('properties->tool', 'CreatePlanTool')
+                ->where('properties->status', 'approval_resolved')
+                ->exists()
+        );
     }
 
     public function test_create_plan_blocked_on_reject(): void
     {
         $this->actingAs($this->siteadmin);
 
-        $tool = app(CreatePlanTool::class);
         $args = $this->planArgs(['name' => 'Rejected Plan']);
-        $agent = new PlatformOperationsAgent;
 
-        $outcome = app(PlatformToolInvoker::class)->invoke(
-            $tool,
-            $args,
-            Decision::reject('Keep existing pricing.'),
-            $agent,
-        );
+        PlatformOperationsAgent::fake([
+            new ToolCall('call_plan_reject', 'CreatePlanTool', $args),
+        ]);
 
-        $this->assertSame('rejected', $outcome['status']);
-        $this->assertStringContainsString('Rejected', $outcome['result']);
+        $paused = (new PlatformOperationsAgent)
+            ->forUser($this->siteadmin)
+            ->prompt('Create Rejected Plan.');
+
+        $this->assertTrue($paused->hasPendingApprovals());
+        $approvalId = $paused->pendingApprovals->first()->id;
+
+        $this->clearAgentFake(PlatformOperationsAgent::class);
+        $this->fakeOpenAiCompatibleCompletion('Understood, plan not created.');
+
+        $resumed = (new PlatformOperationsAgent)
+            ->continue($paused->conversationId, as: $this->siteadmin)
+            ->prompt(Decisions::from([
+                $approvalId => Decision::reject('Keep existing pricing.'),
+            ]));
+
+        $this->assertFalse($resumed->hasPendingApprovals());
         $this->assertDatabaseMissing('plans', ['name' => 'Rejected Plan']);
+        $this->assertTrue(
+            ActivityLog::where('log_name', 'toshi')
+                ->where('properties->tool', 'CreatePlanTool')
+                ->where('properties->status', 'approval_rejected')
+                ->exists()
+        );
     }
 
-    public function test_direct_handle_without_approval_does_not_mutate(): void
+    public function test_needs_approval_returns_approval_instance(): void
     {
-        $this->actingAs($this->siteadmin);
-
-        $result = (string) app(CreatePlanTool::class)->handle(new Request($this->planArgs([
-            'name' => 'Sneaky Plan',
+        $tool = app(CreatePlanTool::class);
+        $approval = $tool->shouldRequestApproval(new Request($this->planArgs([
+            'name' => 'Schema Check',
         ])));
 
-        $this->assertStringContainsString('requires human approval', $result);
-        $this->assertDatabaseMissing('plans', ['name' => 'Sneaky Plan']);
+        $this->assertNotNull($approval);
+        $this->assertStringContainsString('Schema Check', (string) $approval->reason);
     }
 
-    public function test_create_plan_validation_rejection_after_approve(): void
+    public function test_create_plan_validation_rejection_after_approve_via_handle(): void
     {
         $this->actingAs($this->siteadmin);
 
-        $outcome = app(PlatformToolInvoker::class)->invoke(
-            app(CreatePlanTool::class),
-            [
-                'cycle' => 'monthly',
-                'name' => 'Bad Plan',
-                // amount missing
-                'no_of_users' => 1,
-                'no_of_students' => 1,
-            ],
-            Decision::approve(),
-            new PlatformOperationsAgent,
-        );
+        // handle() runs only after native HITL approve; direct call simulates post-approve execution.
+        $result = (string) app(CreatePlanTool::class)->handle(new Request([
+            'cycle' => 'monthly',
+            'name' => 'Bad Plan',
+            'no_of_users' => 1,
+            'no_of_students' => 1,
+        ]));
 
-        $this->assertSame('executed', $outcome['status']);
-        $this->assertStringStartsWith('❌', $outcome['result']);
+        $this->assertStringStartsWith('❌', $result);
         $this->assertDatabaseMissing('plans', ['name' => 'Bad Plan']);
     }
 
@@ -183,20 +222,79 @@ class PlatformPlanToolsTest extends TestCase
             'amount' => 54321,
         ]);
 
-        $invoker = app(PlatformToolInvoker::class);
-        $tool = app(UpdatePlanTool::class);
-        $agent = new PlatformOperationsAgent;
+        PlatformOperationsAgent::fake([
+            new ToolCall('call_plan_update', 'UpdatePlanTool', $args),
+        ]);
 
-        $pending = $invoker->invoke($tool, $args, null, $agent);
-        $this->assertSame('pending_approval', $pending['status']);
+        $paused = (new PlatformOperationsAgent)
+            ->forUser($this->siteadmin)
+            ->prompt('Update Editable plan.');
+
+        $this->assertTrue($paused->hasPendingApprovals());
         $this->assertDatabaseHas('plans', ['id' => $plan->id, 'amount' => 10]);
 
-        $done = $invoker->invoke($tool, $args, Decision::approve(), $agent);
-        $this->assertSame('executed', $done['status']);
+        $this->clearAgentFake(PlatformOperationsAgent::class);
+        $this->fakeOpenAiCompatibleCompletion('Plan updated.');
+
+        (new PlatformOperationsAgent)
+            ->continue($paused->conversationId, as: $this->siteadmin)
+            ->prompt(Decisions::from([
+                $paused->pendingApprovals->first()->id => Decision::approve(),
+            ]));
+
         $this->assertDatabaseHas('plans', [
             'id' => $plan->id,
             'name' => 'Editable Updated',
             'amount' => 54321,
+        ]);
+    }
+
+    public function test_agent_fake_assert_prompted_with_decisions(): void
+    {
+        PlatformOperationsAgent::fake();
+
+        (new PlatformOperationsAgent)->prompt(Decisions::from([
+            'call_abc' => Decision::approve(),
+        ]));
+
+        PlatformOperationsAgent::assertPrompted(function (AgentPrompt $prompt) {
+            return $prompt->hasApprovalDecisions()
+                && $prompt->approvalDecisions->get('call_abc')->isApproved();
+        });
+    }
+
+    /**
+     * laravel/ai skips real tool resume while Agent::fake() is registered.
+     */
+    private function clearAgentFake(string $agentClass): void
+    {
+        $ai = Ai::getFacadeRoot();
+        $prop = new ReflectionProperty($ai, 'fakeAgentGateways');
+        $gateways = $prop->getValue($ai);
+        unset($gateways[$agentClass]);
+        $prop->setValue($ai, $gateways);
+    }
+
+    private function fakeOpenAiCompatibleCompletion(string $content): void
+    {
+        Http::fake([
+            'api.deepseek.com/*' => Http::response([
+                'id' => 'chatcmpl-test',
+                'object' => 'chat.completion',
+                'choices' => [[
+                    'index' => 0,
+                    'message' => [
+                        'role' => 'assistant',
+                        'content' => $content,
+                    ],
+                    'finish_reason' => 'stop',
+                ]],
+                'usage' => [
+                    'prompt_tokens' => 10,
+                    'completion_tokens' => 5,
+                    'total_tokens' => 15,
+                ],
+            ], 200),
         ]);
     }
 }

@@ -2,17 +2,19 @@
 
 namespace App\Listeners\Toshi;
 
-use App\Ai\Events\ToolApprovalRequested;
 use App\Services\ToshiAuditService;
+use Laravel\Ai\Events\ToolApprovalRequested;
 
 /**
- * Audit Approvable tool approval requests (platform Plan tools).
+ * Audit native laravel/ai HITL approval pauses (platform Plan tools).
  */
 class LogToolApprovalRequested
 {
     public function handle(ToolApprovalRequested $event): void
     {
-        $user = auth()->user() ?? request()->user();
+        $user = auth()->user()
+            ?? request()->user()
+            ?? $event->conversationUser;
 
         if (! $user) {
             return;

@@ -3,17 +3,17 @@
 namespace Tests\Feature\Toshi\Platform;
 
 use App\Ai\Agents\PlatformOperationsAgent;
-use App\Ai\Tools\Superadmin\CreateCountryTool;
 use App\Ai\Tools\Superadmin\CreateCityTool;
-use App\Ai\Tools\Superadmin\UpdateCountryTool;
+use App\Ai\Tools\Superadmin\CreateCountryTool;
 use App\Ai\Tools\Superadmin\UpdateCityTool;
+use App\Ai\Tools\Superadmin\UpdateCountryTool;
 use App\Models\ActivityLog;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\User;
-use App\Services\Toshi\PlatformToolInvoker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Laravel\Ai\Responses\Data\ToolCall;
 use Laravel\Ai\Tools\Request;
 use Tests\TestCase;
 
@@ -56,8 +56,6 @@ class PlatformGeoToolsTest extends TestCase
     {
         $this->actingAs($this->siteadmin);
 
-        $agent = new PlatformOperationsAgent;
-        $tool = app(CreateCountryTool::class);
         $args = [
             'name' => 'Testland',
             'short_name' => 'TLND',
@@ -66,10 +64,16 @@ class PlatformGeoToolsTest extends TestCase
             'status' => 1,
         ];
 
-        $outcome = app(PlatformToolInvoker::class)->invoke($tool, $args, null, $agent);
+        PlatformOperationsAgent::fake([
+            new ToolCall('call_geo_1', 'CreateCountryTool', $args),
+            'Country created.',
+        ]);
 
-        $this->assertSame('executed', $outcome['status']);
-        $this->assertStringContainsString('Country created', $outcome['result']);
+        $response = (new PlatformOperationsAgent)
+            ->forUser($this->siteadmin)
+            ->prompt('Create country Testland.');
+
+        $this->assertFalse($response->hasPendingApprovals());
         $this->assertDatabaseHas('countries', [
             'name' => 'Testland',
             'short_name' => 'TLND',

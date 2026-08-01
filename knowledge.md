@@ -614,6 +614,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-01: Toshi Phase 1.5 — migrate Approvable polyfill → native laravel/ai ^0.10 HITL
+- **Work done**: Bumped `laravel/ai` **0.9.0 → 0.10.2**. Published + ran `agent_conversations` / `agent_conversation_messages` migration. Plan tools (`CreatePlanTool` / `UpdatePlanTool`) use native `Laravel\Ai\Contracts\Approvable` + `InteractsWithApprovals` + `needsApproval()` / `Approval::required()`. Listeners switched to native `ToolApprovalRequested`, `ToolApprovalResolved`, `InvokingTool`, `ToolInvoked`. Platform tool tests rewritten against agent ToolCall fake + resume via `Decisions::from` / `Decision::approve()` (17 passed). Scope-router comments fixed (not SDK Sub-Agents). Polyfill + `PlatformToolInvoker` removed in follow-up commit after green tests.
+- **(a) Migration column**: `agent_conversation_messages.approval_state` (nullable text) — confirmed from published vendor migration.
+- **(b) Custom ConversationStore**: none — default `DatabaseConversationStore` already implements `storeApprovalResults`.
+- **(c) Doc vs package**: no blocking mismatch; `approval_state` matches both. Doc Events list matches package. Fake gateway skips real tool resume (`resumesAgainstRealGateway`) — tests clear fake + Http::fake for post-approve continuation.
+- **Branch**: `feature/toshi-platform-tools` — not pushed
+- **Status**: ✅ Done (Phase 1.5 only; Subscriptions+ still deferred)
+
 ### 2026-08-01: Toshi Phase 1 PARTIAL — Geo + Plans + Schools tools (STOP before Subscriptions+)
 - **Work done**: Extracted `CountryService` / `CityService` / `PlanService` / `SchoolService` from Livewire mutators. Added `app/Ai/Tools/Superadmin/*` (8 tools), `PlatformOperationsAgent`, `PlatformToolInvoker` with Approvable polyfill for Plans (`Decision::approve`/`reject`). Wired platform scope in `ToshiSdkV2Service` → `PlatformOperationsAgent` (AgentToshi unchanged — already passes `ToshiScope::Platform`). `ToolInvoked` + `ToolApprovalRequested` → `ToshiAuditService`. Tests: Geo/Plans/Schools (16 passed).
 - **Approvable note**: Installed `laravel/ai` is **0.9** (no native Approvable). Polyfill under `App\Ai\{Contracts,Concerns,Approvals}` mirrors 0.10 API. Bump to ^0.10 needed for agent-loop pause/resume.
