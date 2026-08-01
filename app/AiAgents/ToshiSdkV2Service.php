@@ -72,12 +72,15 @@ class ToshiSdkV2Service
             \App\Services\ToshiActionService::$pendingConfirmPayload = null;
 
             // Scope router (deterministic PHP — not SDK Sub-Agents / CanActAsTool):
-            // Platform → PlatformOperationsAgent; ug5 → TeacherOperationsAgent; else school-admin ToshiOrchestrator.
+            // Platform → PlatformOperationsAgent; ug5 → TeacherOperationsAgent;
+            // ug11 → AccountantOperationsAgent; else school-admin ToshiOrchestrator.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
-                : ((int) $user->usergroup_id === 5
-                    ? new TeacherOperationsAgent
-                    : new ToshiOrchestrator);
+                : match ((int) $user->usergroup_id) {
+                    5 => new TeacherOperationsAgent,
+                    11 => new AccountantOperationsAgent,
+                    default => new ToshiOrchestrator,
+                };
             $response = $agent->run($query);
 
             Log::info('SDK v2 path: agent dispatched', [
@@ -142,9 +145,11 @@ class ToshiSdkV2Service
             // Scope router (same as ask()) — not an SDK Sub-Agent.
             $agent = $scope === ToshiScope::Platform
                 ? new PlatformOperationsAgent
-                : ((int) $user->usergroup_id === 5
-                    ? new TeacherOperationsAgent
-                    : new ToshiOrchestrator);
+                : match ((int) $user->usergroup_id) {
+                    5 => new TeacherOperationsAgent,
+                    11 => new AccountantOperationsAgent,
+                    default => new ToshiOrchestrator,
+                };
             $fullText = '';
 
             $agent

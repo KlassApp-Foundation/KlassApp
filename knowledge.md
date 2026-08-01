@@ -615,6 +615,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-01: AccountantOperationsAgent (ug11) — teacher-pattern clone
+- **Work done**: Branch `feature/toshi-accountant-role` off `origin/main` + cherry-pick teacher commits (`8a5cb5e`, `c759afa`). `AccountantOperationsAgent` + 6 tools via `AccountantActionService` (fee payment, batch payroll, unpaid reports, fee structure, dashboard, tasks). Gate `toshi-accountant-action` (ug11 + ug1→ug11 impersonation). Scope router: ug11 → accountant, ug5 → teacher, else orchestrator. Blade `[1,3,5,11]`. Isolation tests: AddCoAdmin absent; school+teacher Gates deny ug11; accountant Gate allows. Tier-2 confirm sets `approver_id`+`acting_user_id`.
+- **Payroll /batch UI**: Re-checked — blade has full Alpine batch form; knowledge July 10 concluded false alarm (Toshi overlay / wrong role). Status: **fixed / not a layout bug** (evidence: `resources/views/accountant/payroll/batch/index.blade.php` + knowledge investigation).
+- **Confirm bar**: Money tools (payment + payroll) always Tier-2 — **stricter than Teacher** (Teacher writes are operational; accountant money moves cash/statutory payroll).
+- **Status**: ✅ Done on branch — not pushed / not merged
+- **Edge cases flagged**: Next role = Librarian (ug8); do not widen school/teacher Gates
+
 ### 2026-08-01: Push `feature/toshi-platform-tools` + knowledge closeout (Phase 0–1)
 - **Work done**: Updated Current Status / decided-deferred / Superadmin Toshi inventory notes to reflect Phase 0–1 complete on branch. Pushed `feature/toshi-platform-tools` to `origin`. Synced `knowledge.md` to canonical KlassApp workspace. Did **not** merge to `main`.
 - **Branch tip before knowledge commit**: `edc07e5` (CoAdmins + Impersonation + audit identity)

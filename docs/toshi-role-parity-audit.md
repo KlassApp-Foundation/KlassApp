@@ -173,15 +173,15 @@ When false: NL falls through keyword router then `fallbackMessage()` (same soft-
 
 ### (a) Does the pill/panel render?
 
-**No.** `layouts.accountant.layout` → `layouts.app`; same `[1, 3]` gate. No accountant-specific Toshi mount.
+**Yes (on `feature/toshi-accountant-role`).** Blade allowlist is `[1, 3, 5, 11]` in `layouts.app`. Accountant layout extends `layouts.app`, so ug11 mounts `@livewire('agent-toshi')`.
 
 ### (b) `isAvailable()`?
 
-Same as Teacher: UI N/A; Gate would deny ug11 even if mounted. Local accountant id=8 on school 1 → `toshi_enabled=0` → false anyway.
+Same school-flag rules as other roles. Gate `toshi-accountant-action` allows ug11 with `school_id` (and ug1→ug11 impersonation). `toshi-school-action` and `toshi-teacher-action` still deny ug11.
 
 ### (c) NL spot-check
 
-**Cannot run via UI.** Caps claim: `record_payment`, `manage_payroll`, `view_unpaid_reports`, `view_fee_structure`, `view_dashboard`, `manage_tasks`. Only `RecordPaymentTool` exists in the stack — and it is **ug3 Gate-bound**, not accountant-scoped.
+Caps claim: `record_payment`, `manage_payroll`, `view_unpaid_reports`, `view_fee_structure`, `view_dashboard`, `manage_tasks`. Implemented via `AccountantOperationsAgent` + `AccountantActionService` (accountant panel paths — not ug3 `ToshiActionService`).
 
 ### Route inventory (prefix `accountant/`)
 
@@ -191,18 +191,18 @@ Same as Teacher: UI N/A; Gate would deny ug11 even if mounted. Local accountant 
 
 | Capability claim | Toshi? | Panel? |
 |---|---|---|
-| `record_payment` | ❌ (tool exists but Gate=ug3; UI absent) | ✅ `/accountant/fees/...` |
-| `manage_payroll` | ❌ | ✅ large payroll tree |
-| `view_unpaid_reports` | ❌ | ✅ unpaid / payroll reports |
-| `view_fee_structure` | ❌ | ✅ |
-| `view_dashboard` / `manage_tasks` | ❌ | ✅ |
+| `record_payment` | ✅ `Accountant\RecordPaymentTool` (Tier-2 confirm) | ✅ `/accountant/fees/...` |
+| `manage_payroll` | ✅ `ManagePayrollTool` (Tier-2 confirm; batch by template) | ✅ large payroll tree |
+| `view_unpaid_reports` | ✅ `ViewUnpaidReportsTool` (read-only) | ✅ unpaid / payroll reports |
+| `view_fee_structure` | ✅ `ViewFeeStructureTool` (read-only) | ✅ |
+| `view_dashboard` | ✅ `ViewDashboardTool` (read-only) | ✅ |
+| `manage_tasks` | ✅ `CreateTaskTool` (Tier-2 confirm) | ✅ |
 
-**Gap:** full advisory set; payroll entirely uncovered by Toshi tools.
+**Gap:** closed for advisory set on accountant branch. Payroll batch UI false-alarm noted in knowledge (July 10) — blade/content present; overlay/redirect confusion.
 
 ### UI-absence flag
 
-**Intentional** — same `7c4b314` / Blade allowlist. Not a layout bug (accountant correctly extends `layouts.app`).
-
+**Resolved on accountant branch** — Blade `[1, 3, 5, 11]`.
 ---
 
 ## Role 4 — Librarian (usergroup **8** — confirmed via `MustBeLibrarian` + `getRoleCapabilities`)
@@ -333,11 +333,11 @@ Controllers: `BookController`, `BookCategoryController`, `BookLendingController`
 |---|---|---|---|---|---|---|
 | Siteadmin | 1 | yes | platform path (separate branch) | 3 | platform tools on feature branch | n/a |
 | School Admin | 3 | yes | school `toshi_enabled` | 16 | ~26 tools cover 16 | mounts |
-| Teacher | 5 | **no** | school flag; Gate denies | 12 | 0 | **intentional** `7c4b314` |
+| Teacher | 5 | **yes** (teacher/accountant branches) | school flag; `toshi-teacher-action` | 12 | 12 | resolved on teacher branch |
 | Student | 6 | **no** | school flag; Gate denies; scope=`self` | 11 | 0 (admin tools ≠ self) | **intentional** |
 | Librarian | **8** | **no** | school flag; Gate denies | 6 | 0 | **intentional** |
 | Receptionist | 10 | **no** | school flag; Gate denies | 8 | 0 | **intentional** |
-| Accountant | 11 | **no** | school flag; Gate denies | 6 | 0 | **intentional** |
+| Accountant | 11 | **yes** (`feature/toshi-accountant-role`) | school flag; `toshi-accountant-action` | 6 | 6 | resolved on accountant branch |
 
 ---
 
@@ -359,3 +359,14 @@ Controllers: `BookController`, `BookCategoryController`, `BookLendingController`
 4. Isolation: `AddCoAdminTool` absent from `tools()`; `toshi-school-action` still denies ug5.
 
 Accountant / Librarian / Receptionist / Student builds wait until Teacher boundary holds.
+
+### Accountant Part B (implemented on `feature/toshi-accountant-role`)
+
+1. `AccountantOperationsAgent` — 6 tools matching advisory actions; `toshi-accountant-action` Gate; scope router ug11 → accountant agent (ug5 → teacher retained).
+2. `AccountantActionService` mirrors accountant fee/payroll/dashboard/task panel paths (not ug3 `ToshiActionService`).
+3. Blade allowlist widened to `[1, 3, 5, 11]` after tools+tests green.
+4. Isolation: `AddCoAdminTool` absent from `tools()`; `toshi-school-action` **and** `toshi-teacher-action` deny ug11; `toshi-accountant-action` allows.
+5. Money tools (`record_payment`, `manage_payroll`) use Tier-2 ConfirmsBeforeWrite — **stricter bar than Teacher** (payroll/money blast radius).
+6. Tier-2 confirm sets `acting_user_id` + `approver_id` (AgentToshi fix verified in accountant tests).
+
+Librarian / Receptionist / Student builds wait until Accountant boundary holds.
