@@ -662,6 +662,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Branch**: folded into `feature/toshi-platform-tools` (gate commit `cc35f38`)
 - **Status**: ✅ Done — included in pushed feature branch
 
+### 2026-08-01: TeacherOperationsAgent (ug5) — first non-admin Toshi role
+- **Work done**: Branch `feature/toshi-teacher-role` off `main`. `TeacherOperationsAgent` + 12 tools (`app/AiAgents/Tools/Teacher/*`) via `TeacherActionService`. Gate `toshi-teacher-action` (ug5); `toshi-school-action` unchanged (ug3-only). Scope router in `ToshiSdkV2Service` (ug5 → TeacherOperationsAgent). Ported audit identity fields (`acting_user_id` / `approver_id`) + AI event listeners from platform work. Blade allowlist `[1,3,5]`. Tests: `TeacherOperationsToolsTest` 9 passed (isolation + Gate + happy/validation + audit identity).
+- **Approvable judgment**: Writes use `ConfirmsBeforeWrite` (AgentToshi Tier-2) — attendance, marks, lesson plans, assignments, homework, leave, class wall, tasks. Views non-confirm. Native Approvable HTTP ops UI remains platform-scope only (design delta).
+- **Design deltas**: ConfirmsBeforeWrite not native HITL resume; timetable view returns Teacherlink basis (not full period grid).
+- **Status**: ✅ Done on branch — not pushed / not merged
+
 ### 2026-07-31: Merge fix/superadmin-audit-triage → main (audit CLOSED on main)
 - **Work done**: Pre-merge gate (fetch; **0 behind / 3 ahead** vs `origin/main`; PHPUnit **247 passed / 1 skipped / 1 failed** ToshiE2E; `npm run build` PASS; clean tree after discarding `public/build` junk) then no-ff merge into `main`. Post-merge PHPUnit same; build PASS. High-stakes verify as siteadmin: ChangePassword → real HTTP login with new password → restore; all 4 Filament lists HTTP **200**; country create Livewire → DB row **id=12** `TriageLand…`. Soft-deleted disposable co-admin **id=173**. Knowledge closeout + sync to KlassApp (this commit).
 - **Merge commit**: **`32a3bb4333f8645a2752d760fcd76287f57f5fa8`**
