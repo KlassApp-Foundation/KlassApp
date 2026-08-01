@@ -71,6 +71,11 @@ class AgentToshi extends Component
         'toolLibrarianManageBookCategories' => \App\AiAgents\Tools\Librarian\ManageBookCategoriesTool::class,
         'toolLibrarianManageLending' => \App\AiAgents\Tools\Librarian\ManageLendingTool::class,
         'toolLibrarianCreateTask' => \App\AiAgents\Tools\Librarian\CreateTaskTool::class,
+        // ReceptionistOperationsAgent confirm keys (ug10) — writes only
+        'toolReceptionistManageVisitorLog' => \App\AiAgents\Tools\Receptionist\ManageVisitorLogTool::class,
+        'toolReceptionistManageCallLog' => \App\AiAgents\Tools\Receptionist\ManageCallLogTool::class,
+        'toolReceptionistManagePostalRecord' => \App\AiAgents\Tools\Receptionist\ManagePostalRecordTool::class,
+        'toolReceptionistCreateTask' => \App\AiAgents\Tools\Receptionist\CreateTaskTool::class,
     ];
 
     public $step = 0;

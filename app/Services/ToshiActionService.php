@@ -261,8 +261,7 @@ class ToshiActionService
                 'label'   => 'receptionist',
                 'actions' => [
                     'manage_visitor_log', 'manage_call_log', 'manage_postal_record',
-                    'manage_email_record', 'view_dashboard', 'view_events',
-                    'manage_noticeboard', 'manage_tasks',
+                    'view_dashboard', 'view_events', 'view_noticeboard', 'manage_tasks',
                 ],
             ],
             11 => [ // Accountant
