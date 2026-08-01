@@ -236,7 +236,7 @@
 
 | Item | Decision | Why not triage-now |
 |---|---|---|
-| **Toshi platform-scope for superadmin** | **Phase 1 partial STOP** — `feature/toshi-platform-tools` | Phase 0 gate done. Phase 1 Geo+Plans+Schools tools landed (STOPPED before Subscriptions+). |
+| **Toshi platform-scope for superadmin** | **Phase 1.5 HITL native** — `feature/toshi-platform-tools` | Phase 0 gate + Phase 1 Geo/Plans/Schools + Phase 1.5 native `laravel/ai` ^0.10 Approvable. STOPPED before Subscriptions+. |
 
 ---
 
@@ -615,7 +615,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 ## Session Log
 
 ### 2026-08-01: Toshi Phase 1.5 — migrate Approvable polyfill → native laravel/ai ^0.10 HITL
-- **Work done**: Bumped `laravel/ai` **0.9.0 → 0.10.2**. Published + ran `agent_conversations` / `agent_conversation_messages` migration. Plan tools (`CreatePlanTool` / `UpdatePlanTool`) use native `Laravel\Ai\Contracts\Approvable` + `InteractsWithApprovals` + `needsApproval()` / `Approval::required()`. Listeners switched to native `ToolApprovalRequested`, `ToolApprovalResolved`, `InvokingTool`, `ToolInvoked`. Platform tool tests rewritten against agent ToolCall fake + resume via `Decisions::from` / `Decision::approve()` (17 passed). Scope-router comments fixed (not SDK Sub-Agents). Polyfill + `PlatformToolInvoker` removed in follow-up commit after green tests.
+- **Work done**: Bumped `laravel/ai` **0.9.0 → 0.10.2**. Published + ran `agent_conversations` / `agent_conversation_messages` migration. Plan tools (`CreatePlanTool` / `UpdatePlanTool`) use native `Laravel\Ai\Contracts\Approvable` + `InteractsWithApprovals` + `needsApproval()` / `Approval::required()`. Listeners switched to native `ToolApprovalRequested`, `ToolApprovalResolved`, `InvokingTool`, `ToolInvoked`. Platform tool tests rewritten against agent ToolCall fake + resume via `Decisions::from` / `Decision::approve()` (17 passed). Scope-router comments fixed (not SDK Sub-Agents). Polyfill under `App\Ai\{Contracts,Concerns,Approvals,Events}` and `PlatformToolInvoker` removed after green tests.
 - **(a) Migration column**: `agent_conversation_messages.approval_state` (nullable text) — confirmed from published vendor migration.
 - **(b) Custom ConversationStore**: none — default `DatabaseConversationStore` already implements `storeApprovalResults`.
 - **(c) Doc vs package**: no blocking mismatch; `approval_state` matches both. Doc Events list matches package. Fake gateway skips real tool resume (`resumesAgainstRealGateway`) — tests clear fake + Http::fake for post-approve continuation.
