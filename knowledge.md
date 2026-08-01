@@ -236,7 +236,7 @@
 
 | Item | Decision | Why not triage-now |
 |---|---|---|
-| **Toshi platform-scope for superadmin** | **Phase 0 in progress** — `feature/toshi-platform-gate` | Auth scaffolding landed (config `platform_gate` + `ToshiScope::Platform`); school `per_school_gate` unchanged. Still no platform business tools (Phase 1). |
+| **Toshi platform-scope for superadmin** | **Phase 1 partial STOP** — `feature/toshi-platform-tools` | Phase 0 gate done. Phase 1 Geo+Plans+Schools tools landed (STOPPED before Subscriptions+). |
 
 ---
 

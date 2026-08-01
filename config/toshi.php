@@ -46,8 +46,9 @@ return [
     | Platform-scope gate (siteadmin / usergroup 1)
     |--------------------------------------------------------------------------
     |
-    | Independent of per_school_gate and school_id. Phase 0 scaffolding only —
-    | unlocks isAvailable(Platform); does not add platform business tools yet.
+    | Independent of per_school_gate and school_id. Phase 0 scaffolding +
+    | Phase 1 partial tools (Geo/Plans/Schools via PlatformOperationsAgent).
+    | Unlock isAvailable(Platform); business tools grow on PlatformOperationsAgent.
     |
     | Capability model: config allowlist (not a users column, not FeatureToggles).
     | FeatureToggleService is school_id-scoped; users/usergroups have no capability
