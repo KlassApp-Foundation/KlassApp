@@ -615,6 +615,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-01: LibrarianOperationsAgent (ug8) — view-only cards + Tier-2 writes
+- **Work done**: Branch `feature/toshi-librarian-role`. Cherry-picked teacher+accountant shared patterns. View-only `GET /library/cards` (`library.cards`, MustBeLibrarian) via shared `LibraryCardLookupService` (admin `cardIndex` thin-wrap). `LibrarianOperationsAgent` + 6 tools via `LibrarianActionService`. Gate `toshi-librarian-action` (ug8 + ug1→ug8 impersonation). Scope router ug8 → librarian. Capability rename `manage_library_cards` → `view_library_cards`. Blade `[1,3,5,8,11]`. Isolation + audit identity tests green (11).
+- **Write flag**: books / categories / lending / tasks are panel **writes** → Tier-2 ConfirmsBeforeWrite (not all-reads as initially hoped). Dashboard + cards are read-only.
+- **Follow-up**: card issue/return/create/update CRUD (Approvable/confirm judgment later).
+- **Files**: agent/tools/service/gate/routes/views/tests/docs/knowledge; admin LibraryController uses shared lookup.
+- **Status**: ✅ Done (not pushed)
+
 ### 2026-08-01: AccountantOperationsAgent (ug11) — teacher-pattern clone
 - **Work done**: Branch `feature/toshi-accountant-role` off `origin/main` + cherry-pick teacher commits (`8a5cb5e`, `c759afa`). `AccountantOperationsAgent` + 6 tools via `AccountantActionService` (fee payment, batch payroll, unpaid reports, fee structure, dashboard, tasks). Gate `toshi-accountant-action` (ug11 + ug1→ug11 impersonation). Scope router: ug11 → accountant, ug5 → teacher, else orchestrator. Blade `[1,3,5,11]`. Isolation tests: AddCoAdmin absent; school+teacher Gates deny ug11; accountant Gate allows. Tier-2 confirm sets `approver_id`+`acting_user_id`.
 - **Payroll /batch UI**: Re-checked — blade has full Alpine batch form; knowledge July 10 concluded false alarm (Toshi overlay / wrong role). Status: **fixed / not a layout bug** (evidence: `resources/views/accountant/payroll/batch/index.blade.php` + knowledge investigation).
