@@ -349,6 +349,7 @@ Controllers: `BookController`, `BookCategoryController`, `BookLendingController`
 
 - **Librarian `manage_library_cards`**: advisory overclaim — library cards live under `/admin/library/cards` only; no `/library/*` card CRUD for ug8.
 - **Receptionist `manage_email_record`**: dead/orphan — `EmailRecordController` exists but no `/receptionist/*email*` routes registered.
+- **Converge ConfirmsBeforeWrite (Tier-2) + native Approvable into one confirmation mechanism** — deferred/tracked; both currently populate the same audit identity fields (`acting_user_id` + `approver_id`) via different paths.
 
 ### Teacher Part B (implemented on `feature/toshi-teacher-role`)
 

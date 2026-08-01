@@ -15,7 +15,7 @@ class ViewTimetableTool implements Tool
 
     public function description(): Stringable|string
     {
-        return 'Show your Teacherlink class/subject timetable basis.';
+        return 'Show your Teacherlink class/subject assignments as a timetable basis (not a full period schedule grid).';
     }
 
     public function schema(JsonSchema $schema): array

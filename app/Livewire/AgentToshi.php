@@ -1061,6 +1061,8 @@ class AgentToshi extends Component
 
             // Audit trail — log every write action at the single execution point.
             // School may be null during initial create-onboarding before schoolId is set.
+            // Tier-2 ConfirmsBeforeWrite: confirming user is the approver (self-approve OK —
+            // same person may fill both fields, but both must be populated on confirm).
             $school = $this->schoolId ? \App\Models\School::find($this->schoolId) : null;
             $actor = auth()->user() ?? auth('web')->user();
             \App\Services\ToshiAuditService::logExecution(
@@ -1069,7 +1071,7 @@ class AgentToshi extends Component
                 toolName: $toolName,
                 arguments: $args,
                 result: $result,
-                approver: null,
+                approver: $actor,
                 actingUser: $actor,
             );
 

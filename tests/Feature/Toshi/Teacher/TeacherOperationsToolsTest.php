@@ -22,6 +22,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Ai\Tools\Request;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class TeacherOperationsToolsTest extends TestCase
@@ -224,15 +225,15 @@ class TeacherOperationsToolsTest extends TestCase
         }
     }
 
-    public function test_audit_log_includes_acting_user_id_for_teacher_execution(): void
+    public function test_unconfirmed_or_read_only_audit_leaves_approver_id_null(): void
     {
         $this->actingAs($this->teacher);
 
         $log = ToshiAuditService::logExecution(
             user: $this->teacher,
             school: $this->teacher->school,
-            toolName: 'MarkAttendanceTool',
-            arguments: ['student' => 'x'],
+            toolName: 'ViewTimetableTool',
+            arguments: [],
             result: '✅ ok',
             actingUser: $this->teacher,
             approver: null,
@@ -242,5 +243,33 @@ class TeacherOperationsToolsTest extends TestCase
         $this->assertNull($log->properties['approver_id']);
         $this->assertSame($this->teacher->id, $log->causer_id);
         $this->assertTrue(ActivityLog::where('log_name', 'toshi')->where('causer_id', $this->teacher->id)->exists());
+    }
+
+    public function test_tier2_confirm_yes_sets_approver_id_to_confirming_teacher(): void
+    {
+        $this->actingAs($this->teacher);
+
+        Livewire::test(\App\Livewire\AgentToshi::class)
+            ->set('schoolId', $this->schoolId)
+            ->set('pendingToolConfirm', [
+                'tool' => 'toolTeacherMarkAttendance',
+                'args' => [
+                    'student' => $this->student->email,
+                    'date' => '2026-08-03',
+                    'status' => 'present',
+                ],
+            ])
+            ->call('confirmYes');
+
+        $log = ActivityLog::where('log_name', 'toshi')
+            ->where('school_id', $this->schoolId)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log, 'Toshi audit log should exist after Tier-2 confirmYes');
+        $this->assertSame('toolTeacherMarkAttendance', $log->properties['tool']);
+        $this->assertSame($this->teacher->id, $log->properties['acting_user_id']);
+        $this->assertSame($this->teacher->id, $log->properties['approver_id']);
+        $this->assertTrue(Attendance::where('user_id', $this->student->id)->whereDate('date', '2026-08-03')->exists());
     }
 }

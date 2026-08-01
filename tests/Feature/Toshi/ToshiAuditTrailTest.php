@@ -133,6 +133,8 @@ class ToshiAuditTrailTest extends TestCase
 
         $this->assertNotNull($log, 'Toshi audit log should exist after confirmYes');
         $this->assertEquals('toolRecordAttendance', $log->properties['tool']);
+        $this->assertEquals($user->id, $log->properties['acting_user_id']);
+        $this->assertEquals($user->id, $log->properties['approver_id']);
     }
 
     /** @test */
