@@ -149,6 +149,20 @@ class ToshiAdversarialLiveCommandTest extends TestCase
         $this->assertStringContainsString('CRITICAL', Artisan::output());
     }
 
+    public function test_runner_seeds_sqlite_fixtures_without_factories(): void
+    {
+        // Non-matching filter still boots sqlite + seedFixtures, but never calls the LLM.
+        // Guards the --no-dev prod path where fakerphp/faker is absent.
+        $previousDefault = (string) config('database.default');
+
+        $result = app(LiveAdversarialRunner::class)->run('___no_such_scenario_filter_xyz___');
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame([], $result['report']);
+        $this->assertSame(0, $result['pass'] + $result['flag'] + $result['fail']);
+        $this->assertSame($previousDefault, config('database.default'));
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();

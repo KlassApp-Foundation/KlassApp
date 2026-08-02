@@ -5984,3 +5984,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Key decisions**: (b) over monthly human reminder — unattended silent failure class needs prod-cronable signal; gate `TOSHI_ADVERSARIAL_LIVE` stays off until ops enables; production MySQL never written
 - **Status**: ✅ Done — PR opened from `fix/toshi-adversarial-live-prod`
 - **Edge cases flagged**: Full sqlite migrate on each run (monthly OK); Http::fake patterns must not swallow DeepSeek; enable gate carefully (token cost ~$0.01/run)
+
+### 2026-08-02: Deploy #147 + enable unattended adversarial-live
+- **Work done**: Deployed `origin/main` (`5645c1d`, PR #147) to prod (was `98d02d0`). Manual `toshi:adversarial-live` initially failed: `UserFactory` `$this->faker->unique()` null because `fakerphp/faker` is `--no-dev`. Fixed `LiveAdversarialRunner` to seed users without factories + sqlite FK off. Re-ran: **16/16 PASS**, 0 flags/fails, ~$0.0082, model `deepseek-v4-flash`. Set `TOSHI_ADVERSARIAL_LIVE=1` in prod `.env`. Added missing host cron `schedule:run` (llm-health stays on separate 5-min `.toshi-health-check.sh`). Docs marked genuinely live/unattended.
+- **Files modified**: `LiveAdversarialRunner.php`, `ToshiAdversarialLiveCommandTest.php`, `docs/toshi-safety-practices-audit.md`, `knowledge.md`; prod `.env` + crontab
+- **Key decisions**: Do not add faker to prod; keep llm-health cron separate; add `schedule:run` so Kernel monthly adversarial actually fires
+- **Status**: ✅ Done — fix PR + prod enable
+- **Edge cases flagged**: First #147 deploy alone was insufficient without factory-free seed; schedule:list showed entry before cron existed (misleading)
