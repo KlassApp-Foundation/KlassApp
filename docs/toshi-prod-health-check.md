@@ -50,8 +50,8 @@ docker exec sms-app php artisan toshi:adversarial-live
 
 ## Schedule
 
-- **`toshi:llm-health`**: **Not wired** in `app/Console/Kernel.php`. OpenCode/ops owns production cadence (cron/k8s watching exit code).
-- **`toshi:adversarial-live`**: Gated monthly Kernel entry (first Sunday 02:00 Africa/Kampala, day≤7). Runs only when `TOSHI_ADVERSARIAL_LIVE=1` **and** openai-compatible key is set; `--scheduled` no-ops otherwise. Safe for `--no-dev` images (in-process runner).
+- **`toshi:llm-health`**: **Not wired** in `app/Console/Kernel.php`. OpenCode/ops owns production cadence (cron/k8s watching exit code). Host script `.toshi-health-check.sh` every 5 min → `storage/logs/toshi-health-monitor.log` (`HEALTH OK` / `HEALTH FAIL`) + `Log::critical` on failure into laravel daily logs.
+- **`toshi:adversarial-live`**: Gated monthly Kernel entry (first Sunday 02:00 Africa/Kampala, day≤7). Runs only when `TOSHI_ADVERSARIAL_LIVE=1` **and** openai-compatible key is set; `--scheduled` no-ops otherwise. Safe for `--no-dev` images (in-process runner). **Durable reports:** `storage/logs/toshi-adversarial-live.log` (Kernel `appendOutputTo` + log channel `toshi_adversarial`) and structured `Log::info` / `Log::critical` on the default stack.
 
 ## Post-deploy cleanup
 

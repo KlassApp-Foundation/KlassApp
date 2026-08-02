@@ -76,6 +76,17 @@ return [
             'driver' => 'errorlog',
             'level' => 'debug',
         ],
+
+        /*
+         * Monthly toshi:adversarial-live unattended reports.
+         * Kernel also appendOutputTo this path for the full console transcript.
+         * Structured summaries use Log::channel('toshi_adversarial').
+         */
+        'toshi_adversarial' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/toshi-adversarial-live.log'),
+            'level' => 'debug',
+        ],
     ],
 
 ];

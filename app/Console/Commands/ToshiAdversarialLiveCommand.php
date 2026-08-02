@@ -16,6 +16,10 @@ use Throwable;
  * Runs scenarios in-process (no PHPUnit) on an isolated sqlite :memory: DB —
  * safe for --no-dev production images. Does not send WhatsApp to real parents
  * (Http::fake for Evolution/WhatsApp hosts only).
+ *
+ * Unattended durability (scheduled): Kernel appendOutputTo + Log channel
+ * `toshi_adversarial` → storage/logs/toshi-adversarial-live.log; Log::info
+ * summary / Log::critical failure also hit the default laravel daily stack.
  */
 class ToshiAdversarialLiveCommand extends Command
 {
@@ -35,6 +39,9 @@ class ToshiAdversarialLiveCommand extends Command
             $message = 'TOSHI_ADVERSARIAL_LIVE is not set to 1 — refusing to call a live model.';
             if ($scheduled) {
                 $this->comment($message.' (scheduled no-op)');
+                $this->logDurable('info', 'Toshi live adversarial scheduled no-op: '.$message, [
+                    'reason' => 'gate_off',
+                ]);
 
                 return self::SUCCESS;
             }
@@ -47,6 +54,9 @@ class ToshiAdversarialLiveCommand extends Command
             $message = 'ai.providers.openai-compatible.key is empty — cannot run live adversarial suite.';
             if ($scheduled) {
                 $this->comment($message.' (scheduled no-op)');
+                $this->logDurable('info', 'Toshi live adversarial scheduled no-op: '.$message, [
+                    'reason' => 'missing_api_key',
+                ]);
 
                 return self::SUCCESS;
             }
@@ -97,9 +107,7 @@ class ToshiAdversarialLiveCommand extends Command
         }
 
         $totalTokens = $result['prompt_tokens'] + $result['completion_tokens'];
-        $this->newLine();
-        $this->info('=== Live adversarial summary ===');
-        $this->line(sprintf(
+        $summaryLine = sprintf(
             'scenarios=%d pass=%d flag=%d fail=%d tokens=%d (prompt=%d completion=%d) est_usd≈$%.4f',
             count($result['report']),
             $result['pass'],
@@ -109,7 +117,10 @@ class ToshiAdversarialLiveCommand extends Command
             $result['prompt_tokens'],
             $result['completion_tokens'],
             $result['estimated_usd']
-        ));
+        );
+        $this->newLine();
+        $this->info('=== Live adversarial summary ===');
+        $this->line($summaryLine);
         $this->line('provider='.$result['provider'].' host='.$result['host'].' model='.$result['model']);
 
         foreach ($result['report'] as $row) {
@@ -122,14 +133,34 @@ class ToshiAdversarialLiveCommand extends Command
             ));
         }
 
+        $summaryContext = [
+            'provider' => $result['provider'],
+            'model' => $result['model'],
+            'url_host' => $result['host'],
+            'scenarios' => count($result['report']),
+            'pass' => $result['pass'],
+            'flag' => $result['flag'],
+            'fail' => $result['fail'],
+            'prompt_tokens' => $result['prompt_tokens'],
+            'completion_tokens' => $result['completion_tokens'],
+            'estimated_usd' => $result['estimated_usd'],
+            'scheduled' => $scheduled,
+            'verdicts' => array_map(
+                fn (array $row): string => $row['id'].'='.$row['verdict'],
+                $result['report']
+            ),
+        ];
+
         if (count($result['report']) === 0) {
             $this->warn('No scenarios matched the filter — nothing was scored.');
+            $this->logDurable('info', 'Toshi live adversarial summary (no scenarios matched): '.$summaryLine, $summaryContext);
 
             return self::SUCCESS;
         }
 
         if ($result['ok']) {
             $this->info('Live adversarial suite passed (flags are warnings only).');
+            $this->logDurable('info', 'Toshi live adversarial PASSED: '.$summaryLine, $summaryContext);
 
             return self::SUCCESS;
         }
@@ -165,6 +196,33 @@ class ToshiAdversarialLiveCommand extends Command
     }
 
     /**
+     * Durable report sink for unattended (and manual) runs.
+     *
+     * Writes to the default log stack (laravel.log / daily) and the dedicated
+     * `toshi_adversarial` channel → storage/logs/toshi-adversarial-live.log.
+     * Kernel schedule also appendOutputTo that same path for the full console
+     * transcript (parity with llm-health → toshi-health-monitor.log).
+     *
+     * @param  'info'|'critical'|'warning'  $level
+     * @param  array<string, mixed>  $context
+     */
+    private function logDurable(string $level, string $message, array $context = []): void
+    {
+        match ($level) {
+            'critical' => Log::critical($message, $context),
+            'warning' => Log::warning($message, $context),
+            default => Log::info($message, $context),
+        };
+
+        $channel = Log::channel('toshi_adversarial');
+        match ($level) {
+            'critical' => $channel->critical($message, $context),
+            'warning' => $channel->warning($message, $context),
+            default => $channel->info($message, $context),
+        };
+    }
+
+    /**
      * @param  array<string, mixed>  $context
      */
     private function failCritical(string $reason, string $message, array $context = []): int
@@ -177,7 +235,7 @@ class ToshiAdversarialLiveCommand extends Command
             // Intentionally empty — conflict already reported in $context.
         }
 
-        Log::critical('Toshi live adversarial FAILED: '.$message, $payload);
+        $this->logDurable('critical', 'Toshi live adversarial FAILED: '.$message, $payload);
 
         $this->error('CRITICAL: '.$message);
         $this->line('  Reason: '.$reason);

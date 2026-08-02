@@ -147,7 +147,9 @@ class Kernel extends ConsoleKernel
         // Live-LLM adversarial soft-refusal spot check (in-process; no PHPUnit).
         // Safe for --no-dev prod images. No-ops without TOSHI_ADVERSARIAL_LIVE=1 /
         // openai-compatible key (--scheduled). First Sunday 02:00 Africa/Kampala ≈ monthly.
-        // Keep gate OFF in prod until intentionally enabled (LLM cost + latency).
+        // Durable output: appendOutputTo + Log channel `toshi_adversarial` both write
+        // storage/logs/toshi-adversarial-live.log; Log::info summary + Log::critical on fail
+        // also hit the default laravel daily stack (same durability bar as llm-health).
         $schedule->command('toshi:adversarial-live --scheduled')
                  ->weeklyOn(0, '02:00')
                  ->timezone('Africa/Kampala')

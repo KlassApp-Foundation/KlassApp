@@ -256,7 +256,8 @@ Live-LLM is the **only** check type that validates prompt-manipulation / soft-re
 | **Runtime** | **In-process** via `App\Services\Toshi\LiveAdversarialRunner` — **no PHPUnit** (works in `--no-dev` prod images). Optional `@group live-llm` PHPUnit wrapper still available for local. |
 | **DB isolation** | Temporary sqlite `:memory:` for scenario seed + mutation checks; production MySQL never written |
 | **WhatsApp** | `Http::fake` for Evolution/WhatsApp/localhost hosts only — LLM provider stays live |
-| **Failure signal** | Exit `1` + `Log::critical` on hard failures (same ops pattern as `toshi:llm-health`) |
+| **Failure signal** | Exit `1` + `Log::critical` (default laravel daily stack **and** dedicated channel) on hard failures — same ops pattern as `toshi:llm-health` |
+| **Unattended report destination** | **Confirmed + durable (2026-08-03):** (1) Kernel `appendOutputTo(storage/logs/toshi-adversarial-live.log)` captures full console transcript; (2) structured `Log::info` summary / `Log::critical` failure also write via channel `toshi_adversarial` → **same file**; (3) those `Log::*` calls also hit the default `stack`/`daily` channel (`storage/logs/laravel-*.log`). Format: `Toshi live adversarial PASSED|FAILED|scheduled no-op: …` + context keys `pass`/`fail`/`flag`/`tokens`/`provider`/`model`/`url_host`/`verdicts`/`reason`. Parity with llm-health → `toshi-health-monitor.log` + laravel CRITICAL. |
 | **Checks** | Soft-refusal quality; no successful mutation; text-only “I did it” claims fail; peer secrets flagged |
 | **One-time real run (2026-08-02)** | Provider DeepSeek `https://api.deepseek.com` / model `deepseek-chat`; DB = phpunit sqlite `:memory:` (artisan boot used local `klassapp_local`, not prod); WhatsApp Http::fake. **16/16 PASS**, 0 flags, 0 false-successes; ~20k tokens; est ≈ **$0.0066** |
 | **Live-LLM vs repo defaults** | **Confirmed** against repo-configured defaults: `ToshiLlm` / `UsesToshiLlm` → provider `openai-compatible`, model `deepseek-chat`, URL host `api.deepseek.com` (`config/toshi.php` + `config/ai.php`). Live run used the same path. |
@@ -265,7 +266,7 @@ Live-LLM is the **only** check type that validates prompt-manipulation / soft-re
 | **VPS-actual confirmation** | **✅ Confirmed (2026-08-02 ~16:22 UTC)** via `docker exec sms-app php artisan toshi:llm-status` → provider `openai-compatible`, model `deepseek-v4-flash`, URL host `api.deepseek.com`, key configured, checksum `d4129b3240672733` (no secrets printed). **Note:** production now intentionally resolves `deepseek-v4-flash`, not the repo default `deepseek-chat` — that is a deliberate live overrides, so `config/toshi.php` + `config/ai.php` defaults remain `deepseek-chat` for non-prod. |
 | **Runtime diagnostic** | `php artisan toshi:llm-status` — prints provider, model, URL **host only**, key set yes/no, and a non-secret config checksum (`provider\|model\|host`). Uses `ToshiLlm` (same resolver as agents). **Never prints API keys or full URLs.** |
 | **Ops (VPS) instructions** | After merge + deploy: `docker exec sms-app php artisan toshi:llm-status`. Expect `openai-compatible` / `deepseek-v4-flash` / host `api.deepseek.com` on production (repo defaults in dev are `deepseek-chat`). Paste output into the safety audit follow-up — no secrets should appear. |
-| **Prod unattended status** | **✅ Genuinely live and unattended (2026-08-02 / early 2026-08-03 UTC)** after deploy of `#147` (`5645c1d`) + follow-up factory-free seed fix. Manual: `docker exec -e TOSHI_ADVERSARIAL_LIVE=1 sms-app php artisan toshi:adversarial-live` → **16/16 PASS**, 0 flags, 0 false-successes; tokens **21640** (prompt 18848 / completion 2792); est ≈ **$0.0082**; provider `openai-compatible` / host `api.deepseek.com` / model **`deepseek-v4-flash`**; in-process (no PHPUnit); sqlite `:memory:` + WA Http::fake. Prod `.env` now has `TOSHI_ADVERSARIAL_LIVE=1`. Kernel entry `toshi:adversarial-live --scheduled` (first Sunday 02:00 Africa/Kampala, day≤7) is driven by host cron `* * * * * docker exec sms-app php artisan schedule:run` (separate from the existing 5-min `.toshi-health-check.sh` for `toshi:llm-health`). Watch `storage/logs/toshi-adversarial-live.log` + `Log::critical` on hard fail. |
+| **Prod unattended status** | **✅ Genuinely live and unattended (2026-08-02 / early 2026-08-03 UTC)** after deploy of `#147` (`5645c1d`) + follow-up factory-free seed fix. Manual: `docker exec -e TOSHI_ADVERSARIAL_LIVE=1 sms-app php artisan toshi:adversarial-live` → **16/16 PASS**, 0 flags, 0 false-successes; tokens **21640** (prompt 18848 / completion 2792); est ≈ **$0.0082**; provider `openai-compatible` / host `api.deepseek.com` / model **`deepseek-v4-flash`**; in-process (no PHPUnit); sqlite `:memory:` + WA Http::fake. Prod `.env` now has `TOSHI_ADVERSARIAL_LIVE=1`. Kernel entry `toshi:adversarial-live --scheduled` (first Sunday 02:00 Africa/Kampala, day≤7) is driven by host cron `* * * * * docker exec sms-app php artisan schedule:run` (separate from the existing 5-min `.toshi-health-check.sh` for `toshi:llm-health`). **Watch:** `storage/logs/toshi-adversarial-live.log` (console + structured) + `storage/logs/laravel-*.log` CRITICAL/INFO. |
 | **Prod seed caveat (fixed)** | First post-#147 run failed: `UserFactory` → `$this->faker->unique()` with `fakerphp/faker` absent under `composer --no-dev`. Fixed by seeding users via explicit `User::unguarded` create (no factories) and keeping sqlite FK constraints off to match prior PHPUnit fixture placeholder exam/section ids. |
 | **Recommendation** | Structural dual-config fail-loud + live health check: see [`docs/toshi-prod-health-check.md`](toshi-prod-health-check.md). Monthly adversarial is **enabled** on prod (`TOSHI_ADVERSARIAL_LIVE=1`). **`toshi:llm-health` is NOT in Kernel** — it stays on the dedicated 5-min host cron (`.toshi-health-check.sh`). Laravel Kernel jobs (including adversarial) use `schedule:run`. |
 
@@ -282,6 +283,16 @@ Live-LLM is the **only** check type that validates prompt-manipulation / soft-re
 | Routing | Parent/Student → Receptionist (fallback School Admin); staff → School Admin; School Admin → **log only** (no Task, no self-notify) |
 | Audit | Not exempt — `log_name=toshi`, `tool=WhatsAppHumanEscalation`, `status=escalated`, `properties.acting_user_id` set |
 | MVP gap | No helpdesk table / SLA / live-chat transfer; if receiver has no opted-in `WhatsAppUser`, only ActivityLog + Task remain |
+
+---
+
+## Backlog — deferred ops quick-sweep
+
+| Item | Detail |
+|---|---|
+| **What** | Assumed-working-but-never-verified ops checks (exemplar: the host `schedule:run` cron gap discovered only after adversarial went live — other Kernel/cron/env assumptions in the same class). |
+| **Why deferred** | Prod LLM health + adversarial unattended path are live; panel-parity roadmap (School Admin Batch 1 → Teacher → …) is the active product track. Sweeping every “probably fine” ops assumption now would interrupt that without a blocking incident. |
+| **Revisit trigger** | **after current roadmap complete** — not dropped; not now. |
 
 ---
 
