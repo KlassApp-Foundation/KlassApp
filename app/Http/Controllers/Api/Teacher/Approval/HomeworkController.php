@@ -385,74 +385,74 @@ class HomeworkController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $homework = Homework::where('id',$id)->first();
+
+        if ($homework === null) {
+            return response()->json([
+                'success'   =>  false,
+                'message'   =>  'Unauthorized',
+            ], 401);
+        }
+
+        // Authorize outside try/catch so 403 is not swallowed by Exception handler.
+        if (! \Gate::allows('homework', $homework)) {
+            abort(403);
+        }
+
         try
         {
-            $homework = Homework::where('id',$id)->first();
-            if(count($homework)>0)
+            if( $homework->homeworkApproval->status == 'pending' )
             {
-                if(\Gate::allows('homework',$homework))
-                {                    
-                    if( $homework->homeworkApproval->status == 'pending' )
-                    {
-                        $homework->delete();
+                $array = [];
+                $array['school_id']         = Auth::user()->school_id;
+                $array['standardLink_id']   = $homework->standardLink_id;
+                $array['details']           = trans('notification.homework_delete_success_msg');
 
-                        $admin = User::BySchool(Auth::user()->school_id)->ByRole(3)->first();
+                $homework->delete();
 
-                        if($admin->id != Auth::id())
-                        {
-                            $data = [];
+                $admin = User::BySchool(Auth::user()->school_id)->ByRole(3)->first();
 
-                            $data['user']       =   $admin;
-                            $data['details']    =   trans('notification.homework_delete_success_msg');
-
-                            event(new SingleNotificationEvent($data));
-
-                            /*$array=[];
-
-                            $array['school_id'] =  Auth::user()->school_id;
-                            $array['user_id']   =  $admin->id;
-                            $array['message']   = 'Assignment Deleted';
-                            $array['type']      = 'assignment';
-                                    
-                            event(new SinglePushEvent($array));*/
-                        }
-
-                        $message=trans('messages.delete_success_msg',['module' => 'Homework']); 
-
-                        event(new ClassNotificationEvent($array));
-
-                        $ip= $this->getRequestIP();
-                        $this->doActivityLog(
-                            $homework,
-                            Auth::user(),
-                            ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                            LOGNAME_DELETE_HOMEWORK,
-                            $message
-                        );
-                    }
-                    else
-                    {
-                        $message = trans('messages.delete_fail_approval_done_msg',['module' => 'Homework']);
-                    }
-                    $success = true;
-                    $error_code = 200;
-                }
-                else
+                if($admin->id != Auth::id())
                 {
-                    abort(403);
+                    $data = [];
+
+                    $data['user']       =   $admin;
+                    $data['details']    =   trans('notification.homework_delete_success_msg');
+
+                    event(new SingleNotificationEvent($data));
+
+                    /*$array=[];
+
+                    $array['school_id'] =  Auth::user()->school_id;
+                    $array['user_id']   =  $admin->id;
+                    $array['message']   = 'Assignment Deleted';
+                    $array['type']      = 'assignment';
+                            
+                    event(new SinglePushEvent($array));*/
                 }
+
+                $message=trans('messages.delete_success_msg',['module' => 'Homework']); 
+
+                event(new ClassNotificationEvent($array));
+
+                $ip= $this->getRequestIP();
+                $this->doActivityLog(
+                    $homework,
+                    Auth::user(),
+                    ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
+                    LOGNAME_DELETE_HOMEWORK,
+                    $message
+                );
             }
             else
             {
-                $success    =   false;
-                $message    =   'Unauthorized';
-                $error_code =   401; 
+                $message = trans('messages.delete_fail_approval_done_msg',['module' => 'Homework']);
             }
+
             return response()->json([
-                'success'   =>  $success,
+                'success'   =>  true,
                 'message'   =>  $message,
-            ],$error_code); 
+            ], 200);
         }
         catch(Exception $e)
         {
