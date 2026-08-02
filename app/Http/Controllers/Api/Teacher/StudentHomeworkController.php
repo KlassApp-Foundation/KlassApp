@@ -9,6 +9,7 @@ use App\Http\Resources\API\Teacher\StudentHomework as StudentHomeworkResource;
 use App\Http\Requests\API\Teacher\StudentHomeworkCheckRequest;
 use App\Events\Notification\SingleNotificationEvent;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Events\SinglePushEvent;
 use App\Models\StudentHomework;
@@ -32,16 +33,20 @@ class StudentHomeworkController extends Controller
      */
     public function show($id)
     {
-        //
-        $studentHomework = StudentHomework::where('id',$id)->first();
+        $studentHomework = StudentHomework::with('homework')->where('id',$id)->first();
+
+        if (! Gate::allows('studentHomework-review', $studentHomework)) {
+            abort(403);
+        }
+
         $file = [];
-        foreach ($studentHomework->AttachmentPath as $id => $attachments) 
+        foreach ($studentHomework->AttachmentPath as $attachmentId => $attachments) 
         {
             foreach ($attachments as $key1 => $value) 
             {
                 if($key1 == 'path')
                 {
-                    $file[$id] = $value;
+                    $file[$attachmentId] = $value;
                 }
             }
         }
@@ -71,11 +76,14 @@ class StudentHomeworkController extends Controller
      */
     public function update(StudentHomeworkCheckRequest $request, $id)
     {
-        //
+        $studentHomework = StudentHomework::with('homework')->where('id',$id)->first();
+
+        if (! Gate::allows('studentHomework-review', $studentHomework)) {
+            abort(403);
+        }
+
         try
         {
-            $studentHomework = StudentHomework::where('id',$id)->first();
-
             $studentHomework->comments      = $request->comments;
             $studentHomework->checked_by    = Auth::id();
             $studentHomework->checked_on    = date('Y-m-d');

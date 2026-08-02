@@ -314,38 +314,36 @@ class HomeWorkController extends Controller
      */
     public function destroy($id)
     {
+        $homework = Homework::where('id',$id)->first();
+
+        if (! Gate::allows('homework-manage', $homework)) {
+            abort(403);
+        }
+
         try
         {
-            $homework = Homework::where('id',$id)->first();
-            if(Gate::allows('homework',$homework))
-            {
-                $array = [];
+            $array = [];
 
-                $array['school_id']         = Auth::user()->school_id;
-                $array['standardLink_id']   = $homework->standardLink_id;
-                $array['details']           = trans('notification.homework_delete_success_msg'); 
+            $array['school_id']         = Auth::user()->school_id;
+            $array['standardLink_id']   = $homework->standardLink_id;
+            $array['details']           = trans('notification.homework_delete_success_msg'); 
 
-                $homework->delete();
+            $homework->delete();
 
-                $message=trans('messages.delete_success_msg',['module' => 'Homework']); 
+            $message=trans('messages.delete_success_msg',['module' => 'Homework']); 
 
-                event(new ClassNotificationEvent($array));
+            event(new ClassNotificationEvent($array));
 
-                $ip= $this->getRequestIP();
-                $this->doActivityLog(
-                    $homework,
-                    Auth::user(),
-                    ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                    LOGNAME_DELETE_HOMEWORK,
-                    $message
-                );
-                $res['success'] = $message;
-                return $res;
-            }
-            else
-            {
-                abort(403);
-            }
+            $ip= $this->getRequestIP();
+            $this->doActivityLog(
+                $homework,
+                Auth::user(),
+                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
+                LOGNAME_DELETE_HOMEWORK,
+                $message
+            );
+            $res['success'] = $message;
+            return $res;
         }
         catch(Exception $e)
         {
