@@ -6,7 +6,9 @@ use App\AiAgents\DeputyAdminOperationsAgent;
 use App\AiAgents\Skills\TeacherSkill;
 use App\AiAgents\Tools\AddCoAdminTool;
 use App\AiAgents\Tools\AddStudentTool;
+use App\AiAgents\Tools\ApproveHomeworkTool;
 use App\AiAgents\Tools\ListTeachersTool;
+use App\AiAgents\Tools\ListTimetableSlotsTool;
 use App\AiAgents\Tools\SetCurriculumTool;
 use App\Livewire\AgentToshi;
 use App\Models\ActivityLog;
@@ -99,7 +101,9 @@ class DeputyAdminOperationsToolsTest extends TestCase
         $this->assertNotContains(SetCurriculumTool::class, $classes);
         $this->assertContains(AddStudentTool::class, $classes);
         $this->assertContains(ListTeachersTool::class, $classes);
-        $this->assertCount(31, $classes);
+        $this->assertContains(ListTimetableSlotsTool::class, $classes);
+        $this->assertContains(ApproveHomeworkTool::class, $classes);
+        $this->assertCount(42, $classes);
     }
 
     public function test_ug3_teacher_skill_still_includes_add_coadmin(): void
