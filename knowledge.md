@@ -240,10 +240,11 @@
 
 ---
 
-## Current Status: August 3, 2026 (School Admin Batch 1 PR; Toshi LLM safety on `main`)
+## Current Status: August 3, 2026 (School Admin Batch 1 merged; Batch 2 Part A audit)
 
-- **🚧 School Admin Batch 1** (`feature/toshi-schooladmin-batch1`): notices/events/holidays create/list/update via `SchoolCommsSkill` — rebasing onto main / opening PR. Notices = same `notice_board` as Receptionist; events post-#131 Gate; holidays = `Events.category=holidays`; Deputy inherits; WA lists only. **Batch 2 needs its own Part A.**
-- **✅ Toshi on `main`**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config fail-loud + llm-health (#143–#149 era).
+- **✅ School Admin Batch 1** (#150 on `main`): notices/events/holidays create/list/update via `SchoolCommsSkill`.
+- **🚧 School Admin Batch 2 Part A** (`audit/toshi-schooladmin-batch2`): docs-only inventory + proposed scope — timetable + homework + student-homework (no tools). See `docs/toshi-schooladmin-batch2-audit.md`.
+- **✅ Toshi on `main`**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config fail-loud + llm-health (#143–#149 era), School Admin Batch 1 (#150).
 - **Open**: Preference memory #138; Google connector audit #139 (skip Google first); digests after prefs; WA wave-2 deferred; Slack/Notion **shelved**.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log updated at every done-as-scoped.
 
@@ -621,6 +622,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-03: School Admin Batch 2 Part A — remaining-domain audit
+- **Work done**: Docs-only audit on `audit/toshi-schooladmin-batch2` (worktree `KlassApp-toshi-schooladmin-batch2` off `origin/main` @ `e80fc87` / #150). Inventoried remaining School Admin domains (route/mutator counts); verified **zero** School Admin Toshi tools for timetable/homework/classwall/library/transport/desk logs/promotion/admissions/messaging; cross-referenced Teacher/Librarian/Receptionist/Student overlaps; proposed Batch 2 = timetable + homework approval + student-homework review; held classwall/library/transport/desk/promotion/admissions/settings/messaging/destroy; flagged homework approve/reject + visitor/call/postal id-only IDOR risks.
+- **Files modified**: `docs/toshi-schooladmin-batch2-audit.md` (new), `knowledge.md` (this log)
+- **Key decisions**: Size like Batch 1 (~3 related domains); reuse SchoolComms RouteTo* pattern; assignment stays Teacher-panel (no admin routes); Deputy inherits (not Settings-adjacent)
+- **Status**: ✅ Done — draft PR for Part A
+- **Edge cases flagged**: `HomeworkApprovalController` approve/reject loads by id without Gate/school_id; visitor/call/postal admin update/destroy/show often id-only; no TimetableSlot Gate (controller abort_if only)
 
 ### 2026-08-03: School Admin Batch 1 — commit, rebase, UsesToshiLlm, PR
 - **Work done**: Committed uncommitted Batch 1 work on `feature/toshi-schooladmin-batch1` (worktree `KlassApp-toshi-schooladmin-batch1`). Rebased onto `origin/main` (#141–#149 era); only conflict was `knowledge.md` Session Log (kept both). Verified ToshiLlm path: **SchoolCommsSkill now uses `UsesToshiLlm`** (same as Orchestrator/OperationsAgents) so `prompt()` hits `ToshiLlm::assertConfigConsistent()` + openai-compatible model — not `ai.default`/`openai`. Sibling skills (Academic/Fee/…) still lack the trait (pre-existing gap on main — out of Batch 1 scope). Leaf tools unchanged (no LLM). Re-ran Batch 1 suite; pushed PR (do not merge from this session).
