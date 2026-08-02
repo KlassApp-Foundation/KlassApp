@@ -13,6 +13,7 @@ use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\HasTools;
+use App\AiAgents\Concerns\UsesToshiLlm;
 use Laravel\Ai\Promptable;
 
 /**
@@ -28,16 +29,8 @@ use Laravel\Ai\Promptable;
 class AccountantOperationsAgent implements Agent, HasTools
 {
     use Promptable;
+    use UsesToshiLlm;
 
-    public function provider(): string
-    {
-        return 'openai-compatible';
-    }
-
-    public function model(): string
-    {
-        return config('toshi.model', 'nvidia/llama-3.3-nemotron-super-49b-v1');
-    }
 
     public function instructions(): string
     {

@@ -2,6 +2,7 @@
 
 namespace App\AiAgents\WhatsApp;
 
+use App\AiAgents\ToshiLlm;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Contracts\Agent;
@@ -39,7 +40,7 @@ class WhatsAppReadOnlyAgent implements Agent, HasTools
             return $this->inner->provider();
         }
 
-        return 'openai-compatible';
+        return ToshiLlm::provider();
     }
 
     public function model(): string
@@ -48,7 +49,7 @@ class WhatsAppReadOnlyAgent implements Agent, HasTools
             return $this->inner->model();
         }
 
-        return config('toshi.model', 'nvidia/llama-3.3-nemotron-super-49b-v1');
+        return ToshiLlm::model();
     }
 
     public function instructions(): Stringable|string

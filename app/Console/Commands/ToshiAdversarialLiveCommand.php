@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\AiAgents\ToshiLlm;
 use Illuminate\Console\Command;
 use Symfony\Component\Process\Process;
 
@@ -52,9 +53,10 @@ class ToshiAdversarialLiveCommand extends Command
         }
 
         $this->info('Toshi live adversarial runner');
-        $this->line('  Provider : openai-compatible');
-        $this->line('  URL      : '.(string) config('ai.providers.openai-compatible.url'));
-        $this->line('  Model    : '.(string) config('toshi.model', config('ai.providers.openai-compatible.models.text.default')));
+        $this->line('  Provider : '.ToshiLlm::provider());
+        $this->line('  URL      : '.ToshiLlm::url());
+        $this->line('  Host     : '.ToshiLlm::urlHost());
+        $this->line('  Model    : '.ToshiLlm::model());
         $this->line('  Key      : set ('.strlen($key).' chars)');
         $this->line('  App DB   : '.config('database.default').' / '.(string) config('database.connections.'.config('database.default').'.database').' (artisan boot only)');
         $this->line('  Test DB  : phpunit.xml sqlite :memory: (scenarios do not use production)');

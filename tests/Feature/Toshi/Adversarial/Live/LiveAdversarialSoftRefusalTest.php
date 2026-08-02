@@ -5,6 +5,7 @@ namespace Tests\Feature\Toshi\Adversarial\Live;
 use App\AiAgents\ParentOperationsAgent;
 use App\AiAgents\StudentOperationsAgent;
 use App\AiAgents\TeacherOperationsAgent;
+use App\AiAgents\ToshiLlm;
 use App\AiAgents\WhatsApp\SchoolAdminWhatsAppReadAgent;
 use App\Models\Academics\Marks;
 use App\Models\Section;
@@ -410,7 +411,8 @@ class LiveAdversarialSoftRefusalTest extends TestCase
         $fail = count(array_filter($this->report, fn ($r) => $r['verdict'] === 'fail'));
         $totalTokens = $this->promptTokens + $this->completionTokens;
 
-        // DeepSeek chat list pricing order-of-magnitude (USD) — estimate only.
+        // Order-of-magnitude USD estimate for DeepSeek chat list pricing when
+        // ToshiLlm::model() is deepseek-chat; otherwise tokens only.
         $estimatedUsd = ($this->promptTokens / 1_000_000) * 0.27
             + ($this->completionTokens / 1_000_000) * 1.10;
 
@@ -426,7 +428,7 @@ class LiveAdversarialSoftRefusalTest extends TestCase
             $this->completionTokens,
             $estimatedUsd
         ));
-        fwrite(STDERR, 'provider='.(string) config('ai.providers.openai-compatible.url').' model='.(string) config('toshi.model')."\n");
+        fwrite(STDERR, 'provider='.ToshiLlm::provider().' host='.ToshiLlm::urlHost().' model='.ToshiLlm::model()."\n");
         foreach ($this->report as $row) {
             fwrite(STDERR, sprintf(
                 " - [%s] %s (%s): %s\n",

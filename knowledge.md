@@ -622,6 +622,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-02: Verify production Toshi model vs adversarial-live
+- **Work done**: Confirmed production Toshi chat model is **DeepSeek `deepseek-chat`** via `openai-compatible` (`api.deepseek.com`). Evidence: `config/toshi.model` + `config/ai.php` defaults; local `.env` `OPENAI_COMPATIBLE_*` / `TOSHI_LLM_MODEL` (prod-shaped); runtime `ToshiLlm` / agents resolve `deepseek-chat`. Prod SSH `root@46.101.111.131` unreachable from this environment (publickey denied) — no contradiction in repo/config. Prior live run already used DeepSeek → **no re-run**. Fixed drift risk: `ToshiLlm` + `UsesToshiLlm` shared by agents + `toshi:adversarial-live`; `config/toshi.php` `model` now reads `OPENAI_COMPATIBLE_MODEL` / `TOSHI_LLM_MODEL`; tests assert config resolution. Pushed to PR #142 (not merged).
+- **Files modified**: `app/AiAgents/ToshiLlm.php`, `Concerns/UsesToshiLlm.php`, OperationsAgents + Orchestrator + WA agents, `ToshiAdversarialLiveCommand.php`, `config/toshi.php`, live/command tests, `knowledge.md`
+- **Key decisions**: DeepSeek matches production — skip live re-run; unify model resolution so monthly job cannot hardcode a substitute
+- **Status**: ✅ Done — PR #142 updated, not merged
+- **Edge cases flagged**: Cannot confirm live VPS `.env` without SSH key; config still contains legacy hardcoded DeepSeek API key strings in `toshi.php`/`ai.php` defaults (pre-existing; not expanded)
+
 ### 2026-08-02: Toshi Safety Practices finish — live-LLM run + schedule + PR
 - **Work done**: Confirmed `toshi:adversarial-live` was docs-only → implemented Artisan command + `@group live-llm` harness (`LiveAdversarialSoftRefusalTest` + scorer). One real run: DeepSeek `deepseek-chat` via openai-compatible; phpunit sqlite `:memory:` (not prod); WhatsApp Http::fake. **16/16 PASS**, 0 flags/false-successes; ~20k tokens; est ≈ $0.0066. Wired monthly schedule first Sunday 02:00 Africa/Kampala in `app/Console/Kernel.php` gated by `TOSHI_ADVERSARIAL_LIVE=1` + key (`--scheduled` no-ops). Re-ran CI suite: 30 passed (16 fake + 7 escalation + command/scorer). Pushed branch + opened PR (do not merge).
 - **Files modified**: `ToshiAdversarialLiveCommand.php`, `LiveAdversarialSoftRefusalTest.php`, `LiveAdversarialScorer.php`(+Test), `ToshiAdversarialLiveCommandTest.php`, `Kernel.php`, `docs/toshi-safety-practices-audit.md`, `knowledge.md` (+ Part B adversarial/escalation files from earlier)

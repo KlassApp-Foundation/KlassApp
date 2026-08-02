@@ -25,6 +25,7 @@ use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasTools;
+use App\AiAgents\Concerns\UsesToshiLlm;
 use Laravel\Ai\Promptable;
 
 /**
@@ -42,17 +43,9 @@ use Laravel\Ai\Promptable;
 class PlatformOperationsAgent implements Agent, Conversational, HasTools
 {
     use Promptable;
+    use UsesToshiLlm;
     use RemembersConversations;
 
-    public function provider(): string
-    {
-        return 'openai-compatible';
-    }
-
-    public function model(): string
-    {
-        return config('toshi.model', 'deepseek-chat');
-    }
 
     public function instructions(): string
     {
