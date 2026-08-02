@@ -372,51 +372,54 @@ class HomeWorkController extends Controller
      */
     public function destroy($id)
     {
+        $homework = Homework::where('id',$id)->first();
+
+        if ($homework === null) {
+            abort(404);
+        }
+
+        // Authorize outside try/catch so 403 is not swallowed by Exception handler.
+        if (! Gate::allows('homework', $homework)) {
+            abort(403);
+        }
+
         try
         {
-            $homework = Homework::where('id',$id)->first();
-            if(Gate::allows('homework',$homework))
+            $homework->delete();
+
+            $admin = User::BySchool(Auth::user()->school_id)->ByRole(3)->first();
+
+            if($admin->id != Auth::id())
             {
-                $homework->delete();
+                $data = [];
 
-                $admin = User::BySchool(Auth::user()->school_id)->ByRole(3)->first();
+                $data['user']       =   $admin;
+                $data['details']    =   trans('notification.homework_delete_success_msg');
 
-                if($admin->id != Auth::id())
-                {
-                    $data = [];
+                event(new SingleNotificationEvent($data));
 
-                    $data['user']       =   $admin;
-                    $data['details']    =   trans('notification.homework_delete_success_msg');
+                /*$array=[];
 
-                    event(new SingleNotificationEvent($data));
-
-                    /*$array=[];
-
-                    $array['school_id'] =  Auth::user()->school_id;
-                    $array['user_id']   =  $admin->id;
-                    $array['message']   = 'Assignment Deleted';
-                    $array['type']      = 'assignment';
-                            
-                    event(new SinglePushEvent($array));*/
-                }
-
-                $message=trans('messages.delete_success_msg',['module' => 'Homework']);
-
-                $ip= $this->getRequestIP();
-                $this->doActivityLog(
-                    $homework,
-                    Auth::user(),
-                    ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                    LOGNAME_DELETE_HOMEWORK,
-                    $message
-                );
-                $res['success'] = $message;
-                return $res;
+                $array['school_id'] =  Auth::user()->school_id;
+                $array['user_id']   =  $admin->id;
+                $array['message']   = 'Assignment Deleted';
+                $array['type']      = 'assignment';
+                        
+                event(new SinglePushEvent($array));*/
             }
-            else
-            {
-                abort(403);
-            }
+
+            $message=trans('messages.delete_success_msg',['module' => 'Homework']);
+
+            $ip= $this->getRequestIP();
+            $this->doActivityLog(
+                $homework,
+                Auth::user(),
+                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
+                LOGNAME_DELETE_HOMEWORK,
+                $message
+            );
+            $res['success'] = $message;
+            return $res;
         }
         catch(Exception $e)
         {

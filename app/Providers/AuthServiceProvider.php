@@ -86,17 +86,24 @@ class AuthServiceProvider extends ServiceProvider
         return $user->school_id == $academic->school_id;
       });
 
-      // Legacy school_id match — Teacher / Teacher API destroy only (ug5). Not used for admin moderate paths.
+      // Teacher / Teacher API destroy only (ug5): school_id + teacher_id ownership.
+      // Matches CreateHomeworkTool / TeacherActionService::createHomework (teacher_id = actor).
+      // Admin moderate/destroy uses homework-manage (ug1/ug3) — ug3 must not rely on this Gate.
       Gate::define('homework', function ($user, $homework) {
         if ($homework === null) {
           return false;
         }
 
-        return (int) $user->school_id === (int) $homework->school_id;
+        if ((int) $user->usergroup_id !== 5) {
+          return false;
+        }
+
+        return (int) $user->school_id === (int) $homework->school_id
+          && (int) $user->id === (int) $homework->teacher_id;
       });
 
       // Admin moderate / mutate: approve·reject·bulk, admin show/edit/update/view, admin destroy.
-      // ug1 unscoped or ug3 school_id (Option A). ug5 denied — teachers keep `homework` for destroy.
+      // ug1 unscoped or ug3 school_id (Option A). ug5 denied — teachers use `homework` for destroy.
       Gate::define('homework-manage', function ($user, $homework) {
         if ($homework === null) {
           return false;

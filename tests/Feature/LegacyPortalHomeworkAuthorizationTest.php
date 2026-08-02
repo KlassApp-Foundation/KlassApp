@@ -422,11 +422,60 @@ class LegacyPortalHomeworkAuthorizationTest extends TestCase
         $this->assertTrue(Gate::denies('studentHomework', $this->submissionA));
     }
 
-    public function test_legacy_homework_gate_still_used_for_teacher_school_scope(): void
+    public function test_homework_gate_ug5_owns_via_teacher_id(): void
     {
         $this->actingAs($this->teacherAssigned);
         $this->assertTrue(Gate::allows('homework', $this->homeworkA));
         $this->assertTrue(Gate::denies('homework', $this->homeworkB));
+
+        $this->actingAs($this->teacherUnassigned);
+        $this->assertTrue(Gate::denies('homework', $this->homeworkA));
+
+        $this->actingAs($this->adminA);
+        $this->assertTrue(Gate::denies('homework', $this->homeworkA));
+        $this->assertTrue(Gate::allows('homework-manage', $this->homeworkA));
+    }
+
+    public function test_ug5_can_destroy_own_homework(): void
+    {
+        $this->actingAs($this->teacherAssigned);
+
+        $this->get('/teacher/homework/delete/'.$this->homeworkA->id)
+            ->assertOk();
+
+        $this->assertSoftDeleted('homeworks', [
+            'id' => $this->homeworkA->id,
+        ]);
+    }
+
+    public function test_ug5_cannot_destroy_colleague_homework_same_school(): void
+    {
+        $colleagueHomework = Homework::create([
+            'school_id' => $this->schoolA,
+            'academic_year_id' => $this->academicYearA,
+            'standardLink_id' => $this->standardLinkA,
+            'subject_id' => $this->subjectA,
+            'teacher_id' => $this->teacherUnassigned->id,
+            'description' => 'Colleague homework',
+            'attachment' => null,
+            'date' => '2026-08-02',
+            'created_by' => $this->teacherUnassigned->id,
+        ]);
+
+        HomeworkApproval::create([
+            'homework_id' => $colleagueHomework->id,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($this->teacherAssigned);
+
+        $this->get('/teacher/homework/delete/'.$colleagueHomework->id)
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('homeworks', [
+            'id' => $colleagueHomework->id,
+            'deleted_at' => null,
+        ]);
     }
 
     private function makeUser(int $usergroupId, int $schoolId, string $email, string $name): User
