@@ -76,7 +76,7 @@ class ToshiLlmHealthCommand extends Command
                     'messages' => [
                         ['role' => 'user', 'content' => 'Reply with exactly: TOSHI_HEALTH_OK'],
                     ],
-                    'max_tokens' => 16,
+                    'max_tokens' => 128,
                     'temperature' => 0,
                 ]);
         } catch (ConnectionException $e) {
@@ -104,8 +104,17 @@ class ToshiLlmHealthCommand extends Command
             ]);
         }
 
-        $content = data_get($response->json(), 'choices.0.message.content');
-        if (! is_string($content) || trim($content) === '') {
+        $json = $response->json();
+
+        // Reasoning models (e.g. deepseek-v4-flash) spend the first completion
+        // tokens on reasoning_content. A health check must succeed when the
+        // provider is alive and returned either an assistant reply or a
+        // non-empty reasoning trace — otherwise it false-fails on healthy
+        // providers (seen on prod: max_tokens=16 + temperature=0 exhausted on
+        // reasoning, empty content, exit 1 despite a 200).
+        $content = data_get($json, 'choices.0.message.content');
+        $reasoning = (string) data_get($json, 'choices.0.message.reasoning_content', '');
+        if ((! is_string($content) || trim($content) === '') && trim($reasoning) === '') {
             return $this->failCritical('empty_response', 'LLM provider returned no assistant content.', [
                 'provider' => ToshiLlm::provider(),
                 'model' => $model,
@@ -114,7 +123,8 @@ class ToshiLlmHealthCommand extends Command
             ]);
         }
 
-        $this->info('  Result   : OK (received '.mb_strlen(trim($content)).' chars)');
+        $snippet = trim(is_string($content) && $content !== '' ? $content : $reasoning);
+        $this->info('  Result   : OK (received '.mb_strlen($snippet).' chars)');
         $this->comment('Live completion succeeded. No secrets printed. Schedule not wired here.');
 
         return self::SUCCESS;
