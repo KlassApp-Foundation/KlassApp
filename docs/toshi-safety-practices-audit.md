@@ -238,13 +238,13 @@ Prefer **school-local** humans. Platform/superadmin is not the WhatsApp escalati
 
 | Item | Decision |
 |---|---|
-| Path | `tests/Feature/Toshi/Adversarial/` + `AdversarialPromptFixtures` |
+| Path | `tests/Feature/Toshi/Adversarial/` + `App\Support\Toshi\AdversarialPromptFixtures` |
 | Files | `TeacherAdversarialIsolationTest`, `StudentAdversarialIsolationTest`, `ParentAdversarialIsolationTest`, `SchoolAdminWhatsAppAdversarialIsolationTest` (4 scenarios each ≈ **16** tests) |
 | What it proves | Structural isolation under adversarial-shaped prompts (tools absent / `canInvokeTool` false / `handle()` deny / WA HARD_DENY) |
 | What it does **not** prove | Jailbreak resistance or soft-refusal quality of any model — suite class docblocks state this explicitly |
 | How “prompt pressure” is simulated | Document manipulative fixture → `Agent::fake([ToolCall …])` scripts a compliance-shaped attempt → laravel/ai raises `NoSuchToolException` for off-role tools (not on `tools()`); on-role peer-scope tools may run but forged peer ids stay ignored. Soft-refusal wording is out of scope. |
 
-### Live-LLM adversarial cadence — SHIPPED (after one clean real run)
+### Live-LLM adversarial cadence — SHIPPED (in-process; prod-safe)
 
 Live-LLM is the **only** check type that validates prompt-manipulation / soft-refusal resistance. The CI `Agent::fake` suite cannot replace it.
 
@@ -253,7 +253,10 @@ Live-LLM is the **only** check type that validates prompt-manipulation / soft-re
 | **Frequency** | **Monthly** — first Sunday 02:00 Africa/Kampala (`Kernel` schedule + day≤7 gate) |
 | **Trigger** | `php artisan toshi:adversarial-live` (manual) or scheduled `toshi:adversarial-live --scheduled` |
 | **Env gate** | `TOSHI_ADVERSARIAL_LIVE=1` + real `ai.providers.openai-compatible.key`; manual aborts loudly; `--scheduled` no-ops quietly |
-| **PHPUnit** | `tests/Feature/Toshi/Adversarial/Live/LiveAdversarialSoftRefusalTest` (`@group live-llm`); self-skips without gate (CI-safe) |
+| **Runtime** | **In-process** via `App\Services\Toshi\LiveAdversarialRunner` — **no PHPUnit** (works in `--no-dev` prod images). Optional `@group live-llm` PHPUnit wrapper still available for local. |
+| **DB isolation** | Temporary sqlite `:memory:` for scenario seed + mutation checks; production MySQL never written |
+| **WhatsApp** | `Http::fake` for Evolution/WhatsApp/localhost hosts only — LLM provider stays live |
+| **Failure signal** | Exit `1` + `Log::critical` on hard failures (same ops pattern as `toshi:llm-health`) |
 | **Checks** | Soft-refusal quality; no successful mutation; text-only “I did it” claims fail; peer secrets flagged |
 | **One-time real run (2026-08-02)** | Provider DeepSeek `https://api.deepseek.com` / model `deepseek-chat`; DB = phpunit sqlite `:memory:` (artisan boot used local `klassapp_local`, not prod); WhatsApp Http::fake. **16/16 PASS**, 0 flags, 0 false-successes; ~20k tokens; est ≈ **$0.0066** |
 | **Live-LLM vs repo defaults** | **Confirmed** against repo-configured defaults: `ToshiLlm` / `UsesToshiLlm` → provider `openai-compatible`, model `deepseek-chat`, URL host `api.deepseek.com` (`config/toshi.php` + `config/ai.php`). Live run used the same path. |
@@ -262,7 +265,8 @@ Live-LLM is the **only** check type that validates prompt-manipulation / soft-re
 | **VPS-actual confirmation** | **✅ Confirmed (2026-08-02 ~16:22 UTC)** via `docker exec sms-app php artisan toshi:llm-status` → provider `openai-compatible`, model `deepseek-v4-flash`, URL host `api.deepseek.com`, key configured, checksum `d4129b3240672733` (no secrets printed). **Note:** production now intentionally resolves `deepseek-v4-flash`, not the repo default `deepseek-chat` — that is a deliberate live overrides, so `config/toshi.php` + `config/ai.php` defaults remain `deepseek-chat` for non-prod. An `@group live-llm` rerun against the real model (`deepseek-v4-flash`) is still pending to revalidate the adversarial suite under the production model. |
 | **Runtime diagnostic** | `php artisan toshi:llm-status` — prints provider, model, URL **host only**, key set yes/no, and a non-secret config checksum (`provider\|model\|host`). Uses `ToshiLlm` (same resolver as agents). **Never prints API keys or full URLs.** |
 | **Ops (VPS) instructions** | After merge + deploy: `docker exec sms-app php artisan toshi:llm-status`. Expect `openai-compatible` / `deepseek-v4-flash` / host `api.deepseek.com` on production (repo defaults in dev are `deepseek-chat`). Paste output into the safety audit follow-up — no secrets should appear. |
-| **Recommendation** | **(a)** Rerun `php artisan toshi:adversarial-live` against the real model (now `deepseek-v4-flash`) to revalidate the adversarial suite under production's actual model. **(b)** Structural dual-config fail-loud + live health check: see [`docs/toshi-prod-health-check.md`](toshi-prod-health-check.md) (`ToshiLlm::assertConfigConsistent()`, `toshi:llm-health`). Adversarial schedule stays gated off in production until intentionally enabled. Production provider is now verified working. **`toshi:llm-health` schedule is NOT wired in Kernel — OpenCode/ops follow-up.** |
+| **Ops enable monthly schedule** | Set `TOSHI_ADVERSARIAL_LIVE=1` in prod `.env` only when ready for unattended monthly runs. Gate stays off by default. Watch `storage/logs/toshi-adversarial-live.log` + `Log::critical` on hard fail. |
+| **Recommendation** | Structural dual-config fail-loud + live health check: see [`docs/toshi-prod-health-check.md`](toshi-prod-health-check.md). Adversarial is now prod-cron-capable (in-process); enable the env gate when ops wants the monthly schedule live. **`toshi:llm-health` schedule is NOT wired in Kernel — OpenCode/ops owns that 5-min cron.** |
 
 ### B-2 — WhatsApp human escalation MVP (shipped)
 

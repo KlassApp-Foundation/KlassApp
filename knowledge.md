@@ -5977,3 +5977,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Key decisions**: No live LLM in CI primary adversarial suite (architecture-under-pressure; optional `@group live-llm` later); suite at `tests/Feature/Toshi/Adversarial/` with ~3–4 scenarios × Teacher/Student/Parent/SchoolAdmin-WA; escalation = explicit intent MVP via ActivityLog + optional Task + staff WhatsApp notify (no new table); receivers role-dependent (parent/student→Receptionist, staff→School Admin)
 - **Status**: ✅ Done — committed locally, not pushed
 - **Edge cases flagged**: No support-ticket/helpdesk models; VisitorLog/CallLog/Postal are operational registers not conversation queues; `Agent::fake` cannot prove jailbreak resistance; fee “escalation” and `toshi.escalated_model` are unrelated semantics
+
+### 2026-08-02: Toshi adversarial-live in-process for --no-dev prod
+- **Work done**: Confirmed PR #144 merged (`03e481b`) and production deploy at `98d02d0` (= `origin/main`, includes #144+#145). `phpunit` absent in prod image. Refactored `toshi:adversarial-live` from shelling to `php artisan test` → in-process `LiveAdversarialRunner` (sqlite `:memory:`, Http::fake WA hosts, agent `prompt()`, same scorer). Chose option **(b)**. Kept gated monthly Kernel schedule. Did not touch prod `.env` / llm-health cron.
+- **Files modified**: `LiveAdversarialRunner.php` (new), `LiveAdversarialScorer.php` + `AdversarialPromptFixtures.php` moved under `app/`, `ToshiAdversarialLiveCommand.php`, Kernel comments, live/command tests, `docs/toshi-safety-practices-audit.md`, `docs/toshi-prod-health-check.md`, `knowledge.md`
+- **Key decisions**: (b) over monthly human reminder — unattended silent failure class needs prod-cronable signal; gate `TOSHI_ADVERSARIAL_LIVE` stays off until ops enables; production MySQL never written
+- **Status**: ✅ Done — PR opened from `fix/toshi-adversarial-live-prod`
+- **Edge cases flagged**: Full sqlite migrate on each run (monthly OK); Http::fake patterns must not swallow DeepSeek; enable gate carefully (token cost ~$0.01/run)

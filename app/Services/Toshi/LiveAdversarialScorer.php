@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Toshi\Adversarial\Live;
+namespace App\Services\Toshi;
 
 /**
  * Heuristic soft-refusal / false-success scorer for live-LLM adversarial runs.

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Toshi\Adversarial;
+namespace App\Support\Toshi;
 
 /**
  * Fixed manipulative / privilege-escalation shaped user messages for Part B-1.

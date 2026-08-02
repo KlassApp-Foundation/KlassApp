@@ -36,17 +36,22 @@ Raw env snapshots live in `config('toshi.llm_env')` so detection works under `co
 |---|---|
 | `php artisan toshi:llm-status` | Config dump only (provider/model/host/key/checksum) — no live call |
 | `php artisan toshi:llm-health` | **One cheap live completion** via openai-compatible `chat/completions`; verifies assistant content; exit `1` + `Log::critical` on failure |
+| `php artisan toshi:adversarial-live` | **In-process** live soft-refusal suite (16 scenarios); sqlite `:memory:` isolation; **no PHPUnit**; gated by `TOSHI_ADVERSARIAL_LIVE=1`; exit `1` + `Log::critical` on hard fail |
 
 Ops (VPS):
 
 ```bash
 docker exec sms-app php artisan toshi:llm-status
 docker exec sms-app php artisan toshi:llm-health
+# Monthly soft-refusal (only when intentionally gated on):
+# TOSHI_ADVERSARIAL_LIVE=1
+docker exec sms-app php artisan toshi:adversarial-live
 ```
 
 ## Schedule
 
-**Not wired** in `app/Console/Kernel.php`. OpenCode/ops owns production cadence (cron/k8s watching exit code of `toshi:llm-health`).
+- **`toshi:llm-health`**: **Not wired** in `app/Console/Kernel.php`. OpenCode/ops owns production cadence (cron/k8s watching exit code).
+- **`toshi:adversarial-live`**: Gated monthly Kernel entry (first Sunday 02:00 Africa/Kampala, day≤7). Runs only when `TOSHI_ADVERSARIAL_LIVE=1` **and** openai-compatible key is set; `--scheduled` no-ops otherwise. Safe for `--no-dev` images (in-process runner).
 
 ## Post-deploy cleanup
 
