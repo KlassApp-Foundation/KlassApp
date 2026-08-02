@@ -18,6 +18,7 @@ use App\AiAgents\Tools\RouteToAcademicSkillTool;
 use App\AiAgents\Tools\RouteToFeeSkillTool;
 use App\AiAgents\Tools\RouteToGradingSkillTool;
 use App\AiAgents\Tools\RouteToReportingSkillTool;
+use App\AiAgents\Tools\RouteToSchoolCommsSkillTool;
 
 #[MaxSteps(3)]
 #[Timeout(120)]
@@ -48,6 +49,7 @@ Your job is to classify the user query into EXACTLY ONE domain and route it to t
 4. **fee** — Creating fee categories, recording payments, checking fee balances
 5. **grading** — Setting/viewing grading scales, seeding default UNEB scales
 6. **report** — Generating academic, fee, attendance, and summary reports
+7. **school_comms** — Noticeboard notices, calendar events, and holidays (list/create/update only)
 
 **Rules:**
 - If the query clearly matches a domain, route it immediately using the corresponding tool.
@@ -59,6 +61,8 @@ Your job is to classify the user query into EXACTLY ONE domain and route it to t
 Example: "add a student named John in Primary Four" → routeToStudentSkill
 Example: "create a term called Term 1" → routeToAcademicSkill
 Example: "record a payment of 50k for student 42" → routeToFeeSkill
+Example: "post a notice about parent meeting" → routeToSchoolCommsSkill
+Example: "add Independence Day holiday" → routeToSchoolCommsSkill
 PROMPT;
     }
 
@@ -71,6 +75,7 @@ PROMPT;
             new RouteToFeeSkillTool,
             new RouteToGradingSkillTool,
             new RouteToReportingSkillTool,
+            new RouteToSchoolCommsSkillTool,
         ];
     }
 

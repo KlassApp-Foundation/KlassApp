@@ -99,7 +99,7 @@ class DeputyAdminOperationsToolsTest extends TestCase
         $this->assertNotContains(SetCurriculumTool::class, $classes);
         $this->assertContains(AddStudentTool::class, $classes);
         $this->assertContains(ListTeachersTool::class, $classes);
-        $this->assertCount(22, $classes);
+        $this->assertCount(31, $classes);
     }
 
     public function test_ug3_teacher_skill_still_includes_add_coadmin(): void
