@@ -5,8 +5,8 @@ namespace App\AiAgents;
 /**
  * Single resolution path for Toshi's openai-compatible provider + model.
  *
- * Live agents and toshi:adversarial-live must call this (or UsesToshiLlm)
- * so monthly live runs cannot silently drift from production chat config.
+ * Live agents, toshi:adversarial-live, and toshi:llm-status must call this
+ * (or UsesToshiLlm) so monthly live runs cannot silently drift from production chat config.
  */
 final class ToshiLlm
 {
@@ -33,5 +33,26 @@ final class ToshiLlm
         $host = parse_url(self::url(), PHP_URL_HOST);
 
         return is_string($host) ? $host : '';
+    }
+
+    /**
+     * Whether an API key is present in config (never returns the key itself).
+     */
+    public static function keyConfigured(): bool
+    {
+        return (string) config('ai.providers.openai-compatible.key', '') !== '';
+    }
+
+    /**
+     * Short fingerprint of non-secret resolution inputs (provider + model + host).
+     * Safe to log / paste into ops chat — no credentials.
+     */
+    public static function configChecksum(): string
+    {
+        return substr(hash('sha256', implode("\0", [
+            self::provider(),
+            self::model(),
+            self::urlHost(),
+        ])), 0, 16);
     }
 }

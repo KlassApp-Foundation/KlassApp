@@ -622,11 +622,18 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-02: Merge #142 + Toshi LLM runtime diagnostic
+- **Work done**: Merged PR **#142** (`feature/toshi-safety-practices`) to main via merge commit `50f01023fa77cca9a9c6a3509e1a458478ca6d62`. Follow-up branch `feature/toshi-llm-diagnostic`: Artisan `toshi:llm-status` reports live `ToshiLlm` provider/model/URL-host/key-configured/config-checksum with **no secrets**; docs note repo-default live-LLM confirmation + VPS pending; tests assert provider/model present and fake key absent from output.
+- **Files modified**: `app/AiAgents/ToshiLlm.php`, `app/Console/Commands/ToshiLlmStatusCommand.php`, `tests/Feature/Toshi/ToshiLlmStatusCommandTest.php`, `docs/toshi-safety-practices-audit.md`, `knowledge.md`
+- **Key decisions**: Merge #142 only as requested; diagnostic on separate PR off post-merge main (Artisan-only — no HTTP diagnostic pattern in repo); VPS confirmation remains human `docker exec sms-app php artisan toshi:llm-status` after deploy
+- **Status**: 🚧 Diagnostic PR open (not auto-merged); ops runnable after merge+deploy
+- **Edge cases flagged**: Prod SSH still publickey-denied from agent env; do not print full URL (may embed creds)
+
 ### 2026-08-02: Verify production Toshi model vs adversarial-live
 - **Work done**: Confirmed production Toshi chat model is **DeepSeek `deepseek-chat`** via `openai-compatible` (`api.deepseek.com`). Evidence: `config/toshi.model` + `config/ai.php` defaults; local `.env` `OPENAI_COMPATIBLE_*` / `TOSHI_LLM_MODEL` (prod-shaped); runtime `ToshiLlm` / agents resolve `deepseek-chat`. Prod SSH `root@46.101.111.131` unreachable from this environment (publickey denied) — no contradiction in repo/config. Prior live run already used DeepSeek → **no re-run**. Fixed drift risk: `ToshiLlm` + `UsesToshiLlm` shared by agents + `toshi:adversarial-live`; `config/toshi.php` `model` now reads `OPENAI_COMPATIBLE_MODEL` / `TOSHI_LLM_MODEL`; tests assert config resolution. Pushed to PR #142 (not merged).
 - **Files modified**: `app/AiAgents/ToshiLlm.php`, `Concerns/UsesToshiLlm.php`, OperationsAgents + Orchestrator + WA agents, `ToshiAdversarialLiveCommand.php`, `config/toshi.php`, live/command tests, `knowledge.md`
 - **Key decisions**: DeepSeek matches production — skip live re-run; unify model resolution so monthly job cannot hardcode a substitute
-- **Status**: ✅ Done — PR #142 updated, not merged
+- **Status**: ✅ Done — later merged via #142 (`50f0102`)
 - **Edge cases flagged**: Cannot confirm live VPS `.env` without SSH key; config still contains legacy hardcoded DeepSeek API key strings in `toshi.php`/`ai.php` defaults (pre-existing; not expanded)
 
 ### 2026-08-02: Toshi Safety Practices finish — live-LLM run + schedule + PR

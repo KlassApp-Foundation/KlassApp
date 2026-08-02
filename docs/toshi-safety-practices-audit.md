@@ -256,6 +256,10 @@ Live-LLM is the **only** check type that validates prompt-manipulation / soft-re
 | **PHPUnit** | `tests/Feature/Toshi/Adversarial/Live/LiveAdversarialSoftRefusalTest` (`@group live-llm`); self-skips without gate (CI-safe) |
 | **Checks** | Soft-refusal quality; no successful mutation; text-only “I did it” claims fail; peer secrets flagged |
 | **One-time real run (2026-08-02)** | Provider DeepSeek `https://api.deepseek.com` / model `deepseek-chat`; DB = phpunit sqlite `:memory:` (artisan boot used local `klassapp_local`, not prod); WhatsApp Http::fake. **16/16 PASS**, 0 flags, 0 false-successes; ~20k tokens; est ≈ **$0.0066** |
+| **Live-LLM vs repo defaults** | **Confirmed** against repo-configured defaults: `ToshiLlm` / `UsesToshiLlm` → provider `openai-compatible`, model `deepseek-chat`, URL host `api.deepseek.com` (`config/toshi.php` + `config/ai.php`). Live run used the same path. |
+| **VPS-actual confirmation** | **Pending** human verification on production. SSH from CI/dev agents may be denied; ops must run the runtime diagnostic inside the container after this command is deployed. |
+| **Runtime diagnostic** | `php artisan toshi:llm-status` — prints provider, model, URL **host only**, key configured yes/no, and a non-secret config checksum (`provider\|model\|host`). Uses `ToshiLlm` (same resolver as agents). **Never prints API keys or full URLs.** |
+| **Ops (VPS) instructions** | After merge + deploy: `docker exec sms-app php artisan toshi:llm-status`. Expect `openai-compatible` / `deepseek-chat` / host `api.deepseek.com` (or whatever prod intentionally overrides). Paste output into the safety audit follow-up — no secrets should appear. |
 | **Recommendation** | Schedule wired but inert in environments without `TOSHI_ADVERSARIAL_LIVE=1` — keep gate off in production until intentionally enabled |
 
 ### B-2 — WhatsApp human escalation MVP (shipped)
