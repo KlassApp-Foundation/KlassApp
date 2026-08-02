@@ -28,6 +28,42 @@ trait AuthorizesToshiAction
             throw new ToshiUnauthorizedActionException($response->message());
         }
 
+        $this->assertEffectiveSchoolScope($user, $target);
+    }
+
+    /**
+     * Dual-allow school admin (toshi-school-action) OR deputy admin (toshi-deputy-action).
+     *
+     * Shared school tools call authorizeOrMessage() → this path so ug4 can use the same
+     * tool classes as ug3 without widening toshi-school-action. Owner-only tools
+     * (AddCoAdminTool, SetCurriculumTool) must use authorizeSchoolAdminOrMessage() instead.
+     *
+     * @throws \App\Exceptions\ToshiUnauthorizedActionException
+     */
+    protected function authorizeSchoolOrDeputyAction(User $user, mixed $target = null): void
+    {
+        $school = Gate::inspect('toshi-school-action', [$user, $target]);
+        if ($school->allowed()) {
+            $this->assertEffectiveSchoolScope($user, $target);
+
+            return;
+        }
+
+        $deputy = Gate::inspect('toshi-deputy-action', [$user, $target]);
+        if ($deputy->allowed()) {
+            $this->assertEffectiveSchoolScope($user, $target);
+
+            return;
+        }
+
+        throw new ToshiUnauthorizedActionException($school->message());
+    }
+
+    /**
+     * @throws \App\Exceptions\ToshiUnauthorizedActionException
+     */
+    protected function assertEffectiveSchoolScope(User $user, mixed $target = null): void
+    {
         $effectiveSchoolId = ToshiActionService::getEffectiveSchoolId($user);
         if (! $effectiveSchoolId) {
             throw new ToshiUnauthorizedActionException(
@@ -45,7 +81,8 @@ trait AuthorizesToshiAction
     }
 
     /**
-     * Convenience wrapper for Tool handle() methods.
+     * Convenience wrapper for shared school Tool handle() methods.
+     * Dual-allows ug3 (toshi-school-action) or ug4 (toshi-deputy-action).
      * Returns null on success, or an error string (prefixed with ❌) on failure.
      */
     protected function authorizeOrMessage(?User $user): ?string
@@ -55,10 +92,30 @@ trait AuthorizesToshiAction
         }
 
         try {
-            $this->authorizeSchoolAction($user);
+            $this->authorizeSchoolOrDeputyAction($user);
+
             return null;
         } catch (ToshiUnauthorizedActionException $e) {
-            return '❌ ' . $e->getMessage();
+            return '❌ '.$e->getMessage();
+        }
+    }
+
+    /**
+     * Owner-level school-admin only (ug3 / ug1 impersonating ug3).
+     * Use for AddCoAdminTool and SetCurriculumTool — not dual-allowed for deputies.
+     */
+    protected function authorizeSchoolAdminOrMessage(?User $user): ?string
+    {
+        if (! $user) {
+            return '❌ Authentication required.';
+        }
+
+        try {
+            $this->authorizeSchoolAction($user);
+
+            return null;
+        } catch (ToshiUnauthorizedActionException $e) {
+            return '❌ '.$e->getMessage();
         }
     }
 

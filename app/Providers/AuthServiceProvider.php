@@ -251,6 +251,24 @@ class AuthServiceProvider extends ServiceProvider
             return \Illuminate\Auth\Access\Response::deny('You are not authorized for this school action.');
         });
 
+        // Deputy Admin–scoped Toshi tools only (ug4). Keep toshi-school-action ug3-only —
+        // structural isolation via DeputyAdminOperationsAgent::tools() (excludes owner-level
+        // AddCoAdminTool + SetCurriculumTool), not widening this Gate.
+        Gate::define('toshi-deputy-action', function (User $user): \Illuminate\Auth\Access\Response {
+            if ($user->usergroup_id === 4 && $user->school_id) {
+                return \Illuminate\Auth\Access\Response::allow();
+            }
+
+            if ($user->usergroup_id === 1 && $user->isImpersonating()) {
+                $impersonated = User::find(\Session::get('impersonate'));
+                if ($impersonated && $impersonated->usergroup_id === 4 && $impersonated->school_id) {
+                    return \Illuminate\Auth\Access\Response::allow();
+                }
+            }
+
+            return \Illuminate\Auth\Access\Response::deny('You are not authorized for this deputy admin action.');
+        });
+
         // Teacher-scoped Toshi tools only (ug5). Keep toshi-school-action ug3-only —
         // structural isolation via TeacherOperationsAgent::tools(), not widening this Gate.
         Gate::define('toshi-teacher-action', function (User $user): \Illuminate\Auth\Access\Response {

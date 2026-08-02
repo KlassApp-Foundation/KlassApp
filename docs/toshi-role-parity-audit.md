@@ -755,3 +755,26 @@ Branch: `feature/toshi-student-role`.
 | Legacy IDOR Gates fixed | ❌ **explicitly deferred** — see **HIGH backlog — Legacy portal IDOR** above |
 
 Classwall mutations remain deferred.
+
+---
+
+## Deputy Admin Part B — implemented (2026-08-02)
+
+Branch: `feature/toshi-deputy-admin-role`.
+
+| Deliverable | Status |
+|---|---|
+| `DeputyAdminOperationsAgent` (22 tools = skill surface minus owner tools) | ✅ |
+| Gate `toshi-deputy-action` (ug4 + school_id; ug1→ug4 impersonation) | ✅ |
+| `toshi-school-action` unchanged (ug3-only) | ✅ |
+| Dual-allow `authorizeOrMessage()`; owner tools use `authorizeSchoolAdminOrMessage()` | ✅ |
+| Scope router ug4 → deputy agent (not ToshiOrchestrator fall-through) | ✅ |
+| `getRoleCapabilities(4)` school ops minus `add_coadmin` / settings | ✅ |
+| Isolation vs school/teacher/accountant/librarian/receptionist/student Gates | ✅ `tests/Feature/Toshi/DeputyAdmin/DeputyAdminOperationsToolsTest.php` |
+| Audit `acting_user_id` / `approver_id` (Tier-2 confirm) | ✅ |
+| Blade allowlist `[1, 3, 4, 5, 6, 8, 10, 11]` | ✅ |
+| WhatsApp ug4 | ❌ out of scope (WriteExclusion agent-agnostic — see `docs/toshi-deputy-admin-audit.md`) |
+
+### AddCoAdminTool exclusion (owner governance)
+
+Not a Settings field (name/logo/plan/academic-year), but excluded because creating ug3 co-admins is owner-level governance — deputies must not make owner-level changes. See `DeputyAdminOperationsAgent` docblock + `docs/toshi-deputy-admin-audit.md`.

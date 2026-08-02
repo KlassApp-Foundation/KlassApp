@@ -212,10 +212,17 @@ class ToshiActionService
                     'list_classes', 'list_teachers', 'list_sections', 'generate_report',
                 ],
             ],
-             4 => [ // SchoolSubadmin
+            4 => [ // SchoolSubadmin / Deputy Admin — school ops minus owner-level
                 'scope'   => 'school',
-                'label'   => 'school administrator',
-                'actions' => [],
+                'label'   => 'deputy school administrator',
+                'actions' => [
+                    'add_student', 'add_teacher',
+                    'create_fee', 'create_term', 'record_attendance',
+                    'record_payment', 'create_exam', 'add_parent', 'enter_mark',
+                    'assign_teacher', 'create_subject',
+                    'list_classes', 'list_teachers', 'list_sections', 'generate_report',
+                    // Explicitly omitted: add_coadmin (owner governance), settings/curriculum
+                ],
             ],
             5 => [ // Teacher
                 'scope'   => 'school',

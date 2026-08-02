@@ -5900,3 +5900,11 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Key decisions**: Named class allowlist (not dropping ConfirmsBeforeWrite from tools); no new bridge; School Admin + Parent excluded from wave 1
 - **Status**: ✅ Done — local branch only, not pushed
 - **Edge cases flagged**: `ask()` returns `CONFIRMATION_DISPATCHED` sentinel so webhook does not fall through to unknown-keyword after buttons send
+
+### 2026-08-02: Deputy Admin Part B — DeputyAdminOperationsAgent
+- **Work done**: Implemented ug4 Toshi on `feature/toshi-deputy-admin-role` (worktree). Gate `toshi-deputy-action`; dual-allow `authorizeOrMessage()`; owner-only `authorizeSchoolAdminOrMessage()` for AddCoAdminTool + SetCurriculumTool; `DeputyAdminOperationsAgent` (22 tools); scope router ug4; `getRoleCapabilities(4)` minus add_coadmin/settings; Blade allowlist +4; isolation + audit tests.
+- **Files modified**: `DeputyAdminOperationsAgent.php`, `AuthorizesToshiAction.php`, `AddCoAdminTool.php`, `SetCurriculumTool.php`, `AuthServiceProvider.php`, `ToshiSdkV2Service.php`, `ToshiActionService.php`, `ToshiOrchestrator.php`, `layouts/app.blade.php`, `tests/Feature/Toshi/DeputyAdmin/DeputyAdminOperationsToolsTest.php`, `docs/toshi-deputy-admin-audit.md`, `docs/toshi-role-parity-audit.md`, `knowledge.md`
+- **Key decisions**: AddCoAdmin excluded as owner governance (not Settings fields); SetCurriculum as Settings; do not widen `toshi-school-action`; WhatsApp ug4 out of scope (WriteExclusion agent-agnostic confirmed)
+- **Tests**: `DeputyAdminOperationsToolsTest` — 11 passed (37 assertions); related auth filter — 8 passed
+- **Status**: ✅ Done — committed locally, not pushed
+- **Edge cases flagged**: SetCurriculum remains AgentToshi-map orphan for ug3 (not on skill agents)
