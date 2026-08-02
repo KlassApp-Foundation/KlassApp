@@ -42,6 +42,8 @@ use Illuminate\Notifications\ChannelManager;
 use App\Channels\WhatsAppBackupChannel;
 use Laravel\Ai\Tools\Request as AiToolRequest;
 use Illuminate\Support\Facades\Notification;
+use App\Services\Toshi\AuditingMcpClientManager;
+use Laravel\Mcp\Client\ClientManager;
 // Importing DuskServiceProvider class
 
 class AppServiceProvider extends ServiceProvider {
@@ -146,6 +148,7 @@ class AppServiceProvider extends ServiceProvider {
     * @return void
     */
     public function register() {
-
+        // Named Mcp::client() resolutions always return auditing clients (closes raw callTool bypass).
+        $this->app->singleton(ClientManager::class, fn (): ClientManager => new AuditingMcpClientManager);
     }
 }

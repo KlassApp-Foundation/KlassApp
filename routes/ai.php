@@ -22,8 +22,9 @@ use Laravel\Mcp\Facades\Mcp;
 | Schools have their own workspaces — store TokenSet per school (or per
 | connecting staff user) after mcp.oauth.slack.connect.
 |
-| Audit: agent-mediated MCP → ToolInvoked → LogToolInvoked. Raw callTool
-| banned — use ToshiMcpClient. MCP Approvable/HITL for writes is deferred.
+| Audit: named Mcp::client() → AuditingMcpClient(Manager) callTool audit.
+| Agent McpTool uses same layer (LogToolInvoked skips McpTool). Prefer
+| ToshiMcpClient when you need an explicit acting user. MCP HITL deferred.
 */
 
 $mode = config('services.slack_mcp.mode', 'mock');

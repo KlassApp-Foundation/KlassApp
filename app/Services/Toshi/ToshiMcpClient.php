@@ -2,9 +2,7 @@
 
 namespace App\Services\Toshi;
 
-use App\Models\School;
 use App\Models\User;
-use App\Services\ToshiAuditService;
 use Illuminate\Support\Collection;
 use Laravel\Mcp\Client;
 use Laravel\Mcp\Client\Schema\ToolResult;
@@ -12,12 +10,13 @@ use Laravel\Mcp\Facades\Mcp;
 use LogicException;
 
 /**
- * Audited wrapper around Laravel MCP client callTool.
+ * Convenience wrapper around named MCP clients with an explicit acting user.
  *
- * Agent-mediated MCP tools already audit via LogToolInvoked (ToolInvoked event).
- * Raw Mcp::client()->callTool() bypasses that event loop — use this wrapper instead,
- * or prefer spreading Mcp::client()->tools() into an agent so ToolInvoked fires.
+ * Named clients from Mcp::client() are already AuditingMcpClient / AuditingWebClient
+ * (via AuditingMcpClientManager) — callTool audits at that layer. This class requires
+ * an acting user up front so unauthenticated raw calls fail fast.
  *
+ * Prefer spreading Mcp::client()->tools() into an agent (ToolInvoked path) when possible.
  * MCP Approvable/HITL for write tools is deferred.
  */
 class ToshiMcpClient
@@ -45,7 +44,7 @@ class ToshiMcpClient
     }
 
     /**
-     * Invoke an MCP tool and write a Toshi audit row (read-shape: acting_user_id, null approver_id).
+     * Invoke an MCP tool (audit written by AuditingMcpClient / AuditingWebClient).
      *
      * @param  array<string, mixed>  $arguments
      */
@@ -57,42 +56,21 @@ class ToshiMcpClient
 
         if (! $user instanceof User) {
             throw new LogicException(
-                'ToshiMcpClient::callTool requires an acting user (pass actingUser or authenticate). '.
-                'Raw Mcp::client()->callTool() is banned for app code — it bypasses Toshi audit.'
+                'ToshiMcpClient::callTool requires an acting user (pass actingUser or authenticate).'
             );
         }
 
-        $result = $this->client->callTool($name, $arguments);
+        ToshiMcpCallAuditor::actingAs($user);
 
-        $school = $user->school_id
-            ? School::find($user->school_id)
-            : null;
-
-        $resultText = method_exists($result, 'text')
-            ? (string) $result->text()
-            : (string) $result;
-
-        if (($result->isError ?? false) === true) {
-            $resultText = str_starts_with($resultText, '❌')
-                ? $resultText
-                : '❌ '.$resultText;
+        try {
+            return $this->client->callTool($name, $arguments);
+        } finally {
+            ToshiMcpCallAuditor::clearActingAs();
         }
-
-        ToshiAuditService::logExecution(
-            user: $user,
-            school: $school,
-            toolName: 'mcp_tools_'.$name,
-            arguments: $arguments,
-            result: $resultText,
-            approver: null,
-            actingUser: $user,
-        );
-
-        return $result;
     }
 
     /**
-     * Expose the underlying client only for tools() / OAuth plumbing — not for unaudited callTool.
+     * Expose the underlying (already auditing) named client for tools() / OAuth plumbing.
      */
     public function client(): Client
     {

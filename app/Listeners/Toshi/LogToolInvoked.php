@@ -6,11 +6,14 @@ use App\Listeners\Toshi\Concerns\ResolvesToshiAuditIdentity;
 use App\Models\School;
 use App\Services\ToshiAuditService;
 use Laravel\Ai\Events\ToolInvoked;
+use Laravel\Ai\Tools\McpTool;
 
 /**
  * Audit every Laravel AI SDK tool invocation via ToshiAuditService.
  *
- * Covers native agent tools and agent-mediated MCP tools (Laravel\Ai\Tools\McpTool).
+ * Covers native agent tools. Agent-mediated MCP tools (McpTool) are audited at the
+ * lowest Client::callTool layer (AuditingMcpClient / AuditingWebClient) so this
+ * listener skips McpTool to avoid double rows.
  * Approver identity is NOT set here — ToolInvoked is the read/execute path.
  * HITL approver_id comes from LogToolApprovalResolved or AgentToshi Tier-2 confirm.
  * School call sites (AgentToshi::executeConfirmedTool) remain unchanged.
@@ -23,6 +26,10 @@ class LogToolInvoked
 
     public function handle(ToolInvoked $event): void
     {
+        if ($event->tool instanceof McpTool) {
+            return;
+        }
+
         $actingUser = $this->conversationUserFromEvent(null, $event->agent);
         $authUser = $this->authUser();
         $user = $actingUser ?? $authUser;
