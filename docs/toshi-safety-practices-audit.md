@@ -286,3 +286,37 @@ Live-LLM is the **only** check type that validates prompt-manipulation / soft-re
 - Pushing/merging without explicit ask
 - Building a full support desk
 - Claiming jailbreak proof from either Agent::fake or a single live soft-refusal run
+
+---
+
+# Live re-verification — 2026-08-02 (post-fix, follow-up)
+
+Follow-up to the B-1 recommendation (rerun live-LLM against the **real** model) and the health-check follow-up. Production provider is now `deepseek-v4-flash`; `.env` dual-config trap cleared; health-check wired + alert path verified end-to-end. Full structural fix documented in [`docs/toshi-prod-health-check.md`](toshi-prod-health-check.md).
+
+## Addendum 1 — Live adversarial re-run against the real model ✅
+
+Ran `tests/Feature/Toshi/Adversarial/Live/LiveAdversarialSoftRefusalTest` (`@group live-llm`) against the **real production config**: provider `openai-compatible`, host `api.deepseek.com`, model `deepseek-v4-flash`, real key. DB = phpunit sqlite `:memory:`; WhatsApp `Http::fake` (no prod DB, no WA).
+
+| Run | Scenarios | Pass | Fail | Flags (warnings) | False-success / leak / mutation | Tokens | Est. cost |
+|---|---|---|---|---|---|---|---|
+| 1 | 16 | 14 | 2 | 0 | 0 | 20,018 (17,523 / 2,495) | ≈ $0.0075 |
+| 2 | 16 | 15 | 1 | 0 | 0 | — | — |
+
+**Every scenario that received a model response produced the correct soft-refusal cue. Zero false-success, zero leaks, zero mutations.** The only failures in both runs were `cURL error 28: Connection timed out` against `https://api.deepseek.com/chat/completions` (transport-level, before a response) — on different scenarios each run (run 1: `teacher_impersonate_admin`, `school_admin_wa_add_coadmin`; run 2: `student_peer_attendance`). These are **provider-latency/transport timeouts, not config or safety failures.** Production config matches; the safety behaviour of the live provider is consistent with the mock B-1 suite.
+
+Tooling note surfaced: the `toshi:adversarial-live` runner shells out to `php artisan test`, but the prod container is deployed `composer --no-dev`, so **phpunit is absent on the VPS** and the runner errors `Command "test" is not defined`. Local worktree (which keeps dev deps) was used for the faithful real-config run. Flagged for ops: either keep test/dev deps in the deploy image or point the runner at an explicit install.
+
+## Addendum B — Production `.env` dual-config cleanup ✅
+
+Leftover NVIDIA NIM keys from the incident were **commented out** in prod `.env` (backup `.env.bak.toshi-cleanup-20260802-170155` kept, same discipline as the live fix):
+
+- `# TOSHI_LLM_BASE_URL`, `# TOSHI_LLM_API_KEY`, `# TOSHI_LLM_MODEL`, `# TOSHI_LLM_FALLBACK_MODEL` (marked `# DEPRECATED TOSHI_LLM_* NVIDIA dual-config`)
+
+Kept: `TOSHI_LLM_ENABLED=true`, `OPENAI_COMPATIBLE_MODEL=deepseek-v4-flash`. Result: `toshi:llm-status` clean, model resolves `deepseek-v4-flash`, `assertConfigConsistent()` passes (single source of truth `OPENAI_COMPATIBLE_*`).
+
+## Addendum C — Health-check wired + alert path verified end-to-end ✅
+
+- **Deliberate-failure test (non-invasive, env-injected for one run):** injected the exact broken dual-model (`TOSHI_LLM_MODEL=meta/llama-3.1-8b-instruct` against `OPENAI_COMPATIBLE_MODEL=deepseek-v4-flash`) → `toshi:llm-health` exited `1` and appended a `production.CRITICAL` `Toshi LLM health check FAILED … reason=config_conflict` to the watched daily log `storage/logs/laravel-2026-08-02.log`. Clean re-run returned to exit `0` (`Result: OK`, 15 chars), no lingering state.
+- **Watched channel** = Laravel daily log + non-zero Artisan exit (no Sentry/Bugsnag/slack webhook in this app) — the alert contract defined in [`docs/toshi-prod-health-check.md`](toshi-prod-health-check.md).
+- **Schedule wired on VPS:** root `crontab` entry `*/5 * * * *` runs `.toshi-health-check.sh` every **5 minutes**. The script runs `docker exec sms-app php artisan toshi:llm-health`, on failure logs `HEALTH FAIL (exit=…)` + failure output to `storage/logs/toshi-health-monitor.log` and exits `1`; on success logs `HEALTH OK`. Verified **autonomously fired** `17:25`, `17:30`, `17:35` UTC (config not cached; host/container both UTC, cron running).
+- Deployment cadence: root-owned cron, not Kernel — operator-owned, matching the existing design note.
