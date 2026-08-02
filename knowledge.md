@@ -622,6 +622,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-02: Panel-parity expansion ranking (Part A docs)
+- **Work done**: Docs-only audit ranking next Toshi coverage batches for School Admin (Deputy inherits), Teacher, Accountant, Librarian, Receptionist, Student, Alumni. Parent excluded (no web panel). Rank #1 School Admin Batch 1 = notices + events + holidays (non-destructive). Alumni candidate #7.
+- **Files**: `docs/toshi-panel-parity-ranking.md`
+- **Status**: 🚧 Awaiting ranking approval — branch `audit/toshi-panel-parity-ranking`
+- **Key decisions**: Rank by centrality×risk not gap size alone; Deputy not separate; destructive/promote/settings out of Batch 1
+
 ### 2026-08-02: Toshi rollout closeout (#124–#140) + MCP Client::web/local ban
 - **Work done**: Session Log / status catch-up for Aug 1–2 merges. Folded architecture test banning direct `Client::web()`/`Client::local()` outside `routes/ai.php` into #140 (with AuditingMcpClientManager named-client audit). Knowledge updates are now part of every done-as-scoped report going forward.
 - **Merged to main (evidence)**:
