@@ -14,6 +14,12 @@ class ToshiLlmStatusCommandTest extends TestCase
 
         config([
             'toshi.model' => 'deepseek-chat',
+            'toshi.llm_env' => [
+                'openai_compatible_model' => 'deepseek-chat',
+                'toshi_llm_model' => null,
+                'openai_compatible_url' => 'https://api.deepseek.com/v1',
+                'toshi_llm_base_url' => null,
+            ],
             'ai.providers.openai-compatible.url' => 'https://api.deepseek.com/v1',
             'ai.providers.openai-compatible.key' => $fakeKey,
         ]);
@@ -38,6 +44,12 @@ class ToshiLlmStatusCommandTest extends TestCase
     {
         config([
             'toshi.model' => 'configured-status-model',
+            'toshi.llm_env' => [
+                'openai_compatible_model' => 'configured-status-model',
+                'toshi_llm_model' => null,
+                'openai_compatible_url' => 'https://llm.example.test',
+                'toshi_llm_base_url' => null,
+            ],
             'ai.providers.openai-compatible.url' => 'https://llm.example.test',
             'ai.providers.openai-compatible.key' => '',
         ]);
