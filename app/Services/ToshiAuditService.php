@@ -14,15 +14,21 @@ use App\Models\User;
  * school-scoping. This is the only path that writes to activity_log for Toshi —
  * no stray logging in individual tools or elsewhere.
  *
- * Identity fields (platform HITL + Tier-2 ConfirmsBeforeWrite):
- * - causer_id / acting_user_id — conversation participant (forUser / continue as:)
+ * Identity fields (platform HITL + Tier-2 ConfirmsBeforeWrite + ToolInvoked reads):
+ * - causer_id / acting_user_id — conversation participant (forUser / continue as:) or auth user
  * - approver_id — authenticated user who confirmed/resolved (null for read-only / cancel / pending)
  * These must stay distinguishable even under self-approve (same person, two fields).
  * Tier-2 cards set both on confirmYes → executeConfirmedTool; native Approvable sets
- * approver_id via LogToolApprovalResolved.
+ * approver_id via LogToolApprovalResolved. Native agent tools audit via LogToolInvoked
+ * (approver_id null). Named MCP clients audit in AuditingMcpClient::callTool; LogToolInvoked
+ * skips McpTool to avoid doubles. Direct Client::web()/local() bypasses the manager — ban in app code.
+ * MCP Approvable/HITL for write tools is deferred.
  *
- * @see \App\Livewire\AgentToshi::executeConfirmedTool()  — the single execution point
- * @see \App\Livewire\AgentToshi::confirmNo()              — the single cancel point
+ * @see \App\Listeners\Toshi\LogToolInvoked                 — agent ToolInvoked (native)
+ * @see \App\Services\Toshi\AuditingMcpClientManager        — Mcp::client() always audited
+ * @see \App\Services\Toshi\ToshiMcpClient                  — optional acting-user pin for jobs
+ * @see \App\Livewire\AgentToshi::executeConfirmedTool()  — Tier-2 execution point
+ * @see \App\Livewire\AgentToshi::confirmNo()              — Tier-2 cancel point
  */
 class ToshiAuditService
 {

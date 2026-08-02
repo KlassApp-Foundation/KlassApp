@@ -60,4 +60,21 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/auth/google/callback'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Slack MCP client (spike / plumbing — mock by default)
+    |--------------------------------------------------------------------------
+    | mode=mock  → local SpikeSlackMockServer via Mcp::local + Client::local
+    | mode=live  → https://mcp.slack.com/mcp (needs credentials)
+    | MCP Approvable/HITL for write tools is deferred — read audit via ToolInvoked.
+    */
+    'slack_mcp' => [
+        'mode' => env('SLACK_MCP_MODE', 'mock'),
+        'url' => env('SLACK_MCP_URL', 'https://mcp.slack.com/mcp'),
+        'client_id' => env('SLACK_MCP_CLIENT_ID'),
+        'client_secret' => env('SLACK_MCP_CLIENT_SECRET'),
+        'token' => env('SLACK_MCP_TOKEN'),
+        'timeout' => env('SLACK_MCP_TIMEOUT', 30),
+    ],
+
 ];

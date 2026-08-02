@@ -22,6 +22,7 @@
     <env name="EVOLUTION_API_URL" value="http://localhost:8080"/>
     <env name="EVOLUTION_API_KEY" value="test-key"/>
     <env name="EVOLUTION_INSTANCE_NAME" value="klassapp"/>
+    <env name="SLACK_MCP_MODE" value="mock"/>
   </php>
   <source>
     <include>
