@@ -615,6 +615,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-02: Reconcile MCP ToolInvoked audit gap (fix/toshi-mcp-audit-gap)
+- **Work done**: Part 1 reconciled — main already has `LogToolInvoked` on `ToolInvoked` (not HITL-only). Spike docs were wrong; gap was raw `callTool` bypass + McpTool name = `class_basename`. Widened listeners: `resolveToolName()`, `approver: null` on ToolInvoked/Invoking. Added `ToshiMcpClient` wrapper for audited raw calls. Copied spike mock Slack MCP setup. MCP Approvable/HITL deferred.
+- **Files modified**: `LogToolInvoked`, `LogInvokingTool`, `ResolvesToshiAuditIdentity`, `ToshiAuditService`, `ToshiMcpClient` (new), spike MCP mock + tests, `routes/ai.php`, `config/services.php`, `phpunit.xml`
+- **Key decisions**: (a) widen existing ToolInvoked path — no new listener. Raw `Mcp::client()->callTool()` remains banned for app code.
+- **Status**: ✅ Done on branch — **not pushed**
+- **Tests**: SpikeSlackMcpClientTest + ToshiAuditTrailTest — 14 passed
+
 ### 2026-08-01: LibrarianOperationsAgent (ug8) — view-only cards + Tier-2 writes
 - **Work done**: Branch `feature/toshi-librarian-role`. Cherry-picked teacher+accountant shared patterns. View-only `GET /library/cards` (`library.cards`, MustBeLibrarian) via shared `LibraryCardLookupService` (admin `cardIndex` thin-wrap). `LibrarianOperationsAgent` + 6 tools via `LibrarianActionService`. Gate `toshi-librarian-action` (ug8 + ug1→ug8 impersonation). Scope router ug8 → librarian. Capability rename `manage_library_cards` → `view_library_cards`. Blade `[1,3,5,8,11]`. Isolation + audit identity tests green (11).
 - **Write flag**: books / categories / lending / tasks are panel **writes** → Tier-2 ConfirmsBeforeWrite (not all-reads as initially hoped). Dashboard + cards are read-only.
