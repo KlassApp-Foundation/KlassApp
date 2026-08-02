@@ -49,7 +49,7 @@
 - **Worktree / tip**: `/Users/mac/projects/KlassApp-main-merge` on `main` @ `1f8ea30` (inventory session).
 - **Routes**: **41** inventoried (`40` registered `GET` under `/superadmin` + `1` related `schooladmin/{id}/impersonate`). Almost all are Livewire-backed closures in `routes/web.php` (`middleware` `superadmin`+`auth`, `prefix` `superadmin`). Dead stub: empty `routes/superadmin.php` still mapped by `RouteServiceProvider` (adds zero routes).
 - **Livewire mutate surface**: Per-route map of Blade → Livewire components → public mutating methods completed in the same audit pass (layout-shared `agent-toshi` + page components). Full tables live in the Phase 1 agent report (not duplicated here).
-- **Toshi**: Uses **Laravel AI SDK** (`laravel/ai` **^0.10** / 0.10.2; `ToshiOrchestrator` / `ToshiSdkV2Service` — **not** LarAgent). School/onboarding still school-scoped. **Platform scope** (siteadmin): Phase 0–1 on `feature/toshi-platform-tools` — `ToshiAvailabilityGate` + `PlatformOperationsAgent` tools covering the prior 32-gap mutators + HITL review UI at `/superadmin/toshi/ops/{conversation}`. Audit props: `acting_user_id` + `approver_id`.
+- **Toshi**: Uses **Laravel AI SDK** (`laravel/ai` **^0.10** / 0.10.2; `ToshiOrchestrator` / `ToshiSdkV2Service` — **not** LarAgent). **On `main`**: platform scope (Phase 0–1), school roles Teacher/Accountant/Librarian/Receptionist/Student/Parent/Deputy Admin, WhatsApp channel (read + wave-1 CreateTask writes + confirm bridge), IDOR Gate fixes. MCP: named clients audited via `AuditingMcpClientManager`; direct `Client::web`/`local` banned outside `routes/ai.php`. Open: prefs #138, digests, WA wave-2, product MCP connectors shelved.
 
 ### Pre–Phase 2 findings (logged before any testing)
 
@@ -236,11 +236,18 @@
 
 | Item | Decision | Why not triage-now |
 |---|---|---|
-| **Toshi platform-scope for superadmin** | **Phase 0–1 COMPLETE on branch** — `feature/toshi-platform-tools` @ `edc07e5`+ (pushed) | Platform gate + full tool set (Geo/Plans/Schools/Subscriptions/FeatureToggles/SystemSettings/CoAdmins/Impersonation) + native HITL approval UI. **Not merged to `main` yet.** Next: Phase 2 role audits; Phase 3 connectors. |
+| **Toshi platform-scope for superadmin** | **Phase 0–1 MERGED** — #124 on `main` | Platform gate + tools + HITL. Role agents #125–#129+#137; WhatsApp #133–#136 deployed; MCP audit #140. |
 
 ---
 
-## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch**)
+## Current Status: August 2, 2026 (Toshi roles + WhatsApp + IDOR on `main`; MCP audit #140)
+
+- **✅ Toshi on `main`**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp audit/bridge/channel/wave-1 (#133–#136, **prod flag on**), legacy portal IDOR (#123/#130–#132).
+- **✅ MCP named-client audit**: `AuditingMcpClientManager`; architecture test bans direct `Client::web`/`local` outside `routes/ai.php` (#140).
+- **Open**: Preference memory #138; Google connector audit #139 (recommend skip Google first); digests after prefs; WA wave-2 deferred (no usage signal yet); Slack/Notion product connectors **shelved**.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log updated at every done-as-scoped.
+
+## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
 
 - **✅ Toshi Autonomous Operator Phase 0–1 on `feature/toshi-platform-tools`** (worktree `KlassApp-main-merge`): tip **`edc07e5`** + knowledge push closeout. **Pushed to origin** (not merged to `main`). Includes: platform gate (`TOSHI_PLATFORM_GATE_ENABLED`), scope router in `ToshiSdkV2Service` (Platform → `PlatformOperationsAgent`, School → `ToshiOrchestrator`), native `laravel/ai` 0.10.2 HITL (`approval_state` column), ops review UI, full superadmin mutator tools, audit `acting_user_id`/`approver_id`. Enable locally: `TOSHI_PLATFORM_GATE_ENABLED=true`.
 - **✅ Superadmin audit CLOSED on `main`**: merge commit **`32a3bb4333f8645a2752d760fcd76287f57f5fa8`** — `Merge branch 'fix/superadmin-audit-triage'` (no-ff). Tip merged: `fix/superadmin-audit-triage` @ `8c93693`. Phase 1 + Phase 2 Batches A–E catalogue + triage fixes. Toshi platform-scope built on feature branch (above) — was decided-deferred during triage.
@@ -615,12 +622,25 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-02: Toshi rollout closeout (#124–#140) + MCP Client::web/local ban
+- **Work done**: Session Log / status catch-up for Aug 1–2 merges. Folded architecture test banning direct `Client::web()`/`Client::local()` outside `routes/ai.php` into #140 (with AuditingMcpClientManager named-client audit). Knowledge updates are now part of every done-as-scoped report going forward.
+- **Merged to main (evidence)**:
+  - **#124** platform-tools → `2e24718` / tip after roles `e16bed4` era; Phase 0–1 platform gate+tools+HITL **on main**
+  - **#125–#129** Teacher → Student role agents (merge commits through `e16bed4`)
+  - **#123** IDOR docs tracker; **#130** assignment/homework ownership; **#131** event destroy+class visibility; **#132** post Gate (`212418d`)
+  - **#133** WhatsApp channel audit docs; **#134** confirm bridge; **#135** read-only WA + Parent; **#136** WA writes wave 1 (`f11e5cb`) **deployed** (`TOSHI_WHATSAPP_CHANNEL_ENABLED`, pending-confirm + agent_conversations migrations)
+  - **#137** Deputy Admin ug4 (`20c54ad`)
+- **Open / not merged**: **#138** preference memory; **#139** Google MCP audit (skip Google first); **#140** MCP audit gap + Client construction ban (this PR)
+- **Shelved / deferred**: Slack/Notion product connectors (spike proved plumbing; demand unproven; payroll/impersonation stay web-only); digests after prefs; WA wave-2 until usage signal; MCP Approvable/HITL for writes
+- **Key decisions**: Named MCP clients only; direct Client construction banned by architecture test; knowledge closeouts required at done-as-scoped
+- **Status**: ✅ Closeout logged; #140 includes construction ban
+
 ### 2026-08-02: Reconcile MCP ToolInvoked audit gap (fix/toshi-mcp-audit-gap)
-- **Work done**: Part 1 reconciled — main already has `LogToolInvoked` on `ToolInvoked` (not HITL-only). Spike docs were wrong; gap was raw `callTool` bypass + McpTool name = `class_basename`. Widened listeners: `resolveToolName()`, `approver: null` on ToolInvoked/Invoking. Added `ToshiMcpClient` wrapper for audited raw calls. Copied spike mock Slack MCP setup. MCP Approvable/HITL deferred.
-- **Files modified**: `LogToolInvoked`, `LogInvokingTool`, `ResolvesToshiAuditIdentity`, `ToshiAuditService`, `ToshiMcpClient` (new), spike MCP mock + tests, `routes/ai.php`, `config/services.php`, `phpunit.xml`
-- **Key decisions**: (a) widen existing ToolInvoked path — no new listener. Raw `Mcp::client()->callTool()` remains banned for app code.
-- **Status**: ✅ Done on branch — **not pushed**
-- **Tests**: SpikeSlackMcpClientTest + ToshiAuditTrailTest — 14 passed
+- **Work done**: Part 1 reconciled — main already has `LogToolInvoked` on `ToolInvoked` (not HITL-only). Spike docs were wrong; gap was raw `callTool` bypass + McpTool name = `class_basename`. Widened listeners; AuditingMcpClientManager so named `Mcp::client()->callTool` always audits; architecture test bans direct `Client::web`/`local` outside `routes/ai.php`.
+- **Files modified**: `AuditingMcpClientManager`, `AuditingMcpClient`/`AuditingWebClient`, `ToshiMcpCallAuditor`, listeners, `AppServiceProvider`, spike tests, `McpClientConstructionTest`, knowledge
+- **Key decisions**: (a) widen ToolInvoked for native; MCP audits at callTool layer; structural ClientManager wrap + architecture test (not comment-only)
+- **Status**: ✅ PR #140
+- **Tests**: SpikeSlackMcpClientTest + ToshiAuditTrailTest + McpClientConstructionTest
 
 ### 2026-08-01: LibrarianOperationsAgent (ug8) — view-only cards + Tier-2 writes
 - **Work done**: Branch `feature/toshi-librarian-role`. Cherry-picked teacher+accountant shared patterns. View-only `GET /library/cards` (`library.cards`, MustBeLibrarian) via shared `LibraryCardLookupService` (admin `cardIndex` thin-wrap). `LibrarianOperationsAgent` + 6 tools via `LibrarianActionService`. Gate `toshi-librarian-action` (ug8 + ug1→ug8 impersonation). Scope router ug8 → librarian. Capability rename `manage_library_cards` → `view_library_cards`. Blade `[1,3,5,8,11]`. Isolation + audit identity tests green (11).

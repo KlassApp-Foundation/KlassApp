@@ -10,7 +10,8 @@ use Laravel\Mcp\WebClient;
  * Ensures Mcp::client($name) / ClientManager::build() always return an auditing client.
  *
  * This structurally closes the raw Mcp::client()->callTool() audit bypass for named clients.
- * Direct Client::web()/Client::local() construction is not wrapped — use named clients.
+ * Direct Client::web()/Client::local() is forbidden outside routes/ai.php registration
+ * factories (enforced by Tests\Architecture\McpClientConstructionTest).
  */
 class AuditingMcpClientManager extends ClientManager
 {
