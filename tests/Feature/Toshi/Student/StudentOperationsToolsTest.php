@@ -252,7 +252,7 @@ class StudentOperationsToolsTest extends TestCase
         $this->assertContains(SubmitHomeworkTool::class, $classes);
         $this->assertContains(ManageTasksTool::class, $classes);
         $this->assertContains(ManageConversationsTool::class, $classes);
-        $this->assertCount(13, $classes);
+        $this->assertCount(14, $classes);
     }
 
     public function test_gates_isolate_student_from_five_other_role_gates(): void

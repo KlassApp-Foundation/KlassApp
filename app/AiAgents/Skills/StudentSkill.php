@@ -13,6 +13,7 @@ use App\AiAgents\Tools\RecordAttendanceTool;
 use App\AiAgents\Tools\RecordBulkAttendanceTool;
 use App\AiAgents\Tools\EnterMarkTool;
 use App\AiAgents\Tools\AddParentTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 
 #[MaxSteps(5)]
 class StudentSkill implements Agent, HasTools
@@ -34,6 +35,7 @@ class StudentSkill implements Agent, HasTools
             new RecordBulkAttendanceTool,
             new EnterMarkTool,
             new AddParentTool,
+            new ManagePreferencesTool,
         ];
     }
 }

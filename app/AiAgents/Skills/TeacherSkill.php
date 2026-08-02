@@ -10,6 +10,7 @@ use App\AiAgents\Tools\AddTeacherTool;
 use App\AiAgents\Tools\AddCoAdminTool;
 use App\AiAgents\Tools\AssignTeacherTool;
 use App\AiAgents\Tools\ListTeachersTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 
 #[MaxSteps(5)]
 class TeacherSkill implements Agent, HasTools
@@ -28,6 +29,7 @@ class TeacherSkill implements Agent, HasTools
             new AddCoAdminTool,
             new AssignTeacherTool,
             new ListTeachersTool,
+            new ManagePreferencesTool,
         ];
     }
 }

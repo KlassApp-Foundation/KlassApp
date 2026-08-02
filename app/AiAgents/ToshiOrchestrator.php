@@ -17,6 +17,7 @@ use App\AiAgents\Tools\RouteToAcademicSkillTool;
 use App\AiAgents\Tools\RouteToFeeSkillTool;
 use App\AiAgents\Tools\RouteToGradingSkillTool;
 use App\AiAgents\Tools\RouteToReportingSkillTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 
 #[MaxSteps(3)]
 #[Timeout(120)]
@@ -57,12 +58,14 @@ Your job is to classify the user query into EXACTLY ONE domain and route it to t
 6. **report** — Generating academic, fee, attendance, and summary reports
 
 **Rules:**
+- If the query is about the user's own preferences (language, notification channel, digest, timezone), use managePreferencesTool directly — do NOT route.
 - If the query clearly matches a domain, route it immediately using the corresponding tool.
 - If the query could match multiple domains, pick the most relevant ONE. Do not route to multiple skills.
 - If you truly cannot determine the domain, ask ONE clarifying question.
-- Do NOT answer the query directly — always route it.
+- Do NOT answer domain queries directly — always route them.
 - Pass the **user's full original query** as the "query" parameter to the routing tool.
 
+Example: "set my language to English" → managePreferencesTool
 Example: "add a student named John in Primary Four" → routeToStudentSkill
 Example: "create a term called Term 1" → routeToAcademicSkill
 Example: "record a payment of 50k for student 42" → routeToFeeSkill
@@ -72,6 +75,7 @@ PROMPT;
     public function tools(): iterable
     {
         return [
+            new ManagePreferencesTool,
             new RouteToStudentSkillTool,
             new RouteToTeacherSkillTool,
             new RouteToAcademicSkillTool,

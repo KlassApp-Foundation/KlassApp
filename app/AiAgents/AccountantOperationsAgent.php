@@ -8,6 +8,7 @@ use App\AiAgents\Tools\Accountant\RecordPaymentTool;
 use App\AiAgents\Tools\Accountant\ViewDashboardTool;
 use App\AiAgents\Tools\Accountant\ViewFeeStructureTool;
 use App\AiAgents\Tools\Accountant\ViewUnpaidReportsTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
@@ -72,6 +73,7 @@ PROMPT;
             new ViewFeeStructureTool,
             new ViewDashboardTool,
             new CreateTaskTool,
+            new ManagePreferencesTool,
         ];
     }
 }

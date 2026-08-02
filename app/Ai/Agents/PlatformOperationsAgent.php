@@ -19,6 +19,7 @@ use App\Ai\Tools\Superadmin\UpdateCountryTool;
 use App\Ai\Tools\Superadmin\UpdatePlanTool;
 use App\Ai\Tools\Superadmin\UpdateSchoolTool;
 use App\Ai\Tools\Superadmin\UpdateSystemSettingsTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Concerns\RemembersConversations;
@@ -97,6 +98,7 @@ PROMPT;
             app(DeleteCoAdminTool::class),
             app(ResetCoAdminPasswordTool::class),
             app(ImpersonateSchoolAdminTool::class),
+            new ManagePreferencesTool,
         ];
     }
 

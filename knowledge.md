@@ -614,6 +614,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+### 2026-08-02: Toshi preference memory (Part B — local branch)
+- **Work done**: Added typed `user_preferences` table + `UserPreference` model/`User::preference()`, `UserPreferenceService` (self-scoped get/set), and `ManagePreferencesTool` (no ConfirmsBeforeWrite) registered on Platform, School Admin orchestrator + skills + WA read agent, and all OperationsAgents. Tests for durability, cross-user isolation, defaults, WhatsApp-safe exclusion.
+- **Files modified**: migration, model, service, tool, agents/skills, audit backlog, `UserPreferenceMemoryTest`
+- **Key decisions**: No Tier-2 so tool passes WhatsAppWriteExclusion automatically; never accept `user_id` from LLM args; DeputyAdmin agent not on `main` yet — skipped
+- **Status**: ✅ Done (local only — not pushed)
+- **Edge cases flagged**: `toshi_personas` remains unused scaffolding (backlog in `docs/toshi/_architecture-audit.md`)
+
 
 ### 2026-08-01: LibrarianOperationsAgent (ug8) — view-only cards + Tier-2 writes
 - **Work done**: Branch `feature/toshi-librarian-role`. Cherry-picked teacher+accountant shared patterns. View-only `GET /library/cards` (`library.cards`, MustBeLibrarian) via shared `LibraryCardLookupService` (admin `cardIndex` thin-wrap). `LibrarianOperationsAgent` + 6 tools via `LibrarianActionService`. Gate `toshi-librarian-action` (ug8 + ug1→ug8 impersonation). Scope router ug8 → librarian. Capability rename `manage_library_cards` → `view_library_cards`. Blade `[1,3,5,8,11]`. Isolation + audit identity tests green (11).
