@@ -622,6 +622,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-02: Fail-loud dual LLM config + toshi:llm-health
+- **Work done**: Structural fix for empty `agent_conversations` incident (NVIDIA `TOSHI_LLM_MODEL` + DeepSeek `OPENAI_COMPATIBLE_*`). Added `ToshiLlm::assertConfigConsistent()` (throws `AmbiguousToshiLlmConfigException` on conflicting dual env / model↔host family mismatch) called from `model()`/`provider()` first use — not App boot. Added `php artisan toshi:llm-health` (one cheap live `chat/completions`, verifies content; `Log::critical` + exit 1 on failure). Docs + tests for incident shape and failing provider response. **Schedule not wired**; **`.env` not touched**.
+- **Files modified**: `app/AiAgents/ToshiLlm.php`, `app/Exceptions/AmbiguousToshiLlmConfigException.php`, `app/Console/Commands/ToshiLlmHealthCommand.php`, `config/toshi.php` (`llm_env`), `tests/Feature/Toshi/ToshiLlmConfigConsistencyTest.php`, `ToshiLlmHealthCommandTest.php`, `ToshiLlmStatusCommandTest.php`, `docs/toshi-prod-health-check.md`, `docs/toshi-safety-practices-audit.md`, `knowledge.md`
+- **Key decisions**: Fail on first Toshi LLM resolve + health command (not HTTP boot); no Sentry in repo → critical log + non-zero exit for cron/k8s; prefer `OPENAI_COMPATIBLE_*` as source of truth; leave Kernel schedule to OpenCode
+- **Status**: 🚧 PR open
+- **Edge cases flagged**: After deploy, leftover `TOSHI_LLM_MODEL=meta/llama-…` alongside `OPENAI_COMPATIBLE_MODEL=deepseek-v4-flash` will throw until ops unsets/aligns the legacy var
+
 ### 2026-08-02: Merge #142 + Toshi LLM runtime diagnostic
 - **Work done**: Merged PR **#142** (`feature/toshi-safety-practices`) to main via merge commit `50f01023fa77cca9a9c6a3509e1a458478ca6d62`. Follow-up branch `feature/toshi-llm-diagnostic`: Artisan `toshi:llm-status` reports live `ToshiLlm` provider/model/URL-host/key-configured/config-checksum with **no secrets**; docs note repo-default live-LLM confirmation + VPS pending; tests assert provider/model present and fake key absent from output.
 - **Files modified**: `app/AiAgents/ToshiLlm.php`, `app/Console/Commands/ToshiLlmStatusCommand.php`, `tests/Feature/Toshi/ToshiLlmStatusCommandTest.php`, `docs/toshi-safety-practices-audit.md`, `knowledge.md`

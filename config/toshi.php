@@ -96,10 +96,25 @@ return [
     | Model name to use (same slug agents + toshi:adversarial-live resolve).
     | Prefer OPENAI_COMPATIBLE_MODEL; TOSHI_LLM_MODEL is a legacy alias.
     | OpenAI:      gpt-4o-mini (recommended — cheap & fast)
-    | DeepSeek:    deepseek-chat
+    | DeepSeek:    deepseek-chat / deepseek-v4-flash
     | Nvidia NIM:  meta/llama-3.1-8b-instruct
+    |
+    | Dual-config: ToshiLlm::assertConfigConsistent() fails loudly when both
+    | OPENAI_COMPATIBLE_* and TOSHI_LLM_* are populated with conflicting
+    | provider/model intent (see docs/toshi-prod-health-check.md).
     */
     'model' => env('OPENAI_COMPATIBLE_MODEL', env('TOSHI_LLM_MODEL', 'deepseek-chat')),
+
+    /*
+    | Raw dual-env snapshots for conflict detection (null when unset).
+    | Must live in config — never read env() from ToshiLlm after config:cache.
+    */
+    'llm_env' => [
+        'openai_compatible_model' => env('OPENAI_COMPATIBLE_MODEL'),
+        'toshi_llm_model' => env('TOSHI_LLM_MODEL'),
+        'openai_compatible_url' => env('OPENAI_COMPATIBLE_URL'),
+        'toshi_llm_base_url' => env('TOSHI_LLM_BASE_URL'),
+    ],
 
     /*
     | Fallback model — used when the primary model fails (404, timeout, etc.).
