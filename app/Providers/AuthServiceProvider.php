@@ -6,7 +6,10 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Laravel\Airlock\PersonalAccessToken;
 use Illuminate\Support\Facades\Gate;
 use App\Policies\ApiTokenPolicy;
+use App\Models\Homework;
 use App\Models\Plan;
+use App\Models\StudentHomework;
+use App\Models\Teacherlink;
 use App\Models\User;
 use App\Policies\ConversationPolicy;
 use Laravel\Ai\Models\Conversation;
@@ -83,8 +86,31 @@ class AuthServiceProvider extends ServiceProvider
         return $user->school_id == $academic->school_id;
       });
 
+      // Legacy school_id match — Teacher / Teacher API destroy only (ug5). Not used for admin moderate paths.
       Gate::define('homework', function ($user, $homework) {
-        return $user->school_id == $homework->school_id;
+        if ($homework === null) {
+          return false;
+        }
+
+        return (int) $user->school_id === (int) $homework->school_id;
+      });
+
+      // Admin moderate / mutate: approve·reject·bulk, admin show/edit/update/view, admin destroy.
+      // ug1 unscoped or ug3 school_id (Option A). ug5 denied — teachers keep `homework` for destroy.
+      Gate::define('homework-manage', function ($user, $homework) {
+        if ($homework === null) {
+          return false;
+        }
+
+        if ((int) $user->usergroup_id === 1) {
+          return true;
+        }
+
+        if ((int) $user->usergroup_id === 3) {
+          return (int) $user->school_id === (int) $homework->school_id;
+        }
+
+        return false;
       });
 
       Gate::define('document', function ($user, $document) {
@@ -200,6 +226,7 @@ class AuthServiceProvider extends ServiceProvider
           && (int) $user->school_id === (int) $studentassignment->assignment->school_id;
       });
 
+      // Student owner-only (#130) — do not widen for staff review.
       Gate::define('studentHomework', function ($user, $studentHomework) {
         if ($studentHomework === null || $studentHomework->homework === null) {
           return false;
@@ -207,6 +234,59 @@ class AuthServiceProvider extends ServiceProvider
 
         return (int) $user->id === (int) $studentHomework->user_id
           && (int) $user->school_id === (int) $studentHomework->homework->school_id;
+      });
+
+      // Staff review of submissions (admin / teacher / teacher API). Accepts Homework (list) or StudentHomework.
+      // ug5: assigned class/subject only — teacher_id, class teacher, or Teacherlink (same as CreateHomeworkTool).
+      Gate::define('studentHomework-review', function ($user, $model) {
+        $homework = null;
+
+        if ($model instanceof Homework) {
+          $homework = $model;
+        } elseif ($model instanceof StudentHomework) {
+          if ($model->homework === null) {
+            $model->loadMissing('homework');
+          }
+          $homework = $model->homework;
+        }
+
+        if ($homework === null) {
+          return false;
+        }
+
+        if ((int) $user->usergroup_id === 1) {
+          return true;
+        }
+
+        if ((int) $user->usergroup_id === 3) {
+          return (int) $user->school_id === (int) $homework->school_id;
+        }
+
+        if ((int) $user->usergroup_id === 5) {
+          if ((int) $user->school_id !== (int) $homework->school_id) {
+            return false;
+          }
+
+          if ((int) $homework->teacher_id === (int) $user->id) {
+            return true;
+          }
+
+          if ($homework->relationLoaded('standardLink') === false) {
+            $homework->loadMissing('standardLink');
+          }
+
+          if ($homework->standardLink !== null
+            && (int) $homework->standardLink->class_teacher_id === (int) $user->id) {
+            return true;
+          }
+
+          return Teacherlink::where('teacher_id', $user->id)
+            ->where('standardLink_id', $homework->standardLink_id)
+            ->where('subject_id', $homework->subject_id)
+            ->exists();
+        }
+
+        return false;
       });
 
       Gate::define('subscription', function ($user, $subscription) {

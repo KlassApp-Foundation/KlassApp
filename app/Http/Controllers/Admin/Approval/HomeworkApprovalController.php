@@ -10,6 +10,7 @@ use App\Events\Notification\SingleNotificationEvent;
 use App\Http\Requests\HomeworkApprovalRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Models\HomeworkApproval;
 use App\Events\StandardPushEvent;
 use App\Events\SinglePushEvent;
@@ -37,12 +38,16 @@ class HomeworkApprovalController extends Controller
      */
     public function approve(HomeworkApprovalRequest $request,$id)
     {
-        //
+        $homework = Homework::where('id', $id)->first();
+
+        // Authorize outside try/catch so 403 is not swallowed by Exception handler.
+        if (! Gate::allows('homework-manage', $homework)) {
+            abort(403);
+        }
+
         \DB::beginTransaction();
         try
         {
-            $homework             = Homework::where('id',$id)->first();
-
             $homeworkapproval = HomeworkApproval::where('homework_id',$id)->first();
 
             $homeworkapproval->comments           =   $request->principal_comments;
@@ -106,12 +111,15 @@ class HomeworkApprovalController extends Controller
      */
     public function reject(HomeworkApprovalRequest $request, $id)
     {
-        //
+        $homework = Homework::where('id', $id)->first();
+
+        if (! Gate::allows('homework-manage', $homework)) {
+            abort(403);
+        }
+
         \DB::beginTransaction();
         try
         {
-            $homework             = Homework::where('id',$id)->first();
-
             $homeworkapproval = HomeworkApproval::where('homework_id',$id)->first();
             
             $homeworkapproval->comments           =   $request->principal_comments;
@@ -150,9 +158,17 @@ class HomeworkApprovalController extends Controller
 
     public function update(HomeworkApprovalRequest $request)
     {
-       // dd($request->approvallist);
+        foreach ($request->approvallist as $id) {
+            $homework = Homework::where('id', $id)->first();
+            if (! Gate::allows('homework-manage', $homework)) {
+                abort(403);
+            }
+        }
+
         try
         {
+            $data = null;
+
             foreach ($request->approvallist as  $id) 
             {
 

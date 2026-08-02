@@ -235,12 +235,21 @@ class HomeWorkController extends Controller
     {
         $homework = Homework::where('id',$id)->first();
 
+        if (! Gate::allows('homework-manage', $homework)) {
+            abort(403);
+        }
+
         return view('/admin/homework/show',['homework' => $homework]); 
     }
 
     public function view($id)
     {
         $homework = Homework::where('id',$id)->first();
+
+        if (! Gate::allows('homework-manage', $homework)) {
+            abort(403);
+        }
+
         $viewers=$homework->viewers()->latest()->paginate(10);
        // dd($viewers);
 
@@ -255,6 +264,10 @@ class HomeWorkController extends Controller
     public function edit($id)
     {
         $homework = Homework::where('id',$id)->first();
+
+        if (! Gate::allows('homework-manage', $homework)) {
+            abort(403);
+        }
         
         return view('/admin/homework/edit',['homework' => $homework]); 
     }
@@ -262,6 +275,12 @@ class HomeWorkController extends Controller
     public function editList($id)
     {
         //
+        $homework = Homework::where('id',$id)->first();
+
+        if (! Gate::allows('homework-manage', $homework)) {
+            abort(403);
+        }
+
         $school_id      =   Auth::user()->school_id;
         $academic_year  =   SiteHelper::getAcademicYear($school_id);
         $standardLink   =   SiteHelper::getStandardLinkList($school_id);
@@ -271,8 +290,6 @@ class HomeWorkController extends Controller
         $subjectlist    =   SubjectResource::collection($teacherlink)->groupby('standardLink_id');
 
         $teacherlist    =   TeacherResource::collection($teacherlink)->groupby(['standardLink_id','subject_id']);
-
-        $homework = Homework::where('id',$id)->first();
 
         $array=[];
 
@@ -302,11 +319,14 @@ class HomeWorkController extends Controller
      */
     public function update(HomeworkRequest $request,$id)
     {
-        //
+        $homework = Homework::where('id',$id)->first();
+
+        if (! Gate::allows('homework-manage', $homework)) {
+            abort(403);
+        }
+
         try
         {
-            $homework = Homework::where('id',$id)->first();
-
             $homework->standardLink_id      =   $request->standardLink_id;
             $standardLink = StandardLink::where('id',$request->standardLink_id)->first();
             $homework->subject_id           =   $request->subject_id;
@@ -394,51 +414,50 @@ class HomeWorkController extends Controller
      */
     public function destroy($id)
     {
+        $homework = Homework::where('id',$id)->first();
+
+        // Authorize outside try/catch so 403 is not swallowed by Exception handler.
+        if (! Gate::allows('homework-manage', $homework)) {
+            abort(403);
+        }
+
         try
         {
-            $homework = Homework::where('id',$id)->first();
-            if(Gate::allows('homework',$homework))
+            $homework->delete();
+
+            $admin = User::BySchool(Auth::user()->school_id)->ByRole(3)->first();
+
+            if($admin->id != Auth::id())
             {
-                $homework->delete();
+                $data = [];
 
-                $admin = User::BySchool(Auth::user()->school_id)->ByRole(3)->first();
+                $data['user']       =   $admin;
+                $data['details']    =   trans('notification.homework_delete_success_msg');
 
-                if($admin->id != Auth::id())
-                {
-                    $data = [];
+                event(new SingleNotificationEvent($data));
 
-                    $data['user']       =   $admin;
-                    $data['details']    =   trans('notification.homework_delete_success_msg');
+                /*$array=[];
 
-                    event(new SingleNotificationEvent($data));
-
-                    /*$array=[];
-
-                    $array['school_id'] =  Auth::user()->school_id;
-                    $array['user_id']   =  $admin->id;
-                    $array['message']   = 'Assignment Deleted';
-                    $array['type']      = 'assignment';
-                            
-                    event(new SinglePushEvent($array));*/
-                }
-
-                $message=trans('messages.delete_success_msg',['module' => 'Homework']); 
-
-                $ip= $this->getRequestIP();
-                $this->doActivityLog(
-                    $homework,
-                    Auth::user(),
-                    ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                    LOGNAME_DELETE_HOMEWORK,
-                    $message
-                );
-                $res['success'] = $message;
-                return $res;
+                $array['school_id'] =  Auth::user()->school_id;
+                $array['user_id']   =  $admin->id;
+                $array['message']   = 'Assignment Deleted';
+                $array['type']      = 'assignment';
+                        
+                event(new SinglePushEvent($array));*/
             }
-            else
-            {
-                abort(403);
-            }
+
+            $message=trans('messages.delete_success_msg',['module' => 'Homework']); 
+
+            $ip= $this->getRequestIP();
+            $this->doActivityLog(
+                $homework,
+                Auth::user(),
+                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
+                LOGNAME_DELETE_HOMEWORK,
+                $message
+            );
+            $res['success'] = $message;
+            return $res;
         }
         catch(Exception $e)
         {

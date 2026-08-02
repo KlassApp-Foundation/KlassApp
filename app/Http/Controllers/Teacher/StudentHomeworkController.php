@@ -9,11 +9,13 @@ use App\Http\Resources\Teacher\StudentHomework as StudentHomeworkResource;
 use App\Events\Notification\SingleNotificationEvent;
 use App\Http\Requests\StudentHomeworkCheckRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Events\SinglePushEvent;
 use App\Models\StudentHomework;
 use Illuminate\Http\Request;
 use App\Traits\LogActivity;
+use App\Models\Homework;
 use App\Traits\Common;
 use App\Models\User;
 use Exception;
@@ -31,7 +33,12 @@ class StudentHomeworkController extends Controller
      */
     public function list(Request $request, $id)
     {
-        //
+        $homework = Homework::where('id', $id)->first();
+
+        if (! Gate::allows('studentHomework-review', $homework)) {
+            abort(403);
+        }
+
         $studentHomeworks = StudentHomework::where('homework_id',$id);
         if(\Request::getQueryString() != null)
         {
@@ -64,8 +71,11 @@ class StudentHomeworkController extends Controller
      */
     public function show($id)
     {
-        //
-        $studentHomework = StudentHomework::where('id',$id)->first();
+        $studentHomework = StudentHomework::with('homework')->where('id',$id)->first();
+
+        if (! Gate::allows('studentHomework-review', $studentHomework)) {
+            abort(403);
+        }
 
         $array = [];
 
@@ -86,11 +96,14 @@ class StudentHomeworkController extends Controller
      */
     public function update(StudentHomeworkCheckRequest $request, $id)
     {
-        //
+        $studentHomework = StudentHomework::with('homework')->where('id',$id)->first();
+
+        if (! Gate::allows('studentHomework-review', $studentHomework)) {
+            abort(403);
+        }
+
         try
         {
-            $studentHomework = StudentHomework::where('id',$id)->first();
-            
             $studentHomework->comments      = $request->comments;
             $studentHomework->checked_by    = Auth::id();
             $studentHomework->checked_on    = date('Y-m-d');
