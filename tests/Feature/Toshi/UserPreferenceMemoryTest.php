@@ -4,6 +4,7 @@ namespace Tests\Feature\Toshi;
 
 use App\Ai\Agents\PlatformOperationsAgent;
 use App\AiAgents\AccountantOperationsAgent;
+use App\AiAgents\DeputyAdminOperationsAgent;
 use App\AiAgents\LibrarianOperationsAgent;
 use App\AiAgents\ParentOperationsAgent;
 use App\AiAgents\ReceptionistOperationsAgent;
@@ -35,6 +36,7 @@ class UserPreferenceMemoryTest extends TestCase
         DB::table('usergroups')->upsert([
             ['id' => 1, 'name' => 'siteadmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 4, 'name' => 'schoolsubadmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 6, 'name' => 'student', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 7, 'name' => 'parent', 'created_at' => now(), 'updated_at' => now()],
@@ -195,6 +197,7 @@ class UserPreferenceMemoryTest extends TestCase
             PlatformOperationsAgent::class,
             ToshiOrchestrator::class,
             SchoolAdminWhatsAppReadAgent::class,
+            DeputyAdminOperationsAgent::class,
             TeacherOperationsAgent::class,
             AccountantOperationsAgent::class,
             LibrarianOperationsAgent::class,
@@ -211,6 +214,62 @@ class UserPreferenceMemoryTest extends TestCase
                 "{$agentClass} must expose ManagePreferencesTool"
             );
         }
+    }
+
+    public function test_deputy_admin_ug4_self_scope_and_durability(): void
+    {
+        $deputy = $this->makeUser(4, 'deputy.prefs@test.sch.ug');
+        $peer = $this->makeUser(4, 'deputy.peer@test.sch.ug');
+        $service = app(UserPreferenceService::class);
+
+        $this->actingAs($deputy);
+        $service->set($deputy, [
+            'preferred_language' => 'lg',
+            'notification_channel' => 'email',
+            'digest_enabled' => true,
+            'digest_frequency' => 'daily',
+            'timezone' => 'Africa/Kampala',
+        ]);
+        Auth::logout();
+
+        $this->actingAs(User::findOrFail($deputy->id));
+        $later = app(UserPreferenceService::class)->get(User::findOrFail($deputy->id));
+        $this->assertSame('lg', $later->preferred_language);
+        $this->assertSame('email', $later->notification_channel);
+        $this->assertTrue($later->digest_enabled);
+        $this->assertSame('daily', $later->digest_frequency);
+        $this->assertSame('Africa/Kampala', $later->timezone);
+
+        Auth::logout();
+        $this->actingAs(User::findOrFail($deputy->id));
+        $toolGet = (new ManagePreferencesTool)->handle(new Request(['action' => 'get']));
+        $this->assertStringContainsString('"preferred_language":"lg"', (string) $toolGet);
+        $this->assertStringContainsString('"timezone":"Africa/Kampala"', (string) $toolGet);
+
+        Auth::logout();
+        $this->actingAs($peer);
+        $peerGet = (new ManagePreferencesTool)->handle(new Request(['action' => 'get']));
+        $this->assertStringContainsString('"preferred_language":"en"', (string) $peerGet);
+        $this->assertStringNotContainsString('lg', (string) $peerGet);
+
+        $smuggle = (new ManagePreferencesTool)->handle(new Request([
+            'action' => 'set',
+            'user_id' => $deputy->id,
+            'preferred_language' => 'sw',
+            'timezone' => 'UTC',
+        ]));
+        $this->assertStringContainsString('✅', (string) $smuggle);
+
+        $deputyFresh = UserPreference::where('user_id', $deputy->id)->first();
+        $peerFresh = UserPreference::where('user_id', $peer->id)->first();
+        $this->assertSame('lg', $deputyFresh->preferred_language);
+        $this->assertSame('Africa/Kampala', $deputyFresh->timezone);
+        $this->assertSame('sw', $peerFresh->preferred_language);
+        $this->assertSame('UTC', $peerFresh->timezone);
+
+        $agentTools = collect((new DeputyAdminOperationsAgent)->tools())->map(fn ($t) => $t::class)->all();
+        $this->assertContains(ManagePreferencesTool::class, $agentTools);
+        $this->assertTrue(WhatsAppWriteExclusion::allowsClass(ManagePreferencesTool::class));
     }
 
     public function test_user_preference_relationship(): void

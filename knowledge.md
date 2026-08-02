@@ -5915,3 +5915,11 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Tests**: `DeputyAdminOperationsToolsTest` — 11 passed (37 assertions); related auth filter — 8 passed
 - **Status**: ✅ Done — committed locally, not pushed
 - **Edge cases flagged**: SetCurriculum remains AgentToshi-map orphan for ug3 (not on skill agents)
+
+### 2026-08-02: Wire ManagePreferencesTool to Deputy Admin (ug4)
+- **Work done**: After merging #137, rebased preference-memory onto main; registered `ManagePreferencesTool` on `DeputyAdminOperationsAgent` (22→23 tools). ug4 WhatsApp remains fail-closed (no channel map). Added ug4 self-scope + durability coverage in `UserPreferenceMemoryTest`.
+- **Files modified**: `DeputyAdminOperationsAgent.php`, `DeputyAdminOperationsToolsTest.php`, `UserPreferenceMemoryTest.php`, `knowledge.md`
+- **Key decisions**: Match other eight roles' registration pattern; no WA subset for deputy (channel returns null for ug4)
+- **Tests**: UserPreferenceMemoryTest 7 passed; DeputyAdminOperationsToolsTest 11 passed; related role/WA suite 87 passed
+- **Status**: ✅ Done — pushing PR (do not merge)
+- **Edge cases flagged**: None — smuggled `user_id` still writes peer only
