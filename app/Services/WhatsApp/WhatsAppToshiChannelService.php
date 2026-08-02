@@ -44,6 +44,7 @@ class WhatsAppToshiChannelService
     public function __construct(
         private readonly ToshiAvailabilityGate $availabilityGate,
         private readonly WhatsAppConfirmationBridge $confirmationBridge,
+        private readonly WhatsAppHumanEscalationService $humanEscalation,
     ) {}
 
     public function isEnabled(): bool
@@ -88,11 +89,35 @@ class WhatsAppToshiChannelService
      *
      * Returns reply text, CONFIRMATION_DISPATCHED when a wave-1 write was
      * routed to the confirmation bridge, or null on miss/failure.
+     *
+     * Explicit human-escalation phrases are checked before the agent tool loop
+     * so that turn never continues autonomous tool use. Escalation does not
+     * require an AI provider key (only channel + role eligibility).
      */
     public function ask(WhatsAppUser $whatsAppUser, string $query): ?string
     {
         $user = $whatsAppUser->user;
-        if (! $user || ! $this->isAvailableFor($user)) {
+        if (! $user || ! $this->isEnabled()) {
+            return null;
+        }
+
+        // ug4 (deputy) has no Toshi surface — fail closed (matches isAvailableFor).
+        if ((int) $user->usergroup_id === 4) {
+            return null;
+        }
+
+        if (! $this->resolveAgentClass((int) $user->usergroup_id)) {
+            return null;
+        }
+
+        // Explicit human handoff — halt tool-calling for this turn (≠ confirmation).
+        // Runs before AI-key availability so escalation still works without a provider.
+        $escalationAck = $this->humanEscalation->tryEscalate($whatsAppUser, $query);
+        if ($escalationAck !== null) {
+            return $escalationAck;
+        }
+
+        if (! $this->isAvailableFor($user)) {
             return null;
         }
 

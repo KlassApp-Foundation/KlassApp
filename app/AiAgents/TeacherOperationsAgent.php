@@ -17,6 +17,7 @@ use App\AiAgents\Tools\Teacher\ViewTimetableTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
+use App\AiAgents\Concerns\UsesToshiLlm;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Promptable;
@@ -34,16 +35,7 @@ use Laravel\Ai\Promptable;
 class TeacherOperationsAgent implements Agent, HasTools
 {
     use Promptable;
-
-    public function provider(): string
-    {
-        return 'openai-compatible';
-    }
-
-    public function model(): string
-    {
-        return config('toshi.model', 'nvidia/llama-3.3-nemotron-super-49b-v1');
-    }
+    use UsesToshiLlm;
 
     public function instructions(): string
     {

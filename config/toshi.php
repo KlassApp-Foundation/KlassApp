@@ -93,12 +93,13 @@ return [
     'api_key' => 'sk-2ccccb77847d446aa75105000aafab98',
 
     /*
-    | Model name to use.
+    | Model name to use (same slug agents + toshi:adversarial-live resolve).
+    | Prefer OPENAI_COMPATIBLE_MODEL; TOSHI_LLM_MODEL is a legacy alias.
     | OpenAI:      gpt-4o-mini (recommended — cheap & fast)
     | DeepSeek:    deepseek-chat
     | Nvidia NIM:  meta/llama-3.1-8b-instruct
     */
-    'model' => 'deepseek-chat',
+    'model' => env('OPENAI_COMPATIBLE_MODEL', env('TOSHI_LLM_MODEL', 'deepseek-chat')),
 
     /*
     | Fallback model — used when the primary model fails (404, timeout, etc.).

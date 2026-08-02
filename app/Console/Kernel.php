@@ -143,6 +143,18 @@ class Kernel extends ConsoleKernel
         $schedule->command('marks:lock-expired')
                  ->everyFifteenMinutes()
                  ->withoutOverlapping();
+
+        // Live-LLM adversarial soft-refusal spot check (manual-first cadence).
+        // No-ops without TOSHI_ADVERSARIAL_LIVE=1 / openai-compatible key (--scheduled).
+        // First Sunday 02:00 Africa/Kampala ≈ monthly; not merge-blocking CI.
+        $schedule->command('toshi:adversarial-live --scheduled')
+                 ->weeklyOn(0, '02:00')
+                 ->timezone('Africa/Kampala')
+                 ->when(fn () => now('Africa/Kampala')->day <= 7)
+                 ->when(fn () => in_array(env('TOSHI_ADVERSARIAL_LIVE'), [true, 1, '1'], true))
+                 ->when(fn () => filled(config('ai.providers.openai-compatible.key')))
+                 ->withoutOverlapping()
+                 ->appendOutputTo(storage_path('logs/toshi-adversarial-live.log'));
     }
 
     /**

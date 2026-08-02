@@ -167,6 +167,33 @@ class ToshiAuditService
     }
 
     /**
+     * Log a WhatsApp human-escalation handoff (≠ confirmation / Approvable).
+     *
+     * Uses the same dual-identity write path as every other Toshi action
+     * (acting_user_id + optional approver_id). Escalation is not exempt.
+     */
+    public static function logEscalation(
+        User $user,
+        ?School $school,
+        array $arguments,
+        string $result,
+        ?User $actingUser = null,
+        ?User $approver = null,
+    ): ActivityLog {
+        return self::write(
+            user: $user,
+            school: $school,
+            toolName: 'WhatsAppHumanEscalation',
+            description: 'WhatsApp human escalation requested',
+            arguments: $arguments,
+            status: 'escalated',
+            result: $result,
+            actingUser: $actingUser ?? $user,
+            approver: $approver,
+        );
+    }
+
+    /**
      * Core write — single place that inserts into activity_log.
      */
     private static function write(

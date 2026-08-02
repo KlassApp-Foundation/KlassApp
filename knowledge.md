@@ -622,6 +622,27 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-02: Verify production Toshi model vs adversarial-live
+- **Work done**: Confirmed production Toshi chat model is **DeepSeek `deepseek-chat`** via `openai-compatible` (`api.deepseek.com`). Evidence: `config/toshi.model` + `config/ai.php` defaults; local `.env` `OPENAI_COMPATIBLE_*` / `TOSHI_LLM_MODEL` (prod-shaped); runtime `ToshiLlm` / agents resolve `deepseek-chat`. Prod SSH `root@46.101.111.131` unreachable from this environment (publickey denied) — no contradiction in repo/config. Prior live run already used DeepSeek → **no re-run**. Fixed drift risk: `ToshiLlm` + `UsesToshiLlm` shared by agents + `toshi:adversarial-live`; `config/toshi.php` `model` now reads `OPENAI_COMPATIBLE_MODEL` / `TOSHI_LLM_MODEL`; tests assert config resolution. Pushed to PR #142 (not merged).
+- **Files modified**: `app/AiAgents/ToshiLlm.php`, `Concerns/UsesToshiLlm.php`, OperationsAgents + Orchestrator + WA agents, `ToshiAdversarialLiveCommand.php`, `config/toshi.php`, live/command tests, `knowledge.md`
+- **Key decisions**: DeepSeek matches production — skip live re-run; unify model resolution so monthly job cannot hardcode a substitute
+- **Status**: ✅ Done — PR #142 updated, not merged
+- **Edge cases flagged**: Cannot confirm live VPS `.env` without SSH key; config still contains legacy hardcoded DeepSeek API key strings in `toshi.php`/`ai.php` defaults (pre-existing; not expanded)
+
+### 2026-08-02: Toshi Safety Practices finish — live-LLM run + schedule + PR
+- **Work done**: Confirmed `toshi:adversarial-live` was docs-only → implemented Artisan command + `@group live-llm` harness (`LiveAdversarialSoftRefusalTest` + scorer). One real run: DeepSeek `deepseek-chat` via openai-compatible; phpunit sqlite `:memory:` (not prod); WhatsApp Http::fake. **16/16 PASS**, 0 flags/false-successes; ~20k tokens; est ≈ $0.0066. Wired monthly schedule first Sunday 02:00 Africa/Kampala in `app/Console/Kernel.php` gated by `TOSHI_ADVERSARIAL_LIVE=1` + key (`--scheduled` no-ops). Re-ran CI suite: 30 passed (16 fake + 7 escalation + command/scorer). Pushed branch + opened PR (do not merge).
+- **Files modified**: `ToshiAdversarialLiveCommand.php`, `LiveAdversarialSoftRefusalTest.php`, `LiveAdversarialScorer.php`(+Test), `ToshiAdversarialLiveCommandTest.php`, `Kernel.php`, `docs/toshi-safety-practices-audit.md`, `knowledge.md` (+ Part B adversarial/escalation files from earlier)
+- **Key decisions**: Clean live run → schedule wired but inert without env gate; not jailbreak proof; cost negligible
+- **Status**: ✅ Done — PR opened, not merged
+- **Edge cases flagged**: Production must keep `TOSHI_ADVERSARIAL_LIVE` unset until intentionally enabled; worktree `.env` symlinked from main KlassApp for local keys only (not committed)
+
+### 2026-08-02: Toshi Safety Practices Part B (adversarial suite + WA human escalation)
+- **Work done**: Branch `feature/toshi-safety-practices` off `audit/toshi-safety-practices` @ `0e413db` (worktree `/Users/mac/projects/KlassApp-toshi-safety-practices-impl`). Part B-1: `tests/Feature/Toshi/Adversarial/` — 16 structural-isolation regression tests under adversarial-shaped prompts via `Agent::fake` + compliance `ToolCall` (off-role → `NoSuchToolException`; peer-scope stays self/children). Explicit docblocks: NOT jailbreak proof. Part B-2: `WhatsAppHumanEscalationService` (keyword phrase set) integrated early in `WhatsAppToshiChannelService::ask()`; ActivityLog via `ToshiAuditService::logEscalation` (`acting_user_id`); optional Task + staff WA notify; ack; tool loop halted for that turn. Routing: Parent/Student → Receptionist (fallback Admin); staff → Admin; Admin → log only. Live-LLM cadence completed in follow-up session entry above.
+- **Tests**: 23 passed (16 adversarial + 7 escalation), then 30 with live harness gate/scorer tests
+- **Key decisions**: Exact/keyword substring phrases (FP: casual “real person…”; FN: “speak with staff”); escalation not exempt from dual-identity audit; no helpdesk table
+- **Status**: ✅ Superseded by finish entry above (push/PR)
+- **Edge cases flagged**: Receiver without opted-in WhatsAppUser → Task + ActivityLog only (no staff notify)
+
 ### 2026-08-02: Toshi rollout closeout (#124–#140) + MCP Client::web/local ban
 - **Work done**: Session Log / status catch-up for Aug 1–2 merges. Folded architecture test banning direct `Client::web()`/`Client::local()` outside `routes/ai.php` into #140 (with AuditingMcpClientManager named-client audit). Knowledge updates are now part of every done-as-scoped report going forward.
 - **Merged to main (evidence)**:
@@ -5935,3 +5956,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Tests**: `DeputyAdminOperationsToolsTest` — 11 passed (37 assertions); related auth filter — 8 passed
 - **Status**: ✅ Done — committed locally, not pushed
 - **Edge cases flagged**: SetCurriculum remains AgentToshi-map orphan for ug3 (not on skill agents)
+
+### 2026-08-02: Toshi safety practices Part A — adversarial tests + WA human escalation
+- **Work done**: Docs-only audit on `audit/toshi-safety-practices` (worktree off `origin/main` @ `72c2ca6`). Investigated isolation/WhatsApp write-exclusion test patterns, Laravel AI `Agent::fake` vs live LLM (`ToshiE2EVerificationTest`), and absence of helpdesk/live-agent infra. Proposed adversarial suite under prompt pressure + thin WhatsApp human-escalation MVP distinct from confirmation bridge.
+- **Files modified**: `docs/toshi-safety-practices-audit.md` (new), `knowledge.md` (this log)
+- **Key decisions**: No live LLM in CI primary adversarial suite (architecture-under-pressure; optional `@group live-llm` later); suite at `tests/Feature/Toshi/Adversarial/` with ~3–4 scenarios × Teacher/Student/Parent/SchoolAdmin-WA; escalation = explicit intent MVP via ActivityLog + optional Task + staff WhatsApp notify (no new table); receivers role-dependent (parent/student→Receptionist, staff→School Admin)
+- **Status**: ✅ Done — committed locally, not pushed
+- **Edge cases flagged**: No support-ticket/helpdesk models; VisitorLog/CallLog/Postal are operational registers not conversation queues; `Agent::fake` cannot prove jailbreak resistance; fee “escalation” and `toshi.escalated_model` are unrelated semantics
