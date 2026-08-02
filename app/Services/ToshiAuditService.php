@@ -14,15 +14,19 @@ use App\Models\User;
  * school-scoping. This is the only path that writes to activity_log for Toshi —
  * no stray logging in individual tools or elsewhere.
  *
- * Identity fields (platform HITL + Tier-2 ConfirmsBeforeWrite):
- * - causer_id / acting_user_id — conversation participant (forUser / continue as:)
+ * Identity fields (platform HITL + Tier-2 ConfirmsBeforeWrite + ToolInvoked reads):
+ * - causer_id / acting_user_id — conversation participant (forUser / continue as:) or auth user
  * - approver_id — authenticated user who confirmed/resolved (null for read-only / cancel / pending)
  * These must stay distinguishable even under self-approve (same person, two fields).
  * Tier-2 cards set both on confirmYes → executeConfirmedTool; native Approvable sets
- * approver_id via LogToolApprovalResolved.
+ * approver_id via LogToolApprovalResolved. Agent-mediated tools (native + MCP McpTool)
+ * audit via LogToolInvoked with approver_id null. Raw MCP callTool must use ToshiMcpClient.
+ * MCP Approvable/HITL for write tools is deferred.
  *
- * @see \App\Livewire\AgentToshi::executeConfirmedTool()  — the single execution point
- * @see \App\Livewire\AgentToshi::confirmNo()              — the single cancel point
+ * @see \App\Listeners\Toshi\LogToolInvoked                 — agent ToolInvoked (native + MCP)
+ * @see \App\Services\Toshi\ToshiMcpClient                  — audited raw MCP callTool
+ * @see \App\Livewire\AgentToshi::executeConfirmedTool()  — Tier-2 execution point
+ * @see \App\Livewire\AgentToshi::confirmNo()              — Tier-2 cancel point
  */
 class ToshiAuditService
 {

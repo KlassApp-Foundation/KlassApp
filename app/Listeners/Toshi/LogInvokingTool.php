@@ -8,8 +8,9 @@ use App\Services\ToshiAuditService;
 use Laravel\Ai\Events\InvokingTool;
 
 /**
- * Optional pre-invoke audit for native laravel/ai tool calls.
+ * Optional pre-invoke audit for native laravel/ai tool calls (incl. MCP McpTool).
  * Kept lightweight — full outcome is logged by LogToolInvoked.
+ * Approver stays null here; HITL uses ToolApprovalResolved / Tier-2.
  */
 class LogInvokingTool
 {
@@ -18,8 +19,8 @@ class LogInvokingTool
     public function handle(InvokingTool $event): void
     {
         $actingUser = $this->conversationUserFromEvent(null, $event->agent);
-        $approver = $this->authUser();
-        $user = $actingUser ?? $approver;
+        $authUser = $this->authUser();
+        $user = $actingUser ?? $authUser;
 
         if (! $user) {
             return;
@@ -32,10 +33,10 @@ class LogInvokingTool
         ToshiAuditService::logInvoking(
             user: $user,
             school: $school,
-            toolName: class_basename($event->tool),
+            toolName: $this->resolveToolName($event->tool),
             arguments: $event->arguments,
             actingUser: $actingUser ?? $user,
-            approver: $approver,
+            approver: null,
         );
     }
 }
