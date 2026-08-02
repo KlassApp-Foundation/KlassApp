@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Toshi\Adversarial\Live;
 
+use App\Services\Toshi\LiveAdversarialScorer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 

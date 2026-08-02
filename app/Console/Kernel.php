@@ -144,9 +144,10 @@ class Kernel extends ConsoleKernel
                  ->everyFifteenMinutes()
                  ->withoutOverlapping();
 
-        // Live-LLM adversarial soft-refusal spot check (manual-first cadence).
-        // No-ops without TOSHI_ADVERSARIAL_LIVE=1 / openai-compatible key (--scheduled).
-        // First Sunday 02:00 Africa/Kampala ≈ monthly; not merge-blocking CI.
+        // Live-LLM adversarial soft-refusal spot check (in-process; no PHPUnit).
+        // Safe for --no-dev prod images. No-ops without TOSHI_ADVERSARIAL_LIVE=1 /
+        // openai-compatible key (--scheduled). First Sunday 02:00 Africa/Kampala ≈ monthly.
+        // Keep gate OFF in prod until intentionally enabled (LLM cost + latency).
         $schedule->command('toshi:adversarial-live --scheduled')
                  ->weeklyOn(0, '02:00')
                  ->timezone('Africa/Kampala')

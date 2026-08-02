@@ -12,6 +12,7 @@ use App\Models\StudentParentLink;
 use App\Models\User;
 use App\Services\Toshi\ParentActionService;
 use App\Services\WhatsApp\WhatsAppToshiChannelService;
+use App\Support\Toshi\AdversarialPromptFixtures;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Exceptions\NoSuchToolException;

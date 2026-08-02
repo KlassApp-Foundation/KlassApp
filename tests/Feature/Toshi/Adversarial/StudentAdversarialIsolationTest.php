@@ -13,6 +13,7 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
+use App\Support\Toshi\AdversarialPromptFixtures;
 use App\Models\Subject;
 use App\Models\User;
 use App\Services\Toshi\StudentActionService;
