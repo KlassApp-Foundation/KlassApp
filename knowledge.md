@@ -622,6 +622,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-03: Adversarial schedule durable logging + ops backlog
+- **Work done**: Confirmed Kernel already `appendOutputTo(storage/logs/toshi-adversarial-live.log)` but success path had no structured `Log::info` (unlike llm-health durability). Added log channel `toshi_adversarial`, dual-write `Log::info`/`Log::critical` (default stack + dedicated file), documented destination/format, deferred quick-sweep backlog line (revisit **after current roadmap complete**). Roadmap check: School Admin Batch 1 approved + partially implemented (uncommitted on `feature/toshi-schooladmin-batch1`) — **not** Teacher batch 2 next.
+- **Files modified**: `ToshiAdversarialLiveCommand.php`, `config/logging.php`, `Kernel.php`, `ToshiAdversarialLiveCommandTest.php`, `docs/toshi-safety-practices-audit.md`, `docs/toshi-prod-health-check.md`, `knowledge.md`
+- **Key decisions**: Finish/ship School Admin Batch 1 before Teacher panel-parity; quick-sweep stays deferred until roadmap complete
+- **Status**: ✅ Done — PR opened/merged from `fix/toshi-adversarial-schedule-logging`
+- **Edge cases flagged**: `feature/toshi-schooladmin-batch1` is 15 behind main with uncommitted tools — rebase before resume
+
 ### 2026-08-02: Fail-loud dual LLM config + toshi:llm-health
 - **Work done**: Structural fix for empty `agent_conversations` incident (NVIDIA `TOSHI_LLM_MODEL` + DeepSeek `OPENAI_COMPATIBLE_*`). Added `ToshiLlm::assertConfigConsistent()` (throws `AmbiguousToshiLlmConfigException` on conflicting dual env / model↔host family mismatch) called from `model()`/`provider()` first use — not App boot. Added `php artisan toshi:llm-health` (one cheap live `chat/completions`, verifies content; `Log::critical` + exit 1 on failure). Docs + tests for incident shape and failing provider response. **Schedule not wired**; **`.env` not touched**.
 - **Files modified**: `app/AiAgents/ToshiLlm.php`, `app/Exceptions/AmbiguousToshiLlmConfigException.php`, `app/Console/Commands/ToshiLlmHealthCommand.php`, `config/toshi.php` (`llm_env`), `tests/Feature/Toshi/ToshiLlmConfigConsistencyTest.php`, `ToshiLlmHealthCommandTest.php`, `ToshiLlmStatusCommandTest.php`, `docs/toshi-prod-health-check.md`, `docs/toshi-safety-practices-audit.md`, `knowledge.md`

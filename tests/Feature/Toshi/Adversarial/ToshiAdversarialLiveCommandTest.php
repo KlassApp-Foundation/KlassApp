@@ -143,10 +143,108 @@ class ToshiAdversarialLiveCommandTest extends TestCase
                     && ($context['reason'] ?? null) === 'soft_refusal_failures';
             });
 
+        $adversarialChannel = \Mockery::mock();
+        $adversarialChannel->shouldReceive('critical')
+            ->once()
+            ->withArgs(function (string $message, array $context): bool {
+                return str_contains($message, 'Toshi live adversarial FAILED')
+                    && ($context['reason'] ?? null) === 'soft_refusal_failures';
+            });
+
+        \Illuminate\Support\Facades\Log::shouldReceive('channel')
+            ->once()
+            ->with('toshi_adversarial')
+            ->andReturn($adversarialChannel);
+
         $exit = Artisan::call('toshi:adversarial-live');
 
         $this->assertSame(1, $exit);
         $this->assertStringContainsString('CRITICAL', Artisan::output());
+    }
+
+    public function test_command_logs_info_summary_on_pass(): void
+    {
+        putenv('TOSHI_ADVERSARIAL_LIVE=1');
+        $_ENV['TOSHI_ADVERSARIAL_LIVE'] = '1';
+        $_SERVER['TOSHI_ADVERSARIAL_LIVE'] = '1';
+
+        config([
+            'toshi.model' => 'pass-assert-model',
+            'ai.providers.openai-compatible.key' => 'sk-test-not-a-real-key',
+            'ai.providers.openai-compatible.url' => 'https://api.pass-assert.test',
+        ]);
+
+        $this->mock(LiveAdversarialRunner::class, function ($mock): void {
+            $mock->shouldReceive('run')
+                ->once()
+                ->andReturn([
+                    'ok' => true,
+                    'report' => [[
+                        'id' => 'teacher_as_admin_add_coadmin',
+                        'role' => 'teacher',
+                        'verdict' => 'pass',
+                        'notes' => ['soft refusal ok'],
+                        'preview' => 'I cannot do that',
+                        'prompt_tokens' => 10,
+                        'completion_tokens' => 5,
+                    ]],
+                    'prompt_tokens' => 10,
+                    'completion_tokens' => 5,
+                    'pass' => 1,
+                    'flag' => 0,
+                    'fail' => 0,
+                    'estimated_usd' => 0.001,
+                    'provider' => 'openai-compatible',
+                    'host' => 'api.pass-assert.test',
+                    'model' => 'pass-assert-model',
+                ]);
+        });
+
+        \Illuminate\Support\Facades\Log::shouldReceive('info')
+            ->once()
+            ->withArgs(function (string $message, array $context): bool {
+                return str_contains($message, 'Toshi live adversarial PASSED')
+                    && ($context['pass'] ?? null) === 1
+                    && ($context['fail'] ?? null) === 0;
+            });
+
+        $adversarialChannel = \Mockery::mock();
+        $adversarialChannel->shouldReceive('info')
+            ->once()
+            ->withArgs(fn (string $message): bool => str_contains($message, 'Toshi live adversarial PASSED'));
+
+        \Illuminate\Support\Facades\Log::shouldReceive('channel')
+            ->once()
+            ->with('toshi_adversarial')
+            ->andReturn($adversarialChannel);
+
+        $exit = Artisan::call('toshi:adversarial-live');
+
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString('Live adversarial suite passed', Artisan::output());
+    }
+
+    public function test_scheduled_noop_logs_durable_info(): void
+    {
+        putenv('TOSHI_ADVERSARIAL_LIVE');
+        unset($_ENV['TOSHI_ADVERSARIAL_LIVE'], $_SERVER['TOSHI_ADVERSARIAL_LIVE']);
+
+        \Illuminate\Support\Facades\Log::shouldReceive('info')
+            ->once()
+            ->withArgs(fn (string $message, array $context): bool => str_contains($message, 'scheduled no-op')
+                && ($context['reason'] ?? null) === 'gate_off');
+
+        $adversarialChannel = \Mockery::mock();
+        $adversarialChannel->shouldReceive('info')->once();
+
+        \Illuminate\Support\Facades\Log::shouldReceive('channel')
+            ->once()
+            ->with('toshi_adversarial')
+            ->andReturn($adversarialChannel);
+
+        $exit = Artisan::call('toshi:adversarial-live', ['--scheduled' => true]);
+
+        $this->assertSame(0, $exit);
     }
 
     public function test_runner_seeds_sqlite_fixtures_without_factories(): void
