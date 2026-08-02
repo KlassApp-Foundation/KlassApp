@@ -9,9 +9,13 @@ use App\AiAgents\Tools\GetStudentCountTool;
 use App\AiAgents\Tools\ListClassesTool;
 use App\AiAgents\Tools\ListEventsTool;
 use App\AiAgents\Tools\ListHolidaysTool;
+use App\AiAgents\Tools\ListHomeworkTool;
 use App\AiAgents\Tools\ListNoticesTool;
 use App\AiAgents\Tools\ListSectionsTool;
+use App\AiAgents\Tools\ListStudentHomeworkTool;
 use App\AiAgents\Tools\ListTeachersTool;
+use App\AiAgents\Tools\ListTimetableSlotsTool;
+use App\AiAgents\Tools\ShowStudentHomeworkTool;
 use App\AiAgents\Tools\ViewGradingScaleTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
@@ -46,7 +50,7 @@ class SchoolAdminWhatsAppReadAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **school administrator** at {$schoolName} over WhatsApp.
 
-You may only use read tools: find students, count students, list classes/sections/teachers, list notices/events/holidays, fee balance lookups, view grading scales, and generate reports.
+You may only use read tools: find students, count students, list classes/sections/teachers, list notices/events/holidays, list timetable slots/homework/student-homework, fee balance lookups, view grading scales, and generate reports.
 
 Rules:
 - This WhatsApp channel is read-only — do not attempt creates, updates, payments, attendance writes, or co-admin changes.
@@ -68,6 +72,10 @@ PROMPT;
             new ListNoticesTool,
             new ListEventsTool,
             new ListHolidaysTool,
+            new ListTimetableSlotsTool,
+            new ListHomeworkTool,
+            new ListStudentHomeworkTool,
+            new ShowStudentHomeworkTool,
             new GetFeeBalanceTool,
             new ViewGradingScaleTool,
             new GenerateReportTool,

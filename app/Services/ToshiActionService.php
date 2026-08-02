@@ -214,6 +214,11 @@ class ToshiActionService
                     'list_notices', 'create_notice', 'update_notice',
                     'list_events', 'create_event', 'update_event',
                     'list_holidays', 'create_holiday', 'update_holiday',
+                    // Batch 2 school_academics_ops (not Settings; no destroy)
+                    'list_timetable_slots', 'create_timetable_slot', 'update_timetable_slot',
+                    'list_homework', 'create_homework', 'update_homework',
+                    'approve_homework', 'reject_homework',
+                    'list_student_homework', 'show_student_homework', 'update_student_homework',
                 ],
             ],
             4 => [ // SchoolSubadmin / Deputy Admin — school ops minus owner-level
@@ -228,6 +233,10 @@ class ToshiActionService
                     'list_notices', 'create_notice', 'update_notice',
                     'list_events', 'create_event', 'update_event',
                     'list_holidays', 'create_holiday', 'update_holiday',
+                    'list_timetable_slots', 'create_timetable_slot', 'update_timetable_slot',
+                    'list_homework', 'create_homework', 'update_homework',
+                    'approve_homework', 'reject_homework',
+                    'list_student_homework', 'show_student_homework', 'update_student_homework',
                     // Explicitly omitted: add_coadmin (owner governance), settings/curriculum
                 ],
             ],

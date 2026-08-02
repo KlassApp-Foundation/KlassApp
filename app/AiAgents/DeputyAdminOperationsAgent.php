@@ -5,14 +5,17 @@ namespace App\AiAgents;
 use App\AiAgents\Tools\AddParentTool;
 use App\AiAgents\Tools\AddStudentTool;
 use App\AiAgents\Tools\AddTeacherTool;
+use App\AiAgents\Tools\ApproveHomeworkTool;
 use App\AiAgents\Tools\AssignTeacherTool;
 use App\AiAgents\Tools\CreateEventTool;
 use App\AiAgents\Tools\CreateExamTool;
 use App\AiAgents\Tools\CreateFeeTool;
 use App\AiAgents\Tools\CreateHolidayTool;
+use App\AiAgents\Tools\CreateHomeworkTool;
 use App\AiAgents\Tools\CreateNoticeTool;
 use App\AiAgents\Tools\CreateSubjectTool;
 use App\AiAgents\Tools\CreateTermTool;
+use App\AiAgents\Tools\CreateTimetableSlotTool;
 use App\AiAgents\Tools\EnterMarkTool;
 use App\AiAgents\Tools\FindStudentTool;
 use App\AiAgents\Tools\GenerateReportTool;
@@ -21,17 +24,25 @@ use App\AiAgents\Tools\GetStudentCountTool;
 use App\AiAgents\Tools\ListClassesTool;
 use App\AiAgents\Tools\ListEventsTool;
 use App\AiAgents\Tools\ListHolidaysTool;
+use App\AiAgents\Tools\ListHomeworkTool;
 use App\AiAgents\Tools\ListNoticesTool;
 use App\AiAgents\Tools\ListSectionsTool;
+use App\AiAgents\Tools\ListStudentHomeworkTool;
 use App\AiAgents\Tools\ListTeachersTool;
+use App\AiAgents\Tools\ListTimetableSlotsTool;
 use App\AiAgents\Tools\RecordAttendanceTool;
 use App\AiAgents\Tools\RecordBulkAttendanceTool;
 use App\AiAgents\Tools\RecordPaymentTool;
+use App\AiAgents\Tools\RejectHomeworkTool;
 use App\AiAgents\Tools\SeedDefaultGradingTool;
 use App\AiAgents\Tools\SetGradingScaleTool;
+use App\AiAgents\Tools\ShowStudentHomeworkTool;
 use App\AiAgents\Tools\UpdateEventTool;
 use App\AiAgents\Tools\UpdateHolidayTool;
+use App\AiAgents\Tools\UpdateHomeworkTool;
 use App\AiAgents\Tools\UpdateNoticeTool;
+use App\AiAgents\Tools\UpdateStudentHomeworkTool;
+use App\AiAgents\Tools\UpdateTimetableSlotTool;
 use App\AiAgents\Tools\ViewGradingScaleTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
@@ -80,7 +91,7 @@ class DeputyAdminOperationsAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **deputy school administrator** at {$schoolName}.
 
-You have school-operations tools: students, parents, teachers (add/assign/list — not co-admins), academics (classes, sections, terms, subjects, exams), fees, grading scales, attendance, marks, reports, and school communications (notices, events, holidays — list/create/update only).
+You have school-operations tools: students, parents, teachers (add/assign/list — not co-admins), academics (classes, sections, terms, subjects, exams), fees, grading scales, attendance, marks, reports, school communications (notices, events, holidays — list/create/update only), and academic ops (timetable slots, homework approve/reject, student-homework review — no destroy).
 
 Rules:
 - Do **not** attempt owner-level changes: school Settings (curriculum / academic-year config), or creating co-admins (ug3).
@@ -133,6 +144,18 @@ PROMPT;
             new ListHolidaysTool,
             new CreateHolidayTool,
             new UpdateHolidayTool,
+            // School Academics Ops skill surface (Batch 2 — not Settings-adjacent)
+            new ListTimetableSlotsTool,
+            new CreateTimetableSlotTool,
+            new UpdateTimetableSlotTool,
+            new ListHomeworkTool,
+            new CreateHomeworkTool,
+            new UpdateHomeworkTool,
+            new ApproveHomeworkTool,
+            new RejectHomeworkTool,
+            new ListStudentHomeworkTool,
+            new ShowStudentHomeworkTool,
+            new UpdateStudentHomeworkTool,
         ];
     }
 }

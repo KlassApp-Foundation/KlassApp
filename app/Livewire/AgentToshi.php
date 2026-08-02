@@ -60,6 +60,14 @@ class AgentToshi extends Component
         'toolUpdateEvent'         => \App\AiAgents\Tools\UpdateEventTool::class,
         'toolCreateHoliday'       => \App\AiAgents\Tools\CreateHolidayTool::class,
         'toolUpdateHoliday'       => \App\AiAgents\Tools\UpdateHolidayTool::class,
+        // School Admin Batch 2 — academics ops (writes only; lists need no confirm)
+        'toolCreateTimetableSlot' => \App\AiAgents\Tools\CreateTimetableSlotTool::class,
+        'toolUpdateTimetableSlot' => \App\AiAgents\Tools\UpdateTimetableSlotTool::class,
+        'toolCreateHomework'      => \App\AiAgents\Tools\CreateHomeworkTool::class,
+        'toolUpdateHomework'      => \App\AiAgents\Tools\UpdateHomeworkTool::class,
+        'toolApproveHomework'     => \App\AiAgents\Tools\ApproveHomeworkTool::class,
+        'toolRejectHomework'      => \App\AiAgents\Tools\RejectHomeworkTool::class,
+        'toolUpdateStudentHomework' => \App\AiAgents\Tools\UpdateStudentHomeworkTool::class,
         // TeacherOperationsAgent confirm keys (ug5)
         'toolTeacherMarkAttendance' => \App\AiAgents\Tools\Teacher\MarkAttendanceTool::class,
         'toolTeacherEnterMarks' => \App\AiAgents\Tools\Teacher\EnterMarksTool::class,
@@ -684,6 +692,13 @@ class AgentToshi extends Component
             'toolUpdateEvent'      => ['label' => 'Update Event',     'icon' => '📅'],
             'toolCreateHoliday'    => ['label' => 'Create Holiday',   'icon' => '🎄'],
             'toolUpdateHoliday'    => ['label' => 'Update Holiday',   'icon' => '🎄'],
+            'toolCreateTimetableSlot' => ['label' => 'Create Timetable Slot', 'icon' => '🗓️'],
+            'toolUpdateTimetableSlot' => ['label' => 'Update Timetable Slot', 'icon' => '🗓️'],
+            'toolCreateHomework'   => ['label' => 'Create Homework',  'icon' => '📝'],
+            'toolUpdateHomework'   => ['label' => 'Update Homework',  'icon' => '📝'],
+            'toolApproveHomework'  => ['label' => 'Approve Homework', 'icon' => '✅'],
+            'toolRejectHomework'   => ['label' => 'Reject Homework',  'icon' => '❌'],
+            'toolUpdateStudentHomework' => ['label' => 'Check Student Homework', 'icon' => '✔️'],
         ];
         return $map[$tool] ?? ['label' => 'Execute Action', 'icon' => '⚡'];
     }
