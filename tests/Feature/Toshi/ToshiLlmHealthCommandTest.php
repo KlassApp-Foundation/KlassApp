@@ -57,6 +57,35 @@ class ToshiLlmHealthCommandTest extends TestCase
         });
     }
 
+    public function test_health_check_succeeds_on_reasoning_model_trace_alone(): void
+    {
+        // Regression for the prod false-failure: deepseek-v4-flash is a reasoning
+        // model — with a low max_tokens budget it can return empty content while a
+        // non-empty reasoning_content exists. The provider is alive; this must be
+        // OK, not a critical empty_response.
+        Http::fake([
+            'api.deepseek.com/*' => Http::response([
+                'id' => 'chatcmpl-health-reasoner',
+                'object' => 'chat.completion',
+                'choices' => [[
+                    'index' => 0,
+                    'message' => [
+                        'role' => 'assistant',
+                        'content' => '',
+                        'reasoning_content' => 'We need to respond exactly with "TOSHI_HEALTH_OK". No extra',
+                    ],
+                    'finish_reason' => 'length',
+                ]],
+            ], 200),
+        ]);
+
+        $exit = Artisan::call('toshi:llm-health');
+        $output = Artisan::output();
+
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString('Result   : OK', $output);
+    }
+
     public function test_health_check_reports_provider_http_failure_as_critical(): void
     {
         Log::spy();
