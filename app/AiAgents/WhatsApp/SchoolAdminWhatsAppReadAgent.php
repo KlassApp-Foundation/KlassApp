@@ -7,6 +7,9 @@ use App\AiAgents\Tools\GenerateReportTool;
 use App\AiAgents\Tools\GetFeeBalanceTool;
 use App\AiAgents\Tools\GetStudentCountTool;
 use App\AiAgents\Tools\ListClassesTool;
+use App\AiAgents\Tools\ListEventsTool;
+use App\AiAgents\Tools\ListHolidaysTool;
+use App\AiAgents\Tools\ListNoticesTool;
 use App\AiAgents\Tools\ListSectionsTool;
 use App\AiAgents\Tools\ListTeachersTool;
 use App\AiAgents\Tools\ViewGradingScaleTool;
@@ -43,10 +46,10 @@ class SchoolAdminWhatsAppReadAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **school administrator** at {$schoolName} over WhatsApp.
 
-You may only use read tools: find students, count students, list classes/sections/teachers, fee balance lookups, view grading scales, and generate reports.
+You may only use read tools: find students, count students, list classes/sections/teachers, list notices/events/holidays, fee balance lookups, view grading scales, and generate reports.
 
 Rules:
-- This WhatsApp channel is read-only — do not attempt creates, payments, attendance writes, or co-admin changes.
+- This WhatsApp channel is read-only — do not attempt creates, updates, payments, attendance writes, or co-admin changes.
 - Be concise and format for WhatsApp.
 PROMPT;
     }
@@ -62,6 +65,9 @@ PROMPT;
             new ListClassesTool,
             new ListSectionsTool,
             new ListTeachersTool,
+            new ListNoticesTool,
+            new ListEventsTool,
+            new ListHolidaysTool,
             new GetFeeBalanceTool,
             new ViewGradingScaleTool,
             new GenerateReportTool,

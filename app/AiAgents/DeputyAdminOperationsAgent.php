@@ -6,8 +6,11 @@ use App\AiAgents\Tools\AddParentTool;
 use App\AiAgents\Tools\AddStudentTool;
 use App\AiAgents\Tools\AddTeacherTool;
 use App\AiAgents\Tools\AssignTeacherTool;
+use App\AiAgents\Tools\CreateEventTool;
 use App\AiAgents\Tools\CreateExamTool;
 use App\AiAgents\Tools\CreateFeeTool;
+use App\AiAgents\Tools\CreateHolidayTool;
+use App\AiAgents\Tools\CreateNoticeTool;
 use App\AiAgents\Tools\CreateSubjectTool;
 use App\AiAgents\Tools\CreateTermTool;
 use App\AiAgents\Tools\EnterMarkTool;
@@ -16,6 +19,9 @@ use App\AiAgents\Tools\GenerateReportTool;
 use App\AiAgents\Tools\GetFeeBalanceTool;
 use App\AiAgents\Tools\GetStudentCountTool;
 use App\AiAgents\Tools\ListClassesTool;
+use App\AiAgents\Tools\ListEventsTool;
+use App\AiAgents\Tools\ListHolidaysTool;
+use App\AiAgents\Tools\ListNoticesTool;
 use App\AiAgents\Tools\ListSectionsTool;
 use App\AiAgents\Tools\ListTeachersTool;
 use App\AiAgents\Tools\RecordAttendanceTool;
@@ -23,6 +29,9 @@ use App\AiAgents\Tools\RecordBulkAttendanceTool;
 use App\AiAgents\Tools\RecordPaymentTool;
 use App\AiAgents\Tools\SeedDefaultGradingTool;
 use App\AiAgents\Tools\SetGradingScaleTool;
+use App\AiAgents\Tools\UpdateEventTool;
+use App\AiAgents\Tools\UpdateHolidayTool;
+use App\AiAgents\Tools\UpdateNoticeTool;
 use App\AiAgents\Tools\ViewGradingScaleTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
@@ -71,7 +80,7 @@ class DeputyAdminOperationsAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **deputy school administrator** at {$schoolName}.
 
-You have school-operations tools: students, parents, teachers (add/assign/list — not co-admins), academics (classes, sections, terms, subjects, exams), fees, grading scales, attendance, marks, and reports.
+You have school-operations tools: students, parents, teachers (add/assign/list — not co-admins), academics (classes, sections, terms, subjects, exams), fees, grading scales, attendance, marks, reports, and school communications (notices, events, holidays — list/create/update only).
 
 Rules:
 - Do **not** attempt owner-level changes: school Settings (curriculum / academic-year config), or creating co-admins (ug3).
@@ -114,6 +123,16 @@ PROMPT;
             new SeedDefaultGradingTool,
             // Reporting skill surface
             new GenerateReportTool,
+            // School Comms skill surface (Batch 1 — not Settings-adjacent)
+            new ListNoticesTool,
+            new CreateNoticeTool,
+            new UpdateNoticeTool,
+            new ListEventsTool,
+            new CreateEventTool,
+            new UpdateEventTool,
+            new ListHolidaysTool,
+            new CreateHolidayTool,
+            new UpdateHolidayTool,
         ];
     }
 }

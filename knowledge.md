@@ -240,11 +240,11 @@
 
 ---
 
-## Current Status: August 2, 2026 (Toshi roles + WhatsApp + IDOR on `main`; MCP audit #140)
+## Current Status: August 3, 2026 (School Admin Batch 1 PR; Toshi LLM safety on `main`)
 
-- **✅ Toshi on `main`**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp audit/bridge/channel/wave-1 (#133–#136, **prod flag on**), legacy portal IDOR (#123/#130–#132).
-- **✅ MCP named-client audit**: `AuditingMcpClientManager`; architecture test bans direct `Client::web`/`local` outside `routes/ai.php` (#140).
-- **Open**: Preference memory #138; Google connector audit #139 (recommend skip Google first); digests after prefs; WA wave-2 deferred (no usage signal yet); Slack/Notion product connectors **shelved**.
+- **🚧 School Admin Batch 1** (`feature/toshi-schooladmin-batch1`): notices/events/holidays create/list/update via `SchoolCommsSkill` — rebasing onto main / opening PR. Notices = same `notice_board` as Receptionist; events post-#131 Gate; holidays = `Events.category=holidays`; Deputy inherits; WA lists only. **Batch 2 needs its own Part A.**
+- **✅ Toshi on `main`**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config fail-loud + llm-health (#143–#149 era).
+- **Open**: Preference memory #138; Google connector audit #139 (skip Google first); digests after prefs; WA wave-2 deferred; Slack/Notion **shelved**.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log updated at every done-as-scoped.
 
 ## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
@@ -622,12 +622,19 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-03: School Admin Batch 1 — commit, rebase, UsesToshiLlm, PR
+- **Work done**: Committed uncommitted Batch 1 work on `feature/toshi-schooladmin-batch1` (worktree `KlassApp-toshi-schooladmin-batch1`). Rebased onto `origin/main` (#141–#149 era); only conflict was `knowledge.md` Session Log (kept both). Verified ToshiLlm path: **SchoolCommsSkill now uses `UsesToshiLlm`** (same as Orchestrator/OperationsAgents) so `prompt()` hits `ToshiLlm::assertConfigConsistent()` + openai-compatible model — not `ai.default`/`openai`. Sibling skills (Academic/Fee/…) still lack the trait (pre-existing gap on main — out of Batch 1 scope). Leaf tools unchanged (no LLM). Re-ran Batch 1 suite; pushed PR (do not merge from this session).
+- **Files modified**: Batch 1 skill/tools/service/wiring (prior commit) + `SchoolCommsSkill` UsesToshiLlm + test assertion + knowledge
+- **Key decisions**: Fix SchoolCommsSkill only (new prompt()-ing agent); document sibling-skill gap for follow-up; Batch 1 scope ends here — Batch 2 needs Part A
+- **Status**: ✅ Done — PR opened, not merged
+- **Edge cases flagged**: AcademicSkill et al. still resolve via `ai.default` without UsesToshiLlm — potential dual-config / provider drift on nested skill prompts
+
 ### 2026-08-03: Adversarial schedule durable logging + ops backlog
 - **Work done**: Confirmed Kernel already `appendOutputTo(storage/logs/toshi-adversarial-live.log)` but success path had no structured `Log::info` (unlike llm-health durability). Added log channel `toshi_adversarial`, dual-write `Log::info`/`Log::critical` (default stack + dedicated file), documented destination/format, deferred quick-sweep backlog line (revisit **after current roadmap complete**). Roadmap check: School Admin Batch 1 approved + partially implemented (uncommitted on `feature/toshi-schooladmin-batch1`) — **not** Teacher batch 2 next.
 - **Files modified**: `ToshiAdversarialLiveCommand.php`, `config/logging.php`, `Kernel.php`, `ToshiAdversarialLiveCommandTest.php`, `docs/toshi-safety-practices-audit.md`, `docs/toshi-prod-health-check.md`, `knowledge.md`
 - **Key decisions**: Finish/ship School Admin Batch 1 before Teacher panel-parity; quick-sweep stays deferred until roadmap complete
 - **Status**: ✅ Done — PR opened/merged from `fix/toshi-adversarial-schedule-logging`
-- **Edge cases flagged**: `feature/toshi-schooladmin-batch1` is 15 behind main with uncommitted tools — rebase before resume
+- **Edge cases flagged**: `feature/toshi-schooladmin-batch1` was behind main with uncommitted tools — rebased + PR in follow-up session
 
 ### 2026-08-02: Fail-loud dual LLM config + toshi:llm-health
 - **Work done**: Structural fix for empty `agent_conversations` incident (NVIDIA `TOSHI_LLM_MODEL` + DeepSeek `OPENAI_COMPATIBLE_*`). Added `ToshiLlm::assertConfigConsistent()` (throws `AmbiguousToshiLlmConfigException` on conflicting dual env / model↔host family mismatch) called from `model()`/`provider()` first use — not App boot. Added `php artisan toshi:llm-health` (one cheap live `chat/completions`, verifies content; `Log::critical` + exit 1 on failure). Docs + tests for incident shape and failing provider response. **Schedule not wired**; **`.env` not touched**.
@@ -663,6 +670,25 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: Exact/keyword substring phrases (FP: casual “real person…”; FN: “speak with staff”); escalation not exempt from dual-identity audit; no helpdesk table
 - **Status**: ✅ Superseded by finish entry above (push/PR)
 - **Edge cases flagged**: Receiver without opted-in WhatsAppUser → Task + ActivityLog only (no staff notify)
+
+### 2026-08-02: School Comms RouteTo* audit fidelity + SDK Sub-Agent clarification
+- **Work done**: Audited `RouteToSchoolCommsSkillTool` / `SchoolCommsSkill` vs Laravel AI Sub-Agents. Confirmed custom RouteTo* pattern (same as Academic/Fee/etc.) — **not** SDK `CanActAsTool` / AgentTool. Verified create-notice audit fidelity: leaf `toolCreateNotice` + `acting_user_id` / `approver_id` on Tier-2 `confirmYes`; nested `ToolInvoked` under `SchoolCommsSkill` logs leaf `CreateNoticeTool` (not router). No code fix required for audit gap — fidelity already matched Deputy/Teacher bar. Added PHPDoc + 5 regression tests.
+- **Mechanical finding**: Orchestrator returns `new RouteToSchoolCommsSkillTool` (plain Tool → `authorizeOrMessage` → `(new SchoolCommsSkill)->prompt($query)`). SDK Sub-Agent would return the Agent from `tools()` so `resolveTool()` wraps `AgentTool` (`task` schema, optional `CanActAsTool` name/description). Docs: laravel/ai “Sub-Agents” / `CanActAsTool`.
+- **Audit evidence (real ActivityLog via PHPUnit)**: `properties.tool=toolCreateNotice`, `acting_user_id`=school admin, `approver_id`=same on confirmYes; notice_board row created. ToolInvoked path: `tool=CreateNoticeTool`, `acting_user_id` set, `approver_id` null.
+- **Pattern decision**: **Yes — template for future School Admin batches** (and any Orchestrator-growing domain). Skill+RouteTo* is the established Orchestrator design; Batch 1 only newly packaged school_comms into it. Role OperationsAgents remain flattened tools + scope router (also not CanActAsTool).
+- **Files modified**: `RouteToSchoolCommsSkillTool.php`, `SchoolCommsSkill.php`, `SchoolAdminBatch1CommsToolsTest.php`, `knowledge.md`
+- **Status**: ✅ Done (superseded by rebase/PR closeout)
+- **Tests**: `SchoolAdminBatch1CommsToolsTest` — **14 passed** (169 assertions)
+
+### 2026-08-02: School Admin Batch 1 — notices/events/holidays (feature/toshi-schooladmin-batch1)
+- **Work done**: Implemented School Comms skill + 9 tools (list/create/update × notices, events, holidays). Wired `ToshiOrchestrator` (`RouteToSchoolCommsSkillTool`), `DeputyAdminOperationsAgent` (flattened inherit — not Settings-adjacent), WA read lists on `SchoolAdminWhatsAppReadAgent`, AgentToshi/`WhatsAppConfirmationBridge` Tier-2 keys, `getRoleCapabilities` ug3/ug4. Service: `SchoolCommsActionService`.
+- **Notices/Receptionist overlap**: **Same** `NoticeBoard` / `notice_board` as Receptionist `ViewNoticeboardTool` → `ReceptionistActionService::viewNoticeboard()`. Admin create/list/update writes that table; Receptionist remains view-only.
+- **Events Gate**: Updates call `Gate::forUser()->allows('event', $event)` (school_id match, post-#131). No destroy; does not use/reintroduce `event-destroy` shape for writes. Regression test: ug3 cannot update another school's event via `UpdateEventTool`.
+- **Holidays**: `Events` rows with `category=holidays` (Admin HolidaysController pattern) — not a separate model.
+- **Files modified**: `SchoolCommsActionService`, 9 tools + `SchoolCommsSkill` + route tool, Orchestrator, DeputyAgent, WA read agent, AgentToshi, WhatsAppConfirmationBridge, ToshiActionService capabilities, Deputy count test, `SchoolAdminBatch1CommsToolsTest`, knowledge
+- **Key decisions**: Tier-2 ConfirmsBeforeWrite on all six writes (low-risk creates/updates, no destroy); lists read-only / WA-safe; creates/updates fail-closed via WhatsAppWriteExclusion (not on WRITE_ALLOWLIST); Deputy gets all nine (comms ≠ Settings)
+- **Status**: ✅ Implemented — rebase + UsesToshiLlm fix + PR in follow-up
+- **Tests**: `SchoolAdminBatch1CommsToolsTest` + `DeputyAdminOperationsToolsTest` — 20 passed
 
 ### 2026-08-02: Toshi rollout closeout (#124–#140) + MCP Client::web/local ban
 - **Work done**: Session Log / status catch-up for Aug 1–2 merges. Folded architecture test banning direct `Client::web()`/`Client::local()` outside `routes/ai.php` into #140 (with AuditingMcpClientManager named-client audit). Knowledge updates are now part of every done-as-scoped report going forward.

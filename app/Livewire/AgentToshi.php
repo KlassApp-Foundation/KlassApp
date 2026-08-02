@@ -53,6 +53,13 @@ class AgentToshi extends Component
         'toolSetCurriculum'       => \App\AiAgents\Tools\SetCurriculumTool::class,
         'toolCreateStream'        => \App\AiAgents\Tools\CreateStreamTool::class,
         'toolAssignStudentsToStream' => \App\AiAgents\Tools\AssignStudentsToStreamTool::class,
+        // School Admin Batch 1 — school_comms (create/update only; lists need no confirm)
+        'toolCreateNotice'        => \App\AiAgents\Tools\CreateNoticeTool::class,
+        'toolUpdateNotice'        => \App\AiAgents\Tools\UpdateNoticeTool::class,
+        'toolCreateEvent'         => \App\AiAgents\Tools\CreateEventTool::class,
+        'toolUpdateEvent'         => \App\AiAgents\Tools\UpdateEventTool::class,
+        'toolCreateHoliday'       => \App\AiAgents\Tools\CreateHolidayTool::class,
+        'toolUpdateHoliday'       => \App\AiAgents\Tools\UpdateHolidayTool::class,
         // TeacherOperationsAgent confirm keys (ug5)
         'toolTeacherMarkAttendance' => \App\AiAgents\Tools\Teacher\MarkAttendanceTool::class,
         'toolTeacherEnterMarks' => \App\AiAgents\Tools\Teacher\EnterMarksTool::class,
@@ -671,6 +678,12 @@ class AgentToshi extends Component
             'toolSeedDefaultGrading' => ['label' => 'Setup Grading',   'icon' => '⚙️'],
             'toolSetGradingScale'  => ['label' => 'Set Grading Scale', 'icon' => '📏'],
             'toolSetCurriculum'    => ['label' => 'Set Curriculum',   'icon' => '📚'],
+            'toolCreateNotice'     => ['label' => 'Create Notice',    'icon' => '📢'],
+            'toolUpdateNotice'     => ['label' => 'Update Notice',    'icon' => '📢'],
+            'toolCreateEvent'      => ['label' => 'Create Event',     'icon' => '📅'],
+            'toolUpdateEvent'      => ['label' => 'Update Event',     'icon' => '📅'],
+            'toolCreateHoliday'    => ['label' => 'Create Holiday',   'icon' => '🎄'],
+            'toolUpdateHoliday'    => ['label' => 'Update Holiday',   'icon' => '🎄'],
         ];
         return $map[$tool] ?? ['label' => 'Execute Action', 'icon' => '⚡'];
     }

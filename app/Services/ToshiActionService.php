@@ -210,6 +210,10 @@ class ToshiActionService
                     'record_payment', 'create_exam', 'add_parent', 'enter_mark',
                     'assign_teacher', 'create_subject',
                     'list_classes', 'list_teachers', 'list_sections', 'generate_report',
+                    // Batch 1 school_comms (not Settings)
+                    'list_notices', 'create_notice', 'update_notice',
+                    'list_events', 'create_event', 'update_event',
+                    'list_holidays', 'create_holiday', 'update_holiday',
                 ],
             ],
             4 => [ // SchoolSubadmin / Deputy Admin — school ops minus owner-level
@@ -221,6 +225,9 @@ class ToshiActionService
                     'record_payment', 'create_exam', 'add_parent', 'enter_mark',
                     'assign_teacher', 'create_subject',
                     'list_classes', 'list_teachers', 'list_sections', 'generate_report',
+                    'list_notices', 'create_notice', 'update_notice',
+                    'list_events', 'create_event', 'update_event',
+                    'list_holidays', 'create_holiday', 'update_holiday',
                     // Explicitly omitted: add_coadmin (owner governance), settings/curriculum
                 ],
             ],
