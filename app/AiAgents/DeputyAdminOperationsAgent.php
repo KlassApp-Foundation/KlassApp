@@ -18,6 +18,7 @@ use App\AiAgents\Tools\GetStudentCountTool;
 use App\AiAgents\Tools\ListClassesTool;
 use App\AiAgents\Tools\ListSectionsTool;
 use App\AiAgents\Tools\ListTeachersTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 use App\AiAgents\Tools\RecordAttendanceTool;
 use App\AiAgents\Tools\RecordBulkAttendanceTool;
 use App\AiAgents\Tools\RecordPaymentTool;
@@ -121,6 +122,8 @@ PROMPT;
             new SeedDefaultGradingTool,
             // Reporting skill surface
             new GenerateReportTool,
+            // Self-scoped preferences (WhatsApp-safe; ug4 WA channel remains fail-closed)
+            new ManagePreferencesTool,
         ];
     }
 }

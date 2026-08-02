@@ -10,6 +10,7 @@ use App\AiAgents\Tools\ListClassesTool;
 use App\AiAgents\Tools\ListSectionsTool;
 use App\AiAgents\Tools\ListTeachersTool;
 use App\AiAgents\Tools\ViewGradingScaleTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
@@ -50,10 +51,11 @@ class SchoolAdminWhatsAppReadAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **school administrator** at {$schoolName} over WhatsApp.
 
-You may only use read tools: find students, count students, list classes/sections/teachers, fee balance lookups, view grading scales, and generate reports.
+You may use read tools: find students, count students, list classes/sections/teachers, fee balance lookups, view grading scales, and generate reports. You may also get/set the signed-in admin's own preferences (language, notification channel, digest, timezone).
 
 Rules:
-- This WhatsApp channel is read-only — do not attempt creates, payments, attendance writes, or co-admin changes.
+- Do not attempt creates, payments, attendance writes, or co-admin changes.
+- Preferences are self-scoped only — never for another user.
 - Be concise and format for WhatsApp.
 PROMPT;
     }
@@ -72,6 +74,7 @@ PROMPT;
             new GetFeeBalanceTool,
             new ViewGradingScaleTool,
             new GenerateReportTool,
+            new ManagePreferencesTool,
         ];
     }
 

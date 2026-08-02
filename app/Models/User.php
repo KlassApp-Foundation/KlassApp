@@ -86,6 +86,11 @@ class User extends Authenticatable implements HasMedia
         return $this->hasOne('App\Models\Userprofile','user_id','id');
     }
 
+    public function preference()
+    {
+        return $this->hasOne(UserPreference::class);
+    }
+
      public function librarycard()
     {
         return $this->hasOne('App\Models\LibraryCard','user_id','id');

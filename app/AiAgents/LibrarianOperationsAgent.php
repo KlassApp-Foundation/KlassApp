@@ -8,6 +8,7 @@ use App\AiAgents\Tools\Librarian\ManageBooksTool;
 use App\AiAgents\Tools\Librarian\ManageLendingTool;
 use App\AiAgents\Tools\Librarian\ViewDashboardTool;
 use App\AiAgents\Tools\Librarian\ViewLibraryCardsTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
@@ -73,6 +74,7 @@ PROMPT;
             new ViewLibraryCardsTool,
             new ViewDashboardTool,
             new CreateTaskTool,
+            new ManagePreferencesTool,
         ];
     }
 }

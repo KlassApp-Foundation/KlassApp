@@ -15,6 +15,7 @@ use App\AiAgents\Tools\Student\ViewHomeworkTool;
 use App\AiAgents\Tools\Student\ViewLibraryActivityTool;
 use App\AiAgents\Tools\Student\ViewMarksTool;
 use App\AiAgents\Tools\Student\ViewNoticesTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
@@ -86,6 +87,7 @@ PROMPT;
             new SubmitHomeworkTool,
             new ManageTasksTool,
             new ManageConversationsTool,
+            new ManagePreferencesTool,
         ];
     }
 }

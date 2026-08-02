@@ -94,7 +94,7 @@ class ReceptionistOperationsToolsTest extends TestCase
         $this->assertContains(ViewEventsTool::class, $classes);
         $this->assertContains(ViewNoticeboardTool::class, $classes);
         $this->assertContains(CreateTaskTool::class, $classes);
-        $this->assertCount(7, $classes);
+        $this->assertCount(8, $classes);
     }
 
     public function test_gates_isolate_receptionist_from_school_teacher_accountant_librarian(): void

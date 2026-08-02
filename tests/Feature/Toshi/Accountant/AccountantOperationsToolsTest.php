@@ -104,7 +104,7 @@ class AccountantOperationsToolsTest extends TestCase
         $this->assertNotContains(AddCoAdminTool::class, $classes);
         $this->assertContains(RecordPaymentTool::class, $classes);
         $this->assertContains(ManagePayrollTool::class, $classes);
-        $this->assertCount(6, $classes);
+        $this->assertCount(7, $classes);
     }
 
     public function test_gates_isolate_accountant_from_school_and_teacher(): void

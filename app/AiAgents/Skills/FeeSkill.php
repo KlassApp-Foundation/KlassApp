@@ -9,6 +9,7 @@ use Laravel\Ai\Attributes\MaxSteps;
 use App\AiAgents\Tools\CreateFeeTool;
 use App\AiAgents\Tools\RecordPaymentTool;
 use App\AiAgents\Tools\GetFeeBalanceTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 
 #[MaxSteps(5)]
 class FeeSkill implements Agent, HasTools
@@ -26,6 +27,7 @@ class FeeSkill implements Agent, HasTools
             new CreateFeeTool,
             new RecordPaymentTool,
             new GetFeeBalanceTool,
+            new ManagePreferencesTool,
         ];
     }
 }

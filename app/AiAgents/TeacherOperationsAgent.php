@@ -14,6 +14,7 @@ use App\AiAgents\Tools\Teacher\ViewEventsTool;
 use App\AiAgents\Tools\Teacher\ViewNoticeboardTool;
 use App\AiAgents\Tools\Teacher\ViewStudentsTool;
 use App\AiAgents\Tools\Teacher\ViewTimetableTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
@@ -24,7 +25,7 @@ use Laravel\Ai\Promptable;
 /**
  * Teacher-scoped Toshi operator (ug5).
  *
- * Structural isolation: tools() lists only the 12 advisory teacher actions.
+ * Structural isolation: tools() lists only the 13 advisory teacher actions.
  * School-admin tools (e.g. AddCoAdminTool) are never registered here.
  * Deterministic scope router in ToshiSdkV2Service selects this agent for ug5 —
  * this is not Laravel AI Sub-Agents / CanActAsTool.
@@ -83,6 +84,7 @@ PROMPT;
             new ViewTimetableTool,
             new ViewEventsTool,
             new ViewNoticeboardTool,
+            new ManagePreferencesTool,
         ];
     }
 }

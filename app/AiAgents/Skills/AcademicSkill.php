@@ -11,6 +11,7 @@ use App\AiAgents\Tools\ListSectionsTool;
 use App\AiAgents\Tools\CreateTermTool;
 use App\AiAgents\Tools\CreateSubjectTool;
 use App\AiAgents\Tools\CreateExamTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 
 #[MaxSteps(5)]
 class AcademicSkill implements Agent, HasTools
@@ -30,6 +31,7 @@ class AcademicSkill implements Agent, HasTools
             new CreateTermTool,
             new CreateSubjectTool,
             new CreateExamTool,
+            new ManagePreferencesTool,
         ];
     }
 }

@@ -169,7 +169,7 @@ class WhatsAppToshiChannelTest extends TestCase
         $this->assertNotContains(AddCoAdminTool::class, $classes);
         $this->assertNotContains(ManagePayrollTool::class, $classes);
         $this->assertNotContains(ImpersonateSchoolAdminTool::class, $classes);
-        $this->assertCount(6, $classes);
+        $this->assertCount(7, $classes);
     }
 
     public function test_parent_capabilities_restored_to_children_scope(): void

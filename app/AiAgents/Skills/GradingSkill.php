@@ -9,6 +9,7 @@ use Laravel\Ai\Attributes\MaxSteps;
 use App\AiAgents\Tools\SetGradingScaleTool;
 use App\AiAgents\Tools\ViewGradingScaleTool;
 use App\AiAgents\Tools\SeedDefaultGradingTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 
 #[MaxSteps(5)]
 class GradingSkill implements Agent, HasTools
@@ -26,6 +27,7 @@ class GradingSkill implements Agent, HasTools
             new SetGradingScaleTool,
             new ViewGradingScaleTool,
             new SeedDefaultGradingTool,
+            new ManagePreferencesTool,
         ];
     }
 }

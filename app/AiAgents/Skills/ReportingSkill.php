@@ -7,6 +7,7 @@ use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Promptable;
 use Laravel\Ai\Attributes\MaxSteps;
 use App\AiAgents\Tools\GenerateReportTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 
 #[MaxSteps(5)]
 class ReportingSkill implements Agent, HasTools
@@ -22,6 +23,7 @@ class ReportingSkill implements Agent, HasTools
     {
         return [
             new GenerateReportTool,
+            new ManagePreferencesTool,
         ];
     }
 }

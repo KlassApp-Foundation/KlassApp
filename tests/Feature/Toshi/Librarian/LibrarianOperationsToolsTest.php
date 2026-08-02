@@ -102,7 +102,7 @@ class LibrarianOperationsToolsTest extends TestCase
         $this->assertContains(ManageLendingTool::class, $classes);
         $this->assertContains(ViewDashboardTool::class, $classes);
         $this->assertContains(CreateTaskTool::class, $classes);
-        $this->assertCount(6, $classes);
+        $this->assertCount(7, $classes);
     }
 
     public function test_gates_isolate_librarian_from_school_teacher_accountant(): void

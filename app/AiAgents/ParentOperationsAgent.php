@@ -8,6 +8,7 @@ use App\AiAgents\Tools\Parent\FeeBalanceTool;
 use App\AiAgents\Tools\Parent\GradesTool;
 use App\AiAgents\Tools\Parent\HealthTool;
 use App\AiAgents\Tools\Parent\ListChildrenTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
@@ -74,6 +75,7 @@ PROMPT;
             new AttendanceTool,
             new HealthTool,
             new EventsTool,
+            new ManagePreferencesTool,
         ];
     }
 

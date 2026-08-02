@@ -9,6 +9,7 @@ use App\AiAgents\Tools\Receptionist\ManageVisitorLogTool;
 use App\AiAgents\Tools\Receptionist\ViewDashboardTool;
 use App\AiAgents\Tools\Receptionist\ViewEventsTool;
 use App\AiAgents\Tools\Receptionist\ViewNoticeboardTool;
+use App\AiAgents\Tools\ManagePreferencesTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
@@ -76,6 +77,7 @@ PROMPT;
             new ViewEventsTool,
             new ViewNoticeboardTool,
             new CreateTaskTool,
+            new ManagePreferencesTool,
         ];
     }
 }
