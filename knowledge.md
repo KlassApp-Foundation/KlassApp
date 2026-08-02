@@ -622,6 +622,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-02: Toshi Safety Practices Part B (adversarial suite + WA human escalation)
+- **Work done**: Branch `feature/toshi-safety-practices` off `audit/toshi-safety-practices` @ `0e413db` (worktree `/Users/mac/projects/KlassApp-toshi-safety-practices-impl`). Part B-1: `tests/Feature/Toshi/Adversarial/` — 16 structural-isolation regression tests under adversarial-shaped prompts via `Agent::fake` + compliance `ToolCall` (off-role → `NoSuchToolException`; peer-scope stays self/children). Explicit docblocks: NOT jailbreak proof. Part B-2: `WhatsAppHumanEscalationService` (keyword phrase set) integrated early in `WhatsAppToshiChannelService::ask()`; ActivityLog via `ToshiAuditService::logEscalation` (`acting_user_id`); optional Task + staff WA notify; ack; tool loop halted for that turn. Routing: Parent/Student → Receptionist (fallback Admin); staff → Admin; Admin → log only. Live-LLM cadence proposed in audit doc (monthly / Artisan / `TOSHI_ADVERSARIAL_LIVE=1`) — **awaiting approval, not scheduled**.
+- **Tests**: 23 passed (16 adversarial + 7 escalation), 99 assertions
+- **Key decisions**: Exact/keyword substring phrases (FP: casual “real person…”; FN: “speak with staff”); escalation not exempt from dual-identity audit; no helpdesk table
+- **Status**: 🚧 Implemented locally — **NOT pushed / NOT merged**
+- **Edge cases flagged**: Receiver without opted-in WhatsAppUser → Task + ActivityLog only (no staff notify)
+
 ### 2026-08-02: Toshi rollout closeout (#124–#140) + MCP Client::web/local ban
 - **Work done**: Session Log / status catch-up for Aug 1–2 merges. Folded architecture test banning direct `Client::web()`/`Client::local()` outside `routes/ai.php` into #140 (with AuditingMcpClientManager named-client audit). Knowledge updates are now part of every done-as-scoped report going forward.
 - **Merged to main (evidence)**:

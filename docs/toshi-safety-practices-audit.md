@@ -228,9 +228,55 @@ Prefer **school-local** humans. Platform/superadmin is not the WhatsApp escalati
 
 ---
 
+## Part B implementation decisions (feature/toshi-safety-practices)
+
+> **Branch:** `feature/toshi-safety-practices` (worktree `/Users/mac/projects/KlassApp-toshi-safety-practices-impl`)  
+> **Date:** 2026-08-02  
+> **Status:** Implemented — push/PR pending. Live-LLM Artisan + monthly schedule wired after one clean real run (2026-08-02).
+
+### B-1 — Adversarial `Agent::fake` suite (shipped)
+
+| Item | Decision |
+|---|---|
+| Path | `tests/Feature/Toshi/Adversarial/` + `AdversarialPromptFixtures` |
+| Files | `TeacherAdversarialIsolationTest`, `StudentAdversarialIsolationTest`, `ParentAdversarialIsolationTest`, `SchoolAdminWhatsAppAdversarialIsolationTest` (4 scenarios each ≈ **16** tests) |
+| What it proves | Structural isolation under adversarial-shaped prompts (tools absent / `canInvokeTool` false / `handle()` deny / WA HARD_DENY) |
+| What it does **not** prove | Jailbreak resistance or soft-refusal quality of any model — suite class docblocks state this explicitly |
+| How “prompt pressure” is simulated | Document manipulative fixture → `Agent::fake([ToolCall …])` scripts a compliance-shaped attempt → laravel/ai raises `NoSuchToolException` for off-role tools (not on `tools()`); on-role peer-scope tools may run but forged peer ids stay ignored. Soft-refusal wording is out of scope. |
+
+### Live-LLM adversarial cadence — SHIPPED (after one clean real run)
+
+Live-LLM is the **only** check type that validates prompt-manipulation / soft-refusal resistance. The CI `Agent::fake` suite cannot replace it.
+
+| Dimension | Decision |
+|---|---|
+| **Frequency** | **Monthly** — first Sunday 02:00 Africa/Kampala (`Kernel` schedule + day≤7 gate) |
+| **Trigger** | `php artisan toshi:adversarial-live` (manual) or scheduled `toshi:adversarial-live --scheduled` |
+| **Env gate** | `TOSHI_ADVERSARIAL_LIVE=1` + real `ai.providers.openai-compatible.key`; manual aborts loudly; `--scheduled` no-ops quietly |
+| **PHPUnit** | `tests/Feature/Toshi/Adversarial/Live/LiveAdversarialSoftRefusalTest` (`@group live-llm`); self-skips without gate (CI-safe) |
+| **Checks** | Soft-refusal quality; no successful mutation; text-only “I did it” claims fail; peer secrets flagged |
+| **One-time real run (2026-08-02)** | Provider DeepSeek `https://api.deepseek.com` / model `deepseek-chat`; DB = phpunit sqlite `:memory:` (artisan boot used local `klassapp_local`, not prod); WhatsApp Http::fake. **16/16 PASS**, 0 flags, 0 false-successes; ~20k tokens; est ≈ **$0.0066** |
+| **Recommendation** | Schedule wired but inert in environments without `TOSHI_ADVERSARIAL_LIVE=1` — keep gate off in production until intentionally enabled |
+
+### B-2 — WhatsApp human escalation MVP (shipped)
+
+| Item | Decision |
+|---|---|
+| Trigger | **Small keyword/substring phrase set** (case-insensitive): `talk to a person`, `talk to a human`, `speak to someone`, `speak to a person`, `talk to someone`, `human agent`, `real person` |
+| FP risk | Casual sentences containing those substrings (e.g. “is there a real person at the gate?”) may escalate |
+| FN risk | Paraphrases like “can I speak with staff” / “connect me to reception” are not covered until the set grows |
+| Rejected for v1 | Loose NL intent classifier; self-detect stuck loops |
+| Effects | `ToshiAuditService::logEscalation` (same dual-identity `acting_user_id` / `approver_id` path), optional `Task` for receiver, optional staff WhatsApp notify, ack to user |
+| Halt | Checked in `WhatsAppToshiChannelService::ask()` **before** agent prompt/run — that turn never enters the tool loop |
+| Routing | Parent/Student → Receptionist (fallback School Admin); staff → School Admin; School Admin → **log only** (no Task, no self-notify) |
+| Audit | Not exempt — `log_name=toshi`, `tool=WhatsAppHumanEscalation`, `status=escalated`, `properties.acting_user_id` set |
+| MVP gap | No helpdesk table / SLA / live-chat transfer; if receiver has no opted-in `WhatsAppUser`, only ActivityLog + Task remain |
+
+---
+
 ## Out of scope / non-goals
 
 - Re-litigating HITL / write exclusion / Presence parity
-- Implementing tests or escalation tools in this branch
-- Pushing/merging this audit without explicit ask
+- Pushing/merging without explicit ask
 - Building a full support desk
+- Claiming jailbreak proof from either Agent::fake or a single live soft-refusal run
