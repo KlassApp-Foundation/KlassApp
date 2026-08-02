@@ -5908,3 +5908,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Tests**: `DeputyAdminOperationsToolsTest` — 11 passed (37 assertions); related auth filter — 8 passed
 - **Status**: ✅ Done — committed locally, not pushed
 - **Edge cases flagged**: SetCurriculum remains AgentToshi-map orphan for ug3 (not on skill agents)
+
+### 2026-08-02: Google MCP connector design audit (Part A)
+- **Work done**: Docs-only audit of Google OAuth token reality, native events SoT, and whether Google should be the first Toshi MCP connector under non-OpenClaw framing.
+- **Files modified**: `docs/toshi-google-connector-audit.md` (new), `knowledge.md` (this log)
+- **Key decisions**: Existing `google_token` is login-only (never stores access/refresh token; scopes openid/profile/email). Defer Google MCP; prefer Notion/internal MCP smoke over Google/Slack/Telegram. Calendar sync none for starting scope.
+- **Status**: ✅ Done (await Part B approval)
+- **Edge cases flagged**: Preference memory not on `origin/main` tip (`20c54ad`); lives on `feature/toshi-preference-memory`.
