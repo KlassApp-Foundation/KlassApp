@@ -5935,3 +5935,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Tests**: `DeputyAdminOperationsToolsTest` — 11 passed (37 assertions); related auth filter — 8 passed
 - **Status**: ✅ Done — committed locally, not pushed
 - **Edge cases flagged**: SetCurriculum remains AgentToshi-map orphan for ug3 (not on skill agents)
+
+### 2026-08-02: Toshi safety practices Part A — adversarial tests + WA human escalation
+- **Work done**: Docs-only audit on `audit/toshi-safety-practices` (worktree off `origin/main` @ `72c2ca6`). Investigated isolation/WhatsApp write-exclusion test patterns, Laravel AI `Agent::fake` vs live LLM (`ToshiE2EVerificationTest`), and absence of helpdesk/live-agent infra. Proposed adversarial suite under prompt pressure + thin WhatsApp human-escalation MVP distinct from confirmation bridge.
+- **Files modified**: `docs/toshi-safety-practices-audit.md` (new), `knowledge.md` (this log)
+- **Key decisions**: No live LLM in CI primary adversarial suite (architecture-under-pressure; optional `@group live-llm` later); suite at `tests/Feature/Toshi/Adversarial/` with ~3–4 scenarios × Teacher/Student/Parent/SchoolAdmin-WA; escalation = explicit intent MVP via ActivityLog + optional Task + staff WhatsApp notify (no new table); receivers role-dependent (parent/student→Receptionist, staff→School Admin)
+- **Status**: ✅ Done — committed locally, not pushed
+- **Edge cases flagged**: No support-ticket/helpdesk models; VisitorLog/CallLog/Postal are operational registers not conversation queues; `Agent::fake` cannot prove jailbreak resistance; fee “escalation” and `toshi.escalated_model` are unrelated semantics
