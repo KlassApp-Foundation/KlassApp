@@ -19,7 +19,9 @@ use App\Support\Toshi\AdversarialPromptFixtures;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Laravel\Ai\Responses\AgentResponse;
 use Throwable;
 
@@ -27,11 +29,14 @@ use Throwable;
  * In-process live-LLM adversarial soft-refusal runner.
  *
  * Isolates all Eloquent work on a temporary sqlite :memory: connection so
- * production MySQL is never touched. Does not require PHPUnit / --dev deps.
+ * production MySQL is never touched. Does not require PHPUnit / --dev deps
+ * (including fakerphp/faker — users are created without Eloquent factories).
  * WhatsApp / Evolution HTTP is faked; the configured LLM provider is live.
  */
 class LiveAdversarialRunner
 {
+    private int $userSeedSeq = 0;
+
     private int $schoolId;
 
     private User $teacher;
@@ -98,7 +103,9 @@ class LiveAdversarialRunner
                 'driver' => 'sqlite',
                 'database' => ':memory:',
                 'prefix' => '',
-                'foreign_key_constraints' => true,
+                // Match PHPUnit soft-refusal fixtures: marks use placeholder exam/section
+                // ids. Enforcing FKs would require full academic-term/exam graph.
+                'foreign_key_constraints' => false,
             ],
         ]);
 
@@ -202,20 +209,20 @@ class LiveAdversarialRunner
             'status' => 1,
         ]);
 
-        $this->teacher = User::factory()->create([
+        $this->teacher = $this->createUser([
             'school_id' => $this->schoolId,
             'usergroup_id' => 5,
             'email' => 'teacher.live.adv@test.sch.ug',
             'name' => 'Live Adv Teacher',
         ]);
 
-        $this->studentA = User::factory()->create([
+        $this->studentA = $this->createUser([
             'school_id' => $this->schoolId,
             'usergroup_id' => 6,
             'email' => 'student.a.live.adv@test.sch.ug',
             'name' => 'Student A Live',
         ]);
-        $this->studentB = User::factory()->create([
+        $this->studentB = $this->createUser([
             'school_id' => $this->schoolId,
             'usergroup_id' => 6,
             'email' => 'student.b.live.adv@test.sch.ug',
@@ -264,13 +271,13 @@ class LiveAdversarialRunner
             'grade' => 'B',
         ]);
 
-        $this->parent = User::factory()->create([
+        $this->parent = $this->createUser([
             'school_id' => $this->schoolId,
             'usergroup_id' => 7,
             'email' => 'parent.live.adv@test.sch.ug',
             'name' => 'Live Adv Parent',
         ]);
-        $this->otherStudent = User::factory()->create([
+        $this->otherStudent = $this->createUser([
             'school_id' => $this->schoolId,
             'usergroup_id' => 6,
             'email' => 'other.live.adv@test.sch.ug',
@@ -283,12 +290,37 @@ class LiveAdversarialRunner
             'status' => 1,
         ]);
 
-        $this->admin = User::factory()->create([
+        $this->admin = $this->createUser([
             'school_id' => $this->schoolId,
             'usergroup_id' => 3,
             'email' => 'admin.live.adv@test.sch.ug',
             'name' => 'Live Adv Admin',
         ]);
+    }
+
+    /**
+     * Create a fixture user without Eloquent factories.
+     *
+     * Production images install composer --no-dev, so fakerphp/faker is absent
+     * and UserFactory::$faker is null (unique() fatal). Explicit attributes only.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function createUser(array $attributes): User
+    {
+        $this->userSeedSeq++;
+        $seq = $this->userSeedSeq;
+
+        return User::unguarded(function () use ($attributes, $seq): User {
+            return User::query()->create(array_merge([
+                'password' => Hash::make('password'),
+                'mobile_no' => sprintf('700%06d', $seq),
+                'registration_number' => sprintf('%06d', 100000 + $seq),
+                'status' => 'active',
+                'email_verification_code' => Str::random(40),
+                'remember_token' => Str::random(10),
+            ], $attributes));
+        });
     }
 
     /**
