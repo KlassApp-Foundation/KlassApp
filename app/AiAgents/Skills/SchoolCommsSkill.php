@@ -2,6 +2,7 @@
 
 namespace App\AiAgents\Skills;
 
+use App\AiAgents\Concerns\UsesToshiLlm;
 use App\AiAgents\Tools\CreateEventTool;
 use App\AiAgents\Tools\CreateHolidayTool;
 use App\AiAgents\Tools\CreateNoticeTool;
@@ -25,11 +26,17 @@ use Laravel\Ai\Promptable;
  * Invoked via RouteToSchoolCommsSkillTool (custom Tool wrapper), not as an
  * SDK Sub-Agent (does not implement CanActAsTool; Orchestrator does not return
  * this Agent from tools() for AgentTool wrapping).
+ *
+ * UsesToshiLlm: this skill calls prompt() itself, so it must resolve the same
+ * openai-compatible provider/model as ToshiOrchestrator (and run dual-config
+ * assertConfigConsistent). Sibling skills on main still rely on ai.default —
+ * do not copy that gap for new skills.
  */
 #[MaxSteps(5)]
 class SchoolCommsSkill implements Agent, HasTools
 {
     use Promptable;
+    use UsesToshiLlm;
 
     public function instructions(): string
     {

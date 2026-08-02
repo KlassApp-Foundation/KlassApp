@@ -21,6 +21,7 @@ use App\AiAgents\Tools\RouteToSchoolCommsSkillTool;
 use App\AiAgents\Tools\UpdateEventTool;
 use App\AiAgents\Tools\UpdateHolidayTool;
 use App\AiAgents\Tools\UpdateNoticeTool;
+use App\AiAgents\ToshiLlm;
 use App\AiAgents\ToshiOrchestrator;
 use App\AiAgents\WhatsApp\SchoolAdminWhatsAppReadAgent;
 use App\AiAgents\WhatsApp\WhatsAppWriteExclusion;
@@ -428,6 +429,18 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
         $this->assertStringContainsString('new SchoolCommsSkill', $commsSource);
         $this->assertStringContainsString('->prompt(', $commsSource);
         $this->assertStringContainsString('NOT Laravel AI Sub-Agents / CanActAsTool', $commsSource);
+    }
+
+    public function test_school_comms_skill_resolves_llm_via_toshi_llm(): void
+    {
+        config(['toshi.model' => 'batch1-school-comms-model']);
+
+        $skill = new SchoolCommsSkill;
+
+        $this->assertSame(ToshiLlm::model(), $skill->model());
+        $this->assertSame(ToshiLlm::provider(), $skill->provider());
+        $this->assertSame('openai-compatible', $skill->provider());
+        $this->assertSame('batch1-school-comms-model', $skill->model());
     }
 
     public function test_create_notice_leaf_sets_tier2_side_channel_not_generic_router(): void

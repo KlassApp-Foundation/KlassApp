@@ -622,6 +622,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-03: School Admin Batch 1 — commit, rebase, UsesToshiLlm, PR
+- **Work done**: Committed uncommitted Batch 1 work on `feature/toshi-schooladmin-batch1` (worktree `KlassApp-toshi-schooladmin-batch1`). Rebased onto `origin/main` (#141–#149 era); only conflict was `knowledge.md` Session Log (kept both). Verified ToshiLlm path: **SchoolCommsSkill now uses `UsesToshiLlm`** (same as Orchestrator/OperationsAgents) so `prompt()` hits `ToshiLlm::assertConfigConsistent()` + openai-compatible model — not `ai.default`/`openai`. Sibling skills (Academic/Fee/…) still lack the trait (pre-existing gap on main — out of Batch 1 scope). Leaf tools unchanged (no LLM). Re-ran Batch 1 suite; pushed PR (do not merge from this session).
+- **Files modified**: Batch 1 skill/tools/service/wiring (prior commit) + `SchoolCommsSkill` UsesToshiLlm + test assertion + knowledge
+- **Key decisions**: Fix SchoolCommsSkill only (new prompt()-ing agent); document sibling-skill gap for follow-up; Batch 1 scope ends here — Batch 2 needs Part A
+- **Status**: ✅ Done — PR opened, not merged
+- **Edge cases flagged**: AcademicSkill et al. still resolve via `ai.default` without UsesToshiLlm — potential dual-config / provider drift on nested skill prompts
+
 ### 2026-08-03: Adversarial schedule durable logging + ops backlog
 - **Work done**: Confirmed Kernel already `appendOutputTo(storage/logs/toshi-adversarial-live.log)` but success path had no structured `Log::info` (unlike llm-health durability). Added log channel `toshi_adversarial`, dual-write `Log::info`/`Log::critical` (default stack + dedicated file), documented destination/format, deferred quick-sweep backlog line (revisit **after current roadmap complete**). Roadmap check: School Admin Batch 1 approved + partially implemented (uncommitted on `feature/toshi-schooladmin-batch1`) — **not** Teacher batch 2 next.
 - **Files modified**: `ToshiAdversarialLiveCommand.php`, `config/logging.php`, `Kernel.php`, `ToshiAdversarialLiveCommandTest.php`, `docs/toshi-safety-practices-audit.md`, `docs/toshi-prod-health-check.md`, `knowledge.md`
