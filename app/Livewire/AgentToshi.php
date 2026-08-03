@@ -380,6 +380,10 @@ class AgentToshi extends Component
             }
 
             $this->mode = 'complete';
+            if (request()->boolean('toshi_onboarding') || session()->pull('open_toshi_onboarding')) {
+                $this->visible = true;
+                $this->maximized = true;
+            }
             $this->botSay("Hello! Let's finish setting up **{$school->name}** on KlassApp.");
             $this->detectMissingSteps();
             return;
@@ -588,6 +592,7 @@ class AgentToshi extends Component
             $this->botSay("✅ Everything looks set up! Your school is ready to go.");
             $this->botSay("If you need help with anything, just ask.");
             $this->step = 99;
+            $this->mode = 'assistant';
             return;
         }
 
@@ -596,9 +601,44 @@ class AgentToshi extends Component
             $this->botSay("  ❌ " . ($step['icon'] ?? '') . ' ' . $step['label']);
         }
 
-        // Jump to first incomplete step
         $first = $incomplete[0];
+        $this->jumpToIncompleteOnboardingStep($first['key']);
         $this->botSay(self::onboardingPromptForStep($first['key']));
+    }
+
+    /**
+     * Map OnboardingStepsService keys onto create-flow step indices / action flows.
+     */
+    private function jumpToIncompleteOnboardingStep(string $key): void
+    {
+        if ($key === 'curriculum') {
+            $this->actionStep = 'onboarding_curriculum';
+            $this->actionSubstep = 0;
+            $this->curriculum = '';
+            return;
+        }
+
+        $map = [
+            'school_name' => 'school_info',
+            'academic_year' => 'academic_year',
+            'standards' => 'standards',
+            'subjects' => 'subjects',
+            'teachers' => 'teachers',
+            'terms' => 'terms',
+            'fees' => 'fees',
+            'whatsapp_verify' => 'whatsapp_verify',
+        ];
+
+        $stepName = $map[$key] ?? null;
+        if ($stepName === null) {
+            return;
+        }
+
+        $idx = array_search($stepName, $this->steps, true);
+        if ($idx !== false) {
+            $this->step = $idx;
+            $this->substep = 0;
+        }
     }
 
     /**
@@ -607,8 +647,10 @@ class AgentToshi extends Component
     private static function onboardingPromptForStep(string $key): string
     {
         return match ($key) {
-            'curriculum' => "First, let's confirm your school's curriculum. I see it's currently set — is that correct, or would you like to change it?",
-            'standards'  => "Let's start with classes. What classes does your school have?",
+            'school_name' => "What's the real name of your school? (You can keep refining it later.)",
+            'curriculum' => "Which curriculum does your school follow? I recommend **UNEB** for most Ugandan schools. Reply with UNEB, Cambridge, Montessori, or Other.",
+            'academic_year' => "Let's set your academic year next — classes and terms depend on it. Is **" . date('Y') . "** correct? (yes / no)",
+            'standards'  => "Let's set up classes. What classes does your school have?",
             'subjects'   => "Let's set up subjects per class.",
             'teachers'   => "Let's add teachers. Paste their names (one per line) or type 'skip'.",
             'terms'      => "Let's set up academic terms.",
@@ -2450,7 +2492,12 @@ class AgentToshi extends Component
      */
     private function isDuplicateSchool(string $name): bool
     {
-        return \App\Models\School::where('name', trim($name))->exists();
+        $query = \App\Models\School::where('name', trim($name));
+        if ($this->mode === 'complete' && $this->schoolId) {
+            $query->where('id', '!=', $this->schoolId);
+        }
+
+        return $query->exists();
     }
 
     // ── Assistant mode — keyword router first (zero cost), then LLM, then fallback ──
@@ -2884,6 +2931,11 @@ class AgentToshi extends Component
      */
     private function handleActionFlow(string $text): void
     {
+        if ($this->actionStep === 'onboarding_curriculum') {
+            $this->actionOnboardingCurriculum($text);
+            return;
+        }
+
         if (!$this->can($this->actionStep)) {
             $this->actionStep = null;
             $this->botSay("You don't have permission to do that. Let me know if you need something else.");
@@ -3520,6 +3572,17 @@ class AgentToshi extends Component
                 $this->substep = 0; // go back to name entry
                 return;
             }
+
+            // Complete mode: persist rename immediately when it differs from placeholder
+            if ($this->mode === 'complete' && $this->schoolId && $this->schoolName !== '') {
+                $this->persistSchoolNameIfChanged($this->schoolName);
+                $this->botSay("School name updated to **{$this->schoolName}**.");
+                $this->actionStep = null;
+                $this->substep = 0;
+                $this->detectMissingSteps();
+                return;
+            }
+
             // Name confirmed — school type is now button-driven in blade
             $this->botSay("Great! Now select the school type from the options below.");
             $this->substep = 2; // awaiting type selection (via button)
@@ -3777,6 +3840,12 @@ class AgentToshi extends Component
         if ($this->substep === 1) {
             $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
             if ($yes) {
+                if ($this->mode === 'complete' && $this->schoolId) {
+                    $this->persistAcademicYearIfMissing($this->academicYearLabel ?: (string) date('Y'));
+                    $this->substep = 0;
+                    $this->detectMissingSteps();
+                    return;
+                }
                 $this->substep = 0;
                 $this->advance();
                 return;
@@ -3790,10 +3859,107 @@ class AgentToshi extends Component
         if ($this->substep === 2) {
             $this->academicYearLabel = trim($text);
             $this->botSay("Academic year set to **{$this->academicYearLabel}**.");
+            if ($this->mode === 'complete' && $this->schoolId) {
+                $this->persistAcademicYearIfMissing($this->academicYearLabel);
+                $this->substep = 0;
+                $this->detectMissingSteps();
+                return;
+            }
             $this->substep = 0;
             $this->advance();
             return;
         }
+    }
+
+    /**
+     * Complete-mode curriculum picker (UNEB suggested first, never silently pre-filled).
+     */
+    private function actionOnboardingCurriculum(string $text): void
+    {
+        $normalized = strtolower(trim($text));
+        $map = [
+            'uneb' => 'uneb',
+            'uganda' => 'uneb',
+            'ncdc' => 'uneb',
+            'cambridge' => 'cambridge',
+            'montessori' => 'montessori',
+            'other' => 'other',
+            'custom' => 'other',
+        ];
+
+        $choice = $map[$normalized] ?? null;
+        if ($choice === null && preg_match('/\b(uneb|cambridge|montessori|other)\b/i', $normalized, $m)) {
+            $choice = strtolower($m[1]);
+        }
+
+        if ($choice === null) {
+            $this->botSay("Please choose **UNEB** (recommended), **Cambridge**, **Montessori**, or **Other**.");
+            return;
+        }
+
+        $this->curriculum = $choice;
+        $school = \App\Models\School::find($this->schoolId);
+        if ($school) {
+            $school->curriculum = $choice;
+            $school->toshi_enabled = 1;
+            $school->save();
+        }
+
+        $this->botSay("✅ Curriculum set to **" . strtoupper($choice) . "**.");
+        $this->actionStep = null;
+        $this->actionSubstep = 0;
+        $this->detectMissingSteps();
+    }
+
+    private function persistSchoolNameIfChanged(string $desiredName): void
+    {
+        $school = \App\Models\School::find($this->schoolId);
+        if (! $school) {
+            return;
+        }
+
+        if ($desiredName === $school->name) {
+            return;
+        }
+
+        $unique = app(\App\Services\SchoolSignupBootstrapService::class)->uniqueSchoolName($desiredName);
+        // uniqueSchoolName returns desired if free; if collision on another school, suffix.
+        // When renaming to a name that only collides with THIS school, keep it.
+        if ($unique !== $desiredName && \App\Models\School::where('name', $desiredName)->where('id', '!=', $school->id)->exists()) {
+            $this->schoolName = $unique;
+        } else {
+            $this->schoolName = $desiredName;
+            $unique = $desiredName;
+        }
+
+        if ($unique === $school->name) {
+            return;
+        }
+
+        $school->name = $unique;
+        $school->slug = \Illuminate\Support\Str::slug($unique);
+        $school->save();
+        $this->schoolName = $unique;
+    }
+
+    private function persistAcademicYearIfMissing(string $label): void
+    {
+        $existing = \App\Models\AcademicYear::where('school_id', $this->schoolId)->first();
+        if ($existing) {
+            return;
+        }
+
+        AcademicYear::create([
+            'school_id' => $this->schoolId,
+            'name' => $label,
+            'start_date' => now()->startOfYear(),
+            'end_date' => now()->endOfYear(),
+            'type' => 'Current Academic Year',
+            'description' => 'Current Academic Year',
+            'status' => 1,
+        ]);
+
+        \Illuminate\Support\Facades\Cache::forget('academic_year_for_school_'.$this->schoolId);
     }
 
     // ════════════════════════════════════════════════
@@ -4932,14 +5098,37 @@ class AgentToshi extends Component
                 $schoolId = $this->schoolId;
                 $user = auth()->user();
 
+                $school = School::find($schoolId);
+                if ($school) {
+                    if ($this->schoolName !== '' && $this->schoolName !== $school->name) {
+                        $unique = app(\App\Services\SchoolSignupBootstrapService::class)->uniqueSchoolName($this->schoolName);
+                        if ($unique !== $school->name) {
+                            // Prefer exact desired name when only this school holds it
+                            if (! School::where('name', $this->schoolName)->where('id', '!=', $school->id)->exists()) {
+                                $unique = $this->schoolName;
+                            }
+                            $school->name = $unique;
+                            $school->slug = Str::slug($unique);
+                        }
+                    }
+                    if ($this->curriculum !== '' && $this->curriculum !== null && $school->curriculum !== $this->curriculum) {
+                        $school->curriculum = $this->curriculum;
+                    }
+                    $school->toshi_enabled = 1;
+                    $school->save();
+                }
+
                 $academicYear = \App\Models\AcademicYear::where('school_id', $schoolId)->first();
                 if (!$academicYear) {
                     $academicYear = AcademicYear::create([
-                        'school_id' => $schoolId, 'name' => date('Y'),
+                        'school_id' => $schoolId, 'name' => $this->academicYearLabel ?: date('Y'),
                         'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear(),
                         'type' => 'Current Academic Year',
                         'description' => 'Current Academic Year',
                     ]);
+                } elseif ($this->academicYearLabel && (string) $academicYear->name !== (string) $this->academicYearLabel) {
+                    $academicYear->name = $this->academicYearLabel;
+                    $academicYear->save();
                 }
 
                 $phase = \App\Models\Standard::where('school_id', $schoolId)->first();

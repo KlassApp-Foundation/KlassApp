@@ -49,9 +49,40 @@ trait Dashboard
             'noticeboard' => collect(),
             'events'      => collect(),
             'booklendings'=> collect(),
+            'setupIncomplete' => false,
         ];
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
+
+        // Fresh SaaS signup: no AcademicYear yet — never 500 on `$academic_year->id`.
+        if ($academic_year === null) {
+            $array['setupIncomplete'] = true;
+            $array['studentCount'] = User::where([['status','!=','exit']])->BySchool($school_id)->ByRole(6)->count();
+            $array['parentCount'] = 0;
+            $array['teacherCount'] = User::where([['status','!=','exit']])->BySchool($school_id)->ByRole(5)->count();
+            $array['nonteachingCount'] = 0;
+            $array['maleCount'] = 0;
+            $array['femaleCount'] = 0;
+            $array['eventCount'] = 0;
+            $array['videoCount'] = 0;
+            $array['bulletinCount'] = 0;
+            $array['subscription'] = Subscription::where('school_id',$school_id)->first();
+            $array['feedbacks'] = collect();
+            $array['products'] = [];
+            $array['upcomingExam'] = [];
+            $array['standardLinks'] = collect();
+            $array['standardStudentCounts'] = collect();
+            $array['teachers'] = collect();
+            $array['task'] = ['to_do' => 0, 'inprogress' => 0];
+            $array['whatsapp'] = [
+                'parentsOptedIn' => 0,
+                'totalLinked' => 0,
+                'messagesThisMonth' => 0,
+                'pendingNotifications' => 0,
+            ];
+
+            return $array;
+        }
     
         $array['studentCount'] = Cache::remember('studentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)  {
                                   return User::where([['status','!=','exit']])->BySchool($school_id)->ByRole(6)->count();

@@ -127,12 +127,20 @@ class OnboardingStepsServiceTest extends TestCase
     /** @test */
     public function other_steps_still_work_correctly(): void
     {
-        // Sanity check that we didn't break the other step completions
-
         // curriculum: based on school->curriculum being set (already 'uneb' in setUp)
         $this->assertTrue(
             OnboardingStepsService::isStepComplete('curriculum', $this->school),
             'curriculum step should be complete when school has a curriculum set'
+        );
+
+        $this->assertTrue(
+            OnboardingStepsService::isStepComplete('academic_year', $this->school),
+            'academic_year step should be complete when an AcademicYear exists'
+        );
+
+        $this->assertTrue(
+            OnboardingStepsService::isStepComplete('school_name', $this->school),
+            'non-placeholder school names count as complete'
         );
 
         // subjects: no subjects exist yet
@@ -158,5 +166,20 @@ class OnboardingStepsServiceTest extends TestCase
             OnboardingStepsService::isStepComplete('nonexistent', $this->school),
             'unknown step should return false'
         );
+    }
+
+    /** @test */
+    public function null_curriculum_is_incomplete_and_academic_year_comes_before_standards(): void
+    {
+        $this->school->curriculum = null;
+        $this->school->save();
+
+        $this->assertFalse(OnboardingStepsService::isStepComplete('curriculum', $this->school->fresh()));
+
+        $keys = array_keys(OnboardingStepsService::ALL_STEPS);
+        $this->assertSame('school_name', $keys[0]);
+        $this->assertSame('curriculum', $keys[1]);
+        $this->assertSame('academic_year', $keys[2]);
+        $this->assertSame('standards', $keys[3]);
     }
 }

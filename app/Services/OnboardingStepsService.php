@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AcademicTerm;
+use App\Models\AcademicYear;
 use App\Models\FeesCategories;
 use App\Models\School;
 use App\Models\StandardLink;
@@ -19,13 +20,21 @@ use App\Models\WhatsAppUser;
 class OnboardingStepsService
 {
     /**
-     * All steps in order, with their labels and completion checks.
-     * 'curriculum' is step 0 — everything else depends on it.
+     * Ordered steps. School name → curriculum → academic year are near-first
+     * because classes/streams/students/terms depend on year + board.
      */
     const ALL_STEPS = [
+        'school_name' => [
+            'label' => 'School name',
+            'icon'  => '🏫',
+        ],
         'curriculum' => [
             'label' => 'Board / Curriculum',
             'icon'  => '📚',
+        ],
+        'academic_year' => [
+            'label' => 'Academic year',
+            'icon'  => '📆',
         ],
         'standards' => [
             'label' => 'Classes',
@@ -54,8 +63,18 @@ class OnboardingStepsService
     ];
 
     /**
-     * Get the full ordered list of onboarding steps with completion status.
-     *
+     * Placeholder names created at SaaS signup: "{FirstName}'s School" (+ optional -N).
+     */
+    public static function isPlaceholderSchoolName(?string $name): bool
+    {
+        if ($name === null || trim($name) === '') {
+            return true;
+        }
+
+        return (bool) preg_match("/^.+'s School(-\d+)?$/u", trim($name));
+    }
+
+    /**
      * @return array<int, array{key: string, label: string, icon: string, is_complete: bool, route: ?string}>
      */
     public static function steps(School $school, ?int $userId = null): array
@@ -72,18 +91,19 @@ class OnboardingStepsService
             ];
             $i++;
         }
+
         return $result;
     }
 
-    /**
-     * Check whether a single step is complete.
-     */
     public static function isStepComplete(string $step, School $school, ?int $userId = null): bool
     {
         $sid = $school->id;
 
         return match ($step) {
-            'curriculum' => !empty($school->curriculum),
+            'school_name' => ! self::isPlaceholderSchoolName($school->name),
+            // null / empty = not yet answered (do not treat DB default as complete)
+            'curriculum' => filled($school->curriculum),
+            'academic_year' => AcademicYear::where('school_id', $sid)->exists(),
             'standards'  => StandardLink::where('school_id', $sid)->exists(),
             'subjects'   => Subject::where('school_id', $sid)->exists(),
             'teachers'   => Teacherlink::where('school_id', $sid)->exists(),
@@ -95,46 +115,38 @@ class OnboardingStepsService
     }
 
     /**
-     * Get the first incomplete step, or null if all are complete.
-     *
      * @return ?array{key: string, label: string, icon: string, is_complete: bool, route: ?string}
      */
     public static function nextIncompleteStep(School $school, ?int $userId = null): ?array
     {
         foreach (self::steps($school, $userId) as $step) {
-            if (!$step['is_complete']) {
+            if (! $step['is_complete']) {
                 return $step;
             }
         }
+
         return null;
     }
 
-    /**
-     * Get the list of incomplete step keys (for the checklist message).
-     */
     public static function incompleteSteps(School $school, ?int $userId = null): array
     {
         return array_values(array_filter(
             self::steps($school, $userId),
-            fn($s) => !$s['is_complete']
+            fn ($s) => ! $s['is_complete']
         ));
     }
 
-    /**
-     * Returns true if any onboarding step is incomplete.
-     */
     public static function hasIncompleteSteps(School $school, ?int $userId = null): bool
     {
         return self::nextIncompleteStep($school, $userId) !== null;
     }
 
-    /**
-     * Admin route for each step (null if no dedicated page).
-     */
     private static function stepRoute(string $step, School $school): ?string
     {
         return match ($step) {
+            'school_name' => null,
             'curriculum' => '/admin/standard/create',
+            'academic_year' => '/admin/academics',
             'standards'  => '/admin/standard/create',
             'subjects'   => '/admin/subjects',
             'teachers'   => '/admin/staff',

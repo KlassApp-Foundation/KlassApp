@@ -6,29 +6,72 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Traits\AuthenticationProcess;
-use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use App\Services\SchoolSignupBootstrapService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Laravel\Socialite\Facades\Socialite;
-use App\Models\AcademicYear;
-use App\Models\Subscription;
-use App\Models\Userprofile;
-use App\Models\Usergroup;
-use App\Models\School;
-use App\Models\User;
-use Carbon\Carbon;
 use Throwable;
 
 class GoogleAuthController extends Controller
 {
-    use AuthenticationProcess;
+    /**
+     * Stash signup fields, then redirect to Google OAuth.
+     * Same bootstrap path as email/password signup after callback.
+     */
+    public function start(Request $request, SchoolSignupBootstrapService $bootstrap)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'min:2', 'max:100', "regex:/^[\pL\s'\-]+$/u"],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+                'regex:/^(\+?256)?0?7[0578]\d{7}$/',
+            ],
+            'termsandcondn' => ['required', 'accepted'],
+        ], [
+            'phone.required' => 'Phone (WhatsApp) is required.',
+            'termsandcondn.accepted' => 'Please agree to the Terms and Conditions.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('register')
+                ->withErrors($validator)
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+
+        $phone = $bootstrap->normalizePhone($request->input('phone'));
+        if ($phone === null) {
+            return redirect()->route('register')
+                ->withErrors(['phone' => 'Enter a valid WhatsApp phone number.'])
+                ->withInput();
+        }
+
+        if (User::where('mobile_no', $phone)->exists()) {
+            return redirect()->route('register')
+                ->withErrors(['phone' => 'This phone number is already registered.'])
+                ->withInput();
+        }
+
+        session([
+            'saas_signup' => [
+                'name' => trim($request->input('name')),
+                'email' => trim($request->input('email')),
+                'phone' => $phone,
+            ],
+        ]);
+
+        return Socialite::driver('google')->redirect();
+    }
 
     /**
-     * Redirect the user to Google's OAuth page.
+     * Redirect the user to Google's OAuth page (login / existing accounts).
      */
     public function redirect()
     {
@@ -38,252 +81,125 @@ class GoogleAuthController extends Controller
     /**
      * Handle the Google OAuth callback.
      */
-    public function callback()
+    public function callback(SchoolSignupBootstrapService $bootstrap)
     {
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
         } catch (Throwable $e) {
             Log::error('Google OAuth failed', ['message' => $e->getMessage()]);
+
             return redirect('/login')->with('failmessage', 'Google sign-in failed. Please try again.');
         }
 
         $googleId = $googleUser->getId();
         $googleEmail = $googleUser->getEmail();
-        $googleName = $googleUser->getName();
+        $googleName = $googleUser->getName() ?: 'Google User';
         $googleAvatar = $googleUser->getAvatar();
 
-        // 1. Existing user by google_id — just log them in
         $existingByGoogleId = User::where('google_id', $googleId)->first();
         if ($existingByGoogleId) {
             $this->updateGoogleData($existingByGoogleId, $googleUser);
             Auth::login($existingByGoogleId, true);
-            return redirect('/admin/dashboard');
+            session()->forget('saas_signup');
+
+            return $this->postAuthRedirect($existingByGoogleId);
         }
 
-        // 2. Existing user by email — link Google account and log in
         $existingByEmail = User::where('email', $googleEmail)->first();
         if ($existingByEmail) {
             $this->updateGoogleData($existingByEmail, $googleUser);
             Auth::login($existingByEmail, true);
-            return redirect('/admin/dashboard');
+            session()->forget('saas_signup');
+
+            return $this->postAuthRedirect($existingByEmail);
         }
 
-        // 3. New user — create a minimal placeholder, then redirect to onboarding
+        $signup = session('saas_signup', []);
+        $phone = $signup['phone'] ?? null;
+
+        if ($phone === null || $phone === '') {
+            session()->forget('saas_signup');
+
+            return redirect()->route('register')
+                ->with('failmessage', 'Phone (WhatsApp) is required. Please complete the signup form, then continue with Google.');
+        }
+
         try {
-            $user = DB::transaction(function () use ($googleName, $googleEmail, $googleId, $googleAvatar) {
-                $baseName = (!empty($googleName) ? $googleName : 'Google User');
+            $user = $bootstrap->bootstrap([
+                'name' => $signup['name'] ?? $googleName,
+                'email' => $signup['email'] ?? $googleEmail,
+                'phone' => $phone,
+                'google_id' => $googleId,
+                'google_avatar' => $googleAvatar,
+                'email_verified' => true,
+            ]);
 
-                // Placeholder school (will be updated during onboarding)
-                $school = School::create([
-                    'name' => $baseName . "'s School",
-                    'email' => $googleEmail,
-                    'phone' => '',
-                    'slug' => Str::slug($baseName . '-' . Str::random(8)),
-                    'country' => '',
-                    'student_size' => '',
-                    'ministry_code' => '',
-                    'status' => '1',
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ]);
+            // Prefer Google-verified email if form email differed
+            if ($googleEmail && $user->email !== $googleEmail) {
+                $user->email = $googleEmail;
+                $user->save();
+            }
 
-                $schoolAdminGroupId = Usergroup::where('id', 3)->exists()
-                    ? 3
-                    : (DB::table('usergroups')->orderBy('id')->value('id') ?? 3);
-
-                $user = User::create([
-                    'school_id' => $school->id,
-                    'usergroup_id' => $schoolAdminGroupId,
-                    'name' => $this->generateUniqueUsername($baseName),
-                    'email' => $googleEmail,
-                    'password' => Hash::make(Str::random(32)),
-                    'email_verified' => 1,
-                    'email_verified_at' => Carbon::now(),
-                    'email_verification_code' => Str::random(40),
-                    'google_id' => $googleId,
-                    'google_avatar' => $googleAvatar,
-                    'google_token' => '',
-                    'is_activated' => 1,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ]);
-
-                Userprofile::create([
-                    'user_id' => $user->id,
-                    'school_id' => $school->id,
-                    'usergroup_id' => $schoolAdminGroupId,
-                    'firstname' => $googleName,
-                    'mobile_no' => '',
-                    'avatar' => $googleAvatar ?: 'uploads/male.png',
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ]);
-
-                try {
-                    Subscription::create([
-                        'school_id' => $school->id,
-                        'user_id' => $user->id,
-                        'plan_id' => $this->resolveDefaultPlanId(),
-                        'status' => 'pending',
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now(),
-                    ]);
-                } catch (Throwable $e) {
-                    Log::warning('Google auth: subscription creation skipped', ['message' => $e->getMessage()]);
-                }
-
-                try {
-                    $year = Carbon::now()->year;
-                    AcademicYear::create([
-                        'school_id' => $school->id,
-                        'name' => $year,
-                        'description' => 'Current Academic Year',
-                        'start_date' => Carbon::create($year, 2, 1),
-                        'end_date' => Carbon::create($year, 12, 15),
-                        'status' => 1,
-                    ]);
-                } catch (Throwable $e) {
-                    Log::warning('Google auth: academic year creation skipped', ['message' => $e->getMessage()]);
-                }
-
-                Log::info('New Google user registered (pending onboarding)', [
-                    'user_id' => $user->id,
-                    'school_id' => $school->id,
-                    'google_id' => $googleId,
-                ]);
-
-                return $user;
-            });
-
+            session()->forget('saas_signup');
             Auth::login($user, true);
 
-            // Redirect to onboarding, not dashboard
-            return redirect('/welcome?name=' . urlencode($googleName));
-
+            return redirect('/admin/dashboard?toshi_onboarding=1')
+                ->with('open_toshi_onboarding', true)
+                ->with('successmessage', 'Welcome to KlassApp! Continue setup with Toshi.');
         } catch (Throwable $e) {
             Log::error('Google auth user creation failed', ['message' => $e->getMessage()]);
+            session()->forget('saas_signup');
+
             return redirect('/login')->with('failmessage', 'We could not create your account. Please try again.');
         }
     }
 
     /**
-     * Show the onboarding form (interstitial after first Google sign-in).
+     * Public marketing /welcome page remains untouched for pre-signup.
+     * Legacy Google interstitial routes still resolve but send users to Toshi.
      */
     public function showOnboarding(Request $request)
     {
-        $user = Auth::user();
-
-        if (!$user) {
+        if (! Auth::check()) {
             return redirect('/login');
         }
 
-        // If the user already has a proper school name and country, skip onboarding
-        $school = School::find($user->school_id);
-        if ($school && !empty($school->country) && !empty($school->phone) && !empty($school->student_size)) {
-            return redirect('/admin/dashboard');
-        }
-
-        $name = $request->query('name', $school->name ?? $user->name);
-
-        return view('auth.onboarding', [
-            'googleName' => $name,
-            'email' => $user->email,
-        ]);
+        return redirect('/admin/dashboard?toshi_onboarding=1')
+            ->with('open_toshi_onboarding', true);
     }
 
-    /**
-     * Process the onboarding form.
-     */
     public function storeOnboarding(Request $request)
     {
-        $user = Auth::user();
-
-        if (!$user) {
-            return redirect('/login');
-        }
-
-        $validated = $request->validate([
-            'school_name' => 'required|string|max:255',
-            'country' => 'required|string|max:100',
-            'mobile_no' => 'required|string|max:20',
-            'student_size' => 'required|in:Under 100 students,100-300 students,300-500 students,500+ students',
-        ]);
-
-        try {
-            DB::transaction(function () use ($user, $validated) {
-                $school = School::findOrFail($user->school_id);
-
-                $school->name = $validated['school_name'];
-                $school->slug = Str::slug($validated['school_name'] . '-' . Str::random(6));
-                $school->country = $validated['country'];
-                $school->phone = $validated['mobile_no'];
-                $school->student_size = $validated['student_size'];
-                $school->save();
-
-                $profile = Userprofile::where('user_id', $user->id)->first();
-                if ($profile) {
-                    $profile->mobile_no = $validated['mobile_no'];
-                    $profile->save();
-                }
-
-                Log::info('Google user onboarding completed', [
-                    'user_id' => $user->id,
-                    'school_id' => $school->id,
-                    'school_name' => $validated['school_name'],
-                ]);
-            });
-
-            return redirect('/admin/dashboard')->with('successmessage', 'Welcome to KlassApp! Your school is all set up.');
-
-        } catch (Throwable $e) {
-            Log::error('Google onboarding failed', ['message' => $e->getMessage()]);
-            return redirect()->back()->withInput()->with('failmessage', 'Something went wrong. Please try again.');
-        }
+        return $this->showOnboarding($request);
     }
 
-    /**
-     * Update user's Google-related fields from socialite data.
-     */
+    private function postAuthRedirect(User $user)
+    {
+        $school = $user->school;
+        $needsSetup = $school && (
+            $school->curriculum === null
+            || $school->curriculum === ''
+            || ! \App\Models\AcademicYear::where('school_id', $school->id)->exists()
+        );
+
+        if ($needsSetup) {
+            return redirect('/admin/dashboard?toshi_onboarding=1')
+                ->with('open_toshi_onboarding', true);
+        }
+
+        return redirect('/admin/dashboard');
+    }
+
     private function updateGoogleData(User $user, $googleUser): void
     {
         $user->google_id = $googleUser->getId();
         $user->google_avatar = $googleUser->getAvatar();
 
-        if ($user->email_verified == 0) {
+        if ((int) $user->email_verified === 0) {
             $user->email_verified = 1;
             $user->email_verified_at = Carbon::now();
         }
 
         $user->save();
-    }
-
-    /**
-     * Generate a unique username from a base name.
-     */
-    private function generateUniqueUsername(string $name): string
-    {
-        $base = Str::slug($name ?: 'user', '');
-        if ($base === '') {
-            $base = 'user';
-        }
-
-        $username = $base;
-        $counter = 1;
-
-        while (User::where('name', $username)->exists()) {
-            $username = $base . $counter;
-            $counter++;
-        }
-
-        return $username;
-    }
-
-    /**
-     * Resolve a default plan id for new subscriptions.
-     */
-    private function resolveDefaultPlanId(): int
-    {
-        $id = DB::table('plans')->orderBy('id')->value('id');
-        return $id ? (int) $id : 1;
     }
 }
