@@ -12,10 +12,12 @@ use App\Models\Homework;
 use App\Models\LessonPlan;
 use App\Models\NoticeBoard;
 use App\Models\Post;
+use App\Models\StudentAssignment;
 use App\Models\Task;
 use App\Models\TeacherLeaveApplication;
 use App\Models\Teacherlink;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -364,6 +366,187 @@ class TeacherActionService
         $lines = $notices->map(fn ($n) => '- '.($n->title ?? 'Notice')." (#{$n->id})")->implode("\n");
 
         return self::result(true, $lines !== '' ? "**Notices:**\n{$lines}" : 'No notices found.');
+    }
+
+    /**
+     * @return array{success: bool, message: string, data?: array}
+     */
+    public static function listStudentAssignments(User $teacher, array $args): array
+    {
+        $assignmentId = (int) ($args['assignment_id'] ?? 0);
+        $assignment = Assignment::where('id', $assignmentId)->first();
+        if (! $assignment) {
+            return self::result(false, 'Assignment not found.');
+        }
+
+        if (! Gate::forUser($teacher)->allows('studentAssignment-review', $assignment)) {
+            return self::result(false, 'You are not authorized to review submissions for this assignment.');
+        }
+
+        $limit = max(1, min((int) ($args['limit'] ?? 20), 50));
+        $status = $args['status'] ?? null;
+        $query = StudentAssignment::where('assignment_id', $assignment->id)->orderByDesc('id')->limit($limit);
+        if (is_string($status) && $status !== '') {
+            $query->where('status', $status);
+        }
+
+        $rows = $query->get();
+        if ($rows->isEmpty()) {
+            return self::result(true, "No student submissions for assignment #{$assignment->id}.");
+        }
+
+        $lines = $rows->map(fn (StudentAssignment $sa) => "- #{$sa->id} student#{$sa->user_id} status={$sa->status}")->implode("\n");
+
+        return self::result(true, "**Student assignments for #{$assignment->id}:**\n{$lines}", $rows->toArray());
+    }
+
+    /**
+     * @return array{success: bool, message: string, data?: array}
+     */
+    public static function showStudentAssignment(User $teacher, array $args): array
+    {
+        $row = StudentAssignment::with('assignment')->where('id', (int) ($args['student_assignment_id'] ?? 0))->first();
+        if (! $row) {
+            return self::result(false, 'Student assignment not found.');
+        }
+
+        if (! Gate::forUser($teacher)->allows('studentAssignment-review', $row)) {
+            return self::result(false, 'You are not authorized to review this submission.');
+        }
+
+        $message = "**Student assignment #{$row->id}**\n"
+            ."- assignment_id: {$row->assignment_id}\n"
+            ."- student_id: {$row->user_id}\n"
+            ."- status: {$row->status}\n"
+            .'- obtained_marks: '.($row->obtained_marks ?? '(none)')."\n"
+            .'- comments: '.($row->comments ?: '(none)');
+
+        return self::result(true, $message, $row->toArray());
+    }
+
+    /**
+     * @return array{success: bool, message: string, data?: array}
+     */
+    public static function markStudentAssignment(User $teacher, array $args): array
+    {
+        $v = Validator::make($args, [
+            'student_assignment_id' => 'required|integer',
+            'obtained_marks' => 'required|numeric|min:0',
+            'comments' => 'nullable|string',
+        ]);
+        if ($v->fails()) {
+            return self::result(false, $v->errors()->first());
+        }
+
+        $row = StudentAssignment::with('assignment')->where('id', (int) $args['student_assignment_id'])->first();
+        if (! $row) {
+            return self::result(false, 'Student assignment not found.');
+        }
+
+        if (! Gate::forUser($teacher)->allows('studentAssignment-review', $row)) {
+            return self::result(false, 'You are not authorized to mark this submission.');
+        }
+
+        $max = (float) ($row->assignment?->marks ?? 0);
+        if ((float) $args['obtained_marks'] > $max) {
+            return self::result(false, "Mark cannot be greater than {$max}.");
+        }
+
+        if (($row->status ?? '') === 'completed') {
+            return self::result(false, 'Submission already marked completed.');
+        }
+
+        $row->obtained_marks = $args['obtained_marks'];
+        $row->comments = $args['comments'] ?? $row->comments;
+        $row->marks_given_by = $teacher->id;
+        $row->marks_given_on = date('Y-m-d');
+        $row->status = 'completed';
+        $row->save();
+
+        return self::result(true, "Student assignment #{$row->id} marked completed.", ['id' => $row->id]);
+    }
+
+    /**
+     * @return array{success: bool, message: string, data?: array}
+     */
+    public static function listMyLeaves(User $teacher, array $args = []): array
+    {
+        $limit = max(1, min((int) ($args['limit'] ?? 20), 50));
+        $schoolId = (int) $teacher->school_id;
+        $academicYear = SiteHelper::getAcademicYear($schoolId);
+
+        $query = TeacherLeaveApplication::where('user_id', $teacher->id)
+            ->where('school_id', $schoolId)
+            ->orderByDesc('id')
+            ->limit($limit);
+
+        if ($academicYear) {
+            $query->where('academic_year_id', $academicYear->id);
+        }
+
+        $rows = $query->get();
+        if ($rows->isEmpty()) {
+            return self::result(true, 'You have no leave applications.');
+        }
+
+        $lines = $rows->map(function (TeacherLeaveApplication $leave) {
+            $from = optional($leave->from_date)->format('Y-m-d') ?? (string) $leave->from_date;
+            $to = optional($leave->to_date)->format('Y-m-d') ?? (string) $leave->to_date;
+
+            return "- #{$leave->id} {$from}→{$to} status={$leave->status}";
+        })->implode("\n");
+
+        return self::result(true, "**My leave applications:**\n{$lines}", $rows->toArray());
+    }
+
+    /**
+     * @return array{success: bool, message: string, data?: array}
+     */
+    public static function showMyLeave(User $teacher, array $args): array
+    {
+        $leave = TeacherLeaveApplication::where('id', (int) ($args['leave_id'] ?? 0))->first();
+        if (! $leave) {
+            return self::result(false, 'Leave application not found.');
+        }
+
+        if (! Gate::forUser($teacher)->allows('teacher-leave', $leave)) {
+            return self::result(false, 'You are not authorized to view this leave application.');
+        }
+
+        $from = optional($leave->from_date)->format('Y-m-d H:i') ?? (string) $leave->from_date;
+        $to = optional($leave->to_date)->format('Y-m-d H:i') ?? (string) $leave->to_date;
+        $message = "**Leave #{$leave->id}**\n"
+            ."- from: {$from}\n"
+            ."- to: {$to}\n"
+            ."- status: {$leave->status}\n"
+            .'- remarks: '.($leave->remarks ?: '(none)');
+
+        return self::result(true, $message, $leave->toArray());
+    }
+
+    /**
+     * @return array{success: bool, message: string, data?: array}
+     */
+    public static function cancelMyLeave(User $teacher, array $args): array
+    {
+        $leave = TeacherLeaveApplication::where('id', (int) ($args['leave_id'] ?? 0))->first();
+        if (! $leave) {
+            return self::result(false, 'Leave application not found.');
+        }
+
+        if (! Gate::forUser($teacher)->allows('teacher-leave', $leave)) {
+            return self::result(false, 'You are not authorized to cancel this leave application.');
+        }
+
+        if (($leave->status ?? '') !== 'pending') {
+            return self::result(false, 'Only pending leave applications can be cancelled.');
+        }
+
+        $leave->status = 'cancelled';
+        $leave->save();
+        $leave->delete();
+
+        return self::result(true, "Leave application #{$leave->id} cancelled.", ['id' => $leave->id]);
     }
 
     private static function teacherLinked(User $teacher, int $standardLinkId, int $subjectId): bool
