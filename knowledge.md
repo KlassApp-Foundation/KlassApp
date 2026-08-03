@@ -636,7 +636,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Created always-apply rule `.cursor/rules/knowledge-session-log.mdc` (log through PR open + merge; Current Status ≤1 session behind main; no stale NOT PUSHED after ship). Updated `klassapp-knowledge` skill Session End protocol. Synced `knowledge.md` from richest worktree copies (`KlassApp-toshi-report-cards` + workspace merge stubs + #159 tip) onto `chore/knowledge-sync-aug3` off `origin/main` @ `862ba92`.
 - **Files modified**: `.cursor/rules/knowledge-session-log.mdc`, `knowledge.md`; skill `/Users/mac/.agents/skills/klassapp-knowledge/SKILL.md`
 - **Key decisions**: Prefer branch+PR for KB sync; merge when docs-only checks green
-- **Status**: 🚧 This PR
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/160 (`chore/knowledge-sync-aug3`)
+- **Status**: ✅ Done — PR open (docs-only; merge when green)
 - **Edge cases flagged**: Canonical path remains `/Users/mac/projects/KlassApp/knowledge.md` — sync dirty worktrees after merge
 
 ### 2026-08-03: Toshi report cards v1 (per-student PDF) — PR #159
