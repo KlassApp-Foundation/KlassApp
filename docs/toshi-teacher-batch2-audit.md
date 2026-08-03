@@ -1,8 +1,9 @@
 # Toshi Teacher Batch 2 — Part A audit (docs only)
 
 > Branch: `audit/toshi-teacher-batch2` off `origin/main` @ `102f92e` (includes merged School Admin Batch 2 / #153 + homework Gate / #152)  
-> Date: 2026-08-03  
-> Scope: **docs-only** — inventory remaining Teacher (ug5) domains after advisory ~12 tools; propose Batch 2 with graduated-risk + mandatory Gate discipline. **No tools built.**  
+> Date: 2026-08-03 (updated same day — Gate proposals for leave + assignment)  
+> Scope: **docs-only** — inventory remaining Teacher (ug5) domains after advisory ~12 tools; propose Batch 2 with graduated-risk + mandatory Gate discipline. **No tools built. No Gates implemented.**  
+> Continuation: `docs/toshi-teacher-leave-assignment-gates-audit.md` — own-leave + assignment-review Gate proposals (awaiting approval).  
 > Ground truth: Teacher advisory shipped earlier (`TeacherOperationsAgent` — 12 tools). Ranking: `docs/toshi-panel-parity-ranking.md` (PR #141) flagged submission review / leave / classwall as core-teaching remainder. School Admin Batches 1–2 each found real Gate gaps via Part A — same rigor here.  
 > Method: active `routes/teacher.php` + `routes/teacherapi.php` (comments stripped); `AuthServiceProvider` Gates; Teacher / API Teacher controllers; existing Teacher / Student / School Admin Toshi tools + ActionServices.
 
@@ -86,7 +87,7 @@ Counts = active routes in `routes/teacher.php` (block + line comments stripped).
 |---|---|---|
 | **Homework submission review** | Panel + API Teacher controllers already `Gate::allows('studentHomework-review', …)`; Gate encodes ug5 teacher_id / class_teacher / Teacherlink; SA ActionService methods are reusable if Teacher auth is wired | Destroy; do **not** call SA tools as-is (`AuthorizesToshiAction` denies ug5) |
 | **Assignment submission review** | Core teaching loop; Student already submits; list path scopes by `assignment.teacher_id` | **destroy**; **must fix Gate + id-only mark/update before tools** |
-| **Own leave status** (list / show own / optional cancel pending) | `ApplyLeaveTool` already writes; status depth is natural | Peer leave **approve/reject** until Gate exists; destroy |
+| **Own leave status** (list / show own / optional cancel pending) | `ApplyLeaveTool` already writes; status depth is natural | Peer leave **approve/reject** until Gate exists; destroy; **panel id-only IDOR → Gate-first** (not tool-only `user_id`) — see `docs/toshi-teacher-leave-assignment-gates-audit.md` |
 
 ### Hold for later (one-line reasons)
 
@@ -115,7 +116,7 @@ Aligns with ranking alternate (“Teacher Batch 1 = submission review + leave st
 |---|---|---|---|
 | **2a — Homework submission review** | `studenthomework` list / show / update (mark checked) | Teacher-auth tools: `ListStudentHomeworkTool` / `ShowStudentHomeworkTool` / `UpdateStudentHomeworkTool` **variants** (or shared service + `AuthorizesTeacherToshiAction`) reusing `SchoolAcademicsOpsActionService::{list,show,update}StudentHomework` which already call `studentHomework-review` | Writes → Tier-2; **Gate already ug5-correct** — wire auth trait only |
 | **2b — Assignment submission review** | `assignment/show/*`, `addMarks`, `editMarks` | `ListStudentAssignmentsTool`, `ShowStudentAssignmentTool`, `MarkStudentAssignmentTool` | Writes → Tier-2; **fix-first Gate** `studentAssignment-review` (mirror homework Option A) + wire Teacher/API controllers before trusting panel copy |
-| **2c — Own leave status** | `leave/list`, `leaves`, `leave/show`, optional pending cancel | `ListMyLeavesTool`, `ShowMyLeaveTool` (+ optional `CancelMyLeaveTool` if product wants) | Read-first; mutate only **own** `user_id` rows; **hold** peer/student leave approve for Gate PR |
+| **2c — Own leave status** | `leave/list`, `leaves`, `leave/show`, optional pending cancel | `ListMyLeavesTool`, `ShowMyLeaveTool` (+ optional `CancelMyLeaveTool` if product wants) | **Fix-first Gate** (`teacher-leave` + `teacher-leave-manage`) before tools; **reject** tool-only `user_id=actor` as sole fix; **hold** peer/student leave approve |
 
 **Implementation pattern (Part B — not this PR):**
 
@@ -175,21 +176,23 @@ Aligns with ranking alternate (“Teacher Batch 1 = submission review + leave st
 
 ---
 
-### 2c — Leave — **mixed: own-status OK with service scope; approve = FIX-FIRST**
+### 2c — Leave — **own-status = FIX-FIRST (Gate); approve = FIX-FIRST (separate)**
 
 | Path | Evidence | Verdict |
 |---|---|---|
-| **Gate** | **No** `leave` / `leave-approve` / `studentLeave` Gate in `AuthServiceProvider` | Missing |
+| **Gate** | **No** `leave` / `teacher-leave` / `leave-approve` / `studentLeave` Gate in `AuthServiceProvider` | Missing |
 | **Apply (advisory)** | `ApplyLeaveTool` → `TeacherActionService::applyLeave` | Already shipped |
-| **Own show/edit/update/destroy** | `LeaveController`: `TeacherLeaveApplication::where('id',$id)->first()` with **no** `user_id` / school_id assert (~283, ~337, ~394) | **IDOR-class** on panel — tools must enforce `user_id === actor` (and school_id) even if panel is dirty |
-| **Peer approve/reject** | Routes under `middleware designation:leave_checker`; `approveStore`/`rejectStore` id-only (~477, ~547) | Designation ≠ row authorization; **cross-school / wrong-row IDOR** if id guessed |
+| **Own show/edit/update/destroy** | `LeaveController` (+ API): `TeacherLeaveApplication::where('id',$id)->first()` with **no** `user_id` / school_id / Gate (~283, ~337, ~394) | **IDOR-class** — **Gate-level fix required** (not tool-only `user_id`) |
+| **FormRequests** | `LeaveEditRequest` / `LeaveApproveRequest` `authorize()` → `true` | No ownership |
+| **Admin moderation?** | **Yes:** `Admin\ApprovalController` inbox (school-scoped Approvals; Teacher leave creates `Approval`); `TeacherShowController@showLeaveHistory` school-scoped read. Leave *types* only via `LeaveTypesController`. | ug1/ug3 school-scoped + owner ug5 on Gate pair |
+| **Peer approve/reject** | Routes under `middleware designation:leave_checker`; `approveStore`/`rejectStore` id-only (~477, ~547) | Designation ≠ row authorization — **held** (separate Gate) |
 | **Student leave list** | `StudentLeaveController@indexList`: `standardLink_id ∈ class_teacher` + school_id | List OK |
-| **Student leave approve/reject** | id-only load (~110, ~181); API Teacher mirror same | **IDOR-class** — class teacher for class A can approve leave id from class B |
+| **Student leave approve/reject** | id-only load (~110, ~181); API Teacher mirror same | **IDOR-class** — **held** |
 
-**Batch 2 implication:**
+**Batch 2 implication (updated):**
 
-- **Own leave list/status tools:** allowed in Batch 2 **only** if ActionService filters `user_id = actor` (+ school_id). Do not expose approve.
-- **Approve/reject (peer or student):** **fix-before-tools** — add Gates (e.g. leave-approve + studentLeave-approve with school_id + designation/class_teacher checks) and wire controllers. Separate PR like homework Gate.
+- **Own leave:** propose `teacher-leave` (ug5 owner) + `teacher-leave-manage` (ug1 / ug3 school) — full proposal in `docs/toshi-teacher-leave-assignment-gates-audit.md`. **Reject** tool-only `user_id=actor` as sole fix.
+- **Approve/reject (peer or student):** still **out of Batch 2 tools**; separate Gate PR later.
 
 ---
 
@@ -211,7 +214,7 @@ Aligns with ranking alternate (“Teacher Batch 1 = submission review + leave st
 |---|---|---|---|
 | **2a Homework review** | **Clean** (ug5 assignment-aware) | Teacher review controllers clean | Tools OK after Teacher auth wiring |
 | **2b Assignment review** | **Needs fix-first** (school-only / student-owner only / missing review Gate) | Mark/update id-only; API list unscoped | **Gate PR → then tools** |
-| **2c Own leave status** | No Gate; OK if service scopes to actor | Panel id-only — do not copy | Tools with strict `user_id` scope |
+| **2c Own leave status** | **Needs fix-first** (`teacher-leave` + manage) | Panel/API id-only; FormRequests authorize true | **Gate PR → then tools** (see leave-assignment gates doc) |
 | **Leave approve / student leave** *(not in Batch 2 tools)* | Missing | id-only approve | **Fix-first** (separate) |
 | **Classwall beyond create** *(held)* | post OK; comments weak; post_reply broken | Large surface | Hold |
 
@@ -219,15 +222,28 @@ Aligns with ranking alternate (“Teacher Batch 1 = submission review + leave st
 
 ## Open questions for Part B approval
 
-1. Confirm Batch 2 = **homework review + assignment review + own leave status** (classwall full held).  
-2. Confirm **assignment review Gate PR** ships before/with Part B (homework #152 pattern).  
-3. Confirm peer/student **leave approve** stays out until Leave Gate PR.  
+1. ~~Confirm Batch 2 = homework review + assignment review + own leave status~~ — **approved** (ground truth).  
+2. Confirm **Gate designs** in `docs/toshi-teacher-leave-assignment-gates-audit.md`: leave Option A (dual) + `studentAssignment-review` (mirror homework-review).  
+3. Confirm peer/student **leave approve** stays out of the leave Gate PR (own/manage only).  
 4. Skill name: `TeacherTeachingOpsSkill` + `RouteToTeacherTeachingOpsSkillTool` vs flattening new leaves onto `TeacherOperationsAgent`?  
 5. Reuse `SchoolAcademicsOpsActionService` student-homework methods from Teacher tools (dual-auth) vs thin TeacherActionService delegates?
 
 ---
 
+## Gate proposals (Part A continuation)
+
+Full evidence + proposed Gate code shapes: **`docs/toshi-teacher-leave-assignment-gates-audit.md`**.
+
+| Fix | Proposed Gates | Implement before |
+|---|---|---|
+| Own-leave panel IDOR | `teacher-leave` + `teacher-leave-manage` | Own-leave tools (2c) |
+| Assignment review IDOR | `studentAssignment-review` (do **not** widen `studentassignment`) | Assignment review tools (2b) |
+
+Homework review (2a) remains Gate-clean — tools-only after Teacher auth wiring.
+
+---
+
 ## Ready for Part B?
 
-**Awaiting approval of Batch 2 scope.** No implementation on this branch.
+**Batch 2 scope approved.** Gate proposals drafted — **awaiting approval of Gate designs** before implementation branches. **No Gates implemented. No Batch 2b tools on this branch.**
 )
