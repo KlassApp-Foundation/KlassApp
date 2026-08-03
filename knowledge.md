@@ -240,10 +240,10 @@
 
 ---
 
-## Current Status: August 3, 2026 (`feature/saas-minimal-signup` — implement in flight; `origin/main` tip `dcc60c3`)
+## Current Status: August 4, 2026 (`origin/main` tip `417ca26` — SaaS minimal signup #163)
 
-- **`origin/main` tip**: `dcc60c3` — knowledge signup-investigation log (#162). Prior: `1755927` (#161), `862ba92` (#157 Teacher Batch 2).
-- **🚧 PR opening**: **SaaS minimal signup redesign** on `feature/saas-minimal-signup` — light bootstrap (name+email+phone + password|Google) → placeholder School (`{First}'s School`, `curriculum=null`, `toshi_enabled=1`, **no AcademicYear**) → `/admin/dashboard?toshi_onboarding=1` + Toshi `complete` mode. See Session Log “SaaS minimal signup redesign — implement”.
+- **`origin/main` tip**: `417ca26` — `feat(saas): minimal signup → Toshi onboarding (#163)`. Prior: `dcc60c3` (#162 knowledge), `862ba92` (#157 Teacher Batch 2).
+- **✅ Merged #163**: SaaS minimal signup — shared `SchoolSignupBootstrapService` (name+email+Phone WhatsApp + password|Google) → placeholder `{First}'s School` (`-2/-3` collisions), `curriculum=null`, `toshi_enabled=1`, **no AcademicYear** → `/admin/dashboard?toshi_onboarding=1` + Toshi complete mode (school name → curriculum → academic year early). Dashboard/`MustBePrivilege` null-guard. Merge commit `417ca269a19d0c1fccb6cd2b9660be6bc71f6995`.
 - **✅ Merged Aug 2–3 (on main; deploy separate)**:
   - **#142+** safety/adversarial + `UsesToshiLlm`; **#143–#145** llm-status / dual-config fail-loud / llm-health
   - **#147–#149** adversarial-live in-process (no phpunit/faker on prod) + durable schedule logging; prod adversarial gate live
@@ -256,9 +256,9 @@
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
-- **✅ Toshi on `main` (cumulative)**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config/llm-health (#143–#149), School Admin Batch 1–2 (#150/#153), Teacher Batch 2 (#157) + Gate fixes (#152/#154/#156).
+- **✅ Toshi on `main` (cumulative)**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config/llm-health (#143–#149), School Admin Batch 1–2 (#150/#153), Teacher Batch 2 (#157) + Gate fixes (#152/#154/#156), **SaaS minimal signup (#163)**.
 - **Report cards**: Academic per-student PDF **exists** (`DownloadStudentReport`; shared `StudentReportCardService` on #159). `/admin/reports` hub remains CSV/operational exports only — do not claim “no report cards”. Gaps: class/term batch + full distribution. See `docs/toshi-report-cards-audit.md` / #158.
-- **Onboarding harmony**: Signup now sets `toshi_enabled=1` + `curriculum=null` so Toshi asks curriculum; Academic Year is an early OnboardingStepsService step. Student ID bugs remain out of scope.
+- **Onboarding / signup**: Fresh admins get placeholder school + Toshi-first setup; curriculum and academic year are asked early (not silently defaulted). Student ID bugs remain out of scope. **Next**: deploy + live fresh-signup walkthrough (collision `-2/-3`, dashboard pre-year, early academic year).
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
 
 ## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
@@ -641,9 +641,10 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `SchoolSignupBootstrapService`, `RegisterController`/`RegisterRequest`/`register.blade.php`, `GoogleAuthController`, `OnboardingStepsService`/`OnboardingHelper`, `AgentToshi`, `Dashboard` trait + admin dashboard blade/controller, `MustBePrivilege`, `User` fillable google_*, curriculum migrations, tests `SaasMinimalSignupTest`/`FreshAdminDashboardSafetyTest` + updated RegistrationFlow/OnboardingSteps/MinistryCode tests.
 - **Key decisions** (locked by user): phone required; no AcademicYear at signup (null-guard instead); curriculum null (not uneb default); no OTP; plans unchanged; `/welcome` marketing untouched (auth `/welcome` redirects to Toshi); student ID bugs out of scope.
 - **Tests**: `php artisan test --compact` on SaasMinimalSignup + FreshAdminDashboardSafety + RegistrationFlow + OnboardingStepsService + RegistrationMinistryCode — **15 passed**.
-- **PR / merge**: opening — branch `feature/saas-minimal-signup` (URL filled after `gh pr create`)
-- **Status**: 🚧 PR opening
-- **Base**: `origin/main` @ `dcc60c3`
+- **PR / merge**: https://github.com/KlassApp-Foundation/KlassApp/pull/163 — squash merge commit `417ca269a19d0c1fccb6cd2b9660be6bc71f6995` (`417ca26` on main)
+- **Status**: ✅ MERGED
+- **Base**: was `origin/main` @ `dcc60c3`; tip after merge `417ca26`
+- **Next**: deploy (incl. curriculum-nullable migration) + live fresh-signup walkthrough
 
 ### 2026-08-03: SaaS minimal signup redesign — investigate (paused for later pickup)
 - **Work done**: Investigation only (no code). Mapped `RegisterController` / `GoogleAuthController` / `AgentToshi::commitAll('create'|'complete')` / `OnboardingStepsService` / admin dashboard bare-school risks for a future minimal SaaS signup → Toshi onboarding handoff. Also completed a separate **onboarding harmony status audit** on `origin/main` @ `1755927` (manual vs Toshi write paths; July 2026 fixes still green; student-ID / `toshi_enabled` asymmetries flagged).
