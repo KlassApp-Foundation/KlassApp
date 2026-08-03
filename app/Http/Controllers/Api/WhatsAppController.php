@@ -389,55 +389,47 @@ class WhatsAppController extends Controller
 
         $school = \App\Models\School::find($schoolId);
         $examTypePrefs = $school ? ($school->exam_type_preferences ?? []) : [];
-        $contributingIds = \App\Models\Academics\ExamType::all()->filter(fn($et) => $examTypePrefs[$et->id] ?? $et->contributes_to_report_total)->pluck('id')->toArray();
+        $contributingIds = \App\Models\Academics\ExamType::all()
+            ->filter(fn ($et) => $examTypePrefs[$et->id] ?? $et->contributes_to_report_total)
+            ->pluck('id')
+            ->toArray();
 
-        $exams = \App\Models\Academics\Exam::where('school_id', $schoolId)
+        $marksCount = \App\Models\Academics\Exam::where('school_id', $schoolId)
             ->where('academic_term_id', $term->id)
             ->whereIn('exam_type_id', $contributingIds)
-            ->with(['marks' => fn($q) => $q->where('student_id', $student->id), 'examType', 'subject'])
-            ->get();
+            ->whereHas('marks', fn ($q) => $q->where('student_id', $student->id))
+            ->count();
 
-        $approvedSubjectIds = \DB::table('exam_marks_submissions')
-            ->join('exams', 'exams.id', '=', 'exam_marks_submissions.exam_id')
-            ->where('exams.school_id', $schoolId)
-            ->where('exams.academic_term_id', $term->id)
-            ->where('exam_marks_submissions.approval_status', 'approved')
-            ->pluck('exam_marks_submissions.subject_id')->unique()->toArray();
+        $partial = $approvedCount < max(1, $marksCount);
 
-        $marksData = [];
-        foreach ($exams as $exam) {
-            $isApproved = in_array($exam->subject_id, $approvedSubjectIds);
-            $mark = $exam->marks->first();
-            $marksData[] = [
-                'subject'  => $exam->subject?->name ?? 'Unknown',
-                'score'    => $isApproved && $mark ? $mark->marks : null,
-                'grade'    => $isApproved && $mark ? $mark->grade : null,
-                'approved' => $isApproved,
-                'display'  => $isApproved && $mark ? $mark->marks . '%' : 'Not yet available',
-            ];
+        /** @var \App\Services\StudentReportCardService $reportCards */
+        $reportCards = app(\App\Services\StudentReportCardService::class);
+        $saved = $reportCards->generateForWhatsAppParent($student, $term, $school, $partial);
+        if (! $saved['success']) {
+            return response()->json([
+                'student_name' => $student->name,
+                'error' => $saved['message'] ?? 'Failed to generate report card.',
+            ], 500);
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('whatsapp.report-card', [
-            'student'   => $student,
-            'marksData' => $marksData,
-            'term'      => $term,
-            'school'    => $school,
-            'partial'   => $approvedCount < count($marksData),
-        ]);
-
-        $filename = 'report_' . $student->id . '_' . time() . '.pdf';
-        $path = storage_path('app/public/reports/' . $filename);
-        if (!is_dir(dirname($path))) { mkdir(dirname($path), 0755, true); }
-        $pdf->save($path);
-
-        $fileUrl = url('storage/reports/' . $filename);
-        $caption = 'Report Card for ' . $student->name . ' — ' . ($term->name ?? '');
+        $fileUrl = $saved['url'];
+        $filename = $saved['filename'];
+        $caption = 'Report Card for '.$student->name.' — '.($term->name ?? '');
 
         $result = $this->businessApi->sendDocument($phone, $fileUrl, $caption, $filename, 'report_card', $student->id);
 
         return $result['success']
-            ? response()->json(['student_name' => $student->name, 'message' => 'Report card sent via WhatsApp.', 'approved' => true, 'partial' => $approvedSubjectIds < count($marksData), 'message_id' => $result['message_id']])
-            : response()->json(['student_name' => $student->name, 'error' => $result['error'] ?? 'Failed to send document via WhatsApp.'], 500);
+            ? response()->json([
+                'student_name' => $student->name,
+                'message' => 'Report card sent via WhatsApp.',
+                'approved' => true,
+                'partial' => $partial,
+                'message_id' => $result['message_id'],
+            ])
+            : response()->json([
+                'student_name' => $student->name,
+                'error' => $result['error'] ?? 'Failed to send document via WhatsApp.',
+            ], 500);
     }
 
     /**

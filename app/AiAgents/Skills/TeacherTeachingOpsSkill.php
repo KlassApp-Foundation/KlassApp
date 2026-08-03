@@ -4,6 +4,7 @@ namespace App\AiAgents\Skills;
 
 use App\AiAgents\Concerns\UsesToshiLlm;
 use App\AiAgents\Tools\Teacher\CancelMyLeaveTool;
+use App\AiAgents\Tools\Teacher\GenerateStudentReportCardTool;
 use App\AiAgents\Tools\Teacher\ListMyLeavesTool;
 use App\AiAgents\Tools\Teacher\ListStudentAssignmentsTool;
 use App\AiAgents\Tools\Teacher\ListStudentHomeworkTool;
@@ -33,7 +34,8 @@ class TeacherTeachingOpsSkill implements Agent, HasTools
     {
         return 'You help a teacher with the teaching loop: review student homework '
             .'submissions (list/show/check), mark student assignment submissions, '
-            .'and manage the teacher\'s own leave applications (list/show/cancel pending). '
+            .'manage the teacher\'s own leave applications (list/show/cancel pending), '
+            .'and generate per-student report-card PDFs for students in assigned classes only. '
             .'Homework review requires studentHomework-review; assignment review requires '
             .'studentAssignment-review; own leave requires teacher-leave. Never approve peer '
             .'leave, never destroy homework/assignments, never widen student ownership Gates.';
@@ -51,6 +53,7 @@ class TeacherTeachingOpsSkill implements Agent, HasTools
             new ListMyLeavesTool,
             new ShowMyLeaveTool,
             new CancelMyLeaveTool,
+            new GenerateStudentReportCardTool,
         ];
     }
 }

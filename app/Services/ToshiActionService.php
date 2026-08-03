@@ -219,6 +219,7 @@ class ToshiActionService
                     'list_homework', 'create_homework', 'update_homework',
                     'approve_homework', 'reject_homework',
                     'list_student_homework', 'show_student_homework', 'update_student_homework',
+                    'generate_student_report_card',
                 ],
             ],
             4 => [ // SchoolSubadmin / Deputy Admin — school ops minus owner-level
@@ -237,6 +238,7 @@ class ToshiActionService
                     'list_homework', 'create_homework', 'update_homework',
                     'approve_homework', 'reject_homework',
                     'list_student_homework', 'show_student_homework', 'update_student_homework',
+                    'generate_student_report_card',
                     // Explicitly omitted: add_coadmin (owner governance), settings/curriculum
                 ],
             ],
@@ -248,6 +250,7 @@ class ToshiActionService
                     'manage_assignments', 'manage_homework', 'apply_leave',
                     'manage_class_wall', 'view_students', 'view_timetable',
                     'view_events', 'manage_tasks', 'manage_noticeboard',
+                    'generate_student_report_card',
                 ],
             ],
             6 => [ // Student

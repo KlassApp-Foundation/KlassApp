@@ -165,12 +165,19 @@
      <div>
         @php
             $termMap = ["First Term" => 1, "Second Term" => 2, "Third Term" => 3];
-            $termName = $learner->marks->first()->exam->academicTerm->name;
+            $firstExam = $learner->marks->first()?->exam;
+            $termName = $firstExam?->academicTerm?->name ?? "-";
+            $yearLabel = $academicYearName
+                ?? \App\Models\AcademicYear::find($firstExam?->academic_year_id)?->name
+                ?? "—";
+            $examTypeLabel = is_object($firstExam?->exam_type ?? null)
+                ? ($firstExam->exam_type->name ?? $firstExam->exam_type->code ?? "")
+                : ($firstExam?->examType?->name ?? $firstExam?->exam_type ?? "");
         @endphp
         <h3 class="title">
-            {{ $learner->marks->first()->exam->exam_type }}
+            {{ $examTypeLabel }}
             {{ $termMap[$termName] ?? "-" }}
-            {{ $termName->academicYear }}
+            {{ $yearLabel }}
             <span>STUDENT REPORT CARD</span>
         </h3>
     </div>
@@ -234,12 +241,12 @@
                             });
                           @endphp
                           <td>
-                              {{ $markForExam ? floor($markForExam->marks) : "-" }}
+                              {{ ($markForExam && is_numeric($markForExam->marks)) ? floor((float) $markForExam->marks) : "-" }}
                           </td>                 
                         @endforeach
                             @if ($uniqueExamTypes > 1)
                                  <td>
-                                {{ $score ? floor($score) : "-" }}
+                                {{ is_numeric($score) ? floor((float) $score) : "-" }}
                             </td>
                             @endif
                         {{-- ============ grade ========= --}}
@@ -265,7 +272,7 @@
                     <th>{{ $total }}</th>
                     @if ($uniqueExamTypes > 1)
                         <td>
-                        {{floor($average) * $examsDone ?? "-" }}
+                        {{ is_numeric($average) ? floor((float) $average) * ($examsDone ?? 0) : "-" }}
                     </td>     
                     @endif     
                     <th colspan="{{$span}}"></th>
@@ -317,8 +324,8 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{$nextTerm->starts_on?->format("d M, Y")}}</td>
-                <td>{{$nextTerm->ends_on?->format("d M, Y")}}</td>
+                <td>{{$nextTerm?->starts_on?->format("d M, Y") ?? "—"}}</td>
+                <td>{{$nextTerm?->ends_on?->format("d M, Y") ?? "—"}}</td>
                 <td>UGX {{$fees}}</td>
             </tr>
         </tbody>

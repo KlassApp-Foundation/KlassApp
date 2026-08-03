@@ -20,7 +20,7 @@ class RouteToSchoolAcademicsOpsSkillTool implements Tool
 
     public function description(): string
     {
-        return 'Route an academic-ops query to the School Academics Ops skill. Handles: timetable slots (list/create/update), homework admin list/create/update/approve/reject, and student-homework review (list/show/update). No destroy. Call when the user asks about timetable, homework approval, or checking student homework submissions.';
+        return 'Route an academic-ops query to the School Academics Ops skill. Handles: timetable slots (list/create/update), homework admin list/create/update/approve/reject, student-homework review (list/show/update), and per-student report-card PDF generation. No destroy. Call when the user asks about timetable, homework approval, checking student homework submissions, or generating a student report card.';
     }
 
     public function schema(JsonSchema $schema): array

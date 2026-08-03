@@ -463,9 +463,10 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
         $this->assertContains(RouteToSchoolAcademicsOpsSkillTool::class, $orch);
 
         $skill = collect((new SchoolAcademicsOpsSkill)->tools())->map(fn ($t) => $t::class)->all();
-        $this->assertCount(11, $skill);
+        $this->assertCount(12, $skill);
         $this->assertContains(ApproveHomeworkTool::class, $skill);
         $this->assertContains(CreateTimetableSlotTool::class, $skill);
+        $this->assertContains(\App\AiAgents\Tools\GenerateStudentReportCardTool::class, $skill);
     }
 
     public function test_batch2_tools_absent_from_non_admin_agents(): void
@@ -522,6 +523,7 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
             'list_homework', 'create_homework', 'update_homework',
             'approve_homework', 'reject_homework',
             'list_student_homework', 'show_student_homework', 'update_student_homework',
+            'generate_student_report_card',
         ] as $action) {
             $this->assertContains($action, $admin['actions']);
             $this->assertContains($action, $deputy['actions']);
@@ -529,6 +531,7 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
 
         $this->assertNotContains('settings', $deputy['actions']);
         $this->assertNotContains('add_coadmin', $deputy['actions']);
+        $this->assertContains('generate_student_report_card', ToshiActionService::getRoleCapabilities(5)['actions']);
     }
 
     public function test_skill_is_custom_route_not_sdk_sub_agent_and_uses_toshi_llm(): void
