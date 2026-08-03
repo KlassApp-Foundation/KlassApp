@@ -12,6 +12,7 @@ use App\Http\Requests\API\Teacher\LeaveAddRequest;
 use App\Http\Requests\LeaveApproveRequest;
 use App\Models\TeacherLeaveApplication;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Events\SinglePushEvent;
 use App\Models\TeacherProfile;
@@ -197,6 +198,10 @@ class LeaveController extends Controller
 
         $leave = TeacherLeaveApplication::where('id',$id)->first();
 
+        if (! Gate::allows('teacher-leave', $leave)) {
+            abort(403);
+        }
+
         $array['from_date']     =   date('d-m-Y H:i:s',strtotime($leave->from_date));
         $array['to_date']       =   date('d-m-Y H:i:s',strtotime($leave->to_date ));
         $array['reason_id']     =   $leave->reason_id;
@@ -220,11 +225,14 @@ class LeaveController extends Controller
      */
     public function update(LeaveEditRequest $request, $id)
     {
-        //
+        $leave = TeacherLeaveApplication::where('id',$id)->first();
+
+        if (! Gate::allows('teacher-leave', $leave)) {
+            abort(403);
+        }
+
         try
         {
-            $leave = TeacherLeaveApplication::where('id',$id)->first();
-
             if($leave->status == 'pending')
             {
                 $leave->from_date           = date('Y-m-d H:i:s',strtotime($request->from_date));
@@ -275,10 +283,14 @@ class LeaveController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $leave = TeacherLeaveApplication::where('id',$id)->first();
+
+        if (! Gate::allows('teacher-leave', $leave)) {
+            abort(403);
+        }
+
         try
         {
-            $leave = TeacherLeaveApplication::where('id',$id)->first();
             if($leave->status == 'pending')
             {
                 $leave->status     =   'cancelled';

@@ -12,6 +12,7 @@ use App\Models\TeacherLeaveApplication;
 use App\Http\Requests\LeaveEditRequest;
 use App\Http\Requests\LeaveAddRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Events\SinglePushEvent;
 use App\Models\TeacherProfile;
@@ -282,6 +283,10 @@ class LeaveController extends Controller
 
         $leave = TeacherLeaveApplication::where('id',$id)->first();
 
+        if (! Gate::allows('teacher-leave', $leave)) {
+            abort(403);
+        }
+
         $array['from_date']     =   date('d-m-Y H:i:s',strtotime($leave->from_date));
         $array['to_date']       =   date('d-m-Y H:i:s',strtotime($leave->to_date ));
         $array['reason_id']     =   $leave->reason_id;
@@ -305,6 +310,10 @@ class LeaveController extends Controller
         //
         $leave = TeacherLeaveApplication::where('id',$id)->first();
 
+        if (! Gate::allows('teacher-leave', $leave)) {
+            abort(403);
+        }
+
         return view('/teacher/leave/show', ['leave' => $leave]);
     }
 
@@ -318,6 +327,10 @@ class LeaveController extends Controller
     {
         //
         $leave = TeacherLeaveApplication::where('id',$id)->first();
+
+        if (! Gate::allows('teacher-leave', $leave)) {
+            abort(403);
+        }
  
         return view('/teacher/leave/edit', ['leave' => $leave]);
     }
@@ -331,11 +344,14 @@ class LeaveController extends Controller
      */
     public function update(LeaveEditRequest $request, $id)
     {
-        //
+        $leave = TeacherLeaveApplication::where('id',$id)->first();
+
+        if (! Gate::allows('teacher-leave', $leave)) {
+            abort(403);
+        }
+
         try
         {
-            $leave = TeacherLeaveApplication::where('id',$id)->first();
-
             $leave->from_date           = date('Y-m-d H:i:s',strtotime($request->from_date));
             $leave->to_date             = date('Y-m-d H:i:s',strtotime($request->to_date));
             $leave->reason_id           = $request->reason_id;
@@ -388,11 +404,14 @@ class LeaveController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $leave = TeacherLeaveApplication::where('id',$id)->first();
+
+        if (! Gate::allows('teacher-leave', $leave)) {
+            abort(403);
+        }
+
         try
         {
-            $leave = TeacherLeaveApplication::where('id',$id)->first();
-
             $leave->status     =   'cancelled';
             $leave->save();
 
