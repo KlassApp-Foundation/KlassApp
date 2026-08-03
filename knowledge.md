@@ -240,9 +240,10 @@
 
 ---
 
-## Current Status: August 3, 2026 (`origin/main` tip `ee561ef` — knowledge sync #160)
+## Current Status: August 3, 2026 (`origin/main` tip `1755927` — knowledge merge-stamp #161)
 
-- **`origin/main` tip**: `ee561ef` — `Merge pull request #160` (knowledge sync + session-log rule). Prior tip `862ba92` (#157 Teacher Batch 2).
+- **`origin/main` tip**: `1755927` — `Merge pull request #161` (knowledge merge-stamp after #160). Prior: `ee561ef` (#160 sync), `862ba92` (#157 Teacher Batch 2).
+- **⏸️ Paused — pick up next**: **SaaS minimal signup redesign** (investigate-only done; **no code**). Goal: name+email(+password|Google) → placeholder School + admin + `toshi_enabled=1` → Toshi onboarding for the rest. See Session Log “SaaS minimal signup redesign — investigate (paused)”.
 - **✅ Merged Aug 2–3 (on main; deploy separate)**:
   - **#142+** safety/adversarial + `UsesToshiLlm`; **#143–#145** llm-status / dual-config fail-loud / llm-health
   - **#147–#149** adversarial-live in-process (no phpunit/faker on prod) + durable schedule logging; prod adversarial gate live
@@ -250,12 +251,14 @@
   - **#152** homework-manage + studentHomework-review Gates; **#154** ug5 homework destroy ownership (`teacher_id`)
   - **#153** School Admin Batch 2 — timetable + homework oversight (merge `102f92e`)
   - **#156** teacher-leave + studentAssignment-review Gates (merge `0cb5b76`); **#157** Teacher Batch 2 — submission review + own leave (merge `862ba92`)
+  - **#160/#161** knowledge sync + session-log Cursor rule
 - **🚧 Open PRs**:
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
 - **✅ Toshi on `main` (cumulative)**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config/llm-health (#143–#149), School Admin Batch 1–2 (#150/#153), Teacher Batch 2 (#157) + Gate fixes (#152/#154/#156).
 - **Report cards**: Academic per-student PDF **exists** (`DownloadStudentReport`; shared `StudentReportCardService` on #159). `/admin/reports` hub remains CSV/operational exports only — do not claim “no report cards”. Gaps: class/term batch + full distribution. See `docs/toshi-report-cards-audit.md` / #158.
+- **Onboarding harmony (status audit, Aug 3)**: July name/StandardLink/step-check fixes still hold. Gaps: `toshi_enabled` auto only on Toshi `commitAll('create')` (not Register/Google/platform); `commitAll` sets `klassapp_student_id` but not `registration_number`; `AddStudentTool` sets neither. WhatsApp does not create schools.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
 
 ## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
@@ -632,6 +635,38 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-03: SaaS minimal signup redesign — investigate (paused for later pickup)
+- **Work done**: Investigation only (no code). Mapped `RegisterController` / `GoogleAuthController` / `AgentToshi::commitAll('create'|'complete')` / `OnboardingStepsService` / admin dashboard bare-school risks for a future minimal SaaS signup → Toshi onboarding handoff. Also completed a separate **onboarding harmony status audit** on `origin/main` @ `1755927` (manual vs Toshi write paths; July 2026 fixes still green; student-ID / `toshi_enabled` asymmetries flagged).
+- **Goal (not started)**: Replace fat register form with name + email (+ password **or** Google) → placeholder `School` + admin `User` + real `schools.id` + `toshi_enabled=1` → redirect into Toshi onboarding for school details / curriculum / year / classes / teachers / students. Out of scope: `registration_number` / `klassapp_student_id` generation bugs (separate).
+- **Immediate vs defer (summary)**:
+  - **Immediate**: `schools.id` (auto-increment PK), unique non-null `name` (placeholder OK), `status`, slug (observer), admin User+profile (`usergroup_id=3`, `school_id`), **`toshi_enabled=1`**, and almost certainly an **AcademicYear** row (dashboard 500s without it).
+  - **Defer to Toshi**: real school name polish, phone/country/size/ministry, curriculum choice, classes/StandardLink, subjects, teachers, students, terms, fees, WhatsApp verify.
+- **Key findings**:
+  - **Do not** use `commitAll('create')` for signup — too heavy (expects full conversational payload). Use a **light bootstrap** (Register/Google-shaped) then Toshi **`mode=complete`** / `commitAll('complete')` on the existing `schoolId` (no duplicate school).
+  - **Reuse/extend `GoogleAuthController`** as the closest existing placeholder path; today it omits `toshi_enabled=1`, uses `phone=>''` (UNIQUE hazard), sets bogus `country` (column is `registration_country`), and redirects `/welcome` → dashboard rather than Toshi-first.
+  - **Bare school without AcademicYear → admin dashboard 500** (`Dashboard` / `SiteHelper::getAcademicYear` assume object). Soft onboarding banner exists but never renders if dashboard crashes first.
+  - Curriculum DB default `uneb` makes `isStepComplete('curriculum')` look done without user choice — product quirk for Toshi step 0.
+  - Harmony audit: only Toshi-create auto-enables Toshi; Register/Google/`SchoolService`/`CreateSchoolTool` leave `toshi_enabled` false until `SetCurriculumTool` or manual flip. Platform gate env is siteadmin-only.
+- **Decisions needed before implement** (open for next session):
+  1. Placeholder name format (must stay unique under `schools.name`)
+  2. Plan / subscription / trial at signup vs later
+  3. Create AcademicYear at signup (**recommended**) vs null-guard all `getAcademicYear` callers
+  4. Curriculum: keep DB default vs nullable/sentinel so Toshi step 0 is real
+  5. Phone: `null` vs required — never `''` under UNIQUE
+  6. OTP for email/password vs Google-verified email
+  7. Post-signup UX: force Toshi / maximize panel vs dashboard banner vs keep `/welcome` then Toshi
+  8. How `complete` mode renames the school (`commitAll('complete')` does not update `schools.name` today)
+  9. Unify Google `country` → `registration_country` if interstitial kept
+- **Pickup**: Resume on `origin/main`; implement only after product calls above. Suggested branch name when starting: `feature/saas-minimal-signup`.
+- **Status**: ⏸️ **Paused** — investigate done; implementation not started; no PR
+- **Base**: `origin/main` @ `1755927`
+
+### 2026-08-03: Onboarding harmony status audit (manual vs Toshi)
+- **Work done**: Docs/status only. Listed school-create paths (Register, Toshi commitAll create/complete, Google placeholder, Superadmin/`CreateSchoolTool`, WhatsApp=none). Confirmed July fixes: `users.name`, StandardLink+Section on both commitAll branches, `OnboardingStepsService` uses `StandardLink::exists()`. Flagged divergences: `toshi_enabled` asymmetry; student ID incomplete (`klassapp_student_id` in wizard only; `registration_number` nowhere in Toshi paths; `AddStudentTool` sets neither).
+- **Status**: ✅ Audit complete — no code changes
+- **Pickup note**: Feeds SaaS signup redesign decisions (`toshi_enabled=1` at bootstrap; student ID bugs remain out of signup scope)
+
 ### 2026-08-03: Knowledge sync + session-log Cursor rule
 - **Work done**: Created always-apply rule `.cursor/rules/knowledge-session-log.mdc` (log through PR open + merge; Current Status ≤1 session behind main; no stale NOT PUSHED after ship). Updated `klassapp-knowledge` skill Session End protocol. Synced `knowledge.md` from richest worktree copies (`KlassApp-toshi-report-cards` + workspace merge stubs + #159 tip) onto `chore/knowledge-sync-aug3` off `origin/main` @ `862ba92`.
 - **Files modified**: `.cursor/rules/knowledge-session-log.mdc`, `knowledge.md`; skill `/Users/mac/.agents/skills/klassapp-knowledge/SKILL.md`
