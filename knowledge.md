@@ -6038,3 +6038,11 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Key decisions**: Do not add faker to prod; keep llm-health cron separate; add `schedule:run` so Kernel monthly adversarial actually fires
 - **Status**: ✅ Done — fix PR + prod enable
 - **Edge cases flagged**: First #147 deploy alone was insufficient without factory-free seed; schedule:list showed entry before cron existed (misleading)
+
+### 2026-08-03: Toshi report cards v1 (per-student PDF)
+- **Work done**: Fixed `academicYear` blade bug (+ null-safe nextTerm/floor); extracted `StudentReportCardService` shared by `DownloadStudentReport`, `WhatsAppController@report`, and Toshi tools; SA tool on `SchoolAcademicsOpsSkill`; Teacher tool on `TeacherTeachingOpsSkill` (assigned class: class teacher or Teacherlink); Deputy inherits SA tool (not Settings). Live PDF re-verify: Primary/Nursery/O/A show year **2026**. Nursery assessments DB still **0 rows** (unverified gap for real domain ratings).
+- **Files modified**: `StudentReportCardService.php`, `DownloadStudentReport.php`, `WhatsAppController.php`, `student-report.blade.php`, `GenerateStudentReportCardTool` (SA+Teacher), skills/routers/orchestrator/Deputy/ToshiActionService, `ToshiReportCardsV1Test.php`, `docs/toshi-report-cards-audit.md` §9, Batch2/Deputy tool-count tests
+- **Key decisions**: Canonical PDF = admin template (WhatsApp abandoned `whatsapp.report-card` DomPDF path); no batch/email/`report_cards` table; teacher scope mirrors assignment review class linkage
+- **Tests**: `ToshiReportCardsV1Test` + Batch2/Deputy/pipeline — 39 passed (272 assertions)
+- **Status**: ✅ Done on `feature/toshi-report-cards-v1` — commit + PR opened (not merged, not deployed)
+- **Edge cases flagged**: helper `learner()` still requires marks rows even for nursery; nursery descriptive content unverified without assessment seed

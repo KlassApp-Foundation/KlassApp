@@ -18,7 +18,7 @@ class RouteToTeacherTeachingOpsSkillTool implements Tool
 
     public function description(): string
     {
-        return 'Route a teaching-ops query to the Teacher Teaching Ops skill. Handles: student homework review (list/show/check), student assignment review/marking, and own leave list/show/cancel. No peer leave approve, no destroy. Call when the teacher asks about checking homework submissions, marking assignments, or their leave status.';
+        return 'Route a teaching-ops query to the Teacher Teaching Ops skill. Handles: student homework review (list/show/check), student assignment review/marking, own leave list/show/cancel, and per-student report-card PDFs for assigned-class students. No peer leave approve, no destroy. Call when the teacher asks about checking homework submissions, marking assignments, leave status, or generating a student report card.';
     }
 
     public function schema(JsonSchema $schema): array

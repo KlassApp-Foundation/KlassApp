@@ -391,10 +391,11 @@ class TeacherBatch2TeachingOpsToolsTest extends TestCase
         $this->assertCount(13, $agentTools);
 
         $skillTools = collect((new TeacherTeachingOpsSkill)->tools())->map(fn ($t) => $t::class)->all();
-        $this->assertCount(9, $skillTools);
+        $this->assertCount(10, $skillTools);
         $this->assertContains(ListStudentHomeworkTool::class, $skillTools);
         $this->assertContains(MarkStudentAssignmentTool::class, $skillTools);
         $this->assertContains(CancelMyLeaveTool::class, $skillTools);
+        $this->assertContains(\App\AiAgents\Tools\Teacher\GenerateStudentReportCardTool::class, $skillTools);
     }
 
     public function test_studentassignment_owner_gate_still_not_widened(): void

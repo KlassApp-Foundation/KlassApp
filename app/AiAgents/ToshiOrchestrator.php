@@ -51,7 +51,7 @@ Your job is to classify the user query into EXACTLY ONE domain and route it to t
 5. **grading** — Setting/viewing grading scales, seeding default UNEB scales
 6. **report** — Generating academic, fee, attendance, and summary reports
 7. **school_comms** — Noticeboard notices, calendar events, and holidays (list/create/update only)
-8. **school_academics_ops** — Timetable slots, homework approve/reject/admin CRUD, student-homework review (no destroy)
+8. **school_academics_ops** — Timetable slots, homework approve/reject/admin CRUD, student-homework review, per-student report-card PDFs (no destroy)
 
 **Rules:**
 - If the query clearly matches a domain, route it immediately using the corresponding tool.
@@ -67,6 +67,7 @@ Example: "post a notice about parent meeting" → routeToSchoolCommsSkill
 Example: "add Independence Day holiday" → routeToSchoolCommsSkill
 Example: "approve pending homework" → routeToSchoolAcademicsOpsSkill
 Example: "add a Monday 9am math timetable slot" → routeToSchoolAcademicsOpsSkill
+Example: "generate report card for student 58 exam 71" → routeToSchoolAcademicsOpsSkill
 PROMPT;
     }
 

@@ -6,6 +6,7 @@ use App\AiAgents\Concerns\UsesToshiLlm;
 use App\AiAgents\Tools\ApproveHomeworkTool;
 use App\AiAgents\Tools\CreateHomeworkTool;
 use App\AiAgents\Tools\CreateTimetableSlotTool;
+use App\AiAgents\Tools\GenerateStudentReportCardTool;
 use App\AiAgents\Tools\ListHomeworkTool;
 use App\AiAgents\Tools\ListStudentHomeworkTool;
 use App\AiAgents\Tools\ListTimetableSlotsTool;
@@ -34,9 +35,9 @@ class SchoolAcademicsOpsSkill implements Agent, HasTools
 
     public function instructions(): string
     {
-        return 'You manage academic schedule and homework oversight: timetable slots, '
-            .'admin homework (list/create/update/approve/reject), and student-homework review '
-            .'(list/show/mark checked). Never destroy, promote, or change Settings. '
+        return 'You manage academic schedule, homework oversight, and per-student report cards: '
+            .'timetable slots, admin homework (list/create/update/approve/reject), student-homework review '
+            .'(list/show/mark checked), and generate student report-card PDFs. Never destroy, promote, or change Settings. '
             .'Homework mutations require homework-manage authorization; submission review requires '
             .'studentHomework-review. Ask for missing required fields before creating.';
     }
@@ -55,6 +56,7 @@ class SchoolAcademicsOpsSkill implements Agent, HasTools
             new ListStudentHomeworkTool,
             new ShowStudentHomeworkTool,
             new UpdateStudentHomeworkTool,
+            new GenerateStudentReportCardTool,
         ];
     }
 }

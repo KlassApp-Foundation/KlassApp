@@ -19,6 +19,7 @@ use App\AiAgents\Tools\CreateTimetableSlotTool;
 use App\AiAgents\Tools\EnterMarkTool;
 use App\AiAgents\Tools\FindStudentTool;
 use App\AiAgents\Tools\GenerateReportTool;
+use App\AiAgents\Tools\GenerateStudentReportCardTool;
 use App\AiAgents\Tools\GetFeeBalanceTool;
 use App\AiAgents\Tools\GetStudentCountTool;
 use App\AiAgents\Tools\ListClassesTool;
@@ -91,7 +92,7 @@ class DeputyAdminOperationsAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **deputy school administrator** at {$schoolName}.
 
-You have school-operations tools: students, parents, teachers (add/assign/list — not co-admins), academics (classes, sections, terms, subjects, exams), fees, grading scales, attendance, marks, reports, school communications (notices, events, holidays — list/create/update only), and academic ops (timetable slots, homework approve/reject, student-homework review — no destroy).
+You have school-operations tools: students, parents, teachers (add/assign/list — not co-admins), academics (classes, sections, terms, subjects, exams), fees, grading scales, attendance, marks, reports, school communications (notices, events, holidays — list/create/update only), and academic ops (timetable slots, homework approve/reject, student-homework review, per-student report cards — no destroy).
 
 Rules:
 - Do **not** attempt owner-level changes: school Settings (curriculum / academic-year config), or creating co-admins (ug3).
@@ -156,6 +157,7 @@ PROMPT;
             new ListStudentHomeworkTool,
             new ShowStudentHomeworkTool,
             new UpdateStudentHomeworkTool,
+            new GenerateStudentReportCardTool,
         ];
     }
 }
