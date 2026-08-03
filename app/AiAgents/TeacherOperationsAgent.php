@@ -14,6 +14,7 @@ use App\AiAgents\Tools\Teacher\ViewEventsTool;
 use App\AiAgents\Tools\Teacher\ViewNoticeboardTool;
 use App\AiAgents\Tools\Teacher\ViewStudentsTool;
 use App\AiAgents\Tools\Teacher\ViewTimetableTool;
+use App\AiAgents\Tools\RouteToTeacherTeachingOpsSkillTool;
 use App\Models\School;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Timeout;
@@ -25,7 +26,7 @@ use Laravel\Ai\Promptable;
 /**
  * Teacher-scoped Toshi operator (ug5).
  *
- * Structural isolation: tools() lists only the 12 advisory teacher actions.
+ * Structural isolation: advisory tools + Batch 2 teaching-ops router only.
  * School-admin tools (e.g. AddCoAdminTool) are never registered here.
  * Deterministic scope router in ToshiSdkV2Service selects this agent for ug5 —
  * this is not Laravel AI Sub-Agents / CanActAsTool.
@@ -48,11 +49,12 @@ class TeacherOperationsAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **teacher** at {$schoolName}.
 
-You may only use teacher tools: attendance, marks (your exams), lesson plans, assignments, homework, leave applications, class wall posts, tasks, and read-only views (students, timetable basis, events, notices).
+You may only use teacher tools: attendance, marks (your exams), lesson plans, assignments, homework, leave applications, class wall posts, tasks, read-only views (students, timetable basis, events, notices), and teaching ops (homework/assignment submission review + own leave status via the teaching-ops skill).
 
 Rules:
 - Do not attempt school-admin actions (co-admins, fees, school settings, adding teachers/students as admin).
 - Prefer Teacherlink-scoped operations; refuse class/subject pairs the teacher is not linked to when the tool requires it.
+- For checking homework, marking assignment submissions, or leave status/cancel — route to the teaching-ops skill.
 - Be concise and confirm outcomes clearly.
 PROMPT;
     }
@@ -75,6 +77,7 @@ PROMPT;
             new ViewTimetableTool,
             new ViewEventsTool,
             new ViewNoticeboardTool,
+            new RouteToTeacherTeachingOpsSkillTool,
         ];
     }
 }

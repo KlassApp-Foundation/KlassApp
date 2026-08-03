@@ -621,11 +621,18 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+### 2026-08-03: Teacher Batch 2 tools (teaching ops)
+- **Work done**: After Gate #156 merge — `TeacherTeachingOpsSkill` + `RouteToTeacherTeachingOpsSkillTool` on TeacherOperationsAgent. Tools: homework review (list/show/check via SchoolAcademicsOpsActionService + studentHomework-review), assignment review/mark (TeacherActionService + studentAssignment-review), own leave list/show/cancel (teacher-leave only). UsesToshiLlm on skill.
+- **Files modified**: TeacherTeachingOpsSkill, RouteToTeacherTeachingOpsSkillTool, 9 Teacher/* tools, TeacherActionService, TeacherOperationsAgent, TeacherBatch2TeachingOpsToolsTest, TeacherOperationsToolsTest (13 tools), knowledge.md
+- **Key decisions**: Skill+RouteTo pattern (not flattening 9 tools onto agent); reuse SA homework service methods; do not merge tools PR unless requested
+- **Status**: 🚧 PR open — not merged
+- **Edge cases flagged**: Peer leave approve still held; studentassignment Gate untouched
+
 ### 2026-08-03: Teacher leave + assignment-review Gates
 - **Work done**: Combined Gate PR — `teacher-leave` (ug5 owner), `teacher-leave-manage` (ug1/ug3 school), `studentAssignment-review` (mirror homework-review). Wired Teacher/API leave show/update/destroy + LeaveEditRequest; Teacher/API StudentAssignment list/show/mark; Admin ApprovalController for TeacherLeaveApplication. Left `studentassignment` + `assignment` untouched.
 - **Files modified**: AuthServiceProvider, LeaveController (Teacher+API), LeaveEditRequest (web+API), StudentAssignmentController (Teacher+API), ApprovalController, LegacyPortalTeacherLeaveAssignmentAuthorizationTest, docs/toshi-teacher-leave-assignment-gates-audit.md, knowledge.md
 - **Key decisions**: One combined PR (homework-style); Option A dual leave Gates; Gate checks outside catch(Exception) so abort(403) is not swallowed
-- **Status**: 🚧 In progress — push/merge Gate PR then Batch 2 tools
+- **Status**: ✅ Done — Gate PR #156 merged (`0cb5b76`)
 - **Edge cases flagged**: Peer leave_checker approve still held; assignment destroy school-only Gate held
 
 
