@@ -6024,3 +6024,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Key decisions**: Do not add faker to prod; keep llm-health cron separate; add `schedule:run` so Kernel monthly adversarial actually fires
 - **Status**: ✅ Done — fix PR + prod enable
 - **Edge cases flagged**: First #147 deploy alone was insufficient without factory-free seed; schedule:list showed entry before cron existed (misleading)
+
+### 2026-08-03: Teacher Batch 2 Part A — remaining-domain audit
+- **Work done**: Docs-only inventory on `audit/toshi-teacher-batch2` worktree off `origin/main` @ `102f92e`. Counted Teacher panel ≈219 routes / API ≈97; listed the 12 advisory tools; proposed Batch 2 = homework submission review + assignment submission review + own leave status; held full classwall / peer·student leave approve / destroy / desk logs / marks expansion. Mandatory Gate audit: homework review **clean**; assignment review **fix-first IDOR**; leave approve **fix-first**; own-leave tools OK with user_id scope.
+- **Files modified**: `docs/toshi-teacher-batch2-audit.md` (new), `knowledge.md` (this log)
+- **Key decisions**: Ranking remainder (submission review / leave / classwall) confirmed; classwall full held (create already advisory); SA `List/UpdateStudentHomeworkTool` not ug5-callable as-is (`AuthorizesToshiAction`); pattern Skill + RouteTo like SchoolAcademicsOps
+- **Status**: ✅ Done — docs only; no tools implemented
+- **Edge cases flagged**: `assignment` Gate school-only; Teacher/API StudentAssignment mark paths id-only; leave approve id-only; `post_reply` Gate uses undefined `$post_reply`
