@@ -14,7 +14,9 @@ use App\Services\OnboardingStepsService;
 class OnboardingHelper
 {
     const STEP_LABELS = [
+        'school_name'     => 'School name',
         'curriculum'      => 'Board / Curriculum',
+        'academic_year'   => 'Academic year',
         'standards'       => 'Classes',
         'subjects'        => 'Subjects',
         'teachers'        => 'Teachers',
@@ -26,21 +28,27 @@ class OnboardingHelper
     public static function getMissingSteps(int $schoolId, ?int $userId = null): array
     {
         $school = School::find($schoolId);
-        if (!$school) return [];
+        if (! $school) {
+            return [];
+        }
 
         $incomplete = OnboardingStepsService::incompleteSteps($school, $userId);
-        return array_map(fn($s) => $s['key'], $incomplete);
+
+        return array_map(fn ($s) => $s['key'], $incomplete);
     }
 
     public static function hasMissingSteps(int $schoolId, ?int $userId = null): bool
     {
         $school = School::find($schoolId);
-        if (!$school) return false;
+        if (! $school) {
+            return false;
+        }
+
         return OnboardingStepsService::hasIncompleteSteps($school, $userId);
     }
 
     public static function getMissingLabels(array $missingKeys): array
     {
-        return array_map(fn($key) => self::STEP_LABELS[$key] ?? ucfirst($key), $missingKeys);
+        return array_map(fn ($key) => self::STEP_LABELS[$key] ?? ucfirst($key), $missingKeys);
     }
 }

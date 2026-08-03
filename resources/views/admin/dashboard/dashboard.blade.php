@@ -13,6 +13,26 @@
         @include('partials.onboarding-reminder')
         @include('partials.plan-banner')
 
+        @if(!empty($setupIncomplete))
+            <div class="bg-white border border-gray-200 rounded-xl px-6 py-8 my-4" style="background:#FFFFFF;border-color:#E2E8F0;">
+                <h2 class="text-xl font-semibold text-gray-900" style="color:#0F172A;font-family:Sora,sans-serif;">Continue school setup</h2>
+                <p class="mt-2 text-sm text-gray-600" style="color:#64748B;">
+                    Your account is ready. Finish naming your school, choosing a curriculum, and creating an academic year with Toshi before using the full dashboard.
+                </p>
+                @if(!empty($onboardingMissing))
+                    <ul class="mt-4 text-sm text-gray-700" style="color:#334155;">
+                        @foreach(\App\Helpers\OnboardingHelper::getMissingLabels($onboardingMissing) as $label)
+                            <li class="py-1">• {{ $label }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+                <p class="mt-4 text-sm text-gray-600" style="color:#64748B;">
+                    Open the <strong>Toshi</strong> chat to continue — it should open automatically.
+                </p>
+            </div>
+        @endif
+
+        @if(empty($setupIncomplete))
         <div class="flex flex-wrap my-2 dashboard-topfold">
             <div class="w-full xl:w-1/3 lg:w-2/3 my-2">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -378,11 +398,30 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
+
+    @if(!empty($openToshiOnboarding))
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        document.body.classList.remove('toshi-collapsed');
+        var pill = document.getElementById('toshi-pill');
+        if (pill) {
+          pill.click();
+        }
+        // Prefer maximized onboarding surface when available
+        var maximizeBtn = document.querySelector('[wire\\:click="maximize"], button[title="Maximize"]');
+        if (maximizeBtn) {
+          setTimeout(function () { maximizeBtn.click(); }, 400);
+        }
+      });
+    </script>
+    @endif
 
 @endsection
 
 @push('scripts')
+    @if(empty($setupIncomplete))
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
     <script>
         var ctx = document.getElementById('graph').getContext('2d');
@@ -553,4 +592,5 @@
         }
 
     </script>
+    @endif
 @endpush

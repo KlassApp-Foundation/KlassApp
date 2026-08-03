@@ -50,7 +50,8 @@ class User extends Authenticatable implements HasMedia
      * @var array
      */
     protected $fillable = [
-        'school_id' , 'usergroup_id' , 'ref_id' ,'name', 'email', 'password','mobile_no','is_activated', 'email_verification_code' , 'email_verified' , 'email_verified_at' , 'platform_token' , 'remember_token', 'registration_role', 'teacher_designations', 'registration_number'
+        'school_id' , 'usergroup_id' , 'ref_id' ,'name', 'email', 'password','mobile_no','is_activated', 'email_verification_code' , 'email_verified' , 'email_verified_at' , 'platform_token' , 'remember_token', 'registration_role', 'teacher_designations', 'registration_number',
+        'google_id', 'google_avatar', 'google_token',
     ];
 
     protected $casts = [

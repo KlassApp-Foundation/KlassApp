@@ -111,9 +111,11 @@ Route::post('/verifyotp', 'OTPController@store');
 
 // Google OAuth
 Route::get('/auth/google', 'Auth\GoogleAuthController@redirect');
+Route::post('/auth/google/start', 'Auth\GoogleAuthController@start')->name('auth.google.start');
 Route::get('/auth/google/callback', 'Auth\GoogleAuthController@callback');
 
-// Google Onboarding (interstitial after first Google sign-in)
+// Legacy Google interstitial — redirects authenticated users into Toshi onboarding.
+// Public marketing /welcome content is separate; these routes keep old bookmarks working.
 Route::get('/welcome', 'Auth\GoogleAuthController@showOnboarding')->middleware('auth');
 Route::post('/welcome', 'Auth\GoogleAuthController@storeOnboarding')->middleware('auth');
 

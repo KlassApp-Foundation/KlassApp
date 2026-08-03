@@ -46,16 +46,18 @@ class DashboardController extends Controller
     */
     public function index(Request $request) 
     {
-
-        
         $admin_id  =   Auth::id();
         $school_id =   Auth::user()->school_id;
 
         $dashboard = $this->adminDashboard( $school_id, $admin_id );
 
-        $standardLink = StandardLink::where('id',$request->standardLink_id)->first();
+        $standardLink = $request->standardLink_id
+            ? StandardLink::where('id', $request->standardLink_id)->first()
+            : null;
         
-        $selected_teacher = User::where('id',$request->teacher_id)->first();
+        $selected_teacher = $request->teacher_id
+            ? User::where('id', $request->teacher_id)->first()
+            : null;
 
         // ── Plan usage data for banner ──
         $plan = null;
@@ -79,6 +81,13 @@ class DashboardController extends Controller
             $onboardingMissing = \App\Helpers\OnboardingHelper::getMissingSteps($school_id, Auth::id());
         }
 
+        $setupIncomplete = ! empty($dashboard['setupIncomplete'])
+            || (Auth::user()->usergroup_id === 3 && ! empty($onboardingMissing));
+
+        $openToshiOnboarding = $request->boolean('toshi_onboarding')
+            || session()->pull('open_toshi_onboarding', false)
+            || $setupIncomplete;
+
         $pendingApprovals = $school_id
             ? Approval::where('state', PendingState::class)
                 ->whereHas('approvable', fn($q) => $q->where('school_id', $school_id))
@@ -87,7 +96,9 @@ class DashboardController extends Controller
 
         // ── Fee Collection Trend (default: monthly, last 6 periods) ──
         $trendPeriod = in_array($request->period, ['day', 'week', 'month']) ? $request->period : 'month';
-        $feeTrend = $this->computeFeeTrend($school_id, $trendPeriod, 6);
+        $feeTrend = $setupIncomplete
+            ? ['labels' => [], 'values' => []]
+            : $this->computeFeeTrend($school_id, $trendPeriod, 6);
 
         return view( '/admin/dashboard/dashboard', [
             'dashboard' => $dashboard,
@@ -97,6 +108,8 @@ class DashboardController extends Controller
             'plan' => $plan,
             'planUsage' => $planUsage,
             'onboardingMissing' => $onboardingMissing,
+            'setupIncomplete' => $setupIncomplete,
+            'openToshiOnboarding' => $openToshiOnboarding,
             'feeTrend' => $feeTrend,
             'trendPeriod' => $trendPeriod,
         ] );

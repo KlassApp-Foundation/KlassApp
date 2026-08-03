@@ -9,7 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('schools', function (Blueprint $table) {
-            $table->string('curriculum', 50)->default('uneb')->after('ministry_code');
+            // Nullable so SaaS signup can leave curriculum unanswered for Toshi.
+            $table->string('curriculum', 50)->nullable()->default(null)->after('ministry_code');
             $table->index('curriculum');
         });
     }

@@ -34,44 +34,13 @@ class RegistrationMinistryCodeTest extends TestCase
         ]);
     }
 
-    public function test_registration_with_ministry_code_saves_code_on_school(): void
+    public function test_registration_creates_placeholder_school_without_ministry_code(): void
     {
-        $unique = 'RegTest' . now()->timestamp;
-
+        // Ministry code is deferred to Toshi onboarding under the minimal SaaS signup.
         $response = $this->post('/register', [
-            'school_name' => $unique . ' School',
             'name' => 'Test Admin',
-            'email' => $unique . '@example.com',
-            'mobile_no' => '712345678',
-            'country' => 'Uganda',
-            'curriculum' => 'uneb',
-            'student_size' => '100-500',
-            'password' => 'Secret123!',
-            'password_confirmation' => 'Secret123!',
-            'termsandcondn' => '1',
-            'ministry_code' => '876543',
-        ]);
-
-        $response->assertStatus(302);
-        $response->assertSessionHasNoErrors();
-
-        $school = School::where('name', $unique . ' School')->first();
-        $this->assertNotNull($school, 'School was not created');
-        $this->assertEquals('876543', $school->ministry_code);
-    }
-
-    public function test_registration_without_ministry_code_creates_school_with_null_code(): void
-    {
-        $unique = 'RegTestNoCode' . now()->timestamp;
-
-        $response = $this->post('/register', [
-            'school_name' => $unique . ' School',
-            'name' => 'Test Admin',
-            'email' => $unique . '@example.com',
-            'mobile_no' => '712345679',
-            'country' => 'Uganda',
-            'curriculum' => 'uneb',
-            'student_size' => '100-500',
+            'email' => 'reg-ministry@example.com',
+            'phone' => '0701234567',
             'password' => 'Secret123!',
             'password_confirmation' => 'Secret123!',
             'termsandcondn' => '1',
@@ -79,9 +48,11 @@ class RegistrationMinistryCodeTest extends TestCase
 
         $response->assertStatus(302);
         $response->assertSessionHasNoErrors();
+        $response->assertRedirect('/admin/dashboard?toshi_onboarding=1');
 
-        $school = School::where('name', $unique . ' School')->first();
+        $school = School::where('email', 'reg-ministry@example.com')->first();
         $this->assertNotNull($school, 'School was not created');
         $this->assertNull($school->ministry_code);
+        $this->assertSame("Test's School", $school->name);
     }
 }
