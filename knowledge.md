@@ -1985,7 +1985,7 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **School_id scoping:** ✅ All reports scope by `school_id` via `Auth::user()->school_id`
 - **Academic year scoping:** ✅ Holiday reports use `SiteHelper::getAcademicYear()`, student reports use `MemberFilter` which is academic-year-aware
 - **Date-range filtering:** Student export reports offer class/status filters but not explicit date-range or term selection
-- ⚠️ **No dedicated academic report cards or termly report generation** — reports are primarily CSV exports of records, not formatted academic documents. If report card generation is expected, it doesn't exist here.
+- ⚠️ **This module (`ReportsController` / `/admin/reports`) is CSV/operational exports only** — not academic report cards. Academic per-student PDF report cards **do** exist elsewhere: `DownloadStudentReport` + `admin.marks.student-report` (`GET /admin/report/student/{learner}/class/{class}/{exam}`), plus WhatsApp/alumni PDF paths. See `docs/toshi-report-cards-audit.md` (2026-08-03). Missing: class/term **batch** generation and full distribution (email/portal blast).
 
 ### Module 5: Messaging — ❌ PARTIAL (1 MEDIUM issue)
 
@@ -2803,7 +2803,7 @@ Three major work streams completed: (1) students list page redesigned from Vue t
 
 ### Still Open — Priority Order for Next Session
 1. Per-school custom grading real click-test — change a boundary via `/admin/grades`, confirm it takes effect on real mark, confirm isolation between schools.
-2. Report card content brief review — draft at `.sisyphus/plans/report-card-design-spec.md`.
+2. Report card content brief review — ~~draft at `.sisyphus/plans/report-card-design-spec.md`~~ (**orphaned path — file never committed**). Closest plan: `.sisyphus/plans/part-c-parent-report-cards.md`. Full reconciliation: `docs/toshi-report-cards-audit.md` (2026-08-03).
 3. Full redesign roadmap — Step 2 (pattern library) and Step 3 (per-page process) ready to proceed: Teacher → Accountant → Student → Librarian → Receptionist.
 4. Discrepancy to resolve: earlier notes claimed Accountant/Librarian/Receptionist dashboards "didn't exist" — today's inventory found they do. Needs reconciliation before redesign work starts on them.
 5. Trial plan-selection click-test (Toshi onboarding, Growth vs Premium) — still deferred, not yet done.
@@ -6038,3 +6038,10 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Key decisions**: Do not add faker to prod; keep llm-health cron separate; add `schedule:run` so Kernel monthly adversarial actually fires
 - **Status**: ✅ Done — fix PR + prod enable
 - **Edge cases flagged**: First #147 deploy alone was insufficient without factory-free seed; schedule:list showed entry before cron existed (misleading)
+
+### 2026-08-03: Part A — Report cards knowledge reconciliation (docs only)
+- **Work done**: Branched `audit/toshi-report-cards` from `origin/main`. Audited `DownloadStudentReport`, `student-report.blade.php`, routes, helpers, WhatsApp/alumni PDF paths. Reconciled KB conflict (Reports CSV hub vs academic PDF). Live DomPDF generation for Primary (Micheal Okwir #58), Nursery (Brian Okello #47), O-Level (Andrew Ssentongo #66), A-Level (Jackie Namuyomba #75) — all returned `%PDF-1.7`. Documented gaps (batch/termly/distribution). Confirmed `report-card-design-spec.md` never existed in git. **No Toshi tools implemented or proposed.**
+- **Files modified**: `docs/toshi-report-cards-audit.md` (new), `knowledge.md` (conflict note + session log)
+- **Key decisions**: Treat older “CSV only / no report cards” note as scoped to Reports module only; defer Toshi tool scope until product clarifies termly/batch vs per-exam PDF
+- **Status**: ✅ Done — docs + draft PR
+- **Edge cases flagged**: Local `nursery_assessments` empty (nursery path shows Domain table with `—`); blade `academicYear` on string error on every render; O/A share Primary numeric branch (under-tested, not missing)
