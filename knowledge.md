@@ -240,12 +240,23 @@
 
 ---
 
-## Current Status: August 3, 2026 (School Admin Batch 1 PR; Toshi LLM safety on `main`)
+## Current Status: August 3, 2026 (`origin/main` tip `862ba92` — Teacher Batch 2 merged)
 
-- **🚧 School Admin Batch 1** (`feature/toshi-schooladmin-batch1`): notices/events/holidays create/list/update via `SchoolCommsSkill` — rebasing onto main / opening PR. Notices = same `notice_board` as Receptionist; events post-#131 Gate; holidays = `Events.category=holidays`; Deputy inherits; WA lists only. **Batch 2 needs its own Part A.**
-- **✅ Toshi on `main`**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config fail-loud + llm-health (#143–#149 era).
-- **Open**: Preference memory #138; Google connector audit #139 (skip Google first); digests after prefs; WA wave-2 deferred; Slack/Notion **shelved**.
-- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log updated at every done-as-scoped.
+- **`origin/main` tip**: `862ba92` — `Merge pull request #157` (Teacher Batch 2). Verified via `git log origin/main -20` / `gh pr list`.
+- **✅ Merged Aug 2–3 (on main; deploy separate)**:
+  - **#142+** safety/adversarial + `UsesToshiLlm`; **#143–#145** llm-status / dual-config fail-loud / llm-health
+  - **#147–#149** adversarial-live in-process (no phpunit/faker on prod) + durable schedule logging; prod adversarial gate live
+  - **#150** School Admin Batch 1 — notices/events/holidays via `SchoolCommsSkill` (merge `e80fc87`)
+  - **#152** homework-manage + studentHomework-review Gates; **#154** ug5 homework destroy ownership (`teacher_id`)
+  - **#153** School Admin Batch 2 — timetable + homework oversight (merge `102f92e`)
+  - **#156** teacher-leave + studentAssignment-review Gates (merge `0cb5b76`); **#157** Teacher Batch 2 — submission review + own leave (merge `862ba92`)
+- **🚧 Open PRs**:
+  - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
+  - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
+  - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
+- **✅ Toshi on `main` (cumulative)**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config/llm-health (#143–#149), School Admin Batch 1–2 (#150/#153), Teacher Batch 2 (#157) + Gate fixes (#152/#154/#156).
+- **Report cards**: Academic per-student PDF **exists** (`DownloadStudentReport`; shared `StudentReportCardService` on #159). `/admin/reports` hub remains CSV/operational exports only — do not claim “no report cards”. Gaps: class/term batch + full distribution. See `docs/toshi-report-cards-audit.md` / #158.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
 
 ## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
 
@@ -621,11 +632,63 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+### 2026-08-03: Knowledge sync + session-log Cursor rule
+- **Work done**: Created always-apply rule `.cursor/rules/knowledge-session-log.mdc` (log through PR open + merge; Current Status ≤1 session behind main; no stale NOT PUSHED after ship). Updated `klassapp-knowledge` skill Session End protocol. Synced `knowledge.md` from richest worktree copies (`KlassApp-toshi-report-cards` + workspace merge stubs + #159 tip) onto `chore/knowledge-sync-aug3` off `origin/main` @ `862ba92`.
+- **Files modified**: `.cursor/rules/knowledge-session-log.mdc`, `knowledge.md`; skill `/Users/mac/.agents/skills/klassapp-knowledge/SKILL.md`
+- **Key decisions**: Prefer branch+PR for KB sync; merge when docs-only checks green
+- **Status**: 🚧 This PR
+- **Edge cases flagged**: Canonical path remains `/Users/mac/projects/KlassApp/knowledge.md` — sync dirty worktrees after merge
+
+### 2026-08-03: Toshi report cards v1 (per-student PDF) — PR #159
+- **Work done**: Fixed `academicYear` blade bug (+ null-safe nextTerm/floor); extracted `StudentReportCardService` shared by `DownloadStudentReport`, `WhatsAppController@report`, and Toshi tools; SA `GenerateStudentReportCardTool` on `SchoolAcademicsOpsSkill`; Teacher tool on `TeacherTeachingOpsSkill` (assigned class); Deputy inherits (not Settings). Live PDF: year **2026** in Primary/Nursery/O/A. Nursery assessments still **0** rows.
+- **Branch / tip**: `feature/toshi-report-cards-v1` @ `6f13017` (worktree `KlassApp-toshi-report-cards-v1`)
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/159 — **open** (not merged, not deployed)
+- **Tests**: 39 passed (272 assertions) for report-card + Batch2/Deputy/pipeline suites
+- **Status**: ✅ Done — PR open
+- **Edge cases flagged**: helper `learner()` still requires marks rows even for nursery; nursery descriptive content unverified without assessment seed
+
+### 2026-08-03: Teacher Batch 2 merged (PR #157)
+- **Work done**: Merged GitHub PR #157 into `main` via merge commit (checks green). Teacher Batch 2 — submission review + own leave.
+- **Merge commit**: `862ba92c8e9f0062caee2a4dcfa6ea484a64f8db`
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/157
+- **Status**: ✅ MERGED (not deployed)
+
+### 2026-08-03: Teacher Batch 2 Part A — remaining-domain audit
+- **Work done**: Docs-only inventory on `audit/toshi-teacher-batch2`. Proposed Batch 2 = homework/assignment submission review + own leave; Gate IDOR on assignment review + leave approve fixed in #156 before tools.
+- **Files modified**: `docs/toshi-teacher-batch2-audit.md`, `knowledge.md`
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/155 — docs audit still open
+- **Status**: ✅ Done — docs; tools shipped via #157
+
+### 2026-08-03: School Admin Batch 2 merged (PR #153)
+- **Work done**: Rebased Batch 2 onto main post-#154; Deputy tool-count 31→42; merged `SchoolAcademicsOpsSkill` timetable + homework oversight.
+- **Merge commit**: `102f92e81b97565b8ef8d2128609c1c900a02e98`
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/153
+- **Status**: ✅ MERGED (not deployed)
+
+### 2026-08-03: Homework Gate Part B + School Admin Batch 2
+- **Work done**: Merged Gate Option A #152 (`homework-manage` + `studentHomework-review`); opened then merged Batch 2 #153.
+- **Gate PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/152 — merge `c6d3f17`
+- **Batch 2 PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/153 — merge `102f92e`
+- **Status**: ✅ Both merged to main
+
+### 2026-08-03: Legacy homework Gate — ug5 teacher destroy ownership (PR #154)
+- **Work done**: Legacy `homework` Gate was school_id-only; Teacher/API destroy could delete any school homework. Fixed: ug5 + school_id + `teacher_id`; ug3 stays on `homework-manage`.
+- **Merge commit**: `a7aa6e7`
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/154
+- **Status**: ✅ MERGED — unblocked #153 rebase
+
+### 2026-08-03: School Admin Batch 1 merged (PR #150)
+- **Work done**: Merged PR #150 — notices/events/holidays via SchoolCommsSkill.
+- **Merge commit**: `e80fc8728745cd4429630f19e35d985e80d7210e`
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/150
+- **Status**: ✅ MERGED (not deployed)
+
 ### 2026-08-03: Teacher Batch 2 tools (teaching ops)
 - **Work done**: After Gate #156 merge — `TeacherTeachingOpsSkill` + `RouteToTeacherTeachingOpsSkillTool` on TeacherOperationsAgent. Tools: homework review (list/show/check via SchoolAcademicsOpsActionService + studentHomework-review), assignment review/mark (TeacherActionService + studentAssignment-review), own leave list/show/cancel (teacher-leave only). UsesToshiLlm on skill.
 - **Files modified**: TeacherTeachingOpsSkill, RouteToTeacherTeachingOpsSkillTool, 9 Teacher/* tools, TeacherActionService, TeacherOperationsAgent, TeacherBatch2TeachingOpsToolsTest, TeacherOperationsToolsTest (13 tools), knowledge.md
 - **Key decisions**: Skill+RouteTo pattern (not flattening 9 tools onto agent); reuse SA homework service methods; do not merge tools PR unless requested
-- **Status**: 🚧 PR open — not merged
+- **PR / merge**: https://github.com/KlassApp-Foundation/KlassApp/pull/157 — merge commit `862ba92`
+- **Status**: ✅ MERGED to main (not deployed)
 - **Edge cases flagged**: Peer leave approve still held; studentassignment Gate untouched
 
 ### 2026-08-03: Teacher leave + assignment-review Gates
@@ -640,7 +703,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Committed uncommitted Batch 1 work on `feature/toshi-schooladmin-batch1` (worktree `KlassApp-toshi-schooladmin-batch1`). Rebased onto `origin/main` (#141–#149 era); only conflict was `knowledge.md` Session Log (kept both). Verified ToshiLlm path: **SchoolCommsSkill now uses `UsesToshiLlm`** (same as Orchestrator/OperationsAgents) so `prompt()` hits `ToshiLlm::assertConfigConsistent()` + openai-compatible model — not `ai.default`/`openai`. Sibling skills (Academic/Fee/…) still lack the trait (pre-existing gap on main — out of Batch 1 scope). Leaf tools unchanged (no LLM). Re-ran Batch 1 suite; pushed PR (do not merge from this session).
 - **Files modified**: Batch 1 skill/tools/service/wiring (prior commit) + `SchoolCommsSkill` UsesToshiLlm + test assertion + knowledge
 - **Key decisions**: Fix SchoolCommsSkill only (new prompt()-ing agent); document sibling-skill gap for follow-up; Batch 1 scope ends here — Batch 2 needs Part A
-- **Status**: ✅ Done — PR opened, not merged
+- **PR / merge**: https://github.com/KlassApp-Foundation/KlassApp/pull/150 — merge commit `e80fc87`
+- **Status**: ✅ MERGED to main (not deployed)
 - **Edge cases flagged**: AcademicSkill et al. still resolve via `ai.default` without UsesToshiLlm — potential dual-config / provider drift on nested skill prompts
 
 ### 2026-08-03: Adversarial schedule durable logging + ops backlog
@@ -654,14 +718,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Structural fix for empty `agent_conversations` incident (NVIDIA `TOSHI_LLM_MODEL` + DeepSeek `OPENAI_COMPATIBLE_*`). Added `ToshiLlm::assertConfigConsistent()` (throws `AmbiguousToshiLlmConfigException` on conflicting dual env / model↔host family mismatch) called from `model()`/`provider()` first use — not App boot. Added `php artisan toshi:llm-health` (one cheap live `chat/completions`, verifies content; `Log::critical` + exit 1 on failure). Docs + tests for incident shape and failing provider response. **Schedule not wired**; **`.env` not touched**.
 - **Files modified**: `app/AiAgents/ToshiLlm.php`, `app/Exceptions/AmbiguousToshiLlmConfigException.php`, `app/Console/Commands/ToshiLlmHealthCommand.php`, `config/toshi.php` (`llm_env`), `tests/Feature/Toshi/ToshiLlmConfigConsistencyTest.php`, `ToshiLlmHealthCommandTest.php`, `ToshiLlmStatusCommandTest.php`, `docs/toshi-prod-health-check.md`, `docs/toshi-safety-practices-audit.md`, `knowledge.md`
 - **Key decisions**: Fail on first Toshi LLM resolve + health command (not HTTP boot); no Sentry in repo → critical log + non-zero exit for cron/k8s; prefer `OPENAI_COMPATIBLE_*` as source of truth; leave Kernel schedule to OpenCode
-- **Status**: 🚧 PR open
+- **PR / merge**: https://github.com/KlassApp-Foundation/KlassApp/pull/144 (+ #145) — on main
+- **Status**: ✅ MERGED to main
 - **Edge cases flagged**: After deploy, leftover `TOSHI_LLM_MODEL=meta/llama-…` alongside `OPENAI_COMPATIBLE_MODEL=deepseek-v4-flash` will throw until ops unsets/aligns the legacy var
 
 ### 2026-08-02: Merge #142 + Toshi LLM runtime diagnostic
 - **Work done**: Merged PR **#142** (`feature/toshi-safety-practices`) to main via merge commit `50f01023fa77cca9a9c6a3509e1a458478ca6d62`. Follow-up branch `feature/toshi-llm-diagnostic`: Artisan `toshi:llm-status` reports live `ToshiLlm` provider/model/URL-host/key-configured/config-checksum with **no secrets**; docs note repo-default live-LLM confirmation + VPS pending; tests assert provider/model present and fake key absent from output.
 - **Files modified**: `app/AiAgents/ToshiLlm.php`, `app/Console/Commands/ToshiLlmStatusCommand.php`, `tests/Feature/Toshi/ToshiLlmStatusCommandTest.php`, `docs/toshi-safety-practices-audit.md`, `knowledge.md`
 - **Key decisions**: Merge #142 only as requested; diagnostic on separate PR off post-merge main (Artisan-only — no HTTP diagnostic pattern in repo); VPS confirmation remains human `docker exec sms-app php artisan toshi:llm-status` after deploy
-- **Status**: 🚧 Diagnostic PR open (not auto-merged); ops runnable after merge+deploy
+- **PR / merge**: https://github.com/KlassApp-Foundation/KlassApp/pull/143 — merged to main
+- **Status**: ✅ MERGED to main
 - **Edge cases flagged**: Prod SSH still publickey-denied from agent env; do not print full URL (may embed creds)
 
 ### 2026-08-02: Verify production Toshi model vs adversarial-live
@@ -675,7 +741,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Confirmed `toshi:adversarial-live` was docs-only → implemented Artisan command + `@group live-llm` harness (`LiveAdversarialSoftRefusalTest` + scorer). One real run: DeepSeek `deepseek-chat` via openai-compatible; phpunit sqlite `:memory:` (not prod); WhatsApp Http::fake. **16/16 PASS**, 0 flags/false-successes; ~20k tokens; est ≈ $0.0066. Wired monthly schedule first Sunday 02:00 Africa/Kampala in `app/Console/Kernel.php` gated by `TOSHI_ADVERSARIAL_LIVE=1` + key (`--scheduled` no-ops). Re-ran CI suite: 30 passed (16 fake + 7 escalation + command/scorer). Pushed branch + opened PR (do not merge).
 - **Files modified**: `ToshiAdversarialLiveCommand.php`, `LiveAdversarialSoftRefusalTest.php`, `LiveAdversarialScorer.php`(+Test), `ToshiAdversarialLiveCommandTest.php`, `Kernel.php`, `docs/toshi-safety-practices-audit.md`, `knowledge.md` (+ Part B adversarial/escalation files from earlier)
 - **Key decisions**: Clean live run → schedule wired but inert without env gate; not jailbreak proof; cost negligible
-- **Status**: ✅ Done — PR opened, not merged
+- **PR / merge**: https://github.com/KlassApp-Foundation/KlassApp/pull/142 — merge `50f0102`
+- **Status**: ✅ MERGED to main; adversarial-live enabled on prod after #147–#148
 - **Edge cases flagged**: Production must keep `TOSHI_ADVERSARIAL_LIVE` unset until intentionally enabled; worktree `.env` symlinked from main KlassApp for local keys only (not committed)
 
 ### 2026-08-02: Toshi Safety Practices Part B (adversarial suite + WA human escalation)
@@ -712,10 +779,10 @@ Phase B: Mix→Vite + Vue 3 runtime
   - **#123** IDOR docs tracker; **#130** assignment/homework ownership; **#131** event destroy+class visibility; **#132** post Gate (`212418d`)
   - **#133** WhatsApp channel audit docs; **#134** confirm bridge; **#135** read-only WA + Parent; **#136** WA writes wave 1 (`f11e5cb`) **deployed** (`TOSHI_WHATSAPP_CHANNEL_ENABLED`, pending-confirm + agent_conversations migrations)
   - **#137** Deputy Admin ug4 (`20c54ad`)
-- **Open / not merged**: **#138** preference memory; **#139** Google MCP audit (skip Google first); **#140** MCP audit gap + Client construction ban (this PR)
-- **Shelved / deferred**: Slack/Notion product connectors (spike proved plumbing; demand unproven; payroll/impersonation stay web-only); digests after prefs; WA wave-2 until usage signal; MCP Approvable/HITL for writes
-- **Key decisions**: Named MCP clients only; direct Client construction banned by architecture test; knowledge closeouts required at done-as-scoped
-- **Status**: ✅ Closeout logged; #140 includes construction ban
+- **Open / not merged (as of this closeout; later updated)**: then #138 preference memory; #139 Google MCP audit; #140 MCP audit gap (merged same day). Subsequent merges through #157 — see Current Status Aug 3 tip.
+- **Shelved / deferred**: Slack/Notion product connectors; digests after prefs; WA wave-2 until usage signal; MCP Approvable/HITL for writes
+- **Key decisions**: Named MCP clients only; direct Client construction banned by architecture test; knowledge closeouts required at done-as-scoped through PR/merge
+- **Status**: ✅ Closeout logged; #140 merged; Current Status supersedes open-PR list
 
 ### 2026-08-02: Reconcile MCP ToolInvoked audit gap (fix/toshi-mcp-audit-gap)
 - **Work done**: Part 1 reconciled — main already has `LogToolInvoked` on `ToolInvoked` (not HITL-only). Spike docs were wrong; gap was raw `callTool` bypass + McpTool name = `class_basename`. Widened listeners; AuditingMcpClientManager so named `Mcp::client()->callTool` always audits; architecture test bans direct `Client::web`/`local` outside `routes/ai.php`.
@@ -1985,7 +2052,7 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **School_id scoping:** ✅ All reports scope by `school_id` via `Auth::user()->school_id`
 - **Academic year scoping:** ✅ Holiday reports use `SiteHelper::getAcademicYear()`, student reports use `MemberFilter` which is academic-year-aware
 - **Date-range filtering:** Student export reports offer class/status filters but not explicit date-range or term selection
-- ⚠️ **No dedicated academic report cards or termly report generation** — reports are primarily CSV exports of records, not formatted academic documents. If report card generation is expected, it doesn't exist here.
+- ⚠️ **This module (`ReportsController` / `/admin/reports`) is CSV/operational exports only** — not academic report cards. Academic per-student PDF report cards **do** exist elsewhere: `DownloadStudentReport` + `admin.marks.student-report` (`GET /admin/report/student/{learner}/class/{class}/{exam}`), plus WhatsApp/alumni PDF paths. See `docs/toshi-report-cards-audit.md` (2026-08-03). Missing: class/term **batch** generation and full distribution (email/portal blast).
 
 ### Module 5: Messaging — ❌ PARTIAL (1 MEDIUM issue)
 
@@ -2803,7 +2870,7 @@ Three major work streams completed: (1) students list page redesigned from Vue t
 
 ### Still Open — Priority Order for Next Session
 1. Per-school custom grading real click-test — change a boundary via `/admin/grades`, confirm it takes effect on real mark, confirm isolation between schools.
-2. Report card content brief review — draft at `.sisyphus/plans/report-card-design-spec.md`.
+2. Report card content brief review — ~~draft at `.sisyphus/plans/report-card-design-spec.md`~~ (**orphaned path — file never committed**). Closest plan: `.sisyphus/plans/part-c-parent-report-cards.md`. Full reconciliation: `docs/toshi-report-cards-audit.md` (2026-08-03).
 3. Full redesign roadmap — Step 2 (pattern library) and Step 3 (per-page process) ready to proceed: Teacher → Accountant → Student → Librarian → Receptionist.
 4. Discrepancy to resolve: earlier notes claimed Accountant/Librarian/Receptionist dashboards "didn't exist" — today's inventory found they do. Needs reconciliation before redesign work starts on them.
 5. Trial plan-selection click-test (Toshi onboarding, Growth vs Premium) — still deferred, not yet done.
@@ -6022,14 +6089,16 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Work done**: Docs-only audit on `audit/toshi-safety-practices` (worktree off `origin/main` @ `72c2ca6`). Investigated isolation/WhatsApp write-exclusion test patterns, Laravel AI `Agent::fake` vs live LLM (`ToshiE2EVerificationTest`), and absence of helpdesk/live-agent infra. Proposed adversarial suite under prompt pressure + thin WhatsApp human-escalation MVP distinct from confirmation bridge.
 - **Files modified**: `docs/toshi-safety-practices-audit.md` (new), `knowledge.md` (this log)
 - **Key decisions**: No live LLM in CI primary adversarial suite (architecture-under-pressure; optional `@group live-llm` later); suite at `tests/Feature/Toshi/Adversarial/` with ~3–4 scenarios × Teacher/Student/Parent/SchoolAdmin-WA; escalation = explicit intent MVP via ActivityLog + optional Task + staff WhatsApp notify (no new table); receivers role-dependent (parent/student→Receptionist, staff→School Admin)
-- **Status**: ✅ Done — committed locally, not pushed
+- **PR / merge**: preceded #142 — https://github.com/KlassApp-Foundation/KlassApp/pull/142 merged
+- **Status**: ✅ Superseded by Part B + #142 on main
 - **Edge cases flagged**: No support-ticket/helpdesk models; VisitorLog/CallLog/Postal are operational registers not conversation queues; `Agent::fake` cannot prove jailbreak resistance; fee “escalation” and `toshi.escalated_model` are unrelated semantics
 
 ### 2026-08-02: Toshi adversarial-live in-process for --no-dev prod
 - **Work done**: Confirmed PR #144 merged (`03e481b`) and production deploy at `98d02d0` (= `origin/main`, includes #144+#145). `phpunit` absent in prod image. Refactored `toshi:adversarial-live` from shelling to `php artisan test` → in-process `LiveAdversarialRunner` (sqlite `:memory:`, Http::fake WA hosts, agent `prompt()`, same scorer). Chose option **(b)**. Kept gated monthly Kernel schedule. Did not touch prod `.env` / llm-health cron.
 - **Files modified**: `LiveAdversarialRunner.php` (new), `LiveAdversarialScorer.php` + `AdversarialPromptFixtures.php` moved under `app/`, `ToshiAdversarialLiveCommand.php`, Kernel comments, live/command tests, `docs/toshi-safety-practices-audit.md`, `docs/toshi-prod-health-check.md`, `knowledge.md`
 - **Key decisions**: (b) over monthly human reminder — unattended silent failure class needs prod-cronable signal; gate `TOSHI_ADVERSARIAL_LIVE` stays off until ops enables; production MySQL never written
-- **Status**: ✅ Done — PR opened from `fix/toshi-adversarial-live-prod`
+- **PR / merge**: https://github.com/KlassApp-Foundation/KlassApp/pull/147 (+ #148/#149)
+- **Status**: ✅ MERGED to main; prod adversarial unattended after #148
 - **Edge cases flagged**: Full sqlite migrate on each run (monthly OK); Http::fake patterns must not swallow DeepSeek; enable gate carefully (token cost ~$0.01/run)
 
 ### 2026-08-02: Deploy #147 + enable unattended adversarial-live
@@ -6038,3 +6107,11 @@ Inventory source: Jul 29 DEV smoke — **17 unique** MODE 2 / Vue warns (login�
 - **Key decisions**: Do not add faker to prod; keep llm-health cron separate; add `schedule:run` so Kernel monthly adversarial actually fires
 - **Status**: ✅ Done — fix PR + prod enable
 - **Edge cases flagged**: First #147 deploy alone was insufficient without factory-free seed; schedule:list showed entry before cron existed (misleading)
+
+### 2026-08-03: Part A — Report cards knowledge reconciliation (docs only)
+- **Work done**: Branched `audit/toshi-report-cards` from `origin/main`. Audited `DownloadStudentReport`, `student-report.blade.php`, routes, helpers, WhatsApp/alumni PDF paths. Reconciled KB conflict (Reports CSV hub vs academic PDF). Live DomPDF generation for Primary (Micheal Okwir #58), Nursery (Brian Okello #47), O-Level (Andrew Ssentongo #66), A-Level (Jackie Namuyomba #75) — all returned `%PDF-1.7`. Documented gaps (batch/termly/distribution). Confirmed `report-card-design-spec.md` never existed in git. **No Toshi tools implemented or proposed.**
+- **Files modified**: `docs/toshi-report-cards-audit.md` (new), `knowledge.md` (conflict note + session log)
+- **Key decisions**: Treat older “CSV only / no report cards” note as scoped to Reports module only; defer Toshi tool scope until product clarifies termly/batch vs per-exam PDF
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/158 (`audit/toshi-report-cards` @ `c9db10c`) — **draft**
+- **Status**: ✅ Done — draft PR open (not merged)
+- **Edge cases flagged**: Local `nursery_assessments` empty (nursery path shows Domain table with `—`); blade `academicYear` on string error on every render; O/A share Primary numeric branch (under-tested, not missing)

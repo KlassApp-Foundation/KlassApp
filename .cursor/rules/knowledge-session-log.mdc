@@ -1,0 +1,32 @@
+---
+description: "Require knowledge.md Session Log + PR/merge logging so Current Status never lags merged main."
+alwaysApply: true
+---
+
+# KlassApp — Knowledge Session Log (PR → Merge)
+
+Canonical file: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Keep one body of truth; sync worktree copies back here.
+
+## When to update
+
+1. **Done-as-scoped task** — Append under `## Session Log` (date, work done, files, decisions, status, edge cases). Update structural sections if routes/services/models/config changed.
+2. **Opening a PR** — Same session entry (or amend it): **PR number**, **URL**, **branch**. Status = PR open / awaiting review — **not** “local only / not pushed”.
+3. **Merging** — Log **merge commit SHA**, tip merged, PR URL. Status = ✅ MERGED. Refresh **Current Status** to match `origin/main`.
+
+## Current Status freshness
+
+- Top **Current Status** must not lag more than **one session** behind merged `main`.
+- After merge: tip SHA / PR numbers / open-vs-merged must match `gh pr list` + `git log origin/main`.
+- Do **not** leave “NOT PUSHED”, “opening PR”, or “local only” stubs after the PR is open or merged — correct them in the same closeout.
+
+## Minimal examples
+
+```markdown
+# PR open
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/159 (`feature/…` @ `6f13017`)
+- **Status**: ✅ Done — PR open (not merged)
+
+# After merge
+- **Merge commit**: `862ba92…`
+- **Status**: ✅ MERGED (not deployed)
+```
