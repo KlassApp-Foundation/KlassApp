@@ -33,6 +33,12 @@ class StudentAssignmentController extends Controller
     public function submittedAssignmentList(Request $request,$assignment_id)
     {
         //
+        $assignment = Assignment::where('id', $assignment_id)->first();
+
+        if (! Gate::allows('studentAssignment-review', $assignment)) {
+            abort(403);
+        }
+
         $studentAssignment = StudentAssignment::where([['assignment_id',$assignment_id],['status','submitted']])->get();
         $list = StudentAssignmentResource::collection($studentAssignment);
 
@@ -51,6 +57,12 @@ class StudentAssignmentController extends Controller
     public function completedAssignmentList(Request $request,$assignment_id)
     {
         //
+        $assignment = Assignment::where('id', $assignment_id)->first();
+
+        if (! Gate::allows('studentAssignment-review', $assignment)) {
+            abort(403);
+        }
+
         $studentAssignment = StudentAssignment::where([['assignment_id',$assignment_id],['status','completed']])->get();
         $list = StudentAssignmentResource::collection($studentAssignment);
 
@@ -69,11 +81,14 @@ class StudentAssignmentController extends Controller
      */
     public function store(StudentAssignmentUpdateRequest $request,$id)
     {
-        //
+        $studentAssignment = StudentAssignment::with('assignment')->where('id',$id)->first();
+
+        if (! Gate::allows('studentAssignment-review', $studentAssignment)) {
+            abort(403);
+        }
+
         try
         {
-            $studentAssignment     =   StudentAssignment::where('id',$id)->first();
-
             $studentAssignment->obtained_marks  =   $request->obtained_marks;
             $studentAssignment->comments        =   $request->comments;
             $studentAssignment->marks_given_by  =   Auth::id();
@@ -126,7 +141,12 @@ class StudentAssignmentController extends Controller
     public function show($id)
     {
         //
-        $studentAssignment     =   StudentAssignment::where('id',$id)->first();
+        $studentAssignment     =   StudentAssignment::with('assignment')->where('id',$id)->first();
+
+        if (! Gate::allows('studentAssignment-review', $studentAssignment)) {
+            abort(403);
+        }
+
         $array = [];
 
         $array['obtained_marks']    =   $studentAssignment->obtained_marks;
@@ -148,11 +168,14 @@ class StudentAssignmentController extends Controller
      */
     public function update(StudentAssignmentUpdateRequest $request, $id)
     {
-        //
+        $studentAssignment = StudentAssignment::with('assignment')->where('id',$id)->first();
+
+        if (! Gate::allows('studentAssignment-review', $studentAssignment)) {
+            abort(403);
+        }
+
         try
         {
-            $studentAssignment     =   StudentAssignment::where('id',$id)->first();
-
             $studentAssignment->obtained_marks  =   $request->obtained_marks;
             $studentAssignment->comments        =   $request->comments;
             $studentAssignment->marks_given_by  =   Auth::id();

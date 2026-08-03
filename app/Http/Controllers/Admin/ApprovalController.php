@@ -11,6 +11,7 @@ use App\States\Approval\Rejected;
 use App\Traits\LogActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class ApprovalController extends Controller
 {
@@ -49,6 +50,8 @@ class ApprovalController extends Controller
     {
         $request->validate(['comments' => 'nullable|string|max:1000']);
 
+        $this->authorizeTeacherLeaveManage($approval);
+
         if (! $approval->state->canTransitionTo(Approved::class)) {
             return back()->with('error', 'This approval cannot be transitioned to Approved.');
         }
@@ -74,6 +77,8 @@ class ApprovalController extends Controller
     {
         $request->validate(['comments' => 'required|string|max:1000']);
 
+        $this->authorizeTeacherLeaveManage($approval);
+
         if (! $approval->state->canTransitionTo(Rejected::class)) {
             return back()->with('error', 'This approval cannot be transitioned to Rejected.');
         }
@@ -93,5 +98,15 @@ class ApprovalController extends Controller
         );
 
         return back()->with('success', 'Request rejected.');
+    }
+
+    private function authorizeTeacherLeaveManage(Approval $approval): void
+    {
+        $approval->loadMissing('approvable');
+
+        if ($approval->approvable instanceof TeacherLeaveApplication
+            && ! Gate::allows('teacher-leave-manage', $approval->approvable)) {
+            abort(403);
+        }
     }
 }

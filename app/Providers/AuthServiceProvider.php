@@ -6,9 +6,12 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Laravel\Airlock\PersonalAccessToken;
 use Illuminate\Support\Facades\Gate;
 use App\Policies\ApiTokenPolicy;
+use App\Models\Assignment;
 use App\Models\Homework;
 use App\Models\Plan;
+use App\Models\StudentAssignment;
 use App\Models\StudentHomework;
+use App\Models\TeacherLeaveApplication;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Policies\ConversationPolicy;
@@ -291,6 +294,90 @@ class AuthServiceProvider extends ServiceProvider
             ->where('standardLink_id', $homework->standardLink_id)
             ->where('subject_id', $homework->subject_id)
             ->exists();
+        }
+
+        return false;
+      });
+
+      // Staff review of assignment submissions. Accepts Assignment or StudentAssignment.
+      // Do not widen studentassignment (#130) or school-only assignment mark-path Gate.
+      Gate::define('studentAssignment-review', function ($user, $model) {
+        $assignment = null;
+
+        if ($model instanceof Assignment) {
+          $assignment = $model;
+        } elseif ($model instanceof StudentAssignment) {
+          if ($model->assignment === null) {
+            $model->loadMissing('assignment');
+          }
+          $assignment = $model->assignment;
+        }
+
+        if ($assignment === null) {
+          return false;
+        }
+
+        if ((int) $user->usergroup_id === 1) {
+          return true;
+        }
+
+        if ((int) $user->usergroup_id === 3) {
+          return (int) $user->school_id === (int) $assignment->school_id;
+        }
+
+        if ((int) $user->usergroup_id === 5) {
+          if ((int) $user->school_id !== (int) $assignment->school_id) {
+            return false;
+          }
+
+          if ((int) $assignment->teacher_id === (int) $user->id) {
+            return true;
+          }
+
+          if ($assignment->relationLoaded('standardLink') === false) {
+            $assignment->loadMissing('standardLink');
+          }
+
+          if ($assignment->standardLink !== null
+            && (int) $assignment->standardLink->class_teacher_id === (int) $user->id) {
+            return true;
+          }
+
+          return Teacherlink::where('teacher_id', $user->id)
+            ->where('standardLink_id', $assignment->standardLink_id)
+            ->where('subject_id', $assignment->subject_id)
+            ->exists();
+        }
+
+        return false;
+      });
+
+      // Own leave (ug5 owner only). Admin moderation uses teacher-leave-manage.
+      Gate::define('teacher-leave', function ($user, $leave) {
+        if ($leave === null) {
+          return false;
+        }
+
+        if ((int) $user->usergroup_id !== 5) {
+          return false;
+        }
+
+        return (int) $user->school_id === (int) $leave->school_id
+          && (int) $user->id === (int) $leave->user_id;
+      });
+
+      // Admin Approvals / leave history moderation path.
+      Gate::define('teacher-leave-manage', function ($user, $leave) {
+        if ($leave === null) {
+          return false;
+        }
+
+        if ((int) $user->usergroup_id === 1) {
+          return true;
+        }
+
+        if ((int) $user->usergroup_id === 3) {
+          return (int) $user->school_id === (int) $leave->school_id;
         }
 
         return false;

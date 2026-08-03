@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Validator;
 use App\Models\TeacherLeaveApplication;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Helpers\SiteHelper;
 use Carbon\Carbon;
 
@@ -18,7 +19,9 @@ class LeaveEditRequest extends FormRequest
      */
     public function authorize()
     {
-        return true;
+        $leave = TeacherLeaveApplication::where('id', $this->route('id'))->first();
+
+        return Gate::allows('teacher-leave', $leave);
     }
 
     /**

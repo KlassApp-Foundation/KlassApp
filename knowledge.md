@@ -621,6 +621,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+### 2026-08-03: Teacher leave + assignment-review Gates
+- **Work done**: Combined Gate PR — `teacher-leave` (ug5 owner), `teacher-leave-manage` (ug1/ug3 school), `studentAssignment-review` (mirror homework-review). Wired Teacher/API leave show/update/destroy + LeaveEditRequest; Teacher/API StudentAssignment list/show/mark; Admin ApprovalController for TeacherLeaveApplication. Left `studentassignment` + `assignment` untouched.
+- **Files modified**: AuthServiceProvider, LeaveController (Teacher+API), LeaveEditRequest (web+API), StudentAssignmentController (Teacher+API), ApprovalController, LegacyPortalTeacherLeaveAssignmentAuthorizationTest, docs/toshi-teacher-leave-assignment-gates-audit.md, knowledge.md
+- **Key decisions**: One combined PR (homework-style); Option A dual leave Gates; Gate checks outside catch(Exception) so abort(403) is not swallowed
+- **Status**: 🚧 In progress — push/merge Gate PR then Batch 2 tools
+- **Edge cases flagged**: Peer leave_checker approve still held; assignment destroy school-only Gate held
+
 
 ### 2026-08-03: School Admin Batch 1 — commit, rebase, UsesToshiLlm, PR
 - **Work done**: Committed uncommitted Batch 1 work on `feature/toshi-schooladmin-batch1` (worktree `KlassApp-toshi-schooladmin-batch1`). Rebased onto `origin/main` (#141–#149 era); only conflict was `knowledge.md` Session Log (kept both). Verified ToshiLlm path: **SchoolCommsSkill now uses `UsesToshiLlm`** (same as Orchestrator/OperationsAgents) so `prompt()` hits `ToshiLlm::assertConfigConsistent()` + openai-compatible model — not `ai.default`/`openai`. Sibling skills (Academic/Fee/…) still lack the trait (pre-existing gap on main — out of Batch 1 scope). Leaf tools unchanged (no LLM). Re-ran Batch 1 suite; pushed PR (do not merge from this session).
