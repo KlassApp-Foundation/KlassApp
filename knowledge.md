@@ -240,9 +240,9 @@
 
 ---
 
-## Current Status: August 4, 2026 (`origin/main` tip `275b0bd` — #172 auth flash deployed)
+## Current Status: August 4, 2026 (`origin/main` tip `dc85b0f` — #173 knowledge stamp; prod still `275b0bd`)
 
-- **`origin/main` tip**: `275b0bd` — squash merge of #172 (login OAuth `failmessage` flash). Prior: `be3d622` (#171 knowledge stamp), `6202025` (#170), `beca53a` (#168), `62e63e1` (#167), `1cfb499` (#165), `417ca26` (#163).
+- **`origin/main` tip**: `dc85b0f` — knowledge stamp #173 (docs only). Prior app tip / **prod HEAD**: `275b0bd` (#172 login OAuth `failmessage` flash). Earlier: `be3d622` (#171 knowledge stamp), `6202025` (#170), `beca53a` (#168), `62e63e1` (#167), `1cfb499` (#165), `417ca26` (#163).
 - **✅ Deployed to prod**: `scripts/deploy-manual.sh` @ **2026-08-04 13:21:18 UTC** — prod HEAD `275b0bd136259f584f3ace526d54146181291063` (#172). **No migrations** (Blade + PHPUnit only). Post-deploy Playwright on `https://klassapp.xyz/login`: wrong-password → visible `klass-error` alert (“Invalid Credentials…”); OAuth callback without code → `data-testid="auth-flash-error"` “Google sign-in failed. Please try again.” Log ownership already `appuser:appgroup`.
 - **✅ Merged #172**: Login Blade renders session `failmessage`/`successmessage` (OAuth failures no longer silent refresh). Squash merge commit `275b0bd136259f584f3ace526d54146181291063`.
 - **✅ Merged #170**: Auth pages no longer mount global Vue on `#app` (fixes register input wipe / false “Please fill this field” on name). Playwright signup/onboarding e2e + `SaasMinimalSignupTest` `#app` regression. Squash merge commit `62020252e117e3d294ecfe63a840f92b100b7a40`.
@@ -257,14 +257,14 @@
   - **#153** School Admin Batch 2 — timetable + homework oversight (merge `102f92e`)
   - **#156** teacher-leave + studentAssignment-review Gates (merge `0cb5b76`); **#157** Teacher Batch 2 — submission review + own leave (merge `862ba92`)
   - **#160/#161/#162** knowledge sync + session-log rule + signup investigation pause log
-  - **#164** knowledge stamp for #163 merge; **#166** knowledge stamp for #165; **#168** deploy stamp for #167; **#171** deploy stamp for #170
+  - **#164** knowledge stamp for #163 merge; **#166** knowledge stamp for #165; **#168** deploy stamp for #167; **#171** deploy stamp for #170; **#173** deploy stamp for #172
 - **🚧 Open PRs**:
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
 - **✅ Toshi on `main` (cumulative)**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config/llm-health (#143–#149), School Admin Batch 1–2 (#150/#153), Teacher Batch 2 (#157) + Gate fixes (#152/#154/#156), **SaaS minimal signup (#163)**, **school-name onboarding (#165)**, **Google OAuth signup fix (#167)**, **register Vue-mount race fix (#170)**, **login OAuth failmessage flash (#172)**.
 - **Report cards**: Academic per-student PDF **exists** (`DownloadStudentReport`; shared `StudentReportCardService` on #159). `/admin/reports` hub remains CSV/operational exports only — do not claim “no report cards”. Gaps: class/term batch + full distribution. See `docs/toshi-report-cards-audit.md` / #158.
-- **Onboarding / signup**: Fresh admins get placeholder school + Toshi-first setup; curriculum and academic year are asked early (not silently defaulted). Student ID bugs remain out of scope. **Google OAuth**: phone optional (null) on Google path; email/password still requires WhatsApp phone. **Auth/OTP layouts must not mount global Vue** (`layouts.empty` CSS-only `@vite`). **Login must render** session `failmessage` (OAuth) + field `$errors` (wrong password). **Prod deployed** `275b0bd` (#172) @ 2026-08-04 13:21:18 UTC.
+- **Onboarding / signup**: Fresh admins get placeholder school + Toshi-first setup; curriculum and academic year are asked early (not silently defaulted). Student ID bugs remain out of scope. **Google OAuth**: phone optional (null) on Google path; email/password still requires WhatsApp phone. **Same Google OAuth client** for local + prod — Authorized redirect URIs must include both `http://127.0.0.1:8010/auth/google/callback` and `https://klassapp.xyz/auth/google/callback` (Console-only; not an app/config-cache bug). Login `GET /auth/google` and register `POST /auth/google/start` share that redirect_uri; register can fail form validation before OAuth. **Auth/OTP layouts must not mount global Vue** (`layouts.empty` CSS-only `@vite`). **Login must render** session `failmessage` (OAuth) + field `$errors` (wrong password). **Playwright** is the standard signup/onboarding browser verification path. **Prod deployed** `275b0bd` (#172) @ 2026-08-04 13:21:18 UTC.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
 
 ## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
@@ -648,15 +648,25 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: Knowledge-only follow-up PR (same pattern as #171); did not touch Google Console
 - **Merge commit**: `275b0bd136259f584f3ace526d54146181291063`
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/172
-- **Deploy**: `scripts/deploy-manual.sh` @ **2026-08-04 13:21:18 UTC** — prod HEAD matches `origin/main`
+- **Deploy**: `scripts/deploy-manual.sh` @ **2026-08-04 13:21:18 UTC** — prod HEAD `275b0bd` (#172). Later knowledge-only tip `dc85b0f` (#173) did not redeploy.
 - **Status**: ✅ MERGED + ✅ DEPLOYED + verified
 - **Edge cases flagged**: Prod wrong-password path often fails custom `checkschool`/`checkusers` validators before generic `auth.failed`, so the visible span may lack `data-testid="login-email-error"` but still shows `.klass-error`; OAuth flash uses `auth-flash-error`
+
+### 2026-08-04: Knowledge gap-fill — OAuth Console URIs + tip SHA (#173 follow-up)
+- **Work done**: Compared checklist vs `origin/main` @ `dc85b0f` (#173). #170/#171/#172/#173 merge/deploy facts and Issue 1 (login vs register entry routes) were already logged. Filled gaps: Current Status tip lagged at `275b0bd` after #173; documented exact Google Console Authorized redirect URIs for the shared OAuth client; noted Playwright as standard signup verification; optional Cursor autonomy preference note.
+- **Files modified**: `knowledge.md` (this stamp)
+- **Key decisions / findings**:
+  - **`redirect_uri_mismatch`**: same Google Cloud OAuth client for local + prod. Required Console URIs: local `http://127.0.0.1:8010/auth/google/callback`; prod `https://klassapp.xyz/auth/google/callback`. Fix is Console-only — not Laravel config cache / app code.
+  - Login vs register: different entry routes (`GET /auth/google` vs `POST /auth/google/start`) but identical `redirect_uri`; register may fail Blade/form validation before Socialite redirect.
+  - **Autonomy** (operator preference, not app code): Cursor Run Everything + `~/.cursor/rules/autonomy.mdc`.
+- **Status**: ✅ Knowledge stamp PR (no app deploy)
+- **Edge cases flagged**: Prod remains at app commit `275b0bd`; `origin/main` tip may be knowledge-only ahead of prod after stamps.
 
 ### 2026-08-04: Investigate Google OAuth login vs register + restore auth flash
 - **Work done**: Prod scrape of `https://klassapp.xyz/login` vs `/register` Google entry points; followed OAuth `Location` headers; confirmed identical `redirect_uri` + `client_id`. Restored Blade flash for `failmessage`/`successmessage` on login (OAuth failures redirect here). Added PHPUnit coverage for visible wrong-password error + OAuth flash.
 - **Files modified**: `resources/views/auth/login.blade.php`, `tests/Feature/Auth/LoginRegressionTest.php`, `knowledge.md`
 - **Key decisions / findings**:
-  - **Issue 1 (Console)**: Login `GET /auth/google` and register `POST /auth/google/start` both emit `redirect_uri=https://klassapp.xyz/auth/google/callback` and the same `client_id`. **No new Console URI** — not a login-vs-register redirect mismatch. Register path additionally validates name/email/phone/terms before Socialite redirect (failed validation → `/register` with `$errors`).
+  - **Issue 1 (Console)**: Login `GET /auth/google` and register `POST /auth/google/start` both emit `redirect_uri=https://klassapp.xyz/auth/google/callback` and the same `client_id`. **No new Console URI for register** — not a login-vs-register redirect mismatch. Register path additionally validates name/email/phone/terms before Socialite redirect (failed validation → `/register` with `$errors`). Separate diagnosis: local/prod `redirect_uri_mismatch` needs both Authorized redirect URIs on the shared client (`http://127.0.0.1:8010/auth/google/callback` + `https://klassapp.xyz/auth/google/callback`) — Console-only.
   - **Issue 2**: #170 did **not** remove a Vue flash renderer on auth pages (none existed). Field `$errors` already Blade — wrong-password errors still visible. OAuth/`GoogleAuthController` flashes `failmessage` to `/login`, but login never rendered it (register already did) → silent refresh. Fixed with plain Blade banners.
 - **Tests**: `php artisan test --compact tests/Feature/Auth/LoginRegressionTest.php` — **5 passed**
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/172 (`fix/auth-flash-oauth-errors` @ `4353743`)
