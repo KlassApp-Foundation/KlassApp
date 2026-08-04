@@ -240,10 +240,10 @@
 
 ---
 
-## Current Status: August 4, 2026 (`origin/main` tip `eb68856` — knowledge stamp #166; Google OAuth signup fix PR open)
+## Current Status: August 4, 2026 (`origin/main` tip `62e63e1` — Google OAuth signup fix #167)
 
-- **`origin/main` tip**: `eb68856` — `docs(knowledge): mark school-name onboarding #165 as merged (#166)`. Prior: `1cfb499` (#165), `c6ba7af` (#164), `417ca26` (#163 SaaS minimal signup).
-- **🚧 Open PR — Google OAuth signup 500**: https://github.com/KlassApp-Foundation/KlassApp/pull/167 (`feature/fix-google-oauth-signup` @ `5f24d90`) — prod exception was `SQLSTATE[42S22] Unknown column 'is_activated'`; main bootstrap already Schema-guards it; PR allows **null phone on Google path (Decision B)** and covers callback e2e tests.
+- **`origin/main` tip**: `62e63e1` — `fix(auth): Google OAuth signup callback without phone (#167)`. Prior: `eb68856` (#166 knowledge stamp), `1cfb499` (#165), `417ca26` (#163 SaaS minimal signup).
+- **✅ Merged #167**: Google OAuth signup hotfix — allow null WhatsApp phone on Google path (Decision B); Schema-guard `is_activated` / `mobile_no`; null (not `''`) for `schools.phone` UNIQUE. Squash merge commit `62e63e192d46e09ee3e899f48b8f3f759404d7e7`.
 - **✅ Merged #165**: Toshi complete-mode school-name fixes — skip keyword/student-lookup while collecting `school_info` name; complete-mode rename collisions use `uniqueSchoolName` (`-2/-3`) instead of hard reject. Squash merge commit `1cfb4992056a3f03c4e2dd8d194b8946e8768cdf`.
 - **✅ Merged #163**: SaaS minimal signup — shared `SchoolSignupBootstrapService` (name+email+Phone WhatsApp + password|Google) → placeholder `{First}'s School` (`-2/-3` collisions), `curriculum=null`, `toshi_enabled=1`, **no AcademicYear** → `/admin/dashboard?toshi_onboarding=1` + Toshi complete mode (school name → curriculum → academic year early). Dashboard/`MustBePrivilege` null-guard. Merge commit `417ca269a19d0c1fccb6cd2b9660be6bc71f6995`.
 - **✅ Merged Aug 2–3 (on main; deploy separate)**:
@@ -259,9 +259,9 @@
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
-- **✅ Toshi on `main` (cumulative)**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config/llm-health (#143–#149), School Admin Batch 1–2 (#150/#153), Teacher Batch 2 (#157) + Gate fixes (#152/#154/#156), **SaaS minimal signup (#163)**, **school-name onboarding (#165)**.
+- **✅ Toshi on `main` (cumulative)**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config/llm-health (#143–#149), School Admin Batch 1–2 (#150/#153), Teacher Batch 2 (#157) + Gate fixes (#152/#154/#156), **SaaS minimal signup (#163)**, **school-name onboarding (#165)**, **Google OAuth signup fix (#167)**.
 - **Report cards**: Academic per-student PDF **exists** (`DownloadStudentReport`; shared `StudentReportCardService` on #159). `/admin/reports` hub remains CSV/operational exports only — do not claim “no report cards”. Gaps: class/term batch + full distribution. See `docs/toshi-report-cards-audit.md` / #158.
-- **Onboarding / signup**: Fresh admins get placeholder school + Toshi-first setup; curriculum and academic year are asked early (not silently defaulted). Student ID bugs remain out of scope. **Google OAuth**: phone optional (null) on Google path; email/password still requires WhatsApp phone. **Prod still on #148** (`fbbe3b7`) — needs `scripts/deploy-manual.sh` after merge (#163+#165+Google fix).
+- **Onboarding / signup**: Fresh admins get placeholder school + Toshi-first setup; curriculum and academic year are asked early (not silently defaulted). Student ID bugs remain out of scope. **Google OAuth**: phone optional (null) on Google path; email/password still requires WhatsApp phone. **Prod still on #148** (`fbbe3b7`) — needs `scripts/deploy-manual.sh` (#163+#165+#167 undeployed).
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
 
 ## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
@@ -647,9 +647,11 @@ Phase B: Mix→Vite + Vue 3 runtime
   - Do not invent post-OAuth phone prompt (A) for this hotfix — unblocks signup with minimal surface.
 - **Prod evidence**: `storage/logs/laravel-2026-07-30.log` / `laravel-2026-07-31.log` — `Google auth user creation failed` → `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'is_activated' in 'field list'` (User create). Also: `schools.phone` UNIQUE (empty string hazard); `userprofiles` has no `mobile_no` on prod.
 - **Tests**: `php artisan test --compact tests/Feature/SaasMinimalSignupTest.php` — **8 passed** (81 assertions)
-- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/167 (`feature/fix-google-oauth-signup` @ `5f24d90`)
-- **Status**: ✅ Done — PR open (not merged); **prod still needs deploy** via `scripts/deploy-manual.sh` after merge
-- **Edge cases flagged**: Prod tip lags main (#163/#165 undeployed); UserprofileObserver rewrites `users.name` to slug; multiple NULL phones OK under MySQL UNIQUE
+- **PR / merge**: https://github.com/KlassApp-Foundation/KlassApp/pull/167 — squash merge commit `62e63e192d46e09ee3e899f48b8f3f759404d7e7` (`62e63e1` on main)
+- **Status**: ✅ MERGED (not deployed)
+- **Branch**: was `feature/fix-google-oauth-signup` @ `5f24d90` (base near `eb68856`); tip after merge `62e63e1`
+- **Next**: deploy via `scripts/deploy-manual.sh` (#163+#165+#167) — prod still on #148 (`fbbe3b7`)
+- **Edge cases flagged**: Prod tip lags main; UserprofileObserver rewrites `users.name` to slug; multiple NULL phones OK under MySQL UNIQUE
 
 ### 2026-08-04: Toshi complete-mode school-name onboarding fixes (#163 follow-up)
 - **Work done**: Fixed two complete-mode school-name bugs. (1) `AgentToshi::send()` skipped `tryKeywordRoute` / NL→assistant heuristic while collecting `school_info` name (`substep === 0`) so multi-word names no longer become student-lookup misses. (2) Complete-mode rename collisions use `SchoolSignupBootstrapService::uniqueSchoolName()` (`-2/-3`) instead of hard-reject via `isDuplicateSchool`; create-mode still rejects duplicates. Privilege-gate report only: `/admin/academics` + `/admin/standard/create` allowlist in `MustBePrivilege` is **intentional** (pre-#163 onboarding-loop avoid; #163 kept it so mid-setup admins can reach AY/class pages) — not a `fullschooladmin` bypass; no code change.
