@@ -240,10 +240,11 @@
 
 ---
 
-## Current Status: August 4, 2026 (`origin/main` tip `6202025` — deployed to prod)
+## Current Status: August 4, 2026 (`origin/main` tip `be3d622` — knowledge stamp after #170 deploy; app tip still `6202025`)
 
-- **`origin/main` tip**: `6202025` — `fix(auth): stop register input resets and add signup e2e coverage (#170)`. Prior: `beca53a` (#168), `62e63e1` (#167), `eb68856` (#166), `1cfb499` (#165), `417ca26` (#163).
-- **✅ Deployed to prod**: `scripts/deploy-manual.sh` @ **2026-08-04 11:04:27 UTC** — prod HEAD `62020252e117e3d294ecfe63a840f92b100b7a40` matches `origin/main`. **No migrations** (layout + Playwright only). Post-deploy Playwright on `https://klassapp.xyz/register`: race PASS (no `#app`, name retained); full email/password signup → `/admin/dashboard?toshi_onboarding=1` with Continue school setup + Toshi; disposable `deploy.verify+pr170.*` user/school cleaned.
+- **`origin/main` tip**: `be3d622` — knowledge deploy stamp for #170. App deploy tip remains `6202025` (#170). Prior: `beca53a` (#168), `62e63e1` (#167), `eb68856` (#166), `1cfb499` (#165), `417ca26` (#163).
+- **🚧 Open PR (auth flash)**: https://github.com/KlassApp-Foundation/KlassApp/pull/172 (`fix/auth-flash-oauth-errors` @ `4353743`) — Blade `failmessage`/`successmessage` on login + PHPUnit visible-error coverage. Not merged / not deployed.
+- **✅ Deployed to prod**: `scripts/deploy-manual.sh` @ **2026-08-04 11:04:27 UTC** — prod HEAD `62020252e117e3d294ecfe63a840f92b100b7a40` (#170). **No migrations** (layout + Playwright only). Post-deploy Playwright on `https://klassapp.xyz/register`: race PASS (no `#app`, name retained); full email/password signup → `/admin/dashboard?toshi_onboarding=1` with Continue school setup + Toshi; disposable `deploy.verify+pr170.*` user/school cleaned.
 - **✅ Merged #170**: Auth pages no longer mount global Vue on `#app` (fixes register input wipe / false “Please fill this field” on name). Playwright signup/onboarding e2e + `SaasMinimalSignupTest` `#app` regression. Squash merge commit `62020252e117e3d294ecfe63a840f92b100b7a40`.
 - **✅ Merged #167**: Google OAuth signup hotfix — allow null WhatsApp phone on Google path (Decision B); Schema-guard `is_activated` / `mobile_no`; null (not `''`) for `schools.phone` UNIQUE. Squash merge commit `62e63e192d46e09ee3e899f48b8f3f759404d7e7`.
 - **✅ Merged #165**: Toshi complete-mode school-name fixes — skip keyword/student-lookup while collecting `school_info` name; complete-mode rename collisions use `uniqueSchoolName` (`-2/-3`) instead of hard reject. Squash merge commit `1cfb4992056a3f03c4e2dd8d194b8946e8768cdf`.
@@ -640,6 +641,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-04: Investigate Google OAuth login vs register + restore auth flash
+- **Work done**: Prod scrape of `https://klassapp.xyz/login` vs `/register` Google entry points; followed OAuth `Location` headers; confirmed identical `redirect_uri` + `client_id`. Restored Blade flash for `failmessage`/`successmessage` on login (OAuth failures redirect here). Added PHPUnit coverage for visible wrong-password error + OAuth flash.
+- **Files modified**: `resources/views/auth/login.blade.php`, `tests/Feature/Auth/LoginRegressionTest.php`, `knowledge.md`
+- **Key decisions / findings**:
+  - **Issue 1 (Console)**: Login `GET /auth/google` and register `POST /auth/google/start` both emit `redirect_uri=https://klassapp.xyz/auth/google/callback` and the same `client_id`. **No new Console URI** — not a login-vs-register redirect mismatch. Register path additionally validates name/email/phone/terms before Socialite redirect (failed validation → `/register` with `$errors`).
+  - **Issue 2**: #170 did **not** remove a Vue flash renderer on auth pages (none existed). Field `$errors` already Blade — wrong-password errors still visible. OAuth/`GoogleAuthController` flashes `failmessage` to `/login`, but login never rendered it (register already did) → silent refresh. Fixed with plain Blade banners.
+- **Tests**: `php artisan test --compact tests/Feature/Auth/LoginRegressionTest.php` — **5 passed**
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/172 (`fix/auth-flash-oauth-errors` @ `4353743`)
+- **Status**: ✅ Done — PR open (not merged)
+- **Edge cases flagged**: Local OAuth silent fail often = `GOOGLE_REDIRECT_URI` / Console mismatch vs `APP_URL` port; error is logged then redirected to `/login` with invisible `failmessage` until this fix. Shared `vendor/` symlinks across worktrees can make PHPUnit load another worktree’s views — use a real `composer install` per worktree.
 
 ### 2026-08-04: Deploy #170 register Vue-mount fix to production
 - **Work done**: Pre-merge safety: confirmed 7 `@extends('layouts.empty')` consumers (login, register, verify, passwords email/code/reset, admin OTP) are server-rendered HTML + `@stack('scripts')` only — no Vue directives / no `#app` dependency. Squash-merged #170. Deployed via `scripts/deploy-manual.sh` from clean main worktree (`KlassApp-deploy-pr170`). Prod advanced `beca53a` → `6202025`. Migrations: none. Playwright prod verify: fill-before-idle race PASS (`#app` absent, name retained); full signup PASS → `/admin/dashboard?toshi_onboarding=1` with Continue school setup + Toshi composer. Cleaned disposable user **102** / school **43** (`deploy.verify+pr170.*`). Log ownership already `1000:1000`.
