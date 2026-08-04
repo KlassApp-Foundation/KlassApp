@@ -659,7 +659,8 @@ Phase B: Mix→Vite + Vue 3 runtime
   - **`redirect_uri_mismatch`**: same Google Cloud OAuth client for local + prod. Required Console URIs: local `http://127.0.0.1:8010/auth/google/callback`; prod `https://klassapp.xyz/auth/google/callback`. Fix is Console-only — not Laravel config cache / app code.
   - Login vs register: different entry routes (`GET /auth/google` vs `POST /auth/google/start`) but identical `redirect_uri`; register may fail Blade/form validation before Socialite redirect.
   - **Autonomy** (operator preference, not app code): Cursor Run Everything + `~/.cursor/rules/autonomy.mdc`.
-- **Status**: ✅ Knowledge stamp PR (no app deploy)
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/174 (`chore/knowledge-stamp-oauth-console`)
+- **Status**: ✅ Knowledge stamp PR open (no app deploy)
 - **Edge cases flagged**: Prod remains at app commit `275b0bd`; `origin/main` tip may be knowledge-only ahead of prod after stamps.
 
 ### 2026-08-04: Investigate Google OAuth login vs register + restore auth flash
