@@ -69,6 +69,15 @@
   .klass-meta { margin-top: 20px; text-align: center; }
   .klass-meta-lock { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #94A3B8; text-decoration: none; }
   .klass-error { font-size: 12px; color: #DC2626; margin-top: 4px; display: block; }
+  .klass-flash {
+    margin-bottom: 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; line-height: 1.4;
+  }
+  .klass-flash-error {
+    border: 1px solid rgba(239, 68, 68, 0.18); background: #FEF2F2; color: #991B1B;
+  }
+  .klass-flash-success {
+    border: 1px solid rgba(34, 197, 94, 0.22); background: #F0FDF4; color: #166534;
+  }
   @media (max-width: 480px) { .klass-login-form { padding: 0 16px; } }
 </style>
 @endpush
@@ -85,13 +94,20 @@
   @if(\Config::get('settings.login_status', 1) == 0)
     <div class="klass-maintenance">Login page is under maintenance</div>
   @else
+    {{-- Session flash (OAuth / auth failures). Field $errors stay on inputs below. --}}
+    @if (session('failmessage'))
+      <div class="klass-flash klass-flash-error" role="alert" data-testid="auth-flash-error">{{ session('failmessage') }}</div>
+    @endif
+    @if (session('successmessage'))
+      <div class="klass-flash klass-flash-success" role="status" data-testid="auth-flash-success">{{ session('successmessage') }}</div>
+    @endif
     <form method="POST" action="/login" aria-label="{{ __('Login') }}">
       @csrf
       <div class="klass-field">
         <label class="klass-label" for="email">Email, Phone, Name, or Registration Number</label>
         <input id="email" type="text" class="klass-input{{ $errors->has('email') ? ' is-invalid' : '' }}" name="email" value="{{ old('email') }}" placeholder="your@school.edu" required>
         @if ($errors->has('email'))
-          <span class="klass-error" role="alert">{{ $errors->first('email') }}</span>
+          <span class="klass-error" role="alert" data-testid="login-email-error">{{ $errors->first('email') }}</span>
         @endif
       </div>
       <div class="klass-field">

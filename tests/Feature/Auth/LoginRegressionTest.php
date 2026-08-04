@@ -40,6 +40,30 @@ class LoginRegressionTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_failed_login_shows_visible_blade_error(): void
+    {
+        $response = $this->from('/login')->followingRedirects()->post('/login', [
+            'email' => self::TEST_EMAIL,
+            'password' => 'WrongPass!999',
+        ]);
+
+        $response->assertOk();
+        $response->assertSee(trans('auth.failed'));
+        $response->assertSee('data-testid="login-email-error"', false);
+        $this->assertGuest();
+    }
+
+    public function test_oauth_failmessage_flash_is_visible_on_login(): void
+    {
+        $message = 'Google sign-in failed. Please try again.';
+
+        $response = $this->withSession(['failmessage' => $message])->get('/login');
+
+        $response->assertOk();
+        $response->assertSee($message);
+        $response->assertSee('data-testid="auth-flash-error"', false);
+    }
+
     public function test_login_succeeds_with_valid_credentials(): void
     {
         $response = $this->post('/login', [
