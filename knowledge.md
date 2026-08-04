@@ -647,7 +647,7 @@ Phase B: Mix→Vite + Vue 3 runtime
   - Do not invent post-OAuth phone prompt (A) for this hotfix — unblocks signup with minimal surface.
 - **Prod evidence**: `storage/logs/laravel-2026-07-30.log` / `laravel-2026-07-31.log` — `Google auth user creation failed` → `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'is_activated' in 'field list'` (User create). Also: `schools.phone` UNIQUE (empty string hazard); `userprofiles` has no `mobile_no` on prod.
 - **Tests**: `php artisan test --compact tests/Feature/SaasMinimalSignupTest.php` — **8 passed** (81 assertions)
-- **PR**: TBD — `feature/fix-google-oauth-signup`
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/167 (`feature/fix-google-oauth-signup` @ `5f24d90`)
 - **Status**: ✅ Done — PR open (not merged); **prod still needs deploy** via `scripts/deploy-manual.sh` after merge
 - **Edge cases flagged**: Prod tip lags main (#163/#165 undeployed); UserprofileObserver rewrites `users.name` to slug; multiple NULL phones OK under MySQL UNIQUE
 
