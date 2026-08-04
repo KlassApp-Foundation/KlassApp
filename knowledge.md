@@ -254,6 +254,7 @@
   - **#156** teacher-leave + studentAssignment-review Gates (merge `0cb5b76`); **#157** Teacher Batch 2 — submission review + own leave (merge `862ba92`)
   - **#160/#161/#162** knowledge sync + session-log rule + signup investigation pause log
   - **#164** knowledge stamp for #163 merge
+- **🚧 Open PRs**:
   - **#165** Toshi school-name onboarding fixes — **PR open** @ `ec873be` — https://github.com/KlassApp-Foundation/KlassApp/pull/165
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
