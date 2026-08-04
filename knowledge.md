@@ -243,7 +243,7 @@
 ## Current Status: August 4, 2026 (`origin/main` tip `eb68856` — knowledge stamp #166; Google OAuth signup fix PR open)
 
 - **`origin/main` tip**: `eb68856` — `docs(knowledge): mark school-name onboarding #165 as merged (#166)`. Prior: `1cfb499` (#165), `c6ba7af` (#164), `417ca26` (#163 SaaS minimal signup).
-- **🚧 Open PR — Google OAuth signup 500**: https://github.com/KlassApp-Foundation/KlassApp/pull/TBD (`feature/fix-google-oauth-signup`) — prod exception was `SQLSTATE[42S22] Unknown column 'is_activated'`; main bootstrap already Schema-guards it; PR allows **null phone on Google path (Decision B)** and covers callback e2e tests.
+- **🚧 Open PR — Google OAuth signup 500**: https://github.com/KlassApp-Foundation/KlassApp/pull/167 (`feature/fix-google-oauth-signup` @ `5f24d90`) — prod exception was `SQLSTATE[42S22] Unknown column 'is_activated'`; main bootstrap already Schema-guards it; PR allows **null phone on Google path (Decision B)** and covers callback e2e tests.
 - **✅ Merged #165**: Toshi complete-mode school-name fixes — skip keyword/student-lookup while collecting `school_info` name; complete-mode rename collisions use `uniqueSchoolName` (`-2/-3`) instead of hard reject. Squash merge commit `1cfb4992056a3f03c4e2dd8d194b8946e8768cdf`.
 - **✅ Merged #163**: SaaS minimal signup — shared `SchoolSignupBootstrapService` (name+email+Phone WhatsApp + password|Google) → placeholder `{First}'s School` (`-2/-3` collisions), `curriculum=null`, `toshi_enabled=1`, **no AcademicYear** → `/admin/dashboard?toshi_onboarding=1` + Toshi complete mode (school name → curriculum → academic year early). Dashboard/`MustBePrivilege` null-guard. Merge commit `417ca269a19d0c1fccb6cd2b9660be6bc71f6995`.
 - **✅ Merged Aug 2–3 (on main; deploy separate)**:
