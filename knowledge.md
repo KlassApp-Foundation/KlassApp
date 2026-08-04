@@ -640,6 +640,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-04: Fix register name validation race + add Playwright signup coverage
+- **Work done**: Reproduced the production `/register` bug against `https://klassapp.xyz/register` with Playwright and confirmed a race: auth pages loaded the global Vue app on `#app`, and if a user typed before `app.js` finished mounting, Vue re-rendered from empty `value` attributes and wiped filled inputs, causing native HTML5 “Please fill out this field” on `name`. Fixed `resources/views/layouts/empty.blade.php` to stop booting `resources/assets/js/app.js` on auth / OTP pages. Added a focused feature regression asserting `/register` no longer renders a global `#app` root. Added Playwright as the standard browser verification path for signup/onboarding with local seeding for `usergroups` + `plans`, covering email/password signup handoff, Toshi onboarding (`school name → curriculum → academic year`), and same-first-name collision signups. Verified local browser run against `php artisan serve :8011`; verified production manually and cleaned disposable prod users/schools created during diagnosis.
+- **Files modified**: `resources/views/layouts/empty.blade.php`, `tests/Feature/SaasMinimalSignupTest.php`, `package.json`, `package-lock.json`, `playwright.config.js`, `e2e/global-setup.js`, `e2e/signup-onboarding.spec.js`, `knowledge.md`
+- **Key decisions**:
+  - Auth / OTP pages should stay server-rendered and must not mount the legacy global Vue app.
+  - Standard signup verification should be real-browser first; local Playwright seeds only the minimum reference rows (`usergroups`, Freemium plan) when running against localhost.
+  - Google OAuth Playwright stays env-gated until a dedicated test account is provided.
+- **Tests**: `php artisan test --compact tests/Feature/SaasMinimalSignupTest.php tests/Feature/FreshAdminDashboardSafetyTest.php` — **11 passed** (89 assertions). `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8011 npx playwright test e2e/signup-onboarding.spec.js` — **3 passed, 1 skipped** (Google env-gated).
+- **Status**: ✅ Done locally — PR metadata to be stamped after push
+- **Edge cases flagged**: Playwright local runs can fail on stale local fixture drift unless baseline `usergroups` / `plans` exist; `e2e/global-setup.js` now seeds those rows automatically for localhost only.
+
 ### 2026-08-04: Deploy main to production (#163+#165+#167)
 - **Work done**: Ran `scripts/deploy-manual.sh` from main worktree. Prod advanced `fbbe3b7` (#148) → `beca53a` (#168). Ran migration `make_schools_curriculum_nullable`. Verified Google OAuth (#167): `/auth/google`→Google; callback without code→302 `/login` + log `Google OAuth failed` (missing code) — **no** `Unknown column 'is_activated'`. Signup bootstrap spot-check: `Deploy's School`, `curriculum=null`, `toshi_enabled=1`, 0 AcademicYears; cleaned test user/school. Fixed FPM log ownership (`storage/logs` root-owned after deploy probes → callback 500 until chown appuser). Local `:8010` (`KlassApp-main-merge`) `GOOGLE_REDIRECT_URI` → `http://127.0.0.1:8010/auth/google/callback` (not committed).
 - **Files modified**: `knowledge.md` (this stamp); local `.env` only (not committed)
