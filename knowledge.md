@@ -240,10 +240,11 @@
 
 ---
 
-## Current Status: August 4, 2026 (`origin/main` tip `beca53a` — deployed to prod)
+## Current Status: August 4, 2026 (`origin/main` tip `6202025` — deployed to prod)
 
-- **`origin/main` tip**: `beca53a` — `docs(knowledge): mark Google OAuth signup #167 as merged (#168)`. Prior: `62e63e1` (#167), `eb68856` (#166), `1cfb499` (#165), `417ca26` (#163).
-- **✅ Deployed to prod**: `scripts/deploy-manual.sh` @ **2026-08-04 06:01:38 UTC** — prod HEAD `beca53af9b72d27b08f60ea556e6480cc799e25d` matches `origin/main`. Migration ran: `2026_08_03_235031_make_schools_curriculum_nullable`. Verified Google OAuth start→Google + callback missing-code→302 `/login` (not `is_activated` 500); signup bootstrap shape OK.
+- **`origin/main` tip**: `6202025` — `fix(auth): stop register input resets and add signup e2e coverage (#170)`. Prior: `beca53a` (#168), `62e63e1` (#167), `eb68856` (#166), `1cfb499` (#165), `417ca26` (#163).
+- **✅ Deployed to prod**: `scripts/deploy-manual.sh` @ **2026-08-04 11:04:27 UTC** — prod HEAD `62020252e117e3d294ecfe63a840f92b100b7a40` matches `origin/main`. **No migrations** (layout + Playwright only). Post-deploy Playwright on `https://klassapp.xyz/register`: race PASS (no `#app`, name retained); full email/password signup → `/admin/dashboard?toshi_onboarding=1` with Continue school setup + Toshi; disposable `deploy.verify+pr170.*` user/school cleaned.
+- **✅ Merged #170**: Auth pages no longer mount global Vue on `#app` (fixes register input wipe / false “Please fill this field” on name). Playwright signup/onboarding e2e + `SaasMinimalSignupTest` `#app` regression. Squash merge commit `62020252e117e3d294ecfe63a840f92b100b7a40`.
 - **✅ Merged #167**: Google OAuth signup hotfix — allow null WhatsApp phone on Google path (Decision B); Schema-guard `is_activated` / `mobile_no`; null (not `''`) for `schools.phone` UNIQUE. Squash merge commit `62e63e192d46e09ee3e899f48b8f3f759404d7e7`.
 - **✅ Merged #165**: Toshi complete-mode school-name fixes — skip keyword/student-lookup while collecting `school_info` name; complete-mode rename collisions use `uniqueSchoolName` (`-2/-3`) instead of hard reject. Squash merge commit `1cfb4992056a3f03c4e2dd8d194b8946e8768cdf`.
 - **✅ Merged #163**: SaaS minimal signup — shared `SchoolSignupBootstrapService` (name+email+Phone WhatsApp + password|Google) → placeholder `{First}'s School` (`-2/-3` collisions), `curriculum=null`, `toshi_enabled=1`, **no AcademicYear** → `/admin/dashboard?toshi_onboarding=1` + Toshi complete mode (school name → curriculum → academic year early). Dashboard/`MustBePrivilege` null-guard. Merge commit `417ca269a19d0c1fccb6cd2b9660be6bc71f6995`.
@@ -255,14 +256,14 @@
   - **#153** School Admin Batch 2 — timetable + homework oversight (merge `102f92e`)
   - **#156** teacher-leave + studentAssignment-review Gates (merge `0cb5b76`); **#157** Teacher Batch 2 — submission review + own leave (merge `862ba92`)
   - **#160/#161/#162** knowledge sync + session-log rule + signup investigation pause log
-  - **#164** knowledge stamp for #163 merge; **#166** knowledge stamp for #165
+  - **#164** knowledge stamp for #163 merge; **#166** knowledge stamp for #165; **#168** deploy stamp for #167
 - **🚧 Open PRs**:
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
-- **✅ Toshi on `main` (cumulative)**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config/llm-health (#143–#149), School Admin Batch 1–2 (#150/#153), Teacher Batch 2 (#157) + Gate fixes (#152/#154/#156), **SaaS minimal signup (#163)**, **school-name onboarding (#165)**, **Google OAuth signup fix (#167)**.
+- **✅ Toshi on `main` (cumulative)**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config/llm-health (#143–#149), School Admin Batch 1–2 (#150/#153), Teacher Batch 2 (#157) + Gate fixes (#152/#154/#156), **SaaS minimal signup (#163)**, **school-name onboarding (#165)**, **Google OAuth signup fix (#167)**, **register Vue-mount race fix (#170)**.
 - **Report cards**: Academic per-student PDF **exists** (`DownloadStudentReport`; shared `StudentReportCardService` on #159). `/admin/reports` hub remains CSV/operational exports only — do not claim “no report cards”. Gaps: class/term batch + full distribution. See `docs/toshi-report-cards-audit.md` / #158.
-- **Onboarding / signup**: Fresh admins get placeholder school + Toshi-first setup; curriculum and academic year are asked early (not silently defaulted). Student ID bugs remain out of scope. **Google OAuth**: phone optional (null) on Google path; email/password still requires WhatsApp phone. **Prod deployed** `beca53a` (#163+#165+#167) @ 2026-08-04 06:01:38 UTC.
+- **Onboarding / signup**: Fresh admins get placeholder school + Toshi-first setup; curriculum and academic year are asked early (not silently defaulted). Student ID bugs remain out of scope. **Google OAuth**: phone optional (null) on Google path; email/password still requires WhatsApp phone. **Auth/OTP layouts must not mount global Vue** (`layouts.empty` CSS-only `@vite`). **Prod deployed** `6202025` (#170) @ 2026-08-04 11:04:27 UTC.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
 
 ## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
@@ -640,6 +641,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-04: Deploy #170 register Vue-mount fix to production
+- **Work done**: Pre-merge safety: confirmed 7 `@extends('layouts.empty')` consumers (login, register, verify, passwords email/code/reset, admin OTP) are server-rendered HTML + `@stack('scripts')` only — no Vue directives / no `#app` dependency. Squash-merged #170. Deployed via `scripts/deploy-manual.sh` from clean main worktree (`KlassApp-deploy-pr170`). Prod advanced `beca53a` → `6202025`. Migrations: none. Playwright prod verify: fill-before-idle race PASS (`#app` absent, name retained); full signup PASS → `/admin/dashboard?toshi_onboarding=1` with Continue school setup + Toshi composer. Cleaned disposable user **102** / school **43** (`deploy.verify+pr170.*`). Log ownership already `1000:1000`.
+- **Files modified**: `knowledge.md` (this stamp)
+- **Key decisions**: Auth/OTP stay CSS-only `@vite` (no `app.js`); name validator rejects digits (test name must be letters-only)
+- **Merge commit**: `62020252e117e3d294ecfe63a840f92b100b7a40`
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/170
+- **Deploy**: `scripts/deploy-manual.sh` @ **2026-08-04 11:04:27 UTC** — prod HEAD matches `origin/main`
+- **Status**: ✅ MERGED + ✅ DEPLOYED + verified + cleaned
+- **Edge cases flagged**: Register name regex rejects digits/numbers in display names; temporary worktrees outside Cursor primary root need unrestricted shell for deploy
+
 ### 2026-08-04: Fix register name validation race + add Playwright signup coverage
 - **Work done**: Reproduced the production `/register` bug against `https://klassapp.xyz/register` with Playwright and confirmed a race: auth pages loaded the global Vue app on `#app`, and if a user typed before `app.js` finished mounting, Vue re-rendered from empty `value` attributes and wiped filled inputs, causing native HTML5 “Please fill out this field” on `name`. Fixed `resources/views/layouts/empty.blade.php` to stop booting `resources/assets/js/app.js` on auth / OTP pages. Added a focused feature regression asserting `/register` no longer renders a global `#app` root. Added Playwright as the standard browser verification path for signup/onboarding with local seeding for `usergroups` + `plans`, covering email/password signup handoff, Toshi onboarding (`school name → curriculum → academic year`), and same-first-name collision signups. Verified local browser run against `php artisan serve :8011`; verified production manually and cleaned disposable prod users/schools created during diagnosis.
 - **Files modified**: `resources/views/layouts/empty.blade.php`, `tests/Feature/SaasMinimalSignupTest.php`, `package.json`, `package-lock.json`, `playwright.config.js`, `e2e/global-setup.js`, `e2e/signup-onboarding.spec.js`, `knowledge.md`
@@ -649,7 +660,8 @@ Phase B: Mix→Vite + Vue 3 runtime
   - Google OAuth Playwright stays env-gated until a dedicated test account is provided.
 - **Tests**: `php artisan test --compact tests/Feature/SaasMinimalSignupTest.php tests/Feature/FreshAdminDashboardSafetyTest.php` — **11 passed** (89 assertions). `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8011 npx playwright test e2e/signup-onboarding.spec.js` — **3 passed, 1 skipped** (Google env-gated).
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/170 (`fix/register-name-validation-playwright` @ `d80149b`)
-- **Status**: ✅ Done — PR open
+- **Merge commit**: `62020252e117e3d294ecfe63a840f92b100b7a40`
+- **Status**: ✅ MERGED + ✅ DEPLOYED (`6202025` @ 2026-08-04 11:04:27 UTC)
 - **Edge cases flagged**: Playwright local runs can fail on stale local fixture drift unless baseline `usergroups` / `plans` exist; `e2e/global-setup.js` now seeds those rows automatically for localhost only.
 
 ### 2026-08-04: Deploy main to production (#163+#165+#167)
