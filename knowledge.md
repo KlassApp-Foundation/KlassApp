@@ -240,9 +240,9 @@
 
 ---
 
-## Current Status: August 4, 2026 (`origin/main` tip `dc85b0f` — #173 knowledge stamp; prod still `275b0bd`)
+## Current Status: August 4, 2026 (`origin/main` tip `5bda067` — #174 knowledge stamp; prod still `275b0bd`)
 
-- **`origin/main` tip**: `dc85b0f` — knowledge stamp #173 (docs only). Prior app tip / **prod HEAD**: `275b0bd` (#172 login OAuth `failmessage` flash). Earlier: `be3d622` (#171 knowledge stamp), `6202025` (#170), `beca53a` (#168), `62e63e1` (#167), `1cfb499` (#165), `417ca26` (#163).
+- **`origin/main` tip**: `5bda067` — knowledge stamp #174 (OAuth Console URIs + tip SHA gap-fill). Prior: `dc85b0f` (#173). Prior app tip / **prod HEAD**: `275b0bd` (#172 login OAuth `failmessage` flash). Earlier: `be3d622` (#171), `6202025` (#170), `beca53a` (#168), `62e63e1` (#167), `1cfb499` (#165), `417ca26` (#163).
 - **✅ Deployed to prod**: `scripts/deploy-manual.sh` @ **2026-08-04 13:21:18 UTC** — prod HEAD `275b0bd136259f584f3ace526d54146181291063` (#172). **No migrations** (Blade + PHPUnit only). Post-deploy Playwright on `https://klassapp.xyz/login`: wrong-password → visible `klass-error` alert (“Invalid Credentials…”); OAuth callback without code → `data-testid="auth-flash-error"` “Google sign-in failed. Please try again.” Log ownership already `appuser:appgroup`.
 - **✅ Merged #172**: Login Blade renders session `failmessage`/`successmessage` (OAuth failures no longer silent refresh). Squash merge commit `275b0bd136259f584f3ace526d54146181291063`.
 - **✅ Merged #170**: Auth pages no longer mount global Vue on `#app` (fixes register input wipe / false “Please fill this field” on name). Playwright signup/onboarding e2e + `SaasMinimalSignupTest` `#app` regression. Squash merge commit `62020252e117e3d294ecfe63a840f92b100b7a40`.
@@ -257,7 +257,7 @@
   - **#153** School Admin Batch 2 — timetable + homework oversight (merge `102f92e`)
   - **#156** teacher-leave + studentAssignment-review Gates (merge `0cb5b76`); **#157** Teacher Batch 2 — submission review + own leave (merge `862ba92`)
   - **#160/#161/#162** knowledge sync + session-log rule + signup investigation pause log
-  - **#164** knowledge stamp for #163 merge; **#166** knowledge stamp for #165; **#168** deploy stamp for #167; **#171** deploy stamp for #170; **#173** deploy stamp for #172
+  - **#164** knowledge stamp for #163 merge; **#166** knowledge stamp for #165; **#168** deploy stamp for #167; **#171** deploy stamp for #170; **#173** deploy stamp for #172; **#174** OAuth Console URI / tip-SHA gap-fill
 - **🚧 Open PRs**:
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
@@ -660,7 +660,8 @@ Phase B: Mix→Vite + Vue 3 runtime
   - Login vs register: different entry routes (`GET /auth/google` vs `POST /auth/google/start`) but identical `redirect_uri`; register may fail Blade/form validation before Socialite redirect.
   - **Autonomy** (operator preference, not app code): Cursor Run Everything + `~/.cursor/rules/autonomy.mdc`.
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/174 (`chore/knowledge-stamp-oauth-console`)
-- **Status**: ✅ Knowledge stamp PR open (no app deploy)
+- **Merge commit**: `5bda06778982cd90f608cda8ea602a4b2201bdf9`
+- **Status**: ✅ MERGED (knowledge-only; no app deploy)
 - **Edge cases flagged**: Prod remains at app commit `275b0bd`; `origin/main` tip may be knowledge-only ahead of prod after stamps.
 
 ### 2026-08-04: Investigate Google OAuth login vs register + restore auth flash
