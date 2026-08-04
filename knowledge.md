@@ -648,7 +648,8 @@ Phase B: Mix→Vite + Vue 3 runtime
   - Standard signup verification should be real-browser first; local Playwright seeds only the minimum reference rows (`usergroups`, Freemium plan) when running against localhost.
   - Google OAuth Playwright stays env-gated until a dedicated test account is provided.
 - **Tests**: `php artisan test --compact tests/Feature/SaasMinimalSignupTest.php tests/Feature/FreshAdminDashboardSafetyTest.php` — **11 passed** (89 assertions). `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8011 npx playwright test e2e/signup-onboarding.spec.js` — **3 passed, 1 skipped** (Google env-gated).
-- **Status**: ✅ Done locally — PR metadata to be stamped after push
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/170 (`fix/register-name-validation-playwright` @ `d80149b`)
+- **Status**: ✅ Done — PR open
 - **Edge cases flagged**: Playwright local runs can fail on stale local fixture drift unless baseline `usergroups` / `plans` exist; `e2e/global-setup.js` now seeds those rows automatically for localhost only.
 
 ### 2026-08-04: Deploy main to production (#163+#165+#167)
