@@ -244,7 +244,7 @@
 
 - **`origin/main` tip**: `c6ba7af` — `docs(knowledge): mark SaaS minimal signup #163 as merged (#164)`. Prior: `417ca26` (#163 SaaS minimal signup).
 - **✅ Merged #163**: SaaS minimal signup — shared `SchoolSignupBootstrapService` (name+email+Phone WhatsApp + password|Google) → placeholder `{First}'s School` (`-2/-3` collisions), `curriculum=null`, `toshi_enabled=1`, **no AcademicYear** → `/admin/dashboard?toshi_onboarding=1` + Toshi complete mode (school name → curriculum → academic year early). Dashboard/`MustBePrivilege` null-guard. Merge commit `417ca269a19d0c1fccb6cd2b9660be6bc71f6995`.
-- **🚧 Open — Toshi school-name onboarding follow-up** (`fix/toshi-onboarding-school-name`): skip keyword/student-lookup during complete-mode `school_info` name entry; complete-mode collisions use `uniqueSchoolName` (`-2/-3`) instead of hard reject. See Session Log.
+- **🚧 Open — Toshi school-name onboarding follow-up** (`fix/toshi-onboarding-school-name` @ `ec873be`): skip keyword/student-lookup during complete-mode `school_info` name entry; complete-mode collisions use `uniqueSchoolName` (`-2/-3`) instead of hard reject. **PR #165**: https://github.com/KlassApp-Foundation/KlassApp/pull/165
 - **✅ Merged Aug 2–3 (on main; deploy separate)**:
   - **#142+** safety/adversarial + `UsesToshiLlm`; **#143–#145** llm-status / dual-config fail-loud / llm-health
   - **#147–#149** adversarial-live in-process (no phpunit/faker on prod) + durable schedule logging; prod adversarial gate live
@@ -254,7 +254,7 @@
   - **#156** teacher-leave + studentAssignment-review Gates (merge `0cb5b76`); **#157** Teacher Batch 2 — submission review + own leave (merge `862ba92`)
   - **#160/#161/#162** knowledge sync + session-log rule + signup investigation pause log
   - **#164** knowledge stamp for #163 merge
-- **🚧 Open PRs**:
+  - **#165** Toshi school-name onboarding fixes — **PR open** @ `ec873be` — https://github.com/KlassApp-Foundation/KlassApp/pull/165
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
@@ -643,8 +643,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/ToshiSchoolNameOnboardingTest.php`, `knowledge.md`
 - **Key decisions**: Gate keyword routing at the `send()` school_info collector only (do not weaken `tryStudentLookup` globally); complete-mode suffix alignment with signup; create-mode keeps duplicate reject.
 - **Tests**: `php artisan test --compact tests/Feature/Onboarding/ToshiSchoolNameOnboardingTest.php` — **3 passed** (23 assertions)
-- **PR**: (set after `gh pr create`)
-- **Status**: 🚧 PR opening
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/165 (`fix/toshi-onboarding-school-name` @ `ec873be`)
+- **Status**: ✅ Done — PR open (not merged)
 - **Branch**: `fix/toshi-onboarding-school-name` (worktree `/Users/mac/projects/KlassApp-fix-toshi-onboarding-school-name`, base `origin/main` @ `c6ba7af`)
 
 ### 2026-08-03: SaaS minimal signup redesign — implement
