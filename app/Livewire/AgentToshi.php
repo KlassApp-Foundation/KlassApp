@@ -3447,28 +3447,36 @@ class AgentToshi extends Component
                 }
             }
 
-            // Try the keyword router first (zero-cost). If it matches, switch to assistant.
-            if ($this->tryKeywordRoute(strtolower($text), $text)) {
-                $this->mode = 'assistant';
-                $this->step = 99;
-                $this->saveDraft();
-                return;
-            }
+            // Collecting a school name (complete or create): never treat the answer as
+            // student lookup / assistant keyword routing — multi-word names like
+            // "Sunrise Primary School" would otherwise hit tryStudentLookup.
+            $collectingSchoolName = ($this->steps[$this->step] ?? null) === 'school_info'
+                && (int) $this->substep === 0;
 
-            // Heuristic: detect natural language queries vs. setup answers.
-            $isQuestion = (bool) preg_match('/^(what|how|why|when|where|who|which|can|could|would|will|do|does|did|is|are|has|have|show|tell|list|find|give)\b/i', $text);
-            $hasQueryVerb = (bool) preg_match('/\b(show|list|tell|find|give|add|create|record|mark|assign|report|how many|what is|who is|i want|i need|can you)\b/i', $lower);
-            $isMultiWord = str_word_count($text) >= 3;
-            $isSetupAnswer = in_array($lower, ['yes', 'y', 'no', 'n', 'correct', 'right', 'ok', 'default', 'skip', 'later', 'cash', 'cheque', 'mobile_money', 'bank_transfer', 'can we go on', 'go on', 'continue', 'proceed', 'next', 'lets go', 'move on'])
-                || preg_match('/^\+?256\d{9,12}$/', $text)
-                || preg_match('/^[\w\.\-]+@[\w\.\-]+\.\w+$/', $text);
+            if (! $collectingSchoolName) {
+                // Try the keyword router first (zero-cost). If it matches, switch to assistant.
+                if ($this->tryKeywordRoute(strtolower($text), $text)) {
+                    $this->mode = 'assistant';
+                    $this->step = 99;
+                    $this->saveDraft();
+                    return;
+                }
 
-            if ($this->mode !== 'create' && ($isQuestion || ($hasQueryVerb && $isMultiWord)) && !$isSetupAnswer) {
-                $this->mode = 'assistant';
-                $this->step = 99;
-                $this->saveDraft();
-                $this->handleAssistantQuery($text);
-                return;
+                // Heuristic: detect natural language queries vs. setup answers.
+                $isQuestion = (bool) preg_match('/^(what|how|why|when|where|who|which|can|could|would|will|do|does|did|is|are|has|have|show|tell|list|find|give)\b/i', $text);
+                $hasQueryVerb = (bool) preg_match('/\b(show|list|tell|find|give|add|create|record|mark|assign|report|how many|what is|who is|i want|i need|can you)\b/i', $lower);
+                $isMultiWord = str_word_count($text) >= 3;
+                $isSetupAnswer = in_array($lower, ['yes', 'y', 'no', 'n', 'correct', 'right', 'ok', 'default', 'skip', 'later', 'cash', 'cheque', 'mobile_money', 'bank_transfer', 'can we go on', 'go on', 'continue', 'proceed', 'next', 'lets go', 'move on'])
+                    || preg_match('/^\+?256\d{9,12}$/', $text)
+                    || preg_match('/^[\w\.\-]+@[\w\.\-]+\.\w+$/', $text);
+
+                if ($this->mode !== 'create' && ($isQuestion || ($hasQueryVerb && $isMultiWord)) && !$isSetupAnswer) {
+                    $this->mode = 'assistant';
+                    $this->step = 99;
+                    $this->saveDraft();
+                    $this->handleAssistantQuery($text);
+                    return;
+                }
             }
         }
 
@@ -3552,11 +3560,24 @@ class AgentToshi extends Component
             // Collecting school name
             $name = $this->validateRequired($text, 'School name', 3);
             if ($name === null) return;
-            if ($this->isDuplicateSchool($name)) {
-                $this->botSay("A school named **{$name}** already exists. Please use a different name.");
-                return;
+
+            if ($this->mode === 'complete' && $this->schoolId) {
+                // Align with signup: suffix -2/-3 on collision instead of rejecting.
+                $unique = app(\App\Services\SchoolSignupBootstrapService::class)->uniqueSchoolName($name);
+                if ($unique !== $name
+                    && \App\Models\School::where('name', $name)->where('id', '!=', $this->schoolId)->exists()) {
+                    $this->schoolName = $unique;
+                } else {
+                    $this->schoolName = $name;
+                }
+            } else {
+                if ($this->isDuplicateSchool($name)) {
+                    $this->botSay("A school named **{$name}** already exists. Please use a different name.");
+                    return;
+                }
+                $this->schoolName = $name;
             }
-            $this->schoolName = $name;
+
             $this->botSay("🏫 **{$this->schoolName}**");
             $this->botSay("Is the name correct? (yes / no)");
             $this->awaitingConfirm = true;

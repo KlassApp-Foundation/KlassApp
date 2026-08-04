@@ -240,10 +240,11 @@
 
 ---
 
-## Current Status: August 4, 2026 (`origin/main` tip `417ca26` — SaaS minimal signup #163)
+## Current Status: August 4, 2026 (`origin/main` tip `c6ba7af` — #163/#164 + school-name follow-up PR)
 
-- **`origin/main` tip**: `417ca26` — `feat(saas): minimal signup → Toshi onboarding (#163)`. Prior: `dcc60c3` (#162 knowledge), `862ba92` (#157 Teacher Batch 2).
+- **`origin/main` tip**: `c6ba7af` — `docs(knowledge): mark SaaS minimal signup #163 as merged (#164)`. Prior: `417ca26` (#163 SaaS minimal signup).
 - **✅ Merged #163**: SaaS minimal signup — shared `SchoolSignupBootstrapService` (name+email+Phone WhatsApp + password|Google) → placeholder `{First}'s School` (`-2/-3` collisions), `curriculum=null`, `toshi_enabled=1`, **no AcademicYear** → `/admin/dashboard?toshi_onboarding=1` + Toshi complete mode (school name → curriculum → academic year early). Dashboard/`MustBePrivilege` null-guard. Merge commit `417ca269a19d0c1fccb6cd2b9660be6bc71f6995`.
+- **🚧 Open — Toshi school-name onboarding follow-up** (`fix/toshi-onboarding-school-name` @ `ec873be`): skip keyword/student-lookup during complete-mode `school_info` name entry; complete-mode collisions use `uniqueSchoolName` (`-2/-3`) instead of hard reject. **PR #165**: https://github.com/KlassApp-Foundation/KlassApp/pull/165
 - **✅ Merged Aug 2–3 (on main; deploy separate)**:
   - **#142+** safety/adversarial + `UsesToshiLlm`; **#143–#145** llm-status / dual-config fail-loud / llm-health
   - **#147–#149** adversarial-live in-process (no phpunit/faker on prod) + durable schedule logging; prod adversarial gate live
@@ -252,13 +253,15 @@
   - **#153** School Admin Batch 2 — timetable + homework oversight (merge `102f92e`)
   - **#156** teacher-leave + studentAssignment-review Gates (merge `0cb5b76`); **#157** Teacher Batch 2 — submission review + own leave (merge `862ba92`)
   - **#160/#161/#162** knowledge sync + session-log rule + signup investigation pause log
+  - **#164** knowledge stamp for #163 merge
 - **🚧 Open PRs**:
+  - **#165** Toshi school-name onboarding fixes — **PR open** @ `ec873be` — https://github.com/KlassApp-Foundation/KlassApp/pull/165
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
 - **✅ Toshi on `main` (cumulative)**: Platform (#124), Teacher→Student (#125–#129), Deputy Admin (#137), WhatsApp (#133–#136), IDOR (#123/#130–#132), MCP audit (#140), safety/adversarial + UsesToshiLlm (#142+), dual-config/llm-health (#143–#149), School Admin Batch 1–2 (#150/#153), Teacher Batch 2 (#157) + Gate fixes (#152/#154/#156), **SaaS minimal signup (#163)**.
 - **Report cards**: Academic per-student PDF **exists** (`DownloadStudentReport`; shared `StudentReportCardService` on #159). `/admin/reports` hub remains CSV/operational exports only — do not claim “no report cards”. Gaps: class/term batch + full distribution. See `docs/toshi-report-cards-audit.md` / #158.
-- **Onboarding / signup**: Fresh admins get placeholder school + Toshi-first setup; curriculum and academic year are asked early (not silently defaulted). Student ID bugs remain out of scope. **Next**: deploy + live fresh-signup walkthrough (collision `-2/-3`, dashboard pre-year, early academic year).
+- **Onboarding / signup**: Fresh admins get placeholder school + Toshi-first setup; curriculum and academic year are asked early (not silently defaulted). Student ID bugs remain out of scope. **Next**: merge school-name follow-up, deploy + live fresh-signup walkthrough (collision `-2/-3`, dashboard pre-year, early academic year).
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
 
 ## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
@@ -635,6 +638,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-04: Toshi complete-mode school-name onboarding fixes (#163 follow-up)
+- **Work done**: Fixed two complete-mode school-name bugs. (1) `AgentToshi::send()` skipped `tryKeywordRoute` / NL→assistant heuristic while collecting `school_info` name (`substep === 0`) so multi-word names no longer become student-lookup misses. (2) Complete-mode rename collisions use `SchoolSignupBootstrapService::uniqueSchoolName()` (`-2/-3`) instead of hard-reject via `isDuplicateSchool`; create-mode still rejects duplicates. Privilege-gate report only: `/admin/academics` + `/admin/standard/create` allowlist in `MustBePrivilege` is **intentional** (pre-#163 onboarding-loop avoid; #163 kept it so mid-setup admins can reach AY/class pages) — not a `fullschooladmin` bypass; no code change.
+- **Files modified**: `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/ToshiSchoolNameOnboardingTest.php`, `knowledge.md`
+- **Key decisions**: Gate keyword routing at the `send()` school_info collector only (do not weaken `tryStudentLookup` globally); complete-mode suffix alignment with signup; create-mode keeps duplicate reject.
+- **Tests**: `php artisan test --compact tests/Feature/Onboarding/ToshiSchoolNameOnboardingTest.php` — **3 passed** (23 assertions)
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/165 (`fix/toshi-onboarding-school-name` @ `ec873be`)
+- **Status**: ✅ Done — PR open (not merged)
+- **Branch**: `fix/toshi-onboarding-school-name` (worktree `/Users/mac/projects/KlassApp-fix-toshi-onboarding-school-name`, base `origin/main` @ `c6ba7af`)
 
 ### 2026-08-03: SaaS minimal signup redesign — implement
 - **Work done**: Implemented product decisions from investigation. Shared `SchoolSignupBootstrapService` (User+ug3+profile+placeholder School `{First}'s School` with `-2/-3` collision, `curriculum=null`, `toshi_enabled=1`, **no AcademicYear**, no OTP). Slim register form (name/email/Phone WhatsApp/password|Google via `POST /auth/google/start`). Dashboard + `MustBePrivilege` null-guard for bare schools (“Continue school setup” + Toshi open). `OnboardingStepsService` order: school_name → curriculum → academic_year → …; Toshi complete-mode jump + curriculum ask + school rename + year persist. Migrations make curriculum nullable (MySQL alter + fresh create).
