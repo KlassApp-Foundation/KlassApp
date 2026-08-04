@@ -126,16 +126,12 @@ class SaasMinimalSignupTest extends TestCase
             ],
         ]);
 
-        $abstractUser = Mockery::mock(\Laravel\Socialite\Two\User::class);
-        $abstractUser->shouldReceive('getId')->andReturn('google-123');
-        $abstractUser->shouldReceive('getEmail')->andReturn('okello@example.com');
-        $abstractUser->shouldReceive('getName')->andReturn('Okello Dan');
-        $abstractUser->shouldReceive('getAvatar')->andReturn('https://example.com/a.png');
-
-        $provider = Mockery::mock(Provider::class);
-        $provider->shouldReceive('stateless')->andReturnSelf();
-        $provider->shouldReceive('user')->andReturn($abstractUser);
-        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+        $this->mockGoogleUser([
+            'id' => 'google-123',
+            'email' => 'okello@example.com',
+            'name' => 'Okello Dan',
+            'avatar' => 'https://example.com/a.png',
+        ]);
 
         $response = $this->get('/auth/google/callback');
 
@@ -147,6 +143,7 @@ class SaasMinimalSignupTest extends TestCase
         if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'google_id')) {
             $this->assertSame('google-123', $user->google_id);
         }
+        $this->assertSame('+256703333333', $user->mobile_no);
 
         $school = School::find($user->school_id);
         $this->assertSame("Okello's School", $school->name);
@@ -154,6 +151,87 @@ class SaasMinimalSignupTest extends TestCase
         $this->assertSame(1, (int) $school->toshi_enabled);
         $this->assertFalse(AcademicYear::where('school_id', $school->id)->exists());
         $this->assertSame('+256703333333', $school->phone);
+    }
+
+    public function test_google_oauth_callback_without_phone_bootstraps_null_phone(): void
+    {
+        // Login-page Google path: no saas_signup session / no WhatsApp phone.
+        $this->mockGoogleUser([
+            'id' => 'google-no-phone',
+            'email' => 'amina@example.com',
+            'name' => 'Amina Nalubega',
+            'avatar' => null,
+        ]);
+
+        $response = $this->get('/auth/google/callback');
+
+        $response->assertRedirect('/admin/dashboard?toshi_onboarding=1');
+        $this->assertAuthenticated();
+
+        $user = User::where('email', 'amina@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertNull($user->mobile_no);
+        $this->assertSame(3, (int) $user->usergroup_id);
+        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'google_id')) {
+            $this->assertSame('google-no-phone', $user->google_id);
+        }
+
+        $school = School::find($user->school_id);
+        $this->assertSame("Amina's School", $school->name);
+        $this->assertNull($school->phone);
+        $this->assertNull($school->curriculum);
+        $this->assertSame(1, (int) $school->toshi_enabled);
+        $this->assertFalse(AcademicYear::where('school_id', $school->id)->exists());
+
+        $keys = array_column(OnboardingStepsService::incompleteSteps($school, $user->id), 'key');
+        $this->assertSame('school_name', $keys[0]);
+    }
+
+    public function test_google_oauth_null_phone_does_not_collide_on_schools_phone_unique(): void
+    {
+        $this->mockGoogleUser([
+            'id' => 'google-a',
+            'email' => 'first-google@example.com',
+            'name' => 'First User',
+        ]);
+        $this->get('/auth/google/callback')->assertRedirect('/admin/dashboard?toshi_onboarding=1');
+        auth()->logout();
+
+        $this->mockGoogleUser([
+            'id' => 'google-b',
+            'email' => 'second-google@example.com',
+            'name' => 'Second User',
+        ]);
+        $this->get('/auth/google/callback')->assertRedirect('/admin/dashboard?toshi_onboarding=1');
+
+        $first = User::where('email', 'first-google@example.com')->first();
+        $second = User::where('email', 'second-google@example.com')->first();
+        $this->assertNotNull($first);
+        $this->assertNotNull($second);
+        $this->assertNull($first->mobile_no);
+        $this->assertNull($second->mobile_no);
+        $this->assertNull($first->school->phone);
+        $this->assertNull($second->school->phone);
+        $this->assertNotSame($first->school_id, $second->school_id);
+    }
+
+    public function test_google_oauth_falls_back_when_name_missing(): void
+    {
+        $this->mockGoogleUser([
+            'id' => 'google-noname',
+            'email' => 'noname@example.com',
+            'name' => null,
+        ]);
+
+        $response = $this->get('/auth/google/callback');
+
+        $response->assertRedirect('/admin/dashboard?toshi_onboarding=1');
+        $user = User::where('email', 'noname@example.com')->first();
+        $this->assertNotNull($user);
+        // UserprofileObserver rewrites users.name to a username; school uses bootstrap first-name.
+        $this->assertSame("Google's School", $user->school->name);
+        $this->assertNull($user->mobile_no);
+        $this->assertNull($user->school->phone);
     }
 
     public function test_curriculum_null_is_not_treated_as_complete(): void
@@ -171,5 +249,22 @@ class SaasMinimalSignupTest extends TestCase
         $this->assertFalse(OnboardingStepsService::isStepComplete('curriculum', $school));
         $this->assertTrue(OnboardingStepsService::isPlaceholderSchoolName($school->name));
         $this->assertFalse(OnboardingStepsService::isStepComplete('school_name', $school));
+    }
+
+    /**
+     * @param  array{id: string, email: string, name: ?string, avatar?: ?string}  $attrs
+     */
+    private function mockGoogleUser(array $attrs): void
+    {
+        $abstractUser = Mockery::mock(\Laravel\Socialite\Two\User::class);
+        $abstractUser->shouldReceive('getId')->andReturn($attrs['id']);
+        $abstractUser->shouldReceive('getEmail')->andReturn($attrs['email']);
+        $abstractUser->shouldReceive('getName')->andReturn($attrs['name'] ?? null);
+        $abstractUser->shouldReceive('getAvatar')->andReturn($attrs['avatar'] ?? null);
+
+        $provider = Mockery::mock(Provider::class);
+        $provider->shouldReceive('stateless')->andReturnSelf();
+        $provider->shouldReceive('user')->once()->andReturn($abstractUser);
+        Socialite::shouldReceive('driver')->with('google')->once()->andReturn($provider);
     }
 }

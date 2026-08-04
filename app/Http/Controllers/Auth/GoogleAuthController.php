@@ -96,6 +96,12 @@ class GoogleAuthController extends Controller
         $googleName = $googleUser->getName() ?: 'Google User';
         $googleAvatar = $googleUser->getAvatar();
 
+        if (! $googleEmail) {
+            session()->forget('saas_signup');
+
+            return redirect('/login')->with('failmessage', 'Google did not return an email address. Please try again or use email signup.');
+        }
+
         $existingByGoogleId = User::where('google_id', $googleId)->first();
         if ($existingByGoogleId) {
             $this->updateGoogleData($existingByGoogleId, $googleUser);
@@ -114,31 +120,22 @@ class GoogleAuthController extends Controller
             return $this->postAuthRedirect($existingByEmail);
         }
 
+        // Phone is optional on Google OAuth (Decision B): Google has no phone claim.
+        // Email/password signup still requires WhatsApp phone. Prefer null over a
+        // fake number; schools.phone UNIQUE allows multiple NULLs, not ''.
         $signup = session('saas_signup', []);
         $phone = $signup['phone'] ?? null;
-
-        if ($phone === null || $phone === '') {
-            session()->forget('saas_signup');
-
-            return redirect()->route('register')
-                ->with('failmessage', 'Phone (WhatsApp) is required. Please complete the signup form, then continue with Google.');
-        }
+        $adminName = trim((string) ($signup['name'] ?? '')) ?: $googleName;
 
         try {
             $user = $bootstrap->bootstrap([
-                'name' => $signup['name'] ?? $googleName,
-                'email' => $signup['email'] ?? $googleEmail,
+                'name' => $adminName,
+                'email' => $googleEmail,
                 'phone' => $phone,
                 'google_id' => $googleId,
                 'google_avatar' => $googleAvatar,
                 'email_verified' => true,
             ]);
-
-            // Prefer Google-verified email if form email differed
-            if ($googleEmail && $user->email !== $googleEmail) {
-                $user->email = $googleEmail;
-                $user->save();
-            }
 
             session()->forget('saas_signup');
             Auth::login($user, true);
@@ -147,7 +144,10 @@ class GoogleAuthController extends Controller
                 ->with('open_toshi_onboarding', true)
                 ->with('successmessage', 'Welcome to KlassApp! Continue setup with Toshi.');
         } catch (Throwable $e) {
-            Log::error('Google auth user creation failed', ['message' => $e->getMessage()]);
+            Log::error('Google auth user creation failed', [
+                'message' => $e->getMessage(),
+                'exception' => $e::class,
+            ]);
             session()->forget('saas_signup');
 
             return redirect('/login')->with('failmessage', 'We could not create your account. Please try again.');
