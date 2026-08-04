@@ -3,10 +3,13 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
+        "test:e2e": "playwright test",
+        "test:e2e:headed": "playwright test --headed",
         "build-subscriptioninfo": "cd nova-components/Subscriptioninfo && npm run dev",
         "build-subscriptioninfo-prod": "cd nova-components/Subscriptioninfo && npm run prod"
     },
     "devDependencies": {
+        "@playwright/test": "^1.62.1",
         "@tailwindcss/vite": "^4.3.3",
         "@vitejs/plugin-vue": "^6.0.8",
         "@vue/compiler-sfc": "3.5.40",

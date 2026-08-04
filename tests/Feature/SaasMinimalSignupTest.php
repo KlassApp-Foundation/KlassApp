@@ -92,6 +92,15 @@ class SaasMinimalSignupTest extends TestCase
         $this->assertNull(User::where('email', 'grace2@example.com')->first());
     }
 
+    public function test_register_page_does_not_mount_global_vue_root(): void
+    {
+        $response = $this->get('/register');
+
+        $response->assertOk();
+        $response->assertDontSee('id="app"', false);
+        $response->assertSee('Create your KlassApp account', false);
+    }
+
     public function test_placeholder_school_names_do_not_collide_for_same_first_name(): void
     {
         $bootstrap = app(SchoolSignupBootstrapService::class);

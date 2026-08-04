@@ -8,8 +8,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @include('layouts.partials.favicon')
     <title>{{ config('app.name', 'KlassApp') }}</title>
+    {{-- Auth / OTP pages must not boot the global Vue app.
+         Mounting app.js on #app can wipe inputs typed before the bundle finishes loading,
+         because Vue recompiles the server-rendered markup from empty value attributes. --}}
     @vite([
-        'resources/assets/js/app.js',
         'resources/assets/sass/app.scss',
         'resources/css/tailwind.css',
     ])
@@ -18,13 +20,11 @@
     @stack('styles')
   </head>
   <body style="background: #FAFAF5; font-family: 'DM Sans', sans-serif;">
-    <div id="app">
-      <main>
-        <div class="flex items-center justify-center min-h-screen px-4 py-8">
-          @yield('content')
-        </div>
-      </main>
-    </div>
+    <main>
+      <div class="flex items-center justify-center min-h-screen px-4 py-8">
+        @yield('content')
+      </div>
+    </main>
     @stack('scripts')
   </body>
 </html>
