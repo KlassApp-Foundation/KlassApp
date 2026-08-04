@@ -138,6 +138,7 @@ class SchoolSignupBootstrapService
         $payload = [
             'name' => $name,
             'email' => $email,
+            // NULL (not '') — schools.phone has a UNIQUE index; empty string collides.
             'phone' => $phone,
             'slug' => Str::slug($name),
             'status' => '1',
@@ -202,16 +203,22 @@ class SchoolSignupBootstrapService
 
     private function createUserProfile(User $user, string $adminName, ?string $phone): void
     {
-        Userprofile::create([
+        $payload = [
             'user_id' => $user->id,
             'school_id' => $user->school_id,
             'usergroup_id' => $user->usergroup_id,
             'firstname' => $adminName,
-            'mobile_no' => $phone ?? '',
             'avatar' => $user->google_avatar ?: 'uploads/male.png',
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
-        ]);
+        ];
+
+        // Production userprofiles has no mobile_no column; only set when present.
+        if (Schema::hasColumn('userprofiles', 'mobile_no')) {
+            $payload['mobile_no'] = $phone;
+        }
+
+        Userprofile::create($payload);
     }
 
     private function createPendingSubscription(User $user): void
