@@ -637,8 +637,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `e2e/prod-uganda-onboarding.spec.js` (new), `playwright.config.js` (`prod` project), `package.json` (`test:e2e:prod-uganda`), `knowledge.md`
 - **Key decisions**: Prefer real chat for early #177/#178 steps; SSH seed mid-flow because Livewire nested `$set`+`confirmOnboarding` reported success but left empty server-side arrays; WhatsAppUser insert so plan is last incomplete step (OTP not automatable)
 - **Run**: `PLAYWRIGHT_BROWSERS_PATH="$HOME/Library/Caches/ms-playwright" PLAYWRIGHT_BASE_URL=https://klassapp.xyz npm run test:e2e:prod-uganda` — **1 passed** (~1.1m); school 67 cleaned
-- **PR**: opening
-- **Status**: ✅ Done — PR opening
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/180 (`e2e/prod-uganda-onboarding` @ `d9fde9e`)
+- **Status**: ✅ Done — PR open (not merged)
 - **Edge cases flagged**: complete-mode WhatsApp skip does not mark checklist complete; plan cards may need Livewire `selectPlan` fallback; Predis deprecation noise in tinker stdout requires JSON extraction
 
 ### 2026-08-05: Merge + deploy #177 + #178 (country/EMIS/plan + plain dashboard redirect)
