@@ -36,7 +36,7 @@ class MustBePrivilege
                 return $next($request);
             }
 
-            return redirect('/admin/dashboard?toshi_onboarding=1')
+            return redirect('/admin/dashboard')
                 ->with('open_toshi_onboarding', true);
         }
 
@@ -46,7 +46,7 @@ class MustBePrivilege
             }
 
             if ($onboardingIncomplete) {
-                return redirect('/admin/dashboard?toshi_onboarding=1')
+                return redirect('/admin/dashboard')
                     ->with('open_toshi_onboarding', true);
             }
 

@@ -140,7 +140,7 @@ class GoogleAuthController extends Controller
             session()->forget('saas_signup');
             Auth::login($user, true);
 
-            return redirect('/admin/dashboard?toshi_onboarding=1')
+            return redirect('/admin/dashboard')
                 ->with('open_toshi_onboarding', true)
                 ->with('successmessage', 'Welcome to KlassApp! Continue setup with Toshi.');
         } catch (Throwable $e) {
@@ -164,7 +164,7 @@ class GoogleAuthController extends Controller
             return redirect('/login');
         }
 
-        return redirect('/admin/dashboard?toshi_onboarding=1')
+        return redirect('/admin/dashboard')
             ->with('open_toshi_onboarding', true);
     }
 
@@ -183,7 +183,7 @@ class GoogleAuthController extends Controller
         );
 
         if ($needsSetup) {
-            return redirect('/admin/dashboard?toshi_onboarding=1')
+            return redirect('/admin/dashboard')
                 ->with('open_toshi_onboarding', true);
         }
 

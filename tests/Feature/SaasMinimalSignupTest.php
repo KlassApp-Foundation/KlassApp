@@ -47,7 +47,7 @@ class SaasMinimalSignupTest extends TestCase
             'termsandcondn' => '1',
         ]);
 
-        $response->assertRedirect('/admin/dashboard?toshi_onboarding=1');
+        $response->assertRedirect('/admin/dashboard');
         $this->assertAuthenticated();
 
         $user = User::where('email', 'grace@example.com')->first();
@@ -144,7 +144,7 @@ class SaasMinimalSignupTest extends TestCase
 
         $response = $this->get('/auth/google/callback');
 
-        $response->assertRedirect('/admin/dashboard?toshi_onboarding=1');
+        $response->assertRedirect('/admin/dashboard');
         $this->assertAuthenticated();
 
         $user = User::where('email', 'okello@example.com')->first();
@@ -174,7 +174,7 @@ class SaasMinimalSignupTest extends TestCase
 
         $response = $this->get('/auth/google/callback');
 
-        $response->assertRedirect('/admin/dashboard?toshi_onboarding=1');
+        $response->assertRedirect('/admin/dashboard');
         $this->assertAuthenticated();
 
         $user = User::where('email', 'amina@example.com')->first();
@@ -203,7 +203,7 @@ class SaasMinimalSignupTest extends TestCase
             'email' => 'first-google@example.com',
             'name' => 'First User',
         ]);
-        $this->get('/auth/google/callback')->assertRedirect('/admin/dashboard?toshi_onboarding=1');
+        $this->get('/auth/google/callback')->assertRedirect('/admin/dashboard');
         auth()->logout();
 
         $this->mockGoogleUser([
@@ -211,7 +211,7 @@ class SaasMinimalSignupTest extends TestCase
             'email' => 'second-google@example.com',
             'name' => 'Second User',
         ]);
-        $this->get('/auth/google/callback')->assertRedirect('/admin/dashboard?toshi_onboarding=1');
+        $this->get('/auth/google/callback')->assertRedirect('/admin/dashboard');
 
         $first = User::where('email', 'first-google@example.com')->first();
         $second = User::where('email', 'second-google@example.com')->first();
@@ -234,7 +234,7 @@ class SaasMinimalSignupTest extends TestCase
 
         $response = $this->get('/auth/google/callback');
 
-        $response->assertRedirect('/admin/dashboard?toshi_onboarding=1');
+        $response->assertRedirect('/admin/dashboard');
         $user = User::where('email', 'noname@example.com')->first();
         $this->assertNotNull($user);
         // UserprofileObserver rewrites users.name to a username; school uses bootstrap first-name.
