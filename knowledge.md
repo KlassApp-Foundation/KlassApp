@@ -651,8 +651,8 @@ Phase B: Mix→Vite + Vue 3 runtime
   - `registration_number` convention: backfill copies `klassapp_student_id` → `users.registration_number`; admin/manual forms accept free-text; Toshi paths never wrote it.
   - AddStudentTool gap: delegates to `ToshiActionService::addStudent`, a lower-level create that never called the generator (set neither field).
 - **Tests**: `php artisan test --compact tests/Feature/Onboarding/StudentRegistrationNumberPathsTest.php tests/Unit/Services/StudentIdGeneratorServiceTest.php` — **9 passed**; also Backfill + AssignStudentsToStream — **15 passed**
-- **PR**: (opening) `fix/student-registration-number`
-- **Status**: ✅ Done — PR opening
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/176 (`fix/student-registration-number` @ `35f8a4d`)
+- **Status**: ✅ Done — PR open (not merged)
 - **Edge cases flagged**: Worktree must `composer install` (not symlink `vendor` to another tree) or PHPUnit loads the wrong `App\` classes. AssignStudentsToStream only calls `nextForStudent` when `registration_number` is empty (preserves manual REG* values).
 
 ### 2026-08-04: Merge + deploy #172 auth flash; stamp knowledge
