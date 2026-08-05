@@ -248,6 +248,7 @@
 - **✅ Merged #177**: Country + Uganda EMIS (`ministry_code`) + optional UNEB centre (`schools.uneb_center_number`); plan selection moved to end (no commitAll truncation). Squash merge `b9eec94d2ebaae67bb5ffc5cbfe273b4b5700182`.
 - **✅ Merged #176**: Toshi student create paths set `registration_number` + `klassapp_student_id` via `StudentIdGeneratorService`. Squash merge `eeb3a96b2aa21defdd67590e12ddccfce159acae` (already on main before this deploy).
 - **✅ Post-deploy verify (Playwright @ klassapp.xyz)**: fresh email signup → `https://klassapp.xyz/admin/dashboard` (**no** `?toshi_onboarding=1`); **Continue school setup** + `[data-toshi-root]` + composer visible; Toshi checklist includes **Country** early and **Plan** at end. Test user `deploy.verify.1785968348241@example.test` + school 53 cleaned up.
+- **✅ Full Uganda onboarding e2e (2026-08-06)**: `e2e/prod-uganda-onboarding.spec.js` @ klassapp.xyz — steps 1–8 PASS + cleanup; EMIS block, UNEB skip (`''`), 12× `KLS…` IDs, plan override Freemium→Growth; school 67 removed.
 - **🚧 Open PRs**:
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
@@ -630,6 +631,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-06: Prod Uganda Playwright e2e (signup → onboarding verify #163–#178)
+- **Work done**: Added reusable prod-only Playwright suite that signs up a fresh Uganda school on https://klassapp.xyz, drives Toshi chat through school name → UNEB → Uganda → EMIS required → UNEB centre skip → academic year, seeds ≥12 students (+ classes/subjects/teachers/terms/fees) via SSH using `StudentIdGeneratorService`, clears WhatsApp checklist gate, selects a non-suggested plan (Growth over Freemium), DB-asserts country/EMIS/`uneb_center_number=''`/KLS IDs/CurrentPlan+Subscription, then deletes all test rows.
+- **Files modified**: `e2e/prod-uganda-onboarding.spec.js` (new), `playwright.config.js` (`prod` project), `package.json` (`test:e2e:prod-uganda`), `knowledge.md`
+- **Key decisions**: Prefer real chat for early #177/#178 steps; SSH seed mid-flow because Livewire nested `$set`+`confirmOnboarding` reported success but left empty server-side arrays; WhatsAppUser insert so plan is last incomplete step (OTP not automatable)
+- **Run**: `PLAYWRIGHT_BROWSERS_PATH="$HOME/Library/Caches/ms-playwright" PLAYWRIGHT_BASE_URL=https://klassapp.xyz npm run test:e2e:prod-uganda` — **1 passed** (~1.1m); school 67 cleaned
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/180 (`e2e/prod-uganda-onboarding` @ `d9fde9e`)
+- **Status**: ✅ Done — PR open (not merged)
+- **Edge cases flagged**: complete-mode WhatsApp skip does not mark checklist complete; plan cards may need Livewire `selectPlan` fallback; Predis deprecation noise in tinker stdout requires JSON extraction
 
 ### 2026-08-05: Merge + deploy #177 + #178 (country/EMIS/plan + plain dashboard redirect)
 - **Work done**: Pre-merge: both PRs MERGEABLE/CLEAN, conflict-marker CI green, **no file overlap**. Confirmed #177 migration `2026_08_05_100600_add_uneb_center_number_to_schools_table`. Squash-merged **#177 first** then **#178** (no rebase needed). Deployed to prod (`root@46.101.111.131` / `sms-app`) from worktree `KlassApp-deploy-177-178` @ tip `6fb4756` — pull + composer + toshi-ui publish + `migrate --force` + optimize:clear (local Vite skipped; PHP-only). Post-deploy Playwright signup on `https://klassapp.xyz`: redirect plain `/admin/dashboard`, continue-setup + Toshi live (checklist shows Country; plan last). Cleaned test user/school 53.

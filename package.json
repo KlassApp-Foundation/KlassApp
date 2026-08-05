@@ -5,6 +5,7 @@
         "build": "vite build",
         "test:e2e": "playwright test",
         "test:e2e:headed": "playwright test --headed",
+        "test:e2e:prod-uganda": "PLAYWRIGHT_BASE_URL=https://klassapp.xyz playwright test --project=prod e2e/prod-uganda-onboarding.spec.js",
         "build-subscriptioninfo": "cd nova-components/Subscriptioninfo && npm run dev",
         "build-subscriptioninfo-prod": "cd nova-components/Subscriptioninfo && npm run prod"
     },

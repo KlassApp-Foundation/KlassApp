@@ -43,6 +43,7 @@ GEMINI.md
 .junie/
 
 test-results/
+playwright-report/
 
 # === Development & testing noise ===
 TESTING.md
