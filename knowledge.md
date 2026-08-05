@@ -240,21 +240,21 @@
 
 ---
 
-## Current Status: August 5, 2026 (`origin/main` tip `6fb4756` — #177+#178 deployed)
+## Current Status: August 6, 2026 (`origin/main` tip `4807aec` — #180 e2e merged; prod still `6fb4756`)
 
-- **`origin/main` tip**: `6fb4756` — squash merge of #178 (drop `?toshi_onboarding=1` from dashboard redirects). Prior: `b9eec94` (#177 country/EMIS/UNEB + end-of-flow plan), `eeb3a96` (#176 student registration_number), `49d815b` (#175), `5bda067` (#174), `dc85b0f` (#173), `275b0bd` (#172).
-- **✅ Deployed to prod**: remote deploy steps equivalent to `scripts/deploy-manual.sh` (local Vite build skipped — PHP-only ship; `npm ci` timed out) @ **2026-08-05 22:06:27 UTC** — prod HEAD `6fb47564b23cee348186f7a8e290bcc082c1f8a0` (#178 tip, includes #177). Migration `2026_08_05_100600_add_uneb_center_number_to_schools_table` **Ran** batch **11**; `Schema::hasColumn(schools, uneb_center_number)=true`; **no pending** migrations. Logs `appuser:appgroup`; host cron `docker exec -u appuser sms-app php artisan schedule:run`.
-- **✅ Merged #178**: Auth/register/privilege redirects → plain `/admin/dashboard` (continue-setup + Toshi from `$setupIncomplete` / `open_toshi_onboarding` flash). Squash merge `6fb47564b23cee348186f7a8e290bcc082c1f8a0`.
-- **✅ Merged #177**: Country + Uganda EMIS (`ministry_code`) + optional UNEB centre (`schools.uneb_center_number`); plan selection moved to end (no commitAll truncation). Squash merge `b9eec94d2ebaae67bb5ffc5cbfe273b4b5700182`.
-- **✅ Merged #176**: Toshi student create paths set `registration_number` + `klassapp_student_id` via `StudentIdGeneratorService`. Squash merge `eeb3a96b2aa21defdd67590e12ddccfce159acae` (already on main before this deploy).
-- **✅ Post-deploy verify (Playwright @ klassapp.xyz)**: fresh email signup → `https://klassapp.xyz/admin/dashboard` (**no** `?toshi_onboarding=1`); **Continue school setup** + `[data-toshi-root]` + composer visible; Toshi checklist includes **Country** early and **Plan** at end. Test user `deploy.verify.1785968348241@example.test` + school 53 cleaned up.
+- **`origin/main` tip**: `4807aec` — squash merge of #180 (prod Uganda signup + onboarding Playwright suite). Prior: `fbfe87a` (#179 knowledge stamp), `6fb4756` (#178), `b9eec94` (#177), `eeb3a96` (#176), `49d815b` (#175), `5bda067` (#174).
+- **✅ Deployed to prod**: still **`6fb4756`** (#177+#178) @ **2026-08-05 22:06:27 UTC** — **not** redeployed for #180 (e2e-only / Playwright + config; no app runtime change). Migration `uneb_center_number` batch **11** already Ran; no pending migrations. Logs `appuser:appgroup`.
+- **✅ Merged #180**: `e2e/prod-uganda-onboarding.spec.js` + Playwright `prod` project + `npm run test:e2e:prod-uganda`. Squash merge `4807aec4404c4582b7d80ddce4cf9a6a539b5410`. **e2e-only — not deployed**.
+- **✅ Merged #178**: Auth/register/privilege redirects → plain `/admin/dashboard`. Squash merge `6fb47564b23cee348186f7a8e290bcc082c1f8a0`.
+- **✅ Merged #177**: Country + Uganda EMIS + optional UNEB centre; plan selection at end. Squash merge `b9eec94d2ebaae67bb5ffc5cbfe273b4b5700182`.
+- **✅ Merged #176**: Toshi student create paths set `registration_number` + `klassapp_student_id`. Squash merge `eeb3a96b2aa21defdd67590e12ddccfce159acae`.
 - **✅ Full Uganda onboarding e2e (2026-08-06)**: `e2e/prod-uganda-onboarding.spec.js` @ klassapp.xyz — steps 1–8 PASS + cleanup; EMIS block, UNEB skip (`''`), 12× `KLS…` IDs, plan override Freemium→Growth; school 67 removed.
 - **🚧 Open PRs**:
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
-- **✅ Toshi on `main` (cumulative)**: prior + **#176 student IDs**, **#177 country/EMIS/UNEB + end plan**, **#178 plain dashboard redirect**.
-- **Onboarding / signup**: Fresh admins → plain `/admin/dashboard` (no query param); continue-setup + Toshi auto-open from incomplete school state. Flow: school name → curriculum → **country** → (Uganda) **EMIS** → (UNEB) optional centre → academic year → … → **plan last** (suggested from active student count; override allowed). **Prod deployed** `6fb4756` (#177+#178) @ 2026-08-05 22:06:27 UTC.
+- **✅ Toshi on `main` (cumulative)**: prior + **#176 student IDs**, **#177 country/EMIS/UNEB + end plan**, **#178 plain dashboard redirect**, **#180 Uganda onboarding e2e**.
+- **Onboarding / signup**: Fresh admins → plain `/admin/dashboard` (no query param); continue-setup + Toshi auto-open from incomplete school state. Flow: school name → curriculum → **country** → (Uganda) **EMIS** → (UNEB) optional centre → academic year → … → **plan last**. **Prod app HEAD** `6fb4756` (#177+#178); main tip includes e2e suite #180 (not deployed).
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
 
 ## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
@@ -632,13 +632,23 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-06: Knowledge stamp — #180 MERGED (e2e-only)
+- **Work done**: Updated Current Status + Session Log after squash-merge of #180 (`4807aec`). Confirmed e2e-only (Playwright suite + config); **no app deploy**. Prod remains `6fb4756` (#177+#178). Cleared stale “PR open” / “knowledge stamp PR opening” stubs.
+- **Files modified**: `knowledge.md` (this stamp)
+- **Key decisions**: Knowledge-only follow-up PR (same pattern as #179); do not deploy e2e-only tip
+- **PR**: (this stamp PR)
+- **Merge commit (feature)**: `4807aec4404c4582b7d80ddce4cf9a6a539b5410` (#180)
+- **Status**: ✅ MERGED stamp opening — tip on main will include this commit after squash-merge
+- **Edge cases flagged**: Dirty `KlassApp` root (`migration/tailwind4`) — stamp done in clean worktree `KlassApp-knowledge-stamp-180`
+
 ### 2026-08-06: Prod Uganda Playwright e2e (signup → onboarding verify #163–#178)
 - **Work done**: Added reusable prod-only Playwright suite that signs up a fresh Uganda school on https://klassapp.xyz, drives Toshi chat through school name → UNEB → Uganda → EMIS required → UNEB centre skip → academic year, seeds ≥12 students (+ classes/subjects/teachers/terms/fees) via SSH using `StudentIdGeneratorService`, clears WhatsApp checklist gate, selects a non-suggested plan (Growth over Freemium), DB-asserts country/EMIS/`uneb_center_number=''`/KLS IDs/CurrentPlan+Subscription, then deletes all test rows.
 - **Files modified**: `e2e/prod-uganda-onboarding.spec.js` (new), `playwright.config.js` (`prod` project), `package.json` (`test:e2e:prod-uganda`), `knowledge.md`
 - **Key decisions**: Prefer real chat for early #177/#178 steps; SSH seed mid-flow because Livewire nested `$set`+`confirmOnboarding` reported success but left empty server-side arrays; WhatsAppUser insert so plan is last incomplete step (OTP not automatable)
 - **Run**: `PLAYWRIGHT_BROWSERS_PATH="$HOME/Library/Caches/ms-playwright" PLAYWRIGHT_BASE_URL=https://klassapp.xyz npm run test:e2e:prod-uganda` — **1 passed** (~1.1m); school 67 cleaned
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/180 (`e2e/prod-uganda-onboarding` @ `d9fde9e`)
-- **Status**: ✅ Done — PR open (not merged)
+- **Merge commit**: `4807aec4404c4582b7d80ddce4cf9a6a539b5410` (squash)
+- **Status**: ✅ MERGED (e2e-only — not deployed; prod remains `6fb4756`)
 - **Edge cases flagged**: complete-mode WhatsApp skip does not mark checklist complete; plan cards may need Livewire `selectPlan` fallback; Predis deprecation noise in tinker stdout requires JSON extraction
 
 ### 2026-08-05: Merge + deploy #177 + #178 (country/EMIS/plan + plain dashboard redirect)
@@ -648,7 +658,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Deploy**: prod HEAD `6fb47564b23cee348186f7a8e290bcc082c1f8a0` @ **2026-08-05 22:06:27 UTC**
 - **Verification**: redirect PASS; continue-setup PASS; Toshi root/composer PASS; country-in-checklist PASS; full Uganda→EMIS→UNEB→plan walk soft/skipped (LLM-heavy); truncation not exercised live (code on disk has no plan truncate). Cleanup VERIFIED.
 - **Files modified**: `knowledge.md` (this stamp)
-- **Status**: ✅ MERGED + deployed — knowledge stamp PR opening
+- **Status**: ✅ MERGED + deployed (knowledge stamp #179 @ `fbfe87a`)
 - **Edge cases / risks**: Full Toshi chat walk (Uganda EMIS required / UNEB optional non-blocking / plan auto-suggest) not fully browser-walked on prod; rely on Feature tests + checklist evidence. Local `npm ci` timed out during deploy — assets unchanged (PHP-only). Host has no `appuser` login; container+cron use `appuser`.
 
 ### 2026-08-05: Onboarding redesign — country / EMIS / UNEB centre steps + end-of-flow plan selection
