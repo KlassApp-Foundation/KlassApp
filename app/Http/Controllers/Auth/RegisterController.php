@@ -23,9 +23,11 @@ class RegisterController extends Controller
     use RegistersUsers;
 
     /**
-     * Post-signup destination: admin dashboard with Toshi onboarding opened.
+     * Post-signup destination: admin dashboard.
+     * Continue-setup + Toshi auto-open derive from incomplete school state
+     * ($setupIncomplete → $openToshiOnboarding), not the query string.
      */
-    protected $redirectTo = '/admin/dashboard?toshi_onboarding=1';
+    protected $redirectTo = '/admin/dashboard';
 
     public function __construct()
     {

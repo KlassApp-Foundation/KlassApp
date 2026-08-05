@@ -44,7 +44,7 @@ async function submitSignup(page) {
 }
 
 async function expectDashboardOnboarding(page) {
-    await page.waitForURL(/\/admin\/dashboard(\?toshi_onboarding=1)?$/);
+    await page.waitForURL(/\/admin\/dashboard/);
     await expect(page.getByText('Continue school setup')).toBeVisible();
     await expect(page.locator('[data-toshi-root]')).toBeVisible();
     await expect(page.locator('textarea[placeholder*="Message Toshi"]:visible').first()).toBeVisible();
