@@ -16,6 +16,9 @@ class OnboardingHelper
     const STEP_LABELS = [
         'school_name'     => 'School name',
         'curriculum'      => 'Board / Curriculum',
+        'country'         => 'Country',
+        'emis'            => 'EMIS / Ministry code',
+        'uneb_center'     => 'UNEB centre number',
         'academic_year'   => 'Academic year',
         'standards'       => 'Classes',
         'subjects'        => 'Subjects',
@@ -23,6 +26,7 @@ class OnboardingHelper
         'terms'           => 'Academic terms',
         'fees'            => 'Fee structures',
         'whatsapp_verify' => 'WhatsApp verification',
+        'plan_selection'  => 'Plan selection',
     ];
 
     public static function getMissingSteps(int $schoolId, ?int $userId = null): array

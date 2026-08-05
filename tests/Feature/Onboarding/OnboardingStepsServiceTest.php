@@ -143,6 +143,11 @@ class OnboardingStepsServiceTest extends TestCase
             'non-placeholder school names count as complete'
         );
 
+        $this->assertFalse(
+            OnboardingStepsService::isStepComplete('country', $this->school),
+            'country incomplete until registration_country is set'
+        );
+
         // subjects: no subjects exist yet
         $this->assertFalse(
             OnboardingStepsService::isStepComplete('subjects', $this->school),
@@ -169,7 +174,7 @@ class OnboardingStepsServiceTest extends TestCase
     }
 
     /** @test */
-    public function null_curriculum_is_incomplete_and_academic_year_comes_before_standards(): void
+    public function null_curriculum_is_incomplete_and_country_block_sits_between_curriculum_and_academic_year(): void
     {
         $this->school->curriculum = null;
         $this->school->save();
@@ -179,7 +184,14 @@ class OnboardingStepsServiceTest extends TestCase
         $keys = array_keys(OnboardingStepsService::ALL_STEPS);
         $this->assertSame('school_name', $keys[0]);
         $this->assertSame('curriculum', $keys[1]);
-        $this->assertSame('academic_year', $keys[2]);
-        $this->assertSame('standards', $keys[3]);
+        // Country / EMIS / UNEB centre are inserted after curriculum, before academic year.
+        $this->assertSame('country', $keys[2]);
+        $this->assertSame('emis', $keys[3]);
+        $this->assertSame('uneb_center', $keys[4]);
+        $this->assertSame('academic_year', $keys[5]);
+        $this->assertSame('standards', $keys[6]);
+
+        // plan_selection is the very last step (after content).
+        $this->assertSame('plan_selection', array_key_last(OnboardingStepsService::ALL_STEPS));
     }
 }
