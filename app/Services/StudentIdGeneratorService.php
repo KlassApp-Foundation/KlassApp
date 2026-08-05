@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -10,6 +11,9 @@ use Illuminate\Support\Facades\DB;
  * Uses a dedicated student_id_sequences table with row-level locking
  * (SELECT ... FOR UPDATE inside a transaction) to guarantee uniqueness
  * across concurrent calls, even across different processes.
+ *
+ * Convention: users.registration_number and student_academics.klassapp_student_id
+ * share the same generated value (see BackfillRegistrationNumbers).
  *
  * Before first use in a production environment, the sequence table must
  * be seeded per school via SeedStudentIdSequences command — see
@@ -49,5 +53,19 @@ class StudentIdGeneratorService
 
             return sprintf('KLS%03d%04d', $schoolId, $seq);
         });
+    }
+
+    /**
+     * Reserve the next KLS ID and persist it on users.registration_number.
+     *
+     * Callers must also store the returned value on
+     * student_academics.klassapp_student_id so both fields stay in sync.
+     */
+    public static function nextForStudent(User $student): string
+    {
+        $id = self::next((int) $student->school_id);
+        $student->forceFill(['registration_number' => $id])->save();
+
+        return $id;
     }
 }

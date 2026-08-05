@@ -5051,7 +5051,7 @@ class AgentToshi extends Component
                     }
 
                     if ($targetLink) {
-                        $klassappId = StudentIdGeneratorService::next($school->id);
+                        $klassappId = StudentIdGeneratorService::nextForStudent($studentUser);
 
                         $lin = is_array($record) ? ($record['lin'] ?? '') : '';
                         StudentAcademic::create([
@@ -5287,7 +5287,7 @@ class AgentToshi extends Component
                                         'academic_year_id' => $academicYear->id,
                                         'user_id' => $student->id,
                                         'standardLink_id' => $targetStdLink->id,
-                                        'klassapp_student_id' => StudentIdGeneratorService::next($schoolId),
+                                        'klassapp_student_id' => StudentIdGeneratorService::nextForStudent($student),
                                     ]);
                                 }
                             } catch (\Exception $e) {
