@@ -63,4 +63,18 @@ class StudentIdGeneratorServiceTest extends TestCase
         $next = StudentIdGeneratorService::next(99);
         $this->assertSame('KLS0990051', $next);
     }
+
+    public function test_next_for_student_persists_registration_number()
+    {
+        $user = \App\Models\User::factory()->create([
+            'school_id' => 7,
+            'usergroup_id' => 6,
+            'registration_number' => null,
+        ]);
+
+        $id = StudentIdGeneratorService::nextForStudent($user);
+
+        $this->assertSame('KLS0070001', $id);
+        $this->assertSame('KLS0070001', $user->fresh()->registration_number);
+    }
 }

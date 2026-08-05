@@ -413,6 +413,8 @@ class ToshiActionService
             DB::beginTransaction();
 
             $password = Hash::make('password');
+            $klassappId = StudentIdGeneratorService::next($schoolId);
+
             $student = User::create([
                 'school_id'    => $schoolId,
                 'usergroup_id' => 6,
@@ -421,6 +423,7 @@ class ToshiActionService
                 'password'     => $password,
                 'status'       => 'active',
                 'email_verified' => 1,
+                'registration_number' => $klassappId,
             ]);
 
             $profileGender = in_array(strtolower(trim($data['gender'] ?? '')), ['male', 'female'])
@@ -441,6 +444,7 @@ class ToshiActionService
                 'school_id'        => $schoolId,
                 'academic_year_id' => $academicYear->id,
                 'user_id'          => $student->id,
+                'klassapp_student_id' => $klassappId,
             ];
             if ($standardLink) {
                 $academicData['standardLink_id'] = $standardLink->id;
