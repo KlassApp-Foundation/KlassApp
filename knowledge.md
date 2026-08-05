@@ -259,6 +259,7 @@
   - **#160/#161/#162** knowledge sync + session-log rule + signup investigation pause log
   - **#164** knowledge stamp for #163 merge; **#166** knowledge stamp for #165; **#168** deploy stamp for #167; **#171** deploy stamp for #170; **#173** deploy stamp for #172; **#174** OAuth Console URI / tip-SHA gap-fill
 - **🚧 Open PRs**:
+  - **#177** onboarding country/EMIS/UNEB steps + end-of-flow plan selection (adds `schools.uneb_center_number` migration; removes commitAll plan truncation) — **PR open** @ `4526f8a` — https://github.com/KlassApp-Foundation/KlassApp/pull/177
   - **#176** student `registration_number` + `klassapp_student_id` on all Toshi create paths — **PR open** @ `4283b22` — https://github.com/KlassApp-Foundation/KlassApp/pull/176
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
@@ -651,7 +652,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `app/Services/OnboardingStepsService.php`, `app/Helpers/OnboardingHelper.php`, `app/Models/School.php` (fillable `uneb_center_number`), `app/Livewire/AgentToshi.php`, `app/Services/SchoolSignupBootstrapService.php` (flag comment), `tests/Feature/Onboarding/OnboardingStepsServiceTest.php` (step-order assertions updated for new order). **New**: `database/migrations/2026_08_05_100600_add_uneb_center_number_to_schools_table.php`, `tests/Feature/Onboarding/OnboardingCountryEmisPlanTest.php`, `tests/Feature/Onboarding/ToshiCountryEmisPlanFlowTest.php`.
 - **Tests**: `php artisan test tests/Feature/Onboarding tests/Feature/ToshiTrialFlowTest.php` — **69 passed (272 assertions)**. New coverage: Uganda requires EMIS / non-Uganda skips it; UNEB centre optional (null vs '' vs value) + non-UNEB skip; `applicableSteps` filtering; `countActiveStudents` excludes exited + non-students + other schools; `suggestPlanForStudentCount` tier selection + unlimited + null; `persistCountry` sets `country_id`; `plan_selection` complete only when `CurrentPlan` exists; complete-mode country/EMIS/UNEB action handlers persist to DB; complete-mode plan selection creates `CurrentPlan`+`Subscription` with override honored; create-mode `commitAll` does **not** truncate students/teachers below plan limits.
 - **Env / harness note**: Test suite is forced onto **SQLite in-memory** by `tests/CreatesApplication.php` (protects dev DB). Worktree `vendor` is a symlink to the main repo; ran `composer dump-autoload` in the worktree first so PSR-4 `App\` mapped to **this** worktree (was pointing at `KlassApp-toshi-report-cards-v1`, causing "undefined method" + phantom failures). `users.status` and `schools.curriculum` are NOT NULL under SQLite; `User::$fillable` excludes `status` (set it directly in tests).
-- **PR**: (opened below — see Current Status)
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/177 (`feature/onboarding-country-emis-plan-end` @ `4526f8a`)
 - **Status**: ✅ Done — PR open (not merged, not deployed)
 
 ### 2026-08-05: Fix registration_number + klassapp_student_id on all student-create paths
