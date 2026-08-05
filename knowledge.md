@@ -636,9 +636,9 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Updated Current Status + Session Log after squash-merge of #180 (`4807aec`). Confirmed e2e-only (Playwright suite + config); **no app deploy**. Prod remains `6fb4756` (#177+#178). Cleared stale “PR open” / “knowledge stamp PR opening” stubs.
 - **Files modified**: `knowledge.md` (this stamp)
 - **Key decisions**: Knowledge-only follow-up PR (same pattern as #179); do not deploy e2e-only tip
-- **PR**: (this stamp PR)
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/181 (`chore/knowledge-stamp-pr180`)
 - **Merge commit (feature)**: `4807aec4404c4582b7d80ddce4cf9a6a539b5410` (#180)
-- **Status**: ✅ MERGED stamp opening — tip on main will include this commit after squash-merge
+- **Status**: ✅ Done — PR open (knowledge-only; squash-merge pending)
 - **Edge cases flagged**: Dirty `KlassApp` root (`migration/tailwind4`) — stamp done in clean worktree `KlassApp-knowledge-stamp-180`
 
 ### 2026-08-06: Prod Uganda Playwright e2e (signup → onboarding verify #163–#178)
