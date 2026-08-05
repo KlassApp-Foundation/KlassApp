@@ -26,6 +26,18 @@ module.exports = defineConfig({
         {
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
+            testIgnore: /prod-uganda-onboarding\.spec\.js/,
+        },
+        {
+            // Live production only — run explicitly:
+            // PLAYWRIGHT_BASE_URL=https://klassapp.xyz npx playwright test --project=prod
+            name: 'prod',
+            use: {
+                ...devices['Desktop Chrome'],
+                baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://klassapp.xyz',
+            },
+            testMatch: /prod-uganda-onboarding\.spec\.js/,
+            timeout: 15 * 60_000,
         },
     ],
     webServer: process.env.PLAYWRIGHT_WEB_SERVER_COMMAND
