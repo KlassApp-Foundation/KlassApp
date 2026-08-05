@@ -221,6 +221,18 @@ class SchoolSignupBootstrapService
         Userprofile::create($payload);
     }
 
+    /**
+     * FLAG — early plan assumption.
+     *
+     * This writes a PLACEHOLDER pending Subscription at signup using the first
+     * Plan (orderBy id), before the admin has chosen anything. The real plan is
+     * chosen at the END of Toshi onboarding (the `plan_selection` step), which
+     * calls {@see \App\Livewire\AgentToshi::persistSelectedPlan()} and
+     * updateOrCreate()s this same Subscription (keyed by school_id + user_id),
+     * plus creates the CurrentPlan. No CurrentPlan is (or should be) created
+     * here — plan limits must not be assumed until the admin actually picks a
+     * tier. Do not add a CurrentPlan write at this early point.
+     */
     private function createPendingSubscription(User $user): void
     {
         try {

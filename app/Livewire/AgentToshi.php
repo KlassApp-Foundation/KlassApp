@@ -118,7 +118,10 @@ class AgentToshi extends Component
     public $schoolEmail = '';
     public $schoolPhone = '';
     public $ministryCode = '';
+    /** @var string|null null = not asked; '' = skipped; value = UNEB centre number */
+    public $unebCenterNumber = null;
     public $curriculum = 'uneb';
+    public $suggestedPlanId = null;
     public $schoolPayPassword = '';
     public $adminName = '';
     public $adminEmail = '';
@@ -132,8 +135,6 @@ class AgentToshi extends Component
     public $teacherList = [];
     public $teacherLinks = [];
     public $teacherPhones = [];
-    /** @var string Conversational message when plan limit truncates onboarding lists. */
-    public string $onboardingLimitNote = '';
     public $studentList = [];
     public $hasNursery = null; // null = not asked, true/false for primary schools
     public $streamClassIndex = 0; // tracks which class we're adding streams for
@@ -176,8 +177,10 @@ class AgentToshi extends Component
     public $reviewData = []; // populated when entering review step
 
     public $steps = [
-        'plan_selection',
         'school_info',
+        'country',
+        'emis',
+        'uneb_center',
         'admin_account',
         'co_admin_invite',
         'academic_year',
@@ -190,6 +193,7 @@ class AgentToshi extends Component
         'exams',
         'whatsapp_verify',
         'school_pay',
+        'plan_selection',
         'review',
     ];
 
@@ -198,13 +202,14 @@ class AgentToshi extends Component
      * Optional steps can be skipped and completed later via the admin panel.
      */
     public $mandatorySteps = [
-        'plan_selection',
         'school_info',
+        'country',
         'admin_account',
         'academic_year',
         'standards',
         'subjects',
         'terms',
+        'plan_selection',
     ];
 
     public $whatsappPhone = '';
@@ -488,6 +493,7 @@ class AgentToshi extends Component
         $this->schoolEmail = $data['schoolEmail'] ?? '';
         $this->schoolPhone = $data['schoolPhone'] ?? '';
         $this->ministryCode = $data['ministryCode'] ?? '';
+        $this->unebCenterNumber = array_key_exists('unebCenterNumber', $data) ? $data['unebCenterNumber'] : null;
         $this->curriculum = $data['curriculum'] ?? 'uneb';
         $this->schoolPayPassword = $data['schoolPayPassword'] ?? '';
         $this->adminName = $data['adminName'] ?? '';
@@ -498,6 +504,7 @@ class AgentToshi extends Component
         $this->coAdminUserId = $data['coAdminUserId'] ?? null;
         $this->academicYearLabel = $data['academicYearLabel'] ?? '';
         $this->selectedPlanId = $data['selectedPlanId'] ?? null;
+        $this->suggestedPlanId = $data['suggestedPlanId'] ?? null;
         $this->standards = $data['standards'] ?? [];
         $this->subjects = $data['subjects'] ?? [];
         $this->teacherList = $data['teacherList'] ?? [];
@@ -528,6 +535,7 @@ class AgentToshi extends Component
             'schoolEmail'       => $this->schoolEmail,
             'schoolPhone'       => $this->schoolPhone,
             'ministryCode'      => $this->ministryCode,
+            'unebCenterNumber'  => $this->unebCenterNumber,
             'curriculum'        => $this->curriculum,
             'schoolPayPassword' => $this->schoolPayPassword,
             'adminName'         => $this->adminName,
@@ -538,6 +546,7 @@ class AgentToshi extends Component
             'coAdminUserId'     => $this->coAdminUserId,
             'academicYearLabel' => $this->academicYearLabel,
             'selectedPlanId'    => $this->selectedPlanId,
+            'suggestedPlanId'   => $this->suggestedPlanId,
             'standards'         => $this->standards,
             'subjects'          => $this->subjects,
             'teacherList'       => $this->teacherList,
@@ -603,7 +612,11 @@ class AgentToshi extends Component
 
         $first = $incomplete[0];
         $this->jumpToIncompleteOnboardingStep($first['key']);
-        $this->botSay(self::onboardingPromptForStep($first['key']));
+        if ($first['key'] === 'plan_selection') {
+            $this->promptPlanSelection();
+        } else {
+            $this->botSay(self::onboardingPromptForStep($first['key']));
+        }
     }
 
     /**
@@ -611,10 +624,20 @@ class AgentToshi extends Component
      */
     private function jumpToIncompleteOnboardingStep(string $key): void
     {
-        if ($key === 'curriculum') {
-            $this->actionStep = 'onboarding_curriculum';
+        $actionMap = [
+            'curriculum' => 'onboarding_curriculum',
+            'country' => 'onboarding_country',
+            'emis' => 'onboarding_emis',
+            'uneb_center' => 'onboarding_uneb_center',
+            'plan_selection' => 'onboarding_plan_selection',
+        ];
+
+        if (isset($actionMap[$key])) {
+            $this->actionStep = $actionMap[$key];
             $this->actionSubstep = 0;
-            $this->curriculum = '';
+            if ($key === 'curriculum') {
+                $this->curriculum = '';
+            }
             return;
         }
 
@@ -649,6 +672,9 @@ class AgentToshi extends Component
         return match ($key) {
             'school_name' => "What's the real name of your school? (You can keep refining it later.)",
             'curriculum' => "Which curriculum does your school follow? I recommend **UNEB** for most Ugandan schools. Reply with UNEB, Cambridge, Montessori, or Other.",
+            'country' => "Which country is your school in? (e.g. **Uganda**, Kenya, Tanzania)",
+            'emis' => "What's your school's **EMIS / Ministry code**? This is required for Ugandan schools.",
+            'uneb_center' => "If you have a **UNEB centre number**, share it now — or type **skip** (optional).",
             'academic_year' => "Let's set your academic year next — classes and terms depend on it. Is **" . date('Y') . "** correct? (yes / no)",
             'standards'  => "Let's set up classes. What classes does your school have?",
             'subjects'   => "Let's set up subjects per class.",
@@ -656,6 +682,7 @@ class AgentToshi extends Component
             'terms'      => "Let's set up academic terms.",
             'fees'       => "Let's add fee categories. Type a fee name or 'skip'.",
             'whatsapp_verify' => "Let's verify your WhatsApp number for school notifications.",
+            'plan_selection' => "Let's pick a KlassApp plan for your school.",
             default      => "Let's continue setting up.",
         };
     }
@@ -1666,7 +1693,7 @@ class AgentToshi extends Component
             $this->scope = 'platform';
             $this->mode = 'create';
             $this->botSay("Hello! I'll help you set up a new school on KlassApp.");
-            $this->botSay("First, let's choose a plan. | Select one of the plans below to get started.");
+            $this->botSay("First, what's the name of your school?");
             return;
         }
 
@@ -2383,6 +2410,9 @@ class AgentToshi extends Component
         $handler = match ($stepName) {
             'plan_selection'  => 'handlePlanSelection',
             'school_info'     => 'handleSchoolInfo',
+            'country'         => 'handleCountry',
+            'emis'            => 'handleEmis',
+            'uneb_center'     => 'handleUnebCenter',
             'admin_account'   => 'handleAdminAccount',
             'co_admin_invite' => null, // buttons only, no text handler on entry
             'academic_year'   => 'handleAcademicYear',
@@ -2935,6 +2965,22 @@ class AgentToshi extends Component
             $this->actionOnboardingCurriculum($text);
             return;
         }
+        if ($this->actionStep === 'onboarding_country') {
+            $this->actionOnboardingCountry($text);
+            return;
+        }
+        if ($this->actionStep === 'onboarding_emis') {
+            $this->actionOnboardingEmis($text);
+            return;
+        }
+        if ($this->actionStep === 'onboarding_uneb_center') {
+            $this->actionOnboardingUnebCenter($text);
+            return;
+        }
+        if ($this->actionStep === 'onboarding_plan_selection') {
+            $this->actionOnboardingPlanSelection($text);
+            return;
+        }
 
         if (!$this->can($this->actionStep)) {
             $this->actionStep = null;
@@ -3485,7 +3531,7 @@ class AgentToshi extends Component
             $this->resetOnboarding();
             // Override the greeting so it's contextual for a draft restart
             $this->messages = [];
-            $this->botSay("Restarting from scratch. First, let's choose a plan.");
+            $this->botSay("Restarting from scratch. First, what's the name of your school?");
             return;
         }
 
@@ -3501,6 +3547,9 @@ class AgentToshi extends Component
         match ($stepName) {
             'plan_selection'  => $this->handlePlanSelection($text),
             'school_info'     => $this->handleSchoolInfo($text),
+            'country'         => $this->handleCountry($text),
+            'emis'            => $this->handleEmis($text),
+            'uneb_center'     => $this->handleUnebCenter($text),
             'admin_account'   => $this->handleAdminAccount($text),
             'co_admin_invite' => $this->handleCoAdminInvite($text),
             'academic_year'   => $this->handleAcademicYear($text),
@@ -3531,18 +3580,59 @@ class AgentToshi extends Component
         }
         $this->selectedPlanId = $plan->id;
         $this->userSay("Selected plan: **{$plan->name}**");
-        $this->botSay("**{$plan->name}** plan selected. | Now, what's the name of your school?");
+
+        // Complete-mode plan step: persist CurrentPlan + Subscription immediately
+        if ($this->mode === 'complete' && $this->schoolId) {
+            $this->persistSelectedPlan($this->schoolId, $this->selectedPlanId);
+            $this->botSay("**{$plan->name}** plan selected and saved.");
+            $this->actionStep = null;
+            $this->actionSubstep = 0;
+            $this->detectMissingSteps();
+            return;
+        }
+
+        $this->botSay("**{$plan->name}** plan selected. | Review your setup next.");
         $this->advance();
     }
 
     private function handlePlanSelection(string $text)
     {
-        $plan = \App\Models\Plan::where('name', strtolower($text))->first();
+        if ($text === '' && $this->substep === 0) {
+            $this->promptPlanSelection();
+            return;
+        }
+
+        $plan = \App\Models\Plan::whereRaw('LOWER(name) = ?', [strtolower(trim($text))])->first()
+            ?? \App\Models\Plan::whereRaw('LOWER(display_name) = ?', [strtolower(trim($text))])->first();
         if ($plan) {
             $this->selectPlan($plan->id);
             return;
         }
-        $this->botSay("Please select a plan using the buttons above.");
+        $this->botSay("Please select a plan using the buttons above (you can pick any tier).");
+    }
+
+    private function promptPlanSelection(): void
+    {
+        $count = 0;
+        if ($this->schoolId) {
+            $count = \App\Services\OnboardingStepsService::countActiveStudents((int) $this->schoolId);
+        }
+        if ($count === 0 && (! empty($this->actionData['students']) || ! empty($this->studentList))) {
+            $count = count($this->actionData['students'] ?? $this->studentList);
+        }
+
+        $suggested = \App\Services\OnboardingStepsService::suggestPlanForStudentCount($count);
+        $this->suggestedPlanId = $suggested?->id;
+
+        $suggestLabel = $suggested
+            ? "**{$suggested->display_name}**"
+            : 'a plan that fits';
+
+        $this->botSay(
+            "You currently have **{$count}** active student" . ($count === 1 ? '' : 's') . ". "
+            . "Based on that, I suggest {$suggestLabel}. "
+            . "You can pick **any** tier below — even one below your student count."
+        );
     }
 
     // ════════════════════════════════════════════════
@@ -3930,6 +4020,213 @@ class AgentToshi extends Component
         $this->actionStep = null;
         $this->actionSubstep = 0;
         $this->detectMissingSteps();
+    }
+
+    private function actionOnboardingCountry(string $text): void
+    {
+        $this->persistCountryFromInput($text, completeMode: true);
+    }
+
+    private function actionOnboardingEmis(string $text): void
+    {
+        $this->persistEmisFromInput($text, completeMode: true);
+    }
+
+    private function actionOnboardingUnebCenter(string $text): void
+    {
+        $this->persistUnebCenterFromInput($text, completeMode: true);
+    }
+
+    private function actionOnboardingPlanSelection(string $text): void
+    {
+        if ($text === '') {
+            $this->promptPlanSelection();
+            return;
+        }
+        $this->handlePlanSelection($text);
+    }
+
+    private function handleCountry(string $text): void
+    {
+        if ($text === '' && $this->substep === 0) {
+            $this->botSay(self::onboardingPromptForStep('country'));
+            return;
+        }
+        $this->persistCountryFromInput($text, completeMode: false);
+    }
+
+    private function handleEmis(string $text): void
+    {
+        if ($text === '' && $this->substep === 0) {
+            if (! \App\Services\OnboardingStepsService::isUganda($this->schoolCountry)) {
+                $this->advance();
+                return;
+            }
+            $this->botSay(self::onboardingPromptForStep('emis'));
+            return;
+        }
+        $this->persistEmisFromInput($text, completeMode: false);
+    }
+
+    private function handleUnebCenter(string $text): void
+    {
+        if ($text === '' && $this->substep === 0) {
+            if (! \App\Services\OnboardingStepsService::isUnebCurriculum($this->curriculum)) {
+                $this->unebCenterNumber = '';
+                $this->advance();
+                return;
+            }
+            $this->botSay(self::onboardingPromptForStep('uneb_center'));
+            return;
+        }
+        $this->persistUnebCenterFromInput($text, completeMode: false);
+    }
+
+    private function persistCountryFromInput(string $text, bool $completeMode): void
+    {
+        $country = $this->validateRequired($text, 'Country', 2);
+        if ($country === null) {
+            return;
+        }
+
+        $this->schoolCountry = $country;
+
+        if ($completeMode && $this->schoolId) {
+            $school = \App\Models\School::find($this->schoolId);
+            if ($school) {
+                \App\Services\OnboardingStepsService::persistCountry($school, $country);
+            }
+            $this->botSay("✅ Country set to **{$country}**.");
+            $this->actionStep = null;
+            $this->actionSubstep = 0;
+            $this->detectMissingSteps();
+            return;
+        }
+
+        $this->botSay("✅ Country: **{$country}**");
+        $this->advance();
+    }
+
+    private function persistEmisFromInput(string $text, bool $completeMode): void
+    {
+        $country = $this->schoolCountry;
+        if ($completeMode && $this->schoolId) {
+            $country = optional(\App\Models\School::find($this->schoolId))->registration_country ?: $country;
+        }
+
+        if (! \App\Services\OnboardingStepsService::isUganda($country)) {
+            if ($completeMode) {
+                $this->actionStep = null;
+                $this->detectMissingSteps();
+            } else {
+                $this->advance();
+            }
+            return;
+        }
+
+        $code = $this->validateRequired($text, 'EMIS / Ministry code', 2);
+        if ($code === null) {
+            return;
+        }
+
+        $this->ministryCode = $code;
+
+        if ($completeMode && $this->schoolId) {
+            $school = \App\Models\School::find($this->schoolId);
+            if ($school) {
+                $school->ministry_code = $code;
+                $school->save();
+            }
+            $this->botSay("✅ EMIS code saved: **{$code}**.");
+            $this->actionStep = null;
+            $this->actionSubstep = 0;
+            $this->detectMissingSteps();
+            return;
+        }
+
+        $this->botSay("✅ EMIS code: **{$code}**");
+        $this->advance();
+    }
+
+    private function persistUnebCenterFromInput(string $text, bool $completeMode): void
+    {
+        $curriculum = $this->curriculum;
+        if ($completeMode && $this->schoolId) {
+            $curriculum = optional(\App\Models\School::find($this->schoolId))->curriculum ?: $curriculum;
+        }
+
+        if (! \App\Services\OnboardingStepsService::isUnebCurriculum($curriculum)) {
+            $this->unebCenterNumber = '';
+            if ($completeMode) {
+                $this->actionStep = null;
+                $this->detectMissingSteps();
+            } else {
+                $this->advance();
+            }
+            return;
+        }
+
+        $lower = strtolower(trim($text));
+        if (in_array($lower, ['skip', 'later', 'none', 'n/a', 'na', '-'], true)) {
+            $this->unebCenterNumber = '';
+            $msg = "No problem — UNEB centre number skipped (optional).";
+        } else {
+            $value = trim($text);
+            if ($value === '') {
+                $this->botSay("Enter a UNEB centre number, or type **skip**.");
+                return;
+            }
+            $this->unebCenterNumber = $value;
+            $msg = "✅ UNEB centre number saved: **{$value}**.";
+        }
+
+        if ($completeMode && $this->schoolId) {
+            $school = \App\Models\School::find($this->schoolId);
+            if ($school && \Illuminate\Support\Facades\Schema::hasColumn('schools', 'uneb_center_number')) {
+                $school->uneb_center_number = $this->unebCenterNumber;
+                $school->save();
+            }
+            $this->botSay($msg);
+            $this->actionStep = null;
+            $this->actionSubstep = 0;
+            $this->detectMissingSteps();
+            return;
+        }
+
+        $this->botSay($msg);
+        $this->advance();
+    }
+
+    private function persistSelectedPlan(int $schoolId, int $planId): void
+    {
+        $plan = \App\Models\Plan::find($planId);
+        if (! $plan) {
+            return;
+        }
+
+        if ($plan->amount > 0) {
+            \App\Services\TrialService::startTrial($schoolId, $planId);
+        } else {
+            CurrentPlan::updateOrCreate(
+                ['school_id' => $schoolId],
+                ['plan_id' => $planId]
+            );
+        }
+
+        $adminUser = auth()->user()
+            ?? User::where('school_id', $schoolId)->where('usergroup_id', 3)->first();
+
+        if ($adminUser) {
+            Subscription::updateOrCreate(
+                ['school_id' => $schoolId, 'user_id' => $adminUser->id],
+                [
+                    'plan_id' => $planId,
+                    'status' => 'pending',
+                    'start_date' => now(),
+                    'end_date' => now()->addYear(),
+                ]
+            );
+        }
     }
 
     private function persistSchoolNameIfChanged(string $desiredName): void
@@ -4623,20 +4920,23 @@ class AgentToshi extends Component
         // Parse the step name they typed and jump to that step
         if (empty($this->reviewData)) {
             $stepMap = [
-                'plan' => 0, 'plans' => 0, 'plan_selection' => 0,
-                'school' => 1, 'school_info' => 1,
-                'admin' => 2, 'admin_account' => 2,
-                'co-admin' => 3, 'coadmin' => 3, 'co_admin' => 3, 'co_admin_invite' => 3,
-                'academic' => 4, 'academic_year' => 4, 'year' => 4,
-                'classes' => 5, 'class' => 5, 'standards' => 5, 'standard' => 5,
-                'subjects' => 6, 'subject' => 6,
-                'teachers' => 7, 'teacher' => 7,
-                'students' => 8, 'student' => 8,
-                'terms' => 9, 'term' => 9,
-                'fees' => 10, 'fee' => 10,
-                'exams' => 11, 'exam' => 11,
-                'whatsapp' => 12, 'whatsapp_verify' => 12,
-                'school_pay' => 13, 'payment' => 13,
+                'school' => 0, 'school_info' => 0,
+                'country' => 1,
+                'emis' => 2, 'ministry' => 2,
+                'uneb' => 3, 'uneb_center' => 3,
+                'admin' => 4, 'admin_account' => 4,
+                'co-admin' => 5, 'coadmin' => 5, 'co_admin' => 5, 'co_admin_invite' => 5,
+                'academic' => 6, 'academic_year' => 6, 'year' => 6,
+                'classes' => 7, 'class' => 7, 'standards' => 7, 'standard' => 7,
+                'subjects' => 8, 'subject' => 8,
+                'teachers' => 9, 'teacher' => 9,
+                'students' => 10, 'student' => 10,
+                'terms' => 11, 'term' => 11,
+                'fees' => 12, 'fee' => 12,
+                'exams' => 13, 'exam' => 13,
+                'whatsapp' => 14, 'whatsapp_verify' => 14,
+                'school_pay' => 15, 'payment' => 15,
+                'plan' => 16, 'plans' => 16, 'plan_selection' => 16,
             ];
             $textLower = strtolower(trim($text));
             // Exact match first
@@ -4666,10 +4966,12 @@ class AgentToshi extends Component
                 ? optional(\App\Models\School::find($this->schoolId))->name ?? 'Your school'
                 : $this->schoolName;
             $this->reviewData = [
-                'plan'         => $this->mode === 'create' ? ucfirst($planName ?: '—') : 'Already assigned',
+                'plan'         => ucfirst($planName ?: '—'),
                 'schoolName'   => $schoolDisplay,
                 'schoolType'   => $this->schoolType,
+                'country'      => $this->schoolCountry ?: '—',
                 'ministryCode' => $this->ministryCode ?: '—',
+                'unebCenter'   => $this->unebCenterNumber ?: '—',
                 'curriculum'   => strtoupper($this->curriculum ?: 'UNEB'),
                 'adminName'    => $this->adminName ?: (auth()->user()->name ?? '—'),
                 'adminEmail'   => $this->adminEmail ?: (auth()->user()->email ?? '—'),
@@ -4694,7 +4996,7 @@ class AgentToshi extends Component
             // Build a smart summary
             $parts = [];
             $parts[] = "{$schoolDisplay}";
-            if ($this->mode !== 'complete' && $planName && $planName !== '—') {
+            if ($planName && $planName !== '—') {
                 $parts[] = "Plan: **{$planName}**";
             }
             $counts = [];
@@ -4759,11 +5061,6 @@ class AgentToshi extends Component
             $this->reviewData['coAdminPromoted'] = (bool) $this->coAdminUserId;
             $this->reviewData['mode'] = $this->mode;
             $this->step = 99;
-            // ── Plan limit: conversational note (only shown if list was truncated) ──
-            if ($this->onboardingLimitNote !== '') {
-                $this->botSay($this->onboardingLimitNote);
-                $this->botSay('You can **upgrade your plan** anytime from the admin panel to add the remaining members.');
-            }
             // Welcome message for school admin completing setup
             if ($this->mode === 'complete') {
                 $schoolName = optional(\App\Models\School::find($this->schoolId))->name ?? 'your school';
@@ -4803,6 +5100,7 @@ class AgentToshi extends Component
                     'email'   => $this->schoolEmail ?: Str::slug($this->schoolName) . '@klassapp.sch.ug',
                     'phone'   => $this->schoolPhone ?: '0700000000',
                     'ministry_code' => $this->ministryCode ?: null,
+                    'uneb_center_number' => $this->unebCenterNumber,
                     'curriculum'    => $this->curriculum ?: 'uneb',
                     'school_pay_api_password' => $this->schoolPayPassword ?: null,
                     'school_pay_webhook_enabled' => $this->schoolPayPassword ? true : false,
@@ -4811,6 +5109,10 @@ class AgentToshi extends Component
                     'slug'    => Str::slug($this->schoolName),
                     'registration_country' => $this->schoolCountry ?: 'Uganda',
                 ]);
+                if ($this->schoolCountry) {
+                    \App\Services\OnboardingStepsService::persistCountry($school->fresh(), $this->schoolCountry);
+                    $school->refresh();
+                }
                 $this->schoolId = $school->id;
                 $schoolId = $school->id;
 
@@ -4909,17 +5211,6 @@ class AgentToshi extends Component
                     \Log::warning('Failed to seed grading scales: ' . $e->getMessage());
                 }
 
-                // ── Plan limit: teachers ──
-                $teacherSkipped = 0;
-                $studentSkipped = 0;
-                if ($this->selectedPlanId && count($this->teacherList) > 0) {
-                    $plan = optional(\App\Models\CurrentPlan::with('plan')->where('school_id', $schoolId)->first())->plan;
-                    if ($plan && ($plan->no_of_users ?? 0) > 0 && count($this->teacherList) > $plan->no_of_users) {
-                        $teacherSkipped = count($this->teacherList) - $plan->no_of_users;
-                        $this->teacherList = array_slice($this->teacherList, 0, $plan->no_of_users);
-                    }
-                }
-
                 foreach ($this->teacherList as $name) {
                     $tEmail = Str::slug($name) . '@' . Str::slug($this->schoolName) . '.edu';
                     $phone = $this->teacherPhones[$name] ?? null;
@@ -4963,23 +5254,7 @@ class AgentToshi extends Component
                     }
                 }
 
-                // ── Plan limit: students ──
-                if ($this->selectedPlanId) {
-                    $plan = optional(\App\Models\CurrentPlan::with('plan')->where('school_id', $schoolId)->first())->plan;
-                    if ($plan && ($plan->no_of_students ?? 0) > 0) {
-                        $totalStudents = count($this->actionData['students'] ?? $this->studentList);
-                        if ($totalStudents > $plan->no_of_students) {
-                            $studentSkipped = $totalStudents - $plan->no_of_students;
-                            if (!empty($this->actionData['students'])) {
-                                $this->actionData['students'] = array_slice($this->actionData['students'], 0, $plan->no_of_students);
-                            } else {
-                                $this->studentList = array_slice($this->studentList, 0, $plan->no_of_students);
-                            }
-                        }
-                    }
-                }
-
-                // Create students from onboarding list
+                // Create students from onboarding list (no plan-limit truncation)
                 // Use actionData['students'] when available (has class info), fall back to studentList
                 $studentRecords = !empty($this->actionData['students'])
                     ? $this->actionData['students']
@@ -5065,27 +5340,6 @@ class AgentToshi extends Component
                     }
                 }
 
-                // ── Plan limit: post-commit note ──
-                if ($teacherSkipped > 0 || $studentSkipped > 0) {
-                    $planName = optional(\App\Models\CurrentPlan::with('plan')->where('school_id', $schoolId)->first())->plan->name ?? 'current';
-                    $parts = [];
-                    if ($teacherSkipped > 0) {
-                        $max = count($this->teacherList);
-                        $parts[] = "We added **{$max}** teachers. Your **{$planName}** plan allows {$max} teachers. Upgrade anytime to add the remaining {$teacherSkipped}.";
-                    }
-                    if ($studentSkipped > 0) {
-                        $max = count($this->actionData['students'] ?? $this->studentList);
-                        $parts[] = "We added **{$max}** students. Your **{$planName}** plan allows {$max} students. Upgrade anytime to add the remaining {$studentSkipped}.";
-                    }
-                    $this->onboardingLimitNote = implode("\n\n", $parts);
-                    // Update reviewData so the success card shows actual committed counts
-                    $this->reviewData['teacherCount'] = count($this->teacherList);
-                    $this->reviewData['studentCount'] = count($this->studentList);
-                    $this->reviewData['studentIds'] = count($this->studentList) > 0
-                        ? count($this->studentList) . " students — each gets a unique KlassApp ID"
-                        : '—';
-                }
-
                 foreach ($this->terms as $term) {
                     AcademicTerm::create([
                         'school_id' => $school->id, 'academic_year_id' => $academicYear->id,
@@ -5135,8 +5389,23 @@ class AgentToshi extends Component
                     if ($this->curriculum !== '' && $this->curriculum !== null && $school->curriculum !== $this->curriculum) {
                         $school->curriculum = $this->curriculum;
                     }
+                    if ($this->schoolCountry !== '') {
+                        \App\Services\OnboardingStepsService::persistCountry($school, $this->schoolCountry);
+                        $school->refresh();
+                    }
+                    if ($this->ministryCode !== '') {
+                        $school->ministry_code = $this->ministryCode;
+                    }
+                    if ($this->unebCenterNumber !== null
+                        && \Illuminate\Support\Facades\Schema::hasColumn('schools', 'uneb_center_number')) {
+                        $school->uneb_center_number = $this->unebCenterNumber;
+                    }
                     $school->toshi_enabled = 1;
                     $school->save();
+
+                    if ($this->selectedPlanId && ! CurrentPlan::where('school_id', $schoolId)->exists()) {
+                        $this->persistSelectedPlan((int) $schoolId, (int) $this->selectedPlanId);
+                    }
                 }
 
                 $academicYear = \App\Models\AcademicYear::where('school_id', $schoolId)->first();
