@@ -259,6 +259,7 @@
   - **#160/#161/#162** knowledge sync + session-log rule + signup investigation pause log
   - **#164** knowledge stamp for #163 merge; **#166** knowledge stamp for #165; **#168** deploy stamp for #167; **#171** deploy stamp for #170; **#173** deploy stamp for #172; **#174** OAuth Console URI / tip-SHA gap-fill
 - **🚧 Open PRs**:
+  - **#176** student `registration_number` + `klassapp_student_id` on all Toshi create paths — **PR open** @ `4283b22` — https://github.com/KlassApp-Foundation/KlassApp/pull/176
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
