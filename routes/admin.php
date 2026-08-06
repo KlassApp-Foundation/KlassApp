@@ -65,7 +65,7 @@ Route::get( '/schooldetails', 'SchoolDetailsController@index' );
 //Route::post( '/schooldetails/create', 'SchoolDetailsController@store' );
 Route::get( '/schooldetails/edit/{school_id}', 'SchoolDetailsController@edit' );
 Route::get( '/schooldetails/editdetail/{school_id}', 'SchoolDetailsController@editdetail' );
-Route::post( '/schooldetails/update/validationUpdate/{school_id}', 'SchoolDetailsController@update' );
+Route::post( '/schooldetails/update/validationUpdate/{school_id}', 'SchoolDetailsController@validationUpdate' );
 Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@update' );
 
 //academics

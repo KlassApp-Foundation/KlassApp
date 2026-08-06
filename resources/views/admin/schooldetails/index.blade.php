@@ -114,13 +114,35 @@
                     <li class="flex pb-2 flex-col lg:flex-row py-3">
                         <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">Country</p>
                         <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
-                            @if($school->country_id != null)
+                            @if($school->registration_country)
+                                {{ $school->registration_country }}
+                            @elseif($school->country_id != null)
                                 {{ $school->country->name }}
                             @else
                                 NULL
                             @endif
                         </p>
                     </li>
+                    <li class="flex pb-2 flex-col lg:flex-row py-3">
+                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">EMIS / Ministry Code</p>
+                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
+                            {{ $school->ministry_code ?: 'NULL' }}
+                        </p>
+                    </li>
+                    @if(\App\Services\OnboardingStepsService::isUnebCurriculum($school->curriculum))
+                    <li class="flex pb-2 flex-col lg:flex-row py-3">
+                        <p class="font-bold text-base text-gray-800 capitalize w-full lg:w-1/4">UNEB Centre Number</p>
+                        <p class="font-medium text-sm text-black capitalize flex items-center w-full lg:w-1/2">
+                            @if($school->uneb_center_number !== null && $school->uneb_center_number !== '')
+                                {{ $school->uneb_center_number }}
+                            @elseif($school->uneb_center_number === '')
+                                Skipped
+                            @else
+                                NULL
+                            @endif
+                        </p>
+                    </li>
+                    @endif
                 </ul>
             </div>
         </div>

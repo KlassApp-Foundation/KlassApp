@@ -240,6 +240,18 @@
 
 ---
 
+## Current Status: August 7, 2026 (`origin/main` tip `707c9ca` — #184 knowledge tip refresh; prod **`7a705f8`** #182)
+
+- **`origin/main` tip**: `707c9ca` — #184 tip refresh after #183. Prior: `bbc8a3d` (#183), `7a705f8` (#182 timetable), `ba1df48` (#181), `4807aec` (#180 e2e).
+- **✅ Deployed to prod**: **`7a705f8`** (#182) @ **2026-08-06 03:41:11 UTC** via `scripts/deploy-manual.sh`. Knowledge stamps #183/#184 **not** redeployed (docs-only).
+- **🚧 Open PRs**:
+  - **#185** admin School Details country + EMIS + UNEB centre — **PR open** @ `6aed04f` — https://github.com/KlassApp-Foundation/KlassApp/pull/185 (`feature/admin-schooldetails-country-emis-uneb`)
+  - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
+  - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
+  - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
+- **Country field authority**: Toshi/`OnboardingStepsService` read **`registration_country`**. Admin School Details country selector writes **both** `registration_country` + `country_id` via `persistCountry` (no second drift-prone field).
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
+
 ## Current Status: August 6, 2026 (`origin/main` tip `bbc8a3d` — #183 knowledge stamp; prod **`7a705f8`** #182)
 
 - **`origin/main` tip**: `bbc8a3d` — #183 knowledge stamp for #182 merge+deploy. Prior: `7a705f8` (#182 timetable), `ba1df48` (#181), `4807aec` (#180 e2e), `fbfe87a` (#179), `6fb4756` (#178), `b9eec94` (#177).
@@ -633,6 +645,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-07: Admin School Details — country / EMIS / UNEB centre editable
+- **Work done**: Added Country, EMIS (`ministry_code`), and UNEB centre (`uneb_center_number`) as editable fields on `/admin/schooldetails`. Wired validation (Uganda-required EMIS; UNEB centre optional). Fixed `validationUpdate` route to validate-only. Hardened Toshi complete-mode so empty/null props do not wipe already-set values. PHPUnit coverage in `SchoolDetailsCountryEmisUnebTest`.
+- **Files modified**: `app/Http/Controllers/Admin/SchoolDetailsController.php`, `app/Http/Requests/DetailRequest.php`, `app/Livewire/AgentToshi.php`, `resources/assets/js/components/schooldetail/Edit.vue`, `resources/views/admin/schooldetails/index.blade.php`, `routes/admin.php`, `tests/Feature/Admin/SchoolDetailsCountryEmisUnebTest.php`, `knowledge.md`
+- **Key decisions**:
+  - **Authoritative for Toshi**: `registration_country` (string). `country_id` is the FK for legacy UI/geo.
+  - **UX**: single country selector → `OnboardingStepsService::persistCountry()` writes **both** (matches Toshi/`RegisterController`). Do not add a second independent country field.
+  - EMIS shown/required only when selected country is Uganda; UNEB centre shown only when board/curriculum is UNEB.
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/185 (`feature/admin-schooldetails-country-emis-uneb` @ `6aed04f`)
+- **Status**: ✅ Done — PR open (not merged / not deployed)
+- **Edge cases flagged**: Vue assets need `npm run build` (or `dev`) for Edit.vue to show new fields in browser; axios preflight no longer persists (form submit does). Schools without `SchoolDetail` meta rows now get `updateOrCreate` for board/moto/etc.
 
 ### 2026-08-06: Knowledge stamp — #182 MERGED + DEPLOYED
 - **Work done**: Confirmed CI green / mergeable; squash-merged #182; deployed via `scripts/deploy-manual.sh`; verified prod HEAD `7a705f8`, migrate nothing pending, live route wiring `admin.timetable.index` → `TimetableSlotController@index`, unauth HTTP 302→login; stamped Current Status + Session Log.

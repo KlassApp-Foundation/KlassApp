@@ -5389,11 +5389,13 @@ class AgentToshi extends Component
                     if ($this->curriculum !== '' && $this->curriculum !== null && $school->curriculum !== $this->curriculum) {
                         $school->curriculum = $this->curriculum;
                     }
-                    if ($this->schoolCountry !== '') {
+                    // Do not overwrite already-set values with empty/null when
+                    // complete-mode is reopened without re-collecting fields.
+                    if (filled($this->schoolCountry)) {
                         \App\Services\OnboardingStepsService::persistCountry($school, $this->schoolCountry);
                         $school->refresh();
                     }
-                    if ($this->ministryCode !== '') {
+                    if (filled($this->ministryCode)) {
                         $school->ministry_code = $this->ministryCode;
                     }
                     if ($this->unebCenterNumber !== null
