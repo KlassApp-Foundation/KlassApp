@@ -240,16 +240,18 @@
 
 ---
 
-## Current Status: August 6, 2026 (`origin/main` tip `4807aec` — #180 e2e merged; prod still `6fb4756`)
+## Current Status: August 6, 2026 (`origin/main` tip `ba1df48` — #181 knowledge stamp; prod still `6fb4756`)
 
-- **`origin/main` tip**: `4807aec` — squash merge of #180 (prod Uganda signup + onboarding Playwright suite). Prior: `fbfe87a` (#179 knowledge stamp), `6fb4756` (#178), `b9eec94` (#177), `eeb3a96` (#176), `49d815b` (#175), `5bda067` (#174).
-- **✅ Deployed to prod**: still **`6fb4756`** (#177+#178) @ **2026-08-05 22:06:27 UTC** — **not** redeployed for #180 (e2e-only / Playwright + config; no app runtime change). Migration `uneb_center_number` batch **11** already Ran; no pending migrations. Logs `appuser:appgroup`.
+- **`origin/main` tip**: `ba1df48` — #181 knowledge stamp for #180 merge. Prior: `4807aec` (#180 e2e), `fbfe87a` (#179), `6fb4756` (#178), `b9eec94` (#177).
+- **✅ Deployed to prod**: still **`6fb4756`** (#177+#178) @ **2026-08-05 22:06:27 UTC** — **not** redeployed for #180/#181 (e2e/docs-only). Migration `uneb_center_number` batch **11** already Ran; no pending migrations. Logs `appuser:appgroup`.
+- **🚧 Open — fix `/admin/timetable` 500**: **#182** https://github.com/KlassApp-Foundation/KlassApp/pull/182 (`fix/admin-timetable-500` @ `d6524d0`) — route/view mismatch (nav → broken `timetableIndex`; slots controller has correct empty UI). **Not related to signup #163/#165/#170/#177** — pre-existing since Jul 16 timetable slots (`6387646`). **PR open — not merged; do not deploy.**
 - **✅ Merged #180**: `e2e/prod-uganda-onboarding.spec.js` + Playwright `prod` project + `npm run test:e2e:prod-uganda`. Squash merge `4807aec4404c4582b7d80ddce4cf9a6a539b5410`. **e2e-only — not deployed**.
 - **✅ Merged #178**: Auth/register/privilege redirects → plain `/admin/dashboard`. Squash merge `6fb47564b23cee348186f7a8e290bcc082c1f8a0`.
 - **✅ Merged #177**: Country + Uganda EMIS + optional UNEB centre; plan selection at end. Squash merge `b9eec94d2ebaae67bb5ffc5cbfe273b4b5700182`.
 - **✅ Merged #176**: Toshi student create paths set `registration_number` + `klassapp_student_id`. Squash merge `eeb3a96b2aa21defdd67590e12ddccfce159acae`.
 - **✅ Full Uganda onboarding e2e (2026-08-06)**: `e2e/prod-uganda-onboarding.spec.js` @ klassapp.xyz — steps 1–8 PASS + cleanup; EMIS block, UNEB skip (`''`), 12× `KLS…` IDs, plan override Freemium→Growth; school 67 removed.
 - **🚧 Open PRs**:
+  - **#182** `/admin/timetable` HTTP 500 fix — **PR open** @ `d6524d0` — https://github.com/KlassApp-Foundation/KlassApp/pull/182
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
@@ -631,6 +633,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-06: Fix `/admin/timetable` HTTP 500 (route/view mismatch)
+- **Work done**: Investigated GET `/admin/timetable` as onboarded school admin. Root cause: sidebar `url('admin/timetable')` hit `StandardsLinkDetailsController@timetableIndex`, which passed only `$standards` into `admin.timetable.index` — a slots UI that requires `$sections`/`$slots`/`$sectionId`/`$dayNames`. Real exception: `Call to a member function isNotEmpty() on null` (always crashes; not null-state-only). Pointed `/admin/timetable` at `TimetableSlotController@index`, kept `/timetable/slots` as BC alias, removed dead `timetableIndex`, null-safe empty state in the Blade view. PHPUnit: no-slots + with-slots both HTTP 200.
+- **Files modified**: `routes/admin.php`, `app/Http/Controllers/Admin/StandardsLinkDetailsController.php`, `resources/views/admin/timetable/index.blade.php`, `tests/Feature/AdminTimetableIndexTest.php`, `knowledge.md`
+- **Key decisions**: Pre-existing since Jul 16 timetable slots (`6387646`) + Jul 7 nav route (`8d6fb9e`) — **not** caused by signup/onboarding #163/#165/#170/#177. Fix is route wiring + defensive view; no schema change.
+- **Related to signup?**: No
+- **Worktree**: `/Users/mac/projects/KlassApp-fix-admin-timetable-500` on `fix/admin-timetable-500` (base `ba1df48` = `origin/main`)
+- **PR**: opening
+- **Status**: ✅ Done — PR opening (not merged; do not deploy)
+- **Edge cases flagged**: Empty sections/slots already handled by slots controller; view harden covers accidental wrong compact(); `/admin/timetable/slots` remains a working alias
 
 ### 2026-08-06: Knowledge stamp — #180 MERGED (e2e-only)
 - **Work done**: Updated Current Status + Session Log after squash-merge of #180 (`4807aec`). Confirmed e2e-only (Playwright suite + config); **no app deploy**. Prod remains `6fb4756` (#177+#178). Cleared stale “PR open” / “knowledge stamp PR opening” stubs.

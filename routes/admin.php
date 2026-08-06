@@ -114,7 +114,8 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 	Route::post( '/standardLink/add', 'StandardsLinkController@store' );
 	//show
 	Route::get( '/standardLink/show/{id}', 'StandardsLinkDetailsController@show' );
-	Route::get( '/timetable', 'StandardsLinkDetailsController@timetableIndex' );
+	// Nav hits /admin/timetable — TimetableSlotController supplies the view vars.
+	Route::get( '/timetable', 'TimetableSlotController@index' )->name( 'admin.timetable.index' );
 	Route::get( '/standardLink/show/timetable/{id}', 'StandardsLinkDetailsController@showTimetable' );
 	Route::get( '/standardLink/show/teachers/{id}', 'StandardsLinkDetailsController@showTeachers' );
 	Route::get( '/standardLink/show/students/{id}', 'StandardsLinkDetailsController@showStudents' );
@@ -304,8 +305,8 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::get( '/teacher/show/details/{name}', 'TeacherShowController@showDetails' );
 	Route::get( '/teacher/show/timetable/{name}', 'TeacherShowController@showTimetable' );
 
-// Timetable slot management
-Route::get('/timetable/slots', 'TimetableSlotController@index')->name('admin.timetable.index');
+// Timetable slot management (index lives at /admin/timetable; /slots is a BC alias)
+Route::get('/timetable/slots', 'TimetableSlotController@index');
 Route::get('/timetable/slots/create', 'TimetableSlotController@create')->name('admin.timetable.create');
 Route::post('/timetable/slots', 'TimetableSlotController@store')->name('admin.timetable.store');
 Route::get('/timetable/slots/{slot}/edit', 'TimetableSlotController@edit')->name('admin.timetable.edit');

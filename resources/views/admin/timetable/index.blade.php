@@ -11,16 +11,16 @@
             <label class="ds-label">Class</label>
             <select name="section_id" class="ds-input" onchange="this.form.submit()">
                 <option value="">Select class...</option>
-                @foreach($sections as $s)
-                    <option value="{{ $s->id }}" {{ $s->id == $sectionId ? 'selected' : '' }}>{{ $s->name }}</option>
+                @foreach(($sections ?? collect()) as $s)
+                    <option value="{{ $s->id }}" {{ $s->id == ($sectionId ?? null) ? 'selected' : '' }}>{{ $s->name }}</option>
                 @endforeach
             </select>
         </div>
-        <a href="{{ route('admin.timetable.create', ['section_id' => $sectionId]) }}" class="ds-btn ds-btn-primary">+ Add Slot</a>
+        <a href="{{ route('admin.timetable.create', ['section_id' => $sectionId ?? null]) }}" class="ds-btn ds-btn-primary">+ Add Slot</a>
     </form>
 </div>
 
-@if($slots->isNotEmpty())
+@if(($slots ?? collect())->isNotEmpty())
     <div class="overflow-x-auto">
         <table class="ds-table w-full">
             <thead>
@@ -35,10 +35,10 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($slots as $day => $daySlots)
+                @foreach(($slots ?? collect()) as $day => $daySlots)
                     @foreach($daySlots as $slot)
                         <tr class="ds-tr">
-                            <td class="ds-td font-medium">{{ $dayNames[$day] ?? '?' }}</td>
+                            <td class="ds-td font-medium">{{ ($dayNames ?? [])[$day] ?? '?' }}</td>
                             <td class="ds-td">{{ substr($slot->start_time, 0, 5) }}–{{ substr($slot->end_time, 0, 5) }}</td>
                             <td class="ds-td">{{ $slot->subject?->name ?? '—' }}</td>
                             <td class="ds-td">{{ $slot->teacher?->name ?? '—' }}</td>
@@ -57,7 +57,7 @@
             </tbody>
         </table>
     </div>
-@elseif($sectionId)
+@elseif($sectionId ?? null)
     <div class="ds-empty-state"><p>No timetable slots for this class yet.</p>
         <a href="{{ route('admin.timetable.create', ['section_id' => $sectionId]) }}" class="ds-btn ds-btn-primary mt-3">Add the first slot</a></div>
 @else
