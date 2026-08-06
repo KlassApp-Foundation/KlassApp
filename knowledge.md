@@ -240,10 +240,11 @@
 
 ---
 
-## Current Status: August 7, 2026 (`origin/main` tip `361ed22` — #185 + Vite assets + deploy-script fix; prod **`361ed22`**)
+## Current Status: August 7, 2026 (`origin/main` tip `8c47811` — #186 knowledge stamp; prod **`361ed22`** #185)
 
-- **`origin/main` tip**: `361ed22` — deploy-script auto-commit/push of `public/build`. Prior: `54e9691` (Vite rebuild for #185 Edit.vue), `2b262ed` (#185 squash), `707c9ca` (#184), `bbc8a3d` (#183), `7a705f8` (#182).
-- **✅ Deployed to prod**: **`361ed22`** @ **2026-08-06 21:40:46–21:41:23 UTC** via `scripts/deploy-manual.sh` from worktree `KlassApp-toshi-adversarial-live-prod`. Migrations: **Nothing to migrate**. Frontend: Vite `app-C3OSstE4.js` on prod (EMIS / `ministry_code` / `uneb_center_number` markers present).
+- **`origin/main` tip**: `8c47811` — #186 knowledge stamp for #185 merge+deploy. Prior: `361ed22` (deploy-script asset push), `54e9691` (Vite rebuild), `2b262ed` (#185 squash), `707c9ca` (#184), `bbc8a3d` (#183).
+- **✅ Deployed to prod**: **`361ed22`** @ **2026-08-06 21:40:46–21:41:23 UTC** via `scripts/deploy-manual.sh` from worktree `KlassApp-toshi-adversarial-live-prod`. Migrations: **Nothing to migrate**. Frontend: Vite `app-C3OSstE4.js` on prod (EMIS / `ministry_code` / `uneb_center_number` markers present). Knowledge stamps #186 (+ tip refresh) **not** redeployed (docs-only).
+- **✅ Merged #186**: Knowledge stamp for #185. Squash merge `8c47811f797112a0e2905743307fd13f44fcb589`.
 - **✅ Merged #185**: Admin School Details country + EMIS + UNEB centre. Squash merge `2b262edcd5a096a1c3a6cc16b872d6651e3067a3`. Tip before squash: `feature/admin-schooldetails-country-emis-uneb` @ `02f0feb`.
 - **🚧 Open PRs**:
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
@@ -655,7 +656,9 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Merge commit (feature)**: `2b262edcd5a096a1c3a6cc16b872d6651e3067a3`
 - **Follow-up commits**: `54e9691` (assets), `361ed22` (deploy script)
 - **Deploy**: `2026-08-06 21:40:46–21:41:23 UTC` — prod HEAD `361ed22`
-- **Status**: ✅ MERGED + DEPLOYED (this stamp docs-only)
+- **PR (stamp)**: https://github.com/KlassApp-Foundation/KlassApp/pull/186 (`chore/knowledge-stamp-pr185`)
+- **Merge commit (stamp)**: `8c47811f797112a0e2905743307fd13f44fcb589` (#186)
+- **Status**: ✅ MERGED (knowledge-only; not redeployed)
 
 ### 2026-08-07: Admin School Details — country / EMIS / UNEB centre editable
 - **Work done**: Added Country, EMIS (`ministry_code`), and UNEB centre (`uneb_center_number`) as editable fields on `/admin/schooldetails`. Wired validation (Uganda-required EMIS; UNEB centre optional). Fixed `validationUpdate` route to validate-only. Hardened Toshi complete-mode so empty/null props do not wipe already-set values. PHPUnit coverage in `SchoolDetailsCountryEmisUnebTest`. Squash-merged + deployed same day (see stamp above).
