@@ -637,10 +637,10 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Confirmed CI green / mergeable; squash-merged #182; deployed via `scripts/deploy-manual.sh`; verified prod HEAD `7a705f8`, migrate nothing pending, live route wiring `admin.timetable.index` → `TimetableSlotController@index`, unauth HTTP 302→login; stamped Current Status + Session Log.
 - **Files modified**: `knowledge.md` (this stamp)
 - **Key decisions**: Knowledge-only follow-up PR after ship (same pattern as #181); no further app deploy needed for stamp.
-- **PR**: opening (`chore/knowledge-stamp-pr182`)
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/183 (`chore/knowledge-stamp-pr182`)
 - **Merge commit (feature)**: `7a705f8db1bbe04b967f09b365bccdd6d41058ab` (#182)
 - **Deploy**: `2026-08-06 03:41:11 UTC` — prod HEAD matches squash SHA
-- **Status**: ✅ Done — knowledge stamp PR opening (squash-merge pending)
+- **Status**: ✅ Done — PR open (knowledge-only; squash-merge pending)
 - **Edge cases flagged**: `gh pr merge --delete-branch` could not delete local `fix/admin-timetable-500` (still checked out in worktree `KlassApp-fix-admin-timetable-500`); remote branch deleted. Local Vite rebuild during deploy left uncommitted `public/build` in deploy worktree — discarded (not part of #182).
 
 ### 2026-08-06: Fix `/admin/timetable` HTTP 500 (route/view mismatch)
