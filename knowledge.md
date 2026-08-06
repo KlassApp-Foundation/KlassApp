@@ -240,10 +240,11 @@
 
 ---
 
-## Current Status: August 6, 2026 (`origin/main` tip `7a705f8` — #182 admin timetable 500 fix **MERGED + DEPLOYED**)
+## Current Status: August 6, 2026 (`origin/main` tip `bbc8a3d` — #183 knowledge stamp; prod **`7a705f8`** #182)
 
-- **`origin/main` tip**: `7a705f8` — #182 `/admin/timetable` route/view mismatch fix. Prior: `ba1df48` (#181 knowledge), `4807aec` (#180 e2e), `fbfe87a` (#179), `6fb4756` (#178), `b9eec94` (#177).
-- **✅ Deployed to prod**: **`7a705f8`** (#182) @ **2026-08-06 03:41:11 UTC** via `scripts/deploy-manual.sh` from worktree `KlassApp-toshi-adversarial-live-prod`. Migrate: **Nothing to migrate** (batch **11** already Ran). Smoke: prod HEAD match; `admin.timetable.index` → `TimetableSlotController@index`; unauth GET `/admin/timetable` → **302** `/login` (not 500).
+- **`origin/main` tip**: `bbc8a3d` — #183 knowledge stamp for #182 merge+deploy. Prior: `7a705f8` (#182 timetable), `ba1df48` (#181), `4807aec` (#180 e2e), `fbfe87a` (#179), `6fb4756` (#178), `b9eec94` (#177).
+- **✅ Deployed to prod**: **`7a705f8`** (#182) @ **2026-08-06 03:41:11 UTC** via `scripts/deploy-manual.sh` from worktree `KlassApp-toshi-adversarial-live-prod`. Migrate: **Nothing to migrate** (batch **11** already Ran). Smoke: prod HEAD match; `admin.timetable.index` → `TimetableSlotController@index`; unauth GET `/admin/timetable` → **302** `/login` (not 500). Knowledge stamp #183 **not** redeployed (docs-only).
+- **✅ Merged #183**: Knowledge stamp for #182. Squash merge `bbc8a3d32d8157d7ffad063305e611cedb9fa853`.
 - **✅ Merged #182**: Wire `/admin/timetable` to `TimetableSlotController@index`, null-safe empty state, PHPUnit coverage. Squash merge `7a705f8db1bbe04b967f09b365bccdd6d41058ab`. Tip before squash: `fix/admin-timetable-500` @ `b2560fd` (fix `d6524d0`).
 - **✅ Merged #180**: `e2e/prod-uganda-onboarding.spec.js` + Playwright `prod` project + `npm run test:e2e:prod-uganda`. Squash merge `4807aec4404c4582b7d80ddce4cf9a6a539b5410`.
 - **✅ Merged #178**: Auth/register/privilege redirects → plain `/admin/dashboard`. Squash merge `6fb47564b23cee348186f7a8e290bcc082c1f8a0`.
@@ -639,8 +640,9 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: Knowledge-only follow-up PR after ship (same pattern as #181); no further app deploy needed for stamp.
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/183 (`chore/knowledge-stamp-pr182`)
 - **Merge commit (feature)**: `7a705f8db1bbe04b967f09b365bccdd6d41058ab` (#182)
-- **Deploy**: `2026-08-06 03:41:11 UTC` — prod HEAD matches squash SHA
-- **Status**: ✅ Done — PR open (knowledge-only; squash-merge pending)
+- **Merge commit (stamp)**: `bbc8a3d32d8157d7ffad063305e611cedb9fa853` (#183)
+- **Deploy**: `2026-08-06 03:41:11 UTC` — prod HEAD matches #182 squash SHA (`7a705f8`)
+- **Status**: ✅ MERGED (knowledge-only; not redeployed)
 - **Edge cases flagged**: `gh pr merge --delete-branch` could not delete local `fix/admin-timetable-500` (still checked out in worktree `KlassApp-fix-admin-timetable-500`); remote branch deleted. Local Vite rebuild during deploy left uncommitted `public/build` in deploy worktree — discarded (not part of #182).
 
 ### 2026-08-06: Fix `/admin/timetable` HTTP 500 (route/view mismatch)
