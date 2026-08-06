@@ -240,23 +240,22 @@
 
 ---
 
-## Current Status: August 6, 2026 (`origin/main` tip `ba1df48` — #181 knowledge stamp; prod still `6fb4756`)
+## Current Status: August 6, 2026 (`origin/main` tip `7a705f8` — #182 admin timetable 500 fix **MERGED + DEPLOYED**)
 
-- **`origin/main` tip**: `ba1df48` — #181 knowledge stamp for #180 merge. Prior: `4807aec` (#180 e2e), `fbfe87a` (#179), `6fb4756` (#178), `b9eec94` (#177).
-- **✅ Deployed to prod**: still **`6fb4756`** (#177+#178) @ **2026-08-05 22:06:27 UTC** — **not** redeployed for #180/#181 (e2e/docs-only). Migration `uneb_center_number` batch **11** already Ran; no pending migrations. Logs `appuser:appgroup`.
-- **🚧 Open — fix `/admin/timetable` 500**: **#182** https://github.com/KlassApp-Foundation/KlassApp/pull/182 (`fix/admin-timetable-500` @ `d6524d0`) — route/view mismatch (nav → broken `timetableIndex`; slots controller has correct empty UI). **Not related to signup #163/#165/#170/#177** — pre-existing since Jul 16 timetable slots (`6387646`). **PR open — not merged; do not deploy.**
-- **✅ Merged #180**: `e2e/prod-uganda-onboarding.spec.js` + Playwright `prod` project + `npm run test:e2e:prod-uganda`. Squash merge `4807aec4404c4582b7d80ddce4cf9a6a539b5410`. **e2e-only — not deployed**.
+- **`origin/main` tip**: `7a705f8` — #182 `/admin/timetable` route/view mismatch fix. Prior: `ba1df48` (#181 knowledge), `4807aec` (#180 e2e), `fbfe87a` (#179), `6fb4756` (#178), `b9eec94` (#177).
+- **✅ Deployed to prod**: **`7a705f8`** (#182) @ **2026-08-06 03:41:11 UTC** via `scripts/deploy-manual.sh` from worktree `KlassApp-toshi-adversarial-live-prod`. Migrate: **Nothing to migrate** (batch **11** already Ran). Smoke: prod HEAD match; `admin.timetable.index` → `TimetableSlotController@index`; unauth GET `/admin/timetable` → **302** `/login` (not 500).
+- **✅ Merged #182**: Wire `/admin/timetable` to `TimetableSlotController@index`, null-safe empty state, PHPUnit coverage. Squash merge `7a705f8db1bbe04b967f09b365bccdd6d41058ab`. Tip before squash: `fix/admin-timetable-500` @ `b2560fd` (fix `d6524d0`).
+- **✅ Merged #180**: `e2e/prod-uganda-onboarding.spec.js` + Playwright `prod` project + `npm run test:e2e:prod-uganda`. Squash merge `4807aec4404c4582b7d80ddce4cf9a6a539b5410`.
 - **✅ Merged #178**: Auth/register/privilege redirects → plain `/admin/dashboard`. Squash merge `6fb47564b23cee348186f7a8e290bcc082c1f8a0`.
 - **✅ Merged #177**: Country + Uganda EMIS + optional UNEB centre; plan selection at end. Squash merge `b9eec94d2ebaae67bb5ffc5cbfe273b4b5700182`.
 - **✅ Merged #176**: Toshi student create paths set `registration_number` + `klassapp_student_id`. Squash merge `eeb3a96b2aa21defdd67590e12ddccfce159acae`.
 - **✅ Full Uganda onboarding e2e (2026-08-06)**: `e2e/prod-uganda-onboarding.spec.js` @ klassapp.xyz — steps 1–8 PASS + cleanup; EMIS block, UNEB skip (`''`), 12× `KLS…` IDs, plan override Freemium→Growth; school 67 removed.
 - **🚧 Open PRs**:
-  - **#182** `/admin/timetable` HTTP 500 fix — **PR open** @ `d6524d0` — https://github.com/KlassApp-Foundation/KlassApp/pull/182
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
-- **✅ Toshi on `main` (cumulative)**: prior + **#176 student IDs**, **#177 country/EMIS/UNEB + end plan**, **#178 plain dashboard redirect**, **#180 Uganda onboarding e2e**.
-- **Onboarding / signup**: Fresh admins → plain `/admin/dashboard` (no query param); continue-setup + Toshi auto-open from incomplete school state. Flow: school name → curriculum → **country** → (Uganda) **EMIS** → (UNEB) optional centre → academic year → … → **plan last**. **Prod app HEAD** `6fb4756` (#177+#178); main tip includes e2e suite #180 (not deployed).
+- **✅ Toshi on `main` (cumulative)**: prior + **#176 student IDs**, **#177 country/EMIS/UNEB + end plan**, **#178 plain dashboard redirect**, **#180 Uganda onboarding e2e**, **#182 admin timetable fix**.
+- **Onboarding / signup**: Fresh admins → plain `/admin/dashboard` (no query param); continue-setup + Toshi auto-open from incomplete school state. Flow: school name → curriculum → **country** → (Uganda) **EMIS** → (UNEB) optional centre → academic year → … → **plan last**. **Prod app HEAD** `7a705f8` (#182).
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
 
 ## Current Status: August 1, 2026 (Vue 3 + Phase 3 Vite + superadmin audit CLOSED on `main` + **Toshi Phase 0–1 on feature branch** — superseded above for Toshi merge state)
@@ -634,14 +633,26 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-06: Knowledge stamp — #182 MERGED + DEPLOYED
+- **Work done**: Confirmed CI green / mergeable; squash-merged #182; deployed via `scripts/deploy-manual.sh`; verified prod HEAD `7a705f8`, migrate nothing pending, live route wiring `admin.timetable.index` → `TimetableSlotController@index`, unauth HTTP 302→login; stamped Current Status + Session Log.
+- **Files modified**: `knowledge.md` (this stamp)
+- **Key decisions**: Knowledge-only follow-up PR after ship (same pattern as #181); no further app deploy needed for stamp.
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/183 (`chore/knowledge-stamp-pr182`)
+- **Merge commit (feature)**: `7a705f8db1bbe04b967f09b365bccdd6d41058ab` (#182)
+- **Deploy**: `2026-08-06 03:41:11 UTC` — prod HEAD matches squash SHA
+- **Status**: ✅ Done — PR open (knowledge-only; squash-merge pending)
+- **Edge cases flagged**: `gh pr merge --delete-branch` could not delete local `fix/admin-timetable-500` (still checked out in worktree `KlassApp-fix-admin-timetable-500`); remote branch deleted. Local Vite rebuild during deploy left uncommitted `public/build` in deploy worktree — discarded (not part of #182).
+
 ### 2026-08-06: Fix `/admin/timetable` HTTP 500 (route/view mismatch)
-- **Work done**: Investigated GET `/admin/timetable` as onboarded school admin. Root cause: sidebar `url('admin/timetable')` hit `StandardsLinkDetailsController@timetableIndex`, which passed only `$standards` into `admin.timetable.index` — a slots UI that requires `$sections`/`$slots`/`$sectionId`/`$dayNames`. Real exception: `Call to a member function isNotEmpty() on null` (always crashes; not null-state-only). Pointed `/admin/timetable` at `TimetableSlotController@index`, kept `/timetable/slots` as BC alias, removed dead `timetableIndex`, null-safe empty state in the Blade view. PHPUnit: no-slots + with-slots both HTTP 200.
+- **Work done**: Investigated GET `/admin/timetable` as onboarded school admin. Root cause: sidebar `url('admin/timetable')` hit `StandardsLinkDetailsController@timetableIndex`, which passed only `$standards` into `admin.timetable.index` — a slots UI that requires `$sections`/`$slots`/`$sectionId`/`$dayNames`. Real exception: `Call to a member function isNotEmpty() on null` (always crashes; not null-state-only). Pointed `/admin/timetable` at `TimetableSlotController@index`, kept `/timetable/slots` as BC alias, removed dead `timetableIndex`, null-safe empty state in the Blade view. PHPUnit: no-slots + with-slots both HTTP 200. Squash-merged + deployed same day.
 - **Files modified**: `routes/admin.php`, `app/Http/Controllers/Admin/StandardsLinkDetailsController.php`, `resources/views/admin/timetable/index.blade.php`, `tests/Feature/AdminTimetableIndexTest.php`, `knowledge.md`
 - **Key decisions**: Pre-existing since Jul 16 timetable slots (`6387646`) + Jul 7 nav route (`8d6fb9e`) — **not** caused by signup/onboarding #163/#165/#170/#177. Fix is route wiring + defensive view; no schema change.
 - **Related to signup?**: No
 - **Worktree**: `/Users/mac/projects/KlassApp-fix-admin-timetable-500` on `fix/admin-timetable-500` (base `ba1df48` = `origin/main`)
-- **PR**: opening
-- **Status**: ✅ Done — PR opening (not merged; do not deploy)
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/182 (`fix/admin-timetable-500`)
+- **Merge commit**: `7a705f8db1bbe04b967f09b365bccdd6d41058ab`
+- **Deploy**: `2026-08-06 03:41:11 UTC` — prod HEAD `7a705f8`; migrate nothing to migrate
+- **Status**: ✅ MERGED + DEPLOYED
 - **Edge cases flagged**: Empty sections/slots already handled by slots controller; view harden covers accidental wrong compact(); `/admin/timetable/slots` remains a working alias
 
 ### 2026-08-06: Knowledge stamp — #180 MERGED (e2e-only)
