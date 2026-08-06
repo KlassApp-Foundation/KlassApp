@@ -28,9 +28,23 @@ bash scripts/check-conflict-markers.sh
 echo "[Pre] Conflict marker check passed."
 
 # ---- Local build step ----
+# Prod serves hashed Vite assets from git (public/build). A local-only build
+# never reaches the server — commit + push when the manifest/assets change.
 echo "[Local] Rebuilding frontend assets (Vite)..."
 npm run build
-echo "[Local] Assets rebuilt. Remember to commit if running manually."
+if ! git diff --quiet -- public/build || [ -n "$(git ls-files --others --exclude-standard -- public/build)" ]; then
+  echo "[Local] public/build changed — committing and pushing so prod git pull gets assets..."
+  git add public/build
+  git commit -m "$(cat <<'EOF'
+chore(assets): rebuild Vite assets for deploy
+
+EOF
+)"
+  git push origin "$GIT_BRANCH"
+  echo "[Local] Built assets pushed to origin/$GIT_BRANCH."
+else
+  echo "[Local] public/build unchanged — nothing to commit."
+fi
 
 ssh "$APP_SERVER" -i ~/.ssh/id_ed25519_do << REMOTE_SCRIPT
 set -e
