@@ -240,16 +240,17 @@
 
 ---
 
-## Current Status: August 7, 2026 (`origin/main` tip `707c9ca` — #184 knowledge tip refresh; prod **`7a705f8`** #182)
+## Current Status: August 7, 2026 (`origin/main` tip `361ed22` — #185 + Vite assets + deploy-script fix; prod **`361ed22`**)
 
-- **`origin/main` tip**: `707c9ca` — #184 tip refresh after #183. Prior: `bbc8a3d` (#183), `7a705f8` (#182 timetable), `ba1df48` (#181), `4807aec` (#180 e2e).
-- **✅ Deployed to prod**: **`7a705f8`** (#182) @ **2026-08-06 03:41:11 UTC** via `scripts/deploy-manual.sh`. Knowledge stamps #183/#184 **not** redeployed (docs-only).
+- **`origin/main` tip**: `361ed22` — deploy-script auto-commit/push of `public/build`. Prior: `54e9691` (Vite rebuild for #185 Edit.vue), `2b262ed` (#185 squash), `707c9ca` (#184), `bbc8a3d` (#183), `7a705f8` (#182).
+- **✅ Deployed to prod**: **`361ed22`** @ **2026-08-06 21:40:46–21:41:23 UTC** via `scripts/deploy-manual.sh` from worktree `KlassApp-toshi-adversarial-live-prod`. Migrations: **Nothing to migrate**. Frontend: Vite `app-C3OSstE4.js` on prod (EMIS / `ministry_code` / `uneb_center_number` markers present).
+- **✅ Merged #185**: Admin School Details country + EMIS + UNEB centre. Squash merge `2b262edcd5a096a1c3a6cc16b872d6651e3067a3`. Tip before squash: `feature/admin-schooldetails-country-emis-uneb` @ `02f0feb`.
 - **🚧 Open PRs**:
-  - **#185** admin School Details country + EMIS + UNEB centre — **PR open** @ `6aed04f` — https://github.com/KlassApp-Foundation/KlassApp/pull/185 (`feature/admin-schooldetails-country-emis-uneb`)
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
 - **Country field authority**: Toshi/`OnboardingStepsService` read **`registration_country`**. Admin School Details country selector writes **both** `registration_country` + `country_id` via `persistCountry` (no second drift-prone field).
+- **Deploy note**: `scripts/deploy-manual.sh` now commits + pushes `public/build` after `npm run build` when assets change (prod only `git pull`s — local-only Vite builds never reached the server before).
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
 
 ## Current Status: August 6, 2026 (`origin/main` tip `bbc8a3d` — #183 knowledge stamp; prod **`7a705f8`** #182)
@@ -646,16 +647,28 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-07: Knowledge stamp — #185 MERGED + DEPLOYED
+- **Work done**: Confirmed #185 MERGEABLE (conflict-marker CI only; no checks reported on feature branch). Squash-merged #185. PR had **no migrations** and **no Vite `public/build`**. Built Vite assets, pushed `54e9691`, fixed `deploy-manual.sh` to auto-commit/push `public/build` (`361ed22`), deployed. Prod verify (Demo school 16): index shows Country/EMIS/UNEB labels; edit serves `app-C3OSstE4.js` + `<edit-schooldetail>`; empty Uganda EMIS → **422**; save Uganda+EMIS+UNEB centre → `registration_country=Uganda` + `country_id=1`; restored school 16 + demo admin hash.
+- **Files modified**: `knowledge.md` (this stamp)
+- **Key decisions**: Frontend path critical — deploy previously rebuilt locally then only `git pull`ed on server; Vue Edit.vue changes were invisible until assets committed. Deploy script now pushes asset diffs.
+- **PR (feature)**: https://github.com/KlassApp-Foundation/KlassApp/pull/185
+- **Merge commit (feature)**: `2b262edcd5a096a1c3a6cc16b872d6651e3067a3`
+- **Follow-up commits**: `54e9691` (assets), `361ed22` (deploy script)
+- **Deploy**: `2026-08-06 21:40:46–21:41:23 UTC` — prod HEAD `361ed22`
+- **Status**: ✅ MERGED + DEPLOYED (this stamp docs-only)
+
 ### 2026-08-07: Admin School Details — country / EMIS / UNEB centre editable
-- **Work done**: Added Country, EMIS (`ministry_code`), and UNEB centre (`uneb_center_number`) as editable fields on `/admin/schooldetails`. Wired validation (Uganda-required EMIS; UNEB centre optional). Fixed `validationUpdate` route to validate-only. Hardened Toshi complete-mode so empty/null props do not wipe already-set values. PHPUnit coverage in `SchoolDetailsCountryEmisUnebTest`.
+- **Work done**: Added Country, EMIS (`ministry_code`), and UNEB centre (`uneb_center_number`) as editable fields on `/admin/schooldetails`. Wired validation (Uganda-required EMIS; UNEB centre optional). Fixed `validationUpdate` route to validate-only. Hardened Toshi complete-mode so empty/null props do not wipe already-set values. PHPUnit coverage in `SchoolDetailsCountryEmisUnebTest`. Squash-merged + deployed same day (see stamp above).
 - **Files modified**: `app/Http/Controllers/Admin/SchoolDetailsController.php`, `app/Http/Requests/DetailRequest.php`, `app/Livewire/AgentToshi.php`, `resources/assets/js/components/schooldetail/Edit.vue`, `resources/views/admin/schooldetails/index.blade.php`, `routes/admin.php`, `tests/Feature/Admin/SchoolDetailsCountryEmisUnebTest.php`, `knowledge.md`
 - **Key decisions**:
   - **Authoritative for Toshi**: `registration_country` (string). `country_id` is the FK for legacy UI/geo.
   - **UX**: single country selector → `OnboardingStepsService::persistCountry()` writes **both** (matches Toshi/`RegisterController`). Do not add a second independent country field.
   - EMIS shown/required only when selected country is Uganda; UNEB centre shown only when board/curriculum is UNEB.
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/185 (`feature/admin-schooldetails-country-emis-uneb` @ `6aed04f`)
-- **Status**: ✅ Done — PR open (not merged / not deployed)
-- **Edge cases flagged**: Vue assets need `npm run build` (or `dev`) for Edit.vue to show new fields in browser; axios preflight no longer persists (form submit does). Schools without `SchoolDetail` meta rows now get `updateOrCreate` for board/moto/etc.
+- **Merge commit**: `2b262edcd5a096a1c3a6cc16b872d6651e3067a3`
+- **Deploy**: `2026-08-06 21:40:46–21:41:23 UTC` — prod HEAD `361ed22` (includes Vite rebuild + deploy-script fix)
+- **Status**: ✅ MERGED + DEPLOYED
+- **Edge cases flagged**: Incomplete onboarding schools (`toshi_enabled=1`) are privilege-gated away from `/admin/schooldetails` → dashboard. Axios preflight no longer persists. Schools without `SchoolDetail` meta rows get `updateOrCreate` for board/moto/etc.
 
 ### 2026-08-06: Knowledge stamp — #182 MERGED + DEPLOYED
 - **Work done**: Confirmed CI green / mergeable; squash-merged #182; deployed via `scripts/deploy-manual.sh`; verified prod HEAD `7a705f8`, migrate nothing pending, live route wiring `admin.timetable.index` → `TimetableSlotController@index`, unauth HTTP 302→login; stamped Current Status + Session Log.
