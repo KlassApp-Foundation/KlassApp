@@ -201,6 +201,9 @@
                             class="text-red-500 text-xs font-semibold"
                             >{{ errors.country_id[0] }}</span
                         >
+                        <p class="text-xs text-gray-500 mt-1">
+                            Saves both country and Toshi registration country.
+                        </p>
                     </div>
                 </div>
 
@@ -235,6 +238,69 @@
                             v-if="errors.city_id"
                             class="text-red-500 text-xs font-semibold"
                             >{{ errors.city_id[0] }}</span
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <!-- EMIS (Uganda) & UNEB centre -->
+            <div class="flex flex-col lg:flex-row">
+                <div v-if="isUganda" class="tw-form-group w-full lg:w-1/2">
+                    <div class="lg:mr-8 md:mr-8">
+                        <div class="mb-2">
+                            <label for="ministry_code" class="tw-form-label"
+                                >EMIS / Ministry Code<span class="text-red-500"
+                                    >*</span
+                                ></label
+                            >
+                        </div>
+                        <div class="w-full lg:w-3/4 my-2">
+                            <input
+                                type="text"
+                                name="ministry_code"
+                                v-model="ministry_code"
+                                id="ministry_code"
+                                class="tw-form-control w-full"
+                                placeholder="e.g. 4527"
+                            />
+                        </div>
+                        <span
+                            v-if="errors.ministry_code"
+                            class="text-red-500 text-xs font-semibold"
+                            >{{ errors.ministry_code[0] }}</span
+                        >
+                    </div>
+                </div>
+
+                <div
+                    v-if="showUnebCenter"
+                    class="tw-form-group w-full lg:w-1/2"
+                >
+                    <div class="lg:mr-8 md:mr-8">
+                        <div class="mb-2">
+                            <label
+                                for="uneb_center_number"
+                                class="tw-form-label"
+                                >UNEB Centre Number
+                                <span class="text-xs text-gray-400 font-normal"
+                                    >(optional)</span
+                                ></label
+                            >
+                        </div>
+                        <div class="w-full lg:w-3/4 my-2">
+                            <input
+                                type="text"
+                                name="uneb_center_number"
+                                v-model="uneb_center_number"
+                                id="uneb_center_number"
+                                class="tw-form-control w-full"
+                                placeholder="e.g. U0123"
+                            />
+                        </div>
+                        <span
+                            v-if="errors.uneb_center_number"
+                            class="text-red-500 text-xs font-semibold"
+                            >{{ errors.uneb_center_number[0] }}</span
                         >
                     </div>
                 </div>
@@ -332,6 +398,9 @@ export default {
             country_id: 7,
             city_id: "",
             website: "",
+            ministry_code: "",
+            uneb_center_number: "",
+            curriculum: "",
 
             countrylist: [],
             citylist: [],
@@ -348,6 +417,38 @@ export default {
             errors: [],
             success: null,
         };
+    },
+
+    computed: {
+        selectedCountry() {
+            if (!this.countrylist || !this.country_id) {
+                return null;
+            }
+            if (this.countrylist[this.country_id]) {
+                return this.countrylist[this.country_id];
+            }
+            const list = Array.isArray(this.countrylist)
+                ? this.countrylist
+                : Object.values(this.countrylist);
+            return (
+                list.find(
+                    (c) => String(c.id) === String(this.country_id)
+                ) || null
+            );
+        },
+        isUganda() {
+            const name = (this.selectedCountry?.name || "").trim();
+            if (!name) {
+                return false;
+            }
+            return (
+                name.toLowerCase() === "uganda" || name.toLowerCase() === "ug"
+            );
+        },
+        showUnebCenter() {
+            const board = (this.board || this.curriculum || "").toLowerCase();
+            return board === "uneb";
+        },
     },
 
     methods: {
@@ -376,6 +477,13 @@ export default {
                 this.country_id = this.details.country_id || 7;
                 this.city_id = this.details.city_id || "";
                 this.website = this.details.website || "";
+                this.ministry_code = this.details.ministry_code || "";
+                this.uneb_center_number =
+                    this.details.uneb_center_number ?? "";
+                this.curriculum = this.details.curriculum || "";
+                if (!this.board && this.curriculum) {
+                    this.board = this.curriculum;
+                }
 
                 this.countrylist = this.details.countrylist || [];
                 this.citylist = this.details.citylist || [];
@@ -399,6 +507,15 @@ export default {
             formData.append("country_id", this.country_id);
             formData.append("city_id", this.city_id);
             formData.append("website", this.website);
+            if (this.isUganda) {
+                formData.append("ministry_code", this.ministry_code || "");
+            }
+            if (this.showUnebCenter) {
+                formData.append(
+                    "uneb_center_number",
+                    this.uneb_center_number ?? ""
+                );
+            }
 
             axios
                 .post(
@@ -427,6 +544,8 @@ export default {
             this.website = "";
             this.school_logo = "";
             this.city_id = "";
+            this.ministry_code = "";
+            this.uneb_center_number = "";
             this.errors = [];
             this.success = null;
             // Note: country_id remains default (7)
