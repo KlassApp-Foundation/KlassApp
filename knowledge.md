@@ -240,10 +240,11 @@
 
 ---
 
-## Current Status: August 8, 2026 (`origin/main` tip `abeb6fc` — #188 MERGED + DEPLOYED)
+## Current Status: August 8, 2026 (`origin/main` tip `509d233` — #189 knowledge handoff; prod app **`abeb6fc`** #188)
 
-- **`origin/main` tip**: `abeb6fc746084320cabec7010af16e372a0b52a6` — Full manual↔Toshi onboarding parity (#188). Prior: `8c47811` (#186 knowledge stamp), `361ed22` (#185 deploy + asset push), `2b262ed` (#185 squash).
+- **`origin/main` tip**: `509d23318acce25d41d6364bcf6ab531f0f3a287` — Goose/OpenCode handoff after #188 (#189, docs-only). App merge prior: `abeb6fc746084320cabec7010af16e372a0b52a6` (#188 manual↔Toshi parity). Prior: `8c47811` (#186), `361ed22` (#185 deploy).
 - **✅ Deployed to prod**: **`abeb6fc`** @ **2026-08-08 10:17:43 UTC** — remote deploy steps on Hetzner (`git pull`, composer, toshi-ui publish, migrate, optimize:clear, FPM reload). Migrations: **Nothing to migrate**. Prod spot-check: `MustBePrivilege::isManualOnboardingRoute` allowlists `admin/schooldetails` + `admin/whatsapp/phone` (grep lines 70–74 in deployed middleware).
+- **✅ Merged #189**: Goose/OpenCode handoff section in `knowledge.md`. Squash merge `509d23318acce25d41d6364bcf6ab531f0f3a287` — https://github.com/KlassApp-Foundation/KlassApp/pull/189
 - **✅ Merged #188**: Full manual↔Toshi onboarding parity (Parts 1–4). Merge commit `abeb6fc746084320cabec7010af16e372a0b52a6` — https://github.com/KlassApp-Foundation/KlassApp/pull/188
 - **✅ Merged #186 / #185**: (unchanged) knowledge stamp `8c47811`; School Details country/EMIS/UNEB `2b262ed`; prod had been `361ed22` until this deploy.
 - **🚧 Open PRs** (at handoff time):
