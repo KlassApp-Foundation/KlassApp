@@ -36,6 +36,8 @@ class UpdateSchoolTool implements Tool
             'student_size' => $schema->string()->nullable(),
             'ministry_code' => $schema->string()->nullable(),
             'curriculum' => $schema->string()->nullable(),
+            'uneb_center_number' => $schema->string()->nullable(),
+            'toshi_enabled' => $schema->boolean()->nullable(),
             'status' => $schema->integer()->nullable(),
         ];
     }
@@ -47,21 +49,29 @@ class UpdateSchoolTool implements Tool
             return $error;
         }
 
+        $data = [
+            'name' => $request['name'],
+            'email' => $request['email'],
+            'phone' => $request['phone'],
+            'address' => $request['address'],
+            'city_id' => $request['city_id'],
+            'country_id' => $request['country_id'],
+            'pincode' => $request['pincode'],
+            'registration_country' => $request['registration_country'] ?? null,
+            'student_size' => $request['student_size'] ?? null,
+            'ministry_code' => $request['ministry_code'] ?? null,
+            'curriculum' => $request['curriculum'] ?? 'uneb',
+            'uneb_center_number' => $request['uneb_center_number'] ?? null,
+            'status' => $request['status'] ?? 1,
+        ];
+
+        // Only touch toshi_enabled when explicitly provided — never null it out.
+        if ($request['toshi_enabled'] !== null) {
+            $data['toshi_enabled'] = $request['toshi_enabled'] ? 1 : 0;
+        }
+
         try {
-            $school = $this->schools->update((int) $request['id'], [
-                'name' => $request['name'],
-                'email' => $request['email'],
-                'phone' => $request['phone'],
-                'address' => $request['address'],
-                'city_id' => $request['city_id'],
-                'country_id' => $request['country_id'],
-                'pincode' => $request['pincode'],
-                'registration_country' => $request['registration_country'] ?? null,
-                'student_size' => $request['student_size'] ?? null,
-                'ministry_code' => $request['ministry_code'] ?? null,
-                'curriculum' => $request['curriculum'] ?? 'uneb',
-                'status' => $request['status'] ?? 1,
-            ]);
+            $school = $this->schools->update((int) $request['id'], $data);
         } catch (ValidationException $e) {
             return '❌ Validation failed: '.collect($e->errors())->flatten()->implode('; ');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {

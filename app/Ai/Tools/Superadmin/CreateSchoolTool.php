@@ -39,6 +39,8 @@ class CreateSchoolTool implements Tool
             'student_size' => $schema->string()->nullable(),
             'ministry_code' => $schema->string()->nullable(),
             'curriculum' => $schema->string()->nullable(),
+            'uneb_center_number' => $schema->string()->nullable(),
+            'toshi_enabled' => $schema->boolean()->nullable(),
             'status' => $schema->integer()->nullable(),
         ];
     }
@@ -63,6 +65,8 @@ class CreateSchoolTool implements Tool
                 'student_size' => $request['student_size'] ?? null,
                 'ministry_code' => $request['ministry_code'] ?? null,
                 'curriculum' => $request['curriculum'] ?? 'uneb',
+                'uneb_center_number' => $request['uneb_center_number'] ?? null,
+                'toshi_enabled' => $request['toshi_enabled'] ?? 1,
                 'status' => $request['status'] ?? 1,
             ]);
         } catch (ValidationException $e) {

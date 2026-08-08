@@ -308,22 +308,30 @@ class OnboardingStepsService
         $school->save();
     }
 
+    /**
+     * Where a school admin can complete each step by hand (manual path).
+     *
+     * Every route here is a real, registered admin route (verified against
+     * `php artisan route:list`). School identity / curriculum / country / EMIS /
+     * UNEB centre are all editable on the School Details page, so those steps
+     * point there. Content steps point at their dedicated add/create pages.
+     */
     private static function stepRoute(string $step, School $school): ?string
     {
         return match ($step) {
-            'school_name' => null,
-            'curriculum' => '/admin/standard/create',
-            'country' => null,
-            'emis' => null,
-            'uneb_center' => null,
+            'school_name' => '/admin/schooldetails',
+            'curriculum' => '/admin/schooldetails',
+            'country' => '/admin/schooldetails',
+            'emis' => '/admin/schooldetails',
+            'uneb_center' => '/admin/schooldetails',
             'academic_year' => '/admin/academics',
             'standards'  => '/admin/standard/create',
             'subjects'   => '/admin/subjects',
-            'teachers'   => '/admin/staff',
-            'terms'      => '/admin/term',
-            'fees'       => '/admin/fees',
-            'whatsapp_verify' => null,
-            'plan_selection' => '/admin/subscription',
+            'teachers'   => '/admin/teacher/add',
+            'terms'      => '/admin/academic-term/create',
+            'fees'       => '/admin/fees-categories/create',
+            'whatsapp_verify' => '/admin/whatsapp/phone',
+            'plan_selection' => '/admin/subscriptions',
             default      => null,
         };
     }

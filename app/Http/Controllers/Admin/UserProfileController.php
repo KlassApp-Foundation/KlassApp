@@ -283,13 +283,17 @@ class UserProfileController extends Controller
             return back()->with('success', 'WhatsApp number unlinked successfully.');
         }
 
-        // Upsert: link/update the phone number
+        // Upsert: link/update the phone number.
+        // Mirror Toshi's whatsapp_verify commit (verified_at + opted_in) so the
+        // manual path produces the same WhatsAppUser state and satisfies the
+        // onboarding whatsapp_verify step identically.
         $waUser = WhatsAppUser::updateOrCreate(
             ['user_id' => $user->id],
             [
-                'phone'     => $request->phone,
-                'school_id' => $user->school_id,
-                'opted_in'  => true,
+                'phone'       => $request->phone,
+                'school_id'   => $user->school_id,
+                'opted_in'    => true,
+                'verified_at' => now(),
             ]
         );
 

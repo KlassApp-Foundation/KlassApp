@@ -43,6 +43,12 @@ class CreateSchool extends Component
     public $ministry_code;
 
     public $curriculum = 'uneb';
+
+    #[Rule('nullable|string|max:50')]
+    public $uneb_center_number;
+
+    public $toshi_enabled = true;
+
     public $status = 1;
 
     public $schoolId;
@@ -69,6 +75,8 @@ class CreateSchool extends Component
             $this->student_size = $school->student_size;
             $this->ministry_code = $school->ministry_code;
             $this->curriculum = $school->curriculum ?? 'uneb';
+            $this->uneb_center_number = $school->uneb_center_number;
+            $this->toshi_enabled = (bool) $school->toshi_enabled;
             $this->status = $school->status;
 
             if ($school->country_id != '') {
@@ -118,6 +126,8 @@ class CreateSchool extends Component
             'student_size' => $this->student_size,
             'ministry_code' => $this->ministry_code,
             'curriculum' => $this->curriculum,
+            'uneb_center_number' => $this->uneb_center_number,
+            'toshi_enabled' => $this->toshi_enabled ? 1 : 0,
             'status' => $this->status,
         ];
 

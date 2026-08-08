@@ -32,7 +32,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('admin.whatsapp.phone') }}" onsubmit="return confirm('Unlink your WhatsApp number?');">
+            <form method="POST" action="{{ route('whatsapp.phone') }}" onsubmit="return confirm('Unlink your WhatsApp number?');">
                 @csrf
                 <input type="hidden" name="unlink" value="1" />
                 <input type="hidden" name="phone" value="{{ $waUser->phone }}" />
@@ -51,7 +51,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('admin.whatsapp.phone') }}">
+            <form method="POST" action="{{ route('whatsapp.phone') }}">
                 @csrf
                 <div class="tw-form-group mb-4">
                     <label class="tw-form-label">Phone Number</label>
