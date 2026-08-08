@@ -240,20 +240,61 @@
 
 ---
 
-## Current Status: August 7, 2026 (`origin/main` tip `8c47811` — #186 knowledge stamp; prod **`361ed22`** #185)
+## Current Status: August 8, 2026 (`origin/main` tip `abeb6fc` — #188 MERGED + DEPLOYED)
 
-- **`origin/main` tip**: `8c47811` — #186 knowledge stamp for #185 merge+deploy. Prior: `361ed22` (deploy-script asset push), `54e9691` (Vite rebuild), `2b262ed` (#185 squash), `707c9ca` (#184), `bbc8a3d` (#183).
-- **✅ Deployed to prod**: **`361ed22`** @ **2026-08-06 21:40:46–21:41:23 UTC** via `scripts/deploy-manual.sh` from worktree `KlassApp-toshi-adversarial-live-prod`. Migrations: **Nothing to migrate**. Frontend: Vite `app-C3OSstE4.js` on prod (EMIS / `ministry_code` / `uneb_center_number` markers present). Knowledge stamps #186 (+ tip refresh) **not** redeployed (docs-only).
-- **✅ Merged #186**: Knowledge stamp for #185. Squash merge `8c47811f797112a0e2905743307fd13f44fcb589`.
-- **✅ Merged #185**: Admin School Details country + EMIS + UNEB centre. Squash merge `2b262edcd5a096a1c3a6cc16b872d6651e3067a3`. Tip before squash: `feature/admin-schooldetails-country-emis-uneb` @ `02f0feb`.
-- **🚧 Open PRs**:
-  - **#188** full manual↔Toshi onboarding parity (Parts 1–4) — **PR open** @ `feature/manual-onboarding-parity` (base `origin/main` @ `33c4cfd`) — https://github.com/KlassApp-Foundation/KlassApp/pull/188 — MustBePrivilege pre-AY allowlist, Superadmin CreateSchool UNEB+`toshi_enabled`, WhatsApp manual `verified_at` parity, `FreeTierPlanService` (existing unlimited schools untouched). Tests 45✅.
-  - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
-  - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
-  - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
+- **`origin/main` tip**: `abeb6fc746084320cabec7010af16e372a0b52a6` — Full manual↔Toshi onboarding parity (#188). Prior: `8c47811` (#186 knowledge stamp), `361ed22` (#185 deploy + asset push), `2b262ed` (#185 squash).
+- **✅ Deployed to prod**: **`abeb6fc`** @ **2026-08-08 10:17:43 UTC** — remote deploy steps on Hetzner (`git pull`, composer, toshi-ui publish, migrate, optimize:clear, FPM reload). Migrations: **Nothing to migrate**. Prod spot-check: `MustBePrivilege::isManualOnboardingRoute` allowlists `admin/schooldetails` + `admin/whatsapp/phone` (grep lines 70–74 in deployed middleware).
+- **✅ Merged #188**: Full manual↔Toshi onboarding parity (Parts 1–4). Merge commit `abeb6fc746084320cabec7010af16e372a0b52a6` — https://github.com/KlassApp-Foundation/KlassApp/pull/188
+- **✅ Merged #186 / #185**: (unchanged) knowledge stamp `8c47811`; School Details country/EMIS/UNEB `2b262ed`; prod had been `361ed22` until this deploy.
+- **🚧 Open PRs** (at handoff time):
+  - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** — https://github.com/KlassApp-Foundation/KlassApp/pull/159
+  - **#138** persistent self-scoped user preference memory — **PR open** — https://github.com/KlassApp-Foundation/KlassApp/pull/138
+  - **#146** live re-verification docs — **PR open**
+  - Draft audits (not part of onboarding arc): #158 report cards, #155 Teacher Batch 2, #151 SA Batch 2, #141 panel-parity, #139 Google connector
 - **Country field authority**: Toshi/`OnboardingStepsService` read **`registration_country`**. Admin School Details country selector writes **both** `registration_country` + `country_id` via `persistCountry` (no second drift-prone field).
-- **Deploy note**: `scripts/deploy-manual.sh` now commits + pushes `public/build` after `npm run build` when assets change (prod only `git pull`s — local-only Vite builds never reached the server before).
+- **Deploy note**: `scripts/deploy-manual.sh` commits + pushes `public/build` after local `npm run build` when assets change; prod only `git pull`s compiled assets.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge (no stale “NOT PUSHED” / “opening PR” after ship).
+
+## Handoff: Goose / OpenCode (post-#188 manual↔Toshi parity)
+
+### 1. Current state of signup/onboarding
+
+- Two complete parallel paths: **Toshi chat** and **manual forms** — either can finish school onboarding without the other.
+- **What #188 unlocked**:
+  - `MustBePrivilege` narrow pre-AY allowlist (`schooldetails`, `schooldetails/*`, `whatsapp/phone`, subscriptions routes) via `isManualOnboardingRoute()`.
+  - Dashboard **“Set up manually”** entry for admins who prefer forms.
+  - Superadmin **CreateSchool**: UNEB centre + **`toshi_enabled` default ON**; shared validation with #177/#185.
+  - **WhatsApp manual initiation** on `/admin/whatsapp/phone` with `verified_at` parity to Toshi `whatsapp_verify`.
+  - **`FreeTierPlanService`**: forward-only **CurrentPlan** assignment after onboarding completes — never overwrites existing plans; existing schools with no CurrentPlan stay unlimited.
+- **Mixed-path** (start Toshi, finish manual) covered by PHPUnit: `test_mixed_curriculum_via_toshi_then_finished_manually_has_no_conflicts`.
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/188 — merge `abeb6fc746084320cabec7010af16e372a0b52a6`.
+
+### 2. Open / deferred items (with WHY)
+
+- **Manual onboarding UI redesign** (card-based, step-at-a-time, preview-style) — not started; design direction only.
+- **Dashboard real-time Toshi-visibility feature** — deferred until core app stability is confirmed post-#188 deploy.
+- **Plan-selection pure-UI rendering gap** — plan cards do not reliably render in live UI; local-only Livewire fallback used in testing, never pushed.
+- **Other open PRs** (via `gh pr list --state open` at handoff): e.g. **#159** report cards, **#138** preference memory, various **audit drafts** (#158, #155, #151, #146, #141, #139) — not part of the manual↔Toshi parity arc.
+
+### 3. Standing decisions (do not casually reverse)
+
+- Schools sign up **FREE for now** — no payment enforcement.
+- Plan UI is **last-step / informational / non-blocking**.
+- **Full Toshi↔manual bidirectional parity** is a hard product requirement.
+- **WhatsApp verification** = shared Evolution API instance + `WhatsAppUser` DB state — **NOT** per-school Meta WABA.
+- **No Socialite migration** planned.
+- **`FreeTierPlanService` is forward-only**: existing schools with no CurrentPlan stay unlimited (do not backfill in a way that suddenly enforces freemium caps).
+
+### 4. Tooling division going forward
+
+- **Goose**: build / investigation work.
+- **OpenCode**: Playwright browser-driven verification specifically.
+- Hybrid SSH/DB seeding used in earlier Toshi-vs-manual compares was a **weaker** form of verification than real Playwright chat-UI runs — **real browser verification is the standard going forward** for anything touching live chat flows.
+
+### 5. Where to find things
+
+- Milestone PRs: **#163**, **#165**, **#170**, **#172**, **#176**, **#177**, **#178**, **#182**, **#185**, **#188**.
+- `knowledge.md` is the running log — see **Session Log** stamps for full detail rather than re-summarizing here.
 
 ## Current Status: August 6, 2026 (`origin/main` tip `bbc8a3d` — #183 knowledge stamp; prod **`7a705f8`** #182)
 
@@ -649,6 +690,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-08: #188 MERGED + DEPLOYED (manual↔Toshi parity)
+- **Work done**: Confirmed #188 merged to `origin/main` @ `abeb6fc746084320cabec7010af16e372a0b52a6`. Deployed to production on Hetzner (`/var/www/KlassApp`, container `sms-app`): `git pull`, `composer install --no-dev`, toshi-ui publish, `migrate --force` (nothing to migrate), `optimize:clear`, FPM reload.
+- **Prod verify**: Host + container HEAD `abeb6fc`; `MustBePrivilege.php` contains `isManualOnboardingRoute` allowlist for `admin/schooldetails` and `admin/whatsapp/phone` (grep lines 34–74). No e2e junk left on prod.
+- **Deploy UTC**: **2026-08-08 10:17:43 UTC**
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/188
+- **Merge commit**: `abeb6fc746084320cabec7010af16e372a0b52a6`
+- **Status**: ✅ MERGED + DEPLOYED
+
 ### 2026-08-08: Full manual↔Toshi onboarding parity (Parts 1–4) — PR #188
 - **Work done**: Brought the manual (form-based) onboarding path to full parity with Toshi so a fresh admin can finish onboarding with **no Toshi**.
   - **Part 1 (unlock pre-AY)**: `MustBePrivilege` no-AY + no-standards gates now allow School Details / WhatsApp phone / subscriptions via a narrow `isManualOnboardingRoute()` helper (gate otherwise stays closed). `OnboardingStepsService::stepRoute` remapped to real registered routes. `StandardController@create` guards missing AY → `/admin/academics`. `DetailRequest::checkunique_schoolname` fixed to a real uniqueness check (excludes current school) so the #163 placeholder name can be renamed.
@@ -663,7 +712,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Tests**: `ManualOnboardingParityTest` (full manual flow, **mixed manual+Toshi**, WhatsApp parity, step-route validity, Toshi gate regression), `FreeTierPlanServiceTest`, `CreateSchoolUnebToshiTest`. Ran new + affected (`OnboardingStepsServiceTest`, `SchoolDetailsCountryEmisUnebTest`, `PlatformSchoolToolsTest`, `PlanLimitEnforcementTest`) → **45 passed, 149 assertions**.
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-onboarding-parity` on `feature/manual-onboarding-parity` (from `origin/main` @ `33c4cfd`) @ `6991664`.
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/188
-- **Status**: ✅ Done — PR open (not merged)
+- **Status**: ✅ MERGED — deploy `abeb6fc` @ 2026-08-08 10:17:43 UTC (see Session Log deploy stamp below)
 - **Edge cases flagged**: SQLite test env lacks MySQL `FIELD()` used by the admin dashboard order-by, so dashboard-render assertions were replaced with direct service + redirect/session-flag assertions. `academic_terms.status` is an enum (`last`/`current`/`next`) — tests seed `'current'`. `fees_categories.standard_id` is NOT NULL — tests seed a real standard.
 
 ### 2026-08-07: Knowledge stamp — #185 MERGED + DEPLOYED
