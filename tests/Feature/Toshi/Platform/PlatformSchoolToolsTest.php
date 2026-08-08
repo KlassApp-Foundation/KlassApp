@@ -8,6 +8,7 @@ use App\Ai\Tools\Superadmin\UpdateSchoolTool;
 use App\Models\ActivityLog;
 use App\Models\City;
 use App\Models\Country;
+use App\Models\EmisSchool;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -59,6 +60,14 @@ class PlatformSchoolToolsTest extends TestCase
             'status' => 1,
             'state_id' => 0,
         ]);
+
+        // Uganda schools require a valid EMIS/ministry code (shared #185 rule).
+        EmisSchool::create([
+            'emis_code' => '4527',
+            'school_name' => 'BatchA EMIS School',
+            'district' => 'Kampala',
+            'status' => 1,
+        ]);
     }
 
     private function schoolArgs(array $overrides = []): array
@@ -72,6 +81,7 @@ class PlatformSchoolToolsTest extends TestCase
             'country_id' => $this->country->id,
             'pincode' => 25601,
             'registration_country' => 'Uganda',
+            'ministry_code' => '4527',
             'curriculum' => 'uneb',
             'status' => 1,
         ], $overrides);
@@ -147,6 +157,7 @@ class PlatformSchoolToolsTest extends TestCase
             'country_id' => $this->country->id,
             'pincode' => (int) $school->pincode,
             'registration_country' => 'Uganda',
+            'ministry_code' => '4527',
             'curriculum' => 'uneb',
             'status' => 1,
         ]));

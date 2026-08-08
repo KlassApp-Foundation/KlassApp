@@ -104,6 +104,15 @@ protected $academicSetupService;
         //
         $school = Auth::user()->school;
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
+
+        // Classes require an academic year. During manual onboarding an admin can
+        // reach this page before creating one — send them to set that up first
+        // instead of throwing on a null academic year.
+        if ($academic_year === null) {
+            return redirect('/admin/academics')
+                ->with('errormessage', 'Please create an academic year before adding classes.');
+        }
+
         $board = ["uneb", "cambridge", "ib", "montessori", "other"];
         $standards = ["nursery", "primary", "o-level", "a-level"];
 // ['academic_year_id' => $academic_year->id]

@@ -14,20 +14,51 @@
         @include('partials.plan-banner')
 
         @if(!empty($setupIncomplete))
+            @php
+                $firstManualStep = collect($onboardingSteps ?? [])->firstWhere('route', '!=', null);
+                $firstManualRoute = $firstManualStep['route'] ?? '/admin/schooldetails';
+            @endphp
             <div class="bg-white border border-gray-200 rounded-xl px-6 py-8 my-4" style="background:#FFFFFF;border-color:#E2E8F0;">
                 <h2 class="text-xl font-semibold text-gray-900" style="color:#0F172A;font-family:Sora,sans-serif;">Continue school setup</h2>
                 <p class="mt-2 text-sm text-gray-600" style="color:#64748B;">
-                    Your account is ready. Finish naming your school, choosing a curriculum, and creating an academic year with Toshi before using the full dashboard.
+                    Your account is ready. Finish setting up your school &mdash; you can do it step by step yourself, or let Toshi guide you.
                 </p>
-                @if(!empty($onboardingMissing))
+
+                @if(!empty($onboardingSteps))
+                    <ul class="mt-4 text-sm text-gray-700" style="color:#334155;">
+                        @foreach($onboardingSteps as $step)
+                            <li class="py-1 flex items-center gap-2">
+                                <span>{{ $step['icon'] ?? '•' }}</span>
+                                @if(!empty($step['route']))
+                                    <a href="{{ url($step['route']) }}" class="text-blue-600 hover:underline" style="color:#2563EB;">{{ $step['label'] }}</a>
+                                @else
+                                    <span>{{ $step['label'] }}</span>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                @elseif(!empty($onboardingMissing))
                     <ul class="mt-4 text-sm text-gray-700" style="color:#334155;">
                         @foreach(\App\Helpers\OnboardingHelper::getMissingLabels($onboardingMissing) as $label)
                             <li class="py-1">• {{ $label }}</li>
                         @endforeach
                     </ul>
                 @endif
-                <p class="mt-4 text-sm text-gray-600" style="color:#64748B;">
-                    Open the <strong>Toshi</strong> chat to continue — it should open automatically.
+
+                <div class="mt-6 flex flex-wrap items-center gap-3">
+                    <a href="{{ url($firstManualRoute) }}"
+                       class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                       style="background:#2563EB;color:#FFFFFF;min-height:44px;">
+                        Set up manually
+                    </a>
+                    <button type="button" onclick="var p=document.getElementById('toshi-pill'); if(p){p.click();}"
+                       class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold"
+                       style="background:#22C55E;color:#FFFFFF;min-height:44px;border:none;cursor:pointer;">
+                        Set up with Toshi
+                    </button>
+                </div>
+                <p class="mt-3 text-xs text-gray-500" style="color:#64748B;">
+                    "Set up manually" takes you to the next step. Toshi can walk you through everything in chat.
                 </p>
             </div>
         @endif

@@ -77,8 +77,22 @@ class DashboardController extends Controller
 
         // ── Onboarding reminder for school admins ──
         $onboardingMissing = [];
+        $onboardingSteps = [];
         if (Auth::user()->usergroup_id === 3 && $school_id) {
+            $school = Auth::user()->school;
+
+            // Free-tier milestone: once all content steps are done, auto-assign a
+            // free plan so plan selection stays informational/non-blocking. Safe
+            // for existing schools — see FreeTierPlanService for the guarantees.
+            if ($school) {
+                app(\App\Services\FreeTierPlanService::class)
+                    ->assignIfEligible($school, Auth::id());
+            }
+
             $onboardingMissing = \App\Helpers\OnboardingHelper::getMissingSteps($school_id, Auth::id());
+            $onboardingSteps = $school
+                ? \App\Services\OnboardingStepsService::incompleteSteps($school, Auth::id())
+                : [];
         }
 
         $setupIncomplete = ! empty($dashboard['setupIncomplete'])
@@ -108,6 +122,7 @@ class DashboardController extends Controller
             'plan' => $plan,
             'planUsage' => $planUsage,
             'onboardingMissing' => $onboardingMissing,
+            'onboardingSteps' => $onboardingSteps,
             'setupIncomplete' => $setupIncomplete,
             'openToshiOnboarding' => $openToshiOnboarding,
             'feeTrend' => $feeTrend,

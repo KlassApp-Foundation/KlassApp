@@ -27,16 +27,16 @@ class DetailRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Name must be unique across OTHER schools (the school's own current name
+        // is always allowed). The previous implementation only passed when the
+        // submitted name was a substring of the school's *existing* name, which
+        // silently blocked a manual admin from renaming the signup placeholder
+        // ("{First}'s School") to a real name — Toshi's commitAll bypasses this
+        // request entirely, so the manual path could never complete school_name.
         Validator::extend('checkunique_schoolname', function ($attribute, $value, $parameters, $validator) {
-            $school = School::where('name', 'LIKE', '%'.request('name').'%')
-                ->where('id', Auth::user()->school_id)
+            return ! School::where('name', request('name'))
+                ->where('id', '!=', Auth::user()->school_id)
                 ->exists();
-
-            if (! $school) {
-                return false;
-            }
-
-            return true;
         });
 
         Validator::extend('check_keyword', function ($attribute, $value, $parameters, $validator) {

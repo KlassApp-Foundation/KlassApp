@@ -174,7 +174,7 @@
         <div class="mb-2">
         <label class="tw-form-label">Curriculum</label>
         </div>
-          <select class="tw-form-control w-full" wire:model="curriculum">
+          <select class="tw-form-control w-full" wire:model.live="curriculum">
             <option value="uneb">UNEB</option>
             <option value="uk">UK Curriculum</option>
             <option value="us">US Curriculum</option>
@@ -182,6 +182,35 @@
             <option value="other">Other</option>
           </select>
         </div>
+        </div>
+      </div>
+
+      @if(strtolower((string) $curriculum) === 'uneb')
+      <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 mb-2">
+        <div class="mb-2">
+        <label class="tw-form-label">UNEB Centre Number <span class="text-xs text-gray-500 font-normal">(optional)</span></label>
+        </div>
+          <input name="uneb_center_number" type="text" placeholder="e.g. U0123" class="tw-form-control w-full" wire:model="uneb_center_number">
+          @error('uneb_center_number')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
+        </div>
+        </div>
+      </div>
+      @endif
+
+      <div class="tw-form-group w-full lg:w-1/2">
+        <div class="lg:mr-8 md:mr-8 ">
+        <div>
+          <label class="text-sm font-semibold">Toshi AI Assistant</label>
+          <div class="p-2 border border-gray-300 rounded text-sm mt-1">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" wire:model="toshi_enabled" value="1" />
+              <span>Enable Toshi assistant for this school</span>
+            </label>
+            <p class="text-xs text-gray-500 mt-1">On by default. School admins can be guided by Toshi or set up manually.</p>
+          </div>
+          @error('toshi_enabled')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
       </div>
 
