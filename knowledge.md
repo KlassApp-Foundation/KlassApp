@@ -247,6 +247,7 @@
 - **✅ Merged #186**: Knowledge stamp for #185. Squash merge `8c47811f797112a0e2905743307fd13f44fcb589`.
 - **✅ Merged #185**: Admin School Details country + EMIS + UNEB centre. Squash merge `2b262edcd5a096a1c3a6cc16b872d6651e3067a3`. Tip before squash: `feature/admin-schooldetails-country-emis-uneb` @ `02f0feb`.
 - **🚧 Open PRs**:
+  - **#188** full manual↔Toshi onboarding parity (Parts 1–4) — **PR open** @ `feature/manual-onboarding-parity` (base `origin/main` @ `33c4cfd`) — https://github.com/KlassApp-Foundation/KlassApp/pull/188 — MustBePrivilege pre-AY allowlist, Superadmin CreateSchool UNEB+`toshi_enabled`, WhatsApp manual `verified_at` parity, `FreeTierPlanService` (existing unlimited schools untouched). Tests 45✅.
   - **#159** report cards v1 — shared PDF + SA/Teacher tools — **PR open** @ `6f13017` — https://github.com/KlassApp-Foundation/KlassApp/pull/159
   - **#158** report cards audit (Part A, docs) — **draft** @ `c9db10c` — https://github.com/KlassApp-Foundation/KlassApp/pull/158
   - Also open: #155 Teacher Batch 2 audit, #151 SA Batch 2 audit, #146 live-verification docs, #141 panel-parity ranking, #139 Google connector audit, #138 preference memory
@@ -647,6 +648,23 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-08: Full manual↔Toshi onboarding parity (Parts 1–4) — PR #188
+- **Work done**: Brought the manual (form-based) onboarding path to full parity with Toshi so a fresh admin can finish onboarding with **no Toshi**.
+  - **Part 1 (unlock pre-AY)**: `MustBePrivilege` no-AY + no-standards gates now allow School Details / WhatsApp phone / subscriptions via a narrow `isManualOnboardingRoute()` helper (gate otherwise stays closed). `OnboardingStepsService::stepRoute` remapped to real registered routes. `StandardController@create` guards missing AY → `/admin/academics`. `DetailRequest::checkunique_schoolname` fixed to a real uniqueness check (excludes current school) so the #163 placeholder name can be renamed.
+  - **Part 2 (Superadmin CreateSchool)**: added UNEB centre number + explicit `toshi_enabled` toggle (**default ON**); `Superadmin\SchoolService` shares #177/#185 validation (Uganda→EMIS required, UNEB→centre optional); `CreateSchoolTool`/`UpdateSchoolTool` carry both; `UpdateSchoolTool` no longer nulls `toshi_enabled` when omitted.
+  - **Part 3 (WhatsApp manual)**: `/admin/whatsapp/phone` reachable pre-AY + linked from dashboard; manual link now sets `verified_at` → same state as Toshi `whatsapp_verify`.
+  - **Part 4 (free-tier CurrentPlan)**: new `FreeTierPlanService` assigns free tier **only after content onboarding is complete**, **never overwrites** an existing plan, and **refuses a plan that would block current usage**. Existing unlimited (no-CurrentPlan) schools are **not** migrated/back-filled → stay unlimited. Dashboard hooks the service for onboarding admins.
+- **Files modified**: `app/Http/Middleware/MustBePrivilege.php`, `app/Services/OnboardingStepsService.php`, `app/Services/FreeTierPlanService.php` (new), `app/Services/Superadmin/SchoolService.php`, `app/Http/Controllers/Admin/{DashboardController,StandardController,UserProfileController}.php`, `app/Http/Requests/DetailRequest.php`, `app/Livewire/Superadmin/Academics/CreateSchool.php`, `app/Ai/Tools/Superadmin/{CreateSchoolTool,UpdateSchoolTool}.php`, `resources/views/admin/dashboard/dashboard.blade.php`, `resources/views/admin/whatsapp/phone-link.blade.php`, `resources/views/livewire/superadmin/academics/create-school.blade.php`, `tests/Feature/Onboarding/{ManualOnboardingParityTest,FreeTierPlanServiceTest}.php` (new), `tests/Feature/Superadmin/CreateSchoolUnebToshiTest.php` (new), `tests/Feature/Toshi/Platform/PlatformSchoolToolsTest.php`, `knowledge.md`
+- **Key decisions**:
+  - **Existing-school safety**: forward-only free-tier assignment, gated on real onboarded state + a `planWouldBlock()` self-veto. No migration touches existing rows.
+  - **Curriculum UI**: reuse the existing #185 School Details `board` dropdown (UNEB/Cambridge/Montessori/Other → `schools.curriculum`); no duplicate field.
+  - Allowlist stays narrow — only the specific manual-onboarding routes, not a blanket open-up.
+- **Tests**: `ManualOnboardingParityTest` (full manual flow, **mixed manual+Toshi**, WhatsApp parity, step-route validity, Toshi gate regression), `FreeTierPlanServiceTest`, `CreateSchoolUnebToshiTest`. Ran new + affected (`OnboardingStepsServiceTest`, `SchoolDetailsCountryEmisUnebTest`, `PlatformSchoolToolsTest`, `PlanLimitEnforcementTest`) → **45 passed, 149 assertions**.
+- **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-onboarding-parity` on `feature/manual-onboarding-parity` (from `origin/main` @ `33c4cfd`) @ `6991664`.
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/188
+- **Status**: ✅ Done — PR open (not merged)
+- **Edge cases flagged**: SQLite test env lacks MySQL `FIELD()` used by the admin dashboard order-by, so dashboard-render assertions were replaced with direct service + redirect/session-flag assertions. `academic_terms.status` is an enum (`last`/`current`/`next`) — tests seed `'current'`. `fees_categories.standard_id` is NOT NULL — tests seed a real standard.
 
 ### 2026-08-07: Knowledge stamp — #185 MERGED + DEPLOYED
 - **Work done**: Confirmed #185 MERGEABLE (conflict-marker CI only; no checks reported on feature branch). Squash-merged #185. PR had **no migrations** and **no Vite `public/build`**. Built Vite assets, pushed `54e9691`, fixed `deploy-manual.sh` to auto-commit/push `public/build` (`361ed22`), deployed. Prod verify (Demo school 16): index shows Country/EMIS/UNEB labels; edit serves `app-C3OSstE4.js` + `<edit-schooldetail>`; empty Uganda EMIS → **422**; save Uganda+EMIS+UNEB centre → `registration_country=Uganda` + `country_id=1`; restored school 16 + demo admin hash.
