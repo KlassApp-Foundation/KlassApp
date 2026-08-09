@@ -751,7 +751,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Replaced bare academic-year date fields with Wave DS date-picker chrome around native `<input type="date">` (no new npm dep — Flatpickr not in stack; native dates already used app-wide). Alpine `showPicker()` via Livewire-bundled Alpine. Same `academicYearStart` / `academicYearEnd` + `after:academicYearStart` validation.
 - **Files modified**: `resources/views/components/ds-date-picker.blade.php` (new), `manual-wizard-step-fields.blade.php`, `public/css/dashboard-refresh.css`, `WizardAcademicYearDatePickerTest.php`, screenshots in `docs/wizard-ay-datepicker/`
 - **Key decisions**: Prefer native date input + DS chrome over adding Flatpickr; keep field names/validation unchanged.
-- **Status**: 🚧 PR opening
+- **Status**: 🚧 PR open — #205 https://github.com/KlassApp-Foundation/KlassApp/pull/205 · tip `7108b1e`
 - **Edge cases flagged**: Browser calendar popup chrome is OS/UA-native; DS styles the field affordance, not the OS picker sheet.
 
 ### 2026-08-09: Fix wizard/Toshi desync + restore visible plan step
