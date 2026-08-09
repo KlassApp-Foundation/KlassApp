@@ -7,6 +7,11 @@ include ('addon.php');
 
 
 Route::get( '/dashboard', 'DashboardController@index' )->name( 'dashboard' );
+
+// Wave 3 — manual onboarding wizard shell (UI layer; persistence via Livewire + existing models)
+Route::get('/onboarding/wizard', function () {
+    return view('admin.onboarding.wizard');
+})->name('admin.onboarding.wizard');
 Route::get( '/dashboard/event', 'DashboardController@event' );
 Route::get( '/dashboard/structuralList', 'DashboardController@structuralList' );
 Route::post( '/dashboard/structuralList', 'DashboardController@showStructuralList' );

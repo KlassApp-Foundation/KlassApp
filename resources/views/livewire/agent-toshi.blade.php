@@ -1,5 +1,6 @@
 <div x-data="{ hasText: false }"
      x-on:toshi-run-plan-step.window="setTimeout(() => $wire.executeNextPlanStep(), 200)"
+     x-on:toshi-maximize.window="$wire.maximize()"
      data-toshi-root
      class="toshi-root">
     <div id="toshi-pill"
@@ -29,6 +30,9 @@
             <div class="toshi-header-actions">
                 <button wire:click="resetSchoolOnboarding" class="toshi-header-btn" title="Restart onboarding" style="font-size:11px;font-weight:600;color:#D97706;">
                     ↻ Restart
+                </button>
+                <button wire:click="maximize" class="toshi-header-btn" title="Expand" data-testid="toshi-expand">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
                 </button>
                 <button onclick="document.body.classList.add('toshi-collapsed');document.getElementById('toshi-toggle').textContent='◀';" class="toshi-header-btn" title="Close">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>

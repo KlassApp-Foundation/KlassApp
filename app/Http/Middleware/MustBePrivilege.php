@@ -73,6 +73,8 @@ class MustBePrivilege
             || $request->is('admin/schooldetails/*')
             || $request->is('admin/whatsapp/phone')
             || $request->is('admin/subscriptions')
-            || $request->is('admin/subscriptions/*');
+            || $request->is('admin/subscriptions/*')
+            || $request->is('admin/onboarding/wizard')
+            || $request->is('admin/onboarding/wizard/*');
     }
 }
