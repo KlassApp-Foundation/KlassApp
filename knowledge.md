@@ -707,7 +707,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: Wave 1 = DS reuse only (no Open Design mockups). Preserved field names + `______` select sentinels on term/fees level. Fees page title corrected from mislabeled “Add Academic Term” → “Add Fee”.
 - **Tests**: `php artisan test --compact tests/Feature/Onboarding/ManualUiWave1BladeDsTest.php tests/Feature/Onboarding/ManualOnboardingParityTest.php` → **15 passed, 71 assertions**.
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave1` on `feature/manual-ui-wave1-blade-ds` (from `origin/main` @ `0eeb687`)
-- **Status**: 🚧 PR open — awaiting URL after push
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/191
+- **Status**: 🚧 PR open — https://github.com/KlassApp-Foundation/KlassApp/pull/191
 - **Edge cases flagged**: `SectionController@create` still `compact('sections', …)` with undefined `$sections` (pre-existing; not fixed in Wave 1). Live `StandardController@create` renders `standards.add` (Vue), not `standards.create` — Wave 1 still restyled the orphaned `create` view per scope.
 
 ### 2026-08-08: #188 MERGED + DEPLOYED (manual↔Toshi parity)
