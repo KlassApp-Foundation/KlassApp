@@ -240,7 +240,15 @@
 
 ---
 
-## Current Status: August 9, 2026 (`origin/main` tip `4aa7ad4` — #192 knowledge stamp; Wave 2 **#193** open)
+## Current Status: August 9, 2026 (`origin/main` tip `ad16e55` — #193 Wave 2 School Details DS MERGED)
+
+- **✅ Merged #193**: Wave 2 School Details `editdetail` DS restyle — squash `ad16e5576034ded79498c1b194d4126890d93709` @ **2026-08-09 14:44:42 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/193
+- **Tip before**: `4aa7ad4` (#192). App prior: `fc1d7a4` (#191 Wave 1). Prod app still **`abeb6fc`** (#188) until a deploy that includes #191+.
+- **Wave 2 shipped**: live `editdetail` Blade (`ds-page-head`, `x-card`) + Vue `Edit.vue` (`ds-form-*`, `ds-btn`). Address/Maps portal left on `tw-form-*`. Screenshots in `docs/wave2-screenshots/`.
+- **Open Design**: still deferred to Wave 3+. Vue Create surfaces ≈ Wave 4.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
+
+## Current Status: August 9, 2026 (`origin/main` tip `4aa7ad4` — #192 knowledge stamp; Wave 2 **#193** open) — superseded above
 
 - **`origin/main` tip**: `4aa7ad4` (#192 knowledge stamp after #191). App merge prior: `fc1d7a4` (#191 Wave 1 Blade DS). Prod app still **`abeb6fc`** (#188) until a deploy that includes #191+.
 - **🚧 Wave 2 PR #193 open**: School Details `editdetail` Blade + `Edit.vue` DS restyle — https://github.com/KlassApp-Foundation/KlassApp/pull/193 — branch `feature/manual-ui-wave2-schooldetails` @ `47550a3` (worktree `/Users/mac/projects/KlassApp-manual-ui-wave2`). Screenshots in `docs/wave2-screenshots/`. Address/Maps portal left on `tw-form-*` by design. **Do not merge until visual confirm.**
@@ -707,13 +715,22 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-09: #193 MERGED — Wave 2 School Details editdetail DS
+- **Work done**: Squash-merged #193 to `origin/main`. School Details live `editdetail` Blade + Vue DS restyle + screenshots + Wave 2 feature test included in tip.
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/193
+- **Merge commit**: `ad16e5576034ded79498c1b194d4126890d93709`
+- **Merged at**: 2026-08-09 14:44:42 UTC
+- **Status**: ✅ MERGED (not deployed to prod in this step)
+
 ### 2026-08-09: Manual UI redesign Wave 2 — School Details editdetail DS (PR open)
 - **Work done**: Restyled live School Details edit UI (`GET /admin/schooldetails/editdetail/{id}` → `edit.blade.php` + Vue `Edit.vue`) to Wave 1 DS tokens (`ds-page-head`, `x-card`, `ds-form-*`, `ds-btn`). Google Maps + address portal left on legacy `tw-form-*`. Built Vite assets into `public/build`. Screenshots captured under `docs/wave2-screenshots/`.
 - **Files modified**: `resources/views/admin/schooldetails/edit.blade.php`, `resources/assets/js/components/schooldetail/Edit.vue`, `public/build/*`, `tests/Feature/Onboarding/ManualUiWave2SchoolDetailsDsTest.php` (new), `docs/wave2-screenshots/*`, `knowledge.md`
 - **Key decisions**: Confirmed live edit route is `editdetail` (not JSON `edit/{id}`). Country/EMIS/UNEB live in Vue — restyled via `ds-form-*` class tokens (Blade `x-form-group` cannot wrap Vue). Address/Maps portal out of scope.
 - **Tests**: `php artisan test --compact tests/Feature/Onboarding/ManualUiWave2SchoolDetailsDsTest.php tests/Feature/Admin/SchoolDetailsCountryEmisUnebTest.php tests/Feature/Onboarding/ManualOnboardingParityTest.php` → Wave2 DS **2 passed**; Country/EMIS + parity suite previously **15 passed**.
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave2` on `feature/manual-ui-wave2-schooldetails` (from `origin/main` @ `4aa7ad4`)
-- **Status**: 🚧 PR opening (do not merge until visual confirm)
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/193
+- **Status**: ✅ MERGED — squash `ad16e5576034ded79498c1b194d4126890d93709` @ 2026-08-09 14:44:42 UTC
+- **Merge commit**: `ad16e5576034ded79498c1b194d4126890d93709`
 - **Edge cases flagged**: EMIS/UNEB fields are conditional on Uganda / UNEB curriculum — screenshots on school 12 may hide them until country/curriculum set.
 
 ### 2026-08-09: #191 MERGED — Wave 1 Blade DS restyle
