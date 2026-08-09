@@ -242,7 +242,7 @@
 
 ## Current Status: August 9, 2026 (`origin/main` tip `fc6b451` — #194; Wave 3 **#195** + empty-state follow-up open)
 
-- **🚧 Empty-state / plan-to-profile PR open** (stacked on Wave 3): remove plan card from dashboard; pre-onboarding KPI placeholder; plan info line on `/admin/editprofile` (allowlisted in `MustBePrivilege`) — branch `feature/dashboard-empty-state-plan-to-profile` (worktree `/Users/mac/projects/KlassApp-manual-ui-wave3`). Screenshots in `docs/dashboard-empty-state-screenshots/`.
+- **🚧 Empty-state / plan-to-profile PR #196 open** (stacked on Wave 3): remove plan card from dashboard; pre-onboarding KPI placeholder; plan info line on `/admin/editprofile` (allowlisted in `MustBePrivilege`) — https://github.com/KlassApp-Foundation/KlassApp/pull/196 — branch `feature/dashboard-empty-state-plan-to-profile` @ `dc07ced` (worktree `/Users/mac/projects/KlassApp-manual-ui-wave3`). Screenshots in `docs/dashboard-empty-state-screenshots/`.
 - **🚧 Wave 3 PR #195 open**: Manual UI redesign — consolidated dashboard setup banner, maximized Toshi wiring (existing modal layout), manual onboarding wizard shell — https://github.com/KlassApp-Foundation/KlassApp/pull/195 — branch `feature/manual-ui-wave3-wizard` @ `8868413`. Screenshots in `docs/wave3-screenshots/`.
 - **`origin/main` tip**: `fc6b451` (#194 knowledge stamp after #193). App merge prior: `ad16e55` (#193 Wave 2). Prod still **`abeb6fc`** (#188) until deploy includes #191+.
 - **✅ Merged #191–#194**: Wave 1 Blade DS, Wave 2 School Details DS, knowledge stamps.
@@ -730,8 +730,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: Plan never on dashboard (even plan-only incomplete). Profile is the plan home. KPI placeholder intentionally empty content.
 - **Tests**: `DashboardEmptyStatePlanToProfileTest` (5) + `ManualUiWave3BannerTest` — passing.
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave3` on `feature/dashboard-empty-state-plan-to-profile` (from Wave 3 tip `8868413`)
-- **PR**: opening (stacked on #195 / `feature/manual-ui-wave3-wizard`)
-- **Status**: 🚧 PR opening
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/196 (`dc07ced`, base `feature/manual-ui-wave3-wizard` / #195)
+- **Status**: 🚧 PR open — awaiting visual confirm
 - **Edge cases flagged**: Without `editprofile` allowlist, pre-AY `MustBePrivilege` redirected profile → dashboard (plan unreachable).
 
 ### 2026-08-09: Manual UI redesign Wave 3 — banner + maximized Toshi + wizard shell (PR opening)
