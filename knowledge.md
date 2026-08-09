@@ -240,18 +240,14 @@
 
 ---
 
-## Current Status: August 10, 2026 (`feature/wizard-bulk-teachers-students` — #207 bulk upload PR open)
+## Current Status: August 10, 2026 (`origin/main` tip `9166769` — #206 + #207 MERGED)
 
-- **🚧 PR open**: #207 https://github.com/KlassApp-Foundation/KlassApp/pull/207 — Manual wizard Teachers/Students bulk parity (upload + paste + one-at-a-time) + shared `OnboardingNameListExtractor`; students checklist step; optional skip. Stacked on #206 review branch.
-- **`origin/main` tip**: `acaafa2`. Prod still **`abeb6fc`** (#188) — **no deploy yet**.
-- **Open**: #206 review/preview; #205 AY datepicker.
-- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
-
-## Current Status: August 10, 2026 (`feature/wizard-review-preview` — #206 review/preview PR open)
-
-- **🚧 PR open**: #206 https://github.com/KlassApp-Foundation/KlassApp/pull/206 — Manual wizard **review/preview** after plan selection; Edit/return; Create School. Branch `feature/wizard-review-preview` tip `2e2986f` off `origin/main` @ `acaafa2`.
-- **`origin/main` tip**: `acaafa2` (includes #203/#204). Prod still **`abeb6fc`** (#188) — **no deploy yet**.
-- **Related open**: #205 AY datepicker (independent).
+- **✅ Merged #206**: Wizard review/preview final confirmation + Livewire `currentStep` memo fix (`77289f1`) — merge `79908b27d6351bc7b28d4fe7d793ae542dc4cf33` @ **2026-08-09 23:23:40 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/206
+- **✅ Merged #207**: Wizard Teachers/Students bulk upload parity (shared `OnboardingNameListExtractor`, optional skip) — merge `9166769bdae87759ac762e3fc9f11d079b6c4757` @ **2026-08-09 23:23:55 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/207
+- **Browser verify (#206 tip)**: Edit from review → Save & return → review remorphs cleanly in ~211ms (`CLEAN_MORPH=yes`); no progress-dot / 12s fallback.
+- **`origin/main` tip**: `9166769`. Prod still **`abeb6fc`** (#188) — **no deploy yet**.
+- **Open**: #205 AY datepicker (independent).
+- **Later (not blocking)**: Toshi teacher/student file-picker `accept=` narrower than backend parser (often missing `.pdf`/`.xls`) — Toshi-side inconsistency.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
 
 ## Current Status: August 9, 2026 (`origin/main` tip `b199802` — #203 wizard/Toshi sync MERGED)
@@ -761,19 +757,26 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-10: #206 + #207 MERGED — review/preview + bulk teachers/students
+- **Work done**: Confirmed clean Livewire morph after Edit→Save on review (`CLEAN_MORPH=yes`, ~211ms, no progress-dot/12s fallback). Root cause: legacy `getCurrentStepProperty()` request memo — `next()` read `$this->currentStep` before changing `stepIndex`, so HTML stayed on the edit step. Fixed with `setStepIndex()` + `unset($this->currentStep)` and reading `$this->steps[$this->stepIndex]` in `next()`. Merged #206 then #207 (rebased onto morph fix). Stamped Current Status.
+- **Files modified**: `ManualOnboardingWizard.php`, `ManualUiWave3WizardTest.php`, `knowledge.md`
+- **Key decisions**: Fix the computed memo (not extend timeout / rely on progress-dot). PHPUnit now asserts review HTML after `next()` alone (no `goToStep` mask).
+- **Status**: ✅ MERGED — #206 `79908b27d6351bc7b28d4fe7d793ae542dc4cf33` then #207 `9166769bdae87759ac762e3fc9f11d079b6c4757` @ 2026-08-09 23:23 UTC; morph fix tip `77289f1`
+- **Edge cases flagged (later)**: Toshi teacher/student `<input accept>` narrower than `OnboardingNameListExtractor` (`.pdf`/`.xls` server-ok, picker often omits) — unrelated to wizard.
+
 ### 2026-08-10: Wizard Teachers/Students bulk upload parity
 - **Work done**: Extracted Toshi `extractNamesFromFile` / `extractTeacherLinksFromFile` / `parseNameList` / `extractColumnFromFile` into `OnboardingNameListExtractor`. Wired AgentToshi thin wrappers. Added Students to `OnboardingStepsService` (after Teachers); marked teachers+students optional via `OPTIONAL_STEPS` + `hasBlockingIncompleteSteps`. Manual wizard: WithFileUploads, running lists, paste, template downloads, skip; persist N teachers/Teacherlinks and students via `StudentIdGeneratorService::nextForStudent`. Review summary includes students (depends on #206). Screenshots in `docs/wizard-bulk-upload/`.
 - **Files modified**: `OnboardingNameListExtractor.php`, `AgentToshi.php`, `OnboardingStepsService.php`, `ManualOnboardingWizard.php`, wizard Blade/CSS, tests, `docs/wizard-bulk-upload/*`, `knowledge.md`
 - **Key decisions**: Stack on #206 so preview shows student lists; optional steps don't block finish (Toshi parity); no CSV twin templates (XLSX templates reused).
-- **Status**: 🚧 PR open — #207 https://github.com/KlassApp-Foundation/KlassApp/pull/207 · tip `c4fd378` (base #206)
-- **Edge cases flagged**: Merge after #206 or retarget base to main and cherry-pick review student row; teacher template Subjects/Classes columns are informational for wizard (links use first class/subject like prior single-add).
+- **Status**: ✅ MERGED — #207 https://github.com/KlassApp-Foundation/KlassApp/pull/207 · merge `9166769bdae87759ac762e3fc9f11d079b6c4757`
+- **Edge cases flagged**: Teacher template Subjects/Classes columns are informational for wizard (links use first class/subject like prior single-add).
 
 ### 2026-08-10: Wizard review/preview final confirmation (after plan)
 - **Work done**: Added wizard-only synthetic `review` step after `plan_selection` (not in `OnboardingStepsService` checklist — avoids trapping Toshi in Completing Setup). Review card mirrors Toshi review-card structure with Wave DS styling; each section has Edit → `editSection` → Save & return without wiping later steps; Create School → `confirmReview` finishes + `manual-onboarding-finished`. Tests cover accurate preview, edit-return preservation, and final create. Screenshots in `docs/wizard-review-preview/`.
 - **Files modified**: `ManualOnboardingWizard.php`, `manual-onboarding-wizard.blade.php`, `manual-wizard-step-fields.blade.php`, `public/css/dashboard-refresh.css`, `ManualUiWave3WizardTest.php`, `docs/wizard-review-preview/*`, `knowledge.md`
 - **Key decisions**: Ordering is plan → review → finish; review is wizard-only (not shared checklist); school-level fields update in place on edit; entity creates still early-return if already present (edit hydrates for display).
-- **Status**: 🚧 PR open — #206 https://github.com/KlassApp-Foundation/KlassApp/pull/206 · tip `2e2986f`
-- **Edge cases flagged**: Livewire browser morph can lag after edit-return (tests use `goToStep` re-enter; wire:key on card added). Subject names display uppercase via model accessor.
+- **Status**: ✅ MERGED — #206 https://github.com/KlassApp-Foundation/KlassApp/pull/206 · merge `79908b27d6351bc7b28d4fe7d793ae542dc4cf33` (includes morph fix `77289f1`)
+- **Edge cases flagged**: Subject names display uppercase via model accessor. (Morph hang resolved — see merge stamp above.)
 
 ### 2026-08-09: Fix wizard/Toshi desync + restore visible plan step
 - **Work done**: Hide Toshi entirely on `/admin/onboarding/wizard` (`toshi-manual-wizard` body class). Reconcile AgentToshi "Completing Setup" / 1/18 against `OnboardingStepsService` on mount + `manual-onboarding-finished` event so stale incomplete UI clears after manual onboarding. Restore plan selection as a real last wizard step (plan cards, Freemium default, no payment); stop silent Freemium assign on every wizard `next()` and on dashboard load. Re-verified Previous-from-Classes — not a product bug (automation artifact).
