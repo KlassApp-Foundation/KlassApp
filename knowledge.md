@@ -747,6 +747,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-10: Wizard academic-year DS date picker (UI-only)
+- **Work done**: Replaced bare academic-year date fields with Wave DS date-picker chrome around native `<input type="date">` (no new npm dep — Flatpickr not in stack; native dates already used app-wide). Alpine `showPicker()` via Livewire-bundled Alpine. Same `academicYearStart` / `academicYearEnd` + `after:academicYearStart` validation.
+- **Files modified**: `resources/views/components/ds-date-picker.blade.php` (new), `manual-wizard-step-fields.blade.php`, `public/css/dashboard-refresh.css`, `WizardAcademicYearDatePickerTest.php`, screenshots in `docs/wizard-ay-datepicker/`
+- **Key decisions**: Prefer native date input + DS chrome over adding Flatpickr; keep field names/validation unchanged.
+- **Status**: 🚧 PR opening
+- **Edge cases flagged**: Browser calendar popup chrome is OS/UA-native; DS styles the field affordance, not the OS picker sheet.
+
 ### 2026-08-09: Fix wizard/Toshi desync + restore visible plan step
 - **Work done**: Hide Toshi entirely on `/admin/onboarding/wizard` (`toshi-manual-wizard` body class). Reconcile AgentToshi "Completing Setup" / 1/18 against `OnboardingStepsService` on mount + `manual-onboarding-finished` event so stale incomplete UI clears after manual onboarding. Restore plan selection as a real last wizard step (plan cards, Freemium default, no payment); stop silent Freemium assign on every wizard `next()` and on dashboard load. Re-verified Previous-from-Classes — not a product bug (automation artifact).
 - **Files modified**: `ManualOnboardingWizard.php`, `AgentToshi.php`, `DashboardController.php`, `FreeTierPlanService.php` (docs), wizard Blade/CSS/partials, `WizardToshiSyncPlanStepTest.php`, `ManualUiWave3WizardTest.php`, screenshots under `docs/wizard-toshi-sync-screenshots/`
