@@ -12,15 +12,20 @@ use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
+use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
+use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingStepsService;
+use App\Services\StudentIdGeneratorService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 /**
  * Wave 3 manual onboarding wizard shell.
@@ -29,6 +34,8 @@ use Livewire\Component;
  */
 class ManualOnboardingWizard extends Component
 {
+    use WithFileUploads;
+
     public int $stepIndex = 0;
 
     public bool $finished = false;
@@ -79,6 +86,32 @@ class ManualOnboardingWizard extends Component
 
     public string $teacherPhone = '';
 
+    /** @var list<array{name: string, email: string, phone: string}> */
+    public array $teacherDrafts = [];
+
+    public string $teacherPaste = '';
+
+    /** @var mixed */
+    public $teacherUpload = null;
+
+    public string $studentName = '';
+
+    public string $studentClass = '';
+
+    public string $studentStream = '';
+
+    public string $studentParent = '';
+
+    public string $studentParentPhone = '';
+
+    /** @var list<array{name: string, class: string, stream: string, parent: string, parent_phone: string}> */
+    public array $studentDrafts = [];
+
+    public string $studentPaste = '';
+
+    /** @var mixed */
+    public $studentUpload = null;
+
     public string $termName = 'Term 1';
 
     public string $termStartsOn = '';
@@ -119,10 +152,12 @@ class ManualOnboardingWizard extends Component
             }
         }
 
-        // Checklist complete → land on the synthetic review screen (do not auto-finish).
-        if (! OnboardingStepsService::hasIncompleteSteps($school->fresh(), Auth::id())) {
+        // Blocking checklist complete → land on the synthetic review screen (do not auto-finish).
+        // Teachers/students are optional and do not block review.
+        if (! OnboardingStepsService::hasBlockingIncompleteSteps($school->fresh(), Auth::id())) {
             $this->completedDuringSession = collect($this->steps)
                 ->where('key', '!=', 'review')
+                ->where('is_complete', true)
                 ->pluck('key')
                 ->all();
             $this->setStepIndex($this->reviewStepIndex());
@@ -143,6 +178,233 @@ class ManualOnboardingWizard extends Component
 
         $this->selectedPlanId = $planId;
         $this->errorMessage = '';
+    }
+
+    public function addTeacherDraft(): void
+    {
+        $name = trim($this->teacherName);
+        if ($name === '') {
+            $this->errorMessage = 'Enter a teacher name.';
+
+            return;
+        }
+
+        $email = trim($this->teacherEmail);
+        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->errorMessage = 'Enter a valid teacher email.';
+
+            return;
+        }
+
+        $this->teacherDrafts[] = [
+            'name' => $name,
+            'email' => $email,
+            'phone' => trim($this->teacherPhone),
+        ];
+        $this->teacherName = '';
+        $this->teacherPhone = '';
+        $this->teacherEmail = 'teacher.'.Str::lower(Str::random(6)).'@'.($this->school()->slug ?: 'school').'.test';
+        $this->errorMessage = '';
+    }
+
+    public function removeTeacherDraft(int $index): void
+    {
+        if (! isset($this->teacherDrafts[$index])) {
+            return;
+        }
+        unset($this->teacherDrafts[$index]);
+        $this->teacherDrafts = array_values($this->teacherDrafts);
+    }
+
+    public function applyTeacherPaste(): void
+    {
+        $names = app(OnboardingNameListExtractor::class)->parseNameList($this->teacherPaste);
+        foreach ($names as $name) {
+            $this->teacherDrafts[] = [
+                'name' => $name,
+                'email' => 'teacher.'.Str::lower(Str::random(6)).'@'.($this->school()->slug ?: 'school').'.test',
+                'phone' => '',
+            ];
+        }
+        $this->teacherPaste = '';
+        $this->errorMessage = $names === [] ? 'Could not find any names in the paste list.' : '';
+    }
+
+    public function updatedTeacherUpload(): void
+    {
+        $this->ingestUpload('teacher');
+    }
+
+    public function addStudentDraft(): void
+    {
+        $name = trim($this->studentName);
+        if ($name === '') {
+            $this->errorMessage = 'Enter a student name.';
+
+            return;
+        }
+
+        $this->studentDrafts[] = [
+            'name' => $name,
+            'class' => trim($this->studentClass),
+            'stream' => trim($this->studentStream),
+            'parent' => trim($this->studentParent),
+            'parent_phone' => trim($this->studentParentPhone),
+        ];
+        $this->studentName = '';
+        $this->studentStream = '';
+        $this->studentParent = '';
+        $this->studentParentPhone = '';
+        $this->errorMessage = '';
+    }
+
+    public function removeStudentDraft(int $index): void
+    {
+        if (! isset($this->studentDrafts[$index])) {
+            return;
+        }
+        unset($this->studentDrafts[$index]);
+        $this->studentDrafts = array_values($this->studentDrafts);
+    }
+
+    public function applyStudentPaste(): void
+    {
+        $names = app(OnboardingNameListExtractor::class)->parseNameList($this->studentPaste);
+        foreach ($names as $name) {
+            $this->studentDrafts[] = [
+                'name' => $name,
+                'class' => $this->studentClass ?: $this->className,
+                'stream' => '',
+                'parent' => '',
+                'parent_phone' => '',
+            ];
+        }
+        $this->studentPaste = '';
+        $this->errorMessage = $names === [] ? 'Could not find any names in the paste list.' : '';
+    }
+
+    public function updatedStudentUpload(): void
+    {
+        $this->ingestUpload('student');
+    }
+
+    /**
+     * Skip an optional step (teachers / students) without creating records.
+     */
+    public function skipOptionalStep(): void
+    {
+        $key = $this->currentKey();
+        if (! in_array($key, OnboardingStepsService::OPTIONAL_STEPS, true)) {
+            return;
+        }
+
+        $this->errorMessage = '';
+        if (! in_array($key, $this->completedDuringSession, true)) {
+            $this->completedDuringSession[] = $key;
+        }
+
+        if ($this->returnToStepIndex !== null || $this->returnToStepKey !== null) {
+            $this->returnToReviewAfterEdit();
+
+            return;
+        }
+
+        $this->refreshSteps();
+        if (! OnboardingStepsService::hasBlockingIncompleteSteps($this->school()->fresh(), Auth::id())) {
+            $this->setStepIndex($this->reviewStepIndex());
+            $this->buildReviewSummary();
+
+            return;
+        }
+
+        $this->advanceToNextIncompleteOrReview($key);
+    }
+
+    private function ingestUpload(string $kind): void
+    {
+        $file = $kind === 'teacher' ? $this->teacherUpload : $this->studentUpload;
+        if (! $file) {
+            return;
+        }
+
+        try {
+            $this->validate([
+                ($kind === 'teacher' ? 'teacherUpload' : 'studentUpload') => 'file|max:10240',
+            ]);
+        } catch (ValidationException $e) {
+            $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Upload failed.';
+
+            return;
+        }
+
+        $ext = strtolower($file->getClientOriginalExtension() ?: '');
+        if (! in_array($ext, OnboardingNameListExtractor::ACCEPTED_MIMES, true)) {
+            $this->errorMessage = 'Supported files: CSV, XLSX, TXT, DOCX, PDF.';
+
+            return;
+        }
+
+        $rows = app(OnboardingNameListExtractor::class)->extractNamesFromFile($file->getRealPath(), $ext);
+        if ($rows === []) {
+            $this->errorMessage = 'No names found in that file.';
+
+            return;
+        }
+
+        if ($kind === 'teacher') {
+            foreach ($rows as $row) {
+                $email = trim((string) ($row['email'] ?? ''));
+                if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $email = 'teacher.'.Str::lower(Str::random(6)).'@'.($this->school()->slug ?: 'school').'.test';
+                }
+                $this->teacherDrafts[] = [
+                    'name' => $row['name'],
+                    'email' => $email,
+                    'phone' => (string) ($row['phone'] ?? ''),
+                ];
+            }
+            $this->teacherUpload = null;
+        } else {
+            foreach ($rows as $row) {
+                $this->studentDrafts[] = [
+                    'name' => $row['name'],
+                    'class' => (string) ($row['class'] ?? ''),
+                    'stream' => (string) ($row['stream'] ?? ''),
+                    'parent' => (string) ($row['parent'] ?? ''),
+                    'parent_phone' => (string) ($row['parent_phone'] ?? ''),
+                ];
+            }
+            $this->studentUpload = null;
+        }
+
+        $this->errorMessage = '';
+    }
+
+    private function advanceToNextIncompleteOrReview(string $fromKey): void
+    {
+        $keys = array_column($this->steps, 'key');
+        $currentIndex = array_search($fromKey, $keys, true);
+        $start = $currentIndex === false ? 0 : ((int) $currentIndex + 1);
+
+        for ($i = $start; $i < count($this->steps); $i++) {
+            if (($this->steps[$i]['key'] ?? '') === 'review') {
+                continue;
+            }
+            if (! $this->steps[$i]['is_complete'] && ! in_array($this->steps[$i]['key'], OnboardingStepsService::OPTIONAL_STEPS, true)) {
+                $this->setStepIndex($i);
+
+                return;
+            }
+            // Still visit incomplete optional steps in sequence when advancing normally
+            if (! $this->steps[$i]['is_complete']) {
+                $this->setStepIndex($i);
+
+                return;
+            }
+        }
+
+        $this->setStepIndex($this->reviewStepIndex());
+        $this->buildReviewSummary();
     }
 
     public function getCurrentStepProperty(): ?array
@@ -182,6 +444,14 @@ class ManualOnboardingWizard extends Component
                 'title' => 'Invite more teachers',
                 'body' => 'Add the rest of your teaching staff so class assignments stay accurate.',
                 'href' => url('/admin/teacher/add'),
+            ];
+        }
+
+        if (in_array('students', $done, true) || OnboardingStepsService::countActiveStudents($school->id) > 0) {
+            $suggestions[] = [
+                'title' => 'Add more students',
+                'body' => 'Keep enrollment current — bulk upload more learners anytime.',
+                'href' => url('/admin/student/add'),
             ];
         }
 
@@ -271,6 +541,18 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
+        // Optional steps with an empty draft list = skip (parity with Toshi).
+        if (($step['key'] ?? '') === 'teachers' && $this->teacherDrafts === [] && trim($this->teacherName) === '') {
+            $this->skipOptionalStep();
+
+            return;
+        }
+        if (($step['key'] ?? '') === 'students' && $this->studentDrafts === [] && trim($this->studentName) === '') {
+            $this->skipOptionalStep();
+
+            return;
+        }
+
         try {
             $this->persistCurrentStep($step['key']);
         } catch (ValidationException $e) {
@@ -297,7 +579,7 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        if (! OnboardingStepsService::hasIncompleteSteps($this->school()->fresh(), Auth::id())) {
+        if (! OnboardingStepsService::hasBlockingIncompleteSteps($this->school()->fresh(), Auth::id())) {
             $this->setStepIndex($this->reviewStepIndex());
             $this->buildReviewSummary();
 
@@ -377,7 +659,7 @@ class ManualOnboardingWizard extends Component
         $this->errorMessage = '';
         $this->refreshSteps();
 
-        if (OnboardingStepsService::hasIncompleteSteps($this->school()->fresh(), Auth::id())) {
+        if (OnboardingStepsService::hasBlockingIncompleteSteps($this->school()->fresh(), Auth::id())) {
             $this->errorMessage = 'Finish the remaining setup steps before creating your school.';
 
             return;
@@ -513,6 +795,18 @@ class ManualOnboardingWizard extends Component
             ->filter()
             ->unique()
             ->values();
+        $students = User::query()
+            ->where('school_id', $sid)
+            ->where('usergroup_id', 6)
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', '!=', 'exit');
+            })
+            ->orderBy('id')
+            ->limit(20)
+            ->pluck('name')
+            ->filter()
+            ->values();
+        $studentCount = OnboardingStepsService::countActiveStudents($sid);
         $terms = AcademicTerm::where('school_id', $sid)->get();
         $fees = FeesCategories::where('school_id', $sid)->get();
         $whatsapp = WhatsAppUser::where('user_id', Auth::id())->first();
@@ -552,6 +846,14 @@ class ManualOnboardingWizard extends Component
             ['key' => 'standards', 'label' => 'Classes', 'icon' => '🏷️', 'value' => $classNames->isEmpty() ? '—' : $classNames->implode(', ')],
             ['key' => 'subjects', 'label' => 'Subjects', 'icon' => '📖', 'value' => $subjects->isEmpty() ? '—' : $subjects->implode(', ')],
             ['key' => 'teachers', 'label' => 'Teachers', 'icon' => '👩‍🏫', 'value' => $teachers->isEmpty() ? '—' : $teachers->implode(', ')],
+            [
+                'key' => 'students',
+                'label' => 'Students',
+                'icon' => '🎒',
+                'value' => $studentCount === 0
+                    ? '—'
+                    : ($studentCount.' · '.$students->take(5)->implode(', ').($studentCount > 5 ? '…' : '')),
+            ],
             ['key' => 'terms', 'label' => 'Terms', 'icon' => '🗓️', 'value' => $terms->isEmpty() ? '—' : $terms->pluck('name')->implode(', ')],
             ['key' => 'fees', 'label' => 'Fees', 'icon' => '💰', 'value' => $feeValue],
             ['key' => 'whatsapp_verify', 'label' => 'WhatsApp', 'icon' => '📱', 'value' => $whatsapp?->phone ?: 'Not linked'],
@@ -658,7 +960,8 @@ class ManualOnboardingWizard extends Component
             'academic_year' => $this->saveAcademicYear($school),
             'standards' => $this->saveClass($school),
             'subjects' => $this->saveSubject($school),
-            'teachers' => $this->saveTeacher($school),
+            'teachers' => $this->saveTeachers($school),
+            'students' => $this->saveStudents($school),
             'terms' => $this->saveTerm($school),
             'fees' => $this->saveFee($school),
             'whatsapp_verify' => $this->saveWhatsApp($school),
@@ -803,20 +1106,18 @@ class ManualOnboardingWizard extends Component
         ]);
     }
 
-    private function saveTeacher(School $school): void
+    private function saveTeachers(School $school): void
     {
-        if (Teacherlink::where('school_id', $school->id)->exists()) {
+        // Flush a pending single-add form into the draft list.
+        if (trim($this->teacherName) !== '') {
+            $this->addTeacherDraft();
+            if ($this->errorMessage !== '') {
+                throw ValidationException::withMessages(['teacherName' => $this->errorMessage]);
+            }
+        }
+
+        if ($this->teacherDrafts === []) {
             return;
-        }
-
-        $name = trim($this->teacherName);
-        if ($name === '') {
-            throw ValidationException::withMessages(['teacherName' => 'Enter a teacher name.']);
-        }
-
-        $email = trim($this->teacherEmail);
-        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw ValidationException::withMessages(['teacherEmail' => 'Enter a valid teacher email.']);
         }
 
         $year = AcademicYear::where('school_id', $school->id)->first();
@@ -826,24 +1127,112 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['teacherName' => 'Add class and subject first.']);
         }
 
-        $teacher = User::create([
-            'school_id' => $school->id,
-            'usergroup_id' => 5,
-            'name' => $name,
-            'email' => $email,
-            'password' => bcrypt(Str::random(16)),
-            'status' => 'active',
-            'email_verified' => 1,
-            'mobile_no' => trim($this->teacherPhone) ?: null,
-        ]);
+        foreach ($this->teacherDrafts as $draft) {
+            $name = trim((string) ($draft['name'] ?? ''));
+            $email = trim((string) ($draft['email'] ?? ''));
+            if ($name === '' || $email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
 
-        Teacherlink::create([
-            'school_id' => $school->id,
-            'academic_year_id' => $year->id,
-            'standardLink_id' => $link->id,
-            'subject_id' => $subject->id,
-            'teacher_id' => $teacher->id,
-        ]);
+            if (User::where('school_id', $school->id)->where('email', $email)->exists()) {
+                $email = 'teacher.'.Str::lower(Str::random(6)).'@'.($school->slug ?: 'school').'.test';
+            }
+
+            $teacher = User::create([
+                'school_id' => $school->id,
+                'usergroup_id' => 5,
+                'name' => $name,
+                'email' => $email,
+                'password' => bcrypt(Str::random(16)),
+                'status' => 'active',
+                'email_verified' => 1,
+                'mobile_no' => trim((string) ($draft['phone'] ?? '')) ?: null,
+            ]);
+
+            Teacherlink::firstOrCreate([
+                'school_id' => $school->id,
+                'academic_year_id' => $year->id,
+                'standardLink_id' => $link->id,
+                'subject_id' => $subject->id,
+                'teacher_id' => $teacher->id,
+            ]);
+        }
+
+        $this->teacherDrafts = [];
+    }
+
+    private function saveStudents(School $school): void
+    {
+        if (trim($this->studentName) !== '') {
+            $this->addStudentDraft();
+            if ($this->errorMessage !== '') {
+                throw ValidationException::withMessages(['studentName' => $this->errorMessage]);
+            }
+        }
+
+        if ($this->studentDrafts === []) {
+            return;
+        }
+
+        $year = AcademicYear::where('school_id', $school->id)->first();
+        $links = StandardLink::with('section')->where('school_id', $school->id)->get();
+        $firstLink = $links->first();
+        if (! $year || ! $firstLink) {
+            throw ValidationException::withMessages(['studentName' => 'Add a class first.']);
+        }
+
+        foreach ($this->studentDrafts as $index => $draft) {
+            $name = trim((string) ($draft['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            $email = 'student.'.($index + 1).'.'.Str::lower(Str::random(4)).'@'.($school->slug ?: 'school').'.test';
+            $student = User::create([
+                'school_id' => $school->id,
+                'usergroup_id' => 6,
+                'name' => $name,
+                'email' => $email,
+                'password' => bcrypt(Str::random(16)),
+                'status' => 'active',
+                'email_verified' => 1,
+            ]);
+
+            Userprofile::create([
+                'school_id' => $school->id,
+                'user_id' => $student->id,
+                'usergroup_id' => 6,
+                'firstname' => $name,
+                'lastname' => '',
+                'status' => 'active',
+            ]);
+
+            $klassappId = StudentIdGeneratorService::nextForStudent($student);
+
+            $targetLink = $firstLink;
+            $studentClass = trim((string) ($draft['class'] ?? ''));
+            if ($studentClass !== '') {
+                $matched = $links->first(function ($link) use ($studentClass) {
+                    $sectionName = (string) ($link->section?->name ?? '');
+
+                    return strcasecmp($sectionName, $studentClass) === 0
+                        || str_contains(strtolower($sectionName), strtolower($studentClass));
+                });
+                if ($matched) {
+                    $targetLink = $matched;
+                }
+            }
+
+            StudentAcademic::create([
+                'school_id' => $school->id,
+                'academic_year_id' => $year->id,
+                'user_id' => $student->id,
+                'standardLink_id' => $targetLink->id,
+                'klassapp_student_id' => $klassappId,
+            ]);
+        }
+
+        $this->studentDrafts = [];
     }
 
     private function saveTerm(School $school): void
@@ -931,6 +1320,9 @@ class ManualOnboardingWizard extends Component
     private function savePlan(School $school): void
     {
         foreach (OnboardingStepsService::incompleteSteps($school->fresh(), Auth::id()) as $step) {
+            if (in_array($step['key'], OnboardingStepsService::OPTIONAL_STEPS, true)) {
+                continue;
+            }
             if ($step['key'] !== 'plan_selection') {
                 throw ValidationException::withMessages(['plan' => 'Finish the earlier setup steps before choosing a plan.']);
             }

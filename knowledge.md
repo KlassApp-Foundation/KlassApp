@@ -240,6 +240,13 @@
 
 ---
 
+## Current Status: August 10, 2026 (`feature/wizard-bulk-teachers-students` — #207 bulk upload PR open)
+
+- **🚧 PR open**: #207 https://github.com/KlassApp-Foundation/KlassApp/pull/207 — Manual wizard Teachers/Students bulk parity (upload + paste + one-at-a-time) + shared `OnboardingNameListExtractor`; students checklist step; optional skip. Stacked on #206 review branch.
+- **`origin/main` tip**: `acaafa2`. Prod still **`abeb6fc`** (#188) — **no deploy yet**.
+- **Open**: #206 review/preview; #205 AY datepicker.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
+
 ## Current Status: August 10, 2026 (`feature/wizard-review-preview` — #206 review/preview PR open)
 
 - **🚧 PR open**: #206 https://github.com/KlassApp-Foundation/KlassApp/pull/206 — Manual wizard **review/preview** after plan selection; Edit/return; Create School. Branch `feature/wizard-review-preview` tip `2e2986f` off `origin/main` @ `acaafa2`.
@@ -753,6 +760,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-10: Wizard Teachers/Students bulk upload parity
+- **Work done**: Extracted Toshi `extractNamesFromFile` / `extractTeacherLinksFromFile` / `parseNameList` / `extractColumnFromFile` into `OnboardingNameListExtractor`. Wired AgentToshi thin wrappers. Added Students to `OnboardingStepsService` (after Teachers); marked teachers+students optional via `OPTIONAL_STEPS` + `hasBlockingIncompleteSteps`. Manual wizard: WithFileUploads, running lists, paste, template downloads, skip; persist N teachers/Teacherlinks and students via `StudentIdGeneratorService::nextForStudent`. Review summary includes students (depends on #206). Screenshots in `docs/wizard-bulk-upload/`.
+- **Files modified**: `OnboardingNameListExtractor.php`, `AgentToshi.php`, `OnboardingStepsService.php`, `ManualOnboardingWizard.php`, wizard Blade/CSS, tests, `docs/wizard-bulk-upload/*`, `knowledge.md`
+- **Key decisions**: Stack on #206 so preview shows student lists; optional steps don't block finish (Toshi parity); no CSV twin templates (XLSX templates reused).
+- **Status**: 🚧 PR open — #207 https://github.com/KlassApp-Foundation/KlassApp/pull/207 · tip `c4fd378` (base #206)
+- **Edge cases flagged**: Merge after #206 or retarget base to main and cherry-pick review student row; teacher template Subjects/Classes columns are informational for wizard (links use first class/subject like prior single-add).
 
 ### 2026-08-10: Wizard review/preview final confirmation (after plan)
 - **Work done**: Added wizard-only synthetic `review` step after `plan_selection` (not in `OnboardingStepsService` checklist — avoids trapping Toshi in Completing Setup). Review card mirrors Toshi review-card structure with Wave DS styling; each section has Edit → `editSection` → Save & return without wiping later steps; Create School → `confirmReview` finishes + `manual-onboarding-finished`. Tests cover accurate preview, edit-return preservation, and final create. Screenshots in `docs/wizard-review-preview/`.

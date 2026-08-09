@@ -146,6 +146,7 @@ class ManualUiWave3WizardTest extends TestCase
             ->set('teacherName', 'Grace')
             ->set('teacherEmail', 'grace@wave3.sch.ug')
             ->call('next')
+            ->call('next') // students skip
             ->call('next') // terms
             ->call('next') // fees
             ->assertSee('WhatsApp verification')
@@ -153,10 +154,10 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next');
 
         $instance = $component->instance();
-        $this->assertSame(12, $instance->stepIndex);
-        $this->assertSame('plan_selection', $instance->steps[12]['key']);
+        $this->assertSame(13, $instance->stepIndex);
+        $this->assertSame('plan_selection', $instance->steps[13]['key']);
         // Livewire test HTML can lag one tick after stepIndex-only updates; re-enter step.
-        $component->call('goToStep', 12);
+        $component->call('goToStep', 13);
         $component
             ->assertSee('Plan selection')
             ->assertSeeHtml('data-testid="wizard-plan-cards"')
@@ -211,6 +212,7 @@ class ManualUiWave3WizardTest extends TestCase
             ->set('teacherName', 'Amina Teacher')
             ->set('teacherEmail', 'amina@wave3.sch.ug')
             ->call('next')
+            ->call('next') // students skip
             ->call('next') // term defaults
             ->call('next') // fee defaults
             ->set('whatsappPhone', '+256700333444')
@@ -262,6 +264,7 @@ class ManualUiWave3WizardTest extends TestCase
             ->set('teacherName', 'Helen Teacher')
             ->set('teacherEmail', 'helen@wave3.sch.ug')
             ->call('next')
+            ->call('next') // students skip
             ->call('next') // terms
             ->call('next') // fees
             ->set('whatsappPhone', '+256700555666')

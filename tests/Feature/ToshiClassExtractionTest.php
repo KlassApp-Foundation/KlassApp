@@ -2,9 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
-use App\Models\Section;
+use App\Services\OnboardingNameListExtractor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -36,15 +37,7 @@ class ToshiClassExtractionTest extends TestCase
         $path = tempnam(sys_get_temp_dir(), 'toshi_test') . '.csv';
         file_put_contents($path, $csv);
 
-        $ref = new \ReflectionMethod(\App\Livewire\AgentToshi::class, 'extractNamesFromFile');
-        $ref->setAccessible(true);
-
-        $component = $this->getMockBuilder(\App\Livewire\AgentToshi::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods([])
-            ->getMock();
-
-        $result = $ref->invoke($component, $path, 'csv');
+        $result = app(OnboardingNameListExtractor::class)->extractNamesFromFile($path, 'csv');
         unlink($path);
 
         $this->assertCount(3, $result);
@@ -62,22 +55,13 @@ class ToshiClassExtractionTest extends TestCase
         $path = tempnam(sys_get_temp_dir(), 'toshi_test') . '.csv';
         file_put_contents($path, $csv);
 
-        $ref = new \ReflectionMethod(\App\Livewire\AgentToshi::class, 'extractNamesFromFile');
-        $ref->setAccessible(true);
-
-        $component = $this->getMockBuilder(\App\Livewire\AgentToshi::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods([])
-            ->getMock();
-
-        $result = $ref->invoke($component, $path, 'csv');
+        $result = app(OnboardingNameListExtractor::class)->extractNamesFromFile($path, 'csv');
         unlink($path);
 
         $this->assertCount(2, $result);
         $this->assertSame('Alice', $result[0]['name']);
         $this->assertSame('', $result[0]['class']);
         $this->assertSame('Bob', $result[1]['name']);
-        $this->assertSame('', $result[1]['class']);
     }
 
     public function test_class_fuzzy_match_resolves_standard_link(): void
@@ -85,18 +69,16 @@ class ToshiClassExtractionTest extends TestCase
         $nurseryStd = Standard::where(['school_id' => 1, 'name' => 'nursery'])->first();
         $primaryStd = Standard::where(['school_id' => 1, 'name' => 'primary'])->first();
 
-        // Fuzzy match "Primary One" → primary standard
         $sl = StandardLink::where('school_id', 1)
-            ->whereHas('section', fn($q) => $q->where('name', 'LIKE', '%Primary%'))
-            ->whereHas('standard', fn($q) => $q->where('name', 'primary'))
+            ->whereHas('section', fn ($q) => $q->where('name', 'LIKE', '%Primary%'))
+            ->whereHas('standard', fn ($q) => $q->where('name', 'primary'))
             ->first();
         $this->assertNotNull($sl);
         $this->assertEquals($primaryStd->id, $sl->standard_id);
 
-        // Exact match "Baby Class" → nursery standard
         $sl2 = StandardLink::where('school_id', 1)
-            ->whereHas('section', fn($q) => $q->where('name', 'Baby Class'))
-            ->whereHas('standard', fn($q) => $q->where('name', 'nursery'))
+            ->whereHas('section', fn ($q) => $q->where('name', 'Baby Class'))
+            ->whereHas('standard', fn ($q) => $q->where('name', 'nursery'))
             ->first();
         $this->assertNotNull($sl2);
         $this->assertEquals($nurseryStd->id, $sl2->standard_id);

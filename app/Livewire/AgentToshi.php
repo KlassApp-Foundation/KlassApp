@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\CoAdminInviteMail;
 use App\Models\OnboardingSession;
+use App\Services\OnboardingNameListExtractor;
 use App\Services\StudentIdGeneratorService;
 use App\Services\ToshiActionService;
 
@@ -1795,9 +1796,13 @@ class AgentToshi extends Component
                     $this->actionData['teachers'] = $this->teacherList;
                     $this->showTeacherForm = false;
                     // Also try extracting teacher-subject-class links from the same file
-                    $links = $this->extractTeacherLinksFromFile($this->attachment->getRealPath(), $ext);
+                    $linksResult = $this->extractTeacherLinksFromFile($this->attachment->getRealPath(), $ext);
+                    $links = $linksResult['links'] ?? $linksResult;
                     if (count($links) > 0) {
                         $this->teacherLinks = $links;
+                        foreach (($linksResult['phones'] ?? []) as $teacherName => $phone) {
+                            $this->teacherPhones[$teacherName] = $phone;
+                        }
                     }
                 } else {
                     $this->studentList = array_values(array_unique($plainNames));
@@ -1806,10 +1811,10 @@ class AgentToshi extends Component
                     $this->actionData['students'] = array_map(fn($i, $r) => [
                         'name' => $r['name'],
                         'gender' => null,
-                        'class' => $r['class'],
-                        'stream' => '',
-                        'parent' => '',
-                        'parent_phone' => '',
+                        'class' => $r['class'] ?? '',
+                        'stream' => $r['stream'] ?? '',
+                        'parent' => $r['parent'] ?? '',
+                        'parent_phone' => $r['parent_phone'] ?? '',
                         'lin' => $linValues[$i] ?? '',
                     ], array_keys($nameRows), $nameRows);
                     $this->showStudentForm = false;
@@ -1906,319 +1911,43 @@ class AgentToshi extends Component
         $this->attachment = null;
     }
 
+    private function nameListExtractor(): OnboardingNameListExtractor
+    {
+        return app(OnboardingNameListExtractor::class);
+    }
+
     /**
-     * Extract names from a tabular file (CSV/TXT/XLSX/XLS).
-     * Returns an array of full names (first + last where available).
+     * @deprecated Prefer OnboardingNameListExtractor; kept as a thin Toshi wrapper.
      */
     private function extractNamesFromFile(string $path, string $ext): array
     {
-        $headers = [];
-        $dataRows = [];
-
-        if (in_array($ext, ['xlsx', 'xls'])) {
-            try {
-                $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($path);
-                $reader->setReadDataOnly(true);
-                $spreadsheet = $reader->load($path);
-                $allRows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
-                if (empty($allRows)) return [];
-
-                // Find the actual header row by looking for known column names
-                $headerRowIdx = 0;
-                $knownColumns = ['name', 'firstname', 'student_name', 'teacher_name', 'class', 'stream', 'subject', 'email', 'phone'];
-                foreach ($allRows as $ri => $row) {
-                    $rowLower = array_map('strtolower', array_map('trim', $row ?? []));
-                    $matchCount = 0;
-                    foreach ($knownColumns as $kc) {
-                        if (in_array($kc, $rowLower)) $matchCount++;
-                    }
-                    if ($matchCount >= 2) { $headerRowIdx = $ri; break; }
-                }
-
-                $headers = array_map('trim', $allRows[$headerRowIdx]);
-                $dataRows = array_slice($allRows, $headerRowIdx + 1);
-            } catch (\Exception $e) {
-                \Log::warning('XLSX parse failed: ' . $e->getMessage());
-                return [];
-            }
-        } elseif ($ext === 'pdf') {
-            try {
-                $parser = new \Smalot\PdfParser\Parser();
-                $pdf = $parser->parseFile($path);
-                $text = $pdf->getText();
-                return $this->parseNameList($text);
-            } catch (\Exception $e) {
-                \Log::warning('PDF parse failed: ' . $e->getMessage());
-                return [];
-            }
-        } elseif ($ext === 'docx') {
-            try {
-                $phpWord = \PhpOffice\PhpWord\IOFactory::load($path);
-                $text = '';
-                foreach ($phpWord->getSections() as $section) {
-                    foreach ($section->getElements() as $element) {
-                        if (method_exists($element, 'getText')) {
-                            $text .= $element->getText() . "\n";
-                        } elseif (method_exists($element, 'getElements')) {
-                            foreach ($element->getElements() as $child) {
-                                if (method_exists($child, 'getText')) {
-                                    $text .= $child->getText() . "\n";
-                                }
-                            }
-                        }
-                    }
-                }
-                return $this->parseNameList($text);
-            } catch (\Exception $e) {
-                \Log::warning('DOCX parse failed: ' . $e->getMessage());
-                return [];
-            }
-        } else {
-            $handle = fopen($path, 'r');
-            if (!$handle) return [];
-            $headerLine = fgetcsv($handle);
-            if ($headerLine === false) { fclose($handle); return []; }
-            $headers = array_map('trim', $headerLine);
-            while (($row = fgetcsv($handle)) !== false) {
-                $dataRows[] = $row;
-            }
-            fclose($handle);
-        }
-
-        // Spreadsheet/CSV path — try column-based extraction
-        if (empty($dataRows)) return [];
-
-        // Find the name column index (case-insensitive)
-        $nameIdx = null;
-        $lowerHeaders = array_map('strtolower', $headers);
-        foreach (['firstname', 'name', 'first_name', 'student_name', 'teacher_name', 'full_name'] as $col) {
-            $idx = array_search($col, $lowerHeaders);
-            if ($idx !== false) { $nameIdx = $idx; break; }
-        }
-
-        // Find lastname column index
-        $lastIdx = array_search('lastname', array_map('strtolower', $headers));
-        if ($lastIdx === false) {
-            $lastIdx = array_search('last_name', array_map('strtolower', $headers));
-        }
-
-        // Find class/section column index
-        $classIdx = null;
-        foreach (['class', 'section', 'grade', 'form', 'standard', 'class_name'] as $col) {
-            $idx = array_search($col, $lowerHeaders);
-            if ($idx !== false) { $classIdx = $idx; break; }
-        }
-
-        $names = [];
-        $prevColB = '';
-        foreach ($dataRows as $row) {
-            if (!is_array($row) || count($row) === 0) continue;
-            $row = array_map('trim', $row);
-
-            // Detect merged cell artifacts: skip rows where col A repeats prev row's col B
-            if ($prevColB !== '' && count($row) > 1 && $row[0] === $prevColB) {
-                $prevColB = $row[1] ?? '';
-                continue;
-            }
-
-            // Determine name value
-            if ($nameIdx !== null && !empty($row[$nameIdx] ?? '')) {
-                $name = $row[$nameIdx];
-            } elseif (count($row) > 0 && !empty($row[0])) {
-                $name = $row[0];
-            } elseif (count($row) > 1 && !empty($row[1])) {
-                $name = $row[1];
-            } else {
-                continue;
-            }
-
-            $prevColB = $row[1] ?? '';
-
-            // Skip labels
-            $upper = strtoupper($name);
-            if (in_array($upper, ['BOARDERS', 'DAY SCHOLAR', 'BOARDING', 'DAY', 'STAFF', 'TEACHERS', 'STUDENTS', 'CLASS', 'NAME', 'NAMES'])
-                || preg_match('/^\d+$/', $name)) continue;
-
-            // Try second column if first looks like a label
-            if ($nameIdx === null && count($row) > 1 && !empty($row[1]) && $row[0] !== $row[1]) {
-                $candidate = $row[1];
-                $upper2 = strtoupper($candidate);
-                if (!in_array($upper2, ['BOARDERS', 'DAY SCHOLAR', 'BOARDING', 'DAY'])) {
-                    $name = $candidate;
-                }
-            }
-
-            // Append lastname if available
-            if ($lastIdx !== false && !empty($row[$lastIdx] ?? '')) {
-                $name .= ' ' . $row[$lastIdx];
-            }
-
-            // Capture class value if available
-            $classVal = '';
-            if ($classIdx !== null && !empty($row[$classIdx] ?? '')) {
-                $classVal = $row[$classIdx];
-            }
-
-            $names[] = ['name' => $name, 'class' => $classVal];
-        }
-
-        return $names;
+        return $this->nameListExtractor()->extractNamesFromFile($path, $ext);
     }
 
     /**
-     * Extract a single optional column (e.g. LIN) from a spreadsheet/CSV.
-     * Returns an array of values indexed by row, or empty array if column not found.
+     * @deprecated Prefer OnboardingNameListExtractor; kept as a thin Toshi wrapper.
      */
     private function extractColumnFromFile(string $path, string $ext, array $aliases): array
     {
-        $headers = [];
-        $dataRows = [];
-
-        if (in_array($ext, ['xlsx', 'xls'])) {
-            try {
-                $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($path);
-                $reader->setReadDataOnly(true);
-                $spreadsheet = $reader->load($path);
-                $allRows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
-                if (empty($allRows)) return [];
-                $knownColumns = array_merge(['name', 'firstname', 'student_name'], $aliases);
-                $headerRowIdx = 0;
-                foreach ($allRows as $ri => $row) {
-                    $rowLower = array_map('strtolower', array_map('trim', $row ?? []));
-                    $matchCount = 0;
-                    foreach ($knownColumns as $kc) {
-                        if (in_array($kc, $rowLower)) $matchCount++;
-                    }
-                    if ($matchCount >= 2) { $headerRowIdx = $ri; break; }
-                }
-                $headers = array_map('trim', $allRows[$headerRowIdx]);
-                $dataRows = array_slice($allRows, $headerRowIdx + 1);
-            } catch (\Exception $e) {
-                \Log::warning('XLSX column extraction failed: ' . $e->getMessage());
-                return [];
-            }
-        } elseif ($ext === 'csv' || $ext === 'txt') {
-            $handle = fopen($path, 'r');
-            if (!$handle) return [];
-            $headerLine = fgetcsv($handle);
-            if ($headerLine === false) { fclose($handle); return []; }
-            $headers = array_map('trim', $headerLine);
-            while (($row = fgetcsv($handle)) !== false) {
-                $dataRows[] = $row;
-            }
-            fclose($handle);
-        } else {
-            return []; // PDF/DOCX cannot extract structured columns
-        }
-
-        if (empty($headers) || empty($dataRows)) return [];
-
-        // Find the column index by alias
-        $lowerHeaders = array_map('strtolower', $headers);
-        $colIdx = null;
-        foreach ($aliases as $alias) {
-            $idx = array_search($alias, $lowerHeaders);
-            if ($idx !== false) { $colIdx = $idx; break; }
-        }
-        if ($colIdx === null) return [];
-
-        // Extract values, skipping header-like rows
-        $values = [];
-        foreach ($dataRows as $row) {
-            if (!is_array($row) || count($row) <= $colIdx) {
-                $values[] = '';
-                continue;
-            }
-            $val = trim((string) ($row[$colIdx] ?? ''));
-            $upper = strtoupper($val);
-            if (in_array($upper, ['LIN', 'LEARNER ID', 'LEARNER IDENTIFICATION NUMBER', 'EMIS LIN', ''])) {
-                $values[] = '';
-                continue;
-            }
-            $values[] = $val;
-        }
-
-        return $values;
+        return $this->nameListExtractor()->extractColumnFromFile($path, $ext, $aliases);
     }
 
     /**
-     * Extract teacher-subject-class links from a spreadsheet (CSV/XLSX).
-     * Expects columns: Teacher, Subject, Class, Phone (optional).
+     * @return list<array{teacher: string, subject: string, class: string, phone: string}>|array{links: list, phones: array}
+     * @deprecated Prefer OnboardingNameListExtractor; kept as a thin Toshi wrapper.
      */
     private function extractTeacherLinksFromFile(string $path, string $ext): array
     {
-        $rows = [];
+        $classNames = collect($this->standards ?? [])->pluck('name')->filter()->values()->all();
+        $result = $this->nameListExtractor()->extractTeacherLinksFromFile(
+            $path,
+            $ext,
+            $this->teacherList ?? [],
+            $classNames
+        );
 
-        try {
-            if (in_array($ext, ['xlsx', 'xls'])) {
-                $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($path);
-                $reader->setReadDataOnly(true);
-                $spreadsheet = $reader->load($path);
-                $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
-            } elseif ($ext === 'csv' || $ext === 'txt') {
-                $handle = fopen($path, 'r');
-                while (($line = fgetcsv($handle)) !== false) {
-                    $rows[] = $line;
-                }
-                fclose($handle);
-            } else {
-                return [];
-            }
-        } catch (\Exception $e) {
-            \Log::warning('Teacher links file parse error: ' . $e->getMessage());
-            return [];
-        }
-
-        if (empty($rows)) return [];
-
-        // Find column indices from header row
-        $header = array_map('strtolower', array_map('trim', $rows[0]));
-        $colMap = ['teacher' => null, 'subject' => null, 'class' => null, 'phone' => null];
-        foreach ($header as $i => $h) {
-            if (str_contains($h, 'teacher') || str_contains($h, 'name')) $colMap['teacher'] = $i;
-            if (str_contains($h, 'subject')) $colMap['subject'] = $i;
-            if (str_contains($h, 'class') || str_contains($h, 'grade')) $colMap['class'] = $i;
-            if (str_contains($h, 'phone') || str_contains($h, 'mobile') || str_contains($h, 'tel')) $colMap['phone'] = $i;
-        }
-
-        // If no header match, assume column order: Teacher, Subject, Class, Phone
-        if ($colMap['teacher'] === null && count($rows[0]) >= 3) {
-            $colMap = ['teacher' => 0, 'subject' => 1, 'class' => 2, 'phone' => 3];
-        }
-
-        if ($colMap['teacher'] === null || $colMap['subject'] === null || $colMap['class'] === null) {
-            return [];
-        }
-
-        $parsed = [];
-        $dataRows = array_slice($rows, 1); // skip header
-
-        foreach ($dataRows as $row) {
-            $teacher = trim($row[$colMap['teacher']] ?? '');
-            $subject = trim($row[$colMap['subject']] ?? '');
-            $class = trim($row[$colMap['class']] ?? '');
-            $phone = $colMap['phone'] !== null ? trim($row[$colMap['phone']] ?? '') : '';
-
-            if ($teacher && $subject && $class) {
-                // Validate against existing teacher list and standards
-                $teacherExists = in_array($teacher, $this->teacherList);
-                $classExists = collect($this->standards)->pluck('name')->contains($class);
-
-                if ($teacherExists && $classExists) {
-                    $parsed[] = [
-                        'teacher' => $teacher,
-                        'subject' => $subject,
-                        'class'   => $class,
-                        'phone'   => $phone,
-                    ];
-                    if ($phone) {
-                        $this->teacherPhones[$teacher] = $phone;
-                    }
-                }
-            }
-        }
-
-        return $parsed;
+        // Back-compat: historical callers expected a flat list of links.
+        return $result;
     }
 
     public function render()
@@ -4592,16 +4321,9 @@ class AgentToshi extends Component
 
     private function parseNameList(string $text): array
     {
-        $lines = preg_split('/[\n,]+/', $text);
-        $names = [];
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (strlen($line) > 3 && !is_numeric($line)) {
-                $names[] = $line;
-            }
-        }
-        return array_slice(array_unique($names), 0, 50);
+        return $this->nameListExtractor()->parseNameList($text);
     }
+
 
     // ════════════════════════════════════════════════
     //  Step 9: Teacher-Class-Subject Linking
