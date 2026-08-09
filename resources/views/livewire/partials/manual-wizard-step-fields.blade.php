@@ -123,8 +123,40 @@
     </div>
 
 @elseif($stepKey === 'plan_selection')
-    <p class="text-sm text-gray-600" style="color:#64748B;">
-        When your content setup is complete, KlassApp assigns a free-tier plan automatically if one fits.
-        Click <strong>Finish</strong> to apply that milestone.
+    <p class="text-sm text-gray-600 mb-3" style="color:#64748B;">
+        Schools are free to start — pick a plan so capacity limits are clear. No payment is required now.
     </p>
+    <div class="manual-wizard-plan-grid" data-testid="wizard-plan-cards" role="radiogroup" aria-label="Plan selection">
+        @forelse(($plans ?? []) as $plan)
+            @php
+                $isSelected = (int) ($selectedPlanId ?? 0) === (int) $plan->id;
+                $isFreemium = strcasecmp((string) $plan->name, 'Freemium') === 0
+                    || strcasecmp((string) ($plan->display_name ?? ''), 'Freemium') === 0
+                    || (int) $plan->amount === 0;
+            @endphp
+            <button type="button"
+                    class="manual-wizard-plan-card {{ $isSelected ? 'is-selected' : '' }}"
+                    wire:click="selectPlan({{ $plan->id }})"
+                    role="radio"
+                    aria-checked="{{ $isSelected ? 'true' : 'false' }}"
+                    data-testid="wizard-plan-{{ $plan->id }}"
+                    data-plan-name="{{ $plan->name }}">
+                <span class="manual-wizard-plan-name">{{ $plan->display_name ?: ucfirst($plan->name) }}</span>
+                <span class="manual-wizard-plan-price">
+                    @if(!empty($plan->is_custom_pricing))
+                        Contact us
+                    @elseif((int) $plan->amount > 0)
+                        ${{ number_format((float) $plan->amount) }} / {{ $plan->cycle }} days
+                    @else
+                        Free
+                    @endif
+                </span>
+                @if($isFreemium)
+                    <span class="manual-wizard-plan-hint">Recommended to start</span>
+                @endif
+            </button>
+        @empty
+            <p class="text-sm text-red-600" role="alert">No plans are available yet. Contact support.</p>
+        @endforelse
+    </div>
 @endif

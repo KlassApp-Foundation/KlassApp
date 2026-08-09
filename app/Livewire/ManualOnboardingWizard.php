@@ -15,7 +15,6 @@ use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\WhatsAppUser;
-use App\Services\FreeTierPlanService;
 use App\Services\OnboardingStepsService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -80,6 +79,9 @@ class ManualOnboardingWizard extends Component
 
     public string $errorMessage = '';
 
+    /** Selected plan id for the visible plan_selection step (Freemium defaulted in mount). */
+    public ?int $selectedPlanId = null;
+
     public function mount(): void
     {
         $school = $this->school();
@@ -87,6 +89,7 @@ class ManualOnboardingWizard extends Component
 
         $this->refreshSteps();
         $this->hydrateFieldsFromSchool($school);
+        $this->defaultSelectedPlan();
 
         $this->academicYearStart = now()->startOfYear()->toDateString();
         $this->academicYearEnd = now()->endOfYear()->toDateString();
@@ -105,9 +108,22 @@ class ManualOnboardingWizard extends Component
         if ($this->steps !== [] && collect($this->steps)->every(fn ($s) => $s['is_complete'])) {
             $this->finished = true;
             $this->completedDuringSession = array_column($this->steps, 'key');
+            $this->notifyToshiOnboardingFinished();
         }
 
         unset($user);
+    }
+
+    public function selectPlan(int $planId): void
+    {
+        if (! Plan::query()->where('id', $planId)->where('is_active', 1)->exists()) {
+            $this->errorMessage = 'That plan is not available.';
+
+            return;
+        }
+
+        $this->selectedPlanId = $planId;
+        $this->errorMessage = '';
     }
 
     public function getCurrentStepProperty(): ?array
@@ -118,6 +134,16 @@ class ManualOnboardingWizard extends Component
     public function getStepCountProperty(): int
     {
         return count($this->steps);
+    }
+
+    /**
+     * Active plans for the visible plan_selection step.
+     *
+     * @return \Illuminate\Support\Collection<int, Plan>
+     */
+    public function getPlansProperty()
+    {
+        return Plan::query()->where('is_active', 1)->orderBy('order')->get();
     }
 
     /**
@@ -222,11 +248,13 @@ class ManualOnboardingWizard extends Component
             $this->completedDuringSession[] = $step['key'];
         }
 
-        app(FreeTierPlanService::class)->assignIfEligible($this->school()->fresh(), Auth::id());
+        // Do NOT auto-assign Freemium on every Next — plan_selection must remain a
+        // visible last step. Assignment happens only in savePlan() when the user confirms.
         $this->refreshSteps();
 
         if (! OnboardingStepsService::hasIncompleteSteps($this->school()->fresh(), Auth::id())) {
             $this->finished = true;
+            $this->notifyToshiOnboardingFinished();
 
             return;
         }
@@ -253,6 +281,7 @@ class ManualOnboardingWizard extends Component
         }
 
         $this->finished = true;
+        $this->notifyToshiOnboardingFinished();
     }
 
     public function goToStep(int $index): void
@@ -272,6 +301,39 @@ class ManualOnboardingWizard extends Component
             'countries' => Country::query()->orderBy('order')->orderBy('name')->get(['id', 'name']),
             'school' => $this->school(),
         ]);
+    }
+
+    /**
+     * Tell AgentToshi to leave "Completing Setup" and re-read OnboardingStepsService.
+     */
+    private function notifyToshiOnboardingFinished(): void
+    {
+        $this->dispatch('manual-onboarding-finished');
+    }
+
+    private function defaultSelectedPlan(): void
+    {
+        if ($this->selectedPlanId) {
+            return;
+        }
+
+        $freemium = Plan::query()
+            ->where('is_active', 1)
+            ->where(function ($q) {
+                $q->whereRaw('LOWER(name) = ?', ['freemium'])
+                    ->orWhereRaw('LOWER(display_name) = ?', ['freemium']);
+            })
+            ->orderBy('order')
+            ->first();
+
+        if ($freemium) {
+            $this->selectedPlanId = (int) $freemium->id;
+
+            return;
+        }
+
+        $first = Plan::query()->where('is_active', 1)->orderBy('order')->first();
+        $this->selectedPlanId = $first ? (int) $first->id : null;
     }
 
     private function school(): School
@@ -580,29 +642,27 @@ class ManualOnboardingWizard extends Component
 
     private function savePlan(School $school): void
     {
-        $assigned = app(FreeTierPlanService::class)->assignIfEligible($school->fresh(), Auth::id());
-        if ($assigned) {
-            return;
-        }
-
         if (OnboardingStepsService::isStepComplete('plan_selection', $school->fresh(), Auth::id())) {
             return;
         }
 
-        // Informational fallback: attach Freemium when eligible content is done
-        // but FreeTierPlanService declined (e.g. missing freemium row). Tests seed plans.
-        $plan = Plan::query()->where('is_active', 1)->orderBy('order')->first();
-        if (! $plan) {
-            throw ValidationException::withMessages(['plan' => 'No plans are available yet. Contact support.']);
-        }
-
-        // Only create when content onboarding is otherwise complete — mirrors FreeTier contract.
         foreach (OnboardingStepsService::incompleteSteps($school->fresh(), Auth::id()) as $step) {
             if ($step['key'] !== 'plan_selection') {
                 throw ValidationException::withMessages(['plan' => 'Finish the earlier setup steps before choosing a plan.']);
             }
         }
 
+        $this->defaultSelectedPlan();
+        if (! $this->selectedPlanId) {
+            throw ValidationException::withMessages(['plan' => 'Select a plan to continue.']);
+        }
+
+        $plan = Plan::query()->where('id', $this->selectedPlanId)->where('is_active', 1)->first();
+        if (! $plan) {
+            throw ValidationException::withMessages(['plan' => 'That plan is not available.']);
+        }
+
+        // Visible confirmation step — no payment gate. Persist the chosen plan.
         \App\Models\CurrentPlan::create([
             'school_id' => $school->id,
             'plan_id' => $plan->id,

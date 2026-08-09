@@ -59,7 +59,12 @@
             @endif
 
             <div class="manual-wizard-fields space-y-4" wire:key="step-{{ $step['key'] }}">
-                @include('livewire.partials.manual-wizard-step-fields', ['stepKey' => $step['key'], 'countries' => $countries])
+                @include('livewire.partials.manual-wizard-step-fields', [
+                    'stepKey' => $step['key'],
+                    'countries' => $countries,
+                    'plans' => $this->plans,
+                    'selectedPlanId' => $selectedPlanId,
+                ])
             </div>
 
             @if(!empty($step['route']) && !in_array($step['key'], ['school_name', 'curriculum', 'country', 'emis', 'uneb_center', 'academic_year', 'plan_selection'], true))
