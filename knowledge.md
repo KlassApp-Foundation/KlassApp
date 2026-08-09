@@ -240,10 +240,10 @@
 
 ---
 
-## Current Status: August 9, 2026 (`origin/main` tip `4aa7ad4` — #192 knowledge stamp; Wave 2 PR open)
+## Current Status: August 9, 2026 (`origin/main` tip `4aa7ad4` — #192 knowledge stamp; Wave 2 **#193** open)
 
 - **`origin/main` tip**: `4aa7ad4` (#192 knowledge stamp after #191). App merge prior: `fc1d7a4` (#191 Wave 1 Blade DS). Prod app still **`abeb6fc`** (#188) until a deploy that includes #191+.
-- **🚧 Wave 2 PR open**: School Details `editdetail` Blade + `Edit.vue` DS restyle — branch `feature/manual-ui-wave2-schooldetails` (worktree `/Users/mac/projects/KlassApp-manual-ui-wave2`). Screenshots in `docs/wave2-screenshots/`. Address/Maps portal left on `tw-form-*` by design.
+- **🚧 Wave 2 PR #193 open**: School Details `editdetail` Blade + `Edit.vue` DS restyle — https://github.com/KlassApp-Foundation/KlassApp/pull/193 — branch `feature/manual-ui-wave2-schooldetails` @ `47550a3` (worktree `/Users/mac/projects/KlassApp-manual-ui-wave2`). Screenshots in `docs/wave2-screenshots/`. Address/Maps portal left on `tw-form-*` by design. **Do not merge until visual confirm.**
 - **✅ Merged #191 / #192**: Wave 1 Blade DS + knowledge stamp.
 - **Open Design**: still deferred to Wave 3+. Vue Create surfaces ≈ Wave 4.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
