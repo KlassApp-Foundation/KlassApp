@@ -240,14 +240,12 @@
 
 ---
 
-## Current Status: August 9, 2026 (`feature/manual-ui-wave1-blade-ds` — Wave 1 Blade DS restyle PR open)
+## Current Status: August 9, 2026 (`origin/main` tip `fc1d7a4` — #191 Wave 1 Blade DS MERGED)
 
-- **🚧 PR open**: Manual UI redesign **Wave 1** — https://github.com/KlassApp-Foundation/KlassApp/pull/191 — restyle five pure-Blade create screens with existing DS primitives (`x-card`, `x-form-group`, `x-button`, `ds-page-head`). No Vue/JS/backend changes. Branch `feature/manual-ui-wave1-blade-ds` @ `5cf60b4` from `origin/main` @ `0eeb687`.
-- **`origin/main` tip** (pre-Wave-1): `0eeb687` — #190 tip refresh after #189. Prod app still **`abeb6fc`** (#188) unless redeployed later.
-- **✅ Merged #189 / #188**: Goose/OpenCode handoff + manual↔Toshi parity (unchanged).
-- **Wave 1 files**: `sections/create(+_form)`, `term/create-term`, `fees/create`, `standards/create` (header only), `academics/create` (header only; Vue `create-academic-year` untouched).
-- **Tests**: `ManualUiWave1BladeDsTest` + `ManualOnboardingParityTest` — **15 passed**.
-- **Open Design**: deferred to Wave 3+ (new visual directions). Wave 1 is pure DS reuse.
+- **✅ Merged #191**: Wave 1 Blade DS restyle — squash `fc1d7a4768cf5c5392235dbe10e37b59739a0ca6` @ **2026-08-09 13:58:24 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/191
+- **Tip before**: `0eeb687` (#190). Prod app still **`abeb6fc`** (#188) until a deploy that includes #191.
+- **Wave 1 shipped**: sections/term/fees forms + live `standards.add` / academics create headers (`ds-page-head`, `x-card`, `x-form-group`, `x-button`). Vue bodies untouched (Wave 4). Screenshots in `docs/wave1-screenshots/`.
+- **Open Design**: still deferred to Wave 3+.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
 
 ## Current Status: August 8, 2026 (`origin/main` tip `509d233` — #189 knowledge handoff; prod app **`abeb6fc`** #188)
@@ -282,7 +280,7 @@
 
 ### 2. Open / deferred items (with WHY)
 
-- **Manual onboarding UI redesign** — **Wave 1 in PR** (Blade DS restyle of five create screens). Later waves (card-based step UI / Open Design) still deferred.
+- **Manual onboarding UI redesign** — **Wave 1 MERGED (#191)**. Later waves (card-based step UI / Open Design Wave 3+, Vue Create Wave 4) still deferred.
 - **Dashboard real-time Toshi-visibility feature** — deferred until core app stability is confirmed post-#188 deploy.
 - **Plan-selection pure-UI rendering gap** — plan cards do not reliably render in live UI; local-only Livewire fallback used in testing, never pushed.
 - **Other open PRs** (via `gh pr list --state open` at handoff): e.g. **#159** report cards, **#138** preference memory, various **audit drafts** (#158, #155, #151, #146, #141, #139) — not part of the manual↔Toshi parity arc.
@@ -701,6 +699,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-09: #191 MERGED — Wave 1 Blade DS restyle
+- **Work done**: Squash-merged #191 to `origin/main`. Live standards header follow-up + screenshots included in tip.
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/191
+- **Merge commit**: `fc1d7a4768cf5c5392235dbe10e37b59739a0ca6`
+- **Merged at**: 2026-08-09 13:58:24 UTC
+- **Status**: ✅ MERGED (not deployed to prod in this step)
+
 ### 2026-08-09: Manual UI redesign Wave 1 — Blade DS restyle (PR open)
 - **Work done**: Restyled five pure-Blade legacy create screens to existing design-system primitives only (`x-card`, `x-form-group`, `x-button`, `ds-page-head`). No Vue/JS/controller/validation/route changes. Standards/academics pages: header-only; Vue mounts untouched.
 - **Files modified**: `resources/views/admin/school/sections/{create,create_form}.blade.php`, `term/create-term.blade.php`, `fees/create.blade.php`, `standards/create.blade.php`, `academics/create.blade.php`, `tests/Feature/Onboarding/ManualUiWave1BladeDsTest.php` (new), `knowledge.md`
@@ -708,7 +713,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Tests**: `php artisan test --compact tests/Feature/Onboarding/ManualUiWave1BladeDsTest.php tests/Feature/Onboarding/ManualOnboardingParityTest.php` → **15 passed, 71 assertions**.
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave1` on `feature/manual-ui-wave1-blade-ds` (from `origin/main` @ `0eeb687`)
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/191
-- **Status**: 🚧 PR open — https://github.com/KlassApp-Foundation/KlassApp/pull/191
+- **Status**: ✅ MERGED — squash `fc1d7a4768cf5c5392235dbe10e37b59739a0ca6` @ 2026-08-09 13:58:24 UTC
+- **Merge commit**: `fc1d7a4768cf5c5392235dbe10e37b59739a0ca6`
 - **Follow-up (pre-merge)**: Confirmed LIVE `/admin/standard/create` → `standards.add` (Vue `<standard-setup>`), not orphaned `standards/create`. Restyled live `standards.add` Blade header to match academics Wave 1 pattern; Vue body deferred to Wave 4. Fixed `SectionController@create` undefined `$sections` compact so sections create can render. Screenshots in `docs/wave1-screenshots/` posted on PR #191.
 - **Edge cases flagged**: Orphaned `standards/create.blade.php` remains restyled but unused by any route; keep or delete in a later cleanup.
 
