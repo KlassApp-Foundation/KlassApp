@@ -240,6 +240,15 @@
 
 ---
 
+## Current Status: August 9, 2026 (`origin/main` tip `b199802` — #203 wizard/Toshi sync MERGED)
+
+- **✅ Merged #203**: Hide Toshi on manual wizard; reconcile Completing Setup vs `OnboardingStepsService`; restore visible plan-selection step (no silent Freemium assign) — merge `b1998028788ee6f888bcab4c99d6709da80f79c5` @ **2026-08-09 20:55:07 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/203
+- **Resolves**: walkthrough deploy-blockers (Toshi/wizard desync + competing progress) + plan-selection regression.
+- **`origin/main` tip**: `b199802` (#203). Prior tip `9647aa5` (#202) / app `b8b9718` (#201). Prod still **`abeb6fc`** (#188) — **no deploy yet**.
+- **✅ Merged #191–#203**: Wave 1–3 + empty-state/plan-to-profile + product demo + wizard/Toshi sync + knowledge stamps.
+- **Standing rule**: conflict-marker pre-push check after merge/rebase (Handoff §3).
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
+
 ## Current Status: August 9, 2026 (`origin/main` tip `b8b9718` — #201 empty-state demo MERGED)
 
 - **✅ Merged #201**: Empty-state 3-scene product demo (WhatsApp / Toshi / connectors) + git-hygiene conflict-marker standing rule — squash `b8b971858843868afaa27579559cb8e4d8b52ed1` @ **2026-08-09 17:16:45 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/201
@@ -742,7 +751,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Hide Toshi entirely on `/admin/onboarding/wizard` (`toshi-manual-wizard` body class). Reconcile AgentToshi "Completing Setup" / 1/18 against `OnboardingStepsService` on mount + `manual-onboarding-finished` event so stale incomplete UI clears after manual onboarding. Restore plan selection as a real last wizard step (plan cards, Freemium default, no payment); stop silent Freemium assign on every wizard `next()` and on dashboard load. Re-verified Previous-from-Classes — not a product bug (automation artifact).
 - **Files modified**: `ManualOnboardingWizard.php`, `AgentToshi.php`, `DashboardController.php`, `FreeTierPlanService.php` (docs), wizard Blade/CSS/partials, `WizardToshiSyncPlanStepTest.php`, `ManualUiWave3WizardTest.php`, screenshots under `docs/wizard-toshi-sync-screenshots/`
 - **Key decisions**: Plan must stay a visible milestone even while free; Toshi must not compete on the manual path; completion state source of truth is `OnboardingStepsService` (same as wizard).
-- **Status**: 🚧 PR open — #203 https://github.com/KlassApp-Foundation/KlassApp/pull/203
+- **Status**: ✅ MERGED — #203 https://github.com/KlassApp-Foundation/KlassApp/pull/203 · merge `b199802`
 - **Edge cases flagged**: Dashboard no longer auto-assigns Freemium — schools that finished content via legacy forms still need an explicit plan confirmation (wizard/Toshi) or a future backfill.
 
 
