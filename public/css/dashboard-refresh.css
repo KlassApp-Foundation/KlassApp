@@ -3051,3 +3051,87 @@ body.toshi-manual-wizard [data-toshi-root] {
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
+
+/* Wave 3 review / preview — Toshi review-card structure, DS colors */
+.manual-wizard-review-intro {
+    font-size: 14px;
+    color: #64748B;
+    margin: 0 0 14px;
+    line-height: 1.45;
+}
+.manual-wizard-review-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+.manual-wizard-review-header {
+    background: #0F172A;
+    color: #FFFFFF;
+    padding: 14px 16px;
+    font-family: "Sora", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+.manual-wizard-review-body {
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+}
+.manual-wizard-review-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #E2E8F0;
+}
+.manual-wizard-review-row:last-child {
+    border-bottom: none;
+}
+.manual-wizard-review-row-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+}
+.manual-wizard-review-icon {
+    font-size: 16px;
+    line-height: 1.4;
+    flex-shrink: 0;
+}
+.manual-wizard-review-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.manual-wizard-review-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0F172A;
+    margin-top: 2px;
+    word-break: break-word;
+}
+.manual-wizard-review-edit {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1E6FD9;
+    background: transparent;
+    border: none;
+    padding: 4px 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.manual-wizard-review-edit:hover {
+    color: #1557B0;
+}
+.manual-wizard-dot.is-review.is-current {
+    background: #0F172A;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.18);
+}

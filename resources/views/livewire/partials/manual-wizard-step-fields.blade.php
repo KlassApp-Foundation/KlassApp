@@ -159,4 +159,35 @@
             <p class="text-sm text-red-600" role="alert">No plans are available yet. Contact support.</p>
         @endforelse
     </div>
+
+@elseif($stepKey === 'review')
+    <div class="manual-wizard-review" data-testid="wizard-review">
+        <p class="manual-wizard-review-intro">
+            Confirm everything looks right. Use Edit to jump back to a step — your later answers stay saved.
+        </p>
+        <div class="manual-wizard-review-card" data-testid="wizard-review-card">
+            <div class="manual-wizard-review-header">Review &amp; confirm</div>
+            <div class="manual-wizard-review-body">
+                @forelse(($reviewSummary ?? []) as $row)
+                    <div class="manual-wizard-review-row" data-testid="wizard-review-{{ $row['key'] }}">
+                        <div class="manual-wizard-review-row-main">
+                            <span class="manual-wizard-review-icon" aria-hidden="true">{{ $row['icon'] }}</span>
+                            <div>
+                                <div class="manual-wizard-review-label">{{ $row['label'] }}</div>
+                                <div class="manual-wizard-review-value">{{ $row['value'] }}</div>
+                            </div>
+                        </div>
+                        <button type="button"
+                                class="manual-wizard-review-edit"
+                                wire:click="editSection('{{ $row['key'] }}')"
+                                data-testid="wizard-edit-{{ $row['key'] }}">
+                            Edit
+                        </button>
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-600">Nothing to review yet.</p>
+                @endforelse
+            </div>
+        </div>
+    </div>
 @endif
