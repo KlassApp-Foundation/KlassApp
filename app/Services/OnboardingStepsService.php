@@ -65,6 +65,10 @@ class OnboardingStepsService
             'label' => 'Teachers',
             'icon'  => '👨‍🏫',
         ],
+        'students' => [
+            'label' => 'Students',
+            'icon'  => '🎒',
+        ],
         'terms' => [
             'label' => 'Academic terms',
             'icon'  => '📅',
@@ -81,6 +85,15 @@ class OnboardingStepsService
             'label' => 'Plan selection',
             'icon'  => '💳',
         ],
+    ];
+
+    /**
+     * Optional in Toshi's $mandatorySteps — may be skipped without blocking finish.
+     * Still shown on Completing Setup until data exists.
+     */
+    public const OPTIONAL_STEPS = [
+        'teachers',
+        'students',
     ];
 
     /**
@@ -165,6 +178,13 @@ class OnboardingStepsService
             'standards'  => StandardLink::where('school_id', $sid)->exists(),
             'subjects'   => Subject::where('school_id', $sid)->exists(),
             'teachers'   => Teacherlink::where('school_id', $sid)->exists(),
+            'students'   => User::query()
+                ->where('school_id', $sid)
+                ->where('usergroup_id', 6)
+                ->where(function ($q) {
+                    $q->whereNull('status')->orWhere('status', '!=', 'exit');
+                })
+                ->exists(),
             'terms'      => AcademicTerm::where('school_id', $sid)->exists(),
             'fees'       => FeesCategories::where('school_id', $sid)->exists(),
             'whatsapp_verify' => $userId && WhatsAppUser::where('user_id', $userId)->exists(),
@@ -232,6 +252,34 @@ class OnboardingStepsService
     public static function hasIncompleteSteps(School $school, ?int $userId = null): bool
     {
         return self::nextIncompleteStep($school, $userId) !== null;
+    }
+
+    /**
+     * Incomplete steps that block wizard finish / plan confirmation.
+     * Teachers & students are optional (match Toshi $mandatorySteps).
+     */
+    public static function hasBlockingIncompleteSteps(School $school, ?int $userId = null): bool
+    {
+        return self::nextBlockingIncompleteStep($school, $userId) !== null;
+    }
+
+    /**
+     * @return ?array{key: string, label: string, icon: string, is_complete: bool, route: ?string}
+     */
+    public static function nextBlockingIncompleteStep(School $school, ?int $userId = null): ?array
+    {
+        foreach (self::steps($school, $userId) as $step) {
+            if ($step['is_complete']) {
+                continue;
+            }
+            if (in_array($step['key'], self::OPTIONAL_STEPS, true)) {
+                continue;
+            }
+
+            return $step;
+        }
+
+        return null;
     }
 
     /**
@@ -328,6 +376,7 @@ class OnboardingStepsService
             'standards'  => '/admin/standard/create',
             'subjects'   => '/admin/subjects',
             'teachers'   => '/admin/teacher/add',
+            'students'   => '/admin/student/add',
             'terms'      => '/admin/academic-term/create',
             'fees'       => '/admin/fees-categories/create',
             'whatsapp_verify' => '/admin/whatsapp/phone',

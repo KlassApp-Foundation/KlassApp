@@ -3135,3 +3135,89 @@ body.toshi-manual-wizard [data-toshi-root] {
     background: #0F172A;
     box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.18);
 }
+
+/* Bulk upload (teachers / students) — Wave DS */
+.manual-wizard-bulk-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.manual-wizard-bulk-link,
+.manual-wizard-bulk-upload {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1E6FD9;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+.manual-wizard-bulk-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.manual-wizard-bulk-list {
+    list-style: none;
+    margin: 0 0 14px;
+    padding: 0;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #FFFFFF;
+}
+.manual-wizard-bulk-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #E2E8F0;
+}
+.manual-wizard-bulk-item:last-child {
+    border-bottom: none;
+}
+.manual-wizard-bulk-item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.manual-wizard-bulk-item-main strong {
+    font-size: 14px;
+    color: #0F172A;
+}
+.manual-wizard-bulk-meta {
+    font-size: 12px;
+    color: #64748B;
+}
+.manual-wizard-bulk-remove {
+    border: none;
+    background: transparent;
+    color: #94A3B8;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+}
+.manual-wizard-bulk-remove:hover {
+    color: #DC2626;
+}
+.manual-wizard-bulk-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 12px;
+    color: #94A3B8;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.manual-wizard-bulk-divider::before,
+.manual-wizard-bulk-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #E2E8F0;
+}

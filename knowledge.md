@@ -240,6 +240,13 @@
 
 ---
 
+## Current Status: August 10, 2026 (`feature/wizard-bulk-teachers-students` — bulk upload PR opening)
+
+- **🚧 PR opening**: Manual wizard Teachers/Students bulk parity (upload + paste + one-at-a-time) + shared `OnboardingNameListExtractor`; students checklist step; optional skip. Stacked on #206 review branch.
+- **`origin/main` tip**: `acaafa2`. Prod still **`abeb6fc`** (#188) — **no deploy yet**.
+- **Open**: #206 review/preview; #205 AY datepicker.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
+
 ## Current Status: August 10, 2026 (`feature/wizard-review-preview` — #206 review/preview PR open)
 
 - **🚧 PR open**: #206 https://github.com/KlassApp-Foundation/KlassApp/pull/206 — Manual wizard **review/preview** after plan selection; Edit/return; Create School. Branch `feature/wizard-review-preview` tip `2e2986f` off `origin/main` @ `acaafa2`.
