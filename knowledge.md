@@ -242,7 +242,7 @@
 
 ## Current Status: August 9, 2026 (`origin/main` tip `c39253b` — #200; empty-state demo PR opening)
 
-- **🚧 Empty-state product demo PR opening**: 3-scene auto-loop (WhatsApp / Toshi / connectors) in pre-onboarding dashboard top half; setup banner below. Slack/Notion marked Coming soon (aspirational). Branch `feature/empty-state-product-demo` (worktree `/Users/mac/projects/KlassApp-empty-state-demo`). Screenshots in `docs/empty-state-demo-screenshots/`.
+- **🚧 Empty-state product demo PR #201 open**: 3-scene auto-loop (WhatsApp / Toshi / connectors) in pre-onboarding dashboard top half; setup banner below. Slack/Notion marked Coming soon (aspirational). https://github.com/KlassApp-Foundation/KlassApp/pull/201 — branch `feature/empty-state-product-demo` @ `4d220a0` (worktree `/Users/mac/projects/KlassApp-empty-state-demo`). Screenshots in `docs/empty-state-demo-screenshots/`.
 - **Standing rule added**: git conflict-marker pre-push hygiene after merge/rebase (Handoff §3).
 - **`origin/main` tip**: `c39253b` (#200). App tip: `260e0ae` (#198) / `7e6d5f4` (#195). Prod still **`abeb6fc`** (#188) — **no deploy yet**.
 - **✅ Merged #191–#200**: Wave 1–3 + empty-state/plan-to-profile + knowledge stamps.
@@ -740,8 +740,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: Scene 3 Slack/Notion explicitly "Coming soon" / aspirational disclaimer — WhatsApp live, Google sign-in only. `prefers-reduced-motion` → static fallback. No video assets.
 - **Tests**: `EmptyStateProductDemoTest` + `DashboardEmptyStatePlanToProfileTest` — passing.
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-empty-state-demo` on `feature/empty-state-product-demo` (from `origin/main` @ `c39253b`)
-- **PR**: opening
-- **Status**: 🚧 PR opening
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/201 (`4d220a0`)
+- **Status**: 🚧 PR open — awaiting visual confirm
 - **Edge cases flagged**: Do not symlink `vendor` from another worktree — Composer classmap will bootstrap the wrong app base path.
 
 
