@@ -299,11 +299,12 @@ class ManualUiWave3WizardTest extends TestCase
             ->set('schoolName', 'Preview Academy Renamed')
             ->call('next');
 
-        $component->call('goToStep', $component->instance()->stepIndex);
-
+        // Must re-render review from next() alone — no goToStep / progress-dot fallback.
+        $this->assertSame('review', $component->instance()->steps[$component->instance()->stepIndex]['key'] ?? null);
         $component
             ->assertSeeHtml('data-testid="wizard-review"')
             ->assertSee('Preview Academy Renamed')
+            ->assertSee('Create School')
             ->assertSee('P2')
             ->assertSee('ENGLISH')
             ->assertSee('Helen Teacher')

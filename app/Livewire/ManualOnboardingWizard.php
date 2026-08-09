@@ -114,7 +114,7 @@ class ManualOnboardingWizard extends Component
         // Land on first incomplete step
         foreach ($this->steps as $i => $step) {
             if (! $step['is_complete']) {
-                $this->stepIndex = $i;
+                $this->setStepIndex($i);
                 break;
             }
         }
@@ -125,7 +125,7 @@ class ManualOnboardingWizard extends Component
                 ->where('key', '!=', 'review')
                 ->pluck('key')
                 ->all();
-            $this->stepIndex = $this->reviewStepIndex();
+            $this->setStepIndex($this->reviewStepIndex());
             $this->buildReviewSummary();
             $this->finished = false;
         }
@@ -234,7 +234,7 @@ class ManualOnboardingWizard extends Component
         if ($this->finished) {
             $this->finished = false;
             $this->refreshSteps();
-            $this->stepIndex = $this->reviewStepIndex();
+            $this->setStepIndex($this->reviewStepIndex());
             $this->buildReviewSummary();
 
             return;
@@ -247,7 +247,7 @@ class ManualOnboardingWizard extends Component
         }
 
         if ($this->stepIndex > 0) {
-            $this->stepIndex--;
+            $this->setStepIndex($this->stepIndex - 1);
             if ($this->currentKey() === 'review') {
                 $this->buildReviewSummary();
             }
@@ -257,7 +257,10 @@ class ManualOnboardingWizard extends Component
     public function next(): void
     {
         $this->errorMessage = '';
-        $step = $this->currentStep;
+        // Read steps[] directly — do not touch $this->currentStep here.
+        // Livewire memoizes legacy get*Property() computeds for the request; accessing
+        // currentStep before changing stepIndex leaves the render stuck on the old step.
+        $step = $this->steps[$this->stepIndex] ?? null;
         if (! $step) {
             return;
         }
@@ -295,7 +298,7 @@ class ManualOnboardingWizard extends Component
         }
 
         if (! OnboardingStepsService::hasIncompleteSteps($this->school()->fresh(), Auth::id())) {
-            $this->stepIndex = $this->reviewStepIndex();
+            $this->setStepIndex($this->reviewStepIndex());
             $this->buildReviewSummary();
 
             return;
@@ -310,7 +313,7 @@ class ManualOnboardingWizard extends Component
                 continue;
             }
             if (! $this->steps[$i]['is_complete']) {
-                $this->stepIndex = $i;
+                $this->setStepIndex($i);
 
                 return;
             }
@@ -321,13 +324,13 @@ class ManualOnboardingWizard extends Component
                 continue;
             }
             if (! $candidate['is_complete']) {
-                $this->stepIndex = $i;
+                $this->setStepIndex($i);
 
                 return;
             }
         }
 
-        $this->stepIndex = $this->reviewStepIndex();
+        $this->setStepIndex($this->reviewStepIndex());
         $this->buildReviewSummary();
     }
 
@@ -339,7 +342,7 @@ class ManualOnboardingWizard extends Component
 
         $this->finished = false;
         $this->errorMessage = '';
-        $this->stepIndex = $index;
+        $this->setStepIndex($index);
         if (($this->steps[$index]['key'] ?? '') === 'review') {
             $this->returnToStepIndex = null;
             $this->returnToStepKey = null;
@@ -362,7 +365,7 @@ class ManualOnboardingWizard extends Component
                 $this->finished = false;
                 $this->errorMessage = '';
                 $this->hydrateFieldsForEdit($key);
-                $this->stepIndex = $index;
+                $this->setStepIndex($index);
 
                 return;
             }
@@ -403,8 +406,17 @@ class ManualOnboardingWizard extends Component
         }
         $this->returnToStepIndex = null;
         $this->returnToStepKey = null;
-        $this->stepIndex = $target;
+        $this->setStepIndex($target);
         $this->buildReviewSummary();
+    }
+
+    /**
+     * Assign stepIndex and bust Livewire's request-memoized currentStep computed.
+     */
+    private function setStepIndex(int $index): void
+    {
+        $this->stepIndex = $index;
+        unset($this->currentStep);
     }
 
     public function render()
