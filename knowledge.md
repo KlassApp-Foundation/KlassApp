@@ -240,11 +240,12 @@
 
 ---
 
-## Current Status: August 9, 2026 (`origin/main` tip `fc6b451` — #194; Wave 3 PR opening)
+## Current Status: August 9, 2026 (`origin/main` tip `7e6d5f4` — #195 Wave 3 MERGED; #196 next)
 
-- **🚧 Wave 3 PR opening**: Manual UI redesign — consolidated dashboard setup banner, maximized Toshi wiring (existing modal layout), manual onboarding wizard shell with bottom-center progress dots + personalized completion. Branch `feature/manual-ui-wave3-wizard` (worktree `/Users/mac/projects/KlassApp-manual-ui-wave3`). Screenshots in `docs/wave3-screenshots/`.
-- **`origin/main` tip**: `fc6b451` (#194 knowledge stamp after #193). App merge prior: `ad16e55` (#193 Wave 2). Prod still **`abeb6fc`** (#188) until deploy includes #191+.
-- **✅ Merged #191–#194**: Wave 1 Blade DS, Wave 2 School Details DS, knowledge stamps.
+- **✅ Merged #195**: Wave 3 setup banner + maximized Toshi + manual wizard — squash `7e6d5f454948a296ba402c84b947fa9571703da1` @ **2026-08-09 16:38:48 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/195
+- **🚧 #196 open** (empty-state / plan-to-profile, was stacked on Wave 3): retarget/rebase onto `main` after #195 — https://github.com/KlassApp-Foundation/KlassApp/pull/196
+- **`origin/main` tip**: `7e6d5f4` (#195). Prior tip `fc6b451` (#194). Prod still **`abeb6fc`** (#188) — **no deploy yet** (holding until full wave lands).
+- **✅ Merged #191–#195**: Wave 1–3 manual UI redesign + knowledge stamps through #194; #195 app merge stamped here.
 - **Open Design**: used only as optional internal reference for Wave 3 chrome; implementation reused DS tokens. Vue Create ≈ Wave 4.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
 
@@ -723,6 +724,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-09: #195 MERGED — Wave 3 banner + maximized Toshi + wizard
+- **Work done**: Squash-merged #195 to `origin/main`. Consolidated setup banner, maximized Toshi modal wiring, manual onboarding wizard shell + screenshots + Wave 3 tests included in tip. **No prod deploy** (holding until full wave lands).
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/195
+- **Merge commit**: `7e6d5f454948a296ba402c84b947fa9571703da1`
+- **Merged at**: 2026-08-09 16:38:48 UTC
+- **Status**: ✅ MERGED (not deployed to prod)
+- **Next**: Merge #196 (dashboard empty-state / plan-to-profile) after rebase onto `main` + CI green.
+
 ### 2026-08-09: Manual UI redesign Wave 3 — banner + maximized Toshi + wizard shell (PR opening)
 - **Work done**: Consolidated dashboard setup banner (replaces onboarding-reminder + no-plan alert + continue-setup card). Wired “Set up with Toshi” / Expand to existing maximized Toshi modal (`maximize()` → `#toshi-modal`). Added Livewire manual wizard at `GET /admin/onboarding/wizard` with Prev/Next + bottom-center progress dots + personalized completion suggestions. Allowlisted wizard in `MustBePrivilege`. Screenshots in `docs/wave3-screenshots/`.
 - **Files modified**: `resources/views/partials/setup-banner.blade.php` (new), `plan-banner-usage.blade.php` (new), `admin/dashboard/dashboard.blade.php`, `admin/onboarding/wizard.blade.php` (new), `livewire/manual-onboarding-wizard.blade.php` + step partial, `app/Livewire/ManualOnboardingWizard.php` (new), `agent-toshi.blade.php`, `MustBePrivilege.php`, `routes/admin.php`, `public/css/dashboard-refresh.css`, Wave 3 tests, `knowledge.md`
@@ -730,7 +739,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Tests**: `ManualUiWave3WizardTest`, `ManualUiWave3BannerTest`, `ManualUiWave3ToshiMaximizeTest`, `ManualOnboardingParityTest` — all passing.
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave3` on `feature/manual-ui-wave3-wizard` (from `origin/main` @ `fc6b451`)
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/195 (`4d7f788`)
-- **Status**: 🚧 PR open — awaiting visual confirm
+- **Status**: ✅ MERGED — squash `7e6d5f454948a296ba402c84b947fa9571703da1` @ 2026-08-09 16:38:48 UTC
+- **Merge commit**: `7e6d5f454948a296ba402c84b947fa9571703da1`
 - **Edge cases flagged**: Local DB needed `uneb_center_number` migration; wizard `saveUneb` guards missing column.
 
 ### 2026-08-09: #193 MERGED — Wave 2 School Details editdetail DS
