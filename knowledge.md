@@ -240,6 +240,16 @@
 
 ---
 
+## Current Status: August 9, 2026 (`feature/manual-ui-wave1-blade-ds` — Wave 1 Blade DS restyle PR open)
+
+- **🚧 PR open**: Manual UI redesign **Wave 1** — restyle five pure-Blade create screens with existing DS primitives (`x-card`, `x-form-group`, `x-button`, `ds-page-head`). No Vue/JS/backend changes. Branch `feature/manual-ui-wave1-blade-ds` from `origin/main` @ `0eeb687`.
+- **`origin/main` tip** (pre-Wave-1): `0eeb687` — #190 tip refresh after #189. Prod app still **`abeb6fc`** (#188) unless redeployed later.
+- **✅ Merged #189 / #188**: Goose/OpenCode handoff + manual↔Toshi parity (unchanged).
+- **Wave 1 files**: `sections/create(+_form)`, `term/create-term`, `fees/create`, `standards/create` (header only), `academics/create` (header only; Vue `create-academic-year` untouched).
+- **Tests**: `ManualUiWave1BladeDsTest` + `ManualOnboardingParityTest` — **15 passed**.
+- **Open Design**: deferred to Wave 3+ (new visual directions). Wave 1 is pure DS reuse.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
+
 ## Current Status: August 8, 2026 (`origin/main` tip `509d233` — #189 knowledge handoff; prod app **`abeb6fc`** #188)
 
 - **`origin/main` tip**: `509d23318acce25d41d6364bcf6ab531f0f3a287` — Goose/OpenCode handoff after #188 (#189, docs-only). App merge prior: `abeb6fc746084320cabec7010af16e372a0b52a6` (#188 manual↔Toshi parity). Prior: `8c47811` (#186), `361ed22` (#185 deploy).
@@ -272,7 +282,7 @@
 
 ### 2. Open / deferred items (with WHY)
 
-- **Manual onboarding UI redesign** (card-based, step-at-a-time, preview-style) — not started; design direction only.
+- **Manual onboarding UI redesign** — **Wave 1 in PR** (Blade DS restyle of five create screens). Later waves (card-based step UI / Open Design) still deferred.
 - **Dashboard real-time Toshi-visibility feature** — deferred until core app stability is confirmed post-#188 deploy.
 - **Plan-selection pure-UI rendering gap** — plan cards do not reliably render in live UI; local-only Livewire fallback used in testing, never pushed.
 - **Other open PRs** (via `gh pr list --state open` at handoff): e.g. **#159** report cards, **#138** preference memory, various **audit drafts** (#158, #155, #151, #146, #141, #139) — not part of the manual↔Toshi parity arc.
@@ -690,6 +700,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-09: Manual UI redesign Wave 1 — Blade DS restyle (PR open)
+- **Work done**: Restyled five pure-Blade legacy create screens to existing design-system primitives only (`x-card`, `x-form-group`, `x-button`, `ds-page-head`). No Vue/JS/controller/validation/route changes. Standards/academics pages: header-only; Vue mounts untouched.
+- **Files modified**: `resources/views/admin/school/sections/{create,create_form}.blade.php`, `term/create-term.blade.php`, `fees/create.blade.php`, `standards/create.blade.php`, `academics/create.blade.php`, `tests/Feature/Onboarding/ManualUiWave1BladeDsTest.php` (new), `knowledge.md`
+- **Key decisions**: Wave 1 = DS reuse only (no Open Design mockups). Preserved field names + `______` select sentinels on term/fees level. Fees page title corrected from mislabeled “Add Academic Term” → “Add Fee”.
+- **Tests**: `php artisan test --compact tests/Feature/Onboarding/ManualUiWave1BladeDsTest.php tests/Feature/Onboarding/ManualOnboardingParityTest.php` → **15 passed, 71 assertions**.
+- **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave1` on `feature/manual-ui-wave1-blade-ds` (from `origin/main` @ `0eeb687`)
+- **Status**: 🚧 PR open — awaiting URL after push
+- **Edge cases flagged**: `SectionController@create` still `compact('sections', …)` with undefined `$sections` (pre-existing; not fixed in Wave 1). Live `StandardController@create` renders `standards.add` (Vue), not `standards.create` — Wave 1 still restyled the orphaned `create` view per scope.
 
 ### 2026-08-08: #188 MERGED + DEPLOYED (manual↔Toshi parity)
 - **Work done**: Confirmed #188 merged to `origin/main` @ `abeb6fc746084320cabec7010af16e372a0b52a6`. Deployed to production on Hetzner (`/var/www/KlassApp`, container `sms-app`): `git pull`, `composer install --no-dev`, toshi-ui publish, `migrate --force` (nothing to migrate), `optimize:clear`, FPM reload.

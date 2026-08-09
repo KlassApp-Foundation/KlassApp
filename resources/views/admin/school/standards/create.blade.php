@@ -3,19 +3,15 @@
 
 @section('content')
    <div class="relative">
-      <div class="flex flex-wrap lg:flex-row justify-between">
-         <div>
-            <h1 class="admin-h1 mb-5 flex items-center">
-               <a href="{{ url('/admin/standards') }}" title="Back" class="rounded-full bg-gray-300 p-2">
-                  <img src="{{ asset('/uploads/icons/back.svg') }}" class="w-3 h-3">
-               </a>
-               <span class="mx-3">Add Standards</span>
-            </h1>
+      <div class="ds-page-head">
+         <div class="flex items-center gap-3">
+            <x-button href="{{ url('/admin/standards') }}" variant="ghost" size="sm" title="Back">
+               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </x-button>
+            <h1 class="ds-page-head-title">Add Standards</h1>
          </div>
       </div>
       @include('partials.message')
       @include('admin.school.standards.create_form')
    </div>
 @endsection
-
-   
