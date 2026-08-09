@@ -123,8 +123,27 @@ class UserProfileController extends Controller
     }
 
     public function edit(Request $request)
-    {  
-        return view('/admin/editprofile');
+    {
+        $plan = null;
+        $planSummary = null;
+        $schoolId = Auth::user()->school_id;
+        if ($schoolId) {
+            $currentPlan = \App\Models\CurrentPlan::with('plan')->where('school_id', $schoolId)->first();
+            if ($currentPlan && $currentPlan->plan) {
+                $plan = $currentPlan->plan;
+                $planSummary = trim(ucfirst($plan->display_name ?: $plan->name));
+                if ((float) $plan->amount > 0) {
+                    $planSummary .= ' — $'.number_format((float) $plan->amount).' / '.$plan->cycle.' days';
+                } else {
+                    $planSummary .= ' — Free';
+                }
+            }
+        }
+
+        return view('/admin/editprofile', [
+            'plan' => $plan,
+            'planSummary' => $planSummary,
+        ]);
     }
 
     public function create()

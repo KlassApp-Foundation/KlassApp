@@ -62,7 +62,7 @@ class MustBePrivilege
     /**
      * Routes that make up the manual (non-Toshi) onboarding surface: School
      * Details (curriculum / country / EMIS / UNEB centre), WhatsApp phone
-     * linking, and the informational subscription / plan pages.
+     * linking, subscription pages, edit profile (plan info line), and wizard.
      *
      * Deliberately narrow — only pages required to finish onboarding by hand.
      * Everything else stays gated behind AcademicYear + standards.
@@ -75,6 +75,8 @@ class MustBePrivilege
             || $request->is('admin/subscriptions')
             || $request->is('admin/subscriptions/*')
             || $request->is('admin/onboarding/wizard')
-            || $request->is('admin/onboarding/wizard/*');
+            || $request->is('admin/onboarding/wizard/*')
+            // Plan moved off the dashboard — profile must stay reachable pre-AY.
+            || $request->is('admin/editprofile');
     }
 }
