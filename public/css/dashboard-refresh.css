@@ -2829,3 +2829,157 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     to { transform: rotate(360deg); }
 }
 
+
+/* ── Wave 3: consolidated setup banner ── */
+.setup-banner {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    background: var(--d-white);
+    border: 1px solid var(--d-border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.setup-banner-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #F0FDF4;
+    color: var(--d-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.setup-banner-body { flex: 1; min-width: 0; }
+.setup-banner-title {
+    font-family: Sora, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #0F172A;
+    margin: 0;
+}
+.setup-banner-text {
+    font-family: "DM Sans", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--d-text-secondary);
+    margin: 6px 0 0;
+}
+.setup-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+/* ── Wave 3: manual wizard shell ── */
+.manual-wizard {
+    max-width: 880px;
+    margin: 0 auto 48px;
+}
+.manual-wizard-card {
+    margin-top: 8px;
+}
+.manual-wizard-nav {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 0 4px;
+}
+.manual-wizard-nav > :first-child { justify-self: start; }
+.manual-wizard-nav > :last-child { justify-self: end; }
+.manual-wizard-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    max-width: 320px;
+}
+.manual-wizard-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: none;
+    padding: 0;
+    background: #CBD5E1;
+    cursor: pointer;
+    transition: width 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+.manual-wizard-dot.is-complete {
+    background: var(--d-green);
+}
+.manual-wizard-dot.is-current {
+    width: 28px;
+    background: var(--d-blue);
+    transform: none;
+}
+.manual-wizard-done-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    border-radius: 999px;
+    background: #F0FDF4;
+    color: var(--d-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+}
+.manual-wizard-suggestion {
+    display: block;
+    padding: 14px 16px;
+    border: 1px solid var(--d-border);
+    border-radius: 12px;
+    text-decoration: none;
+    background: var(--d-white);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.manual-wizard-suggestion:hover {
+    border-color: #BBF7D0;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.08);
+}
+.manual-wizard-suggestion-title {
+    display: block;
+    font-family: Sora, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0F172A;
+}
+.manual-wizard-suggestion-body {
+    display: block;
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--d-text-secondary);
+}
+
+/* Wave 3: maximized Toshi modal — slightly richer focus surface */
+[data-toshi-root] .toshi-modal-overlay {
+    backdrop-filter: blur(2px);
+}
+[data-toshi-root] .toshi-modal-box {
+    width: min(96vw, 1280px);
+    height: min(92vh, 920px);
+    max-width: 1280px;
+    max-height: 920px;
+}
+
+@media (max-width: 640px) {
+    .manual-wizard-nav {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "progress progress"
+            "prev next";
+        row-gap: 12px;
+    }
+    .manual-wizard-progress { grid-area: progress; max-width: none; }
+    .manual-wizard-nav > :first-child { grid-area: prev; }
+    .manual-wizard-nav > :last-child { grid-area: next; }
+    .setup-banner { flex-direction: column; }
+}

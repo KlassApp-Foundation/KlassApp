@@ -240,7 +240,15 @@
 
 ---
 
-## Current Status: August 9, 2026 (`origin/main` tip `ad16e55` — #193 Wave 2 School Details DS MERGED)
+## Current Status: August 9, 2026 (`origin/main` tip `fc6b451` — #194; Wave 3 PR opening)
+
+- **🚧 Wave 3 PR opening**: Manual UI redesign — consolidated dashboard setup banner, maximized Toshi wiring (existing modal layout), manual onboarding wizard shell with bottom-center progress dots + personalized completion. Branch `feature/manual-ui-wave3-wizard` (worktree `/Users/mac/projects/KlassApp-manual-ui-wave3`). Screenshots in `docs/wave3-screenshots/`.
+- **`origin/main` tip**: `fc6b451` (#194 knowledge stamp after #193). App merge prior: `ad16e55` (#193 Wave 2). Prod still **`abeb6fc`** (#188) until deploy includes #191+.
+- **✅ Merged #191–#194**: Wave 1 Blade DS, Wave 2 School Details DS, knowledge stamps.
+- **Open Design**: used only as optional internal reference for Wave 3 chrome; implementation reused DS tokens. Vue Create ≈ Wave 4.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
+
+## Current Status: August 9, 2026 (`origin/main` tip `ad16e55` — #193 Wave 2 School Details DS MERGED) — superseded above
 
 - **✅ Merged #193**: Wave 2 School Details `editdetail` DS restyle — squash `ad16e5576034ded79498c1b194d4126890d93709` @ **2026-08-09 14:44:42 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/193
 - **Tip before**: `4aa7ad4` (#192). App prior: `fc1d7a4` (#191 Wave 1). Prod app still **`abeb6fc`** (#188) until a deploy that includes #191+.
@@ -714,6 +722,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-09: Manual UI redesign Wave 3 — banner + maximized Toshi + wizard shell (PR opening)
+- **Work done**: Consolidated dashboard setup banner (replaces onboarding-reminder + no-plan alert + continue-setup card). Wired “Set up with Toshi” / Expand to existing maximized Toshi modal (`maximize()` → `#toshi-modal`). Added Livewire manual wizard at `GET /admin/onboarding/wizard` with Prev/Next + bottom-center progress dots + personalized completion suggestions. Allowlisted wizard in `MustBePrivilege`. Screenshots in `docs/wave3-screenshots/`.
+- **Files modified**: `resources/views/partials/setup-banner.blade.php` (new), `plan-banner-usage.blade.php` (new), `admin/dashboard/dashboard.blade.php`, `admin/onboarding/wizard.blade.php` (new), `livewire/manual-onboarding-wizard.blade.php` + step partial, `app/Livewire/ManualOnboardingWizard.php` (new), `agent-toshi.blade.php`, `MustBePrivilege.php`, `routes/admin.php`, `public/css/dashboard-refresh.css`, Wave 3 tests, `knowledge.md`
+- **Key decisions**: Maximized Toshi is **existing modal layout** (not CSS-only sidebar expand) — restored Expand button + `toshi-maximize` browser event. Wizard reuses `OnboardingStepsService` sequence and writes same models as manual forms (no controller rewrites). Banner CTAs: blue “Set up manually” → wizard; green “Set up with Toshi” → maximize.
+- **Tests**: `ManualUiWave3WizardTest`, `ManualUiWave3BannerTest`, `ManualUiWave3ToshiMaximizeTest`, `ManualOnboardingParityTest` — all passing.
+- **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave3` on `feature/manual-ui-wave3-wizard` (from `origin/main` @ `fc6b451`)
+- **Status**: 🚧 PR opening
+- **Edge cases flagged**: Local DB needed `uneb_center_number` migration; wizard `saveUneb` guards missing column.
 
 ### 2026-08-09: #193 MERGED — Wave 2 School Details editdetail DS
 - **Work done**: Squash-merged #193 to `origin/main`. School Details live `editdetail` Blade + Vue DS restyle + screenshots + Wave 2 feature test included in tip.
