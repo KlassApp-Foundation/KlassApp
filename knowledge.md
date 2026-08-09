@@ -240,13 +240,13 @@
 
 ---
 
-## Current Status: August 9, 2026 (`origin/main` tip `97fac97` — #195 MERGED + #197 stamp; empty-state **#198** open)
+## Current Status: August 9, 2026 (`origin/main` tip `260e0ae` — #195 + #198 MERGED; stamps #197 done / #199 pending)
 
+- **✅ Merged #198**: Dashboard empty-state (no empty KPIs/plan card; plan on Edit Profile) — squash `260e0ae314a6ec64049315ab206d4ce2c4e4b32c` @ **2026-08-09 16:48:41 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/198 (replaces closed #196)
 - **✅ Merged #195**: Wave 3 setup banner + maximized Toshi + manual wizard — squash `7e6d5f454948a296ba402c84b947fa9571703da1` @ **2026-08-09 16:38:48 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/195
 - **✅ Knowledge stamp #197**: `97fac974df1a676efb02608a0fb029de8cf1e992` — https://github.com/KlassApp-Foundation/KlassApp/pull/197
-- **🚧 Empty-state / plan-to-profile PR #198 open** (replaces closed #196 after rebase onto main): remove plan card from dashboard; pre-onboarding KPI placeholder; plan info line on `/admin/editprofile` — https://github.com/KlassApp-Foundation/KlassApp/pull/198 — branch `feature/dashboard-empty-state-plan-to-profile`. Screenshots in `docs/dashboard-empty-state-screenshots/`.
-- **`origin/main` tip**: `97fac97` (#197). App tip prior: `7e6d5f4` (#195). Prod still **`abeb6fc`** (#188) — **no deploy yet** (holding until full wave lands).
-- **✅ Merged #191–#195 / #197**: Wave 1–3 manual UI redesign + knowledge stamps.
+- **`origin/main` tip**: `260e0ae` (#198). Prior: `97fac97` (#197) / `7e6d5f4` (#195). Prod still **`abeb6fc`** (#188) — **no deploy yet** (holding until full wave lands).
+- **✅ Merged #191–#198** (app + #197 stamp): Wave 1–3 + empty-state/plan-to-profile.
 - **Open Design**: used only as optional internal reference for Wave 3 chrome; implementation reused DS tokens. Vue Create ≈ Wave 4.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
 
@@ -725,6 +725,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-09: #198 MERGED — dashboard empty state + plan on profile
+- **Work done**: Squash-merged #198 to `origin/main` (rebased successor to closed #196). Pre-onboarding KPI placeholder; plan removed from dashboard; plan info line on Edit Profile; `editprofile` allowlisted pre-AY. **No prod deploy**.
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/198
+- **Merge commit**: `260e0ae314a6ec64049315ab206d4ce2c4e4b32c`
+- **Merged at**: 2026-08-09 16:48:41 UTC
+- **Status**: ✅ MERGED (not deployed to prod)
+- **Note**: Closed #196 was stacked on deleted Wave 3 branch; reopened as #198 on `main` after #195.
+
 ### 2026-08-09: Dashboard empty state + plan moved to profile (PR opening)
 - **Work done**: Removed plan/subscription usage banner from dashboard setup surface. Pre-onboarding (`$setupIncomplete`) hides KPI/chart/notice cards and shows dashed `dashboard-kpi-placeholder` for a later demo animation. Plan shown as a low-key line on Edit Profile; allowlisted `admin/editprofile` in `MustBePrivilege` so pre-AY admins can open it. Screenshots in `docs/dashboard-empty-state-screenshots/`.
 - **Files modified**: `setup-banner.blade.php`, `dashboard.blade.php`, `editprofile.blade.php`, `UserProfileController.php`, `MustBePrivilege.php`, `dashboard-refresh.css`, `ManualUiWave3BannerTest.php`, `DashboardEmptyStatePlanToProfileTest.php` (new), `knowledge.md`
@@ -732,7 +740,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Tests**: `DashboardEmptyStatePlanToProfileTest` (5) + `ManualUiWave3BannerTest` — passing.
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave3` on `feature/dashboard-empty-state-plan-to-profile` (rebased onto `main` after #195)
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/198 (replaces closed #196)
-- **Status**: 🚧 PR open — awaiting CI + merge
+- **Status**: ✅ MERGED — squash `260e0ae314a6ec64049315ab206d4ce2c4e4b32c` @ 2026-08-09 16:48:41 UTC
+- **Merge commit**: `260e0ae314a6ec64049315ab206d4ce2c4e4b32c`
 - **Edge cases flagged**: Without `editprofile` allowlist, pre-AY `MustBePrivilege` redirected profile → dashboard (plan unreachable).
 
 ### 2026-08-09: #195 MERGED — Wave 3 banner + maximized Toshi + wizard
@@ -742,7 +751,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Merged at**: 2026-08-09 16:38:48 UTC
 - **Knowledge stamp**: #197 → `97fac974df1a676efb02608a0fb029de8cf1e992`
 - **Status**: ✅ MERGED (not deployed to prod)
-- **Next**: Merge #198 (dashboard empty-state / plan-to-profile).
+- **Follow-up**: #198 merged `260e0ae` (empty-state / plan-to-profile).
 
 ### 2026-08-09: Manual UI redesign Wave 3 — banner + maximized Toshi + wizard shell (PR opening)
 - **Work done**: Consolidated dashboard setup banner (replaces onboarding-reminder + no-plan alert + continue-setup card). Wired “Set up with Toshi” / Expand to existing maximized Toshi modal (`maximize()` → `#toshi-modal`). Added Livewire manual wizard at `GET /admin/onboarding/wizard` with Prev/Next + bottom-center progress dots + personalized completion suggestions. Allowlisted wizard in `MustBePrivilege`. Screenshots in `docs/wave3-screenshots/`.
