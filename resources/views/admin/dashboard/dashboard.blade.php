@@ -10,7 +10,15 @@
             </div>
         </div>
         @include('partials.message')
-        @include('partials.setup-banner')
+        @if(!empty($setupIncomplete))
+            {{-- Top: product demo · Bottom: setup banner (Wave 3 empty-state layout) --}}
+            <div class="dashboard-kpi-placeholder my-4" data-testid="dashboard-kpi-placeholder">
+                @include('partials.empty-state-product-demo')
+            </div>
+            @include('partials.setup-banner')
+        @else
+            @include('partials.setup-banner')
+        @endif
 
         @if(empty($setupIncomplete))
         <div class="flex flex-wrap my-2 dashboard-topfold">
@@ -379,11 +387,6 @@
             </div>
         </div>
         @endif
-
-        @if(!empty($setupIncomplete))
-            {{-- Reserved for product demo animation (separate follow-up). --}}
-            <div class="dashboard-kpi-placeholder my-4" data-testid="dashboard-kpi-placeholder" aria-hidden="true"></div>
-        @endif
     </div>
 
     @if(!empty($openToshiOnboarding))
@@ -399,6 +402,9 @@
 @endsection
 
 @push('scripts')
+    @if(!empty($setupIncomplete))
+    <script src="{{ asset('js/empty-state-product-demo.js') }}" defer></script>
+    @endif
     @if(empty($setupIncomplete))
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
     <script>

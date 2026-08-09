@@ -2830,12 +2830,13 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 }
 
 
-/* Pre-onboarding KPI placeholder — reserved for demo animation */
+/* Pre-onboarding product demo (top half of empty state) */
 .dashboard-kpi-placeholder {
-    min-height: 180px;
-    border: 1px dashed var(--d-border);
-    border-radius: 14px;
+    min-height: 0;
+    border: none;
     background: transparent;
+    padding: 0;
+    margin: 0 0 8px;
 }
 
 .setup-banner {
