@@ -8,23 +8,19 @@ use App\Models\School;
 use App\Models\User;
 
 /**
- * Auto-assigns a free-tier CurrentPlan once a school has finished the
- * substantive onboarding steps (everything except plan_selection), so the
- * plan-selection UI becomes informational / non-blocking rather than a gate.
+ * Assigns a free-tier CurrentPlan once a school has finished the substantive
+ * onboarding steps (everything except plan_selection).
  *
- * Safety contract — protects the large body of existing schools that are
- * currently "unlimited by missing CurrentPlan" from suddenly being blocked:
+ * Used by explicit plan-confirmation paths (and tests). The manual wizard and
+ * dashboard must NOT call this automatically before the user sees plan selection —
+ * that step is a required visible milestone even while schools remain free.
+ *
+ * Safety contract — protects existing schools that are currently "unlimited by
+ * missing CurrentPlan" from suddenly being blocked:
  *
  *   1. Never touches a school that already has a CurrentPlan.
- *   2. Only assigns once all applicable steps EXCEPT plan_selection are done
- *      (a "real onboarded state").
- *   3. Never assigns a plan whose limits are already exceeded by the school's
- *      current students / teachers / admins. Such a school is left plan-less
- *      (i.e. effectively unlimited) exactly as it was before this feature.
- *
- * Rule 3 is the key guarantee: assigning a free tier can only ever keep a
- * school where it is or give it MORE headroom — it can never shrink an
- * already-populated school below its current usage.
+ *   2. Only assigns once all applicable steps EXCEPT plan_selection are done.
+ *   3. Never assigns a plan whose limits are already exceeded by current usage.
  */
 class FreeTierPlanService
 {

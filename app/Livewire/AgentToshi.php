@@ -30,6 +30,11 @@ class AgentToshi extends Component
 {
     use WithFileUploads;
 
+    /** @var array<string, string> */
+    protected $listeners = [
+        'manual-onboarding-finished' => 'syncOnboardingAfterManualWizard',
+    ];
+
     /**
      * Map of tool name (as stored in pendingToolConfirm) to Tool class FQCN.
      * The only source of truth for what happens when a user confirms a tool.
@@ -322,24 +327,17 @@ class AgentToshi extends Component
 
         // ── Restore state from session (survives page refresh) ──
         if ($this->restoreState()) {
-            // If restored state is assistant but school has missing steps, switch to complete
-            if ($this->mode === 'assistant' && $this->scope === 'school' && $user->school_id) {
-                $missing = $user->usergroup_id === 3
-                    ? \App\Helpers\OnboardingHelper::getMissingSteps($user->school_id, $user->id)
-                    : [];
-                if (!empty($missing)) {
-                    $this->mode = 'complete';
-                    $this->step = 5;
-                    $this->substep = 0;
-                    $this->schoolId = $user->school_id;
-                    $this->messages = [];
-                    $school = \App\Models\School::find($user->school_id);
-                    $name = $school ? $school->name : 'your school';
-                    $this->botSay("Hello! Let's finish setting up **{$name}** on KlassApp.");
-                    $this->detectMissingSteps();
-                    return;
+            // Always reconcile "Completing Setup" against OnboardingStepsService so a
+            // manual-wizard finish (or any path that completed steps outside Toshi)
+            // exits stale complete-mode instead of showing 1/18 + red ❌ forever.
+            if ($this->scope === 'school' && $user->school_id && $user->usergroup_id === 3) {
+                $this->reconcileSchoolOnboardingMode($user);
+                if ($this->mode === 'assistant' && empty($this->messages)) {
+                    $this->botSay($this->getAssistantGreeting());
                 }
+                return;
             }
+
             if ($this->mode === 'assistant' && empty($this->messages)) {
                 $this->botSay($this->getAssistantGreeting());
             }
@@ -598,10 +596,7 @@ class AgentToshi extends Component
 
         $incomplete = \App\Services\OnboardingStepsService::incompleteSteps($school, auth()->id());
         if (empty($incomplete)) {
-            $this->botSay("✅ Everything looks set up! Your school is ready to go.");
-            $this->botSay("If you need help with anything, just ask.");
-            $this->step = 99;
-            $this->mode = 'assistant';
+            $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
             return;
         }
 
@@ -617,6 +612,82 @@ class AgentToshi extends Component
         } else {
             $this->botSay(self::onboardingPromptForStep($first['key']));
         }
+    }
+
+    /**
+     * Livewire event from ManualOnboardingWizard — leave Completing Setup when manual path finishes.
+     */
+    public function syncOnboardingAfterManualWizard(): void
+    {
+        $user = auth()->user();
+        if (! $user || ! $user->school_id || (int) $user->usergroup_id !== 3) {
+            return;
+        }
+
+        $this->schoolId = $user->school_id;
+        $this->scope = 'school';
+        $this->reconcileSchoolOnboardingMode($user);
+    }
+
+    /**
+     * Align mode + progress UI with OnboardingStepsService (same source as the manual wizard).
+     * The "1/18 Required" counter is $step+1 / count($steps) in create-flow indices — it only
+     * makes sense while mode === complete. Once onboarding is done, switch to assistant.
+     */
+    private function reconcileSchoolOnboardingMode($user): void
+    {
+        $school = \App\Models\School::find($user->school_id);
+        if (! $school) {
+            return;
+        }
+
+        $this->schoolId = $user->school_id;
+        $incomplete = \App\Services\OnboardingStepsService::incompleteSteps($school, $user->id);
+
+        if (empty($incomplete)) {
+            if ($this->mode !== 'assistant' || $this->step !== 99) {
+                $this->exitCompletingSetupMode();
+            }
+
+            return;
+        }
+
+        // Still incomplete — enter/refresh complete mode from the shared step list.
+        if ($this->mode !== 'complete') {
+            $this->mode = 'complete';
+            $this->messages = [];
+            $name = $school->name ?: 'your school';
+            $this->botSay("Hello! Let's finish setting up **{$name}** on KlassApp.");
+            $this->detectMissingSteps();
+            $this->persistState();
+
+            return;
+        }
+
+        // Already in complete mode with stale step index — jump to first incomplete key.
+        $first = $incomplete[0];
+        $this->jumpToIncompleteOnboardingStep($first['key']);
+        $this->persistState();
+    }
+
+    /**
+     * Exit Completing Setup UI (mode badge, 1/18 bar, red ❌ checklist messages).
+     */
+    private function exitCompletingSetupMode(?string $message = null): void
+    {
+        $this->mode = 'assistant';
+        $this->step = 99;
+        $this->substep = 0;
+        $this->actionStep = null;
+        $this->actionSubstep = 0;
+        $this->messages = [];
+        if ($message) {
+            $this->botSay($message);
+            $this->botSay('If you need help with anything, just ask.');
+        } else {
+            $this->botSay($this->getAssistantGreeting());
+        }
+        $this->persistState();
     }
 
     /**

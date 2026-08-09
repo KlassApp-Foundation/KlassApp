@@ -6,6 +6,7 @@ use App\Http\Middleware\MustBePrivilege;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Livewire\ManualOnboardingWizard;
 use App\Models\Country;
+use App\Models\Plan;
 use App\Models\School;
 use App\Models\User;
 use App\Models\Userprofile;
@@ -72,7 +73,7 @@ class ManualUiWave3WizardTest extends TestCase
             'lastname' => 'Admin',
         ]);
 
-        DB::table('plans')->insert([
+        Plan::create([
             'name' => 'Freemium',
             'display_name' => 'Freemium',
             'cycle' => 30,
@@ -81,8 +82,6 @@ class ManualUiWave3WizardTest extends TestCase
             'amount' => 0,
             'order' => 1,
             'is_active' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
     }
 
@@ -123,6 +122,59 @@ class ManualUiWave3WizardTest extends TestCase
             ->assertSet('stepIndex', 1);
     }
 
+    public function test_whatsapp_next_lands_on_visible_plan_step_not_completion(): void
+    {
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+
+        $component
+            ->set('schoolName', 'Plan Step Academy')
+            ->call('next')
+            ->set('curriculum', 'uneb')
+            ->call('next')
+            ->set('countryName', 'Uganda')
+            ->call('next')
+            ->set('ministryCode', 'EMIS-PLAN')
+            ->call('next')
+            ->call('next') // uneb skip
+            ->call('next') // academic year
+            ->set('className', 'P1')
+            ->call('next')
+            ->set('subjectName', 'Math')
+            ->call('next')
+            ->set('teacherName', 'Grace')
+            ->set('teacherEmail', 'grace@wave3.sch.ug')
+            ->call('next')
+            ->call('next') // terms
+            ->call('next') // fees
+            ->assertSee('WhatsApp verification')
+            ->set('whatsappPhone', '+256700111222')
+            ->call('next');
+
+        $instance = $component->instance();
+        $this->assertSame(12, $instance->stepIndex);
+        $this->assertSame('plan_selection', $instance->steps[12]['key']);
+        // Livewire test HTML can lag one tick after stepIndex-only updates; re-enter step.
+        $component->call('goToStep', 12);
+        $component
+            ->assertSee('Plan selection')
+            ->assertSeeHtml('data-testid="wizard-plan-cards"')
+            ->assertSee('Freemium')
+            ->assertSee('Recommended to start')
+            ->assertSet('finished', false);
+        $this->assertNull(
+            \App\Models\CurrentPlan::where('school_id', $this->school->id)->first(),
+            'Plan must not be silently assigned before the plan step is confirmed'
+        );
+
+        $component->call('next')->assertSet('finished', true);
+
+        $this->assertNotNull(
+            \App\Models\CurrentPlan::where('school_id', $this->school->id)->first()
+        );
+    }
+
     public function test_completion_screen_is_personalized_from_setup(): void
     {
         $this->actingAs($this->admin);
@@ -151,8 +203,12 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next') // term defaults
             ->call('next') // fee defaults
             ->set('whatsappPhone', '+256700333444')
-            ->call('next')
-            ->call('next'); // plan
+            ->call('next');
+
+        $this->assertSame('plan_selection', $component->instance()->steps[$component->instance()->stepIndex]['key'] ?? null);
+        $component->call('goToStep', $component->instance()->stepIndex);
+        $component->assertSeeHtml('data-testid="wizard-plan-cards"');
+        $component->call('next'); // confirm Freemium
 
         $component
             ->assertSet('finished', true)
@@ -160,5 +216,41 @@ class ManualUiWave3WizardTest extends TestCase
             ->assertSeeHtml('data-testid="wizard-completion-suggestions"')
             ->assertSee('Invite more teachers')
             ->assertDontSee('Setup complete! You are all done.');
+    }
+
+    public function test_previous_from_classes_returns_to_academic_year(): void
+    {
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+
+        $component
+            ->set('schoolName', 'Prev Nav Academy')
+            ->call('next')
+            ->set('curriculum', 'uneb')
+            ->call('next')
+            ->set('countryName', 'Uganda')
+            ->call('next')
+            ->set('ministryCode', 'EMIS-PREV')
+            ->call('next')
+            ->call('next') // uneb
+            ->call('next'); // academic year → lands on classes
+
+        $component
+            ->assertSee('Classes')
+            ->call('previous')
+            ->assertSee('Academic year')
+            ->assertDontSeeHtml('>Classes</h2>');
+    }
+
+    public function test_wizard_page_hides_toshi_via_body_class_hook(): void
+    {
+        $this->actingAs($this->admin);
+
+        $response = $this->get('/admin/onboarding/wizard');
+
+        $response->assertOk();
+        $response->assertSee('toshi-manual-wizard', false);
+        $response->assertSee('data-testid="manual-wizard-page"', false);
     }
 }

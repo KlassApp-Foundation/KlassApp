@@ -81,13 +81,8 @@ class DashboardController extends Controller
         if (Auth::user()->usergroup_id === 3 && $school_id) {
             $school = Auth::user()->school;
 
-            // Free-tier milestone: once all content steps are done, auto-assign a
-            // free plan so plan selection stays informational/non-blocking. Safe
-            // for existing schools — see FreeTierPlanService for the guarantees.
-            if ($school) {
-                app(\App\Services\FreeTierPlanService::class)
-                    ->assignIfEligible($school, Auth::id());
-            }
+            // Plan selection is a visible last step in the manual wizard / Toshi —
+            // do not silently assign Freemium on dashboard load (that skipped the UI).
 
             $onboardingMissing = \App\Helpers\OnboardingHelper::getMissingSteps($school_id, Auth::id());
             $onboardingSteps = $school

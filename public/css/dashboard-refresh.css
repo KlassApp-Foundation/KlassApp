@@ -2991,3 +2991,63 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     .manual-wizard-nav > :last-child { grid-area: next; }
     .setup-banner { flex-direction: column; }
 }
+
+/* Manual wizard: hide Toshi panel + floating pill so progress metaphors don't compete. */
+body.toshi-manual-wizard [data-toshi-root] {
+    display: none !important;
+}
+
+.manual-wizard-plan-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+@media (min-width: 640px) {
+    .manual-wizard-plan-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.manual-wizard-plan-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+    padding: 14px 16px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    color: #0f172a;
+}
+
+.manual-wizard-plan-card:hover {
+    border-color: #22c55e;
+}
+
+.manual-wizard-plan-card.is-selected {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+    background: #f0fdf4;
+}
+
+.manual-wizard-plan-name {
+    font-family: Sora, sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.manual-wizard-plan-price {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.manual-wizard-plan-hint {
+    font-size: 11px;
+    font-weight: 600;
+    color: #15803d;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
