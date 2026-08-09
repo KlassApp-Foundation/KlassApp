@@ -50,17 +50,30 @@
 @elseif($stepKey === 'academic_year')
     <div class="ds-form-group">
         <label class="ds-form-label" for="wizard-ay-desc">Description</label>
-        <input id="wizard-ay-desc" type="text" class="ds-form-input w-full" wire:model="academicYearDescription" />
+        <input id="wizard-ay-desc" type="text" class="ds-form-input w-full" wire:model="academicYearDescription" placeholder="e.g. 2026 Academic Year" />
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="ds-form-group">
-            <label class="ds-form-label" for="wizard-ay-start">Starts on<span class="text-red-500">*</span></label>
-            <input id="wizard-ay-start" type="date" class="ds-form-input w-full" wire:model="academicYearStart" />
+    <div class="manual-wizard-date-range" data-testid="wizard-ay-date-range" role="group" aria-label="Academic year dates">
+        <x-ds-date-picker
+            id="wizard-ay-start"
+            label="Starts on"
+            :required="true"
+            hint="Open the calendar to pick the first day."
+            wire:model="academicYearStart"
+            data-testid="wizard-ay-start"
+        />
+        <div class="manual-wizard-date-range-sep" aria-hidden="true">
+            <span class="manual-wizard-date-range-sep-line"></span>
+            <span class="manual-wizard-date-range-sep-label">to</span>
+            <span class="manual-wizard-date-range-sep-line"></span>
         </div>
-        <div class="ds-form-group">
-            <label class="ds-form-label" for="wizard-ay-end">Ends on<span class="text-red-500">*</span></label>
-            <input id="wizard-ay-end" type="date" class="ds-form-input w-full" wire:model="academicYearEnd" />
-        </div>
+        <x-ds-date-picker
+            id="wizard-ay-end"
+            label="Ends on"
+            :required="true"
+            hint="Must be after the start date."
+            wire:model="academicYearEnd"
+            data-testid="wizard-ay-end"
+        />
     </div>
 
 @elseif($stepKey === 'standards')
