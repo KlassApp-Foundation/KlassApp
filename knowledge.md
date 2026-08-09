@@ -240,12 +240,16 @@
 
 ---
 
-## Current Status: August 9, 2026 (`origin/main` tip `c39253b` — #200; empty-state demo PR opening)
+## Current Status: August 9, 2026 (`origin/main` tip `b8b9718` — #201 empty-state demo MERGED)
 
-- **🚧 Empty-state product demo PR #201 open**: 3-scene auto-loop (WhatsApp / Toshi / connectors) in pre-onboarding dashboard top half; setup banner below. Slack/Notion marked Coming soon (aspirational). https://github.com/KlassApp-Foundation/KlassApp/pull/201 — branch `feature/empty-state-product-demo` @ `4d220a0` (worktree `/Users/mac/projects/KlassApp-empty-state-demo`). Screenshots in `docs/empty-state-demo-screenshots/`.
-- **Standing rule added**: git conflict-marker pre-push hygiene after merge/rebase (Handoff §3).
-- **`origin/main` tip**: `c39253b` (#200). App tip: `260e0ae` (#198) / `7e6d5f4` (#195). Prod still **`abeb6fc`** (#188) — **no deploy yet**.
-- **✅ Merged #191–#200**: Wave 1–3 + empty-state/plan-to-profile + knowledge stamps.
+- **✅ Merged #201**: Empty-state 3-scene product demo (WhatsApp / Toshi / connectors) + git-hygiene conflict-marker standing rule — squash `b8b971858843868afaa27579559cb8e4d8b52ed1` @ **2026-08-09 17:16:45 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/201
+- **✅ Merged #198**: Dashboard empty-state (no empty KPIs/plan card; plan on Edit Profile) — squash `260e0ae314a6ec64049315ab206d4ce2c4e4b32c` — https://github.com/KlassApp-Foundation/KlassApp/pull/198
+- **✅ Merged #195**: Wave 3 setup banner + maximized Toshi + manual wizard — squash `7e6d5f454948a296ba402c84b947fa9571703da1` — https://github.com/KlassApp-Foundation/KlassApp/pull/195
+- **`origin/main` tip**: `b8b9718` (#201). Prior tip `c39253b` (#200). Prod still **`abeb6fc`** (#188) — **no deploy yet** (holding until full wave lands).
+- **✅ Merged #191–#201**: Wave 1–3 + empty-state/plan-to-profile + product demo + knowledge stamps.
+- **Standing rule**: conflict-marker pre-push check after merge/rebase (Handoff §3).
+- **Open Design**: used only as optional internal reference for Wave 3 chrome; implementation reused DS tokens. Vue Create ≈ Wave 4.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
 
 ## Current Status: August 9, 2026 (`origin/main` tip `4aef387` — #195 + #198 MERGED; stamps #197 + #199)
 
@@ -734,14 +738,22 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-09: #201 MERGED — empty-state product demo + git hygiene rule
+- **Work done**: Squash-merged #201 to `origin/main`. 3-scene auto-loop demo on pre-onboarding dashboard; Handoff §3 conflict-marker pre-push rule. Screenshots included in tip. **No prod deploy**.
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/201
+- **Merge commit**: `b8b971858843868afaa27579559cb8e4d8b52ed1`
+- **Merged at**: 2026-08-09 17:16:45 UTC
+- **Status**: ✅ MERGED (not deployed to prod)
+
 ### 2026-08-09: Empty-state product demo animation + git hygiene rule (PR opening)
 - **Work done**: Built 3-scene CSS/JS product demo for pre-onboarding dashboard (WhatsApp phone, Toshi browser task, connectors hub). Wired above setup banner. Added Handoff standing rule for conflict-marker pre-push checks. Screenshots in `docs/empty-state-demo-screenshots/`.
 - **Files modified**: `empty-state-product-demo.blade.php` (new), `public/css/empty-state-product-demo.css` (new), `public/js/empty-state-product-demo.js` (new), `dashboard.blade.php`, `dashboard-refresh.css` (placeholder), `EmptyStateProductDemoTest.php` (new), `knowledge.md`
 - **Key decisions**: Scene 3 Slack/Notion explicitly "Coming soon" / aspirational disclaimer — WhatsApp live, Google sign-in only. `prefers-reduced-motion` → static fallback. No video assets.
 - **Tests**: `EmptyStateProductDemoTest` + `DashboardEmptyStatePlanToProfileTest` — passing.
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-empty-state-demo` on `feature/empty-state-product-demo` (from `origin/main` @ `c39253b`)
-- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/201 (`4d220a0`)
-- **Status**: 🚧 PR open — awaiting visual confirm
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/201
+- **Status**: ✅ MERGED — squash `b8b971858843868afaa27579559cb8e4d8b52ed1` @ 2026-08-09 17:16:45 UTC
+- **Merge commit**: `b8b971858843868afaa27579559cb8e4d8b52ed1`
 - **Edge cases flagged**: Do not symlink `vendor` from another worktree — Composer classmap will bootstrap the wrong app base path.
 
 
