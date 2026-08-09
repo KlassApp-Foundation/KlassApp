@@ -240,6 +240,13 @@
 
 ---
 
+## Current Status: August 10, 2026 (`feature/wizard-review-preview` — wizard review/preview PR opening)
+
+- **🚧 PR opening**: Manual wizard **review/preview** final confirmation after plan selection (#203); Edit jumps back without wiping later steps; Create School finishes. Branch `feature/wizard-review-preview` off `origin/main` @ `acaafa2`.
+- **`origin/main` tip**: `acaafa2` (includes #203/#204). Prod still **`abeb6fc`** (#188) — **no deploy yet**.
+- **Related open**: #205 AY datepicker (may still be open; this PR does not depend on it).
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
+
 ## Current Status: August 9, 2026 (`origin/main` tip `b199802` — #203 wizard/Toshi sync MERGED)
 
 - **✅ Merged #203**: Hide Toshi on manual wizard; reconcile Completing Setup vs `OnboardingStepsService`; restore visible plan-selection step (no silent Freemium assign) — merge `b1998028788ee6f888bcab4c99d6709da80f79c5` @ **2026-08-09 20:55:07 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/203
@@ -746,6 +753,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-10: Wizard review/preview final confirmation (after plan)
+- **Work done**: Added wizard-only synthetic `review` step after `plan_selection` (not in `OnboardingStepsService` checklist — avoids trapping Toshi in Completing Setup). Review card mirrors Toshi review-card structure with Wave DS styling; each section has Edit → `editSection` → Save & return without wiping later steps; Create School → `confirmReview` finishes + `manual-onboarding-finished`. Tests cover accurate preview, edit-return preservation, and final create. Screenshots in `docs/wizard-review-preview/`.
+- **Files modified**: `ManualOnboardingWizard.php`, `manual-onboarding-wizard.blade.php`, `manual-wizard-step-fields.blade.php`, `public/css/dashboard-refresh.css`, `ManualUiWave3WizardTest.php`, `docs/wizard-review-preview/*`, `knowledge.md`
+- **Key decisions**: Ordering is plan → review → finish; review is wizard-only (not shared checklist); school-level fields update in place on edit; entity creates still early-return if already present (edit hydrates for display).
+- **Status**: 🚧 PR opening — branch `feature/wizard-review-preview`
+- **Edge cases flagged**: Livewire browser morph can lag after edit-return (tests use `goToStep` re-enter; wire:key on card added). Subject names display uppercase via model accessor.
 
 ### 2026-08-09: Fix wizard/Toshi desync + restore visible plan step
 - **Work done**: Hide Toshi entirely on `/admin/onboarding/wizard` (`toshi-manual-wizard` body class). Reconcile AgentToshi "Completing Setup" / 1/18 against `OnboardingStepsService` on mount + `manual-onboarding-finished` event so stale incomplete UI clears after manual onboarding. Restore plan selection as a real last wizard step (plan cards, Freemium default, no payment); stop silent Freemium assign on every wizard `next()` and on dashboard load. Re-verified Previous-from-Classes — not a product bug (automation artifact).

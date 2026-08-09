@@ -44,7 +44,7 @@
         </x-card>
     @elseif($this->currentStep)
         @php $step = $this->currentStep; @endphp
-        <x-card padding="lg" shadow="md" class="max-w-3xl mx-auto manual-wizard-card">
+        <x-card padding="lg" shadow="md" class="max-w-3xl mx-auto manual-wizard-card" wire:key="wizard-card-{{ $stepIndex }}-{{ $step['key'] }}">
             <div class="mb-6">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500" style="color:#64748B;">
                     Step {{ $stepIndex + 1 }} of {{ $this->stepCount }}
@@ -64,10 +64,11 @@
                     'countries' => $countries,
                     'plans' => $this->plans,
                     'selectedPlanId' => $selectedPlanId,
+                    'reviewSummary' => $reviewSummary,
                 ])
             </div>
 
-            @if(!empty($step['route']) && !in_array($step['key'], ['school_name', 'curriculum', 'country', 'emis', 'uneb_center', 'academic_year', 'plan_selection'], true))
+            @if(!empty($step['route']) && !in_array($step['key'], ['school_name', 'curriculum', 'country', 'emis', 'uneb_center', 'academic_year', 'plan_selection', 'review'], true))
                 <p class="mt-4 text-xs text-gray-500" style="color:#64748B;">
                     Prefer the full admin form?
                     <a href="{{ url($step['route']) }}" class="text-blue-600 underline" style="color:#1E6FD9;">Open {{ $step['label'] }}</a>
@@ -78,19 +79,29 @@
 
     {{-- Footer chrome: Previous | progress dots | Next --}}
     @if(! $finished && $this->stepCount > 0)
+        @php
+            $onReview = ($this->currentStep['key'] ?? '') === 'review';
+            $nextLabel = $onReview ? 'Create School' : (($stepIndex >= $this->stepCount - 1) ? 'Finish' : 'Next');
+            if ($returnToStepIndex !== null && ! $onReview) {
+                $nextLabel = 'Save & return';
+            }
+            if ($returnToStepKey !== null && ! $onReview) {
+                $nextLabel = 'Save & return';
+            }
+        @endphp
         <nav class="manual-wizard-nav" aria-label="Wizard navigation" data-testid="wizard-nav">
             <button type="button"
                     class="ds-btn ds-btn-outline ds-btn-md"
                     wire:click="previous"
-                    @disabled($stepIndex === 0)
+                    @disabled($stepIndex === 0 && $returnToStepIndex === null && $returnToStepKey === null)
                     data-testid="wizard-prev">
-                Previous
+                {{ ($returnToStepIndex !== null || $returnToStepKey !== null) && ! $onReview ? 'Cancel edit' : 'Previous' }}
             </button>
 
             <div class="manual-wizard-progress" role="tablist" aria-label="Setup progress" data-testid="wizard-progress">
                 @foreach($steps as $i => $s)
                     <button type="button"
-                            class="manual-wizard-dot {{ $i === $stepIndex ? 'is-current' : '' }} {{ $s['is_complete'] ? 'is-complete' : '' }}"
+                            class="manual-wizard-dot {{ $i === $stepIndex ? 'is-current' : '' }} {{ $s['is_complete'] ? 'is-complete' : '' }} {{ ($s['key'] ?? '') === 'review' ? 'is-review' : '' }}"
                             wire:click="goToStep({{ $i }})"
                             title="{{ $s['label'] }}"
                             aria-label="{{ $s['label'] }}"
@@ -103,7 +114,7 @@
                     class="ds-btn ds-btn-primary ds-btn-md"
                     wire:click="next"
                     data-testid="wizard-next">
-                {{ $stepIndex >= $this->stepCount - 1 ? 'Finish' : 'Next' }}
+                {{ $nextLabel }}
             </button>
         </nav>
     @elseif($finished)

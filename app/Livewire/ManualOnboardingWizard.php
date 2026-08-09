@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Country;
+use App\Models\CurrentPlan;
 use App\Models\FeesCategories;
 use App\Models\Plan;
 use App\Models\School;
@@ -31,6 +32,19 @@ class ManualOnboardingWizard extends Component
     public int $stepIndex = 0;
 
     public bool $finished = false;
+
+    /** When set, Next on an edited checklist step returns here (wizard review). */
+    public ?int $returnToStepIndex = null;
+
+    /** Backup key for return-after-edit (survives index shifts). */
+    public ?string $returnToStepKey = null;
+
+    /**
+     * Summary rows for the synthetic review step (wizard-only; not in OnboardingStepsService).
+     *
+     * @var list<array{key: string, label: string, icon: string, value: string}>
+     */
+    public array $reviewSummary = [];
 
     /** @var array<int, array{key: string, label: string, icon: string, is_complete: bool, route: ?string}> */
     public array $steps = [];
@@ -105,10 +119,15 @@ class ManualOnboardingWizard extends Component
             }
         }
 
-        if ($this->steps !== [] && collect($this->steps)->every(fn ($s) => $s['is_complete'])) {
-            $this->finished = true;
-            $this->completedDuringSession = array_column($this->steps, 'key');
-            $this->notifyToshiOnboardingFinished();
+        // Checklist complete → land on the synthetic review screen (do not auto-finish).
+        if (! OnboardingStepsService::hasIncompleteSteps($school->fresh(), Auth::id())) {
+            $this->completedDuringSession = collect($this->steps)
+                ->where('key', '!=', 'review')
+                ->pluck('key')
+                ->all();
+            $this->stepIndex = $this->reviewStepIndex();
+            $this->buildReviewSummary();
+            $this->finished = false;
         }
 
         unset($user);
@@ -153,8 +172,8 @@ class ManualOnboardingWizard extends Component
     {
         $school = $this->school()->fresh();
         $done = $this->completedDuringSession !== []
-            ? $this->completedDuringSession
-            : collect($this->steps)->where('is_complete', true)->pluck('key')->all();
+            ? array_values(array_filter($this->completedDuringSession, fn ($k) => $k !== 'review'))
+            : collect($this->steps)->where('key', '!=', 'review')->where('is_complete', true)->pluck('key')->all();
 
         $suggestions = [];
 
@@ -214,13 +233,24 @@ class ManualOnboardingWizard extends Component
         $this->errorMessage = '';
         if ($this->finished) {
             $this->finished = false;
-            $this->stepIndex = max(0, count($this->steps) - 1);
+            $this->refreshSteps();
+            $this->stepIndex = $this->reviewStepIndex();
+            $this->buildReviewSummary();
+
+            return;
+        }
+
+        if ($this->returnToStepIndex !== null || $this->returnToStepKey !== null) {
+            $this->returnToReviewAfterEdit();
 
             return;
         }
 
         if ($this->stepIndex > 0) {
             $this->stepIndex--;
+            if ($this->currentKey() === 'review') {
+                $this->buildReviewSummary();
+            }
         }
     }
 
@@ -229,6 +259,12 @@ class ManualOnboardingWizard extends Component
         $this->errorMessage = '';
         $step = $this->currentStep;
         if (! $step) {
+            return;
+        }
+
+        if (($step['key'] ?? '') === 'review') {
+            $this->confirmReview();
+
             return;
         }
 
@@ -249,12 +285,18 @@ class ManualOnboardingWizard extends Component
         }
 
         // Do NOT auto-assign Freemium on every Next — plan_selection must remain a
-        // visible last step. Assignment happens only in savePlan() when the user confirms.
+        // visible decision step. Assignment happens only in savePlan() when confirmed.
         $this->refreshSteps();
 
+        if ($this->returnToStepIndex !== null || $this->returnToStepKey !== null) {
+            $this->returnToReviewAfterEdit();
+
+            return;
+        }
+
         if (! OnboardingStepsService::hasIncompleteSteps($this->school()->fresh(), Auth::id())) {
-            $this->finished = true;
-            $this->notifyToshiOnboardingFinished();
+            $this->stepIndex = $this->reviewStepIndex();
+            $this->buildReviewSummary();
 
             return;
         }
@@ -264,6 +306,9 @@ class ManualOnboardingWizard extends Component
         $start = $currentIndex === false ? 0 : ((int) $currentIndex + 1);
 
         for ($i = $start; $i < count($this->steps); $i++) {
+            if (($this->steps[$i]['key'] ?? '') === 'review') {
+                continue;
+            }
             if (! $this->steps[$i]['is_complete']) {
                 $this->stepIndex = $i;
 
@@ -271,8 +316,10 @@ class ManualOnboardingWizard extends Component
             }
         }
 
-        // Remaining steps already complete — land on first incomplete from start, or finish
         foreach ($this->steps as $i => $candidate) {
+            if (($candidate['key'] ?? '') === 'review') {
+                continue;
+            }
             if (! $candidate['is_complete']) {
                 $this->stepIndex = $i;
 
@@ -280,8 +327,8 @@ class ManualOnboardingWizard extends Component
             }
         }
 
-        $this->finished = true;
-        $this->notifyToshiOnboardingFinished();
+        $this->stepIndex = $this->reviewStepIndex();
+        $this->buildReviewSummary();
     }
 
     public function goToStep(int $index): void
@@ -293,6 +340,71 @@ class ManualOnboardingWizard extends Component
         $this->finished = false;
         $this->errorMessage = '';
         $this->stepIndex = $index;
+        if (($this->steps[$index]['key'] ?? '') === 'review') {
+            $this->returnToStepIndex = null;
+            $this->returnToStepKey = null;
+            $this->buildReviewSummary();
+        }
+    }
+
+    /**
+     * Jump to a checklist step from the review screen; Next returns to review.
+     */
+    public function editSection(string $key): void
+    {
+        $this->refreshSteps();
+        $reviewIndex = $this->reviewStepIndex();
+
+        foreach ($this->steps as $index => $step) {
+            if (($step['key'] ?? '') === $key && $key !== 'review') {
+                $this->returnToStepIndex = $reviewIndex;
+                $this->returnToStepKey = 'review';
+                $this->finished = false;
+                $this->errorMessage = '';
+                $this->hydrateFieldsForEdit($key);
+                $this->stepIndex = $index;
+
+                return;
+            }
+        }
+    }
+
+    public function confirmReview(): void
+    {
+        $this->errorMessage = '';
+        $this->refreshSteps();
+
+        if (OnboardingStepsService::hasIncompleteSteps($this->school()->fresh(), Auth::id())) {
+            $this->errorMessage = 'Finish the remaining setup steps before creating your school.';
+
+            return;
+        }
+
+        $this->finished = true;
+        $this->returnToStepIndex = null;
+        $this->returnToStepKey = null;
+        $this->notifyToshiOnboardingFinished();
+    }
+
+    private function returnToReviewAfterEdit(): void
+    {
+        $this->refreshSteps();
+        $target = $this->reviewStepIndex();
+        if ($this->returnToStepIndex !== null && $this->returnToStepIndex >= 0 && $this->returnToStepIndex < count($this->steps)) {
+            $target = $this->returnToStepIndex;
+        }
+        if ($this->returnToStepKey) {
+            foreach ($this->steps as $i => $step) {
+                if (($step['key'] ?? '') === $this->returnToStepKey) {
+                    $target = $i;
+                    break;
+                }
+            }
+        }
+        $this->returnToStepIndex = null;
+        $this->returnToStepKey = null;
+        $this->stepIndex = $target;
+        $this->buildReviewSummary();
     }
 
     public function render()
@@ -343,7 +455,171 @@ class ManualOnboardingWizard extends Component
 
     private function refreshSteps(): void
     {
-        $this->steps = OnboardingStepsService::steps($this->school()->fresh(), Auth::id());
+        $checklist = OnboardingStepsService::steps($this->school()->fresh(), Auth::id());
+
+        // Wizard-only synthetic review step — not part of OnboardingStepsService /
+        // Toshi "Completing Setup" checklist (would never complete otherwise).
+        $checklist[] = [
+            'key' => 'review',
+            'label' => 'Review & confirm',
+            'icon' => '📋',
+            'is_complete' => false,
+            'route' => null,
+        ];
+
+        $this->steps = $checklist;
+    }
+
+    private function currentKey(): ?string
+    {
+        return $this->steps[$this->stepIndex]['key'] ?? null;
+    }
+
+    private function reviewStepIndex(): int
+    {
+        foreach ($this->steps as $i => $step) {
+            if (($step['key'] ?? '') === 'review') {
+                return $i;
+            }
+        }
+
+        return max(count($this->steps) - 1, 0);
+    }
+
+    private function buildReviewSummary(): void
+    {
+        $school = $this->school()->fresh();
+        $sid = $school->id;
+
+        $year = AcademicYear::where('school_id', $sid)->first();
+        $links = StandardLink::with('section')->where('school_id', $sid)->get();
+        $subjects = Subject::where('school_id', $sid)->pluck('name')->filter()->values();
+        $teachers = Teacherlink::with('teacher')
+            ->where('school_id', $sid)
+            ->get()
+            ->map(fn ($tl) => $tl->teacher?->name)
+            ->filter()
+            ->unique()
+            ->values();
+        $terms = AcademicTerm::where('school_id', $sid)->get();
+        $fees = FeesCategories::where('school_id', $sid)->get();
+        $whatsapp = WhatsAppUser::where('user_id', Auth::id())->first();
+        $currentPlan = CurrentPlan::with('plan')->where('school_id', $sid)->first();
+        $plan = $currentPlan?->plan;
+
+        $classNames = $links->map(fn ($l) => $l->section?->name)->filter()->unique()->values();
+        $emis = trim((string) ($school->ministry_code ?: ''));
+        $unebRaw = $school->uneb_center_number;
+        $unebDisplay = '—';
+        if ($unebRaw !== null) {
+            $unebDisplay = trim((string) $unebRaw) === '' ? 'Skipped' : trim((string) $unebRaw);
+        }
+
+        $yearValue = '—';
+        if ($year) {
+            $start = $year->start_date ? substr((string) $year->start_date, 0, 10) : '';
+            $end = $year->end_date ? substr((string) $year->end_date, 0, 10) : '';
+            $yearValue = trim(($year->description ?: $year->name).($start || $end ? " · {$start} → {$end}" : ''));
+        }
+
+        $feeValue = $fees->isEmpty()
+            ? '—'
+            : $fees->map(fn ($f) => $f->name.' ('.number_format((float) $f->amount).')')->implode(', ');
+
+        $planValue = $plan
+            ? ($plan->display_name ?: ucfirst((string) $plan->name))
+            : '—';
+
+        $this->reviewSummary = [
+            ['key' => 'school_name', 'label' => 'School name', 'icon' => '🏫', 'value' => (string) ($school->name ?: '—')],
+            ['key' => 'curriculum', 'label' => 'Curriculum', 'icon' => '📚', 'value' => strtoupper((string) ($school->curriculum ?: '—'))],
+            ['key' => 'country', 'label' => 'Country', 'icon' => '🌍', 'value' => (string) ($school->registration_country ?: '—')],
+            ['key' => 'emis', 'label' => 'EMIS / Ministry code', 'icon' => '🔢', 'value' => $emis !== '' ? $emis : '—'],
+            ['key' => 'uneb_center', 'label' => 'UNEB centre', 'icon' => '🎓', 'value' => $unebDisplay],
+            ['key' => 'academic_year', 'label' => 'Academic year', 'icon' => '📅', 'value' => $yearValue],
+            ['key' => 'standards', 'label' => 'Classes', 'icon' => '🏷️', 'value' => $classNames->isEmpty() ? '—' : $classNames->implode(', ')],
+            ['key' => 'subjects', 'label' => 'Subjects', 'icon' => '📖', 'value' => $subjects->isEmpty() ? '—' : $subjects->implode(', ')],
+            ['key' => 'teachers', 'label' => 'Teachers', 'icon' => '👩‍🏫', 'value' => $teachers->isEmpty() ? '—' : $teachers->implode(', ')],
+            ['key' => 'terms', 'label' => 'Terms', 'icon' => '🗓️', 'value' => $terms->isEmpty() ? '—' : $terms->pluck('name')->implode(', ')],
+            ['key' => 'fees', 'label' => 'Fees', 'icon' => '💰', 'value' => $feeValue],
+            ['key' => 'whatsapp_verify', 'label' => 'WhatsApp', 'icon' => '📱', 'value' => $whatsapp?->phone ?: 'Not linked'],
+            ['key' => 'plan_selection', 'label' => 'Selected plan', 'icon' => '✨', 'value' => $planValue],
+        ];
+    }
+
+    private function hydrateFieldsForEdit(string $key): void
+    {
+        $school = $this->school()->fresh();
+        $this->hydrateFieldsFromSchool($school);
+
+        $sid = $school->id;
+
+        match ($key) {
+            'academic_year' => (function () use ($sid) {
+                $year = AcademicYear::where('school_id', $sid)->first();
+                if ($year) {
+                    $this->academicYearDescription = (string) ($year->description ?: 'Current Academic Year');
+                    $this->academicYearStart = $year->start_date ? substr((string) $year->start_date, 0, 10) : $this->academicYearStart;
+                    $this->academicYearEnd = $year->end_date ? substr((string) $year->end_date, 0, 10) : $this->academicYearEnd;
+                }
+            })(),
+            'standards' => (function () use ($sid) {
+                $link = StandardLink::with('section')->where('school_id', $sid)->first();
+                if ($link?->section?->name) {
+                    $this->className = (string) $link->section->name;
+                }
+            })(),
+            'subjects' => (function () use ($sid) {
+                $subject = Subject::where('school_id', $sid)->first();
+                if ($subject) {
+                    $this->subjectName = (string) $subject->name;
+                }
+            })(),
+            'teachers' => (function () use ($sid) {
+                $link = Teacherlink::with('teacher')->where('school_id', $sid)->first();
+                if ($link?->teacher) {
+                    $this->teacherName = (string) $link->teacher->name;
+                    $this->teacherEmail = (string) ($link->teacher->email ?: $this->teacherEmail);
+                    $this->teacherPhone = (string) ($link->teacher->mobile_no ?: '');
+                }
+            })(),
+            'terms' => (function () use ($sid) {
+                $term = AcademicTerm::where('school_id', $sid)->first();
+                if ($term) {
+                    $this->termName = (string) $term->name;
+                    $this->termStartsOn = $term->starts_on ? substr((string) $term->starts_on, 0, 10) : $this->termStartsOn;
+                    $this->termEndsOn = $term->ends_on ? substr((string) $term->ends_on, 0, 10) : $this->termEndsOn;
+                }
+            })(),
+            'fees' => (function () use ($sid) {
+                $fee = FeesCategories::where('school_id', $sid)->first();
+                if ($fee) {
+                    $this->feeName = (string) $fee->name;
+                    $this->feeAmount = (string) $fee->amount;
+                }
+            })(),
+            'whatsapp_verify' => (function () {
+                $wa = WhatsAppUser::where('user_id', Auth::id())->first();
+                if ($wa) {
+                    $this->whatsappPhone = (string) $wa->phone;
+                }
+            })(),
+            'plan_selection' => (function () use ($sid) {
+                $current = CurrentPlan::where('school_id', $sid)->first();
+                if ($current) {
+                    $this->selectedPlanId = (int) $current->plan_id;
+                }
+            })(),
+            'emis' => null,
+            'uneb_center' => null,
+            default => null,
+        };
+
+        // Country/EMIS/UNEB combined review row edits country by default;
+        // dedicated emis/uneb rows still hydrate from school above.
+        if ($key === 'country') {
+            // Prefer jumping to country; emis/uneb stay editable via progress dots.
+        }
     }
 
     private function hydrateFieldsFromSchool(School $school): void
@@ -642,10 +918,6 @@ class ManualOnboardingWizard extends Component
 
     private function savePlan(School $school): void
     {
-        if (OnboardingStepsService::isStepComplete('plan_selection', $school->fresh(), Auth::id())) {
-            return;
-        }
-
         foreach (OnboardingStepsService::incompleteSteps($school->fresh(), Auth::id()) as $step) {
             if ($step['key'] !== 'plan_selection') {
                 throw ValidationException::withMessages(['plan' => 'Finish the earlier setup steps before choosing a plan.']);
@@ -662,8 +934,17 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['plan' => 'That plan is not available.']);
         }
 
+        $existing = CurrentPlan::where('school_id', $school->id)->first();
+        if ($existing) {
+            $existing->plan_id = $plan->id;
+            $existing->status = 'running';
+            $existing->save();
+
+            return;
+        }
+
         // Visible confirmation step — no payment gate. Persist the chosen plan.
-        \App\Models\CurrentPlan::create([
+        CurrentPlan::create([
             'school_id' => $school->id,
             'plan_id' => $plan->id,
             'status' => 'running',

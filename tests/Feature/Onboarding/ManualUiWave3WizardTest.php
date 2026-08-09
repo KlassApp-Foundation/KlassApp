@@ -168,11 +168,22 @@ class ManualUiWave3WizardTest extends TestCase
             'Plan must not be silently assigned before the plan step is confirmed'
         );
 
-        $component->call('next')->assertSet('finished', true);
+        $component->call('next')->assertSet('finished', false);
 
+        $instance = $component->instance();
+        $this->assertSame('review', $instance->steps[$instance->stepIndex]['key'] ?? null);
         $this->assertNotNull(
             \App\Models\CurrentPlan::where('school_id', $this->school->id)->first()
         );
+
+        $component->call('goToStep', $instance->stepIndex);
+        $component
+            ->assertSee('Review & confirm')
+            ->assertSeeHtml('data-testid="wizard-review"')
+            ->assertSee('Plan Step Academy')
+            ->assertSee('Freemium');
+
+        $component->call('next')->assertSet('finished', true);
     }
 
     public function test_completion_screen_is_personalized_from_setup(): void
@@ -208,14 +219,115 @@ class ManualUiWave3WizardTest extends TestCase
         $this->assertSame('plan_selection', $component->instance()->steps[$component->instance()->stepIndex]['key'] ?? null);
         $component->call('goToStep', $component->instance()->stepIndex);
         $component->assertSeeHtml('data-testid="wizard-plan-cards"');
-        $component->call('next'); // confirm Freemium
+        $component->call('next'); // confirm Freemium → review
+
+        $reviewIndex = $component->instance()->stepIndex;
+        $this->assertSame('review', $component->instance()->steps[$reviewIndex]['key'] ?? null);
+        // Livewire test HTML can lag one tick after stepIndex-only updates; re-enter step.
+        $component->call('goToStep', $reviewIndex);
 
         $component
+            ->assertSet('finished', false)
+            ->assertSeeHtml('data-testid="wizard-review"')
+            ->call('confirmReview')
             ->assertSet('finished', true)
             ->assertSee('Personalized Academy is ready')
             ->assertSeeHtml('data-testid="wizard-completion-suggestions"')
             ->assertSee('Invite more teachers')
             ->assertDontSee('Setup complete! You are all done.');
+    }
+
+    public function test_review_preview_shows_entered_data_and_edit_return_preserves_rest(): void
+    {
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(ManualOnboardingWizard::class);
+
+        $component
+            ->set('schoolName', 'Preview Academy')
+            ->call('next')
+            ->set('curriculum', 'uneb')
+            ->call('next')
+            ->set('countryName', 'Uganda')
+            ->call('next')
+            ->set('ministryCode', 'EMIS-PREVIEW')
+            ->call('next')
+            ->set('unebCenterNumber', 'U999')
+            ->call('next')
+            ->call('next') // academic year
+            ->set('className', 'P2')
+            ->call('next')
+            ->set('subjectName', 'English')
+            ->call('next')
+            ->set('teacherName', 'Helen Teacher')
+            ->set('teacherEmail', 'helen@wave3.sch.ug')
+            ->call('next')
+            ->call('next') // terms
+            ->call('next') // fees
+            ->set('whatsappPhone', '+256700555666')
+            ->call('next'); // plan
+
+        $component->call('goToStep', $component->instance()->stepIndex);
+        $component->call('next'); // plan → review
+
+        $reviewIndex = $component->instance()->stepIndex;
+        $this->assertSame('review', $component->instance()->steps[$reviewIndex]['key'] ?? null);
+        $component->call('goToStep', $reviewIndex);
+
+        $component
+            ->assertSet('finished', false)
+            ->assertSeeHtml('data-testid="wizard-review"')
+            ->assertSee('Preview Academy')
+            ->assertSee('UNEB')
+            ->assertSee('Uganda')
+            ->assertSee('EMIS-PREVIEW')
+            ->assertSee('U999')
+            ->assertSee('P2')
+            ->assertSee('ENGLISH') // Subject model accessor uppercases name
+            ->assertSee('Helen Teacher')
+            ->assertSee('+256700555666')
+            ->assertSee('Freemium');
+
+        $planId = \App\Models\CurrentPlan::where('school_id', $this->school->id)->value('plan_id');
+        $this->assertNotNull($planId);
+
+        $component
+            ->call('editSection', 'school_name')
+            ->assertSee('School name');
+        $this->assertNotNull($component->get('returnToStepIndex'));
+        $component
+            ->set('schoolName', 'Preview Academy Renamed')
+            ->call('next');
+
+        $component->call('goToStep', $component->instance()->stepIndex);
+
+        $component
+            ->assertSeeHtml('data-testid="wizard-review"')
+            ->assertSee('Preview Academy Renamed')
+            ->assertSee('P2')
+            ->assertSee('ENGLISH')
+            ->assertSee('Helen Teacher')
+            ->assertSee('+256700555666')
+            ->assertSee('Freemium');
+        $this->assertNull($component->get('returnToStepIndex'));
+
+        $this->assertSame(
+            'Preview Academy Renamed',
+            $this->school->fresh()->name
+        );
+        $this->assertSame(
+            (int) $planId,
+            (int) \App\Models\CurrentPlan::where('school_id', $this->school->id)->value('plan_id')
+        );
+        $this->assertTrue(
+            \App\Models\Subject::where('school_id', $this->school->id)->where('name', 'English')->exists()
+            || \App\Models\Subject::where('school_id', $this->school->id)->where('name', 'ENGLISH')->exists()
+        );
+
+        $component->call('confirmReview')->assertSet('finished', true);
+        $this->assertNotNull(
+            \App\Models\CurrentPlan::where('school_id', $this->school->id)->first()
+        );
     }
 
     public function test_previous_from_classes_returns_to_academic_year(): void
