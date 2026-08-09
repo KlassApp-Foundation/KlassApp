@@ -240,6 +240,13 @@
 
 ---
 
+## Current Status: August 9, 2026 (`origin/main` tip `c39253b` — #200; empty-state demo PR opening)
+
+- **🚧 Empty-state product demo PR opening**: 3-scene auto-loop (WhatsApp / Toshi / connectors) in pre-onboarding dashboard top half; setup banner below. Slack/Notion marked Coming soon (aspirational). Branch `feature/empty-state-product-demo` (worktree `/Users/mac/projects/KlassApp-empty-state-demo`). Screenshots in `docs/empty-state-demo-screenshots/`.
+- **Standing rule added**: git conflict-marker pre-push hygiene after merge/rebase (Handoff §3).
+- **`origin/main` tip**: `c39253b` (#200). App tip: `260e0ae` (#198) / `7e6d5f4` (#195). Prod still **`abeb6fc`** (#188) — **no deploy yet**.
+- **✅ Merged #191–#200**: Wave 1–3 + empty-state/plan-to-profile + knowledge stamps.
+
 ## Current Status: August 9, 2026 (`origin/main` tip `4aef387` — #195 + #198 MERGED; stamps #197 + #199)
 
 - **✅ Merged #198**: Dashboard empty-state (no empty KPIs/plan card; plan on Edit Profile) — squash `260e0ae314a6ec64049315ab206d4ce2c4e4b32c` @ **2026-08-09 16:48:41 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/198 (replaces closed #196)
@@ -314,6 +321,7 @@
 
 ### 3. Standing decisions (do not casually reverse)
 
+- **Git hygiene (mandatory pre-push after merge / rebase / conflict resolution):** Before any push that follows a merge, rebase, or conflict resolution, run `git diff --check` and/or `grep -rn '^<<<<<<<\|^=======\|^>>>>>>>' <changed files>` (or repo-wide on touched paths) and confirm **zero leftover conflict markers** in the working tree. Do not push until clean. Lesson: #198 near-miss — markers accidentally committed during rebase. Also run this check before opening/merging a PR when conflicts were involved.
 - Schools sign up **FREE for now** — no payment enforcement.
 - Plan UI is **last-step / informational / non-blocking**.
 - **Full Toshi↔manual bidirectional parity** is a hard product requirement.
@@ -725,6 +733,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-09: Empty-state product demo animation + git hygiene rule (PR opening)
+- **Work done**: Built 3-scene CSS/JS product demo for pre-onboarding dashboard (WhatsApp phone, Toshi browser task, connectors hub). Wired above setup banner. Added Handoff standing rule for conflict-marker pre-push checks. Screenshots in `docs/empty-state-demo-screenshots/`.
+- **Files modified**: `empty-state-product-demo.blade.php` (new), `public/css/empty-state-product-demo.css` (new), `public/js/empty-state-product-demo.js` (new), `dashboard.blade.php`, `dashboard-refresh.css` (placeholder), `EmptyStateProductDemoTest.php` (new), `knowledge.md`
+- **Key decisions**: Scene 3 Slack/Notion explicitly "Coming soon" / aspirational disclaimer — WhatsApp live, Google sign-in only. `prefers-reduced-motion` → static fallback. No video assets.
+- **Tests**: `EmptyStateProductDemoTest` + `DashboardEmptyStatePlanToProfileTest` — passing.
+- **Worktree/branch**: `/Users/mac/projects/KlassApp-empty-state-demo` on `feature/empty-state-product-demo` (from `origin/main` @ `c39253b`)
+- **PR**: opening
+- **Status**: 🚧 PR opening
+- **Edge cases flagged**: Do not symlink `vendor` from another worktree — Composer classmap will bootstrap the wrong app base path.
+
 
 ### 2026-08-09: #199 MERGED — knowledge stamp for #198
 - **Work done**: Stamped Current Status + Session Log after #198 squash-merge. Confirmed no prod deploy.
