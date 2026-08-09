@@ -1,6 +1,6 @@
 {
   "node_modules/quill/quill.js": {
-    "file": "assets/quill-CyP0xyXW.js",
+    "file": "assets/quill-DVuNG_1b.js",
     "name": "quill",
     "src": "node_modules/quill/quill.js",
     "isDynamicEntry": true,
@@ -9,7 +9,7 @@
     ]
   },
   "resources/assets/js/app.js": {
-    "file": "assets/app-C3OSstE4.js",
+    "file": "assets/app-rhxsMJGA.js",
     "name": "app",
     "src": "resources/assets/js/app.js",
     "isEntry": true,
@@ -17,7 +17,7 @@
       "node_modules/quill/quill.js"
     ],
     "css": [
-      "assets/app-By2FRZS4.css"
+      "assets/app-DmAxERQh.css"
     ]
   },
   "resources/assets/sass/app.scss": {

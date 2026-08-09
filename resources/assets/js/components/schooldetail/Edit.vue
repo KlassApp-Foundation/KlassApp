@@ -1,6 +1,6 @@
 <template>
     <div class="">
-        <div class="bg-white shadow px-4">
+        <div class="">
             <div
                 v-if="this.success != null"
                 class="alert alert-success"
@@ -30,7 +30,7 @@
                             />
                             <span
                                 v-if="errors.school_logo"
-                                class="text-red-500 text-xs font-semibold"
+                                class="ds-form-error"
                                 >{{ errors.school_logo[0] }}</span
                             >
                         </label>
@@ -40,10 +40,10 @@
 
             <!-- Basic Info -->
             <div class="flex flex-col lg:flex-row">
-                <div class="tw-form-group w-full lg:w-1/2">
+                <div class="ds-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="name" class="tw-form-label"
+                            <label for="name" class="ds-form-label"
                                 >School Name<span class="text-red-500"
                                     >*</span
                                 ></label
@@ -55,21 +55,21 @@
                                 name="name"
                                 v-model="name"
                                 id="name"
-                                class="tw-form-control w-full"
+                                class="ds-form-input w-full"
                                 placeholder="Enter School Name"
                             />
                         </div>
                         <span
                             v-if="errors.name"
-                            class="text-red-500 text-xs font-semibold"
+                            class="ds-form-error"
                             >{{ errors.name[0] }}</span
                         >
                     </div>
                 </div>
-                <div class="tw-form-group w-full lg:w-1/2">
+                <div class="ds-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="moto" class="tw-form-label"
+                            <label for="moto" class="ds-form-label"
                                 >School Moto<span class="text-red-500"
                                     >*</span
                                 ></label
@@ -81,13 +81,13 @@
                                 name="moto"
                                 v-model="moto"
                                 id="moto"
-                                class="tw-form-control w-full"
+                                class="ds-form-input w-full"
                                 placeholder="Enter School Moto"
                             />
                         </div>
                         <span
                             v-if="errors.moto"
-                            class="text-red-500 text-xs font-semibold"
+                            class="ds-form-error"
                             >{{ errors.moto[0] }}</span
                         >
                     </div>
@@ -103,12 +103,12 @@
 
             <!-- Establishment & Board -->
             <div class="flex flex-col lg:flex-row">
-                <div class="tw-form-group w-full lg:w-1/2">
+                <div class="ds-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label
                                 for="date_of_establishment"
-                                class="tw-form-label"
+                                class="ds-form-label"
                                 >Date Of Establishment<span class="text-red-500"
                                     >*</span
                                 ></label
@@ -120,21 +120,21 @@
                                 name="date_of_establishment"
                                 v-model="date_of_establishment"
                                 id="date_of_establishment"
-                                class="tw-form-control w-full"
+                                class="ds-form-input w-full"
                             />
                         </div>
                         <span
                             v-if="errors.date_of_establishment"
-                            class="text-red-500 text-xs font-semibold"
+                            class="ds-form-error"
                             >{{ errors.date_of_establishment[0] }}</span
                         >
                     </div>
                 </div>
 
-                <div class="tw-form-group w-full lg:w-1/2">
+                <div class="ds-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="board" class="tw-form-label"
+                            <label for="board" class="ds-form-label"
                                 >Board Of Education<span class="text-red-500"
                                     >*</span
                                 ></label
@@ -145,7 +145,7 @@
                                 name="board"
                                 v-model="board"
                                 id="board"
-                                class="tw-form-control w-full"
+                                class="ds-form-input ds-form-select w-full"
                             >
                                 <option value="" disabled>Select board</option>
                                 <option
@@ -157,7 +157,7 @@
                             </select>
                             <span
                                 v-if="errors.board"
-                                class="text-red-500 text-xs font-semibold"
+                                class="ds-form-error"
                                 >{{ errors.board[0] }}</span
                             >
                         </div>
@@ -169,10 +169,10 @@
 
             <!-- Location -->
             <div class="flex flex-col lg:flex-row">
-                <div class="tw-form-group w-full lg:w-1/2">
+                <div class="ds-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="country" class="tw-form-label"
+                            <label for="country" class="ds-form-label"
                                 >Country<span class="text-red-500"
                                     >*</span
                                 ></label
@@ -180,7 +180,7 @@
                         </div>
                         <div class="w-full lg:w-3/4 my-2">
                             <select
-                                class="tw-form-control w-full"
+                                class="ds-form-input ds-form-select w-full"
                                 id="country_id"
                                 v-model="country_id"
                                 name="country_id"
@@ -198,7 +198,7 @@
                         </div>
                         <span
                             v-if="errors.country_id"
-                            class="text-red-500 text-xs font-semibold"
+                            class="ds-form-error"
                             >{{ errors.country_id[0] }}</span
                         >
                         <p class="text-xs text-gray-500 mt-1">
@@ -207,10 +207,10 @@
                     </div>
                 </div>
 
-                <div class="tw-form-group w-full lg:w-1/2">
+                <div class="ds-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="city" class="tw-form-label"
+                            <label for="city" class="ds-form-label"
                                 >District<span class="text-red-500"
                                     >*</span
                                 ></label
@@ -218,7 +218,7 @@
                         </div>
                         <div class="w-full lg:w-3/4 my-2">
                             <select
-                                class="tw-form-control w-full"
+                                class="ds-form-input ds-form-select w-full"
                                 id="city_id"
                                 v-model="city_id"
                                 name="city_id"
@@ -236,7 +236,7 @@
                         </div>
                         <span
                             v-if="errors.city_id"
-                            class="text-red-500 text-xs font-semibold"
+                            class="ds-form-error"
                             >{{ errors.city_id[0] }}</span
                         >
                     </div>
@@ -245,10 +245,10 @@
 
             <!-- EMIS (Uganda) & UNEB centre -->
             <div class="flex flex-col lg:flex-row">
-                <div v-if="isUganda" class="tw-form-group w-full lg:w-1/2">
+                <div v-if="isUganda" class="ds-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="ministry_code" class="tw-form-label"
+                            <label for="ministry_code" class="ds-form-label"
                                 >EMIS / Ministry Code<span class="text-red-500"
                                     >*</span
                                 ></label
@@ -260,13 +260,13 @@
                                 name="ministry_code"
                                 v-model="ministry_code"
                                 id="ministry_code"
-                                class="tw-form-control w-full"
+                                class="ds-form-input w-full"
                                 placeholder="e.g. 4527"
                             />
                         </div>
                         <span
                             v-if="errors.ministry_code"
-                            class="text-red-500 text-xs font-semibold"
+                            class="ds-form-error"
                             >{{ errors.ministry_code[0] }}</span
                         >
                     </div>
@@ -274,13 +274,13 @@
 
                 <div
                     v-if="showUnebCenter"
-                    class="tw-form-group w-full lg:w-1/2"
+                    class="ds-form-group w-full lg:w-1/2"
                 >
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label
                                 for="uneb_center_number"
-                                class="tw-form-label"
+                                class="ds-form-label"
                                 >UNEB Centre Number
                                 <span class="text-xs text-gray-400 font-normal"
                                     >(optional)</span
@@ -293,13 +293,13 @@
                                 name="uneb_center_number"
                                 v-model="uneb_center_number"
                                 id="uneb_center_number"
-                                class="tw-form-control w-full"
+                                class="ds-form-input w-full"
                                 placeholder="e.g. U0123"
                             />
                         </div>
                         <span
                             v-if="errors.uneb_center_number"
-                            class="text-red-500 text-xs font-semibold"
+                            class="ds-form-error"
                             >{{ errors.uneb_center_number[0] }}</span
                         >
                     </div>
@@ -308,10 +308,10 @@
 
             <!-- About & Website -->
             <div class="flex flex-col lg:flex-row">
-                <div class="tw-form-group w-full lg:w-1/2">
+                <div class="ds-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="about_us" class="tw-form-label"
+                            <label for="about_us" class="ds-form-label"
                                 >About Us<span class="text-red-500"
                                     >*</span
                                 ></label
@@ -322,21 +322,21 @@
                                 name="about_us"
                                 v-model="about_us"
                                 id="about_us"
-                                class="tw-form-control w-full"
+                                class="ds-form-input ds-form-textarea w-full"
                                 placeholder="Enter About Us"
                             ></textarea>
                         </div>
                         <span
                             v-if="errors.about_us"
-                            class="text-red-500 text-xs font-semibold"
+                            class="ds-form-error"
                             >{{ errors.about_us[0] }}</span
                         >
                     </div>
                 </div>
-                <div class="tw-form-group w-full lg:w-1/2">
+                <div class="ds-form-group w-full lg:w-1/2">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
-                            <label for="website" class="tw-form-label"
+                            <label for="website" class="ds-form-label"
                                 >Website</label
                             >
                         </div>
@@ -346,13 +346,13 @@
                                 name="website"
                                 v-model="website"
                                 id="website"
-                                class="tw-form-control w-full"
+                                class="ds-form-input w-full"
                                 placeholder="Enter Website"
                             />
                         </div>
                         <span
                             v-if="errors.website"
-                            class="text-red-500 text-xs font-semibold"
+                            class="ds-form-error"
                             >{{ errors.website[0] }}</span
                         >
                     </div>
@@ -364,13 +364,13 @@
                 <div class="py-3">
                     <a
                         href="#"
-                        class="btn btn-primary submit-btn"
+                        class="ds-btn ds-btn-primary ds-btn-md submit-btn"
                         @click="updateDetails()"
                         >Submit</a
                     >
                     <a
                         href="#"
-                        class="btn btn-reset reset-btn"
+                        class="ds-btn ds-btn-outline ds-btn-md reset-btn"
                         @click="resetForm()"
                         >Reset</a
                     >

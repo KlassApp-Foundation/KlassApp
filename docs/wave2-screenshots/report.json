@@ -1,0 +1,13 @@
+{
+  "captured_at": "2026-08-09T14:07:05.883Z",
+  "base_url": "http://127.0.0.1:8012",
+  "user": "e2e.toshi.1785838250647.5pbgci@example.test",
+  "school_id": 12,
+  "files": [
+    "01-schooldetails-index.png",
+    "02-schooldetails-editdetail-1280.png",
+    "03-schooldetails-editdetail-390.png"
+  ],
+  "page_url": "http://127.0.0.1:8012/admin/schooldetails/editdetail/12",
+  "title": "KlassApp"
+}
