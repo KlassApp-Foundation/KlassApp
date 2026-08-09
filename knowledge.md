@@ -242,7 +242,7 @@
 
 ## Current Status: August 9, 2026 (`feature/manual-ui-wave1-blade-ds` — Wave 1 Blade DS restyle PR open)
 
-- **🚧 PR open**: Manual UI redesign **Wave 1** — restyle five pure-Blade create screens with existing DS primitives (`x-card`, `x-form-group`, `x-button`, `ds-page-head`). No Vue/JS/backend changes. Branch `feature/manual-ui-wave1-blade-ds` from `origin/main` @ `0eeb687`.
+- **🚧 PR open**: Manual UI redesign **Wave 1** — https://github.com/KlassApp-Foundation/KlassApp/pull/191 — restyle five pure-Blade create screens with existing DS primitives (`x-card`, `x-form-group`, `x-button`, `ds-page-head`). No Vue/JS/backend changes. Branch `feature/manual-ui-wave1-blade-ds` @ `5cf60b4` from `origin/main` @ `0eeb687`.
 - **`origin/main` tip** (pre-Wave-1): `0eeb687` — #190 tip refresh after #189. Prod app still **`abeb6fc`** (#188) unless redeployed later.
 - **✅ Merged #189 / #188**: Goose/OpenCode handoff + manual↔Toshi parity (unchanged).
 - **Wave 1 files**: `sections/create(+_form)`, `term/create-term`, `fees/create`, `standards/create` (header only), `academics/create` (header only; Vue `create-academic-year` untouched).
