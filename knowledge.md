@@ -742,7 +742,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Hide Toshi entirely on `/admin/onboarding/wizard` (`toshi-manual-wizard` body class). Reconcile AgentToshi "Completing Setup" / 1/18 against `OnboardingStepsService` on mount + `manual-onboarding-finished` event so stale incomplete UI clears after manual onboarding. Restore plan selection as a real last wizard step (plan cards, Freemium default, no payment); stop silent Freemium assign on every wizard `next()` and on dashboard load. Re-verified Previous-from-Classes — not a product bug (automation artifact).
 - **Files modified**: `ManualOnboardingWizard.php`, `AgentToshi.php`, `DashboardController.php`, `FreeTierPlanService.php` (docs), wizard Blade/CSS/partials, `WizardToshiSyncPlanStepTest.php`, `ManualUiWave3WizardTest.php`, screenshots under `docs/wizard-toshi-sync-screenshots/`
 - **Key decisions**: Plan must stay a visible milestone even while free; Toshi must not compete on the manual path; completion state source of truth is `OnboardingStepsService` (same as wizard).
-- **Status**: 🚧 PR opening
+- **Status**: 🚧 PR open — #203 https://github.com/KlassApp-Foundation/KlassApp/pull/203
 - **Edge cases flagged**: Dashboard no longer auto-assigns Freemium — schools that finished content via legacy forms still need an explicit plan confirmation (wizard/Toshi) or a future backfill.
 
 
