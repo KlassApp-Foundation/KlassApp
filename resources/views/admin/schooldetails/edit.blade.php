@@ -1,26 +1,31 @@
 {{-- SPDX-License-Identifier: MIT --}}
+{{--
+  Live route: GET /admin/schooldetails/editdetail/{school_id}
+  → SchoolDetailsController@editdetail → this view.
+  (GET /admin/schooldetails/edit/{id} returns JSON for the Vue component.)
+--}}
 @extends('layouts.admin.layout')
 
 @section('content')
+<div class="py-6 px-4">
+    <div class="ds-page-head">
+        <div class="flex items-center gap-3">
+            <x-button href="{{ url('/admin/schooldetails') }}" variant="ghost" size="sm" title="Back">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </x-button>
+            <h1 class="ds-page-head-title">Edit School Details</h1>
+        </div>
+    </div>
 
-<div class="w-full lg:mx-2 md:mx-2">
-    <h1 class="admin-h1 my-3 flex items-center">
-      <a href="{{ url('/admin/schooldetails') }}" title="Back" class="rounded-full bg-gray-100 p-2">
+    @include('partials.message')
 
-           <svg class="w-3 h-3 fill-current text-gray-700" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 492 492" style="enable-background:new 0 0 492 492;" xml:space="preserve" width="512px" height="512px"><g><g>
-    <g>
-        <path d="M464.344,207.418l0.768,0.168H135.888l103.496-103.724c5.068-5.064,7.848-11.924,7.848-19.124    c0-7.2-2.78-14.012-7.848-19.088L223.28,49.538c-5.064-5.064-11.812-7.864-19.008-7.864c-7.2,0-13.952,2.78-19.016,7.844    L7.844,226.914C2.76,231.998-0.02,238.77,0,245.974c-0.02,7.244,2.76,14.02,7.844,19.096l177.412,177.412    c5.064,5.06,11.812,7.844,19.016,7.844c7.196,0,13.944-2.788,19.008-7.844l16.104-16.112c5.068-5.056,7.848-11.808,7.848-19.008    c0-7.196-2.78-13.592-7.848-18.652L134.72,284.406h329.992c14.828,0,27.288-12.78,27.288-27.6v-22.788    C492,219.198,479.172,207.418,464.344,207.418z" data-original="#000000" class="active-path" fill=""/>
-    </g>
-</g></g> </svg>
-
-      </a>
-      <span class="mx-3">Edit School Details</span>
-    </h1>
-      @include('partials.message')
-      <form method="POST" action="{{url('/admin/schooldetails/update/'.$school_id)}}" enctype="multipart/form-data">
+    <form method="POST" action="{{ url('/admin/schooldetails/update/'.$school_id) }}" enctype="multipart/form-data">
         @csrf
-          <edit-schooldetail url="{{url('/')}}" :school_id="{{ $school_id }}"></edit-schooldetail> 
-          <portal to="edit_school_address">
+        <x-card padding="lg" shadow="md" class="max-w-5xl">
+            <edit-schooldetail url="{{ url('/') }}" :school_id="{{ $school_id }}"></edit-schooldetail>
+
+            {{-- Address + Google Maps portal: markup/JS left intact (Wave 2 scope). --}}
+            <portal to="edit_school_address">
             <div class="flex flex-col lg:flex-row md:flex-row">
               <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
                 <div class="lg:mr-8 md:mr-8">
@@ -39,16 +44,16 @@
                       </a>
                     </span>
                     <span class="text-red-500 text-xs font-semibold">{{$errors->first('address')}}</span>
-                  </div>   
+                  </div>
                 </div>
               </div>
 
               <div class="tw-form-group w-full lg:w-1/2 md:w-1/2">
                 <div class="lg:mr-8 md:mr-8">
                   <div id="map_canvas" class="tw-form-control" style="height: 250px;">
-                  </div> 
+                  </div>
                 </div>
-              </div> 
+              </div>
 
               <div class="tw-form-group w-1/2" hidden>
                 <div class="lg:mr-8 md:mr-8">
@@ -56,11 +61,11 @@
                     <label for="latitude" class="col-md-4 control-label">Latitude</label>
                   </div>
                   <div class="mb-2 w-full relative">
-                    <input id="latitude" type="text" class="tw-form-control w-1/2" name="latitude" value="{{old('latitude')}}"> 
+                    <input id="latitude" type="text" class="tw-form-control w-1/2" name="latitude" value="{{old('latitude')}}">
                     @if ($errors->has('latitude'))
                       <span class="help-block">
                         <strong>{{ $errors->first('latitude') }}</strong>
-                      </span> 
+                      </span>
                     @endif
                   </div>
                 </div>
@@ -69,21 +74,20 @@
                     <label for="password-confirm" class="col-md-4 control-label">Longitude</label>
                   </div>
                   <div class="mb-2 w-full relative">
-                    <input id="longitude" type="text" class="tw-form-control w-1/2" name="longitude" value="{{old('longitude')}}"> 
+                    <input id="longitude" type="text" class="tw-form-control w-1/2" name="longitude" value="{{old('longitude')}}">
                     @if ($errors->has('longitude'))
                       <span class="help-block">
                         <strong>{{ $errors->first('longitude') }}</strong>
                       </span>
                     @endif
                   </div>
-                </div>      
+                </div>
               </div>
             </div>
           </portal>
-        </form>
-     
+        </x-card>
+    </form>
 </div>
-
 @endsection
 
 @push('scripts')
@@ -92,7 +96,7 @@
 
 var map;
 
-function initialize() 
+function initialize()
 {
     var address = (document.getElementById('address'));
     var autocomplete = new google.maps.places.Autocomplete(address);
@@ -115,7 +119,7 @@ function initialize()
     codeAddress("address");
 }
 
-function longlat(lat, lng) 
+function longlat(lat, lng)
 {
     //Map
     var myLatlng = new google.maps.LatLng(lat, lng);
@@ -142,20 +146,20 @@ function longlat(lat, lng)
     //map
 }
 
-function codeAddress() 
+function codeAddress()
 {
     geocoder = new google.maps.Geocoder();
     var address = document.getElementById("address").value;
     geocoder.geocode({ 'address': address }, function(results, status) {
-        if (status == google.maps.GeocoderStatus.OK) 
+        if (status == google.maps.GeocoderStatus.OK)
         {
             //alert("Latitude: "+results[0].geometry.location.lat());
             // alert("Longitude: "+results[0].geometry.location.lng());
             document.getElementById('latitude').value = results[0].geometry.location.lat();
             document.getElementById('longitude').value = results[0].geometry.location.lng();
             longlat(results[0].geometry.location.lat(), results[0].geometry.location.lng());
-        } 
-        else 
+        }
+        else
         {
             //alert("Geocode was not successful for the following reason: " + status);
         }

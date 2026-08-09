@@ -240,7 +240,15 @@
 
 ---
 
-## Current Status: August 9, 2026 (`origin/main` tip `fc1d7a4` — #191 Wave 1 Blade DS MERGED)
+## Current Status: August 9, 2026 (`origin/main` tip `4aa7ad4` — #192 knowledge stamp; Wave 2 PR open)
+
+- **`origin/main` tip**: `4aa7ad4` (#192 knowledge stamp after #191). App merge prior: `fc1d7a4` (#191 Wave 1 Blade DS). Prod app still **`abeb6fc`** (#188) until a deploy that includes #191+.
+- **🚧 Wave 2 PR open**: School Details `editdetail` Blade + `Edit.vue` DS restyle — branch `feature/manual-ui-wave2-schooldetails` (worktree `/Users/mac/projects/KlassApp-manual-ui-wave2`). Screenshots in `docs/wave2-screenshots/`. Address/Maps portal left on `tw-form-*` by design.
+- **✅ Merged #191 / #192**: Wave 1 Blade DS + knowledge stamp.
+- **Open Design**: still deferred to Wave 3+. Vue Create surfaces ≈ Wave 4.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
+
+## Current Status: August 9, 2026 (`origin/main` tip `fc1d7a4` — #191 Wave 1 Blade DS MERGED) — superseded above
 
 - **✅ Merged #191**: Wave 1 Blade DS restyle — squash `fc1d7a4768cf5c5392235dbe10e37b59739a0ca6` @ **2026-08-09 13:58:24 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/191
 - **Tip before**: `0eeb687` (#190). Prod app still **`abeb6fc`** (#188) until a deploy that includes #191.
@@ -698,6 +706,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-09: Manual UI redesign Wave 2 — School Details editdetail DS (PR open)
+- **Work done**: Restyled live School Details edit UI (`GET /admin/schooldetails/editdetail/{id}` → `edit.blade.php` + Vue `Edit.vue`) to Wave 1 DS tokens (`ds-page-head`, `x-card`, `ds-form-*`, `ds-btn`). Google Maps + address portal left on legacy `tw-form-*`. Built Vite assets into `public/build`. Screenshots captured under `docs/wave2-screenshots/`.
+- **Files modified**: `resources/views/admin/schooldetails/edit.blade.php`, `resources/assets/js/components/schooldetail/Edit.vue`, `public/build/*`, `tests/Feature/Onboarding/ManualUiWave2SchoolDetailsDsTest.php` (new), `docs/wave2-screenshots/*`, `knowledge.md`
+- **Key decisions**: Confirmed live edit route is `editdetail` (not JSON `edit/{id}`). Country/EMIS/UNEB live in Vue — restyled via `ds-form-*` class tokens (Blade `x-form-group` cannot wrap Vue). Address/Maps portal out of scope.
+- **Tests**: `php artisan test --compact tests/Feature/Onboarding/ManualUiWave2SchoolDetailsDsTest.php tests/Feature/Admin/SchoolDetailsCountryEmisUnebTest.php tests/Feature/Onboarding/ManualOnboardingParityTest.php` → Wave2 DS **2 passed**; Country/EMIS + parity suite previously **15 passed**.
+- **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave2` on `feature/manual-ui-wave2-schooldetails` (from `origin/main` @ `4aa7ad4`)
+- **Status**: 🚧 PR opening (do not merge until visual confirm)
+- **Edge cases flagged**: EMIS/UNEB fields are conditional on Uganda / UNEB curriculum — screenshots on school 12 may hide them until country/curriculum set.
 
 ### 2026-08-09: #191 MERGED — Wave 1 Blade DS restyle
 - **Work done**: Squash-merged #191 to `origin/main`. Live standards header follow-up + screenshots included in tip.
