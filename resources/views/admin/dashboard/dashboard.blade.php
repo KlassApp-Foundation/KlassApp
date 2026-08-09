@@ -379,6 +379,11 @@
             </div>
         </div>
         @endif
+
+        @if(!empty($setupIncomplete))
+            {{-- Reserved for product demo animation (separate follow-up). --}}
+            <div class="dashboard-kpi-placeholder my-4" data-testid="dashboard-kpi-placeholder" aria-hidden="true"></div>
+        @endif
     </div>
 
     @if(!empty($openToshiOnboarding))

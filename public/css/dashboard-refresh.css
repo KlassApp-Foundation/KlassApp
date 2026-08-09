@@ -2830,7 +2830,14 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
 }
 
 
-/* ── Wave 3: consolidated setup banner ── */
+/* Pre-onboarding KPI placeholder — reserved for demo animation */
+.dashboard-kpi-placeholder {
+    min-height: 180px;
+    border: 1px dashed var(--d-border);
+    border-radius: 14px;
+    background: transparent;
+}
+
 .setup-banner {
     display: flex;
     gap: 16px;
