@@ -729,7 +729,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: Maximized Toshi is **existing modal layout** (not CSS-only sidebar expand) — restored Expand button + `toshi-maximize` browser event. Wizard reuses `OnboardingStepsService` sequence and writes same models as manual forms (no controller rewrites). Banner CTAs: blue “Set up manually” → wizard; green “Set up with Toshi” → maximize.
 - **Tests**: `ManualUiWave3WizardTest`, `ManualUiWave3BannerTest`, `ManualUiWave3ToshiMaximizeTest`, `ManualOnboardingParityTest` — all passing.
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave3` on `feature/manual-ui-wave3-wizard` (from `origin/main` @ `fc6b451`)
-- **Status**: 🚧 PR opening
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/195 (`4d7f788`)
+- **Status**: 🚧 PR open — awaiting visual confirm
 - **Edge cases flagged**: Local DB needed `uneb_center_number` migration; wizard `saveUneb` guards missing column.
 
 ### 2026-08-09: #193 MERGED — Wave 2 School Details editdetail DS
