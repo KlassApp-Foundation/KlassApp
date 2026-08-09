@@ -57,7 +57,7 @@ class SectionController extends Controller
         }
         // remove duplicates
         $classes = array_unique($classes);
-        return view("admin.school.sections.create", compact("sections", "classes"));
+        return view("admin.school.sections.create", compact("classes"));
      }
 
      public function save(Request $request){

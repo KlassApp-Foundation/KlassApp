@@ -709,7 +709,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Worktree/branch**: `/Users/mac/projects/KlassApp-manual-ui-wave1` on `feature/manual-ui-wave1-blade-ds` (from `origin/main` @ `0eeb687`)
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/191
 - **Status**: 🚧 PR open — https://github.com/KlassApp-Foundation/KlassApp/pull/191
-- **Edge cases flagged**: `SectionController@create` still `compact('sections', …)` with undefined `$sections` (pre-existing; not fixed in Wave 1). Live `StandardController@create` renders `standards.add` (Vue), not `standards.create` — Wave 1 still restyled the orphaned `create` view per scope.
+- **Follow-up (pre-merge)**: Confirmed LIVE `/admin/standard/create` → `standards.add` (Vue `<standard-setup>`), not orphaned `standards/create`. Restyled live `standards.add` Blade header to match academics Wave 1 pattern; Vue body deferred to Wave 4. Fixed `SectionController@create` undefined `$sections` compact so sections create can render. Screenshots in `docs/wave1-screenshots/` posted on PR #191.
+- **Edge cases flagged**: Orphaned `standards/create.blade.php` remains restyled but unused by any route; keep or delete in a later cleanup.
 
 ### 2026-08-08: #188 MERGED + DEPLOYED (manual↔Toshi parity)
 - **Work done**: Confirmed #188 merged to `origin/main` @ `abeb6fc746084320cabec7010af16e372a0b52a6`. Deployed to production on Hetzner (`/var/www/KlassApp`, container `sms-app`): `git pull`, `composer install --no-dev`, toshi-ui publish, `migrate --force` (nothing to migrate), `optimize:clear`, FPM reload.

@@ -128,15 +128,29 @@ class ManualUiWave1BladeDsTest extends TestCase
 
     public function test_standards_create_header_uses_ds_page_head(): void
     {
-        $view = $this->actingAs($this->admin)
+        // Orphaned Blade file still restyled in Wave 1 for consistency.
+        $orphaned = $this->actingAs($this->admin)
             ->withViewErrors([])
             ->view('admin.school.standards.create');
 
-        $view->assertSee('ds-page-head', false);
-        $view->assertSee('ds-btn', false);
-        $view->assertSee('Add Standards');
-        $view->assertDontSee('admin-h1');
-        $view->assertDontSee('/uploads/icons/back.svg');
+        $orphaned->assertSee('ds-page-head', false);
+        $orphaned->assertSee('ds-btn', false);
+        $orphaned->assertSee('Add Standards');
+        $orphaned->assertDontSee('admin-h1');
+        $orphaned->assertDontSee('/uploads/icons/back.svg');
+    }
+
+    public function test_live_standard_create_route_uses_standards_add_with_ds_header(): void
+    {
+        // LIVE /admin/standard/create → admin.school.standards.add (Vue <standard-setup>).
+        $response = $this->actingAs($this->admin)->get('/admin/standard/create');
+
+        $response->assertOk();
+        $response->assertSee('ds-page-head', false);
+        $response->assertSee('ds-btn', false);
+        $response->assertSee('Setup Standards');
+        $response->assertSee('standard-setup', false);
+        $response->assertDontSee('admin-h1');
     }
 
     public function test_academics_create_header_uses_ds_page_head_and_keeps_vue_component(): void
