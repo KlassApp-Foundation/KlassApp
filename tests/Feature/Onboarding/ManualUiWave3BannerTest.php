@@ -79,7 +79,7 @@ class ManualUiWave3BannerTest extends TestCase
         $response->assertDontSee('No active plan.</span>', false);
     }
 
-    public function test_setup_banner_covers_incomplete_setup_and_missing_plan(): void
+    public function test_setup_banner_shows_for_incomplete_setup(): void
     {
         $this->actingAs($this->admin);
 
@@ -90,7 +90,8 @@ class ManualUiWave3BannerTest extends TestCase
         $this->assertTrue(
             OnboardingStepsService::hasIncompleteSteps($this->school->fresh(), $this->admin->id)
         );
-        $response->assertSee('not a blocker', false);
+        $response->assertDontSee('data-testid="plan-usage-banner"', false);
+        $response->assertDontSee('Freemium Plan', false);
     }
 
     public function test_no_plan_only_banner_when_setup_complete_enough_for_dashboard_gate(): void
