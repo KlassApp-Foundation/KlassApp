@@ -240,7 +240,15 @@
 
 ---
 
-## Current Status: August 10, 2026 (`origin/main` tip `9166769` — #206 + #207 MERGED)
+## Current Status: August 10, 2026 (`origin/main` tip `fd66010` — #209 AY/WhatsApp walkthrough fixes MERGED)
+
+- **✅ Merged #209**: Academic year current resolution by `status=1` (not magic description) + WhatsApp duplicate phone validation (no raw SQL leak) — merge `fd66010ce21e09470cb9b5eae91de47ca2cf0d66` @ **2026-08-10 11:37:40 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/209
+- **Tip merged**: `fix/walkthrough-ay-whatsapp-bugs` @ `7239496` (knowledge stamp before merge)
+- **`origin/main` tip**: `fd66010`. Prod still **`abeb6fc`** (#188) — **no deploy yet**.
+- **Prior tip**: `d61ca86` (#208 stamps #206/#207). App tips before that: #206 `79908b2` / #207 `9166769`.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
+
+## Current Status: August 10, 2026 (`origin/main` tip `9166769` — #206 + #207 MERGED) — superseded above
 
 - **✅ Merged #206**: Wizard review/preview final confirmation + Livewire `currentStep` memo fix (`77289f1`) — merge `79908b27d6351bc7b28d4fe7d793ae542dc4cf33` @ **2026-08-09 23:23:40 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/206
 - **✅ Merged #207**: Wizard Teachers/Students bulk upload parity (shared `OnboardingNameListExtractor`, optional skip) — merge `9166769bdae87759ac762e3fc9f11d079b6c4757` @ **2026-08-09 23:23:55 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/207
@@ -761,7 +769,9 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: `SiteHelper::getAcademicYear()` now resolves current year by `academic_years.status = 1` (legacy description fallback only). `AcademicYearObserver` + wizard `saveAcademicYear` forget `academic_year_for_school_{id}`. Wizard WhatsApp step validates unique phone and catches `UniqueConstraintViolationException`; generic Throwable catch no longer dumps raw SQL to the UI. Tests + before/after screenshots in `docs/bugfix-ay-whatsapp/`.
 - **Files modified**: `SiteHelper.php`, `ManualOnboardingWizard.php`, `AcademicYearObserver.php`, `AcademicYearCurrentResolutionTest.php`, `WizardWhatsAppDuplicatePhoneTest.php`, `.ai/rules/helpers.md`, `docs/bugfix-ay-whatsapp/*`, `knowledge.md`
 - **Key decisions**: status=1 is the real “current” signal (`AcademicYearController::updateStatus` already used it); do not hardcode wizard description to the magic string.
-- **Status**: ✅ Done — PR open https://github.com/KlassApp-Foundation/KlassApp/pull/209 (`fix/walkthrough-ay-whatsapp-bugs` @ `4b103f5`)
+- **Merge commit**: `fd66010ce21e09470cb9b5eae91de47ca2cf0d66`
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/209 (`fix/walkthrough-ay-whatsapp-bugs` tip `7239496`)
+- **Status**: ✅ MERGED (not deployed) — prod remains `abeb6fc` (#188)
 - **Edge cases flagged**: Other direct `where('description', 'Current Academic Year')` callers (terms/marks controllers) still use the legacy string — out of this PR’s scope; SiteHelper is the dashboard gate.
 
 ### 2026-08-10: #206 + #207 MERGED — review/preview + bulk teachers/students
