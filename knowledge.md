@@ -781,6 +781,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-10: Teacher mark view 500 + save ownership (opening PR)
+- **Work done**: Fixed `viewExamMarks` 500 (undefined `$exms` + brittle Term I `match` + broken `officialTeacher` footer). `saveExamMarks` now requires `exam.teacher_id === auth.id` in addition to school_id. Feature tests in `TeacherExamMarksAuthorizationTest`.
+- **Files modified**: `MarksController.php`, `teacher/marks/view.blade.php`, `tests/Feature/Teacher/TeacherExamMarksAuthorizationTest.php`, `.ai/rules/teacher.md`, `knowledge.md`
+- **Key decisions**: Soft/hard lock and no-prefill left untouched; admin mark entry remains impersonation-only.
+- **Status**: 🚧 opening PR / awaiting live verify
+- **Edge cases flagged**: Enter form still lacks teacher_id guard (save rejects); View Entered Marks was the crash teachers hit after demo.
+
 ### 2026-08-10: Fix + deploy exam-create school_id validation (#214)
 - **Work done**: `CreateExamRequest` / `UpdateUgSubjectRequest` `school_id` now `exists:schools,id` (was wrongly `exists:standards,id`). Feature tests added. Merged #214 @ `ea019997`. Deployed to prod. Verified Bukoto UI create Mid Term Math P1 succeeded (no “selected school id is invalid”).
 - **Files modified**: `app/Http/Requests/CreateExamRequest.php`, `UpdateUgSubjectRequest.php`, `tests/Feature/Admin/CreateExamSchoolIdValidationTest.php`

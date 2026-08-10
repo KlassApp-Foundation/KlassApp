@@ -12,7 +12,7 @@
     @endphp
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
         <div>
-            <h2 class="text-2xl font-semibold ">{{ $exam->examType->code }} Exam Marks</h2>
+            <h2 class="text-2xl font-semibold ">{{ $exam->examType->code ?? $exam->examType->name ?? 'Exam' }} Exam Marks</h2>
                 <p class="text-xs bg-gray-400 text-center rounded-full text-red-500">
                 {{$examStatus}}</p>
         </div>
@@ -40,21 +40,12 @@
             </select>
         </form>
     </div>
-  @php
-       $termVal = match ($exam->academicTerm->name){
-              "First Term"     =>  1,
-              "Second Term"       =>  2,
-              "Third Term"       =>  3,
-               };
-  @endphp
     {{-- Table --}}
     <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm p-1">
         <h3 class='text-center py-2 font-semibold '>
-            {{-- {{ dd($exam) }} --}}
-            <span>{{$exam->examType->name}}</span>
-            <span>{{ $termVal . ", ". $exam->academicYear->name }}</span>
-            <span>{{$exam->subject->name}}</span>
-             
+            <span>{{ $exam->examType->name ?? 'Exam' }}</span>
+            <span>{{ ($exam->academicTerm->name ?? '') . ', ' . ($exam->academicYear->name ?? '') }}</span>
+            <span>{{ $exam->subject->name ?? '' }}</span>
             </h3>
         <table class="min-w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200  text-sm">
@@ -142,9 +133,8 @@
         </table>
     </div>
     <div class="flex items-center justify-end py-4 text-sm font-semibold ">
-        {{-- <span>By</span> --}}
             <span>
-                {{ "Tr. " . $exam->officialTeacher->firstname . " " . $exam->officialTeacher->firstname }}
+                {{ 'Tr. ' . ($exam->teacher->name ?? '—') }}
             </span>
     </div>
 </div>
