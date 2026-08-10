@@ -240,6 +240,12 @@
 
 ---
 
+## Current Status: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
+
+- **✅ Merged #214**: `CreateExamRequest`/`UpdateUgSubjectRequest` `school_id` → `exists:schools,id` — merge `ea019997` — https://github.com/KlassApp-Foundation/KlassApp/pull/214
+- **Prod**: deployed `ea019997`; Bukoto Springs UI Mid Term exam create verified.
+- **`origin/main` tip**: `ea019997`.
+
 ## Current Status: August 10, 2026 (`origin/main` tip `4884e51` — **DEPLOYED** manual-UI Waves 1–3 + #209)
 
 - **✅ Deployed to prod**: **`4884e51664427ee9d29ffe1a092a488dec2436ee`** @ **2026-08-10 18:54:53 UTC** via `scripts/deploy-manual.sh` (Hetzner `sms-app`). Migrations: **Nothing to migrate** (no new migrations in `abeb6fc`→`4884e51`; `uneb_center_number` already Ran on prod from #177). Vite assets confirmed on prod (`app-rhxsMJGA.js`, `app-DmAxERQh.css`, `empty-state-product-demo.{css,js}`); no `public/hot`.
@@ -774,6 +780,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-10: Fix + deploy exam-create school_id validation (#214)
+- **Work done**: `CreateExamRequest` / `UpdateUgSubjectRequest` `school_id` now `exists:schools,id` (was wrongly `exists:standards,id`). Feature tests added. Merged #214 @ `ea019997`. Deployed to prod. Verified Bukoto UI create Mid Term Math P1 succeeded (no “selected school id is invalid”).
+- **Files modified**: `app/Http/Requests/CreateExamRequest.php`, `UpdateUgSubjectRequest.php`, `tests/Feature/Admin/CreateExamSchoolIdValidationTest.php`
+- **Key decisions**: Same copy-paste bug fixed in subject update request; `UpdateExamsRequest` already correct.
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/214
+- **Merge commit**: `ea0199975226cd2c016f02f62000d3eebf38e3a2`
+- **Status**: ✅ MERGED + deployed — UI exam create confirmed on prod (school 102)
+- **Edge cases flagged**: Exam calendar sync still writes `events.batch=''` (SQLite test omit scheduled_at); admin exams store URI remains `admin/admin/exams/store`
 
 ### 2026-08-10: Prod deploy — manual-UI Waves 1–3 + empty-state + wizard parity + #209
 - **Work done**: Ran `scripts/deploy-manual.sh` from clean worktree at `origin/main` `4884e51`. Local Vite rebuild unchanged (assets already on main). Prod fast-forward `abeb6fc`→`4884e51`; composer no-op; toshi-ui publish; migrate Nothing to migrate; optimize:clear; FPM reload. Playwright smoke on https://klassapp.xyz: signup, 3-scene empty-state + setup banner, wizard Step 1, Toshi maximize, core routes 200.
