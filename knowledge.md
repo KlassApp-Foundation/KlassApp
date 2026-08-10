@@ -240,11 +240,12 @@
 
 ---
 
-## Current Status: August 10, 2026 (`origin/main` tip `fd66010` — #209 AY/WhatsApp walkthrough fixes MERGED)
+## Current Status: August 10, 2026 (`origin/main` tip `762f688` — #209 MERGED + #210 knowledge stamp)
 
 - **✅ Merged #209**: Academic year current resolution by `status=1` (not magic description) + WhatsApp duplicate phone validation (no raw SQL leak) — merge `fd66010ce21e09470cb9b5eae91de47ca2cf0d66` @ **2026-08-10 11:37:40 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/209
-- **Tip merged**: `fix/walkthrough-ay-whatsapp-bugs` @ `7239496` (knowledge stamp before merge)
-- **`origin/main` tip**: `fd66010`. Prod still **`abeb6fc`** (#188) — **no deploy yet**.
+- **✅ Merged #210**: Knowledge Current Status / Session Log stamp for #209 — merge `762f6886b8a40a8288b7bb0a41b3d92f4419a576` — https://github.com/KlassApp-Foundation/KlassApp/pull/210
+- **Tip merged**: `fix/walkthrough-ay-whatsapp-bugs` @ `7239496` (pre-merge knowledge stamp on that branch)
+- **`origin/main` tip**: `762f688`. Prod still **`abeb6fc`** (#188) — **no deploy yet**.
 - **Prior tip**: `d61ca86` (#208 stamps #206/#207). App tips before that: #206 `79908b2` / #207 `9166769`.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
 
