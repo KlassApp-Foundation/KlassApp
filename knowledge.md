@@ -761,7 +761,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: `SiteHelper::getAcademicYear()` now resolves current year by `academic_years.status = 1` (legacy description fallback only). `AcademicYearObserver` + wizard `saveAcademicYear` forget `academic_year_for_school_{id}`. Wizard WhatsApp step validates unique phone and catches `UniqueConstraintViolationException`; generic Throwable catch no longer dumps raw SQL to the UI. Tests + before/after screenshots in `docs/bugfix-ay-whatsapp/`.
 - **Files modified**: `SiteHelper.php`, `ManualOnboardingWizard.php`, `AcademicYearObserver.php`, `AcademicYearCurrentResolutionTest.php`, `WizardWhatsAppDuplicatePhoneTest.php`, `.ai/rules/helpers.md`, `docs/bugfix-ay-whatsapp/*`, `knowledge.md`
 - **Key decisions**: status=1 is the real “current” signal (`AcademicYearController::updateStatus` already used it); do not hardcode wizard description to the magic string.
-- **Status**: 🚧 PR opening
+- **Status**: ✅ Done — PR open https://github.com/KlassApp-Foundation/KlassApp/pull/209 (`fix/walkthrough-ay-whatsapp-bugs` @ `4b103f5`)
 - **Edge cases flagged**: Other direct `where('description', 'Current Academic Year')` callers (terms/marks controllers) still use the legacy string — out of this PR’s scope; SiteHelper is the dashboard gate.
 
 ### 2026-08-10: #206 + #207 MERGED — review/preview + bulk teachers/students
