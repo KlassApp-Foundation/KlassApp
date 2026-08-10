@@ -31,17 +31,32 @@ class SiteHelper
     {
         $schoolCacheKey = "academic_year_for_school_".$school_id;
         return Cache::remember( $schoolCacheKey, env('CACHE_TIME'), function () use ($school_id)  {
-            $academic_year=AcademicYear::where([['school_id',$school_id]]);   //['status',1]
-            if (Cache::has('academic_year') && Cache::get('academic_year')!='')
-            {
-                $academic_year_id = Cache::get('academic_year');
-                $academic_year=$academic_year->where('id',$academic_year_id);
+            // Temporary viewing override (NavigationController) — specific year by id.
+            if (Cache::has('academic_year') && Cache::get('academic_year') != '') {
+                return AcademicYear::where('school_id', $school_id)
+                    ->where('id', Cache::get('academic_year'))
+                    ->first();
             }
-         
-            $academic_year=$academic_year->where("description", "Current Academic Year")->first();
-            return $academic_year;
+
+            // status=1 is the real "current" flag (see AcademicYearController::updateStatus
+            // and AcademicYear::getStatusDisplayAttribute). Description is free text —
+            // never use it as the primary signal (wizard / admin forms allow custom copy).
+            $current = AcademicYear::where('school_id', $school_id)
+                ->where('status', 1)
+                ->orderByDesc('id')
+                ->first();
+
+            if ($current !== null) {
+                return $current;
+            }
+
+            // Legacy fallback for rows that only marked current via description.
+            return AcademicYear::where('school_id', $school_id)
+                ->where('description', 'Current Academic Year')
+                ->orderByDesc('id')
+                ->first();
         });
-    } 
+    }
 
     public static function getAdmin($school_id)
     {

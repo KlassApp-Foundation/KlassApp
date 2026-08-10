@@ -21,7 +21,9 @@ use App\Models\WhatsAppUser;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingStepsService;
 use App\Services\StudentIdGeneratorService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -560,7 +562,9 @@ class ManualOnboardingWizard extends Component
 
             return;
         } catch (\Throwable $e) {
-            $this->errorMessage = $e->getMessage() ?: 'Could not save this step.';
+            report($e);
+            // Never surface raw SQL / connection strings to the wizard UI.
+            $this->errorMessage = 'Could not save this step. Please try again.';
 
             return;
         }
@@ -1043,6 +1047,10 @@ class ManualOnboardingWizard extends Component
             'end_date' => $this->academicYearEnd,
             'status' => 1,
         ]);
+
+        // Observer also forgets; keep an explicit forget so a cached null from the
+        // pre-AY empty-state dashboard cannot stick across this wizard step.
+        Cache::forget('academic_year_for_school_'.$school->id);
     }
 
     private function saveClass(School $school): void
@@ -1306,15 +1314,27 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['whatsappPhone' => 'Enter your WhatsApp number (+256…).']);
         }
 
-        WhatsAppUser::updateOrCreate(
-            ['user_id' => Auth::id()],
-            [
-                'phone' => $phone,
-                'school_id' => $school->id,
-                'opted_in' => true,
-                'verified_at' => now(),
-            ]
-        );
+        if (WhatsAppUser::where('phone', $phone)->exists()) {
+            throw ValidationException::withMessages([
+                'whatsappPhone' => 'This WhatsApp number is already registered',
+            ]);
+        }
+
+        try {
+            WhatsAppUser::updateOrCreate(
+                ['user_id' => Auth::id()],
+                [
+                    'phone' => $phone,
+                    'school_id' => $school->id,
+                    'opted_in' => true,
+                    'verified_at' => now(),
+                ]
+            );
+        } catch (UniqueConstraintViolationException $e) {
+            throw ValidationException::withMessages([
+                'whatsappPhone' => 'This WhatsApp number is already registered',
+            ]);
+        }
     }
 
     private function savePlan(School $school): void

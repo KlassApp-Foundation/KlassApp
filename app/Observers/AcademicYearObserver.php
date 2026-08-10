@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\AcademicYear;
 use App\Models\Grade;
 use Auth;
+use Illuminate\Support\Facades\Cache;
 
 class AcademicYearObserver
 {
@@ -13,6 +14,8 @@ class AcademicYearObserver
      */
     public function created(AcademicYear $academicYear): void
     {
+        Cache::forget('academic_year_for_school_'.$academicYear->school_id);
+
         if(config('gexam.enabled', false)) //new
         {
             if($academicYear)
@@ -82,7 +85,7 @@ class AcademicYearObserver
      */
     public function updated(AcademicYear $academicYear): void
     {
-        
+        Cache::forget('academic_year_for_school_'.$academicYear->school_id);
     }
 
     /**
@@ -90,7 +93,7 @@ class AcademicYearObserver
      */
     public function deleted(AcademicYear $academicYear): void
     {
-        //
+        Cache::forget('academic_year_for_school_'.$academicYear->school_id);
     }
 
     /**
