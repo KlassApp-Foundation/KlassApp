@@ -10,7 +10,6 @@ use App\Models\Academics\Marks;
 use App\Models\Academics\NurseryAssessment;
 use App\Models\AcademicYear;
 use App\Models\Standard;
-use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
@@ -134,7 +133,7 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
 {
     $user = Auth::user();
     $schoolId = $user->school_id;
-    if ($exam->school_id !== $schoolId) {
+    if ($exam->school_id !== $schoolId || (int) $exam->teacher_id !== (int) $user->id) {
         abort(403, "Not Authorized");
     }
 
@@ -251,26 +250,25 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
 
 public function viewExamMarks(Exam $exam)
 {
-    $tr=Auth::user();
-    // 1. Get students in this exam's standard/class using your scope
-    if ($exam->school_id !== $tr->school_id || $exam->teacher_id !== $tr->id) {
-         abort(403, "You are not authorized to view this exam.");
-     }
-      // only needed columns
-      $ll=StandardLink::where("standard_id", 2)->get();
-    //   to add school id relationship and filter according to it
-        $marks = Marks::with(["exam", "student", "subject", "teacher"])->where('teacher_id', $tr->id)
+    $tr = Auth::user();
 
+    if ($exam->school_id !== $tr->school_id || (int) $exam->teacher_id !== (int) $tr->id) {
+        abort(403, 'You are not authorized to view this exam.');
+    }
+
+    $exam->load(['examType', 'academicTerm', 'academicYear', 'subject', 'teacher']);
+
+    $marks = Marks::with(['exam', 'student.userprofile', 'subject', 'teacher'])
+        ->where('teacher_id', $tr->id)
         ->where('exam_id', $exam->id)
-        ->where("school_id", $tr->school_id)
-        ->where("subject_id", $exam->subject_id)
+        ->where('school_id', $tr->school_id)
+        ->where('subject_id', $exam->subject_id)
         ->whereHas('student', function ($query) {
-            $query->students();           // ← uses the scope!
-        })->get();
-    return view('teacher.marks.view', compact( "marks", "exms", "exam" ));    // ← recommended if you want all students
+            $query->students();
+        })
+        ->get();
 
-        // or 'marks', 'students' if you prefer separate
-
+    return view('teacher.marks.view', compact('marks', 'exam'));
 }
 
 // edit user
