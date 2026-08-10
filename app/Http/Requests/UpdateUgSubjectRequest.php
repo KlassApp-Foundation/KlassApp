@@ -47,7 +47,7 @@ class UpdateUgSubjectRequest extends FormRequest
                                  ->where("standard_id", $this->standard_id);
                 })
             ],
-            'school_id'        => 'sometimes|nullable|exists:standards,id',
+            'school_id'        => 'sometimes|nullable|exists:schools,id',
             'academic_year_id' => 'sometimes|nullable|exists:academic_years,id',
             'standard_id'      => 'sometimes|nullable|exists:standards,id',
             'section_id'       => 'sometimes|nullable|exists:sections,id',

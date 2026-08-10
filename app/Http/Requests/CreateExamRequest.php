@@ -42,7 +42,7 @@ class CreateExamRequest extends FormRequest
     {
         return [
             'standard_id'      => 'required|exists:standards,id',
-            'school_id'      => 'required|exists:standards,id',
+            'school_id'        => 'required|exists:schools,id',
             'section_id'       => 'required|exists:sections,id',
             'academic_year_id' => 'required|exists:academic_years,id',
             'academic_term_id' => 'required|exists:academic_terms,id', // or string if named "Term I", etc.
