@@ -240,12 +240,21 @@
 
 ---
 
-## Current Status: August 10, 2026 (`origin/main` tip `762f688` — #209 MERGED + #210 knowledge stamp)
+## Current Status: August 10, 2026 (`origin/main` tip `4884e51` — **DEPLOYED** manual-UI Waves 1–3 + #209)
+
+- **✅ Deployed to prod**: **`4884e51664427ee9d29ffe1a092a488dec2436ee`** @ **2026-08-10 18:54:53 UTC** via `scripts/deploy-manual.sh` (Hetzner `sms-app`). Migrations: **Nothing to migrate** (no new migrations in `abeb6fc`→`4884e51`; `uneb_center_number` already Ran on prod from #177). Vite assets confirmed on prod (`app-rhxsMJGA.js`, `app-DmAxERQh.css`, `empty-state-product-demo.{css,js}`); no `public/hot`.
+- **Prior prod**: `abeb6fc` (#188) @ 2026-08-08.
+- **Shipping range**: PRs **#189–#211** after #188 (feature: #191 Wave1, #193 Wave2, #195 Wave3, #198 empty-state, #201 product demo, #203 wizard/Toshi sync, #206 review/preview, #207 bulk teachers/students, #209 AY/WhatsApp fixes; remainder docs stamps). Tip includes #210/#211 knowledge stamps.
+- **Smoke (prod)**: Fresh signup → empty-state 3-scene demo + “Finish school setup” banner; 0 KPI cards; 0 plan-usage card; manual wizard Step 1/13; Toshi maximize OK; `/admin/dashboard|onboarding/wizard|schooldetails|editprofile` all HTTP 200.
+- **Optional not blocking**: #212 `serve-verify.sh` DB-isolation safeguard — OPEN tooling-only.
+- **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
+
+## Current Status: August 10, 2026 (`origin/main` tip `762f688` — #209 MERGED + #210 knowledge stamp) — superseded (now deployed)
 
 - **✅ Merged #209**: Academic year current resolution by `status=1` (not magic description) + WhatsApp duplicate phone validation (no raw SQL leak) — merge `fd66010ce21e09470cb9b5eae91de47ca2cf0d66` @ **2026-08-10 11:37:40 UTC** — https://github.com/KlassApp-Foundation/KlassApp/pull/209
 - **✅ Merged #210**: Knowledge Current Status / Session Log stamp for #209 — merge `762f6886b8a40a8288b7bb0a41b3d92f4419a576` — https://github.com/KlassApp-Foundation/KlassApp/pull/210
 - **Tip merged**: `fix/walkthrough-ay-whatsapp-bugs` @ `7239496` (pre-merge knowledge stamp on that branch)
-- **`origin/main` tip**: `762f688`. Prod still **`abeb6fc`** (#188) — **no deploy yet**.
+- **`origin/main` tip**: `762f688`. Prod was **`abeb6fc`** (#188) until 2026-08-10 deploy.
 - **Prior tip**: `d61ca86` (#208 stamps #206/#207). App tips before that: #206 `79908b2` / #207 `9166769`.
 - **Non-negotiable**: payroll + impersonation stay **web-only**; knowledge Session Log + Current Status updated through PR open and merge.
 
@@ -765,6 +774,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-10: Prod deploy — manual-UI Waves 1–3 + empty-state + wizard parity + #209
+- **Work done**: Ran `scripts/deploy-manual.sh` from clean worktree at `origin/main` `4884e51`. Local Vite rebuild unchanged (assets already on main). Prod fast-forward `abeb6fc`→`4884e51`; composer no-op; toshi-ui publish; migrate Nothing to migrate; optimize:clear; FPM reload. Playwright smoke on https://klassapp.xyz: signup, 3-scene empty-state + setup banner, wizard Step 1, Toshi maximize, core routes 200.
+- **Files modified**: `knowledge.md` (this stamp only)
+- **Key decisions**: #212 serve-verify tooling left open (non-blocking). No migrations in deploy range.
+- **Status**: ✅ DEPLOYED — prod `4884e51664427ee9d29ffe1a092a488dec2436ee` @ 2026-08-10 18:54:53 UTC
+- **Edge cases flagged**: Smoke cleanup left orphan school FK cleanup (user removed); mark/delete leftovers if needed.
 
 ### 2026-08-10: Fix AY magic-string + WhatsApp duplicate SQL leak
 - **Work done**: `SiteHelper::getAcademicYear()` now resolves current year by `academic_years.status = 1` (legacy description fallback only). `AcademicYearObserver` + wizard `saveAcademicYear` forget `academic_year_for_school_{id}`. Wizard WhatsApp step validates unique phone and catches `UniqueConstraintViolationException`; generic Throwable catch no longer dumps raw SQL to the UI. Tests + before/after screenshots in `docs/bugfix-ay-whatsapp/`.
