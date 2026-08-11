@@ -75,7 +75,7 @@ class KabaleRestructureAndSeed extends Command
         // ── Map sections to class groups ─────────────────────────────────
         $sections = $this->classifySections($school->id);
 
-        $this->line("  Sections: lower=" . implode(',', $sections['lower']) . " middle=" . implode(',', $sections['middle']) . " upper=" . implode(',', $sections['upper']));
+        $this->line("  Sections: lower=" . implode(',', $sections['lower']) . " middle=" . implode(',', $sections['middle']) . " upper=" . implode(',', $sections['upper']) . " skip(nursery)=" . implode(',', $sections['skip']));
 
         if (empty($sections['lower']) && empty($sections['upper'])) {
             $this->info('Already restructured — nothing to move.');
@@ -106,17 +106,31 @@ class KabaleRestructureAndSeed extends Command
     private function classifySections(int $schoolId): array
     {
         $all = Section::where('school_id', $schoolId)->get()->keyBy('id');
-        $map = ['lower' => [], 'middle' => [], 'upper' => []];
+        $map = ['lower' => [], 'middle' => [], 'upper' => [], 'skip' => []];
 
         foreach ($all as $sec) {
             $name = strtolower(trim($sec->name));
-            if (preg_match('/primary\s+(one|two|three|1|2|3)/i', $name)) {
-                $map['lower'][] = $sec->id;
-            } elseif (preg_match('/primary\s+(seven|7)/i', $name)) {
-                $map['upper'][] = $sec->id;
-            } else {
-                $map['middle'][] = $sec->id; // P.4, P.5, P.6 stay with original primary
+
+            // Nursery sections — never reassign (belong to nursery standard, id 44)
+            if (preg_match('/^(baby|middle|top)\s*(class)?$/i', $name)) {
+                $map['skip'][] = $sec->id;
+                continue;
             }
+
+            // P.1, P.2, P.3 → primary_lower
+            if (preg_match('/^(p\.?\s*[123]|primary\s+(one|two|three))$/i', $name)) {
+                $map['lower'][] = $sec->id;
+                continue;
+            }
+
+            // P.7, Primary Seven → primary_upper
+            if (preg_match('/^(p\.?\s*7|primary\s+seven)$/i', $name)) {
+                $map['upper'][] = $sec->id;
+                continue;
+            }
+
+            // P.4, P.5, P.6 — stay with original "primary" standard (middle)
+            $map['middle'][] = $sec->id;
         }
         return $map;
     }
