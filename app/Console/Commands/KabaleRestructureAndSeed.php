@@ -59,22 +59,7 @@ class KabaleRestructureAndSeed extends Command
         $this->info("School: {$school->name} (id=104)");
         $this->line("  Existing: nursery id={$nursery->id}, primary id={$primary->id}");
 
-        // ── Create new standards ─────────────────────────────────────────
-        $lower  = Standard::firstOrCreate(
-            ['school_id' => 104, 'name' => 'primary_lower'],
-            ['order' => 1, 'status' => '1']
-        );
-        $middle = $primary; // keep existing "primary" as middle (P.4-P6)
-        $upper  = Standard::firstOrCreate(
-            ['school_id' => 104, 'name' => 'primary_upper'],
-            ['order' => 3, 'status' => '1']
-        );
-
-        $this->line("  Created/found: lower id={$lower->id} ({$lower->wasRecentlyCreated}), upper id={$upper->id} ({$upper->wasRecentlyCreated})");
-
-        // ── Map sections to class groups ─────────────────────────────────
         $sections = $this->classifySections($school->id);
-
         $this->line("  Sections: lower=" . implode(',', $sections['lower']) . " middle=" . implode(',', $sections['middle']) . " upper=" . implode(',', $sections['upper']) . " skip(nursery)=" . implode(',', $sections['skip']));
 
         if (empty($sections['lower']) && empty($sections['upper'])) {
@@ -83,6 +68,17 @@ class KabaleRestructureAndSeed extends Command
 
         DB::beginTransaction();
         try {
+            $lower  = Standard::firstOrCreate(
+                ['school_id' => 104, 'name' => 'primary_lower'],
+                ['order' => 1, 'status' => '1']
+            );
+            $upper  = Standard::firstOrCreate(
+                ['school_id' => 104, 'name' => 'primary_upper'],
+                ['order' => 3, 'status' => '1']
+            );
+            $middle = $primary;
+            $this->line("  Standards: lower id={$lower->id} (new=" . ($lower->wasRecentlyCreated ? 'yes' : 'no') . "), middle id={$middle->id}, upper id={$upper->id} (new=" . ($upper->wasRecentlyCreated ? 'yes' : 'no') . ")");
+
             $this->reassignSections($school, $sections, $lower, $middle, $upper, $dryRun);
             $this->seedGradingForAll($school, $lower, $middle, $upper, $nursery, $dryRun);
 
