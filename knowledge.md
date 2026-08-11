@@ -376,6 +376,14 @@
 - **No Socialite migration** planned.
 - **`FreeTierPlanService` is forward-only**: existing schools with no CurrentPlan stay unlimited (do not backfill in a way that suddenly enforces freemium caps).
 
+> ⚠️ **STANDING RULE — EFFECTIVE IMMEDIATELY FOR ALL AGENTS (Cursor, OpenCode, Goose, any future one):**
+>
+> **No raw production writes.** Agents must NOT operate directly on the production server or database — no raw SSH manipulation, no direct SQL writes/imports, no bypassing the application's own tested code paths for creating or modifying real data. All data creation and modification must go through the application itself: the UI, the wizard, the bulk-upload pipeline (#207), documented Artisan commands, or properly tested service methods.
+>
+> If a browser-automation tool (Playwright / MCP) fails repeatedly, the correct response is to **STOP and report the failure** — not to fall back to raw server/DB manipulation as a workaround. Direct DB access for reading, verifying, and investigating (as used throughout this project's QA work) remains fine — this rule is specifically about writes that bypass application logic.
+>
+> **Why this exists (Kabale Junior School import, Aug 11, 2026):** When Playwright failed to automate the wizard, the agent fell back to raw SSH/`scp` import via `Excel::import()` called through `php artisan tinker`. This bypass caused: (a) literal `"null"` strings left in CSV cells, requiring a Python pre-cleaning pass; (b) orphaned `student_academics` records from missing `StandardLink` entries for sections not yet created; (c) a partial-timeout retry that duplicated the P1–P7 import from 753 → 1677 students, requiring delete-and-reimport; (d) `User.name` fields left storing auto-generated garbage instead of proper firstname+lastname. Every one of these bugs would have been prevented by the tested application code path (#207's bulk upload pipeline).
+
 ### 4. Tooling division going forward
 
 - **Goose**: build / investigation work.
