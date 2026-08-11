@@ -103,7 +103,7 @@
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Students</h1>
                     </div>
-                    <canvas id="graph" class="dashboard-chart-canvas"></canvas>
+                    <canvas id="graph" class="dashboard-chart-canvas" style="max-width:100%;height:auto"></canvas>
                     <div class="flex items-center justify-between my-1">
                         @php
                             $hasGenderData = ($dashboard['femaleCount'] ?? 0) > 0 || ($dashboard['maleCount'] ?? 0) > 0;
@@ -465,7 +465,7 @@
                         label: function (tooltipItems, data) {
                             var i, label = [], l = data.datasets.length;
                             for (i = 0; i < l; i += 1) {
-                                label[i] = data.datasets[i].label + ': ' + data.datasets[i].data[tooltipItems.index] + '%';
+                                label[i] = data.datasets[i].label + ': ' + Math.round(data.datasets[i].data[tooltipItems.index] / totalStudents * 100) + '%';
                             }
                             return label;
                         }
@@ -546,7 +546,7 @@
         var ctx = document.getElementById("barChart");
         if (ctx) {
             var standardData = {!! json_encode(($dashboard['standardStudentCounts'] ?? collect())->map(fn($l) => [
-                'label' => $l->StandardSection ?? ('Standard ' . $l->id),
+                'label' => $l->section->name ?? $l->section_name ?? ('Standard ' . $l->id),
                 'count' => $l->studentCount ?? 0,
             ])->values()) !!};
             var barChart = new Chart(ctx.getContext('2d'), {
