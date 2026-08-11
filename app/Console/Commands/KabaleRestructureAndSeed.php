@@ -274,8 +274,12 @@ class KabaleRestructureAndSeed extends Command
     }
 
     // Source: kabale_aggregate_grading.xlsx "P4-P6 Aggregate" sheet.
-    // Both 40-44 and 0-39 share aggregate 9 — combined into one row to
-    // avoid unique-constraint collision on (school_id, standard_id, grade, points).
+    // The source has 10 rows: 45-49=agg8 "Work harder" AND 40-44=agg8 "Aim higher"
+    // share aggregate 8 with different remarks. However the unique DB constraint
+    // on (school_id, standard_id, grade, points) prevents two rows both with
+    // grade='8' and points=8. Combined into one 40-49 band (grade=8, points=8)
+    // with a joint remark, keeping the 0-39 row as the only aggregate 9.
+    // Final: 9 rows, confirmed with school operator.
     private function p4p6Bands(): array
     {
         return [
@@ -286,8 +290,8 @@ class KabaleRestructureAndSeed extends Command
             ['grade' => '5', 'points' => 5, 'min_score' => 60, 'max_score' => 69,  'remark' => 'Q.Good / F.Good'],
             ['grade' => '6', 'points' => 6, 'min_score' => 55, 'max_score' => 59,  'remark' => 'Promising'],
             ['grade' => '7', 'points' => 7, 'min_score' => 50, 'max_score' => 54,  'remark' => 'Fair'],
-            ['grade' => '8', 'points' => 8, 'min_score' => 45, 'max_score' => 49,  'remark' => 'Work harder'],
-            ['grade' => '9', 'points' => 9, 'min_score' => 0,  'max_score' => 44,  'remark' => 'Aim higher / Extra effort'],
+            ['grade' => '8', 'points' => 8, 'min_score' => 40, 'max_score' => 49,  'remark' => 'Work harder / Aim higher'],
+            ['grade' => '9', 'points' => 9, 'min_score' => 0,  'max_score' => 39,  'remark' => 'Extra effort'],
         ];
     }
 
