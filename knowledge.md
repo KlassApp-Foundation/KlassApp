@@ -6760,3 +6760,13 @@ The `remarks` table is globally empty. `remark_id` on `Marks` model is commented
 - **Kabale production**: 4-Standard grading structure live, 36 corrected grading bands seeded, 5 nursery teachers imported and assigned. Ready for Wednesday report cards except comment-bank gap.
 - **Kabale command**: `app/Console/Commands/KabaleRestructureAndSeed.php` — idempotent, `--dry-run` support, handles soft-deleted standards, child-table reassignment following `DedupeStandardLinks` pattern.
 - **Files**: `kabale_aggregate_grading.xlsx`, `kabale_nursery_teachers.xlsx`, `kabale_class_teacher_comments.xlsx` in ~/Downloads (source data, not in repo).
+
+### 2026-08-12: Report card class-teacher comment — derived at PDF-render time (no DB)
+
+The unbuilt `Marks.remark_id` feature was a per-subject remark; this is a **whole-report comment** derived from total marks at PDF-render time. No migration, no new table.
+
+- `config/report_card_comments.php`: 6 bands per group (lower: P.1-P.3 + Nursery, 0-600; upper: P.4-P.7, 100-400). Source: `kabale_class_teacher_comments.xlsx`.
+- `app/Services/ReportCardCommentService.php`: `commentFor(totalScore, standardName, studentId, examId)` — deterministic selection via `crc32` of student+exam ID. Same comment on reprint.
+- Integration: `DownloadStudentReport.php` computes comment from `$total` and `$standard->name`, passes to template. Template replaces legacy promotion text with `$teacherComment`.
+- Verified on production: upper band test (350→320-359), lower band test (450→440-519), deterministic re-test, out-of-range → empty fallback.
+- Nursery: no numeric total → comment shows `—`. Comment bank gap (per-subject remarks via `remark_id`) remains unbuilt and noted as known limitation.
