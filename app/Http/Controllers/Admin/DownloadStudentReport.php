@@ -16,6 +16,7 @@ use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Models\User;
 use App\Services\StudentReportHelperService;
+use App\Services\ReportCardCommentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
@@ -71,9 +72,12 @@ class DownloadStudentReport extends Controller
 
            if (!$isNursery) {
                $marks = $exam->marks->where("student_id", $learner->id);
-               $total = $learner->marks ? $learner->marks->sum("marks") : 0;
-               $examsDone = $studentHelper->examsDone($schoolId, $exam);
-               $grade = $studentHelper->grade($learner, $exam);
+                $total = $learner->marks ? $learner->marks->sum("marks") : 0;
+                $examsDone = $studentHelper->examsDone($schoolId, $exam);
+                $grade = $studentHelper->grade($learner, $exam);
+                $teacherComment = $standard
+                    ? (new ReportCardCommentService)->commentFor((int) $total, $standard->name, $learner->id, $exam->id)
+                    : '';
            }
 
             // promotion
@@ -107,7 +111,7 @@ class DownloadStudentReport extends Controller
         $myPos = $learners->where("id", $learner->id)->value("position");
         // $learner is already a valid User model from route binding — no need to re-query
         $pdf = Pdf::loadView("admin.marks.student-report", compact(
-            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade", "promotion", "school", "isNursery", "nurseryAssessments"
+            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade", "promotion", "school", "isNursery", "nurseryAssessments", "teacherComment"
             ));     
         $pdf->setPaper("a4", "portrait");    
         $pdf->setOptions([

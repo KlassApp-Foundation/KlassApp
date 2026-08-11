@@ -286,7 +286,7 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{$promotion ?? "Advised to repeat"}}</td>
+                <td>{{ $teacherComment ?? '—' }}</td>
                 <td>___________________________</td>
             </tr>
         </tbody>
