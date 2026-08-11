@@ -424,12 +424,12 @@
         }
 
         Chart.pluginService.register({
-            beforeDraw: function(chart) {
+            afterDraw: function(chart) {
                 if (chart.config.type !== 'doughnut') return;
                 var width = chart.chart.width,
                     height = chart.chart.height,
                     ctx = chart.chart.ctx;
-                ctx.restore();
+                ctx.save();
                 var fontSize = (height / 140).toFixed(2);
                 ctx.font = "700 " + fontSize + "em 'Sora', sans-serif";
                 ctx.textBaseline = "middle";
@@ -438,7 +438,7 @@
                     textX = Math.round((width - ctx.measureText(text).width) / 2),
                     textY = height / 2;
                 ctx.fillText(text, textX, textY);
-                ctx.save();
+                ctx.restore();
             }
         });
 
