@@ -133,6 +133,14 @@ class OnboardingStepsServiceTest extends TestCase
             'curriculum step should be complete when school has a curriculum set'
         );
 
+        // school_category: the UNEB school in setUp has no category and no
+        // standards yet, so the step stays incomplete until a category is
+        // chosen (or legacy rows already exist).
+        $this->assertFalse(
+            OnboardingStepsService::isStepComplete('school_category', $this->school),
+            'school_category step should be incomplete until a category is set'
+        );
+
         $this->assertTrue(
             OnboardingStepsService::isStepComplete('academic_year', $this->school),
             'academic_year step should be complete when an AcademicYear exists'
@@ -183,13 +191,15 @@ class OnboardingStepsServiceTest extends TestCase
 
         $keys = array_keys(OnboardingStepsService::ALL_STEPS);
         $this->assertSame('school_name', $keys[0]);
-        $this->assertSame('curriculum', $keys[1]);
-        // Country / EMIS / UNEB centre are inserted after curriculum, before academic year.
-        $this->assertSame('country', $keys[2]);
-        $this->assertSame('emis', $keys[3]);
-        $this->assertSame('uneb_center', $keys[4]);
-        $this->assertSame('academic_year', $keys[5]);
-        $this->assertSame('standards', $keys[6]);
+        $this->assertSame('country', $keys[1]);
+        // Curriculum leads into the school-category step; EMIS / UNEB centre
+        // sit before academic year.
+        $this->assertSame('curriculum', $keys[2]);
+        $this->assertSame('school_category', $keys[3]);
+        $this->assertSame('emis', $keys[4]);
+        $this->assertSame('uneb_center', $keys[5]);
+        $this->assertSame('academic_year', $keys[6]);
+        $this->assertSame('standards', $keys[7]);
 
         // plan_selection is the very last step (after content).
         $this->assertSame('plan_selection', array_key_last(OnboardingStepsService::ALL_STEPS));

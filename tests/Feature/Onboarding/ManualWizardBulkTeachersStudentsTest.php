@@ -94,18 +94,17 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
         $component
             ->set('schoolName', 'Bulk Upload Academy')
             ->call('next')
+            ->set('countryName', 'Uganda')
+            ->call('next')
             ->set('curriculum', 'uneb')
             ->call('next')
-            ->set('countryName', 'Uganda')
+            ->set('schoolCategory', 'primary')
             ->call('next')
             ->set('ministryCode', 'EMIS-BULK')
             ->call('next')
             ->call('next') // uneb
-            ->call('next') // academic year
-            ->set('className', 'P1')
-            ->call('next')
-            ->set('subjectName', 'Math')
-            ->call('next');
+            ->call('next') // academic year seeds classes/subjects/grading
+            ;
     }
 
     public function test_students_step_exists_after_teachers_in_checklist(): void

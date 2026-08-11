@@ -143,6 +143,24 @@ class OnboardingCountryEmisPlanTest extends TestCase
         $this->assertArrayHasKey('uneb_center', OnboardingStepsService::applicableSteps($school));
     }
 
+    // ── School category (UNEB-only smart-default step) ───────────
+
+    /** @test */
+    public function school_category_not_applicable_for_non_uneb(): void
+    {
+        $school = $this->makeSchool(['curriculum' => 'cambridge', 'school_category' => null]);
+
+        $this->assertArrayNotHasKey('school_category', OnboardingStepsService::applicableSteps($school));
+    }
+
+    /** @test */
+    public function school_category_step_is_applicable_for_uneb_curriculum(): void
+    {
+        $school = $this->makeSchool(['curriculum' => 'uneb']);
+
+        $this->assertArrayHasKey('school_category', OnboardingStepsService::applicableSteps($school));
+    }
+
     // ── persistCountry ─────────────────────────────────────────────
 
     /** @test */
