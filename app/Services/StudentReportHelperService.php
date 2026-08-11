@@ -71,7 +71,7 @@ public function fees($admin, $section){
 }
 
 public function totalStudentsInClass($schoolId, $section){
-    return  User::with(["studentAcademic.standardLink", "marks"])
+    return  User::with(["studentAcademic.standardLink", "marks.exam.examType"])
                      ->where("school_id", $schoolId)
                      ->where("usergroup_id", 6)
                      ->whereHas("studentAcademic", function ($q) use($section){
@@ -83,7 +83,9 @@ public function totalStudentsInClass($schoolId, $section){
 
 public function totalMarks($learners){
     $learners = $learners->map(function ($learner){
-            $learner->total = $learner->marks->sum("marks");
+            $learner->total = $learner->marks->filter(
+                fn($m) => $m->exam?->examType?->contributes_to_report_total
+            )->sum("marks");
             $learner->average = $learner->marks->average("marks");
             return $learner;
         });

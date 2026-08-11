@@ -70,9 +70,11 @@ class DownloadStudentReport extends Controller
            $examsDone = 0;
            $grade = null;
 
-           if (!$isNursery) {
-               $marks = $exam->marks->where("student_id", $learner->id);
-                $total = $learner->marks ? $learner->marks->sum("marks") : 0;
+            if (!$isNursery) {
+                $marks = $exam->marks->where("student_id", $learner->id);
+                $total = $learner->marks
+                    ? $learner->marks->filter(fn($m) => $m->exam?->examType?->contributes_to_report_total)->sum("marks")
+                    : 0;
                 $examsDone = $studentHelper->examsDone($schoolId, $exam);
                 $grade = $studentHelper->grade($learner, $exam);
                 $teacherComment = $standard
