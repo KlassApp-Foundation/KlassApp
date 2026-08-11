@@ -406,7 +406,7 @@
     <script src="{{ asset('js/empty-state-product-demo.js') }}" defer></script>
     @endif
     @if(empty($setupIncomplete))
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
+    <script src="{{ asset('js/Chart.min.js') }}?v=2.9.3"></script>
     <script>
         var ctx = document.getElementById('graph').getContext('2d');
         var femaleCount = {!! trans($dashboard['femaleCount'] ?? 0) !!};
@@ -548,15 +548,22 @@
             var standardData = {!! json_encode(($dashboard['standardStudentCounts'] ?? collect())->map(fn($l) => [
                 'label' => $l->section->name ?? $l->section_name ?? ('Standard ' . $l->id),
                 'count' => $l->studentCount ?? 0,
+                'male'  => $l->maleCount ?? 0,
+                'female'=> $l->femaleCount ?? 0,
             ])->values()) !!};
             var barChart = new Chart(ctx.getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: standardData.map(function(d) { return d.label; }),
                     datasets: [{
-                        label: 'Students',
-                        data: standardData.map(function(d) { return d.count; }),
-                        backgroundColor: '#c96442',
+                        label: 'Boys',
+                        data: standardData.map(function(d) { return d.male; }),
+                        backgroundColor: '#304ffe',
+                        borderRadius: 6,
+                    }, {
+                        label: 'Girls',
+                        data: standardData.map(function(d) { return d.female; }),
+                        backgroundColor: '#ffa601',
                         borderRadius: 6,
                     }]
                 },
