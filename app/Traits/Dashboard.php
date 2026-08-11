@@ -176,8 +176,21 @@ trait Dashboard
 
         $array['standardStudentCounts'] = collect($array['standardLinks'])->map(function ($link) {
             $link->studentCount = \App\Models\User::whereHas('studentAcademic', function ($q) use ($link) {
-                $q->where('standardLink_id', $link->id)->where('status', '!=', 'exit');
+                $q->where('standardLink_id', $link->id);
+            })->where('status', '!=', 'exit')->count();
+
+            $link->maleCount = \App\Models\User::whereHas('studentAcademic', function ($q) use ($link) {
+                $q->where('standardLink_id', $link->id);
+            })->where('status', '!=', 'exit')->whereHas('userprofile', function ($q) {
+                $q->where('gender', 'male');
             })->count();
+
+            $link->femaleCount = \App\Models\User::whereHas('studentAcademic', function ($q) use ($link) {
+                $q->where('standardLink_id', $link->id);
+            })->where('status', '!=', 'exit')->whereHas('userprofile', function ($q) {
+                $q->where('gender', 'female');
+            })->count();
+
             return $link;
         });
 
