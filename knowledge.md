@@ -6724,3 +6724,39 @@ Read-only verification of the Kabale reference school on production (`ssh root@4
 ### 2026-08-12: Grading config — P.7 scale credit + per-section note
 
 `config/grading_uganda.php`: Primary (P1-P7) 9-band percentage scale confirmed with Kabale school 104 operator via phone. Added per-section variant note — P.4-P6 and P.1-P3/Nursery band data logged above as future per-section grading enhancement. UNEB UCE release statement cited for O-Level bands (A-E, 80-49), and NymyNet UACE grading guide cited for A-Level points (A=6 through F=0).
+
+### 2026-08-12: Kabale restructure live execution — 4 standards + grading seeded
+
+Ran `kabale:restructure-and-seed` (no `--dry-run`) on production. In one DB transaction:
+
+- **Standards created**: `primary_lower` (id=54, P.1-P.3) and `primary_upper` (id=55, P.7). Existing `primary` (id=43) now holds P.4-P.6 only. `nursery` (id=44) unchanged.
+- **Sections reassigned**: P.1 (sec 45, stdlink 52→78, 306 students), P.2 (sec 46, stdlink 53→79, 342 students), P.3 (sec 47, stdlink 54→80, 291 students) → primary_lower. P.7 (sec 51, stdlink 58→81, 375 students) → primary_upper. P.4-P.6 (sec 48-50) stayed. Nursery (sec 52-54) untouched.
+- **Child tables updated**: 1,314 `student_academics` rows re-pointed, 57 `subjects` moved, 1 `fees_categories` moved. Also covered: assignments, attendances, disciplines, homeworks, class_teacher_links, task_assignees, teacher_leave_applications, exams, chapters, student_promotion_rules.
+- **Grading seeded**: 36 `school_grading_systems` rows — 9 per standard. P.4-P6 uses corrected bands from `kabale_aggregate_grading.xlsx` (different score ranges than P.7: 95-100/90-94/80-89/70-79/60-69/55-59/50-54/40-49 combined/0-39). P.1-P3 + Nursery share comment-only scale (Excellent→More effort, points=null).
+- **Artifact**: Section 44 ("Primary Seven") — orphan duplicate with zero marks/exams/students, left as-is.
+- **Rule recorded**: `P = Primary, S = Secondary` section naming convention → `.ai/rules/commands.md`.
+
+### 2026-08-12: Kabale nursery teachers imported
+
+5 nursery teachers from `kabale_nursery_teachers.xlsx` (Downloads) imported to production using the same User/Teacherlink Eloquent pattern as the wizard:
+
+| Teacher | User ID | Baby | Middle | Top |
+|---|---|---|---|---|
+| Asiimwe Pamela | 3324 | Health Habits (CT) | Health Habits | Drawing |
+| Namuga Hope | 3325 | English | English (CT) | English |
+| Akankunda Esther | 3326 | Social Dev't | Social Dev't | Drawing (CT) |
+| Anasta Prize | 3327 | Numbers | — | Drawing |
+| Ainembabazi Catherine | 3328 | Writing | Reading | — |
+
+(CT) = assigned as class teacher via `standards_link.class_teacher_id`. 7 nursery subjects created (Health Habits, English, Social Dev't, Numbers, Writing, Reading, Drawing). 13 new `class_teacher_links` rows. Teacher total: 27→32; `Teacherlink` count: 27→40.
+
+### 2026-08-12: Comment bank — confirmed gap, not fixable before Wednesday
+
+The `remarks` table is globally empty. `remark_id` on `Marks` model is commented out (`Marks.php:28`). No code path writes to it. The standard marks save path writes `grade/marks/section_id` only; nursery marks save writes `remarks => null`. The feature is unbuilt — class-teacher comments will not appear on Wednesday's report cards. Grade + numeric aggregate from `school_grading_systems` will show correctly.
+
+### 2026-08-12: Session summary — school-category PR + Kabale production restructure
+
+- **PR #221**: `feat/onboarding-school-category` → `main`. School category smart-default step in wizard, `SchoolCategorySeeder`, grading config citations. 0 new test failures. Open at https://github.com/KlassApp-Foundation/KlassApp/pull/221.
+- **Kabale production**: 4-Standard grading structure live, 36 corrected grading bands seeded, 5 nursery teachers imported and assigned. Ready for Wednesday report cards except comment-bank gap.
+- **Kabale command**: `app/Console/Commands/KabaleRestructureAndSeed.php` — idempotent, `--dry-run` support, handles soft-deleted standards, child-table reassignment following `DedupeStandardLinks` pattern.
+- **Files**: `kabale_aggregate_grading.xlsx`, `kabale_nursery_teachers.xlsx`, `kabale_class_teacher_comments.xlsx` in ~/Downloads (source data, not in repo).
