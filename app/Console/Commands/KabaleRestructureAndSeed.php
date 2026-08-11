@@ -68,14 +68,8 @@ class KabaleRestructureAndSeed extends Command
 
         DB::beginTransaction();
         try {
-            $lower  = Standard::firstOrCreate(
-                ['school_id' => 104, 'name' => 'primary_lower'],
-                ['order' => 1, 'status' => '1']
-            );
-            $upper  = Standard::firstOrCreate(
-                ['school_id' => 104, 'name' => 'primary_upper'],
-                ['order' => 3, 'status' => '1']
-            );
+            $lower  = $this->findOrCreateStandard(104, 'primary_lower', ['order' => 1, 'status' => '1']);
+            $upper  = $this->findOrCreateStandard(104, 'primary_upper', ['order' => 3, 'status' => '1']);
             $middle = $primary;
             $this->line("  Standards: lower id={$lower->id} (new=" . ($lower->wasRecentlyCreated ? 'yes' : 'no') . "), middle id={$middle->id}, upper id={$upper->id} (new=" . ($upper->wasRecentlyCreated ? 'yes' : 'no') . ")");
 
@@ -129,6 +123,26 @@ class KabaleRestructureAndSeed extends Command
             $map['middle'][] = $sec->id;
         }
         return $map;
+    }
+
+    private function findOrCreateStandard(int $schoolId, string $name, array $attributes): Standard
+    {
+        $std = Standard::withTrashed()
+            ->where('school_id', $schoolId)
+            ->where('name', $name)
+            ->first();
+
+        if ($std) {
+            if ($std->trashed()) {
+                $std->restore();
+            }
+            return $std;
+        }
+
+        return Standard::create(array_merge(
+            ['school_id' => $schoolId, 'name' => $name],
+            $attributes
+        ));
     }
 
     private function reassignSections(School $school, array $sections, Standard $lower, Standard $middle, Standard $upper, bool $dryRun): void
