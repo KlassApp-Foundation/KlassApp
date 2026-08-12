@@ -172,7 +172,10 @@ class ImportKabaleMarks extends Command
                         $score = (int) $score;
 
                         $subjectId = $subjects[$subjectName] ?? null;
-                        if (!$subjectId) continue;
+                        if (!$subjectId) {
+                            $this->warn("  DEBUG: subject not found for '$subjectName' in map");
+                            continue;
+                        }
 
                         if (!$dryRun) {
                             $grade = $this->resolveGrade($school->id, $stdLink->standard_id, $score);
