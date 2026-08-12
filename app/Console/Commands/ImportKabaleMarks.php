@@ -368,6 +368,10 @@ class ImportKabaleMarks extends Command
             'RR' => 'READINGANDRESPONSE',
             'READINGANDRESPONSE' => 'READINGANDRESPONSE',
             'R_R' => 'READINGANDRESPONSE',
+            'SCI' => 'SCIENCE',
+            'SCIENCE' => 'SCIENCE',
+            'SST' => 'SST',
+            'SOCIALSTUDIES' => 'SST',
         ];
     }
 
