@@ -85,12 +85,16 @@ class Subject extends Model
     public static function sortByReportOrder(\Illuminate\Support\Collection $subjects): \Illuminate\Support\Collection
     {
         $order = ['ENGLISH','ENG', 'MTC','MATHEMATICS','MATH', 'RELIGIOUS EDUCATION','RE', 'LITERACY I','LIT I', 'LITERACY II','LIT II', 'READING AND RESPONSE','R&R','RR', 'SCIENCE','SCI', 'SOCIAL STUDIES','SST'];
-        $orderMap = array_flip($order);
 
-        return $subjects->sortBy(function ($subject) use ($orderMap) {
-            $normalized = strtoupper(str_replace(['  ', ' AND ', ' & '], ' ', trim($subject->name)));
+        $normalize = fn (string $name): string => strtoupper(str_replace(['  ', ' AND ', ' & '], ' ', trim($name)));
 
-            return $orderMap[$normalized] ?? 999;
+        $orderMap = [];
+        foreach ($order as $index => $key) {
+            $orderMap[$normalize($key)] = $index;
+        }
+
+        return $subjects->sortBy(function ($subject) use ($orderMap, $normalize) {
+            return $orderMap[$normalize($subject->name)] ?? 999;
         })->values();
     }
 }

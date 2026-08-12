@@ -295,14 +295,25 @@ class CombinedMarksheetExportTest extends TestCase
     {
         $subjects = collect([
             new Subject(['name' => 'Social Studies']),
+            new Subject(['name' => 'Reading and Response']),
             new Subject(['name' => 'Literacy I']),
+            new Subject(['name' => 'Science']),
             new Subject(['name' => 'Mathematics']),
             new Subject(['name' => 'English']),
+            new Subject(['name' => 'Literacy II']),
         ]);
 
         $ordered = Subject::sortByReportOrder($subjects)->map(fn ($s) => $s->name)->all();
 
-        $this->assertSame(['ENGLISH', 'MATHEMATICS', 'LITERACY I', 'SOCIAL STUDIES'], $ordered);
+        $this->assertSame([
+            'ENGLISH',
+            'MATHEMATICS',
+            'LITERACY I',
+            'LITERACY II',
+            'READING AND RESPONSE',
+            'SCIENCE',
+            'SOCIAL STUDIES',
+        ], $ordered);
     }
 
     private function assertBlank($cell): void
