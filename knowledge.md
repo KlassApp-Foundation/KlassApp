@@ -6895,9 +6895,31 @@ Import was hardcoded to 6 subjects via `SUBJECT_MAP` constant. Report side alrea
 - 339 legacy duplicate student records (real names, don't match authoritative roster, concentrated P.3–P.7) — left active, unreconciled, low priority.
 - Position-in-Stream — still unbuilt; confirmed real/used by the school via manual paper forms.
 - Platform-wide scope question — does the report template rewrite affect every KlassApp school or just Kabale? Never confirmed.
-- ⚠️ **Queue worker** (`php artisan queue:work --sleep=3 --tries=1 --timeout=900 --memory=1024`) is running but **manually started** (not in `entrypoint.sh`, no supervisor, no compose service). It will NOT survive a container restart, and the bulk-download jobs (`GenerateClassReportsJob`) depend on it. Should be added to the Docker entrypoint/supervisor.
+- ✅ **Queue worker** — RESOLVED by PR #293 (merge `f2ad0add`, branch `fix/queue-worker-entrypoint`): `queue:work` added to `entrypoint.sh` with a `while true … sleep 5` restart loop. Image rebuilt + container recreated; verified surviving `docker restart` (worker auto-starts, no manual `docker exec`).
 
 **Clean state:**
 - Local: branch `fix/a-button-background-css`, working tree clean; no leftover scripts (the 10 stashes are pre-existing, not from this session).
 - Production: removed leftover diagnostic scripts `missing2.php` + `verify_all.php`; temp admin user `verify.temp@klassapp.test` deleted. `resources/views/vendor/toshi-ui/` is untracked (deploy-published, not gitignored — minor hygiene, left as-is).
 - Production stable and safe to hand off — latest deployed commit `df255497` (PR #291), PHP 8.4.23 / Laravel 12.63.0.
+
+### 2026-08-13: /admin/students Class-filter dedupe — stale `primary` standard cleanup
+
+**Root cause.** School 104 (Kabale) still carried a stale pre-restructure `primary` standard (id 43) left over from PR #259's split into `primary_lower` (54) / `primary_upper` (55). The split was incomplete:
+- P.1/P.2/P.3/P.7 got new `standards_link` rows (78/79/80/81) but the old ones (52/53/54/58) were never removed → the Class dropdown listed them twice, and the stale rows (zero students) sorted first, so selecting one looked like a broken filter.
+- P.4/P.5/P.6 (~530 students) were never moved — they (plus 1 subject `SCI`, 9 exams, and a stale 9-row grading scale) still sat under the stale `primary`.
+
+**Fix** — data migration `2026_08_13_000000_cleanup_stale_primary_standard_104` (matches the P.7 stale-exam cleanup pattern): re-point P.4/P.5/P.6 links + subject + exams to `primary_upper` (55), soft-delete the duplicate P.1/P.2/P.3/P.7 links (52/53/54/58), delete the stale grading scale, soft-delete the stale `primary` standard (43).
+
+**Stream filter**: NOT added — `standards_link.stream` + `CreateStreamTool` exist, but school 104 has zero stream values (all NULL), so it would be dead UI. Wire it up when streams are actually used.
+
+**Verified live (real browser, prod school 104):**
+- Dropdown deduplicated — 11 options (`All Classes` + P.1–P.7 + Baby/Middle/Top, each once; `duplicateLabels: []`).
+- Filter correct: P.1 → **147** students, P.4 → **163** students (both match DB); CLASS column shows correct class; total **1228**.
+- Migration tracked in prod `migrations` table; required `php artisan optimize:clear` — `getStandardLinkList()` is `Cache::remember`-backed.
+
+**Files modified**: `database/migrations/2026_08_13_000000_cleanup_stale_primary_standard_104.php` (applied to prod via scp + `migrate`; **not yet committed/PR'd**).
+
+**Edge cases flagged:**
+- `getStandardLinkList()` caches under `standardLink{school}_{year}` — any standards/links change needs `optimize:clear` or container restart.
+- `latest_sa` student subquery isn't truly "latest per user" (no per-user limit), but no school-104 student has >1 active `student_academic`, so it doesn't manifest. Latent for multi-year data.
+- 9 active academic years (`status=1`) all named "2026" — `getAcademicYear` picks highest id (51); data mess, not touched.
