@@ -144,7 +144,7 @@
     <table class="header-table">
         <tr>
             <td class="header-logo-cell">
-                <div class="header-logo">{{ strtoupper(mb_substr($learner->school->name, 0, 2)) }}</div>
+                <img src="{{ public_path('images/logo.png') }}" style="width: 52px; height: 52px;" alt="Logo">
             </td>
             <td class="header-info">
                 <div class="header-school">{{ $learner->school->name }}</div>
@@ -320,11 +320,19 @@
     {{-- ═══ FOOTER ═══ --}}
     <table class="footer-table">
         <tr>
-            <td>{{ $learner->school->name }} &middot; Generated {{ now()->format('d M Y') }}</td>
+            <td>
+                {{ $learner->school->name }} &middot; Generated {{ now()->format('d M Y') }}
+                @if ($nextTerm) &middot; Next Term Begins: {{ $nextTerm->starts_on->format('d/m/Y') }} @endif
+            </td>
             <td class="right">
                 Class Teacher <span class="sign-line"></span>
                 &nbsp;&nbsp;
                 Head Teacher <span class="sign-line"></span>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center; font-size: 8px; color: #475569; padding-top: 2px;">
+                HARD WORK PAYS
             </td>
         </tr>
     </table>
