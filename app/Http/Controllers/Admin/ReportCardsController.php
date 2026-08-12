@@ -201,6 +201,63 @@ class ReportCardsController extends Controller
         return $this->singleStudentResponse($stdLink, $learner, true);
     }
 
+    public function missingMarksPdf()
+    {
+        $schoolId = Auth::user()?->school_id;
+        if (!$schoolId) return back()->with('failmessage', 'No school linked.');
+
+        $academicTermId = request('term', AcademicTerm::where('school_id', $schoolId)
+            ->where('status', 'current')->value('id'));
+
+        $eotIds = Exam::where('school_id', $schoolId)
+            ->where('academic_term_id', $academicTermId)
+            ->whereHas('examType', fn($q) => $q->where('code', 'EOT'))
+            ->pluck('id');
+
+        $stdLinks = StandardLink::where('school_id', $schoolId)
+            ->with(['section', 'standard'])
+            ->whereHas('standard', fn($q) => $q->whereNot('name', 'nursery'))
+            ->get();
+
+        $missing = [];
+
+        foreach ($stdLinks as $sl) {
+            $exam = $this->resolveExam($schoolId, $sl);
+            if (!$exam) continue;
+
+            $studentIds = $this->studentIds($exam);
+            $students = \App\Models\User::whereIn('id', $studentIds)
+                ->where('status', 'active')
+                ->where('name', 'regexp', '^[^0-9]+$')
+                ->whereNotIn('id', function ($q) use ($eotIds) {
+                    $q->select('student_id')->from('marks')
+                        ->whereIn('exam_id', $eotIds)->distinct();
+                })
+                ->orderBy('name')
+                ->get(['id', 'name']);
+
+            if ($students->isNotEmpty()) {
+                $missing[] = [
+                    'class' => $sl->section->name,
+                    'standard' => $sl->standard->name,
+                    'count' => $students->count(),
+                    'students' => $students,
+                ];
+            }
+        }
+
+        $html = view('admin.reports.missing-marks', [
+            'missing' => $missing,
+            'school' => \App\Models\School::find($schoolId),
+            'academicTermId' => $academicTermId,
+        ])->render();
+
+        $pdf = Pdf::loadHTML($html);
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download('missing_marks_report.pdf');
+    }
+
     private function singleStudentResponse(StandardLink $stdLink, \App\Models\User $learner, bool $download)
     {
         try {
