@@ -76,6 +76,12 @@
                                        class="py-2 px-4 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">
                                         View Entered Marks
                                     </a>
+                                    <!-- Download marksheet -->
+                                    <a href="{{ route('teacher.exam.marksheet', $exam) }}"
+                                       class="py-2 px-4 rounded bg-blue-500 hover:bg-blue-600 text-white text-sm inline-flex items-center gap-1">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                        Marksheet
+                                    </a>
                                 </div>
                             </div>
                         @endforeach

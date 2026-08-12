@@ -349,6 +349,9 @@ Route::prefix('exam')->group(function () {
     // Optional: view entered marks for this exam
     Route::get('/{exam}/marks/view', 'MarksController@viewExamMarks')->name('teacher.exam.marks.view');
 
+    // Download combined class marksheet
+    Route::get('/{exam}/marksheet', 'MarksController@downloadMarksheet')->name('teacher.exam.marksheet');
+
     // ======edit students marks=======
     Route::get("/{exam}/students/{student}/mark/{marks}/edit", "MarksController@editMark")->name("teacher.student.marks.edit");
 

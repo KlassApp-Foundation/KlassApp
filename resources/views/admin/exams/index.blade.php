@@ -38,8 +38,9 @@
         <td>{{ filled($exam->teacher?->name) ? $exam->teacher->name : $exam->teacher?->email }}</td>
         <td>
             <div class="flex items-center gap-2">
-                <a href="{{ route("admin.exams.marksheet", $exam) }}" class="dt-action-btn text-blue-600 hover:text-blue-800" title="Download Marksheet">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <a href="{{ route("admin.exams.marksheet", $exam) }}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition" title="Download Marksheet">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Marksheet
                 </a>
                 <a href="{{ route("admin.exams.edit", $exam) }}" class="dt-action-btn" title="Edit">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
