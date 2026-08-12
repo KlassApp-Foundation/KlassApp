@@ -244,18 +244,21 @@
             @php $eotTotal = 0; @endphp
             @foreach ($subjects as $subject)
                 @php $subjectMarks = $learner->marks->where('subject_id', $subject->id); @endphp
-                @if ($subjectMarks->isEmpty()) @continue @endif
+                @php $eotMark = $subjectMarks->firstWhere('exam_id', $eotExams->first()->id); @endphp
+                @if (!$eotMark) @continue @endif
                 @php
-                    $eotMark = $subjectMarks->firstWhere('exam_id', $eotExams->first()->id);
+                    $hasEotMarks = $eotMark->marks !== null;
                     $eotGrade = '-';
                     $eotComment = '-';
-                    if ($eotMark && $eotMark->marks !== null) {
+                    if ($hasEotMarks) {
                         $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
                         $eotGrade = $g ? 'D' . $g->points : '-';
                         $eotComment = $g ? $g->remark : '-';
                     }
-                    $teacherName = $subjectMarks->first()?->teacher?->name ?? '-';
-                    $eotTotal += $eotMark ? $eotMark->marks : 0;
+                    $teacherLink = \App\Models\Teacherlink::where('standardLink_id', $stdLink->id)
+                        ->where('subject_id', $subject->id)->first();
+                    $teacherName = $teacherLink?->teacher?->name ?: ($subjectMarks->first()?->teacher?->name ?? '-');
+                    $eotTotal += $eotMark->marks;
                 @endphp
                 <tr>
                     <td class="left strong">{{ $subject->name }}</td>

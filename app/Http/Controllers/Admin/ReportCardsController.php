@@ -284,6 +284,13 @@ class ReportCardsController extends Controller
         $learner = \App\Models\User::find($sid);
         $learner = $helper->learner($schoolId, $learner, $exam);
         $subjects = $helper->subjects($schoolId, $stdLink->section_id, $learner, $exam);
+        // Sort subjects by predefined order matching the manual form layout
+        $subjectOrder = ['ENGLISH','ENG', 'MTC','MATHEMATICS','MATH', 'RELIGIOUS EDUCATION','RE', 'LITERACY I','LIT I', 'LITERACY II','LIT II', 'READING AND RESPONSE','R&R','RR', 'SCIENCE','SCI', 'SOCIAL STUDIES','SST'];
+        $orderMap = array_flip($subjectOrder);
+        $subjects = $subjects->sortBy(function ($s) use ($orderMap) {
+            $normalized = strtoupper(str_replace(['  ', ' AND ', ' & '], ' ', trim($s->name)));
+            return $orderMap[$normalized] ?? 999;
+        })->values();
         $exams = $helper->exam($schoolId, $exam);
 
         $midExams = $exams->filter(fn($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
@@ -319,6 +326,7 @@ class ReportCardsController extends Controller
             'totalLearners' => $totalLearners, 'myPos' => $myPos,
             'allExamColumns' => $allExamColumns, 'midExams' => $midExams, 'eotExams' => $eotExams,
             'midCount' => $midExams->count(), 'eotCount' => $eotExams->count(),
+            'stdLink' => $stdLink,
             'total' => $total, 'grade' => $grade, 'examinedSubjectCount' => $examinedSubjectCount,
             'school' => \App\Models\School::find($schoolId),
             'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
