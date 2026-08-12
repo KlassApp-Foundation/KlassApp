@@ -144,7 +144,7 @@
     <table class="header-table">
         <tr>
             <td class="header-logo-cell">
-                <img src="{{ public_path('images/logo.png') }}" style="width: 52px; height: 52px;" alt="Logo">
+                <img src="{{ public_path('images/KJSLogo.jpg') }}" style="width: 52px; height: auto;" alt="Logo">
             </td>
             <td class="header-info">
                 <div class="header-school">{{ $learner->school->name }}</div>
