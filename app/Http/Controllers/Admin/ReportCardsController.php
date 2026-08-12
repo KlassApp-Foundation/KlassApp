@@ -305,6 +305,7 @@ class ReportCardsController extends Controller
         $total = $learner->marks
             ? $learner->marks->filter(fn($m) => $m->exam?->examType?->contributes_to_report_total)->sum('marks')
             : 0;
+        $examinedSubjectCount = $subjects->filter(fn($s) => $learner->marks->where('subject_id', $s->id)->isNotEmpty())->count();
         $grade = $helper->grade($learner, $exam);
         $teacherComment = $standard
             ? $svc->commentFor((int) $total, $standard->name, $learner->id, $exam->id)
@@ -317,7 +318,7 @@ class ReportCardsController extends Controller
             'fees' => collect(), 'nextTerm' => AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
             'totalLearners' => $totalLearners, 'myPos' => $myPos,
             'allExamColumns' => $allExamColumns, 'midCount' => $midExams->count(), 'eotCount' => $eotExams->count(),
-            'total' => $total, 'grade' => $grade,
+            'total' => $total, 'grade' => $grade, 'examinedSubjectCount' => $examinedSubjectCount,
             'school' => \App\Models\School::find($schoolId),
             'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
             'teacherComment' => $teacherComment,
