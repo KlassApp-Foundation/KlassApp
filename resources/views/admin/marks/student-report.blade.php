@@ -217,7 +217,7 @@
                                 $midGrade = '-';
                                 if ($midMark && $midMark->marks !== null) {
                                     $g = $grading_system->first(fn($gs) => $gs->min_score <= $midMark->marks && $gs->max_score >= $midMark->marks);
-                                    $midGrade = $g ? $g->grade : '-';
+                                    $midGrade = $g ? 'D' . $g->points : '-';
                                 }
                             @endphp
                             <td>{{ $midMark ? floor($midMark->marks) : '&mdash;' }}</td>
@@ -251,7 +251,7 @@
                     $eotComment = '-';
                     if ($eotMark && $eotMark->marks !== null) {
                         $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
-                        $eotGrade = $g ? $g->grade : '-';
+                        $eotGrade = $g ? 'D' . $g->points : '-';
                         $eotComment = $g ? $g->remark : '-';
                     }
                     $teacherName = $subjectMarks->first()?->teacher?->name ?? '-';
@@ -306,7 +306,7 @@
     <table class="grades-table">
         <tr>
             <th>Grade</th>
-            @foreach ($grading_system as $grade) <th>{{ $grade->grade }}</th> @endforeach
+            @foreach ($grading_system as $grade) <th>{{ 'D' . $grade->points }}</th> @endforeach
         </tr>
         <tr>
             <td class="strong">Range</td>
