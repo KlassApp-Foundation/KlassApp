@@ -126,7 +126,8 @@ class ReportCardsController extends Controller
 
     public function downloadClass(StandardLink $stdLink)
     {
-        @ini_set('memory_limit', '512M');
+        @ini_set('memory_limit', '1024M');
+        @set_time_limit(600);
         $schoolId = Auth::user()->school_id;
 
         $exam = $this->resolveExam($schoolId, $stdLink);
@@ -164,7 +165,8 @@ class ReportCardsController extends Controller
 
     public function downloadMerged(StandardLink $stdLink)
     {
-        @ini_set('memory_limit', '512M');
+        @ini_set('memory_limit', '1024M');
+        @set_time_limit(600);
         $schoolId = Auth::user()->school_id;
 
         $exam = $this->resolveExam($schoolId, $stdLink);
