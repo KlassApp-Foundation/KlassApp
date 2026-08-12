@@ -148,7 +148,9 @@
             </td>
             <td class="header-info">
                 <div class="header-school">{{ $learner->school->name }}</div>
-                <div class="header-meta">{{ $school->address ?? 'School Address' }} &middot; {{ $school->phone ?? '' }}</div>
+                <div class="header-meta">(Nursery And Primary, Day And Boarding)</div>
+                <div class="header-meta">P.O Box 283 - Kabale - UGA</div>
+                <div class="header-meta">Tel: +256782255758 / +256784119149 / +256704301646</div>
             </td>
             <td class="header-badge-cell">
                 <span class="badge-term">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }}</span>
