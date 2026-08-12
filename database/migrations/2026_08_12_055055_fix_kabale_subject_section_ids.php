@@ -6,36 +6,38 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     /**
-     * Fix Kabale P.2 subjects (school 104) that were imported with wrong section_id.
+     * Kabale P.2: reassign marks from wrong-section subjects to correct ones.
      *
-     * The import script's firstOrCreate did not update section_id on pre-existing
-     * subjects, so Mathematics (234), ENGLISH (236), LITERACY I (241), and
-     * LITERACY II (242) retained their original section_id values (43/45) instead
-     * of P.2's section (46).
-     *
-     * This migration is idempotent — safe to run on environments without Kabale data.
+     * The import created duplicate subjects because firstOrCreate matched on
+     * (school_id + name + standard_id) but the unique constraint is
+     * (school_id + section_id + name). Marks point to old subjects (234/236/
+     * 241/242) with wrong section_ids; correct duplicates (244/245/249/250)
+     * already exist at section_id=46 with no marks. This migration reassigns
+     * marks and cleans up orphaned subjects.
      */
     public function up(): void
     {
-        $p2section = DB::table('standards_link')
-            ->join('sections', 'standards_link.section_id', '=', 'sections.id')
-            ->where('standards_link.school_id', 104)
-            ->where('standards_link.standard_id', 54)
-            ->where('sections.name', 'P.2')
-            ->value('standards_link.section_id');
+        $remap = [
+            234 => 245, // Mathematics → MTC
+            236 => 244, // ENGLISH → ENGLISH
+            241 => 249, // LITERACY I → LITERACY I
+            242 => 250, // LITERACY II → LITERACY II
+        ];
 
-        if (!$p2section) {
-            return;
+        foreach ($remap as $oldId => $newId) {
+            if (!DB::table('subjects')->where('id', $oldId)->exists()) continue;
+            if (!DB::table('subjects')->where('id', $newId)->exists()) continue;
+
+            DB::table('marks')->where('subject_id', $oldId)->update(['subject_id' => $newId]);
+
+            if (!DB::table('marks')->where('subject_id', $oldId)->exists()) {
+                DB::table('subjects')->where('id', $oldId)->delete();
+            }
         }
-
-        DB::table('subjects')
-            ->where('school_id', 104)
-            ->whereIn('id', [234, 236, 241, 242])
-            ->update(['section_id' => $p2section]);
     }
 
     public function down(): void
     {
-        // No reverse — original section_ids are not uniquely recoverable
+        // Not reversible
     }
 };
