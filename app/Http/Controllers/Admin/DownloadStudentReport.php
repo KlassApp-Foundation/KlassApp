@@ -30,24 +30,19 @@ class DownloadStudentReport extends Controller
          $subjects = $studentHelper->subjects($schoolId, $section, $learner, $exam);
 
          $exams = $studentHelper->exam($schoolId, $exam);
-            $controls = ["SUBJECT", "OUT OF"];
-             $cals = ["AVG"];
-             $uniqueExamTypes = $exams->pluck('examType')->unique()->count();
-            $marksFromSubject = [];
-            foreach ($exams as $ex){
-                if(!in_array(strtoupper($ex->examType->code), $controls)){
-                    $controls[] = strtoupper($ex->examType->code);
-                    $marksFromSubject[] = $ex; // store the full exam so the view can match marks by exam type
-                    // check for more exam types to add average
-                    if($uniqueExamTypes > 1){
-                        $controls= array_merge($controls, $cals);
-                    }
-                }
-                
-            }
-            // dd($marksFromSubject);
-             $next = ["DIVISION", "TEACHER", "REMARK"];
-           $controls= array_merge($controls, $next);
+
+         $midExams = $exams->filter(fn($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
+         $eotExams = $exams->filter(fn($e) => $e->examType->code !== 'MID')->values();
+         $allExamColumns = $midExams->merge($eotExams);
+
+         $controls = ["SUBJECT", "OUT OF"];
+         foreach ($midExams as $ex) {
+             $controls[] = strtoupper($ex->scheduled_at->format('M')) . ' MID';
+         }
+         foreach ($eotExams as $ex) {
+             $controls[] = 'EOT';
+         }
+         $controls = array_merge($controls, ['DIVISION', 'TEACHER', 'REMARK']);
 
            // Detect nursery level BEFORE marks calculations
            $isNursery = false;
@@ -108,7 +103,8 @@ class DownloadStudentReport extends Controller
         $myPos = $learners->where("id", $learner->id)->value("position");
         // $learner is already a valid User model from route binding — no need to re-query
         $pdf = Pdf::loadView("admin.marks.student-report", compact(
-            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "uniqueExamTypes", "grade", "promotion", "school", "isNursery", "nurseryAssessments", "teacherComment"
+            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "total", "grade", "school", "isNursery", "nurseryAssessments", "teacherComment",
+            "allExamColumns", "midCount", "eotCount"
             ));     
         $pdf->setPaper("a4", "portrait");    
         $pdf->setOptions([
