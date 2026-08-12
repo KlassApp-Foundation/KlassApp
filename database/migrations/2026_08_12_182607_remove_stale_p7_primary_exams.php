@@ -9,8 +9,8 @@ return new class extends Migration
     {
         DB::table('exams')
             ->where('school_id', 104)
-            ->where('section_id', DB::table('sections')->where('school_id', 104)->where('name', 'P.7')->value('id'))
-            ->where('standard_id', DB::table('standards')->where('name', 'primary')->value('id'))
+            ->where('section_id', 51)
+            ->where('standard_id', 43)
             ->where('academic_term_id', 89)
             ->delete();
     }
