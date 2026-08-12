@@ -6845,3 +6845,16 @@ Import was hardcoded to 6 subjects via `SUBJECT_MAP` constant. Report side alrea
 | #229 | Generalize subject detection |
 | #230 | Filter non-subject columns + deploy map file |
 | #231 | Filter No. column (dot→underscore)
+
+### 2026-08-12: Combined per-class marksheet export (MID + EOT) — PR #286
+
+- **Work done**: Two-sheet "Combined Marksheet" XLSX per class — Sheet 1 "MONTHLY RESULTS" (subjects as columns, one row per student per MID month), Sheet 2 "END OF TERM" (subjects as columns, one row per student, EOT marks). Full active roster, blank cells for missing marks, raw marks only, current term (`status=current`) only.
+- **Subject ordering**: Extracted the report card's predefined order (was inline in `ReportCardsController@generatePdf`) into `Subject::sortByReportOrder()` so marksheet and report card share identical column order (PR #260 logic, reused verbatim — not reinvented).
+- **Placement/access**: Admin button on `/admin/reports/cards` per class card; teacher button on "My Exams" grouped by class. Teacher access = class teacher (`class_teacher_id`) OR subject teacher (has an exam in that section).
+- **Files**: `app/Exports/CombinedMarksheetExport.php` (new), `ReportCardsController.php`, `MarksController.php`, `Subject.php`, `routes/admin.php`, `routes/teacher.php`, `cards.blade.php`, `teacher-exam-list.blade.php`, migration `2026_08_12_173702_flag_junk_student_records.php` (SQLite guard), `tests/Feature/Exports/CombinedMarksheetExportTest.php` (new).
+- **Migration guard**: `2026_08_12_173702_flag_junk_student_records.php` used MySQL-only `regexp`, crashing SQLite and breaking every `RefreshDatabase` test — added `DB::getDriverName() === 'sqlite'` early-return (matches existing convention).
+- **Tests**: `CombinedMarksheetExportTest` (4 tests, 41 assertions); affected files 15 passing / 79 assertions.
+- **Status**: ✅ MERGED + DEPLOYED — PR #286, merge commit `5b7180448aa88e6b6cae236c913a959ebd43cad3`, branch `feat/combined-marksheet` → `main`. Deployed to production (46.101.111.131, `sms-app`), PHP 8.4.23 / Laravel 12.63.0.
+- **URL**: https://github.com/KlassApp-Foundation/KlassApp/pull/286
+- **Real-data verification (Kabale P.2)**: Generated `combined_kabale_p2.xlsx` on production for P.2 (stdlink 79, standard 54 `primary_lower`, 113 active students, Term 2 id=89). Confirmed: subject column order matches report card (`Subject::sortByReportOrder`, both now share the same function); June/July/EOT values match DB cell-for-cell (AARON YESUTAHINDUKA, ABIGAIL AINAMANI, ALI ALUKA verified); blank cells correct for missing-marks students (ADON ZANE NDUWAYESU, ALBERT ATWINE — no marks) and for no-mark subjects (SCIENCE, SST, RUNYANKORE RUKIGA); inactive/junk student EMMANUEL NAMANYA correctly excluded (113 active + 1 inactive). Stale stdlink 53 (standard 43) has no EOT exam → filtered out of report-cards page, so no empty-sheet button.
+- **Flagged**: PR #260's ordering has a latent quirk — `'READING AND RESPONSE'` normalizes to `'READING RESPONSE'` (the `' AND '` → `' '` replace), so it never matches its own array key and sorts to the end (after SST). Both report card and marksheet share this (bug-for-bug consistent). Full roster (113) vs report-card "48 with marks" is intentional per spec.
