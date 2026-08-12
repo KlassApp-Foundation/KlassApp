@@ -279,7 +279,7 @@ class ReportCardsController extends Controller
         return $map;
     }
 
-    private function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0): string
+    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0): string
     {
         $learner = \App\Models\User::find($sid);
         $learner = $helper->learner($schoolId, $learner, $exam);

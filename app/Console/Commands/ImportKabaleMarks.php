@@ -278,15 +278,66 @@ class ImportKabaleMarks extends Command
 
     private function ensureSubjects(int $schoolId, StandardLink $stdLink, array $subjectMap): array
     {
+        $existingSubjects = Subject::where('school_id', $schoolId)
+            ->where('section_id', $stdLink->section_id)
+            ->get()
+            ->keyBy(function ($s) { return strtoupper(str_replace(' ', '', $s->name)); });
+
         $map = [];
-        foreach ($subjectMap as $subjectName) {
-            $s = Subject::updateOrCreate(
-                ['school_id' => $schoolId, 'section_id' => $stdLink->section_id, 'name' => $subjectName],
-                ['code' => '', 'type' => 'core', 'status' => 1, 'academic_year_id' => $stdLink->academic_year_id, 'standard_id' => $stdLink->standard_id]
-            );
-            $map[$subjectName] = $s->id;
+        foreach ($subjectMap as $colKey => $subjectName) {
+            $canonical = $this->findCanonicalSubject($subjectName, $existingSubjects);
+
+            if ($canonical) {
+                $s = $canonical;
+                $this->line("  Matched '{$subjectName}' → existing '{$s->name}' (id={$s->id})");
+            } else {
+                $s = Subject::updateOrCreate(
+                    ['school_id' => $schoolId, 'section_id' => $stdLink->section_id, 'name' => strtoupper($subjectName)],
+                    ['code' => '', 'type' => 'core', 'status' => 1, 'academic_year_id' => $stdLink->academic_year_id, 'standard_id' => $stdLink->standard_id]
+                );
+                $this->line("  Created new subject '{$s->name}' (id={$s->id})");
+            }
+            $map[$colKey] = $s->id;
         }
         return $map;
+    }
+
+    private function findCanonicalSubject(string $detectedName, \Illuminate\Support\Collection $existing): ?Subject
+    {
+        $normalized = strtoupper(str_replace(' ', '', $detectedName));
+
+        if ($existing->has($normalized)) {
+            return $existing->get($normalized);
+        }
+
+        $aliases = $this->subjectAliases();
+        if (isset($aliases[$normalized]) && $existing->has($aliases[$normalized])) {
+            return $existing->get($aliases[$normalized]);
+        }
+
+        return null;
+    }
+
+    private function subjectAliases(): array
+    {
+        return [
+            'ENG' => 'ENGLISH',
+            'ENGLISH' => 'ENGLISH',
+            'MTC' => 'MTC',
+            'MATHEMATICS' => 'MTC',
+            'MATH' => 'MTC',
+            'RE' => 'RELIGIOUSEDUCATION',
+            'RELIGIOUSEDUCATION' => 'RELIGIOUSEDUCATION',
+            'LITI' => 'LITERACYI',
+            'LITI' => 'LITERACYI',
+            'LITERACYI' => 'LITERACYI',
+            'LITII' => 'LITERACYII',
+            'LITII' => 'LITERACYII',
+            'LITERACYII' => 'LITERACYII',
+            'RR' => 'READINGANDRESPONSE',
+            'READINGANDRESPONSE' => 'READINGANDRESPONSE',
+            'R_R' => 'READINGANDRESPONSE',
+        ];
     }
 
     private function buildSubjectMap(array $files, bool $dryRun): array

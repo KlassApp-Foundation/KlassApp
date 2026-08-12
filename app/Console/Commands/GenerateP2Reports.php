@@ -48,62 +48,19 @@ class GenerateP2Reports extends Command
                 $learner = User::find($sid);
                 $exam = Exam::find($examId);
                 $learner = $helper->learner($schoolId, $learner, $exam);
-                $subjects = $helper->subjects($schoolId, $section, $learner, $exam);
-                $exams = $helper->exam($schoolId, $exam);
 
-                $controls = ['SUBJECT', 'OUT OF'];
-                $uniqueExamTypes = $exams->pluck('examType')->unique()->count();
-                $marksFromSubject = [];
-                foreach ($exams as $ex) {
-                    if (!in_array(strtoupper($ex->examType->code), $controls)) {
-                        $controls[] = strtoupper($ex->examType->code);
-                        $marksFromSubject[] = $ex;
-                        if ($uniqueExamTypes > 1) {
-                            $controls = array_merge($controls, ['AVG']);
-                        }
-                    }
-                }
-                $controls = array_merge($controls, ['DIVISION', 'TEACHER', 'REMARK']);
+                $stdLink = \App\Models\StandardLink::where('school_id', $schoolId)
+                    ->where('section_id', $section)
+                    ->where('standard_id', $exam->standard_id)
+                    ->first();
 
-                $standard = $learner->studentAcademicLatest?->standardLink?->standard;
-                $isNursery = $standard && \App\Helpers\GradingHelper::levelTypeForStandard($standard) === 'nursery';
-
-                $total = $learner->marks
-                    ? $learner->marks->filter(fn($m) => $m->exam?->examType?->contributes_to_report_total)->sum('marks')
-                    : 0;
-                $grade = $helper->grade($learner, $exam);
-                $teacherComment = $standard
-                    ? (new \App\Services\ReportCardCommentService)->commentFor((int) $total, $standard->name, $learner->id, $exam->id)
-                    : '';
-
-                $pdf = Pdf::loadView('admin.marks.student-report', [
-                    'subjects'            => $subjects,
-                    'learner'             => $learner,
-                    'controls'            => $controls,
-                    'class_name'          => \App\Models\Section::find($section)->name,
-                    'grading_system'      => \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)->get(),
-                    'fees'                => collect(),
-                    'nextTerm'            => \App\Models\AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
-                    'totalLearners'       => 1,
-                    'myPos'               => 1,
-                    'exams'               => $exams,
-                    'marks'               => collect(),
-                    'examsDone'           => 1,
-                    'marksFromSubject'    => $marksFromSubject,
-                    'total'               => $total,
-                    'uniqueExamTypes'     => $uniqueExamTypes,
-                    'grade'               => $grade,
-                    'promotion'           => null,
-                    'school'              => \App\Models\School::find(104),
-                    'isNursery'           => $isNursery,
-                    'nurseryAssessments'  => collect(),
-                    'teacherComment'      => $teacherComment,
-                ]);
-                $pdf->setPaper('a4', 'portrait');
+                $pdfContent = \App\Http\Controllers\Admin\ReportCardsController::generatePdf(
+                    $learner->id, $exam, $stdLink, $schoolId, $helper, new \App\Services\ReportCardCommentService, 0, 0
+                );
 
                 $name = str_replace([' ', '/'], '_', $learner->name);
                 $path = "{$outDir}/{$sid}_{$name}.pdf";
-                file_put_contents($path, $pdf->output());
+                file_put_contents($path, $pdfContent);
                 $generated++;
             } catch (\Throwable $e) {
                 $errors[] = "student {$sid}: " . $e->getMessage();
