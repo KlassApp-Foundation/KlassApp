@@ -123,7 +123,12 @@ class ImportKabaleMarks extends Command
                 }
                 $sheets = Excel::toArray(new SheetsOnlyImport, $path);
                 $rawRows = $sheets[0] ?? [];
-                $headers = array_map(fn($h) => strtolower(str_replace([' ', '.'], '_', (string) $h)), $rawRows[0] ?? []);
+                $rawHeaders = array_map(fn($h) => strtolower(str_replace([' ', '.'], '_', (string) $h)), $rawRows[0] ?? []);
+                // Remove trailing empty headers that cause array_combine mismatch
+                while (!empty($rawHeaders) && ($rawHeaders[count($rawHeaders) - 1] === '')) {
+                    array_pop($rawHeaders);
+                }
+                $headers = $rawHeaders;
                 $dataRows = array_slice($rawRows, 1);
                 $examType = ($label === 'EOT') ? $examTypeEot : $examTypeMid;
                 $month = ($label === 'June') ? 6 : (($label === 'July') ? 7 : 8);
@@ -134,7 +139,8 @@ class ImportKabaleMarks extends Command
                 $this->line("\n--- {$label} ({$examType->code}) exam_id={$exam->id} ---");
 
                 foreach ($dataRows as $rawRow) {
-                    $row = array_combine($headers, array_values($rawRow));
+                    $values = array_slice(array_values($rawRow), 0, count($headers));
+                    $row = array_combine($headers, $values);
                     $excelName = trim((string) ($row['name'] ?? ''));
                     if ($excelName === '') continue;
 
