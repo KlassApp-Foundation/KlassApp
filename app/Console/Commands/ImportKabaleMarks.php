@@ -113,7 +113,6 @@ class ImportKabaleMarks extends Command
         $conflicts = [];
         $unmatched = ['June' => [], 'July' => [], 'EOT' => []];
         $matched = [];
-        $insertedCount = 0;
 
         DB::beginTransaction();
         try {
@@ -206,7 +205,7 @@ class ImportKabaleMarks extends Command
                 $this->info("\nDry run — changes rolled back.");
         } else {
             DB::commit();
-            $this->info("Import committed. {$insertedCount} marks inserted.");
+            $this->info("Import committed.");
         }
         } catch (\Throwable $e) {
             DB::rollBack();
