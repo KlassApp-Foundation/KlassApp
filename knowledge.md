@@ -6797,3 +6797,51 @@ The unbuilt `Marks.remark_id` feature was a per-subject remark; this is a **whol
 - **Data fix (production)**: Created Term 2 for Kabale (id=89, school_id=104, status=current), marked Term 1 as past, reassigned exams 21/22/23 to term_id=89. Verified P.2 → 48 students.
 - **Code fix**: `ReportCardsController@index` changed from `$terms->first()?->id` to `$terms->firstWhere('status', 'current')?->id ?? $terms->first()?->id`. Added `->orderBy('starts_on')` for deterministic ordering.
 - **Status**: ✅ MERGED — PR #222, merge commit `45e4357f2f969eee4bd17decdacc34e29990798e`, branch `hotfix/reports-cards-default-term` → `main`. Deployed to production.
+
+### 2026-08-12: Four P.2 report card rendering bugs — diagnosis + fixes (PRs #223–#226)
+
+Four issues found during manual review of 5 real P.2 PDFs:
+
+1. **Only 2 of 6 subjects displayed** — Root cause: subjects 234/236/241/242 had wrong `section_id` (43/45 instead of P.2's 46). Import's `firstOrCreate` used `(school, name, standard_id)` key but unique constraint is `(school, section_id, name)`. Fix: migration reassigns marks 234→245, 236→244, 241→249, 242→250. Import changed to `updateOrCreate` with `(school, section_id, name)` key. #223, #224, #225
+2. **OUT OF showed 400 (should be 600)** — Template had hardcoded `<th>400</th>`. Fix: `count($subjects) * 100`. #223
+3. **Position always 0** — `generatePdf()` hardcoded `'myPos' => 0`. Fix: added `computePositionMap()` using existing `StudentReportHelperService::totalMarks()` + `position()`. #223
+4. **Division always 0** — `marks.grade` was empty for all 288 EOT marks. `grade()` looked up by grade string instead of score range. Fix: `grade()` now uses score-range lookup (`min_score`/`max_score` from SchoolGradingSystem). Per-subject grade column in template also uses score-range. Added `resolveGrade()` + `backfillMarksGrade()` to import. New `kabale:backfill-grades` command. #223, #226
+
+- **Files**: `ReportCardsController.php`, `StudentReportHelperService.php`, `student-report.blade.php`, `ImportKabaleMarks.php`, migrations + BackfillMarksGrades command
+- **Test suites**: 14 passed (ReportTotal + MarksImport + ToshiReportCard)
+- **Status**: ✅ MERGED — PRs #223–#226, deployed. 852 marks.grade rows backfilled on production. All 6 subjects at correct section, 48 marks each.
+
+### 2026-08-12: Aggregate ranking — P.4-P.7 + corrected P.1-P.3/Nursery (PRs #227–#228)
+
+**Initial assumption (PR #227)**: Only P.7 and P.4-P.6 use aggregate ranking; P.1-P.3/Nursery fall back to totalMarks. Code: `StudentReportHelperService::position()` now accepts `$exam`, detects `whereNotNull('points')`, ranks by aggregate ascending (lower=better) when points exist, totalMarks descending otherwise. Updated all 3 callers (batch PDF, individual download, marks view). 19 tests passed.
+
+**Correction (PR #228)**: User confirmed via `1_Aggregate_Grading.xlsx` — P.1-P.3/Nursery DO use the same 9-band aggregate scale (95-100→1 through 0-39→9). Migration populated NULL points for standards 44 (nursery) and 54 (primary_lower). All 4 Kabale standards now 9/9 points, all rank by aggregate.
+
+- **Detection logic**: `hasAggregateRanking()` uses `whereNotNull('points')` — no hardcoded standard list. Automatically picks up new standards.
+- **Status**: ✅ MERGED — PRs #227, #228. 19 tests passing. All 4 standards confirmed 9/9 points on production.
+
+### 2026-08-12: Variable subject lists — pipeline generalization (PRs #229–#231)
+
+Import was hardcoded to 6 subjects via `SUBJECT_MAP` constant. Report side already dynamic (`count($subjects) * 100`, section-scoped query). Fix:
+- Removed `SUBJECT_MAP` constant. Import now reads Excel headers dynamically.
+- `--map` option for JSON column→name file (backward-compatible: `kabale_p2_subject_map.json`)
+- Auto-detection: normalizes headers, filters non-subject columns (`['name', 'no', 'no_', '#', 'total', 'position', 'pos', 'rank', 'average', 'avg', 'remarks', 'comment']`)
+- Verified both modes on production: 6 subjects detected correctly, no non-subject columns
+- Server is clean: no untracked files, no debug artifacts
+
+- **Status**: ✅ MERGED — PRs #229, #230, #231. Ready for any class's Excel with arbitrary subject count.
+
+### Tonight's PRs logged (complete)
+| PR | What |
+|---|---|
+| #221 | /admin/reports/cards + merged PDF + EOT KPI charts |
+| #222 | Hotfix: default term logic |
+| #223 | 4 report card bug fixes |
+| #224 | Migration: mark reassignment (FK-safe) |
+| #225 | Migration: skip FK-blocked delete |
+| #226 | Backfill: empty-string grades |
+| #227 | Aggregate ranking for P.4-P.7 |
+| #228 | Points for primary_lower + nursery |
+| #229 | Generalize subject detection |
+| #230 | Filter non-subject columns + deploy map file |
+| #231 | Filter No. column (dot→underscore)
