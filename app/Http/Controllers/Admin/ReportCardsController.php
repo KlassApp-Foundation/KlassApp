@@ -236,17 +236,16 @@ class ReportCardsController extends Controller
         $subjects = $helper->subjects($schoolId, $stdLink->section_id, $learner, $exam);
         $exams = $helper->exam($schoolId, $exam);
 
+        $midExams = $exams->filter(fn($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
+        $eotExams = $exams->filter(fn($e) => $e->examType->code !== 'MID')->values();
+        $allExamColumns = $midExams->merge($eotExams);
+
         $controls = ['SUBJECT', 'OUT OF'];
-        $uniqueExamTypes = $exams->pluck('examType')->unique()->count();
-        $marksFromSubject = [];
-        foreach ($exams as $ex) {
-            if (!in_array(strtoupper($ex->examType->code), $controls)) {
-                $controls[] = strtoupper($ex->examType->code);
-                $marksFromSubject[] = $ex;
-                if ($uniqueExamTypes > 1) {
-                    $controls = array_merge($controls, ['AVG']);
-                }
-            }
+        foreach ($midExams as $ex) {
+            $controls[] = strtoupper($ex->scheduled_at->format('M')) . ' MID';
+        }
+        foreach ($eotExams as $ex) {
+            $controls[] = 'EOT';
         }
         $controls = array_merge($controls, ['DIVISION', 'TEACHER', 'REMARK']);
 
@@ -267,10 +266,9 @@ class ReportCardsController extends Controller
             'grading_system' => \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)->get(),
             'fees' => collect(), 'nextTerm' => AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
             'totalLearners' => $totalLearners, 'myPos' => $myPos,
-            'exams' => $exams, 'marks' => collect(), 'examsDone' => $helper->examsDone($schoolId, $exam),
-            'marksFromSubject' => $marksFromSubject, 'total' => $total,
-            'uniqueExamTypes' => $uniqueExamTypes, 'grade' => $grade,
-            'promotion' => null, 'school' => \App\Models\School::find($schoolId),
+            'allExamColumns' => $allExamColumns, 'midCount' => $midExams->count(), 'eotCount' => $eotExams->count(),
+            'total' => $total, 'grade' => $grade,
+            'school' => \App\Models\School::find($schoolId),
             'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
             'teacherComment' => $teacherComment,
         ]);

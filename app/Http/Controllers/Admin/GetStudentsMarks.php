@@ -37,28 +37,18 @@ class GetStudentsMarks extends Controller
 
             $exams = $studentHelper->exam($schoolId, $exam);
 
-            // dd($exams);
+            $midExams = $exams->filter(fn($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
+            $eotExams = $exams->filter(fn($e) => $e->examType->code !== 'MID')->values();
+            $allExamColumns = $midExams->merge($eotExams);
+
             $controls = ["SUBJECT", "OUT OF"];
-            // many exam types
-            $uniqueExamTypes = $exams->pluck('examType')->unique()->count();
-            $cals = ["AVG"];
-            $marksFromSubject = [];
-            foreach ($exams as $ex){
-                
-                if(!in_array(strtoupper($ex->examType->code), $controls)){
-                    // dd($ex->examType->code);
-                    $controls[] = strtoupper($ex->examType->code);
-                    $marksFromSubject[] = $ex->subject;
-                    // check for more exam types to add average
-                    if($uniqueExamTypes > 1){
-                        $controls= array_merge($controls, $cals);
-                    }
-                }
-                
+            foreach ($midExams as $ex) {
+                $controls[] = strtoupper($ex->scheduled_at->format('M')) . ' MID';
             }
-            // dd($controls);
-             $next = ["DIVISION", "TEACHER", "REMARK"];
-           $controls= array_merge($controls, $next);
+            foreach ($eotExams as $ex) {
+                $controls[] = 'EOT';
+            }
+            $controls = array_merge($controls, ['DIVISION', 'TEACHER', 'REMARK']);
         //    dd($controls);
         //    student's total marks
         $studentTotals = $studentHelper->learnersTotal($exam, $user);
@@ -92,7 +82,8 @@ class GetStudentsMarks extends Controller
             // $byStandard = $fees->where("standard_id", )
             // dd($nextTerm);
     return view("admin.marks.student", compact(
-                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "exams", "marks", "examsDone", "marksFromSubject", "total", "studentTotals", "uniqueExamTypes", "grade", "promotion", "school"
+                "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "total", "grade", "school",
+                "allExamColumns", "midCount", "eotCount"
                 ));
     }
     

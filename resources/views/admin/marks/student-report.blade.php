@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Student Report Card</title>
     <style>
-        @page { margin: 2mm 7mm; } /* top-bottom 10mm, sides 15mm */
+        @page { margin: 2mm 5mm; }
         *, html{
             widows: 100%;
             background-color: #f9fbfc;
@@ -13,48 +13,52 @@
         }
         body {
             font-family: sans-serif;
-            font-size: 12px;
-            line-height: 1.5;
+            font-size: 11px;
+            line-height: 1.3;
             color: #2d3748;
             position: relative;
-            padding: 15px 18px;
+            padding: 8px 12px;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0 0;
+            margin: 4px 0 0;
         }
         .table{
-            margin: 24px 0 0;
+            margin: 10px 0 0;
         }
         th, td {
             border: 1px solid #e2e8f0;
-            padding: 10px 10px;
+            padding: 4px 6px;
             vertical-align: middle;
-            font-size: 12px;
+            font-size: 10px;
         }
         th {
             background-color: #f1f5f9;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 13px;
+            font-size: 10px;
         }
         .school-name {
-            font-size: 25px;
+            font-size: 20px;
             font-weight: bold;
             text-transform: uppercase
         }
-        .title {
-            font-size: 16px;
+        .section-header {
+            background-color: #e2e8f0;
+            font-size: 11px;
             font-weight: bold;
             text-align: center;
-            margin: 10px 0 15px;
             text-transform: uppercase;
         }
+        .eot-header {
+            background-color: #c7d2fe;
+            font-weight: bold;
+        }
         .photo {
-            width: 90px;
-            height: 90px;
+            width: 65px;
+            height: 65px;
             border: 2px solid #555;
             background-color: #5a5a5c;
             color: white;
@@ -66,25 +70,15 @@
             background-color: #f9f9f9;
         }
         .logo-circle {
-            width: 60px;
-            height: 60px;
+            width: 45px;
+            height: 45px;
             background: #ccc;
             border-radius: 50%;
             text-align: center;
-            line-height: 60px; 
+            line-height: 45px; 
             font-weight: bold;
-            font-size: 22px;
+            font-size: 18px;
             display: inline-block;
-        }
-        .note{
-            font-weight: 700;
-            font-size: 16px;
-            text-align: center;
-            margin-top: 24px;
-        }
-        .note-txt{
-            text-decoration: underline;
-            color: red;
         }
         .watermark {
     position: absolute;
@@ -96,7 +90,6 @@
     font-size: 60px;
     color: #000;
     font-weight: 900;
-    transform: rotate(-60deg);
 }
     </style>
 </head>
@@ -160,21 +153,6 @@
     </table>
     </div>
 
-    <!-- =========== Performance Summary =============== -->
-   <div class="table">
-     <div>
-        @php
-            $termMap = ["First Term" => 1, "Second Term" => 2, "Third Term" => 3];
-            $termName = $learner->marks->first()->exam->academicTerm->name;
-        @endphp
-        <h3 class="title">
-            {{ $learner->marks->first()->exam->exam_type }}
-            {{ $termMap[$termName] ?? "-" }}
-            {{ $termName->academicYear }}
-            <span>STUDENT REPORT CARD</span>
-        </h3>
-    </div>
-
     <!-- ================= Main Marks Table ===================== -->
     @if(!empty($isNursery))
         {{-- Nursery: descriptive domain assessment table --}}
@@ -209,9 +187,30 @@
         <table>
             <thead>
                 <tr>
-                    @foreach ($controls as $control)
-                        <th>{{ $control }}</th>
+                    <th>SUBJECT</th>
+                    <th>OUT OF</th>
+                    @if ($midCount > 0)
+                        <th class="section-header" colspan="{{ $midCount }}">MID TERM</th>
+                    @endif
+                    @if ($eotCount > 0)
+                        <th class="section-header eot-header" colspan="{{ $eotCount }}">END OF TERM</th>
+                    @endif
+                    <th>GRADE</th>
+                    <th>TEACHER</th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    @foreach ($allExamColumns as $colExam)
+                        @php
+                            $label = $colExam->examType->code === 'MID'
+                                ? strtoupper($colExam->scheduled_at->format('M')) . ' MID'
+                                : 'EOT';
+                        @endphp
+                        <th class="{{ $colExam->examType->code !== 'MID' ? 'eot-header' : '' }}">{{ $label }}</th>
                     @endforeach
+                    <th></th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -219,30 +218,18 @@
                     @php
                      $subjectMarks = $learner->marks->where('subject_id', $subject->id);
                      $firstMark = $subjectMarks->first();
-                     $score = $firstMark ? $firstMark->marks : null;
-                     $average = $subjectMarks->avg('marks');
                     @endphp
                     <tr>
                         <td>{{ $subject->name }}</td>
                         <td>100</td>
-                        @foreach ($marksFromSubject as $subje)
-                          @php
-                            // Find the mark for this specific exam type and subject
-                            $examTypeCode = $subje->examType->code ?? '';
-                            $markForExam = $subjectMarks->first(function ($m) use ($examTypeCode) {
-                                return $m->exam && strtoupper($m->exam->examType->code ?? '') === strtoupper($examTypeCode);
-                            });
-                          @endphp
-                          <td>
-                              {{ $markForExam ? floor($markForExam->marks) : "-" }}
-                          </td>                 
-                        @endforeach
-                            @if ($uniqueExamTypes > 1)
-                                 <td>
-                                {{ $score ? floor($score) : "-" }}
+                        @foreach ($allExamColumns as $colExam)
+                            @php
+                                $markForExam = $subjectMarks->firstWhere('exam_id', $colExam->id);
+                            @endphp
+                            <td>
+                                {{ $markForExam ? floor($markForExam->marks) : "-" }}
                             </td>
-                            @endif
-                        {{-- ============ grade ========= --}}
+                        @endforeach
                         @php
                             $subjectGrade = '-';
                             if ($firstMark && $firstMark->marks !== null) {
@@ -253,31 +240,19 @@
                             }
                         @endphp
                         <td>{{ $subjectGrade }}</td>
-                         @php
-                            $subjectGrade = $firstMark ? $firstMark->grade : null;
-                            $remark = $grade ? collect($grade['remark'])->firstWhere('grade', $subjectGrade) : null;
-                         @endphp
-                        {{-- ============ Remark ========= --}}
-                              <td>{{ $remark->remark ?? '-' }}</td>
-                        
                         <td>{{ $learner->marks->where("subject_id", $subject->id)->first()?->teacher->name ?? "N/A" }}</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 @php
-                $span = count($controls) - 3
-            @endphp
+                    $examCols = $midCount + $eotCount;
+                @endphp
                 <tr class="total-row">
                     <th>TOTAL</th>
                     <th>{{ count($subjects) * 100 }}</th>
-                    <th>{{ $total }}</th>
-                    @if ($uniqueExamTypes > 1)
-                        <td>
-                        {{floor($average) * $examsDone ?? "-" }}
-                    </td>     
-                    @endif     
-                    <th colspan="{{$span}}"></th>
+                    <th colspan="{{ $examCols }}">{{ $total }}</th>
+                    <th colspan="2"></th>
                 </tr>
             </tfoot>
         </table>
@@ -336,37 +311,28 @@
 
     <!-- Grading System -->
    <div class="table">
-     <h3 style="margin: 25px 0 10px 0; font-size: 14px;">School Grading System</h3>
+     <h3 style="margin: 12px 0 4px 0; font-size: 12px;">School Grading System</h3>
     <table>
         <thead>
             <tr>
                 <th>Grade</th>
-                @foreach ($grading_system as $range => $grade)
+                @foreach ($grading_system as $grade)
                     <th>{{ $grade->grade }}</th>
                 @endforeach
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td><strong>@if(!empty($isNursery)) Descriptor @else Range @endif</strong></td>
+                <td><strong>Range</strong></td>
                 @foreach ($grading_system as $grade)
-                    @if(!empty($isNursery))
-                        <td>{{ $grade->remark }}</td>
-                    @else
-                        <td>{{ $grade->min_score . "-" . $grade->max_score }}</td>
-                    @endif
+                    <td>{{ $grade->min_score . "-" . $grade->max_score }}</td>
                 @endforeach
             </tr>
         </tbody>
     </table>
-
    </div>
 @else
     <h3 style="text-align:center;">No records found</h3>
 @endif
-    <h3 class="note">
-        <strong>NOTE:</strong>
-        <span class='note-txt'>This report card is invalid without the official school stamp</span>
-</h3>
 </body>
 </html>
