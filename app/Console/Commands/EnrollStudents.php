@@ -115,6 +115,7 @@ class EnrollStudents extends Command
             }
 
             $sectionId = DB::table('standards_link')->where('id', $stdLinkId)->value('section_id');
+            $yearId = DB::table('academic_years')->where('school_id', $schoolId)->where('status', 1)->value('id');
 
             $exists = User::where('school_id', $schoolId)
                 ->where('usergroup_id', 6)
@@ -158,6 +159,7 @@ class EnrollStudents extends Command
                     'user_id' => $user->id,
                     'standardLink_id' => $stdLinkId,
                     'school_id' => $schoolId,
+                    'academic_year_id' => $yearId,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
