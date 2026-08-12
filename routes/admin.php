@@ -829,6 +829,7 @@ Route::post( '/student/shift', 'SendMessageController@shift' );
 // ========= ADDED FOR UGANDA'S MODEL ===========
 // exams (admin)
 Route::get('/exams', 'ExamController@index')->name('admin.exams');
+Route::get('/exams/{exam}/marksheet', 'ExamController@marksheet')->name('admin.exams.marksheet');
 Route::get('/exams/add-new', 'ExamController@create')->name('admin.exams.create');
 // Route::get('/exams/classes/all', 'ExamController@sections')->name('admin.exams.classes.all');
 Route::get('/exams/{exam}/edit', 'ExamController@edit')->name('admin.exams.edit');
