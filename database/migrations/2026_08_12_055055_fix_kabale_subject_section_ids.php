@@ -29,10 +29,6 @@ return new class extends Migration
             if (!DB::table('subjects')->where('id', $newId)->exists()) continue;
 
             DB::table('marks')->where('subject_id', $oldId)->update(['subject_id' => $newId]);
-
-            if (!DB::table('marks')->where('subject_id', $oldId)->exists()) {
-                DB::table('subjects')->where('id', $oldId)->delete();
-            }
         }
     }
 
