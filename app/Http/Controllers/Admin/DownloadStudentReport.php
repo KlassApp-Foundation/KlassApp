@@ -100,13 +100,8 @@ class DownloadStudentReport extends Controller
                     
     $totalLearners = $learners->count();
     $learners = $learners->get();        
-    // totals
-    $learners = $studentHelper->totalMarks($learners);
-    //   get position
-    $learners = $learners->sortByDesc("total")->values();
-    // dd($learners);
-      // position
-        $learners = $studentHelper->position($learners);
+    // totals + position (aggregate-aware: uses grade points when available, total marks otherwise)
+    $learners = $studentHelper->position($learners, $exam);
         $nextTerm = AcademicTerm::where("school_id", $schoolId)->where("starts_on", ">", now())->first();
         $school = Auth::user()->school;
         

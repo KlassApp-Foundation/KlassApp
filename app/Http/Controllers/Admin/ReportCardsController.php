@@ -220,8 +220,7 @@ class ReportCardsController extends Controller
             ->where('usergroup_id', 6)
             ->get();
 
-        $learners = $helper->totalMarks($learners);
-        $learners = $helper->position($learners->sortByDesc('total')->values());
+        $learners = $helper->position($learners, $exam);
 
         $map = [];
         foreach ($learners as $l) {
