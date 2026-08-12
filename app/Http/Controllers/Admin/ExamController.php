@@ -7,12 +7,15 @@ use App\Http\Requests\CreateExamRequest;
 use App\Http\Requests\UpdateExamsRequest;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamType;
+use App\Models\Academics\Marks;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\School;          // probably not needed if school_id from auth
 use App\Models\Section;
 use App\Models\Standard;
+use App\Models\StandardLink;
 use App\Models\Subject;
+use App\Models\Teacherlink;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -57,25 +60,57 @@ public function sections(){
 
     public function index()
     {
-        // $academicYears = AcademicYear::where('school_id', Auth::user()->school_id)
-        //     ->get();
-        $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
-        ->where('school_id', Auth::user()->school_id)
-        ->latest()
-        ->get();
-        // $exam_types = DB::table("exam_types")->get();
-        $standards   = Standard::where('school_id', Auth::user()->school_id)->get(); // classes/grades
-        $subjects    = Subject::where('school_id', Auth::user()->school_id)->get();
-        $teachers    = User::where('school_id', Auth::user()->school_id)
+        $schoolId = Auth::user()->school_id;
+
+        $exams = Exam::with(['standard', 'section', 'examType', 'academicTerm'])
+            ->where('school_id', $schoolId)
+            ->latest()
+            ->get();
+
+        $subjectNames = Subject::where('school_id', $schoolId)->pluck('name', 'id');
+
+        $marksByExam = Marks::where('school_id', $schoolId)
+            ->whereIn('exam_id', $exams->pluck('id'))
+            ->get()
+            ->groupBy('exam_id');
+
+        $stdLinks = StandardLink::where('school_id', $schoolId)->get();
+
+        $teacherLinks = Teacherlink::where('school_id', $schoolId)
+            ->get()
+            ->groupBy('standardLink_id');
+
+        foreach ($exams as $exam) {
+            $examMarks = $marksByExam->get($exam->id) ?? collect();
+
+            $exam->subjects_list = $examMarks->pluck('subject_id')->unique()
+                ->map(fn ($id) => $subjectNames[$id] ?? null)
+                ->filter()
+                ->values();
+
+            $exam->has_marks = $examMarks->isNotEmpty();
+
+            $sl = $stdLinks->first(fn ($s) => $s->section_id == $exam->section_id && $s->standard_id == $exam->standard_id);
+
+            $exam->teachers_list = $sl
+                ? collect($teacherLinks->get($sl->id) ?? [])
+                    ->map(fn ($tl) => $tl->teacher?->name ?: $tl->teacher?->email)
+                    ->filter()
+                    ->unique()
+                    ->values()
+                : collect();
+        }
+
+        $standards = Standard::where('school_id', $schoolId)->get();
+        $subjects = Subject::where('school_id', $schoolId)->get();
+        $teachers = User::where('school_id', $schoolId)
             ->whereIn('usergroup_id', [3, 5])
             ->get();
-            
-       $headers = [
-        "No", "Term", "Type", "Status", "Level", "Class", "Subject", "Teacher", "Actions"
-        ];     
-       
+
+        $headers = ["No", "Term", "Type", "Status", "Level", "Class", "Subject", "Teacher", "Actions"];
+
         return view('admin.exams.index', compact(
-            "exams", 'standards', 'subjects', 'teachers', "headers"
+            'exams', 'standards', 'subjects', 'teachers', 'headers'
         ));
     }
 
