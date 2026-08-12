@@ -79,6 +79,51 @@ public function sections(){
         ));
     }
 
+    public function marksheet(Exam $exam)
+    {
+        $schoolId = Auth::user()->school_id;
+
+        // Subjects that have marks for this exam (ordered by name)
+        $subjects = \App\Models\Academics\Marks::where('exam_id', $exam->id)
+            ->join('subjects', 'marks.subject_id', '=', 'subjects.id')
+            ->select('subjects.id', 'subjects.name')
+            ->distinct()
+            ->orderBy('subjects.name')
+            ->get();
+
+        // Students who have marks for this exam (active, non-junk)
+        $students = \App\Models\User::whereIn('id', function ($q) use ($exam) {
+                $q->select('student_id')->from('marks')->where('exam_id', $exam->id)->distinct();
+            })
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        $headings = array_merge(['STUDENT NAME'], $subjects->pluck('name')->toArray());
+        $rows = [];
+
+        foreach ($students as $student) {
+            $row = [$student->name];
+            foreach ($subjects as $subject) {
+                $mark = \App\Models\Academics\Marks::where('exam_id', $exam->id)
+                    ->where('student_id', $student->id)
+                    ->where('subject_id', $subject->id)
+                    ->value('marks');
+                $row[] = $mark !== null ? (float) $mark : '';
+            }
+            $rows[] = $row;
+        }
+
+        $title = str_replace(' ', '_', $exam->section?->name ?? 'class') . '_' . ($exam->examType?->code ?? 'exam');
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\MarksheetExport($headings, $rows, $title),
+            "{$title}_marksheet.xlsx"
+        );
+    }
+
     public function store(CreateExamRequest $request)
     {
         // dd($request);
