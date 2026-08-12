@@ -22,18 +22,11 @@ use Carbon\Carbon;
 class ImportKabaleMarks extends Command
 {
     protected $signature = 'kabale:import-marks
-                            {--dry-run : Report matches without writing to DB}';
+                            {--dry-run : Report matches without writing to DB}
+                            {--map= : Optional JSON file mapping Excel column headers to subject names}';
 
-    protected $description = 'Import P.2 marks for Kabale (school 104) from June/July/EOT Excel files';
+    protected $description = 'Import marks for Kabale (school 104) from Excel files. Reads all subject columns dynamically — no hardcoded subject list.';
 
-    private const SUBJECT_MAP = [
-        'eng'   => 'English',
-        'mtc'   => 'Mathematics',
-        're'    => 'Religious Education',
-        'lit_i' => 'Literacy I',
-        'lit_ii'=> 'Literacy II',
-        'r_r'   => 'Reading and Response',
-    ];
 
     public function handle(): int
     {
@@ -75,7 +68,15 @@ class ImportKabaleMarks extends Command
             'EOT'  => '/tmp/P2_End_of_Term_II_Marks.xlsx',
         ];
 
-        $subjects = $this->ensureSubjects($school->id, $p2StdLink);
+        // Build subject map: either from --map JSON file or auto-detected from Excel headers
+        $subjectMap = $this->buildSubjectMap($files, $dryRun);
+        if (empty($subjectMap)) {
+            $this->error('No subject columns found in Excel files.');
+            return 1;
+        }
+        $this->info('Subject columns detected: ' . implode(', ', array_values($subjectMap)));
+
+        $subjects = $this->ensureSubjects($school->id, $p2StdLink, $subjectMap);
         $conflicts = [];
         $unmatched = ['June' => [], 'July' => [], 'EOT' => []];
         $matched = [];
@@ -125,7 +126,7 @@ class ImportKabaleMarks extends Command
                     $studentId = $match['id'];
                     $studentName = $match['name'];
 
-                    foreach (self::SUBJECT_MAP as $colKey => $subjectName) {
+                    foreach ($subjectMap as $colKey => $subjectName) {
                         $score = $row[$colKey] ?? null;
                         if ($score === null || (string) $score === '') continue;
                         $score = (int) $score;
@@ -275,10 +276,10 @@ class ImportKabaleMarks extends Command
         $this->warn("    best: score={$bestScore} match=" . ($bestMatch['name'] ?? 'none') . " tokens=" . implode('|', $excelTokens));
     }
 
-    private function ensureSubjects(int $schoolId, StandardLink $stdLink): array
+    private function ensureSubjects(int $schoolId, StandardLink $stdLink, array $subjectMap): array
     {
         $map = [];
-        foreach (self::SUBJECT_MAP as $subjectName) {
+        foreach ($subjectMap as $subjectName) {
             $s = Subject::updateOrCreate(
                 ['school_id' => $schoolId, 'section_id' => $stdLink->section_id, 'name' => $subjectName],
                 ['code' => '', 'type' => 'core', 'status' => 1, 'academic_year_id' => $stdLink->academic_year_id, 'standard_id' => $stdLink->standard_id]
@@ -286,6 +287,44 @@ class ImportKabaleMarks extends Command
             $map[$subjectName] = $s->id;
         }
         return $map;
+    }
+
+    private function buildSubjectMap(array $files, bool $dryRun): array
+    {
+        $mapFile = $this->option('map');
+        if ($mapFile && file_exists($mapFile)) {
+            $map = json_decode(file_get_contents($mapFile), true);
+            if (is_array($map)) {
+                $this->info("Using subject map from: {$mapFile}");
+                return $map;
+            }
+            $this->warn("Invalid JSON in map file, falling back to auto-detection.");
+        }
+
+        // Auto-detect: read headers from the first available file
+        foreach ($files as $path) {
+            if (!file_exists($path)) continue;
+            $sheets = Excel::toArray(new SheetsOnlyImport, $path);
+            $headers = $sheets[0][0] ?? [];
+            $map = [];
+            foreach ($headers as $h) {
+                $key = strtolower(str_replace([' ', '.'], '_', (string) $h));
+                if ($key === 'name' || $key === '' || $key === '#') continue;
+                $map[$key] = $this->normalizeSubjectName((string) $h);
+            }
+            if (!empty($map)) return $map;
+        }
+
+        return [];
+    }
+
+    private function normalizeSubjectName(string $raw): string
+    {
+        $name = trim(str_replace(['_', '.'], ' ', $raw));
+        $name = preg_replace('/\s+/', ' ', $name);
+        $name = ucwords(strtolower($name));
+        if ($name === '') $name = trim($raw);
+        return $name;
     }
 
     private function resolveGrade(int $schoolId, int $standardId, int $score): string
