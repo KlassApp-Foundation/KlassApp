@@ -190,51 +190,78 @@
             @endforeach
         </table>
     @else
+        {{-- ═══ MID TERM — MONTHLY RESULTS (subjects as columns, exams as rows) ═══ --}}
+        @if ($midExams->isNotEmpty())
+        <div class="grades-heading">MONTHLY RESULTS — MID TERM</div>
         <table class="marks-table">
             <tr>
-                <th style="width:22%">Subject</th>
-                <th style="width:6%">Out of</th>
-                @if ($midCount > 0) <th class="section-mid" colspan="{{ $midCount }}">MID TERM</th> @endif
-                @if ($eotCount > 0) <th class="section-eot" colspan="{{ $eotCount }}">END OF TERM</th> @endif
-                <th style="width:8%">Grade</th>
-            </tr>
-            <tr>
-                <th></th><th></th>
-                @foreach ($allExamColumns as $colExam)
-                    @php $label = $colExam->examType->code === 'MID' ? strtoupper($colExam->scheduled_at->format('M')) : 'EOT'; @endphp
-                    <th class="{{ $colExam->examType->code !== 'MID' ? 'section-eot' : '' }}">{{ $label }}</th>
+                <th style="width:12%">Month Of</th>
+                @foreach ($subjects as $subject)
+                    @if ($learner->marks->where('subject_id', $subject->id)->isNotEmpty())
+                        <th>{{ $subject->name }}</th>
+                        <th>AGG</th>
+                    @endif
                 @endforeach
-                <th></th>
             </tr>
+            @foreach ($midExams as $midExam)
+                @php $monthLabel = strtoupper($midExam->scheduled_at->format('F')); @endphp
+                <tr>
+                    <td class="strong">{{ $monthLabel }}</td>
+                    @foreach ($subjects as $subject)
+                        @if ($learner->marks->where('subject_id', $subject->id)->isNotEmpty())
+                            @php
+                                $midMark = $learner->marks->firstWhere('exam_id', $midExam->id) && $learner->marks->firstWhere('exam_id', $midExam->id)->subject_id == $subject->id
+                                    ? $learner->marks->firstWhere('exam_id', $midExam->id) : $learner->marks->where('subject_id', $subject->id)->firstWhere('exam_id', $midExam->id);
+                                $midGrade = '-';
+                                if ($midMark && $midMark->marks !== null) {
+                                    $g = $grading_system->first(fn($gs) => $gs->min_score <= $midMark->marks && $gs->max_score >= $midMark->marks);
+                                    $midGrade = $g ? $g->grade : '-';
+                                }
+                            @endphp
+                            <td>{{ $midMark ? floor($midMark->marks) : '&mdash;' }}</td>
+                            <td>{{ $midGrade }}</td>
+                        @endif
+                    @endforeach
+                </tr>
+            @endforeach
+        </table>
+        @endif
+
+        {{-- ═══ END OF TERM (subjects as rows, EOT mark + grade) ═══ --}}
+        @if ($eotExams->isNotEmpty())
+        <div class="grades-heading" style="color: #1E6FD9;">END OF TERM EXAMINATION</div>
+        <table class="marks-table">
+            <tr>
+                <th>Subject</th>
+                <th style="width:12%">Mark</th>
+                <th style="width:12%">AGG</th>
+            </tr>
+            @php $eotTotal = 0; @endphp
             @foreach ($subjects as $subject)
                 @php $subjectMarks = $learner->marks->where('subject_id', $subject->id); @endphp
+                @if ($subjectMarks->isEmpty()) @continue @endif
+                @php
+                    $eotMark = $subjectMarks->firstWhere('exam_id', $eotExams->first()->id);
+                    $eotGrade = '-';
+                    if ($eotMark && $eotMark->marks !== null) {
+                        $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
+                        $eotGrade = $g ? $g->grade : '-';
+                    }
+                    $eotTotal += $eotMark ? $eotMark->marks : 0;
+                @endphp
                 <tr>
                     <td class="left strong">{{ $subject->name }}</td>
-                    <td>100</td>
-                    @foreach ($allExamColumns as $colExam)
-                        @php $markForExam = $subjectMarks->firstWhere('exam_id', $colExam->id); @endphp
-                        <td class="{{ $markForExam ? '' : 'empty' }}">{{ $markForExam ? floor($markForExam->marks) : '&mdash;' }}</td>
-                    @endforeach
-                    @php
-                        $firstMark = $subjectMarks->first();
-                        $eotExam = $allExamColumns->last();
-                        $eotMark = $eotExam ? $subjectMarks->firstWhere('exam_id', $eotExam->id) : $firstMark;
-                        $subjectGrade = '-';
-                        if ($eotMark && $eotMark->marks !== null) {
-                            $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
-                            $subjectGrade = $g ? $g->grade : '-';
-                        }
-                    @endphp
-                    <td>{{ $subjectGrade }}</td>
+                    <td>{{ $eotMark ? floor($eotMark->marks) : '&mdash;' }}</td>
+                    <td>{{ $eotGrade }}</td>
                 </tr>
             @endforeach
             <tr class="total-row">
                 <td><strong>TOTAL</strong></td>
-                <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
-                <td colspan="{{ $midCount + $eotCount }}"><strong>{{ $total }}</strong></td>
-                <td></td>
+                <td><strong>{{ $total }}</strong></td>
+                <td><strong>{{ $grade['agg'] ?? '&mdash;' }}</strong></td>
             </tr>
         </table>
+        @endif
     @endif
 
     {{-- ═══ COMMENTS ═══ --}}
