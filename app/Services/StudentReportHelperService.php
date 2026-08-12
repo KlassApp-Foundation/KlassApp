@@ -141,21 +141,25 @@ return $total;
   }
 
    public function grade($learner, $exam){
-        $agg = 0;   
-        $remark = null;
-        foreach($learner->marks as $mark){
-            if (empty($mark->grade)) continue; // skip marks with no grade (shouldn't happen, but handle gracefully)
-            $gradeMapping = SchoolGradingSystem::where('school_id', $learner->school_id)
-                    ->where('standard_id', $exam->standard_id)
-                    ->where('grade', $mark->grade)
-                    ->first();
-            if (!$gradeMapping) continue; // grade not found in grading system (shouldn't happen, but handle gracefully)
-                    
-            $agg += $gradeMapping->points;
-            $remark[] = $gradeMapping;
-        }         
-        return ["agg" => $agg, "remark" => $remark];
-    }
+         $agg = 0;   
+         $remark = null;
+         foreach($learner->marks as $mark){
+             if ($mark->marks === null) continue;
+
+             $gradeMapping = SchoolGradingSystem::where('school_id', $learner->school_id)
+                     ->where('standard_id', $exam->standard_id)
+                     ->where('min_score', '<=', $mark->marks)
+                     ->where('max_score', '>=', $mark->marks)
+                     ->first();
+             if (!$gradeMapping) continue;
+
+             if ($gradeMapping->points !== null) {
+                 $agg += $gradeMapping->points;
+             }
+             $remark[] = $gradeMapping;
+         }         
+         return ["agg" => $agg, "remark" => $remark];
+     }
 //   grading school system
 // public function grade(int $mark, int $schoolId, Exam $exam){
 //         // dd($exam);

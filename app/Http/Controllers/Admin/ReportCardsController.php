@@ -136,10 +136,12 @@ class ReportCardsController extends Controller
 
         $helper = app(\App\Services\StudentReportHelperService::class);
         $svc = new ReportCardCommentService;
+        $positionMap = $this->computePositionMap($exam, $schoolId);
 
         foreach ($studentIds as $sid) {
             $learner = \App\Models\User::find($sid);
-            $pdfContent = $this->generatePdf($sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count());
+            $myPos = $positionMap[$sid] ?? 0;
+            $pdfContent = $this->generatePdf($sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count(), $myPos);
             $name = str_replace([' ', '/'], '_', $learner->name);
             $zip->addFromString("{$sid}_{$name}.pdf", $pdfContent);
         }
@@ -166,9 +168,11 @@ class ReportCardsController extends Controller
         $helper = app(\App\Services\StudentReportHelperService::class);
         $svc = new ReportCardCommentService;
         $merger = new \iio\libmergepdf\Merger;
+        $positionMap = $this->computePositionMap($exam, $schoolId);
 
         foreach ($studentIds as $sid) {
-            $merger->addRaw($this->generatePdf($sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count()));
+            $myPos = $positionMap[$sid] ?? 0;
+            $merger->addRaw($this->generatePdf($sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count(), $myPos));
         }
 
         $merged = $merger->merge();
@@ -199,7 +203,34 @@ class ReportCardsController extends Controller
             ->pluck('student_id');
     }
 
-    private function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners): string
+    private function computePositionMap(Exam $exam, int $schoolId): array
+    {
+        $studentIds = $this->studentIds($exam);
+        if ($studentIds->isEmpty()) return [];
+
+        $helper = app(\App\Services\StudentReportHelperService::class);
+        $scopedExamIds = Exam::where('school_id', $schoolId)
+            ->where('section_id', $exam->section_id)
+            ->where('academic_year_id', $exam->academic_year_id)
+            ->where('academic_term_id', $exam->academic_term_id)
+            ->pluck('id');
+
+        $learners = \App\Models\User::whereIn('id', $studentIds)
+            ->with(['marks' => fn($q) => $q->whereIn('exam_id', $scopedExamIds)->with('exam.examType')])
+            ->where('usergroup_id', 6)
+            ->get();
+
+        $learners = $helper->totalMarks($learners);
+        $learners = $helper->position($learners->sortByDesc('total')->values());
+
+        $map = [];
+        foreach ($learners as $l) {
+            $map[$l->id] = $l->position;
+        }
+        return $map;
+    }
+
+    private function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0): string
     {
         $learner = \App\Models\User::find($sid);
         $learner = $helper->learner($schoolId, $learner, $exam);
@@ -236,7 +267,7 @@ class ReportCardsController extends Controller
             'class_name' => Section::find($stdLink->section_id)->name,
             'grading_system' => \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)->get(),
             'fees' => collect(), 'nextTerm' => AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
-            'totalLearners' => $totalLearners, 'myPos' => 0,
+            'totalLearners' => $totalLearners, 'myPos' => $myPos,
             'exams' => $exams, 'marks' => collect(), 'examsDone' => $helper->examsDone($schoolId, $exam),
             'marksFromSubject' => $marksFromSubject, 'total' => $total,
             'uniqueExamTypes' => $uniqueExamTypes, 'grade' => $grade,

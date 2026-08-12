@@ -134,6 +134,7 @@ class ImportKabaleMarks extends Command
                         if (!$subjectId) continue;
 
                         if (!$dryRun) {
+                            $grade = $this->resolveGrade($school->id, $p2StdLink->standard_id, $score);
                             Marks::updateOrCreate(
                                 [
                                     'student_id' => $studentId,
@@ -145,6 +146,7 @@ class ImportKabaleMarks extends Command
                                     'teacher_id' => $exam->teacher_id ?? 0,
                                     'marks'      => $score,
                                     'section_id' => $p2StdLink->section_id,
+                                    'grade'      => $grade,
                                 ]
                             );
                         }
@@ -169,6 +171,11 @@ class ImportKabaleMarks extends Command
             $this->error('Failed: ' . $e->getMessage());
             $this->error($e->getTraceAsString());
             return 1;
+        }
+
+        // Backfill marks.grade for all newly imported marks using the grading system
+        if (!$dryRun) {
+            $this->backfillMarksGrade($school->id, $p2StdLink->standard_id);
         }
 
         $this->report($matched, $unmatched, $conflicts, $files);
@@ -272,13 +279,47 @@ class ImportKabaleMarks extends Command
     {
         $map = [];
         foreach (self::SUBJECT_MAP as $subjectName) {
-            $s = Subject::firstOrCreate(
+            $s = Subject::updateOrCreate(
                 ['school_id' => $schoolId, 'name' => $subjectName, 'standard_id' => $stdLink->standard_id],
                 ['code' => '', 'type' => 'core', 'status' => 1, 'academic_year_id' => $stdLink->academic_year_id, 'section_id' => $stdLink->section_id]
             );
             $map[$subjectName] = $s->id;
         }
         return $map;
+    }
+
+    private function resolveGrade(int $schoolId, int $standardId, int $score): string
+    {
+        $grade = DB::table('school_grading_systems')
+            ->where('school_id', $schoolId)
+            ->where('standard_id', $standardId)
+            ->where('min_score', '<=', $score)
+            ->where('max_score', '>=', $score)
+            ->value('grade');
+
+        return $grade ?? '';
+    }
+
+    private function backfillMarksGrade(int $schoolId, int $standardId): void
+    {
+        $grades = DB::table('school_grading_systems')
+            ->where('school_id', $schoolId)
+            ->where('standard_id', $standardId)
+            ->get();
+
+        if ($grades->isEmpty()) return;
+
+        $updated = 0;
+        foreach ($grades as $g) {
+            $updated += DB::table('marks')
+                ->where('school_id', $schoolId)
+                ->whereNull('grade')
+                ->where('marks', '>=', $g->min_score)
+                ->where('marks', '<=', $g->max_score)
+                ->update(['grade' => $g->grade]);
+        }
+
+        $this->info("  Backfilled marks.grade: {$updated} rows updated.");
     }
 
     private function findOrCreateExam(int $schoolId, StandardLink $stdLink, ExamType $examType, Carbon $date, AcademicTerm $term, AcademicYear $year, bool $dryRun): Exam

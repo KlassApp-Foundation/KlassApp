@@ -6770,3 +6770,30 @@ The unbuilt `Marks.remark_id` feature was a per-subject remark; this is a **whol
 - Integration: `DownloadStudentReport.php` computes comment from `$total` and `$standard->name`, passes to template. Template replaces legacy promotion text with `$teacherComment`.
 - Verified on production: upper band test (350→320-359), lower band test (450→440-519), deterministic re-test, out-of-range → empty fallback.
 - Nursery: no numeric total → comment shows `—`. Comment bank gap (per-subject remarks via `remark_id`) remains unbuilt and noted as known limitation.
+
+### 2026-08-12: /admin/reports/cards — batch report card downloads + EOT KPI charts
+
+- **Work done**: Built /admin/reports/cards page for batch report card operations:
+  - Class cards with term filter and per-class student counts
+  - Zip download (Download All) — per-student PDFs in zip archive
+  - Merged PDF download (Print All) — single multi-page PDF via `iio/libmergepdf` v4.0.4
+  - Sidebar nav entry under Academics group (Report Cards)
+  - EOT Performance KPI card with 3 tabbed Chart.js v2.9.3 bar charts:
+    - Per class: average EOT total per student, grouped by section
+    - Per subject: average mark per subject across all EOT exams
+    - Per gender: average EOT total split by Male/Female (userprofiles.gender)
+  - Charts render on both admin dashboard and reports/cards page (shared `_eot-kpi-card.blade.php` partial)
+  - All EOT KPI queries filter on `exam_types.contributes_to_report_total = 1`
+  - P.2 batch report generation command (`GenerateP2Reports`)
+- **Files modified**: `ReportCardsController.php` (merged PDF + KPI compute), `DashboardController.php`, `admin/menu.blade.php`, `cards.blade.php`, `dashboard/dashboard.blade.php`, `routes/admin.php`, `composer.json` (iio/libmergepdf)
+- **Files created**: `_eot-kpi-card.blade.php`, `GenerateP2Reports.php`, `.ai/rules/general.md`
+- **Test suites passing**: `ReportTotalExcludesNonContributingExamsTest`, `MarksImportSubjectIntegrityTest`, `ToshiReportCardPipelineFixTest` — all passing in full suite (697 passed, 23 pre-existing failures)
+- **Status**: ✅ MERGED — PR #221, merge commit `ddb7fe1a4fa74b3884d9eea9dca59e341cfe0f07`, branch `feat/onboarding-school-category` → `main`
+- **Edge cases flagged**: EOT KPI queries use subquery pattern for per-student totals (per class and per gender tabs); per subject uses direct AVG. Term filter respected on reports/cards page; dashboard uses all terms.
+
+### 2026-08-12: Hotfix — Kabale /admin/reports/cards showed "No classes with EOT exams found"
+
+- **Work done**: Root cause: Kabale's 3 exams (21=EOT, 22/23=MID) referenced `academic_term_id=3` belonging to school_id=19 (cross-school contamination from SSH import). Kabale only had Term 1 (id=88) in `academic_terms`. Controller defaulted to `$terms->first()` (Term 1, id=88), finding zero exams.
+- **Data fix (production)**: Created Term 2 for Kabale (id=89, school_id=104, status=current), marked Term 1 as past, reassigned exams 21/22/23 to term_id=89. Verified P.2 → 48 students.
+- **Code fix**: `ReportCardsController@index` changed from `$terms->first()?->id` to `$terms->firstWhere('status', 'current')?->id ?? $terms->first()?->id`. Added `->orderBy('starts_on')` for deterministic ordering.
+- **Status**: ✅ MERGED — PR #222, merge commit `45e4357f2f969eee4bd17decdacc34e29990798e`, branch `hotfix/reports-cards-default-term` → `main`. Deployed to production.
