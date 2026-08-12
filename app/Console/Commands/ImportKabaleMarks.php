@@ -40,8 +40,8 @@ class ImportKabaleMarks extends Command
         'p5West'  => ['section' => 'P.5',  'standard' => 'primary'],
         'p6East'  => ['section' => 'P.6',  'standard' => 'primary'],
         'p6West'  => ['section' => 'P.6',  'standard' => 'primary'],
-        'p7A'     => ['section' => 'P.7',  'standard' => 'primary'],
-        'p7B'     => ['section' => 'P.7',  'standard' => 'primary'],
+        'p7A'     => ['section' => 'P.7',  'standard' => 'primary_upper'],
+        'p7B'     => ['section' => 'P.7',  'standard' => 'primary_upper'],
     ];
 
 
