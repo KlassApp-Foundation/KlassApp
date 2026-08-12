@@ -93,10 +93,11 @@ class ImportKabaleMarks extends Command
         $this->info("Roster (filtered): " . count($roster) . " students");
 
         $fileLabel = str_replace(' ', '', $config['section']);
+        $base = storage_path('app');
         $files = [
-            'June' => "/tmp/{$fileLabel}_june.xlsx",
-            'July' => "/tmp/{$fileLabel}_july.xlsx",
-            'EOT'  => "/tmp/{$fileLabel}_end_of_term.xlsx",
+            'June' => "{$base}/{$fileLabel}_june.xlsx",
+            'July' => "{$base}/{$fileLabel}_july.xlsx",
+            'EOT'  => "{$base}/{$fileLabel}_end_of_term.xlsx",
         ];
 
         // Build subject map: either from --map JSON file or auto-detected from Excel headers
