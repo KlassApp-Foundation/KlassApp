@@ -23,23 +23,54 @@ class ImportKabaleMarks extends Command
 {
     protected $signature = 'kabale:import-marks
                             {--dry-run : Report matches without writing to DB}
-                            {--map= : Optional JSON file mapping Excel column headers to subject names}';
+                            {--map= : Optional JSON file mapping Excel column headers to subject names}
+                            {--class= : Class to import (e.g. p1East, p1West, p2, p3East, p3West, p4East, p4West, p5East, p5West, p6East, p6West, p7A, p7B)}';
 
-    protected $description = 'Import marks for Kabale (school 104) from Excel files. Reads all subject columns dynamically — no hardcoded subject list.';
+    protected $description = 'Import marks for Kabale (school 104) from Excel files. Reads all subject columns dynamically.';
+
+    private const CLASS_CONFIG = [
+        'p1East'  => ['section' => 'P.1 East',  'standard' => 'primary_lower'],
+        'p1West'  => ['section' => 'P.1 West',  'standard' => 'primary_lower'],
+        'p2'      => ['section' => 'P.2',        'standard' => 'primary_lower'],
+        'p3East'  => ['section' => 'P.3 East',   'standard' => 'primary_lower'],
+        'p3West'  => ['section' => 'P.3 West',   'standard' => 'primary_lower'],
+        'p4East'  => ['section' => 'P.4 East',   'standard' => 'primary_upper'],
+        'p4West'  => ['section' => 'P.4 West',   'standard' => 'primary_upper'],
+        'p5East'  => ['section' => 'P.5 East',   'standard' => 'primary_upper'],
+        'p5West'  => ['section' => 'P.5 West',   'standard' => 'primary_upper'],
+        'p6East'  => ['section' => 'P.6 East',   'standard' => 'primary_upper'],
+        'p6West'  => ['section' => 'P.6 West',   'standard' => 'primary_upper'],
+        'p7A'     => ['section' => 'P.7 A',      'standard' => 'primary'],
+        'p7B'     => ['section' => 'P.7 B',      'standard' => 'primary'],
+    ];
 
 
     public function handle(): int
     {
         $dryRun = $this->option('dry-run');
+        $classKey = $this->option('class') ?? 'p2';
         $school = School::findOrFail(104);
 
-        $this->info("School: {$school->name}");
-
-        $p2StdLink = $this->findP2StandardLink();
-        if (!$p2StdLink) {
-            $this->error('P.2 standards_link not found.');
+        $config = self::CLASS_CONFIG[$classKey] ?? null;
+        if (!$config) {
+            $this->error("Unknown class: {$classKey}. Valid: " . implode(', ', array_keys(self::CLASS_CONFIG)));
             return 1;
         }
+
+        $this->info("School: {$school->name}");
+        $this->info("Class: {$config['section']} ({$config['standard']})");
+
+        $stdLink = StandardLink::where('school_id', 104)
+            ->whereHas('section', fn($q) => $q->where('name', $config['section']))
+            ->whereHas('standard', fn($q) => $q->where('name', $config['standard']))
+            ->first();
+
+        if (!$stdLink) {
+            $this->error("standards_link not found for {$config['section']} / {$config['standard']}.");
+            return 1;
+        }
+
+        $this->info("Class: {$config['section']} ({$config['standard']}) stdlink_id={$stdLink->id} section_id={$stdLink->section_id}");
 
         $term = AcademicTerm::where('school_id', 104)
             ->where('name', 'like', '%Term II%')
@@ -49,7 +80,6 @@ class ImportKabaleMarks extends Command
         $year = AcademicYear::where('school_id', 104)->where('status', 1)->first();
 
         $this->info("Term: " . ($term?->name ?? 'NOT FOUND') . " Year: " . ($year?->name ?? 'NOT FOUND'));
-        $this->info("P.2 stdlink_id={$p2StdLink->id} section_id={$p2StdLink->section_id}");
 
         if (!$term || !$year) {
             $this->error('Term or year not found.');
@@ -59,13 +89,14 @@ class ImportKabaleMarks extends Command
         $examTypeMid = ExamType::where('code', 'MID')->first();
         $examTypeEot = ExamType::where('code', 'EOT')->first();
 
-        $roster = $this->buildRoster($p2StdLink->id);
-        $this->info("P.2 roster (filtered): " . count($roster) . " students");
+        $roster = $this->buildRoster($stdLink->id);
+        $this->info("Roster (filtered): " . count($roster) . " students");
 
+        $fileLabel = str_replace(' ', '', $config['section']);
         $files = [
-            'June' => '/tmp/P2_June_Marks.xlsx',
-            'July' => '/tmp/P2_July_Marks.xlsx',
-            'EOT'  => '/tmp/P2_End_of_Term_II_Marks.xlsx',
+            'June' => "/tmp/{$fileLabel}_june.xlsx",
+            'July' => "/tmp/{$fileLabel}_july.xlsx",
+            'EOT'  => "/tmp/{$fileLabel}_end_of_term.xlsx",
         ];
 
         // Build subject map: either from --map JSON file or auto-detected from Excel headers
@@ -76,7 +107,7 @@ class ImportKabaleMarks extends Command
         }
         $this->info('Subject columns detected: ' . implode(', ', array_values($subjectMap)));
 
-        $subjects = $this->ensureSubjects($school->id, $p2StdLink, $subjectMap);
+        $subjects = $this->ensureSubjects($school->id, $stdLink, $subjectMap);
         $conflicts = [];
         $unmatched = ['June' => [], 'July' => [], 'EOT' => []];
         $matched = [];
@@ -96,7 +127,7 @@ class ImportKabaleMarks extends Command
                 $month = ($label === 'June') ? 6 : (($label === 'July') ? 7 : 8);
 
                 $examDate = Carbon::create(2026, $month, 1);
-                $exam = $this->findOrCreateExam($school->id, $p2StdLink, $examType, $examDate, $term, $year, $dryRun);
+                $exam = $this->findOrCreateExam($school->id, $stdLink, $examType, $examDate, $term, $year, $dryRun);
 
                 $this->line("\n--- {$label} ({$examType->code}) exam_id={$exam->id} ---");
 
@@ -135,7 +166,7 @@ class ImportKabaleMarks extends Command
                         if (!$subjectId) continue;
 
                         if (!$dryRun) {
-                            $grade = $this->resolveGrade($school->id, $p2StdLink->standard_id, $score);
+                            $grade = $this->resolveGrade($school->id, $stdLink->standard_id, $score);
                             Marks::updateOrCreate(
                                 [
                                     'student_id' => $studentId,
@@ -146,7 +177,7 @@ class ImportKabaleMarks extends Command
                                 [
                                     'teacher_id' => $exam->teacher_id ?? 0,
                                     'marks'      => $score,
-                                    'section_id' => $p2StdLink->section_id,
+                                    'section_id' => $stdLink->section_id,
                                     'grade'      => $grade,
                                 ]
                             );
@@ -176,7 +207,7 @@ class ImportKabaleMarks extends Command
 
         // Backfill marks.grade for all newly imported marks using the grading system
         if (!$dryRun) {
-            $this->backfillMarksGrade($school->id, $p2StdLink->standard_id);
+            $this->backfillMarksGrade($school->id, $stdLink->standard_id);
         }
 
         $this->report($matched, $unmatched, $conflicts, $files);
