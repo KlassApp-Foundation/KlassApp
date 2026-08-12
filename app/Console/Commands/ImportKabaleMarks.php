@@ -342,10 +342,6 @@ class ImportKabaleMarks extends Command
         }
         return $map;
     }
-            $map[$colKey] = $s->id;
-        }
-        return $map;
-    }
 
     private function findCanonicalSubject(string $detectedName, \Illuminate\Support\Collection $existing): ?Subject
     {
