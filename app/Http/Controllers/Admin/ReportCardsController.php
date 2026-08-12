@@ -9,7 +9,9 @@ use App\Models\StandardLink;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Services\ReportCardCommentService;
+use App\Exports\CombinedMarksheetExport;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -137,6 +139,30 @@ class ReportCardsController extends Controller
     public function downloadMerged(StandardLink $stdLink)
     {
         return $this->dispatchGeneration($stdLink, 'merged');
+    }
+
+    public function combinedMarksheet(StandardLink $stdLink)
+    {
+        $schoolId = Auth::user()->school_id;
+
+        if ($stdLink->school_id !== $schoolId) {
+            abort(403);
+        }
+
+        $term = AcademicTerm::where('school_id', $schoolId)
+            ->where('status', 'current')
+            ->first();
+
+        if (!$term) {
+            return back()->with('failmessage', 'No current term found.');
+        }
+
+        $className = str_replace(' ', '_', $stdLink->section?->name ?? 'class');
+
+        return Excel::download(
+            new CombinedMarksheetExport($stdLink, $term),
+            "combined_marksheet_{$className}.xlsx"
+        );
     }
 
     private function dispatchGeneration(StandardLink $stdLink, string $mode)
@@ -334,13 +360,7 @@ class ReportCardsController extends Controller
         $learner = \App\Models\User::find($sid);
         $learner = $helper->learner($schoolId, $learner, $exam);
         $subjects = $helper->subjects($schoolId, $stdLink->section_id, $learner, $exam);
-        // Sort subjects by predefined order matching the manual form layout
-        $subjectOrder = ['ENGLISH','ENG', 'MTC','MATHEMATICS','MATH', 'RELIGIOUS EDUCATION','RE', 'LITERACY I','LIT I', 'LITERACY II','LIT II', 'READING AND RESPONSE','R&R','RR', 'SCIENCE','SCI', 'SOCIAL STUDIES','SST'];
-        $orderMap = array_flip($subjectOrder);
-        $subjects = $subjects->sortBy(function ($s) use ($orderMap) {
-            $normalized = strtoupper(str_replace(['  ', ' AND ', ' & '], ' ', trim($s->name)));
-            return $orderMap[$normalized] ?? 999;
-        })->values();
+        $subjects = \App\Models\Subject::sortByReportOrder($subjects);
         $exams = $helper->exam($schoolId, $exam);
 
         $midExams = $exams->filter(fn($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();

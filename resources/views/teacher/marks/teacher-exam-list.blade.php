@@ -24,7 +24,20 @@
                 @else
                     <div class="space-y-4">
                        
-                        @foreach($exams as $exam)
+                    @foreach($examsByClass as $sectionId => $classExams)
+                        @php $stdLink = $assignedStdLinks->get($sectionId); $className = $classExams->first()->section->name ?? ('Class #' . $sectionId); @endphp
+                        <div class="mb-8">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-base font-semibold text-gray-800 dark:text-white">{{ $className }}</h3>
+                                @if ($stdLink)
+                                    <a href="{{ route('teacher.exam.combinedMarksheet', $stdLink) }}" class="py-2 px-4 rounded bg-amber-600 hover:bg-amber-500 text-white text-sm inline-flex items-center gap-1">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                        Combined Marksheet
+                                    </a>
+                                @endif
+                            </div>
+                            <div class="space-y-4">
+                        @foreach($classExams as $exam)
                          @php
                             $termMap = ["First Term" => 1, "Second Term" => 2, "Third Term" => 3];
                             $term = strtolower($termMap[$exam->academicTerm->name])
@@ -85,6 +98,9 @@
                                 </div>
                             </div>
                         @endforeach
+                            </div>
+                        </div>
+                    @endforeach
                     </div>
                 @endif
             </div>
