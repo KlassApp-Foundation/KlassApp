@@ -259,7 +259,14 @@
                     }
                     $teacherLink = \App\Models\Teacherlink::where('standardLink_id', $stdLink->id)
                         ->where('subject_id', $subject->id)->first();
-                    $teacherName = $teacherLink?->teacher?->name ?: '&mdash;';
+                    $teacherName = '&mdash;';
+                    if ($teacherLink && $teacherLink->teacher) {
+                        $fn = $teacherLink->teacher->userprofile->firstname ?? '';
+                        $ln = $teacherLink->teacher->userprofile->lastname ?? '';
+                        if ($fn) {
+                            $teacherName = $ln ? ucwords(strtolower($fn)) . ' ' . ucwords(strtolower($ln)) : ucwords(strtolower($fn));
+                        }
+                    }
                     $eotTotal += $eotMark->marks;
                 @endphp
                 <tr>
