@@ -2,160 +2,282 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Student Report Card</title>
+    <title>Report Card — {{ $learner->userprofile->firstname ?? 'Student' }} {{ $learner->userprofile->lastname ?? '' }}</title>
     <style>
-        @page { margin: 2mm 5mm; }
-        *, html{
-            widows: 100%;
-            background-color: #f9fbfc;
-            margin: 0;
+        @page { margin: 0; }
+
+        :root {
+            --brand-blue: #1E6FD9;
+            --brand-green: #22C55E;
+            --brand-dark: #0F172A;
+            --brand-light: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-400: #94A3B8;
+            --gray-600: #475569;
+            --gray-800: #1E293B;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito Sans', 'DejaVu Sans', sans-serif;
+            font-size: 10px;
+            line-height: 1.35;
+            color: var(--gray-800);
+            background: #fff;
             padding: 0;
         }
-        body {
-            font-family: sans-serif;
-            font-size: 11px;
-            line-height: 1.3;
-            color: #2d3748;
-            position: relative;
-            padding: 8px 12px;
+
+        .page {
+            width: 100%;
+            padding: 12px 16px 8px;
+            background: #fff;
         }
-        
+
+        /* ── Top accent bar ── */
+        .accent-bar {
+            height: 3px;
+            background: var(--brand-blue);
+            margin-bottom: 10px;
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .header-logo {
+            width: 52px; height: 52px;
+            background: var(--brand-blue);
+            color: #fff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            font-family: 'Exo 2', 'DejaVu Sans', sans-serif;
+            flex-shrink: 0;
+        }
+        .header-info { flex: 1; }
+        .header-school {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--brand-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 1px;
+        }
+        .header-meta {
+            font-size: 8px;
+            color: var(--gray-600);
+        }
+        .header-badge {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .badge-term {
+            display: inline-block;
+            background: var(--brand-blue);
+            color: #fff;
+            font-size: 8px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .badge-year {
+            font-size: 8px;
+            color: var(--gray-400);
+            margin-top: 2px;
+        }
+
+        /* ── Info card ── */
+        .info-card {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            padding: 6px 8px;
+            background: var(--brand-light);
+            border: 1px solid var(--gray-200);
+            border-left: 3px solid var(--brand-blue);
+            border-radius: 4px;
+        }
+        .info-item {
+            flex: 1;
+            text-align: center;
+        }
+        .info-label {
+            font-size: 7px;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1px;
+        }
+        .info-value {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--brand-dark);
+        }
+        .info-value.large {
+            font-size: 12px;
+        }
+
+        /* ── Tables ── */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 4px 0 0;
-        }
-        .table{
-            margin: 10px 0 0;
-        }
-        th, td {
-            border: 1px solid #e2e8f0;
-            padding: 4px 6px;
-            vertical-align: middle;
-            font-size: 10px;
+            margin-bottom: 5px;
         }
         th {
-            background-color: #f1f5f9;
-            font-weight: bold;
+            background: var(--gray-100);
+            font-size: 8px;
+            font-weight: 700;
             text-transform: uppercase;
-            font-size: 10px;
-        }
-        .school-name {
-            font-size: 20px;
-            font-weight: bold;
-            text-transform: uppercase
-        }
-        .section-header {
-            background-color: #e2e8f0;
-            font-size: 11px;
-            font-weight: bold;
+            letter-spacing: 0.3px;
+            color: var(--gray-600);
+            padding: 5px 4px;
+            border: 1px solid var(--gray-200);
             text-align: center;
-            text-transform: uppercase;
         }
-        .eot-header {
-            background-color: #c7d2fe;
-            font-weight: bold;
+        td {
+            font-size: 9px;
+            padding: 3px 4px;
+            border: 1px solid var(--gray-200);
+            text-align: center;
         }
-        .photo {
-            width: 65px;
-            height: 65px;
-            border: 2px solid #555;
-            background-color: #5a5a5c;
-            color: white;
-            font-size: larger;
+        td.subject-col { text-align: left; font-weight: 600; }
+        td.empty { color: var(--gray-400); }
+
+        .section-header {
+            background: var(--brand-dark);
+            color: #fff;
+            font-size: 8px;
             font-weight: 700;
         }
-        .total-row {
-            font-weight: bold;
-            background-color: #f9f9f9;
+        .eot-header {
+            background: var(--brand-blue);
+            color: #fff;
         }
-        .logo-circle {
-            width: 45px;
-            height: 45px;
-            background: #ccc;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 45px; 
-            font-weight: bold;
-            font-size: 18px;
-            display: inline-block;
+
+        .total-row td, .total-row th {
+            font-weight: 800;
+            font-size: 9px;
+            background: #EEF2FF;
+            border-top: 2px solid var(--brand-blue);
         }
+
+        /* ── Comments ── */
+        .comments-box {
+            padding: 6px 8px;
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 9px;
+            min-height: 28px;
+            color: var(--gray-600);
+        }
+        .comments-label {
+            font-size: 7px;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        /* ── Grading table ── */
+        .grading-table th {
+            font-size: 7px;
+            padding: 3px 2px;
+        }
+        .grading-table td {
+            font-size: 7px;
+            padding: 2px 2px;
+        }
+
+        /* ── Footer ── */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 8px;
+            padding-top: 4px;
+            border-top: 1px solid var(--gray-200);
+        }
+        .footer-left { font-size: 7px; color: var(--gray-400); }
+        .footer-right { font-size: 7px; color: var(--gray-400); text-align: right; }
+
         .watermark {
-    position: absolute;
-    top: 40%;
-    left: 10%;
-    width: 80%;
-    text-align: center;
-    opacity: 0.05;
-    font-size: 60px;
-    color: #000;
-    font-weight: 900;
-}
+            position: absolute;
+            top: 45%;
+            left: 5%;
+            width: 90%;
+            text-align: center;
+            opacity: 0.03;
+            font-size: 48px;
+            color: var(--brand-blue);
+            font-weight: 900;
+            pointer-events: none;
+        }
+
+        .sign-line {
+            display: inline-block;
+            width: 100px;
+            border-bottom: 1px solid var(--gray-400);
+            margin-left: 4px;
+        }
     </style>
 </head>
 <body>
 
 @if (!is_null($learner))
-    
-    <body>
-    <div class="watermark">
-        {{ $learner->school->name }}
-    </div>
-    <!-- Header -->
-<div class="table">
-    <table style="width:100%; margin-bottom:20px;">
-    <tr style='border: 0'>
-        <td style="width:15%; text-align:center; border: 0;">
-            <div class="logo-circle">
-                {{ strtoupper(str($learner->school->name)->limit(2, "")) }}
-            </div>
-        </td>
-        <td style="width:70%; text-align:center; border: 0;">
-            <h2 class="school-name">{{ $learner->school->name }}</h2>
-            <p>{{$school->address ?? "School Address"}}</p>
-            <p>{{$school->phone ?? "School Phone"}}</p>
-        </td>
-        <td class="photo" style="width:15%; text-align:center; border: 0;">
-            {{ $learner->userprofile->firstname }}
-            <!-- Empty for student photo -->
-        </td>
-    </tr>
-</table>
 
-</div>
-    <!-- Student Info -->
-    <div class="table">
-        <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Class</th>
-                {{-- <th>Stream</th> --}}
-                <th>Term</th>
-                <th>Agg</th>
-                <th>Position</th>
-                <th>Out Of</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>
-                    <strong>{{ $learner->userprofile->firstname }} {{ $learner->userprofile->lastname }}</strong>
-                </td>
-                <td>{{ $class_name }}</td>
-                {{-- <td>{{ $learner->stream ?? "A" }}</td> --}}
-                <td>{{ $learner->marks->first()->exam->academicTerm->name ?? "-" }}</td>
-                <th>@if(!empty($isNursery)) — @else {{$grade["agg"] ?? "-" }} @endif</th>
-                <td>@if(!empty($isNursery)) — @else {{ $myPos ?? "-" }} @endif</td>
-                <td>@if(!empty($isNursery)) — @else {{ $totalLearners ?? "-" }} @endif</td>
-            </tr>
-        </tbody>
-    </table>
+<div class="watermark">{{ $learner->school->name }}</div>
+
+<div class="page">
+
+    <div class="accent-bar"></div>
+
+    {{-- ═══ HEADER ═══ --}}
+    <div class="header">
+        <div class="header-logo">{{ strtoupper(str($learner->school->name)->limit(2, "")) }}</div>
+        <div class="header-info">
+            <div class="header-school">{{ $learner->school->name }}</div>
+            <div class="header-meta">{{ $school->address ?? 'School Address' }} &middot; {{ $school->phone ?? '' }}</div>
+        </div>
+        <div class="header-badge">
+            <div class="badge-term">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }}</div>
+            <div class="badge-year">{{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</div>
+        </div>
     </div>
 
-    <!-- ================= Main Marks Table ===================== -->
+    {{-- ═══ STUDENT INFO CARD ═══ --}}
+    <div class="info-card">
+        <div class="info-item">
+            <div class="info-label">Student</div>
+            <div class="info-value large">{{ $learner->userprofile->firstname }} {{ $learner->userprofile->lastname }}</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Class</div>
+            <div class="info-value">{{ $class_name }}</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Aggregate</div>
+            <div class="info-value">@if(!empty($isNursery)) — @else {{ $grade['agg'] ?? '—' }} @endif</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Position</div>
+            <div class="info-value">@if(!empty($isNursery)) — @else {{ $myPos ?? '—' }} of {{ $totalLearners ?? '—' }} @endif</div>
+        </div>
+    </div>
+
+    {{-- ═══ MAIN MARKS TABLE ═══ --}}
     @if(!empty($isNursery))
-        {{-- Nursery: descriptive domain assessment table --}}
         <table>
             <thead>
                 <tr>
@@ -165,38 +287,29 @@
                 </tr>
             </thead>
             <tbody>
-                @php
-                    $domains = ['Literacy', 'Numeracy', 'Motor Skills', 'Social/Emotional'];
-                @endphp
-                @foreach ($domains as $domain)
-                    @php
-                        $assessment = $nurseryAssessments->get($domain);
-                        $rating = $assessment?->rating ?? '—';
-                        $remarks = $assessment?->remarks ?? '—';
-                    @endphp
+                @foreach (['Literacy', 'Numeracy', 'Motor Skills', 'Social/Emotional'] as $domain)
+                    @php $a = $nurseryAssessments->get($domain); @endphp
                     <tr>
-                        <td>{{ $domain }}</td>
-                        <td><strong>{{ $rating }}</strong></td>
-                        <td>{{ $remarks }}</td>
+                        <td class="subject-col">{{ $domain }}</td>
+                        <td><strong>{{ $a?->rating ?? '—' }}</strong></td>
+                        <td>{{ $a?->remarks ?? '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     @else
-        {{-- Standard marks table for Primary, O-Level, A-Level --}}
         <table>
             <thead>
                 <tr>
-                    <th>SUBJECT</th>
-                    <th>OUT OF</th>
+                    <th style="width:22%">Subject</th>
+                    <th style="width:6%">Out of</th>
                     @if ($midCount > 0)
-                        <th class="section-header" colspan="{{ $midCount }}">MID TERM</th>
+                        <th class="section-header" colspan="{{ $midCount }}">Mid Term</th>
                     @endif
                     @if ($eotCount > 0)
-                        <th class="section-header eot-header" colspan="{{ $eotCount }}">END OF TERM</th>
+                        <th class="section-header eot-header" colspan="{{ $eotCount }}">End of Term</th>
                     @endif
-                    <th>GRADE</th>
-                    <th>TEACHER</th>
+                    <th style="width:8%">Grade</th>
                 </tr>
                 <tr>
                     <th></th>
@@ -204,115 +317,63 @@
                     @foreach ($allExamColumns as $colExam)
                         @php
                             $label = $colExam->examType->code === 'MID'
-                                ? strtoupper($colExam->scheduled_at->format('M')) . ' MID'
+                                ? strtoupper($colExam->scheduled_at->format('M'))
                                 : 'EOT';
                         @endphp
                         <th class="{{ $colExam->examType->code !== 'MID' ? 'eot-header' : '' }}">{{ $label }}</th>
                     @endforeach
                     <th></th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($subjects as $subject)
-                    @php
-                     $subjectMarks = $learner->marks->where('subject_id', $subject->id);
-                     $firstMark = $subjectMarks->first();
-                    @endphp
+                    @php $subjectMarks = $learner->marks->where('subject_id', $subject->id); @endphp
                     <tr>
-                        <td>{{ $subject->name }}</td>
+                        <td class="subject-col">{{ $subject->name }}</td>
                         <td>100</td>
                         @foreach ($allExamColumns as $colExam)
-                            @php
-                                $markForExam = $subjectMarks->firstWhere('exam_id', $colExam->id);
-                            @endphp
-                            <td>
-                                {{ $markForExam ? floor($markForExam->marks) : "-" }}
+                            @php $markForExam = $subjectMarks->firstWhere('exam_id', $colExam->id); @endphp
+                            <td class="{{ $markForExam ? '' : 'empty' }}">
+                                {{ $markForExam ? floor($markForExam->marks) : '—' }}
                             </td>
                         @endforeach
                         @php
+                            $firstMark = $subjectMarks->first();
                             $subjectGrade = '-';
                             if ($firstMark && $firstMark->marks !== null) {
-                                $gradeRecord = $grading_system->first(function ($gs) use ($firstMark) {
-                                    return $gs->min_score <= $firstMark->marks && $gs->max_score >= $firstMark->marks;
-                                });
-                                $subjectGrade = $gradeRecord ? $gradeRecord->grade : '-';
+                                $g = $grading_system->first(fn($gs) => $gs->min_score <= $firstMark->marks && $gs->max_score >= $firstMark->marks);
+                                $subjectGrade = $g ? $g->grade : '-';
                             }
                         @endphp
                         <td>{{ $subjectGrade }}</td>
-                        <td>{{ $learner->marks->where("subject_id", $subject->id)->first()?->teacher->name ?? "N/A" }}</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
-                @php
-                    $examCols = $midCount + $eotCount;
-                @endphp
                 <tr class="total-row">
-                    <th>TOTAL</th>
-                    <th>{{ count($subjects) * 100 }}</th>
-                    <th colspan="{{ $examCols }}">{{ $total }}</th>
-                    <th colspan="2"></th>
+                    <td><strong>TOTAL</strong></td>
+                    <td>{{ count($subjects) * 100 }}</td>
+                    <td colspan="{{ $midCount + $eotCount }}"><strong>{{ $total }}</strong></td>
+                    <td></td>
                 </tr>
             </tfoot>
         </table>
     @endif
-   </div>
 
-    <!-- Remarks -->
-    <div class="table">
-        <table>
-        <thead>
-            <tr>
-                <th>Class teacher's comment</th>
-                <th>Sign</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>{{ $teacherComment ?? '—' }}</td>
-                <td>___________________________</td>
-            </tr>
-        </tbody>
-        <thead>
-            <tr>
-                <th>Head teacher's comment</th>
-                <th>Sign</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>______________________</td>
-                <td>______________________</td>
-            </tr>
-        </tbody>
-    </table>
-
-    </div>
-    <!-- Next Term -->
-    <div class="table">
-        <table>
-        <thead>
-            <tr>
-                <th>Next term begins on</th>
-                <th>Ends on</th>
-                <th>Fees for next term</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>{{$nextTerm->starts_on?->format("d M, Y")}}</td>
-                <td>{{$nextTerm->ends_on?->format("d M, Y")}}</td>
-                <td>UGX {{$fees}}</td>
-            </tr>
-        </tbody>
-    </table>
+    {{-- ═══ COMMENTS ═══ --}}
+    <div style="display:flex; gap:6px;">
+        <div style="flex:1;">
+            <div class="comments-label">Class Teacher</div>
+            <div class="comments-box">{{ $teacherComment ?? '—' }}</div>
+        </div>
+        <div style="flex:1;">
+            <div class="comments-label">Head Teacher</div>
+            <div class="comments-box"></div>
+        </div>
     </div>
 
-    <!-- Grading System -->
-   <div class="table">
-     <h3 style="margin: 12px 0 4px 0; font-size: 12px;">School Grading System</h3>
-    <table>
+    {{-- ═══ GRADING SYSTEM ═══ --}}
+    <table class="grading-table">
         <thead>
             <tr>
                 <th>Grade</th>
@@ -325,14 +386,29 @@
             <tr>
                 <td><strong>Range</strong></td>
                 @foreach ($grading_system as $grade)
-                    <td>{{ $grade->min_score . "-" . $grade->max_score }}</td>
+                    <td>{{ $grade->min_score }}–{{ $grade->max_score }}</td>
                 @endforeach
             </tr>
         </tbody>
     </table>
-   </div>
+
+    {{-- ═══ FOOTER ═══ --}}
+    <div class="footer">
+        <div class="footer-left">
+            {{ $learner->school->name }} &middot; Generated {{ now()->format('d M Y') }}
+        </div>
+        <div class="footer-right">
+            <span>Class Teacher <span class="sign-line"></span></span>
+            &nbsp;&nbsp;
+            <span>Head Teacher <span class="sign-line"></span></span>
+        </div>
+    </div>
+
+</div>
+
 @else
-    <h3 style="text-align:center;">No records found</h3>
+    <h3 style="text-align:center; padding:40px;">No records found</h3>
 @endif
+
 </body>
 </html>
