@@ -73,8 +73,10 @@ class ImportKabaleMarks extends Command
         $this->info("Class: {$config['section']} ({$config['standard']}) stdlink_id={$stdLink->id} section_id={$stdLink->section_id}");
 
         $term = AcademicTerm::where('school_id', 104)
-            ->where('name', 'like', '%Term II%')
-            ->orWhere('name', 'like', '%Term 2%')
+            ->where(function ($q) {
+                $q->where('name', 'like', '%Term II%')
+                  ->orWhere('name', 'like', '%Term 2%');
+            })
             ->first();
 
         $year = AcademicYear::where('school_id', 104)->where('status', 1)->first();
