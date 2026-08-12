@@ -122,6 +122,7 @@ class DashboardController extends Controller
             'openToshiOnboarding' => $openToshiOnboarding,
             'feeTrend' => $feeTrend,
             'trendPeriod' => $trendPeriod,
+            'eotKpis' => \App\Http\Controllers\Admin\ReportCardsController::computeEotKpis($school_id),
         ] );
     }
 

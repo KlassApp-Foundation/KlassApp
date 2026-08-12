@@ -40,9 +40,13 @@
             </div>
 
             <div class="flex gap-2">
+                <a href="{{ route('admin.reports.cards.merged', $link) }}"
+                   class="flex-1 text-center bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium py-2 rounded-lg transition">
+                    Print All (Merged PDF)
+                </a>
                 <a href="{{ route('admin.reports.cards.download', $link) }}"
                    class="flex-1 text-center bg-green-600 hover:bg-green-500 text-white text-sm font-medium py-2 rounded-lg transition">
-                    Download All
+                    Download All (Zip)
                 </a>
                 <a href="{{ route('admin.marks.filter', ['class' => $link->section_id, 'term' => $selectedTerm]) }}"
                    class="flex-1 text-center bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium py-2 rounded-lg transition">
@@ -58,6 +62,7 @@
     @endforelse
 </div>
 
+    @include('admin.reports._eot-kpi-card')
 </div>
 
 @endsection
