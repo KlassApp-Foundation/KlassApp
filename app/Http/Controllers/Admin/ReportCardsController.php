@@ -314,7 +314,7 @@ class ReportCardsController extends Controller
         $pdf = Pdf::loadView('admin.marks.student-report', [
             'subjects' => $subjects, 'learner' => $learner, 'controls' => $controls,
             'class_name' => Section::find($stdLink->section_id)->name,
-            'grading_system' => \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)->get(),
+            'grading_system' => \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)->where('standard_id', $stdLink->standard_id)->orderBy('min_score', 'desc')->get(),
             'fees' => collect(), 'nextTerm' => AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
             'totalLearners' => $totalLearners, 'myPos' => $myPos,
             'allExamColumns' => $allExamColumns, 'midExams' => $midExams, 'eotExams' => $eotExams,
