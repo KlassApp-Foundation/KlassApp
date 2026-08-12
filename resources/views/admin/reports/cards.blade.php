@@ -10,7 +10,7 @@
 ])
 
 <div class="relative mt-4">
-    <div class="bg-white rounded-lg shadow p-4">
+    <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between">
         <form method="GET" class="flex items-center gap-3">
             <label class="text-sm font-medium text-gray-700">Term:</label>
             <select name="term" onchange="this.form.submit()" class="border rounded px-3 py-1.5 text-sm">
@@ -21,6 +21,10 @@
                 @endforeach
             </select>
         </form>
+        <a href="{{ route('admin.reports.cards.missing') }}"
+           class="bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+            Missing Marks Report
+        </a>
     </div>
 </div>
 
