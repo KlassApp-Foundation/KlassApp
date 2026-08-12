@@ -113,6 +113,7 @@ class ImportKabaleMarks extends Command
         $conflicts = [];
         $unmatched = ['June' => [], 'July' => [], 'EOT' => []];
         $matched = [];
+        $insertedCount = 0;
 
         DB::beginTransaction();
         try {
@@ -189,6 +190,7 @@ class ImportKabaleMarks extends Command
                                     'grade'      => $grade,
                                 ]
                             );
+                            $insertedCount++;
                         }
                     }
 
@@ -202,10 +204,10 @@ class ImportKabaleMarks extends Command
             if ($dryRun) {
                 DB::rollBack();
                 $this->info("\nDry run — changes rolled back.");
-            } else {
-                DB::commit();
-                $this->info("\nImport committed.");
-            }
+        } else {
+            DB::commit();
+            $this->info("Import committed. {$insertedCount} marks inserted.");
+        }
         } catch (\Throwable $e) {
             DB::rollBack();
             $this->error('Failed: ' . $e->getMessage());
