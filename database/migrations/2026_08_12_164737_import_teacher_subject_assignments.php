@@ -101,15 +101,11 @@ return new class extends Migration
 
     private function parseClass(string $name): ?array
     {
-        $name = str_replace('WEST & EAST', 'WEST', $name);
+        $name = str_replace('WEST & EAST', '', $name);
+        $name = preg_replace('/\s+(EAST|WEST)/i', '', $name);
         $name = str_replace('  ', ' ', trim($name));
-        if (preg_match('/^P\.\s*(\d)\s*(EAST|WEST)?$/i', $name, $m)) {
-            $n = $m[1]; $s = strtoupper($m[2] ?? '');
-            $sec = 'P.' . $n . ($s ? ' ' . $s : '');
-            $std = $n <= 3 ? 'primary_lower' : ($n <= 6 ? 'primary' : 'primary_upper');
-            return ['section' => $sec, 'standard' => $std];
-        }
-        if (preg_match('/^P\.(\d)$/', $name, $m)) {
+
+        if (preg_match('/^P\.\s*(\d)$/', $name, $m)) {
             $n = $m[1];
             $std = $n <= 3 ? 'primary_lower' : ($n <= 6 ? 'primary' : 'primary_upper');
             return ['section' => 'P.' . $n, 'standard' => $std];
