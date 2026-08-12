@@ -243,7 +243,16 @@
                             </td>
                             @endif
                         {{-- ============ grade ========= --}}
-                        <td>{{ $firstMark ? $firstMark->grade : '-' }}</td>
+                        @php
+                            $subjectGrade = '-';
+                            if ($firstMark && $firstMark->marks !== null) {
+                                $gradeRecord = $grading_system->first(function ($gs) use ($firstMark) {
+                                    return $gs->min_score <= $firstMark->marks && $gs->max_score >= $firstMark->marks;
+                                });
+                                $subjectGrade = $gradeRecord ? $gradeRecord->grade : '-';
+                            }
+                        @endphp
+                        <td>{{ $subjectGrade }}</td>
                          @php
                             $subjectGrade = $firstMark ? $firstMark->grade : null;
                             $remark = $grade ? collect($grade['remark'])->firstWhere('grade', $subjectGrade) : null;
@@ -261,7 +270,7 @@
             @endphp
                 <tr class="total-row">
                     <th>TOTAL</th>
-                    <th>400</th>
+                    <th>{{ count($subjects) * 100 }}</th>
                     <th>{{ $total }}</th>
                     @if ($uniqueExamTypes > 1)
                         <td>
