@@ -25,21 +25,26 @@ use Illuminate\Support\Facades\Schema;
 class OnboardingStepsService
 {
     /**
-     * Ordered steps. Country / EMIS / UNEB center sit after curriculum and
-     * before academic year. Plan selection is last (after content is in).
+     * Ordered steps. Country comes before curriculum; the board/curriculum
+     * choice then leads into the school-category smart-default step. EMIS /
+     * UNEB center sit before academic year. Plan selection is last.
      */
     const ALL_STEPS = [
         'school_name' => [
             'label' => 'School name',
             'icon'  => '🏫',
         ],
+        'country' => [
+            'label' => 'Country',
+            'icon'  => '🌍',
+        ],
         'curriculum' => [
             'label' => 'Board / Curriculum',
             'icon'  => '📚',
         ],
-        'country' => [
-            'label' => 'Country',
-            'icon'  => '🌍',
+        'school_category' => [
+            'label' => 'School category',
+            'icon'  => '🏫',
         ],
         'emis' => [
             'label' => 'EMIS / Ministry code',
@@ -138,6 +143,7 @@ class OnboardingStepsService
 
         if (! self::isUnebCurriculum($school->curriculum)) {
             unset($steps['uneb_center']);
+            unset($steps['school_category']);
         }
 
         return $steps;
@@ -172,6 +178,10 @@ class OnboardingStepsService
             'school_name' => ! self::isPlaceholderSchoolName($school->name),
             'curriculum' => filled($school->curriculum),
             'country' => filled($school->registration_country),
+            'school_category' => filled($school->school_category)
+                // Fallback: schools onboarded before this step existed (or via
+                // Toshi) already have standards — never block them on it.
+                || StandardLink::where('school_id', $sid)->exists(),
             'emis' => self::isEmisComplete($school),
             'uneb_center' => self::isUnebCenterComplete($school),
             'academic_year' => AcademicYear::where('school_id', $sid)->exists(),
@@ -370,6 +380,7 @@ class OnboardingStepsService
             'school_name' => '/admin/schooldetails',
             'curriculum' => '/admin/schooldetails',
             'country' => '/admin/schooldetails',
+            'school_category' => '/admin/schooldetails',
             'emis' => '/admin/schooldetails',
             'uneb_center' => '/admin/schooldetails',
             'academic_year' => '/admin/academics',

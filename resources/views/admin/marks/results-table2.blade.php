@@ -29,7 +29,7 @@
                     <td class="gm-agg">{{ $student->marks->sum('marks') ? "—" : "—" }}</td>
                     <td class="gm-pos">—</td>
                     <td>
-                        <a href="#" class="text-blue-600 hover:text-blue-800 text-xs">View</a>
+                        <a href="{{ route('admin.report.student.class', [$student, $class->id, $exam->id]) }}" class="text-blue-600 hover:text-blue-800 text-xs" target="_blank">Report</a>
                     </td>
                 </tr>
             @endforeach

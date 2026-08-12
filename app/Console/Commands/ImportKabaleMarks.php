@@ -1,0 +1,380 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use App\Models\School;
+use App\Models\StandardLink;
+use App\Models\AcademicTerm;
+use App\Models\AcademicYear;
+use App\Models\Academics\Exam;
+use App\Models\Academics\ExamType;
+use App\Models\Academics\Marks;
+use App\Models\Subject;
+use App\Models\User;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Illuminate\Support\Collection;
+use Carbon\Carbon;
+
+class ImportKabaleMarks extends Command
+{
+    protected $signature = 'kabale:import-marks
+                            {--dry-run : Report matches without writing to DB}';
+
+    protected $description = 'Import P.2 marks for Kabale (school 104) from June/July/EOT Excel files';
+
+    private const SUBJECT_MAP = [
+        'eng'   => 'English',
+        'mtc'   => 'Mathematics',
+        're'    => 'Religious Education',
+        'lit_i' => 'Literacy I',
+        'lit_ii'=> 'Literacy II',
+        'r_r'   => 'Reading and Response',
+    ];
+
+    public function handle(): int
+    {
+        $dryRun = $this->option('dry-run');
+        $school = School::findOrFail(104);
+
+        $this->info("School: {$school->name}");
+
+        $p2StdLink = $this->findP2StandardLink();
+        if (!$p2StdLink) {
+            $this->error('P.2 standards_link not found.');
+            return 1;
+        }
+
+        $term = AcademicTerm::where('school_id', 104)
+            ->where('name', 'like', '%Term II%')
+            ->orWhere('name', 'like', '%Term 2%')
+            ->first();
+
+        $year = AcademicYear::where('school_id', 104)->where('status', 1)->first();
+
+        $this->info("Term: " . ($term?->name ?? 'NOT FOUND') . " Year: " . ($year?->name ?? 'NOT FOUND'));
+        $this->info("P.2 stdlink_id={$p2StdLink->id} section_id={$p2StdLink->section_id}");
+
+        if (!$term || !$year) {
+            $this->error('Term or year not found.');
+            return 1;
+        }
+
+        $examTypeMid = ExamType::where('code', 'MID')->first();
+        $examTypeEot = ExamType::where('code', 'EOT')->first();
+
+        $roster = $this->buildRoster($p2StdLink->id);
+        $this->info("P.2 roster (filtered): " . count($roster) . " students");
+
+        $files = [
+            'June' => '/tmp/P2_June_Marks.xlsx',
+            'July' => '/tmp/P2_July_Marks.xlsx',
+            'EOT'  => '/tmp/P2_End_of_Term_II_Marks.xlsx',
+        ];
+
+        $subjects = $this->ensureSubjects($school->id, $p2StdLink);
+        $conflicts = [];
+        $unmatched = ['June' => [], 'July' => [], 'EOT' => []];
+        $matched = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($files as $label => $path) {
+                if (!file_exists($path)) {
+                    $this->error("File not found: {$path}");
+                    continue;
+                }
+                $sheets = Excel::toArray(new SheetsOnlyImport, $path);
+                $rawRows = $sheets[0] ?? [];
+                $headers = array_map(fn($h) => strtolower(str_replace([' ', '.'], '_', (string) $h)), $rawRows[0] ?? []);
+                $dataRows = array_slice($rawRows, 1);
+                $examType = ($label === 'EOT') ? $examTypeEot : $examTypeMid;
+                $month = ($label === 'June') ? 6 : (($label === 'July') ? 7 : 8);
+
+                $examDate = Carbon::create(2026, $month, 1);
+                $exam = $this->findOrCreateExam($school->id, $p2StdLink, $examType, $examDate, $term, $year, $dryRun);
+
+                $this->line("\n--- {$label} ({$examType->code}) exam_id={$exam->id} ---");
+
+                foreach ($dataRows as $rawRow) {
+                    $row = array_combine($headers, array_values($rawRow));
+                    $excelName = trim((string) ($row['name'] ?? ''));
+                    if ($excelName === '') continue;
+
+                    $match = $this->matchStudent($excelName, $roster);
+
+                    if ($match === null) {
+                        $unmatched[$label][strtolower($excelName)] = $excelName;
+                        // Debug first few: show best score
+                        if (count($unmatched[$label]) <= 3) {
+                            $this->debugBestScore($excelName, $roster);
+                        }
+                        $this->warn("  UNMATCHED: {$excelName}");
+                        continue;
+                    }
+
+                    if (is_string($match)) {
+                        $conflicts[] = ['file' => $label, 'name' => $excelName, 'reason' => $match];
+                        $this->warn("  CONFLICT: {$excelName} — {$match}");
+                        continue;
+                    }
+
+                    $studentId = $match['id'];
+                    $studentName = $match['name'];
+
+                    foreach (self::SUBJECT_MAP as $colKey => $subjectName) {
+                        $score = $row[$colKey] ?? null;
+                        if ($score === null || (string) $score === '') continue;
+                        $score = (int) $score;
+
+                        $subjectId = $subjects[$subjectName] ?? null;
+                        if (!$subjectId) continue;
+
+                        if (!$dryRun) {
+                            Marks::updateOrCreate(
+                                [
+                                    'student_id' => $studentId,
+                                    'exam_id'    => $exam->id,
+                                    'school_id'  => $school->id,
+                                    'subject_id' => $subjectId,
+                                ],
+                                [
+                                    'teacher_id' => $exam->teacher_id ?? 0,
+                                    'marks'      => $score,
+                                    'section_id' => $p2StdLink->section_id,
+                                ]
+                            );
+                        }
+                    }
+
+                    $key = "{$studentId}|{$label}";
+                    if (!isset($matched[$key])) {
+                        $matched[$key] = ['name' => $studentName, 'student_id' => $studentId, 'label' => $label];
+                    }
+                }
+            }
+
+            if ($dryRun) {
+                DB::rollBack();
+                $this->info("\nDry run — changes rolled back.");
+            } else {
+                DB::commit();
+                $this->info("\nImport committed.");
+            }
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            $this->error('Failed: ' . $e->getMessage());
+            $this->error($e->getTraceAsString());
+            return 1;
+        }
+
+        $this->report($matched, $unmatched, $conflicts, $files);
+        return 0;
+    }
+
+    private function findP2StandardLink(): ?StandardLink
+    {
+        return StandardLink::where('school_id', 104)
+            ->where('standard_id', 54)
+            ->whereHas('section', fn($q) => $q->where('name', 'P.2'))
+            ->first();
+    }
+
+    private function buildRoster(int $stdLinkId): array
+    {
+        $raw = DB::table('student_academics')
+            ->join('users', 'student_academics.user_id', '=', 'users.id')
+            ->where('student_academics.standardLink_id', $stdLinkId)
+            ->select('users.id', 'users.name')
+            ->get();
+
+        $this->line("  DEBUG buildRoster raw count: " . $raw->count());
+
+        $roster = [];
+        $filteredOut = 0;
+        foreach ($raw as $s) {
+            if (preg_match('/[0-9]/', $s->name)) { $filteredOut++; continue; } // skip auto-generated names
+            $key = preg_replace('/[^a-z]/', '', strtolower($s->name));
+            if (!isset($roster[$key]) || strlen($s->name) > strlen($roster[$key]['name'])) {
+                $roster[$key] = ['id' => $s->id, 'name' => $s->name];
+            }
+        }
+        $this->line("  DEBUG filtered out (digits): {$filteredOut}, kept: " . count($roster));
+        return array_values($roster);
+    }
+
+    private function matchStudent(string $excelName, array $roster): null|string|array
+    {
+        if ($excelName === 'Atukunda Shivan Esther' || $excelName === 'Atukunda Shivan E') {
+            return 'CONFLICT_DUPLICATE: Two rows for same student in July sheet — manual review needed';
+        }
+
+        $bestScore = 0;
+        $bestMatch = null;
+        $excelTokens = $this->tokenize($excelName);
+
+        foreach ($roster as $student) {
+            $dbTokens = $this->tokenize($student['name']);
+            $score = $this->matchScore($excelTokens, $dbTokens);
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestMatch = $student;
+            }
+        }
+
+        if ($bestScore >= 50) {
+            return $bestMatch;
+        }
+
+        return null;
+    }
+
+    private function tokenize(string $name): array
+    {
+        return array_map('strtolower', preg_split('/\s+/', trim($name)));
+    }
+
+    private function matchScore(array $tokensA, array $tokensB): float
+    {
+        $common = array_intersect($tokensA, $tokensB);
+        $union = array_unique(array_merge($tokensA, $tokensB));
+        if (empty($union)) return 0;
+
+        $jaccard = count($common) / count($union) * 100;
+
+        sort($tokensA); sort($tokensB);
+        similar_text(implode('', $tokensA), implode('', $tokensB), $simPct);
+
+        return ($jaccard * 0.4) + ($simPct * 0.6);
+    }
+
+    private function debugBestScore(string $excelName, array $roster): void
+    {
+        $bestScore = 0;
+        $bestMatch = null;
+        $excelTokens = $this->tokenize($excelName);
+        foreach ($roster as $student) {
+            $dbTokens = $this->tokenize($student['name']);
+            $score = $this->matchScore($excelTokens, $dbTokens);
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestMatch = $student;
+            }
+        }
+        $this->warn("    best: score={$bestScore} match=" . ($bestMatch['name'] ?? 'none') . " tokens=" . implode('|', $excelTokens));
+    }
+
+    private function ensureSubjects(int $schoolId, StandardLink $stdLink): array
+    {
+        $map = [];
+        foreach (self::SUBJECT_MAP as $subjectName) {
+            $s = Subject::firstOrCreate(
+                ['school_id' => $schoolId, 'name' => $subjectName, 'standard_id' => $stdLink->standard_id],
+                ['code' => '', 'type' => 'core', 'status' => 1, 'academic_year_id' => $stdLink->academic_year_id, 'section_id' => $stdLink->section_id]
+            );
+            $map[$subjectName] = $s->id;
+        }
+        return $map;
+    }
+
+    private function findOrCreateExam(int $schoolId, StandardLink $stdLink, ExamType $examType, Carbon $date, AcademicTerm $term, AcademicYear $year, bool $dryRun): Exam
+    {
+        $existing = Exam::where('school_id', $schoolId)
+            ->where('standard_id', $stdLink->standard_id)
+            ->where('section_id', $stdLink->section_id)
+            ->where('exam_type_id', $examType->id)
+            ->where('academic_term_id', $term->id)
+            ->where('academic_year_id', $year->id)
+            ->whereMonth('scheduled_at', $date->month)
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $firstTeacher = DB::table('users')
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 5)
+            ->value('id') ?? 0;
+
+        $firstSubject = DB::table('subjects')
+            ->where('school_id', $schoolId)
+            ->value('id') ?? 0;
+
+        $exam = new Exam([
+            'school_id'        => $schoolId,
+            'standard_id'      => $stdLink->standard_id,
+            'section_id'       => $stdLink->section_id,
+            'subject_id'       => $firstSubject,
+            'teacher_id'       => $firstTeacher,
+            'exam_type_id'     => $examType->id,
+            'academic_term_id' => $term->id,
+            'academic_year_id' => $year->id,
+            'scheduled_at'     => $date,
+            'status'           => 'undone',
+        ]);
+
+        if (!$dryRun) {
+            $exam->save();
+        }
+
+        $this->line("  Created exam: {$examType->code} ({$date->format('Y-m-d')}) std={$stdLink->standard_id} sec={$stdLink->section_id}");
+        return $exam;
+    }
+
+    private function report(array $matched, array $unmatched, array $conflicts, array $files): void
+    {
+        $this->line("\n========================================");
+        $this->info("IMPORT SUMMARY");
+        $this->line("========================================");
+
+        $byLabel = [];
+        foreach ($matched as $m) {
+            $byLabel[$m['label']][] = $m['name'];
+        }
+        foreach ($files as $label => $path) {
+            $count = count($byLabel[$label] ?? []);
+            $this->line("  {$label}: {$count} students matched");
+        }
+        $this->line("  Total student-exam combinations: " . count($matched));
+
+        if (array_filter($unmatched)) {
+            $totalUnmatched = 0;
+            foreach ($unmatched as $label => $names) {
+                if ($names) {
+                    $totalUnmatched += count($names);
+                    $this->warn("\n  {$label} UNMATCHED: " . count($names));
+                    foreach ($names as $name) {
+                        $this->warn("    - {$name}");
+                    }
+                }
+            }
+
+            $eotOnly = array_diff_key($unmatched['EOT'], $unmatched['June'], $unmatched['July']);
+            if ($eotOnly) {
+                $this->warn("\nEOT-ONLY names (possible new admissions — confirm these are real enrolled P.2 students):");
+                foreach ($eotOnly as $name) {
+                    $this->warn("  - {$name}");
+                }
+            }
+        } else {
+            $this->info("\nUNMATCHED: 0 — all rows matched");
+        }
+
+        if ($conflicts) {
+            $this->warn("\nCONFLICTS (held for manual review):");
+            foreach ($conflicts as $c) {
+                $this->warn("  {$c['name']} — {$c['reason']}");
+            }
+        }
+    }
+}
+
+class SheetsOnlyImport implements ToCollection
+{
+    public function collection(Collection $collection) {}
+}

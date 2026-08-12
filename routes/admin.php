@@ -595,6 +595,13 @@ Route::get( '/magazine/getDate', 'BulletinsController@getDate' );
 Route::get( '/magazine/delete/{id}', 'BulletinsController@destroy' );
 Route::get( '/magazine/download/{id}', 'BulletinsController@downloadattachments' );
 
+// Report Cards (per-class batch PDF generation + download)
+Route::prefix('reports/cards')->name('admin.reports.cards.')->group(function () {
+    Route::get('/', 'ReportCardsController@index')->name('index');
+    Route::get('/download/{stdLink}', 'ReportCardsController@downloadClass')->name('download');
+    Route::get('/merged/{stdLink}', 'ReportCardsController@downloadMerged')->name('merged');
+});
+
 //reports
 Route::get( '/reports', 'ReportsController@report' );
 Route::get( '/report/events', 'ReportsController@eventReport' );

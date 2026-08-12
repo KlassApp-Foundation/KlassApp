@@ -101,18 +101,16 @@ class WizardWhatsAppDuplicatePhoneTest extends TestCase
         $component
             ->set('schoolName', 'WA Dup Academy')
             ->call('next')
+            ->set('countryName', 'Uganda')
+            ->call('next')
             ->set('curriculum', 'uneb')
             ->call('next')
-            ->set('countryName', 'Uganda')
+            ->set('schoolCategory', 'primary')
             ->call('next')
             ->set('ministryCode', 'EMIS-WADUP')
             ->call('next')
             ->call('next') // uneb skip
-            ->call('next') // academic year
-            ->set('className', 'P1')
-            ->call('next')
-            ->set('subjectName', 'Math')
-            ->call('next')
+            ->call('next') // academic year seeds classes/subjects/grading
             ->call('next') // teachers skip
             ->call('next') // students skip
             ->call('next') // terms (defaults)

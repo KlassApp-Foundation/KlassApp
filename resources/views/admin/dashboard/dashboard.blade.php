@@ -389,6 +389,8 @@
         @endif
     </div>
 
+    @include('admin.reports._eot-kpi-card')
+
     @if(!empty($openToshiOnboarding))
     <script>
       document.addEventListener('DOMContentLoaded', function () {

@@ -7,17 +7,6 @@
         <input id="wizard-school-name" type="text" class="ds-form-input w-full" wire:model="schoolName" placeholder="e.g. Sunrise Academy" />
     </div>
 
-@elseif($stepKey === 'curriculum')
-    <div class="ds-form-group">
-        <label class="ds-form-label" for="wizard-curriculum">Board / Curriculum<span class="text-red-500">*</span></label>
-        <select id="wizard-curriculum" class="ds-form-input ds-form-select w-full" wire:model="curriculum">
-            <option value="uneb">UNEB (Uganda National Examinations Board)</option>
-            <option value="cambridge">Cambridge</option>
-            <option value="montessori">Montessori</option>
-            <option value="other">Other</option>
-        </select>
-    </div>
-
 @elseif($stepKey === 'country')
     <div class="ds-form-group">
         <label class="ds-form-label" for="wizard-country">Country<span class="text-red-500">*</span></label>
@@ -32,6 +21,39 @@
             @endif
         </select>
         <p class="text-xs text-gray-500 mt-1">Saves both country and Toshi registration country.</p>
+    </div>
+
+@elseif($stepKey === 'curriculum')
+    <div class="ds-form-group">
+        <label class="ds-form-label" for="wizard-curriculum">Board / Curriculum<span class="text-red-500">*</span></label>
+        <select id="wizard-curriculum" class="ds-form-input ds-form-select w-full" wire:model="curriculum">
+            <option value="uneb">UNEB (Uganda National Examinations Board)</option>
+            <option value="cambridge">Cambridge</option>
+            <option value="montessori">Montessori</option>
+            <option value="other">Other</option>
+        </select>
+    </div>
+
+@elseif($stepKey === 'school_category')
+    <div class="ds-form-group">
+        <label class="ds-form-label">School category<span class="text-red-500">*</span></label>
+        <p class="text-xs text-gray-500 mt-1 mb-2">
+            Sets the default classes, subjects, and grading system. Everything stays editable later.
+        </p>
+        <div class="manual-wizard-plan-grid" data-testid="wizard-category-options" role="radiogroup" aria-label="School category">
+            @foreach(\App\Services\SchoolCategorySeeder::CATEGORIES as $value => $label)
+                @php $isSelected = $schoolCategory === $value; @endphp
+                <button type="button"
+                        class="manual-wizard-plan-card {{ $isSelected ? 'is-selected' : '' }}"
+                        wire:click="set('schoolCategory', '{{ $value }}')"
+                        role="radio"
+                        aria-checked="{{ $isSelected ? 'true' : 'false' }}"
+                        data-testid="wizard-category-{{ $value }}">
+                    <span class="manual-wizard-plan-name">{{ $label }}</span>
+                </button>
+            @endforeach
+        </div>
+        @error('schoolCategory') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
     </div>
 
 @elseif($stepKey === 'emis')

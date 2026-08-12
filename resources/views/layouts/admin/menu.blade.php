@@ -90,6 +90,12 @@ if (!function_exists('sidebarActive')) {
                     <span class="mx-3 whitespace-nowrap">Grading</span>
                 </a>
             </li>
+            <li class="py-3 px-3 dashboard-menu-item {{ sidebarActive(['reports']) }}">
+                <a href="{{ url('admin/reports/cards') }}" class="flex items-center">
+                    <x-icons.sidebar name="reports"/>
+                    <span class="mx-3 whitespace-nowrap">Report Cards</span>
+                </a>
+            </li>
         </ul>
     </li>
 

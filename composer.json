@@ -22,6 +22,7 @@
     "caneara/axiom": "^3.2",
     "filament/tables": "^3.3",
     "guzzlehttp/guzzle": "^7.0.1",
+    "iio/libmergepdf": "^4.0",
     "jantinnerezo/livewire-alert": "^3.0",
     "klassapp/toshi-ui": "*",
     "kreait/laravel-firebase": "^7.0",

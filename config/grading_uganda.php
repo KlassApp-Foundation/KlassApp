@@ -28,22 +28,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | PRIMARY (P1-P7) — D1-F9 Percentage Scale
+    | PRIMARY (P1-P7) — P.7 Nine-Band Percentage Scale
     |--------------------------------------------------------------------------
-    | Traditional Ugandan primary school grading. Used for termly internal
-    | school marks. NOT the PLE aggregate-points system (which is for
-    | final national exam certification only, not termly reports).
+    | Uganda P.7-style termly grading bands (confirmed with the school operator,
+    | Kabale reference school 104). This is the ONE primary scale seeded as the
+    | onboarding smart default (schema decision: one default scale per
+    | standard). Per-section P.4-P6 / P.1-P3 / Nursery band variants are logged
+    | in knowledge.md as a future per-section grading enhancement — not seeded.
     */
     'primary' => [
-        ['grade' => 'D1', 'points' => null, 'min_score' => 85, 'max_score' => 100, 'remark' => 'Excellent'],
-        ['grade' => 'D2', 'points' => null, 'min_score' => 80, 'max_score' => 84,  'remark' => 'Very Good'],
-        ['grade' => 'C3', 'points' => null, 'min_score' => 75, 'max_score' => 79,  'remark' => 'Good'],
-        ['grade' => 'C4', 'points' => null, 'min_score' => 70, 'max_score' => 74,  'remark' => 'Fairly Good'],
-        ['grade' => 'C5', 'points' => null, 'min_score' => 65, 'max_score' => 69,  'remark' => 'Average'],
-        ['grade' => 'C6', 'points' => null, 'min_score' => 60, 'max_score' => 64,  'remark' => 'Below Average'],
-        ['grade' => 'P7', 'points' => null, 'min_score' => 50, 'max_score' => 59,  'remark' => 'Pass'],
-        ['grade' => 'P8', 'points' => null, 'min_score' => 40, 'max_score' => 49,  'remark' => 'Weak Pass'],
-        ['grade' => 'F9', 'points' => null, 'min_score' => 0,  'max_score' => 39,  'remark' => 'Fail'],
+        ['grade' => '1', 'points' => null, 'min_score' => 95, 'max_score' => 100, 'remark' => 'Excellent'],
+        ['grade' => '2', 'points' => null, 'min_score' => 85, 'max_score' => 94,  'remark' => 'V.Good'],
+        ['grade' => '3', 'points' => null, 'min_score' => 75, 'max_score' => 84,  'remark' => 'Good'],
+        ['grade' => '4', 'points' => null, 'min_score' => 65, 'max_score' => 74,  'remark' => 'F.Good/Q.Good'],
+        ['grade' => '5', 'points' => null, 'min_score' => 60, 'max_score' => 64,  'remark' => 'Promising'],
+        ['grade' => '6', 'points' => null, 'min_score' => 50, 'max_score' => 59,  'remark' => 'Fair'],
+        ['grade' => '7', 'points' => null, 'min_score' => 45, 'max_score' => 49,  'remark' => 'Work hard'],
+        ['grade' => '8', 'points' => null, 'min_score' => 40, 'max_score' => 44,  'remark' => 'Aim higher'],
+        ['grade' => '9', 'points' => null, 'min_score' => 0,  'max_score' => 39,  'remark' => 'More effort'],
     ],
 
     /*
@@ -51,7 +53,10 @@ return [
     | O-LEVEL (S1-S4) — A-E Letter Grades (NLSC/UCE system)
     |--------------------------------------------------------------------------
     | Uganda's New Lower Secondary Curriculum grading used for all
-    | O-Level termly assessments.
+    | O-Level termly assessments. Bands match the UNEB UCE release statement
+    | figures confirmed via the Monitor's UCE grading article and the UCE 2024
+    | release statement (https://ereg.uneb.ac.ug/files/oNVRW_uce_2024_release_statement.pdf):
+    | A = 80-100 (Exceptional), B = 70-79, C = 60-69, D = 50-59, E = 0-49.
     */
     'o-level' => [
         ['grade' => 'A', 'points' => null, 'min_score' => 80, 'max_score' => 100, 'remark' => 'Excellent'],
@@ -65,8 +70,10 @@ return [
     |--------------------------------------------------------------------------
     | A-LEVEL (S5-S6) — UACE-style Points
     |--------------------------------------------------------------------------
-    | PROPOSED boundaries based on common Ugandan sixth-form practice.
-    | These are NOT confirmed — awaiting sign-off before finalizing.
+    | UACE principal-subject points as cited from NymyNet's UACE grading guide
+    | (https://nymynet.com/uace-grading-system-2025-how-to-count-a-level-points-in-uganda/):
+    | A=6, B=5, C=4, D=3, E=2, O=1, F=0. Boundaries follow the same guide's
+    | published percentage ranges.
     */
     'a-level' => [
         ['grade' => 'A', 'points' => 6, 'min_score' => 80, 'max_score' => 100, 'remark' => 'Excellent'],

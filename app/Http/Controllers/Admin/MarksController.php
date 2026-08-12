@@ -178,7 +178,9 @@ $subjects = Subject::where("school_id", $schoolId) ->where("standard_id", )->get
     $exam = Exam::where("school_id", $schoolId)
            ->where("section_id", $class->id)
            ->where("academic_year_id", $academic_year_id)
-           ->where("academic_term_id", $request->term)->first();
+           ->where("academic_term_id", $request->term)
+           ->whereHas('examType', fn($q) => $q->where('contributes_to_report_total', 1))
+           ->first();
        $headers = ['Total', 'Average', 'Grade', 'Position', 'Actions'];    
        
     return view('admin.marks.filter', compact(

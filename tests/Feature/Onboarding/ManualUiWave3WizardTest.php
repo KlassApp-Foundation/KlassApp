@@ -114,7 +114,7 @@ class ManualUiWave3WizardTest extends TestCase
             ->set('schoolName', 'Wave3 Primary')
             ->call('next')
             ->assertSet('stepIndex', 1)
-            ->assertSee('Board / Curriculum')
+            ->assertSee('Country')
             ->call('previous')
             ->assertSet('stepIndex', 0)
             ->assertSee('School name')
@@ -131,18 +131,16 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->set('schoolName', 'Plan Step Academy')
             ->call('next')
+            ->set('countryName', 'Uganda')
+            ->call('next')
             ->set('curriculum', 'uneb')
             ->call('next')
-            ->set('countryName', 'Uganda')
+            ->set('schoolCategory', 'primary')
             ->call('next')
             ->set('ministryCode', 'EMIS-PLAN')
             ->call('next')
             ->call('next') // uneb skip
-            ->call('next') // academic year
-            ->set('className', 'P1')
-            ->call('next')
-            ->set('subjectName', 'Math')
-            ->call('next')
+            ->call('next') // academic year seeds classes/subjects/grading
             ->set('teacherName', 'Grace')
             ->set('teacherEmail', 'grace@wave3.sch.ug')
             ->call('next')
@@ -154,10 +152,10 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next');
 
         $instance = $component->instance();
-        $this->assertSame(13, $instance->stepIndex);
-        $this->assertSame('plan_selection', $instance->steps[13]['key']);
+        $this->assertSame(14, $instance->stepIndex);
+        $this->assertSame('plan_selection', $instance->steps[14]['key']);
         // Livewire test HTML can lag one tick after stepIndex-only updates; re-enter step.
-        $component->call('goToStep', 13);
+        $component->call('goToStep', 14);
         $component
             ->assertSee('Plan selection')
             ->assertSeeHtml('data-testid="wizard-plan-cards"')
@@ -196,19 +194,17 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->set('schoolName', 'Personalized Academy')
             ->call('next')
+            ->set('countryName', 'Uganda')
+            ->call('next')
             ->set('curriculum', 'uneb')
             ->call('next')
-            ->set('countryName', 'Uganda')
+            ->set('schoolCategory', 'primary')
             ->call('next')
             ->set('ministryCode', 'EMIS-333')
             ->call('next')
             ->set('unebCenterNumber', 'U333')
             ->call('next')
-            ->call('next') // academic year with defaults
-            ->set('className', 'P1')
-            ->call('next')
-            ->set('subjectName', 'Science')
-            ->call('next')
+            ->call('next') // academic year seeds classes/subjects → auto-advances past them
             ->set('teacherName', 'Amina Teacher')
             ->set('teacherEmail', 'amina@wave3.sch.ug')
             ->call('next')
@@ -248,19 +244,17 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->set('schoolName', 'Preview Academy')
             ->call('next')
+            ->set('countryName', 'Uganda')
+            ->call('next')
             ->set('curriculum', 'uneb')
             ->call('next')
-            ->set('countryName', 'Uganda')
+            ->set('schoolCategory', 'primary')
             ->call('next')
             ->set('ministryCode', 'EMIS-PREVIEW')
             ->call('next')
             ->set('unebCenterNumber', 'U999')
             ->call('next')
-            ->call('next') // academic year
-            ->set('className', 'P2')
-            ->call('next')
-            ->set('subjectName', 'English')
-            ->call('next')
+            ->call('next') // academic year seeds classes/subjects → auto-advances past them
             ->set('teacherName', 'Helen Teacher')
             ->set('teacherEmail', 'helen@wave3.sch.ug')
             ->call('next')
@@ -285,7 +279,7 @@ class ManualUiWave3WizardTest extends TestCase
             ->assertSee('Uganda')
             ->assertSee('EMIS-PREVIEW')
             ->assertSee('U999')
-            ->assertSee('P2')
+            ->assertSee('Primary One') // seeded by SchoolCategorySeeder
             ->assertSee('ENGLISH') // Subject model accessor uppercases name
             ->assertSee('Helen Teacher')
             ->assertSee('+256700555666')
@@ -308,7 +302,7 @@ class ManualUiWave3WizardTest extends TestCase
             ->assertSeeHtml('data-testid="wizard-review"')
             ->assertSee('Preview Academy Renamed')
             ->assertSee('Create School')
-            ->assertSee('P2')
+            ->assertSee('Primary One') // seeded by SchoolCategorySeeder
             ->assertSee('ENGLISH')
             ->assertSee('Helen Teacher')
             ->assertSee('+256700555666')
@@ -324,7 +318,7 @@ class ManualUiWave3WizardTest extends TestCase
             (int) \App\Models\CurrentPlan::where('school_id', $this->school->id)->value('plan_id')
         );
         $this->assertTrue(
-            \App\Models\Subject::where('school_id', $this->school->id)->where('name', 'English')->exists()
+            \App\Models\Subject::where('school_id', $this->school->id)->where('name', 'English Language')->exists()
             || \App\Models\Subject::where('school_id', $this->school->id)->where('name', 'ENGLISH')->exists()
         );
 
@@ -343,13 +337,14 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->set('schoolName', 'Prev Nav Academy')
             ->call('next')
-            ->set('curriculum', 'uneb')
-            ->call('next')
             ->set('countryName', 'Uganda')
+            ->call('next')
+            // Cambridge curriculum: no school-category step, no auto-seeding,
+            // so the wizard lands on classes after the academic-year step.
+            ->set('curriculum', 'cambridge')
             ->call('next')
             ->set('ministryCode', 'EMIS-PREV')
             ->call('next')
-            ->call('next') // uneb
             ->call('next'); // academic year → lands on classes
 
         $component

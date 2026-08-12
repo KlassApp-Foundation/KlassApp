@@ -4,5 +4,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| app/Console/Commands/** | .ai/rules/commands.md |
+| **/* | .ai/rules/general.md |
 | app/Helpers/SiteHelper.php | .ai/rules/helpers.md |
 | app/Http/Controllers/Teacher/MarksController.php | .ai/rules/teacher.md |

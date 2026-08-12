@@ -20,6 +20,7 @@ use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingStepsService;
+use App\Services\SchoolCategorySeeder;
 use App\Services\StudentIdGeneratorService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Auth;
@@ -65,6 +66,8 @@ class ManualOnboardingWizard extends Component
     public string $schoolName = '';
 
     public string $curriculum = 'uneb';
+
+    public string $schoolCategory = '';
 
     public string $countryName = 'Uganda';
 
@@ -843,6 +846,12 @@ class ManualOnboardingWizard extends Component
         $this->reviewSummary = [
             ['key' => 'school_name', 'label' => 'School name', 'icon' => '🏫', 'value' => (string) ($school->name ?: '—')],
             ['key' => 'curriculum', 'label' => 'Curriculum', 'icon' => '📚', 'value' => strtoupper((string) ($school->curriculum ?: '—'))],
+            [
+                'key' => 'school_category',
+                'label' => 'School category',
+                'icon' => '🏭',
+                'value' => SchoolCategorySeeder::CATEGORIES[$school->school_category] ?? '—',
+            ],
             ['key' => 'country', 'label' => 'Country', 'icon' => '🌍', 'value' => (string) ($school->registration_country ?: '—')],
             ['key' => 'emis', 'label' => 'EMIS / Ministry code', 'icon' => '🔢', 'value' => $emis !== '' ? $emis : '—'],
             ['key' => 'uneb_center', 'label' => 'UNEB centre', 'icon' => '🎓', 'value' => $unebDisplay],
@@ -946,6 +955,7 @@ class ManualOnboardingWizard extends Component
             ? ''
             : (string) $school->name;
         $this->curriculum = $school->curriculum ?: 'uneb';
+        $this->schoolCategory = (string) ($school->school_category ?: '');
         $this->countryName = $school->registration_country ?: 'Uganda';
         $this->ministryCode = (string) ($school->ministry_code ?: '');
         $this->unebCenterNumber = (string) ($school->uneb_center_number ?: '');
@@ -958,6 +968,7 @@ class ManualOnboardingWizard extends Component
         match ($key) {
             'school_name' => $this->saveSchoolName($school),
             'curriculum' => $this->saveCurriculum($school),
+            'school_category' => $this->saveSchoolCategory($school),
             'country' => $this->saveCountry($school),
             'emis' => $this->saveEmis($school),
             'uneb_center' => $this->saveUneb($school),
@@ -993,6 +1004,17 @@ class ManualOnboardingWizard extends Component
         }
 
         $school->curriculum = $curriculum;
+        $school->save();
+    }
+
+    private function saveSchoolCategory(School $school): void
+    {
+        $category = trim($this->schoolCategory);
+        if (! array_key_exists($category, SchoolCategorySeeder::CATEGORIES)) {
+            throw ValidationException::withMessages(['schoolCategory' => 'Choose a school category.']);
+        }
+
+        $school->school_category = $category;
         $school->save();
     }
 
@@ -1051,6 +1073,10 @@ class ManualOnboardingWizard extends Component
         // Observer also forgets; keep an explicit forget so a cached null from the
         // pre-AY empty-state dashboard cannot stick across this wizard step.
         Cache::forget('academic_year_for_school_'.$school->id);
+
+        // Smart default: the school_category choice drives our default classes,
+        // subjects, and grading scales (idempotent; skipped for non-UNEB).
+        SchoolCategorySeeder::seed($school);
     }
 
     private function saveClass(School $school): void
