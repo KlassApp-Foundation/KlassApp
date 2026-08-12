@@ -29,19 +29,19 @@ class ImportKabaleMarks extends Command
     protected $description = 'Import marks for Kabale (school 104) from Excel files. Reads all subject columns dynamically.';
 
     private const CLASS_CONFIG = [
-        'p1East'  => ['section' => 'P.1 East',  'standard' => 'primary_lower'],
-        'p1West'  => ['section' => 'P.1 West',  'standard' => 'primary_lower'],
-        'p2'      => ['section' => 'P.2',        'standard' => 'primary_lower'],
-        'p3East'  => ['section' => 'P.3 East',   'standard' => 'primary_lower'],
-        'p3West'  => ['section' => 'P.3 West',   'standard' => 'primary_lower'],
-        'p4East'  => ['section' => 'P.4 East',   'standard' => 'primary_upper'],
-        'p4West'  => ['section' => 'P.4 West',   'standard' => 'primary_upper'],
-        'p5East'  => ['section' => 'P.5 East',   'standard' => 'primary_upper'],
-        'p5West'  => ['section' => 'P.5 West',   'standard' => 'primary_upper'],
-        'p6East'  => ['section' => 'P.6 East',   'standard' => 'primary_upper'],
-        'p6West'  => ['section' => 'P.6 West',   'standard' => 'primary_upper'],
-        'p7A'     => ['section' => 'P.7 A',      'standard' => 'primary'],
-        'p7B'     => ['section' => 'P.7 B',      'standard' => 'primary'],
+        'p1East'  => ['section' => 'P.1',  'standard' => 'primary_lower'],
+        'p1West'  => ['section' => 'P.1',  'standard' => 'primary_lower'],
+        'p2'      => ['section' => 'P.2',  'standard' => 'primary_lower'],
+        'p3East'  => ['section' => 'P.3',  'standard' => 'primary_lower'],
+        'p3West'  => ['section' => 'P.3',  'standard' => 'primary_lower'],
+        'p4East'  => ['section' => 'P.4',  'standard' => 'primary'],
+        'p4West'  => ['section' => 'P.4',  'standard' => 'primary'],
+        'p5East'  => ['section' => 'P.5',  'standard' => 'primary'],
+        'p5West'  => ['section' => 'P.5',  'standard' => 'primary'],
+        'p6East'  => ['section' => 'P.6',  'standard' => 'primary'],
+        'p6West'  => ['section' => 'P.6',  'standard' => 'primary'],
+        'p7A'     => ['section' => 'P.7',  'standard' => 'primary'],
+        'p7B'     => ['section' => 'P.7',  'standard' => 'primary'],
     ];
 
 
