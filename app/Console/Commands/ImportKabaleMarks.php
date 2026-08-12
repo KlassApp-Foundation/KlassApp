@@ -110,7 +110,6 @@ class ImportKabaleMarks extends Command
         $this->info('Subject columns detected: ' . implode(', ', array_values($subjectMap)));
 
         $subjects = $this->ensureSubjects($school->id, $stdLink, $subjectMap);
-        $this->info("Subject map keys: " . implode(', ', array_keys($subjects)));
         $conflicts = [];
         $unmatched = ['June' => [], 'July' => [], 'EOT' => []];
         $matched = [];
@@ -172,11 +171,8 @@ class ImportKabaleMarks extends Command
                         if ($score === null || (string) $score === '') continue;
                         $score = (int) $score;
 
-                        $subjectId = $subjects[$subjectName] ?? null;
-                        if (!$subjectId) {
-                            $this->warn("  DEBUG: subject not found for '$subjectName' in map");
-                            continue;
-                        }
+                        $subjectId = $subjects[$colKey] ?? null;
+                        if (!$subjectId) continue;
 
                         if (!$dryRun) {
                             $grade = $this->resolveGrade($school->id, $stdLink->standard_id, $score);
@@ -342,6 +338,10 @@ class ImportKabaleMarks extends Command
                 );
                 $this->line("  Created new subject '{$s->name}' (id={$s->id})");
             }
+            $map[$colKey] = $s->id;
+        }
+        return $map;
+    }
             $map[$colKey] = $s->id;
         }
         return $map;
