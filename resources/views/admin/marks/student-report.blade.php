@@ -217,9 +217,11 @@
                     @endforeach
                     @php
                         $firstMark = $subjectMarks->first();
+                        $eotExam = $allExamColumns->last();
+                        $eotMark = $eotExam ? $subjectMarks->firstWhere('exam_id', $eotExam->id) : $firstMark;
                         $subjectGrade = '-';
-                        if ($firstMark && $firstMark->marks !== null) {
-                            $g = $grading_system->first(fn($gs) => $gs->min_score <= $firstMark->marks && $gs->max_score >= $firstMark->marks);
+                        if ($eotMark && $eotMark->marks !== null) {
+                            $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
                             $subjectGrade = $g ? $g->grade : '-';
                         }
                     @endphp
