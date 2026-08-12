@@ -29,5 +29,8 @@ php artisan cache:clear || true
 php artisan view:clear || true
 php artisan route:clear || true
 
+echo "starting queue worker (bulk report downloads)"
+( while true; do php artisan queue:work --sleep=3 --tries=1 --timeout=900 --memory=1024 || true; sleep 5; done ) &
+
 echo "starting PHP-FPM"
 exec php-fpm -F
