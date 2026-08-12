@@ -118,6 +118,10 @@
         .grades-table td { font-size: 7px; padding: 2px 2px; border: 1px solid #E2E8F0; text-align: center; }
         .grades-table td.strong { font-weight: 600; }
         .grades-heading { margin: 8px 0 4px; font-size: 10px; font-weight: 600; color: #0F172A; }
+        .report-title { text-align: center; font-size: 11px; font-weight: 700; color: #1E6FD9; margin-bottom: 6px; text-transform: uppercase; }
+
+        .pos-row td { font-size: 9px; padding: 3px 4px; border: 1px solid #E2E8F0; text-align: center; }
+        .pos-row td.strong { font-weight: 700; color: #0F172A; }
 
         /* ── Footer ── */
         .footer-table { width: 100%; border-collapse: collapse; margin-top: 8px; padding-top: 4px; border-top: 1px solid #E2E8F0; }
@@ -154,6 +158,8 @@
     </table>
     <div class="header-divider"></div>
 
+    <div class="report-title">PROGRESSIVE REPORT</div>
+
     {{-- ═══ STUDENT INFO CARD ═══ --}}
     <table class="info-table">
         <tr>
@@ -170,8 +176,8 @@
                 <div class="info-value">@if(!empty($isNursery)) &mdash; @else {{ $grade['agg'] ?? '&mdash;' }} @endif</div>
             </td>
             <td>
-                <div class="info-label">Position</div>
-                <div class="info-value">@if(!empty($isNursery)) &mdash; @else {{ $myPos ?? '&mdash;' }} of {{ $totalLearners ?? '&mdash;' }} @endif</div>
+                <div class="info-label">Out Of</div>
+                <div class="info-value">@if(!empty($isNursery)) &mdash; @else {{ $totalLearners ?? '&mdash;' }} @endif</div>
             </td>
         </tr>
     </table>
@@ -227,14 +233,17 @@
         </table>
         @endif
 
-        {{-- ═══ END OF TERM (subjects as rows, EOT mark + grade) ═══ --}}
+        {{-- ═══ END OF TERM (subjects as rows, full column set) ═══ --}}
         @if ($eotExams->isNotEmpty())
         <div class="grades-heading" style="color: #1E6FD9;">END OF TERM EXAMINATION</div>
         <table class="marks-table">
             <tr>
                 <th>Subject</th>
-                <th style="width:12%">Mark</th>
-                <th style="width:12%">AGG</th>
+                <th style="width:8%">Full Mark</th>
+                <th style="width:8%">Mark Gained</th>
+                <th style="width:8%">AGG</th>
+                <th>Comment</th>
+                <th style="width:10%">TR Initials</th>
             </tr>
             @php $eotTotal = 0; @endphp
             @foreach ($subjects as $subject)
@@ -243,24 +252,42 @@
                 @php
                     $eotMark = $subjectMarks->firstWhere('exam_id', $eotExams->first()->id);
                     $eotGrade = '-';
+                    $eotComment = '-';
                     if ($eotMark && $eotMark->marks !== null) {
                         $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
                         $eotGrade = $g ? $g->grade : '-';
+                        $eotComment = $g ? $g->remark : '-';
                     }
+                    $teacherName = $subjectMarks->first()?->teacher?->name ?? '-';
                     $eotTotal += $eotMark ? $eotMark->marks : 0;
                 @endphp
                 <tr>
                     <td class="left strong">{{ $subject->name }}</td>
+                    <td>100</td>
                     <td>{{ $eotMark ? floor($eotMark->marks) : '&mdash;' }}</td>
                     <td>{{ $eotGrade }}</td>
+                    <td>{{ $eotComment }}</td>
+                    <td>{{ $teacherName }}</td>
                 </tr>
             @endforeach
             <tr class="total-row">
                 <td><strong>TOTAL</strong></td>
+                <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
                 <td><strong>{{ $total }}</strong></td>
                 <td><strong>{{ $grade['agg'] ?? '&mdash;' }}</strong></td>
+                <td colspan="2"></td>
             </tr>
         </table>
+
+        {{-- Position row below EOT table --}}
+        @if (!empty($myPos) && !$isNursery)
+        <table class="marks-table" style="margin-top: 2px;">
+            <tr class="pos-row">
+                <td class="strong" style="width: 50%;">POSITION</td>
+                <td>{{ $myPos }} of {{ $totalLearners }}</td>
+            </tr>
+        </table>
+        @endif
         @endif
     @endif
 
