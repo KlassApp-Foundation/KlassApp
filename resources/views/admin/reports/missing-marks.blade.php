@@ -21,6 +21,20 @@
     <h1>Missing Marks Report</h1>
     <div class="meta">{{ $school->name }} &middot; Generated {{ now()->format('d M Y') }} &middot; Students with zero EOT marks</div>
 
+    @php
+        $nurseryStudents = \App\Models\User::where('school_id', $school->id)
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            ->whereHas('studentAcademic.standardLink.standard', fn($q) => $q->where('name', 'nursery'))
+            ->count();
+    @endphp
+    @if ($nurseryStudents > 0)
+    <div style="background:#FEF2F2;border:1px solid #FECACA;padding:8px 12px;margin-bottom:12px;border-radius:4px;">
+        <div style="font-weight:700;color:#DC2626;font-size:11px;margin-bottom:2px;">NURSERY: NO EXAM DATA RECEIVED</div>
+        <div style="font-size:9px;color:#7F1D1D;">{{ $nurseryStudents }} nursery students are enrolled but no marks exist yet for any nursery student. This is a separate outstanding item — not "some students missing," but "no exam data received for nursery at all."</div>
+    </div>
+    @endif
+
     @php $total = 0; @endphp
     @forelse ($missing as $group)
         @php $total += $group['count']; @endphp
