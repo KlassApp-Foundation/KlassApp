@@ -301,7 +301,7 @@ class ImportKabaleMarks extends Command
             $this->warn("Invalid JSON in map file, falling back to auto-detection.");
         }
 
-        $nonSubjects = ['name', 'no', '#', 'total', 'position', 'pos', 'rank', 'average', 'avg', 'remarks', 'comment'];
+        $nonSubjects = ['name', 'no', 'no_', '#', 'total', 'position', 'pos', 'rank', 'average', 'avg', 'remarks', 'comment'];
 
         foreach ($files as $path) {
             if (!file_exists($path)) continue;
