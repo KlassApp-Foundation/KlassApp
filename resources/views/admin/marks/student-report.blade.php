@@ -228,7 +228,7 @@
             @endforeach
             <tr class="total-row">
                 <td><strong>TOTAL</strong></td>
-                <td>{{ count($subjects) * 100 }}</td>
+                <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
                 <td colspan="{{ $midCount + $eotCount }}"><strong>{{ $total }}</strong></td>
                 <td></td>
             </tr>
