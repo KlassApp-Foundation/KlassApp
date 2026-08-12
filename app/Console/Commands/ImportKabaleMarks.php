@@ -92,12 +92,11 @@ class ImportKabaleMarks extends Command
         $roster = $this->buildRoster($stdLink->id);
         $this->info("Roster (filtered): " . count($roster) . " students");
 
-        $fileLabel = str_replace(' ', '', $config['section']);
         $base = storage_path('app');
         $files = [
-            'June' => "{$base}/{$fileLabel}_june.xlsx",
-            'July' => "{$base}/{$fileLabel}_july.xlsx",
-            'EOT'  => "{$base}/{$fileLabel}_end_of_term.xlsx",
+            'June' => "{$base}/{$classKey}_june.xlsx",
+            'July' => "{$base}/{$classKey}_july.xlsx",
+            'EOT'  => "{$base}/{$classKey}_end_of_term.xlsx",
         ];
 
         // Build subject map: either from --map JSON file or auto-detected from Excel headers
