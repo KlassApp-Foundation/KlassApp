@@ -8,8 +8,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
 use App\Models\Academics\NurseryAssessment;
+use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Standard;
+use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
@@ -23,6 +25,8 @@ use App\Events\MarksUpdated;
 use App\Events\GradesPublished;
 use App\Exceptions\MarksLockedException;
 use App\Models\Academics\ExamMarksSubmission;
+use App\Exports\CombinedMarksheetExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MarksController extends Controller
 {
@@ -67,14 +71,26 @@ public function teacherExamMarksList()
     // Example: exams where teacher is linked via subject or directly
         $yrId = AcademicYear::where("school_id", $schoolId)->where("name", now()->year)->value("id");
 
-    $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear'])
+    $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear', 'section', 'examType', 'academicTerm'])
         -> where('school_id', $schoolId)
         ->where('academic_year_id', $yrId)
         ->where("teacher_id", $teacher->id)
         ->orderBy('created_at', 'desc')
         ->get();
-   
-    return view('teacher.marks.teacher-exam-list', compact('exams', "exm"));
+
+    $examsByClass = $exams->groupBy('section_id');
+
+    $assignedStdLinks = StandardLink::where('school_id', $schoolId)
+        ->where(function ($q) use ($teacher, $examsByClass) {
+            $q->where('class_teacher_id', $teacher->id);
+            if ($examsByClass->isNotEmpty()) {
+                $q->orWhereIn('section_id', $examsByClass->keys());
+            }
+        })
+        ->get()
+        ->keyBy('section_id');
+
+    return view('teacher.marks.teacher-exam-list', compact('exams', 'examsByClass', 'assignedStdLinks'));
 }
 
 // mark exam as done
@@ -317,6 +333,40 @@ public function downloadMarksheet(Exam $exam)
     return \Maatwebsite\Excel\Facades\Excel::download(
         new \App\Exports\MarksheetExport($headings, $rows, $title),
         "{$title}_marksheet.xlsx"
+    );
+}
+
+public function combinedMarksheet(StandardLink $stdLink)
+{
+    $teacher = Auth::user();
+
+    if ($stdLink->school_id !== $teacher->school_id) {
+        abort(403);
+    }
+
+    $assigned = (int) $stdLink->class_teacher_id === (int) $teacher->id
+        || Exam::where('school_id', $teacher->school_id)
+            ->where('section_id', $stdLink->section_id)
+            ->where('teacher_id', $teacher->id)
+            ->exists();
+
+    if (!$assigned) {
+        abort(403, 'You are not assigned to this class.');
+    }
+
+    $term = AcademicTerm::where('school_id', $teacher->school_id)
+        ->where('status', 'current')
+        ->first();
+
+    if (!$term) {
+        return back()->with('failmessage', 'No current term found.');
+    }
+
+    $className = str_replace(' ', '_', $stdLink->section?->name ?? 'class');
+
+    return Excel::download(
+        new CombinedMarksheetExport($stdLink, $term),
+        "combined_marksheet_{$className}.xlsx"
     );
 }
 

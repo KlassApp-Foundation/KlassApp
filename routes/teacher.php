@@ -352,6 +352,9 @@ Route::prefix('exam')->group(function () {
     // Download combined class marksheet
     Route::get('/{exam}/marksheet', 'MarksController@downloadMarksheet')->name('teacher.exam.marksheet');
 
+    // Download combined (MID + EOT) class marksheet
+    Route::get('/class/{stdLink}/combined-marksheet', 'MarksController@combinedMarksheet')->name('teacher.exam.combinedMarksheet');
+
     // ======edit students marks=======
     Route::get("/{exam}/students/{student}/mark/{marks}/edit", "MarksController@editMark")->name("teacher.student.marks.edit");
 

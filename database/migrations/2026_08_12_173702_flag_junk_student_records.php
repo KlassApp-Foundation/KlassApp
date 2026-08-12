@@ -15,6 +15,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // `regexp` is MySQL-only; there is no school-104 data to flag on SQLite tests.
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         $flagged = 0;
 
         // Flag digit-containing names as inactive

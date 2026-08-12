@@ -58,6 +58,13 @@
                 </a>
             </div>
 
+            <div class="mb-3">
+                <a href="{{ route('admin.reports.cards.combinedMarksheet', $link) }}"
+                   class="block w-full text-center bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium py-2 rounded-lg transition">
+                    Combined Marksheet (Excel)
+                </a>
+            </div>
+
             @if (!empty($link->students) && count($link->students) > 0)
             <details class="mt-3 border rounded-lg">
                 <summary class="cursor-pointer px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 bg-gray-50 rounded-lg">

@@ -77,4 +77,20 @@ class Subject extends Model
     {
         return $this->hasMany('App\Models\ExamSchedule','subject_id','id');
     }
+
+    /**
+     * Sort a collection of subjects into the report card's predefined order,
+     * matching the manual form layout (subjects not listed fall to the end).
+     */
+    public static function sortByReportOrder(\Illuminate\Support\Collection $subjects): \Illuminate\Support\Collection
+    {
+        $order = ['ENGLISH','ENG', 'MTC','MATHEMATICS','MATH', 'RELIGIOUS EDUCATION','RE', 'LITERACY I','LIT I', 'LITERACY II','LIT II', 'READING AND RESPONSE','R&R','RR', 'SCIENCE','SCI', 'SOCIAL STUDIES','SST'];
+        $orderMap = array_flip($order);
+
+        return $subjects->sortBy(function ($subject) use ($orderMap) {
+            $normalized = strtoupper(str_replace(['  ', ' AND ', ' & '], ' ', trim($subject->name)));
+
+            return $orderMap[$normalized] ?? 999;
+        })->values();
+    }
 }
