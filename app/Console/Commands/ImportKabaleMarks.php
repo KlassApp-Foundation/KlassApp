@@ -110,6 +110,7 @@ class ImportKabaleMarks extends Command
         $this->info('Subject columns detected: ' . implode(', ', array_values($subjectMap)));
 
         $subjects = $this->ensureSubjects($school->id, $stdLink, $subjectMap);
+        $this->info("Subject map keys: " . implode(', ', array_keys($subjects)));
         $conflicts = [];
         $unmatched = ['June' => [], 'July' => [], 'EOT' => []];
         $matched = [];
