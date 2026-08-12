@@ -175,10 +175,6 @@
                 <div class="info-label">Aggregate</div>
                 <div class="info-value">@if(!empty($isNursery)) &mdash; @else {{ $grade['agg'] ?? '&mdash;' }} @endif</div>
             </td>
-            <td>
-                <div class="info-label">Out Of</div>
-                <div class="info-value">@if(!empty($isNursery)) &mdash; @else {{ $totalLearners ?? '&mdash;' }} @endif</div>
-            </td>
         </tr>
     </table>
 
@@ -284,7 +280,7 @@
         <table class="marks-table" style="margin-top: 2px;">
             <tr class="pos-row">
                 <td class="strong" style="width: 50%;">POSITION</td>
-                <td>{{ $myPos }} of {{ $totalLearners }}</td>
+                <td><strong>{{ $myPos ?? '&mdash;' }} of {{ $totalLearners ?? '&mdash;' }}</strong></td>
             </tr>
         </table>
         @endif
