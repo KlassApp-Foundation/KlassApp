@@ -181,6 +181,10 @@ return $total;
          foreach($learner->marks as $mark){
              if ($mark->marks === null) continue;
 
+             if (isset($mark->exam) && isset($mark->exam->examType) && !$mark->exam->examType->contributes_to_report_total) {
+                 continue;
+             }
+
              $gradeMapping = SchoolGradingSystem::where('school_id', $learner->school_id)
                      ->where('standard_id', $exam->standard_id)
                      ->where('min_score', '<=', $mark->marks)
