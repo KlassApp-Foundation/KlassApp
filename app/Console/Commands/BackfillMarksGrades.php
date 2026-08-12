@@ -35,7 +35,7 @@ class BackfillMarksGrades extends Command
                 ->join('exams', 'marks.exam_id', '=', 'exams.id')
                 ->where('marks.school_id', $schoolId)
                 ->where('exams.standard_id', $g->standard_id)
-                ->whereNull('marks.grade')
+                ->where(function ($q) { $q->whereNull('marks.grade')->orWhere('marks.grade', ''); })
                 ->where('marks.marks', '>=', $g->min_score)
                 ->where('marks.marks', '<=', $g->max_score);
 
