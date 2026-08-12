@@ -601,6 +601,7 @@ Route::prefix('reports/cards')->name('admin.reports.cards.')->group(function () 
     Route::get('/download/{stdLink}', 'ReportCardsController@downloadClass')->name('download');
     Route::get('/merged/{stdLink}', 'ReportCardsController@downloadMerged')->name('merged');
     Route::get('/missing', 'ReportCardsController@missingMarksPdf')->name('missing');
+    Route::get('/generation/{generation}/download', 'ReportCardsController@downloadGeneration')->name('generation.download');
     Route::get('/{stdLink}/student/{learner}/preview', 'ReportCardsController@previewStudent')->name('student.preview');
     Route::get('/{stdLink}/student/{learner}/download', 'ReportCardsController@downloadStudent')->name('student.download');
 });
