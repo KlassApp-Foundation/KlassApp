@@ -117,7 +117,7 @@ return new class extends Migration
     {
         return match (strtoupper(trim($name))) {
             'SCIENCE' => 'SCIENCE', 'ENGLISH' => 'ENGLISH', 'MTC' => 'MTC',
-            'SST' => 'SST', 'RELIGIOUS EDUCATION' => 'RELIGIOUS EDUCATION',
+            'SST' => 'SST', 'RELIGIOUS EDUCATION' => 'RE',
             'LITERACY I' => 'LITERACY I', 'LITERACY II' => 'LITERACY II',
             default => strtoupper(trim($name)),
         };
