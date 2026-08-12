@@ -301,18 +301,24 @@ class ImportKabaleMarks extends Command
             $this->warn("Invalid JSON in map file, falling back to auto-detection.");
         }
 
-        // Auto-detect: read headers from the first available file
+        $nonSubjects = ['name', 'no', '#', 'total', 'position', 'pos', 'rank', 'average', 'avg', 'remarks', 'comment'];
+
         foreach ($files as $path) {
             if (!file_exists($path)) continue;
             $sheets = Excel::toArray(new SheetsOnlyImport, $path);
             $headers = $sheets[0][0] ?? [];
             $map = [];
             foreach ($headers as $h) {
-                $key = strtolower(str_replace([' ', '.'], '_', (string) $h));
-                if ($key === 'name' || $key === '' || $key === '#') continue;
-                $map[$key] = $this->normalizeSubjectName((string) $h);
+                $raw = trim((string) $h);
+                if ($raw === '') continue;
+                $key = strtolower(str_replace([' ', '.'], '_', $raw));
+                if (in_array($key, $nonSubjects)) continue;
+                $map[$key] = $this->normalizeSubjectName($raw);
             }
-            if (!empty($map)) return $map;
+            if (!empty($map)) {
+                $this->info("Auto-detected subject columns: " . implode(', ', array_values($map)));
+                return $map;
+            }
         }
 
         return [];
