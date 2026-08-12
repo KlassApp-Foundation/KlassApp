@@ -39,7 +39,7 @@
                 @endif
             </div>
 
-            <div class="flex gap-2">
+            <div class="flex gap-2 mb-3">
                 <a href="{{ route('admin.reports.cards.merged', $link) }}"
                    class="flex-1 text-center bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium py-2 rounded-lg transition">
                     Print All (Merged PDF)
@@ -53,6 +53,39 @@
                     View Marks
                 </a>
             </div>
+
+            @if (!empty($link->students) && count($link->students) > 0)
+            <details class="mt-3 border rounded-lg">
+                <summary class="cursor-pointer px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 bg-gray-50 rounded-lg">
+                    Students ({{ count($link->students) }}) — Preview or Download Individual Reports
+                </summary>
+                <div class="max-h-64 overflow-y-auto mt-1">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-100 text-xs text-gray-500 uppercase">
+                            <tr><th class="text-left px-2 py-1">Name</th><th class="px-2 py-1 w-24">Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($link->students as $student)
+                            <tr class="border-t hover:bg-gray-50">
+                                <td class="px-2 py-1 text-gray-700">{{ $student->name }}</td>
+                                <td class="px-2 py-1 flex gap-1 justify-center">
+                                    <a href="{{ route('admin.reports.cards.student.preview', ['stdLink' => $link, 'learner' => $student]) }}"
+                                       target="_blank"
+                                       class="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 py-0.5 rounded transition">
+                                        Preview
+                                    </a>
+                                    <a href="{{ route('admin.reports.cards.student.download', ['stdLink' => $link, 'learner' => $student]) }}"
+                                       class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-2 py-0.5 rounded transition">
+                                        Download
+                                    </a>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+            @endif
         </div>
     @empty
         <div class="col-span-full text-center py-16 text-gray-500">

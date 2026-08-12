@@ -39,6 +39,12 @@ class ReportCardsController extends Controller
                     $sl->studentCount = \App\Models\Academics\Marks::where('exam_id', $sl->eotExam->id)
                         ->distinct('student_id')
                         ->count('student_id');
+
+                    $sl->students = \App\Models\User::whereIn('id',
+                        \App\Models\Academics\Marks::where('exam_id', $sl->eotExam->id)
+                            ->distinct('student_id')
+                            ->pluck('student_id')
+                    )->orderBy('name')->get(['id', 'name']);
                 }
 
                 return $sl->eotExam !== null;
@@ -182,6 +188,39 @@ class ReportCardsController extends Controller
         return response($merged, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    public function previewStudent(StandardLink $stdLink, \App\Models\User $learner)
+    {
+        return $this->singleStudentResponse($stdLink, $learner, false);
+    }
+
+    public function downloadStudent(StandardLink $stdLink, \App\Models\User $learner)
+    {
+        return $this->singleStudentResponse($stdLink, $learner, true);
+    }
+
+    private function singleStudentResponse(StandardLink $stdLink, \App\Models\User $learner, bool $download)
+    {
+        $schoolId = Auth::user()->school_id;
+
+        $exam = $this->resolveExam($schoolId, $stdLink);
+        if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
+
+        $allStudentIds = $this->studentIds($exam);
+        $helper = app(\App\Services\StudentReportHelperService::class);
+        $svc = new ReportCardCommentService;
+        $positionMap = $this->computePositionMap($exam, $schoolId);
+        $myPos = $positionMap[$learner->id] ?? 0;
+        $pdfContent = $this->generatePdf($learner->id, $exam, $stdLink, $schoolId, $helper, $svc, $allStudentIds->count(), $myPos);
+
+        $name = str_replace([' ', '/'], '_', $learner->name);
+        $filename = "{$name}_report_card.pdf";
+
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => ($download ? 'attachment' : 'inline') . "; filename=\"{$filename}\"",
         ]);
     }
 
