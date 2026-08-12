@@ -21,8 +21,8 @@ class ReportCardsController extends Controller
     {
         $schoolId = Auth::user()->school_id;
 
-        $terms = AcademicTerm::where('school_id', $schoolId)->get();
-        $selectedTerm = request('term', $terms->first()?->id);
+        $terms = AcademicTerm::where('school_id', $schoolId)->orderBy('starts_on')->get();
+        $selectedTerm = request('term', $terms->firstWhere('status', 'current')?->id ?? $terms->first()?->id);
 
         $stdLinks = StandardLink::where('school_id', $schoolId)
             ->with(['section', 'standard'])
