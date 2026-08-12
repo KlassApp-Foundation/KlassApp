@@ -259,7 +259,7 @@
                     }
                     $teacherLink = \App\Models\Teacherlink::where('standardLink_id', $stdLink->id)
                         ->where('subject_id', $subject->id)->first();
-                    $teacherName = $teacherLink?->teacher?->name ?: ($subjectMarks->first()?->teacher?->name ?? '-');
+                    $teacherName = $teacherLink?->teacher?->name ?: '&mdash;';
                     $eotTotal += $eotMark->marks;
                 @endphp
                 <tr>
