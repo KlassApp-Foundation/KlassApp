@@ -101,37 +101,24 @@ class DownloadStudentReport extends Controller
         $school = Auth::user()->school;
         
         $myPos = $learners->where("id", $learner->id)->value("position");
-        // $learner is already a valid User model from route binding — no need to re-query
-        $pdf = Pdf::loadView("admin.marks.student-report", compact(
-            "subjects", "learner", "controls", "class_name", "grading_system", "fees", "nextTerm", "totalLearners", "myPos", "total", "grade", "school", "isNursery", "nurseryAssessments", "teacherComment",
-            "allExamColumns", "midCount", "eotCount"
-            ));     
-        $pdf->setPaper("a4", "portrait");    
-        $pdf->setOptions([
-            "defaultFont" => "sans-serif",
-            "isHtml5ParserEnabled" => true,
-            "isRemoteEnabled" => true, //for external images
-            "isPhpEnabled" => true,
-            "isJavascriptEnabled" => true,
-            "tempDir" =>storage_path("app/dompdf"),
-            "fontDir" =>storage_path("app/dompdf/fonts"),
-                "fontCache" =>storage_path("app/dompdf/fonts")
 
-            ]);
-            // create temp foler if it's nuh there
-            if(!is_dir(storage_path("app/dompdf/fonts"))){
-                mkdir(storage_path("app/dompdf/fonts"), 0775, true);
-            }
-            if (!$learner) {
-          return redirect()->back()->with('error', 'This student has no marks recorded for this exam yet.');
-             }
-            $first_name = $learner->userprofile->firstname ?? "student";
-            $last_name = $learner->userprofile->lastname ?? "unknown";
-            
-            $filename = str_replace(
-                " ", "_", $first_name . "_" . $last_name
-                ) . "_report_card.pdf";
-            return $pdf->download("$filename");    
+        $stdLink = StandardLink::where('school_id', $schoolId)
+            ->where('section_id', $section)
+            ->where('standard_id', $exam->standard_id)
+            ->first();
+
+        $pdfContent = \App\Http\Controllers\Admin\ReportCardsController::generatePdf(
+            $learner->id, $exam, $stdLink, $schoolId, $studentHelper, new \App\Services\ReportCardCommentService, $totalLearners, $myPos
+        );
+
+        $firstName = $learner->userprofile->firstname ?? 'student';
+        $lastName = $learner->userprofile->lastname ?? 'unknown';
+        $filename = str_replace(' ', '_', "{$firstName}_{$lastName}") . '_report_card.pdf';
+
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
 
     }
     
