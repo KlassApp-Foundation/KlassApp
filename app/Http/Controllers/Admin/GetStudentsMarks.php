@@ -77,21 +77,13 @@ class GetStudentsMarks extends Controller
     $totalLearners = $learners->count();
     $learners = $learners->get();
         
-        // totals
-        $learners = $studentHelper->totalMarks($learners);
-        $total = $learners->find($user->id)->total;
-        // $avg = $total / $examsDone;
-        // $promotion = $studentPromotion->promoteToNextClass($avg, $exam, $schoolId, $user);
         $promotion = Promotion::where("school_id", $schoolId)
                               ->where("user_id", $user->id)
-                            //   ->where("current_section_id", $exam->section_id)
                               ->value("comments");
-        // dd($promotion);
-        //   get position
-        $learners = $learners->sortByDesc("total")->values();
-        // dd($learners);
-        // position
-        $learners = $studentHelper->position($learners);
+
+        // totals + position (aggregate-aware)
+        $learners = $studentHelper->position($learners, $exam);
+        $total = $learners->find($user->id)->total;
 
         $myPos = $learners->where("id", $learner->id)->value("position");
         $learner = $learner->where("id", $learner->id)->first();

@@ -108,17 +108,52 @@ return $total;
 }
 
 
-  public function position($learners ){
-     $position = 1;
-     $prevtotal = null;
-    return $learners->map(function ($student, $index) use(&$position, &$prevtotal){
-            if($prevtotal !== null && $student->total < $prevtotal){
-                $position = $index + 1;
-            }
-            $student->position = $position;
-            $prevtotal = $student->total;
-            return $student;
-        });
+  public function position($learners, $exam = null){
+      if ($exam && $this->hasAggregateRanking($exam)) {
+          return $this->rankByAggregate($learners, $exam);
+      }
+      return $this->rankByTotal($learners);
+  }
+
+  private function hasAggregateRanking($exam): bool
+  {
+      return SchoolGradingSystem::where('school_id', $exam->school_id)
+          ->where('standard_id', $exam->standard_id)
+          ->whereNotNull('points')
+          ->exists();
+  }
+
+  private function rankByAggregate($learners, $exam){
+      $learners = $learners->map(function ($l) use ($exam) {
+          $l->total = $this->grade($l, $exam)['agg'];
+          return $l;
+      });
+      $sorted = $learners->sortBy('total')->values();
+      $position = 1;
+      $prev = null;
+      return $sorted->map(function ($student, $index) use(&$position, &$prev) {
+          if ($prev !== null && $student->total > $prev) {
+              $position = $index + 1;
+          }
+          $student->position = $position;
+          $prev = $student->total;
+          return $student;
+      });
+  }
+
+  private function rankByTotal($learners){
+      $learners = $this->totalMarks($learners);
+      $sorted = $learners->sortByDesc('total')->values();
+      $position = 1;
+      $prev = null;
+      return $sorted->map(function ($student, $index) use(&$position, &$prev) {
+          if ($prev !== null && $student->total < $prev) {
+              $position = $index + 1;
+          }
+          $student->position = $position;
+          $prev = $student->total;
+          return $student;
+      });
   }
 
   public function exam ($schoolId, $exam){
