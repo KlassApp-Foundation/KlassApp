@@ -6865,3 +6865,39 @@ Import was hardcoded to 6 subjects via `SUBJECT_MAP` constant. Report side alrea
 - **Status**: ✅ MERGED + DEPLOYED — PR #288, merge commit `45d169b7f808bb45425de7a65607e8f039099f3b`, branch `fix/subject-sort-reading-response` → `main`. Deployed to production.
 - **Verified on production (Kabale P.2)**: report card PDF (AARON YESUTAHINDUKA) MONTHLY header renders `ENGLISH | MTC | RELIGIOUS EDUCATION | LITERACY I | LITERACY II | READING AND RESPONSE`; combined marksheet header matches (same order). `Subject::sortByReportOrder` production dump confirms `READING AND RESPONSE` after `LITERACY II`, before `SCIENCE`. 15 tests / 79 assertions pass.
 - **URL**: https://github.com/KlassApp-Foundation/KlassApp/pull/288
+
+### 2026-08-12: Two production bugs — invisible buttons + exam-list placeholders (PRs #290, #291)
+
+**Bug 1 — `/admin/reports/cards` buttons invisible (white text on transparent).** Two stacked root causes: (a) stale Vite CSS — last built Aug 6, before the report-card buttons existed, so `bg-indigo-600`/`bg-amber-600` weren't in the bundle; (b) deeper — `public/css/admin.css` had the Bootstrap-reboot reset `a { background-color: transparent; }` ("Remove the gray background on active links in IE 10"), which is *unlayered* CSS and therefore beats Tailwind v4's `@layer utilities` `.bg-*` on **every `<a>` element** (confirmed in-browser: `<a class="bg-indigo-600">` → transparent, `<div class="bg-indigo-600">` → indigo). Fix: rebuild Vite assets (#290) + remove the legacy reset + add `filemtime` cache-busting to the `admin.css` `<link>` (#291). Verified live: Print All/Download All/View Marks/Combined Marksheet now resolve indigo/green/blue/amber with white text.
+
+**Bug 2 — `/admin/exams` identical data per row.** The view rendered `$exam->subject`/`$exam->teacher` (single placeholder FKs — `subject_id=234` "MATHEMATICS", `teacher_id=525` seed account "niwandinda pauson5259") plus the stored `status` (import never advanced it). An exam is per-class (multi-subject), so those columns never varied. Fix: `ExamController@index` now computes `subjects_list` (distinct subjects from marks), `teachers_list` (distinct class teachers from `class_teacher_links`), and derives `submitted` from mark existence. Verified live: rows show `ENGLISH, MTC, SCIENCE, SST` + real per-class teachers (P.7→6, P.6→4, P.5→7, all different) + "Submitted".
+
+- **PR #290** — merge `d968421b`, branch `fix/exams-list-and-css` (exam-list fix + Vite rebuild).
+- **PR #291** — merge `df255497`, branch `fix/a-button-background-css` (remove `a{background-color:transparent}` + cache-busting).
+- **Deployed**: production HEAD `df255497`. Verified via real browser (Playwright) logged in as a school-104 admin; full-page screenshots in `.playwright-mcp/`.
+
+### 2026-08-12: Session close-out — verified state, clean-state checks, deferred items
+
+**Verified working on real production data (Kabale school 104):**
+- Combined marksheet (PR #286/#288) — subject order matches report card, values match DB cell-for-cell, blanks + inactive/junk exclusion correct.
+- Exam list (PR #290) — real subjects/teachers/status.
+- Report-card + exam-list buttons (PR #291) — visible (colored backgrounds, not white-on-transparent).
+- Report-card PDF pipeline (PRs #221–#231) — verified earlier tonight.
+
+**Still assumption-based / not re-verified on production:**
+- Teacher `name` fields still carry numeric suffixes (e.g. `"nuwagira darius5373"`) — cosmetic, in underlying data.
+- `marks.teacher_id=525` is a leftover seed account across all marks (real teachers live in `class_teacher_links`).
+
+**Deferred / open items (for continuity):**
+- In-platform inline mark editing on `/admin/exams` — wanted, deliberately sequenced AFTER the visual report redesign (next phase with Claude).
+- Recurring raw-username display bug (digit suffixes) — seen in report-card TR INITIALS and exam-list teacher names; add a shared display helper next time it's touched, not another one-off.
+- Missing-marks visibility on `/admin/reports/cards` class cards — no inline roster-vs-marks gap indicator.
+- 339 legacy duplicate student records (real names, don't match authoritative roster, concentrated P.3–P.7) — left active, unreconciled, low priority.
+- Position-in-Stream — still unbuilt; confirmed real/used by the school via manual paper forms.
+- Platform-wide scope question — does the report template rewrite affect every KlassApp school or just Kabale? Never confirmed.
+- ⚠️ **Queue worker** (`php artisan queue:work --sleep=3 --tries=1 --timeout=900 --memory=1024`) is running but **manually started** (not in `entrypoint.sh`, no supervisor, no compose service). It will NOT survive a container restart, and the bulk-download jobs (`GenerateClassReportsJob`) depend on it. Should be added to the Docker entrypoint/supervisor.
+
+**Clean state:**
+- Local: branch `fix/a-button-background-css`, working tree clean; no leftover scripts (the 10 stashes are pre-existing, not from this session).
+- Production: removed leftover diagnostic scripts `missing2.php` + `verify_all.php`; temp admin user `verify.temp@klassapp.test` deleted. `resources/views/vendor/toshi-ui/` is untracked (deploy-published, not gitignored — minor hygiene, left as-is).
+- Production stable and safe to hand off — latest deployed commit `df255497` (PR #291), PHP 8.4.23 / Laravel 12.63.0.
