@@ -6,57 +6,63 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     private const ROSTER = [
-        ['teacher' => 'NIWANDINDA PAUSON',   'classes' => 'P.4 WEST P.5 EAST',    'subjects' => 'SCIENCE'],
-        ['teacher' => 'AINEBYOONA EMILY',     'classes' => 'P.2 EAST P.2 WEST P.2', 'subjects' => 'MTC MTC LITERACY II'],
-        ['teacher' => 'NKURUNUNGI ALEXANDER',  'classes' => 'P.4 EAST P.3',          'subjects' => 'SCIENCE MTC'],
-        ['teacher' => 'NIWASASIRA R. SANDRA',  'classes' => 'P.5 WEST P.5 EAST',     'subjects' => 'ENGLISH ENGLISH'],
-        ['teacher' => 'NSHABOHURIRA BOAZ',     'classes' => 'P.5 WEST P.6 EAST',     'subjects' => 'MTC MTC'],
-        ['teacher' => 'OWARUHANGA BRIAN',      'classes' => 'P.6 EAST P.6 WEST',     'subjects' => 'ENGLISH ENGLISH'],
-        ['teacher' => 'NKUNZI MONIC',          'classes' => 'P.4 WEST P.4 EAST',     'subjects' => 'ENGLISH ENGLISH'],
-        ['teacher' => 'AYEBARE JOVAN',         'classes' => 'P.5 EAST',              'subjects' => 'MTC'],
-        ['teacher' => 'NTANGANZWA FRED',       'classes' => 'P.3',                   'subjects' => 'LITERACY I'],
-        ['teacher' => 'ABAHO DELIGHT',         'classes' => 'P.1 P.2 WEST P.2 EAST', 'subjects' => 'RELIGIOUS EDUCATION LITERACY I'],
-        ['teacher' => 'KYOSHABIRE MERCY',      'classes' => 'P.1 P.3',               'subjects' => 'LITERACY II LITERACY II'],
-        ['teacher' => 'AKELLO FIONA OCAN',     'classes' => 'P.2 EAST P.2 WEST P.3', 'subjects' => 'RELIGIOUS EDUCATION RELIGIOUS EDUCATION RELIGIOUS EDUCATION'],
-        ['teacher' => 'NUWAGIRA DARIUS',       'classes' => 'P.7 EAST P.7 WEST',     'subjects' => 'ENGLISH ENGLISH'],
-        ['teacher' => 'ORISHABA ONESMUS',      'classes' => 'P.4 EAST P.5 EAST',     'subjects' => 'SST SST'],
-        ['teacher' => 'TUMUKUNDE BERNADES',    'classes' => 'P.1',                   'subjects' => 'ENGLISH'],
-        ['teacher' => 'NUWAGIRA JULIET',       'classes' => 'P.1 P.2',               'subjects' => 'MTC ENGLISH'],
-        ['teacher' => 'KACHERA ABUNERI',       'classes' => 'P.5 WEST P.7 EAST',     'subjects' => 'SCIENCE SCIENCE'],
-        ['teacher' => 'AGABA SIDNEY',          'classes' => 'P.4 WEST P.4 EAST',     'subjects' => 'MTC MTC'],
-        ['teacher' => 'AHUMUZA DOREEN',        'classes' => 'P.1 P.2',               'subjects' => 'LITERACY I ENGLISH'],
-        ['teacher' => 'KABAGAMBE ZAVERIO',     'classes' => 'P.6 WEST P.6 EAST',     'subjects' => 'SCIENCE SCIENCE'],
-        ['teacher' => 'MWESIGYE BRIAN',        'classes' => 'P.4 WEST P.5 WEST',     'subjects' => 'SST SST'],
-        ['teacher' => 'AKANDWANAHO DASAN',     'classes' => 'P.6 WEST P.6 EAST',     'subjects' => 'SST SST'],
-        ['teacher' => 'BYAMUKAMA GERALD',      'classes' => 'P.7 WEST',              'subjects' => 'SCIENCE'],
-        ['teacher' => 'AKAMPURIRA JUSTUS',     'classes' => 'P.7 EAST P.7 WEST',     'subjects' => 'SST'],
-        ['teacher' => 'AMATSIKO NICHOLAS',     'classes' => 'P.7 EAST P.7 WEST',     'subjects' => 'MTC'],
-        ['teacher' => 'BYEKWASO JOTHAM',       'classes' => 'P.7 EAST',              'subjects' => 'ENGLISH'],
-        ['teacher' => 'MWESIGYE BRIAN',        'classes' => 'P.5 EAST',              'subjects' => 'ENGLISH'],
+        ['NIWANDINDA PAUSON',   'P.4 WEST P.5 EAST',    'SCIENCE'],
+        ['AINEBYOONA EMILY',     'P.2 EAST P.2 WEST P.2','MTC MTC LITERACY II'],
+        ['NKURUNUNGI ALEXANDER', 'P.4 EAST P.3',         'SCIENCE MTC'],
+        ['NIWASASIRA R. SANDRA', 'P.5 WEST P.5 EAST',    'ENGLISH ENGLISH'],
+        ['NSHABOHURIRA BOAZ',    'P.5 WEST P.6 EAST',    'MTC MTC'],
+        ['OWARUHANGA BRIAN',     'P.6 EAST P.6 WEST',    'ENGLISH ENGLISH'],
+        ['NKUNZI MONIC',         'P.4 WEST P.4 EAST',    'ENGLISH ENGLISH'],
+        ['AYEBARE JOVAN',        'P.5 EAST',             'MTC'],
+        ['NTANGANZWA FRED',      'P.3',                  'LITERACY I'],
+        ['ABAHO DELIGHT',        'P.1 P.2 WEST P.2 EAST','RELIGIOUS EDUCATION LITERACY I'],
+        ['KYOSHABIRE MERCY',     'P.1 P.3',              'LITERACY II LITERACY II'],
+        ['AKELLO FIONA OCAN',    'P.2 EAST P.2 WEST P.3','RELIGIOUS EDUCATION RELIGIOUS EDUCATION RELIGIOUS EDUCATION'],
+        ['NUWAGIRA DARIUS',      'P.7 EAST P.7 WEST',    'ENGLISH ENGLISH'],
+        ['ORISHABA ONESMUS',     'P.4 EAST P.5 EAST',    'SST SST'],
+        ['TUMUKUNDE BERNADES',   'P.1',                  'ENGLISH'],
+        ['NUWAGIRA JULIET',      'P.1 P.2',              'MTC ENGLISH'],
+        ['KACHERA ABUNERI',      'P.5 WEST P.7 EAST',    'SCIENCE SCIENCE'],
+        ['AGABA SIDNEY',         'P.4 WEST P.4 EAST',    'MTC MTC'],
+        ['AHUMUZA DOREEN',       'P.1 P.2',              'LITERACY I ENGLISH'],
+        ['KABAGAMBE ZAVERIO',    'P.6 WEST P.6 EAST',    'SCIENCE SCIENCE'],
+        ['MWESIGYE BRIAN',       'P.4 WEST P.5 WEST',    'SST SST'],
+        ['AKANDWANAHO DASAN',    'P.6 WEST P.6 EAST',    'SST SST'],
+        ['BYAMUKAMA GERALD',     'P.7 WEST',             'SCIENCE'],
+        ['AKAMPURIRA JUSTUS',    'P.7 EAST P.7 WEST',    'SST'],
+        ['AMATSIKO NICHOLAS',    'P.7 EAST P.7 WEST',    'MTC'],
+        ['BYEKWASO JOTHAM',      'P.7 EAST',             'ENGLISH'],
+        ['MWESIGYE BRIAN',       'P.5 EAST',             'ENGLISH'],
     ];
 
     public function up(): void
     {
-        $inserted = 0;
-        $skipped = 0;
+        $inserted = 0; $skipped = 0;
 
         foreach (self::ROSTER as $row) {
-            $teacherName = str_replace(['[', ']'], '', trim($row['teacher']));
+            $rawName = str_replace(['[',']'], '', trim($row[0]));
+            $parts = explode(' ', $rawName);
+            $first = $parts[0]; $last = $parts[1] ?? '';
+
             $teacher = DB::table('users')->where('school_id', 104)
                 ->where('usergroup_id', 5)
-                ->where('name', 'like', $teacherName . '%')
+                ->where('name', 'like', $first . '%')
+                ->where('name', 'like', '%' . $last . '%')
                 ->first();
 
-            if (!$teacher) { $skipped++; continue; }
+            if (!$teacher) { echo "  SKIP teacher: {$rawName}\n"; $skipped++; continue; }
 
-            $classNames = preg_split('/\s+(?=P\.\d)/', trim($row['classes']));
-            $subjects = array_map('trim', explode(' ', trim($row['subjects'])));
+            $classNames = preg_split('/\s+(?=P\.\d)/', trim($row[1]));
+            $subjects = array_map('trim', explode(' ', trim($row[2])));
 
-            if (count($classNames) !== count($subjects)) { $skipped++; continue; }
+            if (count($classNames) !== count($subjects)) {
+                echo "  SKIP mismatch: {$rawName} (" . count($classNames) . " vs " . count($subjects) . ")\n";
+                $skipped++; continue;
+            }
 
-            foreach ($classNames as $i => $className) {
-                $parsed = $this->parseClass($className);
-                if (!$parsed) { $skipped++; continue; }
+            foreach ($classNames as $i => $cn) {
+                $parsed = $this->parseClass($cn);
+                if (!$parsed) { echo "  SKIP class parse: {$cn}\n"; $skipped++; continue; }
 
                 $stdLink = DB::table('standards_link')
                     ->join('sections', 'standards_link.section_id', '=', 'sections.id')
@@ -66,22 +72,18 @@ return new class extends Migration
                     ->where('standards.name', $parsed['standard'])
                     ->value('standards_link.id');
 
-                if (!$stdLink) { $skipped++; continue; }
+                if (!$stdLink) { echo "  SKIP stdLink: {$cn} ({$parsed['section']}/{$parsed['standard']})\n"; $skipped++; continue; }
 
-                $subjectName = $this->resolveSubject($subjects[$i]);
-                $sectionId = DB::table('standards_link')->where('id', $stdLink)->value('section_id');
-                $subject = DB::table('subjects')
-                    ->where('school_id', 104)
-                    ->where('section_id', $sectionId)
-                    ->where('name', 'like', $subjectName)
-                    ->first();
+                $sn = $this->resolveSubject($subjects[$i]);
+                $secId = DB::table('standards_link')->where('id', $stdLink)->value('section_id');
+                $subject = DB::table('subjects')->where('school_id', 104)->where('section_id', $secId)
+                    ->where('name', 'like', $sn)->first();
 
-                if (!$subject) { $skipped++; continue; }
+                if (!$subject) { echo "  SKIP subject: {$subjects[$i]} ({$sn}) in section {$secId}\n"; $skipped++; continue; }
 
                 $exists = DB::table('class_teacher_links')
                     ->where('school_id', 104)->where('standardLink_id', $stdLink)
-                    ->where('subject_id', $subject->id)->where('teacher_id', $teacher->id)
-                    ->exists();
+                    ->where('subject_id', $subject->id)->where('teacher_id', $teacher->id)->exists();
 
                 if (!$exists) {
                     DB::table('class_teacher_links')->insert([
@@ -120,14 +122,9 @@ return new class extends Migration
         $map = ['LIETRACY II' => 'LITERACY II', 'SCEINCE' => 'SCIENCE',
                 'RELIGIOUS EDUCATION' => 'RELIGIOUS EDUCATION', 'MTC' => 'MTC',
                 'ENGLISH' => 'ENGLISH', 'SCIENCE' => 'SCIENCE', 'SST' => 'SST',
-                'LITERACY I' => 'LITERACY I', 'LITERACY II' => 'LITERACY II', 'RE' => 'RELIGIOUS EDUCATION'];
+                'LITERACY I' => 'LITERACY I', 'LITERACY II' => 'LITERACY II'];
         return $map[strtoupper(trim($name))] ?? strtoupper(trim($name));
     }
 
-    public function down(): void
-    {
-        $names = array_unique(array_map(fn($r) => str_replace(['[',']'], '', trim($r['teacher'])), self::ROSTER));
-        $ids = DB::table('users')->where('school_id', 104)->whereIn('name', $names)->pluck('id');
-        DB::table('class_teacher_links')->where('school_id', 104)->whereIn('teacher_id', $ids)->delete();
-    }
+    public function down(): void {}
 };
