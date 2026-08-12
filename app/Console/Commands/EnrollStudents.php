@@ -47,20 +47,24 @@ class EnrollStudents extends Command
         $allSheetNames = array_keys($sheets);
 
         if ($sheet) {
-            if (!isset($sheets[$sheet])) {
-                $this->error("Sheet '{$sheet}' not found. Available: " . implode(', ', $allSheetNames));
+            $allSheets = Excel::toArray(new SheetsOnlyImport, $file);
+            $sheets = $allSheets;
+            // Map sheet names from the "All Students" summary sheet or try by index
+            $targetIndex = $this->findSheetIndex($sheets, $sheet);
+            if ($targetIndex === null) {
+                $this->error("Sheet '{$sheet}' not found. Available indices: " . implode(', ', array_keys($sheets)));
                 return 1;
             }
-            $sheetNames = [$sheet];
+            $sheetNames = [$targetIndex];
         } else {
-            $sheetNames = $allSheetNames;
-            if (in_array('All Students', $sheetNames)) {
-                $sheetNames = array_diff($sheetNames, ['All Students']);
-            }
+            // Skip "All Students" (index 0)
+            $sheetNames = array_filter(array_keys($sheets), fn($k) => $k !== 0);
         }
 
         foreach ($sheetNames as $sn) {
-            $this->enrollSheet($sheets[$sn], $sn, $school->id, $defaultGender, $dryRun);
+            $rows = $sheets[$sn];
+            $label = is_string($sn) ? $sn : "sheet {$sn}";
+            $this->enrollSheet($rows, $label, $school->id, $defaultGender, $dryRun);
         }
 
         return 0;
@@ -171,6 +175,22 @@ class EnrollStudents extends Command
         }
 
         $this->info("Result: {$enrolled} enrolled, {$skipped} already exist, {$errors} errors");
+    }
+
+    private function findSheetIndex(array $sheets, string $target): ?int
+    {
+        if (isset($sheets[$target])) return $target;
+        $targetNorm = strtolower($target);
+        foreach ($sheets as $idx => $rows) {
+            if ($idx === 0 || count($rows) < 2) continue;
+            $h = array_map(fn($h) => strtolower(trim((string) $h)), $rows[0] ?? []);
+            $ci = array_search('class', $h);
+            if ($ci === false) $ci = 3;
+            $classVal = strtolower(trim((string) ($rows[1][$ci] ?? '')));
+            $streamVal = strtolower(trim((string) ($rows[1][$ci + 1] ?? '')));
+            if (str_replace(['.', ' '], '', $classVal . $streamVal) === $targetNorm) return $idx;
+        }
+        return null;
     }
 
     private function loadStdLinks(int $schoolId): array
