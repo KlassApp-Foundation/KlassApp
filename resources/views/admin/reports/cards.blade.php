@@ -100,6 +100,52 @@
 </div>
 
     @include('admin.reports._eot-kpi-card')
+
+    @if (!empty($recentGenerations) && count($recentGenerations) > 0)
+    <div class="bg-white rounded-xl shadow-sm border mt-6 p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">Recent Generations</h3>
+        <table class="w-full text-sm">
+            <thead class="bg-gray-100 text-xs text-gray-500 uppercase">
+                <tr>
+                    <th class="text-left px-3 py-2">Class</th>
+                    <th class="text-left px-3 py-2">Type</th>
+                    <th class="text-left px-3 py-2">Status</th>
+                    <th class="text-left px-3 py-2">Requested</th>
+                    <th class="px-3 py-2">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($recentGenerations as $g)
+                <tr class="border-t">
+                    <td class="px-3 py-2 font-medium text-gray-700">{{ $g->class_name }}</td>
+                    <td class="px-3 py-2 text-gray-600">{{ $g->mode === 'merged' ? 'Merged PDF' : 'Zip' }}</td>
+                    <td class="px-3 py-2">
+                        @if ($g->status === 'completed')
+                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Ready</span>
+                        @elseif ($g->status === 'failed')
+                            <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full" title="{{ $g->error }}">Failed</span>
+                        @else
+                            <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">Generating…</span>
+                        @endif
+                    </td>
+                    <td class="px-3 py-2 text-gray-500 text-xs">{{ $g->created_at->format('d M H:i') }}</td>
+                    <td class="px-3 py-2 text-center">
+                        @if ($g->status === 'completed')
+                            <a href="{{ route('admin.reports.cards.generation.download', $g) }}"
+                               class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition">Download</a>
+                        @elseif ($g->status === 'failed')
+                            <span class="text-xs text-red-600">{{ $g->error ?? 'Error' }}</span>
+                        @else
+                            <span class="text-xs text-gray-400">Please wait…</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        <p class="text-xs text-gray-400 mt-2">Refresh this page to check status. Generation runs in the background.</p>
+    </div>
+    @endif
 </div>
 
 @endsection

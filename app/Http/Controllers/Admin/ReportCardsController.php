@@ -53,7 +53,12 @@ class ReportCardsController extends Controller
 
         $eotKpis = self::computeEotKpis($schoolId, $selectedTerm);
 
-        return view('admin.reports.cards', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis'));
+        $recentGenerations = \App\Models\ReportGeneration::where('school_id', $schoolId)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('admin.reports.cards', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations'));
     }
 
     /**
@@ -126,8 +131,16 @@ class ReportCardsController extends Controller
 
     public function downloadClass(StandardLink $stdLink)
     {
-        @ini_set('memory_limit', '1024M');
-        @set_time_limit(600);
+        return $this->dispatchGeneration($stdLink, 'zip');
+    }
+
+    public function downloadMerged(StandardLink $stdLink)
+    {
+        return $this->dispatchGeneration($stdLink, 'merged');
+    }
+
+    private function dispatchGeneration(StandardLink $stdLink, string $mode)
+    {
         $schoolId = Auth::user()->school_id;
 
         $exam = $this->resolveExam($schoolId, $stdLink);
@@ -136,63 +149,39 @@ class ReportCardsController extends Controller
         $studentIds = $this->studentIds($exam);
         if ($studentIds->isEmpty()) return back()->with('failmessage', 'No students with marks.');
 
-        $zipPath = tempnam(sys_get_temp_dir(), 'reports_');
-        $zip = new ZipArchive;
-        if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
-            return back()->with('failmessage', 'Could not create zip file.');
-        }
+        $className = Section::find($stdLink->section_id)->name ?? 'class';
 
-        $helper = app(\App\Services\StudentReportHelperService::class);
-        $svc = new ReportCardCommentService;
-        $positionMap = $this->computePositionMap($exam, $schoolId);
+        $generation = \App\Models\ReportGeneration::create([
+            'school_id' => $schoolId,
+            'standard_link_id' => $stdLink->id,
+            'class_name' => $className,
+            'mode' => $mode,
+            'status' => 'pending',
+            'requested_by' => Auth::id(),
+        ]);
 
-        foreach ($studentIds as $sid) {
-            $learner = \App\Models\User::find($sid);
-            $myPos = $positionMap[$sid] ?? 0;
-            $pdfContent = $this->generatePdf($sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count(), $myPos);
-            $name = str_replace([' ', '/'], '_', $learner->name);
-            $zip->addFromString("{$sid}_{$name}.pdf", $pdfContent);
-        }
-        $zip->close();
+        \App\Jobs\GenerateClassReportsJob::dispatch($generation->id);
 
-        $className = Section::find($stdLink->section_id)->name;
-        $filename = str_replace(' ', '_', "report_cards_{$className}.zip");
-
-        return response()->download($zipPath, $filename, [
-            'Content-Type' => 'application/zip',
-        ])->deleteFileAfterSend(true);
+        return redirect()->route('admin.reports.cards.index')
+            ->with('successmessage', "Generating {$className} " . ($mode === 'merged' ? 'merged PDF' : 'zip') . ". You'll see it in Recent Generations when ready.");
     }
 
-    public function downloadMerged(StandardLink $stdLink)
+    public function downloadGeneration(\App\Models\ReportGeneration $generation)
     {
-        @ini_set('memory_limit', '1024M');
-        @set_time_limit(600);
-        $schoolId = Auth::user()->school_id;
-
-        $exam = $this->resolveExam($schoolId, $stdLink);
-        if (!$exam) return back()->with('failmessage', 'No EOT exam found.');
-
-        $studentIds = $this->studentIds($exam);
-        if ($studentIds->isEmpty()) return back()->with('failmessage', 'No students with marks.');
-
-        $helper = app(\App\Services\StudentReportHelperService::class);
-        $svc = new ReportCardCommentService;
-        $merger = new \iio\libmergepdf\Merger;
-        $positionMap = $this->computePositionMap($exam, $schoolId);
-
-        foreach ($studentIds as $sid) {
-            $myPos = $positionMap[$sid] ?? 0;
-            $merger->addRaw($this->generatePdf($sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count(), $myPos));
+        if ($generation->school_id !== Auth::user()->school_id) {
+            abort(403);
         }
 
-        $merged = $merger->merge();
-        $className = Section::find($stdLink->section_id)->name;
-        $filename = str_replace(' ', '_', "report_cards_{$className}_merged.pdf");
+        if ($generation->status !== 'completed' || !$generation->file_path) {
+            return back()->with('failmessage', 'This report is not ready yet.');
+        }
 
-        return response($merged, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ]);
+        $path = storage_path('app/' . $generation->file_path);
+        if (!file_exists($path)) {
+            return back()->with('failmessage', 'Report file no longer exists.');
+        }
+
+        return response()->download($path, $generation->file_name);
     }
 
     public function previewStudent(StandardLink $stdLink, \App\Models\User $learner)
