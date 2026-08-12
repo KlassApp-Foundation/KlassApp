@@ -203,25 +203,36 @@ class ReportCardsController extends Controller
 
     private function singleStudentResponse(StandardLink $stdLink, \App\Models\User $learner, bool $download)
     {
-        $schoolId = Auth::user()->school_id;
+        try {
+            $schoolId = Auth::user()?->school_id;
+            if (!$schoolId) return back()->with('failmessage', 'Your account is not linked to a school.');
 
-        $exam = $this->resolveExam($schoolId, $stdLink);
-        if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
+            $exam = $this->resolveExam($schoolId, $stdLink);
+            if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
 
-        $allStudentIds = $this->studentIds($exam);
-        $helper = app(\App\Services\StudentReportHelperService::class);
-        $svc = new ReportCardCommentService;
-        $positionMap = $this->computePositionMap($exam, $schoolId);
-        $myPos = $positionMap[$learner->id] ?? 0;
-        $pdfContent = $this->generatePdf($learner->id, $exam, $stdLink, $schoolId, $helper, $svc, $allStudentIds->count(), $myPos);
+            $allStudentIds = $this->studentIds($exam);
+            $helper = app(\App\Services\StudentReportHelperService::class);
+            $svc = new ReportCardCommentService;
+            $positionMap = $this->computePositionMap($exam, $schoolId);
+            $myPos = $positionMap[$learner->id] ?? 0;
+            $pdfContent = $this->generatePdf($learner->id, $exam, $stdLink, $schoolId, $helper, $svc, $allStudentIds->count(), $myPos);
 
-        $name = str_replace([' ', '/'], '_', $learner->name);
-        $filename = "{$name}_report_card.pdf";
+            $name = str_replace([' ', '/'], '_', $learner->name);
+            $filename = "{$name}_report_card.pdf";
 
-        return response($pdfContent, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => ($download ? 'attachment' : 'inline') . "; filename=\"{$filename}\"",
-        ]);
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => ($download ? 'attachment' : 'inline') . "; filename=\"{$filename}\"",
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('singleStudentResponse failed', [
+                'stdLink' => $stdLink->id,
+                'learner' => $learner->id,
+                'schoolId' => Auth::user()?->school_id,
+                'error' => $e->getMessage(),
+            ]);
+            return back()->with('failmessage', 'Failed to generate report. Please try again.');
+        }
     }
 
     private function resolveExam(int $schoolId, StandardLink $stdLink): ?Exam
