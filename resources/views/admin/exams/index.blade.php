@@ -20,7 +20,12 @@
         <td>{{ $exam->academicTerm->name }}</td>
         <td>{{ $exam->examType->code }}</td>
         <td>
-            @if($exam->status === 'submitted' || $exam->status === 'done')
+            @if($exam->has_marks)
+                <span class="dt-badge dt-badge-active">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Submitted
+                </span>
+            @elseif($exam->status === 'submitted' || $exam->status === 'done')
                 <span class="dt-badge dt-badge-active">
                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     {{ ucfirst($exam->status) }}
@@ -34,8 +39,8 @@
         </td>
         <td>{{ $exam->standard->name ?? '-' }}</td>
         <td>{{ $exam->section->name }}</td>
-        <td>{{ ucwords(strtolower($exam->subject->name)) ?? '-' }}</td>
-        <td>{{ filled($exam->teacher?->name) ? $exam->teacher->name : $exam->teacher?->email }}</td>
+        <td>{{ $exam->subjects_list->isNotEmpty() ? $exam->subjects_list->implode(', ') : '-' }}</td>
+        <td>{{ $exam->teachers_list->isNotEmpty() ? $exam->teachers_list->implode(', ') : '-' }}</td>
         <td>
             <div class="flex items-center gap-2">
                 <a href="{{ route("admin.exams.marksheet", $exam) }}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition" title="Download Marksheet">
