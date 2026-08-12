@@ -280,8 +280,8 @@ class ImportKabaleMarks extends Command
         $map = [];
         foreach (self::SUBJECT_MAP as $subjectName) {
             $s = Subject::updateOrCreate(
-                ['school_id' => $schoolId, 'name' => $subjectName, 'standard_id' => $stdLink->standard_id],
-                ['code' => '', 'type' => 'core', 'status' => 1, 'academic_year_id' => $stdLink->academic_year_id, 'section_id' => $stdLink->section_id]
+                ['school_id' => $schoolId, 'section_id' => $stdLink->section_id, 'name' => $subjectName],
+                ['code' => '', 'type' => 'core', 'status' => 1, 'academic_year_id' => $stdLink->academic_year_id, 'standard_id' => $stdLink->standard_id]
             );
             $map[$subjectName] = $s->id;
         }
