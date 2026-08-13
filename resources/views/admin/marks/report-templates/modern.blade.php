@@ -140,7 +140,7 @@
         .sign-line { border-bottom: 1px solid #CBD5E1; display: block; height: 16px; }
         .sign-caption { font-size: 6.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #94A3B8; margin-top: 3px; }
         .motto-tag { color: #1E6FD9; font-weight: 700; letter-spacing: 0.5px; }
-        .powered { font-size: 7px; color: #94A3B8; margin-top: 2px; }
+        .powered { font-size: 9px; font-weight: 800; color: #22C55E; margin-top: 2px; }
 
         .no-records { text-align: center; padding: 40px; }
     </style>
@@ -347,8 +347,8 @@
     {{-- ═══ SIGNATURES ═══ --}}
     <table class="sig-table">
         <tr>
-            <td><div class="sig-row"><span class="sig-dash"></span>&nbsp;<span class="sig-caption">Class Teacher</span></div></td>
-            <td><div class="sig-row"><span class="sig-dash"></span>&nbsp;<span class="sig-caption">Head Teacher</span></div></td>
+            <td><div class="sig-row"><span class="sig-caption">Class Teacher</span>&nbsp;<span class="sig-dash"></span></div></td>
+            <td><div class="sig-row"><span class="sig-caption">Head Teacher</span>&nbsp;<span class="sig-dash"></span></div></td>
         </tr>
     </table>
 
