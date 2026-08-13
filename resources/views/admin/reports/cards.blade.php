@@ -34,10 +34,13 @@
         <span class="text-sm font-medium text-gray-700">Report Card Template:</span>
         <div class="flex gap-3">
             @foreach (\App\Http\Controllers\Admin\ReportCardsController::TEMPLATES as $key => $tpl)
-                <label class="flex items-center gap-1.5 text-sm text-gray-700 border rounded-lg px-3 py-1.5 cursor-pointer {{ $reportTemplate === $key ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }}">
-                    <input type="radio" name="report_template" value="{{ $key }}" {{ $reportTemplate === $key ? 'checked' : '' }} class="text-blue-600">
-                    {{ $tpl['label'] }}
-                </label>
+                <div class="flex flex-col items-center gap-1">
+                    <label class="flex items-center gap-1.5 text-sm text-gray-700 border rounded-lg px-3 py-1.5 cursor-pointer {{ $reportTemplate === $key ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }}">
+                        <input type="radio" name="report_template" value="{{ $key }}" {{ $reportTemplate === $key ? 'checked' : '' }} class="text-blue-600">
+                        {{ $tpl['label'] }}
+                    </label>
+                    <a href="{{ route('admin.reports.cards.preview', $key) }}" target="_blank" class="text-xs text-blue-600 hover:underline">Preview</a>
+                </div>
             @endforeach
         </div>
         <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition">

@@ -36,6 +36,7 @@
         .band-mark-cell { width: 44px; }
         .band-school { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 0.2px; }
         .band-meta { font-size: 8.5px; color: #D6E6FA; margin-top: 1px; }
+        .band-meta-tel { font-size: 7px; }
         .band-badge-cell { text-align: right; width: 140px; }
         .term-pill {
             display: inline-block;
@@ -77,7 +78,7 @@
             color: #94A3B8;
             padding: 6px 6px;
             border: none;
-            border-bottom: 1px solid #E2E8F0;
+            border-bottom: 1px solid #1E6FD9;
             text-align: center;
         }
         .flat-table td {
@@ -121,8 +122,9 @@
         .next-term { text-align: center; font-size: 10px; font-weight: 700; color: #1E6FD9; margin: 6px 0 10px; }
         .sig-table { width: 100%; border-collapse: collapse; margin: 4px 0 10px; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
+        .sig-row { text-align: center; }
+        .sig-dash { display: inline-block; width: 130px; border-bottom: 1px solid #CBD5E1; height: 14px; vertical-align: bottom; }
         .sig-caption { font-size: 8.5px; text-transform: uppercase; letter-spacing: 1px; color: #94A3B8; font-weight: 700; }
-        .sig-line { border-bottom: 1px solid #CBD5E1; height: 22px; }
 
         /* ── Grading system ── */
         .grades-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
@@ -138,6 +140,7 @@
         .sign-line { border-bottom: 1px solid #CBD5E1; display: block; height: 16px; }
         .sign-caption { font-size: 6.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #94A3B8; margin-top: 3px; }
         .motto-tag { color: #1E6FD9; font-weight: 700; letter-spacing: 0.5px; }
+        .powered { font-size: 7px; color: #94A3B8; margin-top: 2px; }
 
         .no-records { text-align: center; padding: 40px; }
     </style>
@@ -148,12 +151,17 @@
 
 @php
     $termRaw = $learner->marks->first()?->exam?->academicTerm?->name ?? '';
+    $termYear = $learner->marks->first()?->exam?->academicTerm?->academicYear?->name ?? '';
     if (preg_match('/^(.*?)\s*(\d+)\s*$/', trim($termRaw), $m)) {
         $roman = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V', '6' => 'VI'];
         $termName = strtoupper(trim($m[1])) . ' ' . ($roman[$m[2]] ?? $m[2]);
     } else {
         $termName = strtoupper($termRaw);
     }
+    if ($termName !== '' && $termYear !== '') {
+        $termName .= ' ' . $termYear;
+    }
+    $gradeLetters = ['1' => 'D', '2' => 'D', '3' => 'C', '4' => 'C', '5' => 'C', '6' => 'C', '7' => 'P', '8' => 'P', '9' => 'F'];
 @endphp
 
 <div class="page">
@@ -167,11 +175,10 @@
                     <div class="band-school">{{ $learner->school->name }}</div>
                     <div class="band-meta">(Nursery And Primary, Day And Boarding)</div>
                     <div class="band-meta">P.O Box 283 - Kabale - UGA</div>
-                    <div class="band-meta">Tel: +256782255758 / +256784119149 / +256704301646</div>
+                    <div class="band-meta band-meta-tel">Tel: +256782255758 / +256784119149 / +256704301646</div>
                 </td>
                 <td class="band-badge-cell">
                     <span class="term-pill">{{ $termName }}</span>
-                    <span class="year-label">{{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</span>
                 </td>
             </tr>
         </table>
@@ -243,7 +250,7 @@
                                 $midGrade = '-';
                                 if ($midMark && $midMark->marks !== null) {
                                     $g = $grading_system->first(fn($gs) => $gs->min_score <= $midMark->marks && $gs->max_score >= $midMark->marks);
-                                    $midGrade = $g ? 'D' . $g->points : '-';
+                                    $midGrade = $g ? ($gradeLetters[$g->points] ?? 'D') . $g->points : '-';
                                 }
                             @endphp
                             <td>{{ $midMark ? floor($midMark->marks) : '-' }}</td>
@@ -276,7 +283,7 @@
                     $eotComment = '-';
                     if ($hasEotMarks) {
                         $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
-                        $eotGrade = $g ? 'D' . $g->points : '-';
+                        $eotGrade = $g ? ($gradeLetters[$g->points] ?? 'D') . $g->points : '-';
                         $eotComment = $g ? $g->remark : '-';
                     }
                     $teacherLink = \App\Models\Teacherlink::where('standardLink_id', $stdLink->id)
@@ -340,8 +347,8 @@
     {{-- ═══ SIGNATURES ═══ --}}
     <table class="sig-table">
         <tr>
-            <td><div class="sig-caption">Class Teacher</div><div class="sig-line"></div></td>
-            <td><div class="sig-caption">Head Teacher</div><div class="sig-line"></div></td>
+            <td><div class="sig-row"><span class="sig-dash"></span>&nbsp;<span class="sig-caption">Class Teacher</span></div></td>
+            <td><div class="sig-row"><span class="sig-dash"></span>&nbsp;<span class="sig-caption">Head Teacher</span></div></td>
         </tr>
     </table>
 
@@ -352,6 +359,7 @@
             <td style="width:100%; text-align:center;">
                 <span class="motto-tag">HARD WORK PAYS</span><br>
                 Kabale Junior School, UNEB Center No. {{ $school->uneb_center_number }} Tel: +256782255758 / +256784119149 / +256704301646
+                <br><span class="powered">Powered by klassapp.xyz</span>
             </td>
         </tr>
     </table>
