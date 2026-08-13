@@ -413,6 +413,9 @@ class ReportCardsController extends Controller
         $teacherComment = $standard
             ? $svc->commentFor((int) $total, $standard->name, $learner->id, $exam->id)
             : '';
+        $headTeacherComment = $standard
+            ? $svc->headTeacherCommentFor((int) $total, $standard->name, $learner->id, $exam->id, $teacherComment)
+            : '';
 
         $school = \App\Models\School::find($schoolId);
         $view = self::TEMPLATES[$school->report_template ?? ''] ?? self::TEMPLATES['formal'];
@@ -431,6 +434,7 @@ class ReportCardsController extends Controller
             'school' => $school,
             'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
             'teacherComment' => $teacherComment,
+            'headTeacherComment' => $headTeacherComment,
             'logoPath' => $logoPath,
         ]);
         $pdf->setPaper('a4', 'portrait');
