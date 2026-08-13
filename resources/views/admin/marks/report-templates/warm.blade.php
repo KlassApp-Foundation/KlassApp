@@ -38,7 +38,7 @@
         .header-centered { text-align: center; }
         .h-school { font-size: 22px; font-weight: 800; color: #7C3A11; margin-top: 10px; }
         .h-meta { font-size: 12px; font-weight: 700; color: #A88865; margin-top: 2px; }
-        .h-meta-tel { font-size: 6.5px; }
+        .h-meta-tel { font-size: 7.5px; }
         .term-chip {
             display: inline-block;
             background: #EBF5E4;
