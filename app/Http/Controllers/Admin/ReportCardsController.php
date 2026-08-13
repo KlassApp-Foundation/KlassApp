@@ -469,6 +469,34 @@ class ReportCardsController extends Controller
         $eotPoints = $firstEot ? $aggregatePoints($learner, $firstEot, $subjects, $gradingSystem) : null;
         $eotDivision = $eotPoints ? $divisionScale($eotPoints['points']) : '-';
 
+        $streamName = $learner->studentAcademicLatest?->standardLink?->stream ?? null;
+        $streamPos = null;
+        $streamTotal = null;
+        if ($streamName && $firstEot) {
+            $streamIds = [];
+            $streamRows = DB::table('student_academics')
+                ->join('standards_link', 'standards_link.id', '=', 'student_academics.standardLink_id')
+                ->where('standards_link.school_id', $schoolId)
+                ->where('standards_link.stream', $streamName)
+                ->where('student_academics.academic_year_id', $exam->academic_year_id)
+                ->whereNull('student_academics.deleted_at')
+                ->pluck('student_academics.user_id')
+                ->all();
+            $ranked = [];
+            foreach ($streamRows as $sid) {
+                $ranked[$sid] = (int) round(\App\Models\Academics\Marks::where('student_id', $sid)->where('exam_id', $firstEot->id)->sum('marks'));
+            }
+            arsort($ranked);
+            $streamPos = 0;
+            foreach (array_keys($ranked) as $i => $sid) {
+                if ($sid === $learner->id) {
+                    $streamPos = $i + 1;
+                    break;
+                }
+            }
+            $streamTotal = count($ranked);
+        }
+
         $total = $learner->marks
             ? $learner->marks->filter(fn($m) => $m->exam?->examType?->contributes_to_report_total)->sum('marks')
             : 0;
@@ -502,6 +530,9 @@ class ReportCardsController extends Controller
             'showAgg' => $showAgg,
             'midStats' => $midStats,
             'eotDivision' => $eotDivision,
+            'streamName' => $streamName,
+            'streamPos' => $streamPos,
+            'streamTotal' => $streamTotal,
             'logoPath' => $logoPath,
         ]);
         $pdf->setPaper('a4', 'portrait');
