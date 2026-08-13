@@ -28,6 +28,29 @@
     </div>
 </div>
 
+<div class="bg-white rounded-lg shadow p-4 mt-4">
+    <form method="POST" action="{{ route('admin.reports.cards.template') }}" class="flex flex-wrap items-center gap-4">
+        @csrf
+        <span class="text-sm font-medium text-gray-700">Report Card Template:</span>
+        <div class="flex gap-3">
+            @foreach (\App\Http\Controllers\Admin\ReportCardsController::TEMPLATES as $key => $tpl)
+                <label class="flex items-center gap-1.5 text-sm text-gray-700 border rounded-lg px-3 py-1.5 cursor-pointer {{ $reportTemplate === $key ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }}">
+                    <input type="radio" name="report_template" value="{{ $key }}" {{ $reportTemplate === $key ? 'checked' : '' }} class="text-blue-600">
+                    {{ $tpl['label'] }}
+                </label>
+            @endforeach
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition">
+            Save
+        </button>
+        <span class="text-xs text-gray-400">Applies to all report cards generated from this point on (batch, individual, merged).</span>
+    </form>
+    <div class="mt-2 pt-2 border-t text-xs text-gray-500">
+        Logo not showing correctly on the report card? Manage your school's logo on the
+        <a href="{{ url('/admin/schooldetails/editdetail/' . $school->id) }}" class="text-blue-600 hover:underline">School Details</a> page.
+    </div>
+</div>
+
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
     @forelse ($stdLinks as $link)
         <div class="bg-white rounded-xl shadow-sm border hover:shadow-md transition p-5">

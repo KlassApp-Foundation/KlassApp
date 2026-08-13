@@ -19,6 +19,14 @@ use ZipArchive;
 
 class ReportCardsController extends Controller
 {
+    /**
+     * Available report-card templates: key => [label, Blade view].
+     */
+    public const TEMPLATES = [
+        'formal' => ['label' => 'Formal', 'view' => 'admin.marks.report-templates.formal'],
+        'warm'   => ['label' => 'Warm',   'view' => 'admin.marks.report-templates.warm'],
+    ];
+
     public function index()
     {
         $schoolId = Auth::user()->school_id;
@@ -60,7 +68,25 @@ class ReportCardsController extends Controller
             ->take(10)
             ->get();
 
-        return view('admin.reports.cards', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations'));
+        $school = \App\Models\School::find($schoolId);
+        $reportTemplate = $school->report_template ?? 'formal';
+
+        return view('admin.reports.cards', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations', 'reportTemplate', 'school'));
+    }
+
+    public function updateTemplate(Request $request)
+    {
+        $schoolId = Auth::user()->school_id;
+
+        $request->validate([
+            'report_template' => 'required|string|in:' . implode(',', array_keys(self::TEMPLATES)),
+        ]);
+
+        \App\Models\School::where('id', $schoolId)->update([
+            'report_template' => $request->report_template,
+        ]);
+
+        return back()->with('successmessage', 'Report card template updated to ' . self::TEMPLATES[$request->report_template]['label'] . '.');
     }
 
     /**
@@ -388,7 +414,11 @@ class ReportCardsController extends Controller
             ? $svc->commentFor((int) $total, $standard->name, $learner->id, $exam->id)
             : '';
 
-        $pdf = Pdf::loadView('admin.marks.student-report', [
+        $school = \App\Models\School::find($schoolId);
+        $view = self::TEMPLATES[$school->report_template ?? ''] ?? self::TEMPLATES['formal'];
+        $logoPath = self::resolveLogoPath($schoolId);
+
+        $pdf = Pdf::loadView($view['view'], [
             'subjects' => $subjects, 'learner' => $learner, 'controls' => $controls,
             'class_name' => Section::find($stdLink->section_id)->name,
             'grading_system' => \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)->where('standard_id', $stdLink->standard_id)->orderBy('min_score', 'desc')->get(),
@@ -398,12 +428,41 @@ class ReportCardsController extends Controller
             'midCount' => $midExams->count(), 'eotCount' => $eotExams->count(),
             'stdLink' => $stdLink,
             'total' => $total, 'grade' => $grade, 'examinedSubjectCount' => $examinedSubjectCount,
-            'school' => \App\Models\School::find($schoolId),
+            'school' => $school,
             'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
             'teacherComment' => $teacherComment,
+            'logoPath' => $logoPath,
         ]);
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->output();
+    }
+
+    /**
+     * Resolve the school's uploaded logo to a local filesystem path for
+     * DomPDF (which needs a real path, not a public URL). Uses the same
+     * SchoolDetail (meta_key=school_logo) record every other part of the
+     * app reads via Auth::user()->SchoolLogoPath — not a hardcoded asset.
+     * Returns null (report card renders without a logo) if none uploaded
+     * or the stored file is missing from disk.
+     */
+    private static function resolveLogoPath(int $schoolId): ?string
+    {
+        // SchoolObserver seeds every school with a placeholder school_logo
+        // row (meta_value='-') at creation; the real upload flow always
+        // updateOrCreate()s a single row per school+meta_key, but order by
+        // most-recent and explicitly skip the '-' sentinel defensively.
+        $meta = \App\Models\SchoolDetail::where('school_id', $schoolId)
+            ->where('meta_key', 'school_logo')
+            ->latest('id')
+            ->first();
+
+        if (!$meta || !$meta->meta_value || $meta->meta_value === '-') {
+            return null;
+        }
+
+        $path = \Storage::disk('public')->path($meta->meta_value);
+
+        return file_exists($path) ? $path : null;
     }
 }

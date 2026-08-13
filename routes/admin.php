@@ -598,6 +598,7 @@ Route::get( '/magazine/download/{id}', 'BulletinsController@downloadattachments'
 // Report Cards (per-class batch PDF generation + download)
 Route::prefix('reports/cards')->name('admin.reports.cards.')->group(function () {
     Route::get('/', 'ReportCardsController@index')->name('index');
+    Route::post('/template', 'ReportCardsController@updateTemplate')->name('template');
     Route::get('/download/{stdLink}', 'ReportCardsController@downloadClass')->name('download');
     Route::get('/merged/{stdLink}', 'ReportCardsController@downloadMerged')->name('merged');
 Route::get('/combined-marksheet/{stdLink}', 'ReportCardsController@combinedMarksheet')->name('combinedMarksheet');

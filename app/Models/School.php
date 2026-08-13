@@ -28,6 +28,7 @@ class School extends Model
         'school_pay_code', 'school_pay_api_password', 'school_pay_webhook_enabled',
         'exam_type_preferences',
         'toshi_enabled',
+        'report_template',
     ];
 
     protected $casts = [
