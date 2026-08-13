@@ -57,7 +57,6 @@
         .sig-card { border: 1px solid #22C55E; padding: 8px 10px; margin-bottom: 8px; }
         .sig-card-table { width: 100%; border-collapse: collapse; }
         .sig-card-table td { width: 50%; vertical-align: top; padding: 0 6px; }
-        .stamp { width: 44px; height: 44px; border: 1.5px dashed #15803D; border-radius: 50%; margin: 8px auto 0; }
         .div-row td { font-weight: 700; font-size: 9.5px; background: #F0FBF4; border-top: 1px solid #0F172A; }
         .pos-value { color: #15803D; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
@@ -185,7 +184,6 @@
         .comments-label { font-family: 'DejaVu Serif', serif; font-size: 8.5px; color: #15803D; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
         .comments-box {
             padding: 7px 9px;
-            border: 1px solid #22C55E;
             font-family: 'DejaVu Serif', serif;
             font-style: italic;
             font-size: 10px;
@@ -461,7 +459,6 @@
                     <div class="comments-label">Head Teacher</div>
                     <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
                     <div class="sig-row"><span class="sig-caption">HM Sign &amp; Stamp</span>&nbsp;<span class="sig-dash">____________________</span></div>
-                    <div class="stamp"></div>
                 </td>
             </tr>
         </table>
