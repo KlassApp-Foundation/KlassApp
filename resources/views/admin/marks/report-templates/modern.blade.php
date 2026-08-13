@@ -370,12 +370,12 @@
         <table class="sig-card-table">
             <tr>
                 <td>
-                    <div class="comments-label">Class Teacher</div>
+                    <div class="comments-label">Classteacher</div>
                     <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">Class Teacher</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="sig-row"><span class="sig-caption">Classteacher</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
                 <td>
-                    <div class="comments-label">Head Teacher</div>
+                    <div class="comments-label">Headteacher</div>
                     <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
                     <div class="sig-row"><span class="sig-caption">HM Sign &amp; Stamp</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
