@@ -12,7 +12,7 @@
             font-family: 'DejaVu Sans', sans-serif;
             font-size: 10px;
             line-height: 1.4;
-            color: #2A2318;
+            color: #1E293B;
             background: #fff;
         }
 
@@ -22,18 +22,12 @@
         }
 
         .frame-inner {
-            border: 1px solid #B8912F;
+            border: 1px solid #22C55E;
             padding: 14px 18px 10px;
         }
 
         /* ── Header ── */
-        .crest-cell { width: 62px; text-align: center; vertical-align: middle; }
-        .crest {
-            width: 54px; height: 54px;
-            border: 2px solid #0F172A;
-            border-radius: 50%;
-            text-align: center;
-        }
+        .crest-cell { width: 70px; text-align: center; vertical-align: middle; }
         .header-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
         .header-table td { border: none; vertical-align: middle; padding: 0; }
         .header-center { text-align: center; padding: 0 10px; }
@@ -48,13 +42,13 @@
         .school-meta {
             font-family: 'DejaVu Serif', serif;
             font-size: 8px;
-            color: #4A4030;
+            color: #475569;
             margin-top: 2px;
         }
-        .header-side { width: 62px; }
+        .header-side { width: 70px; }
 
-        .flourish { text-align: center; margin: 8px 0 8px; color: #B8912F; font-size: 10px; letter-spacing: 6px; }
-        .flourish-line { border-top: 1px solid #B8912F; margin: 4px 0; }
+        .flourish { text-align: center; margin: 8px 0 8px; color: #22C55E; font-size: 10px; letter-spacing: 6px; }
+        .flourish-line { border-top: 1px solid #22C55E; margin: 4px 0; }
 
         .doc-title-wrap { text-align: center; margin: 4px 0 10px; }
         .doc-title {
@@ -69,13 +63,13 @@
             border-top: 1px solid #0F172A;
             border-bottom: 1px solid #0F172A;
         }
-        .doc-sub { font-family: 'DejaVu Serif', serif; font-size: 8px; color: #6B5D3F; margin-top: 3px; letter-spacing: 1px; }
+        .doc-sub { font-family: 'DejaVu Serif', serif; font-size: 8px; color: #15803D; margin-top: 3px; letter-spacing: 1px; }
 
         /* ── Particulars ── */
         .particulars { width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #0F172A; }
-        .particulars td { padding: 6px 10px; font-size: 9px; border: none; border-right: 1px solid #D8CBA0; }
+        .particulars td { padding: 6px 10px; font-size: 9px; border: none; border-right: 1px solid #CFE8D6; }
         .particulars td:last-child { border-right: none; }
-        .part-label { font-family: 'DejaVu Serif', serif; font-size: 7px; color: #6B5D3F; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+        .part-label { font-family: 'DejaVu Serif', serif; font-size: 7px; color: #15803D; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
         .part-value { font-family: 'DejaVu Serif', serif; font-size: 12px; font-weight: 700; color: #0F172A; }
         .part-value-sm { font-family: 'DejaVu Serif', serif; font-size: 11px; font-weight: 700; color: #0F172A; }
 
@@ -89,38 +83,38 @@
             letter-spacing: 1px;
             margin: 10px 0 4px;
             padding-bottom: 2px;
-            border-bottom: 1px solid #B8912F;
+            border-bottom: 1px solid #22C55E;
         }
 
         /* ── Tables (ledger style) ── */
         .ledger { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
         .ledger th {
-            background: #0F172A;
-            color: #F2E9CE;
+            background: #15803D;
+            color: #fff;
             font-family: 'DejaVu Serif', serif;
             font-size: 7.5px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 5px 4px;
-            border: 1px solid #0F172A;
+            border: 1px solid #15803D;
             text-align: center;
         }
         .ledger td {
             font-size: 9px;
             padding: 3.5px 4px;
-            border: 1px solid #C9BC96;
+            border: 1px solid #CFE8D6;
             text-align: center;
-            color: #2A2318;
+            color: #1E293B;
         }
-        .ledger tr:nth-child(even) td { background: #FBF7EC; }
+        .ledger tr:nth-child(even) td { background: #F0FBF4; }
         .ledger td.left { text-align: left; font-family: 'DejaVu Serif', serif; }
-        .ledger td.empty { color: #A69A78; }
+        .ledger td.empty { color: #94A3B8; }
 
         .total-row td {
             font-weight: 800;
             font-size: 9.5px;
-            background: #F2E9CE !important;
+            background: #DCF5E3 !important;
             border-top: 2px solid #0F172A;
             color: #0F172A;
         }
@@ -132,7 +126,7 @@
             font-weight: 700;
             padding: 5px 10px;
             border: 1px solid #0F172A;
-            background: #FBF7EC;
+            background: #F0FBF4;
             color: #0F172A;
         }
         .pos-table td.pos-label { text-transform: uppercase; letter-spacing: 1px; width: 50%; }
@@ -142,21 +136,21 @@
         .comments-table td { width: 50%; padding: 0 4px; vertical-align: top; border: none; }
         .comments-table td:first-child { padding-left: 0; }
         .comments-table td:last-child { padding-right: 0; }
-        .comments-label { font-family: 'DejaVu Serif', serif; font-size: 7.5px; color: #6B5D3F; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+        .comments-label { font-family: 'DejaVu Serif', serif; font-size: 7.5px; color: #15803D; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
         .comments-box {
             padding: 7px 9px;
-            border: 1px solid #B8912F;
+            border: 1px solid #22C55E;
             font-family: 'DejaVu Serif', serif;
             font-style: italic;
             font-size: 9px;
             min-height: 30px;
-            color: #4A4030;
+            color: #334155;
         }
 
         /* ── Grading system ── */
         .grades-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .grades-table th { font-family: 'DejaVu Serif', serif; font-size: 7px; padding: 3px 2px; background: #0F172A; color: #F2E9CE; border: 1px solid #0F172A; text-transform: uppercase; font-weight: 700; text-align: center; }
-        .grades-table td { font-size: 7px; padding: 3px 2px; border: 1px solid #C9BC96; text-align: center; color: #2A2318; }
+        .grades-table th { font-family: 'DejaVu Serif', serif; font-size: 7px; padding: 3px 2px; background: #15803D; color: #fff; border: 1px solid #15803D; text-transform: uppercase; font-weight: 700; text-align: center; }
+        .grades-table td { font-size: 7px; padding: 3px 2px; border: 1px solid #CFE8D6; text-align: center; color: #1E293B; }
 
         /* ── Footer / seal / signatures ── */
         .footer-wrap { margin-top: 6px; }
@@ -165,18 +159,18 @@
         .seal-cell { width: 68px; text-align: center; }
         .seal {
             width: 56px; height: 56px;
-            border: 1.5px dashed #B8912F;
+            border: 1.5px dashed #22C55E;
             border-radius: 50%;
             display: inline-block;
             text-align: center;
             line-height: 1.3;
             padding-top: 16px;
         }
-        .seal-text { font-family: 'DejaVu Serif', serif; font-size: 6px; color: #B8912F; text-transform: uppercase; letter-spacing: 0.5px; }
+        .seal-text { font-family: 'DejaVu Serif', serif; font-size: 6px; color: #15803D; text-transform: uppercase; letter-spacing: 0.5px; }
 
         .sign-block { text-align: center; padding: 0 6px; }
         .sign-line { border-top: 1px solid #0F172A; width: 100%; display: block; margin-bottom: 3px; padding-top: 24px; }
-        .sign-caption { font-family: 'DejaVu Serif', serif; font-size: 7.5px; text-transform: uppercase; letter-spacing: 1px; color: #4A4030; }
+        .sign-caption { font-family: 'DejaVu Serif', serif; font-size: 7.5px; text-transform: uppercase; letter-spacing: 1px; color: #475569; }
 
         .motto-row { text-align: center; margin-top: 10px; }
         .motto {
@@ -186,7 +180,7 @@
             color: #0F172A;
             letter-spacing: 1px;
         }
-        .generated-row { text-align: center; margin-top: 5px; font-family: 'DejaVu Serif', serif; font-size: 6.5px; color: #8A7C58; }
+        .generated-row { text-align: center; margin-top: 5px; font-family: 'DejaVu Serif', serif; font-size: 6.5px; color: #64748B; }
 
         .no-records { text-align: center; padding: 40px; }
     </style>
@@ -201,9 +195,7 @@
     <table class="header-table">
         <tr>
             <td class="crest-cell">
-                <div class="crest">
-                    <img src="{{ public_path('images/KJSLogo.jpg') }}" style="width: 50px; height: 50px; border-radius: 50%;" alt="Logo">
-                </div>
+                <img src="{{ public_path('images/KJSLogo.jpg') }}" style="width: 60px; height: auto;" alt="Logo">
             </td>
             <td class="header-center">
                 <div class="school-name">{{ $learner->school->name }}</div>
