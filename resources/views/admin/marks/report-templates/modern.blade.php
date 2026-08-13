@@ -273,7 +273,7 @@
                                     $midGrade = $g ? ($gradeLetters[$g->points] ?? 'D') . $g->points : '-';
                                 }
                             @endphp
-                            <td>{{ $midMark ? floor($midMark->marks) : '-' }}</td>
+                            <td>{{ $midMark {{ $midMark ? floor($midMark->marks) : '-' }}{{ $midMark ? floor($midMark->marks) : '-' }} $midMark->marks !== null ? floor($midMark->marks) : '-' }}</td>
                             @if ($showAgg) <td>{{ $midGrade }}</td> @endif
                         @endif
                     @endforeach
@@ -323,7 +323,7 @@
                 <tr>
                     <td class="left">{{ $subject->name }}</td>
                     <td>100</td>
-                    <td>{{ $eotMark ? floor($eotMark->marks) : '-' }}</td>
+                    <td>{{ $eotMark {{ $eotMark ? floor($eotMark->marks) : '-' }}{{ $eotMark ? floor($eotMark->marks) : '-' }} $eotMark->marks !== null ? floor($eotMark->marks) : '-' }}</td>
                     @if ($showAgg) <td>{{ $eotGrade }}</td> @endif
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>

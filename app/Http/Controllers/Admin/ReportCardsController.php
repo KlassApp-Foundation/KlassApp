@@ -442,12 +442,13 @@ class ReportCardsController extends Controller
 
         $midStats = [];
         foreach ($midExams as $midExam) {
-            $total = (int) round($learner->marks->filter(fn($m) => $m->exam_id === $midExam->id)->sum('marks'));
+            $nonNullMarks = $learner->marks->filter(fn($m) => $m->exam_id === $midExam->id && $m->marks !== null);
+            $total = $nonNullMarks->isNotEmpty() ? (int) round($nonNullMarks->sum('marks')) : null;
             $points = $aggregatePoints($learner, $midExam, $subjects, $gradingSystem);
-            $studentIds = \App\Models\Academics\Marks::where('exam_id', $midExam->id)->distinct('student_id')->pluck('student_id')->all();
+            $studentIds = \App\Models\Academics\Marks::where('exam_id', $midExam->id)->whereNotNull('marks')->distinct('student_id')->pluck('student_id')->all();
             $ranked = [];
             foreach ($studentIds as $sid) {
-                $ranked[$sid] = (int) round(\App\Models\Academics\Marks::where('student_id', $sid)->where('exam_id', $midExam->id)->sum('marks'));
+                $ranked[$sid] = (int) round(\App\Models\Academics\Marks::where('student_id', $sid)->where('exam_id', $midExam->id)->whereNotNull('marks')->sum('marks'));
             }
             arsort($ranked);
             $pos = 0;
