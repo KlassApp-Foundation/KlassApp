@@ -171,7 +171,6 @@
         .sig-card-table { width: 100%; border-collapse: collapse; }
         .sig-card-table td { width: 50%; vertical-align: top; padding: 2px 10px; }
         .sig-card-table td + td { border-left: 1px solid #F0DFC0; }
-        .label-dot { display: inline-block; width: 6px; height: 6px; background: #D97706; border-radius: 50%; margin-right: 5px; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
         .sig-row { text-align: left; margin-top: 6px; border-top: 1px dashed #E8D3B8; padding-top: 6px; }
         .sig-dash { letter-spacing: 3px; color: #7C3A11; }
@@ -275,14 +274,6 @@
                     <div class="pill-value">{{ $class_name }}</div>
                 </div>
             </td>
-            @if ($showAgg)
-            <td style="width:25%;">
-                <div class="pill pill-agg">
-                    <div class="pill-label">Aggregate</div>
-                    <div class="pill-value">{{ $grade['agg'] ?? '-' }}</div>
-                </div>
-            </td>
-            @endif
         </tr>
     </table>
 
@@ -412,14 +403,14 @@
         <table class="sig-card-table">
             <tr>
                 <td>
-                    <div class="comments-label"><span class="label-dot"></span>CLASSTEACHER COMMENT</div>
+                    <div class="comments-label">CLASSTEACHER COMMENT</div>
                     <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">CLASSTEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="sig-row"><span class="sig-caption">SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
                 <td>
-                    <div class="comments-label"><span class="label-dot"></span>HEADTEACHER COMMENT</div>
+                    <div class="comments-label">HEADTEACHER COMMENT</div>
                     <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">HEADTEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="sig-row"><span class="sig-caption">SIGN &amp; STAMP</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
             </tr>
         </table>
