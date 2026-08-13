@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Report Card — {{ $learner->userprofile->firstname ?? 'Student' }} {{ $learner->userprofile->lastname ?? '' }}</title>
+    <title>Report Card — {{ $learner->displayName ?: 'Student' }}</title>
     <style>
         @page { margin: 0; background: #FFFBF2; }
 
@@ -265,7 +265,7 @@
             <td style="width:50%;">
                 <div class="pill pill-student">
                     <div class="pill-label">Student</div>
-                    <div class="pill-value">{{ $learner->userprofile->firstname }} {{ $learner->userprofile->lastname }}</div>
+                    <div class="pill-value">{{ $learner->displayName }}</div>
                 </div>
             </td>
             <td style="width:25%;">
@@ -362,8 +362,8 @@
                         ->where('subject_id', $subject->id)->first();
                     $teacherName = '-';
                     if ($teacherLink && $teacherLink->teacher) {
-                        $fn = $teacherLink->teacher->userprofile->firstname ?? '';
-                        $ln = $teacherLink->teacher->userprofile->lastname ?? '';
+                        $fn = preg_replace('/[\d\s\-]+$/', '', $teacherLink->teacher->userprofile->firstname ?? '');
+                        $ln = preg_replace('/[\d\s\-]+$/', '', $teacherLink->teacher->userprofile->lastname ?? '');
                         if ($fn) {
                             $teacherName = $initials($ln ? $fn . ' ' . $ln : $fn);
                         }

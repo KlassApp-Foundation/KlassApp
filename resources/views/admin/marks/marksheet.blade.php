@@ -87,7 +87,7 @@
         @foreach ($students as $student)
             <tr>
                 <td>{{ $loop->iteration }}</td>
-                <td class="student-name">{{ ucwords(strtolower($student->userprofile?->firstname . " " . $student->userprofile?->lastname ?? "Student".$student->id)) }}</td>
+                <td class="student-name">{{ ucwords(strtolower($student->displayName ?: "Student".$student->id)) }}</td>
 
                 @foreach ($subjects as $subject)
                     @php

@@ -43,7 +43,7 @@
         <table>
             <tr><th style="width:5%">#</th><th>Student Name</th></tr>
             @foreach ($group['students'] as $i => $student)
-                <tr><td>{{ $i + 1 }}</td><td>{{ $student->name }}</td></tr>
+                <tr><td>{{ $i + 1 }}</td><td>{{ $student->displayName }}</td></tr>
             @endforeach
         </table>
     @empty

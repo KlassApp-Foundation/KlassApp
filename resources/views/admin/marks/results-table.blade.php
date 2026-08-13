@@ -15,7 +15,7 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>
-                        <div class="font-medium">{{ $mark->student?->name ?? '—' }}</div>
+                        <div class="font-medium">{{ $mark->student?->displayName ?? '—' }}</div>
                         <div class="gm-subject-code">{{ $mark->student?->admission_number ?? '' }}</div>
                     </td>
                     <td>{{ $mark->subject?->name ?? '—' }}</td>

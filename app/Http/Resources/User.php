@@ -36,6 +36,7 @@ class User extends JsonResource
             'firstname'             =>  $this->userprofile->firstname.' '.$this->userprofile->lastname,
             'lastname'              =>  $this->userprofile->lastname,
             'fullname'              =>  $this->FullName,
+            'display_name'          =>  $this->displayName,
             'class'                 =>  $this->studentAcademicLatest->standardLink->StandardSection,
             'parent_id'             =>  $parent_id == null ? []:$parent_id,
             'designation'           =>  $this->teacherprofile[0]['designation'],

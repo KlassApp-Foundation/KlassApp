@@ -181,7 +181,7 @@
                                     <h2
                                         class="font-bold text-base text-gray-700"
                                     >
-                                        {{ user["fullname"] }}
+                                        {{ user["display_name"] }}
                                     </h2>
                                     <p>{{ user["class"] }}</p>
                                     <p v-if="birthday == 'true'">

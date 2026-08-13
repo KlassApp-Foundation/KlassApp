@@ -98,7 +98,7 @@
                                 </div>
                                 <div>
                                     <a href="{{ url('/admin/student/edit/' . $student->name) }}" class="font-medium text-gray-800 hover:text-blue-600 transition-colors">
-                                        {{ $profile ? $profile->firstname . ' ' . $profile->lastname : $student->name }}
+                                        {{ $student->displayName }}
                                     </a>
                                 </div>
                             </div>
