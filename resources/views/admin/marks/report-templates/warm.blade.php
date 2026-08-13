@@ -144,11 +144,18 @@
             font-weight: 800;
             color: #7C3A11;
         }
-        .pos-sep { color: #D97706; padding: 0 6px; }
+
+        .division-line {
+            text-align: center;
+            font-size: 10px;
+            font-weight: 800;
+            color: #7C3A11;
+            margin: 8px 0 6px;
+        }
 
         /* ── Comments ── */
         .comments-table { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 10px 0 12px; }
-        .comments-label { font-size: 8.5px; color: #A88865; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 700; }
+        .comments-label-inline { font-size: 8.5px; color: #A88865; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
         .comments-box {
             padding: 9px 11px;
             font-size: 10px;
@@ -387,17 +394,18 @@
                 <td class="left"><strong>TOTAL</strong></td>
                 <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
                 <td><strong>{{ $total }}</strong></td>
-                @if ($showAgg) <td><strong>{{ $eotDivision }} &middot; {{ $grade['agg'] ?? '-' }}</strong></td> @endif
+                @if ($showAgg) <td><strong>{{ $grade['agg'] ?? '-' }}</strong></td> @endif
                 <td colspan="2"></td>
             </tr>
         </table>
 
+        @if ($showAgg)
+        <div class="division-line">DIVISION: <strong>{{ $eotDivision }}</strong></div>
+        @endif
+
         @if (!empty($myPos) && !$isNursery)
         <div class="pos-card">
-            Position in Class: {{ $myPos ? $ordinal($myPos) : '-' }} out of {{ $totalLearners ?? '-' }} Pupils
-            @if ($streamName)
-            <span class="pos-sep">&middot;</span> Position in Stream: {{ $streamPos ? $ordinal($streamPos) : '-' }} out of {{ $streamTotal ?? '-' }} Pupils
-            @endif
+            Position in Class: {{ $myPos ? $ordinal($myPos) : '-' }} out of {{ $totalLearners ?? '-' }} Pupils{{ $streamName ? '; Position in Stream: ' . ($streamPos ? $ordinal($streamPos) : '-') . ' out of ' . ($streamTotal ?? '-') . ' Pupils' : '' }}
         </div>
         @if ($nextTerm)
         <div class="next-term">Next term begins on {{ $nextTerm->starts_on->format('d/m/Y') }}</div>
@@ -411,13 +419,11 @@
         <table class="sig-card-table">
             <tr>
                 <td>
-                    <div class="comments-label">Class Teacher</div>
-                    <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
+                    <div class="comments-box"><span class="comments-label-inline">CLASS TEACHER</span>&nbsp;{{ $teacherComment ?? '-' }}</div>
                     <div class="sig-row"><span class="sig-caption">Class Teacher</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
                 <td>
-                    <div class="comments-label">Head Teacher</div>
-                    <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
+                    <div class="comments-box"><span class="comments-label-inline">HEAD TEACHER</span>&nbsp;{{ $headTeacherComment ?? '-' }}</div>
                     <div class="sig-row"><span class="sig-caption">HM Sign &amp; Stamp</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
             </tr>

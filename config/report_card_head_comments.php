@@ -13,27 +13,27 @@
 return [
     'lower' => [
         ['min' => 520, 'max' => 600, 'comments' => [
-            "An outstanding term overall — keep up this standard.",
+            "This has been an outstanding term overall. Keep up this standard.",
             "This is truly commendable work from start to finish.",
             "A result the whole school can be proud of.",
             "Exceptional effort has clearly paid off this term.",
         ]],
         ['min' => 440, 'max' => 519, 'comments' => [
             "A strong, consistent term of work.",
-            "Well done — this level of commitment stands out.",
+            "Well done. This level of commitment truly stands out.",
             "Solid results that reflect real dedication.",
             "Keep building on this strong foundation.",
         ]],
         ['min' => 360, 'max' => 439, 'comments' => [
             "A pleasing term with clear signs of progress.",
-            "Steady improvement is evident — well done.",
+            "Steady improvement is evident. Well done.",
             "This is a good foundation to build further on.",
             "Progress this term has been encouraging.",
         ]],
         ['min' => 280, 'max' => 359, 'comments' => [
             "There are clear signs of growth to build on.",
             "With continued effort, real progress is within reach.",
-            "This term shows promise — keep pushing forward.",
+            "This term shows promise. Keep pushing forward.",
         ]],
         ['min' => 200, 'max' => 279, 'comments' => [
             "More consistent effort will bring better results.",
@@ -49,27 +49,27 @@ return [
 
     'upper' => [
         ['min' => 360, 'max' => 400, 'comments' => [
-            "An outstanding term overall — keep up this standard.",
+            "This has been an outstanding term overall. Keep up this standard.",
             "This is truly commendable work from start to finish.",
             "A result the whole school can be proud of.",
             "Exceptional effort has clearly paid off this term.",
         ]],
         ['min' => 320, 'max' => 359, 'comments' => [
             "A strong, consistent term of work.",
-            "Well done — this level of commitment stands out.",
+            "Well done. This level of commitment truly stands out.",
             "Solid results that reflect real dedication.",
             "Keep building on this strong foundation.",
         ]],
         ['min' => 280, 'max' => 319, 'comments' => [
             "A pleasing term with clear signs of progress.",
-            "Steady improvement is evident — well done.",
+            "Steady improvement is evident. Well done.",
             "This is a good foundation to build further on.",
             "Progress this term has been encouraging.",
         ]],
         ['min' => 240, 'max' => 279, 'comments' => [
             "There are clear signs of growth to build on.",
             "With continued effort, real progress is within reach.",
-            "This term shows promise — keep pushing forward.",
+            "This term shows promise. Keep pushing forward.",
         ]],
         ['min' => 200, 'max' => 239, 'comments' => [
             "More consistent effort will bring better results.",
