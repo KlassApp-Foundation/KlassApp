@@ -19,6 +19,14 @@ use ZipArchive;
 
 class ReportCardsController extends Controller
 {
+    /**
+     * Available report-card templates: key => [label, Blade view].
+     */
+    public const TEMPLATES = [
+        'formal' => ['label' => 'Formal', 'view' => 'admin.marks.report-templates.formal'],
+        'warm'   => ['label' => 'Warm',   'view' => 'admin.marks.report-templates.warm'],
+    ];
+
     public function index()
     {
         $schoolId = Auth::user()->school_id;
@@ -60,7 +68,25 @@ class ReportCardsController extends Controller
             ->take(10)
             ->get();
 
-        return view('admin.reports.cards', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations'));
+        $school = \App\Models\School::find($schoolId);
+        $reportTemplate = $school->report_template ?? 'formal';
+
+        return view('admin.reports.cards', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations', 'reportTemplate'));
+    }
+
+    public function updateTemplate(Request $request)
+    {
+        $schoolId = Auth::user()->school_id;
+
+        $request->validate([
+            'report_template' => 'required|string|in:' . implode(',', array_keys(self::TEMPLATES)),
+        ]);
+
+        \App\Models\School::where('id', $schoolId)->update([
+            'report_template' => $request->report_template,
+        ]);
+
+        return back()->with('successmessage', 'Report card template updated to ' . self::TEMPLATES[$request->report_template]['label'] . '.');
     }
 
     /**
@@ -388,7 +414,10 @@ class ReportCardsController extends Controller
             ? $svc->commentFor((int) $total, $standard->name, $learner->id, $exam->id)
             : '';
 
-        $pdf = Pdf::loadView('admin.marks.student-report', [
+        $school = \App\Models\School::find($schoolId);
+        $view = self::TEMPLATES[$school->report_template ?? ''] ?? self::TEMPLATES['formal'];
+
+        $pdf = Pdf::loadView($view['view'], [
             'subjects' => $subjects, 'learner' => $learner, 'controls' => $controls,
             'class_name' => Section::find($stdLink->section_id)->name,
             'grading_system' => \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)->where('standard_id', $stdLink->standard_id)->orderBy('min_score', 'desc')->get(),
@@ -398,7 +427,7 @@ class ReportCardsController extends Controller
             'midCount' => $midExams->count(), 'eotCount' => $eotExams->count(),
             'stdLink' => $stdLink,
             'total' => $total, 'grade' => $grade, 'examinedSubjectCount' => $examinedSubjectCount,
-            'school' => \App\Models\School::find($schoolId),
+            'school' => $school,
             'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
             'teacherComment' => $teacherComment,
         ]);

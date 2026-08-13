@@ -25,22 +25,10 @@
             padding: 12px 16px;
             border: 1px solid #F0DFC0;
         }
-        .header-table { width: 100%; border-collapse: collapse; }
-        .header-table td { border: none; padding: 0; vertical-align: middle; }
-        .logo-badge {
-            width: 48px; height: 48px;
-            background: #D97706;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 48px;
-            color: #fff;
-            font-size: 17px;
-            font-weight: 800;
-        }
-        .logo-cell { width: 58px; }
-        .h-school { font-size: 16px; font-weight: 800; color: #7C3A11; }
+        .header-top-row { text-align: right; margin-bottom: 4px; }
+        .header-centered { text-align: center; }
+        .h-school { font-size: 16px; font-weight: 800; color: #7C3A11; margin-top: 6px; }
         .h-meta { font-size: 8px; color: #A88865; margin-top: 1px; }
-        .badge-cell { text-align: right; width: 110px; }
         .term-chip {
             display: inline-block;
             background: #EBF5E4;
@@ -187,24 +175,18 @@
 
 <div class="page">
 
-    {{-- ═══ HEADER ═══ --}}
+    {{-- ═══ HEADER (centered letterhead) ═══ --}}
     <div class="header-card">
-        <table class="header-table">
-            <tr>
-                <td class="logo-cell">
-                    <div class="logo-badge">{{ strtoupper(substr($learner->school->name, 0, 1)) }}</div>
-                </td>
-                <td>
-                    <div class="h-school">{{ $learner->school->name }}</div>
-                    <div class="h-meta">Nursery And Primary &middot; Day And Boarding</div>
-                    <div class="h-meta">P.O Box 283, Kabale, Uganda &middot; Tel: +256782255758</div>
-                </td>
-                <td class="badge-cell">
-                    <span class="term-chip">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }}</span>
-                    <span class="year-chip">{{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</span>
-                </td>
-            </tr>
-        </table>
+        <div class="header-top-row">
+            <span class="term-chip">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }}</span>
+            <span class="year-chip">{{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</span>
+        </div>
+        <div class="header-centered">
+            <img src="{{ public_path('images/KJSLogo.jpg') }}" style="width: 56px; height: auto;" alt="Logo">
+            <div class="h-school">{{ $learner->school->name }}</div>
+            <div class="h-meta">Nursery And Primary &middot; Day And Boarding</div>
+            <div class="h-meta">P.O Box 283, Kabale, Uganda &middot; Tel: +256782255758</div>
+        </div>
         <div class="ribbon">A Report of Growth &amp; Progress</div>
     </div>
 

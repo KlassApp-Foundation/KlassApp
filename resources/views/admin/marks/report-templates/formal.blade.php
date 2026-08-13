@@ -26,11 +26,8 @@
             padding: 14px 18px 10px;
         }
 
-        /* ── Header ── */
-        .crest-cell { width: 70px; text-align: center; vertical-align: middle; }
-        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
-        .header-table td { border: none; vertical-align: middle; padding: 0; }
-        .header-center { text-align: center; padding: 0 10px; }
+        /* ── Header (centered letterhead) ── */
+        .header-block { text-align: center; margin-bottom: 6px; }
         .school-name {
             font-family: 'DejaVu Serif', serif;
             font-size: 19px;
@@ -38,6 +35,7 @@
             letter-spacing: 1px;
             color: #0F172A;
             text-transform: uppercase;
+            margin-top: 6px;
         }
         .school-meta {
             font-family: 'DejaVu Serif', serif;
@@ -45,7 +43,6 @@
             color: #475569;
             margin-top: 2px;
         }
-        .header-side { width: 70px; }
 
         .flourish { text-align: center; margin: 8px 0 8px; color: #22C55E; font-size: 10px; letter-spacing: 6px; }
         .flourish-line { border-top: 1px solid #22C55E; margin: 4px 0; }
@@ -191,20 +188,13 @@
 
 <div class="frame"><div class="frame-inner">
 
-    {{-- ═══ HEADER ═══ --}}
-    <table class="header-table">
-        <tr>
-            <td class="crest-cell">
-                <img src="{{ public_path('images/KJSLogo.jpg') }}" style="width: 60px; height: auto;" alt="Logo">
-            </td>
-            <td class="header-center">
-                <div class="school-name">{{ $learner->school->name }}</div>
-                <div class="school-meta">Nursery And Primary &middot; Day And Boarding</div>
-                <div class="school-meta">P.O Box 283, Kabale, Uganda &middot; Tel: +256782255758 / +256784119149</div>
-            </td>
-            <td class="header-side"></td>
-        </tr>
-    </table>
+    {{-- ═══ HEADER (centered letterhead) ═══ --}}
+    <div class="header-block">
+        <img src="{{ public_path('images/KJSLogo.jpg') }}" style="width: 60px; height: auto;" alt="Logo">
+        <div class="school-name">{{ $learner->school->name }}</div>
+        <div class="school-meta">Nursery And Primary &middot; Day And Boarding</div>
+        <div class="school-meta">P.O Box 283, Kabale, Uganda &middot; Tel: +256782255758 / +256784119149</div>
+    </div>
 
     <div class="flourish">&#10022;</div>
 
