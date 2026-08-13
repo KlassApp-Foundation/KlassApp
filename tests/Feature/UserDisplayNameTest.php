@@ -31,7 +31,7 @@ class UserDisplayNameTest extends TestCase
         ]);
     }
 
-    public function test_uses_profile_first_and_last_name_reversed(): void
+    public function test_uses_profile_first_and_last_name_natural_order(): void
     {
         $user = User::factory()->create([
             'usergroup_id' => 6,
@@ -47,7 +47,7 @@ class UserDisplayNameTest extends TestCase
             'lastname' => 'Ishimme',
         ]);
 
-        $this->assertSame('ISHIMME ESTHER', $user->displayName);
+        $this->assertSame('ESTHER ISHIMME', $user->displayName);
     }
 
     public function test_strips_numeric_suffix_from_profile_names(): void
@@ -66,7 +66,7 @@ class UserDisplayNameTest extends TestCase
             'lastname' => 'AKAMPA-2',
         ]);
 
-        $this->assertSame('AKAMPA MARY POLITE', $user->displayName);
+        $this->assertSame('MARY POLITE AKAMPA', $user->displayName);
     }
 
     public function test_falls_back_to_name_without_profile(): void
@@ -77,7 +77,7 @@ class UserDisplayNameTest extends TestCase
             'name' => 'nuwagira darius5373',
         ]);
 
-        $this->assertSame('DARIUS NUWAGIRA', $user->displayName);
+        $this->assertSame('NUWAGIRA DARIUS', $user->displayName);
     }
 
     public function test_single_token_name_is_returned_stripped(): void
@@ -119,6 +119,6 @@ class UserDisplayNameTest extends TestCase
         ]);
 
         $this->assertSame('ESTHER ISHIMME', $user->FullName);
-        $this->assertSame('ISHIMME ESTHER', $user->displayName);
+        $this->assertSame('ESTHER ISHIMME', $user->displayName);
     }
 }
