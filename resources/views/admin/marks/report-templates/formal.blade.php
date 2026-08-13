@@ -194,14 +194,15 @@
         <img src="{{ $logoPath }}" style="width: 60px; height: auto;" alt="Logo">
         @endif
         <div class="school-name">{{ $learner->school->name }}</div>
-        <div class="school-meta">Nursery And Primary &middot; Day And Boarding</div>
-        <div class="school-meta">P.O Box 283, Kabale, Uganda &middot; Tel: +256782255758 / +256784119149</div>
+        <div class="school-meta">(Nursery And Primary, Day And Boarding)</div>
+        <div class="school-meta">P.O Box 283 - Kabale - UGA</div>
+        <div class="school-meta">Tel: +256782255758 / +256784119149 / +256704301646</div>
     </div>
 
     <div class="flourish">&#10022;</div>
 
     <div class="doc-title-wrap">
-        <span class="doc-title">Terminal Report Card</span>
+        <span class="doc-title">PROGRESSIVE REPORT</span>
         <div class="doc-sub">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }} &middot; {{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</div>
     </div>
 
@@ -209,7 +210,7 @@
     <table class="particulars">
         <tr>
             <td style="width:50%;">
-                <div class="part-label">Name of Pupil</div>
+                <div class="part-label">Student</div>
                 <div class="part-value">{{ $learner->userprofile->firstname }} {{ $learner->userprofile->lastname }}</div>
             </td>
             <td style="width:25%;">
@@ -225,7 +226,6 @@
 
     {{-- ═══ MAIN MARKS ═══ --}}
     @if(!empty($isNursery))
-        <div class="section-label">Developmental Assessment</div>
         <table class="ledger">
             <tr><th>Domain</th><th>Rating</th><th>Remarks</th></tr>
             @foreach (['Literacy', 'Numeracy', 'Motor Skills', 'Social/Emotional'] as $domain)
@@ -239,7 +239,7 @@
         </table>
     @else
         @if ($midExams->isNotEmpty())
-        <div class="section-label">Monthly Results — Mid Term</div>
+        <div class="section-label">MONTHLY RESULTS — MID TERM</div>
         <table class="ledger">
             <tr>
                 <th style="width:12%">Month Of</th>
@@ -275,7 +275,7 @@
         @endif
 
         @if ($eotExams->isNotEmpty())
-        <div class="section-label">End of Term Examination</div>
+        <div class="section-label">END OF TERM EXAMINATION</div>
         <table class="ledger">
             <tr>
                 <th>Subject</th>
@@ -330,7 +330,7 @@
         @if (!empty($myPos) && !$isNursery)
         <table class="pos-table">
             <tr>
-                <td class="pos-label">Position in Class</td>
+                <td class="pos-label">POSITION</td>
                 <td>{{ $myPos ?? '&mdash;' }} of {{ $totalLearners ?? '&mdash;' }}</td>
             </tr>
         </table>
@@ -342,11 +342,11 @@
     <table class="comments-table">
         <tr>
             <td>
-                <div class="comments-label">Remarks of Class Teacher</div>
+                <div class="comments-label">Class Teacher</div>
                 <div class="comments-box">{{ $teacherComment ?? '&mdash;' }}</div>
             </td>
             <td>
-                <div class="comments-label">Remarks of Head Teacher</div>
+                <div class="comments-label">Head Teacher</div>
                 <div class="comments-box"></div>
             </td>
         </tr>
@@ -360,6 +360,7 @@
             @foreach ($grading_system as $grade) <th>{{ 'D' . $grade->points }}</th> @endforeach
         </tr>
         <tr>
+            <td class="strong">Range</td>
             @foreach ($grading_system as $grade) <td>{{ $grade->min_score }}&ndash;{{ $grade->max_score }}</td> @endforeach
         </tr>
     </table>
@@ -368,16 +369,11 @@
     <div class="footer-wrap">
         <table class="signoff-table">
             <tr>
-                <td class="sign-block" style="width: 40%;">
+                <td class="sign-block" style="width: 50%;">
                     <span class="sign-line"></span>
                     <span class="sign-caption">Class Teacher</span>
                 </td>
-                <td class="seal-cell">
-                    <div class="seal">
-                        <div class="seal-text">School<br>Seal</div>
-                    </div>
-                </td>
-                <td class="sign-block" style="width: 40%;">
+                <td class="sign-block" style="width: 50%;">
                     <span class="sign-line"></span>
                     <span class="sign-caption">Head Teacher</span>
                 </td>
@@ -385,11 +381,11 @@
         </table>
 
         <div class="motto-row">
-            <span class="motto">&ldquo;Hard Work Pays&rdquo;</span>
+            <span class="motto">HARD WORK PAYS</span>
         </div>
         <div class="generated-row">
             {{ $learner->school->name }} &middot; Generated {{ now()->format('d M Y') }}
-            @if ($nextTerm) &middot; Next Term Begins {{ $nextTerm->starts_on->format('d/m/Y') }} @endif
+            @if ($nextTerm) &middot; Next Term Begins: {{ $nextTerm->starts_on->format('d/m/Y') }} @endif
         </div>
     </div>
 

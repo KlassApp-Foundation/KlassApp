@@ -186,10 +186,11 @@
             <img src="{{ $logoPath }}" style="width: 56px; height: auto;" alt="Logo">
             @endif
             <div class="h-school">{{ $learner->school->name }}</div>
-            <div class="h-meta">Nursery And Primary &middot; Day And Boarding</div>
-            <div class="h-meta">P.O Box 283, Kabale, Uganda &middot; Tel: +256782255758</div>
+            <div class="h-meta">(Nursery And Primary, Day And Boarding)</div>
+            <div class="h-meta">P.O Box 283 - Kabale - UGA</div>
+            <div class="h-meta">Tel: +256782255758 / +256784119149 / +256704301646</div>
         </div>
-        <div class="ribbon">A Report of Growth &amp; Progress</div>
+        <div class="ribbon">PROGRESSIVE REPORT</div>
     </div>
 
     {{-- ═══ INFO PILLS ═══ --}}
@@ -218,7 +219,6 @@
 
     {{-- ═══ MAIN MARKS ═══ --}}
     @if(!empty($isNursery))
-        <div class="sec-heading"><span class="dot"></span>Developmental Assessment</div>
         <table class="card-table">
             <tr><th>Domain</th><th>Rating</th><th>Remarks</th></tr>
             @foreach (['Literacy', 'Numeracy', 'Motor Skills', 'Social/Emotional'] as $domain)
@@ -232,7 +232,7 @@
         </table>
     @else
         @if ($midExams->isNotEmpty())
-        <div class="sec-heading"><span class="dot"></span>Monthly Results — Mid Term</div>
+        <div class="sec-heading"><span class="dot"></span>MONTHLY RESULTS — MID TERM</div>
         <table class="card-table">
             <tr>
                 <th style="width:12%">Month Of</th>
@@ -268,7 +268,7 @@
         @endif
 
         @if ($eotExams->isNotEmpty())
-        <div class="sec-heading sec-heading-eot"><span class="dot"></span>End of Term Examination</div>
+        <div class="sec-heading sec-heading-eot"><span class="dot"></span>END OF TERM EXAMINATION</div>
         <table class="card-table">
             <tr>
                 <th class="eot-th">Subject</th>
@@ -324,7 +324,7 @@
         <div class="pos-card">
             <table class="pos-card-table">
                 <tr>
-                    <td>Position in Class</td>
+                    <td>POSITION</td>
                     <td class="right">{{ $myPos ?? '&mdash;' }} of {{ $totalLearners ?? '&mdash;' }}</td>
                 </tr>
             </table>
@@ -355,6 +355,7 @@
             @foreach ($grading_system as $grade) <th>{{ 'D' . $grade->points }}</th> @endforeach
         </tr>
         <tr>
+            <td class="strong">Range</td>
             @foreach ($grading_system as $grade) <td>{{ $grade->min_score }}&ndash;{{ $grade->max_score }}</td> @endforeach
         </tr>
     </table>
@@ -365,7 +366,7 @@
             <tr>
                 <td style="width:60%;">
                     {{ $learner->school->name }} &middot; Generated {{ now()->format('d M Y') }}
-                    @if ($nextTerm) <br>Next term begins {{ $nextTerm->starts_on->format('d/m/Y') }} @endif
+                    @if ($nextTerm) <br>Next Term Begins: {{ $nextTerm->starts_on->format('d/m/Y') }} @endif
                 </td>
                 <td class="right" style="width:40%;">
                     <span class="sign-block"><span class="sign-line"></span><span class="sign-caption">Class Teacher</span></span>
@@ -374,7 +375,7 @@
                 </td>
             </tr>
         </table>
-        <div class="motto-row">Hard Work Pays</div>
+        <div class="motto-row">HARD WORK PAYS</div>
     </div>
 
 </div>
