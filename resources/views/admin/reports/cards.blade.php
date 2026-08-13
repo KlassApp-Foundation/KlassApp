@@ -29,26 +29,64 @@
 </div>
 
 <div class="bg-white rounded-lg shadow p-4 mt-4">
-    <form method="POST" action="{{ route('admin.reports.cards.template') }}" class="flex flex-wrap items-center gap-4">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-gray-700">Report Card Template</h3>
+        <span class="text-xs text-gray-400">Applies to all report cards generated from this point on (batch, individual, merged).</span>
+    </div>
+
+    <form method="POST" action="{{ route('admin.reports.cards.template') }}">
         @csrf
-        <span class="text-sm font-medium text-gray-700">Report Card Template:</span>
-        <div class="flex gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             @foreach (\App\Http\Controllers\Admin\ReportCardsController::TEMPLATES as $key => $tpl)
-                <div class="flex flex-col items-center gap-1">
-                    <label class="flex items-center gap-1.5 text-sm text-gray-700 border rounded-lg px-3 py-1.5 cursor-pointer {{ $reportTemplate === $key ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }}">
-                        <input type="radio" name="report_template" value="{{ $key }}" {{ $reportTemplate === $key ? 'checked' : '' }} class="text-blue-600">
-                        {{ $tpl['label'] }}
-                    </label>
-                    <a href="{{ route('admin.reports.cards.preview', $key) }}" target="_blank" class="text-xs text-blue-600 hover:underline">Preview</a>
-                </div>
+                @php
+                    $isSaved = $reportTemplate === $key;
+                    $thumbPath = 'images/report-template-thumbnails/' . $key . '.png';
+                    $hasThumb = file_exists(public_path($thumbPath));
+                @endphp
+                <label class="group relative block border-2 border-gray-200 rounded-xl cursor-pointer transition overflow-hidden hover:border-gray-300 peer-checked:border-blue-500 has-[:checked]:border-blue-500 has-[:checked]:ring-2 has-[:checked]:ring-blue-200">
+                    <input type="radio" name="report_template" value="{{ $key }}" {{ $isSaved ? 'checked' : '' }} class="sr-only peer">
+
+                    <span class="absolute top-2 left-2 z-10 w-5 h-5 rounded-full border-2 border-white bg-white/80 shadow flex items-center justify-center peer-checked:bg-blue-600 group-has-[:checked]:bg-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 text-white hidden group-has-[:checked]:block"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
+                    </span>
+
+                    @if ($isSaved)
+                        <span class="absolute top-2 right-2 z-10 bg-gray-900/80 text-white text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full">
+                            Currently in use
+                        </span>
+                    @endif
+
+                    <div class="bg-gray-100 aspect-[3/4] overflow-hidden">
+                        @if ($hasThumb)
+                            <img src="{{ asset($thumbPath) }}" alt="{{ $tpl['label'] }} template preview" class="w-full h-full object-cover object-top">
+                        @else
+                            <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs px-4 text-center">
+                                Preview coming soon
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="p-3 flex items-center justify-between gap-2 bg-white">
+                        <span class="text-sm font-medium text-gray-800">{{ $tpl['label'] }}</span>
+                        <a href="{{ route('admin.reports.cards.preview', $key) }}" target="_blank"
+                           onclick="event.stopPropagation()"
+                           class="text-xs text-blue-600 hover:underline whitespace-nowrap">
+                            Open full preview
+                        </a>
+                    </div>
+                </label>
             @endforeach
         </div>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition">
-            Save
-        </button>
-        <span class="text-xs text-gray-400">Applies to all report cards generated from this point on (batch, individual, merged).</span>
+
+        <div class="mt-4 flex items-center gap-3">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition">
+                Save
+            </button>
+            <span class="text-xs text-gray-400">Click a card to select it, then Save.</span>
+        </div>
     </form>
-    <div class="mt-2 pt-2 border-t text-xs text-gray-500">
+
+    <div class="mt-3 pt-3 border-t text-xs text-gray-500">
         Logo not showing correctly on the report card? Manage your school's logo on the
         <a href="{{ url('/admin/schooldetails/editdetail/' . $school->id) }}" class="text-blue-600 hover:underline">School Details</a> page.
     </div>
