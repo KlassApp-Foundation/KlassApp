@@ -812,18 +812,19 @@ public function scopeStudents($query)
     }
 
     /**
-     * Display name shown across class lists and report cards: "LASTNAME FIRSTNAME".
+     * Display name shown across class lists and report cards: natural "FIRST LAST"
+     * order (matching how report cards have always rendered), with trailing numeric
+     * suffixes stripped from every token (e.g. "nuwagira darius5373" -> "NUWAGIRA DARIUS").
      *
      * Prefers the authoritative userprofile first/last split, falls back to parsing
-     * users.name, and strips trailing numeric suffixes from every token
-     * (e.g. "nuwagira darius5373" -> "DARIUS NUWAGIRA", "name-2" -> "NAME").
+     * users.name.
      */
     public function getDisplayNameAttribute()
     {
         $profile = $this->userprofile;
 
         if ($profile && trim((string) $profile->firstname) !== '' && trim((string) $profile->lastname) !== '') {
-            return trim($this->cleanDisplayToken($profile->lastname).' '.$this->cleanDisplayToken($profile->firstname));
+            return trim($this->cleanDisplayToken($profile->firstname).' '.$this->cleanDisplayToken($profile->lastname));
         }
 
         $tokens = preg_split('/\s+/', trim((string) $this->name), -1, PREG_SPLIT_NO_EMPTY);
@@ -839,7 +840,7 @@ public function scopeStudents($query)
 
         $last = array_pop($tokens);
 
-        return trim($last.' '.implode(' ', $tokens));
+        return trim(implode(' ', $tokens).' '.$last);
     }
 
     /**
