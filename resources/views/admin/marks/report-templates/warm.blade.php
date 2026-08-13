@@ -150,7 +150,7 @@
 
         /* ── Comments ── */
         .comments-table { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 10px 0 12px; }
-        .comments-label-inline { font-size: 8.5px; color: #A88865; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+        .comments-label { font-size: 8.5px; color: #A88865; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 700; }
         .comments-box {
             padding: 0;
             font-size: 10px;
@@ -412,12 +412,14 @@
         <table class="sig-card-table">
             <tr>
                 <td>
-                    <div class="comments-box"><span class="comments-label-inline"><span class="label-dot"></span>CLASS TEACHER</span>&nbsp;{{ $teacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">Class Teacher</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="comments-label"><span class="label-dot"></span>CLASS TEACHER COMMENT</div>
+                    <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
+                    <div class="sig-row"><span class="sig-caption">CLASS TEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
                 <td>
-                    <div class="comments-box"><span class="comments-label-inline"><span class="label-dot"></span>HEAD TEACHER</span>&nbsp;{{ $headTeacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">HM Sign &amp; Stamp</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="comments-label"><span class="label-dot"></span>HEAD TEACHER COMMENT</div>
+                    <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
+                    <div class="sig-row"><span class="sig-caption">HEAD TEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
             </tr>
         </table>
