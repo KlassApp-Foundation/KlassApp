@@ -58,7 +58,6 @@
         .sig-card-table { width: 100%; border-collapse: collapse; }
         .sig-card-table td { width: 50%; vertical-align: top; padding: 2px 10px; }
         .sig-card-table td + td { border-left: 1px solid #CFE8D6; }
-        .label-dot { display: inline-block; width: 6px; height: 6px; background: #15803D; border-radius: 50%; margin-right: 5px; }
         .comments-label { font-family: 'DejaVu Serif', serif; font-size: 8.5px; color: #15803D; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; font-weight: 700; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
         .sig-row { text-align: left; margin-top: 6px; border-top: 1px dashed #CFE8D6; padding-top: 6px; }
@@ -315,12 +314,6 @@
                 <div class="part-label">Class</div>
                 <div class="part-value-sm">{{ $class_name }}</div>
             </td>
-            @if ($showAgg)
-            <td style="width:25%;">
-                <div class="part-label">Aggregate</div>
-                <div class="part-value-sm">{{ $grade['agg'] ?? '-' }}</div>
-            </td>
-            @endif
         </tr>
     </table>
 
@@ -450,14 +443,14 @@
         <table class="sig-card-table">
             <tr>
                 <td>
-                    <div class="comments-label"><span class="label-dot"></span>CLASSTEACHER COMMENT</div>
+                    <div class="comments-label">CLASSTEACHER COMMENT</div>
                     <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">CLASSTEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="sig-row"><span class="sig-caption">SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
                 <td>
-                    <div class="comments-label"><span class="label-dot"></span>HEADTEACHER COMMENT</div>
+                    <div class="comments-label">HEADTEACHER COMMENT</div>
                     <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">HEADTEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="sig-row"><span class="sig-caption">SIGN &amp; STAMP</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
             </tr>
         </table>

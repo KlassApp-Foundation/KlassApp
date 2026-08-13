@@ -217,14 +217,6 @@
                     <div class="tile-value">{{ $class_name }}</div>
                 </div>
             </td>
-            @if ($showAgg)
-            <td style="width:25%;">
-                <div class="tile">
-                    <div class="tile-label">Aggregate</div>
-                    <div class="tile-value">{{ $grade['agg'] ?? '-' }}</div>
-                </div>
-            </td>
-            @endif
         </tr>
     </table>
 
@@ -372,12 +364,12 @@
                 <td>
                     <div class="comments-label">Classteacher</div>
                     <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">Classteacher</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="sig-row"><span class="sig-caption">SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
                 <td>
                     <div class="comments-label">Headteacher</div>
                     <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">HM Sign &amp; Stamp</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="sig-row"><span class="sig-caption">SIGN &amp; STAMP</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
             </tr>
         </table>
