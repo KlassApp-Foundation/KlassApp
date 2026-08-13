@@ -42,6 +42,7 @@
             font-size: 9px;
             color: #334155;
         }
+        .powered { font-size: 7px; color: #94A3B8; margin-top: 3px; }
 
         .next-term {
             text-align: center;
@@ -54,8 +55,9 @@
 
         .sig-table { width: 100%; border-collapse: collapse; margin: 4px 0 10px; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
+        .sig-row { text-align: center; }
+        .sig-dash { display: inline-block; width: 130px; border-bottom: 1px solid #0F172A; height: 14px; vertical-align: bottom; }
         .sig-caption { font-family: 'DejaVu Serif', serif; font-size: 8.5px; text-transform: uppercase; letter-spacing: 1px; color: #475569; }
-        .sig-line { border-bottom: 1px solid #0F172A; height: 22px; }
 
         .frame {
             border: 2px solid #0F172A;
@@ -85,6 +87,7 @@
             color: #475569;
             margin-top: 3px;
         }
+        .school-meta-tel { font-size: 9px; }
 
         .doc-title-wrap { text-align: center; margin: 8px 0 14px; }
         .doc-title {
@@ -139,7 +142,7 @@
         .ledger td {
             font-size: 10px;
             padding: 3.5px 4px;
-            border: 1px solid #CFE8D6;
+            border: 1px solid #22C55E;
             text-align: center;
             color: #1E293B;
         }
@@ -227,12 +230,17 @@
 
 @php
     $termRaw = $learner->marks->first()?->exam?->academicTerm?->name ?? '';
+    $termYear = $learner->marks->first()?->exam?->academicTerm?->academicYear?->name ?? '';
     if (preg_match('/^(.*?)\s*(\d+)\s*$/', trim($termRaw), $m)) {
         $roman = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V', '6' => 'VI'];
         $termName = strtoupper(trim($m[1])) . ' ' . ($roman[$m[2]] ?? $m[2]);
     } else {
         $termName = strtoupper($termRaw);
     }
+    if ($termName !== '' && $termYear !== '') {
+        $termName .= ' ' . $termYear;
+    }
+    $gradeLetters = ['1' => 'D', '2' => 'D', '3' => 'C', '4' => 'C', '5' => 'C', '6' => 'C', '7' => 'P', '8' => 'P', '9' => 'F'];
 @endphp
 
 <div class="header-band">
@@ -245,12 +253,12 @@
         <div class="school-name">{{ $learner->school->name }}</div>
         <div class="school-meta">(Nursery And Primary, Day And Boarding)</div>
         <div class="school-meta">P.O Box 283 - Kabale - UGA</div>
-        <div class="school-meta">Tel: +256782255758 / +256784119149 / +256704301646</div>
+        <div class="school-meta school-meta-tel">Tel: +256782255758 / +256784119149 / +256704301646</div>
     </div>
 
     <div class="doc-title-wrap">
         <span class="doc-title">PROGRESSIVE REPORT</span>
-        <div class="doc-sub">{{ $termName }} &middot; {{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</div>
+        <div class="doc-sub">{{ $termName }}</div>
     </div>
 
 </div>
@@ -319,7 +327,7 @@
                                 $midGrade = '-';
                                 if ($midMark && $midMark->marks !== null) {
                                     $g = $grading_system->first(fn($gs) => $gs->min_score <= $midMark->marks && $gs->max_score >= $midMark->marks);
-                                    $midGrade = $g ? 'D' . $g->points : '-';
+                                    $midGrade = $g ? ($gradeLetters[$g->points] ?? 'D') . $g->points : '-';
                                 }
                             @endphp
                             <td>{{ $midMark ? floor($midMark->marks) : '-' }}</td>
@@ -352,7 +360,7 @@
                     $eotComment = '-';
                     if ($hasEotMarks) {
                         $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
-                        $eotGrade = $g ? 'D' . $g->points : '-';
+                        $eotGrade = $g ? ($gradeLetters[$g->points] ?? 'D') . $g->points : '-';
                         $eotComment = $g ? $g->remark : '-';
                     }
                     $teacherLink = \App\Models\Teacherlink::where('standardLink_id', $stdLink->id)
@@ -416,8 +424,8 @@
     {{-- ═══ SIGNATURES ═══ --}}
     <table class="sig-table">
         <tr>
-            <td><div class="sig-caption">Class Teacher</div><div class="sig-line"></div></td>
-            <td><div class="sig-caption">Head Teacher</div><div class="sig-line"></div></td>
+            <td><div class="sig-row"><span class="sig-dash"></span>&nbsp;<span class="sig-caption">Class Teacher</span></div></td>
+            <td><div class="sig-row"><span class="sig-dash"></span>&nbsp;<span class="sig-caption">Head Teacher</span></div></td>
         </tr>
     </table>
 
@@ -430,6 +438,7 @@
 
 <div class="footer-band">
     Kabale Junior School, UNEB Center No. {{ $school->uneb_center_number }} Tel: +256782255758 / +256784119149 / +256704301646
+    <div class="powered">Powered by klassapp.xyz</div>
 </div>
 
 @else

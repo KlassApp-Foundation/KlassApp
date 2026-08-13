@@ -381,7 +381,7 @@ class ReportCardsController extends Controller
         return $map;
     }
 
-    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0): string
+    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0, ?string $templateKey = null): string
     {
         $learner = \App\Models\User::find($sid);
         $learner = $helper->learner($schoolId, $learner, $exam);
@@ -418,7 +418,7 @@ class ReportCardsController extends Controller
             : '';
 
         $school = \App\Models\School::find($schoolId);
-        $view = self::TEMPLATES[$school->report_template ?? ''] ?? self::TEMPLATES['formal'];
+        $view = self::TEMPLATES[$templateKey ?? $school->report_template ?? ''] ?? self::TEMPLATES['formal'];
         $logoPath = self::resolveLogoPath($schoolId);
 
         $pdf = Pdf::loadView($view['view'], [
@@ -440,6 +440,42 @@ class ReportCardsController extends Controller
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->output();
+    }
+
+    public function previewTemplate(string $template)
+    {
+        abort_unless(isset(self::TEMPLATES[$template]), 404);
+
+        $schoolId = Auth::user()->school_id;
+
+        $exam = Exam::where('school_id', $schoolId)
+            ->whereHas('examType', fn ($q) => $q->where('contributes_to_report_total', 1))
+            ->latest()
+            ->first();
+
+        if (!$exam) {
+            return back()->with('failmessage', 'No exams with report-total marks yet — nothing to preview.');
+        }
+
+        $stdLink = StandardLink::where('section_id', $exam->section_id)->where('standard_id', $exam->standard_id)->first();
+
+        $learner = \App\Models\User::where('usergroup_id', 6)
+            ->whereHas('marks', fn ($q) => $q->where('exam_id', $exam->id))
+            ->first();
+
+        if (!$stdLink || !$learner) {
+            return back()->with('failmessage', 'No students with marks for the latest exam — nothing to preview.');
+        }
+
+        $helper = app(\App\Services\StudentReportHelperService::class);
+        $svc = app(\App\Services\ReportCardCommentService::class);
+        $totalLearners = \App\Models\Academics\Marks::where('exam_id', $exam->id)->distinct('student_id')->count();
+
+        $pdf = self::generatePdf($learner->id, $exam, $stdLink, $schoolId, $helper, $svc, $totalLearners, 0, $template);
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="preview-' . $template . '.pdf"');
     }
 
     /**

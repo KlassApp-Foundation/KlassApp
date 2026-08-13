@@ -38,6 +38,7 @@
         .header-centered { text-align: center; }
         .h-school { font-size: 22px; font-weight: 800; color: #7C3A11; margin-top: 10px; }
         .h-meta { font-size: 12px; font-weight: 700; color: #A88865; margin-top: 2px; }
+        .h-meta-tel { font-size: 9px; }
         .term-chip {
             display: inline-block;
             background: #EBF5E4;
@@ -80,7 +81,7 @@
         .sec-heading-eot .dot { background: #3F6B1F; }
 
         /* ── Tables ── */
-        .card-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; border: 1px solid #F0DFC0; border-radius: 10px; overflow: hidden; }
+        .card-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; border: 1px solid #D97706; border-radius: 10px; overflow: hidden; }
         .card-table th {
             background: #D97706;
             color: #fff;
@@ -153,8 +154,9 @@
         .next-term { text-align: center; font-size: 10px; font-weight: 800; color: #3F6B1F; margin: 6px 0 10px; }
         .sig-table { width: 100%; border-collapse: collapse; margin: 4px 0 10px; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
+        .sig-row { text-align: center; }
+        .sig-dash { display: inline-block; width: 130px; border-bottom: 1px solid #7C3A11; height: 14px; vertical-align: bottom; }
         .sig-caption { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #A88865; font-weight: 700; }
-        .sig-line { border-bottom: 1px solid #7C3A11; height: 22px; }
         .motto-row { text-align: center; margin-top: 8px; font-size: 10px; font-weight: 800; color: #D97706; }
         .footer-band {
             text-align: center;
@@ -165,6 +167,7 @@
             color: #6B543C;
             background: #FFFBF2;
         }
+        .powered { font-size: 7px; color: #A88865; margin-top: 3px; }
 
         .no-records { text-align: center; padding: 40px; }
     </style>
@@ -182,12 +185,17 @@
         return 'chip-low';
     };
     $termRaw = $learner->marks->first()?->exam?->academicTerm?->name ?? '';
+    $termYear = $learner->marks->first()?->exam?->academicTerm?->academicYear?->name ?? '';
     if (preg_match('/^(.*?)\s*(\d+)\s*$/', trim($termRaw), $m)) {
         $roman = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V', '6' => 'VI'];
         $termName = strtoupper(trim($m[1])) . ' ' . ($roman[$m[2]] ?? $m[2]);
     } else {
         $termName = strtoupper($termRaw);
     }
+    if ($termName !== '' && $termYear !== '') {
+        $termName .= ' ' . $termYear;
+    }
+    $gradeLetters = ['1' => 'D', '2' => 'D', '3' => 'C', '4' => 'C', '5' => 'C', '6' => 'C', '7' => 'P', '8' => 'P', '9' => 'F'];
 @endphp
 
 <div class="header-card">
@@ -195,7 +203,6 @@
     {{-- ═══ HEADER (centered letterhead, edge-to-edge) ═══ --}}
     <div class="header-top-row">
         <span class="term-chip">{{ $termName }}</span>
-        <span class="year-chip">{{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</span>
     </div>
     <div class="header-centered">
         @if (!empty($logoPath))
@@ -204,7 +211,7 @@
         <div class="h-school">{{ $learner->school->name }}</div>
         <div class="h-meta">(Nursery And Primary, Day And Boarding)</div>
         <div class="h-meta">P.O Box 283 - Kabale - UGA</div>
-        <div class="h-meta">Tel: +256782255758 / +256784119149 / +256704301646</div>
+        <div class="h-meta h-meta-tel">Tel: +256782255758 / +256784119149 / +256704301646</div>
     </div>
     <div class="ribbon">PROGRESSIVE REPORT</div>
 </div>
@@ -277,7 +284,7 @@
                                 $midGrade = '-';
                                 if ($midMark && $midMark->marks !== null) {
                                     $g = $grading_system->first(fn($gs) => $gs->min_score <= $midMark->marks && $gs->max_score >= $midMark->marks);
-                                    $midGrade = $g ? 'D' . $g->points : '-';
+                                    $midGrade = $g ? ($gradeLetters[$g->points] ?? 'D') . $g->points : '-';
                                 }
                             @endphp
                             <td>{{ $midMark ? floor($midMark->marks) : '-' }}</td>
@@ -310,7 +317,7 @@
                     $eotComment = '-';
                     if ($hasEotMarks) {
                         $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
-                        $eotGrade = $g ? 'D' . $g->points : '-';
+                        $eotGrade = $g ? ($gradeLetters[$g->points] ?? 'D') . $g->points : '-';
                         $eotComment = $g ? $g->remark : '-';
                     }
                     $teacherLink = \App\Models\Teacherlink::where('standardLink_id', $stdLink->id)
@@ -376,8 +383,8 @@
     {{-- ═══ SIGNATURES ═══ --}}
     <table class="sig-table">
         <tr>
-            <td><div class="sig-caption">Class Teacher</div><div class="sig-line"></div></td>
-            <td><div class="sig-caption">Head Teacher</div><div class="sig-line"></div></td>
+            <td><div class="sig-row"><span class="sig-dash"></span>&nbsp;<span class="sig-caption">Class Teacher</span></div></td>
+            <td><div class="sig-row"><span class="sig-dash"></span>&nbsp;<span class="sig-caption">Head Teacher</span></div></td>
         </tr>
     </table>
 
@@ -387,6 +394,7 @@
 
 <div class="footer-band">
     Kabale Junior School, UNEB Center No. {{ $school->uneb_center_number }} Tel: +256782255758 / +256784119149 / +256704301646
+    <div class="powered">Powered by klassapp.xyz</div>
 </div>
 
 @else
