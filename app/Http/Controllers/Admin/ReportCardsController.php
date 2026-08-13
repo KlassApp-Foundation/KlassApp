@@ -414,10 +414,10 @@ class ReportCardsController extends Controller
             ->get();
 
         $divisionScale = static function (int $points): string {
-            if ($points <= 12) { return '1st'; }
-            if ($points <= 24) { return '2nd'; }
-            if ($points <= 28) { return '3rd'; }
-            if ($points <= 32) { return '4th'; }
+            if ($points <= 12) { return '1'; }
+            if ($points <= 24) { return '2'; }
+            if ($points <= 28) { return '3'; }
+            if ($points <= 32) { return '4'; }
             return 'U';
         };
 

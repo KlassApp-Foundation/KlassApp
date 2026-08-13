@@ -450,14 +450,14 @@
         <table class="sig-card-table">
             <tr>
                 <td>
-                    <div class="comments-label"><span class="label-dot"></span>CLASS TEACHER COMMENT</div>
+                    <div class="comments-label"><span class="label-dot"></span>CLASSTEACHER COMMENT</div>
                     <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">CLASS TEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="sig-row"><span class="sig-caption">CLASSTEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
                 <td>
-                    <div class="comments-label"><span class="label-dot"></span>HEAD TEACHER COMMENT</div>
+                    <div class="comments-label"><span class="label-dot"></span>HEADTEACHER COMMENT</div>
                     <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">HEAD TEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="sig-row"><span class="sig-caption">HEADTEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
             </tr>
         </table>
