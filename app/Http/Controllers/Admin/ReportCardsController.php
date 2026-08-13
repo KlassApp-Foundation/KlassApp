@@ -440,15 +440,46 @@ class ReportCardsController extends Controller
             return $counted ? ['points' => $sum, 'counted' => $counted] : null;
         };
 
+        // Stream = a label shared by sibling StandardLinks (parallel sections)
+        // at the SAME standard, e.g. "P.2 East" + "P.2 West" both "Blue" —
+        // NOT globally unique, so every stream-scoped query below must also
+        // filter by standard_id or it would pool unrelated grade levels that
+        // happen to reuse the same stream letter/name.
+        $streamName = $learner->studentAcademicLatest?->standardLink?->stream ?? null;
+        $streamSectionIds = $streamName
+            ? StandardLink::where('school_id', $schoolId)
+                ->where('standard_id', $stdLink->standard_id)
+                ->where('stream', $streamName)
+                ->pluck('section_id')
+            : collect();
+
         $midStats = [];
         foreach ($midExams as $midExam) {
             $nonNullMarks = $learner->marks->filter(fn($m) => $m->exam_id === $midExam->id && $m->marks !== null);
             $total = $nonNullMarks->isNotEmpty() ? (int) round($nonNullMarks->sum('marks')) : null;
             $points = $aggregatePoints($learner, $midExam, $subjects, $gradingSystem);
-            $studentIds = \App\Models\Academics\Marks::where('exam_id', $midExam->id)->whereNotNull('marks')->distinct('student_id')->pluck('student_id')->all();
+
+            // Position pool: same-month MID exams across every sibling
+            // section in this student's stream (falls back to just this
+            // section's own exam when no stream is set).
+            if ($streamName && $streamSectionIds->isNotEmpty()) {
+                $poolExamIds = Exam::where('school_id', $schoolId)
+                    ->where('standard_id', $stdLink->standard_id)
+                    ->whereIn('section_id', $streamSectionIds)
+                    ->where('academic_term_id', $midExam->academic_term_id)
+                    ->where('academic_year_id', $midExam->academic_year_id)
+                    ->whereHas('examType', fn($q) => $q->where('code', 'MID'))
+                    ->whereYear('scheduled_at', $midExam->scheduled_at->year)
+                    ->whereMonth('scheduled_at', $midExam->scheduled_at->month)
+                    ->pluck('id');
+            } else {
+                $poolExamIds = collect([$midExam->id]);
+            }
+
+            $studentIds = \App\Models\Academics\Marks::whereIn('exam_id', $poolExamIds)->whereNotNull('marks')->distinct('student_id')->pluck('student_id')->all();
             $ranked = [];
             foreach ($studentIds as $sid) {
-                $ranked[$sid] = (int) round(\App\Models\Academics\Marks::where('student_id', $sid)->where('exam_id', $midExam->id)->whereNotNull('marks')->sum('marks'));
+                $ranked[$sid] = (int) round(\App\Models\Academics\Marks::where('student_id', $sid)->whereIn('exam_id', $poolExamIds)->whereNotNull('marks')->sum('marks'));
             }
             arsort($ranked);
             $pos = 0;
@@ -470,14 +501,13 @@ class ReportCardsController extends Controller
         $eotPoints = $firstEot ? $aggregatePoints($learner, $firstEot, $subjects, $gradingSystem) : null;
         $eotDivision = $eotPoints ? $divisionScale($eotPoints['points']) : '-';
 
-        $streamName = $learner->studentAcademicLatest?->standardLink?->stream ?? null;
         $streamPos = null;
         $streamTotal = null;
         if ($streamName && $firstEot) {
-            $streamIds = [];
             $streamRows = DB::table('student_academics')
                 ->join('standards_link', 'standards_link.id', '=', 'student_academics.standardLink_id')
                 ->where('standards_link.school_id', $schoolId)
+                ->where('standards_link.standard_id', $stdLink->standard_id)
                 ->where('standards_link.stream', $streamName)
                 ->where('student_academics.academic_year_id', $exam->academic_year_id)
                 ->whereNull('student_academics.deleted_at')
