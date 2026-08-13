@@ -34,8 +34,8 @@
             font-weight: 800;
         }
         .band-mark-cell { width: 44px; }
-        .band-school { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 0.2px; }
-        .band-meta { font-size: 7.5px; color: #D6E6FA; margin-top: 1px; }
+        .band-school { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 0.2px; }
+        .band-meta { font-size: 8.5px; color: #D6E6FA; margin-top: 1px; }
         .band-badge-cell { text-align: right; width: 140px; }
         .term-pill {
             display: inline-block;
@@ -52,25 +52,25 @@
 
         .content { padding: 18px 24px 0; }
 
-        .doc-title { font-size: 9px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px; }
+        .doc-title { font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px; }
 
         /* ── Stat tiles ── */
         .tiles-table { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 0 0 18px; }
         .tile { background: #F8FAFC; border-radius: 10px; padding: 10px 14px; }
         .tile-label { font-size: 7px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
-        .tile-value { font-size: 14px; font-weight: 700; color: #0F172A; }
+        .tile-value { font-size: 15px; font-weight: 700; color: #0F172A; }
 
         /* ── Section headings ── */
         .sec-heading-table { width: 100%; border-collapse: collapse; margin: 20px 0 8px; }
         .sec-heading-table td { border: none; padding: 0; vertical-align: middle; }
         .sec-tab { width: 4px; background: #1E6FD9; border-radius: 2px; }
         .sec-tab-eot { background: #0F172A; }
-        .sec-heading-text { padding-left: 8px; font-size: 9.5px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 1.5px; }
+        .sec-heading-text { padding-left: 8px; font-size: 10.5px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 1.5px; }
 
         /* ── Tables — flat, row-separator style ── */
         .flat-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
         .flat-table th {
-            font-size: 7.5px;
+            font-size: 8.5px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -81,7 +81,7 @@
             text-align: center;
         }
         .flat-table td {
-            font-size: 9px;
+            font-size: 10px;
             padding: 6px 6px;
             border: none;
             border-bottom: 1px solid #F1F5F9;
@@ -104,7 +104,7 @@
         .pos-strip-table { width: 100%; border-collapse: collapse; margin: 4px 0 14px; }
         .pos-strip-table td { padding: 9px 14px; background: #EFF6FF; border-radius: 10px; border: none; }
         .pos-strip-table td.pos-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: #1E6FD9; font-weight: 700; }
-        .pos-strip-table td.pos-value { text-align: right; font-size: 12px; font-weight: 800; color: #0F172A; }
+        .pos-strip-table td.pos-value { text-align: right; font-size: 13px; font-weight: 800; color: #0F172A; }
 
         /* ── Comments ── */
         .comments-table { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 8px 0 12px; }
@@ -113,7 +113,7 @@
             padding: 10px 12px;
             background: #F8FAFC;
             border-radius: 10px;
-            font-size: 9px;
+            font-size: 10px;
             min-height: 30px;
             color: #475569;
         }
@@ -126,7 +126,7 @@
         /* ── Footer ── */
         .footer-divider { border-top: 1px solid #E2E8F0; margin: 6px 24px 0; }
         .footer-table { width: 100%; border-collapse: collapse; padding: 10px 24px 0; }
-        .footer-table td { font-size: 7px; color: #94A3B8; padding: 10px 0 0; border: none; vertical-align: top; }
+        .footer-table td { font-size: 8px; color: #94A3B8; padding: 10px 0 0; border: none; vertical-align: top; }
         .footer-table td.right { text-align: right; }
         .sign-block { display: inline-block; text-align: center; width: 80px; }
         .sign-line { border-bottom: 1px solid #CBD5E1; display: block; height: 16px; }

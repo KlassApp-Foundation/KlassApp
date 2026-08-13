@@ -40,7 +40,7 @@
         }
         .school-meta {
             font-family: 'DejaVu Serif', serif;
-            font-size: 8px;
+            font-size: 9px;
             color: #475569;
             margin-top: 2px;
         }
@@ -58,20 +58,20 @@
             border-top: 1px solid #0F172A;
             border-bottom: 1px solid #0F172A;
         }
-        .doc-sub { font-family: 'DejaVu Serif', serif; font-size: 8px; color: #15803D; margin-top: 3px; letter-spacing: 1px; }
+        .doc-sub { font-family: 'DejaVu Serif', serif; font-size: 9px; color: #15803D; margin-top: 3px; letter-spacing: 1px; }
 
         /* ── Particulars ── */
         .particulars { width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #0F172A; }
-        .particulars td { padding: 6px 10px; font-size: 9px; border: none; border-right: 1px solid #CFE8D6; }
+        .particulars td { padding: 6px 10px; font-size: 10px; border: none; border-right: 1px solid #CFE8D6; }
         .particulars td:last-child { border-right: none; }
         .part-label { font-family: 'DejaVu Serif', serif; font-size: 7px; color: #15803D; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
-        .part-value { font-family: 'DejaVu Serif', serif; font-size: 12px; font-weight: 700; color: #0F172A; }
-        .part-value-sm { font-family: 'DejaVu Serif', serif; font-size: 11px; font-weight: 700; color: #0F172A; }
+        .part-value { font-family: 'DejaVu Serif', serif; font-size: 13px; font-weight: 700; color: #0F172A; }
+        .part-value-sm { font-family: 'DejaVu Serif', serif; font-size: 12px; font-weight: 700; color: #0F172A; }
 
         /* ── Section labels ── */
         .section-label {
             font-family: 'DejaVu Serif', serif;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 700;
             color: #0F172A;
             text-transform: uppercase;
@@ -87,7 +87,7 @@
             background: #15803D;
             color: #fff;
             font-family: 'DejaVu Serif', serif;
-            font-size: 7.5px;
+            font-size: 8.5px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -96,7 +96,7 @@
             text-align: center;
         }
         .ledger td {
-            font-size: 9px;
+            font-size: 10px;
             padding: 3.5px 4px;
             border: 1px solid #CFE8D6;
             text-align: center;
@@ -108,7 +108,7 @@
 
         .total-row td {
             font-weight: 800;
-            font-size: 9.5px;
+            font-size: 10.5px;
             background: #DCF5E3 !important;
             border-top: 2px solid #0F172A;
             color: #0F172A;
@@ -117,7 +117,7 @@
         .pos-table { width: 100%; border-collapse: collapse; margin: 2px 0 8px; }
         .pos-table td {
             font-family: 'DejaVu Serif', serif;
-            font-size: 9.5px;
+            font-size: 10.5px;
             font-weight: 700;
             padding: 5px 10px;
             border: 1px solid #0F172A;
@@ -137,7 +137,7 @@
             border: 1px solid #22C55E;
             font-family: 'DejaVu Serif', serif;
             font-style: italic;
-            font-size: 9px;
+            font-size: 10px;
             min-height: 30px;
             color: #334155;
         }
@@ -175,7 +175,7 @@
             color: #0F172A;
             letter-spacing: 1px;
         }
-        .generated-row { text-align: center; margin-top: 5px; font-family: 'DejaVu Serif', serif; font-size: 6.5px; color: #64748B; }
+        .generated-row { text-align: center; margin-top: 5px; font-family: 'DejaVu Serif', serif; font-size: 7.5px; color: #64748B; }
 
         .no-records { text-align: center; padding: 40px; }
     </style>

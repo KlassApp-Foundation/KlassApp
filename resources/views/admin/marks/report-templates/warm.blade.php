@@ -28,8 +28,8 @@
         }
         .header-top-row { text-align: right; margin-bottom: 4px; }
         .header-centered { text-align: center; }
-        .h-school { font-size: 16px; font-weight: 800; color: #7C3A11; margin-top: 6px; }
-        .h-meta { font-size: 8px; color: #A88865; margin-top: 1px; }
+        .h-school { font-size: 17px; font-weight: 800; color: #7C3A11; margin-top: 6px; }
+        .h-meta { font-size: 9px; color: #A88865; margin-top: 1px; }
         .term-chip {
             display: inline-block;
             background: #EBF5E4;
@@ -47,7 +47,7 @@
             border-radius: 10px;
             padding: 6px 14px;
             text-align: center;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 700;
             color: #3F6B1F;
             letter-spacing: 0.5px;
@@ -63,10 +63,10 @@
         .pill-student .pill-label { color: #3B6FA8; }
         .pill-class .pill-label { color: #B5651D; }
         .pill-agg .pill-label { color: #7C3AAF; }
-        .pill-value { font-size: 12px; font-weight: 800; color: #4A3624; }
+        .pill-value { font-size: 13px; font-weight: 800; color: #4A3624; }
 
         /* ── Section headings ── */
-        .sec-heading { margin: 14px 0 6px; font-size: 10px; font-weight: 800; color: #7C3A11; }
+        .sec-heading { margin: 14px 0 6px; font-size: 11px; font-weight: 800; color: #7C3A11; }
         .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #D97706; margin-right: 6px; }
         .sec-heading-eot { color: #3F6B1F; }
         .sec-heading-eot .dot { background: #3F6B1F; }
@@ -76,7 +76,7 @@
         .card-table th {
             background: #D97706;
             color: #fff;
-            font-size: 7.5px;
+            font-size: 8.5px;
             font-weight: 700;
             text-transform: uppercase;
             padding: 6px 4px;
@@ -85,7 +85,7 @@
         }
         .card-table th.eot-th { background: #3F6B1F; }
         .card-table td {
-            font-size: 9px;
+            font-size: 10px;
             padding: 5px 4px;
             border: none;
             border-bottom: 1px solid #F5EBD8;
@@ -120,7 +120,7 @@
 
         .pos-card { margin: 5px 0 12px; background: #FCEEDD; border-radius: 12px; padding: 9px 14px; }
         .pos-card-table { width: 100%; border-collapse: collapse; }
-        .pos-card-table td { border: none; padding: 0; font-size: 9.5px; font-weight: 800; color: #7C3A11; }
+        .pos-card-table td { border: none; padding: 0; font-size: 10.5px; font-weight: 800; color: #7C3A11; }
         .pos-card-table td.right { text-align: right; }
 
         /* ── Comments ── */
@@ -131,7 +131,7 @@
             background: #fff;
             border: 1px solid #F0DFC0;
             border-radius: 10px;
-            font-size: 9px;
+            font-size: 10px;
             min-height: 30px;
             color: #6B543C;
         }
@@ -155,7 +155,7 @@
         .sign-block { display: inline-block; text-align: center; width: 78px; }
         .sign-line { border-bottom: 1px solid #D8C4A0; display: block; height: 16px; }
         .sign-caption { font-size: 6.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #A88865; margin-top: 3px; }
-        .motto-row { text-align: center; margin-top: 8px; font-size: 9px; font-weight: 800; color: #D97706; }
+        .motto-row { text-align: center; margin-top: 8px; font-size: 10px; font-weight: 800; color: #D97706; }
 
         .no-records { text-align: center; padding: 40px; }
     </style>
