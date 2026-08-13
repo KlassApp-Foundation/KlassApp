@@ -257,8 +257,7 @@
                     @endif
                 @endforeach
                 <th>TOTAL</th>
-                <th>POSITION</th>
-                <th>DIVISION</th>
+                @if ($showAgg) <th>POSITION</th> <th>DIVISION</th> @endif
             </tr>
             @foreach ($midExams as $midExam)
                 @php $monthLabel = strtoupper($midExam->scheduled_at->format('F')); @endphp
@@ -281,8 +280,10 @@
                         @endif
                     @endforeach
                     <td><strong>{{ $ms['total'] ?? '-' }}</strong></td>
-                    <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) : '-' }}</td>
+                    @if ($showAgg)
+                    <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) . ' out of ' . ($ms['of'] ?? '-') . ' Pupils' : '-' }}</td>
                     <td><strong>{{ $ms['division'] ?? '-' }}</strong></td>
+                    @endif
                 </tr>
             @endforeach
         </table>
@@ -339,11 +340,13 @@
                 @if ($showAgg) <td><strong>{{ $grade['agg'] ?? '-' }}</strong></td> @endif
                 <td colspan="2"></td>
             </tr>
+            @if ($showAgg)
             <tr class="div-row">
                 <td class="left"><strong>DIVISION</strong></td>
                 <td><strong>{{ $eotDivision }}</strong></td>
-                <td colspan="{{ $showAgg ? 4 : 3 }}"></td>
+                <td colspan="4"></td>
             </tr>
+            @endif
         </table>
 
         @if (!empty($myPos) && !$isNursery)

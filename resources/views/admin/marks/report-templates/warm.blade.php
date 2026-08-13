@@ -35,8 +35,10 @@
             border-bottom: 1px solid #F0DFC0;
         }
         .header-top-row { text-align: right; margin-bottom: 8px; }
-        .header-centered { text-align: center; }
-        .h-school { font-size: 22px; font-weight: 800; color: #7C3A11; margin-top: 10px; }
+        .hdr-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+        .hdr-logo { width: 88px; text-align: left; vertical-align: middle; }
+        .hdr-details { text-align: left; padding-left: 10px; vertical-align: middle; }
+        .h-school { font-size: 22px; font-weight: 800; color: #7C3A11; }
         .h-meta { font-size: 12px; font-weight: 700; color: #A88865; margin-top: 2px; }
         .h-meta-tel { font-size: 8.5px; }
         .term-chip {
@@ -218,19 +220,25 @@
 
 <div class="header-card">
 
-    {{-- ═══ HEADER (centered letterhead, edge-to-edge) ═══ --}}
+    {{-- ═══ HEADER (logo left, details right) ═══ --}}
     <div class="header-top-row">
         <span class="term-chip">{{ $termName }}</span>
     </div>
-    <div class="header-centered">
-        @if (!empty($logoPath))
-        <img src="{{ $logoPath }}" style="width: 76px; height: auto;" alt="Logo">
-        @endif
-        <div class="h-school">{{ $learner->school->name }}</div>
-        <div class="h-meta">(Nursery And Primary, Day And Boarding)</div>
-        <div class="h-meta">P.O Box 283 - Kabale - UGA</div>
-        <div class="h-meta h-meta-tel">Tel: +256782255758 / +256784119149 / +256704301646</div>
-    </div>
+    <table class="hdr-table">
+        <tr>
+            <td class="hdr-logo">
+                @if (!empty($logoPath))
+                <img src="{{ $logoPath }}" style="width: 76px; height: auto;" alt="Logo">
+                @endif
+            </td>
+            <td class="hdr-details">
+                <div class="h-school">{{ $learner->school->name }}</div>
+                <div class="h-meta">(Nursery And Primary, Day And Boarding)</div>
+                <div class="h-meta">P.O Box 283 - Kabale - UGA</div>
+                <div class="h-meta h-meta-tel">Tel: +256782255758 / +256784119149 / +256704301646</div>
+            </td>
+        </tr>
+    </table>
     <div class="ribbon">PROGRESSIVE REPORT</div>
 </div>
 
@@ -292,8 +300,7 @@
                     @endif
                 @endforeach
                 <th>TOTAL</th>
-                <th>POSITION</th>
-                <th>DIVISION</th>
+                @if ($showAgg) <th>POSITION</th> <th>DIVISION</th> @endif
             </tr>
             @foreach ($midExams as $midExam)
                 @php $monthLabel = strtoupper($midExam->scheduled_at->format('F')); @endphp
@@ -316,8 +323,10 @@
                         @endif
                     @endforeach
                     <td><strong>{{ $ms['total'] ?? '-' }}</strong></td>
-                    <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) : '-' }}</td>
+                    @if ($showAgg)
+                    <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) . ' out of ' . ($ms['of'] ?? '-') . ' Pupils' : '-' }}</td>
                     <td><strong>{{ $ms['division'] ?? '-' }}</strong></td>
+                    @endif
                 </tr>
             @endforeach
         </table>
@@ -374,11 +383,13 @@
                 @if ($showAgg) <td><strong>{{ $grade['agg'] ?? '-' }}</strong></td> @endif
                 <td colspan="2"></td>
             </tr>
+            @if ($showAgg)
             <tr class="div-row">
                 <td class="left"><strong>DIVISION</strong></td>
                 <td><strong>{{ $eotDivision }}</strong></td>
-                <td colspan="{{ $showAgg ? 4 : 3 }}"></td>
+                <td colspan="4"></td>
             </tr>
+            @endif
         </table>
 
         @if (!empty($myPos) && !$isNursery)
