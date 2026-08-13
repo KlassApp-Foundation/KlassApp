@@ -36,7 +36,7 @@
         .band-mark-cell { width: 44px; }
         .band-school { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 0.2px; }
         .band-meta { font-size: 8.5px; color: #D6E6FA; margin-top: 1px; }
-        .band-meta-tel { font-size: 7px; }
+        .band-meta-tel { font-size: 6px; }
         .band-badge-cell { text-align: right; width: 140px; }
         .term-pill {
             display: inline-block;

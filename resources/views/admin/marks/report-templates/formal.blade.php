@@ -87,7 +87,7 @@
             color: #475569;
             margin-top: 3px;
         }
-        .school-meta-tel { font-size: 9px; }
+        .school-meta-tel { font-size: 6.5px; }
 
         .doc-title-wrap { text-align: center; margin: 8px 0 14px; }
         .doc-title {
