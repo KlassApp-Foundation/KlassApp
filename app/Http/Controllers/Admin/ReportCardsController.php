@@ -599,8 +599,10 @@ class ReportCardsController extends Controller
         $helper = app(\App\Services\StudentReportHelperService::class);
         $svc = app(\App\Services\ReportCardCommentService::class);
         $totalLearners = \App\Models\Academics\Marks::where('exam_id', $exam->id)->distinct('student_id')->count();
+        $positionMap = $this->computePositionMap($exam, $schoolId);
+        $myPos = $positionMap[$learner->id] ?? 0;
 
-        $pdf = self::generatePdf($learner->id, $exam, $stdLink, $schoolId, $helper, $svc, $totalLearners, 0, $template);
+        $pdf = self::generatePdf($learner->id, $exam, $stdLink, $schoolId, $helper, $svc, $totalLearners, $myPos, $template);
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
