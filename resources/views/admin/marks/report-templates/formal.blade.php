@@ -59,6 +59,7 @@
         .sig-card-table td { width: 50%; vertical-align: top; padding: 2px 10px; }
         .sig-card-table td + td { border-left: 1px solid #CFE8D6; }
         .label-dot { display: inline-block; width: 6px; height: 6px; background: #15803D; border-radius: 50%; margin-right: 5px; }
+        .comments-label { font-family: 'DejaVu Serif', serif; font-size: 8.5px; color: #15803D; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; font-weight: 700; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
         .sig-row { text-align: left; margin-top: 6px; border-top: 1px dashed #CFE8D6; padding-top: 6px; }
         .sig-dash { letter-spacing: 3px; color: #0F172A; }
@@ -189,7 +190,6 @@
         .comments-table td { width: 50%; padding: 0 4px; vertical-align: top; border: none; }
         .comments-table td:first-child { padding-left: 0; }
         .comments-table td:last-child { padding-right: 0; }
-        .comments-label-inline { font-style: normal; font-weight: 700; color: #15803D; text-transform: uppercase; letter-spacing: 1px; margin-right: 5px; }
         .comments-box {
             padding: 0;
             font-family: 'DejaVu Serif', serif;
@@ -450,12 +450,14 @@
         <table class="sig-card-table">
             <tr>
                 <td>
-                    <div class="comments-box"><span class="comments-label-inline"><span class="label-dot"></span>CLASS TEACHER</span>&nbsp;{{ $teacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">Class Teacher</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="comments-label"><span class="label-dot"></span>CLASS TEACHER COMMENT</div>
+                    <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
+                    <div class="sig-row"><span class="sig-caption">CLASS TEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
                 <td>
-                    <div class="comments-box"><span class="comments-label-inline"><span class="label-dot"></span>HEAD TEACHER</span>&nbsp;{{ $headTeacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">HM Sign &amp; Stamp</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="comments-label"><span class="label-dot"></span>HEAD TEACHER COMMENT</div>
+                    <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
+                    <div class="sig-row"><span class="sig-caption">HEAD TEACHER SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
             </tr>
         </table>
