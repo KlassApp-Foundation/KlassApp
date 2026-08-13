@@ -57,8 +57,6 @@
         .sig-card { border: 1px solid #22C55E; padding: 8px 10px; margin-bottom: 8px; }
         .sig-card-table { width: 100%; border-collapse: collapse; }
         .sig-card-table td { width: 50%; vertical-align: top; padding: 0 6px; }
-        .div-row td { font-weight: 700; font-size: 9.5px; background: #F0FBF4; border-top: 1px solid #0F172A; }
-        .pos-value { color: #15803D; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
         .sig-row { text-align: center; }
         .sig-dash { letter-spacing: 3px; color: #0F172A; }
@@ -82,7 +80,7 @@
            them. */
         .hdr-table { border-collapse: collapse; margin: 0 auto 10px; }
         .hdr-logo { text-align: left; vertical-align: middle; padding-right: 16px; }
-        .hdr-details { text-align: left; vertical-align: middle; }
+        .hdr-details { text-align: center; vertical-align: middle; }
         .school-name {
             font-family: 'DejaVu Serif', serif;
             font-size: 24px;
@@ -169,17 +167,18 @@
             color: #0F172A;
         }
 
-        .pos-table { width: 100%; border-collapse: collapse; margin: 2px 0 8px; }
-        .pos-table td {
+        .pos-banner {
+            margin: 2px 0 8px;
+            padding: 7px 12px;
             font-family: 'DejaVu Serif', serif;
             font-size: 10.5px;
             font-weight: 700;
-            padding: 5px 10px;
             border: 1px solid #0F172A;
             background: #F0FBF4;
             color: #0F172A;
+            text-align: center;
         }
-        .pos-table td.pos-label { text-transform: uppercase; letter-spacing: 1px; width: 50%; }
+        .pos-sep { color: #22C55E; padding: 0 6px; }
 
         /* ── Comments ── */
         .comments-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
@@ -240,10 +239,10 @@
 @if (!is_null($learner))
 
 @php
+    $roman = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V', '6' => 'VI'];
     $termRaw = $learner->marks->first()?->exam?->academicTerm?->name ?? '';
     $termYear = $learner->marks->first()?->exam?->academicTerm?->academicYear?->name ?? '';
     if (preg_match('/^(.*?)\s*(\d+)\s*$/', trim($termRaw), $m)) {
-        $roman = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V', '6' => 'VI'];
         $termName = strtoupper(trim($m[1])) . ' ' . ($roman[$m[2]] ?? $m[2]);
     } else {
         $termName = strtoupper($termRaw);
@@ -251,7 +250,8 @@
     if ($termName !== '' && $termYear !== '') {
         $termName .= ' ' . $termYear;
     }
-    $termNumeral = preg_match('/\D*(\d+)/', $termRaw, $tmm) ? $tmm[1] : '';
+    $termNumeralArabic = preg_match('/\D*(\d+)/', $termRaw, $tmm) ? $tmm[1] : '';
+    $termNumeral = $termNumeralArabic !== '' ? ($roman[$termNumeralArabic] ?? $termNumeralArabic) : '';
     $ordinal = function ($n) {
         $n = (int) $n;
         $j = $n % 100;
@@ -384,7 +384,7 @@
                 <th>Subject</th>
                 <th style="width:8%">Full Mark</th>
                 <th style="width:8%">Mark Gained</th>
-                @if ($showAgg) <th style="width:8%">AGG</th> @endif
+                @if ($showAgg) <th style="width:10%">AGG</th> @endif
                 <th>Comment</th>
                 <th style="width:10%">TR Initials</th>
             </tr>
@@ -425,31 +425,18 @@
                 <td><strong>TOTAL</strong></td>
                 <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
                 <td><strong>{{ $total }}</strong></td>
-                @if ($showAgg) <td><strong>{{ $grade['agg'] ?? '-' }}</strong></td> @endif
+                @if ($showAgg) <td><strong>{{ $eotDivision }} &middot; {{ $grade['agg'] ?? '-' }}</strong></td> @endif
                 <td colspan="2"></td>
             </tr>
-            @if ($showAgg)
-            <tr class="div-row">
-                <td><strong>DIVISION</strong></td>
-                <td><strong>{{ $eotDivision }}</strong></td>
-                <td colspan="4"></td>
-            </tr>
-            @endif
         </table>
 
         @if (!empty($myPos) && !$isNursery)
-        <table class="pos-table">
-            <tr>
-                <td class="pos-label">POSITION IN CLASS</td>
-                <td class="pos-value"><strong>{{ $myPos ? $ordinal($myPos) : '-' }} out of {{ $totalLearners ?? '-' }} Pupils</strong></td>
-            </tr>
+        <div class="pos-banner">
+            Position in Class: {{ $myPos ? $ordinal($myPos) : '-' }} out of {{ $totalLearners ?? '-' }} Pupils
             @if ($streamName)
-            <tr>
-                <td class="pos-label">POSITION IN STREAM</td>
-                <td class="pos-value"><strong>{{ $streamPos ? $ordinal($streamPos) : '-' }} out of {{ $streamTotal ?? '-' }} Pupils</strong></td>
-            </tr>
+            <span class="pos-sep">&middot;</span> Position in Stream: {{ $streamPos ? $ordinal($streamPos) : '-' }} out of {{ $streamTotal ?? '-' }} Pupils
             @endif
-        </table>
+        </div>
         @if ($nextTerm)
         <div class="next-term">Next term begins on {{ $nextTerm->starts_on->format('d/m/Y') }}</div>
         @endif
