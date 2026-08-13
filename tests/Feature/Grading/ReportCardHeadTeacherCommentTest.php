@@ -116,4 +116,30 @@ class ReportCardHeadTeacherCommentTest extends TestCase
         $this->assertSame('Boundary phrase.', $svc->headTeacherCommentFor(600, 'primary_lower', 2, 2, 'x'));
         $this->assertSame('', $svc->headTeacherCommentFor(601, 'primary_lower', 3, 3, 'x'));
     }
+
+    /** @test */
+    public function real_bank_is_populated_and_never_collides_with_class_comments(): void
+    {
+        $svc = new ReportCardCommentService;
+
+        foreach (['lower', 'upper'] as $group) {
+            $bands = config("report_card_head_comments.$group");
+            $this->assertCount(6, $bands);
+
+            foreach ($bands as $band) {
+                $this->assertArrayHasKey('min', $band);
+                $this->assertArrayHasKey('max', $band);
+                $this->assertNotEmpty($band['comments']);
+            }
+        }
+
+        foreach (['primary_lower' => 580, 'primary_upper' => 380] as $standard => $score) {
+            $class = $svc->commentFor($score, $standard, 2649, 21);
+            $head = $svc->headTeacherCommentFor($score, $standard, 2649, 21, $class);
+
+            $this->assertNotEmpty($class);
+            $this->assertNotEmpty($head);
+            $this->assertNotSame($class, $head);
+        }
+    }
 }

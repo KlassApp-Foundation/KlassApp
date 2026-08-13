@@ -17,37 +17,37 @@
             background: #FFFBF2;
         }
 
-        .page { padding: 14px 18px; background: #FFFBF2; }
+        .page { padding: 16px 22px; background: #FFFBF2; }
 
         /* ── Header card ── */
         .header-card {
             background: #fff;
             border-radius: 14px;
-            padding: 12px 16px;
+            padding: 16px 22px;
             border: 1px solid #F0DFC0;
         }
-        .header-top-row { text-align: right; margin-bottom: 4px; }
+        .header-top-row { text-align: right; margin-bottom: 8px; }
         .header-centered { text-align: center; }
-        .h-school { font-size: 17px; font-weight: 800; color: #7C3A11; margin-top: 6px; }
-        .h-meta { font-size: 9px; color: #A88865; margin-top: 1px; }
+        .h-school { font-size: 22px; font-weight: 800; color: #7C3A11; margin-top: 10px; }
+        .h-meta { font-size: 10px; color: #A88865; margin-top: 2px; }
         .term-chip {
             display: inline-block;
             background: #EBF5E4;
             color: #3F6B1F;
-            font-size: 8px;
+            font-size: 9px;
             font-weight: 700;
-            padding: 4px 11px;
+            padding: 6px 16px;
             border-radius: 20px;
         }
         .year-chip { display: block; font-size: 7.5px; color: #A88865; margin-top: 3px; }
 
         .ribbon {
-            margin-top: 10px;
+            margin-top: 14px;
             background: #EBF5E4;
             border-radius: 10px;
-            padding: 6px 14px;
+            padding: 9px 24px;
             text-align: center;
-            font-size: 10px;
+            font-size: 12px;
             font-weight: 700;
             color: #3F6B1F;
             letter-spacing: 0.5px;
@@ -184,7 +184,7 @@
         </div>
         <div class="header-centered">
             @if (!empty($logoPath))
-            <img src="{{ $logoPath }}" style="width: 56px; height: auto;" alt="Logo">
+            <img src="{{ $logoPath }}" style="width: 76px; height: auto;" alt="Logo">
             @endif
             <div class="h-school">{{ $learner->school->name }}</div>
             <div class="h-meta">(Nursery And Primary, Day And Boarding)</div>

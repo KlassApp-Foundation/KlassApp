@@ -24,41 +24,41 @@
 
         .frame-inner {
             border: 1px solid #22C55E;
-            padding: 14px 18px 10px;
+            padding: 18px 22px 12px;
         }
 
         /* ── Header (centered letterhead) ── */
-        .header-block { text-align: center; margin-bottom: 6px; }
+        .header-block { text-align: center; margin-bottom: 12px; }
         .school-name {
             font-family: 'DejaVu Serif', serif;
-            font-size: 19px;
+            font-size: 24px;
             font-weight: 700;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             color: #0F172A;
             text-transform: uppercase;
-            margin-top: 6px;
+            margin-top: 10px;
         }
         .school-meta {
             font-family: 'DejaVu Serif', serif;
-            font-size: 9px;
+            font-size: 10px;
             color: #475569;
-            margin-top: 2px;
+            margin-top: 3px;
         }
 
-        .doc-title-wrap { text-align: center; margin: 4px 0 10px; }
+        .doc-title-wrap { text-align: center; margin: 8px 0 14px; }
         .doc-title {
             display: inline-block;
             font-family: 'DejaVu Serif', serif;
-            font-size: 12px;
+            font-size: 16px;
             font-weight: 700;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             color: #0F172A;
             text-transform: uppercase;
-            padding: 4px 22px;
+            padding: 7px 36px;
             border-top: 1px solid #0F172A;
             border-bottom: 1px solid #0F172A;
         }
-        .doc-sub { font-family: 'DejaVu Serif', serif; font-size: 9px; color: #15803D; margin-top: 3px; letter-spacing: 1px; }
+        .doc-sub { font-family: 'DejaVu Serif', serif; font-size: 10px; color: #15803D; margin-top: 5px; letter-spacing: 1px; }
 
         /* ── Particulars ── */
         .particulars { width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #0F172A; }
@@ -189,7 +189,7 @@
     {{-- ═══ HEADER (centered letterhead) ═══ --}}
     <div class="header-block">
         @if (!empty($logoPath))
-        <img src="{{ $logoPath }}" style="width: 60px; height: auto;" alt="Logo">
+        <img src="{{ $logoPath }}" style="width: 84px; height: auto;" alt="Logo">
         @endif
         <div class="school-name">{{ $learner->school->name }}</div>
         <div class="school-meta">(Nursery And Primary, Day And Boarding)</div>
