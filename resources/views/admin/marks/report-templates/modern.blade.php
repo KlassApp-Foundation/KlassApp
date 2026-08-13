@@ -123,7 +123,7 @@
         .sig-table { width: 100%; border-collapse: collapse; margin: 4px 0 10px; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
         .sig-row { text-align: center; }
-        .sig-dash { display: inline-block; width: 130px; border-bottom: 1px solid #CBD5E1; height: 14px; vertical-align: bottom; }
+        .sig-dash { letter-spacing: 3px; color: #334155; }
         .sig-caption { font-size: 8.5px; text-transform: uppercase; letter-spacing: 1px; color: #94A3B8; font-weight: 700; }
 
         /* ── Grading system ── */
@@ -347,8 +347,8 @@
     {{-- ═══ SIGNATURES ═══ --}}
     <table class="sig-table">
         <tr>
-            <td><div class="sig-row"><span class="sig-caption">Class Teacher</span>&nbsp;<span class="sig-dash"></span></div></td>
-            <td><div class="sig-row"><span class="sig-caption">Head Teacher</span>&nbsp;<span class="sig-dash"></span></div></td>
+            <td><div class="sig-row"><span class="sig-caption">Class Teacher</span>&nbsp;<span class="sig-dash">____________________</span></div></td>
+            <td><div class="sig-row"><span class="sig-caption">Head Teacher</span>&nbsp;<span class="sig-dash">____________________</span></div></td>
         </tr>
     </table>
 
