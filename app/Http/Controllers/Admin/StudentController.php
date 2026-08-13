@@ -87,7 +87,18 @@ class StudentController extends Controller
 
         $standardFilter = $request->input('standard');
         if ($standardFilter) {
-            $query->where('latest_sa.standardLink_id', $standardFilter);
+            $selectedLink = StandardLink::find($standardFilter);
+            if ($selectedLink) {
+                // A class can have multiple stream links (e.g. East/West) —
+                // filter by standard + section so every stream is included.
+                $query->where('standards_link.standard_id', $selectedLink->standard_id)
+                      ->where('standards_link.section_id', $selectedLink->section_id);
+            }
+        }
+
+        $streamFilter = $request->input('stream');
+        if ($streamFilter) {
+            $query->where('standards_link.stream', $streamFilter);
         }
 
         $statusFilter = $request->input('status');
@@ -117,6 +128,7 @@ class StudentController extends Controller
             'standardLinks' => $standardLinks,
             'search' => $search,
             'standardFilter' => $standardFilter,
+            'streamFilter' => $streamFilter,
             'statusFilter' => $statusFilter,
         ]);
     }
