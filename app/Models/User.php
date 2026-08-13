@@ -811,6 +811,45 @@ public function scopeStudents($query)
         return $this->userprofile->firstname.' '.$this->userprofile->lastname;
     }
 
+    /**
+     * Display name shown across class lists and report cards: "LASTNAME FIRSTNAME".
+     *
+     * Prefers the authoritative userprofile first/last split, falls back to parsing
+     * users.name, and strips trailing numeric suffixes from every token
+     * (e.g. "nuwagira darius5373" -> "DARIUS NUWAGIRA", "name-2" -> "NAME").
+     */
+    public function getDisplayNameAttribute()
+    {
+        $profile = $this->userprofile;
+
+        if ($profile && trim((string) $profile->firstname) !== '' && trim((string) $profile->lastname) !== '') {
+            return trim($this->cleanDisplayToken($profile->lastname).' '.$this->cleanDisplayToken($profile->firstname));
+        }
+
+        $tokens = preg_split('/\s+/', trim((string) $this->name), -1, PREG_SPLIT_NO_EMPTY);
+        $tokens = array_values(array_filter(array_map([$this, 'cleanDisplayToken'], $tokens)));
+
+        if (count($tokens) === 0) {
+            return '';
+        }
+
+        if (count($tokens) === 1) {
+            return $tokens[0];
+        }
+
+        $last = array_pop($tokens);
+
+        return trim($last.' '.implode(' ', $tokens));
+    }
+
+    /**
+     * Strip trailing digits and separator junk from a single name token, then upper-case it.
+     */
+    private function cleanDisplayToken($token)
+    {
+        return mb_strtoupper((string) preg_replace('/[\d\s\-]+$/', '', trim((string) $token)));
+    }
+
     public function standardLink()
     {
         return $this->hasOne('App\Models\StandardLink','class_teacher_id','id');

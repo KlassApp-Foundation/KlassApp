@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Report Card - {{ $user->name }}</title>
+    <title>Report Card - {{ $user->displayName }}</title>
     <style>
         body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #1E293B; }
         .header { text-align: center; margin-bottom: 24px; }
@@ -21,7 +21,7 @@
 <body>
     <div class="header">
         <h1>Academic Record</h1>
-        <p>{{ $user->name }} · {{ $user->email }}</p>
+        <p>{{ $user->displayName }} · {{ $user->email }}</p>
     </div>
 
     @if($marks->isEmpty())

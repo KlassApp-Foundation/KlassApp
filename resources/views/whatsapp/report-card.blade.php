@@ -26,7 +26,7 @@
     </div>
 
     <table class="info-table">
-        <tr><td class="info-label">Student Name:</td><td>{{ $student->name }}</td></tr>
+        <tr><td class="info-label">Student Name:</td><td>{{ $student->displayName }}</td></tr>
         <tr><td class="info-label">Class:</td><td>{{ $student->studentAcademic?->first()?->standardLink?->standard?->name ?? $student->studentAcademic?->standardLink?->standard?->name ?? 'N/A' }}</td></tr>
         <tr><td class="info-label">Term:</td><td>{{ $term->name ?? 'N/A' }}</td></tr>
     </table>

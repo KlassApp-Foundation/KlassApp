@@ -176,7 +176,7 @@
             </div>
             <div class="w-full lg:w-4/5 md:w-4/5 lg:mx-8 md:mx-8">
                 <div class="flex lg:items-center lg:justify-between flex-col lg:flex-row relative">
-                    <h3 class="font-semibold text-3xl text-gray-700">{{ ucwords($user->FullName) }}</h3>
+                    <h3 class="font-semibold text-3xl text-gray-700">{{ ucwords($user->displayName) }}</h3>
                      <div onclick="showsidebar('student-profile-menu')" class="bg-white rounded-full w-6 h-6 ml-auto flex items-center justify-center cursor-pointer">
                      <svg id="Capa_1" enable-background="new 0 0 515.555 515.555" height="512" viewBox="0 0 515.555 515.555" width="512" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 fill-current text-gray-600"><path d="m303.347 18.875c25.167 25.167 25.167 65.971 0 91.138s-65.971 25.167-91.138 0-25.167-65.971 0-91.138c25.166-25.167 65.97-25.167 91.138 0"></path><path d="m303.347 212.209c25.167 25.167 25.167 65.971 0 91.138s-65.971 25.167-91.138 0-25.167-65.971 0-91.138c25.166-25.167 65.97-25.167 91.138 0"></path><path d="m303.347 405.541c25.167 25.167 25.167 65.971 0 91.138s-65.971 25.167-91.138 0-25.167-65.971 0-91.138c25.166-25.167 65.97-25.167 91.138 0"></path></svg>
                      </div>

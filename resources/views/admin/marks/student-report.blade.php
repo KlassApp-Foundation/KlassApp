@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Report Card — {{ $learner->userprofile->firstname ?? 'Student' }} {{ $learner->userprofile->lastname ?? '' }}</title>
+    <title>Report Card — {{ $learner->displayName ?: 'Student' }}</title>
     <style>
         @page { margin: 0; }
 
@@ -167,7 +167,7 @@
         <tr>
             <td>
                 <div class="info-label">Student</div>
-                <div class="info-value-lg">{{ $learner->userprofile->firstname }} {{ $learner->userprofile->lastname }}</div>
+                <div class="info-value-lg">{{ $learner->displayName }}</div>
             </td>
             <td>
                 <div class="info-label">Class</div>

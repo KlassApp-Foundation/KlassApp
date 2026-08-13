@@ -41,7 +41,7 @@ tr:nth-child(even) {
   </tr>
   @foreach($users as $user)
   <tr>
-    <td>{{$user->FullName}}</td>
+    <td>{{$user->displayName}}</td>
     <td>{{$user->studentAcademicLatest->standardLink->StandardSection}}</td>
     <td> @if(count($user->parents)>0){{$user->parents[0]['userParent']['userprofile']['firstname'].' '.$user->parents[0]['userParent']['userprofile']['lastname']}}@endif</td>
     <td>@if(count($user->parents)>0){{$user->parents[0]['userParent']['mobile_no']}}@endif</td> 
