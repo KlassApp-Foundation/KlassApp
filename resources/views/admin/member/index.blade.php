@@ -37,6 +37,19 @@
                     </select>
                 </div>
 
+                {{-- Stream Filter --}}
+                <div class="w-full sm:w-36">
+                    <label class="ds-label">Stream</label>
+                    <select name="stream" class="ds-form-select">
+                        <option value="">All Streams</option>
+                        @foreach(['EAST', 'WEST', 'A', 'B'] as $stream)
+                            <option value="{{ $stream }}" {{ ($streamFilter ?? '') === $stream ? 'selected' : '' }}>
+                                {{ $stream }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 {{-- Status Filter --}}
                 <div class="w-full sm:w-40">
                     <label class="ds-label">Status</label>
@@ -53,7 +66,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         Filter
                     </button>
-                    @if($search || $standardFilter || $statusFilter)
+                    @if($search || $standardFilter || $streamFilter || $statusFilter)
                         <a href="{{ url('/admin/students') }}" class="ds-btn ds-btn-ghost text-sm">Clear</a>
                     @endif
                 </div>
@@ -67,7 +80,7 @@
             <div class="ds-empty-state-icon">👤</div>
             <p class="ds-empty-state-title">No students found</p>
             <p class="ds-empty-state-desc">Try adjusting your search or filter criteria.</p>
-            @if($search || $standardFilter || $statusFilter)
+            @if($search || $standardFilter || $streamFilter || $statusFilter)
                 <a href="{{ url('/admin/students') }}" class="text-blue-600 text-sm mt-3 inline-block hover:underline">Clear all filters</a>
             @endif
         </div>
