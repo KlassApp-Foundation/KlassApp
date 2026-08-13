@@ -171,7 +171,8 @@
             margin: 2px 0 8px;
             padding: 7px 12px;
             font-family: 'DejaVu Serif', serif;
-            font-size: 10.5px;
+            font-size: 13px;
+            font-style: italic;
             font-weight: 700;
             border: 1px solid #0F172A;
             background: #F0FBF4;
@@ -195,7 +196,7 @@
         .comments-table td:last-child { padding-right: 0; }
         .comments-label-inline { font-style: normal; font-weight: 700; color: #15803D; text-transform: uppercase; letter-spacing: 1px; margin-right: 5px; }
         .comments-box {
-            padding: 7px 9px;
+            padding: 0;
             font-family: 'DejaVu Serif', serif;
             font-style: italic;
             font-size: 10px;

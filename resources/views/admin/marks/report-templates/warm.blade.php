@@ -140,7 +140,8 @@
             border-radius: 12px;
             padding: 9px 14px;
             text-align: center;
-            font-size: 10.5px;
+            font-size: 13px;
+            font-style: italic;
             font-weight: 800;
             color: #7C3A11;
         }
@@ -157,7 +158,7 @@
         .comments-table { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 10px 0 12px; }
         .comments-label-inline { font-size: 8.5px; color: #A88865; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
         .comments-box {
-            padding: 9px 11px;
+            padding: 0;
             font-size: 10px;
             height: 60px;
             overflow: hidden;
