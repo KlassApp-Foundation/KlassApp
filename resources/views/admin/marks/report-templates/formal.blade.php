@@ -75,9 +75,14 @@
         }
 
         /* ── Header (logo left, details right) ── */
-        .hdr-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .hdr-logo { width: 96px; text-align: left; vertical-align: middle; }
-        .hdr-details { text-align: center; padding-left: 10px; vertical-align: middle; }
+        /* Logo + details form one lockup, shrink-wrapped and centered as a
+           unit (not stretched edge-to-edge) — the logo sits immediately
+           left of the text rather than pinned to the page margin with the
+           text centered independently, which left a lopsided gap between
+           them. */
+        .hdr-table { border-collapse: collapse; margin: 0 auto 10px; }
+        .hdr-logo { text-align: left; vertical-align: middle; padding-right: 16px; }
+        .hdr-details { text-align: left; vertical-align: middle; }
         .school-name {
             font-family: 'DejaVu Serif', serif;
             font-size: 24px;
@@ -188,6 +193,7 @@
             font-style: italic;
             font-size: 10px;
             height: 56px;
+            overflow: hidden;
             color: #334155;
         }
 
@@ -364,7 +370,7 @@
                         @endif
                     @endforeach
                     <td><strong>{{ $ms['total'] ?? '-' }}</strong></td>
-                    <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) . ' out of ' . ($ms['of'] ?? '-') . ' Pupils' : '-' }}</td>
+                    <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) : '-' }}</td>
                     @if ($showAgg) <td><strong>{{ $ms['division'] ?? '-' }}</strong></td> @endif
                 </tr>
             @endforeach
