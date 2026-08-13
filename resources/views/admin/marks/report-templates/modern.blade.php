@@ -118,6 +118,12 @@
             color: #475569;
         }
 
+        .next-term { text-align: center; font-size: 10px; font-weight: 700; color: #1E6FD9; margin: 6px 0 10px; }
+        .sig-table { width: 100%; border-collapse: collapse; margin: 4px 0 10px; }
+        .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
+        .sig-caption { font-size: 8.5px; text-transform: uppercase; letter-spacing: 1px; color: #94A3B8; font-weight: 700; }
+        .sig-line { border-bottom: 1px solid #CBD5E1; height: 22px; }
+
         /* ── Grading system ── */
         .grades-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
         .grades-table th { font-size: 7px; padding: 4px 2px; color: #94A3B8; border: none; border-bottom: 1px solid #E2E8F0; text-transform: uppercase; font-weight: 700; text-align: center; }
@@ -183,7 +189,7 @@
             <td style="width:25%;">
                 <div class="tile">
                     <div class="tile-label">Aggregate</div>
-                    <div class="tile-value">@if(!empty($isNursery)) &mdash; @else {{ $grade['agg'] ?? '&mdash;' }} @endif</div>
+                    <div class="tile-value">@if(!empty($isNursery)) - @else {{ $grade['agg'] ?? '-' }} @endif</div>
                 </div>
             </td>
         </tr>
@@ -197,8 +203,8 @@
                 @php $a = $nurseryAssessments->get($domain); @endphp
                 <tr>
                     <td class="left">{{ $domain }}</td>
-                    <td><strong>{{ $a?->rating ?? '&mdash;' }}</strong></td>
-                    <td>{{ $a?->remarks ?? '&mdash;' }}</td>
+                    <td><strong>{{ $a?->rating ?? '-' }}</strong></td>
+                    <td>{{ $a?->remarks ?? '-' }}</td>
                 </tr>
             @endforeach
         </table>
@@ -230,7 +236,7 @@
                                     $midGrade = $g ? 'D' . $g->points : '-';
                                 }
                             @endphp
-                            <td>{{ $midMark ? floor($midMark->marks) : '&mdash;' }}</td>
+                            <td>{{ $midMark ? floor($midMark->marks) : '-' }}</td>
                             <td>{{ $midGrade }}</td>
                         @endif
                     @endforeach
@@ -265,7 +271,7 @@
                     }
                     $teacherLink = \App\Models\Teacherlink::where('standardLink_id', $stdLink->id)
                         ->where('subject_id', $subject->id)->first();
-                    $teacherName = '&mdash;';
+                    $teacherName = '-';
                     if ($teacherLink && $teacherLink->teacher) {
                         $fn = $teacherLink->teacher->userprofile->firstname ?? '';
                         $ln = $teacherLink->teacher->userprofile->lastname ?? '';
@@ -277,7 +283,7 @@
                 <tr>
                     <td class="left">{{ $subject->name }}</td>
                     <td>100</td>
-                    <td>{{ $eotMark ? floor($eotMark->marks) : '&mdash;' }}</td>
+                    <td>{{ $eotMark ? floor($eotMark->marks) : '-' }}</td>
                     <td>{{ $eotGrade }}</td>
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>
@@ -287,7 +293,7 @@
                 <td class="left"><strong>TOTAL</strong></td>
                 <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
                 <td><strong>{{ $total }}</strong></td>
-                <td><strong>{{ $grade['agg'] ?? '&mdash;' }}</strong></td>
+                <td><strong>{{ $grade['agg'] ?? '-' }}</strong></td>
                 <td colspan="2"></td>
             </tr>
         </table>
@@ -296,7 +302,7 @@
         <table class="pos-strip-table">
             <tr>
                 <td class="pos-label">POSITION</td>
-                <td class="pos-value">{{ $myPos ?? '&mdash;' }} of {{ $totalLearners ?? '&mdash;' }}</td>
+                <td class="pos-value">{{ $myPos ?? '-' }} of {{ $totalLearners ?? '-' }}</td>
             </tr>
         </table>
         @endif
@@ -308,12 +314,24 @@
         <tr>
             <td style="width:50%;">
                 <div class="comments-label">Class Teacher</div>
-                <div class="comments-box">{{ $teacherComment ?? '&mdash;' }}</div>
+                <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
             </td>
             <td style="width:50%;">
                 <div class="comments-label">Head Teacher</div>
-                <div class="comments-box">{{ $headTeacherComment ?? '&mdash;' }}</div>
+                <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
             </td>
+        </tr>
+    </table>
+
+    @if ($nextTerm)
+    <div class="next-term">Next Term Begins: {{ $nextTerm->starts_on->format('d/m/Y') }}</div>
+    @endif
+
+    {{-- ═══ SIGNATURES ═══ --}}
+    <table class="sig-table">
+        <tr>
+            <td><div class="sig-caption">Class Teacher</div><div class="sig-line"></div></td>
+            <td><div class="sig-caption">Head Teacher</div><div class="sig-line"></div></td>
         </tr>
     </table>
 
@@ -321,15 +339,9 @@
     <div class="footer-divider"></div>
     <table class="footer-table">
         <tr>
-            <td style="width:60%; padding-left: 24px;">
-                {{ $learner->school->name }} &middot; Generated {{ now()->format('d M Y') }}<br>
-                @if ($nextTerm) Next Term Begins: {{ $nextTerm->starts_on->format('d/m/Y') }} @endif
-                <br><span class="motto-tag">HARD WORK PAYS</span>
-            </td>
-            <td class="right" style="width:40%; padding-right: 24px;">
-                <span class="sign-block"><span class="sign-line"></span><span class="sign-caption">Class Teacher</span></span>
-                &nbsp;&nbsp;
-                <span class="sign-block"><span class="sign-line"></span><span class="sign-caption">Head Teacher</span></span>
+            <td style="width:100%; text-align:center;">
+                <span class="motto-tag">HARD WORK PAYS</span><br>
+                Kabale Junior School, UNEB Center No. {{ $school->uneb_center_number }} Tel: +256782255758 / +256784119149 / +256704301646
             </td>
         </tr>
     </table>

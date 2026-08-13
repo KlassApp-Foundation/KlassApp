@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Report Card — {{ $learner->userprofile->firstname ?? 'Student' }} {{ $learner->userprofile->lastname ?? '' }}</title>
     <style>
-        @page { margin: 14px 16px; }
+        @page { margin: 0; }
 
         * { margin: 0; padding: 0; }
 
@@ -17,6 +17,37 @@
             background: #fff;
         }
 
+        .header-band {
+            text-align: center;
+            padding: 14px 22px 12px;
+            border-bottom: 2px solid #0F172A;
+        }
+
+        .content-wrap { padding: 14px 16px; }
+
+        .footer-band {
+            text-align: center;
+            padding: 8px 16px 14px;
+            border-top: 2px solid #0F172A;
+            font-family: 'DejaVu Serif', serif;
+            font-size: 9px;
+            color: #334155;
+        }
+
+        .next-term {
+            text-align: center;
+            font-family: 'DejaVu Serif', serif;
+            font-size: 10px;
+            font-weight: 700;
+            color: #15803D;
+            margin: 6px 0 10px;
+        }
+
+        .sig-table { width: 100%; border-collapse: collapse; margin: 4px 0 10px; }
+        .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
+        .sig-caption { font-family: 'DejaVu Serif', serif; font-size: 8.5px; text-transform: uppercase; letter-spacing: 1px; color: #475569; }
+        .sig-line { border-bottom: 1px solid #0F172A; height: 22px; }
+
         .frame {
             border: 2px solid #0F172A;
             padding: 4px;
@@ -24,7 +55,7 @@
 
         .frame-inner {
             border: 1px solid #22C55E;
-            padding: 18px 22px 12px;
+            padding: 14px 18px 12px;
         }
 
         /* ── Header (centered letterhead) ── */
@@ -184,9 +215,9 @@
 
 @if (!is_null($learner))
 
-<div class="frame"><div class="frame-inner">
+<div class="header-band">
 
-    {{-- ═══ HEADER (centered letterhead) ═══ --}}
+    {{-- ═══ HEADER (centered letterhead, edge-to-edge) ═══ --}}
     <div class="header-block">
         @if (!empty($logoPath))
         <img src="{{ $logoPath }}" style="width: 84px; height: auto;" alt="Logo">
@@ -202,6 +233,12 @@
         <div class="doc-sub">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }} &middot; {{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</div>
     </div>
 
+</div>
+
+<div class="content-wrap">
+
+<div class="frame"><div class="frame-inner">
+
     {{-- ═══ PARTICULARS ═══ --}}
     <table class="particulars">
         <tr>
@@ -215,7 +252,7 @@
             </td>
             <td style="width:25%;">
                 <div class="part-label">Aggregate</div>
-                <div class="part-value-sm">@if(!empty($isNursery)) &mdash; @else {{ $grade['agg'] ?? '&mdash;' }} @endif</div>
+                <div class="part-value-sm">@if(!empty($isNursery)) - @else {{ $grade['agg'] ?? '-' }} @endif</div>
             </td>
         </tr>
     </table>
@@ -228,8 +265,8 @@
                 @php $a = $nurseryAssessments->get($domain); @endphp
                 <tr>
                     <td class="left"><strong>{{ $domain }}</strong></td>
-                    <td><strong>{{ $a?->rating ?? '&mdash;' }}</strong></td>
-                    <td>{{ $a?->remarks ?? '&mdash;' }}</td>
+                    <td><strong>{{ $a?->rating ?? '-' }}</strong></td>
+                    <td>{{ $a?->remarks ?? '-' }}</td>
                 </tr>
             @endforeach
         </table>
@@ -261,7 +298,7 @@
                                     $midGrade = $g ? 'D' . $g->points : '-';
                                 }
                             @endphp
-                            <td>{{ $midMark ? floor($midMark->marks) : '&mdash;' }}</td>
+                            <td>{{ $midMark ? floor($midMark->marks) : '-' }}</td>
                             <td>{{ $midGrade }}</td>
                         @endif
                     @endforeach
@@ -296,7 +333,7 @@
                     }
                     $teacherLink = \App\Models\Teacherlink::where('standardLink_id', $stdLink->id)
                         ->where('subject_id', $subject->id)->first();
-                    $teacherName = '&mdash;';
+                    $teacherName = '-';
                     if ($teacherLink && $teacherLink->teacher) {
                         $fn = $teacherLink->teacher->userprofile->firstname ?? '';
                         $ln = $teacherLink->teacher->userprofile->lastname ?? '';
@@ -308,7 +345,7 @@
                 <tr>
                     <td class="left"><strong>{{ $subject->name }}</strong></td>
                     <td>100</td>
-                    <td>{{ $eotMark ? floor($eotMark->marks) : '&mdash;' }}</td>
+                    <td>{{ $eotMark ? floor($eotMark->marks) : '-' }}</td>
                     <td>{{ $eotGrade }}</td>
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>
@@ -318,7 +355,7 @@
                 <td><strong>TOTAL</strong></td>
                 <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
                 <td><strong>{{ $total }}</strong></td>
-                <td><strong>{{ $grade['agg'] ?? '&mdash;' }}</strong></td>
+                <td><strong>{{ $grade['agg'] ?? '-' }}</strong></td>
                 <td colspan="2"></td>
             </tr>
         </table>
@@ -327,7 +364,7 @@
         <table class="pos-table">
             <tr>
                 <td class="pos-label">POSITION</td>
-                <td>{{ $myPos ?? '&mdash;' }} of {{ $totalLearners ?? '&mdash;' }}</td>
+                <td>{{ $myPos ?? '-' }} of {{ $totalLearners ?? '-' }}</td>
             </tr>
         </table>
         @endif
@@ -339,40 +376,37 @@
         <tr>
             <td>
                 <div class="comments-label">Class Teacher</div>
-                <div class="comments-box">{{ $teacherComment ?? '&mdash;' }}</div>
+                <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
             </td>
             <td>
                 <div class="comments-label">Head Teacher</div>
-                <div class="comments-box">{{ $headTeacherComment ?? '&mdash;' }}</div>
+                <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
             </td>
         </tr>
     </table>
 
-    {{-- ═══ FOOTER ═══ --}}
-    <div class="footer-wrap">
-        <table class="signoff-table">
-            <tr>
-                <td class="sign-block" style="width: 50%;">
-                    <span class="sign-line"></span>
-                    <span class="sign-caption">Class Teacher</span>
-                </td>
-                <td class="sign-block" style="width: 50%;">
-                    <span class="sign-line"></span>
-                    <span class="sign-caption">Head Teacher</span>
-                </td>
-            </tr>
-        </table>
+    @if ($nextTerm)
+    <div class="next-term">Next Term Begins: {{ $nextTerm->starts_on->format('d/m/Y') }}</div>
+    @endif
 
-        <div class="motto-row">
-            <span class="motto">HARD WORK PAYS</span>
-        </div>
-        <div class="generated-row">
-            {{ $learner->school->name }} &middot; Generated {{ now()->format('d M Y') }}
-            @if ($nextTerm) &middot; Next Term Begins: {{ $nextTerm->starts_on->format('d/m/Y') }} @endif
-        </div>
+    {{-- ═══ SIGNATURES ═══ --}}
+    <table class="sig-table">
+        <tr>
+            <td><div class="sig-caption">Class Teacher</div><div class="sig-line"></div></td>
+            <td><div class="sig-caption">Head Teacher</div><div class="sig-line"></div></td>
+        </tr>
+    </table>
+
+    <div class="motto-row">
+        <span class="motto">HARD WORK PAYS</span>
     </div>
 
 </div></div>
+</div>
+
+<div class="footer-band">
+    Kabale Junior School, UNEB Center No. {{ $school->uneb_center_number }} Tel: +256782255758 / +256784119149 / +256704301646
+</div>
 
 @else
     <div class="no-records">No records found</div>
