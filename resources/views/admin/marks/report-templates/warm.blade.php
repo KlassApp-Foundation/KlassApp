@@ -10,7 +10,8 @@
 
         body {
             font-family: 'DejaVu Sans', sans-serif;
-            font-size: 10px;
+            font-size: 11px;
+            font-weight: 600;
             line-height: 1.4;
             color: #4A3624;
             background: #FFFBF2;
@@ -342,21 +343,8 @@
             </td>
             <td style="width:50%;">
                 <div class="comments-label">Head Teacher</div>
-                <div class="comments-box"></div>
+                <div class="comments-box">{{ $headTeacherComment ?? '&mdash;' }}</div>
             </td>
-        </tr>
-    </table>
-
-    {{-- ═══ GRADING SYSTEM ═══ --}}
-    <div class="sec-heading"><span class="dot"></span>School Grading System</div>
-    <table class="grades-table">
-        <tr>
-            <th>Grade</th>
-            @foreach ($grading_system as $grade) <th>{{ 'D' . $grade->points }}</th> @endforeach
-        </tr>
-        <tr>
-            <td class="strong">Range</td>
-            @foreach ($grading_system as $grade) <td>{{ $grade->min_score }}&ndash;{{ $grade->max_score }}</td> @endforeach
         </tr>
     </table>
 

@@ -10,7 +10,8 @@
 
         body {
             font-family: 'DejaVu Sans', sans-serif;
-            font-size: 10px;
+            font-size: 11px;
+            font-weight: 600;
             line-height: 1.4;
             color: #1E293B;
             background: #fff;
@@ -43,9 +44,6 @@
             color: #475569;
             margin-top: 2px;
         }
-
-        .flourish { text-align: center; margin: 8px 0 8px; color: #22C55E; font-size: 10px; letter-spacing: 6px; }
-        .flourish-line { border-top: 1px solid #22C55E; margin: 4px 0; }
 
         .doc-title-wrap { text-align: center; margin: 4px 0 10px; }
         .doc-title {
@@ -199,8 +197,6 @@
         <div class="school-meta">Tel: +256782255758 / +256784119149 / +256704301646</div>
     </div>
 
-    <div class="flourish">&#10022;</div>
-
     <div class="doc-title-wrap">
         <span class="doc-title">PROGRESSIVE REPORT</span>
         <div class="doc-sub">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }} &middot; {{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</div>
@@ -347,21 +343,8 @@
             </td>
             <td>
                 <div class="comments-label">Head Teacher</div>
-                <div class="comments-box"></div>
+                <div class="comments-box">{{ $headTeacherComment ?? '&mdash;' }}</div>
             </td>
-        </tr>
-    </table>
-
-    {{-- ═══ GRADING SYSTEM ═══ --}}
-    <div class="section-label">School Grading System</div>
-    <table class="grades-table">
-        <tr>
-            <th>Grade</th>
-            @foreach ($grading_system as $grade) <th>{{ 'D' . $grade->points }}</th> @endforeach
-        </tr>
-        <tr>
-            <td class="strong">Range</td>
-            @foreach ($grading_system as $grade) <td>{{ $grade->min_score }}&ndash;{{ $grade->max_score }}</td> @endforeach
         </tr>
     </table>
 
