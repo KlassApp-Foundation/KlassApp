@@ -148,7 +148,9 @@
                 <td class="band-mark-cell"><div class="band-mark">{{ strtoupper(substr($learner->school->name, 0, 1)) }}</div></td>
                 <td>
                     <div class="band-school">{{ $learner->school->name }}</div>
-                    <div class="band-meta">P.O Box 283, Kabale, Uganda &middot; +256782255758</div>
+                    <div class="band-meta">(Nursery And Primary, Day And Boarding)</div>
+                    <div class="band-meta">P.O Box 283 - Kabale - UGA</div>
+                    <div class="band-meta">Tel: +256782255758 / +256784119149 / +256704301646</div>
                 </td>
                 <td class="band-badge-cell">
                     <span class="term-pill">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }}</span>
@@ -160,7 +162,7 @@
 
     <div class="content">
 
-    <div class="doc-title">Progress Report</div>
+    <div class="doc-title">PROGRESSIVE REPORT</div>
 
     {{-- ═══ STAT TILES ═══ --}}
     <table class="tiles-table">
@@ -188,7 +190,6 @@
 
     {{-- ═══ MAIN MARKS ═══ --}}
     @if(!empty($isNursery))
-        <table class="sec-heading-table"><tr><td class="sec-tab"></td><td class="sec-heading-text">Developmental Assessment</td></tr></table>
         <table class="flat-table">
             <tr><th>Domain</th><th>Rating</th><th>Remarks</th></tr>
             @foreach (['Literacy', 'Numeracy', 'Motor Skills', 'Social/Emotional'] as $domain)
@@ -202,7 +203,7 @@
         </table>
     @else
         @if ($midExams->isNotEmpty())
-        <table class="sec-heading-table"><tr><td class="sec-tab"></td><td class="sec-heading-text">Monthly Results — Mid Term</td></tr></table>
+        <table class="sec-heading-table"><tr><td class="sec-tab"></td><td class="sec-heading-text">MONTHLY RESULTS — MID TERM</td></tr></table>
         <table class="flat-table">
             <tr>
                 <th style="width:12%">Month Of</th>
@@ -238,7 +239,7 @@
         @endif
 
         @if ($eotExams->isNotEmpty())
-        <table class="sec-heading-table"><tr><td class="sec-tab sec-tab-eot"></td><td class="sec-heading-text">End of Term Examination</td></tr></table>
+        <table class="sec-heading-table"><tr><td class="sec-tab sec-tab-eot"></td><td class="sec-heading-text">END OF TERM EXAMINATION</td></tr></table>
         <table class="flat-table">
             <tr>
                 <th>Subject</th>
@@ -293,7 +294,7 @@
         @if (!empty($myPos) && !$isNursery)
         <table class="pos-strip-table">
             <tr>
-                <td class="pos-label">Position in Class</td>
+                <td class="pos-label">POSITION</td>
                 <td class="pos-value">{{ $myPos ?? '&mdash;' }} of {{ $totalLearners ?? '&mdash;' }}</td>
             </tr>
         </table>
@@ -323,6 +324,7 @@
             @foreach ($grading_system as $grade) <th>{{ 'D' . $grade->points }}</th> @endforeach
         </tr>
         <tr>
+            <td class="strong">Range</td>
             @foreach ($grading_system as $grade) <td>{{ $grade->min_score }}&ndash;{{ $grade->max_score }}</td> @endforeach
         </tr>
     </table>
@@ -335,8 +337,8 @@
         <tr>
             <td style="width:60%; padding-left: 24px;">
                 {{ $learner->school->name }} &middot; Generated {{ now()->format('d M Y') }}<br>
-                @if ($nextTerm) Next term begins {{ $nextTerm->starts_on->format('d/m/Y') }} @endif
-                <br><span class="motto-tag">Hard Work Pays</span>
+                @if ($nextTerm) Next Term Begins: {{ $nextTerm->starts_on->format('d/m/Y') }} @endif
+                <br><span class="motto-tag">HARD WORK PAYS</span>
             </td>
             <td class="right" style="width:40%; padding-right: 24px;">
                 <span class="sign-block"><span class="sign-line"></span><span class="sign-caption">Class Teacher</span></span>
