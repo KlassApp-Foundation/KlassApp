@@ -87,7 +87,7 @@
             color: #475569;
             margin-top: 3px;
         }
-        .school-meta-tel { font-size: 7.5px; }
+        .school-meta-tel { font-size: 8.5px; }
 
         .doc-title-wrap { text-align: center; margin: 8px 0 14px; }
         .doc-title {
@@ -175,7 +175,7 @@
         .comments-table td { width: 50%; padding: 0 4px; vertical-align: top; border: none; }
         .comments-table td:first-child { padding-left: 0; }
         .comments-table td:last-child { padding-right: 0; }
-        .comments-label { font-family: 'DejaVu Serif', serif; font-size: 7.5px; color: #15803D; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+        .comments-label { font-family: 'DejaVu Serif', serif; font-size: 8.5px; color: #15803D; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
         .comments-box {
             padding: 7px 9px;
             border: 1px solid #22C55E;
@@ -209,7 +209,7 @@
 
         .sign-block { text-align: center; padding: 0 6px; }
         .sign-line { border-top: 1px solid #0F172A; width: 100%; display: block; margin-bottom: 3px; padding-top: 24px; }
-        .sign-caption { font-family: 'DejaVu Serif', serif; font-size: 7.5px; text-transform: uppercase; letter-spacing: 1px; color: #475569; }
+        .sign-caption { font-family: 'DejaVu Serif', serif; font-size: 8.5px; text-transform: uppercase; letter-spacing: 1px; color: #475569; }
 
         .motto-row { text-align: center; margin-top: 10px; }
         .motto {
@@ -219,7 +219,7 @@
             color: #0F172A;
             letter-spacing: 1px;
         }
-        .generated-row { text-align: center; margin-top: 5px; font-family: 'DejaVu Serif', serif; font-size: 7.5px; color: #64748B; }
+        .generated-row { text-align: center; margin-top: 5px; font-family: 'DejaVu Serif', serif; font-size: 8.5px; color: #64748B; }
 
         .no-records { text-align: center; padding: 40px; }
     </style>

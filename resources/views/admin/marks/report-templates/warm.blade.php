@@ -38,7 +38,7 @@
         .header-centered { text-align: center; }
         .h-school { font-size: 22px; font-weight: 800; color: #7C3A11; margin-top: 10px; }
         .h-meta { font-size: 12px; font-weight: 700; color: #A88865; margin-top: 2px; }
-        .h-meta-tel { font-size: 7.5px; }
+        .h-meta-tel { font-size: 8.5px; }
         .term-chip {
             display: inline-block;
             background: #EBF5E4;
@@ -48,7 +48,7 @@
             padding: 6px 16px;
             border-radius: 20px;
         }
-        .year-chip { display: block; font-size: 7.5px; color: #A88865; margin-top: 3px; }
+        .year-chip { display: block; font-size: 8.5px; color: #A88865; margin-top: 3px; }
 
         .ribbon {
             margin-top: 14px;
@@ -134,7 +134,7 @@
 
         /* ── Comments ── */
         .comments-table { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 10px 0 12px; }
-        .comments-label { font-size: 7.5px; color: #A88865; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 700; }
+        .comments-label { font-size: 8.5px; color: #A88865; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 700; }
         .comments-box {
             padding: 9px 11px;
             background: #fff;
