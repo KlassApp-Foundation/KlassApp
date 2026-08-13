@@ -37,7 +37,7 @@
         .header-top-row { text-align: right; margin-bottom: 8px; }
         .hdr-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
         .hdr-logo { width: 88px; text-align: left; vertical-align: middle; }
-        .hdr-details { text-align: left; padding-left: 10px; vertical-align: middle; }
+        .hdr-details { text-align: center; padding-left: 10px; vertical-align: middle; }
         .h-school { font-size: 22px; font-weight: 800; color: #7C3A11; }
         .h-meta { font-size: 12px; font-weight: 700; color: #A88865; margin-top: 2px; }
         .h-meta-tel { font-size: 8.5px; }
@@ -140,7 +140,7 @@
         .comments-box {
             padding: 9px 11px;
             font-size: 10px;
-            min-height: 30px;
+            height: 60px;
             color: #6B543C;
         }
 
@@ -296,7 +296,8 @@
                     @endif
                 @endforeach
                 <th>TOTAL</th>
-                @if ($showAgg) <th>POSITION</th> <th>DIVISION</th> @endif
+                <th>POSITION</th>
+                @if ($showAgg) <th>DIVISION</th> @endif
             </tr>
             @foreach ($midExams as $midExam)
                 @php $monthLabel = strtoupper($midExam->scheduled_at->format('F')); @endphp
@@ -319,10 +320,8 @@
                         @endif
                     @endforeach
                     <td><strong>{{ $ms['total'] ?? '-' }}</strong></td>
-                    @if ($showAgg)
                     <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) . ' out of ' . ($ms['of'] ?? '-') . ' Pupils' : '-' }}</td>
-                    <td><strong>{{ $ms['division'] ?? '-' }}</strong></td>
-                    @endif
+                    @if ($showAgg) <td><strong>{{ $ms['division'] ?? '-' }}</strong></td> @endif
                 </tr>
             @endforeach
         </table>
@@ -395,6 +394,12 @@
                     <td>POSITION IN CLASS</td>
                     <td class="right pos-value"><strong>{{ $myPos ? $ordinal($myPos) : '-' }} out of {{ $totalLearners ?? '-' }} Pupils</strong></td>
                 </tr>
+                @if ($streamName)
+                <tr>
+                    <td>POSITION IN STREAM</td>
+                    <td class="right pos-value"><strong>{{ $streamPos ? $ordinal($streamPos) : '-' }} out of {{ $streamTotal ?? '-' }} Pupils</strong></td>
+                </tr>
+                @endif
             </table>
         </div>
         @if ($nextTerm)

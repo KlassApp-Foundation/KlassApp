@@ -77,7 +77,7 @@
         /* ── Header (logo left, details right) ── */
         .hdr-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
         .hdr-logo { width: 96px; text-align: left; vertical-align: middle; }
-        .hdr-details { text-align: left; padding-left: 10px; vertical-align: middle; }
+        .hdr-details { text-align: center; padding-left: 10px; vertical-align: middle; }
         .school-name {
             font-family: 'DejaVu Serif', serif;
             font-size: 24px;
@@ -187,7 +187,7 @@
             font-family: 'DejaVu Serif', serif;
             font-style: italic;
             font-size: 10px;
-            min-height: 30px;
+            height: 56px;
             color: #334155;
         }
 
@@ -340,7 +340,8 @@
                     @endif
                 @endforeach
                 <th>TOTAL</th>
-                @if ($showAgg) <th>POSITION</th> <th>DIVISION</th> @endif
+                <th>POSITION</th>
+                @if ($showAgg) <th>DIVISION</th> @endif
             </tr>
             @foreach ($midExams as $midExam)
                 @php $monthLabel = strtoupper($midExam->scheduled_at->format('F')); @endphp
@@ -363,10 +364,8 @@
                         @endif
                     @endforeach
                     <td><strong>{{ $ms['total'] ?? '-' }}</strong></td>
-                    @if ($showAgg)
                     <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) . ' out of ' . ($ms['of'] ?? '-') . ' Pupils' : '-' }}</td>
-                    <td><strong>{{ $ms['division'] ?? '-' }}</strong></td>
-                    @endif
+                    @if ($showAgg) <td><strong>{{ $ms['division'] ?? '-' }}</strong></td> @endif
                 </tr>
             @endforeach
         </table>
@@ -438,6 +437,12 @@
                 <td class="pos-label">POSITION IN CLASS</td>
                 <td class="pos-value"><strong>{{ $myPos ? $ordinal($myPos) : '-' }} out of {{ $totalLearners ?? '-' }} Pupils</strong></td>
             </tr>
+            @if ($streamName)
+            <tr>
+                <td class="pos-label">POSITION IN STREAM</td>
+                <td class="pos-value"><strong>{{ $streamPos ? $ordinal($streamPos) : '-' }} out of {{ $streamTotal ?? '-' }} Pupils</strong></td>
+            </tr>
+            @endif
         </table>
         @if ($nextTerm)
         <div class="next-term">Next term begins on {{ $nextTerm->starts_on->format('d/m/Y') }}</div>
