@@ -13,7 +13,16 @@ return [
     |
     */
 
-    'default' => env('QUEUE_DRIVER', 'sync'),
+    // Standard Laravel 8+ env var is QUEUE_CONNECTION (what .env / .env.example
+    // both set here) — QUEUE_DRIVER is a pre-8.x name this app was still
+    // reading, so the queue connection silently fell back to 'sync' in every
+    // environment that only sets QUEUE_CONNECTION (confirmed locally: jobs
+    // dispatched via GenerateClassReportsJob never touched the `jobs` table
+    // at all). That made ShouldQueue jobs run inline in whatever process
+    // dispatched them instead of the persistent queue:work worker, defeating
+    // the whole point of a background job. QUEUE_DRIVER is kept as a
+    // fallback only in case an environment relies on the old name.
+    'default' => env('QUEUE_CONNECTION', env('QUEUE_DRIVER', 'sync')),
 
     /*
     |--------------------------------------------------------------------------

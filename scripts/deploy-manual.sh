@@ -54,28 +54,40 @@ GIT_BRANCH="$GIT_BRANCH"
 
 cd "\$APP_DIR"
 
-echo "[1/7] Pulling latest code (includes compiled assets)..."
+echo "[1/8] Pulling latest code (includes compiled assets)..."
 git pull origin "\$GIT_BRANCH" --ff-only
 
-echo "[2/7] Installing/updating PHP dependencies inside container..."
+echo "[2/8] Installing/updating PHP dependencies inside container..."
 docker exec "$CONTAINER" composer install --no-dev --optimize-autoloader --no-interaction
-echo "[2/7] Dependencies synchronized."
+echo "[2/8] Dependencies synchronized."
 
-echo "[3/7] Publishing toshi-ui assets (CSS, views)..."
+echo "[3/8] Publishing toshi-ui assets (CSS, views)..."
 docker exec "\$CONTAINER" php artisan vendor:publish --tag=toshi-ui-css --force
 docker exec "\$CONTAINER" php artisan vendor:publish --tag=toshi-ui-views --force
-echo "[3/7] Toshi UI assets published."
+echo "[3/8] Toshi UI assets published."
 
-echo "[4/7] Running migrations..."
+echo "[4/8] Running migrations..."
 docker exec "\$CONTAINER" php artisan migrate --force
 
-echo "[5/7] Clearing caches inside container..."
+echo "[5/8] Clearing caches inside container..."
 docker exec "\$CONTAINER" php artisan optimize:clear
 
-echo "[6/7] Restarting FPM..."
+echo "[6/8] Restarting FPM..."
 docker exec "\$CONTAINER" sh -c "kill -USR2 1 2>/dev/null || php-fpm -t >/dev/null 2>&1" || true
 
-echo "[7/7] Verifying app is serving..."
+# entrypoint.sh runs queue:work in its own background loop, separate from
+# the PID 1 php-fpm process the step above signals — restarting FPM does
+# NOT touch it. A long-running queue:work process bootstraps Laravel once
+# and keeps that code in memory for its entire lifetime, so without this
+# step every deploy leaves the worker silently serving pre-deploy code
+# (stale report PDFs from Print All / Download All) until it happens to
+# crash or the container restarts. queue:restart sets a flag the worker
+# checks after each job and exits cleanly; entrypoint.sh's wrapper loop
+# then immediately relaunches it with fresh code.
+echo "[7/8] Restarting queue worker (picks up new code for background jobs)..."
+docker exec "\$CONTAINER" php artisan queue:restart
+
+echo "[8/8] Verifying app is serving..."
 sleep 1
 docker exec "\$CONTAINER" php -r "echo 'PHP OK: ' . phpversion() . PHP_EOL;"
 
