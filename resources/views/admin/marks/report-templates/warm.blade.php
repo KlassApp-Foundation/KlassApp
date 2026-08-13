@@ -153,6 +153,12 @@
         /* ── Next term / signatures / footer ── */
         .next-term { text-align: center; font-size: 10px; font-weight: 800; color: #3F6B1F; margin: 6px 0 10px; }
         .sig-table { width: 100%; border-collapse: collapse; margin: 4px 0 10px; }
+        .sig-card { background: #fff; border: 1px solid #F0DFC0; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+        .sig-card-table { width: 100%; border-collapse: collapse; }
+        .sig-card-table td { width: 50%; vertical-align: top; padding: 0 6px; }
+        .stamp { width: 44px; height: 44px; border: 1.5px dashed #D97706; border-radius: 50%; margin: 8px auto 0; }
+        .div-row td { font-weight: 800; font-size: 10px; color: #7C3A11; }
+        .pos-value { color: #B5651D; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
         .sig-row { text-align: center; }
         .sig-dash { letter-spacing: 3px; color: #7C3A11; }
@@ -195,6 +201,18 @@
     if ($termName !== '' && $termYear !== '') {
         $termName .= ' ' . $termYear;
     }
+    $termNumeral = preg_match('/\D*(\d+)/', $termRaw, $tmm) ? $tmm[1] : '';
+    $ordinal = function ($n) {
+        $n = (int) $n;
+        $j = $n % 100;
+        if ($j >= 11 && $j <= 13) { return $n . 'th'; }
+        return $n . (['1' => 'st', '2' => 'nd', '3' => 'rd'][$n % 10] ?? 'th');
+    };
+    $initials = function ($full) {
+        $t = preg_split('/\s+/', trim($full ?? ''));
+        if (count($t) >= 2) { return strtoupper(mb_substr($t[0], 0, 1)) . ' ' . strtoupper(mb_substr($t[1], 0, 1)); }
+        return $t ? strtoupper(mb_substr($t[0], 0, 1)) : '-';
+    };
     $gradeLetters = ['1' => 'D', '2' => 'D', '3' => 'C', '4' => 'C', '5' => 'C', '6' => 'C', '7' => 'P', '8' => 'P', '9' => 'F'];
 @endphp
 
@@ -237,12 +255,14 @@
                     <div class="pill-value">{{ $class_name }}</div>
                 </div>
             </td>
+            @if ($showAgg)
             <td style="width:25%;">
                 <div class="pill pill-agg">
                     <div class="pill-label">Aggregate</div>
-                    <div class="pill-value">@if(!empty($isNursery)) - @else {{ $grade['agg'] ?? '-' }} @endif</div>
+                    <div class="pill-value">{{ $grade['agg'] ?? '-' }}</div>
                 </div>
             </td>
+            @endif
         </tr>
     </table>
 
@@ -268,12 +288,16 @@
                 @foreach ($subjects as $subject)
                     @if ($learner->marks->where('subject_id', $subject->id)->isNotEmpty())
                         <th>{{ $subject->name }}</th>
-                        <th>AGG</th>
+                        @if ($showAgg) <th>AGG</th> @endif
                     @endif
                 @endforeach
+                <th>TOTAL</th>
+                <th>POSITION</th>
+                <th>DIVISION</th>
             </tr>
             @foreach ($midExams as $midExam)
                 @php $monthLabel = strtoupper($midExam->scheduled_at->format('F')); @endphp
+                @php $ms = $midStats[$midExam->id] ?? null; @endphp
                 <tr>
                     <td class="left">{{ $monthLabel }}</td>
                     @foreach ($subjects as $subject)
@@ -288,22 +312,25 @@
                                 }
                             @endphp
                             <td>{{ $midMark ? floor($midMark->marks) : '-' }}</td>
-                            <td>@if($midGrade !== '-')<span class="chip {{ $chipClass($midGrade) }}">{{ $midGrade }}</span>@else - @endif</td>
+                            @if ($showAgg) <td>@if($midGrade !== '-')<span class="chip {{ $chipClass($midGrade) }}">{{ $midGrade }}</span>@else - @endif</td> @endif
                         @endif
                     @endforeach
+                    <td><strong>{{ $ms['total'] ?? '-' }}</strong></td>
+                    <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) : '-' }}</td>
+                    <td><strong>{{ $ms['division'] ?? '-' }}</strong></td>
                 </tr>
             @endforeach
         </table>
         @endif
 
         @if ($eotExams->isNotEmpty())
-        <div class="sec-heading sec-heading-eot"><span class="dot"></span>END OF TERM EXAMINATION</div>
+        <div class="sec-heading sec-heading-eot"><span class="dot"></span>END OF TERM {{ $termNumeral ?: 'EXAMINATION' }}</div>
         <table class="card-table">
             <tr>
                 <th class="eot-th">Subject</th>
                 <th class="eot-th" style="width:8%">Full Mark</th>
                 <th class="eot-th" style="width:8%">Mark Gained</th>
-                <th class="eot-th" style="width:8%">AGG</th>
+                @if ($showAgg) <th class="eot-th" style="width:8%">AGG</th> @endif
                 <th class="eot-th">Comment</th>
                 <th class="eot-th" style="width:10%">TR Initials</th>
             </tr>
@@ -327,7 +354,7 @@
                         $fn = $teacherLink->teacher->userprofile->firstname ?? '';
                         $ln = $teacherLink->teacher->userprofile->lastname ?? '';
                         if ($fn) {
-                            $teacherName = $ln ? ucwords(strtolower($fn)) . ' ' . ucwords(strtolower($ln)) : ucwords(strtolower($fn));
+                            $teacherName = $initials($ln ? $fn . ' ' . $ln : $fn);
                         }
                     }
                 @endphp
@@ -335,7 +362,7 @@
                     <td class="left">{{ $subject->name }}</td>
                     <td>100</td>
                     <td>{{ $eotMark ? floor($eotMark->marks) : '-' }}</td>
-                    <td>@if($eotGrade !== '-')<span class="chip {{ $chipClass($eotGrade) }}">{{ $eotGrade }}</span>@else - @endif</td>
+                    @if ($showAgg) <td>@if($eotGrade !== '-')<span class="chip {{ $chipClass($eotGrade) }}">{{ $eotGrade }}</span>@else - @endif</td> @endif
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>
                 </tr>
@@ -344,8 +371,13 @@
                 <td class="left"><strong>TOTAL</strong></td>
                 <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
                 <td><strong>{{ $total }}</strong></td>
-                <td><strong>{{ $grade['agg'] ?? '-' }}</strong></td>
+                @if ($showAgg) <td><strong>{{ $grade['agg'] ?? '-' }}</strong></td> @endif
                 <td colspan="2"></td>
+            </tr>
+            <tr class="div-row">
+                <td class="left"><strong>DIVISION</strong></td>
+                <td><strong>{{ $eotDivision }}</strong></td>
+                <td colspan="{{ $showAgg ? 4 : 3 }}"></td>
             </tr>
         </table>
 
@@ -353,40 +385,36 @@
         <div class="pos-card">
             <table class="pos-card-table">
                 <tr>
-                    <td>POSITION</td>
-                    <td class="right">{{ $myPos ?? '-' }}&nbsp;&nbsp;of&nbsp;&nbsp;{{ $totalLearners ?? '-' }}</td>
+                    <td>POSITION IN CLASS</td>
+                    <td class="right pos-value"><strong>{{ $myPos ? $ordinal($myPos) : '-' }} out of {{ $totalLearners ?? '-' }} Pupils</strong></td>
                 </tr>
             </table>
         </div>
+        @if ($nextTerm)
+        <div class="next-term">Next term begins on {{ $nextTerm->starts_on->format('d/m/Y') }}</div>
+        @endif
         @endif
         @endif
     @endif
 
-    {{-- ═══ COMMENTS ═══ --}}
-    <table class="comments-table">
-        <tr>
-            <td style="width:50%;">
-                <div class="comments-label">Class Teacher</div>
-                <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
-            </td>
-            <td style="width:50%;">
-                <div class="comments-label">Head Teacher</div>
-                <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
-            </td>
-        </tr>
-    </table>
-
-    @if ($nextTerm)
-    <div class="next-term">Next Term Begins: {{ $nextTerm->starts_on->format('d/m/Y') }}</div>
-    @endif
-
-    {{-- ═══ SIGNATURES ═══ --}}
-    <table class="sig-table">
-        <tr>
-            <td><div class="sig-row"><span class="sig-caption">Class Teacher</span>&nbsp;<span class="sig-dash">____________________</span></div></td>
-            <td><div class="sig-row"><span class="sig-caption">Head Teacher</span>&nbsp;<span class="sig-dash">____________________</span></div></td>
-        </tr>
-    </table>
+    {{-- ═══ COMMENTS + SIGNATURES (one card) ═══ --}}
+    <div class="sig-card">
+        <table class="sig-card-table">
+            <tr>
+                <td>
+                    <div class="comments-label">Class Teacher</div>
+                    <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
+                    <div class="sig-row"><span class="sig-caption">Class Teacher</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                </td>
+                <td>
+                    <div class="comments-label">Head Teacher</div>
+                    <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
+                    <div class="sig-row"><span class="sig-caption">HM Sign &amp; Stamp</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="stamp"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
 
     <div class="motto-row">HARD WORK PAYS</div>
 
