@@ -35,9 +35,14 @@
             border-bottom: 1px solid #F0DFC0;
         }
         .header-top-row { text-align: right; margin-bottom: 8px; }
-        .hdr-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-        .hdr-logo { width: 88px; text-align: left; vertical-align: middle; }
-        .hdr-details { text-align: center; padding-left: 10px; vertical-align: middle; }
+        /* Logo + details form one lockup, shrink-wrapped and centered as a
+           unit (not stretched edge-to-edge) — the logo sits immediately
+           left of the text rather than pinned to the page margin with the
+           text centered independently, which left a lopsided gap between
+           them. */
+        .hdr-table { border-collapse: collapse; margin: 0 auto 4px; }
+        .hdr-logo { text-align: left; vertical-align: middle; padding-right: 14px; }
+        .hdr-details { text-align: left; vertical-align: middle; }
         .h-school { font-size: 22px; font-weight: 800; color: #7C3A11; }
         .h-meta { font-size: 12px; font-weight: 700; color: #A88865; margin-top: 2px; }
         .h-meta-tel { font-size: 8.5px; }
@@ -141,6 +146,7 @@
             padding: 9px 11px;
             font-size: 10px;
             height: 60px;
+            overflow: hidden;
             color: #6B543C;
         }
 
@@ -320,7 +326,7 @@
                         @endif
                     @endforeach
                     <td><strong>{{ $ms['total'] ?? '-' }}</strong></td>
-                    <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) . ' out of ' . ($ms['of'] ?? '-') . ' Pupils' : '-' }}</td>
+                    <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) : '-' }}</td>
                     @if ($showAgg) <td><strong>{{ $ms['division'] ?? '-' }}</strong></td> @endif
                 </tr>
             @endforeach
