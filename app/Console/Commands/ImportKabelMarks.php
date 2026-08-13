@@ -191,6 +191,15 @@ class ImportKabelMarks extends Command
             ];
             $this->examMap = ['june' => 42, 'july' => 43, 'end_of_term' => 44];
             $this->sectionId = $stream && strtolower($stream) === 'west' ? 45 : 51;
+        } elseif ($classLower === 'p.4' || $classLower === 'p4') {
+            $this->subjMap = [
+                'ENG' => 260,
+                'MTC' => 261,
+                'SCI' => 310,
+                'SST' => 262,
+            ];
+            $this->examMap = ['june' => 30, 'july' => 31, 'end_of_term' => 32];
+            $this->sectionId = 48;
         } else {
             $this->error("Unsupported class: {$class}");
             return false;
@@ -260,6 +269,15 @@ class ImportKabelMarks extends Command
             ];
         }
 
+        if ($classLower === 'p4') {
+            // P.4 East: June/July in single file, EOT in separate file
+            return [
+                'june' => 'P4 East June&July.xlsx|Sheet1',
+                'july' => 'P4 East June&July.xlsx|Sheet2|header_row=2',
+                'end_of_term' => 'AGABA   END  OF TERM.xlsx|Sheet2|header_row=3|footer_start=58',
+            ];
+        }
+
         return [];
     }
 
@@ -271,9 +289,24 @@ class ImportKabelMarks extends Command
         $flagged = [];
         $resolutions = $this->getNameResolutions();
 
-        foreach ($files as $period => $filename) {
+        foreach ($files as $period => $fileConfig) {
             $examId = $this->examMap[$period] ?? null;
             if (!$examId) continue;
+
+            // Parse file config: "filename.xlsx|Sheet2|header_row=2|footer_start=58"
+            $parts = explode('|', $fileConfig);
+            $filename = $parts[0];
+            $sheetName = $parts[1] ?? null;
+            $headerRow = 0;
+            $footerStart = null;
+            for ($i = 2; $i < count($parts); $i++) {
+                if (str_starts_with($parts[$i], 'header_row=')) {
+                    $headerRow = (int) substr($parts[$i], 11);
+                }
+                if (str_starts_with($parts[$i], 'footer_start=')) {
+                    $footerStart = (int) substr($parts[$i], 13);
+                }
+            }
 
             $path = storage_path("app/{$filename}");
             if (!file_exists($path)) {
@@ -282,18 +315,28 @@ class ImportKabelMarks extends Command
             }
 
             $spreadsheet = IOFactory::load($path);
-            $rows = $spreadsheet->getActiveSheet()->toArray();
-            $header = $rows[0] ?? [];
+            $ws = $sheetName ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
+            if (!$ws) {
+                $this->warn("Sheet '{$sheetName}' not found in {$filename}");
+                continue;
+            }
+            $rows = $ws->toArray();
 
+            // Find header row (first row with a "NAME" or "NAMES" column)
+            $header = $rows[$headerRow] ?? [];
             $cols = $this->mapColumns($header);
+
+            // Determine data start (row after header) and end (before footer)
+            $dataStart = $headerRow + 1;
+            $dataEnd = $footerStart !== null ? min($footerStart, count($rows)) : count($rows);
 
             $matched = 0;
             $totalRows = 0;
 
-            for ($r = 1; $r < count($rows); $r++) {
+            for ($r = $dataStart; $r < $dataEnd; $r++) {
                 $row = $rows[$r];
                 $name = trim($row[$cols['name']] ?? '');
-                if (empty($name) || strtoupper($name) === 'TOTAL') continue;
+                if (empty($name) || strtoupper($name) === 'TOTAL' || strtoupper($name) === 'ANALYSIS') continue;
                 $totalRows++;
 
                 $upper = strtoupper($name);
@@ -412,6 +455,23 @@ class ImportKabelMarks extends Command
             'TURINAWE ELIORAH' => 'ELIORA TURINAWE',
             'TURINAWE ELIORA' => 'ELIORA TURINAWE',
             'AMUTUHEIRE ELIZABETH' => 'ELIZABETH AMUTUHEIRE',
+
+            // P.4 East — spelling variants + reversed names
+            'AIJUKA KEITH' => 'KEITH AJUKA',
+            'KANGWAGYE VICENT' => 'VINCENT KANGWAGYE',
+            'NIWAMANYA PAMELLA' => 'PAMELA NIWAMANYA',
+            'NIWAMANYA PAMELLAH' => 'PAMELA NIWAMANYA',
+            'NABAASSA MELISSA' => 'MELISSA NABAASA',
+            'NABAAASA MELISSA' => 'MELISSA NABAASA',
+            'AHURIRA OSBERT' => 'OSBERT AHURIRA',
+            'AINEBYOONA BRIGHTON' => 'BRIGHTON AINEBYONA',
+            'AKATUKWASA MARTIN' => 'MARTIN AKAWAKWASA',
+            'NTWARI ALEXANDER' => 'ALEXANDER ANTWARI',
+            'ATWINE DYLIAN' => 'DYLAN ATWINE',
+            'TWESHEGYEREZE GASPARI' => 'GASPARI TWESIGYEEREZE',
+            'KWIKIRIZA ALVIN' => 'ALVIN AWIRIZA',
+            'OWAMAANI FRANK' => 'FRANK OWAMANI',
+            'NAJJEMBA MARY ATARAH' => 'MARY ATARAH AJUEMBA',
         ];
     }
 }
