@@ -369,7 +369,7 @@
                 <td>
                     <div class="comments-label">Headteacher</div>
                     <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
-                    <div class="sig-row"><span class="sig-caption">SIGN >HM Sign &amp; Stamp<amp; STAMP</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    <div class="sig-row"><span class="sig-caption">SIGN &amp; STAMP</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
             </tr>
         </table>
