@@ -169,19 +169,6 @@
             color: #0F172A;
         }
 
-        .pos-banner {
-            margin: 2px 0 8px;
-            padding: 7px 12px;
-            font-family: 'DejaVu Serif', serif;
-            font-size: 13px;
-            font-style: italic;
-            font-weight: 700;
-            border: 1px solid #0F172A;
-            background: #F0FBF4;
-            color: #0F172A;
-            text-align: center;
-        }
-
         .division-cell { text-align: center; font-size: 9.5px; color: #15803D; }
 
         /* ── Comments ── */
@@ -427,13 +414,8 @@
             </tr>
         </table>
 
-        @if (!empty($myPos) && !$isNursery)
-        <div class="pos-banner">
-            Position in Class: {{ $myPos ? $ordinal($myPos) : '-' }} out of {{ $totalLearners ?? '-' }} Pupils{{ $streamName ? '; Position in Stream: ' . ($streamPos ? $ordinal($streamPos) : '-') . ' out of ' . ($streamTotal ?? '-') . ' Pupils' : '' }}
-        </div>
-        @if ($nextTerm)
+        @if ($nextTerm && !$isNursery)
         <div class="next-term">Next term begins on {{ $nextTerm->starts_on->format('d/m/Y') }}</div>
-        @endif
         @endif
         @endif
     @endif

@@ -134,18 +134,6 @@
             color: #7C3A11;
         }
 
-        .pos-card {
-            margin: 5px 0 12px;
-            background: #FCEEDD;
-            border-radius: 12px;
-            padding: 9px 14px;
-            text-align: center;
-            font-size: 13px;
-            font-style: italic;
-            font-weight: 800;
-            color: #7C3A11;
-        }
-
         .division-cell { text-align: center; font-size: 9.5px; color: #B5651D; }
 
         /* ── Comments ── */
@@ -387,13 +375,8 @@
             </tr>
         </table>
 
-        @if (!empty($myPos) && !$isNursery)
-        <div class="pos-card">
-            Position in Class: {{ $myPos ? $ordinal($myPos) : '-' }} out of {{ $totalLearners ?? '-' }} Pupils{{ $streamName ? '; Position in Stream: ' . ($streamPos ? $ordinal($streamPos) : '-') . ' out of ' . ($streamTotal ?? '-') . ' Pupils' : '' }}
-        </div>
-        @if ($nextTerm)
+        @if ($nextTerm && !$isNursery)
         <div class="next-term">Next term begins on {{ $nextTerm->starts_on->format('d/m/Y') }}</div>
-        @endif
         @endif
         @endif
     @endif
