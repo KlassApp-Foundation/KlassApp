@@ -443,12 +443,12 @@
         <table class="sig-card-table">
             <tr>
                 <td>
-                    <div class="comments-label">CLASSTEACHER COMMENT</div>
+                    <div class="comments-label">CLASSTEACHER'S COMMENT</div>
                     <div class="comments-box">{{ $teacherComment ?? '-' }}</div>
                     <div class="sig-row"><span class="sig-caption">SIGN</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
                 <td>
-                    <div class="comments-label">HEADTEACHER COMMENT</div>
+                    <div class="comments-label">HEADTEACHER'S COMMENT</div>
                     <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
                     <div class="sig-row"><span class="sig-caption">SIGN &amp; STAMP</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
