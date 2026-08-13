@@ -408,6 +408,11 @@ class ReportCardsController extends Controller
         $standardName = $standard?->name ?? '';
         $showAgg = !$isNursery && !in_array($standardName, ['primary_lower'], true);
 
+        $gradingSystem = \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)
+            ->where('standard_id', $stdLink->standard_id)
+            ->orderBy('min_score', 'desc')
+            ->get();
+
         $divisionScale = static function (int $points): string {
             if ($points <= 12) { return 'I'; }
             if ($points <= 24) { return 'II'; }
@@ -438,7 +443,7 @@ class ReportCardsController extends Controller
         $midStats = [];
         foreach ($midExams as $midExam) {
             $total = (int) round($learner->marks->filter(fn($m) => $m->exam_id === $midExam->id)->sum('marks'));
-            $points = $aggregatePoints($learner, $midExam, $subjects, $grading_system);
+            $points = $aggregatePoints($learner, $midExam, $subjects, $gradingSystem);
             $studentIds = \App\Models\Academics\Marks::where('exam_id', $midExam->id)->distinct('student_id')->pluck('student_id')->all();
             $ranked = [];
             foreach ($studentIds as $sid) {
@@ -461,7 +466,7 @@ class ReportCardsController extends Controller
         }
 
         $firstEot = $eotExams->first();
-        $eotPoints = $firstEot ? $aggregatePoints($learner, $firstEot, $subjects, $grading_system) : null;
+        $eotPoints = $firstEot ? $aggregatePoints($learner, $firstEot, $subjects, $gradingSystem) : null;
         $eotDivision = $eotPoints ? $divisionScale($eotPoints['points']) : '-';
 
         $total = $learner->marks
@@ -483,7 +488,7 @@ class ReportCardsController extends Controller
         $pdf = Pdf::loadView($view['view'], [
             'subjects' => $subjects, 'learner' => $learner, 'controls' => $controls,
             'class_name' => Section::find($stdLink->section_id)->name,
-            'grading_system' => \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)->where('standard_id', $stdLink->standard_id)->orderBy('min_score', 'desc')->get(),
+            'grading_system' => $gradingSystem,
             'fees' => collect(), 'nextTerm' => AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
             'totalLearners' => $totalLearners, 'myPos' => $myPos,
             'allExamColumns' => $allExamColumns, 'midExams' => $midExams, 'eotExams' => $eotExams,
