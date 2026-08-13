@@ -54,11 +54,13 @@
         }
 
         .sig-table { width: 100%; border-collapse: collapse; margin: 4px 0 10px; }
-        .sig-card { border: 1px solid #22C55E; padding: 8px 10px; margin-bottom: 8px; }
+        .sig-card { border: 1px solid #22C55E; border-top: 3px solid #15803D; background: #FCFDFB; padding: 10px 12px 8px; margin-bottom: 8px; }
         .sig-card-table { width: 100%; border-collapse: collapse; }
-        .sig-card-table td { width: 50%; vertical-align: top; padding: 0 6px; }
+        .sig-card-table td { width: 50%; vertical-align: top; padding: 2px 10px; }
+        .sig-card-table td + td { border-left: 1px solid #CFE8D6; }
+        .label-dot { display: inline-block; width: 6px; height: 6px; background: #15803D; border-radius: 50%; margin-right: 5px; }
         .sig-table td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 12px; }
-        .sig-row { text-align: center; }
+        .sig-row { text-align: left; margin-top: 6px; border-top: 1px dashed #CFE8D6; padding-top: 6px; }
         .sig-dash { letter-spacing: 3px; color: #0F172A; }
         .sig-caption { font-family: 'DejaVu Serif', serif; font-size: 8.5px; text-transform: uppercase; letter-spacing: 1px; color: #475569; }
 
@@ -180,14 +182,7 @@
             text-align: center;
         }
 
-        .division-line {
-            text-align: center;
-            font-family: 'DejaVu Serif', serif;
-            font-size: 10px;
-            font-weight: 700;
-            color: #0F172A;
-            margin: 6px 0 8px;
-        }
+        .division-cell { text-align: center; font-size: 9.5px; color: #15803D; }
 
         /* ── Comments ── */
         .comments-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
@@ -435,13 +430,9 @@
                 <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
                 <td><strong>{{ $total }}</strong></td>
                 @if ($showAgg) <td><strong>{{ $grade['agg'] ?? '-' }}</strong></td> @endif
-                <td colspan="2"></td>
+                <td colspan="2" class="division-cell">@if ($showAgg) DIVISION: <strong>{{ $eotDivision }}</strong> @endif</td>
             </tr>
         </table>
-
-        @if ($showAgg)
-        <div class="division-line">DIVISION: <strong>{{ $eotDivision }}</strong></div>
-        @endif
 
         @if (!empty($myPos) && !$isNursery)
         <div class="pos-banner">
@@ -459,11 +450,11 @@
         <table class="sig-card-table">
             <tr>
                 <td>
-                    <div class="comments-box"><span class="comments-label-inline">CLASS TEACHER</span>&nbsp;{{ $teacherComment ?? '-' }}</div>
+                    <div class="comments-box"><span class="comments-label-inline"><span class="label-dot"></span>CLASS TEACHER</span>&nbsp;{{ $teacherComment ?? '-' }}</div>
                     <div class="sig-row"><span class="sig-caption">Class Teacher</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
                 <td>
-                    <div class="comments-box"><span class="comments-label-inline">HEAD TEACHER</span>&nbsp;{{ $headTeacherComment ?? '-' }}</div>
+                    <div class="comments-box"><span class="comments-label-inline"><span class="label-dot"></span>HEAD TEACHER</span>&nbsp;{{ $headTeacherComment ?? '-' }}</div>
                     <div class="sig-row"><span class="sig-caption">HM Sign &amp; Stamp</span>&nbsp;<span class="sig-dash">____________________</span></div>
                 </td>
             </tr>
