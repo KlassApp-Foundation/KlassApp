@@ -25,6 +25,15 @@
 
         .content-wrap { padding: 14px 16px; }
 
+        .watermark {
+            position: absolute;
+            top: 330px;
+            left: 50%;
+            margin-left: -190px;
+            width: 380px;
+            opacity: 0.04;
+        }
+
         .footer-band {
             text-align: center;
             padding: 8px 16px 14px;
@@ -71,7 +80,8 @@
         }
         .school-meta {
             font-family: 'DejaVu Serif', serif;
-            font-size: 10px;
+            font-size: 12px;
+            font-weight: 700;
             color: #475569;
             margin-top: 3px;
         }
@@ -215,6 +225,16 @@
 
 @if (!is_null($learner))
 
+@php
+    $termRaw = $learner->marks->first()?->exam?->academicTerm?->name ?? '';
+    if (preg_match('/^(.*?)\s*(\d+)\s*$/', trim($termRaw), $m)) {
+        $roman = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V', '6' => 'VI'];
+        $termName = strtoupper(trim($m[1])) . ' ' . ($roman[$m[2]] ?? $m[2]);
+    } else {
+        $termName = strtoupper($termRaw);
+    }
+@endphp
+
 <div class="header-band">
 
     {{-- ═══ HEADER (centered letterhead, edge-to-edge) ═══ --}}
@@ -230,14 +250,18 @@
 
     <div class="doc-title-wrap">
         <span class="doc-title">PROGRESSIVE REPORT</span>
-        <div class="doc-sub">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }} &middot; {{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</div>
+        <div class="doc-sub">{{ $termName }} &middot; {{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</div>
     </div>
 
 </div>
 
 <div class="content-wrap">
 
-<div class="frame"><div class="frame-inner">
+    @if (!empty($logoPath))
+    <img class="watermark" src="{{ $logoPath }}" alt="">
+    @endif
+
+    <div class="frame"><div class="frame-inner">
 
     {{-- ═══ PARTICULARS ═══ --}}
     <table class="particulars">
@@ -364,7 +388,7 @@
         <table class="pos-table">
             <tr>
                 <td class="pos-label">POSITION</td>
-                <td>{{ $myPos ?? '-' }} of {{ $totalLearners ?? '-' }}</td>
+                <td>{{ $myPos ?? '-' }}&nbsp;&nbsp;of&nbsp;&nbsp;{{ $totalLearners ?? '-' }}</td>
             </tr>
         </table>
         @endif

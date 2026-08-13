@@ -264,7 +264,7 @@ class KabaleRestructureAndSeed extends Command
             ['grade' => 'Excellent',        'points' => null, 'min_score' => 95, 'max_score' => 100, 'remark' => 'Consistently exceeds expectations'],
             ['grade' => 'V.Good',           'points' => null, 'min_score' => 85, 'max_score' => 94,  'remark' => 'Very good performance'],
             ['grade' => 'Good',             'points' => null, 'min_score' => 75, 'max_score' => 84,  'remark' => 'Good understanding'],
-            ['grade' => 'F.Good/Q.Good',    'points' => null, 'min_score' => 65, 'max_score' => 74,  'remark' => 'Fairly good / quite good'],
+            ['grade' => 'F.Good/Q.Good',    'points' => null, 'min_score' => 65, 'max_score' => 74,  'remark' => 'Fairly Good'],
             ['grade' => 'Promising',        'points' => null, 'min_score' => 60, 'max_score' => 64,  'remark' => 'Shows promise'],
             ['grade' => 'Fair',             'points' => null, 'min_score' => 50, 'max_score' => 59,  'remark' => 'Satisfactory effort'],
             ['grade' => 'Work hard',        'points' => null, 'min_score' => 45, 'max_score' => 49,  'remark' => 'Needs to work harder'],

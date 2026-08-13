@@ -19,6 +19,15 @@
 
         .page { padding: 16px 22px; background: #FFFBF2; }
 
+        .watermark {
+            position: absolute;
+            top: 330px;
+            left: 50%;
+            margin-left: -190px;
+            width: 380px;
+            opacity: 0.04;
+        }
+
         /* ── Header card ── */
         .header-card {
             background: #fff;
@@ -28,7 +37,7 @@
         .header-top-row { text-align: right; margin-bottom: 8px; }
         .header-centered { text-align: center; }
         .h-school { font-size: 22px; font-weight: 800; color: #7C3A11; margin-top: 10px; }
-        .h-meta { font-size: 10px; color: #A88865; margin-top: 2px; }
+        .h-meta { font-size: 12px; font-weight: 700; color: #A88865; margin-top: 2px; }
         .term-chip {
             display: inline-block;
             background: #EBF5E4;
@@ -172,13 +181,20 @@
         if ($n <= 6) return 'chip-mid';
         return 'chip-low';
     };
+    $termRaw = $learner->marks->first()?->exam?->academicTerm?->name ?? '';
+    if (preg_match('/^(.*?)\s*(\d+)\s*$/', trim($termRaw), $m)) {
+        $roman = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V', '6' => 'VI'];
+        $termName = strtoupper(trim($m[1])) . ' ' . ($roman[$m[2]] ?? $m[2]);
+    } else {
+        $termName = strtoupper($termRaw);
+    }
 @endphp
 
 <div class="header-card">
 
     {{-- ═══ HEADER (centered letterhead, edge-to-edge) ═══ --}}
     <div class="header-top-row">
-        <span class="term-chip">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }}</span>
+        <span class="term-chip">{{ $termName }}</span>
         <span class="year-chip">{{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</span>
     </div>
     <div class="header-centered">
@@ -194,6 +210,10 @@
 </div>
 
 <div class="page">
+
+    @if (!empty($logoPath))
+    <img class="watermark" src="{{ $logoPath }}" alt="">
+    @endif
 
     {{-- ═══ INFO PILLS ═══ --}}
     <table class="pills-table">
@@ -327,7 +347,7 @@
             <table class="pos-card-table">
                 <tr>
                     <td>POSITION</td>
-                    <td class="right">{{ $myPos ?? '-' }} of {{ $totalLearners ?? '-' }}</td>
+                    <td class="right">{{ $myPos ?? '-' }}&nbsp;&nbsp;of&nbsp;&nbsp;{{ $totalLearners ?? '-' }}</td>
                 </tr>
             </table>
         </div>

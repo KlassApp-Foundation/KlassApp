@@ -28,7 +28,7 @@ return [
             "A pleasing term with clear signs of progress.",
             "Steady improvement is evident — well done.",
             "This is a good foundation to build further on.",
-            "Progress this term has been encouraging to see.",
+            "Progress this term has been encouraging.",
         ]],
         ['min' => 280, 'max' => 359, 'comments' => [
             "There are clear signs of growth to build on.",
@@ -37,7 +37,7 @@ return [
         ]],
         ['min' => 200, 'max' => 279, 'comments' => [
             "More consistent effort will bring better results.",
-            "There is real potential here waiting to be unlocked.",
+            "There is real potential waiting to be unlocked.",
             "A stronger push next term will make a big difference.",
         ]],
         ['min' => 0, 'max' => 199, 'comments' => [
@@ -64,7 +64,7 @@ return [
             "A pleasing term with clear signs of progress.",
             "Steady improvement is evident — well done.",
             "This is a good foundation to build further on.",
-            "Progress this term has been encouraging to see.",
+            "Progress this term has been encouraging.",
         ]],
         ['min' => 240, 'max' => 279, 'comments' => [
             "There are clear signs of growth to build on.",
@@ -73,7 +73,7 @@ return [
         ]],
         ['min' => 200, 'max' => 239, 'comments' => [
             "More consistent effort will bring better results.",
-            "There is real potential here waiting to be unlocked.",
+            "There is real potential waiting to be unlocked.",
             "A stronger push next term will make a big difference.",
         ]],
         ['min' => 100, 'max' => 199, 'comments' => [
