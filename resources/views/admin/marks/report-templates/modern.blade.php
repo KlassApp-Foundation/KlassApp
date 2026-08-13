@@ -146,6 +146,16 @@
 
 @if (!is_null($learner))
 
+@php
+    $termRaw = $learner->marks->first()?->exam?->academicTerm?->name ?? '';
+    if (preg_match('/^(.*?)\s*(\d+)\s*$/', trim($termRaw), $m)) {
+        $roman = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V', '6' => 'VI'];
+        $termName = strtoupper(trim($m[1])) . ' ' . ($roman[$m[2]] ?? $m[2]);
+    } else {
+        $termName = strtoupper($termRaw);
+    }
+@endphp
+
 <div class="page">
 
     {{-- ═══ TOP BAND ═══ --}}
@@ -160,7 +170,7 @@
                     <div class="band-meta">Tel: +256782255758 / +256784119149 / +256704301646</div>
                 </td>
                 <td class="band-badge-cell">
-                    <span class="term-pill">{{ $learner->marks->first()->exam->academicTerm->name ?? 'Term' }}</span>
+                    <span class="term-pill">{{ $termName }}</span>
                     <span class="year-label">{{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</span>
                 </td>
             </tr>
