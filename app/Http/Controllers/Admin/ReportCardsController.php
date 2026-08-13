@@ -405,6 +405,65 @@ class ReportCardsController extends Controller
         $standard = $learner->studentAcademicLatest?->standardLink?->standard;
         $isNursery = $standard && \App\Helpers\GradingHelper::levelTypeForStandard($standard) === 'nursery';
 
+        $standardName = $standard?->name ?? '';
+        $showAgg = !$isNursery && !in_array($standardName, ['primary_lower'], true);
+
+        $divisionScale = static function (int $points): string {
+            if ($points <= 12) { return 'I'; }
+            if ($points <= 24) { return 'II'; }
+            if ($points <= 30) { return 'III'; }
+            if ($points <= 36) { return 'IV'; }
+            return 'U';
+        };
+
+        $aggregatePoints = static function ($learner, $exam, $subjects, $gradingSystem) {
+            $sum = 0;
+            $counted = 0;
+            foreach ($subjects as $subject) {
+                if ($learner->marks->where('subject_id', $subject->id)->isEmpty()) {
+                    continue;
+                }
+                $mark = $learner->marks->where('subject_id', $subject->id)->firstWhere('exam_id', $exam->id);
+                if ($mark && $mark->marks !== null) {
+                    $g = $gradingSystem->first(fn($gs) => $gs->min_score <= (float) $mark->marks && $gs->max_score >= (float) $mark->marks);
+                    if ($g && $g->points !== null) {
+                        $sum += (int) $g->points;
+                        $counted++;
+                    }
+                }
+            }
+            return $counted ? ['points' => $sum, 'counted' => $counted] : null;
+        };
+
+        $midStats = [];
+        foreach ($midExams as $midExam) {
+            $total = (int) round($learner->marks->filter(fn($m) => $m->exam_id === $midExam->id)->sum('marks'));
+            $points = $aggregatePoints($learner, $midExam, $subjects, $grading_system);
+            $studentIds = \App\Models\Academics\Marks::where('exam_id', $midExam->id)->distinct('student_id')->pluck('student_id')->all();
+            $ranked = [];
+            foreach ($studentIds as $sid) {
+                $ranked[$sid] = (int) round(\App\Models\Academics\Marks::where('student_id', $sid)->where('exam_id', $midExam->id)->sum('marks'));
+            }
+            arsort($ranked);
+            $pos = 0;
+            foreach (array_keys($ranked) as $i => $sid) {
+                if ($sid === $learner->id) {
+                    $pos = $i + 1;
+                    break;
+                }
+            }
+            $midStats[$midExam->id] = [
+                'total' => $total,
+                'pos' => $pos,
+                'of' => count($ranked),
+                'division' => $points ? $divisionScale($points['points']) : '-',
+            ];
+        }
+
+        $firstEot = $eotExams->first();
+        $eotPoints = $firstEot ? $aggregatePoints($learner, $firstEot, $subjects, $grading_system) : null;
+        $eotDivision = $eotPoints ? $divisionScale($eotPoints['points']) : '-';
+
         $total = $learner->marks
             ? $learner->marks->filter(fn($m) => $m->exam?->examType?->contributes_to_report_total)->sum('marks')
             : 0;
@@ -435,6 +494,9 @@ class ReportCardsController extends Controller
             'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
             'teacherComment' => $teacherComment,
             'headTeacherComment' => $headTeacherComment,
+            'showAgg' => $showAgg,
+            'midStats' => $midStats,
+            'eotDivision' => $eotDivision,
             'logoPath' => $logoPath,
         ]);
         $pdf->setPaper('a4', 'portrait');
