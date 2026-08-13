@@ -45,6 +45,10 @@
         </button>
         <span class="text-xs text-gray-400">Applies to all report cards generated from this point on (batch, individual, merged).</span>
     </form>
+    <div class="mt-2 pt-2 border-t text-xs text-gray-500">
+        Logo not showing correctly on the report card? Manage your school's logo on the
+        <a href="{{ url('/admin/schooldetails/editdetail/' . $school->id) }}" class="text-blue-600 hover:underline">School Details</a> page.
+    </div>
 </div>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">

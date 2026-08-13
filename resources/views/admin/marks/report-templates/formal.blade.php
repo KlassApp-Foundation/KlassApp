@@ -190,7 +190,9 @@
 
     {{-- ═══ HEADER (centered letterhead) ═══ --}}
     <div class="header-block">
-        <img src="{{ public_path('images/KJSLogo.jpg') }}" style="width: 60px; height: auto;" alt="Logo">
+        @if (!empty($logoPath))
+        <img src="{{ $logoPath }}" style="width: 60px; height: auto;" alt="Logo">
+        @endif
         <div class="school-name">{{ $learner->school->name }}</div>
         <div class="school-meta">Nursery And Primary &middot; Day And Boarding</div>
         <div class="school-meta">P.O Box 283, Kabale, Uganda &middot; Tel: +256782255758 / +256784119149</div>

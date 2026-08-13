@@ -71,7 +71,7 @@ class ReportCardsController extends Controller
         $school = \App\Models\School::find($schoolId);
         $reportTemplate = $school->report_template ?? 'formal';
 
-        return view('admin.reports.cards', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations', 'reportTemplate'));
+        return view('admin.reports.cards', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations', 'reportTemplate', 'school'));
     }
 
     public function updateTemplate(Request $request)
@@ -416,6 +416,7 @@ class ReportCardsController extends Controller
 
         $school = \App\Models\School::find($schoolId);
         $view = self::TEMPLATES[$school->report_template ?? ''] ?? self::TEMPLATES['formal'];
+        $logoPath = self::resolveLogoPath($schoolId);
 
         $pdf = Pdf::loadView($view['view'], [
             'subjects' => $subjects, 'learner' => $learner, 'controls' => $controls,
@@ -430,9 +431,38 @@ class ReportCardsController extends Controller
             'school' => $school,
             'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
             'teacherComment' => $teacherComment,
+            'logoPath' => $logoPath,
         ]);
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->output();
+    }
+
+    /**
+     * Resolve the school's uploaded logo to a local filesystem path for
+     * DomPDF (which needs a real path, not a public URL). Uses the same
+     * SchoolDetail (meta_key=school_logo) record every other part of the
+     * app reads via Auth::user()->SchoolLogoPath — not a hardcoded asset.
+     * Returns null (report card renders without a logo) if none uploaded
+     * or the stored file is missing from disk.
+     */
+    private static function resolveLogoPath(int $schoolId): ?string
+    {
+        // SchoolObserver seeds every school with a placeholder school_logo
+        // row (meta_value='-') at creation; the real upload flow always
+        // updateOrCreate()s a single row per school+meta_key, but order by
+        // most-recent and explicitly skip the '-' sentinel defensively.
+        $meta = \App\Models\SchoolDetail::where('school_id', $schoolId)
+            ->where('meta_key', 'school_logo')
+            ->latest('id')
+            ->first();
+
+        if (!$meta || !$meta->meta_value || $meta->meta_value === '-') {
+            return null;
+        }
+
+        $path = \Storage::disk('public')->path($meta->meta_value);
+
+        return file_exists($path) ? $path : null;
     }
 }

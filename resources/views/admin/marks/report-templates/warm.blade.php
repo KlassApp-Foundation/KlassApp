@@ -182,7 +182,9 @@
             <span class="year-chip">{{ optional($learner->marks->first()->exam->academicTerm)->academicYear->name ?? '' }}</span>
         </div>
         <div class="header-centered">
-            <img src="{{ public_path('images/KJSLogo.jpg') }}" style="width: 56px; height: auto;" alt="Logo">
+            @if (!empty($logoPath))
+            <img src="{{ $logoPath }}" style="width: 56px; height: auto;" alt="Logo">
+            @endif
             <div class="h-school">{{ $learner->school->name }}</div>
             <div class="h-meta">Nursery And Primary &middot; Day And Boarding</div>
             <div class="h-meta">P.O Box 283, Kabale, Uganda &middot; Tel: +256782255758</div>
