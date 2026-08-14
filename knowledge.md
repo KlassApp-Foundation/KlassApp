@@ -14,10 +14,72 @@
 | **Bundler** | **Vite 8** (sole) | Phase 3 **CLOSED on `main`** — merge `9bdf185` (from `migration/vite` / `3bc5c70`). Scripts: `npm run dev` / `npm run build`. Blade `@vite([...])`. |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
-| **Production host** | Docker on Hetzner VPS (46.101.111.131) | `scripts/deploy-manual.sh` |
+| **Production host** | Docker on **DigitalOcean** droplet (46.101.111.131, droplet 578598104, 2 vCPU/2 GB) — ⚠️ NOT Hetzner (older notes wrong; confirmed via DO metadata 2026-08-14) | `scripts/deploy-manual.sh` |
 
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
+
+## Known Bug Patterns & Lessons (reference — check before touching related code)
+
+> **Purpose**: Regression-prevention reference, not a historical log. Before editing code that touches any area below, verify the "fix still in place" markers are present. Each entry: what happened → root cause → fix → generalizable lesson → how to confirm the fix survives.
+> **First logged**: 2026-08-14 (after Kabale Junior School marks/import/report-card work, PRs #330–#335).
+
+### 1. Duplicated business logic across render paths — `generatePdf()`
+- **What happened**: Report-card fixes (position sentence, header, division) reached only SOME surfaces — bulk/class generation served stale output while individual previews looked fixed.
+- **Root cause**: `generatePdf()` was private/duplicated across 7 call sites; patches landed in one copy, not the shared path.
+- **Fix**: One consolidated `public static function generatePdf()` at `app/Http/Controllers/Admin/ReportCardsController.php:358`; every render path calls it (`DownloadStudentReport.php`, `GenerateClassReportsJob.php`, `GenerateP2Reports.php`, `ReportCardsController` itself).
+- **Lesson**: Shared business logic lives in exactly ONE place — a single static/service method — never copy-pasted across call sites. When a fix touches report rendering, grep ALL call sites of the shared method; do not patch one blade/controller.
+- **Verify fix still in place**: `grep -n "function generatePdf" app/Http/Controllers/Admin/ReportCardsController.php` → exactly ONE match, signature `public static function generatePdf(...)`.
+
+### 2. `standard_id` mistaken for class identity
+- **What happened**: Three separate bugs — duplicate P.7 report card, broken class filter on /admin/students, Position-in-Stream pooling across grade levels (Esther: stream 270 > class 106).
+- **Root cause**: `standard_id` is a broad tier band (`primary_lower` 54 spans P.1–P.3; `primary_upper` 55 spans P.4–P.7), NOT a class scope. Class-scoped queries used `standard_id` and pooled whole tiers together.
+- **Fix**: Scope by `section_id` (the real class). `ReportCardsController` filters `->where('section_id', $sl->section_id)` (lines 34, 317, 339, 362, 393); /admin/students filter resolves link → `standard_id` + `section_id` (PR #327); stream + monthly position scoped by `section_id` (PR #330, merge `434e6a93`); `getStandardLinkList()` dedupes by standard-id + section-id.
+- **Lesson**: `section_id` is the class scope, always. `standard_id` is a grading-tier band. Any query that means "this class" must use `section_id` (directly or via the link's section).
+- **Verify fix still in place**: `grep -n "section_id" app/Http/Controllers/Admin/ReportCardsController.php` shows scoping in the totals query (~line 80) and position query (~line 317). No `where('standard_id', …)` in class-scoped report queries.
+
+### 3. Digit-suffix heuristic for junk-record identification — unreliable
+- **What happened**: Records like `jordan33801` / `mary polite33453` were treated as identifiable by their trailing digit suffix; the heuristic was proven off by up to 48 students in one class (roster vs DB count mismatch).
+- **Root cause**: A proxy signal (digits = junk/duplicate) used as identity evidence instead of matching against a real roster.
+- **Fix**: PR #331 seeded the authoritative roster (`Final_Merged_KJS_List.xlsx`, 826 rows) as source of truth via **direct name-matching** (tokenize + matchScore: Jaccard 0.4 + similar_text 0.6, threshold ≥50 — same approach as `ImportKabaleMarks::buildRoster/matchStudent`). Digit-heuristic deliberately NOT used for identity; digit strip kept only for display (`User::getDisplayNameAttribute()`, `cleanDisplayToken()`, PRs #332/#333).
+- **Lesson**: Never trust a proxy signal (digit suffix, name length) for identity matching when a real source of truth (direct name-matching against the authoritative roster) is available. Proxy heuristics are for display cleanup only, never identity decisions.
+- **Verify fix still in place**: migration `2026_08_13_040000_backfill_school104_authoritative_streams.php` exists; `User::getDisplayNameAttribute()` (~`app/Models/User.php:814`) strips digits for display only.
+
+### 4. `QUEUE_CONNECTION` vs `QUEUE_DRIVER` env-var mismatch — silent sync mode
+- **What happened**: Bulk downloads (Print All / Download All via `GenerateClassReportsJob`) "worked" but served stale report content while individual previews were current. Infrastructure appeared verified (Redis connected, worker running) yet jobs never actually queued.
+- **Root cause**: `config/queue.php:16` read `env('QUEUE_DRIVER', 'sync')` — a pre-Laravel-8 variable name — while `.env`/`.env.example` set `QUEUE_CONNECTION` (standard since Laravel 8). QUEUE_DRIVER was never set → silent fallback to `sync` in every environment → jobs ran inline in the dispatching process, never touching the `jobs` table or the `queue:work` worker `entrypoint.sh` starts. Compounding bug: `scripts/deploy-manual.sh` restarted only PHP-FPM (`kill -USR2 1`), never the separate queue worker loop, so long-running workers kept stale class definitions in memory.
+- **Fix**: PR #335 (`fbe1c62a`) — set QUEUE_DRIVER (prod now: `QUEUE_DRIVER=redis`, `config('queue.default')` = redis) + deploy step `[7/8] php artisan queue:restart` (`scripts/deploy-manual.sh:87-88`).
+- **Lesson**: Verify infrastructure claims against real evidence — after a dispatch, check the actual `jobs` table / Redis `queues:*` keys, not just eventual completion. Queue env var is QUEUE_CONNECTION (Laravel 8+); a config reading an old name is a bug. A deploy must restart ALL long-lived workers (queue:work), not just PHP-FPM.
+- **Verify fix still in place**: `config/queue.php` reads the correct env var; prod `config('queue.default')` = redis; `scripts/deploy-manual.sh` contains `php artisan queue:restart`; dispatching lands in Redis `queues:*` keys, not inline.
+
+### 5. `contributes_to_report_total` not respected at every call site
+- **What happened**: MID (non-total) marks bled into official totals in multiple places — affecting other schools, not just Kabale.
+- **Root cause**: Totals/aggregates computed per call site; some filtered by `contributes_to_report_total`, some didn't.
+- **Fix**: Filter now present at every aggregation site: `ReportCardsController` (37, 78, 98, 111, 319, 383), `DownloadStudentReport.php:71`, `MarksController.php:182`, `WhatsAppController.php:392`, `GenerateClassReportsJob.php:50`, `StudentReportHelperService.php:87,184`, `CombinedMarksheetExport.php:54`. Flag lives on `App\Models\Academics\ExamType` (boolean cast).
+- **Lesson**: When a field decides "should this count toward the total", it must be respected at EVERY call site that computes a total — grep the column name before writing any new aggregate query.
+- **Verify fix still in place**: `grep -rn "contributes_to_report_total" app/` shows the filter in every totals context above; any NEW aggregate query must include `whereHas('examType', fn($q) => $q->where('contributes_to_report_total', 1))` or the examType collection filter.
+
+### 6. `status != 'exit'` conflates "not exited" with "currently active" — silent `inactive` leak into aggregate counts
+- **What happened**: School 104 (Kabale) admin dashboard showed **1,250** "Total Students" instead of the true **933** — the extra **317** were junk/duplicate records the `2026_08_12_173702_flag_junk_student_records` migration had flagged `status='inactive'` earlier the same day. The count silently included them.
+- **Root cause**: `users.status` is a three-value enum `['active','inactive','exit']`. Every student-count query in `app/Traits/Dashboard.php` filtered `status != 'exit'` — a **broad negative exclusion** that matches BOTH `active` AND `inactive`. The "not exited" category was conflated with the "currently active" category, so `inactive` junk records leaked in. (The user-visible 1,250 = 933 active + 317 inactive, both non-soft-deleted; the earlier session's 3,098 was a raw query missing `deleted_at IS NULL` — 933 + 317 + 1,848 soft-deleted inactive. Not a cache issue: no `studentCount_*` cache keys existed; the number was live-computed.)
+- **Fix**: Replace the negative-exclusion filter with the positive-equality scope `ByActive()` (`where('status','active')`) in all student count queries in `app/Traits/Dashboard.php`: headline `studentCount` (setup-incomplete branch + cached main path), `maleCount`, `femaleCount`, the new `unknownCount` (Unspecified-gender donut segment), and `standardStudentCounts` (per-standard breakdown). Teacher (`ByRole(5)`) / parent / non-teaching counts keep `status != 'exit'` — the junk migration only flagged students (`usergroup_id=6`), so staff counts were unaffected. Regression test: `tests/Feature/Dashboard/DashboardStudentCountExcludesInactiveTest.php` seeds active/inactive/exit/soft-deleted students and asserts only `active` are counted + the donut total agrees with the headline number.
+- **Lesson**: On a multi-value enum, a negative-exclusion filter (`!= X`) silently includes every other value — it is a *broad category*, not "the specific thing meant". For aggregate counts (totals, dashboard KPIs, roster figures) use a **positive-equality** scope (`= <intended-value>`), never `!= <excluded-value>`. Before writing any aggregate query on `users.status`, check the enum definition (`enum('active','inactive','exit')` in `2020_02_18_000000_create_users_table.php`) and filter positively. This is the fourth instance of the recurring "conflating a broad category with the specific thing meant" pattern (after `standard_id` vs `section_id`, digit-suffix heuristic vs roster, `QUEUE_DRIVER` vs `QUEUE_CONNECTION`).
+- **Same bug, other call sites (flagged, NOT fixed here — scope was the student-count pipeline)**: `app/Livewire/Superadmin/Academics/SchoolList.php:116,121` (superadmin school-list student counts), `app/Http/Controllers/Admin/StudentController.php:112` (`/admin/students` listing — would show inactive junk rows), `app/Http/Controllers/Admin/StandardsLinkDetailsController.php:144` (per-standard student count), `app/Livewire/ManualOnboardingWizard.php:809` and `app/Services/OnboardingStepsService.php:195,305` (`whereNull('status')->orWhere('status','!=','exit')` onboarding counts). Each should switch to `ByActive()` (or `where('status','active')`) when the intent is "currently active students".
+- **Verify fix still in place**: `grep -n "ByActive" app/Traits/Dashboard.php` shows the scope in student count queries and NO `status.*!=.*exit` in usergroup-6 count paths; `php artisan test --compact tests/Feature/Dashboard/DashboardStudentCountExcludesInactiveTest.php` passes (2 tests, 8 assertions).
+
+## Open items (unresolved — do not assume either is handled)
+
+### O1. P.4 East marks fix — **APPLIED & VERIFIED 2026-08-14** ✅
+- Fix: ADD `OWANI SAMUEL → SAMUEL OWAMANI` (active uid 2877 — all three sheet spellings `OWANI`/`OWAMANI`/`OWAMAANI SAMUEL`); REMOVE over-eager `KWIKIRIZA ALVIN → ALVIN AWIRIZA`; KEEP `AKATUKWASA MARTIN → MARTIN AKAWAKWASA` (uid 2862).
+- **Hidden trap fixed**: `buildNameMap()` keyed by name only; inactive DUPLICATE `SAMUEL OWAMANI` (uid 3040) shadowed uid 2877 and was the prior recipient of wrongly-assigned July marks. Now `->where('status','active')` excludes inactive users (also fixes inactive-duplicate shadows for `ALPHA ELISHADAY ARINANYE` 2506/2480 and `ELIZABETH AMUTUHEIRE` 2889/2579). Source names get internal-whitespace collapse so multi-space spellings match.
+- **Shipped**: commit `aed5496d` on `fix/students-class-filter-dedupe`, rebased onto `origin/main` (previously 88 behind), merged via **PR #336** → merge commit `d983accc` on `main`, deployed 2026-08-14 (deploy script now `[1/8]` with `queue:restart`).
+- **Verified on prod post-import** (`php artisan import:kabel-marks --class=P.4`; deleted 432 / inserted 448): uid 2877 has 12 marks (EOT `4/33/10/4` + June `6/33/15/6` + July `13/28/16/15`); uid 2867 (ALVIN AWIRIZA) **0**; uid 3040 (inactive) **0**; uid 2862 intact on all 3 exams. KWIKIRIZA ALVIN flagged unmatched (47 unmatched pre-existing names, incl. ELASMUS/AGABA GIVEN — no such users in school 104).
+
+### O2. Formal/Warm report-template rewrite scope — **CONFIRMED platform-wide views, per-school selection**
+- `report_template` is a per-school column on `schools` (migration `2026_08_13_010000_add_report_template_to_schools_table.php`; `School.php` `$fillable`), default `formal` (`$school->report_template ?? 'formal'`, `ReportCardsController.php:72`).
+- The template VIEWS (formal/warm/modern blade) are shared platform code (`ReportCardsController::TEMPLATES` registry; fallback to `formal` at line 532) — so the rewrite affects EVERY school that renders report cards; the per-school column only chooses WHICH template.
+- **Verified 2026-08-14 (prod)**: all 20 schools have `report_template = formal` (school 104 restored to formal after warm testing). Non-Kabale schools render the new formal design too — intended shared behavior, not Kabale-scoped.
+- **Still open**: no school beyond Kabale has been visually QA'd on the new templates; if any school sets `warm`, it must render correctly (only Kabale has exercised `warm`).
 
 ## Superadmin audit (Jul 31, 2026) — Phase 1 + Phase 2 + triage **CLOSED on `main`**
 
@@ -788,6 +850,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
+- **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
+- **Key findings**: (1) Production host is **DigitalOcean** (2 vCPU/2 GB, ~$18–24/mo), NOT Hetzner as older notes claim — corrected above. (2) Live scale: 20 schools, 1,376 users, 664,336 marks, 203 exams, 18 report_generations all-time; load 0.09 (idle); nginx access logging DISABLED. (3) Laravel Cloud pricing (verified live): Starter $5/mo, Growth $20/mo, Business $200/mo, each + $5 usage credit, scale-to-zero default → realistic all-in $5–30/mo, **comparable/cheaper than current VPS** (earlier "Pro $59/Scale $199" figures were wrong). (4) Migration effort medium (2–4 days): dump/import DB, R2 blob for 418 MB PDFs, re-point WhatsApp webhooks; no app-code changes required (no vapor.yml, no schedules, queue on redis already).
+- **Decision**: DO NOT migrate now. Tonight's queue-stale-worker incident already fixed in place (`queue:restart` in deploy script). Re-open if: 3rd deploy incident, sustained load >0.7, >2 GB data / >50 schools, or need for per-PR preview envs (Business plan only).
+- **Files**: `LARAVEL-CLOUD-ASSESSMENT.md` (new), `knowledge.md` (host correction + this entry)
+- **Status**: 📋 assessment complete — no code changes, nothing migrated, no PR
 
 ### 2026-08-10: Teacher mark view 500 + save ownership (opening PR)
 - **Work done**: Fixed `viewExamMarks` 500 (undefined `$exms` + brittle Term I `match` + broken `officialTeacher` footer). `saveExamMarks` now requires `exam.teacher_id === auth.id` in addition to school_id. Feature tests in `TeacherExamMarksAuthorizationTest`.
@@ -6923,3 +6992,402 @@ Import was hardcoded to 6 subjects via `SUBJECT_MAP` constant. Report side alrea
 - `getStandardLinkList()` caches under `standardLink{school}_{year}` — any standards/links change needs `optimize:clear` or container restart.
 - `latest_sa` student subquery isn't truly "latest per user" (no per-user limit), but no school-104 student has >1 active `student_academic`, so it doesn't manifest. Latent for multi-year data.
 - 9 active academic years (`status=1`) all named "2026" — `getAcademicYear` picks highest id (51); data mess, not touched.
+
+### 2026-08-13: Report-card template selection (PR #295) MERGED + DEPLOYED + Kabale crest uploaded
+
+**Merge**: PR #295 `feat(reports): report card visual redesign + persistent template selection` — merge commit `99db9e3e9a053d70c2664710c3354a65b8fbeabb`, branch `claude/memory-from-chat-faiob7` → `main`, @ 2026-08-13 02:45 UTC. URL: https://github.com/KlassApp-Foundation/KlassApp/pull/295
+
+**What landed**:
+- `schools.report_template` column (`string`, `NOT NULL DEFAULT 'formal'`) — migration `2026_08_13_010000_add_report_template_to_schools_table`.
+- Formal + Warm templates (modern dropped) under `resources/views/admin/marks/report-templates/` — centered stacked letterhead header (logo above, school name/address centered), KlassApp green/navy brand colors.
+- Per-school template switcher on `/admin/reports/cards` (POST `admin.reports.cards.template`); `ReportCardsController::generatePdf()` picks the Blade view via a single `TEMPLATES` map (all 4 call sites route through it — unified in #238).
+- **Logo resolution moved off the old hardcoded `public_path('images/KJSLogo.jpg')`** (`student-report.blade.php`) → `resolveLogoPath()` reads `SchoolDetail(meta_key='school_logo')` (latest row, skipping the `'-'` sentinel), `Storage::disk('public')->path()` + `file_exists`, graceful omission if none uploaded.
+
+**Deploy**: `scripts/deploy-manual.sh` (Hetzner `sms-app`, root@46.101.111.131) — migration ran cleanly on prod, caches cleared, FPM restarted, PHP 8.4.24 serving. **No raw production edits** — everything through the standing flow.
+
+**Kabale crest upload** (final open item from the design work):
+- Real crest = `KJSLogo.jpg` (490×525, md5 `a5b0f55c6f525348ccb29079ec97f8fc`; downloaded to `~/Downloads` Aug 12 16:03, copied to repo `public/images/` 16:09; **untracked in git** — never committed; a copy already existed on prod at `public/images/KJSLogo.jpg` from the old hardcoded path).
+- Wired via the app's own layer (same writes the admin UI performs): file → `storage/app/public/kabales-school/school_logo/KJSLogo.jpg`; new `SchoolDetail` row id **1093** (`school_id=104`, `meta_key='school_logo'`, `meta_value='kabales-school/school_logo/KJSLogo.jpg'`). Old `'-'` sentinel row left in place (latest-row lookup + sentinel skip handles it).
+- School 104 `report_template` = `formal` (default).
+
+**Verified on production**: generated a real report card via the merged pipeline (exam 44, section 51, standard 55, learner 3266 ALLAN KATO TAYEBWA, stdLink 81) — 1.68 MB PDF; the single embedded DCTDecode XObject is **byte-identical to the real crest** (55,247 B, 490×525, md5 `a5b0f55c…`, pixel MAE 0.00) — not KlassApp's logo, not a broken image.
+
+**Open-PR sweep (tonight)**: #295 was the only PR created Aug 13; remaining open PRs (#212, #205, #159, #158, #155, #151, #146, #141, #139, #138) are all Aug 2–10 and unrelated to tonight's work — none pending from tonight.
+
+**Flagged (not blocking)**:
+- `KJSLogo.jpg` is untracked — if the real crest should live in the repo, `git add` it deliberately; otherwise it's a local-only artifact (prod copy already present).
+- `modern.blade.php` ships in PR #295 but is unreferenced (modern template was dropped) — harmless dead file; remove in a future cleanup if desired.
+
+### 2026-08-13: Report-card template wording audit — ZERO drift restored (PR #296 MERGED + DEPLOYED + verified)
+
+**Rule (standing)**: ZERO wording drift on report card templates. Only CSS, layout, color, spacing, and structural presentation may change — every text string must match the locked pre-redesign baseline (`admin.marks.student-report`, state from PR #242/#260-263) character for character.
+
+**Audit method**: programmatic static-text extraction of all three templates vs baseline (CSS/Blade stripped, HTML text nodes + alts + title compared), then runtime literal comparison of regenerated PDFs.
+
+**Drift found + reverted** (PR #296, merge `c8fe7441`, branch `fix/report-templates-wording-audit`):
+- Title → **PROGRESSIVE REPORT** in ALL templates (was "Terminal Report Card" / "Progress Report" / Warm dropped it for a tagline)
+- **POSITION** (was "Position in Class") — all three
+- School meta lines restored char-for-char: `(Nursery And Primary, Day And Boarding)`, `P.O Box 283 - Kabale - UGA`, `Tel: +256782255758 / +256784119149 / +256704301646`
+- **MONTHLY RESULTS — MID TERM** / **END OF TERM EXAMINATION** (were title-case)
+- Motto **HARD WORK PAYS** (was "Hard Work Pays" / `“Hard Work Pays”`)
+- **Next Term Begins:** — colon restored, baseline capitalization
+- Grading table **Range** label cell re-added (dropped in all three)
+- Formal only: **Student** (was "Name of Pupil"), **Class Teacher**/**Head Teacher** (were "Remarks of …"), removed non-baseline "School / Seal" middle signature block
+- Removed non-baseline "Developmental Assessment" nursery heading (all three; baseline has no heading there)
+
+**Verified on production** (real data, learner 3266 / exam 44 / stdLink 81, school 104):
+- Reconstructed `generatePdf` data renders text-identical to the real pipeline (fidelity confirmed)
+- Baseline vs formal/warm/modern: **zero missing / zero extra words** after normalizing CSS presentation
+- Remaining diffs are CSS-only: `text-transform` case (baseline itself renders comments uppercase + footer title-case) and `letter-spacing` on titles/headings (extract as "P R O G R E S S I V E") — both permitted presentation
+
+**Flagged (not blocking)**:
+- Modern template still renders a letter-monogram band-mark instead of the school logo image (no `$logoPath` usage) — structural; modern not offered in the selector. Confirm intended or wire the crest.
+- `✦` flourish + `·` separators (term·year) are decorative presentation, kept.
+
+### 2026-08-13: Report-card print/template changes — PRs #297, #298, #299 MERGED + DEPLOYED + verified
+
+**#297 (`1b604ac3`, `feat/report-card-print-head-comments`)**:
+- Removed the SCHOOL GRADING SYSTEM footer table (Grade + Range rows) from all three templates — one fixed scale can't represent every standard; grade codes in marks AGG columns untouched.
+- Base font 10→11px + weight 600 on body (base-size bump is **inert** — every rendered element carries an explicit font-size; weight 600 visibly boldens inherited text, with some DomPDF Times-Bold fallback on 600/800 weights).
+- Removed the ✦ flourish (Formal only — Warm/Modern never had it).
+- Head Teacher comment framework: `config/report_card_head_comments.php` skeleton, `ReportCardCommentService::headTeacherCommentFor()` (same band lookup, distinct `head-` seed salt, **programmatic collision guard** — never renders identical to the class-teacher comment; advances within tier, blank + log if all collide), controller wiring, all three Head Teacher boxes. 7 tests.
+
+**#298 (`1fecc9e9`, `feat/report-card-print-font-visible`)**: content font-size scale +1px (marks cells/headers, comments, meta, values, pos rows, footer) so the size increase is visible. Fit verified: still 1 page per template.
+
+**#299 (`2a8e4a83`, `feat/report-card-head-comments-bank`)**:
+- **Head Teacher bank FILLED** with the operator-confirmed 6-tier content (lower 0-600 / upper 100-400, boundaries mirroring the class bank; 4-4-4-3-3-3 phrases/tier).
+- **Bigger/wider headers** (Formal + Warm): school name 19→24px / 17→22px, logo 60→84px / 56→76px, Formal title pill 12→16px with wider padding + letter-spacing 3→4px, Warm ribbon 10→12px + wider padding, wider page padding. Fit verified: still 1 page each.
+- New test locks real-bank structure (6 bands/group, all populated) + proves real class+head banks never collide. 15 tests / 74 assertions.
+
+**Verified on production** (learner 3266 / exam 44, school 104, real pipeline + reconstructed-data cross-check):
+- All templates 1 page; grading table + flourish absent; wording audit zero drift.
+- Head Teacher box renders a real bank phrase ("This is truly commendable work…", Excellent tier — total 370 is in upper 360-400), Class Teacher comment present exactly once per card — **no collision**.
+- Header school-name spans: Formal 18pt DejaVuSerif-Bold, Warm 16.5pt (up from ~14.25pt / 12.75pt).
+
+**Known quirks (not blocking)**:
+- DomPDF maps 600/800 weights to its built-in Times-Bold fallback for some inherited/serif text (e.g., Warm school name) — bolder but different typeface on those strings.
+- Modern template still renders a letter-monogram instead of the school logo (`$logoPath` unused) — not in the selector; confirm intended.
+
+### 2026-08-13: Report-card missing-mark dash, edge-to-edge header, footer redesign — PR #300 MERGED + DEPLOYED + verified
+
+**PR #300** (`f8838e52`, `feat/report-card-footer-header-final`) — four items that had never reached a prior session message + the true edge-to-edge header:
+1. **Missing-mark cells**: all `'&mdash;'` Blade fallbacks (and the raw nursery placeholder) → plain `-`; previously Blade escaped the entity and the PDF showed the literal text "&mdash;".
+2. **Footer redesign**: removed "KABALE JUNIOR SCHOOL · Generated … Next Term Begins" line; replaced with one edge-to-edge line `Kabale Junior School, UNEB Center No. {schools.uneb_center_number} Tel: +256782255758 / +256784119149 / +256704301646` (Kabale = **U100140**).
+3. **Next Term Begins** relocated to just beneath the Class Teacher / Head Teacher comment boxes (`@if ($nextTerm)`-guarded, all templates).
+4. **Signature placeholders**: real signing lines (caption + 22px line) added near the comment boxes; old footer signature blocks removed.
+5. **Edge-to-edge header (Formal + Warm)**: prior "wider padding" had only increased padding within existing page margins (the opposite). Fixed with `@page { margin: 0 }` + full-width header band + content wrapper (frame stays inset) + full-width footer band for the UNEB line.
+
+**Verified on real production render** (learner 3266 / exam 44): 1 page fit holds; zero literal `&mdash;`; UNEB line + "Next Term Begins: 14/09/2026" + CLASS TEACHER/HEAD TEACHER signature captions ×2 present; **geometric proof** of edge-to-edge — header band bottom border and footer band top border both draw from x=0.0 to x=595.3 (physical A4 page edges) while the content frame border stays inset at x≈16.
+
+**Noted (pre-existing, untouched)**: modern.blade.php has an unclosed `.page` div (1 open div at EOF, present before this branch; renders fine, browsers auto-close).
+
+### 2026-08-13: Final template batch — PRs #301 + #302 MERGED + DEPLOYED + verified
+
+**#301** (`b2ba36c9`, `feat/report-templates-final-batch`):
+1. **Comment banks**: Head Teacher — two phrases tightened ("Progress this term has been encouraging." / "There is real potential waiting to be unlocked."); Class Teacher bank untouched (school's own wording).
+2. **"Fairly good / quite good" → "Fairly Good"** (D4 subject grade word): seed source + live DB rows. The D4 remark that actually renders is std-55 numeric set grade 4 (remark `F.Good/Q.Good`) — the "exact phrase" also existed as `Fairly good / quite good` (rows 13/22). All → "Fairly Good" (see #302 for the remaining seed forms + row 40).
+3. **Crest watermark** (Formal + Warm): `$logoPath` img at `opacity: 0.04`, absolute center-page behind content. Verified via PDF ExtGState `/ca .04` (formal obj 24, warm obj 18) + pixel samples; page fit unaffected.
+4. **School meta line**: 10px → 12px + weight 700 (Formal `.school-meta` / Warm `.h-meta`). Rendered spans 9pt Bold.
+5. **TERM II**: template-side transform of the academic-term name (`Term 2` → `TERM II`, regex `^(.*?)\s*(\d+)\s*$` + roman map, uppercase; non-matching names just uppercase). Applied to header displays in all three templates. `academic_terms` data untouched ("Term 1/2/3" still stored).
+6. **Position spacing**: `74 of 99` → `74&nbsp;&nbsp;of&nbsp;&nbsp;99` (Formal + Warm).
+
+**#302** (`0461000f`, `fix/fairly-good-d4-remark`): remaining slash forms in `KabaleRestructureAndSeed` — std-55 grade 4 `F.Good/Q.Good` + P4-P6 grade 5 `Q.Good / F.Good` → "Fairly Good". Live DB row 40 updated; verified a real D4 card (student 3251, mark 74) renders "Fairly Good", no slash variant.
+
+**Verified on real production renders** (learner 3266 + D4 student 3251): TERM II present (all templates, no "Term 2"); watermark ExtGState ca=0.04 + image XObject; meta spans 9pt Bold; position "74 of 1228" with nbsp separation; head-bank Work Hard tier returns the tightened phrase; D4 card shows "Fairly Good"; all cards still 1 page. 15 tests / 74 assertions pass.
+
+### 2026-08-13: Final polish — PRs #303–#307 MERGED + DEPLOYED + verified
+
+- **TERM II 2026** (#303 + #304): term transform now appends the academic-year name. Required adding the **missing `academicYear()` relation on `AcademicTerm`** (#304, `051f5548`) — it never existed, so the year silently never rendered. AcademicYear 18 = "2026".
+- **Tel line width** (#303, #305, #306, #307): iterated 9px→6.5px→7.5px→8.5px (formal/warm) + 7px (modern). Final rendered ratio vs address line: formal 0.97, warm 0.97, modern 1.01. All three phone numbers kept.
+- **Powered by klassapp.xyz**: small muted line under the UNEB Center No. line, all templates.
+- **Template preview** (#303): `GET /admin/reports/cards/preview/{template}` renders the requested template with the admin's own real data (latest contributing exam + first student); `generatePdf()` gained optional trailing `?string $templateKey` (backward-compatible). Each selector radio option now has a Preview link (new tab). Forced-template render verified producing the correct warm PDF.
+- **Bolder colored borders**: accent table borders (formal green #22C55E, warm orange #D97706, modern blue #1E6FD9).
+- **Grade letters (grading system)**: AGG codes now D1–D2, C3–C6, P7–P8, F9 (was hardcoded 'D' prefix). Verified: no D3–D9 anywhere; renders D1/D2/C3 for the sample card.
+- **Signature dash in front**: `____ Class Teacher` / `____ Head Teacher` (dash line drawn immediately left of the caption, all templates).
+
+**Process notes**: the Tel-width fix went through 3 PRs (#305/#306/#307) measuring rendered span widths each time; one commit briefly landed on the worktree's local main and was moved to a proper PR branch (`fix/tel-line-width-3`) before merging — origin/main never carried it directly. Preview route requires admin auth (same middleware as the rest of /admin/reports/cards).
+
+### 2026-08-13: P.2 East/West marks audit vs source export (school 104) — read-only
+
+**No East/West split in DB**: sections are plain "P.1"–"P.7"; `standards_link.stream` is NULL for every school-104 row. P.2 = single section 46 (link 79, std 54 primary_lower, ay 51 "2026", term 89 Term 2). Enrolled: **114**. East/West grouping exists only in the source export.
+
+**Coverage (full P.2)**: EOT II (exam 21) 48/114, June (22) 45/114, July (23) 49/114; 55 students have marks in ≥1 exam; **59 have zero marks in all three**. Marks total 852 rows. Exam structure: exams are per-cycle single rows owned by subject 234; marks rows carry real subject_id (244 ENG, 245 MTC, 300 RE, 249 LIT I, 250 LIT II, 301 RR).
+
+**Spot-check (42 export students)**: 5 exact; 31 diffs (21 all-NULL = no DB marks); 6 name no-match. West-listed students have NO marks anywhere (never imported). East-listed mostly match or small diffs (e.g. MUGISHA June LIT II/RR swapped; AINAMANI ENG 76 vs 96; KABARUNGI RR 94 vs 100).
+
+**Anomalies found**:
+- **ISHIMWE ESTHER misattribution**: export EOT (100,98,94,84,100,98) is stored on uid 2686 'ESTHER AMUTUHEIRE'; the name-matching student uid 2636 'ESTHER ISHIMME' has zero marks.
+- **AINOMUGISHA BRAVE / NIWABINE TIMOTHY**: each is ONE DB student (2653 / 2672); the first export row matches the DB exactly, the second export row matches NO enrolled student (export-side artifact). No duplicate marks rows exist (0 per-student exam+subject dups).
+- **Spelling variants = single students**: AMPURIRE JOSHUA=2656, AYEBARE BRIGHTON=2664, EMMANUELLAH KABARUNGI=2637, MORGAN TYLOR MUGISHA=2641.
+- Name-format variants: AGABA BYONA INNOCENT = uid 2651 'INNOCENT AGABABONA' (July matches exactly); ITANGA ISHAKA RENNY = uid 2717 'RENNY ITANGAISHAKA' (no marks).
+
+### 2026-08-13: P.2 full-population sweep vs combined marksheet (CORRECTION) — read-only
+
+Source of truth: `~/Downloads/combined_marksheet_P.2.xlsx` (MONTHLY RESULTS sheet = June/July; END OF TERM sheet = EOT II). **The DB matches the source file 100%** — the earlier "mismatches" and the "ISHIMWE→AMUTUHEIRE misattribution" were artifacts of the PASTED numbers (which had typos/swapped values/names), not real DB problems.
+
+- **Misattribution sweep (all 55 with-marks students, value-equality): 0 cases.** No DB student's marks equal another student's export row. The file has "ESTHER AMUTUHEIRE (100,98,94,84,100,98)" (DB matches) and "ESTHER ISHIMME (blank)" (DB has 0 rows — consistent). No ISHIMWE row exists in the file.
+- **Non-null diff sweep: 142/142 exact, 0 swaps, 0 wrongs** (every non-null DB cell == file value). Pasted numbers that were wrong: AINAMANI June ENG (file 76), MUGISHA June LIT II/RR (file 82/100 — same as DB), AINEMBABAZI June (file [96,98,86,98,86,90]), KABARUNGI EOT RR (file 94), AMUTUHEIRE EOT (file = DB values).
+- **Blank-vs-zero flag**: uid 2673 CALEB NIWAHA June — file blank, DB has six literal 0.00 rows (the only "extra" with-marks student: DB 45 vs file 44 for June).
+- **Coverage mirrors the file**: file blank rows (EOT 65, June 69, July 64) ≈ the DB zero-mark students (59) — the ~half of P.2 with no marks is blank in the SOURCE, not a DB import loss.
+- **Import trail**: uid 2686 EOT rows created 2026-08-12 03:18:28 (main EOT import batch, 63 rows at 03:18:28 + 225 at 03:18:29), updated 17:33:53 same day (an update pass touched all rows) — no separate manual edit. uid 2636 has 0 rows (never imported; file blank for her).
+
+### 2026-08-13: Signature dash right + bold green powered-by — PRs #308, #309
+
+- **Signature dash on the RIGHT**: user corrected the earlier direction — dash goes after the label. #308 flipped the markup, but DomPDF expanded the border-bottom inline-block to the full cell width (a full-width rule above the captions). #309 replaced it with **underscore text** (`Class Teacher ____`), which renders reliably — verified geometrically: captions at x 67–130 immediately followed by the dash at x 133–258 (same line), both labels.
+- **"Powered by klassapp.xyz"**: now 9px weight 800 in brand green #22C55E (was 7px muted). Verified span color `#22c55e`, Times-Bold.
+
+### 2026-08-13: HM report-card preferences — PRs #310, #311, #312 MERGED + DEPLOYED + verified
+
+**#310 (`3eb49d66`, `feat/report-hm-preferences`)** — HM preferences on all templates:
+- **No aggregate for Nursery–P3**: `showAgg` flag (controller, standard-name based) hides AGG columns, the Aggregate particulars/tile cell, and the TOTAL agg cell for nursery + primary_lower.
+- **TR Initials** → initials ('T B') instead of the full teacher name.
+- **Position**: '74th out of 99 Pupils' (ordinal helper + 'Pupils'), label 'POSITION IN CLASS', value highlighted.
+- **Signature card**: Class Teacher + Head Teacher comments with signatures in ONE bordered card; HM column has a signature line + dashed STAMP placeholder.
+- **Next term**: 'Next term begins on 14/09/2026' moved immediately after the position row.
+- **END OF TERM EXAMINATION** → 'END OF TERM 2' (dynamic numeral).
+- **Monthly tables**: TOTAL / POSITION / DIVISION columns; EOT: DIVISION row. Division scale (points aggregate, Ugandan primary): I=6–12, II=13–24, III=25–30, IV=31–36, U=37+ — ⚠️ assumed, pending HM confirmation.
+- **#311 (`811affb3`)**: fixed a `$grading_system` variable bug in the monthly-stats closure (card generation error) — extracted a shared `$gradingSystem` variable.
+
+**#312 (`26c1c4eb`, `fix/report-division-scope-header`)**:
+- **Division scoped out of Nursery/P.1–P.3** (monthly DIVISION column + EOT DIVISION row now gated by `showAgg` like Aggregate) — lower classes show comments, totals, position only.
+- **Monthly Position column (P.4–P.7)** now uses the full format '66th out of 99 Pupils' with the per-month count.
+- **Header reworked to side-by-side**: logo LEFT, school name/address/contact RIGHT (Formal + Warm) — deliberate reversal of the earlier centered letterhead per the HM.
+
+**Verified on real renders**: P1 (uid 2467) 1 page, no AGG, no Division; P2 (uid 2641) 1 page, no AGG, no Division; P4 (uid 2832) 1 page with AGG + Division + full monthly position. Header geometry: logo x16–79 left, school name x96+ right. All single-page — no compression needed (the post-#310 2-page spill was recovered by the Division scoping).
+
+### 2026-08-13: Division real scale + borderless comment boxes + selector evidence — PR #313
+
+- **Division scale replaced** (was the assumed I/II/III/IV/U): real ordinal scale in the controller — agg 4-12 → '1st', 13-24 → '2nd', 25-28 → '3rd', 29-32 → '4th', 33-36 → 'U'. Verified on the P.4 render: '1st'/'2nd' appear.
+- **Comment boxes borderless** (and background-less) — separated purely by the two-column sig-card spacing; **dashed stamp placeholder removed** (the 'HM Sign & Stamp' caption text remains).
+- **Evidence produced**: Formal + Warm rendered 1 page each; real admin screenshot of /admin/reports/cards selector via a TEMPORARY admin user (id 3648, verify.screenshot@klassapp.test, usergroup 3, school 104 — created, logged in via Playwright chromium, screenshot, then force-deleted). Selector HTML confirmed: Formal radio (checked) + Warm radio, each with a Preview link (opens the real template PDF in a new tab), Save button. Evidence files: sel-3-cards.png (full page) + selector-evidence.png (cropped) in the session temp dir.
+- **Deferred (pending user confirmation)**: header vertical-centering reading (item 3) — my reading is vertically center the details column against the logo WITHIN the side-by-side layout, not a revert to centered-stacked. One-page re-verify queued after that lands.
+### 2026-08-13: Monthly position all classes, Position in Stream, header balance, column alignment — PR #314
+
+- **Monthly POSITION column now renders for ALL classes** (ranked by that month's Total Marks, scoped to that month's sitters — 'out of N Pupils' uses the per-month N). Aggregate + Division remain P.4–P.7-only. Verified on P1/P2/P4 renders.
+- **POSITION IN STREAM (EOT)**: new row ranked within the student's stream via `standards_link.stream`; renders only when the class has a stream. ⚠️ **No school-104 class has stream values** (0 rows across all schools, no per-student stream column) — verified with a temporary stream='East' on link 79 (row rendered with a computed value, then reverted to NULL). Live cards show only POSITION IN CLASS until stream data is populated — a data decision for the HM (how East/West + P7 A/B map into standards_link.stream).
+- **Header balance**: school details block now centers within the side-by-side layout (logo left) so the header reads visually centered.
+- **Column alignment**: comment boxes given fixed heights (formal 56 / warm 60 / modern 62px) so the Class Teacher and HM signature rows stay horizontally level regardless of comment length — verified both signature captions at identical y (671.0).
+- All rendered cards remain 1 page (P1, P2, P4, warm, stream-demo). PRs this cycle: #313 (division scale + borders/stamp), #314.
+### 2026-08-13: Source-file diff + CALEB NIWAHA null fix — PRs #315, #316
+
+**Source diff (combined_marksheet_P.2.xlsx vs p2_final_mark.zip)**:
+- Metadata: combined xlsx mtime **Aug 12 23:30**; p2_final_mark.zip downloaded **Aug 13 07:29** (entries stamped Aug 12 13:52) — the zip is the **newer, authoritative** export ("final").
+- The zip (6 files: p2east/west × EOT/July/June) contains real marks for the **West students (~45/exam) that the combined sheet left blank** (~950 zip-value vs combined-blank cells), plus ~462 value-vs-value disagreements (some are name-matching artifacts; real ones e.g. ATUHURIRE VICTORY EOT LIT II/RR swap 98/100 vs 100/98, KABARUNGI EOT RR 100 vs 94) and roster differences (zip-only names RYONANETE TRXPHENA, ATUHAIRE LARSON, NASIMANYA JOLOVON…).
+- **Implication**: the DB (verified earlier to mirror the combined sheet) is missing the West marks that exist in the final zip. Sync is a separate decision — NOT done here.
+
+**CALEB NIWAHA (uid 2673) June zeros — FIXED (#315 + #316)**:
+- Authoritative zip: NO June row for CALEB NIWAHA (only "NIWAHA CALEB" in July; "NATURINDA CALEB" in EOT/July/June is a DIFFERENT student = DB uid 2662 CALEB ATURINDA, whose marks are missing entirely). So his six 0.00 June rows were import artifacts.
+- `marks` column was `decimal(5,2) NOT NULL` — nulling silently no-oped. Migration `2026_08_13_020000_null_caleb_niwaha_june_marks` made it nullable + set his 6 June rows to NULL (rows kept). **He was the ONLY zero-vs-blank case** across exams 21/22/23 (census vs the authoritative zip: 6 rows, all his).
+- Controller: monthly ranking now only counts students with ≥1 non-null mark; no-mark learners get '-' totals/positions. Templates: mid/EOT cells render '-' for null marks.
+- **⚠️ #315 shipped broken Blade** — the cell edits used sed whose `&` expanded to the matched text, mangling the expressions (prod render broke). **#316 hotfix** repaired the six cells; verified CALEB's card renders June all '-' (no ranking, no zero), July intact, 1 page.
+### 2026-08-13: PR #317 merged + deployed + live-verified (external Claude Code PR)
+
+PR #317 (`a2e55dc8`, `fix/report-header-balance-column-align`, from an external Claude Code session) — merged + deployed per user directive.
+- **Header logo balance**: `.hdr-table` now shrink-wrapped (`margin: 0 auto`, no width:100%); logo cell `padding-right: 16px`; details left-aligned — logo+text form one centered lockup instead of logo-pinned-left + independently-centered text.
+- **Column alignment**: `.comments-box` gained `overflow: hidden` so DomPDF enforces the fixed height (signature rows stay level regardless of comment length).
+- **Monthly POSITION**: back to bare ordinal (e.g. '66th'), no 'out of N Pupils' suffix — NOTE: this reverses the earlier instruction to use the full format in the monthly column; user shipped it knowingly.
+
+**Live verification (P.7 Alvin Keith Nziza, uid 3318, exam 44)**: Formal logo→name gap 12.0pt, lockup center 296.9 vs 297.6 page center (0.7pt offset); Warm gap 10.5pt, center 297.4 (0.2pt offset) — header reads as one balanced unit on production. Monthly cells bare ordinals (4th/67th/72nd); EOT 'POSITION IN CLASS 1st out of 87 Pupils' intact; CT + HM signature captions both at y 625.3 (level); both templates 1 page.
+
+### 2026-08-13: Cross-class P.2-style scoping pass — audit only, no writes
+
+**Source inventory (Downloads)**: `Kabela Rest of marks!.zip` → `all_marks_final/` (36 xlsx: P1/P3/P4/P5/P6 East/West + P7 A/B × EOT/July/June; zip downloaded **Aug 12 12:44**, entries Aug 12 02:20–02:29). P2 separately has `p2_final_mark.zip` (downloaded **Aug 13 07:29** — NEWER). ⚠️ FLAG: the non-P2 exports predate P2's refreshed "final" by ~19h; the school may hold newer per-class files (P2's newer file disagreed with the older combined sheet — same risk here). No nursery source files (nursery uses assessments, not marks). All_Students_P1_to_P7_final.xlsx + Nursery_Students.xlsx are rosters only.
+
+**Subject sets differ by class**: P1/P3 = ENG,MTC,RE,LIT I,LIT II,RR (6); P4–P7 = ENG,MTC,SCI,SST (4).
+
+**Per-class dry-run (backups all saved server+local, e.g. backup_P1_20260813.json):**
+
+| Class | Enrolled | Marks (J/J/E) | FILL | OVERWRITE | NO_CHANGE | NEW | VERIFY |
+|---|---|---|---|---|---|---|---|
+| P1 | 147 | 71/80/99 | 588 | 0 | 966 | 0 | 0 |
+| P3 | 146 | 69/59/72 | 672 | 0 | 678 | 0 | 0 |
+| P4 | 163 | 65/61/49 | 496 | 0 | 340 | 0 | 0 |
+| P5 | 199 | 77/72/68 | 436 | **4** | 492 | 0 | 0 |
+| P6 | 168 | 73/53/64 | 424 | 0 | 440 | 0 | 0 |
+| P7 | 172 | 97/87/87 | 456 | **16** | 656 | 0 | 0 |
+| Baby/Middle/Top | 34/33/52 | no marks | — | — | — | — | — |
+
+**Flags/decisions**: P5 overwrites = FAITH AINOMUGISHA (uid 2943, 4 cells, small diffs 82v78/64v65/54v66/73v69). P7 overwrites = JOSHUA NIWAGABA (uid 3258, 12 cells, DB much lower: MTC 55v95 etc.) + JOEL NIWAHA (uid 3259, 4 cells) — wholesale, likely corrections but need confirmation. No NEW_STUDENT/VERIFY surfaced in any class (vs P2's 19 weak) — suspicious given the P2 false-positive lesson; the overwrite clusters are the visible symptom of possible attribution issues. marks column already nullable (CALEB migration) — no further migration for null-outs. No Blade/rendering code touched.
+
+### 2026-08-13: PR #318 merged + deployed + live-verified (external PR)
+
+PR #318 (`0c9e97b1`, `fix/report-position-division-header-center`) — merged + deployed per user directive. Five items + bug fix:
+1. **Division merged into TOTAL row**: EOT TOTAL row now shows `U · 34` (Division · Aggregate) inline in the AGG cell; separate DIVISION row removed.
+2. **Position combined sentence**: single `Position in Class: 1st out of 87 Pupils [· Position in Stream: 73rd out of 172 Pupils]` banner (stream clause only when a stream exists).
+3. **Stream position computing**: EOT + monthly stream queries now include a `standard_id` filter (the self-caught bug fix — previously could pool students from different grade levels sharing a stream label); monthly position pool = sibling sections' same-month MID exams within the standard.
+4. **"END OF TERM II"**: term numeral converted to roman (was "END OF TERM 2").
+5. **Header meta lines centered**: `.hdr-details { text-align: center }` (formal + warm).
+
+**Live verification (P7 Alvin Keith Nziza, uid 3318, formal + warm, 1 page each)**: 'END OF TERM II' literal; TOTAL row '400 141 U · 34' (Division inline with Aggregate); Position banner 'Position in Class: 1st out of 87 Pupils'; meta lines centered as a stack (all three at center ~335pt — ~37pt right of page center, balanced against the left logo). Stream mechanism demoed via temporary stream='A' on link 81 (rendered 'Position in Stream: 73rd out of 172 Pupils', then reverted to NULL) — ⚠️ no school-104 class has real streams yet, so live cards show only the Class clause.
+
+### 2026-08-13: P.2 marks SYNC executed (user-approved AUTO-APPLY) — 1144 writes
+
+Executed the approved P.2 sync from p2_final_mark.zip (backup p2_marks_backup_20260813.json, 852 rows, untouched):
+- **AUTO-APPLY (1144 cells, one transaction)**: fill_insert=996 (new marks rows), fill_update=0, overwrite=130 (high-confidence exact-name + 4 user-confirmed swaps), variant=18 (AGABA BYONA INNOCENT→2651, ITANGA ISHAKA RENNY→2717, RYONANETE TRXPHENA→2635).
+- **Verified**: EOT with-marks 48→**106/114**, June 45→**96/114**, July 49→**104/114**; zero marks rows 6→**0**; CALEB's 6 NULL June rows preserved; swap correctness cross-checked against the raw zip (MUGISHA June LIT II=100/RR=82 = zip); West student (DESTINY KEMIGISHA) card renders real marks, 1 page. No Blade code touched.
+- **HOLD (not written, awaiting school confirmation)**: 8 name-label mismatch students (23 row-entries: ALVIN TABARO, JONATHAN NATUMANYA, PRINCESS DANIELLA KEMBABAZI, TINA NINEMUGARURA, LUKE ARINDA, JETHRO AKAMWESIGA, ESTHER AMUTUHEIRE, PAUL ATUHEIRE); 4 new students (AHEREZA SHAMIMAH C, ATUHAIRE LARSON, ABAHO RABECCA, AHUMUZA AMALINE N — 10 row-entries); 139 remaining (b) cells (plain value diffs, full list saved); 2 second-row duplicates (AINOMUGISHA BRAVE NO31, NIWABINE TIMOTHY NO35).
+
+### 2026-08-13: PR #319 merged + deployed + live-verified (external PR)
+
+PR #319 (`f6622d82`, `fix/report-division-position-comments-labels`) — merged + deployed per user directive. All four items confirmed live on a P.7 render (Alvin Keith Nziza, formal, 1 page):
+1. **Division un-merged**: EOT TOTAL row AGG cell now shows Aggregate alone (`34`); `DIVISION: U` renders on its own line below the table.
+2. **Semicolon position**: `Position in Class: 1st out of 87 Pupils; Position in Stream: 73rd out of 172 Pupils` (stream demo via temp link value, reverted).
+3. **Em-dashes**: both comment banks' phrases are dash-free (head bank cleaned by the PR; the only rendered `—` is the baseline-locked `MONTHLY RESULTS — MID TERM` section header, and the only config `—`s are docblock comments, not phrases).
+4. **Inline labels**: `CLASS TEACHER <comment>` on one line inside the comment box (both teacher sections).
+
+### 2026-08-13: Position styling + comment indent — PR #320 merged + deployed + verified
+
+PR #320 (`cd845848`, `fix/report-position-style-comment-indent`):
+1. **Position sentence bigger + italic**: pos banner/card 10.5px → 13px + `font-style: italic` (formal + warm).
+2. **Comment indent**: `.comments-box` padding removed (7px 9px / 9px 11px → 0) so the inline label+comment flow flush — one-line layout and fixed-height signature alignment preserved.
+
+**Verified live** (Abigail Amutuheire, uid 2949, P.5 section 49): position span 9.8pt DejaVuSerif-BoldItalic (bigger + italic); **Stream clause correctly absent** — her class has `stream = NULL` (the known no-stream gap, confirmed against her actual enrollment, not a bug); comment renders `CLASS TEACHER  This performance is very good.` flush on one line (no block padding). 1 page.
+
+### 2026-08-13: Division spanning TOTAL row + teacher-section design pass — PR #321
+
+PR #321 (`2310b01a`, `fix/report-division-span-sigcard-design`):
+1. **Division back in the TOTAL row**: EOT TOTAL row now reads `TOTAL | 400 | 141 | 34 | DIVISION: U` — Division right after the AGG value, spanning the otherwise-empty Comment + TR Initials columns (`td colspan=2 class=division-cell`); the separate division-line removed.
+2. **Teacher-section design pass** (formal + warm): accent-dot before each label (verified rendering as a small filled marker at x 48–52.5 before the CLASS TEACHER label at x 56), card top accent bar + light tint, column separator, dashed divider above the signature row (verified at y 597.6 above the HM caption at 604.9), refined padding — one-line label+comment and fixed-height alignment preserved.
+
+**Verified live** (P7 Alvin Keith Nziza, formal): TOTAL row `400 141 34 DIVISION: U`; design elements render; 1 page.
+
+### 2026-08-13: Teacher labels as headings + COMMENT/SIGN captions — PR #322
+
+PR #322 (`f9d5aa31`, `fix/report-teacher-heading-comment-sign`): per user direction, CLASS TEACHER / HEAD TEACHER are headings again with the comment beneath as its subject (reverses the inline one-line layout); headings read **CLASS TEACHER COMMENT** / **HEAD TEACHER COMMENT**; signature captions read **CLASS TEACHER SIGN** / **HEAD TEACHER SIGN** (was 'Class Teacher' / 'HM Sign & Stamp'). Label-dot accent + design polish retained; dead CSS removed.
+
+**Verified live** (P7 Alvin Keith Nziza, formal, 1 page): heading 'CLASS TEACHER COMMENT' at y 553.9 with the comment 'There is still room for improvement.' beneath at y 565.6; same structure for HEAD TEACHER COMMENT; both SIGN captions level at y 618.7.
+
+### 2026-08-13: One-word teacher labels + numeric Division — PR #323
+
+PR #323 (`1f9b2097`, `fix/report-teacher-oneword-division-num`):
+- **CLASSTEACHER / HEADTEACHER** as single words (comment headings + SIGN captions; modern labels too).
+- **Division numeric**: controller scale returns plain digits ('1','2','3','4','U') — renders 'Division 1, 2, 3…' instead of ordinals (4th → 4). Positions remain ordinal.
+
+**Verified live** (P7 Alvin Keith Nziza, formal, 1 page): CLASSTEACHER COMMENT/SIGN + HEADTEACHER COMMENT/SIGN one-word; monthly DIVISION column shows 4 (not 4th); EOT DIVISION: U; positions still ordinal (72nd/67th/1st).
+
+### 2026-08-13: SIGN captions, no accent dots, particulars without Aggregate — PR #324
+
+PR #324 (`6f208ab4`, `fix/report-sign-captions-no-agg`):
+- Accent dots removed from the teacher headings (formal + warm).
+- Signature captions: **SIGN** (Classteacher) and **SIGN & STAMP** (Headteacher) — teacher words removed from the captions, retained in the COMMENT headings above (CLASSTEACHER COMMENT / HEADTEACHER COMMENT).
+- **AGGREGATE cell stripped from the particulars/tiles row** — name + class only (all templates).
+
+**Verified live** (P7 Alvin Keith Nziza, formal, 1 page): particulars row `STUDENT ALVIN KEITH NZIZA CLASS P.7` (no AGGREGATE); headings CLASSTEACHER COMMENT / HEADTEACHER COMMENT with SIGN / SIGN & STAMP captions beneath. (Note: a sed `&` expansion briefly mangled modern's HM caption mid-session — fixed in a follow-up commit before merge.)
+
+### 2026-08-13: School-104 stream backfill — migration + verified (PR #326)
+
+Migration `2026_08_13_030000_backfill_school104_streams` (`03740a3f`): each class's existing standards_link takes stream1 (EAST / A), a sibling link (stream2 WEST / B) is created with class_teacher_links copied, and students whose stream was derived by **value-matching their DB marks against the original per-stream import files** (p1East..p7B) are moved to the correct link.
+- **618 students mapped** (EAST 268, WEST 249, A 51, B 50); 299 on WEST/B sibling links. Spot-checked 3/stream (12 samples) pre-run — all matched their source file.
+- **Live verification**: Benson Tashobya (P7 B) card renders **"Position in Class: 1st out of 87 Pupils; Position in Stream: 37th out of 50 Pupils"** — real computed stream rank, not a demo. 1 page.
+- **/admin/students filter**: getStandardLinkList dedups by standard-section → still one entry per class (10 entries), no duplicates from the split.
+- **Flags**: no-marks students (no value evidence) stayed on the primary EAST/A link — stream unconfirmed for them; NAMANYA EMMANUEL (appears in both P2 files) kept on EAST — both need school confirmation. The Stream filter on /admin/students was explicitly skipped earlier due to no data — **now that real stream data exists, it's worth adding** (stream filter via standards_link.stream).
+
+### 2026-08-13: /admin/students class+stream filter fix — PR #327 merged + deployed (f17c58bc)
+
+After the stream backfill each class has two standards_link rows (East/West, P7 A/B). The class dropdown value was a single link id, so filtering by class only showed ONE stream's students (getStandardLinkList's ->unique(standard_id-section_id) keeps the first link). Fix: StudentController@index now resolves the selected link to standard_id+section_id and filters on those (all streams), plus a new `stream` param (EAST/WEST/A/B) narrows within the class. View admin/member/index.blade.php gained a Stream dropdown; clear-filter conditions include $streamFilter.
+
+**Live verification (production, exact controller query)**: no filter 1228; class=P2(79) → 114 (62 EAST + 52 WEST, both streams ✓); +EAST 62, +WEST 52; class=P7(81) → 172 (122 A + 50 B); +A 122, +B 50; all-WEST 249. Blade compiles; controller lint clean.
+
+**Clarification from verification**: the admin list uses "latest SA in any active year" (existing app convention), so its per-link counts (62 EAST / 122 A) differ from the migration's ay-51 row counts (45 / 52) — pre-existing baseline behavior, not a regression. Also: standards_link ids 90–117 (created 07:38 by another process) are **NOT school-104 links** (school-104 list stops at 89) — the 28 students whose latest SA references them remain the pre-existing mis-enrollment flag from the backfill log; untouched by this change.
+
+### 2026-08-13: PR #328 deployed + live-verified (report-card template selector thumbnails, merge a605d130)
+
+Merged + deployed via standing flow (`scripts/deploy-manual.sh`). Live browser verification on klassapp.xyz (school 104, existing admin session):
+- **Thumbnails**: both registered templates (formal.png, warm.png, 993x1150) render as `<img>` in the selector grid at /admin/reports/cards — no per-request PDF rendering. NOTE: the selector offers **2 templates, not 3** — `modern.blade.php` exists in `resources/views/admin/marks/report-templates/` but was dropped from `ReportCardsController::TEMPLATES` earlier (knowledge: "Formal + Warm templates (modern dropped)"). PR #328 shipped thumbnails only for the 2 registered templates; the third thumbnail does not exist and is not expected unless modern is re-registered.
+- **Selection state**: clicking a card checks its radio + applies the ring (`has-[:checked]:border-blue-500 has-[:checked]:ring-2`) to that card.
+- **Save persists**: POST /admin/reports/cards/template → `schools.report_template` updated (verified `warm` in DB after selecting Warm; page reload keeps Warm checked + "CURRENTLY IN USE" badge moves to the selected card). School restored to `formal` afterward; temp verify data cleaned.
+- Console: 2 errors — both pre-existing 404s for `/storage/uploads/male.png` (default avatar), unrelated to this PR.
+- Artifact: `KlassApp/tmp/verify-p328/selector-initial.png` (viewport screenshot at initial state).
+
+### 2026-08-13: TRACKED ISSUE — Events model $fillable missing batch/color (breaks exam→calendar sync)
+
+**Bug**: `app/Models/Events.php` `$fillable` lacks `batch` and `color`, but both columns are **NOT NULL, no default** (`2020_02_18_064742_create_events_table`: `string('batch')`, `string('color')`). `App\Models\Academics\Exam` lines ~73-104 call `Events::create([... 'batch' => '', 'color' => '#2563EB'/'#DC2626'])` on exam creation — mass assignment silently drops the keys → **DB NOT NULL violation on every exam-created calendar event**. Hit more than once during testing. Hit path: creating an exam triggers calendar-sync event creation.
+- Also affects `app/Calendar/CalendarService.php:37` (`Events::create($request)`) if request carries batch/color, and the EditEvent/ShowEvent resources read `$this->batch`/`$this->color`.
+- **Fix (dedicated PR, separate from template-selector scope)**: add `'batch'`, `'color'` to `Events::$fillable`, ideally with a test asserting exam creation writes the calendar event (Exam factory → `Events::create` → row exists with batch/color). Request rules (`EventRequest`/`EventUpdateRequest` require `batch`) confirm these are intended writable fields.
+
+### 2026-08-13: PR #329 — restored EOT Position in template-selector full preview (merge 9d3128d5)
+
+**Bug**: `/admin/reports/cards/preview/{template}` ("Open full preview" on the card picker) rendered report cards with the EOT "Position in Class" sentence missing — the EOT section jumped straight from TOTAL/DIVISION to CLASSTEACHER'S COMMENT.
+
+**Root cause**: `previewTemplate()` in `ReportCardsController` called `generatePdf(..., $myPos = 0, ...)` — a **hardcoded 0**. The templates (warm.blade.php:390, formal.blade.php:430) gate the position card on `@if (!empty($myPos) && !$isNursery)`, so `0` silently hid the whole sentence.
+
+**Not a stream-backfill regression**: PR #326 was data-only (migration file only — `git show 608cc6fd --stat`). The per-student path (`previewStudent`/`downloadStudent` → `singleStudentResponse` → `computePositionMap`) always computed real class-wide position. Monthly Position was also correct: Allan Kato Tayebwa (P.7, uid 3266, link 81 stream A, section 51 std 55) = June 2nd/97, July 1st/87, EOT 1st/87 — all class-wide (sibling links share section_id, so the stream filter is a no-op for the monthly pool).
+
+**Fix**: compute the real class-wide position map (same `computePositionMap` as per-student path) and pass `$myPos` instead of `0`. "Position in Stream" still appends conditionally when stream data exists — unchanged.
+
+**Verify (prod)**: `computePositionMap(exam 44, school 104)` = 87 students, Allan = 1st. P.7 `isNursery=no`, `streamName=A`. Deployed file at `/var/www/KlassApp` HEAD `9d3128d5` contains the fix at line 602.
+
+### 2026-08-13: PR #330 — scope stream + monthly position by section_id, not standard_id (merge 434e6a93)
+
+**Bug**: Esther Ishimme (P.2) rendered "Position in Class: 3rd out of 106; Position in Stream: 3rd out of 270" — a stream can never exceed its class.
+
+**Root cause**: stream labels (EAST/WEST/A/B) are reused across grade levels. School 104's `primary_lower` standard spans P.1/P.2/P.3 (sections 45/46/47). The EOT stream-position query filtered by `standard_id + stream` (no section_id) → pooled 96+62+112 = 270. The monthly-position pool had the same defect (pooled P.1-P.3 MID exams = 236 vs this class's 96).
+
+**Key lesson (recurring)**: `standard_id` is a broad band (primary_lower / primary_upper), NOT a class identity. The class is identified by `section_id`. PR #318's `standard_id` fix was necessary but insufficient — any stream- or class-scoped query must filter by `section_id` (and standard_id) in addition to stream.
+
+**Fix** (single shared generatePdf): (1) EOT "Position in Stream" adds `standards_link.section_id`; (2) Monthly Position ranks class-wide (section MID exam only, dropping the stream-scoped pool).
+
+**Verify (prod)**: Esther P.2 EAST stream 62 ≤ class 106 (streamPos 3/62). P.1 EAST 96, P.3 EAST 112, P.7 A 122 / B 50 — all consistent with class config.
+
+### 2026-08-13: PR #331 — authoritative roster seeded (Final_Merged_KJS_List.xlsx) for school 104 (merge 8357b6a4)
+
+**Task**: School declared `Final_Merged_KJS_List.xlsx` (826 students, downloads) the single source of truth for student/class/stream. Seed it: match every row against the currently-enrolled roster via the **proven direct name-matching approach** (tokenize + matchScore, Jaccard 0.4 + similar_text 0.6, threshold ≥50 — same as `ImportKabaleMarks::buildRoster/matchStudent`), backfill/correct streams on the correct `standards_link`, flag (never auto-create) unmatched rows, check the 339 legacy-duplicate pool, ship as a proper migration (no raw prod writes), then re-verify the EOT Position-in-Stream bug (Esther: stream 270 > class 106) with real seeded data.
+
+**Analysis**:
+- Roster 826 rows, zero missing streams/names; P.7A/P.7B normalized → class P.7 + stream A/B. Sheet 'School Students'; columns firstname/lastname/class/stream/gender (F231/M276/U319).
+- Prod census (ay 51, school 104): 1109 students across 14 links (55,56,57,78–88 all ay=51; `no_of_students` NULL). Canonical match: **733 uids confirmed** (662 already correct + 70 needed a same-section stream correction + 1 cross-class flagged). 37 rows unmatched (flag, no create), 56 conflict losers (weak collisions, flag), 1 cross-class flag = Mugisha Clinton Ariho (DB P.6/EAST vs roster P.3/East, score 77.6 — NOT auto-applied).
+- Move summary (70): P.2 EAST→West 2; P.3 EAST→West 5; P.4 EAST→West 12 + WEST→East 1; P.5 EAST→West 28; P.6 EAST→West 20; P.7 B→A 2. All same-`section_id` moves; `up()` re-asserts section match per uid; `down()` provided.
+- Legacy 339 pool: **8 of 11 DB duplicate-name keys fully resolved** as distinct students by the roster (both uids matched, e.g. Samuel Owanani → P.4/East + P.5/East; Angel Nabimanya → P.5/East + P.3/West; Bridget Ainomugisha → P.6/East + P.1/East; Collins Agaba → P.5/West + P.6/West; Destiny Ahumuza; Elizabeth Amutuheire; Joel Amutuheire; Miracle Ainembabazi). 3 keys partial (one uid unmatched): promiseahereza (3274), alphaelishadayarinanye (2506), emmanuelnamanya (2726). 42 real-named DB students uncovered (≥50); 85 digit-named with weak plausible roster match (≥60) flagged — digit-heuristic deliberately NOT used (proven unreliable earlier).
+- Old roster `All_Students_P1_to_P7_final.xlsx` (716 names) vs new: new covers 762 real-named vs 724 → **45 newly covered**.
+
+**Migration**: `database/migrations/2026_08_13_040000_backfill_school104_authoritative_streams.php` — MAPPING uid→target link (70 entries), same-section guard, Cache::forget('standardLink104_51'), mirror of `2026_08_13_030000_backfill_school104_streams.php` house style.
+
+**Ship**: PR #331 (`chore/seed-authoritative-roster-streams`, tip c3eb76e0) — https://github.com/KlassApp-Foundation/KlassApp/pull/331 — MERGED @ 2026-08-13 15:21 UTC, merge commit `8357b6a4af733ee601c27dd8a6bc1c0f09e674e0`, deployed via `scripts/deploy-manual.sh` (migration ran under `php artisan migrate --force`).
+
+**Post-seed verification (prod, live DB)**: counts per link match prediction exactly — L55 117, L56 136, L57 106, L78 96, L79 60, L80 107, L81 124, L82 51, L83 54, L84 39, L85 46, L86 63, L87 62, L88 48 (total 1109, unchanged). Spot-checked moves applied: uid 2686→L83, uid 2843→L55, uid 2977→L56.
+- **Esther Ishimme (uid 2636) re-verified with real seeded data**: stream count **60 ≤ class count 114 → YES** (was 270 > 106 pre-fix). Allan Kato Tayebwa (uid 3266, P.7 A): stream 124 ≤ class 172 → YES. Position-in-Stream bug confirmed FIXED with real data; PR #330's section_id scoping holds.
+
+**Artifacts** (temp, `/var/folders/.../T/opencode/`): `final_merged_kjs_normalized.json`, `roster_dump.json`, `canonical2_claims.json`, `canonical2_losers.json`, `canonical2_unmatched.json`, `moves70.json`, `review_report.json`/`.txt`, `compare_rosters.py`.
+
+**Status**: ✅ Done — PR #331 MERGED + DEPLOYED + live-verified. Remaining flagged (no writes): 37 unmatched roster rows, 56 conflict losers, 1 cross-class (Mugisha Clinton Ariho), 42 uncovered real-named, 85 digit-named weak matches, 3 partial duplicate-name keys (incl. emmanuelnamanya uid 2726) — all for school review.
+
+### 2026-08-13: Student display names — LASTNAME FIRSTNAME + no numeric suffixes (PR #332)
+
+**Request**: Across class lists AND report cards, student names must display as "Lastname Firstname" (reversed from whatever currently renders), and no name anywhere may carry a trailing numeric suffix ("-2", "2" glued on). Apply consistently everywhere, verify by regenerating a real report card + real class list.
+
+**Decisive data check (prod, school 104, 1261 users)**: `userprofile` first/last split is **97.4% complete** (1228/1261 both non-empty) — the app's own authoritative source. Only 55/971 full-profile users have `users.name` last-word ≠ profile lastname, all legitimate multi-token surnames (ATWINE ATWINE, GISA ANDY, AKAMPA JR, ...). 332 names carry digits. This SUPERSEDED the earlier roster-override-table recommendation (bg_0e5b7904 FINAL_REPORT.md): no override table needed — a profile-first display accessor handles everything.
+
+**Implementation**: `User::getDisplayNameAttribute()` (`app/Models/User.php:814-851`) — profile first/last (reversed, digit-stripped via `cleanDisplayToken` preg `[\d\s\-]+$`), fallback parses `users.name` with per-token strip + reversal; null-guarded (unlike `getFullNameAttribute` which crashes on missing profile). `getFullNameAttribute` (FIRST LAST) LEFT UNCHANGED — CSV exports + `fullname` API key keep FIRST LAST as structured data.
+
+**Render sites wired to `displayName`**: report cards student-report/formal/warm/modern (title + STUDENT field), whatsapp + alumni PDFs; class lists/admin member/index + show, marksheet, results-table, missing-marks, student export PDF; API resource new `display_name` key + `student/List.vue` (vite rebuild, new hashes app-B9CmCRPI.js/app-CB_6huyO.css). Teacher signature names on report cards: digit-strip only, no reversal (student-only per request). Avatar initials + CSV export unchanged.
+
+**Test**: `tests/Feature/UserDisplayNameTest.php` — 6 cases/7 assertions (profile reversal, digit strip, no-profile fallback, single token, empty name, FullName intact). Grading suite 15 tests still pass. Blade `view:cache` clean.
+
+**Ship**: PR #332 (`fix/student-display-name-lastname-first`, tip 7a09a157, merge c9db8082) — MERGED + deployed, prod HEAD c9db8082.
+
+**Live verification (prod tinker + real PDF)**: P.5 East class list (136 students) — all names LASTNAME FIRSTNAME (ANGASIRA JONAH, ATUZARWE MARIA BELLAH, ...), **zero digit/junk-suffix names**; junk-name students strip correctly end-to-end ("niwandinda pauson5259" → "PAUSON NIWANDINDA"); real report-card PDF via `ReportCardsController::generatePdf` (EOT exam 35, 68 learners) — STUDENT field "**AHIMBISIBWE ELIZABETH**", old FIRST LAST absent. dompdf text is UTF-16LE — verify by null-stripping inflated FlateDecode streams.
+
+### 2026-08-13: displayName reverted to natural FIRST LAST order (PR #333)
+
+**Direction change**: after #332 shipped LASTNAME FIRSTNAME, the school owner flagged the reversal as problematic (unnatural for Ugandan names; no-profile fallback miscuts multi-token names). Decision: **revert ordering to natural FIRST LAST, KEEP the digit-suffix strip**. The reversal was always display-layer only (one shared `getDisplayNameAttribute()` accessor), so the revert was a one-file change — no Blade edits, no asset rebuild, data untouched.
+
+**Change**: `app/Models/User.php` — `getDisplayNameAttribute()` now returns `clean(firstname) . ' ' . clean(lastname)` (profile path) and `implode(' ', $tokens) . ' ' . $last` (no-profile fallback). `cleanDisplayToken()` (`mb_strtoupper(preg_replace('/[\d\s\-]+$/', ...))`) unchanged. Single-token names and empty names behave identically. `FullName` (FIRST LAST, legacy) and exports untouched.
+
+**Test**: `tests/Feature/UserDisplayNameTest.php` expectations flipped to natural order — 6 cases/7 assertions, all pass (`php artisan test tests/Feature/UserDisplayNameTest.php`). Lint + LSP clean. No asset rebuild needed (PHP-only change; Vue/API consume `display_name` server-side).
+
+**Ship**: PR #333 (`fix/display-name-natural-order`, tip cfc22a7d, merge 4579b7f7) via standing flow — deployed `scripts/deploy-manual.sh`, prod head 4579b7f7.
+
+**Live verification (prod tinker, same evidence as #332)**:
+- Class list P.5 East (link 56, 136 students): **all names natural FIRST LAST** (JONAH ANGASIRA, MARIA BELLAH ATUZARWE, PRINCESS SHABAHURIRA...), **zero digits/junk suffixes**, zero profile-order mismatches.
+- Real report-card PDF via `ReportCardsController::generatePdf` (exam 35, 68 learners, student JOEL KIJUNGU uid 3030, 726,922 bytes): PDF text contains "JOEL KIJUNGU" (natural), reversed "KIJUNGU JOEL" ABSENT; STUDENT field context `[(JOEL KIJUNGU)] TJ ET` clean. Digits present in PDF text are marks/positions, not names.
+- Temp verification scripts cleaned from prod + local.
+
+### 2026-08-13: displayName edge-case + third-surface verification (post-#333)
+
+**Hardest-case hunt (school 104, all 1,261 user rows scanned)**: NO enrolled student combines both edge conditions — all 1,228 enrolled students (via student_academics) have COMPLETE profiles, so the fallback branch never fires for the student population. 33 fallback-path users exist, all staff/teacher (usergroup 3/5). The 28 fallback+digit combined cases are teacher accounts (e.g. uid 524 "kabale junior school5245" → "KABALE JUNIOR SCHOOL" — EMPTY-LAST profile → fallback branch, natural order, digits stripped). 304 enrolled students carry digit suffixes in users.name but ALL via the profile branch (e.g. uid 3345 "mary polite33453" → "MARY POLITE AKAMPA"; profile first="MARY POLITE" last="AKAMPA"). None of the 304 digit-suffix students have ANY exam marks — report-card PDF regeneration impossible for them specifically.
+
+**Third surface spot-check** (export path, distinct from class list + formal template): `admin/export/student.blade.php:44` renders `{{$user->displayName}}`, driven by `ExportMemberController.php:253` (`PDF::loadView('/admin/export/student', $array)` — array has `users` collection). Standalone tinker render of that Blade with uid 524 + uid 3345: name cells "KABALE JUNIOR SCHOOL" and "MARY POLITE AKAMPA" — natural order, zero digit-junk ("5245"/"33453" absent), old reversed variants absent. Only warnings were pre-existing template assumptions (standardLink null for the teacher row, unrelated to displayName).
+
+**Full surfaces inventory (grep-confirmed)**: displayName now wired at student-report.blade.php (:5,:170), warm.blade.php (:5,:268), modern.blade.php (:5,:211), formal.blade.php (:5,:311), marksheet.blade.php (:90), results-table.blade.php (:18), missing-marks.blade.php (:46), member/index.blade.php (:101), member/show.blade.php (:179), export/student.blade.php (:44), alumni/pdf-report-card.blade.php (:6,:24), whatsapp/report-card.blade.php (:29), student/List.vue (:184 via API display_name). No leaf surface still renders FullName/name for students.
+
+**Process note**: explore agent for surface mapping (bg_d57a3eef) returned unusable results — its grep saw a STALE index and claimed getDisplayNameAttribute doesn't exist (it does, app/Models/User.php:822). Direct grep was faster and authoritative. librarian (bg_86f7c46d) confirmed the fallback parsing (whitespace split, last-token-as-surname, digit strip) aligns with common practice ("reasonable, aligns with common practice; Laravel docs assume structured storage — keep name-column parsing as the fallback only").

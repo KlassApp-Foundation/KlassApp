@@ -106,19 +106,23 @@
                     <canvas id="graph" class="dashboard-chart-canvas" style="max-width:100%;height:auto"></canvas>
                     <div class="flex items-center justify-between my-1">
                         @php
-                            $hasGenderData = ($dashboard['femaleCount'] ?? 0) > 0 || ($dashboard['maleCount'] ?? 0) > 0;
+                            $hasGenderData = ($dashboard['femaleCount'] ?? 0) > 0 || ($dashboard['maleCount'] ?? 0) > 0 || ($dashboard['unknownCount'] ?? 0) > 0;
                         @endphp
-                        <div class="border-r w-1/2 mt-4 bar-bg-blue relative student_count dashboard-gender-stat">
+                        <div class="border-r w-1/3 mt-4 bar-bg-blue relative student_count dashboard-gender-stat">
                             <a href="{{ url('/admin/students?gender=female') }}">
                                 <p class="text-sm item-title font-semibold">Girls</p>
                                 <p class="text-lg font-semibold text-gray-800">{{ $hasGenderData ? $dashboard['femaleCount'] : '—' }}</p>
                             </a>
                         </div>
-                        <div class="w-1/2 text-right mt-4 bar-bg-orange relative student_count student_male_count dashboard-gender-stat">
+                        <div class="w-1/3 text-center mt-4 bar-bg-orange relative student_count student_male_count dashboard-gender-stat">
                             <a href="{{ url('/admin/students?gender=male') }}" target="_blank">
                                 <p class="text-sm item-title font-semibold ">Boys</p>
                                 <p class="text-lg font-semibold text-gray-800">{{ $hasGenderData ? $dashboard['maleCount'] : '—' }}</p>
                             </a>
+                        </div>
+                        <div class="w-1/3 text-right mt-4 relative student_count dashboard-gender-stat">
+                            <p class="text-sm item-title font-semibold">Unspecified</p>
+                            <p class="text-lg font-semibold text-gray-800">{{ $hasGenderData ? $dashboard['unknownCount'] : '—' }}</p>
                         </div>
                     </div>
                 </div>
@@ -413,7 +417,8 @@
         var ctx = document.getElementById('graph').getContext('2d');
         var femaleCount = {!! trans($dashboard['femaleCount'] ?? 0) !!};
         var maleCount = {!! trans($dashboard['maleCount'] ?? 0) !!};
-        var totalStudents = femaleCount + maleCount;
+        var unknownCount = {!! trans($dashboard['unknownCount'] ?? 0) !!};
+        var totalStudents = {!! trans($dashboard['studentCount'] ?? 0) !!};
 
         if (totalStudents === 0) {
             var ctx2 = document.getElementById('graph').getContext('2d');
@@ -447,13 +452,13 @@
         var chart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ["Male Students", "Female Students"],
+                labels: ["Male Students", "Female Students", "Unspecified"],
                 datasets: [{
                     label: " Students",
                     backgroundColor: [
-                        "#ffa601", "#304ffe"
+                        "#ffa601", "#304ffe", "#cbd5e1"
                     ],
-                    data: [maleCount,femaleCount],
+                    data: [maleCount,femaleCount,unknownCount],
                 }]
             },
             options: {
@@ -552,6 +557,7 @@
                 'count' => $l->studentCount ?? 0,
                 'male'  => $l->maleCount ?? 0,
                 'female'=> $l->femaleCount ?? 0,
+                'unknown'=> $l->unknownCount ?? 0,
             ])->values()) !!};
             var barChart = new Chart(ctx.getContext('2d'), {
                 type: 'bar',
@@ -566,6 +572,11 @@
                         label: 'Girls',
                         data: standardData.map(function(d) { return d.female; }),
                         backgroundColor: '#ffa601',
+                        borderRadius: 6,
+                    }, {
+                        label: 'Unspecified',
+                        data: standardData.map(function(d) { return d.unknown; }),
+                        backgroundColor: '#cbd5e1',
                         borderRadius: 6,
                     }]
                 },

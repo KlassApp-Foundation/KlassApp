@@ -57,12 +57,13 @@ trait Dashboard
         // Fresh SaaS signup: no AcademicYear yet — never 500 on `$academic_year->id`.
         if ($academic_year === null) {
             $array['setupIncomplete'] = true;
-            $array['studentCount'] = User::where([['status','!=','exit']])->BySchool($school_id)->ByRole(6)->count();
+            $array['studentCount'] = User::ByActive()->BySchool($school_id)->ByRole(6)->count();
             $array['parentCount'] = 0;
             $array['teacherCount'] = User::where([['status','!=','exit']])->BySchool($school_id)->ByRole(5)->count();
             $array['nonteachingCount'] = 0;
             $array['maleCount'] = 0;
             $array['femaleCount'] = 0;
+            $array['unknownCount'] = 0;
             $array['eventCount'] = 0;
             $array['videoCount'] = 0;
             $array['bulletinCount'] = 0;
@@ -85,7 +86,7 @@ trait Dashboard
         }
     
         $array['studentCount'] = Cache::remember('studentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)  {
-                                  return User::where([['status','!=','exit']])->BySchool($school_id)->ByRole(6)->count();
+                                  return User::ByActive()->BySchool($school_id)->ByRole(6)->count();
                               });
 
         $array['parentCount']    =  Cache::remember('parentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
@@ -106,10 +107,23 @@ trait Dashboard
 
 
         $array['maleCount']      = Cache::remember('maleCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
-                                  return User::where([['status','!=','exit']])->BySchool($school_id)->ByRole(6)->ByGender('male')->count();
+                                  return User::ByActive()->BySchool($school_id)->ByRole(6)->ByGender('male')->count();
                                 });
         $array['femaleCount']    = Cache::remember('femaleCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
-                                  return User::where([['status','!=','exit']])->BySchool($school_id)->ByRole(6)->ByGender('female')->count();
+                                  return User::ByActive()->BySchool($school_id)->ByRole(6)->ByGender('female')->count();
+                                });
+
+        /**
+         * Students whose userprofile gender is NULL/blank (or who have no
+         * profile row at all) — they are silently dropped by the male/female
+         * queries above. Count them explicitly so the donut chart can show
+         * an "Unspecified" segment and its total agrees with studentCount.
+         */
+        $array['unknownCount']   = Cache::remember('unknownCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
+                                  return User::ByActive()->BySchool($school_id)->ByRole(6)
+                                      ->whereDoesntHave('userprofile', function ($q) {
+                                          $q->whereIn('gender', ['male', 'female']);
+                                      })->count();
                                 });
 
         $array['eventCount']     = Cache::remember('eventCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
@@ -177,18 +191,24 @@ trait Dashboard
         $array['standardStudentCounts'] = collect($array['standardLinks'])->map(function ($link) {
             $link->studentCount = \App\Models\User::whereHas('studentAcademic', function ($q) use ($link) {
                 $q->where('standardLink_id', $link->id);
-            })->where('status', '!=', 'exit')->count();
+            })->ByActive()->count();
 
             $link->maleCount = \App\Models\User::whereHas('studentAcademic', function ($q) use ($link) {
                 $q->where('standardLink_id', $link->id);
-            })->where('status', '!=', 'exit')->whereHas('userprofile', function ($q) {
+            })->ByActive()->whereHas('userprofile', function ($q) {
                 $q->where('gender', 'male');
             })->count();
 
             $link->femaleCount = \App\Models\User::whereHas('studentAcademic', function ($q) use ($link) {
                 $q->where('standardLink_id', $link->id);
-            })->where('status', '!=', 'exit')->whereHas('userprofile', function ($q) {
+            })->ByActive()->whereHas('userprofile', function ($q) {
                 $q->where('gender', 'female');
+            })->count();
+
+            $link->unknownCount = \App\Models\User::whereHas('studentAcademic', function ($q) use ($link) {
+                $q->where('standardLink_id', $link->id);
+            })->ByActive()->whereDoesntHave('userprofile', function ($q) {
+                $q->whereIn('gender', ['male', 'female']);
             })->count();
 
             return $link;
