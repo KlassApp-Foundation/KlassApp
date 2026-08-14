@@ -212,6 +212,7 @@ class ImportKabelMarks extends Command
     {
         $users = DB::table('users')
             ->where('school_id', $this->schoolId)
+            ->where('status', 'active')
             ->whereNull('deleted_at')
             ->get(['id', 'name']);
 
@@ -339,7 +340,8 @@ class ImportKabelMarks extends Command
                 if (empty($name) || strtoupper($name) === 'TOTAL' || strtoupper($name) === 'ANALYSIS') continue;
                 $totalRows++;
 
-                $upper = strtoupper($name);
+                // Collapse internal whitespace so multi-space spellings (e.g. "OWAMANI    SAMUEL") match resolution keys.
+                $upper = strtoupper(preg_replace('/\s+/', ' ', $name));
 
                 // Apply resolution
                 $lookupName = $resolutions[$upper] ?? $upper;
@@ -469,7 +471,9 @@ class ImportKabelMarks extends Command
             'NTWARI ALEXANDER' => 'ALEXANDER ANTWARI',
             'ATWINE DYLIAN' => 'DYLAN ATWINE',
             'TWESHEGYEREZE GASPARI' => 'GASPARI TWESIGYEEREZE',
-            'KWIKIRIZA ALVIN' => 'ALVIN AWIRIZA',
+            'OWANI SAMUEL' => 'SAMUEL OWAMANI',
+            'OWAMANI SAMUEL' => 'SAMUEL OWAMANI',
+            'OWAMAANI SAMUEL' => 'SAMUEL OWAMANI',
             'OWAMAANI FRANK' => 'FRANK OWAMANI',
             'NAJJEMBA MARY ATARAH' => 'MARY ATARAH AJUEMBA',
         ];
