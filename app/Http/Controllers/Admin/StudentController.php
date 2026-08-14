@@ -109,7 +109,13 @@ class StudentController extends Controller
                 $query->where('users.status', '!=', 'active');
             }
         } else {
-            $query->where('users.status', '!=', 'exit');
+            // Default view: only currently-active students. The broad
+            // `!= 'exit'` filter previously included `status='inactive'`
+            // junk records (flagged by the 2026_08_12 cleanup migration).
+            // Use a positive `= 'active'` filter so inactive/exit are
+            // excluded by default; admins can still explicitly request
+            // `?status=inactive` above to audit the flagged junk rows.
+            $query->where('users.status', 'active');
         }
 
         $students = $query->with([
