@@ -113,12 +113,12 @@ class SchoolList extends Component
             })
             ->when($this->filterMinStudents, function ($q) {
                 $q->has('user', '>=', $this->filterMinStudents, 'and', function ($uq) {
-                    $uq->where('usergroup_id', 6)->where('status', '!=', 'exit');
+                    $uq->where('usergroup_id', 6)->where('status', 'active');
                 });
             })
             ->with(['city', 'country', 'subscription.plan'])
             ->withCount(['user as student_count' => function ($q) {
-                $q->where('usergroup_id', 6)->where('status', '!=', 'exit');
+                $q->where('usergroup_id', 6)->where('status', 'active');
             }])
             ->withCount(['user as teacher_count' => function ($q) {
                 $q->where('usergroup_id', 5)->where('status', '!=', 'exit');

@@ -141,7 +141,7 @@ class StandardsLinkDetailsController extends Controller
         if(Gate::allows('standardlink',$standardLink))
         {
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-            $users  = User::where([['school_id',Auth::user()->school_id],['status','!=','exit']])->whereHas('studentAcademic',function($query) use($academic_year)
+            $users  = User::ByActive()->BySchool(Auth::user()->school_id)->whereHas('studentAcademic',function($query) use($academic_year)
                 { 
                     $query->where('academic_year_id',$academic_year->id);
                 })->ByRole(6)->ByStandard($id)->get()->sortBy('userprofile.firstname');
