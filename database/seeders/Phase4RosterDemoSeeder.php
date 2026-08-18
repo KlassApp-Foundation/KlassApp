@@ -136,8 +136,10 @@ class Phase4RosterDemoSeeder extends Seeder
     {
         $user = User::firstOrNew(['email' => $email]);
 
+        // Build directly instead of User::factory()->make(): production installs
+        // with --no-dev, so Faker (and the factory) are unavailable.
         if (! $user->exists) {
-            $user = User::factory()->make();
+            $user = new User;
         }
 
         $user->forceFill([
