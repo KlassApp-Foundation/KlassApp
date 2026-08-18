@@ -20,6 +20,7 @@ use App\Services\GradingSystemService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use App\Events\MarksUpdated;
 use App\Events\GradesPublished;
@@ -147,12 +148,18 @@ public function enterExamMarks(Exam $exam)
 
 public function saveExamMarks(Request $request, Exam $exam, GradingSystemService $gradingSystem)
 {
+    /** @var User $user */
     $user = Auth::user();
+    if (! $user instanceof User) {
+        abort(403, 'Not Authorized');
+    }
+
     $schoolId = $user->school_id;
     if ($exam->school_id !== $schoolId || (int) $exam->teacher_id !== (int) $user->id) {
         abort(403, "Not Authorized");
     }
 
+    $this->assertSubmittedStudentsBelongToSchool($request, $exam);
     $this->checkSubmissionLocked($exam);
 
     // ===== Nursery branch: save domain ratings instead of numeric marks =====
@@ -162,6 +169,7 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
 
     if ($isNursery) {
         $validRatings = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
+        $affectedMarkCount = 0;
 
         foreach ($request->input('assessments', []) as $studentId => $domainRatings) {
             foreach ($domainRatings as $domain => $rating) {
@@ -183,17 +191,22 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
                         'remarks' => null,
                     ]
                 );
+                $affectedMarkCount++;
             }
         }
 
         $exam->changeExamStatus();
+        $this->logMarksActivity($request, $exam, $user, 'marks.saved', $affectedMarkCount);
+
         return redirect()
             ->route('teacher.exam.marks')
             ->with('successmessage', 'Nursery assessments saved!');
     }
 
     // ===== Standard branch: numeric marks =====
-    foreach ($request->marks as $studentId => $mark) {
+    $affectedMarkCount = 0;
+
+    foreach ($request->input('marks', []) as $studentId => $mark) {
         if ($mark === null || trim($mark) === '') continue;
         $grade = $gradingSystem->grade($mark,$schoolId, $exam);
         Marks::updateOrCreate(
@@ -210,6 +223,7 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
                 "section_id" => $exam->section_id
             ]
         );
+        $affectedMarkCount++;
     }
 
     // Notify school admins that marks were entered/updated
@@ -255,6 +269,8 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
 
     // change exam status
     $exam->changeExamStatus();
+    $this->logMarksActivity($request, $exam, $user, 'marks.saved', $affectedMarkCount);
+
     return redirect()
         ->route('teacher.exam.marks')
         ->with('successmessage', ' marks saved!');
@@ -400,8 +416,22 @@ public function editMark(Exam $exam, User $student, Marks $marks)
 
 public function updateMark(Request $request, Exam $exam, User $student, GradingSystemService $gradingSystem)
 {
+    /** @var User $teacher */
     $teacher = Auth::user();
+    if (! $teacher instanceof User) {
+        abort(403, 'Not Authorized');
+    }
+
     $schoolId = $teacher->school_id;
+
+    if (
+        $exam->school_id !== $schoolId
+        || (int) $exam->teacher_id !== (int) $teacher->id
+        || $student->school_id !== $schoolId
+        || (int) $student->usergroup_id !== 6
+    ) {
+        abort(403, 'Not Authorized');
+    }
 
     $this->checkSubmissionLocked($exam);
 
@@ -426,10 +456,57 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
         ]
     );
 
+    $this->logMarksActivity($request, $exam, $teacher, 'marks.updated', 1);
+
     // Optional: flash message
     return redirect()
         ->route('teacher.exam.marks')
         ->with('successmessage', $student->name . "'s ". '  Marks updated!');
+}
+
+private function logMarksActivity(
+    Request $request,
+    Exam $exam,
+    User $teacher,
+    string $action,
+    int $affectedMarkCount
+): void {
+    activity()
+        ->performedOn($exam)
+        ->causedBy($teacher)
+        ->withProperties([
+            'school_id' => (int) $exam->school_id,
+            'exam_id' => (int) $exam->id,
+            'section_id' => (int) $exam->section_id,
+            'subject_id' => (int) $exam->subject_id,
+            'teacher_id' => (int) $teacher->id,
+            'affected_mark_count' => $affectedMarkCount,
+            'request_id' => $request->header('X-Request-ID') ?? (string) Str::uuid(),
+        ])
+        ->useLog('marks')
+        ->log($action);
+}
+
+private function assertSubmittedStudentsBelongToSchool(Request $request, Exam $exam): void
+{
+    $studentIds = array_unique(array_merge(
+        array_keys($request->input('marks', [])),
+        array_keys($request->input('assessments', [])),
+    ));
+
+    if ($studentIds === []) {
+        return;
+    }
+
+    $validStudentCount = User::query()
+        ->whereIn('id', $studentIds)
+        ->where('school_id', $exam->school_id)
+        ->where('usergroup_id', 6)
+        ->count();
+
+    if ($validStudentCount !== count($studentIds)) {
+        abort(403, 'Submitted student is not authorized for this school.');
+    }
 }
 
     /**
