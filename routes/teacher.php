@@ -2,6 +2,16 @@
 
 //dashboard
 Route::get( '/dashboard', 'DashboardController@index' );
+
+Route::get('/classes', function () {
+    return view('class-roster.index');
+})->name('teacher.classes.index');
+Route::get('/classes/{section}', function ($section) {
+    return view('class-roster.show', [
+        'sectionId' => (int) $section,
+        'academicYearId' => request()->integer('academic_year_id') ?: null,
+    ]);
+})->whereNumber('section')->name('teacher.classes.show');
 Route::get( '/dashboard/timetable', 'DashboardController@timetable' );
 Route::get( '/dashboard/tasklist/{task_flag}','DashboardController@list' );
 Route::get( '/dashboard/task/count','DashboardController@listCount' );
@@ -451,5 +461,4 @@ Route::get('/libraryactivity', function () {
 
 //Feed
 Route::get('/feeds', 'FeedController@index');
-
 
