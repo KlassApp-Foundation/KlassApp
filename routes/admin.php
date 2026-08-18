@@ -158,9 +158,19 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 // });
 	// ======= added route for classes/sections@UG ========
 	Route::post('/classes/add-class', 'SectionController@save' )->name("admin.class.add");
-	Route::get("/classes", "SectionController@index")->name("admin.classes");
+	// Keep the legacy section-management URL available while /classes becomes the read-only roster portal.
+	Route::get("/sections", "SectionController@index")->name("admin.classes");
+	Route::get('/classes', function () {
+	    return view('class-roster.index');
+	})->name('admin.classes.index');
 	Route::get("/classes/create", "SectionController@create")->name("admin.classes.create");
 	Route::delete("/classes/delete/{class}", "SectionController@destroy")->name("admin.classes.delete");
+	Route::get('/classes/{section}', function ($section) {
+	    return view('class-roster.show', [
+	        'sectionId' => (int) $section,
+	        'academicYearId' => request()->integer('academic_year_id') ?: null,
+	    ]);
+	})->whereNumber('section')->name('admin.classes.show');
 //notes
 Route::post( '/getnotes', 'NotesController@index' );
 Route::get( '/notes/delete/{id}', 'NotesController@delete' );
