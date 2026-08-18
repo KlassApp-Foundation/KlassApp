@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use App\Models\StandardLink;
 use App\Helpers\SiteHelper;
+use Illuminate\Validation\Rule;
 
 class StandardDetailRequest extends FormRequest
 {
@@ -30,7 +31,9 @@ class StandardDetailRequest extends FormRequest
         
         Validator::extend('check_unique_class_teacher',function($attribute,$value,$parameters,$validator)
         {
-            $standardLink = StandardLink::where('class_teacher_id','=',request('class_teacher_id'))->exists();
+            $standardLink = StandardLink::where('school_id', Auth::user()->school_id)
+                ->where('class_teacher_id', request('class_teacher_id'))
+                ->exists();
             if($standardLink)
             {
                 return false;
@@ -59,6 +62,11 @@ class StandardDetailRequest extends FormRequest
             return preg_match('/^[A-Za-z\s]+$/', request('other_stream')) ;
         });
 
+        $teacherRule = Rule::exists('users', 'id')->where(function ($query): void {
+            $query->where('school_id', Auth::user()->school_id)
+                ->where('usergroup_id', 5);
+        });
+
         $rules = [];
         
         $rules = 
@@ -67,7 +75,8 @@ class StandardDetailRequest extends FormRequest
             'standard_id'       =>  'required|check_standard_link',
             //'no_of_students'    =>  'required|numeric',
             'section_id'        =>  'required',
-            'class_teacher_id'  =>  'nullable|check_unique_class_teacher',
+            'class_teacher_id'  =>  ['nullable', $teacherRule, 'check_unique_class_teacher'],
+            'section_class_teacher_id' => ['nullable', $teacherRule],
         ];
 
         if( (request('standard_name') == '11') || (request('standard_name') == '12') )

@@ -220,9 +220,22 @@ trait AcademicProcess
 
             $standardLink->save();
 
-            $class_teacher = User::where('id',$standardLink->class_teacher_id)->first();
+            if ($data->has('section_class_teacher_id')) {
+                $section = Section::where('school_id', $school_id)
+                    ->findOrFail($standardLink->section_id);
+                $section->class_teacher_id = $data->input('section_class_teacher_id');
+                $section->save();
+            }
 
-                    $class_teacher->addDesignation('student_leave_checker');
+            $class_teacher = $standardLink->class_teacher_id
+                ? User::where([
+                    ['school_id', $school_id],
+                    ['id', $standardLink->class_teacher_id],
+                    ['usergroup_id', 5],
+                ])->first()
+                : null;
+
+            $class_teacher?->addDesignation('student_leave_checker');
 
             for($i=0 ; $i<$data->count ; $i++)
             {
@@ -258,23 +271,46 @@ trait AcademicProcess
         {            
             $standardLink = StandardLink::where('id',$standardLink_id)->first();
 
-            if($standardLink->class_teacher_id != $data->class_teacher_id)
+            if ((int) $standardLink->class_teacher_id !== (int) $data->class_teacher_id)
             {
-                $old_class_teacher = User::where('id',$standardLink->class_teacher_id)->first();
+                $old_class_teacher = $standardLink->class_teacher_id
+                    ? User::where([
+                        ['school_id', $school_id],
+                        ['id', $standardLink->class_teacher_id],
+                        ['usergroup_id', 5],
+                    ])->first()
+                    : null;
 
-                $old_class_teacher->removeDesignation('student_leave_checker');
+                $old_class_teacher?->removeDesignation('student_leave_checker');
 
-                $class_teacher = User::where('id',$data->class_teacher_id)->first();
+                $class_teacher = $data->class_teacher_id
+                    ? User::where([
+                        ['school_id', $school_id],
+                        ['id', $data->class_teacher_id],
+                        ['usergroup_id', 5],
+                    ])->first()
+                    : null;
 
-                $class_teacher->addDesignation('student_leave_checker');
+                $class_teacher?->addDesignation('student_leave_checker');
             }
-            else
+            elseif ($standardLink->class_teacher_id)
             {
-                $class_teacher = User::where('id',$standardLink->class_teacher_id)->first();
-                if(!$class_teacher->hasDesignation('student_leave_checker'))
+                $class_teacher = User::where([
+                    ['school_id', $school_id],
+                    ['id', $standardLink->class_teacher_id],
+                    ['usergroup_id', 5],
+                ])->first();
+                if ($class_teacher && !$class_teacher->hasDesignation('student_leave_checker'))
                 {
-            $class_teacher->addDesignation('student_leave_checker');
+                    $class_teacher->addDesignation('student_leave_checker');
                 }
+            }
+
+            if ($data->has('section_class_teacher_id')) {
+                $section = Section::where('school_id', $school_id)
+                    ->findOrFail($standardLink->section_id);
+                $section->class_teacher_id = $data->input('section_class_teacher_id');
+                $section->save();
             }
 
             $standardLink->class_teacher_id = $data->class_teacher_id;
