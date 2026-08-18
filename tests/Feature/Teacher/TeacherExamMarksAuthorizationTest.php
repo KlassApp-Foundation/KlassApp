@@ -6,6 +6,7 @@ use App\Http\Middleware\MustBeTeacher;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
+use App\Models\ActivityLog;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
@@ -283,6 +284,102 @@ class TeacherExamMarksAuthorizationTest extends TestCase
             'student_id' => $this->student->id,
             'marks' => 55,
         ]);
+
+        $this->assertDatabaseMissing('activity_log', [
+            'description' => 'marks.saved',
+            'subject_id' => $this->ownedExam->id,
+        ]);
+    }
+
+    public function test_teacher_cannot_update_marks_for_another_teachers_exam(): void
+    {
+        $response = $this->actingAs($this->otherTeacher)
+            ->patch(route('teacher.marks.update', [
+                'exam' => $this->ownedExam,
+                'student' => $this->student,
+            ]), [
+                'marks' => 55,
+            ]);
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('marks', [
+            'exam_id' => $this->ownedExam->id,
+            'student_id' => $this->student->id,
+            'marks' => 93,
+        ]);
+
+        $this->assertDatabaseMissing('activity_log', [
+            'description' => 'marks.updated',
+            'subject_id' => $this->ownedExam->id,
+        ]);
+    }
+
+    public function test_teacher_cannot_update_marks_for_an_exam_from_another_school(): void
+    {
+        $otherSchool = School::create([
+            'name' => 'Other Marks School',
+            'slug' => 'other-marks-' . uniqid(),
+            'email' => 'other-marks-' . uniqid() . '@t.sch.ug',
+            'phone' => '070' . random_int(1000000, 9999999),
+            'status' => 1,
+            'registration_country' => 'Uganda',
+        ]);
+
+        $this->ownedExam->update(['school_id' => $otherSchool->id]);
+
+        $response = $this->actingAs($this->ownerTeacher)
+            ->patch(route('teacher.marks.update', [
+                'exam' => $this->ownedExam,
+                'student' => $this->student,
+            ]), [
+                'marks' => 55,
+            ]);
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseMissing('activity_log', [
+            'description' => 'marks.updated',
+            'subject_id' => $this->ownedExam->id,
+        ]);
+    }
+
+    public function test_teacher_cannot_save_marks_for_a_student_from_another_school(): void
+    {
+        $otherSchool = School::create([
+            'name' => 'Other Student School',
+            'slug' => 'other-student-' . uniqid(),
+            'email' => 'other-student-' . uniqid() . '@t.sch.ug',
+            'phone' => '070' . random_int(1000000, 9999999),
+            'status' => 1,
+            'registration_country' => 'Uganda',
+        ]);
+
+        $otherStudent = User::factory()->create([
+            'usergroup_id' => 6,
+            'school_id' => $otherSchool->id,
+            'name' => 'Other School Student',
+            'email' => 'other.student@t.sch.ug',
+        ]);
+
+        $response = $this->actingAs($this->ownerTeacher)
+            ->post(route('teacher.exam.marks.save', $this->ownedExam), [
+                'marks' => [
+                    $otherStudent->id => 55,
+                ],
+            ]);
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseMissing('marks', [
+            'exam_id' => $this->ownedExam->id,
+            'student_id' => $otherStudent->id,
+        ]);
+
+        $this->assertDatabaseMissing('activity_log', [
+            'description' => 'marks.saved',
+            'subject_id' => $this->ownedExam->id,
+        ]);
     }
 
     public function test_assigned_teacher_can_save_marks_for_own_exam(): void
@@ -303,5 +400,98 @@ class TeacherExamMarksAuthorizationTest extends TestCase
             'marks' => 88,
             'teacher_id' => $this->ownerTeacher->id,
         ]);
+
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'marks',
+            'description' => 'marks.saved',
+            'subject_id' => $this->ownedExam->id,
+            'causer_id' => $this->ownerTeacher->id,
+            'school_id' => $this->school->id,
+        ]);
+
+        $log = ActivityLog::query()
+            ->where('description', 'marks.saved')
+            ->where('subject_id', $this->ownedExam->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertSame(1, $log->properties['affected_mark_count']);
+        $this->assertArrayHasKey('request_id', $log->properties);
+        $this->assertSame($this->section->id, $log->properties['section_id']);
+        $this->assertSame($this->subject->id, $log->properties['subject_id']);
+    }
+
+    public function test_assigned_teacher_can_update_marks_and_audit_event_is_aggregate(): void
+    {
+        $response = $this->actingAs($this->ownerTeacher)
+            ->patch(route('teacher.marks.update', [
+                'exam' => $this->ownedExam,
+                'student' => $this->student,
+            ]), [
+                'marks' => 88,
+            ]);
+
+        $response->assertRedirect(route('teacher.exam.marks'));
+
+        $this->assertDatabaseHas('marks', [
+            'exam_id' => $this->ownedExam->id,
+            'student_id' => $this->student->id,
+            'marks' => 88,
+            'teacher_id' => $this->ownerTeacher->id,
+        ]);
+
+        $log = ActivityLog::query()
+            ->where('description', 'marks.updated')
+            ->where('subject_id', $this->ownedExam->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertSame(1, $log->properties['affected_mark_count']);
+        $this->assertSame($this->school->id, $log->school_id);
+        $this->assertSame($this->ownerTeacher->id, $log->properties['teacher_id']);
+    }
+
+    public function test_nursery_save_logs_valid_assessments_without_raw_payload(): void
+    {
+        $nurseryStandard = Standard::create([
+            'school_id' => $this->school->id,
+            'name' => 'nursery',
+            'order' => 1,
+            'status' => 1,
+        ]);
+
+        $this->ownedExam->update(['standard_id' => $nurseryStandard->id]);
+
+        $response = $this->actingAs($this->ownerTeacher)
+            ->post(route('teacher.exam.marks.save', $this->ownedExam), [
+                'assessments' => [
+                    $this->student->id => [
+                        'Literacy' => 'Excellent',
+                        'Numeracy' => 'Good',
+                        'Motor Skills' => 'Not a valid rating',
+                    ],
+                ],
+            ]);
+
+        $response->assertRedirect(route('teacher.exam.marks'));
+
+        $this->assertDatabaseHas('nursery_assessments', [
+            'exam_id' => $this->ownedExam->id,
+            'student_id' => $this->student->id,
+            'domain' => 'Literacy',
+            'rating' => 'Excellent',
+        ]);
+
+        $log = ActivityLog::query()
+            ->where('description', 'marks.saved')
+            ->where('subject_id', $this->ownedExam->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertSame(2, $log->properties['affected_mark_count']);
+        $this->assertArrayNotHasKey('marks', $log->properties);
+        $this->assertArrayNotHasKey('ratings', $log->properties);
+        $this->assertArrayNotHasKey('student_ids', $log->properties);
+        $this->assertSame($this->school->id, $log->school_id);
     }
 }
