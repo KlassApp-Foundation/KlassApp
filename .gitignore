@@ -32,7 +32,6 @@ public/uploads/*
 .history/
 boost.json
 opencode.json
-AGENTS.md
 CLAUDE.md
 GEMINI.md
 # Boost-generated (run `php artisan boost:install` / `boost:update` locally).
