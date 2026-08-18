@@ -26,7 +26,7 @@ class Section extends Model
      * @var array
      */
     protected $fillable = [
-       'school_id' , 'name' , 'value' , 'next_section_id', 'status'
+       'school_id' , 'name' , 'value' , 'next_section_id', 'class_teacher_id', 'status'
     ];
 
     public function school()
@@ -52,5 +52,10 @@ class Section extends Model
     public function standardLink()
     {
         return $this->hasMany('App\Models\StandardLink','section_id','id');
+    }
+
+    public function classTeacher()
+    {
+        return $this->belongsTo('App\Models\User', 'class_teacher_id')->where('usergroup_id', 5);
     }
 }
