@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ImportKabelMarks extends Command
@@ -35,6 +36,13 @@ class ImportKabelMarks extends Command
 
         // Resolve config
         if (!$this->resolveConfig($class, $stream)) {
+            return self::FAILURE;
+        }
+
+        // Guard: the resolved section must actually belong to the requested class.
+        // This prevents marks from being written to the wrong class's section
+        // (e.g. P.7 marks silently landing in the P.1 West section).
+        if (!$this->validateSectionForClass($class, $stream)) {
             return self::FAILURE;
         }
 
@@ -100,11 +108,21 @@ class ImportKabelMarks extends Command
         }
 
         if (!empty($unmatched)) {
+            $unique = array_unique($unmatched);
             $this->newLine();
-            $this->warn('=== UNMATCHED (' . count(array_unique($unmatched)) . ') ===');
-            foreach (array_unique($unmatched) as $u) {
+            $this->warn('=== UNMATCHED (' . count($unique) . ') ===');
+            foreach ($unique as $u) {
                 $this->warn("  ? {$u}");
             }
+
+            // Persist unmatched names so they survive the console output and can
+            // be reviewed/charged after the run.
+            Log::warning('ImportKabelMarks: unmatched student names', [
+                'class' => $class,
+                'stream' => $stream,
+                'count' => count($unique),
+                'names' => array_values($unique),
+            ]);
         }
 
         if ($this->option('dry-run')) {
@@ -190,7 +208,9 @@ class ImportKabelMarks extends Command
                 'SST' => 286,
             ];
             $this->examMap = ['june' => 42, 'july' => 43, 'end_of_term' => 44];
-            $this->sectionId = $stream && strtolower($stream) === 'west' ? 45 : 51;
+            // P.7 (primary_upper) lives in section 51 for BOTH streams (links 81=A, 88=B).
+            // The stream only changes which source file is read, never the section.
+            $this->sectionId = 51;
         } elseif ($classLower === 'p.4' || $classLower === 'p4') {
             $this->subjMap = [
                 'ENG' => 260,
@@ -204,6 +224,69 @@ class ImportKabelMarks extends Command
             $this->error("Unsupported class: {$class}");
             return false;
         }
+
+        return true;
+    }
+
+    /**
+     * Verify the resolved section actually belongs to the requested class.
+     *
+     * Looks up the authoritative sections + standards_link tables for the
+     * school and confirms the section we are about to write marks into is
+     * linked to the standard of the requested class. Aborts before any
+     * write/delete happens if there is a mismatch.
+     */
+    private function validateSectionForClass(string $class, ?string $stream): bool
+    {
+        $classLower = strtolower($class);
+
+        // Expected standard name per class, matching ImportKabaleMarks' config.
+        $expectedStandard = match ($classLower) {
+            'p.1', 'p1', 'p.2', 'p2', 'p.3', 'p3' => 'primary_lower',
+            'p.4', 'p4', 'p.5', 'p5', 'p.6', 'p6' => 'primary',
+            'p.7', 'p7' => 'primary_upper',
+            default => null,
+        };
+
+        if ($expectedStandard === null) {
+            // Unsupported class — resolveConfig already rejected it, but stay safe.
+            $this->error("Cannot validate section for unsupported class: {$class}");
+            return false;
+        }
+
+        $link = DB::table('standards_link as sl')
+            ->join('standards as st', 'st.id', '=', 'sl.standard_id')
+            ->where('sl.school_id', $this->schoolId)
+            ->where('sl.section_id', $this->sectionId)
+            ->whereNull('sl.deleted_at')
+            ->whereNull('st.deleted_at')
+            ->select('sl.id', 'sl.section_id', 'sl.stream', 'st.name as standard_name', 'st.id as standard_id')
+            ->first();
+
+        if (!$link) {
+            $this->error("Section {$this->sectionId} is not linked to any standard for school {$this->schoolId}. Aborting to avoid writing marks to an unassigned section.");
+            return false;
+        }
+
+        $streamMatches = !$stream || !$link->stream || strtolower($link->stream) === strtolower($stream);
+        $standardMatches = strtolower($link->standard_name) === $expectedStandard;
+
+        if (!$standardMatches) {
+            $this->error(
+                "Section {$this->sectionId} is linked to standard '{$link->standard_name}' (id={$link->standard_id}), " .
+                "expected '{$expectedStandard}' for class {$class}. Aborting to avoid writing marks to the wrong class."
+            );
+            return false;
+        }
+
+        if (!$streamMatches) {
+            $this->warn(
+                "Section {$this->sectionId} link (id={$link->id}) stream is '{$link->stream}' but import stream is '" .
+                ($stream ?? 'none') . "'. Continuing with the standard match only."
+            );
+        }
+
+        $this->info("Validation OK: section {$this->sectionId} -> standard '{$link->standard_name}' (id={$link->standard_id}, link={$link->id}).");
 
         return true;
     }
