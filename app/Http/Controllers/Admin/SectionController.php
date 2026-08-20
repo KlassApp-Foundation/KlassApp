@@ -105,7 +105,7 @@ class SectionController extends Controller
     }
 public function destroy(Section $class){
     $user = Auth::user();
-    // to add, check if isadmin
+    abort_if((int) $user->school_id !== (int) $class->school_id, 403, 'You are not authorized to delete this class.');
     $class->delete();
     return redirect()->route("admin.classes")->with("successmessage", "Class deleted successfully!");
 }

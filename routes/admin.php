@@ -164,7 +164,7 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 	    return view('class-roster.index');
 	})->name('admin.classes.index');
 	Route::get("/classes/create", "SectionController@create")->name("admin.classes.create");
-	Route::delete("/classes/delete/{class}", "SectionController@destroy")->name("admin.classes.delete");
+	Route::delete("/classes/delete/{class}", "SectionController@destroy")->name("admin.classes.delete")->can('delete', 'class');
 	Route::get('/classes/{section}', function ($section) {
 	    return view('class-roster.show', [
 	        'sectionId' => (int) $section,
