@@ -7525,3 +7525,22 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Key decisions**: System User token chosen over perpetual token for better security isolation. App remains Unpublished (Development mode) — only testers receive messages. Token stored ONLY in production `.env`; never committed, never in a temp file beyond the curl commands in this session.
 - **Remaining (requires human with phone)**: (1) Add a tester phone number in Meta dashboard → WhatsApp → Getting Started. (2) Send real WhatsApp message from tester phone to `+256 793 844906`. (3) Verify in Laravel logs: `docker exec sms-app cat storage/logs/laravel.log | grep "WhatsApp webhook"`. (4) Publish app once testing passes.
 - **Status**: ✅ REGISTERED + DEPLOYED — awaiting human tester message + app publication.
+
+### 2026-08-22: Hotfix — onboarding completion blocked for schools with no students/teachers
+
+- **Root cause**: `OnboardingStepsService::hasIncompleteSteps`/`incompleteSteps` include optional `teachers` and `students` steps, but production call sites (`FreeTierPlanService`, `ManualOnboardingWizard`, `AgentToshi`, `OnboardingHelper::hasMissingSteps` used by `MustBePrivilege`) treated every incomplete step as blocking. This prevented a school with zero students/teachers from reaching `plan_selection`, receiving a free plan, exiting Toshi's "Completing Setup" mode, or accessing admin pages past optional steps.
+- **Scope confirmation**: Checked out production HEAD `bc3e20a7` and re-ran the failing tests — the same 7 onboarding/plan tests failed on the live prod commit, proving the bug is pre-existing and in production now.
+- **Fix (single source of truth)**: All gating logic now delegates to `OnboardingStepsService::hasBlockingIncompleteSteps` / `nextBlockingIncompleteStep`, which correctly exclude `OPTIONAL_STEPS`:
+  - `app/Helpers/OnboardingHelper.php` — `hasMissingSteps()` now calls `hasBlockingIncompleteSteps()` (used by `MustBePrivilege`)
+  - `app/Services/FreeTierPlanService.php` — `contentOnboardingComplete()` true when the only remaining blocking step is `plan_selection`
+  - `app/Livewire/ManualOnboardingWizard.php` — `mount()` and `advanceToNextIncompleteOrReview()` land on the next required step, not optional ones
+  - `app/Livewire/AgentToshi.php` — exits "Completing Setup" when no blocking steps remain
+  - `tests/Feature/FreshAdminDashboardSafetyTest.php` — updated stale assertion string to current "Finish school setup"
+  - `tests/Feature/Onboarding/ManualOnboardingParityTest.php` and `tests/Feature/Onboarding/WizardToshiSyncPlanStepTest.php` — assert blocking-completion, not all incomplete steps
+- **Verification (local)**:
+  - `php artisan test --compact --filter="FreeTierPlanServiceTest|ManualOnboardingParityTest|WizardToshiSyncPlanStepTest|FreshAdminDashboardSafetyTest"` → 19 passed, 0 failed
+  - `php artisan test --compact tests/Feature/Onboarding tests/Feature/SaasMinimalSignupTest.php tests/Feature/FreshAdminDashboardSafetyTest.php tests/Feature/Auth/LoginRegressionTest.php tests/Feature/Auth/RegistrationMinistryCodeTest.php` → 148 passed, 0 failed
+  - `php artisan test --compact` → 735 passed / 58 failed / 2 skipped (down from 65 failures before fix; no new failures introduced)
+- **Ship**: PR #354 (`hotfix/onboarding-optional-steps`, merge `ff940d6b`). Branch deleted post-merge.
+- **Deploy**: `scripts/deploy-manual.sh` completed successfully 2026-08-22. Production now at `ff940d6b`; migration `2026_08_20_160000_add_roster_scope_composite_indexes` applied; FPM + queue worker restarted; `https://klassapp.xyz` serving.
+- **Status**: ✅ MERGED + DEPLOYED
