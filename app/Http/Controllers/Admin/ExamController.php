@@ -191,8 +191,9 @@ public function sections(){
     public function update(UpdateExamsRequest $request, string $exam){
             // dd($request);
 
+    $school_id = Auth::user()->school_id;
     $validated = $request->validated();
-    Exam::where("id", $exam)->update($validated);
+    Exam::where("id", $exam)->where("school_id", $school_id)->update($validated);
     return redirect()->route("admin.exams")->with("successmessage", "Exam updated successfully!");
     }
 

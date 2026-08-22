@@ -85,8 +85,9 @@ class AcademicTermController extends Controller
     public function update(UpdateAcademicTermRequest $request, string $term)
     {
         //
+        $school_id = Auth::user()->school_id;
         $validated = $request->validated();
-        AcademicTerm::where("id", $term)->update($validated);
+        AcademicTerm::where("id", $term)->where("school_id", $school_id)->update($validated);
         return redirect()->route("admin.academic-term")
                          ->with("successmessage", "Updated Academic Term of id $term !");
     }

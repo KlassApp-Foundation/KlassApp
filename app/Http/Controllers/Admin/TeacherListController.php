@@ -55,7 +55,8 @@ class TeacherListController extends Controller
     {
         try
         {
-            $user = User::where('name',$name)->first();
+            $schoolId = Auth::user()->school_id;
+            $user = User::where('name',$name)->where('school_id', $schoolId)->firstOrFail();
             $user->delete();
 
             $message=trans('messages.delete_success_msg',['module' => 'Teacher']);

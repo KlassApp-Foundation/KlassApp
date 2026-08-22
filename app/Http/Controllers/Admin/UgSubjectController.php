@@ -104,9 +104,10 @@ class UgSubjectController extends Controller
     public function update(UpdateUgSubjectRequest $request, string $subject)
     {
         //
+        $school_id = Auth::user()->school_id;
         $validated = $request->validated();
         // dd($validated);
-        Subject::where("id", $subject)->update($validated);
+        Subject::where("id", $subject)->where("school_id", $school_id)->update($validated);
         return redirect()->route("admin.subjects")->with("successmessage", "Subject Updated!");
     }
 
@@ -123,14 +124,17 @@ class UgSubjectController extends Controller
     // restore deleted subject
      public function restore(string $subject)
     {
-        Subject::withTrashed()->find($subject)->restore();
+        $school_id = Auth::user()->school_id;
+        Subject::withTrashed()->where("id", $subject)->where("school_id", $school_id)->firstOrFail()->restore();
         return redirect()->route("admin.subjects")->with("successmessage", "Subject Restored!");
     }
 
     // force delete
      public function forceDestroy(string $subject)
     {
-        Subject::withTrashed()->find($subject)->forceDelete();
+        $school_id = Auth::user()->school_id;
+        $subjectModel = Subject::withTrashed()->where("id", $subject)->where("school_id", $school_id)->firstOrFail();
+        $subjectModel->forceDelete();
         return redirect()->route("admin.subjects")->with("successmessage", "Subject Deleted!");
     }
 }
