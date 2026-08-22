@@ -37,4 +37,16 @@ class AuthPageCacheControlTest extends TestCase
 
         $response->assertStatus(302);
     }
+
+    /**
+     * @test
+     */
+    public function register_google_button_has_formnovalidate_to_skip_password_field_validation(): void
+    {
+        $response = $this->get('/register');
+
+        $response->assertStatus(200);
+        $this->assertStringContainsString('formnovalidate', $response->getContent());
+        $this->assertStringContainsString('/auth/google/start', $response->getContent());
+    }
 }
