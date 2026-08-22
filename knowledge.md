@@ -7420,7 +7420,7 @@ Merged + deployed via standing flow (`scripts/deploy-manual.sh`). Live browser v
 
 ### 2026-08-20: Phase 5 PR #3 — route audit fixes + toggles + indexes + isolation
 
-**Context**: Route audit (done in prior session) found 6 write routes without school-scoping. PR #3 fixes all 6, adds regression tests (8 tests, 17 assertions), seeds feature toggles for all schools, adds 4 composite performance indexes, and ships a cross-tenant isolation test. PR #354 (`feat/phase5-route-audit-toggles-indexes-isolation`).
+**Context**: Route audit (done in prior session) found 6 write routes without school-scoping. PR #3 fixes all 6, adds regression tests (8 tests, 17 assertions), seeds feature toggles for all schools, adds 4 composite performance indexes, and ships a cross-tenant isolation test. PR #352 (`feat/phase5-route-audit-toggles-indexes-isolation`).
 
 **404 vs 403 rationale**: TeacherListController returns 404 (`firstOrFail` on a school-scoped query) while SectionController returns 403 (`abort_if`). Both are semantically correct for cross-tenant rejection, but they differ because TeacherListController looks up by `name + school_id` (the record simply doesn't exist from the attacker's school perspective → 404), whereas SectionController resolves the section via route-model binding (record exists, but school mismatch → 403 forbidden). This is intentionally NOT harmonized — the two controllers use different lookup patterns and the behavior matches each pattern's natural semantics.
 
@@ -7506,13 +7506,13 @@ Ran full suite on base commit (stashed changes) vs this branch:
 
 `database/migrations/2026_08_20_160000_add_roster_scope_composite_indexes.php`, `database/seeders/Phase5FeatureTogglesSeeder.php`, `tests/Feature/TeacherListCrossSchoolDeleteTest.php`, `tests/Feature/UgSubjectCrossSchoolTest.php`, `tests/Feature/ExamCrossSchoolTest.php`, `tests/Feature/AcademicTermCrossSchoolTest.php`, `tests/Feature/MarksToggleStatusCrossSchoolTest.php`, `tests/Feature/RosterScopeServiceCrossTenantIsolationTest.php`.
 
-**Branch HEAD (pre-merge)**: `b4c3e1b5` — https://github.com/KlassApp-Foundation/KlassApp/pull/354
-**Ship**: PR #354 (`feat/phase5-route-audit-toggles-indexes-isolation`). Awaiting human review + merge.
+**Branch HEAD (pre-merge)**: `aa870ce8` — https://github.com/KlassApp-Foundation/KlassApp/pull/352
+**Ship**: PR #352 (`feat/phase5-route-audit-toggles-indexes-isolation`). Awaiting human review + merge.
 **Status**: ⏳ AWAITING MERGE — merge commit hash will be filled in post-merge.
 
 ### 2026-08-20: WhatsApp Cloud API — new WABA + phone number registration + production .env update
 
-- **Work done**: Created new System User access token (`whatsapp_business_management` + `whatsapp_business_messaging` scopes), registered phone number `+256 793 844906` via POST to `/v21.0/{phone_number_id}/register` (`{success: true}`), verified phone status CONNECTED with quality GREEN. Updated production `.env`: `WHATSAPP_BUSINESS_API_TOKEN`, `WHATSAPP_BUSINESS_PHONE_NUMBER_ID=1416403124879552`, `WHATSAPP_BUSINESS_WABA_ID=1370231745289565`. Existing values unchanged: `WHATSAPP_BUSINESS_VERIFY_TOKEN=klassapp_verify_2026`, `QUEUE_CONNECTION=database`.
+- **Work done**: Created new System User access token (`whatsapp_business_management` + `whatsapp_business_messaging` scopes), registered phone number `+256 793 844906` via POST to `/v21.0/{phone_number_id}/register` (`{success: true}`), verified phone status CONNECTED with quality GREEN. Updated production `.env`: `WHATSAPP_BUSINESS_API_TOKEN`, `WHATSAPP_BUSINESS_PHONE_NUMBER_ID=1416403124879552`, `WHATSAPP_BUSINESS_WABA_ID=1370231745289565`. **This new WABA ID (1370231745289565) supersedes the earlier WABA ID (1709193870117417) from a prior WABA account — this is not the same "wrong ID" bug that was fixed before; it is an intentional replacement with a new Meta Business Manager WABA.** Existing values unchanged: `WHATSAPP_BUSINESS_VERIFY_TOKEN=klassapp_verify_2026`, `QUEUE_CONNECTION=database`.
 - **Webhook endpoint verified**: `GET api/whatsapp/inbound` returns correct `hub.challenge` with HTTP 200. Route confirmed in production via `php artisan route:list`. Cloudflare proxy passes Meta's user-agent correctly. CSRF middleware excluded on `/inbound` route.
 - **Webhook subscriptions**: Confirmed via `GET /{waba_id}/subscribed_apps` — subscribed fields are `messages`, `message_template_status_update`, `message_template_quality_update`, and `security`. Non-`messages` events (security, account_alerts, template updates) are safely ignored by `WhatsAppController::handleInbound` via `if (! $type) { continue; }` and `if (empty($incomingMessage)) { continue; }` guards.
 - **Meta test notification**: Sent via `POST /{phone_number_id}/test_notification` to `https://klassapp.xyz/api/whatsapp/inbound` — Meta confirmed dispatch. This proves the Meta→Laravel pipeline is functional from Meta's side.
