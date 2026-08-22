@@ -12,87 +12,57 @@ class SectionPolicy
 
     /**
      * Determine whether the user can view any sections.
-     *
-     * @param  \App\Models\User  $user
-     * @return mixed
      */
     public function viewAny(User $user)
     {
-        //
         return true;
     }
 
     /**
      * Determine whether the user can view the section.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Section  $section
-     * @return mixed
      */
     public function view(User $user, Section $section)
     {
-        //
-        return true;
+        return (int) $user->school_id === (int) $section->school_id;
     }
 
     /**
      * Determine whether the user can create sections.
-     *
-     * @param  \App\Models\User  $user
-     * @return mixed
      */
     public function create(User $user)
     {
-        //
         return true;
     }
 
     /**
      * Determine whether the user can update the section.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Section  $section
-     * @return mixed
      */
     public function update(User $user, Section $section)
     {
-        //
-        return true;
+        return (int) $user->school_id === (int) $section->school_id;
     }
 
     /**
      * Determine whether the user can delete the section.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Section  $section
-     * @return mixed
      */
     public function delete(User $user, Section $section)
     {
-        //
+        return (int) $user->school_id === (int) $section->school_id;
     }
 
     /**
      * Determine whether the user can restore the section.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Section  $section
-     * @return mixed
      */
     public function restore(User $user, Section $section)
     {
-        //
+        return (int) $user->school_id === (int) $section->school_id;
     }
 
     /**
      * Determine whether the user can permanently delete the section.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Section  $section
-     * @return mixed
      */
     public function forceDelete(User $user, Section $section)
     {
-        //
+        return (int) $user->school_id === (int) $section->school_id;
     }
 }

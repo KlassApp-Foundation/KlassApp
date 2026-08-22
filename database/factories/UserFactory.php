@@ -29,8 +29,9 @@ class UserFactory extends Factory
         'mobile_no' => $this->faker->unique()->randomNumber($nbDigits = 9, $strict = false),
         'password' => bcrypt('password'),
         'email_verification_code' => \Illuminate\Support\Str::random(40),
-        //'email_verified' => 1,
-        //'email_verified_at' => Carbon::now(),
+        'email_verified' => 1,
+        'usergroup_id' => 6, // student by default; tests override
+        'status' => 'active',
         'registration_number'   =>  $this->faker->unique()->randomNumber($nbDigits = 6, $strict = false),
         'remember_token' => \Illuminate\Support\Str::random(10),
     ];

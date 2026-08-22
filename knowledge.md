@@ -7392,26 +7392,133 @@ Merged + deployed via standing flow (`scripts/deploy-manual.sh`). Live browser v
 
 **Process note**: explore agent for surface mapping (bg_d57a3eef) returned unusable results — its grep saw a STALE index and claimed getDisplayNameAttribute doesn't exist (it does, app/Models/User.php:822). Direct grep was faster and authoritative. librarian (bg_86f7c46d) confirmed the fallback parsing (whitespace split, last-token-as-surname, digit strip) aligns with common practice ("reasonable, aligns with common practice; Laravel docs assume structured storage — keep name-column parsing as the fallback only").
 
-### 2026-08-18: Phase 1–4 — Multi-Tenant Class-List Portal (RosterScopeService)
+### 2026-08-19: Phase 1–4 class-roster portal close-out
 
-**Objective**: build a class-list/roster portal for admin + teachers as the ongoing single source of truth for class rosters, with real edit capability — activating the previously-deferred in-platform mark-editing work now that the report-card pipeline was mature. Explicitly required to be multi-tenant from the start, not another Kabale-specific one-off (unlike `ImportKabaleMarks.php`, which was deliberately school-104-hardcoded for the emergency data rescue).
+- **Work done**: Shipped the four-phase, read-only class-roster portal. Phase 1 closed teacher marks-write ownership gaps and added aggregate audit events (PR #341, merge `349799dc`). Phase 2 added nullable `sections.class_teacher_id`, its relationship, school-scoped validation, and Setup A Class support (PR #342, merge `07fbc44c`). Phase 3 introduced `RosterScopeService` as the single school/year-scoped authorization and query boundary, including section-level class-teacher fallback and subject-teacher projections (PR #343, merge `af7e8ee0`). Phase 4 added the teacher/admin Livewire index and show portal pages, routes, filters, pagination, stream selection, and empty/incomplete states (PR #344, merge `120c22b5`).
+- **Demo data**: The isolated, idempotent `Phase4RosterDemoSeeder` and PHPUnit coverage shipped in PR #345 (merge `7db17c25`), followed by the production `--no-dev` Faker removal in PR #346 (merge `5cb0cdc3`). Production is at `5cb0cdc3`; `php artisan db:seed --class=Database\\Seeders\\Phase4RosterDemoSeeder --force --no-interaction` ran through the app container and created school **105**, `Phase 4 Roster Demo School`, with the 2026 Demo year, P.4 Demo / stream A, 3 students, admin, subject teacher, and class teacher.
+- **Files modified**: `app/Services/RosterScopeService.php`, `app/Livewire/ClassRoster/Index.php`, `app/Livewire/ClassRoster/Show.php`, roster views/routes, section migration/model/form paths, `database/seeders/Phase4RosterDemoSeeder.php`, `tests/Feature/Phase4RosterDemoSeederTest.php`, plus focused Phase 1–4 tests.
+- **Key decisions**: No roster writes; scope every roster query by school and academic year; use scalar section IDs rather than unscoped route-model binding; apply `stream.class_teacher_id ?? section.class_teacher_id`; preserve a complete roster for subject teachers but omit full-detail fields; seed demo data only through the committed Laravel seeder, never raw production DB writes.
+- **Tests**: `php artisan test --compact tests/Feature/Phase4RosterDemoSeederTest.php` — **1 passed, 6 assertions** (2026-08-19). The Phase 1–4 focused suites and full-suite results are recorded in PRs #341–#344.
+- **Status**: ✅ CLOSED — screenshot evidence was explicitly waived after repeated unrelated headless-browser/terminal-timeout failures. Production deployment, application-managed seeding, and a real demo-teacher login remain the Phase 4 verification evidence.
+- **Edge cases flagged**: Production has an unrelated untracked `resources/views/vendor/toshi-ui/` directory; it was not changed. Phase 5 tenant-isolation, performance, and rollout hardening remains the next work item after screenshot evidence.
 
-**Terminology established** (now a standing glossary entry, given how many bugs the Standard/Section confusion has already caused — see Known Bug Patterns #2): Subject Teacher = `class_teacher_links` (teacher↔subject↔class). Class Teacher = two-tier — general (`sections.class_teacher_id`, new this phase) + stream-level (`standards_link.class_teacher_id`, pre-existing), resolved as `stream.class_teacher_id ?? section.class_teacher_id`. `Standard` = level grouping (Primary/Nursery/O-Level, shared across many classes); `Section` = the actual class; `standards_link` = one stream of one class.
+### 2026-08-20: Phase 5 PR #1 — seeder fixes & cross-tenant fixture (PR #349)
+- **Status**: ✅ MERGED
 
-**Phase 1 — Audit + authorization wiring.** `MarksController`'s `saveExamMarks`/`updateMark` had zero audit logging; `updateMark` was also missing the exam-ownership guard `saveExamMarks` already had. A second-pass review found a deeper issue: bulk `saveExamMarks` accepted forged student IDs inside the payload even with exam-level ownership checks in place — closed by rejecting any submitted student outside the exam's school or student role. Added aggregate `marks.saved`/`marks.updated` audit events (IDs, count, request ID — no raw payload). 13 tests / 55 assertions; live-verified by re-saving an existing real mark's identical value and confirming the resulting audit row.
-- **Ship**: PR #341 (`fix/marks-audit-phase1`, merge `349799dc`) — https://github.com/KlassApp-Foundation/KlassApp/pull/341 — MERGED 2026-08-18 18:47 UTC.
+- **Work done**: Fixed factory NOT NULL defaults (UserFactory usergroup_id/status, StandardLinkFactory FKs, StudentAcademicFactory old-pattern→modern), shipped Phase5CrossTenantTestSeeder (School B + admin + teacher + 2 students + academic year/term + standards_link + subjects + student_academics, all idempotent).
+- **Files modified**: `database/factories/UserFactory.php`, `database/factories/StandardLinkFactory.php`, `database/factories/StudentAcademicFactory.php`, `database/seeders/Phase5CrossTenantTestSeeder.php` (new).
+- **Ship**: PR #349 (`feat/phase5-seeder-fixes`, merge `34a882a1ad96a23ddf9f2f3f63920b57f4e3c085`). Branch `feat/phase5-seeder-fixes` deleted post-merge.
+- **Status**: ✅ MERGED
 
-**Phase 2 — `sections.class_teacher_id` schema.** Nullable `unsignedInteger` matching `users.id`'s actual type (not Laravel's default `foreignId()`), FK `nullOnDelete()`. Zero backfill by design — existing sections stay NULL. Setup A Class validation extended: new `section_class_teacher_id` field, school-scoped + `usergroup_id=5` required. `AcademicProcess` made null-safe before designation calls. Specialist review agent unavailable (billing) — shipped on direct review + 19 assertions + full suite instead, disclosed honestly in the PR body rather than silently skipped.
-- **Ship**: PR #342 (`feat/sections-class-teacher-phase2`, merge `07fbc44c`) — https://github.com/KlassApp-Foundation/KlassApp/pull/342 — MERGED 2026-08-18 19:16 UTC.
+### 2026-08-20: Phase 5 PR #2 — cross-school section delete fix (PR #350)
 
-**Phase 3 — `RosterScopeService`.** Single authorization/query boundary, no global model scope (admins need broader access, legacy queries exist). Real bug caught by tests: admins were accidentally receiving the subject-teacher-limited student projection — fixed. Hardening: eager-loaded relations need their own school predicates, not just the parent query; inactive sections/streams resolve as not-found. `visibleSections()`, `effectiveClassTeacher()` (the `stream ?? section` precedence above), `studentsForStream()` (pagination-ready, restricts subject-teacher projections while retaining the full roster). 26 assertions; cross-school, invalid-year, precedence, subject-assignment, empty-class, historical-year, and multiple-assignment cases covered.
-- **Ship**: PR #343 (`feat/roster-scope-service-phase3`, merge `af7e8ee0`) — https://github.com/KlassApp-Foundation/KlassApp/pull/343 — MERGED 2026-08-18 19:38 UTC.
+- **Work done**: SectionPolicy view/update/delete/restore/forceDelete all gated on `(int) $user->school_id === (int) $section->school_id`. Route `DELETE /classes/delete/{class}` now carries `->can('delete','class')`. SectionController@destroy defensive `abort_if(403)` when user school_id != section school_id. CrossSchoolSectionDeleteTest: admin can delete own section (soft-delete confirmed), gets 403 for other school's section (record NOT soft-deleted).
+- **Files modified**: `app/Policies/SectionPolicy.php`, `app/Http/Controllers/Admin/SectionController.php`, `routes/admin.php`, `tests/Feature/CrossSchoolSectionDeleteTest.php` (new).
+- **Tests**: `php artisan test --compact tests/Feature/CrossSchoolSectionDeleteTest.php` — **2 passed, 4 assertions**.
+- **Ship**: PR #350 (`fix/cross-school-section-delete`, merge `8223a99e7b184d8e7e7edf38322ac95aa2369101`). Branch `fix/cross-school-section-delete` deleted post-merge.
+- **Status**: ✅ MERGED — merge `8223a99e7b184d8e7e7edf38322ac95aa2369101`
+- **Key decisions**: Policy gates all SectionPolicy methods (view/update/delete/restore/forceDelete), not just delete. Controller abort_if is a defense-in-depth layer — the policy can() should catch this at the route level, but a direct controller call (or if the policy is bypassed) still has the abort_if.
+- **Edge cases**: MustBePrivilege middleware in tests requires AcademicYear + Standard to exist for the school — otherwise routes redirect to /admin/dashboard. Tests use `withoutMiddleware(MustBePrivilege::class)`.
 
-**Phase 4 — Livewire UI + demo tenant.** `ClassRoster\Index` (paginated, school-scoped, filterable by academic year/level/assignment/search) + `ClassRoster\Show` (stream selection, service-resolved effective teachers, subject assignments, searchable/paginated roster, empty/incomplete states), admin + teacher routes, `RosterScopeService` enforced inside `mount()`/query methods, not just route middleware — read-only, no write/edit capability yet. Screenshots were abandoned after repeated headless-browser/terminal-timeout failures unrelated to the actual feature; replaced with a dedicated demo tenant (`phase4-roster-demo`, isolated school/year/section/stream/3 students/6 users) and real credentials for direct human verification instead, on the reasoning that a real login is better evidence than an unreviewed screenshot. Demo credentials: `phase4.teacher@klassapp.xyz` / `phase4.admin@klassapp.xyz` / `phase4.class-teacher@klassapp.xyz` (all `demo123`); subject teacher scoped via a `class_teacher_links` row to MATHEMATICS, P.4 Demo stream A. The seeder crashed on first landing because `User::factory()->make()` requires Faker, not installed under `composer install --no-dev` — fixed by building plain `User` instances directly (every field was already force-filled explicitly, so Faker was never actually needed). A 419 "Page Expired" hit during real login testing was investigated and ruled a stale-CSRF-token non-issue (not a platform bug) — confirmed via fresh-token reproduction against both the demo account and an unrelated control account, and by checking session config was healthy and untouched by the recent PRs.
-- **Ship**: PR #344 (`feat/class-roster-livewire-phase4`, merge `120c22b5`) — https://github.com/KlassApp-Foundation/KlassApp/pull/344 — MERGED 2026-08-18 20:09 UTC.
-- **Ship**: PR #345 (`chore/phase4-roster-demo-seeder`, merge `7db17c25`) — https://github.com/KlassApp-Foundation/KlassApp/pull/345 — MERGED 2026-08-18 21:26 UTC (repo shows 2026-08-19 in some local clocks — GitHub's recorded UTC timestamp is 08-18 21:26).
-- **Ship**: PR #346 (`fix/phase4-seeder-no-faker`, merge `5cb0cdc3`) — https://github.com/KlassApp-Foundation/KlassApp/pull/346 — MERGED 2026-08-18 21:29 UTC.
+### 2026-08-20: Phase 5 PR #3 — route audit fixes + toggles + indexes + isolation
 
-**Status**: ✅ Phases 1–4 MERGED on `main` (verified independently via GitHub — PR numbers, branches, merge commits, and timestamps above were all cross-checked against the GitHub API, not taken on faith). Live production verification (the demo-tenant login testing, the audit-row re-save check, etc.) was performed by the original working session, which had production access this documenting session did not — recorded here as-reported, not independently re-confirmed. This entry itself was written because it was found completely missing from `knowledge.md` despite being real, merged work — a prior session's claim that this history was "already committed" (citing a commit hash that does not exist anywhere in this repository) was false; see the `AGENTS.md` consolidation entry/PR for the parallel finding.
+**Context**: Route audit (done in prior session) found 6 write routes without school-scoping. PR #3 fixes all 6, adds regression tests (8 tests, 17 assertions), seeds feature toggles for all schools, adds 4 composite performance indexes, and ships a cross-tenant isolation test. PR #352 (`feat/phase5-route-audit-toggles-indexes-isolation`).
 
-**Open**: Phase 5 (tenant-isolation test coverage, performance/index review on the roster queries, rollout gates) not yet started — needs its own scoped plan before implementation, same pattern as every prior phase. Requires production access to execute meaningfully (real data volume for perf review); the session that found this gap did not have it.
+**404 vs 403 rationale**: TeacherListController returns 404 (`firstOrFail` on a school-scoped query) while SectionController returns 403 (`abort_if`). Both are semantically correct for cross-tenant rejection, but they differ because TeacherListController looks up by `name + school_id` (the record simply doesn't exist from the attacker's school perspective → 404), whereas SectionController resolves the section via route-model binding (record exists, but school mismatch → 403 forbidden). This is intentionally NOT harmonized — the two controllers use different lookup patterns and the behavior matches each pattern's natural semantics.
+
+#### Fix 1: TeacherListController@destroy (route `DELETE /teacher/delete/{name}`, admin.php l.307)
+
+- **Gap**: `User::where('name',$name)->first()` — name-based lookup without school_id.
+- **Fix**: Added `->where('school_id', $schoolId)` before `->firstOrFail()`. Follows existing StudentController pattern.
+- **Test**: `tests/Feature/TeacherListCrossSchoolDeleteTest.php` — 1 method, 3 assertions (`assertNotFound` + `assertDatabaseHas` + `assertNull`). Admin A attempts delete of School B teacher → 404 (school-scoped query returns no match), teacher B NOT soft-deleted.
+- **File modified**: `app/Http/Controllers/Admin/TeacherListController.php`.
+
+#### Fix 2–4: UgSubjectController@update, @forceDestroy, @restore (admin.php l.393, l.396, l.395)
+
+- **Gap**: `@update`: `Subject::where("id", $subject)->update(...)`. `@forceDestroy`: `Subject::withTrashed()->find($subject)->forceDelete()`. `@restore`: `Subject::withTrashed()->find($subject)->restore()`. None scoped by school_id. Note: `@destroy` already HAD school-scoping — the other three methods did not. The `@restore` route (`POST /subjects/{subject}/restore`, admin.php l.395) was not in the original 6-item audit but was fixed alongside `@forceDestroy` in the same controller since it has the identical unscoped vulnerability.
+- **Fix**: All four now scope by `->where("school_id", $school_id)`. `@update` uses `->where("school_id", $school_id)->update(...)` (silent no-op if school mismatch). `@forceDestroy/@restore` use `->where("school_id", $school_id)->firstOrFail()`.
+- **Test**: `tests/Feature/UgSubjectCrossSchoolTest.php` — 4 methods, 8 assertions. `admin_can_update_own_subject` (proves own-school update works, 2 assertions), `admin_cannot_update_another_schools_subject` (cross-school update is a no-op, name unchanged, 2 assertions), `admin_cannot_force_delete_another_schools_subject` (cross-school force-delete → 404, record remains soft-deleted, 2 assertions), `admin_cannot_restore_another_schools_subject` (cross-school restore → 404, record remains soft-deleted, 2 assertions).
+- **Schema note**: Routes use `admin` prefix (`/admin/subjects/{subject}/update`). UgSubjectController paths do not have a route-group prefix — the prefix comes from RouteServiceProvider's `mapAdminRoutes()`. Tests discovered this (initial 404s from missing `/admin` prefix).
+- **File modified**: `app/Http/Controllers/Admin/UgSubjectController.php`.
+
+#### Fix 5: ExamController@update (route `PUT /exams/{exam}/update`, admin.php l.850)
+
+- **Gap**: `Exam::where("id", $exam)->update(...)` — no school_id scope.
+- **Fix**: Added `->where("school_id", $school_id)` before `->update()`. Matches existing `@archieve` pattern (same controller, already scoped).
+- **Test**: `tests/Feature/ExamCrossSchoolTest.php` — 1 method, 2 assertions (`assertRedirect` + `assertDatabaseHas`). Admin A sends PUT to School B's exam → redirect (0 rows matched, silent no-op), exam status unchanged ('undone').
+- **File modified**: `app/Http/Controllers/Admin/ExamController.php`.
+
+#### Fix 6: AcademicTermController@update (route `PATCH /academic-term/{termId}/update`, admin.php l.881)
+
+- **Gap**: `AcademicTerm::where("id", $term)->update(...)` — no school_id scope.
+- **Fix**: Added `->where("school_id", $school_id)` before `->update()`. Matches existing `@destroy` pattern (same controller, already scoped).
+- **Test**: `tests/Feature/AcademicTermCrossSchoolTest.php` — 1 method, 2 assertions (`assertRedirect` + `assertDatabaseHas`). Admin A sends PATCH to School B's term → redirect (0 rows matched), term name unchanged.
+- **File modified**: `app/Http/Controllers/Admin/Academics/AcademicTermController.php`.
+
+#### Fix 7: MarksController@TogglekStatus (route `PATCH /teacher/exam/{exam}/change-status`, teacher.php l.373)
+
+- **Gap**: Route-model binding resolved the Exam, but no `school_id` or `teacher_id` check — any teacher at any school could toggle any exam's status.
+- **Fix**: Added both `$exam->school_id !== $schoolId` AND `(int) $exam->teacher_id !== (int) $teacher->id` checks, aborting 403 if either fails. Matches existing `updateMark` pattern in same controller (which already scoped by both school_id AND teacher_id). Uses `Auth::user()` with `instanceof User` guard for type safety.
+- **Test**: `tests/Feature/MarksToggleStatusCrossSchoolTest.php` — 2 tests, 4 assertions. `teacher_cannot_toggle_status_of_another_schools_exam` (school A teacher → school B exam → 403, status unchanged). `same_school_teacher_cannot_toggle_another_teachers_exam` (different teacher, same school → teacher_id mismatch → 403, status unchanged). The second test proves the teacher-link check works independently of school-scoping.
+- **File modified**: `app/Http/Controllers/Teacher/MarksController.php`.
+
+#### Feature toggles
+
+- **Work done**: Seeded `school_feature_toggles` for all existing schools with `roster=on`, `report_generation=on`, `bulk_attendance=off`. Idempotent (`updateOrInsert` per school/feature pair).
+- **File**: `database/seeders/Phase5FeatureTogglesSeeder.php` (new). Verified: 3 schools × 3 toggles = 9 rows in `school_feature_toggles`.
+
+#### Performance indexes
+
+- **Work done**: Added 4 composite indexes via migration: `sections(school_id, status)`, `standards_link(school_id, academic_year_id, status)`, `marks(school_id, section_id, exam_id)`, `users(school_id, usergroup_id)`. All match RosterScopeService query patterns.
+- **File**: `database/migrations/2026_08_20_160000_add_roster_scope_composite_indexes.php` (new). Migration applied — all 4 indexes confirmed in klassapp_local via `SHOW INDEXES`.
+
+#### Cross-tenant isolation test
+
+- **Work done**: `RosterScopeServiceCrossTenantIsolationTest.php` mirrors `ToshiSdkV2CrossTenantIsolationTest.php` pattern — school-A user must never see school-B sections/students, including via direct ID substitution. Tests visible sections, stream students, year rejection. School B admin's section must NOT appear in school A's results.
+- **Test results**: `tests/Feature/RosterScopeServiceCrossTenantIsolationTest.php` — **9 tests, 19 assertions**, all pass.
+
+#### Combined test results (this branch)
+
+- Route audit fix tests: 6 files (TeacherList + UgSubject + Exam + AcademicTerm + MarksToggleStatus + RosterScopeService), 18 methods, 36 assertions, all pass.
+- Full branch suite: `php artisan test --compact tests/Feature/RosterScopeServiceCrossTenantIsolationTest.php tests/Feature/TeacherListCrossSchoolDeleteTest.php tests/Feature/UgSubjectCrossSchoolTest.php tests/Feature/ExamCrossSchoolTest.php tests/Feature/AcademicTermCrossSchoolTest.php tests/Feature/MarksToggleStatusCrossSchoolTest.php` — **18 tests, 36 assertions, all pass**. (PR description claimed 19/42; actual count verified after CSRF fixes.)
+
+#### Blocking issues fixed during review (2026-08-21)
+
+1. **CSRF failures (4 test files)**: UgSubjectCrossSchoolTest, ExamCrossSchoolTest, AcademicTermCrossSchoolTest, MarksToggleStatusCrossSchoolTest all sent PATCH/PUT/POST/DELETE without disabling CSRF middleware. Fixed by adding `$this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);` in `setUp()` — following the existing pattern in `LegacyPortalIdorOwnershipTest` and `SaasMinimalSignupTest`. All 4 files now return correct 403/404 (not 419) and DB assertions pass.
+
+2. **Migration down() broken**: Dropping `marks_school_section_exam_index` failed because MySQL FK `marks_school_id_foreign` (on `school_id`) depended on the composite index (only index starting with `school_id`). Fixed `down()` to: check index exists via `information_schema`, drop dependent FK `marks_school_id_foreign`, drop composite index, re-add FK (MySQL auto-creates single-column index on `school_id`). Verified `migrate:rollback` → `migrate` cycle twice.
+
+#### Verified root cause (2026-08-22, pre-re-review)
+
+`SHOW CREATE TABLE marks` + `information_schema.KEY_COLUMN_USAGE` confirm: the composite index `(school_id, section_id, exam_id)` is the **only index starting with `school_id`**. The FK `marks_school_id_foreign` (on `school_id`) requires an index starting with `school_id` — MySQL therefore refused to drop the composite index. The FK `marks_exam_id_foreign` (on `exam_id`) has its own single-column index and was NOT the blocker. Original error message did not name the FK; analysis now verified.
+
+#### Pre-existing test failure confirmation (2026-08-22)
+
+Ran full suite on base commit (stashed changes) vs this branch:
+- **Base (no fixes)**: 74 failed, 717 passed (5015 assertions) — included 6 CSRF failures (3 UgSubject + 1 AcademicTerm + 2 MarksToggleStatus)
+- **This branch (fixes applied)**: 68 failed, 723 passed (5019 assertions) — **exact same 18 unique failing test names**, just 6 fewer total because CSRF tests now pass
+- **Diff**: 6 fewer failures, 6 more passing, +4 assertions = the 6 CSRF-fixed test methods
+- **Conclusion**: All 68 failures are pre-existing (Toshi LLM, onboarding wizard, superadmin subscription, fresh admin dashboard) and unrelated to this PR. No new failures introduced.
+
+#### Controller files modified (6 fixes, 5 files)
+
+`app/Http/Controllers/Admin/TeacherListController.php`, `app/Http/Controllers/Admin/UgSubjectController.php`, `app/Http/Controllers/Admin/ExamController.php`, `app/Http/Controllers/Admin/Academics/AcademicTermController.php`, `app/Http/Controllers/Teacher/MarksController.php`.
+
+#### New files
+
+`database/migrations/2026_08_20_160000_add_roster_scope_composite_indexes.php`, `database/seeders/Phase5FeatureTogglesSeeder.php`, `tests/Feature/TeacherListCrossSchoolDeleteTest.php`, `tests/Feature/UgSubjectCrossSchoolTest.php`, `tests/Feature/ExamCrossSchoolTest.php`, `tests/Feature/AcademicTermCrossSchoolTest.php`, `tests/Feature/MarksToggleStatusCrossSchoolTest.php`, `tests/Feature/RosterScopeServiceCrossTenantIsolationTest.php`.
+
+**Branch HEAD (pre-merge)**: `aa870ce8` — https://github.com/KlassApp-Foundation/KlassApp/pull/352
+**Ship**: PR #352 (`feat/phase5-route-audit-toggles-indexes-isolation`, merge `12137040cd8a8a01a4be30238677bdc5996d3761`). Branch `feat/phase5-route-audit-toggles-indexes-isolation` deleted post-merge.
+**Status**: ✅ MERGED — merge `12137040cd8a8a01a4be30238677bdc5996d3761`
+
+### 2026-08-20: WhatsApp Cloud API — new WABA + phone number registration + production .env update
+
+- **Work done**: Created new System User access token (`whatsapp_business_management` + `whatsapp_business_messaging` scopes), registered phone number `+256 793 844906` via POST to `/v21.0/{phone_number_id}/register` (`{success: true}`), verified phone status CONNECTED with quality GREEN. Updated production `.env`: `WHATSAPP_BUSINESS_API_TOKEN`, `WHATSAPP_BUSINESS_PHONE_NUMBER_ID=1416403124879552`, `WHATSAPP_BUSINESS_WABA_ID=1370231745289565`. **This new WABA ID (1370231745289565) supersedes the earlier WABA ID (1709193870117417) from a prior WABA account — this is not the same "wrong ID" bug that was fixed before; it is an intentional replacement with a new Meta Business Manager WABA.** Existing values unchanged: `WHATSAPP_BUSINESS_VERIFY_TOKEN=klassapp_verify_2026`, `QUEUE_CONNECTION=database`.
+- **Webhook endpoint verified**: `GET api/whatsapp/inbound` returns correct `hub.challenge` with HTTP 200. Route confirmed in production via `php artisan route:list`. Cloudflare proxy passes Meta's user-agent correctly. CSRF middleware excluded on `/inbound` route.
+- **Webhook subscriptions**: Confirmed via `GET /{waba_id}/subscribed_apps` — subscribed fields are `messages`, `message_template_status_update`, `message_template_quality_update`, and `security`. Non-`messages` events (security, account_alerts, template updates) are safely ignored by `WhatsAppController::handleInbound` via `if (! $type) { continue; }` and `if (empty($incomingMessage)) { continue; }` guards.
+- **Meta test notification**: Sent via `POST /{phone_number_id}/test_notification` to `https://klassapp.xyz/api/whatsapp/inbound` — Meta confirmed dispatch. This proves the Meta→Laravel pipeline is functional from Meta's side.
+- **Files modified**: Production `.env` (via SSH + `docker compose exec` + `sed`; backed up as `.env.backup.2026-08-20` before edit). No code changes — controller, route, and webhook logic were already correct.
+- **Key decisions**: System User token chosen over perpetual token for better security isolation. App remains Unpublished (Development mode) — only testers receive messages. Token stored ONLY in production `.env`; never committed, never in a temp file beyond the curl commands in this session.
+- **Remaining (requires human with phone)**: (1) Add a tester phone number in Meta dashboard → WhatsApp → Getting Started. (2) Send real WhatsApp message from tester phone to `+256 793 844906`. (3) Verify in Laravel logs: `docker exec sms-app cat storage/logs/laravel.log | grep "WhatsApp webhook"`. (4) Publish app once testing passes.
+- **Status**: ✅ REGISTERED + DEPLOYED — awaiting human tester message + app publication.
