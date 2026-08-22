@@ -7403,10 +7403,11 @@ Merged + deployed via standing flow (`scripts/deploy-manual.sh`). Live browser v
 - **Edge cases flagged**: Production has an unrelated untracked `resources/views/vendor/toshi-ui/` directory; it was not changed. Phase 5 tenant-isolation, performance, and rollout hardening remains the next work item after screenshot evidence.
 
 ### 2026-08-20: Phase 5 PR #1 — seeder fixes & cross-tenant fixture (PR #349)
+- **Status**: ✅ MERGED
 
 - **Work done**: Fixed factory NOT NULL defaults (UserFactory usergroup_id/status, StandardLinkFactory FKs, StudentAcademicFactory old-pattern→modern), shipped Phase5CrossTenantTestSeeder (School B + admin + teacher + 2 students + academic year/term + standards_link + subjects + student_academics, all idempotent).
 - **Files modified**: `database/factories/UserFactory.php`, `database/factories/StandardLinkFactory.php`, `database/factories/StudentAcademicFactory.php`, `database/seeders/Phase5CrossTenantTestSeeder.php` (new).
-- **Ship**: PR #349 (`feat/phase5-seeder-fixes`, merge `9b44b02b`). Branch `feat/phase5-seeder-fixes` deleted post-merge.
+- **Ship**: PR #349 (`feat/phase5-seeder-fixes`, merge `34a882a1ad96a23ddf9f2f3f63920b57f4e3c085`). Branch `feat/phase5-seeder-fixes` deleted post-merge.
 - **Status**: ✅ MERGED
 
 ### 2026-08-20: Phase 5 PR #2 — cross-school section delete fix (PR #350)
