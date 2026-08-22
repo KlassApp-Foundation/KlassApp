@@ -7597,3 +7597,15 @@ Ran full suite on base commit (stashed changes) vs this branch:
   - **Ship + deploy**: `0c48c9fc` on `main`; `scripts/deploy-manual.sh` completed 2026-08-22. Public `/register`, `/login`, and `/` all return 200 immediately after deploy.
   - **Verification**: `FreshAdminDashboardSafetyTest` still passes; real logged-in dashboard test needs a user with `school_id = null` to confirm end-to-end.
   - **Status**: ✅ FIXED + DEPLOYED
+
+- **Bug 3 — register "Continue with Google" still showed validation errors after formnovalidate was added**:
+  - **Investigation**:
+    - Live `/register` HTML contains `formaction="/auth/google/start"`, `formmethod="post"`, and `formnovalidate` — the button is correctly configured.
+    - `curl` POST to `/auth/google/start` with all fields empty previously returned `302` to `/register` with validation errors, proving the request was reaching the right route but `GoogleAuthController::start` was validating `name`, `email`, `phone`, and `termsandcondn` as required.
+    - `resources/views/auth/register.blade.php` has a `submit` listener that only removes `required` from password/confirm fields; it does not `preventDefault` or change the target URL.
+  - **Root cause**: `GoogleAuthController::start` treated the Google OAuth path like the email/password registration path and required all registration fields. For Google OAuth the email/name come from Google and the phone is optional (Decision B).
+  - **Fix**: `GoogleAuthController::start` now stashes optional `name`/`email`/`phone` only when provided, and never requires `termsandcondn`. Pre-filled valid phone numbers are still normalized and uniqueness-checked if supplied.
+  - **Regression test**: `tests/Feature/Auth/GoogleStartValidationTest.php` extracts a fresh CSRF token from `/register`, POSTs empty fields to `/auth/google/start`, and asserts a `302` to `https://accounts.google.com/`.
+  - **Live verification**:
+    - `curl -D /tmp/headers -X POST -d "_token=...&name=&email=&phone=&termsandcondn=" https://klassapp.xyz/auth/google/start` → `HTTP/1.1 302 Found` with `Location: https://accounts.google.com/o/oauth2/auth?...`.
+  - **Status**: ✅ FIXED + DEPLOYED
