@@ -7606,6 +7606,7 @@ Ran full suite on base commit (stashed changes) vs this branch:
   - **Root cause**: `GoogleAuthController::start` treated the Google OAuth path like the email/password registration path and required all registration fields. For Google OAuth the email/name come from Google and the phone is optional (Decision B).
   - **Fix**: `GoogleAuthController::start` now stashes optional `name`/`email`/`phone` only when provided, and never requires `termsandcondn`. Pre-filled valid phone numbers are still normalized and uniqueness-checked if supplied.
   - **Regression test**: `tests/Feature/Auth/GoogleStartValidationTest.php` extracts a fresh CSRF token from `/register`, POSTs empty fields to `/auth/google/start`, and asserts a `302` to `https://accounts.google.com/`.
+  - **Ship + deploy**: `3f9de40a` on `main`; `scripts/deploy-manual.sh` completed 2026-08-22.
   - **Live verification**:
     - `curl -D /tmp/headers -X POST -d "_token=...&name=&email=&phone=&termsandcondn=" https://klassapp.xyz/auth/google/start` → `HTTP/1.1 302 Found` with `Location: https://accounts.google.com/o/oauth2/auth?...`.
   - **Status**: ✅ FIXED + DEPLOYED
