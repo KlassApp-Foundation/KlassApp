@@ -95,7 +95,22 @@ public function teacherExamMarksList()
 }
 
 // mark exam as done
-public function TogglekStatus(Exam $exam){   
+public function TogglekStatus(Exam $exam){
+    /** @var User $teacher */
+    $teacher = Auth::user();
+    if (! $teacher instanceof User) {
+        abort(403, 'Not Authorized');
+    }
+
+    $schoolId = $teacher->school_id;
+
+    if (
+        $exam->school_id !== $schoolId
+        || (int) $exam->teacher_id !== (int) $teacher->id
+    ) {
+        abort(403, 'Not Authorized');
+    }
+
     $exam->changeExamStatus();
     return redirect()
         ->route('teacher.exam.marks')
