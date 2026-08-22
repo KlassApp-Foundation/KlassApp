@@ -7581,10 +7581,19 @@ Ran full suite on base commit (stashed changes) vs this branch:
   - **Ship + deploy**: `ca816ae3` on `main`; `scripts/deploy-manual.sh` completed 2026-08-22.
   - **Status**: ✅ FIXED + DEPLOYED
 
-- **Bug 2 — login "Continue with Google" returns 500**:
-  - **Investigation to date**:
-    - `curl` to `GET /auth/google` from fresh and existing sessions returns `302` to `https://accounts.google.com/...` — the Socialite config is correct (`client_id`, `client_secret`, `redirect` all set in `config:show services.google`).
-    - `git log bc3e20a7..HEAD -- app/Http/Controllers/Auth/ config/services.php` showed no changes to Google auth config or the controller.
-    - `laravel.log` and dated log files contain no `/auth/google` or `GoogleAuthController` exception around the reported time. The most recent log entries are the pre-existing `Monolog\Handler\SlackWebhookHandler` `EMERGENCY` messages and normal registration `INFO` messages.
-    - Cannot reproduce the 500 from `curl` or `tinker`.
-  - **Status**: ⏸ PENDING — need the real stack trace to fix. Please reproduce in a real browser, note the exact timestamp, and either save the rendered 500 page or the `laravel.log` snippet around that timestamp.
+- **Bug 2 — login / register "Continue with Google" returned 500, plus the home-page Join/Portal buttons**:
+  - **Root cause**: `DashboardController::index` line 125 passed `Auth::user()->school_id` directly to `ReportCardsController::computeEotKpis(int $schoolId)`. When `school_id` was `null` (e.g., superadmin, freshly-created test account, or any user without an assigned school), the `guest` middleware still redirected `/login` and `/register` to `/admin/dashboard`, where `computeEotKpis` threw a `TypeError` and rendered `500`. This also broke the homepage Join/Portal buttons for any already-authenticated visitor.
+  - **Trace (prod `laravel-2026-08-23.log`)**:
+    ```text
+    [2026-08-23 00:43:31] production.ERROR: App\Http\Controllers\Admin\ReportCardsController::computeEotKpis(): Argument #1 ($schoolId) must be of type int, null given, called in /var/www/app/Http/Controllers/Admin/DashboardController.php on line 125
+    {"userId":4,"exception":"[object] (TypeError(code: 0): App\\Http\\Controllers\\Admin\\ReportCardsController::computeEotKpis(): Argument #1 ($schoolId) must be of type int, null given... at app/Http/Controllers/Admin/ReportCardsController.php:97)"}
+    ```
+  - **Fix**: `DashboardController.php` line 125 now null-guards `computeEotKpis`:
+    ```php
+    'eotKpis' => $school_id
+        ? \App\Http\Controllers\Admin\ReportCardsController::computeEotKpis($school_id)
+        : ['perClass' => [], 'perSubject' => [], 'perGender' => []],
+    ```
+  - **Ship + deploy**: `0c48c9fc` on `main`; `scripts/deploy-manual.sh` completed 2026-08-22. Public `/register`, `/login`, and `/` all return 200 immediately after deploy.
+  - **Verification**: `FreshAdminDashboardSafetyTest` still passes; real logged-in dashboard test needs a user with `school_id = null` to confirm end-to-end.
+  - **Status**: ✅ FIXED + DEPLOYED
