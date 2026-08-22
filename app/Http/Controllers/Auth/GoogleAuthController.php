@@ -12,8 +12,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
@@ -25,46 +23,31 @@ class GoogleAuthController extends Controller
      */
     public function start(Request $request, SchoolSignupBootstrapService $bootstrap)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'min:2', 'max:100', "regex:/^[\pL\s'\-]+$/u"],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
-            'phone' => [
-                'required',
-                'string',
-                'max:20',
-                'regex:/^(\+?256)?0?7[0578]\d{7}$/',
-            ],
-            'termsandcondn' => ['required', 'accepted'],
-        ], [
-            'phone.required' => 'Phone (WhatsApp) is required.',
-            'termsandcondn.accepted' => 'Please agree to the Terms and Conditions.',
-        ]);
+        $phone = $request->input('phone') ?: null;
 
-        if ($validator->fails()) {
-            return redirect()->route('register')
-                ->withErrors($validator)
-                ->withInput($request->except(['password', 'password_confirmation']));
+        if ($phone !== null) {
+            $phone = $bootstrap->normalizePhone($phone);
+            if ($phone === null) {
+                return redirect()->route('register')
+                    ->withErrors(['phone' => 'Enter a valid WhatsApp phone number.'])
+                    ->withInput();
+            }
+
+            if (User::where('mobile_no', $phone)->exists()) {
+                return redirect()->route('register')
+                    ->withErrors(['phone' => 'This phone number is already registered.'])
+                    ->withInput();
+            }
         }
 
-        $phone = $bootstrap->normalizePhone($request->input('phone'));
-        if ($phone === null) {
-            return redirect()->route('register')
-                ->withErrors(['phone' => 'Enter a valid WhatsApp phone number.'])
-                ->withInput();
-        }
-
-        if (User::where('mobile_no', $phone)->exists()) {
-            return redirect()->route('register')
-                ->withErrors(['phone' => 'This phone number is already registered.'])
-                ->withInput();
-        }
+        $sessionData = [
+            'name' => $request->input('name') ? trim($request->input('name')) : null,
+            'email' => $request->input('email') ? trim($request->input('email')) : null,
+            'phone' => $phone,
+        ];
 
         session([
-            'saas_signup' => [
-                'name' => trim($request->input('name')),
-                'email' => trim($request->input('email')),
-                'phone' => $phone,
-            ],
+            'saas_signup' => array_filter($sessionData, fn ($value) => $value !== null),
         ]);
 
         return Socialite::driver('google')->redirect();
