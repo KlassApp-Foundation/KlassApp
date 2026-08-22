@@ -7571,3 +7571,20 @@ Ran full suite on base commit (stashed changes) vs this branch:
   - `curl -I https://klassapp.xyz/login` → `Cache-Control: must-revalidate, no-cache, no-store, private`
   - Fresh `POST /auth/google/start` from a new `/register` fetch → `302` to `https://accounts.google.com/o/oauth2/auth` (Google consent screen)
 - **Status**: ✅ FIXED + DEPLOYED
+
+### 2026-08-22: Live browser regression — register Google button validation + login 500
+
+- **Bug 1 — register page validation blocked Google signup**:
+  - **Root cause**: `resources/views/auth/register.blade.php` had the `Continue with Google` button inside the main registration form with `formaction`/`formmethod`, but no `formnovalidate`. Browsers validate all required fields in a form before honoring a submit button override, so the button triggered native validation on the empty full name/email/phone fields instead of posting to Google.
+  - **Fix**: Added `formnovalidate` to the Google button at `resources/views/auth/register.blade.php:270`.
+  - **Regression test**: `AuthPageCacheControlTest::register_google_button_has_formnovalidate_to_skip_password_field_validation` asserts the rendered `/register` HTML contains `formnovalidate` and `/auth/google/start`.
+  - **Ship + deploy**: `ca816ae3` on `main`; `scripts/deploy-manual.sh` completed 2026-08-22.
+  - **Status**: ✅ FIXED + DEPLOYED
+
+- **Bug 2 — login "Continue with Google" returns 500**:
+  - **Investigation to date**:
+    - `curl` to `GET /auth/google` from fresh and existing sessions returns `302` to `https://accounts.google.com/...` — the Socialite config is correct (`client_id`, `client_secret`, `redirect` all set in `config:show services.google`).
+    - `git log bc3e20a7..HEAD -- app/Http/Controllers/Auth/ config/services.php` showed no changes to Google auth config or the controller.
+    - `laravel.log` and dated log files contain no `/auth/google` or `GoogleAuthController` exception around the reported time. The most recent log entries are the pre-existing `Monolog\Handler\SlackWebhookHandler` `EMERGENCY` messages and normal registration `INFO` messages.
+    - Cannot reproduce the 500 from `curl` or `tinker`.
+  - **Status**: ⏸ PENDING — need the real stack trace to fix. Please reproduce in a real browser, note the exact timestamp, and either save the rendered 500 page or the `laravel.log` snippet around that timestamp.
