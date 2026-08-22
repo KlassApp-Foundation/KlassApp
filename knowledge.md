@@ -7514,6 +7514,9 @@ Ran full suite on base commit (stashed changes) vs this branch:
 
 ### 2026-08-20: WhatsApp Cloud API — new WABA + phone number registration + production .env update
 
+- **Ship**: PR #351 (docs/whatsapp-waba-registration, merge 138e235af1a04294aaca0ba1c201715b3cc7cfea). Branch `docs/whatsapp-waba-registration` deleted post-merge.
+- **Status**: ✅ MERGED — merge 138e235af1a04294aaca0ba1c201715b3cc7cfea
+
 - **Work done**: Created new System User access token (`whatsapp_business_management` + `whatsapp_business_messaging` scopes), registered phone number `+256 793 844906` via POST to `/v21.0/{phone_number_id}/register` (`{success: true}`), verified phone status CONNECTED with quality GREEN. Updated production `.env`: `WHATSAPP_BUSINESS_API_TOKEN`, `WHATSAPP_BUSINESS_PHONE_NUMBER_ID=1416403124879552`, `WHATSAPP_BUSINESS_WABA_ID=1370231745289565`. **This new WABA ID (1370231745289565) supersedes the earlier WABA ID (1709193870117417) from a prior WABA account — this is not the same "wrong ID" bug that was fixed before; it is an intentional replacement with a new Meta Business Manager WABA.** Existing values unchanged: `WHATSAPP_BUSINESS_VERIFY_TOKEN=klassapp_verify_2026`, `QUEUE_CONNECTION=database`.
 - **Webhook endpoint verified**: `GET api/whatsapp/inbound` returns correct `hub.challenge` with HTTP 200. Route confirmed in production via `php artisan route:list`. Cloudflare proxy passes Meta's user-agent correctly. CSRF middleware excluded on `/inbound` route.
 - **Webhook subscriptions**: Confirmed via `GET /{waba_id}/subscribed_apps` — subscribed fields are `messages`, `message_template_status_update`, `message_template_quality_update`, and `security`. Non-`messages` events (security, account_alerts, template updates) are safely ignored by `WhatsAppController::handleInbound` via `if (! $type) { continue; }` and `if (empty($incomingMessage)) { continue; }` guards.
