@@ -596,7 +596,7 @@ class AgentToshi extends Component
         }
 
         $incomplete = \App\Services\OnboardingStepsService::incompleteSteps($school, auth()->id());
-        if (empty($incomplete)) {
+        if (! \App\Helpers\OnboardingHelper::hasMissingSteps($school->id, auth()->id())) {
             $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
             return;
         }
@@ -645,7 +645,7 @@ class AgentToshi extends Component
         $this->schoolId = $user->school_id;
         $incomplete = \App\Services\OnboardingStepsService::incompleteSteps($school, $user->id);
 
-        if (empty($incomplete)) {
+        if (! \App\Helpers\OnboardingHelper::hasMissingSteps($school->id, $user->id)) {
             if ($this->mode !== 'assistant' || $this->step !== 99) {
                 $this->exitCompletingSetupMode();
             }

@@ -139,7 +139,7 @@ class WizardToshiSyncPlanStepTest extends TestCase
             ],
         ]]);
 
-        $this->assertEmpty(OnboardingHelper::getMissingSteps($this->school->id, $this->admin->id));
+        $this->assertFalse(OnboardingHelper::hasMissingSteps($this->school->id, $this->admin->id));
 
         Livewire::test(AgentToshi::class)
             ->assertSet('mode', 'assistant')
@@ -166,7 +166,8 @@ class WizardToshiSyncPlanStepTest extends TestCase
 
         Livewire::test(ManualOnboardingWizard::class)
             ->assertSee('Plan selection')
-            ->call('next')
+            ->call('next') // confirm plan → review
+            ->call('next') // confirm review → finish
             ->assertSet('finished', true)
             ->assertDispatched('manual-onboarding-finished');
 

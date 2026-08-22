@@ -55,13 +55,9 @@ class FreeTierPlanService
      */
     private function contentOnboardingComplete(School $school, ?int $userId): bool
     {
-        foreach (OnboardingStepsService::incompleteSteps($school, $userId) as $step) {
-            if ($step['key'] !== 'plan_selection') {
-                return false;
-            }
-        }
+        $next = OnboardingStepsService::nextBlockingIncompleteStep($school, $userId);
 
-        return true;
+        return $next === null || $next['key'] === 'plan_selection';
     }
 
     /**

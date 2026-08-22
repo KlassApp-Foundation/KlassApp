@@ -177,7 +177,7 @@ class ManualOnboardingParityTest extends TestCase
             ->assignIfEligible($this->school->fresh(), $this->admin->id);
 
         $this->assertFalse(
-            OnboardingStepsService::hasIncompleteSteps($this->school->fresh(), $this->admin->id),
+            OnboardingStepsService::hasBlockingIncompleteSteps($this->school->fresh(), $this->admin->id),
             'A fresh admin must be able to fully complete onboarding via manual forms — no Toshi required.'
         );
     }

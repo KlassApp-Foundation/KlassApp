@@ -149,17 +149,11 @@ class ManualOnboardingWizard extends Component
         $this->termEndsOn = now()->startOfYear()->addMonths(4)->toDateString();
         $this->teacherEmail = 'teacher.'.Str::lower(Str::random(6)).'@'.($school->slug ?: 'school').'.test';
 
-        // Land on first incomplete step
-        foreach ($this->steps as $i => $step) {
-            if (! $step['is_complete']) {
-                $this->setStepIndex($i);
-                break;
-            }
-        }
-
-        // Blocking checklist complete → land on the synthetic review screen (do not auto-finish).
-        // Teachers/students are optional and do not block review.
-        if (! OnboardingStepsService::hasBlockingIncompleteSteps($school->fresh(), Auth::id())) {
+        // Land on the first incomplete step that is *not* optional. Optional
+        // teachers/students do not block reaching plan_selection or review.
+        $next = OnboardingStepsService::nextBlockingIncompleteStep($school->fresh(), Auth::id());
+        if ($next === null) {
+            // Blocking checklist complete → land on the synthetic review screen (do not auto-finish).
             $this->completedDuringSession = collect($this->steps)
                 ->where('key', '!=', 'review')
                 ->where('is_complete', true)
@@ -168,6 +162,13 @@ class ManualOnboardingWizard extends Component
             $this->setStepIndex($this->reviewStepIndex());
             $this->buildReviewSummary();
             $this->finished = false;
+        } else {
+            foreach ($this->steps as $i => $step) {
+                if ($step['key'] === $next['key']) {
+                    $this->setStepIndex($i);
+                    break;
+                }
+            }
         }
 
         unset($user);
@@ -400,7 +401,12 @@ class ManualOnboardingWizard extends Component
 
                 return;
             }
-            // Still visit incomplete optional steps in sequence when advancing normally
+        }
+
+        for ($i = $start; $i < count($this->steps); $i++) {
+            if (($this->steps[$i]['key'] ?? '') === 'review') {
+                continue;
+            }
             if (! $this->steps[$i]['is_complete']) {
                 $this->setStepIndex($i);
 
