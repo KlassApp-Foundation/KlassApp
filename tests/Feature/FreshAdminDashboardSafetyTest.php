@@ -56,7 +56,7 @@ class FreshAdminDashboardSafetyTest extends TestCase
         $response = $this->actingAs($admin)->get('/admin/dashboard');
 
         $response->assertOk();
-        $response->assertSee('Continue school setup', false);
+        $response->assertSee('Finish school setup', false);
         // Auto-open script is driven by $setupIncomplete, not ?toshi_onboarding=
         $response->assertSee('toshi-pill', false);
         $response->assertDontSee('ErrorException', false);

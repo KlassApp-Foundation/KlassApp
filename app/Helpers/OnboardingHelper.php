@@ -48,7 +48,7 @@ class OnboardingHelper
             return false;
         }
 
-        return OnboardingStepsService::hasIncompleteSteps($school, $userId);
+        return OnboardingStepsService::hasBlockingIncompleteSteps($school, $userId);
     }
 
     public static function getMissingLabels(array $missingKeys): array
