@@ -7507,8 +7507,8 @@ Ran full suite on base commit (stashed changes) vs this branch:
 `database/migrations/2026_08_20_160000_add_roster_scope_composite_indexes.php`, `database/seeders/Phase5FeatureTogglesSeeder.php`, `tests/Feature/TeacherListCrossSchoolDeleteTest.php`, `tests/Feature/UgSubjectCrossSchoolTest.php`, `tests/Feature/ExamCrossSchoolTest.php`, `tests/Feature/AcademicTermCrossSchoolTest.php`, `tests/Feature/MarksToggleStatusCrossSchoolTest.php`, `tests/Feature/RosterScopeServiceCrossTenantIsolationTest.php`.
 
 **Branch HEAD (pre-merge)**: `aa870ce8` — https://github.com/KlassApp-Foundation/KlassApp/pull/352
-**Ship**: PR #352 (`feat/phase5-route-audit-toggles-indexes-isolation`). Awaiting human review + merge.
-**Status**: ⏳ AWAITING MERGE — merge commit hash will be filled in post-merge.
+**Ship**: PR #352 (`feat/phase5-route-audit-toggles-indexes-isolation`, merge `12137040cd8a8a01a4be30238677bdc5996d3761`). Branch `feat/phase5-route-audit-toggles-indexes-isolation` deleted post-merge.
+**Status**: ✅ MERGED — merge `12137040cd8a8a01a4be30238677bdc5996d3761`
 
 ### 2026-08-20: WhatsApp Cloud API — new WABA + phone number registration + production .env update
 
