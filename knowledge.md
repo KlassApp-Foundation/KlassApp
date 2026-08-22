@@ -7414,7 +7414,8 @@ Merged + deployed via standing flow (`scripts/deploy-manual.sh`). Live browser v
 - **Work done**: SectionPolicy view/update/delete/restore/forceDelete all gated on `(int) $user->school_id === (int) $section->school_id`. Route `DELETE /classes/delete/{class}` now carries `->can('delete','class')`. SectionController@destroy defensive `abort_if(403)` when user school_id != section school_id. CrossSchoolSectionDeleteTest: admin can delete own section (soft-delete confirmed), gets 403 for other school's section (record NOT soft-deleted).
 - **Files modified**: `app/Policies/SectionPolicy.php`, `app/Http/Controllers/Admin/SectionController.php`, `routes/admin.php`, `tests/Feature/CrossSchoolSectionDeleteTest.php` (new).
 - **Tests**: `php artisan test --compact tests/Feature/CrossSchoolSectionDeleteTest.php` — **2 passed, 4 assertions**.
-- **Ship**: PR #350 (`fix/cross-school-section-delete`, tip `b4499b23`). Awaiting review.
+- **Ship**: PR #350 (`fix/cross-school-section-delete`, merge `8223a99e7b184d8e7e7edf38322ac95aa2369101`). Branch `fix/cross-school-section-delete` deleted post-merge.
+- **Status**: ✅ MERGED — merge `8223a99e7b184d8e7e7edf38322ac95aa2369101`
 - **Key decisions**: Policy gates all SectionPolicy methods (view/update/delete/restore/forceDelete), not just delete. Controller abort_if is a defense-in-depth layer — the policy can() should catch this at the route level, but a direct controller call (or if the policy is bypassed) still has the abort_if.
 - **Edge cases**: MustBePrivilege middleware in tests requires AcademicYear + Standard to exist for the school — otherwise routes redirect to /admin/dashboard. Tests use `withoutMiddleware(MustBePrivilege::class)`.
 
