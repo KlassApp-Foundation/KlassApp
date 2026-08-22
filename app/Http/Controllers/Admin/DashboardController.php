@@ -33,7 +33,7 @@ use App\States\Approval\Pending as PendingState;
 use Exception;
 use Log;
 
-class DashboardController extends Controller 
+class DashboardController extends Controller
 {
     use LogActivity;
     use Dashboard;
@@ -44,7 +44,7 @@ class DashboardController extends Controller
     *
     * @return \Illuminate\Http\Response
     */
-    public function index(Request $request) 
+    public function index(Request $request)
     {
         $admin_id  =   Auth::id();
         $school_id =   Auth::user()->school_id;
@@ -54,7 +54,7 @@ class DashboardController extends Controller
         $standardLink = $request->standardLink_id
             ? StandardLink::where('id', $request->standardLink_id)->first()
             : null;
-        
+
         $selected_teacher = $request->teacher_id
             ? User::where('id', $request->teacher_id)->first()
             : null;
@@ -122,7 +122,9 @@ class DashboardController extends Controller
             'openToshiOnboarding' => $openToshiOnboarding,
             'feeTrend' => $feeTrend,
             'trendPeriod' => $trendPeriod,
-            'eotKpis' => \App\Http\Controllers\Admin\ReportCardsController::computeEotKpis($school_id),
+            'eotKpis' => $school_id
+                ? \App\Http\Controllers\Admin\ReportCardsController::computeEotKpis($school_id)
+                : ['perClass' => [], 'perSubject' => [], 'perGender' => []],
         ] );
     }
 
@@ -139,7 +141,7 @@ class DashboardController extends Controller
 
         $tasks = TaskResource::collection($tasks);
 
-        return $tasks;    
+        return $tasks;
     }
 
     public function listCount()
@@ -147,12 +149,12 @@ class DashboardController extends Controller
         //
         $tasks = Task::where([['school_id',Auth::user()->school_id],['user_id',Auth::id()],['task_status',0]])->ByType('to_me',Auth::id())->get()->groupBy('Flag');
 
-        foreach ($tasks as $key => $value) 
+        foreach ($tasks as $key => $value)
         {
             $tasks[$key] = count($value);
         }
 
-        return $tasks;    
+        return $tasks;
     }
 
     public function event()
@@ -232,16 +234,16 @@ class DashboardController extends Controller
         $fees = FeeResource::collection($fees);
         /*$array['feelist'] = FeeResource::collection($fees);
 
-        foreach ($fees as $fee) 
+        foreach ($fees as $fee)
         {
-            $paidfees  = FeePayment::where('fee_id',$fee->id)->where('status',1); 
+            $paidfees  = FeePayment::where('fee_id',$fee->id)->where('status',1);
 
-            $unpaidfees  = FeePayment::where('fee_id',$fee->id)->where('status',0); 
+            $unpaidfees  = FeePayment::where('fee_id',$fee->id)->where('status',0);
 
             if($fee->standardLink_id != null)
             {
                 $paidfees = $paidfees->whereHas('user',function($query) use($fee)
-                { 
+                {
                     $query->whereHas('studentAcademicLatest',function($q) use($fee)
                     {
                         $q->where('standardLink_id',$fee->standardLink_id);
@@ -249,7 +251,7 @@ class DashboardController extends Controller
                 });
 
                 $unpaidfees = $unpaidfees->whereHas('user',function($query) use($fee)
-                { 
+                {
                     $query->whereHas('studentAcademicLatest',function($q) use($fee)
                     {
                         $q->where('standardLink_id',$fee->standardLink_id);
@@ -262,7 +264,7 @@ class DashboardController extends Controller
             $unpaid[$fee->id] = $unpaidfees->pluck('user_id')->toArray();
 
             $students[$fee->id] = User::whereIn('id',array_diff($unpaid[$fee->id],$paid[$fee->id]));
-                  
+
             $array['unpaidCount'][$fee->id] = $students[$fee->id]->count();
             //$array['unpaidStudents'][$fee->id] = UserResource::collection($students[$fee->id]->get());
 
@@ -289,12 +291,12 @@ class DashboardController extends Controller
         if($fees->standardLink_id != null)
         {
             $unpaidfees  = $unpaidfees->whereHas('user',function($query) use($fees)
-            { 
+            {
                 $query->whereHas('studentAcademicLatest',function($q) use($fees)
                 {
                     $q->where('standardLink_id',$fees->standardLink_id);
                 });
-            }); 
+            });
         }
 
         $unpaidfees = $unpaidfees->get();
@@ -339,7 +341,7 @@ class DashboardController extends Controller
                 ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
                 LOGNAME_SEND_FEEPAYMENT_REMINDER,
                 $message
-            ); 
+            );
 
             $res['success'] = $message;
             return $res;
