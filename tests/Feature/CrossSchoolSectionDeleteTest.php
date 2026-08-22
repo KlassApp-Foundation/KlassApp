@@ -76,7 +76,7 @@ class CrossSchoolSectionDeleteTest extends TestCase
     {
         $response = $this->actingAs($this->adminA)
             ->withoutMiddleware(\App\Http\Middleware\MustBePrivilege::class)
-            ->delete("/classes/delete/{$this->sectionA->id}");
+            ->delete("/admin/classes/delete/{$this->sectionA->id}");
 
         $response->assertRedirect();
         $this->assertSoftDeleted('sections', ['id' => $this->sectionA->id]);
@@ -93,7 +93,7 @@ class CrossSchoolSectionDeleteTest extends TestCase
 
         $response = $this->actingAs($this->adminA)
             ->withoutMiddleware(\App\Http\Middleware\MustBePrivilege::class)
-            ->delete("/classes/delete/{$sectionB->id}");
+            ->delete("/admin/classes/delete/{$sectionB->id}");
 
         $response->assertForbidden();
         $this->assertNotSoftDeleted('sections', ['id' => $sectionB->id]);
