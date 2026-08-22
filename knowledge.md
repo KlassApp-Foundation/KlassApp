@@ -7551,3 +7551,23 @@ Ran full suite on base commit (stashed changes) vs this branch:
   - Live `curl` smoke → `https://klassapp.xyz/`, `/register`, `/login` all HTTP 200
   - **Not performed**: a full live production email/password registration that persists a new school/user, because that writes real production data. The verified full-suite tests (148/148 onboarding/auth, plus the exact 735/58/2 full run) are the authoritative evidence the fix is live.
 - **Status**: ✅ MERGED + DEPLOYED
+
+### 2026-08-22: Hotfix follow-up — Google OAuth "Continue with Google" returning 419 Page Expired
+
+- **Symptom**: After the onboarding hotfix deploy, a real user reported `419 Page Expired` when clicking `Continue with Google` on `/register` (and allegedly `/login`).
+- **Root cause**: The `register` and `login` pages were being served with `Cache-Control: no-cache, private`, which still lets browsers store the HTML for history/back navigation and 304 revalidation. A page loaded earlier could contain an old `_token` that no longer matched the current `XSRF-TOKEN` session cookie. When the `register` form POSTed to `POST /auth/google/start`, `VerifyCsrfToken` saw the mismatch and returned 419.
+- **Predate check**: `git log --oneline bc3e20a7..ff940d6b -- routes/ app/Http/Kernel.php app/Http/Middleware/VerifyCsrfToken.php config/session.php` showed only one unrelated `routes/` commit (section delete). No session/CSRF/auth route changes in tonight's deploy.
+- **Infra check (prod)**:
+  - `APP_KEY` unchanged vs backup
+  - `SESSION_DRIVER=database`, `SESSION_SECURE_COOKIE=true`, `same_site=lax`
+  - `bootstrap/cache/` files stamped at deploy time (fresh)
+  - No `cf-` / CDN cache headers on `/register` or `/login`
+- **Reproduction**: fresh `curl` to `/auth/google` (login) and fresh `POST /auth/google/start` (register) with matching token succeeded; using a `_token` from one session with another session's cookies reproduced 419.
+- **Fix**: Set `Cache-Control: no-store, no-cache, must-revalidate, private` on `RegisterController::showRegistrationForm` and `LoginController::showLoginForm` so the browser never reuses a cached page with a stale CSRF token.
+- **Regression test**: `tests/Feature/Auth/AuthPageCacheControlTest.php` asserts `/register` and `/login` contain `no-store` in `Cache-Control` and that `/auth/google` GET remains a 302 redirect.
+- **Ship**: `5ed397f1` on `main`; `scripts/deploy-manual.sh` completed.
+- **Post-fix live verification**:
+  - `curl -I https://klassapp.xyz/register` → `Cache-Control: must-revalidate, no-cache, no-store, private`
+  - `curl -I https://klassapp.xyz/login` → `Cache-Control: must-revalidate, no-cache, no-store, private`
+  - Fresh `POST /auth/google/start` from a new `/register` fetch → `302` to `https://accounts.google.com/o/oauth2/auth` (Google consent screen)
+- **Status**: ✅ FIXED + DEPLOYED
