@@ -45,7 +45,9 @@ class LoginController extends Controller implements ShouldQueue
 
     public function showLoginForm()
     {
-        return view('auth.login');
+        return response()
+            ->view('auth.login')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     }
 
     /**

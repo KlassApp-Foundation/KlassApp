@@ -40,7 +40,9 @@ class RegisterController extends Controller
             session(['selected_plan' => $request->plan]);
         }
 
-        return view('auth.register');
+        return response()
+            ->view('auth.register')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     }
 
     public function register(RegisterRequest $request, SchoolSignupBootstrapService $bootstrap)
