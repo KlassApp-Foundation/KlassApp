@@ -7543,4 +7543,11 @@ Ran full suite on base commit (stashed changes) vs this branch:
   - `php artisan test --compact` → 735 passed / 58 failed / 2 skipped (down from 65 failures before fix; no new failures introduced)
 - **Ship**: PR #354 (`hotfix/onboarding-optional-steps`, merge `ff940d6b`). Branch deleted post-merge.
 - **Deploy**: `scripts/deploy-manual.sh` completed successfully 2026-08-22. Production now at `ff940d6b`; migration `2026_08_20_160000_add_roster_scope_composite_indexes` applied; FPM + queue worker restarted; `https://klassapp.xyz` serving.
+- **Post-deploy verification (raw output)**:
+  - PR #354 `gh pr view` → `MERGED`, `mergeCommit.oid` = `ff940d6b8629afaed08620eb1f7e043fb25af930`, files list = OnboardingHelper, FreeTierPlanService, ManualOnboardingWizard, AgentToshi, 3 test files
+  - `git fetch origin main && git log origin/main` → `ff940d6b` is the second commit on `origin/main`
+  - SSH prod `/var/www/KlassApp` → `git rev-parse HEAD` = `ff940d6b8629afaed08620eb1f7e043fb25af930`
+  - Clean checkout `ff940d6b` → `php artisan test --compact` → 735 passed / 58 failed / 2 skipped (5041 assertions), exact match
+  - Live `curl` smoke → `https://klassapp.xyz/`, `/register`, `/login` all HTTP 200
+  - **Not performed**: a full live production email/password registration that persists a new school/user, because that writes real production data. The verified full-suite tests (148/148 onboarding/auth, plus the exact 735/58/2 full run) are the authoritative evidence the fix is live.
 - **Status**: ✅ MERGED + DEPLOYED
