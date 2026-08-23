@@ -26,9 +26,10 @@ class SubscriptionController extends Controller
                          ->latest()
                          ->paginate(15);
                         //  ->get();
-         $staticStatuses = ['approved','canceled','expired'];   
+         $staticStatuses = ['approved','canceled','expired'];
          $currentPlan = CurrentPlan::query()
             ->with(['school', 'plan'])
+            ->where('school_id', $user->school_id)
             ->where("status", "!=", "running")
             ->latest()
             ->first();
@@ -71,7 +72,7 @@ class SubscriptionController extends Controller
                          ->first();
     //  if(in_array($subscriptions->status, ["pending", "approved"])) {
     //      return;
-    //  }                   
+    //  }
     return view("admin.subscription.create", compact('plans'));
 }
 
