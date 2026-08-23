@@ -3,7 +3,7 @@
 @section('content')
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-    
+
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
         <div>
@@ -12,13 +12,13 @@
         </div>
         {{-- {{ dd($subscriptions->first()->plan->name) }} --}}
 @if (in_array($subscriptions->first()?->status, ['canceled','expired']) || $subscriptions->first()?->plan->name === "free" )
-<a href="{{ route('admin.subscriptions.create') }}" 
+<a href="{{ route('admin.subscriptions.create') }}"
            class="mt-4 sm:mt-0 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded font-medium transition-all shadow-sm">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Subscription
         </a>
 @endif
-        
+
     </div>
 
     <!-- Success Alert -->
@@ -31,7 +31,7 @@
             <p class="text-sm text-gray-500">Total Subscriptions</p>
             <p class="text-2xl font-bold text-gray-900 mt-2">{{ $subscriptions->total() }}</p>
         </div>
-        
+
         <div class="bg-white rounded shadow-sm p-2 border border-gray-100">
             <p class="text-sm text-gray-500">Active</p>
             <p class="text-2xl font-bold text-emerald-600 mt-2">
@@ -55,15 +55,19 @@
     <!-- Main Card -->
     <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
         <div class="p-2 text-xs">
-            <span>Your current plan is {{ $currentPlan->plan->name }}</span>
-            <a class="text-green-500" href="#">continue to subscription</a>
+            @if($currentPlan && $currentPlan->plan)
+                <span>Your current plan is {{ $currentPlan->plan->name }}</span>
+                <a class="text-green-500" href="#">continue to subscription</a>
+            @else
+                <span>No current plan selected</span>
+            @endif
         </div>
         <div class="px-6 py-5 border-b flex items-center justify-between bg-gray-50">
             <h5 class="font-semibold text-lg text-gray-800">All Subscriptions</h5>
             <span class="px-4 py-1.5 bg-blue-100 text-blue-700 text-sm font-medium rounded-2xl">
                 {{ $subscriptions->total() }} Total
             </span>
-           
+
         </div>
 
         <div class="overflow-x-auto">
@@ -111,7 +115,7 @@
                                     {{ ucfirst($subscription->status) }}
                                 </span>
                             </td>
-                             
+
                             <td class="px-6 py-5 text-gray-700">
                                 @if($subscription->amount_paid)
                                     {{ number_format($subscription->amount_paid, 2) }}
@@ -130,7 +134,7 @@
                                 @if ($subscription->plan->name !== "free")
 
                                 @if (!in_array($subscription->status, ['approved','canceled','expired']) )
-                                    
+
                                      <a href="{{ route('admin.subscriptions.edit', $subscription) }}"
                                    class="inline-flex items-center justify-center w-9 h-9 text-amber-600 hover:bg-amber-50 rounded-2xl transition-colors">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -142,17 +146,17 @@
                                     @method("PUT")
                                     <button type="button">
                                         <svg class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-                                    </button> 
+                                    </button>
                                 </form>
 
                                 {{--  --}}
-                                    
+
                                 @endif
-                                    
+
                             </td>
                         </tr>
                     @empty
-                    
+
                         <tr>
                             <td colspan="8" class="px-6 py-16 text-center">
                                 <svg class="w-12 h-12 text-gray-200 mb-4 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
