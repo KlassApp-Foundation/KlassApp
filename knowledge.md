@@ -7610,3 +7610,29 @@ Ran full suite on base commit (stashed changes) vs this branch:
   - **Live verification**:
     - `curl -D /tmp/headers -X POST -d "_token=...&name=&email=&phone=&termsandcondn=" https://klassapp.xyz/auth/google/start` → `HTTP/1.1 302 Found` with `Location: https://accounts.google.com/o/oauth2/auth?...`.
   - **Status**: ✅ FIXED + DEPLOYED
+
+### 2026-08-23: Onboarding engine design doc — Phase 1
+- **Work done**: Produced a structural design document for eliminating the duplicated manual/Toshi onboarding write layer. Defined `app/Services/OnboardingEngine.php` API, resolved all 9 inventory disharmonies, and drafted a migration/test plan with pre-extraction test coverage.
+- **Files modified**: `docs/onboarding-engine-plan.md` (created).
+- **Key decisions**:
+  - `SchoolCategorySeeder` becomes the single canonical default-seeder; Toshi's `curriculumDefaults()` is deprecated.
+  - `amount` becomes optional for fees in both paths (defaults 0.00).
+  - Exams are removed from onboarding (no real `Exam` persistence in current Toshi).
+  - Plan step creates `CurrentPlan` + `Subscription` in both paths.
+  - Toshi `commit()` and `savePlan()` must pass `OnboardingStepsService::hasBlockingIncompleteSteps()` before persisting.
+- **Status**: ⏸️ Awaiting review before Phase 2 extraction
+- **Edge cases flagged**: paid-plan `TrialService` path, zero-teacher/student schools, WhatsApp skip allowed only where optional.
+
+### 2026-08-23: SubscriptionController cross-tenant CurrentPlan hotfix (#355)
+
+- **Problem**: `Admin/SubscriptionController::index()` fetched the "latest non-running CurrentPlan" globally, so a school admin could see another school's plan/limits in the banner. If no non-running `CurrentPlan` existed, the view's `$currentPlan->plan->name` dereference crashed.
+- **Fix**:
+  - Scoped `CurrentPlan::query()` by the authenticated admin's `school_id` in `app/Http/Controllers/Admin/SubscriptionController.php`.
+  - Wrapped the banner in a null guard in `resources/views/admin/subscription/index.blade.php` so the page renders "No current plan selected" when missing.
+- **Regression test**: `tests/Feature/Admin/SubscriptionControllerCrossTenantCurrentPlanTest.php` — cross-tenant isolation and null-safe rendering both pass.
+- **Verification**:
+  - Fresh worktree (`KlassApp-subscription-hotfix-review`): regression test **2 passed**, `tests/Feature/Onboarding` + `tests/Feature/Auth` + `tests/Feature/Admin` **158 passed**, full suite **742 passed / 58 failed / 2 skipped** (same pre-existing baseline as `main`).
+  - PR #355 opened from `fix/subscription-current-plan-tenant-leak`, merged to `main` as `990b95a6fb82ecfd2093b2953ba6bad578e57085`.
+  - Deploy: `scripts/deploy-manual.sh` completed successfully.
+  - Direct SSH prod HEAD check: `docker exec sms-app sh -c 'cd /var/www && git rev-parse HEAD'` → `990b95a6fb82ecfd2093b2953ba6bad578e57085`.
+- **Status**: ✅ MERGED + DEPLOYED
