@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Onboarding\OnboardingEngine;
 
+use App\Models\AcademicYear;
 use App\Models\Country;
 use App\Models\School;
 use App\Services\OnboardingEngine;
@@ -136,5 +137,97 @@ class IdentityStepsTest extends TestCase
         app(OnboardingEngine::class)->saveCurriculum($school, 'cambridge');
 
         $this->assertSame(0, $school->fresh()->toshi_enabled);
+    }
+
+    public function test_save_emis_persists_for_ugandan_school(): void
+    {
+        $school = $this->createSchool('Emis Test School', ['registration_country' => 'Uganda']);
+
+        app(OnboardingEngine::class)->saveEmis($school, 'EMIS-123456');
+
+        $this->assertSame('EMIS-123456', $school->fresh()->ministry_code);
+    }
+
+    public function test_save_emis_throws_for_empty_code_when_uganda(): void
+    {
+        $school = $this->createSchool('Emis Test School', ['registration_country' => 'Uganda']);
+
+        try {
+            app(OnboardingEngine::class)->saveEmis($school, '   ');
+            $this->fail('Expected ValidationException for empty EMIS code.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('ministryCode', $e->errors());
+        }
+    }
+
+    public function test_save_emis_is_noop_for_non_ugandan_school(): void
+    {
+        $school = $this->createSchool('Emis Test School', ['registration_country' => 'Kenya']);
+
+        app(OnboardingEngine::class)->saveEmis($school, 'EMIS-123');
+
+        $this->assertSame('', $school->fresh()->ministry_code ?? '');
+    }
+
+    public function test_save_uneb_center_persists_value_and_empty_string(): void
+    {
+        $school = $this->createSchool('Uneb Test School');
+
+        app(OnboardingEngine::class)->saveUnebCenter($school, 'UG1234567');
+        $this->assertSame('UG1234567', $school->fresh()->uneb_center_number);
+
+        app(OnboardingEngine::class)->saveUnebCenter($school, '');
+        $this->assertSame('', $school->fresh()->uneb_center_number);
+
+        app(OnboardingEngine::class)->saveUnebCenter($school, null);
+        $this->assertSame('', $school->fresh()->uneb_center_number);
+    }
+
+    public function test_save_academic_year_creates_with_named_year_defaults(): void
+    {
+        $school = $this->createSchool('Academic Year Test School');
+
+        $year = app(OnboardingEngine::class)->saveAcademicYear($school, '2026');
+
+        $this->assertSame(1, AcademicYear::where('school_id', $school->id)->count());
+        $this->assertSame('2026', $year->fresh()->name);
+        $this->assertSame('2026-01-01', $year->fresh()->start_date->toDateString());
+        $this->assertSame('2026-12-31', $year->fresh()->end_date->toDateString());
+        $this->assertSame('Current Academic Year', $year->fresh()->description);
+    }
+
+    public function test_save_academic_year_persists_custom_dates(): void
+    {
+        $school = $this->createSchool('Academic Year Test School');
+
+        $year = app(OnboardingEngine::class)->saveAcademicYear($school, '2025/2026', '2025-02-01', '2025-11-30', 'Senior Year');
+
+        $this->assertSame('2025-02-01', $year->fresh()->start_date->toDateString());
+        $this->assertSame('2025-11-30', $year->fresh()->end_date->toDateString());
+        $this->assertSame('Senior Year', $year->fresh()->description);
+    }
+
+    public function test_save_academic_year_is_idempotent_and_updates_when_asked(): void
+    {
+        $school = $this->createSchool('Academic Year Test School');
+
+        $first = app(OnboardingEngine::class)->saveAcademicYear($school, '2026', '2026-01-01', '2026-12-31');
+        $second = app(OnboardingEngine::class)->saveAcademicYear($school, '2026', '2026-02-01', '2026-11-30');
+
+        $this->assertSame($first->id, $second->id);
+        $this->assertSame('2026-02-01', $second->fresh()->start_date->toDateString());
+        $this->assertSame('2026-11-30', $second->fresh()->end_date->toDateString());
+    }
+
+    public function test_save_academic_year_rejects_end_before_start(): void
+    {
+        $school = $this->createSchool('Academic Year Test School');
+
+        try {
+            app(OnboardingEngine::class)->saveAcademicYear($school, '2026', '2026-06-01', '2026-01-01');
+            $this->fail('Expected ValidationException for end before start.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('academicYearEnd', $e->errors());
+        }
     }
 }

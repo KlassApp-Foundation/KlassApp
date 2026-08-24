@@ -3951,8 +3951,13 @@ class AgentToshi extends Component
         if ($completeMode && $this->schoolId) {
             $school = \App\Models\School::find($this->schoolId);
             if ($school) {
-                $school->ministry_code = $code;
-                $school->save();
+                try {
+                    app(\App\Services\OnboardingEngine::class)->saveEmis($school, $code);
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    $this->botSay($e->getMessage());
+
+                    return;
+                }
             }
             $this->botSay("✅ EMIS code saved: **{$code}**.");
             $this->actionStep = null;
@@ -3999,9 +4004,8 @@ class AgentToshi extends Component
 
         if ($completeMode && $this->schoolId) {
             $school = \App\Models\School::find($this->schoolId);
-            if ($school && \Illuminate\Support\Facades\Schema::hasColumn('schools', 'uneb_center_number')) {
-                $school->uneb_center_number = $this->unebCenterNumber;
-                $school->save();
+            if ($school) {
+                app(\App\Services\OnboardingEngine::class)->saveUnebCenter($school, $this->unebCenterNumber);
             }
             $this->botSay($msg);
             $this->actionStep = null;
@@ -4138,22 +4142,21 @@ class AgentToshi extends Component
 
     private function persistAcademicYearIfMissing(string $label): void
     {
+        if (! $this->schoolId) {
+            return;
+        }
+
         $existing = \App\Models\AcademicYear::where('school_id', $this->schoolId)->first();
         if ($existing) {
             return;
         }
 
-        AcademicYear::create([
-            'school_id' => $this->schoolId,
-            'name' => $label,
-            'start_date' => now()->startOfYear(),
-            'end_date' => now()->endOfYear(),
-            'type' => 'Current Academic Year',
-            'description' => 'Current Academic Year',
-            'status' => 1,
-        ]);
+        $school = \App\Models\School::find($this->schoolId);
+        if (! $school) {
+            return;
+        }
 
-        \Illuminate\Support\Facades\Cache::forget('academic_year_for_school_'.$this->schoolId);
+        app(\App\Services\OnboardingEngine::class)->saveAcademicYear($school, $label, null, null);
     }
 
     // ════════════════════════════════════════════════
