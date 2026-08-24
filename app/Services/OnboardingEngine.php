@@ -83,4 +83,23 @@ class OnboardingEngine
         $school->curriculum = $curriculum;
         $school->save();
     }
+
+    /**
+     * Persist the selected school category and seed canonical defaults.
+     *
+     * @throws ValidationException
+     */
+    public function saveSchoolCategory(School $school, string $category): void
+    {
+        $category = trim($category);
+
+        if ($category === '' || ! array_key_exists($category, SchoolCategorySeeder::CATEGORIES)) {
+            throw ValidationException::withMessages(['schoolCategory' => 'Choose a school category.']);
+        }
+
+        $school->school_category = $category;
+        $school->save();
+
+        SchoolCategorySeeder::seed($school);
+    }
 }

@@ -7702,7 +7702,18 @@ Ran full suite on base commit (stashed changes) vs this branch:
 
 ### ⚠️ MANDATORY CHECKLIST — Part 3: rebase + open PR for `feature/onboarding-engine-school-category` (do this immediately after PR #356 merges, not before)
 
-> **Do NOT run this yet.** As of this entry, PR #356 (identity-steps) has not merged, so `main` does not contain the identity-steps commits — there is nothing to rebase onto. Running this checklist early will not produce a category-only diff and may pull in unexpected content. Trigger condition: **PR #356 shows `MERGED` in `gh pr view 356`.**
+> **PR #356 is now MERGED (`0a64be13`).** ✅ Checklist completed.
+
+1. `git fetch origin main` ✅
+2. `git checkout feature/onboarding-engine-school-category` ✅
+3. `git rebase origin/main` ✅ — resolved conflicts in `AgentToshi.php` and `OnboardingEngine.php`
+4. Resolve conflicts — ✅ AgentToshi: restored category methods + main's `persistSchoolNameIfChanged` (bool return, OnboardingEngine delegation); OnboardingEngine: kept all 4 methods. Fixed branch's reverted identity-steps code (re-aligned to match main's OnboardingEngine delegation). Restored SchoolCategoryStepTest.php (lost during rebase artifact). Restored identity-steps test files from main.
+5. Re-run tests — ✅ SchoolCategoryStepTest 8/8, full onboarding 148/150 (2 pre-existing ManualOnboardingParityTest failures). Zero new regressions.
+6. Re-verify diff is category-only — ✅ `git diff origin/main...HEAD`: `AgentToshi.php` (M), `ManualOnboardingWizard.php` (M), `OnboardingEngine.php` (M), `SchoolCategoryStepTest.php` (A). No identity-steps content changed.
+7. Force-push — ✅ `--force-with-lease` to `9b5560f5`
+8. **Do NOT open PR yet** — separate future step.
+
+- **Status**: ✅ REBASED + FORCE-PUSHED — ready for PR opening when instructed
 
 1. `git fetch origin main`
 2. `git checkout feature/onboarding-engine-school-category`
