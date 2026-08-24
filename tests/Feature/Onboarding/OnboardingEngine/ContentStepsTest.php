@@ -781,27 +781,47 @@ class ContentStepsTest extends TestCase
         }
     }
 
-    public function test_save_fees_uses_first_standard_when_no_class_specified(): void
+    public function test_save_fees_general_fee_is_school_wide_not_scoped_to_first_class(): void
     {
         $school = $this->createSchool();
         $year = $this->createYear($school);
 
-        // Create multiple standards
+        // Create classes across two grading tiers: primary + o-level
         app(OnboardingEngine::class)->saveStandards($school, $year, [
             ['name' => 'P.1'],
-            ['name' => 'P.2'],
+            ['name' => 'S.1'],
         ]);
 
-        // Without specifying class, should use the first Standard
+        $standardCount = Standard::where('school_id', $school->id)->count();
+        $this->assertEquals(2, $standardCount, 'Precondition: two Standards exist.');
+
+        // Without a class, the fee must be school-wide — one row per Standard,
+        // each with section_id = NULL (matches StudentReportHelperService::fees()
+        // which reads school-wide fees as whereNull("section_id")).
         app(OnboardingEngine::class)->saveFees($school, [
-            ['name' => 'General Fee', 'amount' => 200000],
+            ['name' => 'General Fund', 'amount' => 200000],
         ]);
 
-        $fee = FeesCategories::where('school_id', $school->id)->first();
-        $firstStandard = Standard::where('school_id', $school->id)
-            ->orderBy('id')
-            ->first();
-        $this->assertEquals($firstStandard->id, $fee->standard_id);
+        $fees = FeesCategories::where('school_id', $school->id)
+            ->where('name', 'General Fund')
+            ->get();
+
+        $this->assertEquals($standardCount, $fees->count(), 'One row per Standard.');
+        $this->assertEquals(2, $fees->count());
+
+        foreach ($fees as $fee) {
+            $this->assertNull($fee->section_id, 'School-wide fee must have section_id NULL.');
+            $this->assertNotNull($fee->standard_id, 'standard_id is NOT NULL by schema.');
+            $this->assertEquals(200000, (float) $fee->amount);
+        }
+
+        $scopedStandardIds = $fees->pluck('standard_id')->unique()->values();
+        $allStandardIds = Standard::where('school_id', $school->id)->pluck('id')->sort()->values();
+        $this->assertEquals(
+            $allStandardIds->all(),
+            $scopedStandardIds->sort()->values()->all(),
+            'Fee covers every Standard, not just the first one.'
+        );
     }
 
     public function test_save_fees_same_name_different_class_creates_distinct_rows(): void
@@ -825,5 +845,34 @@ class ContentStepsTest extends TestCase
         $this->assertEquals(2, FeesCategories::where('school_id', $school->id)
             ->where('name', 'Tuition')
             ->count());
+    }
+
+    public function test_save_fees_with_class_creates_single_scoped_row_not_per_standard(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        // Two classes across different grading tiers
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+            ['name' => 'S.1'],
+        ]);
+
+        $standardCount = Standard::where('school_id', $school->id)->count();
+        $this->assertEquals(2, $standardCount, 'Precondition: two Standards.');
+
+        // Class-specific fee for P.1 only
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 500000, 'class' => 'P.1'],
+        ]);
+
+        $fees = FeesCategories::where('school_id', $school->id)
+            ->where('name', 'Tuition')
+            ->get();
+
+        // Exactly one row — not duplicated across both Standards
+        $this->assertCount(1, $fees);
+        $this->assertNotNull($fees[0]->section_id, 'Class-specific fee has section_id set.');
+        $this->assertEquals(500000, (float) $fees[0]->amount);
     }
 }
