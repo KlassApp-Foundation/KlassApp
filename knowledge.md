@@ -851,6 +851,19 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-24: Phase 1A remaining identity methods extracted
+- **Work done**: Extracted `saveEmis`, `saveUnebCenter`, and `saveAcademicYear` into `OnboardingEngine`; refactored `ManualOnboardingWizard` and `AgentToshi` callers to one-line engine delegation; extended `tests/Feature/Onboarding/OnboardingEngine/IdentityStepsTest.php` with 9 focused tests.
+- **Files touched**: `app/Services/OnboardingEngine.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/OnboardingEngine/IdentityStepsTest.php`.
+- **Branch**: `feature/onboarding-engine-identity-rest`
+- **PR**: #359 — https://github.com/KlassApp-Foundation/KlassApp/pull/359
+- **Tip**: `f6427d62`
+- **Status**: PR open
+- **Test evidence**:
+  - `php artisan test --compact tests/Feature/Onboarding/OnboardingEngine/` — 25 passed, 0 failed
+  - `php artisan test --compact tests/Feature/Onboarding/` — 158 passed, 0 failed
+  - `php artisan test --compact` — 769 passed, 58 failed (pre-existing Toshi LLM/E2E/step-count failures unrelated to this work)
+- **Phase 1A gate**: 7/7 identity methods extracted; pending merge before Phase 1B (content seeding).
+
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
 - **Key findings**: (1) Production host is **DigitalOcean** (2 vCPU/2 GB, ~$18–24/mo), NOT Hetzner as older notes claim — corrected above. (2) Live scale: 20 schools, 1,376 users, 664,336 marks, 203 exams, 18 report_generations all-time; load 0.09 (idle); nginx access logging DISABLED. (3) Laravel Cloud pricing (verified live): Starter $5/mo, Growth $20/mo, Business $200/mo, each + $5 usage credit, scale-to-zero default → realistic all-in $5–30/mo, **comparable/cheaper than current VPS** (earlier "Pro $59/Scale $199" figures were wrong). (4) Migration effort medium (2–4 days): dump/import DB, R2 blob for 418 MB PDFs, re-point WhatsApp webhooks; no app-code changes required (no vapor.yml, no schedules, queue on redis already).

@@ -1030,53 +1030,27 @@ class ManualOnboardingWizard extends Component
 
     private function saveEmis(School $school): void
     {
-        $code = trim($this->ministryCode);
-        if ($code === '') {
-            throw ValidationException::withMessages(['ministryCode' => 'Enter your EMIS / ministry code.']);
+        try {
+            app(OnboardingEngine::class)->saveEmis($school, $this->ministryCode);
+        } catch (ValidationException $e) {
+            throw ValidationException::withMessages(['ministryCode' => $e->getMessage()]);
         }
-
-        $school->ministry_code = $code;
-        $school->save();
     }
 
     private function saveUneb(School $school): void
     {
-        if (! \Illuminate\Support\Facades\Schema::hasColumn('schools', 'uneb_center_number')) {
-            return;
-        }
-
-        // Empty string marks “asked/skipped”; null means not asked.
-        $school->uneb_center_number = trim($this->unebCenterNumber);
-        $school->save();
+        app(OnboardingEngine::class)->saveUnebCenter($school, $this->unebCenterNumber);
     }
 
     private function saveAcademicYear(School $school): void
     {
-        if (AcademicYear::where('school_id', $school->id)->exists()) {
-            return;
-        }
-
-        $this->validate([
-            'academicYearStart' => 'required|date',
-            'academicYearEnd' => 'required|date|after:academicYearStart',
-        ]);
-
-        AcademicYear::create([
-            'school_id' => $school->id,
-            'name' => date('Y', strtotime($this->academicYearStart)),
-            'description' => $this->academicYearDescription ?: 'Current Academic Year',
-            'start_date' => $this->academicYearStart,
-            'end_date' => $this->academicYearEnd,
-            'status' => 1,
-        ]);
-
-        // Observer also forgets; keep an explicit forget so a cached null from the
-        // pre-AY empty-state dashboard cannot stick across this wizard step.
-        Cache::forget('academic_year_for_school_'.$school->id);
-
-        // Smart default: the school_category choice drives our default classes,
-        // subjects, and grading scales (idempotent; skipped for non-UNEB).
-        SchoolCategorySeeder::seed($school);
+        app(OnboardingEngine::class)->saveAcademicYear(
+            $school,
+            date('Y', strtotime($this->academicYearStart)),
+            $this->academicYearStart,
+            $this->academicYearEnd,
+            $this->academicYearDescription
+        );
     }
 
     private function saveClass(School $school): void
