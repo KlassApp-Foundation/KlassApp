@@ -302,6 +302,16 @@
 
 ---
 
+## Current Status: August 24, 2026 (`origin/main` tip `1fefe67` — OnboardingEngine Phase 1B MERGED; Phase 2 wizard refactor PR #365 OPEN)
+
+- **✅ Merged #361**: OnboardingEngine `saveStandards` — `feature/onboarding-engine-standards` → `main`
+- **✅ Merged #362**: OnboardingEngine `saveSubjects` — `feature/onboarding-engine-subjects` → `main`
+- **✅ Merged #363**: OnboardingEngine `saveTerms` — `feature/onboarding-engine-terms` → `main`
+- **✅ Merged #364**: OnboardingEngine `saveFees` — `feature/onboarding-engine-fees` → `main`
+- **🔄 Open #365**: Phase 2 — wizard content-step methods delegate to OnboardingEngine — `feature/wizard-delegate-content-steps` → `main`
+- **Tests**: 60 engine tests pass (43 ContentStepsTest + 17 IdentityStepsTest, 118 assertions)
+- **`origin/main` tip**: `1fefe67` (merge of #364)
+
 ## Current Status: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
 
 - **✅ Merged #214**: `CreateExamRequest`/`UpdateUgSubjectRequest` `school_id` → `exists:schools,id` — merge `ea019997` — https://github.com/KlassApp-Foundation/KlassApp/pull/214
@@ -850,6 +860,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-24: Phase 2 wizard content-step delegation refactors
+- **Work done**: Refactored ManualOnboardingWizard's four content-step methods (`saveClass`, `saveSubject`, `saveTerm`, `saveFee`) to delegate to `OnboardingEngine` instead of performing direct DB writes. Early-return guards retained for UX; engine ValidationException errors mapped to wizard field names via try/catch. Removed unused `Standard` and `Section` imports.
+- **Files touched**: `app/Livewire/ManualOnboardingWizard.php`
+- **PR**: #365 — `feature/wizard-delegate-content-steps` → `main` (OPEN)
+- **Tests**: 60 engine tests pass (43 ContentStepsTest + 17 IdentityStepsTest, 118 assertions)
+- **Status**: PR open, awaiting review/merge
 
 ### 2026-08-24: Phase 1A remaining identity methods extracted
 - **Work done**: Extracted `saveEmis`, `saveUnebCenter`, and `saveAcademicYear` into `OnboardingEngine`; refactored `ManualOnboardingWizard` and `AgentToshi` callers to one-line engine delegation; extended `tests/Feature/Onboarding/OnboardingEngine/IdentityStepsTest.php` with 9 focused tests.
