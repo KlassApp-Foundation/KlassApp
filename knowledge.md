@@ -302,7 +302,14 @@
 
 ---
 
-## Current Status: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
+## Current Status: August 25, 2026 (`origin/main` tip `e98d7982` — OnboardingEngine Phase 1B complete + bug #4 fix MERGED)
+
+- **✅ Merged #366**: `saveFees` whole-school fee fix — one row per Standard with `section_id=NULL`, not fallback to first Standard — merge `e98d7982` — https://github.com/KlassApp-Foundation/KlassApp/pull/366
+- **✅ Phase 1B complete**: `saveStandards`, `saveSubjects`, `saveTerms`, `saveFees` all extracted into `OnboardingEngine`. 69 engine tests pass (44 ContentStepsTest + 17 IdentityStepsTest + 8 SchoolCategoryStepTest).
+- **Next**: Phase 2 — delegation refactors (AgentToshi `commitAll`/`commitStep`, wizard `saveTeachers`/`saveStudents`/`saveWhatsApp`/`savePlan`).
+- **`origin/main` tip**: `e98d7982`.
+
+## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
 
 - **✅ Merged #214**: `CreateExamRequest`/`UpdateUgSubjectRequest` `school_id` → `exists:schools,id` — merge `ea019997` — https://github.com/KlassApp-Foundation/KlassApp/pull/214
 - **Prod**: deployed `ea019997`; Bukoto Springs UI Mid Term exam create verified.
@@ -864,6 +871,23 @@ Phase B: Mix→Vite + Vue 3 runtime
   - `php artisan test --compact tests/Feature/Onboarding/` — 158 passed, 0 failed
   - `php artisan test --compact` — 769 passed, 58 failed (pre-existing Toshi LLM/E2E/step-count failures unrelated to this work)
 - **Phase 1A gate**: ✅ COMPLETE — all 7 identity methods are on `main`; ready to scope Phase 1B (content seeding).
+
+### 2026-08-25: Bug #4 fix — whole-school fee creates one row per Standard (PR #366 MERGED)
+- **Work done**: Fixed `saveFees()` bug where a whole-school fee (no class specified) fell back to the school's first `Standard`, making fees invisible to students in other grading tiers. WhatsApp fee queries filter by `standard_id`; `StudentReportHelperService::fees()` reads school-wide fees as `whereNull('section_id')`. A fee scoped to one arbitrary Standard was invisible to other tiers.
+- **Fix**: Extracted `saveFeeForClass()` and `saveFeeSchoolWide()` private methods. When no class is specified, `saveFeeSchoolWide()` creates one `FeesCategories` row **per Standard** with `section_id=NULL`, matching the read convention exactly. When a class IS specified, `saveFeeForClass()` resolves to one Standard+Section pair as before (no behavior change).
+- **Files touched**: `app/Services/OnboardingEngine.php`, `tests/Feature/Onboarding/OnboardingEngine/ContentStepsTest.php`.
+- **Branch**: `fix/save-fees-whole-school-not-scoped-to-first-class`
+- **PR**: #366 — https://github.com/KlassApp-Foundation/KlassApp/pull/366
+- **Merge commit**: `e98d7982` (merge SHA `27b56809`)
+- **Test evidence**: 69 passed, 131 assertions (`php artisan test --filter=OnboardingEngine`).
+  - New test: `test_save_fees_general_fee_is_school_wide_not_scoped_to_first_class` — school with 2 Standards (P.1 + S.1), call `saveFees` with no class, assert one row per Standard, all `section_id=NULL`.
+  - New test: `test_save_fees_with_class_creates_single_scoped_row_not_per_standard` — same setup, call `saveFees` with `class => 'P.1'`, assert exactly one fee row with `section_id` set.
+  - Old `test_save_fees_uses_first_standard_when_no_class_specified` replaced by the new school-wide test.
+- **Investigated items (no code action needed now)**:
+  1. **Secondary school support** — CONFIRMED working. `SchoolCategorySeeder` handles `o_level` and `o_a_level`.
+  2. **Class teacher subject editing** — `RosterScopeService`/`ClassRoster` are read-only; `OnboardingEngine::saveSubjects()` is already safe for reuse. Design intent documented.
+  3. **Hardcoded 3-term assumptions** — Found in `student.blade.php` L51 and `teacher-exam-list.blade.php` L42. Display-only, not data-corruption. Logged as future UI polish.
+- **Status**: ✅ MERGED — `main` tip now `e98d7982`.
 
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
