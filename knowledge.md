@@ -7717,3 +7717,17 @@ Ran full suite on base commit (stashed changes) vs this branch:
 8. **Then** open the PR for `feature/onboarding-engine-school-category` — do not open it before step 7 completes successfully.
 
 - **Status**: ⏸️ NOT STARTED — blocked on PR #356 merging first.
+
+### 2026-08-22: WhatsApp WABA — final resolution (false "confirmed" claims corrected)
+
+- **Context**: The 2026-08-20 entry claimed the production `.env` was updated to the new WABA (`1416403124879552` / `1370231745289565`). This was **false** — production was still running the old WABA (`1192586767270209` / `1709193870117417`) and the old token the entire time. Everything "verified" between 2026-08-20 and the correction was actually against the old WABA. Root cause: the update was never actually applied, just claimed.
+
+- **The .env correction**: Backed up current `.env` as `.env.backup.2026-08-22`, applied the correct new values via SSH + `docker compose exec` + `sed`. Verified via Graph API `GET` returning real data (not "API access blocked"), confirmed webhook still correctly pointed, sent a real test message that was sent + delivered.
+
+- **The display-name saga**: Initial approval (2026-08-21) got silently wiped. Later investigation strongly suspects the 2FA-disable-then-reset-PIN sequence used to fix an unrelated PIN mismatch during re-registration was the cause — Meta likely treats 2FA changes as invalidating other pending business-account state. A genuine contradiction then appeared between the dashboard UI ("already under review") and the API (`name_status: NON_EXISTS`). Resolved by checking via Meta's official DevTools MCP server (`mcp.facebook.com/devtools`), which confirmed `APPROVED` cleanly. Final re-registration used the SAME already-known PIN with no 2FA/PIN reset this time, and the approval held.
+
+- **Real visual confirmation**: Unlike every earlier "confirmed" reading in this saga (which were all API-level only), this was personally verified by opening an actual WhatsApp chat on a real phone and seeing "KlassApp" display correctly.
+
+- **Key lesson**: Two "confirmed" claims in this saga turned out to be false (the `.env` update, and the first display-name approval) because they were only ever checked via one signal (an email, an API field, a claim) rather than independently verified end-to-end. The eventual fix for both was the same: verify via multiple independent signals, and for anything user-visible, confirm visually before calling it done.
+
+- **Status**: ✅ FULLY RESOLVED AND CLOSED — real `.env` correction applied and verified, display name approved and re-registered correctly, visually confirmed on a real device.
