@@ -9,6 +9,7 @@ use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Models\AcademicTerm;
+use App\Models\FeesCategories;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -529,6 +530,118 @@ class OnboardingEngine
             AcademicTerm::firstOrCreate(
                 ['school_id' => $school->id, 'name' => $name],
                 $createAttrs,
+            );
+        }
+    }
+
+    /**
+     * Persist fee categories for a school.
+     *
+     * Each fee entry creates a FeesCategories row. If 'class' is provided, it
+     * resolves to a Standard (grading tier) and optionally a Section (class).
+     * If 'term' is provided, it resolves to an AcademicTerm. When 'class' is
+     * absent, the school's first Standard is used as fallback.
+     *
+     * Idempotent via firstOrCreate on the unique constraint columns:
+     * (school_id, standard_id, section_id, name).
+     *
+     * @param  School  $school
+     * @param  array  $fees  [ ['name' => 'Tuition', 'amount' => 500000, 'class' => 'P1', 'term' => 'Term 1'], ... ]
+     *
+     * @throws ValidationException
+     */
+    public function saveFees(School $school, array $fees): void
+    {
+        if (empty($fees)) {
+            throw ValidationException::withMessages(['fees' => 'Add at least one fee.']);
+        }
+
+        foreach ($fees as $index => $fee) {
+            $name = trim((string) ($fee['name'] ?? ''));
+            if ($name === '') {
+                throw ValidationException::withMessages(['fees' => 'Fee name cannot be empty.']);
+            }
+
+            $amount = $fee['amount'] ?? 0;
+            if (! is_numeric($amount) || (float) $amount < 0) {
+                throw ValidationException::withMessages(['fees' => "Fee '{$name}': amount must be zero or a positive number."]);
+            }
+        }
+
+        foreach ($fees as $fee) {
+            $name = trim((string) ($fee['name'] ?? ''));
+            $amount = isset($fee['amount']) ? (float) $fee['amount'] : 0.00;
+
+            $className = trim((string) ($fee['class'] ?? ''));
+            $termName = trim((string) ($fee['term'] ?? ''));
+
+            // Resolve standard_id: from class name or first Standard for the school
+            $standardId = null;
+            $sectionId = null;
+
+            if ($className !== '') {
+                // Find a StandardLink whose section name matches the class
+                // (same lookup pattern as saveSubjects)
+                $link = StandardLink::where('school_id', $school->id)
+                    ->whereHas('section', function ($query) use ($school, $className) {
+                        $query->where('school_id', $school->id)
+                            ->where(function ($q) use ($className) {
+                                $q->where('name', $className)
+                                  ->orWhere('name', 'like', $className.' %');
+                            });
+                    })
+                    ->first();
+
+                if ($link) {
+                    $standardId = $link->standard_id;
+                    $sectionId = $link->section_id;
+                } else {
+                    // Fallback: try to find a Standard by matching the class to a grading tier
+                    $standardName = $this->standardNameForClass($className);
+                    $standard = Standard::where('school_id', $school->id)
+                        ->where('name', $standardName)
+                        ->first();
+
+                    if ($standard) {
+                        $standardId = $standard->id;
+                    }
+                }
+            }
+
+            // If still no standard, use the school's first Standard
+            if ($standardId === null) {
+                $firstStandard = Standard::where('school_id', $school->id)->first();
+                if ($firstStandard) {
+                    $standardId = $firstStandard->id;
+                } else {
+                    throw ValidationException::withMessages([
+                        'fees' => 'Add a class first before adding fees.',
+                    ]);
+                }
+            }
+
+            // Resolve academic_term_id from term name if provided
+            $academicTermId = null;
+            if ($termName !== '') {
+                $term = AcademicTerm::where('school_id', $school->id)
+                    ->where('name', $termName)
+                    ->first();
+                if ($term) {
+                    $academicTermId = $term->id;
+                }
+            }
+
+            FeesCategories::firstOrCreate(
+                [
+                    'school_id' => $school->id,
+                    'standard_id' => $standardId,
+                    'section_id' => $sectionId,
+                    'name' => $name,
+                ],
+                [
+                    'amount' => $amount,
+                    'academic_term_id' => $academicTermId,
+                ],
             );
         }
     }

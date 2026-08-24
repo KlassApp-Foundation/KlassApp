@@ -4,6 +4,7 @@ namespace Tests\Feature\Onboarding\OnboardingEngine;
 
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
+use App\Models\FeesCategories;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
@@ -550,5 +551,279 @@ class ContentStepsTest extends TestCase
         $this->assertEquals('Term 1', $term->name);
         $this->assertNull($term->starts_on);
         $this->assertNull($term->ends_on);
+    }
+
+    // ── saveFees ──────────────────────────────────────────────────────
+
+    public function test_save_fees_creates_fee_with_defaults(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        // Need a Standard for fees to attach to
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+        ]);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition'],
+        ]);
+
+        $fee = FeesCategories::where('school_id', $school->id)->first();
+        $this->assertNotNull($fee);
+        $this->assertEquals('Tuition', $fee->name);
+        $this->assertEquals('0.00', number_format($fee->amount, 2, '.', ''));
+        $this->assertNotNull($fee->standard_id);
+        $this->assertNull($fee->section_id);
+        $this->assertNull($fee->academic_term_id);
+    }
+
+    public function test_save_fees_persists_amount(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+        ]);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 500000],
+        ]);
+
+        $fee = FeesCategories::where('school_id', $school->id)->first();
+        $this->assertEquals('500000.00', number_format($fee->amount, 2, '.', ''));
+    }
+
+    public function test_save_fees_resolves_class_to_standard_and_section(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+        ]);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 500000, 'class' => 'P.1'],
+        ]);
+
+        $fee = FeesCategories::where('school_id', $school->id)->first();
+        $this->assertNotNull($fee->standard_id);
+        $this->assertNotNull($fee->section_id);
+    }
+
+    public function test_save_fees_resolves_term(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+        ]);
+        app(OnboardingEngine::class)->saveTerms($school, $year, [
+            ['name' => 'Term 1'],
+        ]);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 500000, 'class' => 'P.1', 'term' => 'Term 1'],
+        ]);
+
+        $fee = FeesCategories::where('school_id', $school->id)->first();
+        $this->assertNotNull($fee->academic_term_id);
+
+        $term = AcademicTerm::find($fee->academic_term_id);
+        $this->assertEquals('Term 1', $term->name);
+    }
+
+    public function test_save_fees_is_idempotent_firstOrCreate(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+        ]);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 500000],
+        ]);
+
+        // Call again — should not duplicate
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 500000],
+        ]);
+
+        $this->assertEquals(1, FeesCategories::where('school_id', $school->id)
+            ->where('name', 'Tuition')
+            ->count());
+    }
+
+    public function test_save_fees_additive_adds_new_fee_to_existing(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+        ]);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 500000],
+        ]);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Lab Fee', 'amount' => 100000],
+        ]);
+
+        $this->assertEquals(2, FeesCategories::where('school_id', $school->id)->count());
+    }
+
+    public function test_save_fees_rejects_empty_fees_array(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        try {
+            app(OnboardingEngine::class)->saveFees($school, []);
+            $this->fail('Expected ValidationException for empty fees array.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('fees', $e->errors());
+        }
+    }
+
+    public function test_save_fees_rejects_empty_fee_name(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+        ]);
+
+        try {
+            app(OnboardingEngine::class)->saveFees($school, [
+                ['name' => '', 'amount' => 500000],
+            ]);
+            $this->fail('Expected ValidationException for empty fee name.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('fees', $e->errors());
+        }
+    }
+
+    public function test_save_fees_rejects_negative_amount(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+        ]);
+
+        try {
+            app(OnboardingEngine::class)->saveFees($school, [
+                ['name' => 'Tuition', 'amount' => -100],
+            ]);
+            $this->fail('Expected ValidationException for negative amount.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('fees', $e->errors());
+        }
+    }
+
+    public function test_save_fees_rejects_non_numeric_amount(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+        ]);
+
+        try {
+            app(OnboardingEngine::class)->saveFees($school, [
+                ['name' => 'Tuition', 'amount' => 'abc'],
+            ]);
+            $this->fail('Expected ValidationException for non-numeric amount.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('fees', $e->errors());
+        }
+    }
+
+    public function test_save_fees_allows_zero_amount(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+        ]);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Free Activity', 'amount' => 0],
+        ]);
+
+        $fee = FeesCategories::where('school_id', $school->id)->first();
+        $this->assertEquals('0.00', number_format($fee->amount, 2, '.', ''));
+    }
+
+    public function test_save_fees_rejects_without_existing_standard(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        try {
+            app(OnboardingEngine::class)->saveFees($school, [
+                ['name' => 'Tuition', 'amount' => 500000],
+            ]);
+            $this->fail('Expected ValidationException — no Standard exists.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('fees', $e->errors());
+        }
+    }
+
+    public function test_save_fees_uses_first_standard_when_no_class_specified(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        // Create multiple standards
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+            ['name' => 'P.2'],
+        ]);
+
+        // Without specifying class, should use the first Standard
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'General Fee', 'amount' => 200000],
+        ]);
+
+        $fee = FeesCategories::where('school_id', $school->id)->first();
+        $firstStandard = Standard::where('school_id', $school->id)
+            ->orderBy('id')
+            ->first();
+        $this->assertEquals($firstStandard->id, $fee->standard_id);
+    }
+
+    public function test_save_fees_same_name_different_class_creates_distinct_rows(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P.1'],
+            ['name' => 'P.2'],
+        ]);
+
+        // Same fee name on different classes — unique constraint allows it
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 500000, 'class' => 'P.1'],
+        ]);
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 600000, 'class' => 'P.2'],
+        ]);
+
+        $this->assertEquals(2, FeesCategories::where('school_id', $school->id)
+            ->where('name', 'Tuition')
+            ->count());
     }
 }
