@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\Subject;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -370,6 +371,93 @@ class OnboardingEngine
                     'section_id' => $section->id,
                     'status' => '1',
                 ]);
+            }
+        }
+    }
+
+    /**
+     * Persist subjects for one or more classes.
+     *
+     * Each key in $subjectsByClass is a class name that must correspond to at
+     * least one existing Section/StandardLink for this school+year. Subjects
+     * are attached to every section under that class name (so stream classes
+     * each get their own copy). firstOrCreate is used throughout for idempotency.
+     *
+     * If SchoolCategorySeeder already created core subjects, firstOrCreate will
+     * not duplicate them.
+     *
+     * @param  School  $school
+     * @param  AcademicYear  $year
+     * @param  array  $subjectsByClass  [ 'P1' => ['Mathematics', 'English'], ... ]
+     *
+     * @throws ValidationException
+     */
+    public function saveSubjects(School $school, AcademicYear $year, array $subjectsByClass): void
+    {
+        if (empty($subjectsByClass)) {
+            throw ValidationException::withMessages(['subjects' => 'Add at least one subject.']);
+        }
+
+        // Validate all class keys and subject names upfront
+        foreach ($subjectsByClass as $className => $subjectNames) {
+            $className = trim((string) $className);
+            if ($className === '') {
+                throw ValidationException::withMessages(['subjects' => 'Class name cannot be empty.']);
+            }
+
+            if (! is_array($subjectNames) || empty($subjectNames)) {
+                throw ValidationException::withMessages(['subjects' => "Class '{$className}' must have at least one subject."]);
+            }
+
+            foreach ($subjectNames as $subjectName) {
+                $subjectName = trim((string) $subjectName);
+                if ($subjectName === '') {
+                    throw ValidationException::withMessages(['subjects' => 'Subject name cannot be empty.']);
+                }
+            }
+        }
+
+        // Resolve each class name to its StandardLinks and create subjects
+        foreach ($subjectsByClass as $className => $subjectNames) {
+            $className = trim((string) $className);
+
+            // Find all StandardLinks for this school+year whose section name
+            // starts with the class name (covers "P1" and "P1 A" stream sections)
+            $links = StandardLink::where('school_id', $school->id)
+                ->where('academic_year_id', $year->id)
+                ->whereHas('section', function ($query) use ($school, $className) {
+                    // Section name is either the exact class name (no streams)
+                    // or "ClassName StreamLetter" (with streams)
+                    $query->where('school_id', $school->id)
+                        ->where(function ($q) use ($className) {
+                            $q->where('name', $className)
+                              ->orWhere('name', 'like', $className.' %');
+                        });
+                })
+                ->get();
+
+            if ($links->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'subjects' => "Class '{$className}' does not exist. Add it on the classes step first.",
+                ]);
+            }
+
+            foreach ($links as $link) {
+                foreach ($subjectNames as $subjectName) {
+                    $subjectName = trim((string) $subjectName);
+
+                    Subject::firstOrCreate([
+                        'school_id' => $school->id,
+                        'academic_year_id' => $year->id,
+                        'standard_id' => $link->standard_id,
+                        'section_id' => $link->section_id,
+                        'name' => $subjectName,
+                    ], [
+                        'code' => null,
+                        'type' => 'core',
+                        'status' => 1,
+                    ]);
+                }
             }
         }
     }
