@@ -696,6 +696,9 @@ class AgentToshi extends Component
      */
     private function jumpToIncompleteOnboardingStep(string $key): void
     {
+        $this->actionStep = null;
+        $this->actionSubstep = 0;
+
         $actionMap = [
             'curriculum' => 'onboarding_curriculum',
             'country' => 'onboarding_country',
@@ -3486,7 +3489,9 @@ class AgentToshi extends Component
 
             // Complete mode: persist rename immediately when it differs from placeholder
             if ($this->mode === 'complete' && $this->schoolId && $this->schoolName !== '') {
-                $this->persistSchoolNameIfChanged($this->schoolName);
+                if (! $this->persistSchoolNameIfChanged($this->schoolName)) {
+                    return;
+                }
                 $this->botSay("School name updated to **{$this->schoolName}**.");
                 $this->actionStep = null;
                 $this->substep = 0;
@@ -3811,7 +3816,13 @@ class AgentToshi extends Component
         $this->curriculum = $choice;
         $school = \App\Models\School::find($this->schoolId);
         if ($school) {
-            $school->curriculum = $choice;
+            try {
+                app(\App\Services\OnboardingEngine::class)->saveCurriculum($school, $choice);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $this->botSay($e->getMessage());
+
+                return;
+            }
             $school->toshi_enabled = 1;
             $school->save();
         }
@@ -3894,7 +3905,13 @@ class AgentToshi extends Component
         if ($completeMode && $this->schoolId) {
             $school = \App\Models\School::find($this->schoolId);
             if ($school) {
-                \App\Services\OnboardingStepsService::persistCountry($school, $country);
+                try {
+                    app(\App\Services\OnboardingEngine::class)->saveCountry($school, $country);
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    $this->botSay($e->getMessage());
+
+                    return;
+                }
             }
             $this->botSay("✅ Country set to **{$country}**.");
             $this->actionStep = null;
@@ -4117,35 +4134,6 @@ class AgentToshi extends Component
         }
 
         return true;
-    }
-    {
-        $school = \App\Models\School::find($this->schoolId);
-        if (! $school) {
-            return;
-        }
-
-        if ($desiredName === $school->name) {
-            return;
-        }
-
-        $unique = app(\App\Services\SchoolSignupBootstrapService::class)->uniqueSchoolName($desiredName);
-        // uniqueSchoolName returns desired if free; if collision on another school, suffix.
-        // When renaming to a name that only collides with THIS school, keep it.
-        if ($unique !== $desiredName && \App\Models\School::where('name', $desiredName)->where('id', '!=', $school->id)->exists()) {
-            $this->schoolName = $unique;
-        } else {
-            $this->schoolName = $desiredName;
-            $unique = $desiredName;
-        }
-
-        if ($unique === $school->name) {
-            return;
-        }
-
-        $school->name = $unique;
-        $school->slug = \Illuminate\Support\Str::slug($unique);
-        $school->save();
-        $this->schoolName = $unique;
     }
 
     private function persistAcademicYearIfMissing(string $label): void
