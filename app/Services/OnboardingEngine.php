@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\AcademicYear;
 use App\Models\School;
+use App\Models\Section;
+use App\Models\Standard;
+use App\Models\StandardLink;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -225,5 +228,149 @@ class OnboardingEngine
         }
 
         return $year;
+    }
+
+    /**
+     * Map a class/section name to a standard (grading-tier) name.
+     *
+     * Follows the same heuristics as SchoolCategorySeeder and
+     * AgentToshi's commitAll fuzzy-match logic. Nursery names map
+     * to 'nursery', Senior names to 'o-level' or 'a-level', and
+     * everything else defaults to 'primary'.
+     */
+    private function standardNameForClass(string $className): string
+    {
+        $lower = strtolower(trim($className));
+
+        // Nursery: Baby Class, Middle Class, Top Class
+        if (in_array($lower, ['baby class', 'middle class', 'top class'])
+            || str_starts_with($lower, 'nursery')
+            || in_array($lower[0] ?? '', ['b', 'm', 't']) && (
+                str_contains($lower, 'baby') || str_contains($lower, 'middle') || str_contains($lower, 'top class')
+            )
+        ) {
+            return 'nursery';
+        }
+
+        // A-Level: Senior Five, Senior Six, S.5, S.6, S5, S6
+        if (in_array($lower, ['senior five', 'senior six', 's.5', 's.6', 's5', 's6', 'a-level', 'a level'])) {
+            return 'a-level';
+        }
+
+        // O-Level: Senior One through Senior Four, S.1–S.4, S1–S4
+        if (preg_match('/^s\.?[1-4](?:\s|$)/i', $lower)
+            || in_array($lower, ['senior one', 'senior two', 'senior three', 'senior four', 'o-level', 'o level'])
+            || str_starts_with($lower, 'senior ') && ! in_array($lower, ['senior five', 'senior six'])
+        ) {
+            return 'o-level';
+        }
+
+        // Default: primary
+        return 'primary';
+    }
+
+    /**
+     * Persist standards (grading tiers), sections (classes), and standard_links
+     * for the given academic year.
+     *
+     * Each entry in $classes creates a Section and a StandardLink. If the school
+     * has a school_category set, SchoolCategorySeeder is run first as a baseline,
+     * and user-supplied classes supplement (not replace) the seeded defaults.
+     * When no category is set, a 'primary' standard is created as fallback.
+     *
+     * Streams: if 'streams' is non-empty, each stream gets its own Section
+     * (named "ClassName StreamLetter") and StandardLink. If empty, one Section
+     * per class name with one StandardLink.
+     *
+     * @param  School  $school
+     * @param  AcademicYear  $year
+     * @param  array  $classes  [ ['name' => 'P1', 'streams' => ['A','B']], ... ]
+     *
+     * @throws ValidationException
+     */
+    public function saveStandards(School $school, AcademicYear $year, array $classes): void
+    {
+        if (empty($classes)) {
+            throw ValidationException::withMessages(['classes' => 'Add at least one class.']);
+        }
+
+        // Validate class names and check for duplicates
+        $seenNames = [];
+        foreach ($classes as $class) {
+            $name = trim((string) ($class['name'] ?? ''));
+            if ($name === '') {
+                throw ValidationException::withMessages(['classes' => 'Each class must have a name.']);
+            }
+            if (in_array($name, $seenNames, true)) {
+                throw ValidationException::withMessages(['classes' => "Duplicate class name: {$name}."]);
+            }
+            $seenNames[] = $name;
+        }
+
+        // If school has a category, run the seeder first as a baseline
+        // (SchoolCategorySeeder is idempotent — early-returns if links already exist)
+        if ($school->school_category) {
+            SchoolCategorySeeder::seed($school);
+        }
+
+        foreach ($classes as $class) {
+            $className = trim((string) ($class['name'] ?? ''));
+            $streams = $class['streams'] ?? [];
+
+            $standardName = $this->standardNameForClass($className);
+
+            // Ensure the grading-tier Standard exists
+            $standard = Standard::firstOrCreate(
+                ['school_id' => $school->id, 'name' => $standardName],
+                [
+                    'order' => match ($standardName) {
+                        'nursery' => 1,
+                        'primary' => 2,
+                        'o-level' => 3,
+                        'a-level' => 4,
+                        default => 5,
+                    },
+                    'status' => '1',
+                ]
+            );
+
+            if (is_array($streams) && count($streams) > 0) {
+                // Create a section per stream
+                foreach ($streams as $stream) {
+                    $streamName = trim((string) $stream);
+                    if ($streamName === '') {
+                        continue;
+                    }
+                    $sectionName = $className.' '.$streamName;
+
+                    $section = Section::firstOrCreate(
+                        ['school_id' => $school->id, 'name' => $sectionName],
+                        ['status' => '1']
+                    );
+
+                    StandardLink::firstOrCreate([
+                        'school_id' => $school->id,
+                        'academic_year_id' => $year->id,
+                        'standard_id' => $standard->id,
+                        'section_id' => $section->id,
+                        'status' => '1',
+                    ]);
+                }
+            } else {
+                // No streams — single section per class
+                $section = Section::firstOrCreate(
+                    ['school_id' => $school->id, 'name' => $className],
+                    ['status' => '1']
+                );
+
+                StandardLink::firstOrCreate([
+                    'school_id' => $school->id,
+                    'academic_year_id' => $year->id,
+                    'standard_id' => $standard->id,
+                    'section_id' => $section->id,
+                    'status' => '1',
+                ]);
+            }
+        }
     }
 }
