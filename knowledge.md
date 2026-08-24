@@ -7636,3 +7636,52 @@ Ran full suite on base commit (stashed changes) vs this branch:
   - Deploy: `scripts/deploy-manual.sh` completed successfully.
   - Direct SSH prod HEAD check: `docker exec sms-app sh -c 'cd /var/www && git rev-parse HEAD'` → `990b95a6fb82ecfd2093b2953ba6bad578e57085`.
 - **Status**: ✅ MERGED + DEPLOYED
+
+### 2026-08-24: Toshi onboarding UI/UX debt logged (deferred)
+
+- **Deferred until after OnboardingEngine backend extraction**: Toshi onboarding UI/UX refinements identified during Phase 1A manual browser testing on school ID 10.
+- **Open items**:
+  1. The upfront "9 things to set up" checklist rendering **9 red ❌ marks** before any progress is made reads as discouraging/alarming for a first-time self-onboarding user; needs a friendlier progress indicator instead (e.g. empty/unchecked state, completion percentages, or contextual guidance).
+  2. Text-prompt steps with typed replies (country, curriculum, and likely others) should become **button-based** where a fixed set of choices exists (e.g. country: Uganda/Kenya/Tanzania/Other buttons + free-text fallback), reusing whatever button component/pattern `plan_selection` already uses (`wire:click="selectPlan"` style), not inventing a new one.
+- **Rationale**: Backend extraction and parity tests take priority; UI is pre-existing debt, not introduced by recent refactor.
+- **Status**: ⏸️ DEFERRED (will be addressed in a dedicated UI-harmony pass after backend extraction)
+
+### 2026-08-24: OnboardingEngine `saveSchoolCategory` extraction slice
+
+- **Work done**:
+  - Extracted `saveSchoolCategory(School $school, string $category): void` into `app/Services/OnboardingEngine.php`.
+  - Refactored `ManualOnboardingWizard::saveSchoolCategory()` to delegate to the engine.
+  - Refactored `AgentToshi` to ask for school category explicitly (text list for now) and call `OnboardingEngine::saveSchoolCategory()`.
+  - Added `tests/Feature/Onboarding/OnboardingEngine/SchoolCategoryStepTest.php` covering all 5 valid categories, invalid/empty rejection, and idempotency.
+  - Verified the engine and wizard/Toshi call sites handle `SchoolCategorySeeder::CATEGORIES` as the single source of truth.
+- **Files modified**: `app/Services/OnboardingEngine.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/OnboardingEngine/SchoolCategoryStepTest.php`, `knowledge.md`.
+- **Key decisions**:
+  - Toshi now explicitly prompts for a category from `SchoolCategorySeeder::CATEGORIES` instead of inferring it from `schoolType`/`hasNursery`.
+  - The engine method validates against `SchoolCategorySeeder::CATEGORIES` and calls `SchoolCategorySeeder::seed($school)` only after a successful save.
+- **Status**: 🚧 Awaiting review and manual test on School ID 10 (manual wizard + Toshi paths). No PR opened yet.
+- **Test results**:
+  - `SchoolCategoryStepTest`: **8 passed (14 assertions)**.
+  - `tests/Feature/Onboarding`: **150 passed (691 assertions)**.
+  - Full suite: **761 passed / 58 failed / 2 skipped** (baseline was 751 passed / 58 failed / 2 skipped) — **+10 passes**, no new failure count.
+
+### 2026-08-24: OnboardingEngine identity-steps slice (name/country/curriculum) + Toshi stale-actionStep bug fix
+
+- **Work done**:
+  - Extracted `saveSchoolName()`, `saveCountry()`, `saveCurriculum()` into `app/Services/OnboardingEngine.php` alongside the existing `saveSchoolCategory()`. Each validates and throws `ValidationException` on bad input (placeholder/short names, empty country, invalid curriculum) and is the single write path for that field.
+  - `ManualOnboardingWizard::saveSchoolName/saveCurriculum/saveSchoolCategory/saveCountry` now all delegate to `OnboardingEngine`, catching `ValidationException` and re-throwing with the wizard's own field key (existing Livewire validation-error bindings unchanged).
+  - `AgentToshi` name/country/curriculum persistence call sites (`persistSchoolNameIfChanged`, country substep handler, curriculum substep handler) now call `OnboardingEngine` and `botSay()` the validation message on failure instead of silently persisting. `persistSchoolNameIfChanged()` now returns `bool` so callers can abort the flow on rejection instead of advancing past a bad name.
+  - `SetCurriculumTool` (Toshi tool used by superadmin/deputy-admin "set curriculum" actions) now calls `OnboardingEngine::saveCurriculum()` instead of writing `$school->curriculum` directly, so tool-driven and chat-driven curriculum writes share one validated path.
+  - **Real bug fix (found via manual browser testing on school ID 10, not introduced by this refactor):** `AgentToshi::jumpToIncompleteOnboardingStep()` did not clear `$this->actionStep`/`$this->actionSubstep` when routing to the next incomplete step. A session restored with a stale `actionStep` (e.g. `onboarding_country` or `onboarding_plan_selection` left over from a previous turn) would hijack the very next typed answer -- e.g. typing the real school name got persisted as the *country* instead, or matched against the stale plan-selection handler. Fixed by resetting both fields at the top of `jumpToIncompleteOnboardingStep()` before computing the new target.
+  - Toshi's school-type button flow (`setSchoolType`) is now a thin legacy-compatible wrapper mapping `type` (nursery/primary/secondary/mixed) to a canonical `SchoolCategorySeeder` key and delegating to the same `persistSchoolCategory()` used by the new text-based category prompt -- no more duplicated defaults/label logic between the button path and the typed path.
+  - New regression tests: `tests/Feature/Onboarding/OnboardingEngine/IdentityStepsTest.php` (9 tests: rename+slug, placeholder rejection, min-length rejection, duplicate-name suffixing, country persistence + rejection, curriculum persistence + rejection, curriculum save doesn't touch `toshi_enabled`) and `tests/Feature/Onboarding/ToshiSchoolNameRoutingTest.php` (2 tests reproducing the stale-actionStep hijack for both `onboarding_country` and `onboarding_plan_selection`, asserting the school-name answer is never misrouted).
+- **Files modified**: `app/Services/OnboardingEngine.php`, `app/Livewire/AgentToshi.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/AiAgents/Tools/SetCurriculumTool.php`, `tests/Feature/Onboarding/OnboardingEngine/IdentityStepsTest.php`, `tests/Feature/Onboarding/ToshiSchoolNameRoutingTest.php`, `knowledge.md`.
+- **Key decisions**:
+  - `ValidationException` is the shared error contract between `OnboardingEngine` and both callers (wizard re-keys the message under its own field name; Toshi surfaces the raw message via `botSay()`).
+  - `SetCurriculumTool` keeps setting `toshi_enabled = true` itself (outside the engine) since that's tool-specific behavior, not a generic onboarding-step concern.
+- **Verification**:
+  - Isolated proof the actionStep fix is real (not a false positive from other changes): reverted tracked files (`git stash`, keeping the new untracked test files) -- `ToshiSchoolNameRoutingTest` fails both cases on pre-fix code (`Failed asserting that 'onboarding_country' is null` / `'onboarding_plan_selection' is null`), full suite 759 passed / 60 failed. Restoring the fix (`git stash pop`) returns to 761 passed / 58 failed -- exactly those 2 tests flip from fail to pass, nothing else changes.
+  - `php artisan test --compact --filter="OnboardingEngine|ToshiSchoolNameRoutingTest"` -> **19 passed (40 assertions)**.
+  - `php artisan test --compact --filter="ManualOnboardingParityTest|WizardToshiSyncPlanStepTest|SetCurriculumTool|ManualOnboardingWizard"` -> **12 passed (54 assertions)**.
+  - `php artisan test --compact --filter="DeputyAdminOperationsToolsTest"` (covers `SetCurriculumTool` tool-call path) -> **11 passed (39 assertions)**.
+  - Full suite: **761 passed / 58 failed / 2 skipped (5099 assertions)** -- matches the prior `saveSchoolCategory` slice baseline exactly (11 new tests in this slice net out: 2 that would have failed pre-fix + 9 brand new, all now passing). Remaining 58 failures are pre-existing and unrelated: `AmbiguousToshiLlmConfigException` dual-provider env-config mismatch (local `.env` `TOSHI_LLM_MODEL`/`OPENAI_COMPATIBLE_MODEL` vs `api.deepseek.com` host -- a local sandbox config issue, not a code bug), 2 live-LLM E2E tests requiring network, and the pre-existing `ToshiOnboardingTest::onboarding_enforces_plan_limit_for_students` step-count-off-by-2 failure (confirmed present on unmodified `main` too via the same stash test, not a regression from this session).
+- **Status**: Ready to ship -- opening PR.

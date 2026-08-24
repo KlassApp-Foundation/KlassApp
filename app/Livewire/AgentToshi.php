@@ -117,6 +117,7 @@ class AgentToshi extends Component
 
     // Collected data across steps
     public $schoolName = '';
+    public $schoolCategory = ''; // canonical SchoolCategorySeeder key
     public $schoolType = 'primary';
     public $schoolLevel = '';   // o-level, a-level, both
     public $schoolGender = '';  // boys, girls, mixed
@@ -485,6 +486,7 @@ class AgentToshi extends Component
         $this->mode = $data['mode'] ?? 'create';
         $this->schoolId = $draft->school_id;
         $this->schoolName = $data['schoolName'] ?? '';
+        $this->schoolCategory = $data['schoolCategory'] ?? '';
         $this->schoolType = $data['schoolType'] ?? 'primary';
         $this->schoolLevel = $data['schoolLevel'] ?? '';
         $this->schoolGender = $data['schoolGender'] ?? '';
@@ -527,6 +529,7 @@ class AgentToshi extends Component
         $data = [
             'mode'              => $this->mode,
             'schoolName'        => $this->schoolName,
+            'schoolCategory'    => $this->schoolCategory,
             'schoolType'        => $this->schoolType,
             'schoolLevel'       => $this->schoolLevel,
             'schoolGender'      => $this->schoolGender,
@@ -696,6 +699,9 @@ class AgentToshi extends Component
      */
     private function jumpToIncompleteOnboardingStep(string $key): void
     {
+        $this->actionStep = null;
+        $this->actionSubstep = 0;
+
         $actionMap = [
             'curriculum' => 'onboarding_curriculum',
             'country' => 'onboarding_country',
@@ -1735,6 +1741,7 @@ class AgentToshi extends Component
             $this->messages = [];
             $this->reviewData = [];
             $this->schoolName = '';
+            $this->schoolCategory = '';
             $this->schoolType = 'primary';
             $this->schoolLevel = '';
             $this->schoolGender = '';
@@ -2135,6 +2142,7 @@ class AgentToshi extends Component
             'scope'             => $this->scope,
             'schoolId'          => $this->schoolId,
             'schoolName'        => $this->schoolName,
+            'schoolCategory'    => $this->schoolCategory,
             'schoolType'        => $this->schoolType,
             'schoolLevel'       => $this->schoolLevel,
             'schoolGender'      => $this->schoolGender,
@@ -3486,7 +3494,9 @@ class AgentToshi extends Component
 
             // Complete mode: persist rename immediately when it differs from placeholder
             if ($this->mode === 'complete' && $this->schoolId && $this->schoolName !== '') {
-                $this->persistSchoolNameIfChanged($this->schoolName);
+                if (! $this->persistSchoolNameIfChanged($this->schoolName)) {
+                    return;
+                }
                 $this->botSay("School name updated to **{$this->schoolName}**.");
                 $this->actionStep = null;
                 $this->substep = 0;
@@ -3494,37 +3504,33 @@ class AgentToshi extends Component
                 return;
             }
 
-            // Name confirmed — school type is now button-driven in blade
-            $this->botSay("Great! Now select the school type from the options below.");
-            $this->substep = 2; // awaiting type selection (via button)
+            // Name confirmed — ask for school category explicitly (text list for now)
+            $this->botSay("Great! Now choose a school category:");
+            $this->botSay(implode("\n", array_map(
+                fn ($key, $label) => "- **{$label}** (type `{$key}`)",
+                array_keys(\App\Services\SchoolCategorySeeder::CATEGORIES),
+                \App\Services\SchoolCategorySeeder::CATEGORIES
+            )));
+            $this->substep = 2; // awaiting category selection
             return;
         }
 
-        // substep === 2 — type already selected via button, shouldn't reach here via text
-        $this->botSay("Please use the buttons above to select the school type.");
+        // substep === 2 — collecting school category from typed reply
+        $this->persistSchoolCategoryFromInput($text);
     }
 
-    // ── Button-driven school type selection ──
+    // ── Button-driven school type selection (legacy fallback) ──
     public function setSchoolType(string $type, string $level = '', string $gender = '')
     {
-        $this->schoolType = $type;
-        $this->schoolLevel = $level;
-        $this->schoolGender = $gender;
+        $category = match ($type) {
+            'nursery' => 'nursery',
+            'primary' => 'primary',
+            'secondary' => 'o_level',
+            'mixed' => 'o_a_level',
+            default => $type,
+        };
 
-        // Pre-populate curriculum defaults so tests can assert early
-        $defaults = $this->curriculumDefaults();
-        $this->standards = $defaults['classes'] ?? [];
-        $this->subjects = $defaults['subjects'] ?? [];
-
-        $label = ucfirst($type);
-        if ($level) $label .= ' — ' . strtoupper($level);
-        if ($gender) $label .= ' — ' . ucfirst($gender);
-
-        $this->userSay("School type: {$label}");
-        $this->botSay("**{$label}** — got it!");
-        $this->botSay("Now let's set up the admin account. | What is the admin's email address?");
-        $this->substep = 0;
-        $this->advance();
+        $this->persistSchoolCategory($category);
     }
 
     // ════════════════════════════════════════════════
@@ -3811,7 +3817,13 @@ class AgentToshi extends Component
         $this->curriculum = $choice;
         $school = \App\Models\School::find($this->schoolId);
         if ($school) {
-            $school->curriculum = $choice;
+            try {
+                app(\App\Services\OnboardingEngine::class)->saveCurriculum($school, $choice);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $this->botSay($e->getMessage());
+
+                return;
+            }
             $school->toshi_enabled = 1;
             $school->save();
         }
@@ -3894,7 +3906,13 @@ class AgentToshi extends Component
         if ($completeMode && $this->schoolId) {
             $school = \App\Models\School::find($this->schoolId);
             if ($school) {
-                \App\Services\OnboardingStepsService::persistCountry($school, $country);
+                try {
+                    app(\App\Services\OnboardingEngine::class)->saveCountry($school, $country);
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    $this->botSay($e->getMessage());
+
+                    return;
+                }
             }
             $this->botSay("✅ Country set to **{$country}**.");
             $this->actionStep = null;
@@ -4029,35 +4047,94 @@ class AgentToshi extends Component
         }
     }
 
-    private function persistSchoolNameIfChanged(string $desiredName): void
+    private function persistSchoolCategoryFromInput(string $text): void
+    {
+        $category = strtolower(trim($text));
+
+        // Friendly synonyms → canonical keys
+        $synonyms = [
+            'nursery only' => 'nursery',
+            'primary' => 'primary',
+            'primary + nursery' => 'primary_nursery',
+            'primary_nursery' => 'primary_nursery',
+            'primary and nursery' => 'primary_nursery',
+            'o level' => 'o_level',
+            'o-level' => 'o_level',
+            'o_level' => 'o_level',
+            'secondary' => 'o_level',
+            'o a level' => 'o_a_level',
+            'o-level + a-level' => 'o_a_level',
+            'o_a_level' => 'o_a_level',
+            'mixed' => 'o_a_level',
+            'all levels' => 'o_a_level',
+        ];
+
+        $category = $synonyms[$category] ?? $category;
+
+        $this->persistSchoolCategory($category);
+    }
+
+    private function persistSchoolCategory(string $category): void
+    {
+        $category = trim($category);
+        if (! array_key_exists($category, \App\Services\SchoolCategorySeeder::CATEGORIES)) {
+            $this->botSay('Choose a school category.');
+            return;
+        }
+
+        $school = \App\Models\School::find($this->schoolId);
+        if ($school) {
+            try {
+                app(\App\Services\OnboardingEngine::class)->saveSchoolCategory($school, $category);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $this->botSay($e->getMessage());
+                return;
+            }
+        }
+
+        $this->schoolCategory = $category;
+
+        // Sync legacy Toshi state used by curriculumDefaults()
+        match ($category) {
+            'nursery' => [$this->schoolType = 'nursery', $this->hasNursery = null],
+            'primary' => [$this->schoolType = 'primary', $this->hasNursery = false],
+            'primary_nursery' => [$this->schoolType = 'primary', $this->hasNursery = true],
+            'o_level' => [$this->schoolType = 'secondary', $this->schoolLevel = 'o-level'],
+            'o_a_level' => [$this->schoolType = 'mixed', $this->schoolLevel = 'both'],
+            default => null,
+        };
+
+        // Pre-populate curriculum defaults so tests can assert early
+        $defaults = $this->curriculumDefaults();
+        $this->standards = $defaults['classes'] ?? [];
+        $this->subjects = $defaults['subjects'] ?? [];
+
+        $label = \App\Services\SchoolCategorySeeder::CATEGORIES[$category] ?? ucfirst($category);
+
+        $this->userSay("School type: {$label}");
+        $this->botSay("**{$label}** — got it!");
+        $this->botSay("Now let's set up the admin account. | What is the admin's email address?");
+        $this->substep = 0;
+        $this->advance();
+    }
+
+    private function persistSchoolNameIfChanged(string $desiredName): bool
     {
         $school = \App\Models\School::find($this->schoolId);
-        if (! $school) {
-            return;
+        if (! $school || $desiredName === $school->name) {
+            return true;
         }
 
-        if ($desiredName === $school->name) {
-            return;
+        try {
+            $result = app(\App\Services\OnboardingEngine::class)->saveSchoolName($school, $desiredName);
+            $this->schoolName = $result->name;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->botSay($e->getMessage());
+
+            return false;
         }
 
-        $unique = app(\App\Services\SchoolSignupBootstrapService::class)->uniqueSchoolName($desiredName);
-        // uniqueSchoolName returns desired if free; if collision on another school, suffix.
-        // When renaming to a name that only collides with THIS school, keep it.
-        if ($unique !== $desiredName && \App\Models\School::where('name', $desiredName)->where('id', '!=', $school->id)->exists()) {
-            $this->schoolName = $unique;
-        } else {
-            $this->schoolName = $desiredName;
-            $unique = $desiredName;
-        }
-
-        if ($unique === $school->name) {
-            return;
-        }
-
-        $school->name = $unique;
-        $school->slug = \Illuminate\Support\Str::slug($unique);
-        $school->save();
-        $this->schoolName = $unique;
+        return true;
     }
 
     private function persistAcademicYearIfMissing(string $label): void

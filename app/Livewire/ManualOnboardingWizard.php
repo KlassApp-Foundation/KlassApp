@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Services\OnboardingNameListExtractor;
+use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolCategorySeeder;
 use App\Services\StudentIdGeneratorService;
@@ -993,45 +994,38 @@ class ManualOnboardingWizard extends Component
 
     private function saveSchoolName(School $school): void
     {
-        $name = trim($this->schoolName);
-        if ($name === '' || OnboardingStepsService::isPlaceholderSchoolName($name)) {
-            throw ValidationException::withMessages(['schoolName' => 'Enter your real school name.']);
+        try {
+            app(OnboardingEngine::class)->saveSchoolName($school, $this->schoolName);
+        } catch (ValidationException $e) {
+            throw ValidationException::withMessages(['schoolName' => $e->getMessage()]);
         }
-
-        $school->name = $name;
-        $school->save();
     }
 
     private function saveCurriculum(School $school): void
     {
-        $curriculum = strtolower(trim($this->curriculum));
-        if ($curriculum === '') {
-            throw ValidationException::withMessages(['curriculum' => 'Choose a curriculum.']);
+        try {
+            app(OnboardingEngine::class)->saveCurriculum($school, $this->curriculum);
+        } catch (ValidationException $e) {
+            throw ValidationException::withMessages(['curriculum' => $e->getMessage()]);
         }
-
-        $school->curriculum = $curriculum;
-        $school->save();
     }
 
     private function saveSchoolCategory(School $school): void
     {
-        $category = trim($this->schoolCategory);
-        if (! array_key_exists($category, SchoolCategorySeeder::CATEGORIES)) {
-            throw ValidationException::withMessages(['schoolCategory' => 'Choose a school category.']);
+        try {
+            app(OnboardingEngine::class)->saveSchoolCategory($school, $this->schoolCategory);
+        } catch (ValidationException $e) {
+            throw ValidationException::withMessages(['schoolCategory' => $e->getMessage()]);
         }
-
-        $school->school_category = $category;
-        $school->save();
     }
 
     private function saveCountry(School $school): void
     {
-        $country = trim($this->countryName);
-        if ($country === '') {
-            throw ValidationException::withMessages(['countryName' => 'Choose a country.']);
+        try {
+            app(OnboardingEngine::class)->saveCountry($school, $this->countryName);
+        } catch (ValidationException $e) {
+            throw ValidationException::withMessages(['countryName' => $e->getMessage()]);
         }
-
-        OnboardingStepsService::persistCountry($school, $country);
     }
 
     private function saveEmis(School $school): void
