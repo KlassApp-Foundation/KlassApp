@@ -1012,11 +1012,13 @@ class ManualOnboardingWizard extends Component
 
     private function saveSchoolCategory(School $school): void
     {
-        try {
-            app(OnboardingEngine::class)->saveSchoolCategory($school, $this->schoolCategory);
-        } catch (ValidationException $e) {
-            throw ValidationException::withMessages(['schoolCategory' => $e->getMessage()]);
+        $category = trim($this->schoolCategory);
+        if (! array_key_exists($category, SchoolCategorySeeder::CATEGORIES)) {
+            throw ValidationException::withMessages(['schoolCategory' => 'Choose a school category.']);
         }
+
+        $school->school_category = $category;
+        $school->save();
     }
 
     private function saveCountry(School $school): void

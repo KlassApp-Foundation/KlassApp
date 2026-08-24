@@ -117,7 +117,6 @@ class AgentToshi extends Component
 
     // Collected data across steps
     public $schoolName = '';
-    public $schoolCategory = ''; // canonical SchoolCategorySeeder key
     public $schoolType = 'primary';
     public $schoolLevel = '';   // o-level, a-level, both
     public $schoolGender = '';  // boys, girls, mixed
@@ -486,7 +485,6 @@ class AgentToshi extends Component
         $this->mode = $data['mode'] ?? 'create';
         $this->schoolId = $draft->school_id;
         $this->schoolName = $data['schoolName'] ?? '';
-        $this->schoolCategory = $data['schoolCategory'] ?? '';
         $this->schoolType = $data['schoolType'] ?? 'primary';
         $this->schoolLevel = $data['schoolLevel'] ?? '';
         $this->schoolGender = $data['schoolGender'] ?? '';
@@ -529,7 +527,6 @@ class AgentToshi extends Component
         $data = [
             'mode'              => $this->mode,
             'schoolName'        => $this->schoolName,
-            'schoolCategory'    => $this->schoolCategory,
             'schoolType'        => $this->schoolType,
             'schoolLevel'       => $this->schoolLevel,
             'schoolGender'      => $this->schoolGender,
@@ -1741,7 +1738,6 @@ class AgentToshi extends Component
             $this->messages = [];
             $this->reviewData = [];
             $this->schoolName = '';
-            $this->schoolCategory = '';
             $this->schoolType = 'primary';
             $this->schoolLevel = '';
             $this->schoolGender = '';
@@ -2142,7 +2138,6 @@ class AgentToshi extends Component
             'scope'             => $this->scope,
             'schoolId'          => $this->schoolId,
             'schoolName'        => $this->schoolName,
-            'schoolCategory'    => $this->schoolCategory,
             'schoolType'        => $this->schoolType,
             'schoolLevel'       => $this->schoolLevel,
             'schoolGender'      => $this->schoolGender,
@@ -3504,33 +3499,37 @@ class AgentToshi extends Component
                 return;
             }
 
-            // Name confirmed — ask for school category explicitly (text list for now)
-            $this->botSay("Great! Now choose a school category:");
-            $this->botSay(implode("\n", array_map(
-                fn ($key, $label) => "- **{$label}** (type `{$key}`)",
-                array_keys(\App\Services\SchoolCategorySeeder::CATEGORIES),
-                \App\Services\SchoolCategorySeeder::CATEGORIES
-            )));
-            $this->substep = 2; // awaiting category selection
+            // Name confirmed — school type is now button-driven in blade
+            $this->botSay("Great! Now select the school type from the options below.");
+            $this->substep = 2; // awaiting type selection (via button)
             return;
         }
 
-        // substep === 2 — collecting school category from typed reply
-        $this->persistSchoolCategoryFromInput($text);
+        // substep === 2 — type already selected via button, shouldn't reach here via text
+        $this->botSay("Please use the buttons above to select the school type.");
     }
 
-    // ── Button-driven school type selection (legacy fallback) ──
+    // ── Button-driven school type selection ──
     public function setSchoolType(string $type, string $level = '', string $gender = '')
     {
-        $category = match ($type) {
-            'nursery' => 'nursery',
-            'primary' => 'primary',
-            'secondary' => 'o_level',
-            'mixed' => 'o_a_level',
-            default => $type,
-        };
+        $this->schoolType = $type;
+        $this->schoolLevel = $level;
+        $this->schoolGender = $gender;
 
-        $this->persistSchoolCategory($category);
+        // Pre-populate curriculum defaults so tests can assert early
+        $defaults = $this->curriculumDefaults();
+        $this->standards = $defaults['classes'] ?? [];
+        $this->subjects = $defaults['subjects'] ?? [];
+
+        $label = ucfirst($type);
+        if ($level) $label .= ' — ' . strtoupper($level);
+        if ($gender) $label .= ' — ' . ucfirst($gender);
+
+        $this->userSay("School type: {$label}");
+        $this->botSay("**{$label}** — got it!");
+        $this->botSay("Now let's set up the admin account. | What is the admin's email address?");
+        $this->substep = 0;
+        $this->advance();
     }
 
     // ════════════════════════════════════════════════
@@ -4045,77 +4044,6 @@ class AgentToshi extends Component
                 ]
             );
         }
-    }
-
-    private function persistSchoolCategoryFromInput(string $text): void
-    {
-        $category = strtolower(trim($text));
-
-        // Friendly synonyms → canonical keys
-        $synonyms = [
-            'nursery only' => 'nursery',
-            'primary' => 'primary',
-            'primary + nursery' => 'primary_nursery',
-            'primary_nursery' => 'primary_nursery',
-            'primary and nursery' => 'primary_nursery',
-            'o level' => 'o_level',
-            'o-level' => 'o_level',
-            'o_level' => 'o_level',
-            'secondary' => 'o_level',
-            'o a level' => 'o_a_level',
-            'o-level + a-level' => 'o_a_level',
-            'o_a_level' => 'o_a_level',
-            'mixed' => 'o_a_level',
-            'all levels' => 'o_a_level',
-        ];
-
-        $category = $synonyms[$category] ?? $category;
-
-        $this->persistSchoolCategory($category);
-    }
-
-    private function persistSchoolCategory(string $category): void
-    {
-        $category = trim($category);
-        if (! array_key_exists($category, \App\Services\SchoolCategorySeeder::CATEGORIES)) {
-            $this->botSay('Choose a school category.');
-            return;
-        }
-
-        $school = \App\Models\School::find($this->schoolId);
-        if ($school) {
-            try {
-                app(\App\Services\OnboardingEngine::class)->saveSchoolCategory($school, $category);
-            } catch (\Illuminate\Validation\ValidationException $e) {
-                $this->botSay($e->getMessage());
-                return;
-            }
-        }
-
-        $this->schoolCategory = $category;
-
-        // Sync legacy Toshi state used by curriculumDefaults()
-        match ($category) {
-            'nursery' => [$this->schoolType = 'nursery', $this->hasNursery = null],
-            'primary' => [$this->schoolType = 'primary', $this->hasNursery = false],
-            'primary_nursery' => [$this->schoolType = 'primary', $this->hasNursery = true],
-            'o_level' => [$this->schoolType = 'secondary', $this->schoolLevel = 'o-level'],
-            'o_a_level' => [$this->schoolType = 'mixed', $this->schoolLevel = 'both'],
-            default => null,
-        };
-
-        // Pre-populate curriculum defaults so tests can assert early
-        $defaults = $this->curriculumDefaults();
-        $this->standards = $defaults['classes'] ?? [];
-        $this->subjects = $defaults['subjects'] ?? [];
-
-        $label = \App\Services\SchoolCategorySeeder::CATEGORIES[$category] ?? ucfirst($category);
-
-        $this->userSay("School type: {$label}");
-        $this->botSay("**{$label}** — got it!");
-        $this->botSay("Now let's set up the admin account. | What is the admin's email address?");
-        $this->substep = 0;
-        $this->advance();
     }
 
     private function persistSchoolNameIfChanged(string $desiredName): bool
