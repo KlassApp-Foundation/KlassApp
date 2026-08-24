@@ -309,12 +309,12 @@
 
 ---
 
-## Current Status: August 25, 2026 (`origin/main` tip `e98d7982` — OnboardingEngine Phase 1B complete + bug #4 fix MERGED; docs PR #367 OPEN)
+## Current Status: August 25, 2026 (`origin/main` tip `e98d7982` — OnboardingEngine Phase 1B complete + bug #4 fix MERGED; docs PR #367 OPEN, expanded with skill doc)
 
 - **✅ Merged #366**: `saveFees` whole-school fee fix — one row per Standard with `section_id=NULL`, not fallback to first Standard — merge `e98d7982` — https://github.com/KlassApp-Foundation/KlassApp/pull/366
-- **🚧 PR #367 open**: docs-only — "Configurable, but never blank — prefill sensible defaults" principle added as AGENTS.md standing rule #17 + `docs/onboarding-engine-plan.md` §7 (cross-linked). Flagged "documented, not yet implemented". Branch `docs/prefill-defaults-principle` — https://github.com/KlassApp-Foundation/KlassApp/pull/367
+- **🚧 PR #367 open** (expanded): docs-only — "Configurable, but never blank — prefill sensible defaults" principle. Original commit: AGENTS.md rule #17 + `docs/onboarding-engine-plan.md` §7. New commit: `docs/onboarding-defaults-skill.md` (canonical skill doc with known defaults per step, implementation checklist, cross-references) + AGENTS.md rule #17 pointer to skill doc. Branch `docs/prefill-defaults-principle` — https://github.com/KlassApp-Foundation/KlassApp/pull/367
 - **✅ Phase 1B complete**: `saveStandards`, `saveSubjects`, `saveTerms`, `saveFees` all extracted into `OnboardingEngine`. 69 engine tests pass (44 ContentStepsTest + 17 IdentityStepsTest + 8 SchoolCategoryStepTest).
-- **Next**: Phase 2 — delegation refactors (AgentToshi `commitAll`/`commitStep`, wizard `saveTeachers`/`saveStudents`/`saveWhatsApp`/`savePlan`). Future UI: apply prefill-defaults principle (rule #17) to terms UI in both Toshi and wizard.
+- **Next**: Phase 2 — delegation refactors (AgentToshi `commitAll`/`commitStep`, wizard `saveTeachers`/`saveStudents`/`saveWhatsApp`/`savePlan`). Future UI: apply prefill-defaults principle (rule #17 + `docs/onboarding-defaults-skill.md`) to terms UI in both Toshi and wizard.
 - **`origin/main` tip**: `e98d7982`.
 
 ## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
@@ -904,7 +904,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files touched**: `AGENTS.md`, `docs/onboarding-engine-plan.md`
 - **Branch**: `docs/prefill-defaults-principle`
 - **PR**: #367 — https://github.com/KlassApp-Foundation/KlassApp/pull/367
-- **Status**: 🚧 PR open, awaiting merge
+- **Status**: 🚧 PR #367 open, expanded with skill doc. Awaiting merge.
 
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
