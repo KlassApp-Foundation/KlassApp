@@ -7698,4 +7698,22 @@ Ran full suite on base commit (stashed changes) vs this branch:
   - `php artisan test --compact tests/Feature/Onboarding tests/Feature/Toshi` → **406 passed / 54 failed / 1 skipped** (down from 414/54/1 — same exact 8-test delta, same 54 pre-existing failures, no new failures).
   - Full suite → **753 passed / 58 failed / 2 skipped** (down from 761/58/2 — same exact 8-test delta, same 58 pre-existing failures untouched).
   - `php -l` clean on `AgentToshi.php`, `ManualOnboardingWizard.php`, `OnboardingEngine.php`.
-- **Status**: Split complete on disk, **not yet pushed/force-pushed, not yet merged**. Reporting back for review before push/merge per explicit instruction.
+- **Status**: Split complete and pushed. `feature/onboarding-engine-identity-steps` pushed as a normal (non-force) push, commit `c5d5d2e4` — additive revert commit, not a history rewrite, so no force needed; PR #356's file list re-verified clean (no `SchoolCategoryStepTest.php`, no `schoolCategory`/`SchoolCategorySeeder` in any `+`/`-` diff line of the code files). `feature/onboarding-engine-school-category` pushed as a new branch, commit `45a840a0` — **no PR opened** (confirmed via `gh pr list` search). Full-suite deltas confirmed exact: identity-steps branch 761→753 (−8, the removed `SchoolCategoryStepTest`); school-category branch 761→750 (−11, the removed `IdentityStepsTest`+`ToshiSchoolNameRoutingTest`). Neither branch merged, nothing deployed. Reporting back for review before Part 2 (merge/deploy) per explicit instruction.
+
+### ⚠️ MANDATORY CHECKLIST — Part 3: rebase + open PR for `feature/onboarding-engine-school-category` (do this immediately after PR #356 merges, not before)
+
+> **Do NOT run this yet.** As of this entry, PR #356 (identity-steps) has not merged, so `main` does not contain the identity-steps commits — there is nothing to rebase onto. Running this checklist early will not produce a category-only diff and may pull in unexpected content. Trigger condition: **PR #356 shows `MERGED` in `gh pr view 356`.**
+
+1. `git fetch origin main`
+2. `git checkout feature/onboarding-engine-school-category`
+3. `git rebase origin/main`
+4. Resolve any conflicts — unlikely since this branch only touches `saveSchoolCategory`-specific hunks, but check `knowledge.md` carefully: it is touched by nearly every branch in this session and is the most likely conflict point. Do not blindly `--ours`/`--theirs` it — merge the prose by hand so no session-log entries are lost from either side.
+5. Re-run tests after rebase — confirm still green (expect the pre-rebase baseline: `SchoolCategoryStepTest` 8/8, full suite passed-count consistent with whatever `main`'s post-merge baseline is at that point, same pre-existing unrelated failures, no new regressions).
+6. Re-verify the diff is **still category-only** after the rebase — repeat the exact same checks used during the original split:
+   - `git diff <pre-refactor-baseline-commit> -- app/Livewire/AgentToshi.php app/Livewire/ManualOnboardingWizard.php app/AiAgents/Tools/SetCurriculumTool.php` and confirm every hunk is category-related only
+   - `grep` the diff for `schoolCategory`/`SchoolCategorySeeder` and confirm no stray identity-steps content came back in
+   - Confirm `app/Services/OnboardingEngine.php` contains only `saveSchoolCategory()` (the rebase should merge it with `main`'s post-merge version, which will contain `saveSchoolName`/`saveCountry`/`saveCurriculum` too — that's expected and correct once based on `main`, since those are already merged; what must NOT happen is any *duplicate* or *conflicting* redefinition)
+7. Force-push: **this one DOES need `--force-with-lease`**, since `git rebase` rewrites this branch's commit history (unlike the earlier additive revert commits on the other two branches, which were plain pushes). Use `--force-with-lease`, not bare `--force`, to avoid clobbering anyone else's work on the remote branch.
+8. **Then** open the PR for `feature/onboarding-engine-school-category` — do not open it before step 7 completes successfully.
+
+- **Status**: ⏸️ NOT STARTED — blocked on PR #356 merging first.
