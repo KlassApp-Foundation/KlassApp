@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Onboarding\OnboardingEngine;
 
+use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\Section;
@@ -389,5 +390,165 @@ class ContentStepsTest extends TestCase
             ->first();
         $this->assertNotNull($subjectRow);
         $this->assertEquals('core', $subjectRow->type);
+    }
+
+    // ── saveTerms ─────────────────────────────────────────────────────
+
+    public function test_save_terms_creates_term_for_year(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveTerms($school, $year, [
+            ['name' => 'Term 1', 'start' => '2025-02-03', 'end' => '2025-05-02'],
+        ]);
+
+        $term = AcademicTerm::where('school_id', $school->id)->first();
+        $this->assertNotNull($term);
+        $this->assertEquals('Term 1', $term->name);
+        $this->assertEquals($year->id, $term->academic_year_id);
+        $this->assertEquals('current', $term->status);
+    }
+
+    public function test_save_terms_persists_dates(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveTerms($school, $year, [
+            ['name' => 'Term 1', 'start' => '2025-02-03', 'end' => '2025-05-02'],
+        ]);
+
+        $term = AcademicTerm::where('school_id', $school->id)->first();
+        $this->assertEquals('2025-02-03', $term->starts_on->format('Y-m-d'));
+        $this->assertEquals('2025-05-02', $term->ends_on->format('Y-m-d'));
+    }
+
+    public function test_save_terms_creates_multiple_terms(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveTerms($school, $year, [
+            ['name' => 'Term 1', 'start' => '2025-02-03', 'end' => '2025-05-02'],
+            ['name' => 'Term 2', 'start' => '2025-05-26', 'end' => '2025-08-29'],
+            ['name' => 'Term 3', 'start' => '2025-09-22', 'end' => '2025-12-19'],
+        ]);
+
+        $this->assertEquals(3, AcademicTerm::where('school_id', $school->id)->count());
+        $names = AcademicTerm::where('school_id', $school->id)
+            ->pluck('name')->sort()->values()->toArray();
+        $this->assertEquals(['Term 1', 'Term 2', 'Term 3'], $names);
+    }
+
+    public function test_save_terms_is_idempotent_firstOrCreate(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveTerms($school, $year, [
+            ['name' => 'Term 1', 'start' => '2025-02-03', 'end' => '2025-05-02'],
+        ]);
+
+        // Call again — should not duplicate
+        app(OnboardingEngine::class)->saveTerms($school, $year, [
+            ['name' => 'Term 1', 'start' => '2025-02-03', 'end' => '2025-05-02'],
+        ]);
+
+        $this->assertEquals(1, AcademicTerm::where('school_id', $school->id)
+            ->where('name', 'Term 1')->count());
+    }
+
+    public function test_save_terms_additive_adds_new_term_to_existing(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        // First call adds Term 1
+        app(OnboardingEngine::class)->saveTerms($school, $year, [
+            ['name' => 'Term 1', 'start' => '2025-02-03', 'end' => '2025-05-02'],
+        ]);
+
+        // Second call adds Term 2 alongside existing Term 1
+        app(OnboardingEngine::class)->saveTerms($school, $year, [
+            ['name' => 'Term 2', 'start' => '2025-05-26', 'end' => '2025-08-29'],
+        ]);
+
+        $this->assertEquals(2, AcademicTerm::where('school_id', $school->id)->count());
+    }
+
+    public function test_save_terms_rejects_empty_terms_array(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        try {
+            app(OnboardingEngine::class)->saveTerms($school, $year, []);
+            $this->fail('Expected ValidationException for empty terms array.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('terms', $e->errors());
+        }
+    }
+
+    public function test_save_terms_rejects_empty_term_name(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        try {
+            app(OnboardingEngine::class)->saveTerms($school, $year, [
+                ['name' => '', 'start' => '2025-02-03', 'end' => '2025-05-02'],
+            ]);
+            $this->fail('Expected ValidationException for empty term name.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('terms', $e->errors());
+        }
+    }
+
+    public function test_save_terms_rejects_end_before_start(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        try {
+            app(OnboardingEngine::class)->saveTerms($school, $year, [
+                ['name' => 'Term 1', 'start' => '2025-06-01', 'end' => '2025-02-01'],
+            ]);
+            $this->fail('Expected ValidationException for end before start.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('terms', $e->errors());
+        }
+    }
+
+    public function test_save_terms_rejects_start_without_end(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        try {
+            app(OnboardingEngine::class)->saveTerms($school, $year, [
+                ['name' => 'Term 1', 'start' => '2025-02-03'],
+            ]);
+            $this->fail('Expected ValidationException for start without end.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('terms', $e->errors());
+        }
+    }
+
+    public function test_save_terms_allows_terms_without_dates(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        // Terms without start/end dates are valid — dates can be filled in later
+        app(OnboardingEngine::class)->saveTerms($school, $year, [
+            ['name' => 'Term 1'],
+        ]);
+
+        $term = AcademicTerm::where('school_id', $school->id)->first();
+        $this->assertNotNull($term);
+        $this->assertEquals('Term 1', $term->name);
+        $this->assertNull($term->starts_on);
+        $this->assertNull($term->ends_on);
     }
 }

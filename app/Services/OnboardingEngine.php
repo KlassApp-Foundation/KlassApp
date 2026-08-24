@@ -8,6 +8,7 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\Subject;
+use App\Models\AcademicTerm;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -459,6 +460,76 @@ class OnboardingEngine
                     ]);
                 }
             }
+        }
+    }
+
+    /**
+     * Persist academic terms for a school year.
+     *
+     * Additive: each call creates new terms or returns existing ones via
+     * firstOrCreate on (school_id, name). Multiple calls accumulate — unlike
+     * the wizard's early-return pattern, this allows adding Term 2, Term 3, etc.
+     *
+     * @param  School  $school
+     * @param  AcademicYear  $year
+     * @param  array  $terms  [ ['name' => 'Term 1', 'start' => '2025-02-01', 'end' => '2025-05-01'], ... ]
+     *
+     * @throws ValidationException
+     */
+    public function saveTerms(School $school, AcademicYear $year, array $terms): void
+    {
+        if (empty($terms)) {
+            throw ValidationException::withMessages(['terms' => 'Add at least one term.']);
+        }
+
+        foreach ($terms as $index => $term) {
+            $name = trim((string) ($term['name'] ?? ''));
+            if ($name === '') {
+                throw ValidationException::withMessages(['terms' => 'Term name cannot be empty.']);
+            }
+
+            $start = $term['start'] ?? null;
+            $end = $term['end'] ?? null;
+            $hasStart = $start !== null && trim((string) $start) !== '';
+            $hasEnd = $end !== null && trim((string) $end) !== '';
+
+            if ($hasStart !== $hasEnd) {
+                throw ValidationException::withMessages(['terms' => "Term '{$name}': provide both start and end dates, or neither."]);
+            }
+
+            if ($hasStart && $hasEnd) {
+                $startParsed = Carbon::parse($start);
+                $endParsed = Carbon::parse($end);
+                if ($endParsed->lte($startParsed)) {
+                    throw ValidationException::withMessages(['terms' => "Term '{$name}': end date must be after start date."]);
+                }
+            }
+        }
+
+        foreach ($terms as $term) {
+            $name = trim((string) ($term['name'] ?? ''));
+            $start = $term['start'] ?? null;
+            $end = $term['end'] ?? null;
+
+            $hasStart = $start !== null && trim((string) $start) !== '';
+            $hasEnd = $end !== null && trim((string) $end) !== '';
+
+            $createAttrs = [
+                'academic_year_id' => $year->id,
+                'status' => 'current',
+            ];
+
+            if ($hasStart) {
+                $createAttrs['starts_on'] = Carbon::parse(trim((string) $start))->startOfDay();
+            }
+            if ($hasEnd) {
+                $createAttrs['ends_on'] = Carbon::parse(trim((string) $end))->endOfDay();
+            }
+
+            AcademicTerm::firstOrCreate(
+                ['school_id' => $school->id, 'name' => $name],
+                $createAttrs,
+            );
         }
     }
 }
