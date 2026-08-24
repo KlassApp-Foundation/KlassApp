@@ -994,20 +994,24 @@ class ManualOnboardingWizard extends Component
 
     private function saveSchoolName(School $school): void
     {
-        try {
-            app(OnboardingEngine::class)->saveSchoolName($school, $this->schoolName);
-        } catch (ValidationException $e) {
-            throw ValidationException::withMessages(['schoolName' => $e->getMessage()]);
+        $name = trim($this->schoolName);
+        if ($name === '' || OnboardingStepsService::isPlaceholderSchoolName($name)) {
+            throw ValidationException::withMessages(['schoolName' => 'Enter your real school name.']);
         }
+
+        $school->name = $name;
+        $school->save();
     }
 
     private function saveCurriculum(School $school): void
     {
-        try {
-            app(OnboardingEngine::class)->saveCurriculum($school, $this->curriculum);
-        } catch (ValidationException $e) {
-            throw ValidationException::withMessages(['curriculum' => $e->getMessage()]);
+        $curriculum = strtolower(trim($this->curriculum));
+        if ($curriculum === '') {
+            throw ValidationException::withMessages(['curriculum' => 'Choose a curriculum.']);
         }
+
+        $school->curriculum = $curriculum;
+        $school->save();
     }
 
     private function saveSchoolCategory(School $school): void
@@ -1023,11 +1027,12 @@ class ManualOnboardingWizard extends Component
 
     private function saveCountry(School $school): void
     {
-        try {
-            app(OnboardingEngine::class)->saveCountry($school, $this->countryName);
-        } catch (ValidationException $e) {
-            throw ValidationException::withMessages(['countryName' => $e->getMessage()]);
+        $country = trim($this->countryName);
+        if ($country === '') {
+            throw ValidationException::withMessages(['countryName' => 'Choose a country.']);
         }
+
+        OnboardingStepsService::persistCountry($school, $country);
     }
 
     private function saveEmis(School $school): void

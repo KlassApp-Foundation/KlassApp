@@ -9,7 +9,6 @@ use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\School;
-use App\Services\OnboardingEngine;
 use App\Services\ToshiActionService;
 
 class SetCurriculumTool implements Tool, VerifiableTool
@@ -57,12 +56,7 @@ class SetCurriculumTool implements Tool, VerifiableTool
             fn() => "Set curriculum to " . strtoupper($curriculum) . " and enable Toshi AI assistant");
         if ($confirm !== null) return $confirm;
 
-        try {
-            app(OnboardingEngine::class)->saveCurriculum($school, $curriculum);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return '❌ ' . $e->getMessage();
-        }
-
+        $school->curriculum = $curriculum;
         $school->toshi_enabled = true;
         $school->save();
 
