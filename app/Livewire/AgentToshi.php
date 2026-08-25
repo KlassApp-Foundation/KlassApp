@@ -16,7 +16,7 @@ use App\Models\Userprofile;
 use App\Models\Subscription;
 use App\Models\CurrentPlan;
 use App\Models\FeesCategories;
-use App\Models\AcademicTerm;
+
 use App\Models\StudentAcademic;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -26,6 +26,7 @@ use App\Models\OnboardingSession;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\StudentIdGeneratorService;
 use App\Services\ToshiActionService;
+use App\Services\OnboardingEngine;
 
 class AgentToshi extends Component
 {
@@ -4958,6 +4959,26 @@ class AgentToshi extends Component
     }
 
     // ════════════════════════════════════════════════
+    //  Transform Toshi's string[] fees into engine format
+    // ════════════════════════════════════════════════
+
+    /**
+     * Transform Toshi's fees (string[] of names) into the structured array
+     * format expected by OnboardingEngine::saveFees().
+     *
+     * Toshi collects fee names only (no amounts, no class/term scoping),
+     * so each entry gets amount=0 and no class/term — making it a whole-school
+     * fee that the engine will spread across all grading tiers.
+     */
+    private function feesForEngine(): array
+    {
+        return array_map(fn(string $name) => [
+            'name' => trim($name),
+            'amount' => 0,
+        ], array_filter($this->fees, fn($f) => is_string($f) && trim($f)));
+    }
+
+    // ════════════════════════════════════════════════
     //  Commit everything to the database
     // ════════════════════════════════════════════════
     private function commitAll()
@@ -5049,30 +5070,37 @@ class AgentToshi extends Component
                     }
                 }
 
-                $phase = Standard::create(['school_id' => $school->id, 'name' => $this->schoolType, 'order' => 1, 'status' => '1']);
+                // ── Content steps: delegate to OnboardingEngine ──
+                // Fixes: (1) per-class tier mapping — nursery/primary/o-level/a-level
+                // instead of a single $phase Standard for all classes; (2) SchoolCategorySeeder
+                // now runs when school_category is set; (3) idempotent via firstOrCreate.
+                app(OnboardingEngine::class)->saveStandards($school, $academicYear, $this->standards);
+                if (!empty($this->subjects)) {
+                    app(OnboardingEngine::class)->saveSubjects($school, $academicYear, $this->subjects);
+                }
 
+                // ── Rebuild classLinkMap from DB for student assignment below ──
                 $firstStandardLink = null;
                 $classLinkMap = []; // class name → StandardLink
 
                 foreach ($this->standards as $class) {
-                    $section = Section::firstOrCreate(
-                        ['school_id' => $school->id, 'name' => $class['name']],
-                        ['status' => '1']
-                    );
-                    $standardLink = StandardLink::firstOrCreate(
-                        ['school_id' => $school->id, 'section_id' => $section->id, 'academic_year_id' => $academicYear->id],
-                        ['standard_id' => $phase->id, 'status' => '1']
-                    );
-                    $classLinkMap[$class['name']] = $standardLink;
-                    if (!$firstStandardLink) {
-                        $firstStandardLink = $standardLink;
-                    }
-                    $classSubjects = $this->subjects[$class['name']] ?? [];
-                    foreach ($classSubjects as $subjectName) {
-                        Subject::firstOrCreate(
-                            ['school_id' => $school->id, 'standard_id' => $phase->id, 'section_id' => $section->id, 'name' => $subjectName],
-                            ['academic_year_id' => $academicYear->id, 'type' => 'core']
-                        );
+                    $className = $class['name'];
+                    $sections = Section::where('school_id', $school->id)
+                        ->where(function ($q) use ($className) {
+                            $q->where('name', $className)
+                              ->orWhere('name', 'like', $className . ' %');
+                        })->get();
+                    foreach ($sections as $section) {
+                        $link = StandardLink::where('school_id', $school->id)
+                            ->where('section_id', $section->id)
+                            ->where('academic_year_id', $academicYear->id)
+                            ->first();
+                        if ($link) {
+                            $classLinkMap[$className] = $link;
+                            if (!$firstStandardLink) {
+                                $firstStandardLink = $link;
+                            }
+                        }
                     }
                 }
 
@@ -5212,21 +5240,14 @@ class AgentToshi extends Component
                     }
                 }
 
-                foreach ($this->terms as $term) {
-                    AcademicTerm::create([
-                        'school_id' => $school->id, 'academic_year_id' => $academicYear->id,
-                        'name' => $term['name'], 'starts_on' => $term['start'], 'ends_on' => $term['end'],
-                        'status' => 'current',
-                    ]);
+                // ── Terms: delegate to OnboardingEngine (idempotent via firstOrCreate) ──
+                if (!empty($this->terms)) {
+                    app(OnboardingEngine::class)->saveTerms($school, $academicYear, $this->terms);
                 }
 
-                foreach ($this->fees as $feeName) {
-                    if (is_string($feeName) && trim($feeName)) {
-                        FeesCategories::create([
-                            'school_id' => $school->id, 'standard_id' => $phase->id,
-                            'name' => trim($feeName), 'amount' => 0,
-                        ]);
-                    }
+                // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
+                if (!empty($this->fees)) {
+                    app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
                 }
 
                 if ($this->whatsappVerified && $this->whatsappPhone) {
@@ -5295,35 +5316,15 @@ class AgentToshi extends Component
                     $academicYear->save();
                 }
 
-                $phase = \App\Models\Standard::where('school_id', $schoolId)->first();
-                if (!$phase) {
-                    $phase = Standard::create(['school_id' => $schoolId, 'name' => 'default', 'order' => 1, 'status' => '1']);
+                // ── Content steps: delegate to OnboardingEngine ──
+                // Fixes: (1) per-class tier mapping instead of single $phase Standard;
+                // (2) SchoolCategorySeeder runs when school_category is set;
+                // (3) idempotent via firstOrCreate throughout.
+                if (!empty($this->standards)) {
+                    app(OnboardingEngine::class)->saveStandards($school, $academicYear, $this->standards);
                 }
-
-                // Create standards if missing (including StandardLink for each class)
-                foreach ($this->standards as $class) {
-                    $section = Section::firstOrCreate(
-                        ['school_id' => $schoolId, 'name' => $class['name']],
-                        ['status' => '1']
-                    );
-                    StandardLink::firstOrCreate(
-                        ['school_id' => $schoolId, 'section_id' => $section->id, 'academic_year_id' => $academicYear->id],
-                        ['standard_id' => $phase->id, 'status' => '1']
-                    );
-                }
-
-                // Create subjects if any
-                foreach ($this->subjects as $className => $subjectNames) {
-                    $section = Section::where('school_id', $schoolId)->where('name', $className)->first();
-                    $stdLink = $section ? StandardLink::where('school_id', $schoolId)->where('section_id', $section->id)->where('academic_year_id', $academicYear->id)->first() : null;
-                    if ($stdLink && is_array($subjectNames)) {
-                        foreach ($subjectNames as $subjName) {
-                            Subject::firstOrCreate(
-                                ['school_id' => $schoolId, 'section_id' => $section->id, 'name' => $subjName],
-                                ['standard_id' => $phase->id, 'academic_year_id' => $academicYear->id, 'type' => 'core']
-                            );
-                        }
-                    }
+                if (!empty($this->subjects)) {
+                    app(OnboardingEngine::class)->saveSubjects($school, $academicYear, $this->subjects);
                 }
 
                 // Create teachers if any
@@ -5378,12 +5379,9 @@ class AgentToshi extends Component
                     }
                 }
 
-                // Create terms
-                foreach ($this->terms as $term) {
-                    AcademicTerm::firstOrCreate(
-                        ['school_id' => $schoolId, 'name' => $term['name']],
-                        ['academic_year_id' => $academicYear->id, 'starts_on' => $term['start'], 'ends_on' => $term['end'], 'status' => 'current']
-                    );
+                // ── Terms: delegate to OnboardingEngine (idempotent) ──
+                if (!empty($this->terms)) {
+                    app(OnboardingEngine::class)->saveTerms($school, $academicYear, $this->terms);
                 }
 
                 // Create students
@@ -5442,18 +5440,9 @@ class AgentToshi extends Component
                     }
                 }
 
-                // Create fees (idempotent)
-                foreach ($this->fees as $feeName) {
-                    if (is_string($feeName) && trim($feeName)) {
-                        try {
-                            FeesCategories::firstOrCreate(
-                                ['school_id' => $schoolId, 'name' => trim($feeName)],
-                                ['standard_id' => $phase->id, 'amount' => 0]
-                            );
-                        } catch (\Exception $e) {
-                            \Log::warning('Fee creation skipped: ' . $feeName . ' - ' . $e->getMessage());
-                        }
-                    }
+                // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
+                if (!empty($this->fees)) {
+                    app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
                 }
 
                 // WhatsApp verification
