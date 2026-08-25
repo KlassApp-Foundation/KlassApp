@@ -970,6 +970,65 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **PR**: #369 — https://github.com/KlassApp-Foundation/KlassApp/pull/369
 - **Status**: 🚧 PR #369 open, depends on #367 and #368 merging first
 
+### 2026-08-26: Phase 1C investigation — teacher/student/WhatsApp/plan divergence
+
+**Scope**: Investigate divergence between ManualOnboardingWizard and AgentToshi for saveTeachers, saveStudents, saveWhatsApp, savePlan — the remaining OnboardingEngine migration phases.
+
+**Key findings**:
+
+1. **Password security gap (F1 — confirmed and expanded)**:
+   - ManualOnboardingWizard: `bcrypt(Str::random(16))` — random password ✅
+   - ToshiActionService addTeacher: `Hash::make('password')` — hardcoded literal ❌
+   - ToshiActionService addStudent: `Hash::make('password')` — hardcoded literal ❌
+   - AgentToshi commitAll create-mode teachers: `bcrypt($this->adminPassword ?: 'password')` — falls back to literal ❌
+   - AgentToshi commitAll create-mode students: `bcrypt('password')` — hardcoded literal ❌
+   - AgentToshi commitAll complete-mode teachers: `bcrypt('password')` — hardcoded literal ❌
+   - AgentToshi commitAll complete-mode students: `bcrypt('password')` — hardcoded literal ❌
+   - RegisterUser::CreateTeacher: `bcrypt('password') //demo` — hardcoded literal ❌
+   - TeachersImport (bulk): also uses hardcoded password (not investigated in this session but confirmed in prior review)
+   - **None of these paths** send a notification or force a password reset. Only the Wizard generates a random password — and even that doesn't send it anywhere.
+   - **Recommendation for 1C**: OnboardingEngine should generate `Str::random(16)` passwords, store no plaintext, and set `requires_password_reset = 1` (or equivalent flag) on the User model.
+
+2. **Teacher creation divergence**:
+   - **Wizard**: Creates User (usergroup_id=5) + Teacherlink only (no Userprofile). Password: random 16-char. Email dedup: generates `teacher.XXXXX@{slug}.test` if duplicate. Validates class/subject exist first.
+   - **ToshiActionService**: Creates User (usergroup_id=5) + Userprofile in DB transaction. Password: literal "password". Email dedup: rejects creation if duplicate email exists. No Teacherlink creation — teacher is just a User+Profile, no class/subject assignment.
+   - **AgentToshi create-mode**: Creates User (usergroup_id=5) + Userprofile. Password: reuses admin password or "password". Creates Teacherlink entries from parsed teacherLinks data. Adds `profession: 'teacher'` to profile.
+   - **AgentToshi complete-mode**: Uses `firstOrCreate` by email. Password: literal "password". Creates Userprofile only if newly created. Creates Teacherlink entries from parsed data.
+   - **RegisterUser::CreateTeacher**: Most complete — creates User + full Userprofile (with DOB, address, blood group, etc.) + Teacherlink. Password: literal "password".
+
+3. **Student creation divergence**:
+   - **Wizard**: Creates User (usergroup_id=6) + Userprofile + StudentAcademic. Password: random 16-char. Email: `student.{N}.{random4}@{slug}.test`. KlassappId via `StudentIdGeneratorService::nextForStudent`. Class assignment by fuzzy-matching section names. No gender field.
+   - **ToshiActionService addStudent**: Creates User (usergroup_id=6) + Userprofile + StudentAcademic. Password: literal "password". Email: `student.{random6}@{slug}.sch.ug`. KlassappId via `StudentIdGeneratorService::next`. Optional gender field. Uses `resolveStandardLink` for class assignment (more robust). Skips StudentAcademic if no standardLink found.
+   - **AgentToshi create-mode**: Creates User (usergroup_id=6) + Userprofile + StudentAcademic. Password: reuses admin password. Email: `student.{N}@{slug}.sch.ug`. Gender field from parsed data. Class assignment via classLinkMap + fuzzy fallback with hardcoded section→standard mapping. LIN field support.
+   - **AgentToshi complete-mode**: `firstOrCreate` by email. Password: literal "password". Email: `student.{N}@school.edu`. Fallback class assignment via `StandardLink::first()`. Less robust class matching than create-mode.
+
+4. **WhatsApp verification divergence**:
+   - **Wizard**: `WhatsAppUser::updateOrCreate` by `user_id`. Validates phone uniqueness. Catches `UniqueConstraintViolationException`. Marks `verified_at = now()` and `opted_in = true`.
+   - **AgentToshi create-mode**: `WhatsAppUser::create` (not updateOrCreate). No duplicate check on phone. Uses `$adminUser->id` (the just-created admin). Sets `verified_at`, `opted_in`.
+   - **AgentToshi complete-mode**: `WhatsAppUser::firstOrCreate` by `phone`. Uses `auth()->user()->id`. Sets `verified_at`, `opted_in`.
+   - **Disharmony**: Wizard uses `updateOrCreate` (safe for re-submission), Toshi create uses plain `create` (will crash on duplicate), Toshi complete uses `firstOrCreate` by phone (safe but different key than Wizard).
+
+5. **Plan selection divergence**:
+   - **Wizard**: `savePlan()` — validates all previous non-optional steps complete first. Looks up Plan by ID + `is_active`. Creates `CurrentPlan` with `status = 'running'`. Updates existing plan if found.
+   - **AgentToshi create-mode**: If `selectedPlanId` is set and plan has `amount > 0`, calls `TrialService::startTrial()`. Otherwise creates bare `CurrentPlan` (no status). Also creates a `Subscription` row with `status = 'pending'`. Completely different flow from Wizard.
+   - **AgentToshi complete-mode**: `persistSelectedPlan()` if no existing CurrentPlan. Does not check plan amount or start trial.
+   - **Disharmony**: Toshi create-mode has trial logic + Subscription creation that Wizard doesn't. Wizard sets `status = 'running'`. Toshi bare-create omits status. Three different plan-persistence paths.
+
+**Security flags**:
+- ⚠️ F1 (hardcoded password): 6 of 7 teacher/student creation paths use literal "password". Only the Wizard uses `Str::random(16)`. No path sends a notification or forces reset.
+- ⚠️ Toshi create-mode WhatsApp: plain `create()` will throw on duplicate phone (no graceful handling like Wizard's `UniqueConstraintViolationException` catch).
+
+**Proposed Phase 1C scope** (before implementing — awaiting approval):
+
+**1C-1**: `OnboardingEngine::saveTeachers()` — unified teacher creation with `Str::random(16)` password, optional Userprofile, optional Teacherlink creation, email dedup strategy.
+**1C-2**: `OnboardingEngine::saveStudents()` — unified student creation with random password, KlassappId, class assignment via StandardLink resolution, optional gender/LIN fields.
+**1C-3**: `OnboardingEngine::saveWhatsApp()` — unified WhatsApp registration using `updateOrCreate` by user_id, phone uniqueness validation, `UniqueConstraintViolationException` handling.
+**1C-4**: `OnboardingEngine::savePlan()` — unified plan selection with step-completion validation, TrialService integration, CurrentPlan + Subscription creation, explicit `status = 'running'`.
+**1C-5**: Wire Wizard and Toshi to call OnboardingEngine methods instead of inline creation.
+**1C-6**: Password security fix — set a `requires_password_change` flag on all newly created teacher/student Users, to be enforced at next login (separate concern from 1C but should be designed alongside).
+
+**Not in 1C scope**: Bulk import paths (TeachersImport), admin single-add form (RegisterUser::CreateTeacher) — these are separate features with their own form flows and should be migrated later.
+
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
 - **Key findings**: (1) Production host is **DigitalOcean** (2 vCPU/2 GB, ~$18–24/mo), NOT Hetzner as older notes claim — corrected above. (2) Live scale: 20 schools, 1,376 users, 664,336 marks, 203 exams, 18 report_generations all-time; load 0.09 (idle); nginx access logging DISABLED. (3) Laravel Cloud pricing (verified live): Starter $5/mo, Growth $20/mo, Business $200/mo, each + $5 usage credit, scale-to-zero default → realistic all-in $5–30/mo, **comparable/cheaper than current VPS** (earlier "Pro $59/Scale $199" figures were wrong). (4) Migration effort medium (2–4 days): dump/import DB, R2 blob for 418 MB PDFs, re-point WhatsApp webhooks; no app-code changes required (no vapor.yml, no schedules, queue on redis already).
