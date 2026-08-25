@@ -943,6 +943,32 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 **F2. Hardcoded "3 terms" display bugs (cosmetic, not data corruption).** Two files hardcode `$termMap = ["First Term"=>1, "Second Term"=>2, "Third Term"=>3]`: `resources/views/admin/marks/student.blade.php:51` and `resources/views/teacher/marks/teacher-exam-list.blade.php:42`. A school with different term names or a different term count shows "-" instead of a number next to exam entries. Fix: build the term map dynamically from the school's real AcademicTerm records instead of hardcoding 3 English term names. Not fixed yet — logged for future UI polish.
 
+### 2026-08-26: Sub-group/grading_style implementation — two PRs shipped
+
+- **Work done**: Implemented the approved sub-grouping design as two PRs:
+  - **PR 1** (branch `feat/grading-style-and-sub-group`, commit 1): Schema + GradingHelper fix + report-card logic decoupling + OnboardingEngine sub_group extension
+    - Migration: `grading_style` enum nullable on `standards`, `sub_group` varchar nullable on `standards_link`
+    - GradingHelper bug fix: `levelTypeForStandard()` now matches underscore-prefixed variants (`primary_lower` → `'primary'`)
+    - ReportCardsController: `showAgg` reads `grading_style` first, falls back to `isNursery + in_array` when NULL
+    - ReportCardCommentService: new `resolveGroup()` method uses `grading_style` when set (`total_marks`→`'lower'`, `aggregate`→`'upper'`), falls back to `in_array` name check when NULL. Optional `?Standard $standard` parameter added to `commentFor()` and `headTeacherCommentFor()`
+    - OnboardingEngine: `saveStandards()` accepts optional `sub_group` key, passed to `StandardLink::firstOrCreate` via `array_filter`
+    - All columns nullable, all params optional — full backward compatibility
+  - **PR 2** (branch `feat/grading-style-and-sub-group`, commit 2): Kabale backfill command
+    - `kabale:backfill-grading-style` Artisan command with `--dry-run` and `--school=` options
+    - Maps: nursery/primary_lower → `total_marks`, primary/primary_upper/o-level/a-level → `aggregate`
+    - Maps: primary_lower → `sub_group='lower'`, primary_upper → `sub_group='upper'`, others → NULL
+    - Idempotent: skips already-correct values, fails gracefully for non-existent schools
+    - Step 6 (remove hardcoded `in_array` checks) confirmed already done — the `in_array` fallbacks only fire when `grading_style` is NULL
+- **Tests**:
+  - GradingHelperLevelTypeTest: 13 PASS (including underscore-prefix regression)
+  - GradingStyleResolutionTest: 10 PASS, 16 assertions
+  - ContentStepsTest: 4 new sub_group tests (48 total PASS)
+  - BackfillKabaleGradingStyleTest: 10 PASS, 31 assertions
+  - Existing: ReportCardHeadTeacherCommentTest 8 PASS, ReportTotalExcludesNonContributingExamsTest 7 PASS
+- **Files touched**: `database/migrations/2026_08_26_000001_add_grading_style_to_standards_and_sub_group_to_standards_link.php`, `app/Models/Standard.php`, `app/Models/StandardLink.php`, `app/Helpers/GradingHelper.php`, `app/Http/Controllers/Admin/ReportCardsController.php`, `app/Services/ReportCardCommentService.php`, `app/Services/OnboardingEngine.php`, `app/Console/Commands/BackfillKabaleGradingStyle.php`, `tests/Feature/Grading/GradingHelperLevelTypeTest.php`, `tests/Feature/Grading/GradingStyleResolutionTest.php`, `tests/Feature/Grading/BackfillKabaleGradingStyleTest.php`, `tests/Feature/Onboarding/OnboardingEngine/ContentStepsTest.php`
+- **Branch**: `feat/grading-style-and-sub-group`
+- **Status**: 🚧 PR not yet opened on GitHub — branch pushed to origin
+
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
 - **Key findings**: (1) Production host is **DigitalOcean** (2 vCPU/2 GB, ~$18–24/mo), NOT Hetzner as older notes claim — corrected above. (2) Live scale: 20 schools, 1,376 users, 664,336 marks, 203 exams, 18 report_generations all-time; load 0.09 (idle); nginx access logging DISABLED. (3) Laravel Cloud pricing (verified live): Starter $5/mo, Growth $20/mo, Business $200/mo, each + $5 usage credit, scale-to-zero default → realistic all-in $5–30/mo, **comparable/cheaper than current VPS** (earlier "Pro $59/Scale $199" figures were wrong). (4) Migration effort medium (2–4 days): dump/import DB, R2 blob for 418 MB PDFs, re-point WhatsApp webhooks; no app-code changes required (no vapor.yml, no schedules, queue on redis already).
