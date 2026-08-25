@@ -970,6 +970,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **PR**: #369 — https://github.com/KlassApp-Foundation/KlassApp/pull/369
 - **Status**: 🚧 PR #369 open, depends on #367 and #368 merging first
 
+### 2026-08-26: UX principle — configuration surfaces must be simple SaaS settings (docs only, no code)
+
+- **Work done**: Documented a standing UX principle (no code changes).
+- **Principle**: Configuration surfaces — including but not limited to the new grading_style/sub_group feature — must present as simple, industry-standard SaaS settings, not raw technical complexity. The audience is school admins and teachers who are not tech-advanced. When the UI for grading_style/sub_group is eventually designed (separate future work, not now), it should read like "how should this class be graded?" with a couple of clear options — not an enum picker exposing `aggregate`/`total_marks` as raw values, and not a form requiring the admin to understand standards/sub-groups as database concepts.
+- **Cross-ref**: AGENTS.md rule #17 (prefill sensible defaults) and `docs/onboarding-defaults-skill.md` — this principle extends that rule from "never show blank forms" to "never show raw internals when a human-friendly wrapper will do."
+- **Scope boundary**: This principle applies to the eventual grading_style UI (not yet built) and to all future configuration surfaces. It does NOT change any current code or the Phase 1C scope. The "Average" grading-style question (raised separately) is also deliberately deferred — not part of 1C.
+- **Files touched**: `knowledge.md` only (this entry)
+- **Status**: 📋 principle documented — no code changes, no PR
+
 ### 2026-08-26: Phase 1C investigation — teacher/student/WhatsApp/plan divergence
 
 **Scope**: Investigate divergence between ManualOnboardingWizard and AgentToshi for saveTeachers, saveStudents, saveWhatsApp, savePlan — the remaining OnboardingEngine migration phases.
@@ -1027,7 +1036,9 @@ Phase B: Mix→Vite + Vue 3 runtime
 **1C-5**: Wire Wizard and Toshi to call OnboardingEngine methods instead of inline creation.
 **1C-6**: Password security fix — set a `requires_password_change` flag on all newly created teacher/student Users, to be enforced at next login (separate concern from 1C but should be designed alongside).
 
-**Not in 1C scope**: Bulk import paths (TeachersImport), admin single-add form (RegisterUser::CreateTeacher) — these are separate features with their own form flows and should be migrated later.
+**Not in 1C scope**: Bulk import paths (TeachersImport), admin single-add form (RegisterUser::CreateTeacher) — separate features with their own form flows. Also explicitly out of scope: grading_style/sub_group UI design (separate future work), "Average" grading-style addition (deferred to later grading redesign), and any grading-related UI — 1C is purely about unifying the four save* methods into OnboardingEngine.
+
+**Implementation hold**: Phase 1C scope is approved in substance, but awaiting explicit go-ahead before writing code. The grading-style UX question and the "Average" grading-style question must stay clearly separated from 1C.
 
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
