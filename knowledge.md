@@ -967,7 +967,8 @@ Phase B: Mix→Vite + Vue 3 runtime
   - Existing: ReportCardHeadTeacherCommentTest 8 PASS, ReportTotalExcludesNonContributingExamsTest 7 PASS
 - **Files touched**: `database/migrations/2026_08_26_000001_add_grading_style_to_standards_and_sub_group_to_standards_link.php`, `app/Models/Standard.php`, `app/Models/StandardLink.php`, `app/Helpers/GradingHelper.php`, `app/Http/Controllers/Admin/ReportCardsController.php`, `app/Services/ReportCardCommentService.php`, `app/Services/OnboardingEngine.php`, `app/Console/Commands/BackfillKabaleGradingStyle.php`, `tests/Feature/Grading/GradingHelperLevelTypeTest.php`, `tests/Feature/Grading/GradingStyleResolutionTest.php`, `tests/Feature/Grading/BackfillKabaleGradingStyleTest.php`, `tests/Feature/Onboarding/OnboardingEngine/ContentStepsTest.php`
 - **Branch**: `feat/grading-style-and-sub-group`
-- **Status**: 🚧 PR not yet opened on GitHub — branch pushed to origin
+- **PR**: #369 — https://github.com/KlassApp-Foundation/KlassApp/pull/369
+- **Status**: 🚧 PR #369 open, depends on #367 and #368 merging first
 
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
