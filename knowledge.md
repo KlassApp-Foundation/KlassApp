@@ -309,12 +309,12 @@
 
 ---
 
-## Current Status: August 25, 2026 (`feat/toshi-content-step-delegation` branch — PR #368 OPEN; main tip `e98d7982`)
+## Current Status: August 26, 2026 (`feat/toshi-content-step-delegation` branch — PR #368 OPEN; main tip `e98d7982`)
 
 - **🚧 PR #368 OPEN**: Toshi content-step delegation — replaces inline Standard::create/Section/StandardLink/Subject/AcademicTerm/FeesCategories persistence in `AgentToshi::commitAll()` with OnboardingEngine delegation calls. **Fixes 2 real live bugs**: (1) single-Standard mapping for mixed-level schools, (2) SchoolCategorySeeder never running for Toshi. Branch `feat/toshi-content-step-delegation` — https://github.com/KlassApp-Foundation/KlassApp/pull/368
 - **🚧 PR #367 open**: docs-only — "Configurable, but never blank" principle + skill doc.
+- **📋 Next**: Sub-grouping & grading-style implementation (standards_link.sub_group, standards.grading_style, GradingHelper fix, ReportCardsController/ReportCardCommentService decoupling, OnboardingEngine extension, Kabale backfill). UNEB grading-reform research recorded in Session Log as reference for future redesign.
 - **✅ Phase 1B complete**: `saveStandards`, `saveSubjects`, `saveTerms`, `saveFees` all extracted into `OnboardingEngine`. 69 engine tests pass.
-- **Next**: Merge #368, then Phase 2 — remaining delegation refactors (wizard `saveTeachers`/`saveStudents`/`saveWhatsApp`/`savePlan`). Future UI: apply prefill-defaults principle to terms UI.
 - **`origin/main` tip**: `e98d7982`.
 
 ## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
@@ -924,6 +924,18 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Branch**: `docs/prefill-defaults-principle`
 - **PR**: #367 — https://github.com/KlassApp-Foundation/KlassApp/pull/367
 - **Status**: 🚧 PR #367 open, expanded with skill doc. Awaiting merge.
+
+### 2026-08-26: UNEB grading-reform research — reference for future grading-system redesign (not implemented)
+
+- **Work done**: Research session on UNEB grading systems by level, documenting the current reform landscape for the future grading-system redesign. This is reference material only — nothing was implemented or changed in code.
+- **Key findings**:
+  - **O-Level (UCE)** — REFORMED, live now. New Lower Secondary Curriculum (NLSC/CBC, rolled out 2020, first UCE cohort assessed 2024, second 2025). Final subject grade = 20% school-based Continuous Assessment + 80% national End-of-Cycle exam. Letter grades A-E (achievement/competency levels), not ranked against peers — the old D1-F9 point scale and Division 1-4 peer-ranking system have been formally removed. Project Work assessed separately at school level, shown as a standalone certificate item (not blended into subject grades). Certification: must sit ≥8 subjects, ≥D in each for a certificate (Result 1); all-E across every subject = transcript only, no certificate.not blended into subject grades). Certification: must sit ≥8 subjects, ≥D in each for a certificate (Result 1); all-E across every subject = transcript only, no certificate.
+  - **A-Level (UACE)** — NOT yet reformed, old system still in effect. Current: points-based (A=6…E=2, O=1 subsidiary pass, F=0), principal-subject-based, no Continuous Assessment weighting yet. A CA-weighted reform (mirroring O-Level's 20/80 split) is planned but UNEB/NCDC officials say the final-grade computation is "still ongoing" even for the 2026 pioneer cohort — full rollout targeted ~2028. Don't build around a 20/80 split for A-Level yet.
+  - **Primary (PLE)** — still the traditional system, no CA-weighting reform found. Division 1-4 based on total points across exactly 4 subjects (English, Math, Science, Social Studies), 1-9 points per subject, lower sum = better division (4-12 points = Division 1). Remains purely exam-based.
+  - **UPE vs PLE**: UPE (Universal Primary Education) is Uganda's free-primary-schooling funding/access policy, not a grading system. The actual primary exam/grading body is PLE. Worth keeping distinct since they're easy to conflate.
+- **Where it connects**: This informs the future, larger grading-system redesign discussed alongside the just-approved sub_group/grading_style work (standards_link.sub_group, standards.grading_style). That implementation itself doesn't need to change based on this research, since it's a general enum that doesn't assume any particular level's current reform status.
+- **Files touched**: `knowledge.md` only (this entry)
+- **Status**: 📋 reference research recorded — no code changes, no PR
 
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
