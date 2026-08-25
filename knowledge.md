@@ -309,12 +309,12 @@
 
 ---
 
-## Current Status: August 25, 2026 (`origin/main` tip `e98d7982` — OnboardingEngine Phase 1B complete + bug #4 fix MERGED; docs PR #367 OPEN, expanded with skill doc)
+## Current Status: August 25, 2026 (`feat/toshi-content-step-delegation` branch — PR #368 OPEN; main tip `e98d7982`)
 
-- **✅ Merged #366**: `saveFees` whole-school fee fix — one row per Standard with `section_id=NULL`, not fallback to first Standard — merge `e98d7982` — https://github.com/KlassApp-Foundation/KlassApp/pull/366
-- **🚧 PR #367 open** (expanded): docs-only — "Configurable, but never blank — prefill sensible defaults" principle. Original commit: AGENTS.md rule #17 + `docs/onboarding-engine-plan.md` §7. New commit: `docs/onboarding-defaults-skill.md` (canonical skill doc with known defaults per step, implementation checklist, cross-references) + AGENTS.md rule #17 pointer to skill doc. Branch `docs/prefill-defaults-principle` — https://github.com/KlassApp-Foundation/KlassApp/pull/367
-- **✅ Phase 1B complete**: `saveStandards`, `saveSubjects`, `saveTerms`, `saveFees` all extracted into `OnboardingEngine`. 69 engine tests pass (44 ContentStepsTest + 17 IdentityStepsTest + 8 SchoolCategoryStepTest).
-- **Next**: Phase 2 — delegation refactors (AgentToshi `commitAll`/`commitStep`, wizard `saveTeachers`/`saveStudents`/`saveWhatsApp`/`savePlan`). Future UI: apply prefill-defaults principle (rule #17 + `docs/onboarding-defaults-skill.md`) to terms UI in both Toshi and wizard.
+- **🚧 PR #368 OPEN**: Toshi content-step delegation — replaces inline Standard::create/Section/StandardLink/Subject/AcademicTerm/FeesCategories persistence in `AgentToshi::commitAll()` with OnboardingEngine delegation calls. **Fixes 2 real live bugs**: (1) single-Standard mapping for mixed-level schools, (2) SchoolCategorySeeder never running for Toshi. Branch `feat/toshi-content-step-delegation` — https://github.com/KlassApp-Foundation/KlassApp/pull/368
+- **🚧 PR #367 open**: docs-only — "Configurable, but never blank" principle + skill doc.
+- **✅ Phase 1B complete**: `saveStandards`, `saveSubjects`, `saveTerms`, `saveFees` all extracted into `OnboardingEngine`. 69 engine tests pass.
+- **Next**: Merge #368, then Phase 2 — remaining delegation refactors (wizard `saveTeachers`/`saveStudents`/`saveWhatsApp`/`savePlan`). Future UI: apply prefill-defaults principle to terms UI.
 - **`origin/main` tip**: `e98d7982`.
 
 ## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
@@ -879,6 +879,25 @@ Phase B: Mix→Vite + Vue 3 runtime
   - `php artisan test --compact tests/Feature/Onboarding/` — 158 passed, 0 failed
   - `php artisan test --compact` — 769 passed, 58 failed (pre-existing Toshi LLM/E2E/step-count failures unrelated to this work)
 - **Phase 1A gate**: ✅ COMPLETE — all 7 identity methods are on `main`; ready to scope Phase 1B (content seeding).
+
+### 2026-08-25: Toshi content-step delegation to OnboardingEngine (PR #368 OPEN)
+- **Work done**: Replaced inline content-step persistence in `AgentToshi::commitAll()` with delegation to `OnboardingEngine::saveStandards()`, `saveSubjects()`, `saveTerms()`, `saveFees()` in both create-mode and complete-mode paths. Added `feesForEngine()` helper that transforms Toshi's `string[]` fee names into structured arrays with `amount=0` for `OnboardingEngine::saveFees()`.
+- **Fixes 2 real, previously-live bugs as a consequence of the refactor**:
+  1. **Single-Standard mapping for mixed-level schools** — Old code created ONE `$phase` Standard (named after `$this->schoolType`) and mapped ALL classes to it. For a mixed-level school (nursery + primary + o-level), subjects and fees were invisible to tiers that didn't match the one Standard. OnboardingEngine creates per-class tier Standards (nursery, primary, o-level, a-level) correctly via `standardNameForClass()`.
+  2. **SchoolCategorySeeder never ran for Toshi** — Old code never called `SchoolCategorySeeder`, so canonical defaults (core subjects, Standard rows for each tier) were missing. OnboardingEngine runs it when `school_category` is set.
+- **Files touched**:
+  - `app/Livewire/AgentToshi.php` — removed inline Standard::create, Section::firstOrCreate, StandardLink::firstOrCreate, Subject::firstOrCreate, AcademicTerm::create/firstOrCreate, FeesCategories::create/firstOrCreate; added feesForEngine() helper + 4 delegation calls in both paths; removed AcademicTerm import; $phase variable removed from content-step code (kept for teacher/student link code, out of scope)
+  - `tests/Feature/Onboarding/ToshiCommitAllCompleteModeTest.php` — updated assertion from buggy single-Standard mapping to correct per-class tier mapping (primary Standard for P1-P3)
+  - `tests/Feature/Onboarding/ToshiContentStepDelegationTest.php` (new) — 5 tests: per-class tier standards, subjects delegation (uses DB::table() to avoid Subject getNameAttribute accessor), terms delegation, fees whole-school spread (Bug 1 + pattern #7), complete-mode delegation
+- **Key decision**: Subject queries in tests use `DB::table('subjects')` raw queries because the Subject model has a `getNameAttribute` accessor that uppercases names, making Eloquent `where('name', 'MATHEMATICS')` return null (the DB stores `'Mathematics'`). This matches the pattern from `ContentStepsTest`.
+- **Branch**: `feat/toshi-content-step-delegation`
+- **PR**: #368 — https://github.com/KlassApp-Foundation/KlassApp/pull/368
+- **Commit**: `f7039220a626`
+- **Test evidence**:
+  - `ToshiCommitAllCompleteModeTest`: 1 test, 11 assertions ✅
+  - `ToshiContentStepDelegationTest`: 5 tests, 28 assertions ✅
+  - Full OnboardingEngine suite (`tests/Feature/Onboarding/OnboardingEngine/`): 69 tests, 131 assertions ✅
+- **Status**: 🚧 PR #368 open, awaiting review/merge.
 
 ### 2026-08-25: Bug #4 fix — whole-school fee creates one row per Standard (PR #366 MERGED)
 - **Work done**: Fixed `saveFees()` bug where a whole-school fee (no class specified) fell back to the school's first `Standard`, making fees invisible to students in other grading tiers. WhatsApp fee queries filter by `standard_id`; `StudentReportHelperService::fees()` reads school-wide fees as `whereNull('section_id')`. A fee scoped to one arbitrary Standard was invisible to other tiers.
