@@ -28,7 +28,7 @@ class StandardLink extends Model
      * @var array
      */
     protected $fillable = [
-       'school_id' , 'academic_year_id', 'class_teacher_id' , 'standard_id' , 'section_id' , 'no_of_students' , 'stream' , 'status'
+       'school_id' , 'academic_year_id', 'class_teacher_id' , 'standard_id' , 'section_id' , 'no_of_students' , 'stream' , 'status' , 'sub_group'
     ];
 
     protected $with=['standard' , 'section'];
@@ -76,10 +76,10 @@ class StandardLink extends Model
     public function getTimeTableCountAttribute()
     {
        return $this->hasMany('\Gegok12\Timetable\Models\TempTimetable','standardLink_id','id')->count();
-    
+
     }
-    
-   
+
+
   /*  public function temp_timetable_monday()
     {
         return $this->hasMany('\App\Models\TempTimetable','standardLink_id','id')->where('day','Monday')->orderBy('schedule');
@@ -150,19 +150,19 @@ class StandardLink extends Model
     {
         return $this->hasMany('\App\Models\Fee','standardLink_id','id');
     }
-   
+
     public function getTeacherLinkDetails()
     {
         $i = 0;
         $array = [];
-        foreach ($this->teacherlink as $teacher) 
-        { 
+        foreach ($this->teacherlink as $teacher)
+        {
 
             $array['inputs'][$i]['subject_id']  = $teacher->subject_id;
             $array['inputs'][$i]['teacher_id']  = $teacher->teacher_id;
             $array['inputs'][$i]['subject_type']  = $teacher->subject_type;
             $array['inputs'][$i]['no_of_periods']  = $teacher->no_of_periods;
-           
+
             $i++;
         }
 
@@ -170,7 +170,7 @@ class StandardLink extends Model
     }
 
     public function getStandardSectionAttribute()
-    { 
+    {
         if( ($this->standard->name == 'PREKG') || ($this->standard->name == 'prekg') )
         {
             $standard_name = 'PREKG';
@@ -179,7 +179,7 @@ class StandardLink extends Model
         {
             $standard_name = 'LKG';
         }
-        elseif ( ($this->standard->name == 'UKG') || ($this->standard->name == 'ukg') ) 
+        elseif ( ($this->standard->name == 'UKG') || ($this->standard->name == 'ukg') )
         {
             $standard_name = 'UKG';
         }
@@ -194,7 +194,7 @@ class StandardLink extends Model
     }
 
     public function getStandardNameAttribute()
-    { 
+    {
         if( ($this->standard->name == 'Nursery') || ($this->standard->name == 'Nursery') )
         {
             $standard_name = 'Nursery';
@@ -203,7 +203,7 @@ class StandardLink extends Model
         {
             $standard_name = 'Primary';
         }
-        elseif ( ($this->standard->name == 'Secondary') || ($this->standard->name == 'Secondary') ) 
+        elseif ( ($this->standard->name == 'Secondary') || ($this->standard->name == 'Secondary') )
         {
             $standard_name = 'Secondary';
         }
@@ -222,7 +222,7 @@ class StandardLink extends Model
     {
 
         $mentry=$this->hasMany('\App\Models\Teacherlink','standardLink_id','id')->where('subject_type','language')->get();
-        
+
              $language=$mentry;
 
              return $language;
@@ -232,7 +232,7 @@ class StandardLink extends Model
     public function getGroupSubjectAttribute()
     {
         $mentry=$this->hasMany('\App\Models\Teacherlink','standardLink_id','id')->where('subject_type','group_dedicated_subject')->get();
-        
+
              $group_subject=$mentry;
 
              return $group_subject;
@@ -241,7 +241,7 @@ class StandardLink extends Model
 
     public function getParingSubjectAttribute()
     {
-         
+
          $language=$this->hasMany('\App\Models\Teacherlink','standardLink_id','id')->where('subject_type','language')->get();
 
          //dd($language);
@@ -249,32 +249,32 @@ class StandardLink extends Model
          $arts=$this->hasMany('\App\Models\Teacherlink','standardLink_id','id')->where('subject_type','arts')->get();
          $group_subject=$this->hasMany('\App\Models\Teacherlink','standardLink_id','id')->where('subject_type','group_dedicated_subject')->get();
         $count=$this->hasMany('\App\Models\Teacherlink','standardLink_id','id')->count();
-    
-       
+
+
              $paring_subject=['','',['',''],['',''],['',''],['','']];
-            
+
 
        for($i=0;$i<3;$i++)
         {
-            $paring_subject[$i] = $language[$i];  
+            $paring_subject[$i] = $language[$i];
             $paring_subject[$i+1] =  $language[$i+1];
-            $paring_subject[$i+2] =  $language[$i+2];   
+            $paring_subject[$i+2] =  $language[$i+2];
 
-            $paring_subject[$i+3][$i] = $science[$i];    
+            $paring_subject[$i+3][$i] = $science[$i];
             $paring_subject[$i+3][$i+1] = $arts[$i];
 
-             $paring_subject[$i+4][$i] = $science[$i+1];     
+             $paring_subject[$i+4][$i] = $science[$i+1];
             $paring_subject[$i+4][$i+1] = $arts[$i+1];
 
-             $paring_subject[$i+5][$i] =  $science[$i+2];   
+             $paring_subject[$i+5][$i] =  $science[$i+2];
             $paring_subject[$i+5][$i+1] = $arts[$i+2];
 
-             $paring_subject[$i+6][$i] =  $group_subject[$i];    
+             $paring_subject[$i+6][$i] =  $group_subject[$i];
             $paring_subject[$i+6][$i+1] = $group_subject[$i+1];
             $paring_subject[$i+6][$i+2] = $group_subject[$i+2];
 
             break;
-           
+
        }
              return $paring_subject;
 
@@ -289,7 +289,7 @@ class StandardLink extends Model
       return $this->hasMany('\Gegok12\Timetable\Models\TempTimetable','standardLink_id','id')->orderBy('schedule')->get();
 
   }
-       
+
 
 //     public function getMondayAttribute()
 //     {
@@ -303,14 +303,14 @@ class StandardLink extends Model
 //         //dd($mentry);
 
 //         //$mentry=$this->hasMany('\App\Models\TempTimetable','standardLink_id','id')->orderBy('schedule')->where('day','Monday')->get();
-        
+
 //         // $mcount=$this->hasMany('\App\Models\TempTimetable','standardLink_id','id')->where('day','Monday')->count();
 //           $mcount=$mentry->count();
-       
+
 //         if($mcount==8)
 //         {
 //              $monday=['free','free','free','free','free','free','free','free'];
-      
+
 //         for($i=0;$i<$mcount;$i++)
 //         {
 //            if($mentry[$i]->schedule==0)
@@ -345,7 +345,7 @@ class StandardLink extends Model
 //            {
 //             $monday[$mentry[$i]->schedule]=$mentry[$i];
 //         }
-           
+
 //         }
 // }
 // else{
@@ -365,7 +365,7 @@ class StandardLink extends Model
 //         // $tucount=$this->hasMany('\App\Models\TempTimetable','standardLink_id','id')->where('day','Tuesday')->count();
 
 //          $tucount=$tuentry->count();
-      
+
 //         if($tucount==8)
 //         {
 //              $tuesday=['free','free','free','free','free','free','free','free'];
@@ -404,7 +404,7 @@ class StandardLink extends Model
 //            {
 //             $tuesday[$tuentry[$i]->schedule]=$tuentry[$i];
 //         }
-           
+
 //         }
 // }
 // else
@@ -426,8 +426,8 @@ class StandardLink extends Model
 
 //         $wcount=$wentry->count();
 
-        
-      
+
+
 //         if($wcount==8)
 //         {
 //             $wednesday=['free','free','free','free','free','free','free','free'];
@@ -465,7 +465,7 @@ class StandardLink extends Model
 //            {
 //             $wednesday[$wentry[$i]->schedule]=$wentry[$i];
 //         }
-           
+
 //         }
 // }
 // else
@@ -483,8 +483,8 @@ class StandardLink extends Model
 //         // $thentry=$this->hasMany('\App\Models\TempTimetable','standardLink_id','id')->where('day','Thursday')->orderBy('schedule')->get();
 //         // $thcount=$this->hasMany('\App\Models\TempTimetable','standardLink_id','id')->where('day','Thursday')->count();
 
-        
-      
+
+
 //         if($thcount==8)
 //         {
 //             $thursday=['free','free','free','free','free','free','free','free'];
@@ -522,7 +522,7 @@ class StandardLink extends Model
 //            {
 //             $thursday[$thentry[$i]->schedule]=$thentry[$i];
 //         }
-           
+
 //         }
 // }
 // else
@@ -540,8 +540,8 @@ class StandardLink extends Model
 //         // $fentry=$this->hasMany('\App\Models\TempTimetable','standardLink_id','id')->where('day','Friday')->orderBy('schedule')->get();
 //         // $fcount=$this->hasMany('\App\Models\TempTimetable','standardLink_id','id')->where('day','Friday')->count();
 
-      
-      
+
+
 //         if($fcount==8)
 //         {
 //              $friday=['free','free','free','free','free','free','free','free'];
@@ -579,7 +579,7 @@ class StandardLink extends Model
 //            {
 //             $friday[$fentry[$i]->schedule]=$fentry[$i];
 //         }
-           
+
 //         }
 // }
 // else
@@ -589,6 +589,6 @@ class StandardLink extends Model
 // return $friday;
 
 //     }
-} 
+}
 
 

@@ -406,7 +406,13 @@ class ReportCardsController extends Controller
         $isNursery = $standard && \App\Helpers\GradingHelper::levelTypeForStandard($standard) === 'nursery';
 
         $standardName = $standard?->name ?? '';
-        $showAgg = !$isNursery && !in_array($standardName, ['primary_lower'], true);
+
+        // Use grading_style if set; fall back to legacy name-based logic when NULL.
+        if ($standard && $standard->grading_style !== null) {
+            $showAgg = $standard->grading_style === 'aggregate';
+        } else {
+            $showAgg = !$isNursery && !in_array($standardName, ['primary_lower'], true);
+        }
 
         $gradingSystem = \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)
             ->where('standard_id', $stdLink->standard_id)

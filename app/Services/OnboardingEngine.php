@@ -319,6 +319,7 @@ class OnboardingEngine
         foreach ($classes as $class) {
             $className = trim((string) ($class['name'] ?? ''));
             $streams = $class['streams'] ?? [];
+            $subGroup = $class['sub_group'] ?? null;
 
             $standardName = $this->standardNameForClass($className);
 
@@ -351,13 +352,14 @@ class OnboardingEngine
                         ['status' => '1']
                     );
 
-                    StandardLink::firstOrCreate([
+                    StandardLink::firstOrCreate(array_filter([
                         'school_id' => $school->id,
                         'academic_year_id' => $year->id,
                         'standard_id' => $standard->id,
                         'section_id' => $section->id,
                         'status' => '1',
-                    ]);
+                        'sub_group' => $subGroup,
+                    ]));
                 }
             } else {
                 // No streams — single section per class
@@ -366,13 +368,14 @@ class OnboardingEngine
                     ['status' => '1']
                 );
 
-                StandardLink::firstOrCreate([
+                StandardLink::firstOrCreate(array_filter([
                     'school_id' => $school->id,
                     'academic_year_id' => $year->id,
                     'standard_id' => $standard->id,
                     'section_id' => $section->id,
                     'status' => '1',
-                ]);
+                    'sub_group' => $subGroup,
+                ]));
             }
         }
     }
