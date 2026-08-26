@@ -23,7 +23,7 @@ class StudentAcademic extends Model
 
     /**
      * The attributes that are mass assignable.
-     * 
+     *
      * @var array
      */
     protected $fillable = [
@@ -86,5 +86,24 @@ class StudentAcademic extends Model
         return $this->hasMany('\App\Models\Timetable','academic_year_id','id');
     }
 
-   
+    /**
+     * Validate klassapp_student_id format on save.
+     * The KLS ID is the sole parent-to-child linking identifier for WhatsApp,
+     * so it must match the format /^KLS\d{7}$/i or be null (for students
+     * not yet assigned an ID). This guard prevents accidental corruption
+     * via admin forms, mass-assignment, or direct Eloquent updates.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $model) {
+            if ($model->klassapp_student_id !== null
+                && $model->klassapp_student_id !== ''
+                && !preg_match('/^KLS\d{7}$/i', $model->klassapp_student_id)) {
+                throw new \InvalidArgumentException(
+                    "klassapp_student_id must match format KLS####### (e.g. KLS0010427), got: {$model->klassapp_student_id}"
+                );
+            }
+        });
+    }
+
 }
