@@ -293,13 +293,17 @@
     {{-- ═══ PARTICULARS ═══ --}}
     <table class="particulars">
         <tr>
-            <td style="width:50%;">
+            <td style="width:40%;">
                 <div class="part-label">Student</div>
                 <div class="part-value">{{ $learner->displayName }}</div>
             </td>
             <td style="width:25%;">
                 <div class="part-label">Class</div>
                 <div class="part-value-sm">{{ $class_name }}</div>
+            </td>
+            <td style="width:35%;">
+                <div class="part-label">KLS ID</div>
+                <div class="part-value-sm">{{ $learner->registration_number ?: '—' }}</div>
             </td>
         </tr>
     </table>

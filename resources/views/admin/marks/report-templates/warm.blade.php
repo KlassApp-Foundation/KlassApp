@@ -250,7 +250,7 @@
     {{-- ═══ INFO PILLS ═══ --}}
     <table class="pills-table">
         <tr>
-            <td style="width:50%;">
+            <td style="width:40%;">
                 <div class="pill pill-student">
                     <div class="pill-label">Student</div>
                     <div class="pill-value">{{ $learner->displayName }}</div>
@@ -260,6 +260,12 @@
                 <div class="pill pill-class">
                     <div class="pill-label">Class</div>
                     <div class="pill-value">{{ $class_name }}</div>
+                </div>
+            </td>
+            <td style="width:35%;">
+                <div class="pill pill-kls">
+                    <div class="pill-label">KLS ID</div>
+                    <div class="pill-value">{{ $learner->registration_number ?: '—' }}</div>
                 </div>
             </td>
         </tr>
