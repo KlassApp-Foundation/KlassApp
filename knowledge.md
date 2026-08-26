@@ -1040,6 +1040,26 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 **Implementation hold**: Phase 1C scope is approved in substance, but awaiting explicit go-ahead before writing code. The grading-style UX question and the "Average" grading-style question must stay clearly separated from 1C.
 
+**Confirmed 1C implementation plan** (approved 2026-08-26):
+
+**Single PR** `feat/onboarding-engine-1c` (branch from `main` after #367/#368/#369 merge).
+
+**Four new OnboardingEngine methods**:
+- `saveTeachers(School, AcademicYear, array $teachers): array` — random password (`Str::random(16)`), `is_reset=1`, User+Userprofile+optional Teacherlink, email dedup
+- `saveStudents(School, AcademicYear, array $students): array` — random password, `is_reset=1`, User+Userprofile+StudentAcademic, KlassappId, class assignment via StandardLink resolution
+- `saveWhatsApp(School, int $userId, string $phone): WhatsAppUser` — `updateOrCreate` by user_id, phone uniqueness + UniqueConstraintViolationException catch
+- `savePlan(School, int $userId, int $planId, bool $skipCompletionCheck = false): CurrentPlan` — step validation, TrialService for paid plans, CurrentPlan+Subscription creation, `status='running'`
+
+**Wiring**: ManualOnboardingWizard and AgentToshi::commitAll() both delegate to OnboardingEngine. ToshiActionService::addTeacher/addStudent also delegate.
+
+**Password fix**: `is_reset=1` on every created User (existing column, tinyint default 0). Login-enforcement middleware is separate future work.
+
+**Existing `is_reset` column**: already on `users` (tinyint(1) DEFAULT 0). Currently used by mobile reset flow. 1C sets it to 1 for newly created accounts, meaning "must change password on next login." No migration needed.
+
+**Out of scope**: RegisterUser::CreateTeacher, TeachersImport, notification/invite flow, grading-style UI, "Average" grading-style.
+
+**New test files**: SaveTeachersTest (~10), SaveStudentsTest (~10), SaveWhatsAppTest (~6), SavePlanTest (~8).
+
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
 - **Key findings**: (1) Production host is **DigitalOcean** (2 vCPU/2 GB, ~$18–24/mo), NOT Hetzner as older notes claim — corrected above. (2) Live scale: 20 schools, 1,376 users, 664,336 marks, 203 exams, 18 report_generations all-time; load 0.09 (idle); nginx access logging DISABLED. (3) Laravel Cloud pricing (verified live): Starter $5/mo, Growth $20/mo, Business $200/mo, each + $5 usage credit, scale-to-zero default → realistic all-in $5–30/mo, **comparable/cheaper than current VPS** (earlier "Pro $59/Scale $199" figures were wrong). (4) Migration effort medium (2–4 days): dump/import DB, R2 blob for 418 MB PDFs, re-point WhatsApp webhooks; no app-code changes required (no vapor.yml, no schedules, queue on redis already).
