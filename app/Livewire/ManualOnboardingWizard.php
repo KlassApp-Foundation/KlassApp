@@ -12,18 +12,18 @@ use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
-use App\Models\StudentAcademic;
+
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
-use App\Models\Userprofile;
+
 use App\Models\WhatsAppUser;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolCategorySeeder;
-use App\Services\StudentIdGeneratorService;
-use Illuminate\Database\UniqueConstraintViolationException;
+
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -1135,36 +1135,17 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['teacherName' => 'Add class and subject first.']);
         }
 
-        foreach ($this->teacherDrafts as $draft) {
-            $name = trim((string) ($draft['name'] ?? ''));
-            $email = trim((string) ($draft['email'] ?? ''));
-            if ($name === '' || $email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                continue;
-            }
+        $drafts = array_map(function ($draft) use ($link, $subject) {
+            return [
+                'name'             => trim((string) ($draft['name'] ?? '')),
+                'email'            => trim((string) ($draft['email'] ?? '')),
+                'phone'            => trim((string) ($draft['phone'] ?? '')),
+                'standardLink_id'  => $link->id,
+                'subject_id'       => $subject->id,
+            ];
+        }, $this->teacherDrafts);
 
-            if (User::where('school_id', $school->id)->where('email', $email)->exists()) {
-                $email = 'teacher.'.Str::lower(Str::random(6)).'@'.($school->slug ?: 'school').'.test';
-            }
-
-            $teacher = User::create([
-                'school_id' => $school->id,
-                'usergroup_id' => 5,
-                'name' => $name,
-                'email' => $email,
-                'password' => bcrypt(Str::random(16)),
-                'status' => 'active',
-                'email_verified' => 1,
-                'mobile_no' => trim((string) ($draft['phone'] ?? '')) ?: null,
-            ]);
-
-            Teacherlink::firstOrCreate([
-                'school_id' => $school->id,
-                'academic_year_id' => $year->id,
-                'standardLink_id' => $link->id,
-                'subject_id' => $subject->id,
-                'teacher_id' => $teacher->id,
-            ]);
-        }
+        app(OnboardingEngine::class)->saveTeachers($school, $year, $drafts);
 
         $this->teacherDrafts = [];
     }
@@ -1183,62 +1164,23 @@ class ManualOnboardingWizard extends Component
         }
 
         $year = AcademicYear::where('school_id', $school->id)->first();
+        if (! $year) {
+            throw ValidationException::withMessages(['studentName' => 'Create an academic year first.']);
+        }
+
         $links = StandardLink::with('section')->where('school_id', $school->id)->get();
-        $firstLink = $links->first();
-        if (! $year || ! $firstLink) {
+        if ($links->isEmpty()) {
             throw ValidationException::withMessages(['studentName' => 'Add a class first.']);
         }
 
-        foreach ($this->studentDrafts as $index => $draft) {
-            $name = trim((string) ($draft['name'] ?? ''));
-            if ($name === '') {
-                continue;
-            }
+        $drafts = array_map(function ($draft) {
+            return [
+                'name'  => trim((string) ($draft['name'] ?? '')),
+                'class' => trim((string) ($draft['class'] ?? '')),
+            ];
+        }, $this->studentDrafts);
 
-            $email = 'student.'.($index + 1).'.'.Str::lower(Str::random(4)).'@'.($school->slug ?: 'school').'.test';
-            $student = User::create([
-                'school_id' => $school->id,
-                'usergroup_id' => 6,
-                'name' => $name,
-                'email' => $email,
-                'password' => bcrypt(Str::random(16)),
-                'status' => 'active',
-                'email_verified' => 1,
-            ]);
-
-            Userprofile::create([
-                'school_id' => $school->id,
-                'user_id' => $student->id,
-                'usergroup_id' => 6,
-                'firstname' => $name,
-                'lastname' => '',
-                'status' => 'active',
-            ]);
-
-            $klassappId = StudentIdGeneratorService::nextForStudent($student);
-
-            $targetLink = $firstLink;
-            $studentClass = trim((string) ($draft['class'] ?? ''));
-            if ($studentClass !== '') {
-                $matched = $links->first(function ($link) use ($studentClass) {
-                    $sectionName = (string) ($link->section?->name ?? '');
-
-                    return strcasecmp($sectionName, $studentClass) === 0
-                        || str_contains(strtolower($sectionName), strtolower($studentClass));
-                });
-                if ($matched) {
-                    $targetLink = $matched;
-                }
-            }
-
-            StudentAcademic::create([
-                'school_id' => $school->id,
-                'academic_year_id' => $year->id,
-                'user_id' => $student->id,
-                'standardLink_id' => $targetLink->id,
-                'klassapp_student_id' => $klassappId,
-            ]);
-        }
+        app(OnboardingEngine::class)->saveStudents($school, $year, $drafts);
 
         $this->studentDrafts = [];
     }
@@ -1305,73 +1247,27 @@ class ManualOnboardingWizard extends Component
 
     private function saveWhatsApp(School $school): void
     {
-        if (WhatsAppUser::where('user_id', Auth::id())->exists()) {
-            return;
-        }
-
         $phone = trim($this->whatsappPhone);
         if ($phone === '') {
             throw ValidationException::withMessages(['whatsappPhone' => 'Enter your WhatsApp number (+256…).']);
         }
 
-        if (WhatsAppUser::where('phone', $phone)->exists()) {
-            throw ValidationException::withMessages([
-                'whatsappPhone' => 'This WhatsApp number is already registered',
-            ]);
-        }
+        $result = app(OnboardingEngine::class)->saveWhatsApp($school, Auth::id(), $phone);
 
-        try {
-            WhatsAppUser::updateOrCreate(
-                ['user_id' => Auth::id()],
-                [
-                    'phone' => $phone,
-                    'school_id' => $school->id,
-                    'opted_in' => true,
-                    'verified_at' => now(),
-                ]
-            );
-        } catch (UniqueConstraintViolationException $e) {
+        if ($result['skipped'] !== null) {
             throw ValidationException::withMessages([
-                'whatsappPhone' => 'This WhatsApp number is already registered',
+                'whatsappPhone' => $result['skipped'][0]['reason'],
             ]);
         }
     }
 
     private function savePlan(School $school): void
     {
-        foreach (OnboardingStepsService::incompleteSteps($school->fresh(), Auth::id()) as $step) {
-            if (in_array($step['key'], OnboardingStepsService::OPTIONAL_STEPS, true)) {
-                continue;
-            }
-            if ($step['key'] !== 'plan_selection') {
-                throw ValidationException::withMessages(['plan' => 'Finish the earlier setup steps before choosing a plan.']);
-            }
-        }
-
         $this->defaultSelectedPlan();
         if (! $this->selectedPlanId) {
             throw ValidationException::withMessages(['plan' => 'Select a plan to continue.']);
         }
 
-        $plan = Plan::query()->where('id', $this->selectedPlanId)->where('is_active', 1)->first();
-        if (! $plan) {
-            throw ValidationException::withMessages(['plan' => 'That plan is not available.']);
-        }
-
-        $existing = CurrentPlan::where('school_id', $school->id)->first();
-        if ($existing) {
-            $existing->plan_id = $plan->id;
-            $existing->status = 'running';
-            $existing->save();
-
-            return;
-        }
-
-        // Visible confirmation step — no payment gate. Persist the chosen plan.
-        CurrentPlan::create([
-            'school_id' => $school->id,
-            'plan_id' => $plan->id,
-            'status' => 'running',
-        ]);
+        app(OnboardingEngine::class)->savePlan($school, (int) $this->selectedPlanId, skipCompletionCheck: false, userId: Auth::id());
     }
 }

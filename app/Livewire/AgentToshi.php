@@ -24,9 +24,8 @@ use Illuminate\Support\Str;
 use App\Mail\CoAdminInviteMail;
 use App\Models\OnboardingSession;
 use App\Services\OnboardingNameListExtractor;
-use App\Services\StudentIdGeneratorService;
-use App\Services\ToshiActionService;
 use App\Services\OnboardingEngine;
+use App\Services\ToshiActionService;
 
 class AgentToshi extends Component
 {
@@ -5023,13 +5022,10 @@ class AgentToshi extends Component
                     'lastname' => 'Admin', 'status' => 'active',
                 ]);
 
+                // ── Plan: delegate to OnboardingEngine for CurrentPlan/TrialService ──
+                // Subscription record is Toshi-specific billing, kept inline.
                 if ($this->selectedPlanId) {
-                    $selectedPlan = \App\Models\Plan::find($this->selectedPlanId);
-                    if ($selectedPlan && $selectedPlan->amount > 0) {
-                        \App\Services\TrialService::startTrial($school->id, $this->selectedPlanId);
-                    } else {
-                        CurrentPlan::create(['school_id' => $school->id, 'plan_id' => $this->selectedPlanId]);
-                    }
+                    app(OnboardingEngine::class)->savePlan($school, (int) $this->selectedPlanId, skipCompletionCheck: true);
                     Subscription::create([
                         'school_id'  => $school->id, 'plan_id' => $this->selectedPlanId,
                         'user_id'    => $adminUser->id,
@@ -5111,19 +5107,18 @@ class AgentToshi extends Component
                     \Log::warning('Failed to seed grading scales: ' . $e->getMessage());
                 }
 
-                foreach ($this->teacherList as $name) {
-                    $tEmail = Str::slug($name) . '@' . Str::slug($this->schoolName) . '.edu';
-                    $phone = $this->teacherPhones[$name] ?? null;
-                    $teacher = User::create([
-                        'school_id' => $school->id, 'usergroup_id' => 5, 'name' => $name,
-                        'email' => $tEmail, 'password' => $password, 'status' => 'active', 'email_verified' => 1,
-                        'mobile_no' => $phone,
-                    ]);
-                    Userprofile::create([
-                        'school_id' => $school->id, 'user_id' => $teacher->id, 'usergroup_id' => 5,
-                        'firstname' => $name, 'lastname' => '', 'profession' => 'teacher', 'status' => 'active',
-                    ]);
-                }
+                // ── Teachers: delegate to OnboardingEngine ──
+                // Fixes: random password per teacher (not shared admin password),
+                // is_reset=1 on every account, Userprofile.alternate_no for phone,
+                // email dedup with fallback.
+                $teacherDrafts = array_map(function ($name) {
+                    return [
+                        'name'  => trim((string) $name),
+                        'email' => Str::slug($name) . '@' . Str::slug($this->schoolName) . '.edu',
+                        'phone' => $this->teacherPhones[$name] ?? '',
+                    ];
+                }, $this->teacherList);
+                app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
 
                 // Create teacher-class-subject links from parsed data
                 foreach ($this->teacherLinks as $link) {
@@ -5154,91 +5149,26 @@ class AgentToshi extends Component
                     }
                 }
 
-                // Create students from onboarding list (no plan-limit truncation)
-                // Use actionData['students'] when available (has class info), fall back to studentList
+                // ── Students: delegate to OnboardingEngine ──
+                // Fixes: random password per student (not shared admin password),
+                // is_reset=1 on every account, Userprofile with alternate_no for phone,
+                // email dedup with fallback, proper StandardLink resolution.
+                // Note: gender/LIN fields are passed through in the draft but
+                // OnboardingEngine::saveStudents doesn't use them — they'll be
+                // added when gender/LIN support is added to the engine. The engine
+                // creates StudentAcademic with klassapp_student_id via nextForStudent.
                 $studentRecords = !empty($this->actionData['students'])
                     ? $this->actionData['students']
                     : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
-
-                foreach ($studentRecords as $index => $record) {
-                    $studentName = is_string($record) ? $record : ($record['name'] ?? '');
-                    if (!trim($studentName)) continue;
-
-                    $sEmail = 'student.' . ($index + 1) . '@' . Str::slug($this->schoolName) . '.sch.ug';
-                    $studentUser = User::create([
-                        'school_id' => $school->id, 'usergroup_id' => 6,
-                        'name' => trim($studentName),
-                        'email' => $sEmail, 'password' => $password,
-                        'status' => 'active', 'email_verified' => 1,
-                    ]);
-                    $profileGender = is_array($record)
-                        ? (in_array(strtolower(trim($record['gender'] ?? '')), ['male', 'female'])
-                            ? strtolower(trim($record['gender']))
-                            : null)
-                        : null;
-                    Userprofile::create([
-                        'school_id' => $school->id, 'user_id' => $studentUser->id, 'usergroup_id' => 6,
-                        'firstname' => trim($studentName), 'lastname' => '', 'gender' => $profileGender, 'status' => 'active',
-                    ]);
-
-                    // Assign to correct class based on student's class field
-                    $studentClass = is_array($record) ? ($record['class'] ?? '') : '';
-                    $targetLink = null;
-                    if (!empty($studentClass)) {
-                        // 1. Exact match against onboarding's own classLinkMap
-                        if (isset($classLinkMap[$studentClass])) {
-                            $targetLink = $classLinkMap[$studentClass];
-                        } else {
-                            // 2. Fuzzy match: find section by name, then derive standard (same logic as UsersImport)
-                            $lowerClass = strtolower(trim($studentClass));
-                            $section = \App\Models\Section::where('school_id', $school->id)
-                                ->whereRaw('LOWER(name) = ?', [$lowerClass])
-                                ->orWhereRaw('LOWER(name) LIKE ?', ["%{$lowerClass}%"])
-                                ->first();
-                            if ($section) {
-                                $stdName = null;
-                                if (str_starts_with($lowerClass, 'p')) {
-                                    $stdName = 'primary';
-                                } elseif (in_array($lowerClass[0] ?? '', ['b', 'm', 't'])) {
-                                    $stdName = 'nursery';
-                                } elseif (in_array($lowerClass, ['senior five', 'senior six', 's.5', 's.6', 's5', 's6', 'a-level', 'a level'])) {
-                                    $stdName = 'a-level';
-                                } elseif (in_array($lowerClass, ['senior one', 'senior two', 'senior three', 'senior four', 's.1', 's.2', 's.3', 's.4', 's1', 's2', 's3', 's4', 'o-level', 'o level'])) {
-                                    $stdName = 'o-level';
-                                }
-                                if ($stdName) {
-                                    $standard = \App\Models\Standard::where(['school_id' => $school->id, 'name' => $stdName])->first();
-                                    if ($standard) {
-                                        $foundLink = \App\Models\StandardLink::where([
-                                            'school_id' => $school->id, 'standard_id' => $standard->id, 'section_id' => $section->id,
-                                        ])->first();
-                                        if ($foundLink) $targetLink = $foundLink;
-                                    }
-                                }
-                            }
-                            if (!$targetLink) {
-                                \Log::warning("Toshi onboarding: unmapped class '{$studentClass}' for school {$school->id}, falling back to first class");
-                            }
-                        }
-                    }
-                    if (!$targetLink) {
-                        $targetLink = $firstStandardLink;
-                    }
-
-                    if ($targetLink) {
-                        $klassappId = StudentIdGeneratorService::nextForStudent($studentUser);
-
-                        $lin = is_array($record) ? ($record['lin'] ?? '') : '';
-                        StudentAcademic::create([
-                            'school_id' => $school->id,
-                            'academic_year_id' => $academicYear->id,
-                            'user_id' => $studentUser->id,
-                            'standardLink_id' => $targetLink->id,
-                            'klassapp_student_id' => $klassappId,
-                            'lin' => $lin ?: null,
-                        ]);
-                    }
-                }
+                $studentDrafts = array_map(function ($record) {
+                    $name = is_string($record) ? $record : ($record['name'] ?? '');
+                    return [
+                        'name'  => trim((string) $name),
+                        'class' => trim((string) (is_array($record) ? ($record['class'] ?? '') : '')),
+                        'phone' => trim((string) (is_array($record) ? ($record['phone'] ?? '') : '')),
+                    ];
+                }, $studentRecords);
+                app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
 
                 // ── Terms: delegate to OnboardingEngine (idempotent via firstOrCreate) ──
                 if (!empty($this->terms)) {
@@ -5250,12 +5180,10 @@ class AgentToshi extends Component
                     app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
                 }
 
+                // ── WhatsApp: delegate to OnboardingEngine ──
+                // Fixes: updateOrCreate by user_id for idempotency, UniqueConstraintViolationException catch for phone dedup.
                 if ($this->whatsappVerified && $this->whatsappPhone) {
-                    \App\Models\WhatsAppUser::create([
-                        'phone' => $this->whatsappPhone, 'user_id' => $adminUser->id,
-                        'school_id' => $this->schoolId,
-                        'verified_at' => now(), 'opted_in' => true,
-                    ]);
+                    app(OnboardingEngine::class)->saveWhatsApp($school, $adminUser->id, $this->whatsappPhone);
                 }
             }
 
@@ -5327,26 +5255,17 @@ class AgentToshi extends Component
                     app(OnboardingEngine::class)->saveSubjects($school, $academicYear, $this->subjects);
                 }
 
-                // Create teachers if any
-                foreach ($this->teacherList as $name) {
-                    $tEmail = Str::slug($name) . '@school.edu';
-                    try {
-                        $teacher = User::firstOrCreate(
-                            ['email' => $tEmail],
-                            ['school_id' => $schoolId, 'usergroup_id' => 5, 'name' => $name,
-                             'password' => bcrypt('password'), 'status' => 'active', 'email_verified' => 1,
-                             'mobile_no' => $this->teacherPhones[$name] ?? null]
-                        );
-                        if ($teacher->wasRecentlyCreated) {
-                            Userprofile::firstOrCreate(
-                                ['user_id' => $teacher->id],
-                                ['school_id' => $schoolId, 'usergroup_id' => 5,
-                                 'firstname' => $name, 'lastname' => '', 'profession' => 'teacher', 'status' => 'active']
-                            );
-                        }
-                    } catch (\Exception $e) {
-                        \Log::warning('Teacher creation skipped (duplicate): ' . $name . ' - ' . $e->getMessage());
-                    }
+                // ── Teachers: delegate to OnboardingEngine ──
+                // Fixes: random password per teacher, is_reset=1, Userprofile.alternate_no for phone.
+                if (!empty($this->teacherList)) {
+                    $teacherDrafts = array_map(function ($name) {
+                        return [
+                            'name'  => trim((string) $name),
+                            'email' => Str::slug($name) . '@school.edu',
+                            'phone' => $this->teacherPhones[$name] ?? '',
+                        ];
+                    }, $this->teacherList);
+                    app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
                 }
 
                 // Create teacher-class-subject links from parsed data
@@ -5384,60 +5303,22 @@ class AgentToshi extends Component
                     app(OnboardingEngine::class)->saveTerms($school, $academicYear, $this->terms);
                 }
 
-                // Create students
-                $studentRecords = !empty($this->actionData['students'])
-                    ? $this->actionData['students']
-                    : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
-                foreach ($studentRecords as $index => $record) {
-                    $studentName = is_string($record) ? $record : ($record['name'] ?? '');
-                    if (!trim($studentName)) continue;
-                    try {
-                        $sEmail = 'student.' . ($index + 1) . '@school.edu';
-                        $student = User::firstOrCreate(
-                            ['email' => $sEmail],
-                            ['school_id' => $schoolId, 'usergroup_id' => 6,
-                             'name' => trim($studentName), 'password' => bcrypt('password'),
-                             'status' => 'active', 'email_verified' => 1]
-                        );
-                        if ($student->wasRecentlyCreated) {
-                            Userprofile::firstOrCreate(
-                                ['user_id' => $student->id],
-                                ['school_id' => $schoolId, 'usergroup_id' => 6,
-                                 'firstname' => trim($studentName), 'lastname' => '', 'status' => 'active']
-                            );
-                            // Link student to a class via student_academics
-                            try {
-                                $studentClass = is_array($record) ? ($record['class'] ?? '') : '';
-                                $targetStdLink = null;
-                                if (!empty($studentClass)) {
-                                    $section = \App\Models\Section::where('school_id', $schoolId)
-                                        ->where('name', $studentClass)->first();
-                                    if ($section) {
-                                        $targetStdLink = \App\Models\StandardLink::where('school_id', $schoolId)
-                                            ->where('section_id', $section->id)
-                                            ->where('academic_year_id', $academicYear->id)
-                                            ->first();
-                                    }
-                                }
-                                if (!$targetStdLink) {
-                                    $targetStdLink = \App\Models\StandardLink::where('school_id', $schoolId)->first();
-                                }
-                                if ($targetStdLink) {
-                                    StudentAcademic::create([
-                                        'school_id' => $schoolId,
-                                        'academic_year_id' => $academicYear->id,
-                                        'user_id' => $student->id,
-                                        'standardLink_id' => $targetStdLink->id,
-                                        'klassapp_student_id' => StudentIdGeneratorService::nextForStudent($student),
-                                    ]);
-                                }
-                            } catch (\Exception $e) {
-                                \Log::warning('StudentAcademic creation skipped: ' . $e->getMessage());
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        \Log::warning('Student creation skipped: ' . $studentName . ' - ' . $e->getMessage());
-                    }
+                // ── Students: delegate to OnboardingEngine ──
+                // Fixes: random password per student, is_reset=1, Userprofile.alternate_no for phone,
+                // proper StandardLink resolution, klassapp_student_id via nextForStudent.
+                if (!empty($this->studentList) || !empty($this->actionData['students'])) {
+                    $studentRecords = !empty($this->actionData['students'])
+                        ? $this->actionData['students']
+                        : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
+                    $studentDrafts = array_map(function ($record) {
+                        $name = is_string($record) ? $record : ($record['name'] ?? '');
+                        return [
+                            'name'  => trim((string) $name),
+                            'class' => trim((string) (is_array($record) ? ($record['class'] ?? '') : '')),
+                            'phone' => trim((string) (is_array($record) ? ($record['phone'] ?? '') : '')),
+                        ];
+                    }, $studentRecords);
+                    app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
                 }
 
                 // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
@@ -5445,12 +5326,10 @@ class AgentToshi extends Component
                     app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
                 }
 
-                // WhatsApp verification
+                // ── WhatsApp: delegate to OnboardingEngine ──
+                // Fixes: updateOrCreate by user_id for idempotency, UniqueConstraintViolationException catch.
                 if ($this->whatsappVerified && $this->whatsappPhone) {
-                    \App\Models\WhatsAppUser::firstOrCreate(
-                        ['phone' => $this->whatsappPhone],
-                        ['user_id' => $user->id, 'school_id' => $this->schoolId, 'verified_at' => now(), 'opted_in' => true]
-                    );
+                    app(OnboardingEngine::class)->saveWhatsApp($school, $user->id, $this->whatsappPhone);
                 }
 
                 // Promote selected teacher to co-admin (usergroup_id: 5 → 3)

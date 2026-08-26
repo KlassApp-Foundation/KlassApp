@@ -5,6 +5,9 @@ namespace Tests\Feature\Onboarding;
 use App\AiAgents\Tools\AddStudentTool;
 use App\Models\AcademicYear;
 use App\Models\School;
+use App\Models\Section;
+use App\Models\Standard;
+use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\Userprofile;
@@ -67,6 +70,31 @@ class StudentRegistrationNumberPathsTest extends TestCase
             'type' => 'Current Academic Year',
             'start_date' => now()->startOfYear(),
             'end_date' => now()->endOfYear(),
+            'status' => 1,
+        ]);
+
+        // Seed StandardLink so the engine can create StudentAcademic with class assignment
+        $standard = Standard::create([
+            'school_id' => $this->school->id,
+            'name' => 'primary_lower',
+            'order' => 1,
+            'status' => 1,
+        ]);
+
+        $section = Section::create([
+            'school_id' => $this->school->id,
+            'name' => 'P1',
+            'status' => 1,
+        ]);
+
+        $year = AcademicYear::where('school_id', $this->school->id)->first();
+
+        StandardLink::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $year->id,
+            'standard_id' => $standard->id,
+            'section_id' => $section->id,
+            'status' => 1,
         ]);
     }
 
