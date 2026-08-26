@@ -15,7 +15,7 @@ class UserDetail extends JsonResource
     */
    public function toArray($request)
    {
-        
+
         return [
 
             'schoolName'                =>  ucwords($this->school->name),
@@ -51,7 +51,7 @@ class UserDetail extends JsonResource
 
             'emailId'                   =>  $this->email,
 
-            'mobileNo'                  =>  $this->mobile_no, 
+            'mobileNo'                  =>  $this->mobile_no,
 
             'notes'                     =>  $this->userprofile->notes,
 
@@ -69,7 +69,7 @@ class UserDetail extends JsonResource
 
             'StdSchoolPayNumber'                =>  $this->studentAcademicLatest->std_school_pay_number,
 
-            'idCardNumber'              =>  $this->studentAcademicLatest->id_card_number,
+            'schoolStudentId'           =>  $this->studentAcademicLatest->school_student_id,
 
             'boardRegistrationNumber'   =>  $this->studentAcademicLatest->board_registration_number,
 

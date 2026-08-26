@@ -365,11 +365,11 @@
                             </g>
                         </svg>
                         <span class="text-gray-700 font-medium mx-2"
-                            >ID Card Number :
+                            >School Student ID :
                         </span>
                     </div>
                     <div>
-                        <p>{{ user.id_card_number }}</p>
+                        <p>{{ user.school_student_id }}</p>
                     </div>
                 </li>
                 <li class="flex py-1">

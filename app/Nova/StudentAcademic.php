@@ -7,6 +7,7 @@ use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\KeyValue;
 use Laravel\Nova\Fields\Select;
 use Laravel\Nova\Fields\Number;
+use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Fields\Code;
 use Illuminate\Http\Request;
 use Laravel\Nova\Fields\ID;
@@ -64,7 +65,7 @@ class StudentAcademic extends Resource
 
             Number::make('Student School Pay Number','std_school_pay_number')->rules('required','numeric'),
 
-            Number::make('Id Card Number','id_card_number')->rules('required','numeric')->hideFromIndex(),
+            Text::make('School Student ID','school_student_id')->rules('nullable','string','max:50')->hideFromIndex(),
 
             Number::make('Board Registration Number','board_registration_number')->rules('nullable','numeric')->hideFromIndex(),
 

@@ -41,7 +41,7 @@ trait RegisterUser
     {
         \DB::beginTransaction();
         try
-        {            
+        {
             $user = new User;
             $user->school_id    = $school_id;
             $user->usergroup_id = $usergroup_id;
@@ -51,14 +51,14 @@ trait RegisterUser
                 $user->name = $data->name;
             }
 
-            $user->password                 = bcrypt('password'); //demo 
+            $user->password                 = bcrypt('password'); //demo
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
             $user->email_verification_code  = Str::random(40);
             $user->registration_number      = $data->registration_number;
 
             $user->save();
-            
+
             $userprofile = new Userprofile;
 
             $userprofile->school_id     = $school_id;
@@ -70,18 +70,18 @@ trait RegisterUser
                 $userprofile->lastname = $data->lastname;
             }
             $userprofile->gender                = $data->gender;
-            
+
             $userprofile->date_of_birth         = date('Y-m-d',strtotime($data->date_of_birth));
-            
+
             $userprofile->blood_group           = $data->blood_group;
-            
+
             $userprofile->address               = $data->address;
-            
+
             $userprofile->city_id               = $data->city_id;
-            
-            
+
+
             $userprofile->country_id            = $data->country_id;
-            
+
             $userprofile->pincode               = $data->pincode;
 
             if(!is_null($data->birth_place))
@@ -102,14 +102,14 @@ trait RegisterUser
             }
 
             $userprofile->sub_caste=$data->sub_caste;
-            
+
             $userprofile->aadhar_number         = $data->aadhar_number;
 
             $userprofile->joining_date          = date('Y-m-d',strtotime($data->joining_date));
-            
+
            /* $userprofile->registration_number   = $data->registration_number;*/
-            
-            
+
+
             // if(!is_null($data->lin))
             // {
             //     $userprofile->lin = $data->lin;
@@ -117,11 +117,11 @@ trait RegisterUser
             if(!is_null($data->notes))
             {
                 $userprofile->notes = $data->notes;
-            } 
+            }
 
             if($path != '')
             {
-              $userprofile->avatar = $path;              
+              $userprofile->avatar = $path;
             }
             else
             {
@@ -129,7 +129,7 @@ trait RegisterUser
                 {
                     $userprofile->avatar = "uploads/male.png";
                 }
-                elseif ($userprofile->gender == 'female') 
+                elseif ($userprofile->gender == 'female')
                 {
                     $userprofile->avatar = "uploads/female.png";
                 }
@@ -138,8 +138,8 @@ trait RegisterUser
                     $userprofile->avatar = "uploads/images.jpg";
                 }
             }
-           
-            
+
+
             $userprofile->save();
 
             $academic = new StudentAcademic;
@@ -150,35 +150,35 @@ trait RegisterUser
             $academic->standardLink_id              = $data->standard;
             $academic->std_school_pay_number                  = $data->std_school_pay_number;
             $academic->lin = $data->lin;
-            $academic->id_card_number               = $data->id_card_number;
+            $academic->school_student_id             = $data->school_student_id;
             $academic->board_registration_number    = $data->board_registration_number;
             $academic->mode_of_transport            = $data->mode_of_transport;
 
             if( ($data->mode_of_transport == 'auto') || ($data->mode_of_transport == 'rickshaw') || ($data->mode_of_transport == 'taxi') )
             {
-                $array['driver_name']           = $data->driver_name; 
+                $array['driver_name']           = $data->driver_name;
                 $array['driver_contact_number'] = $data->driver_contact_number;
 
                 $academic->transport_details    = $array;
             }
-            
+
             $academic->siblings                     = $data->siblings;
             $academic->siblings_count               = $data->siblings_count;
             if($data->siblings == 'yes')
-            { 
+            {
                 $array=[];
 
                 for($i = 0 ; $i < $data->siblings_count ; $i++)
                 {
-                    $array[$i]['sibling_relation']      =  $data->sibling_relation[$i]; 
+                    $array[$i]['sibling_relation']      =  $data->sibling_relation[$i];
                     $array[$i]['sibling_name']          =  $data->sibling_name[$i];
-                    $array[$i]['sibling_date_of_birth'] =  date('Y-m-d',strtotime($data->sibling_date_of_birth[$i])); 
-                    $array[$i]['sibling_standard']      =  $data->sibling_standard[$i];     
+                    $array[$i]['sibling_date_of_birth'] =  date('Y-m-d',strtotime($data->sibling_date_of_birth[$i]));
+                    $array[$i]['sibling_standard']      =  $data->sibling_standard[$i];
                 }
-                
+
                 $academic->sibling_details  =   $array;
             }
-            
+
             $academic->save();
 
         \DB::commit();
@@ -190,7 +190,7 @@ trait RegisterUser
             \DB::rollBack();
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
+        }
     }
 
     /**
@@ -207,13 +207,13 @@ trait RegisterUser
     {
         \DB::beginTransaction();
         try
-        {   
+        {
             $user = User::where('id',$user_id)->first();
             if(!is_null($data->registration_number))
             {
                 $user->registration_number   = $data->registration_number;
-            } 
-            $user->save();        
+            }
+            $user->save();
             $userprofile = Userprofile::where('user_id',$user_id)->first();
 
             $userprofile->firstname     = $data->firstname;
@@ -222,18 +222,18 @@ trait RegisterUser
                 $userprofile->lastname = $data->lastname;
             }
             $userprofile->gender                = $data->gender;
-            
+
             $userprofile->date_of_birth         = date('Y-m-d',strtotime($data->date_of_birth));
-            
+
             $userprofile->blood_group           = $data->blood_group;
-            
+
             $userprofile->address               = $data->address;
-            
+
             $userprofile->city_id               = $data->city_id;
-            
-            
+
+
             $userprofile->country_id            = $data->country_id;
-            
+
             $userprofile->pincode               = $data->pincode;
 
             if(!is_null($data->birth_place))
@@ -254,11 +254,11 @@ trait RegisterUser
             }
 
              $userprofile->sub_caste = $data->sub_caste;
-            
+
             $userprofile->aadhar_number         = $data->aadhar_number;
 
-            $userprofile->joining_date          = date('Y-m-d',strtotime($data->joining_date));            
-            
+            $userprofile->joining_date          = date('Y-m-d',strtotime($data->joining_date));
+
             if(!is_null($data->lin))
             {
                 $userprofile->lin = $data->lin;
@@ -266,11 +266,11 @@ trait RegisterUser
             if(!is_null($data->notes))
             {
                 $userprofile->notes = $data->notes;
-            } 
+            }
 
             if($path != '')
             {
-              $userprofile->avatar = $path;              
+              $userprofile->avatar = $path;
             }
             else
             {
@@ -278,7 +278,7 @@ trait RegisterUser
                 {
                     $userprofile->avatar = "uploads/male.png";
                 }
-                elseif ($userprofile->gender == 'female') 
+                elseif ($userprofile->gender == 'female')
                 {
                     $userprofile->avatar = "uploads/female.png";
                 }
@@ -287,7 +287,7 @@ trait RegisterUser
                     $userprofile->avatar = "uploads/images.jpg";
                 }
             }
-            
+
             $userprofile->save();
 
             $studentAcademic = StudentAcademic::where('user_id',$user_id)->get();
@@ -304,34 +304,34 @@ trait RegisterUser
             $academic->user_id                      = $user_id;
             $academic->standardLink_id              = $data->standard;
             $academic->std_school_pay_number                  = $data->std_school_pay_number;
-            $academic->id_card_number               = $data->id_card_number;
+            $academic->school_student_id             = $data->school_student_id;
             $academic->board_registration_number    = $data->board_registration_number;
             $academic->mode_of_transport            = $data->mode_of_transport;
             if( ($data->mode_of_transport == 'auto') || ($data->mode_of_transport == 'rickshaw') || ($data->mode_of_transport == 'taxi') )
             {
-                $array['driver_name']           = $data->driver_name; 
+                $array['driver_name']           = $data->driver_name;
                 $array['driver_contact_number'] = $data->driver_contact_number;
 
                 $academic->transport_details    = $array;
             }
-            
+
             $academic->siblings                     = $data->siblings;
             $academic->siblings_count               = $data->siblings_count;
             if($data->siblings == 'yes')
-            { 
+            {
                 $array=[];
 
                 for($i = 0 ; $i < $data->siblings_count ; $i++)
                 {
-                    $array[$i]['sibling_relation']      =  $data->sibling_relation[$i]; 
+                    $array[$i]['sibling_relation']      =  $data->sibling_relation[$i];
                     $array[$i]['sibling_name']          =  $data->sibling_name[$i];
-                    $array[$i]['sibling_date_of_birth'] =  date('Y-m-d',strtotime($data->sibling_date_of_birth[$i])); 
-                    $array[$i]['sibling_standard']      =  $data->sibling_standard[$i];     
+                    $array[$i]['sibling_date_of_birth'] =  date('Y-m-d',strtotime($data->sibling_date_of_birth[$i]));
+                    $array[$i]['sibling_standard']      =  $data->sibling_standard[$i];
                 }
-                
+
                 $academic->sibling_details  =   $array;
             }
-            
+
             $academic->save();
 
         \DB::commit();
@@ -343,7 +343,7 @@ trait RegisterUser
             \DB::rollBack();
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
+        }
     }
 
     /**
@@ -359,9 +359,9 @@ trait RegisterUser
     {
         \DB::beginTransaction();
         try
-        {   
+        {
             if($data->parent == 'add')
-            {         
+            {
                 $user = new User;
 
                 $user->school_id    = $school_id;
@@ -370,13 +370,13 @@ trait RegisterUser
                 {
                     $user->name = $data->name;
                 }
-                $user->password = bcrypt('password'); //demo 
+                $user->password = bcrypt('password'); //demo
                 $user->email = $data->email;
                 $user->mobile_no = $data->mobile_no;
                 $user->email_verification_code = Str::random(40);
 
                 $user->save();
-                
+
                 $userprofile = new Userprofile;
 
                 $userprofile->school_id         = $school_id;
@@ -397,8 +397,8 @@ trait RegisterUser
                 if($data->qualification_id != null)
                 {
                     foreach($data->qualification_id as $qualification)
-                    {  
-                        
+                    {
+
                         $parent = new ParentProfile;
 
                         $parent->school_id          =   $school_id;
@@ -458,7 +458,7 @@ trait RegisterUser
 
                 $link->save();
             }
-            
+
             \DB::commit();
             return $user;
         }
@@ -468,7 +468,7 @@ trait RegisterUser
             \DB::rollBack();
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
+        }
     }
 
     /**
@@ -484,7 +484,7 @@ trait RegisterUser
     {
         \DB::beginTransaction();
         try
-        {     
+        {
             $userprofile = Userprofile::where('user_id',$user_id)->first();
 
             $userprofile->firstname         = $data->firstname;
@@ -498,9 +498,9 @@ trait RegisterUser
             }
 
             $userprofile->save();
-            
+
             $parentprofiles = ParentProfile::where('user_id',$user_id)->get();
-            foreach ($parentprofiles as $profile) 
+            foreach ($parentprofiles as $profile)
             {
                 $profile->delete();
             }
@@ -508,8 +508,8 @@ trait RegisterUser
             if($data->qualification_id != null)
             {
                 foreach($data->qualification_id as $qualification)
-                {  
-                    
+                {
+
                     $parent = new ParentProfile;
 
                     $parent->school_id          =   $school_id;
@@ -542,7 +542,7 @@ trait RegisterUser
 
                 $parent->save();
             }
-            
+
             \DB::commit();
             return $userprofile;
         }
@@ -552,7 +552,7 @@ trait RegisterUser
             \DB::rollBack();
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
+        }
     }
 
     /**
@@ -566,20 +566,20 @@ trait RegisterUser
      * @return \App\Models\User Newly created teacher
      */
     public function CreateTeacher($data , $school_id , $academic_year , $path , $usergroup_id)
-    { 
+    {
         \DB::beginTransaction();
         try
-        {            
+        {
             $user = new User;
             $user->school_id    = $school_id;
             $user->usergroup_id = $usergroup_id;
-            
+
             if(!is_null($data->name))
             {
                 $user->name = $data->name;
             }
 // dd($data);
-            $user->password                 = bcrypt('password'); //demo 
+            $user->password                 = bcrypt('password'); //demo
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
             $user->email_verification_code  = Str::random(40);
@@ -599,32 +599,32 @@ trait RegisterUser
             }
 
             $userprofile->gender                = $data->gender;
-            
+
             $userprofile->date_of_birth         = date('Y-m-d',strtotime($data->date_of_birth));
-            
+
             $userprofile->blood_group           = $data->blood_group;
-            
+
             $userprofile->address               = $data->address;
-            
+
             $userprofile->city_id               = $data->city_id;
-            
-            
+
+
             $userprofile->country_id            = $data->country_id;
-            
+
             $userprofile->pincode               = $data->pincode;
-            
+
             $userprofile->aadhar_number         = $data->aadhar_number;
 
             $userprofile->joining_date          = date('Y-m-d',strtotime($data->joining_date));
-            
+
             if(!is_null($data->notes))
             {
                 $userprofile->notes = $data->notes;
-            } 
+            }
 
             if($path != '')
             {
-              $userprofile->avatar = $path;              
+              $userprofile->avatar = $path;
             }
             else
             {
@@ -632,7 +632,7 @@ trait RegisterUser
                 {
                     $userprofile->avatar = "uploads/male.png";
                 }
-                elseif ($userprofile->gender == 'female') 
+                elseif ($userprofile->gender == 'female')
                 {
                     $userprofile->avatar = "uploads/female.png";
                 }
@@ -643,7 +643,7 @@ trait RegisterUser
             }
 
             $userprofile->marital_status = $data->marital_status;
-            
+
             $userprofile->save();
 
 
@@ -664,10 +664,10 @@ trait RegisterUser
                 $teacherprofile->specialization       = $data->specialization;
                 $teacherprofile->designation          = $data->designation;
                 $teacherprofile->sub_designation      = $data->sub_designation;
-                $teacherprofile->employee_id          = $data->employee_id;                
-                $teacherprofile->job_type             = $data->job_type;                
-                $teacherprofile->interested_in        = $data->interested_in;              
-                $teacherprofile->reporting_to         = $data->reporting_to;                 
+                $teacherprofile->employee_id          = $data->employee_id;
+                $teacherprofile->job_type             = $data->job_type;
+                $teacherprofile->interested_in        = $data->interested_in;
+                $teacherprofile->reporting_to         = $data->reporting_to;
                 $teacherprofile->status               = 1;
 
                 $teacherprofile->save();
@@ -691,10 +691,10 @@ trait RegisterUser
                     $teacherprofile->specialization       = $data->specialization;
                     $teacherprofile->designation          = $data->designation;
                     $teacherprofile->sub_designation      = $data->sub_designation;
-                    $teacherprofile->employee_id          = $data->employee_id;                 
-                    $teacherprofile->job_type             = $data->job_type;                
-                    $teacherprofile->interested_in        = $data->interested_in;              
-                    $teacherprofile->reporting_to         = $data->reporting_to;                 
+                    $teacherprofile->employee_id          = $data->employee_id;
+                    $teacherprofile->job_type             = $data->job_type;
+                    $teacherprofile->interested_in        = $data->interested_in;
+                    $teacherprofile->reporting_to         = $data->reporting_to;
                     $teacherprofile->status               = 1;
 
                     $teacherprofile->save();
@@ -705,8 +705,8 @@ trait RegisterUser
             {
                 // $user->addRole('principal');
                 $user->addDesignation("principal");
-                
-                
+
+
             }
 
             if($data->designation == 'transport_coordinator')
@@ -738,7 +738,7 @@ trait RegisterUser
             \DB::rollBack();
             Log::info($e->getMessage());
            throw $e;
-        } 
+        }
     }
 
     /**
@@ -756,8 +756,8 @@ trait RegisterUser
         \DB::beginTransaction();
         try
         {
-            $sc_grade=Scholastic::where('id',$sc_grade)->first(); 
-            
+            $sc_grade=Scholastic::where('id',$sc_grade)->first();
+
             if(class_exists('Gegok12\Exam\Models\Mark'))
             {
             $mark = new \Gegok12\Exam\Models\Mark;
@@ -783,8 +783,8 @@ trait RegisterUser
                 $mark->grades_awarded   =  $data->grades_awarded;
             }
             if($sc_grade->grading_method=='cbse')
-            {               
-              
+            {
+
                 $mark->grade_name      =  $mark->getGrade($mark->obtained_marks);
             }
             else
@@ -811,7 +811,7 @@ trait RegisterUser
             \DB::rollBack();
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
+        }
     }
 
     /**
@@ -824,24 +824,24 @@ trait RegisterUser
      * @return \App\Models\User Alumni user model
      */
     public function AddAlumni($data, $usergroup_id, $school_id, $passing_session)
-    { 
+    {
         \DB::beginTransaction();
         try
         {   $user = User::where('email', $data->email)
                 // ->orWhere('mobile_no', $data->mobile_no)
                 // ->orWhere('registration_number', $data->registration_number)
-                ->first(); 
+                ->first();
 
             $path = '';
-                
-            if(!$user) 
+
+            if(!$user)
             {
                 $user = new User;
 
                 $user->school_id                = $school_id;
                 $user->usergroup_id             = $usergroup_id;
                 $user->name                     = $data->name;
-                $user->password                 = bcrypt('password'); //demo 
+                $user->password                 = bcrypt('password'); //demo
                 $user->email                    = $data->email;
                 $user->mobile_no                = $data->mobile_no;
                 if($data->email_verification_code != null)
@@ -862,7 +862,7 @@ trait RegisterUser
 
                 // $data->passing_session = $passing_session;
 
-                
+
 
                 $userprofile = new Userprofile;
 
@@ -887,7 +887,7 @@ trait RegisterUser
             \DB::rollBack();
             Log::info($e->getMessage());
             dd($e->getMessage());
-        } 
+        }
     }
 
     /**
@@ -901,22 +901,22 @@ trait RegisterUser
      * @return mixed Persisted alumni profile
      */
     public function CreateAlumni($data, $path,$usergroup_id,$school_id,$user)
-    { 
+    {
         \DB::beginTransaction();
         try
         {
             if(class_exists('Gegok12\Alumni\Models\Alumniprofile'))
-            {  
+            {
                 $alumni = new \Gegok12\Alumni\Models\Alumniprofile;
 
                 $alumni->school_id          = $school_id;
                 $alumni->user_id            = $user->id;
                 $alumni->name               = $user->name;
                 $alumni->email              = $user->email;
-                $alumni->mobile_no          = $user->mobile_no;          
+                $alumni->mobile_no          = $user->mobile_no;
                 $alumni->passing_session    = $data->passing_session;
-                $alumni->photo              = $path;   
-         
+                $alumni->photo              = $path;
+
                 $alumni->institution_name   = $data->institution_name;
                 $alumni->degree             = $data->degree;
                 $alumni->specialization     = $data->specialization;
@@ -956,7 +956,7 @@ trait RegisterUser
 
                 $alumni->save();
             }
-         
+
             \DB::commit();
             return $alumni;
         }
@@ -965,6 +965,6 @@ trait RegisterUser
             \DB::rollBack();
             Log::info($e->getMessage());
             dd($e->getMessage());
-        } 
+        }
     }
 }

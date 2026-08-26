@@ -90,7 +90,7 @@
         </div>
 
         <!-- Mobile Number - Commented Out -->
-        <!-- 
+        <!--
         <div class="tw-form-group w-full lg:w-1/2">
             <div class="lg:mr-8 md:mr-8">
                 <div class="mb-2">
@@ -245,7 +245,7 @@
         </div>
 
         <!-- Admission Number - Commented Out -->
-        <!-- 
+        <!--
         <div class="tw-form-group w-full lg:w-1/3">
             <div class="lg:mr-8 md:mr-8">
                 <div class="mb-2">
@@ -387,24 +387,24 @@
             <div class="tw-form-group w-full lg:w-1/3">
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
-                        <label for="id_card_number" class="tw-form-label"
-                            >ID Card Number</label
+                        <label for="school_student_id" class="tw-form-label"
+                            >School Student ID</label
                         >
                     </div>
                     <div class="mb-2">
                         <input
                             type="text"
-                            v-model="id_card_number"
-                            name="id_card_number"
-                            id="id_card_number"
+                            v-model="school_student_id"
+                            name="school_student_id"
+                            id="school_student_id"
                             class="tw-form-control w-full"
-                            placeholder="ID Card Number"
+                            placeholder="School Student ID"
                         />
                     </div>
                     <span
-                        v-if="errors.id_card_number"
+                        v-if="errors.school_student_id"
                         class="text-red-500 text-xs font-semibold"
-                        >{{ errors.id_card_number[0] }}</span
+                        >{{ errors.school_student_id[0] }}</span
                     >
                 </div>
             </div>
@@ -460,7 +460,7 @@ export default {
             // registration_number: "", // commented
             lin: "",
             std_school_pay_number: "",
-            id_card_number: "",
+            school_student_id: "",
             board_registration_number: "",
             mode_of_transport: "",
             driver_name: "",
