@@ -531,12 +531,17 @@
 - **Phase 3 history on `migration/vite`**: Scaffold → CSS (3.2) → **✅ 3.3 Blade `@vite()`** → **✅ 3.4 package firefight** → **✅ 3.1 ESM** → **✅ 3.5 Mix removal** (`3bc5c70`) → rules `c470c39` → merge to main `9bdf185`.
 - **Scoped tech debt**: `.npmrc` `legacy-peer-deps=true` — **7 direct** Vue-2 peer packages reject Vue 3.5.40 (Jul 30 audit): `@fullcalendar/vue@5` (`^2.6.12`), `@kevinfaguiar/vue-twemoji-picker`, `ckeditor4-vue`, `qrcode.vue@1`, `vue-loading-overlay@3`, `vue-qart`, `vue-select@3`. **Transitive**: `vue-clickaway` (via twemoji-picker), `vodal` (via vue-image-upload-croppie). Not “needed for `@vue/compat` in general” — keep until those are upgraded/replaced. Full table in Phase 3.5 session log.
 - **Pushed** to `origin/main` — includes deferred-bugs merge **`536603c`** + knowledge closeout **`d8dc818`** (status correction on this tip).
-## Current Status: July 28, 2026
+## Current Status: August 26, 2026
 
 ### Git
-- **Branch**: `migration/tailwind4`
-- **HEAD**: `355a838` — fix(tailwind): restore empty and main layout utility loading
-- **Latest work (Jul 27-28, Tailwind v4 migration)**: Completed Phase 2a (pre-migration CSS cleanup, 6 commits), Phase 2b (Tailwind v1.4.6 → v4.3.3, CSS-first config, @apply→hardcoded CSS replacement), and Phase 2c (visual regression pass, 19-selector regression fix in `ef5bb77`, admission flow verified, empty/main layouts fixed in `355a838`). Phase 2c closeout complete — see bullets below.
+- **Branch**: `feat/onboarding-engine-1c`
+- **HEAD**: PR #370 open — Phase 1C OnboardingEngine unified methods (saveTeachers, saveStudents, saveWhatsApp, savePlan)
+- **Latest work (Aug 26, Phase 1C)**: All four unified engine methods implemented and wired to three call sites. 246 onboarding tests pass (933 assertions). Key fix: savePlan userId propagation bug (null userId caused whatsapp_verify to appear incomplete in OnboardingStepsService). PR #370 awaiting review.
+- **Onboarding Engine Progress**:
+  - ✅ Phase 1A: saveSchoolName, saveCountry, saveCurriculum (merged to main)
+  - ✅ Phase 1B: saveAcademicYear, saveTerms, saveClasses, saveFees (merged to main)
+  - ✅ Phase 1C: saveTeachers, saveStudents, saveWhatsApp, savePlan (PR #370 open)
+  - ⏸️ Phase 1D: Remaining steps (documents, etc.) — not yet started
 - **Phase 2 selector-count correction (Jul 28)**: the original Phase 2b audit's shorthand `3/8` figures for `.custom-table` and `.submit-btn` were incorrect and should not be treated as historical fact.
   - **Exact class-token recount** across `resources/views/**/*.blade.php`: `.custom-table` = **16 files**, `.submit-btn` = **19 files**.
   - **Why the earlier recount said `16` for `.submit-btn`**: that was a narrower "user-visible submit control" subset that excluded some Livewire loading-state wrappers even though those wrappers still carry the literal `submit-btn` class token in markup.
@@ -7951,3 +7956,50 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Key lesson**: Two "confirmed" claims in this saga turned out to be false (the `.env` update, and the first display-name approval) because they were only ever checked via one signal (an email, an API field, a claim) rather than independently verified end-to-end. The eventual fix for both was the same: verify via multiple independent signals, and for anything user-visible, confirm visually before calling it done.
 
 - **Status**: ✅ FULLY RESOLVED AND CLOSED — real `.env` correction applied and verified, display name approved and re-registered correctly, visually confirmed on a real device.
+
+### 2026-08-26: Phase 1C — OnboardingEngine unified methods (saveTeachers, saveStudents, saveWhatsApp, savePlan)
+
+- **Work done**: Implemented four unified methods in `OnboardingEngine` and wired all three call sites (ManualOnboardingWizard, AgentToshi, ToshiActionService) to use engine methods instead of inline logic. All 246 onboarding tests pass (933 assertions). PR #370 open on `feat/onboarding-engine-1c`.
+
+- **Methods implemented**:
+  - `saveTeachers(School $school, array $teachers)` — creates User (usergroup_id=5) + Userprofile + optional Teacherlink, `Str::random(16)` password, `is_reset=1`, email dedup with fallback (`firstname+random@school.domain`), `email_verified_at` set. Returns `['created' => [...], 'skipped' => [...]]`.
+  - `saveStudents(School $school, array $students)` — creates User (usergroup_id=6) + Userprofile + StudentAcademic (when StandardLink exists), `Str::random(16)` password, `is_reset=1`, KlassApp ID via `StudentIdGeneratorService::nextForStudent()`, class assignment via StandardLink resolution (falls back to first class), `email_verified_at` set. Returns `['created' => [...], 'skipped' => [...]]`.
+  - `saveWhatsApp(School $school, array $entries)` — `updateOrCreate` by `user_id`, phone uniqueness + `UniqueConstraintViolationException` catch, sets `verified_at` + `opted_in`. Returns `['linked' => ..., 'skipped' => ...]`.
+  - `savePlan(School $school, int $planId, bool $skipCompletionCheck = false, ?int $userId = null)` — step validation (unless `skipCompletionCheck`), `TrialService` for paid plans (amount > 0), `CurrentPlan::updateOrCreate` for free plans. Now accepts `?int $userId` passed to `OnboardingStepsService::incompleteSteps()`.
+
+- **Call-site wiring**:
+  - `ManualOnboardingWizard` — all four engine calls wired. `savePlan` passes `Auth::id()` as `userId` parameter.
+  - `AgentToshi` (both `create` and `complete` modes) — `saveTeachers`, `saveStudents`, `saveWhatsApp` wired. Create mode plan uses engine's `savePlan` with `skipCompletionCheck:true` + inline `Subscription::create`. Complete mode plan stays as `persistSelectedPlan` (different flow — plan already selected).
+  - `ToshiActionService` — `addTeacher` and `addStudent` wired to OnboardingEngine. No changes in this session — was wired in prior session.
+
+- **Key bug fixes during implementation**:
+  1. **savePlan userId propagation** — `savePlan` was passing `null` userId to `OnboardingStepsService::incompleteSteps()`, causing `whatsapp_verify` to appear incomplete even after successful WhatsApp linking. Root cause: `OnboardingStepsService::isStepComplete('whatsapp_verify', $school, null)` uses `$userId && WhatsAppUser::where('user_id', $userId)->exists()` which short-circuits to `false` when userId is null. Fixed by adding `?int $userId = null` parameter to `savePlan()` and passing `Auth::id()` from `ManualOnboardingWizard::savePlan()`.
+  2. **UserprofileObserver overwrites users.name** — `assertSee('Helen Teacher')` failed because actual rendered text was `helen teacher27` — `UserprofileObserver::created()` overwrites `users.name` to `strtolower(firstname) + user_id + rand(1,10)`. Fixed assertion to `assertSee('helen teacher')` matching the lowercased prefix.
+  3. **StudentRegistrationNumberPathsTest missing seed data** — `StudentAcademic` row was null because test didn't seed `Standard`/`Section`/`StandardLink` records, so `OnboardingEngine::saveStudents` couldn't resolve a class and skipped `StudentAcademic` creation. Fixed by adding Standard, Section, and StandardLink setup to the test's `setUp` method.
+
+- **Shape mismatches resolved (from prior session, confirmed in this session)**:
+  1. Shared hardcoded password → random passwords (`Str::random(16)`) with `is_reset=1`
+  2. Subscription creation alongside plan kept inline (engine doesn't handle it)
+  3. Gender/LIN fields on students ignored by engine (not in current data model)
+  4. `phone_no` vs `alternate_no` — engine uses correct column name (`alternate_no`)
+  5. `StudentIdGeneratorService::next()` vs `nextForStudent()` — engine uses `nextForStudent()`
+
+- **Test counts**: 35 tests, 85 assertions across the four engine test files:
+  - `SaveTeachersTest`: 11 tests
+  - `SaveStudentsTest`: 10 tests
+  - `SaveWhatsAppTest`: 6 tests, 24 assertions
+  - `SavePlanTest`: 8 tests, 21 assertions
+
+- **Files modified**:
+  - `app/Services/OnboardingEngine.php` — added `saveTeachers`, `saveStudents`, `saveWhatsApp`, `savePlan` methods
+  - `app/Livewire/ManualOnboardingWizard.php` — wired `savePlan` to pass `Auth::id()` as `userId`
+  - `app/Models/User.php` — added `is_reset` to `$fillable`
+  - `tests/Feature/Onboarding/OnboardingEngine/SaveTeachersTest.php` — new file
+  - `tests/Feature/Onboarding/OnboardingEngine/SaveStudentsTest.php` — new file
+  - `tests/Feature/Onboarding/OnboardingEngine/SaveWhatsAppTest.php` — new file
+  - `tests/Feature/Onboarding/OnboardingEngine/SavePlanTest.php` — new file
+  - `tests/Feature/Onboarding/ManualUiWave3WizardTest.php` — fixed `assertSee('helen teacher')` and `savePlan` userId
+  - `tests/Feature/Onboarding/StudentRegistrationNumberPathsTest.php` — added Standard/Section/StandardLink seed data
+
+- **PR**: [#370](https://github.com/KlassApp-Foundation/KlassApp/pull/370) — branch `feat/onboarding-engine-1c`, status: open
+- **Status**: ✅ COMPLETE — all 246 onboarding tests green (933 assertions), PR #370 open
