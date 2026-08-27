@@ -101,6 +101,13 @@ class AssignStudentsToStreamToolTest extends TestCase
         ]);
 
         // Create students assigned to the original no-stream link
+        // Seed the ID sequence so StudentIdGeneratorService doesn't collide with
+        // the KLS-format registration_numbers set above (KLS0010001, KLS0010002).
+        DB::table('student_id_sequences')->insert([
+            'school_id' => $this->school->id,
+            'next_seq' => 3,
+        ]);
+
         $this->student1 = User::create([
             'school_id' => $this->school->id,
             'usergroup_id' => 6,
@@ -109,7 +116,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'password' => bcrypt('password'),
             'status' => 'active',
             'email_verified' => 1,
-            'registration_number' => 'REG001',
+            'registration_number' => 'KLS0010001',
         ]);
 
         $this->student2 = User::create([
@@ -120,7 +127,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'password' => bcrypt('password'),
             'status' => 'active',
             'email_verified' => 1,
-            'registration_number' => 'REG002',
+            'registration_number' => 'KLS0010002',
         ]);
 
         $this->student3 = User::create([
@@ -155,7 +162,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $request = new \Laravel\Ai\Tools\Request([
             'className' => 'Primary 1',
             'streamName' => 'East',
-            'students' => ['REG001'],
+            'students' => ['KLS0010001'],
         ]);
 
         $result = $tool->handle($request);
@@ -207,7 +214,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'password' => bcrypt('password'),
             'status' => 'active',
             'email_verified' => 1,
-            'registration_number' => 'REG001',
+            'registration_number' => 'KLS0010001',
         ]);
     }
 
@@ -316,7 +323,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $request = new \Laravel\Ai\Tools\Request([
             'className' => 'Primary 1',
             'streamName' => 'East',
-            'students' => ['REG001'],
+            'students' => ['KLS0010001'],
         ]);
 
         $result = $tool->handle($request);
@@ -380,7 +387,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $request = new \Laravel\Ai\Tools\Request([
             'className' => 'Primary 1',
             'streamName' => 'East',
-            'students' => ['REG001', 'Grace Nakato'],
+            'students' => ['KLS0010001', 'Grace Nakato'],
         ]);
 
         $tool->handle($request);
@@ -398,7 +405,7 @@ class AssignStudentsToStreamToolTest extends TestCase
         $request = new \Laravel\Ai\Tools\Request([
             'className' => 'Primary 1',
             'streamName' => 'East',
-            'students' => ['REG001'],
+            'students' => ['KLS0010001'],
         ]);
 
         // Don't call handle() — no move happened

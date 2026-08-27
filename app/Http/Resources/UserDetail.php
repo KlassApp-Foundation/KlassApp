@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\OnboardingEngine;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Models\User;
 
@@ -24,7 +25,12 @@ class UserDetail extends JsonResource
     {
         $avatarpath = $this->userprofile->AvatarPath;
     }
-        if( ($this->studentAcademicLatest->standardLink->standard->name == '10') || ($this->studentAcademicLatest->standardLink->standard->name == '12') )
+        $standardName = $this->studentAcademicLatest->standardLink->standard->name ?? '';
+        $sectionName = $this->studentAcademicLatest->standardLink->section->name ?? '';
+        $isCandidateClass = OnboardingEngine::isCandidateClass($standardName)
+            || OnboardingEngine::isCandidateClass($sectionName);
+
+        if ($isCandidateClass)
         {
             $board_registration_number = $this->studentAcademicLatest->board_registration_number;
         }
@@ -33,7 +39,7 @@ class UserDetail extends JsonResource
             $board_registration_number = null;
         }
 
-        return 
+        return
         [
             'name'                      => $this->name,
             'school_name'               => $this->school->name,
@@ -45,10 +51,10 @@ class UserDetail extends JsonResource
             'country'                   => $this->userprofile->country->name,
             'pincode'                   => optional($this->userprofile)->pincode=="" ? null:optional($this->userprofile)->pincode,
             'email'                     => $this->email,
-            'mobile_no'                 => $this->mobile_no, 
+            'mobile_no'                 => $this->mobile_no,
             'notes'                     => optional($this->userprofile)->notes=="" ? null:optional($this->userprofile)->notes,
             'avatar'                    => $avatarpath,
-            'created_at'                => optional($this->userprofile)->created_at=="" ? null:date('d-m-Y H:i:s',strtotime(optional($this->userprofile)->created_at)), 
+            'created_at'                => optional($this->userprofile)->created_at=="" ? null:date('d-m-Y H:i:s',strtotime(optional($this->userprofile)->created_at)),
             'updated_at'                => optional($this->userprofile)->updated_at=="" ? null:date('d-m-Y H:i:s',strtotime(optional($this->userprofile)->updated_at)),
             'age'                       => date('Y')-date('Y',strtotime(optional($this->userprofile)->date_of_birth)),
             'ref_id'                    => $this->ref_id,
@@ -60,8 +66,9 @@ class UserDetail extends JsonResource
             'lin'               => $this->userprofile->lin,
             'joining_date'           => date('d-m-Y',strtotime($this->userprofile->joining_date)),
             'std_school_pay_number'               => $this->studentAcademicLatest->std_school_pay_number,
-            'id_card_number'            => $this->studentAcademicLatest->id_card_number,
+            'school_student_id'          => $this->studentAcademicLatest->school_student_id,
             'board_registration_number' => $board_registration_number,
+            'is_candidate_class'        => $isCandidateClass,
             'librarycard_number'        => $this->librarycard->library_card_no,
         ];
     }
