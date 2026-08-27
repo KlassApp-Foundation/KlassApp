@@ -316,12 +316,13 @@
 
 ---
 
-## Current Status: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN)
+## Current Status: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN + provenance docs PR pending)
 
 - **🔀 PR #373 OPEN**: Rename `id_card_number` → `school_student_id` (PR-A) — https://github.com/KlassApp-Foundation/KlassApp/pull/373
 - **🔀 PR #374 OPEN**: Fix WhatsApp Priority 2 cross-tenant data leak (PR-B) — https://github.com/KlassApp-Foundation/KlassApp/pull/374
-- **🔀 PR #375 OPEN**: Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR-C) — https://github.com/KlassApp-Foundation/KlassApp/pull/375 — branch `fix/wire-school-student-id-and-board-reg` @ `a63f490`
-- **Next**: Merge PR-A → PR-B → PR-C, then deploy.
+- **🔀 PR #375 OPEN**: Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR-C) — https://github.com/KlassApp-Foundation/KlassApp/pull/375 — branch `fix/wire-school-student-id-and-board-reg` @ `97a4485` (2 commits: implementation + docs)
+- **🔀 Provenance docs PR pending**: `docs/project-provenance` branch — documents KlassApp's fork origin from GeGoK12 (India) and lists known fork-legacy artifacts.
+- **Next**: Merge PR-A → PR-B → PR-C, then deploy. Provenance docs PR is independent.
 - **`origin/main` tip**: `e98d7982`.
 
 ## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
@@ -872,6 +873,23 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-27: Project provenance documentation — KlassApp as GeGoK12 fork (docs-only PR)
+
+- **Work done**: Documented KlassApp's origin as a fork of GoGo Technologies' GeGoK12 (India). This explains the recurring "Indian locale" artifacts found in the codebase — Indian grade numbers ('10'/'11'/'12') in board_registration_number validation, "ID Card Number" field naming, Aadhaar/caste/community demographic fields, CBSE "Board" terminology, and AdmissionUser trait patterns inherited from the Indian school management system.
+- **Files created**:
+  - `docs/project-provenance.md` — Full provenance doc: fork history, known fork-legacy artifacts table, identification guide, decision framework for handling artifacts.
+  - `.agents/skills/project-provenance/SKILL.md` — Agent-facing skill for proactive surfacing of fork-legacy context.
+  - `.claude/skills/project-provenance/SKILL.md` — Same.
+  - `.cursor/skills/project-provenance/SKILL.md` — Same.
+  - `.junie/skills/project-provenance/SKILL.md` — Same.
+- **Files modified**:
+  - `AGENTS.md` — Added "Project Provenance" section cross-referencing `docs/project-provenance.md` and standing rule #14.
+  - `knowledge.md` — Updated Current Status, added this session log entry.
+- **Rationale for separate doc vs. AGENTS.md fold-in**: AGENTS.md is a standing rules file, not a history document. Provenance context is explanatory background that explains *why* certain patterns exist — it belongs in a dedicated doc that agents are directed to via the SKILL.md trigger mechanism, with a concise cross-reference in AGENTS.md rather than full duplication.
+- **Cross-references**: AGENTS.md standing rule #14, Known Bug Pattern #7, knowledge.md Known Bug Pattern #8, PRs #373 and #375.
+- **Branch**: `docs/project-provenance`
+- **Status**: Ready to commit and open PR
 
 ### 2026-08-27: PR-C — Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR #375 OPEN)
 
