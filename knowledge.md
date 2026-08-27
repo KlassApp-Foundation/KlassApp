@@ -920,6 +920,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-27: PR #378 — teacher/student sidebar hover cream/DS tokens (MERGED + DEPLOYED)
+
+- **Work done**: Replaced leftover `hover:bg-purple-900` (teacher menu, 11 rows) and `hover:bg-teal-900` (student menu, 10 rows + Quiz now also gets the DS class) with `dashboard-menu-item`, matching admin and the existing DS hover in `dashboard-refresh.css` (`rgba(34, 197, 94, 0.04)`). Independent of PR #377 design proposals.
+- **PR / merge**: [#378](https://github.com/KlassApp-Foundation/KlassApp/pull/378) squash-merged → **`a786d3ce`**. Deployed via `scripts/deploy-manual.sh`.
+- **Files modified**: `resources/views/layouts/teacher/menu.blade.php`, `resources/views/layouts/student/menu.blade.php`, `tests/Feature/SidebarMenuHoverClassesTest.php`.
+- **Evidence**: Before (prod): teacher Classes hover `oklch(… purple-900)` — `tmp/sidebar-hover-fix/before-teacher-sidebar-hover.png`. After deploy: teacher Classes hover `rgba(34, 197, 94, 0.04)`, class `dashboard-menu-item` — `after-teacher-sidebar-hover.png` / `after-report.json`. Student already had stronger `.student-sidebar li:hover !important` green; teal utility removed anyway.
+- **Tests**: `php artisan test --compact tests/Feature/SidebarMenuHoverClassesTest.php` — 2 passed.
+- **Key decisions**: Reuse `dashboard-menu-item` rather than invent a new cream/tan utility — DESIGN_SYSTEM.md points tokens at `dashboard-refresh.css`; admin already uses this class.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED (`a786d3ce`).
+
 ### 2026-08-27: PR #377 — design proposals (landing/brand/dashboard) — branch corruption fixed + fact-check corrections
 
 - **PR**: [#377](https://github.com/KlassApp-Foundation/KlassApp/pull/377) — branch `docs/landing-page-reframe-proposal`, tip **`a06b5b24`**. Docs-only (landing reframe, brand identity, dashboard redesign) — no functional app changes.
