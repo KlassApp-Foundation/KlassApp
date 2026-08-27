@@ -74,6 +74,13 @@
 - **Lesson**: When a model's read convention uses `whereNull('section_id')` to mean "applies to all sections in this standard", the write side must create one row per standard with `section_id=NULL` — not a single row on one arbitrary standard. The write pattern must match the read pattern, or data becomes silently invisible.
 - **Verify fix still in place**: `grep -n "saveFeeSchoolWide" app/Services/OnboardingEngine.php` shows the method; `grep -n "section_id.*null" app/Services/OnboardingEngine.php` shows `section_id => null` in the `firstOrCreate` call; `php artisan test --filter=ContentStepsTest` passes 69 tests including `test_save_fees_general_fee_is_school_wide_not_scoped_to_first_class` and `test_save_fees_with_class_creates_single_scoped_row_not_per_standard`.
 
+### 8. `board_registration_number` validation — operator-precedence + wrong-locale bug (effectively always-required, silently rejecting valid UNEB numbers)
+- **What happened**: The `board_registration_number` field was gated to Indian-system standards `'10'`/`'11'`/`'12'` which never matched actual Ugandan class names in the database (P.7, S.4, Primary, etc.). Additionally, the check `$standard->name == '10' || '11' || '12'` evaluated as `($standard->name == '10') || '11' || '12'` — always truthy because non-empty strings are truthy in PHP. Combined with `nullable|numeric` validation, this meant the field was effectively always-required while simultaneously rejecting valid alphanumeric UNEB numbers like `U1234/567`.
+- **Root cause**: Two interacting bugs: (1) wrong locale — Indian standard numbers 10/11/12 don't exist in the Ugandan schema where `Standard.name` stores tier bands like `primary_lower`, `primary_upper`; (2) PHP operator precedence — `$standard->name == '10' || '11' || '12'` is always truthy, so the `required` branch always fired, and `numeric` rejected real UNEB numbers.
+- **Fix**: PR #375 — replaced Indian-system check with `OnboardingEngine::isCandidateClass()` which matches actual UNEB candidate classes (P.7/PLE, S.4/UCE, S.6/UACE) using the same normalization style as `standardNameForClass()`. Changed validation from `nullable|numeric` to `nullable|string|max:50`. For candidate classes: `required|string|max:50`. Added `is_candidate_class` boolean to UserDetail resources for frontend conditional display. All 3 request validators + Nova + wizard + Toshi updated.
+- **Lesson**: (1) PHP `||` with string literals is always truthy — always use `in_array()` or explicit comparisons for multi-value checks. (2) Locale/domain assumptions from one educational system (Indian 10th/12th) must not be hardcoded for another (Ugandan P.7/S.4/S.6). (3) `numeric` validation rejects real UNEB numbers — always verify the format constraint matches the actual data format (alphanumeric like `U1234/567`).
+- **Verify fix still in place**: `grep -n "isCandidateClass" app/Services/OnboardingEngine.php` shows the method; `grep -rn "isCandidateClass" app/Http/Requests/ app/Http/Resources/ app/Livewire/ app/Services/ToshiActionService.php` shows all call sites; `grep -rn "numeric" app/Http/Requests/UserProfileAddRequest.php app/Http/Requests/UserProfileUpdateRequest.php app/Http/Requests/Admission/AdmissionAcademicRequest.php` returns no matches for board_registration_number; `php artisan test --filter=SchoolStudentIdAndBoardRegCollectionTest` passes 14 tests.
+
 ## Open items (unresolved — do not assume either is handled)
 
 ### O1. P.4 East marks fix — **APPLIED & VERIFIED 2026-08-14** ✅
@@ -309,11 +316,12 @@
 
 ---
 
-## Current Status: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 OPEN)
+## Current Status: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN)
 
 - **🔀 PR #373 OPEN**: Rename `id_card_number` → `school_student_id` (PR-A) — https://github.com/KlassApp-Foundation/KlassApp/pull/373
 - **🔀 PR #374 OPEN**: Fix WhatsApp Priority 2 cross-tenant data leak (PR-B) — https://github.com/KlassApp-Foundation/KlassApp/pull/374
-- **Next**: PR-C (wizard/Toshi/UserprofileForm collection wiring for school_student_id)
+- **🔀 PR #375 OPEN**: Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR-C) — https://github.com/KlassApp-Foundation/KlassApp/pull/375 — branch `fix/wire-school-student-id-and-board-reg` @ `a63f490`
+- **Next**: Merge PR-A → PR-B → PR-C, then deploy.
 - **`origin/main` tip**: `e98d7982`.
 
 ## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
@@ -864,6 +872,42 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-27: PR-C — Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR #375 OPEN)
+
+- **Work done**: Implemented collection wiring for BOTH `school_student_id` (universal, any student) AND `board_registration_number` (level-scoped — only for UNEB candidate classes P.7/S.4/S.6). Added `OnboardingEngine::isCandidateClass()` helper, updated all 6 file surfaces (3 request validators, Nova, wizard, Toshi), 2 frontend resources (UserDetail + API\UserDetail with `is_candidate_class` flag), wizard blade with new input fields, and 14 tests covering all gating logic.
+- **Production bug fix (operator-precedence / wrong-locale)**: The old validation gated `board_registration_number` to Indian-system standards `'10'` / `'11'` / `'12'` which never matched actual Ugandan class names stored in the database (P.7, S.4, S.6, Primary, etc.). This was a real, pre-existing production bug — two issues:
+  1. **Wrong locale**: Indian standard numbers 10/11/12 don't exist in the Ugandan schema. The `Standard.name` column stores tier bands like `primary_lower`, `primary_upper`, `o_level`, `a_level` — not numeric grades.
+  2. **Operator precedence**: The old check `$standard->name == '10' || '11' || '12'` evaluated as `($standard->name == '10') || '11' || '12'` — always truthy because non-empty strings are truthy in PHP. Combined with the wrong locale, `board_registration_number` was **effectively always required** regardless of class, while simultaneously rejecting valid alphanumeric UNEB numbers (like `U1234/567`) via the `numeric` validation rule.
+- **Candidate-class approach**: Hardcoded UNEB candidate classes (P.7/PLE, S.4/UCE, S.6/UACE) in `isCandidateClass()` using the same normalization style as `standardNameForClass()`. NOT per-school configurable — per standing discipline against over-building. `standardNameForClass()` alone was too broad (P.1 and P.7 both map to `'primary'` tier), so `isCandidateClass()` targets specific exam-candidate classes.
+- **Validation change**: `board_registration_number` changed from `nullable|numeric` to `nullable|string|max:50` (UNEB registration numbers are alphanumeric, e.g. `U1234/567`). For candidate classes: `required|string|max:50`.
+- **Files touched**:
+  - `app/Services/OnboardingEngine.php` — added `isCandidateClass()` public static method
+  - `app/Http/Requests/UserProfileAddRequest.php` — replaced Indian-system check with `isCandidateClass()`, changed validation to `string|max:50`
+  - `app/Http/Requests/UserProfileUpdateRequest.php` — same changes
+  - `app/Http/Requests/Admission/AdmissionAcademicRequest.php` — same changes
+  - `app/Nova/StudentAcademic.php` — changed from `Number::make` with `nullable|numeric` to `Text::make` with `nullable|string|max:50`
+  - `app/Livewire/ManualOnboardingWizard.php` — added `studentSchoolStudentId` + `studentBoardRegNumber` properties, expanded draft schema, added `boardRegForDraft()` helper using `isCandidateClass()`
+  - `app/Services/ToshiActionService.php` — added conditional `board_registration_number` persistence via `isCandidateClass()`
+  - `app/Http/Resources/UserDetail.php` — replaced Indian-system check with `isCandidateClass()`, added `is_candidate_class` boolean flag
+  - `app/Http/Resources/API/UserDetail.php` — same changes
+  - `resources/views/livewire/partials/manual-wizard-step-fields.blade.php` — added School Student ID and UNEB Reg No. input fields
+  - `tests/Feature/Onboarding/SchoolStudentIdAndBoardRegCollectionTest.php` — 14 tests, 41 assertions
+- **Branch**: `fix/wire-school-student-id-and-board-reg` (based on PR-B branch `fix/whatsapp-priority2-school-id-scoping`)
+- **PR**: #375 — https://github.com/KlassApp-Foundation/KlassApp/pull/375
+- **Tip**: `a63f4900`
+- **Status**: OPEN (awaiting PR-A merge → PR-B merge → PR-C merge)
+- **Test evidence**: 14 passed, 41 assertions
+  - `is_candidate_class_returns_true_for_p7` / `_s4` / `_s6`
+  - `is_candidate_class_returns_false_for_p1` / `_s1` / `_nursery`
+  - `is_candidate_class_rejects_old_indian_standards`
+  - `is_candidate_class_handles_whitespace_and_case`
+  - `is_candidate_class_returns_false_for_empty_string`
+  - `wizard_saves_school_student_id`
+  - `wizard_saves_board_reg_for_candidate_class`
+  - `board_reg_validation_accepts_alphanumeric`
+  - `user_detail_includes_is_candidate_class_flag`
+  - `user_detail_non_candidate_class_hides_board_reg`
 
 ### 2026-08-27: PR-B — WhatsApp Priority 2 school_id scoping fix (PR #374 OPEN)
 - **Work done**: Fixed cross-tenant data leak in WhatsApp student ID lookup. Priority 2 had ungrouped OR (`where('school_student_id', X)->orWhere('board_registration_number', X)`) which broke out of any school_id scoping. Also added scope-when-known/global-fallback pattern: if WhatsAppUser has a school_id, scope the query; otherwise search globally and auto-learn the school_id onto the WhatsAppUser for future scoped lookups.
