@@ -245,6 +245,45 @@ class OnboardingEngine
     }
 
     /**
+     * Determine whether a class/section name corresponds to a UNEB
+     * candidate year — P.7 (PLE), S.4 (UCE), or S.6 (UACE).
+     *
+     * Uses the same normalisation approach as standardNameForClass()
+     * but targets the specific exam-candidate classes rather than
+     * broad grading tiers. This is intentionally hardcoded: the
+     * standing discipline is not to over-build ahead of real need,
+     * and these three are the only UNEB exam classes in Uganda.
+     *
+     * NOTE: The previous validation gated board_registration_number
+     * to Indian-system standards '10'/'11'/'12' — this was a
+     * production bug that made the field effectively always-required
+     * (because the Standard.name comparison never matched the
+     * actual Ugandan class names in the database). This method
+     * replaces that with the correct Ugandan candidate-class check.
+     */
+    public static function isCandidateClass(string $className): bool
+    {
+        $lower = strtolower(trim($className));
+
+        // PLE: Primary Seven — P.7, P7, P 7, Primary Seven
+        if (in_array($lower, ['p.7', 'p7', 'p 7', 'primary seven'], true)) {
+            return true;
+        }
+
+        // UCE: Senior Four — S.4, S4, S 4, Senior Four
+        if (in_array($lower, ['s.4', 's4', 's 4', 'senior four'], true)) {
+            return true;
+        }
+
+        // UACE: Senior Six — S.6, S6, S 6, Senior Six
+        if (in_array($lower, ['s.6', 's6', 's 6', 'senior six'], true)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Map a class/section name to a standard (grading-tier) name.
      *
      * Follows the same heuristics as SchoolCategorySeeder and
@@ -786,7 +825,11 @@ class OnboardingEngine
      * Create student users with random passwords, is_reset=1, and KlassApp IDs.
      *
      * Each entry in $students must contain at least 'name'.
-     * Optional keys: 'class' (section name to resolve StandardLink), 'email', 'phone'.
+     * Optional keys: 'class' (section name to resolve StandardLink), 'email',
+     * 'phone', 'school_student_id', 'board_registration_number'.
+     *
+     * board_registration_number is persisted only for UNEB candidate classes
+     * (P.7 / S.4 / S.6) via isCandidateClass().
      *
      * Returns ['created' => [...], 'skipped' => [...]].
      */
@@ -850,11 +893,12 @@ class OnboardingEngine
 
             // Resolve class assignment
             $className = trim((string) ($draft['class'] ?? ''));
-            $standardLinkId = null;
+            $link = null;
 
             if ($className !== '') {
                 // Find StandardLink whose section name matches the class
-                $link = StandardLink::where('school_id', $school->id)
+                $link = StandardLink::with(['standard', 'section'])
+                    ->where('school_id', $school->id)
                     ->where('academic_year_id', $year->id)
                     ->whereHas('section', function ($query) use ($school, $className) {
                         $query->where('school_id', $school->id)
@@ -864,24 +908,32 @@ class OnboardingEngine
                             });
                     })
                     ->first();
-
-                if ($link) {
-                    $standardLinkId = $link->id;
-                }
             }
 
             // Fallback: first StandardLink for this school/year
-            if (! $standardLinkId && $firstLink) {
-                $standardLinkId = $firstLink->id;
+            if (! $link && $firstLink) {
+                $link = StandardLink::with(['standard', 'section'])->find($firstLink->id) ?? $firstLink;
             }
 
-            if ($standardLinkId) {
+            if ($link) {
+                $schoolStudentId = trim((string) ($draft['school_student_id'] ?? ''));
+                $boardReg = trim((string) ($draft['board_registration_number'] ?? ''));
+                $stdName = trim((string) ($link->standard?->name ?? ''));
+                $secName = trim((string) ($link->section?->name ?? $className));
+
+                // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6)
+                if ($boardReg !== '' && ! (self::isCandidateClass($stdName) || self::isCandidateClass($secName))) {
+                    $boardReg = '';
+                }
+
                 StudentAcademic::create([
-                    'school_id'            => $school->id,
-                    'academic_year_id'     => $year->id,
-                    'user_id'              => $student->id,
-                    'standardLink_id'      => $standardLinkId,
-                    'klassapp_student_id'  => $klassappId,
+                    'school_id' => $school->id,
+                    'academic_year_id' => $year->id,
+                    'user_id' => $student->id,
+                    'standardLink_id' => $link->id,
+                    'klassapp_student_id' => $klassappId,
+                    'school_student_id' => $schoolStudentId !== '' ? $schoolStudentId : null,
+                    'board_registration_number' => $boardReg !== '' ? $boardReg : null,
                 ]);
             }
 

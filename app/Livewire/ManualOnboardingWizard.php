@@ -9,8 +9,6 @@ use App\Models\CurrentPlan;
 use App\Models\FeesCategories;
 use App\Models\Plan;
 use App\Models\School;
-use App\Models\Section;
-use App\Models\Standard;
 use App\Models\StandardLink;
 
 use App\Models\Subject;
@@ -110,7 +108,11 @@ class ManualOnboardingWizard extends Component
 
     public string $studentParentPhone = '';
 
-    /** @var list<array{name: string, class: string, stream: string, parent: string, parent_phone: string}> */
+    public string $studentSchoolStudentId = '';
+
+    public string $studentBoardRegNumber = '';
+
+    /** @var list<array{name: string, class: string, stream: string, parent: string, parent_phone: string, school_student_id: string, board_registration_number: string}> */
     public array $studentDrafts = [];
 
     public string $studentPaste = '';
@@ -257,11 +259,16 @@ class ManualOnboardingWizard extends Component
             'stream' => trim($this->studentStream),
             'parent' => trim($this->studentParent),
             'parent_phone' => trim($this->studentParentPhone),
+            'school_student_id' => trim($this->studentSchoolStudentId),
+            'board_registration_number' => trim($this->studentBoardRegNumber),
         ];
         $this->studentName = '';
+        $this->studentClass = '';
         $this->studentStream = '';
         $this->studentParent = '';
         $this->studentParentPhone = '';
+        $this->studentSchoolStudentId = '';
+        $this->studentBoardRegNumber = '';
         $this->errorMessage = '';
     }
 
@@ -284,6 +291,8 @@ class ManualOnboardingWizard extends Component
                 'stream' => '',
                 'parent' => '',
                 'parent_phone' => '',
+                'school_student_id' => '',
+                'board_registration_number' => '',
             ];
         }
         $this->studentPaste = '';
@@ -379,6 +388,8 @@ class ManualOnboardingWizard extends Component
                     'stream' => (string) ($row['stream'] ?? ''),
                     'parent' => (string) ($row['parent'] ?? ''),
                     'parent_phone' => (string) ($row['parent_phone'] ?? ''),
+                    'school_student_id' => (string) ($row['school_student_id'] ?? ''),
+                    'board_registration_number' => (string) ($row['board_registration_number'] ?? ''),
                 ];
             }
             $this->studentUpload = null;
@@ -1069,23 +1080,13 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['className' => 'Create an academic year first.']);
         }
 
-        $phase = Standard::firstOrCreate(
-            ['school_id' => $school->id, 'name' => 'primary'],
-            ['order' => 1, 'status' => '1']
-        );
-
-        $section = Section::firstOrCreate(
-            ['school_id' => $school->id, 'name' => $name],
-            ['status' => '1']
-        );
-
-        StandardLink::create([
-            'school_id' => $school->id,
-            'academic_year_id' => $year->id,
-            'standard_id' => $phase->id,
-            'section_id' => $section->id,
-            'status' => '1',
-        ]);
+        try {
+            app(OnboardingEngine::class)->saveStandards($school, $year, [
+                ['name' => $name],
+            ]);
+        } catch (ValidationException $e) {
+            throw ValidationException::withMessages(['className' => collect($e->errors())->flatten()->first()]);
+        }
     }
 
     private function saveSubject(School $school): void
@@ -1099,19 +1100,21 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['subjectName' => 'Enter a subject name.']);
         }
 
-        $link = StandardLink::where('school_id', $school->id)->first();
         $year = AcademicYear::where('school_id', $school->id)->first();
-        if (! $link || ! $year) {
+        if (! $year) {
             throw ValidationException::withMessages(['subjectName' => 'Add a class first.']);
         }
 
-        Subject::create([
-            'school_id' => $school->id,
-            'academic_year_id' => $year->id,
-            'standard_id' => $link->standard_id,
-            'section_id' => $link->section_id,
-            'name' => $name,
-        ]);
+        // Use the wizard's className to scope the subject to the right section
+        $className = trim($this->className);
+
+        try {
+            app(OnboardingEngine::class)->saveSubjects($school, $year, [
+                $className => [$name],
+            ]);
+        } catch (ValidationException $e) {
+            throw ValidationException::withMessages(['subjectName' => collect($e->errors())->flatten()->first()]);
+        }
     }
 
     private function saveTeachers(School $school): void
@@ -1175,8 +1178,10 @@ class ManualOnboardingWizard extends Component
 
         $drafts = array_map(function ($draft) {
             return [
-                'name'  => trim((string) ($draft['name'] ?? '')),
+                'name' => trim((string) ($draft['name'] ?? '')),
                 'class' => trim((string) ($draft['class'] ?? '')),
+                'school_student_id' => trim((string) ($draft['school_student_id'] ?? '')),
+                'board_registration_number' => trim((string) ($draft['board_registration_number'] ?? '')),
             ];
         }, $this->studentDrafts);
 
@@ -1206,14 +1211,13 @@ class ManualOnboardingWizard extends Component
             'termEndsOn' => 'required|date|after:termStartsOn',
         ]);
 
-        AcademicTerm::create([
-            'school_id' => $school->id,
-            'academic_year_id' => $year->id,
-            'name' => $name,
-            'starts_on' => $this->termStartsOn,
-            'ends_on' => $this->termEndsOn,
-            'status' => 'current',
-        ]);
+        try {
+            app(OnboardingEngine::class)->saveTerms($school, $year, [
+                ['name' => $name, 'start' => $this->termStartsOn, 'end' => $this->termEndsOn],
+            ]);
+        } catch (ValidationException $e) {
+            throw ValidationException::withMessages(['termName' => collect($e->errors())->flatten()->first()]);
+        }
     }
 
     private function saveFee(School $school): void
@@ -1232,17 +1236,15 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['feeAmount' => 'Enter a fee amount greater than zero.']);
         }
 
-        $phase = Standard::where('school_id', $school->id)->first();
-        if (! $phase) {
-            throw ValidationException::withMessages(['feeName' => 'Add a class first.']);
-        }
+        $className = trim($this->className);
 
-        FeesCategories::create([
-            'school_id' => $school->id,
-            'standard_id' => $phase->id,
-            'name' => $name,
-            'amount' => $amount,
-        ]);
+        try {
+            app(OnboardingEngine::class)->saveFees($school, [
+                ['name' => $name, 'amount' => $amount, 'class' => $className],
+            ]);
+        } catch (ValidationException $e) {
+            throw ValidationException::withMessages(['feeName' => collect($e->errors())->flatten()->first()]);
+        }
     }
 
     private function saveWhatsApp(School $school): void

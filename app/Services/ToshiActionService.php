@@ -401,10 +401,12 @@ class ToshiActionService
         $className = trim($data['class_name'] ?? $data['class'] ?? '');
 
         $result = app(\App\Services\OnboardingEngine::class)->saveStudents($school, $academicYear, [[
-            'name'  => $name,
+            'name' => $name,
             'email' => trim($data['email'] ?? ''),
             'class' => $className,
             'phone' => trim($data['phone'] ?? ''),
+            'school_student_id' => trim($data['school_student_id'] ?? ''),
+            'board_registration_number' => trim($data['board_registration_number'] ?? ''),
         ]]);
 
         if (!empty($result['skipped'])) {

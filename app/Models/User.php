@@ -76,6 +76,25 @@ class User extends Authenticatable implements HasMedia
      */
     protected $dates = ['deleted_at' , 'email_verified_at'];
 
+    /**
+     * Validate registration_number (dual store of KLS ID) format on save.
+     * Must match /^KLS\d{7}$/i or be null/empty. This mirrors the guard
+     * on StudentAcademic.klassapp_student_id since both fields hold the
+     * same value.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $model) {
+            if ($model->registration_number !== null
+                && $model->registration_number !== ''
+                && !preg_match('/^KLS\d{7}$/i', $model->registration_number)) {
+                throw new \InvalidArgumentException(
+                    "registration_number must match format KLS####### (e.g. KLS0010427), got: {$model->registration_number}"
+                );
+            }
+        });
+    }
+
     public function school()
     {
         return $this->belongsTo('App\Models\School','school_id');

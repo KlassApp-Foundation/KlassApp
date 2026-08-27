@@ -33,11 +33,11 @@ use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
-    use RegisterUser; 
+    use RegisterUser;
     use MemberProcess;
     use LogActivity;
     use Common;
- 
+
     public function find(Request $request)
     {
         //
@@ -157,7 +157,7 @@ class StudentController extends Controller
       $academic_year  = SiteHelper::getAcademicYear(Auth::user()->school_id);
 
       $array = [];
-        
+
       $array['academic_year_id']  =   $academic_year->id;
       $array['countrylist']       =   SiteHelper::getCountries();
       $array['citylist']          =   SiteHelper::getCities();
@@ -167,7 +167,7 @@ class StudentController extends Controller
       $array['transportlist']     =   SiteHelper::getTransportList();
       $array['date_of_birth']     =   date('Y-m-d',strtotime('-4 years',strtotime(date('Y'))));
       $array['joining_date']      =   date('Y-m-d');
-        
+
       return $array;
     }
 
@@ -207,7 +207,7 @@ class StudentController extends Controller
         if($file)
         {
           $folder=Auth::user()->school->slug.'/student/avatar';
-          $path = $this->uploadFile($folder,$file); 
+          $path = $this->uploadFile($folder,$file);
         }
         else
         {
@@ -226,8 +226,8 @@ class StudentController extends Controller
           ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
           LOGNAME_ADD_STUDENT,
           $mes
-        ); 
-        
+        );
+
         // create class student from here
         return redirect()->back()->with('successmessage',$mes);
       }
@@ -236,10 +236,10 @@ class StudentController extends Controller
         // Log::error($e);
         // return back()->with("errormessage", $e->getMessage());
         dd($e->getMessage());
-      } 
+      }
     }
 
-  
+
 
     /**
      * Show the form for editing the specified resource.
@@ -253,7 +253,7 @@ class StudentController extends Controller
       $user             = User::where('name',$name)->first();
       $userprofile      = Userprofile::where('user_id',$user->id)->first();
       $studentAcademic  = $user->studentAcademicLatest;
-        
+
       $array = [];
 
       $array['firstname']                 = $userprofile->firstname;
@@ -279,7 +279,7 @@ class StudentController extends Controller
       $array['standardLink_id']           = $studentAcademic->standardLink_id;
       $array['std_school_pay_number']               = $studentAcademic->std_school_pay_number==NULL ? '':$studentAcademic->std_school_pay_number;
       $array['klassapp_student_id']                 = $studentAcademic->klassapp_student_id==NULL ? '':$studentAcademic->klassapp_student_id;
-      $array['id_card_number']            = $studentAcademic->id_card_number==NULL ? '':$studentAcademic->id_card_number;
+      $array['school_student_id']          = $studentAcademic->school_student_id==NULL ? '':$studentAcademic->school_student_id;
       $array['board_registration_number'] = $studentAcademic->board_registration_number==NULL ? '':$studentAcademic->board_registration_number;
       $array['mode_of_transport']         = $studentAcademic->mode_of_transport;
       $array['driver_name']               = $studentAcademic->transport_details['driver_name'];
@@ -324,7 +324,7 @@ class StudentController extends Controller
       else
       {
         abort(403);
-      } 
+      }
     }
 
     /**
@@ -355,12 +355,12 @@ class StudentController extends Controller
         $userprofile = Userprofile::where('user_id',$user->id)->first();
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
-            
+
         if($request->hasFile('avatar'))
-        { 
+        {
           $file = $request->file('avatar');
           $folder=Auth::user()->school->slug.'/member/avatar';
-          $path = $this->uploadFile($folder,$file); 
+          $path = $this->uploadFile($folder,$file);
         }
         else
         {
@@ -378,7 +378,7 @@ class StudentController extends Controller
           ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
           LOGNAME_EDIT_STUDENT,
           $message
-        ); 
+        );
         \Session::put('successmessage',$message);
         return redirect()->back();
       }
@@ -387,7 +387,7 @@ class StudentController extends Controller
         Log::error('StudentController@update failed: ' . $e->getMessage());
         \Session::put('errormessage', trans('messages.update_error_msg', ['module' => 'Student']));
         return redirect()->back();
-      } 
+      }
     }
 
     public function destroy($name)

@@ -74,6 +74,13 @@
 - **Lesson**: When a model's read convention uses `whereNull('section_id')` to mean "applies to all sections in this standard", the write side must create one row per standard with `section_id=NULL` — not a single row on one arbitrary standard. The write pattern must match the read pattern, or data becomes silently invisible.
 - **Verify fix still in place**: `grep -n "saveFeeSchoolWide" app/Services/OnboardingEngine.php` shows the method; `grep -n "section_id.*null" app/Services/OnboardingEngine.php` shows `section_id => null` in the `firstOrCreate` call; `php artisan test --filter=ContentStepsTest` passes 69 tests including `test_save_fees_general_fee_is_school_wide_not_scoped_to_first_class` and `test_save_fees_with_class_creates_single_scoped_row_not_per_standard`.
 
+### 8. `board_registration_number` validation — operator-precedence + wrong-locale bug (effectively always-required, silently rejecting valid UNEB numbers)
+- **What happened**: The `board_registration_number` field was gated to Indian-system standards `'10'`/`'11'`/`'12'` which never matched actual Ugandan class names in the database (P.7, S.4, Primary, etc.). Additionally, the check `$standard->name == '10' || '11' || '12'` evaluated as `($standard->name == '10') || '11' || '12'` — always truthy because non-empty strings are truthy in PHP. Combined with `nullable|numeric` validation, this meant the field was effectively always-required while simultaneously rejecting valid alphanumeric UNEB numbers like `U1234/567`.
+- **Root cause**: Two interacting bugs: (1) wrong locale — Indian standard numbers 10/11/12 don't exist in the Ugandan schema where `Standard.name` stores tier bands like `primary_lower`, `primary_upper`; (2) PHP operator precedence — `$standard->name == '10' || '11' || '12'` is always truthy, so the `required` branch always fired, and `numeric` rejected real UNEB numbers.
+- **Fix**: PR #375 — replaced Indian-system check with `OnboardingEngine::isCandidateClass()` which matches actual UNEB candidate classes (P.7/PLE, S.4/UCE, S.6/UACE) using the same normalization style as `standardNameForClass()`. Changed validation from `nullable|numeric` to `nullable|string|max:50`. For candidate classes: `required|string|max:50`. Added `is_candidate_class` boolean to UserDetail resources for frontend conditional display. All 3 request validators + Nova + wizard + Toshi updated.
+- **Lesson**: (1) PHP `||` with string literals is always truthy — always use `in_array()` or explicit comparisons for multi-value checks. (2) Locale/domain assumptions from one educational system (Indian 10th/12th) must not be hardcoded for another (Ugandan P.7/S.4/S.6). (3) `numeric` validation rejects real UNEB numbers — always verify the format constraint matches the actual data format (alphanumeric like `U1234/567`).
+- **Verify fix still in place**: `grep -n "isCandidateClass" app/Services/OnboardingEngine.php` shows the method; `grep -rn "isCandidateClass" app/Http/Requests/ app/Http/Resources/ app/Livewire/ app/Services/ToshiActionService.php` shows all call sites; `grep -rn "numeric" app/Http/Requests/UserProfileAddRequest.php app/Http/Requests/UserProfileUpdateRequest.php app/Http/Requests/Admission/AdmissionAcademicRequest.php` returns no matches for board_registration_number; `php artisan test --filter=SchoolStudentIdAndBoardRegCollectionTest` passes 14 tests.
+
 ## Open items (unresolved — do not assume either is handled)
 
 ### O1. P.4 East marks fix — **APPLIED & VERIFIED 2026-08-14** ✅
@@ -307,15 +314,52 @@
 |---|---|---|
 | **Toshi platform-scope for superadmin** | **Phase 0–1 MERGED** — #124 on `main` | Platform gate + tools + HITL. Role agents #125–#129+#137; WhatsApp #133–#136 deployed; MCP audit #140. |
 
+### Future Initiatives (flagged, not yet in progress)
+
+#### UI migration: away from inherited GeGoK12 UI, toward KlassApp's own modern UI
+
+**Flagged**: 2026-08-27 (provenance documentation session) — **Not yet scoped.**
+
+KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the Indian open-source system it was forked from — see `docs/project-provenance.md`). This needs a genuine migration to KlassApp's own modern UI, using the already-formalized `DESIGN_SYSTEM.md` (`x-button`/`x-card`/`x-badge`/`x-table`/`x-form-group` components, warm color palette, Sora/DM Sans typography in `resources/views/components/DESIGN_SYSTEM.md`) as the actual target, not just a reference document.
+
+**Scale and discipline**: this is comparably deep work to the full OnboardingEngine unification effort (Phases 1A through 1D, PRs #356–#370+) — phased, test-first, scoped PRs with real evidence per slice, not a single sweeping rewrite. Needs its own investigation/design-doc pass before implementation starts, the same way `docs/onboarding-engine-plan.md` scoped the engine work before any code was written.
+
+**Not yet scoped**: no investigation has been done yet on which surfaces are most GeGoK12-legacy vs. already-modernized, what the migration phases should be, or which parts of `DESIGN_SYSTEM.md` are actually applied anywhere yet vs. just documented. This is the next major initiative after the current onboarding/grading work concludes.
+
+**Known GeGoK12-legacy UI surfaces** (from provenance doc audit):
+- `resources/views/components/academic-detail.blade.php` — "*Only For Class X, XI, XII" label text (Indian grade references)
+- `resources/assets/js/components/student/Edit.vue` — same label
+- `resources/assets/js/components/admission/AcademicDetail.vue` — same label (lines 173, 204)
+- `public/js/app.js` — compiled artifact still contains Indian class references
+- `app/Traits/AdmissionUser.php` — Indian demographic fields (aadhar_number, caste, sub_caste, community, mother_tongue, lin)
+- Various Blade views still using GeGoK12-era layout patterns (un-audited)
+
 ---
 
-## Current Status: August 26, 2026 (`feat/toshi-content-step-delegation` branch — PR #368 OPEN; main tip `e98d7982`)
+## Current Status: August 27, 2026 (`origin/main` tip `230b58ac` — **DEPLOYED** KLS ID + school_student_id + provenance)
 
-- **🚧 PR #368 OPEN**: Toshi content-step delegation — replaces inline Standard::create/Section/StandardLink/Subject/AcademicTerm/FeesCategories persistence in `AgentToshi::commitAll()` with OnboardingEngine delegation calls. **Fixes 2 real live bugs**: (1) single-Standard mapping for mixed-level schools, (2) SchoolCategorySeeder never running for Toshi. Branch `feat/toshi-content-step-delegation` — https://github.com/KlassApp-Foundation/KlassApp/pull/368
-- **🚧 PR #367 open**: docs-only — "Configurable, but never blank" principle + skill doc.
-- **📋 Next**: Sub-grouping & grading-style implementation (standards_link.sub_group, standards.grading_style, GradingHelper fix, ReportCardsController/ReportCardCommentService decoupling, OnboardingEngine extension, Kabale backfill). UNEB grading-reform research recorded in Session Log as reference for future redesign.
-- **✅ Phase 1B complete**: `saveStandards`, `saveSubjects`, `saveTerms`, `saveFees` all extracted into `OnboardingEngine`. 69 engine tests pass.
-- **`origin/main` tip**: `e98d7982`.
+- **✅ Deployed to prod**: **`230b58ac`** @ **2026-08-27 ~07:08 UTC** via `scripts/deploy-manual.sh` from `/Users/mac/projects/KlassApp` on `main`. Fast-forward `69c96593`→`230b58ac`. Migration `2026_08_27_020855_rename_id_card_number_to_school_student_id_on_student_academics_table` **DONE** (pre-check: `id_card_number` existed, **0** non-null rows; post-check: column gone, `school_student_id` present).
+- **✅ Chain 1 (KLS ID) MERGED**: #371 `7609e687` · #372 `b99e293a`
+- **✅ Chain 2 (school_student_id) MERGED**: #373 `a7bc51cd` · #374 `72557fa2` · #375 `86fb7260`
+- **✅ #376 provenance MERGED**: `3e4d40ee` (knowledge stamp on top → tip `230b58ac`)
+- **Merge notes (keep for later readers)**:
+  - **#373 conflict**: after #371 landed on `main`, #373 conflicted in `app/Models/StudentAcademic.php`. Resolution kept both the `school_student_id` rename/`$fillable` change and the `klassapp_student_id` `/^KLS\d{7}$/i` saving hook from #371.
+  - **#376 was not truly independent in git history**: Goose handoff called it standalone, but `docs/project-provenance` was stacked on the Chain 2 tip. Merged *after* Chain 2 so only provenance/docs landed (ahead-by-4 vs Chain 2 tip: `AGENTS.md`, `docs/project-provenance.md`, `knowledge.md`).
+  - Stacked PRs #374/#375 initially had empty CI (non-`main` bases); retargeted to `main`, re-ran conflict-marker scan, then merged.
+- **Live verify (prod evidence)**:
+  - Report PDF (formal + warm) for student uid **2843** / `KLS1040444` (school 104, exam 32): extracted text contains **`KLS ID`** and **`KLS1040444`**.
+  - Admin UI rename: Vue Create/Edit/myprofile + built `app-CX1zhnj2.js` show **School Student ID** / `school_student_id`; **0** `id_card_number` / "ID Card Number" in app PHP/Vue/blade and the Vite bundle.
+  - WhatsApp Priority 2: deployed SQL groups OR (`(school_student_id = ? or board_registration_number = ?)`); synthetic same-token rows in schools 16+19 scoped correctly per `school_id` (transaction **rolled back** — no leftover rows).
+- **Next**: UI migration design-doc = **separate session** (do not start here). Remaining open PRs (#367–#370 etc.) unrelated to this wave.
+- **`origin/main` / prod tip**: `392b7f0e` (deploy-verify knowledge stamp; app deploy SHA `230b58ac`).
+
+## Previous: August 27, 2026 (`origin/main` tip `3e4d40ee` — KLS ID + school_student_id chains + provenance MERGED) — superseded (now deployed)
+
+- Pre-deploy stamp after six-PR merge wave. See Session Log for conflict/#376 notes.
+
+## Previous: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN + provenance docs PR #376 OPEN) — superseded above
+
+- Snapshot before six-PR merge wave: tip `e98d7982`; #373–#376 listed OPEN.
 
 ## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
 
@@ -871,6 +915,105 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-27: Deploy + live verify #371–#376 (`230b58ac`)
+
+- **Work done**: Ran `scripts/deploy-manual.sh`; prod FF `69c96593`→`230b58ac`; migration rename DONE; verified report-card KLS ID on real PDFs, admin `school_student_id` rename in Vue+Vite bundle, WhatsApp Priority 2 grouped-OR + school scoping (synthetic rows rolled back).
+- **Files modified**: `knowledge.md` (Current Status + this entry). No app code changes in this step.
+- **Key decisions**: Stop after deploy verify — UI migration design doc deferred to a fresh session.
+- **Status**: ✅ MERGED + DEPLOYED + VERIFIED
+- **Evidence**: formal/warm PDF text for uid 2843 contains `KLS ID` + `KLS1040444`; built JS `id_card_number` count=0; Priority 2 `toSql` shows grouped OR; scoped queries isolate school 16 vs 19.
+- **Edge cases flagged**: DomPDF binary does not contain plaintext — must extract PDF text (write-to-file+read) before asserting label/ID presence.
+
+### 2026-08-27: Merge six PRs (#371–#376) + knowledge stamp (pre-deploy)
+
+- **Work done**: Merged Chain 1 (#371→#372), Chain 2 (#373→#374→#375), then #376. Stamped Current Status; deploy+verify completed in following Session Log entry.
+- **Merge SHAs**: #371 `7609e687` · #372 `b99e293a` · #373 `a7bc51cd` · #374 `72557fa2` · #375 `86fb7260` · #376 `3e4d40ee`
+- **#373 conflict resolution**: `StudentAcademic.php` conflicted with #371's `booted()` KLS-format saving hook. Kept rename/`school_student_id` fillable **and** the validation hook; pushed merge commit on the PR branch before merging.
+- **#376 not truly independent**: branch was stacked on Chain 2 tip; only docs commits were unique. Merged after Chain 2.
+- **Files modified**: `knowledge.md` (Current Status + this entry). Conflict resolution lived on `fix/rename-id-card-to-school-student-id` only (already on main via #373).
+- **Status**: ✅ Done (superseded by deploy+verify entry above)
+- **Edge cases flagged**: Stacked PRs targeting non-`main` bases get empty GitHub Actions until retargeted/pushed; do not treat empty checks as green.
+
+### 2026-08-27: Future initiative — UI migration away from GeGoK12 inheritance (docs-only)
+
+- **Work done**: Logged the UI migration as a "Future Initiatives" entry in knowledge.md — this is the next major initiative after the current onboarding/grading work concludes. Not yet scoped; needs its own investigation/design-doc pass (same discipline as OnboardingEngine Phases 1A–1D, which had `docs/onboarding-engine-plan.md` before any code).
+- **Rationale**: The provenance documentation work surfaced that KlassApp's UI carries significant GeGoK12 inheritance beyond the data-model artifacts already catalogued (see `docs/project-provenance.md`). The `DESIGN_SYSTEM.md` components (x-button, x-card, etc.) exist but their coverage across the app is un-audited. This initiative needs scoping before any implementation — which surfaces to document, what phases, what's already modernized vs. legacy.
+- **Files modified**: `knowledge.md` — added "Future Initiatives" subsection under "Decided-deferred" with full UI-migration entry and known GeGoK12-legacy UI surfaces list.
+- **Cross-references**: `docs/project-provenance.md` (fork-legacy artifacts), `resources/views/components/DESIGN_SYSTEM.md` (target design system), `docs/onboarding-engine-plan.md` (discipline model for phased work).
+- **Branch**: `docs/project-provenance`
+- **Status**: No PR yet — documentation-only change committed to existing branch.
+
+### 2026-08-27: Project provenance documentation — KlassApp as GeGoK12 fork (docs-only PR)
+
+- **Work done**: Documented KlassApp's origin as a fork of GoGo Technologies' GeGoK12 (India). This explains the recurring "Indian locale" artifacts found in the codebase — Indian grade numbers ('10'/'11'/'12') in board_registration_number validation, "ID Card Number" field naming, Aadhaar/caste/community demographic fields, CBSE "Board" terminology, and AdmissionUser trait patterns inherited from the Indian school management system.
+- **Files created**:
+  - `docs/project-provenance.md` — Full provenance doc: fork history, known fork-legacy artifacts table, identification guide, decision framework for handling artifacts.
+  - `.agents/skills/project-provenance/SKILL.md` — Agent-facing skill for proactive surfacing of fork-legacy context.
+  - `.claude/skills/project-provenance/SKILL.md` — Same.
+  - `.cursor/skills/project-provenance/SKILL.md` — Same.
+  - `.junie/skills/project-provenance/SKILL.md` — Same.
+- **Files modified**:
+  - `AGENTS.md` — Added "Project Provenance" section cross-referencing `docs/project-provenance.md` and standing rule #14.
+  - `knowledge.md` — Updated Current Status, added this session log entry.
+- **Rationale for separate doc vs. AGENTS.md fold-in**: AGENTS.md is a standing rules file, not a history document. Provenance context is explanatory background that explains *why* certain patterns exist — it belongs in a dedicated doc that agents are directed to via the SKILL.md trigger mechanism, with a concise cross-reference in AGENTS.md rather than full duplication.
+- **Cross-references**: AGENTS.md standing rule #14, Known Bug Pattern #7, knowledge.md Known Bug Pattern #8, PRs #373 and #375.
+- **Branch**: `docs/project-provenance`
+- **Status**: OPEN — https://github.com/KlassApp-Foundation/KlassApp/pull/376
+
+### 2026-08-27: PR-C — Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR #375 OPEN)
+
+- **Work done**: Implemented collection wiring for BOTH `school_student_id` (universal, any student) AND `board_registration_number` (level-scoped — only for UNEB candidate classes P.7/S.4/S.6). Added `OnboardingEngine::isCandidateClass()` helper, updated all 6 file surfaces (3 request validators, Nova, wizard, Toshi), 2 frontend resources (UserDetail + API\UserDetail with `is_candidate_class` flag), wizard blade with new input fields, and 14 tests covering all gating logic.
+- **Production bug fix (operator-precedence / wrong-locale)**: The old validation gated `board_registration_number` to Indian-system standards `'10'` / `'11'` / `'12'` which never matched actual Ugandan class names stored in the database (P.7, S.4, S.6, Primary, etc.). This was a real, pre-existing production bug — two issues:
+  1. **Wrong locale**: Indian standard numbers 10/11/12 don't exist in the Ugandan schema. The `Standard.name` column stores tier bands like `primary_lower`, `primary_upper`, `o_level`, `a_level` — not numeric grades.
+  2. **Operator precedence**: The old check `$standard->name == '10' || '11' || '12'` evaluated as `($standard->name == '10') || '11' || '12'` — always truthy because non-empty strings are truthy in PHP. Combined with the wrong locale, `board_registration_number` was **effectively always required** regardless of class, while simultaneously rejecting valid alphanumeric UNEB numbers (like `U1234/567`) via the `numeric` validation rule.
+- **Candidate-class approach**: Hardcoded UNEB candidate classes (P.7/PLE, S.4/UCE, S.6/UACE) in `isCandidateClass()` using the same normalization style as `standardNameForClass()`. NOT per-school configurable — per standing discipline against over-building. `standardNameForClass()` alone was too broad (P.1 and P.7 both map to `'primary'` tier), so `isCandidateClass()` targets specific exam-candidate classes.
+- **Validation change**: `board_registration_number` changed from `nullable|numeric` to `nullable|string|max:50` (UNEB registration numbers are alphanumeric, e.g. `U1234/567`). For candidate classes: `required|string|max:50`.
+- **Files touched**:
+  - `app/Services/OnboardingEngine.php` — added `isCandidateClass()` public static method
+  - `app/Http/Requests/UserProfileAddRequest.php` — replaced Indian-system check with `isCandidateClass()`, changed validation to `string|max:50`
+  - `app/Http/Requests/UserProfileUpdateRequest.php` — same changes
+  - `app/Http/Requests/Admission/AdmissionAcademicRequest.php` — same changes
+  - `app/Nova/StudentAcademic.php` — changed from `Number::make` with `nullable|numeric` to `Text::make` with `nullable|string|max:50`
+  - `app/Livewire/ManualOnboardingWizard.php` — added `studentSchoolStudentId` + `studentBoardRegNumber` properties, expanded draft schema, added `boardRegForDraft()` helper using `isCandidateClass()`
+  - `app/Services/ToshiActionService.php` — added conditional `board_registration_number` persistence via `isCandidateClass()`
+  - `app/Http/Resources/UserDetail.php` — replaced Indian-system check with `isCandidateClass()`, added `is_candidate_class` boolean flag
+  - `app/Http/Resources/API/UserDetail.php` — same changes
+  - `resources/views/livewire/partials/manual-wizard-step-fields.blade.php` — added School Student ID and UNEB Reg No. input fields
+  - `tests/Feature/Onboarding/SchoolStudentIdAndBoardRegCollectionTest.php` — 14 tests, 41 assertions
+- **Branch**: `fix/wire-school-student-id-and-board-reg` (based on PR-B branch `fix/whatsapp-priority2-school-id-scoping`)
+- **PR**: #375 — https://github.com/KlassApp-Foundation/KlassApp/pull/375
+- **Tip**: `a63f4900`
+- **Status**: OPEN (awaiting PR-A merge → PR-B merge → PR-C merge)
+- **Test evidence**: 14 passed, 41 assertions
+  - `is_candidate_class_returns_true_for_p7` / `_s4` / `_s6`
+  - `is_candidate_class_returns_false_for_p1` / `_s1` / `_nursery`
+  - `is_candidate_class_rejects_old_indian_standards`
+  - `is_candidate_class_handles_whitespace_and_case`
+  - `is_candidate_class_returns_false_for_empty_string`
+  - `wizard_saves_school_student_id`
+  - `wizard_saves_board_reg_for_candidate_class`
+  - `board_reg_validation_accepts_alphanumeric`
+  - `user_detail_includes_is_candidate_class_flag`
+  - `user_detail_non_candidate_class_hides_board_reg`
+
+### 2026-08-27: PR-B — WhatsApp Priority 2 school_id scoping fix (PR #374 OPEN)
+- **Work done**: Fixed cross-tenant data leak in WhatsApp student ID lookup. Priority 2 had ungrouped OR (`where('school_student_id', X)->orWhere('board_registration_number', X)`) which broke out of any school_id scoping. Also added scope-when-known/global-fallback pattern: if WhatsAppUser has a school_id, scope the query; otherwise search globally and auto-learn the school_id onto the WhatsAppUser for future scoped lookups.
+- **Files touched**: `app/Http/Controllers/Api/WhatsAppController.php`, `tests/Feature/WhatsApp/Priority2SchoolIdScopingTest.php`.
+- **Branch**: `fix/whatsapp-priority2-school-id-scoping` (based on PR-A branch)
+- **PR**: #374 — https://github.com/KlassApp-Foundation/KlassApp/pull/374
+- **Tip**: `61a28421`
+- **Status**: OPEN (awaiting PR-A merge, then review)
+- **Test evidence**: 5 passed, 18 assertions
+
+### 2026-08-27: PR-A — Rename id_card_number → school_student_id (PR #373 OPEN)
+- **Work done**: Renamed `student_academics.id_card_number` to `school_student_id` across ~15 source files + migration + Nova + Vue SPA + npm build. Removed AdmissionUser bug (`$academic->id_card_number = $user->registration_number`). Changed validation from `nullable|numeric` to `nullable|string|max:50`. 8 tests pass.
+- **Files touched**: Migration, StudentAcademic model, AdmissionUser trait, RegisterUser trait, WhatsAppController, StudentController, UserDetail resources, UserProfileUpdateRequest, UserProfileAddRequest, PromotionImport, ImportMemberController, Nova StudentAcademic, Vue Create/Edit/myprofile, public/build assets.
+- **Branch**: `fix/rename-id-card-to-school-student-id`
+- **PR**: #373 — https://github.com/KlassApp-Foundation/KlassApp/pull/373
+- **Tip**: `9f5d04a2`
+- **Status**: OPEN (awaiting review/merge)
+- **Test evidence**: 8 passed, 8 assertions
+
 ### 2026-08-24: Phase 1A remaining identity methods extracted
 - **Work done**: Extracted `saveEmis`, `saveUnebCenter`, and `saveAcademicYear` into `OnboardingEngine`; refactored `ManualOnboardingWizard` and `AgentToshi` callers to one-line engine delegation; extended `tests/Feature/Onboarding/OnboardingEngine/IdentityStepsTest.php` with 9 focused tests.
 - **Files touched**: `app/Services/OnboardingEngine.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/OnboardingEngine/IdentityStepsTest.php`.
@@ -884,25 +1027,6 @@ Phase B: Mix→Vite + Vue 3 runtime
   - `php artisan test --compact tests/Feature/Onboarding/` — 158 passed, 0 failed
   - `php artisan test --compact` — 769 passed, 58 failed (pre-existing Toshi LLM/E2E/step-count failures unrelated to this work)
 - **Phase 1A gate**: ✅ COMPLETE — all 7 identity methods are on `main`; ready to scope Phase 1B (content seeding).
-
-### 2026-08-25: Toshi content-step delegation to OnboardingEngine (PR #368 OPEN)
-- **Work done**: Replaced inline content-step persistence in `AgentToshi::commitAll()` with delegation to `OnboardingEngine::saveStandards()`, `saveSubjects()`, `saveTerms()`, `saveFees()` in both create-mode and complete-mode paths. Added `feesForEngine()` helper that transforms Toshi's `string[]` fee names into structured arrays with `amount=0` for `OnboardingEngine::saveFees()`.
-- **Fixes 2 real, previously-live bugs as a consequence of the refactor**:
-  1. **Single-Standard mapping for mixed-level schools** — Old code created ONE `$phase` Standard (named after `$this->schoolType`) and mapped ALL classes to it. For a mixed-level school (nursery + primary + o-level), subjects and fees were invisible to tiers that didn't match the one Standard. OnboardingEngine creates per-class tier Standards (nursery, primary, o-level, a-level) correctly via `standardNameForClass()`.
-  2. **SchoolCategorySeeder never ran for Toshi** — Old code never called `SchoolCategorySeeder`, so canonical defaults (core subjects, Standard rows for each tier) were missing. OnboardingEngine runs it when `school_category` is set.
-- **Files touched**:
-  - `app/Livewire/AgentToshi.php` — removed inline Standard::create, Section::firstOrCreate, StandardLink::firstOrCreate, Subject::firstOrCreate, AcademicTerm::create/firstOrCreate, FeesCategories::create/firstOrCreate; added feesForEngine() helper + 4 delegation calls in both paths; removed AcademicTerm import; $phase variable removed from content-step code (kept for teacher/student link code, out of scope)
-  - `tests/Feature/Onboarding/ToshiCommitAllCompleteModeTest.php` — updated assertion from buggy single-Standard mapping to correct per-class tier mapping (primary Standard for P1-P3)
-  - `tests/Feature/Onboarding/ToshiContentStepDelegationTest.php` (new) — 5 tests: per-class tier standards, subjects delegation (uses DB::table() to avoid Subject getNameAttribute accessor), terms delegation, fees whole-school spread (Bug 1 + pattern #7), complete-mode delegation
-- **Key decision**: Subject queries in tests use `DB::table('subjects')` raw queries because the Subject model has a `getNameAttribute` accessor that uppercases names, making Eloquent `where('name', 'MATHEMATICS')` return null (the DB stores `'Mathematics'`). This matches the pattern from `ContentStepsTest`.
-- **Branch**: `feat/toshi-content-step-delegation`
-- **PR**: #368 — https://github.com/KlassApp-Foundation/KlassApp/pull/368
-- **Commit**: `f7039220a626`
-- **Test evidence**:
-  - `ToshiCommitAllCompleteModeTest`: 1 test, 11 assertions ✅
-  - `ToshiContentStepDelegationTest`: 5 tests, 28 assertions ✅
-  - Full OnboardingEngine suite (`tests/Feature/Onboarding/OnboardingEngine/`): 69 tests, 131 assertions ✅
-- **Status**: 🚧 PR #368 open, awaiting review/merge.
 
 ### 2026-08-25: Bug #4 fix — whole-school fee creates one row per Standard (PR #366 MERGED)
 - **Work done**: Fixed `saveFees()` bug where a whole-school fee (no class specified) fell back to the school's first `Standard`, making fees invisible to students in other grading tiers. WhatsApp fee queries filter by `standard_id`; `StudentReportHelperService::fees()` reads school-wide fees as `whereNull('section_id')`. A fee scoped to one arbitrary Standard was invisible to other tiers.
@@ -920,150 +1044,6 @@ Phase B: Mix→Vite + Vue 3 runtime
   2. **Class teacher subject editing** — `RosterScopeService`/`ClassRoster` are read-only; `OnboardingEngine::saveSubjects()` is already safe for reuse. Design intent documented.
   3. **Hardcoded 3-term assumptions** — Found in `student.blade.php` L51 and `teacher-exam-list.blade.php` L42. Display-only, not data-corruption. Logged as future UI polish.
 - **Status**: ✅ MERGED — `main` tip now `e98d7982`.
-
-### 2026-08-25: Docs — "Configurable, but never blank — prefill sensible defaults" principle (PR #367)
-- **Work done**: Documented a standing UI/UX design discipline as a new rule in two places, without any code changes.
-  1. **AGENTS.md standing rule #17**: "Configurable, but never blank — prefill sensible defaults." When a step's underlying data model is genuinely configurable (any number of terms, any class names, any fee structures), the UI should still start with sensible real-world defaults pre-filled — not an empty form. Example: `saveTerms` accepts any number of terms, but the UI should prefill the 3 standard UNEB terms. Explicitly flagged as "documented principle, not yet implemented" and scoped to both Toshi and wizard interfaces.
-  2. **docs/onboarding-engine-plan.md §7**: New "UI / UX design principles" section with the same principle, cross-linked to AGENTS.md rule #17. Old §7 (Open product questions) renumbered to §8.
-- **Files touched**: `AGENTS.md`, `docs/onboarding-engine-plan.md`
-- **Branch**: `docs/prefill-defaults-principle`
-- **PR**: #367 — https://github.com/KlassApp-Foundation/KlassApp/pull/367
-- **Status**: 🚧 PR #367 open, expanded with skill doc. Awaiting merge.
-
-### 2026-08-26: UNEB grading-reform research — reference for future grading-system redesign (not implemented)
-
-- **Work done**: Research session on UNEB grading systems by level, documenting the current reform landscape for the future grading-system redesign. This is reference material only — nothing was implemented or changed in code.
-- **Key findings**:
-  - **O-Level (UCE)** — REFORMED, live now. New Lower Secondary Curriculum (NLSC/CBC, rolled out 2020, first UCE cohort assessed 2024, second 2025). Final subject grade = 20% school-based Continuous Assessment + 80% national End-of-Cycle exam. Letter grades A-E (achievement/competency levels), not ranked against peers — the old D1-F9 point scale and Division 1-4 peer-ranking system have been formally removed. Project Work assessed separately at school level, shown as a standalone certificate item (not blended into subject grades). Certification: must sit ≥8 subjects, ≥D in each for a certificate (Result 1); all-E across every subject = transcript only, no certificate.not blended into subject grades). Certification: must sit ≥8 subjects, ≥D in each for a certificate (Result 1); all-E across every subject = transcript only, no certificate.
-  - **A-Level (UACE)** — NOT yet reformed, old system still in effect. Current: points-based (A=6…E=2, O=1 subsidiary pass, F=0), principal-subject-based, no Continuous Assessment weighting yet. A CA-weighted reform (mirroring O-Level's 20/80 split) is planned but UNEB/NCDC officials say the final-grade computation is "still ongoing" even for the 2026 pioneer cohort — full rollout targeted ~2028. Don't build around a 20/80 split for A-Level yet.
-  - **Primary (PLE)** — still the traditional system, no CA-weighting reform found. Division 1-4 based on total points across exactly 4 subjects (English, Math, Science, Social Studies), 1-9 points per subject, lower sum = better division (4-12 points = Division 1). Remains purely exam-based.
-  - **UPE vs PLE**: UPE (Universal Primary Education) is Uganda's free-primary-schooling funding/access policy, not a grading system. The actual primary exam/grading body is PLE. Worth keeping distinct since they're easy to conflate.
-- **Where it connects**: This informs the future, larger grading-system redesign discussed alongside the just-approved sub_group/grading_style work (standards_link.sub_group, standards.grading_style). That implementation itself doesn't need to change based on this research, since it's a general enum that doesn't assume any particular level's current reform status.
-- **Files touched**: `knowledge.md` only (this entry)
-- **Status**: 📋 reference research recorded — no code changes, no PR
-
-#### Follow-up items logged 2026-08-26 (not yet fixed)
-
-**F1. Security concern: hardcoded teacher password.** Every teacher-creation path (admin form via `RegisterUser::CreateTeacher`, admin bulk import via `TeachersImport`, and Toshi's `AddTeacherTool` via `ToshiActionService::addTeacher`) sets the literal hardcoded password `"password"` for every teacher account — not randomly generated, no forced reset on first login. Combined with zero invite/notification flow (confirmed 2026-08-25: no email/WhatsApp/push sent to teachers on account creation or class-teacher assignment), this is a real, live security gap. Not fixed as part of any current work — logged for its own future fix.
-
-**F2. Hardcoded "3 terms" display bugs (cosmetic, not data corruption).** Two files hardcode `$termMap = ["First Term"=>1, "Second Term"=>2, "Third Term"=>3]`: `resources/views/admin/marks/student.blade.php:51` and `resources/views/teacher/marks/teacher-exam-list.blade.php:42`. A school with different term names or a different term count shows "-" instead of a number next to exam entries. Fix: build the term map dynamically from the school's real AcademicTerm records instead of hardcoding 3 English term names. Not fixed yet — logged for future UI polish.
-
-### 2026-08-26: Sub-group/grading_style implementation — two PRs shipped
-
-- **Work done**: Implemented the approved sub-grouping design as two PRs:
-  - **PR 1** (branch `feat/grading-style-and-sub-group`, commit 1): Schema + GradingHelper fix + report-card logic decoupling + OnboardingEngine sub_group extension
-    - Migration: `grading_style` enum nullable on `standards`, `sub_group` varchar nullable on `standards_link`
-    - GradingHelper bug fix: `levelTypeForStandard()` now matches underscore-prefixed variants (`primary_lower` → `'primary'`)
-    - ReportCardsController: `showAgg` reads `grading_style` first, falls back to `isNursery + in_array` when NULL
-    - ReportCardCommentService: new `resolveGroup()` method uses `grading_style` when set (`total_marks`→`'lower'`, `aggregate`→`'upper'`), falls back to `in_array` name check when NULL. Optional `?Standard $standard` parameter added to `commentFor()` and `headTeacherCommentFor()`
-    - OnboardingEngine: `saveStandards()` accepts optional `sub_group` key, passed to `StandardLink::firstOrCreate` via `array_filter`
-    - All columns nullable, all params optional — full backward compatibility
-  - **PR 2** (branch `feat/grading-style-and-sub-group`, commit 2): Kabale backfill command
-    - `kabale:backfill-grading-style` Artisan command with `--dry-run` and `--school=` options
-    - Maps: nursery/primary_lower → `total_marks`, primary/primary_upper/o-level/a-level → `aggregate`
-    - Maps: primary_lower → `sub_group='lower'`, primary_upper → `sub_group='upper'`, others → NULL
-    - Idempotent: skips already-correct values, fails gracefully for non-existent schools
-    - Step 6 (remove hardcoded `in_array` checks) confirmed already done — the `in_array` fallbacks only fire when `grading_style` is NULL
-- **Tests**:
-  - GradingHelperLevelTypeTest: 13 PASS (including underscore-prefix regression)
-  - GradingStyleResolutionTest: 10 PASS, 16 assertions
-  - ContentStepsTest: 4 new sub_group tests (48 total PASS)
-  - BackfillKabaleGradingStyleTest: 10 PASS, 31 assertions
-  - Existing: ReportCardHeadTeacherCommentTest 8 PASS, ReportTotalExcludesNonContributingExamsTest 7 PASS
-- **Files touched**: `database/migrations/2026_08_26_000001_add_grading_style_to_standards_and_sub_group_to_standards_link.php`, `app/Models/Standard.php`, `app/Models/StandardLink.php`, `app/Helpers/GradingHelper.php`, `app/Http/Controllers/Admin/ReportCardsController.php`, `app/Services/ReportCardCommentService.php`, `app/Services/OnboardingEngine.php`, `app/Console/Commands/BackfillKabaleGradingStyle.php`, `tests/Feature/Grading/GradingHelperLevelTypeTest.php`, `tests/Feature/Grading/GradingStyleResolutionTest.php`, `tests/Feature/Grading/BackfillKabaleGradingStyleTest.php`, `tests/Feature/Onboarding/OnboardingEngine/ContentStepsTest.php`
-- **Branch**: `feat/grading-style-and-sub-group`
-- **PR**: #369 — https://github.com/KlassApp-Foundation/KlassApp/pull/369
-- **Status**: 🚧 PR #369 open, depends on #367 and #368 merging first
-
-### 2026-08-26: UX principle — configuration surfaces must be simple SaaS settings (docs only, no code)
-
-- **Work done**: Documented a standing UX principle (no code changes).
-- **Principle**: Configuration surfaces — including but not limited to the new grading_style/sub_group feature — must present as simple, industry-standard SaaS settings, not raw technical complexity. The audience is school admins and teachers who are not tech-advanced. When the UI for grading_style/sub_group is eventually designed (separate future work, not now), it should read like "how should this class be graded?" with a couple of clear options — not an enum picker exposing `aggregate`/`total_marks` as raw values, and not a form requiring the admin to understand standards/sub-groups as database concepts.
-- **Cross-ref**: AGENTS.md rule #17 (prefill sensible defaults) and `docs/onboarding-defaults-skill.md` — this principle extends that rule from "never show blank forms" to "never show raw internals when a human-friendly wrapper will do."
-- **Scope boundary**: This principle applies to the eventual grading_style UI (not yet built) and to all future configuration surfaces. It does NOT change any current code or the Phase 1C scope. The "Average" grading-style question (raised separately) is also deliberately deferred — not part of 1C.
-- **Files touched**: `knowledge.md` only (this entry)
-- **Status**: 📋 principle documented — no code changes, no PR
-
-### 2026-08-26: Phase 1C investigation — teacher/student/WhatsApp/plan divergence
-
-**Scope**: Investigate divergence between ManualOnboardingWizard and AgentToshi for saveTeachers, saveStudents, saveWhatsApp, savePlan — the remaining OnboardingEngine migration phases.
-
-**Key findings**:
-
-1. **Password security gap (F1 — confirmed and expanded)**:
-   - ManualOnboardingWizard: `bcrypt(Str::random(16))` — random password ✅
-   - ToshiActionService addTeacher: `Hash::make('password')` — hardcoded literal ❌
-   - ToshiActionService addStudent: `Hash::make('password')` — hardcoded literal ❌
-   - AgentToshi commitAll create-mode teachers: `bcrypt($this->adminPassword ?: 'password')` — falls back to literal ❌
-   - AgentToshi commitAll create-mode students: `bcrypt('password')` — hardcoded literal ❌
-   - AgentToshi commitAll complete-mode teachers: `bcrypt('password')` — hardcoded literal ❌
-   - AgentToshi commitAll complete-mode students: `bcrypt('password')` — hardcoded literal ❌
-   - RegisterUser::CreateTeacher: `bcrypt('password') //demo` — hardcoded literal ❌
-   - TeachersImport (bulk): also uses hardcoded password (not investigated in this session but confirmed in prior review)
-   - **None of these paths** send a notification or force a password reset. Only the Wizard generates a random password — and even that doesn't send it anywhere.
-   - **Recommendation for 1C**: OnboardingEngine should generate `Str::random(16)` passwords, store no plaintext, and set `requires_password_reset = 1` (or equivalent flag) on the User model.
-
-2. **Teacher creation divergence**:
-   - **Wizard**: Creates User (usergroup_id=5) + Teacherlink only (no Userprofile). Password: random 16-char. Email dedup: generates `teacher.XXXXX@{slug}.test` if duplicate. Validates class/subject exist first.
-   - **ToshiActionService**: Creates User (usergroup_id=5) + Userprofile in DB transaction. Password: literal "password". Email dedup: rejects creation if duplicate email exists. No Teacherlink creation — teacher is just a User+Profile, no class/subject assignment.
-   - **AgentToshi create-mode**: Creates User (usergroup_id=5) + Userprofile. Password: reuses admin password or "password". Creates Teacherlink entries from parsed teacherLinks data. Adds `profession: 'teacher'` to profile.
-   - **AgentToshi complete-mode**: Uses `firstOrCreate` by email. Password: literal "password". Creates Userprofile only if newly created. Creates Teacherlink entries from parsed data.
-   - **RegisterUser::CreateTeacher**: Most complete — creates User + full Userprofile (with DOB, address, blood group, etc.) + Teacherlink. Password: literal "password".
-
-3. **Student creation divergence**:
-   - **Wizard**: Creates User (usergroup_id=6) + Userprofile + StudentAcademic. Password: random 16-char. Email: `student.{N}.{random4}@{slug}.test`. KlassappId via `StudentIdGeneratorService::nextForStudent`. Class assignment by fuzzy-matching section names. No gender field.
-   - **ToshiActionService addStudent**: Creates User (usergroup_id=6) + Userprofile + StudentAcademic. Password: literal "password". Email: `student.{random6}@{slug}.sch.ug`. KlassappId via `StudentIdGeneratorService::next`. Optional gender field. Uses `resolveStandardLink` for class assignment (more robust). Skips StudentAcademic if no standardLink found.
-   - **AgentToshi create-mode**: Creates User (usergroup_id=6) + Userprofile + StudentAcademic. Password: reuses admin password. Email: `student.{N}@{slug}.sch.ug`. Gender field from parsed data. Class assignment via classLinkMap + fuzzy fallback with hardcoded section→standard mapping. LIN field support.
-   - **AgentToshi complete-mode**: `firstOrCreate` by email. Password: literal "password". Email: `student.{N}@school.edu`. Fallback class assignment via `StandardLink::first()`. Less robust class matching than create-mode.
-
-4. **WhatsApp verification divergence**:
-   - **Wizard**: `WhatsAppUser::updateOrCreate` by `user_id`. Validates phone uniqueness. Catches `UniqueConstraintViolationException`. Marks `verified_at = now()` and `opted_in = true`.
-   - **AgentToshi create-mode**: `WhatsAppUser::create` (not updateOrCreate). No duplicate check on phone. Uses `$adminUser->id` (the just-created admin). Sets `verified_at`, `opted_in`.
-   - **AgentToshi complete-mode**: `WhatsAppUser::firstOrCreate` by `phone`. Uses `auth()->user()->id`. Sets `verified_at`, `opted_in`.
-   - **Disharmony**: Wizard uses `updateOrCreate` (safe for re-submission), Toshi create uses plain `create` (will crash on duplicate), Toshi complete uses `firstOrCreate` by phone (safe but different key than Wizard).
-
-5. **Plan selection divergence**:
-   - **Wizard**: `savePlan()` — validates all previous non-optional steps complete first. Looks up Plan by ID + `is_active`. Creates `CurrentPlan` with `status = 'running'`. Updates existing plan if found.
-   - **AgentToshi create-mode**: If `selectedPlanId` is set and plan has `amount > 0`, calls `TrialService::startTrial()`. Otherwise creates bare `CurrentPlan` (no status). Also creates a `Subscription` row with `status = 'pending'`. Completely different flow from Wizard.
-   - **AgentToshi complete-mode**: `persistSelectedPlan()` if no existing CurrentPlan. Does not check plan amount or start trial.
-   - **Disharmony**: Toshi create-mode has trial logic + Subscription creation that Wizard doesn't. Wizard sets `status = 'running'`. Toshi bare-create omits status. Three different plan-persistence paths.
-
-**Security flags**:
-- ⚠️ F1 (hardcoded password): 6 of 7 teacher/student creation paths use literal "password". Only the Wizard uses `Str::random(16)`. No path sends a notification or forces reset.
-- ⚠️ Toshi create-mode WhatsApp: plain `create()` will throw on duplicate phone (no graceful handling like Wizard's `UniqueConstraintViolationException` catch).
-
-**Proposed Phase 1C scope** (before implementing — awaiting approval):
-
-**1C-1**: `OnboardingEngine::saveTeachers()` — unified teacher creation with `Str::random(16)` password, optional Userprofile, optional Teacherlink creation, email dedup strategy.
-**1C-2**: `OnboardingEngine::saveStudents()` — unified student creation with random password, KlassappId, class assignment via StandardLink resolution, optional gender/LIN fields.
-**1C-3**: `OnboardingEngine::saveWhatsApp()` — unified WhatsApp registration using `updateOrCreate` by user_id, phone uniqueness validation, `UniqueConstraintViolationException` handling.
-**1C-4**: `OnboardingEngine::savePlan()` — unified plan selection with step-completion validation, TrialService integration, CurrentPlan + Subscription creation, explicit `status = 'running'`.
-**1C-5**: Wire Wizard and Toshi to call OnboardingEngine methods instead of inline creation.
-**1C-6**: Password security fix — set a `requires_password_change` flag on all newly created teacher/student Users, to be enforced at next login (separate concern from 1C but should be designed alongside).
-
-**Not in 1C scope**: Bulk import paths (TeachersImport), admin single-add form (RegisterUser::CreateTeacher) — separate features with their own form flows. Also explicitly out of scope: grading_style/sub_group UI design (separate future work), "Average" grading-style addition (deferred to later grading redesign), and any grading-related UI — 1C is purely about unifying the four save* methods into OnboardingEngine.
-
-**Implementation hold**: Phase 1C scope is approved in substance, but awaiting explicit go-ahead before writing code. The grading-style UX question and the "Average" grading-style question must stay clearly separated from 1C.
-
-**Confirmed 1C implementation plan** (approved 2026-08-26):
-
-**Single PR** `feat/onboarding-engine-1c` (branch from `main` after #367/#368/#369 merge).
-
-**Four new OnboardingEngine methods**:
-- `saveTeachers(School, AcademicYear, array $teachers): array` — random password (`Str::random(16)`), `is_reset=1`, User+Userprofile+optional Teacherlink, email dedup
-- `saveStudents(School, AcademicYear, array $students): array` — random password, `is_reset=1`, User+Userprofile+StudentAcademic, KlassappId, class assignment via StandardLink resolution
-- `saveWhatsApp(School, int $userId, string $phone): WhatsAppUser` — `updateOrCreate` by user_id, phone uniqueness + UniqueConstraintViolationException catch
-- `savePlan(School, int $userId, int $planId, bool $skipCompletionCheck = false): CurrentPlan` — step validation, TrialService for paid plans, CurrentPlan+Subscription creation, `status='running'`
-
-**Wiring**: ManualOnboardingWizard and AgentToshi::commitAll() both delegate to OnboardingEngine. ToshiActionService::addTeacher/addStudent also delegate.
-
-**Password fix**: `is_reset=1` on every created User (existing column, tinyint default 0). Login-enforcement middleware is separate future work.
-
-**Existing `is_reset` column**: already on `users` (tinyint(1) DEFAULT 0). Currently used by mobile reset flow. 1C sets it to 1 for newly created accounts, meaning "must change password on next login." No migration needed.
-
-**Out of scope**: RegisterUser::CreateTeacher, TeachersImport, notification/invite flow, grading-style UI, "Average" grading-style.
-
-**New test files**: SaveTeachersTest (~10), SaveStudentsTest (~10), SaveWhatsAppTest (~6), SavePlanTest (~8).
 
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
