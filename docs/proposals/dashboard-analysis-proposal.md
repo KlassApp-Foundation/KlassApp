@@ -225,89 +225,170 @@ The WhatsApp Delivery Dashboard (`resources/views/admin/whatsapp/dashboard.blade
 
 ---
 
-## 8. Proposed Dashboard Redesign
+## 8. Modern Agentic SaaS Dashboard Standards (2026)
 
-### 8.1 Design Principles
+### 8.1 What Industry-Leading Dashboards Look Like
+
+Based on research of Linear, Vercel, n8n, CrewAI, LangSmith, Stripe, Attio, and other top SaaS products in 2026:
+
+| Pattern | Description | Example Products |
+|---------|-------------|------------------|
+| **Dark-mode-first** | Dark background (#0C1528) with one neon accent. Strict contrast ratios. | Linear, Raycast, Sentry, Supabase, n8n |
+| **Single-metric focus** | Top-left quadrant shows the ONE number that answers "is everything okay?" | Stripe (revenue), Vercel (deploys), Mercury (balance) |
+| **Progressive disclosure** | Show less upfront, reveal on demand. Don't dump everything on first view. | Linear, Notion, Figma |
+| **AI-native summaries** | Dashboards summarize and prioritize instead of making users build charts | Attio, Hex, Cursor, LangSmith |
+| **Agent activity feed** | Real-time stream of what agents are doing, with trace-level detail | LangSmith, n8n, CrewAI |
+| **Connector/integration status** | Show which services are connected, with health indicators | n8n (500+ integrations), Zapier, Make |
+| **Glass-morphism cards** | Semi-transparent cards with backdrop-blur, subtle borders | CrewAI, Vercel, Linear |
+| **Bento grid layout** | Modular grid with varying card sizes for visual hierarchy | Ramp, Stripe, Vercel |
+| **Monospace data** | Numbers, IDs, and technical data in monospace font | Vercel, Linear, n8n |
+| **One accent color** | Single brand accent on dark background. Color = status. | Linear (purple), Raycast (red), n8n (red) |
+
+### 8.2 The 2026 Design Split
+
+SaaS design in 2026 has split into two dominant aesthetics:
+
+1. **Techno-futurist** — Dark mode + neon + shaders + bento grids (Linear, Vercel, n8n)
+2. **Editorial** — Cream + serif + mascots + whitespace (Notion, PostHog, Anthropic)
+
+**Recommendation for KlassApp:** Techno-futurist. Why:
+- Education + AI = future-facing. Dark mode signals technical sophistication.
+- The agentic protocol positioning demands a technical aesthetic.
+- Competitors (most school management tools) use light, friendly designs. Dark mode differentiates.
+- The Toshi AI agent looks more intelligent on a dark background.
+
+### 8.3 Design Principles
 
 1. **Toshi-first** — The AI agent should be the most prominent element on every dashboard
 2. **Connector-aware** — Show which channels are active (WhatsApp, Drive, Slack, Email)
-3. **Unified design system** — Same sidebar style, same card components, same typography
+3. **Unified design system** — Same dark sidebar, same card components, same typography
 4. **Role-appropriate** — Each role sees what matters to them, but the framework is consistent
-5. **Dark-mode ready** — Use CSS variables, not hardcoded colors
+5. **Dark-mode primary** — Dark background with one accent color (blue or violet)
+6. **Progressive disclosure** — Show the north star metric first, drill-down on demand
+7. **Agent observability** — Every Toshi action should be traceable, like LangSmith traces
+8. **Monospace data** — Numbers, IDs, and technical data in JetBrains Mono
 
-### 8.2 Proposed Admin Dashboard Layout
+### 8.4 Proposed Admin Dashboard Layout (Agentic SaaS Standard)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  NAVBAR                                                      │
-│  [Logo] [Search] [Notifications] [Toshi] [Profile]          │
-├──────────┬──────────────────────────────────────────────────┤
-│          │                                                   │
-│ SIDEBAR  │  ┌─────────────────────────────────────────────┐ │
-│          │  │  TOSHI AGENT BAR                            │ │
-│ Dashboard│  │  "Good morning! 3 things need your attention"│ │
-│          │  │  [View] [Dismiss]                           │ │
-│ Academics│  └─────────────────────────────────────────────┘ │
-│  Students│                                                   │
-│  Parents │  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐  │
-│  Classes │  │ 846  │ │  42  │ │ 312  │ │ 96%  │ │ $12K │  │
-│  Subjects│  │Students│ │Teachers│ │Parents│ │Attend│ │ Fees │  │
-│  Timetable│  └──────┘ └──────┘ └──────┘ └──────┘ └──────┘  │
-│  Attend. │                                                   │
-│  Exams   │  ┌──────────────────┐ ┌────────────────────────┐ │
-│  Grades  │  │ CONNECTORS       │ │ ACTIVITY FEED          │ │
-│  Reports │  │ ✅ WhatsApp  312 │ │ • 3 students absent    │ │
-│          │  │ ✅ Drive     ✓   │ │ • Term reports ready   │ │
-│ Finance  │  │ ⚠️ Slack     ✗   │ │ • Fee reminder sent    │ │
-│  Fees    │  │ ✅ Email     ✓   │ │ • New teacher added    │ │
-│  Payroll │  │ ✅ SMS       ✓   │ │                        │ │
-│          │  └──────────────────┘ └────────────────────────┘ │
-│ Comms    │                                                   │
-│  WhatsApp│  ┌──────────────────┐ ┌────────────────────────┐ │
-│  Email   │  │ FEE COLLECTION   │ │ UPCOMING EVENTS        │ │
-│  SMS     │  │ [Chart]          │ │ • Sports Day - Fri     │ │
-│          │  │ Collected: $8.2K │ │ • PTA Meeting - Mon    │ │
-│ Library  │  │ Outstanding: $3K │ │ • Exams start - 15th   │ │
-│ Transport│  └──────────────────┘ └────────────────────────┘ │
-│ Health   │                                                   │
-│          │  ┌──────────────────────────────────────────────┐ │
-│ Settings │  │ QUICK ACTIONS                                │ │
-│          │  │ [Add Student] [Send Notice] [Generate Report]│ │
-│          │  └──────────────────────────────────────────────┘ │
-└──────────┴──────────────────────────────────────────────────┘
-```
-
-### 8.3 Proposed Teacher Dashboard Layout
+Inspired by: Linear (sidebar + content), n8n (connector status), LangSmith (agent traces), Stripe (KPI cards)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  TOSHI AGENT BAR                                             │
-│  "You have 12 marks to submit and 4 homework to review"     │
-│  [Enter Marks] [Review Homework] [Dismiss]                  │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐                      │
-│  │  6   │ │  42  │ │  12  │ │  4   │                      │
-│  │Classes│ │Students│ │Marks │ │Homework│                      │
-│  │      │ │      │ │Due   │ │Due   │                      │
-│  └──────┘ └──────┘ └──────┘ └──────┘                      │
-│                                                              │
-│  ┌──────────────────┐ ┌────────────────────────────────┐   │
-│  │ TODAY'S TIMETABLE│ │ CLASS PERFORMANCE              │   │
-│  │ 8:00 Math S.3    │ │ [Chart: Average marks by class]│   │
-│  │ 9:00 Math S.2    │ │                                │   │
-│  │ 10:30 Math S.1   │ │ S.3: 72% avg                   │   │
-│  │                  │ │ S.2: 68% avg                   │   │
-│  └──────────────────┘ └────────────────────────────────┘   │
-│                                                              │
-│  ┌──────────────────┐ ┌────────────────────────────────┐   │
-│  │ PENDING ACTIONS  │ │ RECENT SUBMISSIONS             │   │
-│  │ • Enter S.3 marks│ │ • John submitted homework      │   │
-│  │ • Review 4 HW    │ │ • Mary submitted assignment    │   │
-│  │ • Approve lesson │ │                                │   │
-│  └──────────────────┘ └────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  NAVBAR (dark, glass-morphism)                                              │
+│  [Logo] [Search ⌘K] [🔔 3] [🤖 Toshi] [Avatar ▾]                         │
+├────────┬────────────────────────────────────────────────────────────────────┤
+│        │                                                                    │
+│SIDEBAR │  ┌──────────────────────────────────────────────────────────────┐  │
+│(dark)  │  │  🤖 TOSHI AGENT BAR                                        │  │
+│        │  │  "Good morning. 3 things need your attention today."        │  │
+│ 🏠     │  │  ┌─────────────────────────────────────────────────────┐    │  │
+│ Dash   │  │  │ • 12 marks pending submission (S.3 Mathematics)    │    │  │
+│        │  │  │ • Fee reminder sent to 23 parents — 98% delivered  │    │  │
+│ 📚     │  │  │ • 3 students absent today — parents notified       │    │  │
+│ Acad.  │  │  └─────────────────────────────────────────────────────┘    │  │
+│  Students│  │  [View All Actions] [Ask Toshi Anything →]                 │  │
+│  Parents │  └──────────────────────────────────────────────────────────────┘  │
+│  Classes │                                                                    │
+│  Subjects│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐         │
+│  Timetable│  │  846   │ │   42   │ │  312   │ │  96%   │ │ $12.4K │         │
+│  Attend. │  │Students│ │Teachers│ │Parents │ │Attend. │ │ Fees   │         │
+│  Exams   │  │  ↑12   │ │  ↑3    │ │  ↑18   │ │  ↑2%   │ │  ↑8%   │         │
+│  Grades  │  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘         │
+│  Reports │  (monospace numbers, subtle trend indicators, glass cards)       │
+│          │                                                                    │
+│ 💰      │  ┌─────────────────────────────┐ ┌─────────────────────────────┐  │
+│ Finance  │  │ CONNECTORS                  │ │ AGENT ACTIVITY              │  │
+│  Fees    │  │                             │ │                             │  │
+│  Payroll │  │ ✅ WhatsApp   312 parents   │ │ 2m ago  Toshi sent fee      │  │
+│          │  │ ✅ Drive      Connected     │ │         reminders to P.6    │  │
+│ 💬      │  │ ⚠️ Slack      Not configured│ │ 15m ago Toshi generated     │  │
+│ Comms    │  │ ✅ Email      SMTP active   │ │         term reports (46)   │  │
+│  WhatsApp│  │ ✅ SMS        Twilio active  │ │ 1h ago  Toshi marked        │  │
+│  Email   │  │ ✅ Firebase   Push active   │ │         attendance for S.2  │  │
+│  SMS     │  │                             │ │                             │  │
+│          │  │ [Manage Connectors →]       │ │ [View Full Trace →]         │  │
+│ 📖      │  └─────────────────────────────┘ └─────────────────────────────┘  │
+│ Library  │                                                                    │
+│ 🚌      │  ┌─────────────────────────────┐ ┌─────────────────────────────┐  │
+│ Transport│  │ FEE COLLECTION TREND        │ │ UPCOMING EVENTS             │  │
+│          │  │                             │ │                             │  │
+│ ⚙️      │  │  $12K ┤      ╭──╮           │ │ 📅 Sports Day — Fri 22nd    │  │
+│ Settings │  │   $8K ┤   ╭──╯  ╰──╮       │ │ 📅 PTA Meeting — Mon 25th   │  │
+│          │  │   $4K ┤──╯          ╰──    │ │ 📅 Exams start — 1st Oct    │  │
+│          │  │       └──────────────────   │ │                             │  │
+│          │  │       Jun  Jul  Aug  Sep    │ │ [View Calendar →]           │  │
+│          │  └─────────────────────────────┘ └─────────────────────────────┘  │
+│          │                                                                    │
+│          │  ┌──────────────────────────────────────────────────────────────┐  │
+│          │  │ QUICK ACTIONS                                               │  │
+│          │  │ [+ Add Student] [📤 Send Notice] [📊 Generate Report]       │  │
+│          │  │ [💰 Record Payment] [📅 Create Event] [🤖 Ask Toshi]        │  │
+│          │  └──────────────────────────────────────────────────────────────┘  │
+└────────┴────────────────────────────────────────────────────────────────────┘
 ```
+
+**Key design elements (matching agentic SaaS standards):**
+- **Dark sidebar** (#0C1528) with icon-only navigation, text on hover
+- **Glass-morphism cards** with backdrop-blur and subtle borders
+- **Monospace numbers** (JetBrains Mono) for KPI values
+- **Trend indicators** (↑↓) with color coding (green=up, red=down)
+- **Agent Activity feed** with timestamped Toshi actions (like LangSmith traces)
+- **Connector status** with health indicators (like n8n integrations)
+- **Chart** using subtle gradient fill (like Stripe dashboard)
+- **⌘K search** in navbar (like Linear, Vercel, Raycast)
+
+### 8.5 Proposed Teacher Dashboard Layout (Agentic SaaS Standard)
+
+Inspired by: Linear (task-focused), n8n (workflow status), Stripe (clean KPIs)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  NAVBAR (dark, glass-morphism)                                              │
+│  [Logo] [Search ⌘K] [🔔 2] [🤖 Toshi] [Avatar ▾]                         │
+├────────┬────────────────────────────────────────────────────────────────────┤
+│        │                                                                    │
+│SIDEBAR │  ┌──────────────────────────────────────────────────────────────┐  │
+│(dark)  │  │  🤖 TOSHI                                                    │  │
+│        │  │  "You have 12 marks to submit and 4 homework to review."    │  │
+│ 🏠     │  │  [Enter Marks] [Review Homework] [Ask Toshi →]              │  │
+│ Dash   │  └──────────────────────────────────────────────────────────────┘  │
+│        │                                                                    │
+│ 📚     │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐                     │
+│ Classes│  │   6    │ │   42   │ │   12   │ │   4    │                     │
+│ 📅     │  │ Classes│ │Students│ │Marks   │ │Homework│                     │
+│ Timetable│  │        │ │        │ │ Due    │ │ Due    │                     │
+│ ✅     │  └────────┘ └────────┘ └────────┘ └────────┘                     │
+│ Attend.│                                                                    │
+│ 📝     │  ┌─────────────────────────────┐ ┌─────────────────────────────┐  │
+│ Exams  │  │ TODAY'S TIMETABLE           │ │ CLASS PERFORMANCE           │  │
+│ 📊     │  │                             │ │                             │  │
+│ Marks  │  │ 08:00  Mathematics  S.3     │ │  S.3  ████████████░  72%    │  │
+│ 👥     │  │ 09:00  Mathematics  S.2     │ │  S.2  ██████████░░░  68%    │  │
+│ Students│  │ 10:30  Mathematics  S.1     │ │  S.1  █████████████░  78%   │  │
+│ 📢     │  │ 14:00  Mathematics  P.6     │ │  P.6  ████████░░░░░  58%    │  │
+│ Notices│  │                             │ │                             │  │
+│ 📅     │  │ [View Full Timetable →]     │ │ [View Detailed Report →]    │  │
+│ Events │  └─────────────────────────────┘ └─────────────────────────────┘  │
+│ 📖     │                                                                    │
+│ Library│  ┌─────────────────────────────┐ ┌─────────────────────────────┐  │
+│        │  │ PENDING ACTIONS             │ │ RECENT SUBMISSIONS          │  │
+│        │  │                             │ │                             │  │
+│        │  │ 🔴 Enter S.3 mid-term marks │ │ 2m ago  John K. submitted   │  │
+│        │  │ 🟡 Review 4 homework        │ │         Math homework Ch.5  │  │
+│        │  │ 🟡 Approve lesson plan      │ │ 15m ago Mary N. submitted   │  │
+│        │  │ 🟢 Submit attendance        │ │         English essay       │  │
+│        │  │                             │ │ 1h ago  Peter M. submitted  │  │
+│        │  │ [View All Tasks →]          │ │         Science lab report  │  │
+│        │  └─────────────────────────────┘ └─────────────────────────────┘  │
+└────────┴────────────────────────────────────────────────────────────────────┘
+```
+
+**Key design elements:**
+- **Toshi bar** with proactive task summary and quick actions
+- **Monospace numbers** for KPI values
+- **Progress bars** for class performance (like n8n execution status)
+- **Color-coded priority** for pending actions (red=urgent, yellow=normal, green=done)
+- **Timestamped submissions** (like LangSmith traces)
 
 ### 8.4 Proposed Student Dashboard Layout
 
