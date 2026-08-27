@@ -471,15 +471,26 @@
             </div>
             @endif
 
-            {{-- School Type Buttons --}}
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'school_info' && $substep === 2)
-            <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
-                <div style="font-size: 12px; font-weight: 600; color: #5e5d59; margin-bottom: 4px;">→ Category</div>
+            {{-- School Category Buttons (complete-mode action step) --}}
+            @if($actionStep === 'onboarding_school_category')
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;" data-testid="toshi-category-options">
+                <div style="font-size: 12px; font-weight: 600; color: #5e5d59; margin-bottom: 4px;">→ School category</div>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                    <button wire:click="setSchoolType('nursery')" class="toshi-btn">Nursery</button>
-                    <button wire:click="setSchoolType('primary','','mixed')" class="toshi-btn">Primary</button>
-                    <button wire:click="setSchoolType('secondary','o-level','mixed')" class="toshi-btn">Secondary</button>
-                    <button wire:click="setSchoolType('mixed','both','mixed')" class="toshi-btn">All Levels</button>
+                    @foreach(\App\Services\SchoolCategorySeeder::CATEGORIES as $value => $label)
+                    <button wire:click="selectSchoolCategory('{{ $value }}')" class="toshi-btn" data-testid="toshi-category-{{ $value }}">{{ $label }}</button>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            {{-- School Category Buttons (create-flow school_info substep) --}}
+            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'school_info' && $substep === 2)
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;" data-testid="toshi-category-options">
+                <div style="font-size: 12px; font-weight: 600; color: #5e5d59; margin-bottom: 4px;">→ School category</div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    @foreach(\App\Services\SchoolCategorySeeder::CATEGORIES as $value => $label)
+                    <button wire:click="selectSchoolCategory('{{ $value }}')" class="toshi-btn" data-testid="toshi-category-{{ $value }}">{{ $label }}</button>
+                    @endforeach
                 </div>
             </div>
             @endif
@@ -1377,14 +1388,24 @@
                         </div>
                         @endif
 
-                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'school_info' && $substep === 2)
-                        <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;">
-                            <div style="font-size: 12px; font-weight: 600; color: #5e5d59; margin-bottom: 4px;">→ Category</div>
+                        @if($actionStep === 'onboarding_school_category')
+                        <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" data-testid="toshi-category-options">
+                            <div style="font-size: 12px; font-weight: 600; color: #5e5d59; margin-bottom: 4px;">→ School category</div>
                             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                <button wire:click="setSchoolType('nursery')" class="toshi-btn">Nursery</button>
-                                <button wire:click="setSchoolType('primary','','mixed')" class="toshi-btn">Primary</button>
-                                <button wire:click="setSchoolType('secondary','o-level','mixed')" class="toshi-btn">Secondary</button>
-                                <button wire:click="setSchoolType('mixed','both','mixed')" class="toshi-btn">All Levels</button>
+                                @foreach(\App\Services\SchoolCategorySeeder::CATEGORIES as $value => $label)
+                                <button wire:click="selectSchoolCategory('{{ $value }}')" class="toshi-btn" data-testid="toshi-category-{{ $value }}">{{ $label }}</button>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+
+                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'school_info' && $substep === 2)
+                        <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" data-testid="toshi-category-options">
+                            <div style="font-size: 12px; font-weight: 600; color: #5e5d59; margin-bottom: 4px;">→ School category</div>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                @foreach(\App\Services\SchoolCategorySeeder::CATEGORIES as $value => $label)
+                                <button wire:click="selectSchoolCategory('{{ $value }}')" class="toshi-btn" data-testid="toshi-category-{{ $value }}">{{ $label }}</button>
+                                @endforeach
                             </div>
                         </div>
                         @endif
