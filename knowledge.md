@@ -316,7 +316,7 @@
 
 ---
 
-## Current Status: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN + provenance docs PR pending)
+## Current Status: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN + provenance docs PR #376 OPEN)
 
 - **🔀 PR #373 OPEN**: Rename `id_card_number` → `school_student_id` (PR-A) — https://github.com/KlassApp-Foundation/KlassApp/pull/373
 - **🔀 PR #374 OPEN**: Fix WhatsApp Priority 2 cross-tenant data leak (PR-B) — https://github.com/KlassApp-Foundation/KlassApp/pull/374
