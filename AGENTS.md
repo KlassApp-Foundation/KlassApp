@@ -44,6 +44,10 @@ Before editing code in these areas, check the fix markers below are still in pla
 6. **`status != 'exit'` conflates "not exited" with "currently active"** — see standing rule #6. This is the same broad-category-vs-specific-value mistake as patterns #2–#4 above; it has now recurred 4 times across unrelated features. Treat it as a reflex check on any new aggregate/count query touching a multi-value enum.
 7. **`board_registration_number` validation — operator-precedence + wrong-locale bug.** `$standard->name == '10' || '11' || '12'` is always truthy (PHP `||` with string literals), and Indian system numbers 10/11/12 don't exist in the Ugandan schema. `nullable|numeric` rejected real UNEB numbers like `U1234/567`. Fixed by `OnboardingEngine::isCandidateClass()` matching actual Ugandan exam-candidate classes + `string|max:50` validation. See standing rule #14.
 
+## Project Provenance
+
+KlassApp is a fork of **GeGoK12** (GoGo Technologies, India). The codebase contains fork-legacy artifacts — Indian grade-level references (`'10'`/`'11'`/`'12'`), `id_card_number` naming, Aadhaar/caste demographic fields, and CBSE "Board" terminology — that predate the Ugandan/UNEB adaptation. When code seems mismatched to the Ugandan context, check `docs/project-provenance.md` before assuming it's a new bug. Standing rule #14 (PHP operator precedence / locale assumptions) and Known Bug Pattern #7 (`board_registration_number`) are concrete instances of this provenance issue.
+
 ## Path-specific notes
 
 ### `app/Console/Commands/**`

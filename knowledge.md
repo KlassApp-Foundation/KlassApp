@@ -314,14 +314,35 @@
 |---|---|---|
 | **Toshi platform-scope for superadmin** | **Phase 0–1 MERGED** — #124 on `main` | Platform gate + tools + HITL. Role agents #125–#129+#137; WhatsApp #133–#136 deployed; MCP audit #140. |
 
+### Future Initiatives (flagged, not yet in progress)
+
+#### UI migration: away from inherited GeGoK12 UI, toward KlassApp's own modern UI
+
+**Flagged**: 2026-08-27 (provenance documentation session) — **Not yet scoped.**
+
+KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the Indian open-source system it was forked from — see `docs/project-provenance.md`). This needs a genuine migration to KlassApp's own modern UI, using the already-formalized `DESIGN_SYSTEM.md` (`x-button`/`x-card`/`x-badge`/`x-table`/`x-form-group` components, warm color palette, Sora/DM Sans typography in `resources/views/components/DESIGN_SYSTEM.md`) as the actual target, not just a reference document.
+
+**Scale and discipline**: this is comparably deep work to the full OnboardingEngine unification effort (Phases 1A through 1D, PRs #356–#370+) — phased, test-first, scoped PRs with real evidence per slice, not a single sweeping rewrite. Needs its own investigation/design-doc pass before implementation starts, the same way `docs/onboarding-engine-plan.md` scoped the engine work before any code was written.
+
+**Not yet scoped**: no investigation has been done yet on which surfaces are most GeGoK12-legacy vs. already-modernized, what the migration phases should be, or which parts of `DESIGN_SYSTEM.md` are actually applied anywhere yet vs. just documented. This is the next major initiative after the current onboarding/grading work concludes.
+
+**Known GeGoK12-legacy UI surfaces** (from provenance doc audit):
+- `resources/views/components/academic-detail.blade.php` — "*Only For Class X, XI, XII" label text (Indian grade references)
+- `resources/assets/js/components/student/Edit.vue` — same label
+- `resources/assets/js/components/admission/AcademicDetail.vue` — same label (lines 173, 204)
+- `public/js/app.js` — compiled artifact still contains Indian class references
+- `app/Traits/AdmissionUser.php` — Indian demographic fields (aadhar_number, caste, sub_caste, community, mother_tongue, lin)
+- Various Blade views still using GeGoK12-era layout patterns (un-audited)
+
 ---
 
-## Current Status: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN)
+## Current Status: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN + provenance docs PR #376 OPEN)
 
 - **🔀 PR #373 OPEN**: Rename `id_card_number` → `school_student_id` (PR-A) — https://github.com/KlassApp-Foundation/KlassApp/pull/373
 - **🔀 PR #374 OPEN**: Fix WhatsApp Priority 2 cross-tenant data leak (PR-B) — https://github.com/KlassApp-Foundation/KlassApp/pull/374
-- **🔀 PR #375 OPEN**: Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR-C) — https://github.com/KlassApp-Foundation/KlassApp/pull/375 — branch `fix/wire-school-student-id-and-board-reg` @ `a63f490`
-- **Next**: Merge PR-A → PR-B → PR-C, then deploy.
+- **🔀 PR #375 OPEN**: Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR-C) — https://github.com/KlassApp-Foundation/KlassApp/pull/375 — branch `fix/wire-school-student-id-and-board-reg` @ `97a4485` (2 commits: implementation + docs)
+- **🔀 Provenance docs PR #376 OPEN**: `docs/project-provenance` branch — documents KlassApp's fork origin from GeGoK12 (India) and lists known fork-legacy artifacts. — https://github.com/KlassApp-Foundation/KlassApp/pull/376
+- **Next**: Merge PR-A → PR-B → PR-C, then deploy. Provenance docs PR is independent.
 - **`origin/main` tip**: `e98d7982`.
 
 ## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
@@ -872,6 +893,32 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-27: Future initiative — UI migration away from GeGoK12 inheritance (docs-only)
+
+- **Work done**: Logged the UI migration as a "Future Initiatives" entry in knowledge.md — this is the next major initiative after the current onboarding/grading work concludes. Not yet scoped; needs its own investigation/design-doc pass (same discipline as OnboardingEngine Phases 1A–1D, which had `docs/onboarding-engine-plan.md` before any code).
+- **Rationale**: The provenance documentation work surfaced that KlassApp's UI carries significant GeGoK12 inheritance beyond the data-model artifacts already catalogued (see `docs/project-provenance.md`). The `DESIGN_SYSTEM.md` components (x-button, x-card, etc.) exist but their coverage across the app is un-audited. This initiative needs scoping before any implementation — which surfaces to document, what phases, what's already modernized vs. legacy.
+- **Files modified**: `knowledge.md` — added "Future Initiatives" subsection under "Decided-deferred" with full UI-migration entry and known GeGoK12-legacy UI surfaces list.
+- **Cross-references**: `docs/project-provenance.md` (fork-legacy artifacts), `resources/views/components/DESIGN_SYSTEM.md` (target design system), `docs/onboarding-engine-plan.md` (discipline model for phased work).
+- **Branch**: `docs/project-provenance`
+- **Status**: No PR yet — documentation-only change committed to existing branch.
+
+### 2026-08-27: Project provenance documentation — KlassApp as GeGoK12 fork (docs-only PR)
+
+- **Work done**: Documented KlassApp's origin as a fork of GoGo Technologies' GeGoK12 (India). This explains the recurring "Indian locale" artifacts found in the codebase — Indian grade numbers ('10'/'11'/'12') in board_registration_number validation, "ID Card Number" field naming, Aadhaar/caste/community demographic fields, CBSE "Board" terminology, and AdmissionUser trait patterns inherited from the Indian school management system.
+- **Files created**:
+  - `docs/project-provenance.md` — Full provenance doc: fork history, known fork-legacy artifacts table, identification guide, decision framework for handling artifacts.
+  - `.agents/skills/project-provenance/SKILL.md` — Agent-facing skill for proactive surfacing of fork-legacy context.
+  - `.claude/skills/project-provenance/SKILL.md` — Same.
+  - `.cursor/skills/project-provenance/SKILL.md` — Same.
+  - `.junie/skills/project-provenance/SKILL.md` — Same.
+- **Files modified**:
+  - `AGENTS.md` — Added "Project Provenance" section cross-referencing `docs/project-provenance.md` and standing rule #14.
+  - `knowledge.md` — Updated Current Status, added this session log entry.
+- **Rationale for separate doc vs. AGENTS.md fold-in**: AGENTS.md is a standing rules file, not a history document. Provenance context is explanatory background that explains *why* certain patterns exist — it belongs in a dedicated doc that agents are directed to via the SKILL.md trigger mechanism, with a concise cross-reference in AGENTS.md rather than full duplication.
+- **Cross-references**: AGENTS.md standing rule #14, Known Bug Pattern #7, knowledge.md Known Bug Pattern #8, PRs #373 and #375.
+- **Branch**: `docs/project-provenance`
+- **Status**: OPEN — https://github.com/KlassApp-Foundation/KlassApp/pull/376
 
 ### 2026-08-27: PR-C — Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR #375 OPEN)
 
