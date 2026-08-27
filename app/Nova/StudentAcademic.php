@@ -67,7 +67,7 @@ class StudentAcademic extends Resource
 
             Text::make('School Student ID','school_student_id')->rules('nullable','string','max:50')->hideFromIndex(),
 
-            Number::make('Board Registration Number','board_registration_number')->rules('nullable','numeric')->hideFromIndex(),
+            Text::make('Board Registration Number','board_registration_number')->rules('nullable','string','max:50')->hideFromIndex(),
 
             Select::make('Mode Of Transport','mode_of_transport')->options([
                 'auto'          => 'Auto',

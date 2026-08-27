@@ -449,6 +449,18 @@ class ToshiActionService
             if ($standardLink) {
                 $academicData['standardLink_id'] = $standardLink->id;
             }
+            // school_student_id is universal — store if provided
+            if (! empty($details['school_student_id'])) {
+                $academicData['school_student_id'] = $details['school_student_id'];
+            }
+            // board_registration_number only for UNEB candidate classes (P.7/S.4/S.6)
+            if (! empty($details['board_registration_number']) && $standardLink) {
+                $stdName = $standardLink->standard?->name ?? '';
+                $secName = $standardLink->section?->name ?? '';
+                if (OnboardingEngine::isCandidateClass($stdName) || OnboardingEngine::isCandidateClass($secName)) {
+                    $academicData['board_registration_number'] = $details['board_registration_number'];
+                }
+            }
             StudentAcademic::create($academicData);
 
             DB::commit();

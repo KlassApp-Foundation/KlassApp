@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\OnboardingEngine;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Models\User;
 
@@ -24,7 +25,12 @@ class UserDetail extends JsonResource
     {
         $avatarpath = $this->userprofile->AvatarPath;
     }
-        if( ($this->studentAcademicLatest->standardLink->standard->name == '10') || ($this->studentAcademicLatest->standardLink->standard->name == '12') )
+        $standardName = $this->studentAcademicLatest->standardLink->standard->name ?? '';
+        $sectionName = $this->studentAcademicLatest->standardLink->section->name ?? '';
+        $isCandidateClass = OnboardingEngine::isCandidateClass($standardName)
+            || OnboardingEngine::isCandidateClass($sectionName);
+
+        if ($isCandidateClass)
         {
             $board_registration_number = $this->studentAcademicLatest->board_registration_number;
         }
@@ -62,6 +68,7 @@ class UserDetail extends JsonResource
             'std_school_pay_number'               => $this->studentAcademicLatest->std_school_pay_number,
             'school_student_id'          => $this->studentAcademicLatest->school_student_id,
             'board_registration_number' => $board_registration_number,
+            'is_candidate_class'        => $isCandidateClass,
             'librarycard_number'        => $this->librarycard->library_card_no,
         ];
     }

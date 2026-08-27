@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\API;
 
+use App\Services\OnboardingEngine;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserDetail extends JsonResource
@@ -71,7 +72,13 @@ class UserDetail extends JsonResource
 
             'schoolStudentId'           =>  $this->studentAcademicLatest->school_student_id,
 
-            'boardRegistrationNumber'   =>  $this->studentAcademicLatest->board_registration_number,
+            'boardRegistrationNumber'   =>  OnboardingEngine::isCandidateClass($this->studentAcademicLatest->standardLink->standard->name ?? '')
+                || OnboardingEngine::isCandidateClass($this->studentAcademicLatest->standardLink->section->name ?? '')
+                ? $this->studentAcademicLatest->board_registration_number
+                : null,
+
+            'isCandidateClass'          =>  OnboardingEngine::isCandidateClass($this->studentAcademicLatest->standardLink->standard->name ?? '')
+                || OnboardingEngine::isCandidateClass($this->studentAcademicLatest->standardLink->section->name ?? ''),
 
             'modeOfTransport'           =>  $this->studentAcademicLatest->mode_of_transport,
 
