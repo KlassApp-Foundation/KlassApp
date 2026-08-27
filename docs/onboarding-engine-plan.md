@@ -311,7 +311,23 @@ The test must fail if any of the 9 resolved disharmonies regresses.
 - No migration or schema changes.
 - No changes to `SchoolSignupBootstrapService` except that `OnboardingEngine::createAdmin` will supersede its admin-creation logic during Toshi create flow.
 
-## 7. Open product questions before Phase 2
+## 7. UI / UX design principles
+
+> These principles guide the design of both Toshi's chat flow and the manual wizard's forms. They are **normative** — any new onboarding UI should follow them — but they are not yet fully implemented. See the status note on each principle.
+
+### "Configurable, but never blank — prefill sensible defaults"
+
+When a step's underlying data model is genuinely configurable (any number of terms, any class names, any fee structures), the UI presented to the user should still start with **sensible, real-world defaults pre-filled** — not an empty form asking them to build structure from scratch.
+
+**Example:** academic terms are stored as fully configurable rows (any count, any names — see `OnboardingEngine::saveTerms`), but the UI should prefill the 3 standard UNEB terms (Term 1, Term 2, Term 3) as a starting point, which the school can then edit, add to, or remove from.
+
+**Scope:** this principle applies across **both interfaces** — Toshi's chat flow and the manual wizard's forms — whenever either is designed or touched.
+
+**Status: documented principle, not yet implemented.** The `saveTerms` backend is shipped; the terms UI in Toshi and the wizard has not been redesigned to prefill defaults yet. The canonical rule lives in **AGENTS.md standing rule #17**.
+
+---
+
+## 8. Open product questions before Phase 2
 
 1. Do we keep the Toshi chat UI as the primary path, or should the manual wizard become the canonical path?
 2. Should Toshi ask `school_category` explicitly, or continue deriving it from `schoolType`/`hasNursery`?

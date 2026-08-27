@@ -68,6 +68,12 @@ class ToshiCommitAllCompleteModeTest extends TestCase
         // Regression test for Finding 2:
         // complete-mode in commitAll() was creating Section rows but NOT StandardLink rows,
         // causing subjects, teacher links, and student academics to silently no-op.
+        //
+        // Additionally: the old code created a single $phase Standard and mapped ALL classes
+        // to it (Bug 1 — single-Standard mapping for mixed-level schools). Now that content
+        // steps delegate to OnboardingEngine, each class maps to its CORRECT tier Standard
+        // (nursery/primary/o-level/a-level). For P1-P3, all map to 'primary', so we verify
+        // the tier name explicitly rather than asserting all links share one arbitrary phase.
 
         $this->actingAs($this->admin);
 
@@ -105,12 +111,16 @@ class ToshiCommitAllCompleteModeTest extends TestCase
                 "Section '{$section->name}' must have a StandardLink after complete-mode commitAll()");
         }
 
-        // Assert: StandardLink is linked to the phase (Standard) and academic year
-        $phase = Standard::where('school_id', $this->school->id)->first();
-        $this->assertNotNull($phase, 'A phase Standard row must exist after commit');
+        // Assert: StandardLink references the CORRECT per-class tier Standard
+        // (Bug 1 fix: each class maps to its grading-tier Standard, not one arbitrary $phase)
+        $primaryStandard = Standard::where('school_id', $this->school->id)
+            ->where('name', 'primary')
+            ->first();
+        $this->assertNotNull($primaryStandard, 'A primary Standard must exist for P1-P3 classes');
+
         foreach (StandardLink::where('school_id', $this->school->id)->get() as $link) {
-            $this->assertEquals($phase->id, $link->standard_id,
-                'StandardLink must reference the phase Standard');
+            $this->assertEquals($primaryStandard->id, $link->standard_id,
+                'P1/P2/P3 StandardLink must reference the primary tier Standard');
             $this->assertNotNull($link->academic_year_id,
                 'StandardLink must reference an academic year');
         }
