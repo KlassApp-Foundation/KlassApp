@@ -34,7 +34,7 @@ class ImportMemberController extends Controller
       //
       return view('admin/member/import/import');
     }
-  
+
     /**
     * @return \Illuminate\Support\Collection
     */
@@ -57,8 +57,8 @@ class ImportMemberController extends Controller
         {
           return back()->with('failmessage','You can add only '.$count.' Members');
         }
-        \Session::forget('count'); 
-         
+        \Session::forget('count');
+
         $insertedcount = \Session::get('insertedcount');
         if($insertedcount > 0)
         {
@@ -77,8 +77,8 @@ class ImportMemberController extends Controller
         else
         {
           return back()->with('failmessage',trans('messages.insert_failure_msg'));
-        } 
-        \Session::forget('insertedcount'); 
+        }
+        \Session::forget('insertedcount');
       }
       catch(Exception $e)
       {
@@ -105,7 +105,7 @@ class ImportMemberController extends Controller
     //     'firstname','lastname','mobile_no','email','gender','date_of_birth','blood_group',
     //     'class','section','address','city','state','country','pincode','birth_place',
     //     'native_place','mother_tongue','caste','sub_caste','aadhar_number','joining_date',
-    //     'admission_number','LIN','std_school_pay_number','id_card_number','board_registration_number',
+    //     'admission_number','LIN','std_school_pay_number','school_student_id','board_registration_number',
     //     'mode_of_transport','driver_name','driver_contact_number','siblings','siblings_count',
     //     'sibling_relation','sibling_name','sibling_date_of_birth','sibling_class','notes',
     //     'parent_firstname','parent_lastname','parent_mobile_no','parent_alternate_no','parent_email',

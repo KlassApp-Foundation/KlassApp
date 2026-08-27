@@ -1,8 +1,8 @@
 <?php
-   
+
 namespace App\Imports;
 
-use Maatwebsite\Excel\Concerns\WithHeadingRow;  
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +16,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Log;
-    
+
 class PromotionImport implements ToCollection , WithHeadingRow
 {
     use RegisterUser;
@@ -24,23 +24,23 @@ class PromotionImport implements ToCollection , WithHeadingRow
     public function collection(Collection $rows)
     {
         \DB::beginTransaction();
-        try 
+        try
         {
             $exam_id                = \Session::get('exam_id');
             $curr_academic_year_id  = \Session::get('curr_academic_year_id');
             $next_academic_year_id  = \Session::get('next_academic_year_id');
             $curr_standardLink_id   = \Session::get('curr_standardlink_id');
             $next_standardLink_id   = \Session::get('next_standardlink_id');
-           
+
             $school_id = Auth::user()->school_id;
             $insertedcount = 0;
-            
-            foreach ($rows as $row) 
-            { 
+
+            foreach ($rows as $row)
+            {
                 $curr_studentAcademic = StudentAcademic::where('std_school_pay_number',$row['std_school_pay_number'])->first();
-              
+
                 if($curr_studentAcademic->academic_status == NULL)
-                { 
+                {
                     if($next_standardLink_id != 'alumni')
                     {
                         $curr_standardLink = StandardLink::where('id',$curr_standardLink_id)->first();
@@ -87,7 +87,7 @@ class PromotionImport implements ToCollection , WithHeadingRow
                             $next_studentAcademic->user_id                    = $user->id;
                             $next_studentAcademic->standardLink_id            = $next_standardLink->id;
                             $next_studentAcademic->std_school_pay_number                = $curr_studentAcademic->std_school_pay_number;
-                            $next_studentAcademic->id_card_number             = $curr_studentAcademic->id_card_number;
+                            $next_studentAcademic->school_student_id            = $curr_studentAcademic->school_student_id;
                             $next_studentAcademic->board_registration_number  = $curr_studentAcademic->board_registration_number;
 
                             $next_studentAcademic->save();
@@ -133,10 +133,10 @@ class PromotionImport implements ToCollection , WithHeadingRow
                         }
                         $insertedcount++;
                     }
-                }       
-            } 
+                }
+            }
             \Session::put('insertedcount',$insertedcount);
-            \DB::commit();     
+            \DB::commit();
         }
         catch(Exception $e)
         {

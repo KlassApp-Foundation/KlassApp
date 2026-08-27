@@ -28,7 +28,7 @@ trait AdmissionUser
     {
         \DB::beginTransaction();
         try
-        {            
+        {
             $user = new User;
             $user->school_id    = $data->school_id;
             $user->usergroup_id = $usergroup_id;
@@ -38,14 +38,14 @@ trait AdmissionUser
                 $user->name = $data->name;
             }*/
 
-            $user->password                 = bcrypt('password'); //demo 
+            $user->password                 = bcrypt('password'); //demo
             $user->email                    = null;
             $user->mobile_no                = null;
             $user->email_verification_code  = Str::random(40);
             $user->registration_number      = date('YmdHis');
 
             $user->save();
-            
+
             $userprofile = new Userprofile;
 
             $userprofile->school_id     = $data->school_id;
@@ -57,11 +57,11 @@ trait AdmissionUser
                 $userprofile->lastname = $data->lastname;
             }
             $userprofile->gender                = $data->gender;
-            
+
             $userprofile->date_of_birth         = date('Y-m-d',strtotime($data->date_of_birth));
-            
+
             $userprofile->blood_group           = $data->blood_group;
-            
+
             $userprofile->address               = $data->permanent_address;
 
             if(!is_null($data->birth_place))
@@ -88,16 +88,16 @@ trait AdmissionUser
             {
                 $userprofile->sub_caste=$data->sub_caste;
             }
-            
+
             if(!is_null($data->aadhar_number))
             {
                 $userprofile->aadhar_number  = $data->aadhar_number;
             }
 
             //$userprofile->joining_date          = date('Y-m-d',strtotime($data->joining_date));
-            
+
             $userprofile->registration_number = $user->registration_number;
-            
+
             if(!is_null($data->lin))
             {
                 $userprofile->lin = $data->lin;
@@ -105,11 +105,11 @@ trait AdmissionUser
             if(!is_null($data->notes))
             {
                 $userprofile->notes = $data->notes;
-            } 
+            }
 
             if($path != '')
             {
-                $userprofile->avatar = $path;              
+                $userprofile->avatar = $path;
             }
             else
             {
@@ -117,7 +117,7 @@ trait AdmissionUser
                 {
                     $userprofile->avatar = "uploads/male.png";
                 }
-                elseif ($userprofile->gender == 'female') 
+                elseif ($userprofile->gender == 'female')
                 {
                     $userprofile->avatar = "uploads/female.png";
                 }
@@ -136,7 +136,6 @@ trait AdmissionUser
             $academic->user_id                      = $user->id;
             $academic->standardLink_id              = $standardLink_id;
             $academic->std_school_pay_number                  = $user->registration_number;
-            $academic->id_card_number               = $user->registration_number;
             $academic->board_registration_number    = $data->board_registration_number;
             $academic->mode_of_transport            = $data->mode_of_transport;
             $academic->transport_details            = $data->transport_details;
@@ -144,17 +143,17 @@ trait AdmissionUser
             $academic->siblings                     = $data->siblings;
             $academic->siblings_count               = $data->siblings_count;
             if($data->siblings == 'yes')
-            { 
+            {
                 $array=[];
 
                 for($i = 0 ; $i < $data->siblings_count ; $i++)
                 {
-                    $array[$i]['sibling_relation']      =  $data->sibling_relation[$i]; 
+                    $array[$i]['sibling_relation']      =  $data->sibling_relation[$i];
                     $array[$i]['sibling_name']          =  $data->sibling_name[$i];
-                    $array[$i]['sibling_date_of_birth'] =  date('Y-m-d',strtotime($data->sibling_date_of_birth[$i])); 
-                    $array[$i]['sibling_standard']      =  $data->sibling_standard[$i];     
+                    $array[$i]['sibling_date_of_birth'] =  date('Y-m-d',strtotime($data->sibling_date_of_birth[$i]));
+                    $array[$i]['sibling_standard']      =  $data->sibling_standard[$i];
                 }
-                
+
                 $academic->sibling_details  =   $array;
             }
             $academic->height               = $data->height;
@@ -196,7 +195,7 @@ trait AdmissionUser
             \DB::rollBack();
             Log::info($e->getMessage());
             dd($e->getMessage());
-        } 
+        }
     }
 
 
@@ -204,7 +203,7 @@ trait AdmissionUser
     {
         \DB::beginTransaction();
         try
-        {    
+        {
             $user = new User;
 
             $user->school_id    = $data->school_id;
@@ -213,13 +212,13 @@ trait AdmissionUser
             {
                 $user->name = $data->father_name;
             }*/
-            $user->password = bcrypt('password'); //demo 
+            $user->password = bcrypt('password'); //demo
             $user->email = $data->father_email;
             $user->mobile_no = $data->father_mobile_no;
             $user->email_verification_code = Str::random(40);
 
             $user->save();
-                
+
             $userprofile = new Userprofile;
 
             $userprofile->school_id         = $data->school_id;
@@ -232,7 +231,7 @@ trait AdmissionUser
             }
 
             $userprofile->save();
-            
+
             $parent = new ParentProfile;
 
             $parent->school_id          =   $data->school_id;
@@ -265,7 +264,7 @@ trait AdmissionUser
             $link->status     = 1;
 
             $link->save();
-            
+
             \DB::commit();
             return $user;
         }
@@ -274,14 +273,14 @@ trait AdmissionUser
             \DB::rollBack();
             Log::info($e->getMessage());
             dd($e->getMessage());
-        } 
+        }
     }
 
     public function CreateStudentMother($student_id,$data , $usergroup_id)
     {
         \DB::beginTransaction();
         try
-        {     
+        {
             $user = new User;
 
             $user->school_id    = $data->school_id;
@@ -290,13 +289,13 @@ trait AdmissionUser
             {
                 $user->name = $data->mother_name;
             }*/
-            $user->password = bcrypt('password'); //demo 
+            $user->password = bcrypt('password'); //demo
             $user->email = $data->motherr_email;
             $user->mobile_no = $data->mother_mobile_no;
             $user->email_verification_code = Str::random(40);
 
             $user->save();
-                
+
             $userprofile = new Userprofile;
 
             $userprofile->school_id         = $data->school_id;
@@ -309,7 +308,7 @@ trait AdmissionUser
             }
 
             $userprofile->save();
-                
+
             $parent = new ParentProfile;
 
             $parent->school_id          =   $data->school_id;
@@ -324,7 +323,7 @@ trait AdmissionUser
             $parent->annual_income      =   $data->mother_income;
 
             $parent->save();
-            
+
             if($student_id != NULL)
             {
                 $student = User::where('id',$student_id)->first();
@@ -342,7 +341,7 @@ trait AdmissionUser
             $link->status     = 1;
 
             $link->save();
-            
+
             \DB::commit();
             return $user;
         }
@@ -351,6 +350,6 @@ trait AdmissionUser
             \DB::rollBack();
             Log::info($e->getMessage());
             dd($e->getMessage());
-        } 
+        }
     }
 }
