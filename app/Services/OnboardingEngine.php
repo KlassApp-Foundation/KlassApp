@@ -3,15 +3,26 @@
 namespace App\Services;
 
 use App\Models\AcademicYear;
+use App\Models\CurrentPlan;
+use App\Models\Plan;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\AcademicTerm;
 use App\Models\FeesCategories;
+use App\Models\Teacherlink;
+use App\Models\User;
+use App\Models\Userprofile;
+use App\Models\WhatsAppUser;
+use App\Services\StudentIdGeneratorService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -730,5 +741,294 @@ class OnboardingEngine
                 ],
             );
         }
+    }
+
+    // ── Phase 1C: Teacher / Student / WhatsApp / Plan ──────────────────
+
+    /**
+     * Create teacher users with random passwords and is_reset=1.
+     *
+     * Each entry in $teachers must contain at least 'name' and 'email'.
+     * Optional keys: 'phone', 'standardLink_id', 'subject_id'.
+     *
+     * Returns ['created' => [...], 'skipped' => [...]].
+     */
+    public function saveTeachers(School $school, AcademicYear $year, array $teachers): array
+    {
+        $created = [];
+        $skipped = [];
+
+        $link = StandardLink::where('school_id', $school->id)->first();
+        $subject = Subject::where('school_id', $school->id)->first();
+
+        foreach ($teachers as $draft) {
+            $name = trim((string) ($draft['name'] ?? ''));
+            $email = trim((string) ($draft['email'] ?? ''));
+            $phone = trim((string) ($draft['phone'] ?? ''));
+
+            if ($name === '' || $email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $skipped[] = ['name' => $name, 'email' => $email, 'reason' => 'Invalid name or email'];
+                continue;
+            }
+
+            // Email dedup within this school: generate a fallback
+            if (User::where('school_id', $school->id)->where('email', $email)->exists()) {
+                $email = 'teacher.'.Str::lower(Str::random(6)).'@'.($school->slug ?: 'school').'.test';
+            }
+
+            $teacher = User::create([
+                'school_id'       => $school->id,
+                'usergroup_id'   => 5,
+                'name'            => $name,
+                'email'           => $email,
+                'password'        => bcrypt(Str::random(16)),
+                'status'          => 'active',
+                'email_verified'  => 1,
+                'is_reset'        => 1,
+                'mobile_no'       => $phone ?: null,
+            ]);
+
+            Userprofile::firstOrCreate(
+                ['user_id' => $teacher->id],
+                [
+                    'school_id'     => $school->id,
+                    'usergroup_id'  => 5,
+                    'firstname'     => $name,
+                    'lastname'      => '',
+                    'profession'    => 'teacher',
+                    'status'        => 'active',
+                    'alternate_no'  => $phone ?: null,
+                ]
+            );
+
+            // Teacherlink if class + subject provided
+            $standardLinkId = $draft['standardLink_id'] ?? null;
+            $subjectId = $draft['subject_id'] ?? null;
+
+            if ($standardLinkId && $subjectId) {
+                Teacherlink::firstOrCreate([
+                    'school_id'        => $school->id,
+                    'academic_year_id'  => $year->id,
+                    'standardLink_id'  => $standardLinkId,
+                    'subject_id'       => $subjectId,
+                    'teacher_id'       => $teacher->id,
+                ]);
+            }
+
+            $created[] = ['name' => $name, 'email' => $email, 'user_id' => $teacher->id];
+        }
+
+        return ['created' => $created, 'skipped' => $skipped];
+    }
+
+    /**
+     * Create student users with random passwords, is_reset=1, and KlassApp IDs.
+     *
+     * Each entry in $students must contain at least 'name'.
+     * Optional keys: 'class' (section name to resolve StandardLink), 'email',
+     * 'phone', 'school_student_id', 'board_registration_number'.
+     *
+     * board_registration_number is persisted only for UNEB candidate classes
+     * (P.7 / S.4 / S.6) via isCandidateClass().
+     *
+     * Returns ['created' => [...], 'skipped' => [...]].
+     */
+    public function saveStudents(School $school, AcademicYear $year, array $students): array
+    {
+        $created = [];
+        $skipped = [];
+
+        $firstLink = StandardLink::where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->first();
+
+        foreach ($students as $draft) {
+            $name = trim((string) ($draft['name'] ?? ''));
+
+            if ($name === '') {
+                $skipped[] = ['name' => '', 'reason' => 'Name is required'];
+                continue;
+            }
+
+            $email = trim((string) ($draft['email'] ?? ''));
+            if ($email === '') {
+                // Generate a placeholder email for students (who may not have email)
+                $email = 'student.'.Str::lower(Str::random(8)).'@'.($school->slug ?: 'school').'.local';
+            }
+
+            // Email dedup within this school
+            if (User::where('school_id', $school->id)->where('email', $email)->exists()) {
+                $email = 'student.'.Str::lower(Str::random(8)).'@'.($school->slug ?: 'school').'.local';
+            }
+
+            $phone = trim((string) ($draft['phone'] ?? ''));
+
+            $student = User::create([
+                'school_id'       => $school->id,
+                'usergroup_id'   => 6,
+                'name'            => $name,
+                'email'           => $email,
+                'password'        => bcrypt(Str::random(16)),
+                'status'          => 'active',
+                'email_verified'  => 1,
+                'is_reset'        => 1,
+                'mobile_no'       => $phone ?: null,
+            ]);
+
+            Userprofile::firstOrCreate(
+                ['user_id' => $student->id],
+                [
+                    'school_id'     => $school->id,
+                    'usergroup_id'  => 6,
+                    'firstname'     => $name,
+                    'lastname'      => '',
+                    'profession'    => 'student',
+                    'status'        => 'active',
+                    'alternate_no'  => $phone ?: null,
+                ]
+            );
+
+            // Generate KlassApp student ID
+            $klassappId = StudentIdGeneratorService::nextForStudent($student);
+
+            // Resolve class assignment
+            $className = trim((string) ($draft['class'] ?? ''));
+            $link = null;
+
+            if ($className !== '') {
+                // Find StandardLink whose section name matches the class
+                $link = StandardLink::with(['standard', 'section'])
+                    ->where('school_id', $school->id)
+                    ->where('academic_year_id', $year->id)
+                    ->whereHas('section', function ($query) use ($school, $className) {
+                        $query->where('school_id', $school->id)
+                            ->where(function ($q) use ($className) {
+                                $q->where('name', $className)
+                                  ->orWhere('name', 'like', $className.' %');
+                            });
+                    })
+                    ->first();
+            }
+
+            // Fallback: first StandardLink for this school/year
+            if (! $link && $firstLink) {
+                $link = StandardLink::with(['standard', 'section'])->find($firstLink->id) ?? $firstLink;
+            }
+
+            if ($link) {
+                $schoolStudentId = trim((string) ($draft['school_student_id'] ?? ''));
+                $boardReg = trim((string) ($draft['board_registration_number'] ?? ''));
+                $stdName = trim((string) ($link->standard?->name ?? ''));
+                $secName = trim((string) ($link->section?->name ?? $className));
+
+                // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6)
+                if ($boardReg !== '' && ! (self::isCandidateClass($stdName) || self::isCandidateClass($secName))) {
+                    $boardReg = '';
+                }
+
+                StudentAcademic::create([
+                    'school_id' => $school->id,
+                    'academic_year_id' => $year->id,
+                    'user_id' => $student->id,
+                    'standardLink_id' => $link->id,
+                    'klassapp_student_id' => $klassappId,
+                    'school_student_id' => $schoolStudentId !== '' ? $schoolStudentId : null,
+                    'board_registration_number' => $boardReg !== '' ? $boardReg : null,
+                ]);
+            }
+
+            $created[] = [
+                'name'         => $name,
+                'email'        => $email,
+                'user_id'      => $student->id,
+                'klassapp_id'  => $klassappId,
+            ];
+        }
+
+        return ['created' => $created, 'skipped' => $skipped];
+    }
+
+    // ── Phase 1C methods: saveWhatsApp, savePlan ─────────────────────────
+
+    /**
+     * Link a WhatsApp number to a user for this school.
+     *
+     * Uses updateOrCreate by user_id so re-submitting is idempotent.
+     * Catches phone-unique constraint violations and returns them as skipped.
+     *
+     * Returns ['linked' => [...], 'skipped' => [...]].
+     */
+    public function saveWhatsApp(School $school, int $userId, string $phone): array
+    {
+        $phone = trim($phone);
+
+        if ($phone === '') {
+            return ['linked' => null, 'skipped' => [['reason' => 'Phone number is required']]];
+        }
+
+        // Check if this user already has a WhatsApp record
+        if (WhatsAppUser::where('user_id', $userId)->exists()) {
+            return ['linked' => null, 'skipped' => [['reason' => 'User already has a WhatsApp record']]];
+        }
+
+        try {
+            $whatsapp = WhatsAppUser::updateOrCreate(
+                ['user_id' => $userId],
+                [
+                    'phone'       => $phone,
+                    'school_id'   => $school->id,
+                    'opted_in'    => true,
+                    'verified_at' => now(),
+                ]
+            );
+
+            return ['linked' => ['user_id' => $userId, 'phone' => $phone], 'skipped' => null];
+        } catch (UniqueConstraintViolationException $e) {
+            return ['linked' => null, 'skipped' => [['reason' => 'This WhatsApp number is already registered']]];
+        }
+    }
+
+    /**
+     * Persist the selected plan for a school.
+     *
+     * For paid plans (amount > 0), starts a trial via TrialService.
+     * For free plans, creates a CurrentPlan with status='running'.
+     *
+     * If a CurrentPlan already exists for this school, updates its plan_id and status.
+     *
+     * @throws ValidationException if incompleteSteps blocks plan selection
+     *                            (unless skipCompletionCheck is true)
+     */
+    public function savePlan(School $school, int $planId, bool $skipCompletionCheck = false, ?int $userId = null): CurrentPlan
+    {
+        if (! $skipCompletionCheck) {
+            foreach (OnboardingStepsService::incompleteSteps($school->fresh(), $userId) as $step) {
+                if (in_array($step['key'], OnboardingStepsService::OPTIONAL_STEPS, true)) {
+                    continue;
+                }
+                if ($step['key'] !== 'plan_selection') {
+                    throw ValidationException::withMessages(['plan' => 'Finish the earlier setup steps before choosing a plan.']);
+                }
+            }
+        }
+
+        $plan = Plan::query()->where('id', $planId)->where('is_active', 1)->first();
+        if (! $plan) {
+            throw ValidationException::withMessages(['plan' => 'That plan is not available.']);
+        }
+
+        // Paid plan → start a trial
+        if ($plan->amount > 0) {
+            return TrialService::startTrial($school->id, $plan->id);
+        }
+
+        // Free plan → create/update CurrentPlan directly
+        return CurrentPlan::updateOrCreate(
+            ['school_id' => $school->id],
+            [
+                'plan_id' => $plan->id,
+                'status'  => 'running',
+            ]
+        );
     }
 }

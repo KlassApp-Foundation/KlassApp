@@ -367,10 +367,10 @@ class ToshiActionService
     // ── Student ──
 
     /**
-     * Add a student: creates User + StudentAcademic + Userprofile.
+     * Add a student: creates User + Userprofile + StudentAcademic via OnboardingEngine.
      *
      * @param User  $admin   The admin performing the action
-     * @param array $data    Keys: name, email (optional), class_name (optional), section_name (optional)
+     * @param array $data    Keys: name, email (optional), class_name/class (optional)
      */
     public static function addStudent(User $admin, array $data): array
     {
@@ -392,94 +392,37 @@ class ToshiActionService
             return self::result(false, 'Student name must be at least 3 characters.');
         }
 
-        $email = trim($data['email'] ?? '');
-        if ($email === '') {
-            $email = 'student.' . Str::random(6) . '@' . Str::slug(School::find($schoolId)?->name ?? 'school') . '.sch.ug';
-        }
-
         $academicYear = SiteHelper::getAcademicYear($schoolId);
         if (!$academicYear) {
             return self::result(false, 'No academic year configured for this school.');
         }
 
-        $standardLink = null;
+        $school = School::find($schoolId);
         $className = trim($data['class_name'] ?? $data['class'] ?? '');
-        if ($className !== '') {
-            $sectionName = trim($data['section_name'] ?? '');
-            $standardLink = self::resolveStandardLink($schoolId, $academicYear->id, $className, $sectionName);
+
+        $result = app(\App\Services\OnboardingEngine::class)->saveStudents($school, $academicYear, [[
+            'name' => $name,
+            'email' => trim($data['email'] ?? ''),
+            'class' => $className,
+            'phone' => trim($data['phone'] ?? ''),
+            'school_student_id' => trim($data['school_student_id'] ?? ''),
+            'board_registration_number' => trim($data['board_registration_number'] ?? ''),
+        ]]);
+
+        if (!empty($result['skipped'])) {
+            return self::result(false, $result['skipped'][0]['reason'] ?? 'Failed to add student.');
         }
 
-        try {
-            DB::beginTransaction();
+        $created = $result['created'][0] ?? null;
+        $userId = $created['user_id'] ?? null;
+        $email = $created['email'] ?? ($data['email'] ?? '');
 
-            $password = Hash::make('password');
-            $klassappId = StudentIdGeneratorService::next($schoolId);
-
-            $student = User::create([
-                'school_id'    => $schoolId,
-                'usergroup_id' => 6,
-                'name'         => $name,
-                'email'        => $email,
-                'password'     => $password,
-                'status'       => 'active',
-                'email_verified' => 1,
-                'registration_number' => $klassappId,
-            ]);
-
-            $profileGender = in_array(strtolower(trim($data['gender'] ?? '')), ['male', 'female'])
-                ? strtolower(trim($data['gender']))
-                : null;
-
-            Userprofile::create([
-                'school_id'    => $schoolId,
-                'user_id'      => $student->id,
-                'usergroup_id' => 6,
-                'firstname'    => $name,
-                'lastname'     => '',
-                'gender'       => $profileGender,
-                'status'       => 'active',
-            ]);
-
-            $academicData = [
-                'school_id'        => $schoolId,
-                'academic_year_id' => $academicYear->id,
-                'user_id'          => $student->id,
-                'klassapp_student_id' => $klassappId,
-            ];
-            if ($standardLink) {
-                $academicData['standardLink_id'] = $standardLink->id;
-            }
-            // school_student_id is universal — store if provided
-            if (! empty($details['school_student_id'])) {
-                $academicData['school_student_id'] = $details['school_student_id'];
-            }
-            // board_registration_number only for UNEB candidate classes (P.7/S.4/S.6)
-            if (! empty($details['board_registration_number']) && $standardLink) {
-                $stdName = $standardLink->standard?->name ?? '';
-                $secName = $standardLink->section?->name ?? '';
-                if (OnboardingEngine::isCandidateClass($stdName) || OnboardingEngine::isCandidateClass($secName)) {
-                    $academicData['board_registration_number'] = $details['board_registration_number'];
-                }
-            }
-            StudentAcademic::create($academicData);
-
-            DB::commit();
-
-            $msg = "Student **{$name}** added successfully";
-            if ($standardLink) {
-                $section = $standardLink->section;
-                $std = $standardLink->standard;
-                $label = ($std?->name ?? '') . ' ' . ($section?->name ?? '');
-                $msg .= " to **{$label}**";
-            }
-            $msg .= ". Login: `{$email}` / password: `password`";
-
-            return self::result(true, $msg, ['user_id' => $student->id, 'email' => $email]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('ToshiAction: addStudent failed', ['error' => $e->getMessage()]);
-            return self::result(false, 'Failed to add student: ' . $e->getMessage());
+        $msg = "Student **{$name}** added successfully. A password reset will be required on first login.";
+        if ($className) {
+            $msg .= " Assigned to class **{$className}**.";
         }
+
+        return self::result(true, $msg, ['user_id' => $userId, 'email' => $email]);
     }
 
     // ── Teacher ──
@@ -514,46 +457,31 @@ class ToshiActionService
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return self::result(false, 'Invalid email format.');
         }
-        if (User::where('email', $email)->exists()) {
-            return self::result(false, "A user with email **{$email}** already exists.");
-        }
 
         $phone = trim($data['phone'] ?? '');
 
-        try {
-            DB::beginTransaction();
-
-            $password = Hash::make('password');
-            $teacher = User::create([
-                'school_id'    => $schoolId,
-                'usergroup_id' => 5,
-                'name'         => $name,
-                'email'        => $email,
-                'password'     => $password,
-                'status'       => 'active',
-                'email_verified' => 1,
-            ]);
-
-            Userprofile::create([
-                'school_id'    => $schoolId,
-                'user_id'      => $teacher->id,
-                'usergroup_id' => 5,
-                'firstname'    => $name,
-                'lastname'     => '',
-                'status'       => 'active',
-                'phone_no'     => $phone,
-            ]);
-
-            DB::commit();
-
-            return self::result(true, "Teacher **{$name}** added successfully. Login: `{$email}` / password: `password`", [
-                'user_id' => $teacher->id, 'email' => $email,
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('ToshiAction: addTeacher failed', ['error' => $e->getMessage()]);
-            return self::result(false, 'Failed to add teacher: ' . $e->getMessage());
+        $school = School::find($schoolId);
+        $academicYear = SiteHelper::getAcademicYear($schoolId);
+        if (!$academicYear) {
+            return self::result(false, 'No academic year configured for this school.');
         }
+
+        $result = app(\App\Services\OnboardingEngine::class)->saveTeachers($school, $academicYear, [[
+            'name'  => $name,
+            'email' => $email,
+            'phone' => $phone,
+        ]]);
+
+        if (!empty($result['skipped'])) {
+            return self::result(false, $result['skipped'][0]['reason'] ?? 'Failed to add teacher.');
+        }
+
+        $created = $result['created'][0] ?? null;
+        $userId = $created['user_id'] ?? null;
+
+        return self::result(true, "Teacher **{$name}** added successfully. A password reset will be required on first login.", [
+            'user_id' => $userId, 'email' => $email,
+        ]);
     }
 
     // ── Co-Admin ──
