@@ -351,7 +351,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
   - Admin UI rename: Vue Create/Edit/myprofile + built `app-CX1zhnj2.js` show **School Student ID** / `school_student_id`; **0** `id_card_number` / "ID Card Number" in app PHP/Vue/blade and the Vite bundle.
   - WhatsApp Priority 2: deployed SQL groups OR (`(school_student_id = ? or board_registration_number = ?)`); synthetic same-token rows in schools 16+19 scoped correctly per `school_id` (transaction **rolled back** — no leftover rows).
 - **Next**: UI migration design-doc = **separate session** (do not start here). Remaining open PRs (#367–#370 etc.) unrelated to this wave.
-- **`origin/main` / prod tip**: `230b58ac`.
+- **`origin/main` / prod tip**: `392b7f0e` (deploy-verify knowledge stamp; app deploy SHA `230b58ac`).
 
 ## Previous: August 27, 2026 (`origin/main` tip `3e4d40ee` — KLS ID + school_student_id chains + provenance MERGED) — superseded (now deployed)
 
