@@ -12,49 +12,49 @@ use App\Models\Userprofile;
 use Livewire\Attributes\Rule;
 
 class UserprofileForm extends Component
-{	
-	#[Rule('required')] 
+{
+	#[Rule('required')]
 	public $school;
-	#[Rule('required')] 
+	#[Rule('required')]
 	//public $user;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $usergroup;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $firstname;
 	public $lastname;
 	public $alternate_no;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $gender;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $dob;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $blood_group;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $birth_place;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $native_place;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $mother_tongue;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $caste;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $address;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $city;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $country;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $pincode;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $aadhar_number;
-	#[Rule('required')] 
+	#[Rule(['required', 'regex:/^KLS\d{7}$/i'])]
 	public $registration_number;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $LIN;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $joining_date;
 	public $notes;
-	#[Rule('required')] 
+	#[Rule('required')]
 	public $status;
 
 	public $userId;
@@ -97,7 +97,7 @@ class UserprofileForm extends Component
 	}
 
 	public function submitUserprofile()
-	{	
+	{
 		$this->validate();
 
 		$data = [
@@ -140,7 +140,7 @@ class UserprofileForm extends Component
 	}
 
     public function render()
-    {	
+    {
     	$usergroups = Usergroup::get();
 
     	$schools = School::where('status', '1')->get();
