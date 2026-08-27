@@ -213,6 +213,16 @@
                 <input id="wizard-student-parent-phone" type="text" class="ds-form-input w-full" wire:model="studentParentPhone" placeholder="+2567…" />
             </div>
         </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-student-school-id">School Student ID <span class="text-xs text-gray-400">(optional)</span></label>
+                <input id="wizard-student-school-id" type="text" class="ds-form-input w-full" wire:model="studentSchoolStudentId" placeholder="e.g. ADM-2025-001" />
+            </div>
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-student-board-reg">UNEB Reg No. <span class="text-xs text-gray-400">(candidate classes only)</span></label>
+                <input id="wizard-student-board-reg" type="text" class="ds-form-input w-full" wire:model="studentBoardRegNumber" placeholder="e.g. U1234/567" />
+            </div>
+        </div>
         <button type="button" class="ds-btn ds-btn-outline ds-btn-sm" wire:click="addStudentDraft" data-testid="wizard-student-add">+ Add student</button>
         <p class="text-xs text-gray-500 mt-3" style="color:#64748B;">Optional — skip if you’ll enrol students later. KlassApp IDs are generated automatically.</p>
         <button type="button" class="ds-btn ds-btn-ghost ds-btn-sm mt-2" wire:click="skipOptionalStep" data-testid="wizard-students-skip">Skip for now</button>

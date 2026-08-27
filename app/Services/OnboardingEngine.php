@@ -234,6 +234,45 @@ class OnboardingEngine
     }
 
     /**
+     * Determine whether a class/section name corresponds to a UNEB
+     * candidate year — P.7 (PLE), S.4 (UCE), or S.6 (UACE).
+     *
+     * Uses the same normalisation approach as standardNameForClass()
+     * but targets the specific exam-candidate classes rather than
+     * broad grading tiers. This is intentionally hardcoded: the
+     * standing discipline is not to over-build ahead of real need,
+     * and these three are the only UNEB exam classes in Uganda.
+     *
+     * NOTE: The previous validation gated board_registration_number
+     * to Indian-system standards '10'/'11'/'12' — this was a
+     * production bug that made the field effectively always-required
+     * (because the Standard.name comparison never matched the
+     * actual Ugandan class names in the database). This method
+     * replaces that with the correct Ugandan candidate-class check.
+     */
+    public static function isCandidateClass(string $className): bool
+    {
+        $lower = strtolower(trim($className));
+
+        // PLE: Primary Seven — P.7, P7, P 7, Primary Seven
+        if (in_array($lower, ['p.7', 'p7', 'p 7', 'primary seven'], true)) {
+            return true;
+        }
+
+        // UCE: Senior Four — S.4, S4, S 4, Senior Four
+        if (in_array($lower, ['s.4', 's4', 's 4', 'senior four'], true)) {
+            return true;
+        }
+
+        // UACE: Senior Six — S.6, S6, S 6, Senior Six
+        if (in_array($lower, ['s.6', 's6', 's 6', 'senior six'], true)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Map a class/section name to a standard (grading-tier) name.
      *
      * Follows the same heuristics as SchoolCategorySeeder and
@@ -539,8 +578,14 @@ class OnboardingEngine
      *
      * Each fee entry creates a FeesCategories row. If 'class' is provided, it
      * resolves to a Standard (grading tier) and optionally a Section (class).
-     * If 'term' is provided, it resolves to an AcademicTerm. When 'class' is
-     * absent, the school's first Standard is used as fallback.
+     * If 'term' is provided, it resolves to an AcademicTerm.
+     *
+     * Whole-school fees (no 'class'): when no class is specified, the fee is
+     * genuinely school-wide — one row per Standard with section_id = NULL.
+     * This matches StudentReportHelperService::fees() which reads school-wide
+     * fees as whereNull('section_id'), and WhatsApp queries that filter by
+     * standard_id. A fee scoped to one arbitrary Standard would be invisible
+     * to students in other grading tiers.
      *
      * Idempotent via firstOrCreate on the unique constraint columns:
      * (school_id, standard_id, section_id, name).
@@ -575,51 +620,6 @@ class OnboardingEngine
             $className = trim((string) ($fee['class'] ?? ''));
             $termName = trim((string) ($fee['term'] ?? ''));
 
-            // Resolve standard_id: from class name or first Standard for the school
-            $standardId = null;
-            $sectionId = null;
-
-            if ($className !== '') {
-                // Find a StandardLink whose section name matches the class
-                // (same lookup pattern as saveSubjects)
-                $link = StandardLink::where('school_id', $school->id)
-                    ->whereHas('section', function ($query) use ($school, $className) {
-                        $query->where('school_id', $school->id)
-                            ->where(function ($q) use ($className) {
-                                $q->where('name', $className)
-                                  ->orWhere('name', 'like', $className.' %');
-                            });
-                    })
-                    ->first();
-
-                if ($link) {
-                    $standardId = $link->standard_id;
-                    $sectionId = $link->section_id;
-                } else {
-                    // Fallback: try to find a Standard by matching the class to a grading tier
-                    $standardName = $this->standardNameForClass($className);
-                    $standard = Standard::where('school_id', $school->id)
-                        ->where('name', $standardName)
-                        ->first();
-
-                    if ($standard) {
-                        $standardId = $standard->id;
-                    }
-                }
-            }
-
-            // If still no standard, use the school's first Standard
-            if ($standardId === null) {
-                $firstStandard = Standard::where('school_id', $school->id)->first();
-                if ($firstStandard) {
-                    $standardId = $firstStandard->id;
-                } else {
-                    throw ValidationException::withMessages([
-                        'fees' => 'Add a class first before adding fees.',
-                    ]);
-                }
-            }
-
             // Resolve academic_term_id from term name if provided
             $academicTermId = null;
             if ($termName !== '') {
@@ -631,11 +631,94 @@ class OnboardingEngine
                 }
             }
 
+            if ($className !== '') {
+                // Class-specific fee: resolve to one Standard + Section
+                $this->saveFeeForClass($school, $name, $amount, $className, $academicTermId);
+            } else {
+                // Whole-school fee: one row per Standard, section_id = NULL
+                $this->saveFeeSchoolWide($school, $name, $amount, $academicTermId);
+            }
+        }
+    }
+
+    /**
+     * Save a class-specific fee scoped to the Standard and Section for that class.
+     */
+    private function saveFeeForClass(School $school, string $name, float $amount, string $className, ?int $academicTermId): void
+    {
+        $standardId = null;
+        $sectionId = null;
+
+        // Find a StandardLink whose section name matches the class
+        $link = StandardLink::where('school_id', $school->id)
+            ->whereHas('section', function ($query) use ($school, $className) {
+                $query->where('school_id', $school->id)
+                    ->where(function ($q) use ($className) {
+                        $q->where('name', $className)
+                          ->orWhere('name', 'like', $className.' %');
+                    });
+            })
+            ->first();
+
+        if ($link) {
+            $standardId = $link->standard_id;
+            $sectionId = $link->section_id;
+        } else {
+            // Fallback: try to find a Standard by matching the class to a grading tier
+            $standardName = $this->standardNameForClass($className);
+            $standard = Standard::where('school_id', $school->id)
+                ->where('name', $standardName)
+                ->first();
+
+            if ($standard) {
+                $standardId = $standard->id;
+            }
+        }
+
+        if ($standardId === null) {
+            throw ValidationException::withMessages([
+                'fees' => "Class '{$className}' does not exist. Add it on the classes step first.",
+            ]);
+        }
+
+        FeesCategories::firstOrCreate(
+            [
+                'school_id' => $school->id,
+                'standard_id' => $standardId,
+                'section_id' => $sectionId,
+                'name' => $name,
+            ],
+            [
+                'amount' => $amount,
+                'academic_term_id' => $academicTermId,
+            ],
+        );
+    }
+
+    /**
+     * Save a whole-school fee: one row per Standard with section_id = NULL.
+     *
+     * This matches StudentReportHelperService::fees() which reads school-wide
+     * fees as whereNull('section_id'), and WhatsApp queries that filter by
+     * standard_id. A fee on just one Standard would be invisible to students
+     * in other grading tiers.
+     */
+    private function saveFeeSchoolWide(School $school, string $name, float $amount, ?int $academicTermId): void
+    {
+        $standards = Standard::where('school_id', $school->id)->get();
+
+        if ($standards->isEmpty()) {
+            throw ValidationException::withMessages([
+                'fees' => 'Add a class first before adding fees.',
+            ]);
+        }
+
+        foreach ($standards as $standard) {
             FeesCategories::firstOrCreate(
                 [
                     'school_id' => $school->id,
-                    'standard_id' => $standardId,
-                    'section_id' => $sectionId,
+                    'standard_id' => $standard->id,
+                    'section_id' => null,
                     'name' => $name,
                 ],
                 [

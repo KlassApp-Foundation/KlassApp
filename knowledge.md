@@ -67,6 +67,20 @@
 - **Same bug, other call sites**: FIXED in the follow-up PR — `app/Livewire/Superadmin/Academics/SchoolList.php:116,121` (superadmin school-list student counts → `where('status','active')`), `app/Http/Controllers/Admin/StudentController.php:112` (`/admin/students` listing default branch → `users.status = 'active'`; the explicit `?status=inactive` audit filter is preserved so admins can still view the flagged junk rows), `app/Http/Controllers/Admin/StandardsLinkDetailsController.php:144` (per-standard student count → `ByActive()`). Teacher/parent/non-teaching counts at those sites keep `status != 'exit'` (the cleanup only flagged students, `usergroup_id=6`). STILL FLAGGED (not fixed — onboarding-path, different `whereNull('status')->orWhere('status','!=','exit')` shape): `app/Livewire/ManualOnboardingWizard.php:809` and `app/Services/OnboardingStepsService.php:195,305` — these need a separate look because `whereNull('status')` intentionally catches new users with no status set; a naive `ByActive()` would drop them. Switch to `where('status','active')->orWhereNull('status')` only if the intent is "active OR not-yet-set".
 - **Verify fix still in place**: `grep -n "ByActive" app/Traits/Dashboard.php` shows the scope in student count queries and NO `status.*!=.*exit` in usergroup-6 count paths; `grep -n "'status'.*'active'" app/Livewire/Superadmin/Academics/SchoolList.php app/Http/Controllers/Admin/StudentController.php app/Http/Controllers/Admin/StandardsLinkDetailsController.php` shows the positive filter; `php artisan test --compact tests/Feature/Dashboard/DashboardStudentCountExcludesInactiveTest.php` passes (2 tests, 8 assertions).
 
+### 7. `saveFees` whole-school fee fell back to first Standard — invisible to other tiers
+- **What happened**: `OnboardingEngine::saveFees()` with no class specified used the school's first `Standard` as `standard_id`, making whole-school fees invisible to students in other grading tiers. WhatsApp fee queries filter by `standard_id`; `StudentReportHelperService::fees()` reads school-wide fees as `whereNull('section_id')`. A fee on one arbitrary Standard would not be found by students in other tiers.
+- **Root cause**: The fallback `Standard::where('school_id', $school->id)->first()` selected one Standard, but the read convention is: school-wide = one row per Standard with `section_id=NULL`. The unique constraint `(school_id, standard_id, section_id, name)` supports this pattern (MySQL treats NULLs as distinct in unique indexes).
+- **Fix**: Extracted `saveFeeSchoolWide()` private method that creates one `FeesCategories` row **per Standard** with `section_id=NULL`. Class-specific fees use `saveFeeForClass()` which resolves to one Standard+Section pair. PR #366 merged as `e98d7982`.
+- **Lesson**: When a model's read convention uses `whereNull('section_id')` to mean "applies to all sections in this standard", the write side must create one row per standard with `section_id=NULL` — not a single row on one arbitrary standard. The write pattern must match the read pattern, or data becomes silently invisible.
+- **Verify fix still in place**: `grep -n "saveFeeSchoolWide" app/Services/OnboardingEngine.php` shows the method; `grep -n "section_id.*null" app/Services/OnboardingEngine.php` shows `section_id => null` in the `firstOrCreate` call; `php artisan test --filter=ContentStepsTest` passes 69 tests including `test_save_fees_general_fee_is_school_wide_not_scoped_to_first_class` and `test_save_fees_with_class_creates_single_scoped_row_not_per_standard`.
+
+### 8. `board_registration_number` validation — operator-precedence + wrong-locale bug (effectively always-required, silently rejecting valid UNEB numbers)
+- **What happened**: The `board_registration_number` field was gated to Indian-system standards `'10'`/`'11'`/`'12'` which never matched actual Ugandan class names in the database (P.7, S.4, Primary, etc.). Additionally, the check `$standard->name == '10' || '11' || '12'` evaluated as `($standard->name == '10') || '11' || '12'` — always truthy because non-empty strings are truthy in PHP. Combined with `nullable|numeric` validation, this meant the field was effectively always-required while simultaneously rejecting valid alphanumeric UNEB numbers like `U1234/567`.
+- **Root cause**: Two interacting bugs: (1) wrong locale — Indian standard numbers 10/11/12 don't exist in the Ugandan schema where `Standard.name` stores tier bands like `primary_lower`, `primary_upper`; (2) PHP operator precedence — `$standard->name == '10' || '11' || '12'` is always truthy, so the `required` branch always fired, and `numeric` rejected real UNEB numbers.
+- **Fix**: PR #375 — replaced Indian-system check with `OnboardingEngine::isCandidateClass()` which matches actual UNEB candidate classes (P.7/PLE, S.4/UCE, S.6/UACE) using the same normalization style as `standardNameForClass()`. Changed validation from `nullable|numeric` to `nullable|string|max:50`. For candidate classes: `required|string|max:50`. Added `is_candidate_class` boolean to UserDetail resources for frontend conditional display. All 3 request validators + Nova + wizard + Toshi updated.
+- **Lesson**: (1) PHP `||` with string literals is always truthy — always use `in_array()` or explicit comparisons for multi-value checks. (2) Locale/domain assumptions from one educational system (Indian 10th/12th) must not be hardcoded for another (Ugandan P.7/S.4/S.6). (3) `numeric` validation rejects real UNEB numbers — always verify the format constraint matches the actual data format (alphanumeric like `U1234/567`).
+- **Verify fix still in place**: `grep -n "isCandidateClass" app/Services/OnboardingEngine.php` shows the method; `grep -rn "isCandidateClass" app/Http/Requests/ app/Http/Resources/ app/Livewire/ app/Services/ToshiActionService.php` shows all call sites; `grep -rn "numeric" app/Http/Requests/UserProfileAddRequest.php app/Http/Requests/UserProfileUpdateRequest.php app/Http/Requests/Admission/AdmissionAcademicRequest.php` returns no matches for board_registration_number; `php artisan test --filter=SchoolStudentIdAndBoardRegCollectionTest` passes 14 tests.
+
 ## Open items (unresolved — do not assume either is handled)
 
 ### O1. P.4 East marks fix — **APPLIED & VERIFIED 2026-08-14** ✅
@@ -300,19 +314,54 @@
 |---|---|---|
 | **Toshi platform-scope for superadmin** | **Phase 0–1 MERGED** — #124 on `main` | Platform gate + tools + HITL. Role agents #125–#129+#137; WhatsApp #133–#136 deployed; MCP audit #140. |
 
+### Future Initiatives (flagged, not yet in progress)
+
+#### UI migration: away from inherited GeGoK12 UI, toward KlassApp's own modern UI
+
+**Flagged**: 2026-08-27 (provenance documentation session) — **Not yet scoped.**
+
+KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the Indian open-source system it was forked from — see `docs/project-provenance.md`). This needs a genuine migration to KlassApp's own modern UI, using the already-formalized `DESIGN_SYSTEM.md` (`x-button`/`x-card`/`x-badge`/`x-table`/`x-form-group` components, warm color palette, Sora/DM Sans typography in `resources/views/components/DESIGN_SYSTEM.md`) as the actual target, not just a reference document.
+
+**Scale and discipline**: this is comparably deep work to the full OnboardingEngine unification effort (Phases 1A through 1D, PRs #356–#370+) — phased, test-first, scoped PRs with real evidence per slice, not a single sweeping rewrite. Needs its own investigation/design-doc pass before implementation starts, the same way `docs/onboarding-engine-plan.md` scoped the engine work before any code was written.
+
+**Not yet scoped**: no investigation has been done yet on which surfaces are most GeGoK12-legacy vs. already-modernized, what the migration phases should be, or which parts of `DESIGN_SYSTEM.md` are actually applied anywhere yet vs. just documented. This is the next major initiative after the current onboarding/grading work concludes.
+
+**Known GeGoK12-legacy UI surfaces** (from provenance doc audit):
+- `resources/views/components/academic-detail.blade.php` — "*Only For Class X, XI, XII" label text (Indian grade references)
+- `resources/assets/js/components/student/Edit.vue` — same label
+- `resources/assets/js/components/admission/AcademicDetail.vue` — same label (lines 173, 204)
+- `public/js/app.js` — compiled artifact still contains Indian class references
+- `app/Traits/AdmissionUser.php` — Indian demographic fields (aadhar_number, caste, sub_caste, community, mother_tongue, lin)
+- Various Blade views still using GeGoK12-era layout patterns (un-audited)
+
 ---
 
-## Current Status: August 24, 2026 (`origin/main` tip `1fefe67` — OnboardingEngine Phase 1B MERGED; Phase 2 wizard refactor PR #365 OPEN)
+## Current Status: August 27, 2026 (`origin/main` tip `230b58ac` — **DEPLOYED** KLS ID + school_student_id + provenance)
 
-- **✅ Merged #361**: OnboardingEngine `saveStandards` — `feature/onboarding-engine-standards` → `main`
-- **✅ Merged #362**: OnboardingEngine `saveSubjects` — `feature/onboarding-engine-subjects` → `main`
-- **✅ Merged #363**: OnboardingEngine `saveTerms` — `feature/onboarding-engine-terms` → `main`
-- **✅ Merged #364**: OnboardingEngine `saveFees` — `feature/onboarding-engine-fees` → `main`
-- **🔄 Open #365**: Phase 2 — wizard content-step methods delegate to OnboardingEngine — `feature/wizard-delegate-content-steps` → `main`
-- **Tests**: 60 engine tests pass (43 ContentStepsTest + 17 IdentityStepsTest, 118 assertions)
-- **`origin/main` tip**: `1fefe67` (merge of #364)
+- **✅ Deployed to prod**: **`230b58ac`** @ **2026-08-27 ~07:08 UTC** via `scripts/deploy-manual.sh` from `/Users/mac/projects/KlassApp` on `main`. Fast-forward `69c96593`→`230b58ac`. Migration `2026_08_27_020855_rename_id_card_number_to_school_student_id_on_student_academics_table` **DONE** (pre-check: `id_card_number` existed, **0** non-null rows; post-check: column gone, `school_student_id` present).
+- **✅ Chain 1 (KLS ID) MERGED**: #371 `7609e687` · #372 `b99e293a`
+- **✅ Chain 2 (school_student_id) MERGED**: #373 `a7bc51cd` · #374 `72557fa2` · #375 `86fb7260`
+- **✅ #376 provenance MERGED**: `3e4d40ee` (knowledge stamp on top → tip `230b58ac`)
+- **Merge notes (keep for later readers)**:
+  - **#373 conflict**: after #371 landed on `main`, #373 conflicted in `app/Models/StudentAcademic.php`. Resolution kept both the `school_student_id` rename/`$fillable` change and the `klassapp_student_id` `/^KLS\d{7}$/i` saving hook from #371.
+  - **#376 was not truly independent in git history**: Goose handoff called it standalone, but `docs/project-provenance` was stacked on the Chain 2 tip. Merged *after* Chain 2 so only provenance/docs landed (ahead-by-4 vs Chain 2 tip: `AGENTS.md`, `docs/project-provenance.md`, `knowledge.md`).
+  - Stacked PRs #374/#375 initially had empty CI (non-`main` bases); retargeted to `main`, re-ran conflict-marker scan, then merged.
+- **Live verify (prod evidence)**:
+  - Report PDF (formal + warm) for student uid **2843** / `KLS1040444` (school 104, exam 32): extracted text contains **`KLS ID`** and **`KLS1040444`**.
+  - Admin UI rename: Vue Create/Edit/myprofile + built `app-CX1zhnj2.js` show **School Student ID** / `school_student_id`; **0** `id_card_number` / "ID Card Number" in app PHP/Vue/blade and the Vite bundle.
+  - WhatsApp Priority 2: deployed SQL groups OR (`(school_student_id = ? or board_registration_number = ?)`); synthetic same-token rows in schools 16+19 scoped correctly per `school_id` (transaction **rolled back** — no leftover rows).
+- **Next**: UI migration design-doc = **separate session** (do not start here). Remaining open PRs (#367–#370 etc.) unrelated to this wave.
+- **`origin/main` / prod tip**: `392b7f0e` (deploy-verify knowledge stamp; app deploy SHA `230b58ac`).
 
-## Current Status: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
+## Previous: August 27, 2026 (`origin/main` tip `3e4d40ee` — KLS ID + school_student_id chains + provenance MERGED) — superseded (now deployed)
+
+- Pre-deploy stamp after six-PR merge wave. See Session Log for conflict/#376 notes.
+
+## Previous: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN + provenance docs PR #376 OPEN) — superseded above
+
+- Snapshot before six-PR merge wave: tip `e98d7982`; #373–#376 listed OPEN.
+
+## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
 
 - **✅ Merged #214**: `CreateExamRequest`/`UpdateUgSubjectRequest` `school_id` → `exists:schools,id` — merge `ea019997` — https://github.com/KlassApp-Foundation/KlassApp/pull/214
 - **Prod**: deployed `ea019997`; Bukoto Springs UI Mid Term exam create verified.
@@ -861,12 +910,104 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-08-24: Phase 2 wizard content-step delegation refactors
-- **Work done**: Refactored ManualOnboardingWizard's four content-step methods (`saveClass`, `saveSubject`, `saveTerm`, `saveFee`) to delegate to `OnboardingEngine` instead of performing direct DB writes. Early-return guards retained for UX; engine ValidationException errors mapped to wizard field names via try/catch. Removed unused `Standard` and `Section` imports.
-- **Files touched**: `app/Livewire/ManualOnboardingWizard.php`
-- **PR**: #365 — `feature/wizard-delegate-content-steps` → `main` (OPEN)
-- **Tests**: 60 engine tests pass (43 ContentStepsTest + 17 IdentityStepsTest, 118 assertions)
-- **Status**: PR open, awaiting review/merge
+### 2026-08-27: Deploy + live verify #371–#376 (`230b58ac`)
+
+- **Work done**: Ran `scripts/deploy-manual.sh`; prod FF `69c96593`→`230b58ac`; migration rename DONE; verified report-card KLS ID on real PDFs, admin `school_student_id` rename in Vue+Vite bundle, WhatsApp Priority 2 grouped-OR + school scoping (synthetic rows rolled back).
+- **Files modified**: `knowledge.md` (Current Status + this entry). No app code changes in this step.
+- **Key decisions**: Stop after deploy verify — UI migration design doc deferred to a fresh session.
+- **Status**: ✅ MERGED + DEPLOYED + VERIFIED
+- **Evidence**: formal/warm PDF text for uid 2843 contains `KLS ID` + `KLS1040444`; built JS `id_card_number` count=0; Priority 2 `toSql` shows grouped OR; scoped queries isolate school 16 vs 19.
+- **Edge cases flagged**: DomPDF binary does not contain plaintext — must extract PDF text (write-to-file+read) before asserting label/ID presence.
+
+### 2026-08-27: Merge six PRs (#371–#376) + knowledge stamp (pre-deploy)
+
+- **Work done**: Merged Chain 1 (#371→#372), Chain 2 (#373→#374→#375), then #376. Stamped Current Status; deploy+verify completed in following Session Log entry.
+- **Merge SHAs**: #371 `7609e687` · #372 `b99e293a` · #373 `a7bc51cd` · #374 `72557fa2` · #375 `86fb7260` · #376 `3e4d40ee`
+- **#373 conflict resolution**: `StudentAcademic.php` conflicted with #371's `booted()` KLS-format saving hook. Kept rename/`school_student_id` fillable **and** the validation hook; pushed merge commit on the PR branch before merging.
+- **#376 not truly independent**: branch was stacked on Chain 2 tip; only docs commits were unique. Merged after Chain 2.
+- **Files modified**: `knowledge.md` (Current Status + this entry). Conflict resolution lived on `fix/rename-id-card-to-school-student-id` only (already on main via #373).
+- **Status**: ✅ Done (superseded by deploy+verify entry above)
+- **Edge cases flagged**: Stacked PRs targeting non-`main` bases get empty GitHub Actions until retargeted/pushed; do not treat empty checks as green.
+
+### 2026-08-27: Future initiative — UI migration away from GeGoK12 inheritance (docs-only)
+
+- **Work done**: Logged the UI migration as a "Future Initiatives" entry in knowledge.md — this is the next major initiative after the current onboarding/grading work concludes. Not yet scoped; needs its own investigation/design-doc pass (same discipline as OnboardingEngine Phases 1A–1D, which had `docs/onboarding-engine-plan.md` before any code).
+- **Rationale**: The provenance documentation work surfaced that KlassApp's UI carries significant GeGoK12 inheritance beyond the data-model artifacts already catalogued (see `docs/project-provenance.md`). The `DESIGN_SYSTEM.md` components (x-button, x-card, etc.) exist but their coverage across the app is un-audited. This initiative needs scoping before any implementation — which surfaces to document, what phases, what's already modernized vs. legacy.
+- **Files modified**: `knowledge.md` — added "Future Initiatives" subsection under "Decided-deferred" with full UI-migration entry and known GeGoK12-legacy UI surfaces list.
+- **Cross-references**: `docs/project-provenance.md` (fork-legacy artifacts), `resources/views/components/DESIGN_SYSTEM.md` (target design system), `docs/onboarding-engine-plan.md` (discipline model for phased work).
+- **Branch**: `docs/project-provenance`
+- **Status**: No PR yet — documentation-only change committed to existing branch.
+
+### 2026-08-27: Project provenance documentation — KlassApp as GeGoK12 fork (docs-only PR)
+
+- **Work done**: Documented KlassApp's origin as a fork of GoGo Technologies' GeGoK12 (India). This explains the recurring "Indian locale" artifacts found in the codebase — Indian grade numbers ('10'/'11'/'12') in board_registration_number validation, "ID Card Number" field naming, Aadhaar/caste/community demographic fields, CBSE "Board" terminology, and AdmissionUser trait patterns inherited from the Indian school management system.
+- **Files created**:
+  - `docs/project-provenance.md` — Full provenance doc: fork history, known fork-legacy artifacts table, identification guide, decision framework for handling artifacts.
+  - `.agents/skills/project-provenance/SKILL.md` — Agent-facing skill for proactive surfacing of fork-legacy context.
+  - `.claude/skills/project-provenance/SKILL.md` — Same.
+  - `.cursor/skills/project-provenance/SKILL.md` — Same.
+  - `.junie/skills/project-provenance/SKILL.md` — Same.
+- **Files modified**:
+  - `AGENTS.md` — Added "Project Provenance" section cross-referencing `docs/project-provenance.md` and standing rule #14.
+  - `knowledge.md` — Updated Current Status, added this session log entry.
+- **Rationale for separate doc vs. AGENTS.md fold-in**: AGENTS.md is a standing rules file, not a history document. Provenance context is explanatory background that explains *why* certain patterns exist — it belongs in a dedicated doc that agents are directed to via the SKILL.md trigger mechanism, with a concise cross-reference in AGENTS.md rather than full duplication.
+- **Cross-references**: AGENTS.md standing rule #14, Known Bug Pattern #7, knowledge.md Known Bug Pattern #8, PRs #373 and #375.
+- **Branch**: `docs/project-provenance`
+- **Status**: OPEN — https://github.com/KlassApp-Foundation/KlassApp/pull/376
+
+### 2026-08-27: PR-C — Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR #375 OPEN)
+
+- **Work done**: Implemented collection wiring for BOTH `school_student_id` (universal, any student) AND `board_registration_number` (level-scoped — only for UNEB candidate classes P.7/S.4/S.6). Added `OnboardingEngine::isCandidateClass()` helper, updated all 6 file surfaces (3 request validators, Nova, wizard, Toshi), 2 frontend resources (UserDetail + API\UserDetail with `is_candidate_class` flag), wizard blade with new input fields, and 14 tests covering all gating logic.
+- **Production bug fix (operator-precedence / wrong-locale)**: The old validation gated `board_registration_number` to Indian-system standards `'10'` / `'11'` / `'12'` which never matched actual Ugandan class names stored in the database (P.7, S.4, S.6, Primary, etc.). This was a real, pre-existing production bug — two issues:
+  1. **Wrong locale**: Indian standard numbers 10/11/12 don't exist in the Ugandan schema. The `Standard.name` column stores tier bands like `primary_lower`, `primary_upper`, `o_level`, `a_level` — not numeric grades.
+  2. **Operator precedence**: The old check `$standard->name == '10' || '11' || '12'` evaluated as `($standard->name == '10') || '11' || '12'` — always truthy because non-empty strings are truthy in PHP. Combined with the wrong locale, `board_registration_number` was **effectively always required** regardless of class, while simultaneously rejecting valid alphanumeric UNEB numbers (like `U1234/567`) via the `numeric` validation rule.
+- **Candidate-class approach**: Hardcoded UNEB candidate classes (P.7/PLE, S.4/UCE, S.6/UACE) in `isCandidateClass()` using the same normalization style as `standardNameForClass()`. NOT per-school configurable — per standing discipline against over-building. `standardNameForClass()` alone was too broad (P.1 and P.7 both map to `'primary'` tier), so `isCandidateClass()` targets specific exam-candidate classes.
+- **Validation change**: `board_registration_number` changed from `nullable|numeric` to `nullable|string|max:50` (UNEB registration numbers are alphanumeric, e.g. `U1234/567`). For candidate classes: `required|string|max:50`.
+- **Files touched**:
+  - `app/Services/OnboardingEngine.php` — added `isCandidateClass()` public static method
+  - `app/Http/Requests/UserProfileAddRequest.php` — replaced Indian-system check with `isCandidateClass()`, changed validation to `string|max:50`
+  - `app/Http/Requests/UserProfileUpdateRequest.php` — same changes
+  - `app/Http/Requests/Admission/AdmissionAcademicRequest.php` — same changes
+  - `app/Nova/StudentAcademic.php` — changed from `Number::make` with `nullable|numeric` to `Text::make` with `nullable|string|max:50`
+  - `app/Livewire/ManualOnboardingWizard.php` — added `studentSchoolStudentId` + `studentBoardRegNumber` properties, expanded draft schema, added `boardRegForDraft()` helper using `isCandidateClass()`
+  - `app/Services/ToshiActionService.php` — added conditional `board_registration_number` persistence via `isCandidateClass()`
+  - `app/Http/Resources/UserDetail.php` — replaced Indian-system check with `isCandidateClass()`, added `is_candidate_class` boolean flag
+  - `app/Http/Resources/API/UserDetail.php` — same changes
+  - `resources/views/livewire/partials/manual-wizard-step-fields.blade.php` — added School Student ID and UNEB Reg No. input fields
+  - `tests/Feature/Onboarding/SchoolStudentIdAndBoardRegCollectionTest.php` — 14 tests, 41 assertions
+- **Branch**: `fix/wire-school-student-id-and-board-reg` (based on PR-B branch `fix/whatsapp-priority2-school-id-scoping`)
+- **PR**: #375 — https://github.com/KlassApp-Foundation/KlassApp/pull/375
+- **Tip**: `a63f4900`
+- **Status**: OPEN (awaiting PR-A merge → PR-B merge → PR-C merge)
+- **Test evidence**: 14 passed, 41 assertions
+  - `is_candidate_class_returns_true_for_p7` / `_s4` / `_s6`
+  - `is_candidate_class_returns_false_for_p1` / `_s1` / `_nursery`
+  - `is_candidate_class_rejects_old_indian_standards`
+  - `is_candidate_class_handles_whitespace_and_case`
+  - `is_candidate_class_returns_false_for_empty_string`
+  - `wizard_saves_school_student_id`
+  - `wizard_saves_board_reg_for_candidate_class`
+  - `board_reg_validation_accepts_alphanumeric`
+  - `user_detail_includes_is_candidate_class_flag`
+  - `user_detail_non_candidate_class_hides_board_reg`
+
+### 2026-08-27: PR-B — WhatsApp Priority 2 school_id scoping fix (PR #374 OPEN)
+- **Work done**: Fixed cross-tenant data leak in WhatsApp student ID lookup. Priority 2 had ungrouped OR (`where('school_student_id', X)->orWhere('board_registration_number', X)`) which broke out of any school_id scoping. Also added scope-when-known/global-fallback pattern: if WhatsAppUser has a school_id, scope the query; otherwise search globally and auto-learn the school_id onto the WhatsAppUser for future scoped lookups.
+- **Files touched**: `app/Http/Controllers/Api/WhatsAppController.php`, `tests/Feature/WhatsApp/Priority2SchoolIdScopingTest.php`.
+- **Branch**: `fix/whatsapp-priority2-school-id-scoping` (based on PR-A branch)
+- **PR**: #374 — https://github.com/KlassApp-Foundation/KlassApp/pull/374
+- **Tip**: `61a28421`
+- **Status**: OPEN (awaiting PR-A merge, then review)
+- **Test evidence**: 5 passed, 18 assertions
+
+### 2026-08-27: PR-A — Rename id_card_number → school_student_id (PR #373 OPEN)
+- **Work done**: Renamed `student_academics.id_card_number` to `school_student_id` across ~15 source files + migration + Nova + Vue SPA + npm build. Removed AdmissionUser bug (`$academic->id_card_number = $user->registration_number`). Changed validation from `nullable|numeric` to `nullable|string|max:50`. 8 tests pass.
+- **Files touched**: Migration, StudentAcademic model, AdmissionUser trait, RegisterUser trait, WhatsAppController, StudentController, UserDetail resources, UserProfileUpdateRequest, UserProfileAddRequest, PromotionImport, ImportMemberController, Nova StudentAcademic, Vue Create/Edit/myprofile, public/build assets.
+- **Branch**: `fix/rename-id-card-to-school-student-id`
+- **PR**: #373 — https://github.com/KlassApp-Foundation/KlassApp/pull/373
+- **Tip**: `9f5d04a2`
+- **Status**: OPEN (awaiting review/merge)
+- **Test evidence**: 8 passed, 8 assertions
 
 ### 2026-08-24: Phase 1A remaining identity methods extracted
 - **Work done**: Extracted `saveEmis`, `saveUnebCenter`, and `saveAcademicYear` into `OnboardingEngine`; refactored `ManualOnboardingWizard` and `AgentToshi` callers to one-line engine delegation; extended `tests/Feature/Onboarding/OnboardingEngine/IdentityStepsTest.php` with 9 focused tests.
@@ -881,6 +1022,23 @@ Phase B: Mix→Vite + Vue 3 runtime
   - `php artisan test --compact tests/Feature/Onboarding/` — 158 passed, 0 failed
   - `php artisan test --compact` — 769 passed, 58 failed (pre-existing Toshi LLM/E2E/step-count failures unrelated to this work)
 - **Phase 1A gate**: ✅ COMPLETE — all 7 identity methods are on `main`; ready to scope Phase 1B (content seeding).
+
+### 2026-08-25: Bug #4 fix — whole-school fee creates one row per Standard (PR #366 MERGED)
+- **Work done**: Fixed `saveFees()` bug where a whole-school fee (no class specified) fell back to the school's first `Standard`, making fees invisible to students in other grading tiers. WhatsApp fee queries filter by `standard_id`; `StudentReportHelperService::fees()` reads school-wide fees as `whereNull('section_id')`. A fee scoped to one arbitrary Standard was invisible to other tiers.
+- **Fix**: Extracted `saveFeeForClass()` and `saveFeeSchoolWide()` private methods. When no class is specified, `saveFeeSchoolWide()` creates one `FeesCategories` row **per Standard** with `section_id=NULL`, matching the read convention exactly. When a class IS specified, `saveFeeForClass()` resolves to one Standard+Section pair as before (no behavior change).
+- **Files touched**: `app/Services/OnboardingEngine.php`, `tests/Feature/Onboarding/OnboardingEngine/ContentStepsTest.php`.
+- **Branch**: `fix/save-fees-whole-school-not-scoped-to-first-class`
+- **PR**: #366 — https://github.com/KlassApp-Foundation/KlassApp/pull/366
+- **Merge commit**: `e98d7982` (merge SHA `27b56809`)
+- **Test evidence**: 69 passed, 131 assertions (`php artisan test --filter=OnboardingEngine`).
+  - New test: `test_save_fees_general_fee_is_school_wide_not_scoped_to_first_class` — school with 2 Standards (P.1 + S.1), call `saveFees` with no class, assert one row per Standard, all `section_id=NULL`.
+  - New test: `test_save_fees_with_class_creates_single_scoped_row_not_per_standard` — same setup, call `saveFees` with `class => 'P.1'`, assert exactly one fee row with `section_id` set.
+  - Old `test_save_fees_uses_first_standard_when_no_class_specified` replaced by the new school-wide test.
+- **Investigated items (no code action needed now)**:
+  1. **Secondary school support** — CONFIRMED working. `SchoolCategorySeeder` handles `o_level` and `o_a_level`.
+  2. **Class teacher subject editing** — `RosterScopeService`/`ClassRoster` are read-only; `OnboardingEngine::saveSubjects()` is already safe for reuse. Design intent documented.
+  3. **Hardcoded 3-term assumptions** — Found in `student.blade.php` L51 and `teacher-exam-list.blade.php` L42. Display-only, not data-corruption. Logged as future UI polish.
+- **Status**: ✅ MERGED — `main` tip now `e98d7982`.
 
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
 - **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.

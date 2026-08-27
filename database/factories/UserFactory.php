@@ -32,7 +32,7 @@ class UserFactory extends Factory
         'email_verified' => 1,
         'usergroup_id' => 6, // student by default; tests override
         'status' => 'active',
-        'registration_number'   =>  $this->faker->unique()->randomNumber($nbDigits = 6, $strict = false),
+        'registration_number'   =>  'KLS001' . str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
         'remember_token' => \Illuminate\Support\Str::random(10),
     ];
 

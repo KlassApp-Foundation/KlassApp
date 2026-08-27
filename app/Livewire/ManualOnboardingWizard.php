@@ -108,7 +108,11 @@ class ManualOnboardingWizard extends Component
 
     public string $studentParentPhone = '';
 
-    /** @var list<array{name: string, class: string, stream: string, parent: string, parent_phone: string}> */
+    public string $studentSchoolStudentId = '';
+
+    public string $studentBoardRegNumber = '';
+
+    /** @var list<array{name: string, class: string, stream: string, parent: string, parent_phone: string, school_student_id: string, board_registration_number: string}> */
     public array $studentDrafts = [];
 
     public string $studentPaste = '';
@@ -255,11 +259,16 @@ class ManualOnboardingWizard extends Component
             'stream' => trim($this->studentStream),
             'parent' => trim($this->studentParent),
             'parent_phone' => trim($this->studentParentPhone),
+            'school_student_id' => trim($this->studentSchoolStudentId),
+            'board_registration_number' => trim($this->studentBoardRegNumber),
         ];
         $this->studentName = '';
+        $this->studentClass = '';
         $this->studentStream = '';
         $this->studentParent = '';
         $this->studentParentPhone = '';
+        $this->studentSchoolStudentId = '';
+        $this->studentBoardRegNumber = '';
         $this->errorMessage = '';
     }
 
@@ -282,6 +291,8 @@ class ManualOnboardingWizard extends Component
                 'stream' => '',
                 'parent' => '',
                 'parent_phone' => '',
+                'school_student_id' => '',
+                'board_registration_number' => '',
             ];
         }
         $this->studentPaste = '';
@@ -377,6 +388,8 @@ class ManualOnboardingWizard extends Component
                     'stream' => (string) ($row['stream'] ?? ''),
                     'parent' => (string) ($row['parent'] ?? ''),
                     'parent_phone' => (string) ($row['parent_phone'] ?? ''),
+                    'school_student_id' => (string) ($row['school_student_id'] ?? ''),
+                    'board_registration_number' => (string) ($row['board_registration_number'] ?? ''),
                 ];
             }
             $this->studentUpload = null;
@@ -1227,10 +1240,41 @@ class ManualOnboardingWizard extends Component
                 'user_id' => $student->id,
                 'standardLink_id' => $targetLink->id,
                 'klassapp_student_id' => $klassappId,
+                'school_student_id' => trim((string) ($draft['school_student_id'] ?? '')) ?: null,
+                'board_registration_number' => $this->boardRegForDraft($draft, $targetLink),
             ]);
         }
 
         $this->studentDrafts = [];
+    }
+
+    /**
+     * Return the board registration number for a student draft, or null
+     * if the student's class is not a UNEB candidate year.
+     *
+     * board_registration_number is only meaningful for P.7 (PLE),
+     * S.4 (UCE), and S.6 (UACE). For all other classes we discard it
+     * rather than persisting a meaningless value.
+     */
+    private function boardRegForDraft(array $draft, ?StandardLink $link): ?string
+    {
+        $raw = trim((string) ($draft['board_registration_number'] ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        // Check the student's class against candidate-class patterns.
+        // Try the Standard name from the matched link, then fall back
+        // to the draft's class name (which may be the section name).
+        $className = trim((string) ($link?->standard?->name ?? ''));
+        $sectionName = trim((string) ($draft['class'] ?? ''));
+
+        if (OnboardingEngine::isCandidateClass($className) || OnboardingEngine::isCandidateClass($sectionName)) {
+            return $raw;
+        }
+
+        // Not a candidate class — discard the value
+        return null;
     }
 
     private function saveTerm(School $school): void

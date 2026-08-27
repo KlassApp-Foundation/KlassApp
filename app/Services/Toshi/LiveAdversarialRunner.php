@@ -315,7 +315,7 @@ class LiveAdversarialRunner
             return User::query()->create(array_merge([
                 'password' => Hash::make('password'),
                 'mobile_no' => sprintf('700%06d', $seq),
-                'registration_number' => sprintf('%06d', 100000 + $seq),
+                'registration_number' => sprintf('KLS%03d%04d', $attributes['school_id'] ?? $this->schoolId ?? 1, $seq),
                 'status' => 'active',
                 'email_verification_code' => Str::random(40),
                 'remember_token' => Str::random(10),
