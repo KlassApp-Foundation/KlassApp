@@ -97,7 +97,7 @@ class StreamingTransitionTest extends TestCase
                 'password' => bcrypt('password'),
                 'status' => 'active',
                 'email_verified' => 1,
-                'registration_number' => "REG00" . ($i + 1),
+                'registration_number' => sprintf('KLS%03d%04d', $this->school->id, $i + 1),
             ]);
 
             StudentAcademic::create([

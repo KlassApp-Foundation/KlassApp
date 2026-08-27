@@ -91,13 +91,13 @@ class BackfillRegistrationNumbersCommandTest extends TestCase
     public function test_skips_students_with_existing_registration_number()
     {
         $student = $this->createStudentWithKlassappId();
-        $student->registration_number = 'EXISTING001';
+        $student->registration_number = 'KLS9990001';
         $student->save();
 
         Artisan::call('students:backfill-registration-numbers');
 
         $student->refresh();
-        $this->assertSame('EXISTING001', $student->registration_number);
+        $this->assertSame('KLS9990001', $student->registration_number);
     }
 
     public function test_unmatched_student_with_neither_field()

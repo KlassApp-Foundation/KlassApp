@@ -205,7 +205,7 @@
     {{-- ═══ STAT TILES ═══ --}}
     <table class="tiles-table">
         <tr>
-            <td style="width:50%;">
+            <td style="width:40%;">
                 <div class="tile">
                     <div class="tile-label">Student</div>
                     <div class="tile-value">{{ $learner->displayName }}</div>
@@ -215,6 +215,12 @@
                 <div class="tile">
                     <div class="tile-label">Class</div>
                     <div class="tile-value">{{ $class_name }}</div>
+                </div>
+            </td>
+            <td style="width:35%;">
+                <div class="tile">
+                    <div class="tile-label">KLS ID</div>
+                    <div class="tile-value">{{ $learner->registration_number ?: '—' }}</div>
                 </div>
             </td>
         </tr>
