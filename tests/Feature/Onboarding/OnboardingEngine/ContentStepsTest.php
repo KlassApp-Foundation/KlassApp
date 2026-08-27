@@ -224,6 +224,95 @@ class ContentStepsTest extends TestCase
         $this->assertEquals('o-level', $standard->name);
     }
 
+    // ── saveStandards with sub_group ──────────────────────────────────
+
+    public function test_save_standards_stores_sub_group_on_standard_link(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P1', 'sub_group' => 'lower'],
+            ['name' => 'P4', 'sub_group' => 'upper'],
+        ]);
+
+        $links = StandardLink::where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->get();
+
+        $this->assertEquals(2, $links->count());
+
+        $p1Link = $links->first(fn($l) => $l->section->name === 'P1');
+        $p4Link = $links->first(fn($l) => $l->section->name === 'P4');
+
+        $this->assertSame('lower', $p1Link->sub_group);
+        $this->assertSame('upper', $p4Link->sub_group);
+    }
+
+    public function test_save_standards_sub_group_defaults_to_null_when_absent(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P1'],
+        ]);
+
+        $link = StandardLink::where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->first();
+
+        $this->assertNotNull($link);
+        $this->assertNull($link->sub_group);
+    }
+
+    public function test_save_standards_sub_group_with_streams_propagates_to_each_stream(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P1', 'streams' => ['A', 'B'], 'sub_group' => 'lower'],
+        ]);
+
+        $links = StandardLink::where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->get();
+
+        $this->assertEquals(2, $links->count());
+
+        // Both stream links should have sub_group = 'lower'
+        foreach ($links as $link) {
+            $this->assertSame('lower', $link->sub_group);
+        }
+    }
+
+    public function test_save_standards_mixed_sub_group_and_null_sub_group(): void
+    {
+        $school = $this->createSchool();
+        $year = $this->createYear($school);
+
+        app(OnboardingEngine::class)->saveStandards($school, $year, [
+            ['name' => 'P1', 'sub_group' => 'lower'],
+            ['name' => 'P4', 'sub_group' => 'upper'],
+            ['name' => 'S1'],  // no sub_group
+        ]);
+
+        $links = StandardLink::where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->get();
+
+        $this->assertEquals(3, $links->count());
+
+        $p1 = $links->first(fn($l) => $l->section->name === 'P1');
+        $p4 = $links->first(fn($l) => $l->section->name === 'P4');
+        $s1 = $links->first(fn($l) => $l->section->name === 'S1');
+
+        $this->assertSame('lower', $p1->sub_group);
+        $this->assertSame('upper', $p4->sub_group);
+        $this->assertNull($s1->sub_group);
+    }
+
     // ── saveSubjects ───────────────────────────────────────────────────
 
     /** Helper: set up standards + links so saveSubjects has something to attach to. */

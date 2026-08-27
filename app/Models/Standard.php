@@ -32,7 +32,7 @@ class Standard extends Model
      * @var array
      */
     protected $fillable = [
-      "school_id", 'name' , 'order', 'status'
+      "school_id", 'name' , 'order', 'status', 'grading_style'
     ];
 
     // public function school()
@@ -61,7 +61,7 @@ public function schoolGradingSystem(){
     {
         return $this->hasMany('\App\Models\Subject','standard_id','id');
     }
-    
+
     public function standardLink()
     {
         return $this->hasMany('\App\Models\StandardLink','standard_id','id');

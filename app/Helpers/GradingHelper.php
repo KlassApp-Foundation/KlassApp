@@ -29,7 +29,7 @@ class GradingHelper
 
         foreach ($phaseMap as $type => $keywords) {
             foreach ($keywords as $keyword) {
-                if ($name === $keyword || str_starts_with($name, $keyword . ' ')) {
+                if ($name === $keyword || str_starts_with($name, $keyword . ' ') || str_starts_with($name, $keyword . '_')) {
                     // For "Senior", disambiguate: Senior 5-6 is A-Level, Senior 1-4 is O-Level
                     if ($keyword === 'senior') {
                         return preg_match('/^(senior\s+(five|six))$/', $name) ? 'a-level' : 'o-level';
