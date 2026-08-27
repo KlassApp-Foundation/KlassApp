@@ -1016,8 +1016,10 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // ── Priority 2: School's own student ID (id_card_number) ──
-        $schoolIdMatch = \App\Models\StudentAcademic::where('id_card_number', $trimmed)
+        // ── Priority 2: School's own student ID (school_student_id) ──
+        // Scoped by school_id when a school context is available (multi-tenant safety);
+        // falls back to global search for first-time parents with no school link yet.
+        $schoolIdMatch = \App\Models\StudentAcademic::where('school_student_id', $trimmed)
             ->orWhere('board_registration_number', $trimmed)
             ->with(['user', 'standardLink.standard', 'school'])
             ->first();

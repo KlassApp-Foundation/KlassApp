@@ -33,7 +33,7 @@ class UserDetail extends JsonResource
             $board_registration_number = null;
         }
 
-        return 
+        return
         [
             'name'                      => $this->name,
             'school_name'               => $this->school->name,
@@ -45,10 +45,10 @@ class UserDetail extends JsonResource
             'country'                   => $this->userprofile->country->name,
             'pincode'                   => optional($this->userprofile)->pincode=="" ? null:optional($this->userprofile)->pincode,
             'email'                     => $this->email,
-            'mobile_no'                 => $this->mobile_no, 
+            'mobile_no'                 => $this->mobile_no,
             'notes'                     => optional($this->userprofile)->notes=="" ? null:optional($this->userprofile)->notes,
             'avatar'                    => $avatarpath,
-            'created_at'                => optional($this->userprofile)->created_at=="" ? null:date('d-m-Y H:i:s',strtotime(optional($this->userprofile)->created_at)), 
+            'created_at'                => optional($this->userprofile)->created_at=="" ? null:date('d-m-Y H:i:s',strtotime(optional($this->userprofile)->created_at)),
             'updated_at'                => optional($this->userprofile)->updated_at=="" ? null:date('d-m-Y H:i:s',strtotime(optional($this->userprofile)->updated_at)),
             'age'                       => date('Y')-date('Y',strtotime(optional($this->userprofile)->date_of_birth)),
             'ref_id'                    => $this->ref_id,
@@ -60,7 +60,7 @@ class UserDetail extends JsonResource
             'lin'               => $this->userprofile->lin,
             'joining_date'           => date('d-m-Y',strtotime($this->userprofile->joining_date)),
             'std_school_pay_number'               => $this->studentAcademicLatest->std_school_pay_number,
-            'id_card_number'            => $this->studentAcademicLatest->id_card_number,
+            'school_student_id'          => $this->studentAcademicLatest->school_student_id,
             'board_registration_number' => $board_registration_number,
             'librarycard_number'        => $this->librarycard->library_card_no,
         ];

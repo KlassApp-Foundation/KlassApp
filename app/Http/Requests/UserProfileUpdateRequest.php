@@ -29,28 +29,28 @@ class UserProfileUpdateRequest extends FormRequest
      * @return array
      */
     public function rules()
-    { 
+    {
         Validator::extend('check_date_of_birth',function($attribute,$value,$parameters,$validator)
-        { 
+        {
             $start = date('Y-06-01',strtotime('-20 years',strtotime(date('Y-m-d'))));
             $end = date('Y-06-01',strtotime('-3 years',strtotime(date('Y-m-d'))));
             if( (request('date_of_birth') <= $end)  && (request('date_of_birth') >= $start) )
             {
                 return true;
             }
-                
+
             return false;
         });
 
         Validator::extend('check_joining_date',function($attribute,$value,$parameters,$validator)
-        { 
+        {
             $now  = Carbon::now()->subYears(18)->format('Y');
 
             if((request('joining_date')<=date('Y-m-d')) && ( date('Y',strtotime(request('joining_date'))) >= $now ) )
             {
                 return true;
             }
-                
+
             return false;
         });
 
@@ -110,7 +110,7 @@ class UserProfileUpdateRequest extends FormRequest
             'blood_group'               => 'nullable',
             'aadhar_number'             => 'nullable|numeric|digits:12|check_unique_aadhar_number',
             'city_id'                   => 'required',
-            
+
             'country_id'                => 'required',
             'pincode'                   => 'nullable|numeric|digits:6',
             'birth_place'               => 'nullable|check_birth_place',
@@ -123,14 +123,14 @@ class UserProfileUpdateRequest extends FormRequest
             'joining_date'              => 'required|date|check_joining_date',
             'standard'                  => 'required',
             'std_school_pay_number'               => 'nullable|numeric',
-            'id_card_number'            => 'nullable|numeric',   
+            'school_student_id'         => 'nullable|string|max:50',
             'mode_of_transport'         => 'nullable',
-            'siblings'                  => 'required', 
+            'siblings'                  => 'required',
             'board_registration_number' => 'nullable|numeric',
         ];
 
         if(\Request('avatar')!= '')
-        { 
+        {
             $rules['avatar']='nullable|mimes:jpg,jpeg,png';
         }
 
@@ -139,7 +139,7 @@ class UserProfileUpdateRequest extends FormRequest
 
         if( ( $standard->name == '10' ) || ( $standard->name == '11' )  || ( $standard->name == '12' ) )
         {
-            $rules['board_registration_number'] = 'required|numeric'; 
+            $rules['board_registration_number'] = 'required|numeric';
         }
 
         if( (request('mode_of_transport') == 'auto') || (request('mode_of_transport') == 'rickshaw') || (request('mode_of_transport') == 'taxi') )
@@ -149,18 +149,18 @@ class UserProfileUpdateRequest extends FormRequest
         }
 
         for($i=0 ; $i<Request('count') ; $i++)
-        {  
+        {
             Validator::extend('check_sibling_name',function($attribute,$value,$parameters,$validator)
-            { 
+            {
                 return preg_match('/^[A-Za-z\s]+$/', $value);
             });
 
             Validator::extend('check_sibling_date_of_birth',function($attribute,$value,$parameters,$validator)
-            { 
+            {
                 if( ($value<=date('Y-m-d')) && ($value>="2000-01-01") )
                 {
                     return true;
-                } 
+                }
                 return false;
             });
 
@@ -180,8 +180,8 @@ class UserProfileUpdateRequest extends FormRequest
     {
         $start = date('01-06-Y',strtotime('-20 years',strtotime(date('Y-m-d'))));
         $end = date('01-06-Y',strtotime('-3 years',strtotime(date('Y-m-d'))));
-        
-        $messages =         
+
+        $messages =
         [
             'firstname.required'                                => 'First Name Is Required',
             'firstname.check_firstname'                         => 'Enter A Valid First Name',
@@ -203,7 +203,7 @@ class UserProfileUpdateRequest extends FormRequest
 
             'city_id.required'                                  => 'City Is Required',
 
-            
+
 
             'country_id.required'                               => 'Country Is Required',
 
@@ -241,8 +241,7 @@ class UserProfileUpdateRequest extends FormRequest
             'std_school_pay_number.required'                              => 'Student School Pay Number Is Required',
             'std_school_pay_number.numeric'                               => 'Student School Pay Number Should Be Numeric',
 
-            'id_card_number.required'                           => 'ID Card Number Is Required',
-            'id_card_number.numeric'                            => 'ID Card Number Should Be Numeric',
+            'school_student_id.max'                            => 'School Student ID must not exceed 50 characters',
 
             'board_registration_number.required'                => 'Board Registration Number Is Required',
             'board_registration_number.numeric'                 => 'Board Registration Number Should Be numeric',
