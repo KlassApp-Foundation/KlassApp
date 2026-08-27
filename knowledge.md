@@ -336,19 +336,20 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 27, 2026 (`origin/main` tip `303fcb69` — **DEPLOYED** Phase 1C / OnboardingEngine unification complete)
+## Current Status: August 28, 2026 (`origin/main` tip `e11c9c4e` — **DEPLOYED** #379 Toshi school_category fix)
 
-- **✅ Prod tip**: **`303fcb69`** (Merge #370) @ **2026-08-27 ~15:20 UTC** via `scripts/deploy-manual.sh`. Migrations: Nothing to migrate.
-- **✅ OnboardingEngine unification closed**: 1A/1B content steps + 1C teachers/students/WhatsApp/plan callers all live. Catch-up same day: #365 · #368 · #369 · **#370**.
-- **Merge notes #370**: Was `CONFLICTING` vs post–#371–376 main. Real conflicts in `ManualOnboardingWizard.php` + `ToshiActionService.php` (not knowledge-only). Kept engine delegation; preserved #375 `school_student_id` / `board_registration_number` by extending `OnboardingEngine::saveStudents` + wizard drafts.
-- **Live verify #370 (deployed files, not tests-only)**:
-  - `OnboardingEngine::saveTeachers/saveStudents`: `bcrypt(Str::random(16))` + `is_reset => 1` — **YES** (host + container).
-  - `ToshiActionService::addTeacher/addStudent`: delegate to engine only; **no** `Hash::make('password')` on those paths. Remaining hardcoded `password` only on **co-admin** + **parent** helpers (out of 1C scope).
-  - `AgentToshi::commitAll` (create + complete): `saveTeachers`/`saveStudents` → engine — **YES**; no inline teacher/student `bcrypt('password')`.
-  - **`app/Traits/RegisterUser.php` still has 4× `bcrypt('password') //demo`** — admin Student/Teacher controller import path; **not** wired through OnboardingEngine in #370. Honest gap vs audit checklist naming.
-- **Still OPEN**: #367 (docs). Broader password/security follow-up (RegisterUser + ActionService co-admin/parent) logged separately — see Session Log **2026-08-27 Phase 1C closed, broader password gap**.
-- **Toshi E2E Step 2 BLOCKED (2026-08-27)**: Fresh school **109** — name/country/curriculum OK via chat; then dead-ends on `school_category` (`null`, 0 standards/subjects). `jumpToIncompleteOnboardingStep` omits `school_category`; `persistSchoolCategory*` is dead code. Report: `tmp/e2e-toshi-step2/STEP2-REPORT.json`. #368 / seeder / students / fees / PDF not verifiable via Toshi until fixed.
-- **`origin/main` / prod tip**: `303fcb69`.
+- **✅ Prod tip**: **`e11c9c4e`** (squash #379) @ **2026-08-27 ~23:13 UTC** via `scripts/deploy-manual.sh`. Migrations: Nothing to migrate.
+- **✅ #379**: Toshi `school_category` resume dead-end fixed — `jumpToIncompleteOnboardingStep` + prompt + `selectSchoolCategory()` → `OnboardingEngine::saveSchoolCategory()`; regression tests in `ToshiSchoolCategoryJumpResumeTest.php`.
+- **✅ Live verify (fresh school 110)**: Signup `e2e.toshi+1787872446835@example.test` → name/country/curriculum → **Primary + Nursery** button → `school_category=primary_nursery`, advanced to EMIS (no "Let's continue setting up." trap). Artifacts: `tmp/e2e-toshi-step2/` (`f05-pre-category.png`, `f06-after-category.png`, `STEP2-REPORT.json`).
+- **Restart behavior (school 108)**: `resetSchoolOnboarding()` intentionally clears **conversation state only** — not DB (`schools.name`, `school_category`, standards). School 108 name corruption from bad chat text is a **UX/labeling issue** (Restart ≠ full reset), not a missing DB wipe bug. Recommend clearer copy: "Restart conversation" vs "Reset school data".
+- **Prior tip**: `a786d3ce` (#378 sidebar hover). OnboardingEngine 1C closed (#370).
+- **`origin/main` / prod tip**: `e11c9c4e`.
+
+## Previous: August 27, 2026 (`origin/main` tip `a786d3ce` — **DEPLOYED** #378 sidebar hover fix + Phase 1C) — superseded by #379
+
+## Previous: August 27, 2026 (`origin/main` tip `303fcb69` — **DEPLOYED** Phase 1C / OnboardingEngine unification complete) — superseded by #378
+
+- Phase 1C tip before sidebar-hover hotfix. See Session Log #370 / password-gap notes.
 
 ## Previous: August 27, 2026 (`origin/main` tip `edad87fb` — **DEPLOYED** #365/#368/#369 catch-up) — superseded by #370
 
@@ -8071,3 +8072,17 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Also logged (code review; not live-reached this run)**: `doneFees`/`feesForEngine` strip amounts/class (`amount=0`); Toshi student form has no `board_registration_number`; `resetSchoolOnboarding` is not a full identity reset (school **108** name was corrupted earlier by bad chat text).
 - **Files modified**: `knowledge.md` (this entry + Current Status note); artifacts under `tmp/e2e-toshi-step2/` (not product code).
 - **Status**: ⏸️ Blocked — needs Toshi fix to wire `school_category` (jump + prompt + button → `saveSchoolCategory`) before Step 2 can continue (#368 multi-tier / seeder / students / fees / PDF).
+
+### 2026-08-28: Toshi school_category resume fix — #379 merged + deployed
+
+- **Work done**: Fixed live-breaking Toshi dead-end after curriculum for UNEB schools (`school_category` null → generic "Let's continue setting up.").
+  1. Added `school_category` → `onboarding_school_category` in `jumpToIncompleteOnboardingStep()` actionMap.
+  2. Added actionable `onboardingPromptForStep('school_category')` with button + text synonyms.
+  3. Wired `persistSchoolCategoryFromInput` / `persistSchoolCategory` via `actionOnboardingSchoolCategory()` + public `selectSchoolCategory()` (complete mode → engine save + `detectMissingSteps()`; create mode → legacy admin-account advance).
+  4. Blade category buttons call `selectSchoolCategory()` with `SchoolCategorySeeder::CATEGORIES` keys (both complete-mode action step + create-flow substep 2). `setSchoolType()` kept as thin legacy mapper for tests.
+- **Restart investigation (school 108)**: `resetSchoolOnboarding()` is **intentionally conversation-only** — clears messages/substeps/draft, jumps to classes prompt; **does not** reset DB fields. Name corruption from mis-parsed chat is not a Restart bug; needs clearer UI copy unless product wants a destructive full reset (separate feature).
+- **Tests**: `tests/Feature/Onboarding/ToshiSchoolCategoryJumpResumeTest.php` — 9 tests (mount jump, button persist, text input, action-map template guard for all 6 action-mapped keys). Also green: `ToshiCountryEmisPlanFlowTest.php` (6 tests).
+- **Live E2E (post-deploy)**: Fresh school **110** (`e2e.toshi+1787872446835@example.test` / `Password123!`) — category button **Primary + Nursery** → `school_category=primary_nursery`, prompt shows category options, flow continues to EMIS. `SchoolCategorySeeder` content rows appear after academic year (seeder requires AY — expected).
+- **Files modified**: `app/Livewire/AgentToshi.php`, `resources/views/livewire/agent-toshi.blade.php`, `tests/Feature/Onboarding/ToshiSchoolCategoryJumpResumeTest.php`, `knowledge.md`.
+- **PR**: [#379](https://github.com/KlassApp-Foundation/KlassApp/pull/379) — branch `fix/toshi-school-category-resume`, squash merge **`e11c9c4e`**, deployed **2026-08-27 ~23:13 UTC**.
+- **Status**: ✅ Shipped. Toshi E2E Step 2 unblocked for category; continue #368 multi-tier / students / fees from school 110 or next fresh signup.
