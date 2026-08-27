@@ -1,5 +1,5 @@
 SPDX-License-Identifier: MIT
-  
+
   <div>
 
     <div class="flex items-center">
@@ -15,18 +15,18 @@ SPDX-License-Identifier: MIT
              Edit School
             @else
              Create Userprofile
-            @endif 
+            @endif
         </div>
     </div>
 
 
     <div class="bg-white shadow px-4 py-3">
-   
+
  <form wire:submit.prevent="submitUserprofile" method="POST" class="mt-6 space-y-6">
-        @csrf 
+        @csrf
 
     <div class="flex flex-col lg:flex-col">
-     
+
      <div class="tw-form-group w-full lg:w-1/2">
         <div class="lg:mr-8 ">
           <div class="mb-2">
@@ -40,7 +40,7 @@ SPDX-License-Identifier: MIT
             @endforeach
             </select>
             @error('school')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
+          </div>
         </div>
       </div>
 
@@ -54,7 +54,7 @@ SPDX-License-Identifier: MIT
               <option value="{{ $user->id}}" disabled>{{ $user->name }}</option>
             </select>
             @error('user')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
+          </div>
         </div>
       </div>
 
@@ -71,7 +71,7 @@ SPDX-License-Identifier: MIT
             @endforeach
             </select>
             @error('usergroup')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
+          </div>
         </div>
       </div>
 
@@ -123,7 +123,7 @@ SPDX-License-Identifier: MIT
               <option value="female">Girl</option>
           </select>
             @error('gender')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
+          </div>
         </div>
       </div>
 
@@ -138,7 +138,7 @@ SPDX-License-Identifier: MIT
         </div>
         </div>
       </div>
-       
+
       <div class="tw-form-group w-full lg:w-1/2">
         <div class="lg:mr-8 ">
           <div class="mb-2">
@@ -147,7 +147,7 @@ SPDX-License-Identifier: MIT
           <div class="mb-2">
             <select class="tw-form-control w-full" wire:model.live="blood_group">
               <option value="">Select Blood Group</option>
-             
+
 	            <option value="a+">A+</option>
 	            <option value="b+">B+</option>
 	            <option value="o+">O+</option>
@@ -156,10 +156,10 @@ SPDX-License-Identifier: MIT
 	            <option value="b-">B-</option>
 	            <option value="o-">O-</option>
 	            <option value="ab-">AB-</option>
-            
+
             </select>
             @error('blood_group')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
+          </div>
         </div>
       </div>
 
@@ -216,10 +216,10 @@ SPDX-License-Identifier: MIT
             <option value="sc">SC</option>
             <option value="sca">SCA</option>
             <option value="st">ST</option>
-          
+
             </select>
             @error('caste')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
+          </div>
         </div>
       </div>
 
@@ -248,7 +248,7 @@ SPDX-License-Identifier: MIT
             @endforeach
             </select>
             @error('city')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
+          </div>
         </div>
       </div>
 
@@ -265,7 +265,7 @@ SPDX-License-Identifier: MIT
             @endforeach
             </select>
             @error('country')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
+          </div>
         </div>
       </div>
 
@@ -297,9 +297,9 @@ SPDX-License-Identifier: MIT
         <div class="w-full lg:w-1/2">
         <div class="lg:mr-8 md:mr-8 mb-2">
         <div class="mb-2">
-        <label for="" class="tw-form-label">Registration Number<span class="text-red-500">*</span></label>
+        <label for="" class="tw-form-label">Registration Number <span class="text-xs text-gray-400 font-normal">(KLS ID — system-managed)</span><span class="text-red-500">*</span></label>
         </div>
-          <input name="registration_number" value="" type="text" placeholder="Registration Number" class="tw-form-control w-full" wire:model.live="registration_number">
+          <input name="registration_number" value="" type="text" pattern="KLS\d{7}" title="KlassApp Student ID format: KLS followed by 7 digits (e.g. KLS0010427)" placeholder="e.g. KLS0010427" class="tw-form-control w-full bg-gray-50" wire:model.live="registration_number" readonly>
           @error('registration_number')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
         </div>
@@ -335,7 +335,7 @@ SPDX-License-Identifier: MIT
         <div class="mb-2">
         <label for="" class="tw-form-label">Notes</label>
         </div>
-          <textarea wire:model.live="notes" class="tw-form-control w-full"></textarea> 
+          <textarea wire:model.live="notes" class="tw-form-control w-full"></textarea>
           @error('notes')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
         </div>
@@ -353,15 +353,15 @@ SPDX-License-Identifier: MIT
               <option value="inactive">Inactive</option>
               <option value="exit">Exit</option>
             @error('status')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div> 
+          </div>
         </div>
       </div>
 
       <div class="my-6">
       	{{-- <button wire:click="submitSchool" class="btn btn-primary submit-btn">Submit</button> --}}
-      	
-     <input type="submit" class="btn btn-primary submit-btn" value="Submit"/> 
-        
+
+     <input type="submit" class="btn btn-primary submit-btn" value="Submit"/>
+
         <a href="#" class="btn btn-reset reset-btn">Reset</a>
     </div>
   </div>
