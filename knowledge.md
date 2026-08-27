@@ -321,7 +321,7 @@
 - **🔀 PR #373 OPEN**: Rename `id_card_number` → `school_student_id` (PR-A) — https://github.com/KlassApp-Foundation/KlassApp/pull/373
 - **🔀 PR #374 OPEN**: Fix WhatsApp Priority 2 cross-tenant data leak (PR-B) — https://github.com/KlassApp-Foundation/KlassApp/pull/374
 - **🔀 PR #375 OPEN**: Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR-C) — https://github.com/KlassApp-Foundation/KlassApp/pull/375 — branch `fix/wire-school-student-id-and-board-reg` @ `97a4485` (2 commits: implementation + docs)
-- **🔀 Provenance docs PR pending**: `docs/project-provenance` branch — documents KlassApp's fork origin from GeGoK12 (India) and lists known fork-legacy artifacts.
+- **🔀 Provenance docs PR #376 OPEN**: `docs/project-provenance` branch — documents KlassApp's fork origin from GeGoK12 (India) and lists known fork-legacy artifacts. — https://github.com/KlassApp-Foundation/KlassApp/pull/376
 - **Next**: Merge PR-A → PR-B → PR-C, then deploy. Provenance docs PR is independent.
 - **`origin/main` tip**: `e98d7982`.
 
@@ -889,7 +889,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Rationale for separate doc vs. AGENTS.md fold-in**: AGENTS.md is a standing rules file, not a history document. Provenance context is explanatory background that explains *why* certain patterns exist — it belongs in a dedicated doc that agents are directed to via the SKILL.md trigger mechanism, with a concise cross-reference in AGENTS.md rather than full duplication.
 - **Cross-references**: AGENTS.md standing rule #14, Known Bug Pattern #7, knowledge.md Known Bug Pattern #8, PRs #373 and #375.
 - **Branch**: `docs/project-provenance`
-- **Status**: Ready to commit and open PR
+- **Status**: OPEN — https://github.com/KlassApp-Foundation/KlassApp/pull/376
 
 ### 2026-08-27: PR-C — Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR #375 OPEN)
 
