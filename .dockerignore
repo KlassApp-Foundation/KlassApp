@@ -1,6 +1,0 @@
-.git
-node_modules
-vendor
-storage/logs
-.env
-docker-compose.yml

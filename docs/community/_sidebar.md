@@ -1,8 +1,0 @@
-- [Overview](./)
-- [For Schools](for-schools)
-- [School Onboarding](school-onboarding)
-- [Book Onboarding](book-onboarding)
-- [For Parents](for-parents)
-- [Ecosystem](ecosystem)
-- [Roadmap](roadmap)
-- [FAQ](faq)

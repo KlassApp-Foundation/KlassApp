@@ -1,7 +1,0 @@
-@import "tailwindcss";
-
-@theme {
-  --font-primary: "Nunito Sans", Roboto, sans-serif;
-  --font-exo: "Exo 2", sans-serif;
-  --font-plex: "IBM Plex Sans", sans-serif;
-}

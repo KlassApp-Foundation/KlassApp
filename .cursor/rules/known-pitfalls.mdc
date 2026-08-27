@@ -1,8 +1,0 @@
----
-description: "Recurring bugs, known failure patterns, and the verification discipline this project requires."
-alwaysApply: true
----
-
-# KlassApp — Known Pitfalls & Debugging Discipline
-
-See `AGENTS.md` in the repo root ("Known bug patterns" and "Verification discipline" sections) — the single canonical rules file for this project. This pointer exists only so Cursor's always-apply mechanism still fires; the actual content lives there, not here.

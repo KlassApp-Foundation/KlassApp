@@ -1,8 +1,0 @@
----
-description: "Project identity, stack, architecture, and conventions — always loaded for every session."
-alwaysApply: true
----
-
-# KlassApp — Project Context
-
-See `AGENTS.md` in the repo root — the single canonical rules file for this project — and `knowledge.md` for full project history and current verified stack. This pointer exists only so Cursor's always-apply mechanism still fires; the actual content lives there, not here. (This file previously had its own stack/hosting notes that had drifted out of date — e.g. it said Hetzner when production is DigitalOcean, and documented the old Evolution API WhatsApp integration since replaced by the Meta Cloud API. `knowledge.md`'s "Verified Stack" section is the corrected, current source.)

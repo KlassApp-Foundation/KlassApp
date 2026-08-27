@@ -1,8 +1,0 @@
----
-description: "Frontend conventions: ds-* pattern library, mobile-first responsive standards, visual verification."
-globs: "**/*.{blade.php,vue,js,css,scss}"
----
-
-# KlassApp — Frontend Conventions
-
-See `AGENTS.md` in the repo root ("Path-specific notes" → Frontend) — the single canonical rules file for this project. This pointer exists only so Cursor's glob-based auto-attach still fires; the actual content lives there, not here.
