@@ -336,22 +336,26 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 27, 2026 (`origin/main` tip `230b58ac` — **DEPLOYED** KLS ID + school_student_id + provenance)
+## Current Status: August 27, 2026 (`origin/main` tip `303fcb69` — **DEPLOYED** Phase 1C / OnboardingEngine unification complete)
 
-- **✅ Deployed to prod**: **`230b58ac`** @ **2026-08-27 ~07:08 UTC** via `scripts/deploy-manual.sh` from `/Users/mac/projects/KlassApp` on `main`. Fast-forward `69c96593`→`230b58ac`. Migration `2026_08_27_020855_rename_id_card_number_to_school_student_id_on_student_academics_table` **DONE** (pre-check: `id_card_number` existed, **0** non-null rows; post-check: column gone, `school_student_id` present).
-- **✅ Chain 1 (KLS ID) MERGED**: #371 `7609e687` · #372 `b99e293a`
-- **✅ Chain 2 (school_student_id) MERGED**: #373 `a7bc51cd` · #374 `72557fa2` · #375 `86fb7260`
-- **✅ #376 provenance MERGED**: `3e4d40ee` (knowledge stamp on top → tip `230b58ac`)
-- **Merge notes (keep for later readers)**:
-  - **#373 conflict**: after #371 landed on `main`, #373 conflicted in `app/Models/StudentAcademic.php`. Resolution kept both the `school_student_id` rename/`$fillable` change and the `klassapp_student_id` `/^KLS\d{7}$/i` saving hook from #371.
-  - **#376 was not truly independent in git history**: Goose handoff called it standalone, but `docs/project-provenance` was stacked on the Chain 2 tip. Merged *after* Chain 2 so only provenance/docs landed (ahead-by-4 vs Chain 2 tip: `AGENTS.md`, `docs/project-provenance.md`, `knowledge.md`).
-  - Stacked PRs #374/#375 initially had empty CI (non-`main` bases); retargeted to `main`, re-ran conflict-marker scan, then merged.
-- **Live verify (prod evidence)**:
-  - Report PDF (formal + warm) for student uid **2843** / `KLS1040444` (school 104, exam 32): extracted text contains **`KLS ID`** and **`KLS1040444`**.
-  - Admin UI rename: Vue Create/Edit/myprofile + built `app-CX1zhnj2.js` show **School Student ID** / `school_student_id`; **0** `id_card_number` / "ID Card Number" in app PHP/Vue/blade and the Vite bundle.
-  - WhatsApp Priority 2: deployed SQL groups OR (`(school_student_id = ? or board_registration_number = ?)`); synthetic same-token rows in schools 16+19 scoped correctly per `school_id` (transaction **rolled back** — no leftover rows).
-- **Next**: UI migration design-doc = **separate session** (do not start here). Remaining open PRs (#367–#370 etc.) unrelated to this wave.
-- **`origin/main` / prod tip**: `392b7f0e` (deploy-verify knowledge stamp; app deploy SHA `230b58ac`).
+- **✅ Prod tip**: **`303fcb69`** (Merge #370) @ **2026-08-27 ~15:20 UTC** via `scripts/deploy-manual.sh`. Migrations: Nothing to migrate.
+- **✅ OnboardingEngine unification closed**: 1A/1B content steps + 1C teachers/students/WhatsApp/plan callers all live. Catch-up same day: #365 · #368 · #369 · **#370**.
+- **Merge notes #370**: Was `CONFLICTING` vs post–#371–376 main. Real conflicts in `ManualOnboardingWizard.php` + `ToshiActionService.php` (not knowledge-only). Kept engine delegation; preserved #375 `school_student_id` / `board_registration_number` by extending `OnboardingEngine::saveStudents` + wizard drafts.
+- **Live verify #370 (deployed files, not tests-only)**:
+  - `OnboardingEngine::saveTeachers/saveStudents`: `bcrypt(Str::random(16))` + `is_reset => 1` — **YES** (host + container).
+  - `ToshiActionService::addTeacher/addStudent`: delegate to engine only; **no** `Hash::make('password')` on those paths. Remaining hardcoded `password` only on **co-admin** + **parent** helpers (out of 1C scope).
+  - `AgentToshi::commitAll` (create + complete): `saveTeachers`/`saveStudents` → engine — **YES**; no inline teacher/student `bcrypt('password')`.
+  - **`app/Traits/RegisterUser.php` still has 4× `bcrypt('password') //demo`** — admin Student/Teacher controller import path; **not** wired through OnboardingEngine in #370. Honest gap vs audit checklist naming.
+- **Still OPEN**: #367 (docs). Broader password/security follow-up (RegisterUser + ActionService co-admin/parent) logged separately — see Session Log **2026-08-27 Phase 1C closed, broader password gap**.
+- **`origin/main` / prod tip**: `303fcb69`.
+
+## Previous: August 27, 2026 (`origin/main` tip `edad87fb` — **DEPLOYED** #365/#368/#369 catch-up) — superseded by #370
+
+- #365/`66e58888` · #368/`05c34f88` · #369/`edad87fb` deployed; schema + GradingHelper underscore fix verified.
+
+## Previous: August 27, 2026 (`origin/main` tip `230b58ac` — **DEPLOYED** KLS ID + school_student_id + provenance) — superseded by #365/#368/#369
+
+- Morning six-PR wave (#371–#376) + deploy verify. See Session Log.
 
 ## Previous: August 27, 2026 (`origin/main` tip `3e4d40ee` — KLS ID + school_student_id chains + provenance MERGED) — superseded (now deployed)
 
@@ -914,6 +918,41 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-27: Phase 1C closed, but a broader password gap remains — logged separately
+
+OnboardingEngine Phase 1C (#370) is genuinely merged and live-verified — wizard and Toshi teacher/student/WhatsApp/plan creation now use `Str::random(16)` passwords + `is_reset=1`, confirmed via direct code inspection.
+
+That closes Phase 1C's own defined scope. But a broader, previously untracked gap exists beyond it:
+
+- **`RegisterUser.php`** (admin controller / bulk-import trait) — always out of Phase 1C's scope — still hardcodes `bcrypt('password')` at 4 sites.
+- **NEWLY FOUND, not previously tracked anywhere**: co-admin and parent account creation (in `ToshiActionService`) also still hardcode passwords.
+
+This needs its own scoped follow-up, distinct from and broader than the now-closed Phase 1C — don't conflate "Phase 1C is done" (true, for its own boundary) with "the password/security gap is fully resolved" (not true — RegisterUser + co-admin + parent paths remain open).
+
+- **Work done**: Documentation-only log of the remaining password gap after #370 live verify.
+- **Files modified**: `knowledge.md` only.
+- **Status**: 📝 Logged — no code change in this entry.
+- **Edge cases flagged**: Treat RegisterUser / addCoAdmin / addParent as a separate security follow-up PR, not a reopening of Phase 1C.
+
+### 2026-08-27: Merge + deploy + live verify #370 (`303fcb69`) — Phase 1C closes OnboardingEngine unification
+
+- **Work done**: Resolved real conflicts vs main (`ManualOnboardingWizard`, `ToshiActionService`); extended `saveStudents` for #375 ID fields; merged #370; deployed; grepped live deployed files for password/`is_reset`.
+- **Merge SHA**: #370 `303fcb69` — https://github.com/KlassApp-Foundation/KlassApp/pull/370
+- **Files modified**: conflict resolution on PR branch; `knowledge.md` stamp locally.
+- **Status**: ✅ MERGED + DEPLOYED + VERIFIED (1C surfaces). RegisterUser trait gap documented, not fixed in this PR.
+- **Evidence**: prod HEAD `303fcb69`; engine `bcrypt(Str::random(16))` + `is_reset=1`; ActionService teacher/student → engine; AgentToshi commitAll → engine; RegisterUser still 4× `bcrypt('password')`.
+- **Edge cases flagged**: Stacked #370 branch also carried earlier 1C docs commits; after merge with main only net 1C code remained. Co-admin/parent ActionService paths still hardcode `password`.
+
+### 2026-08-27: Merge + deploy + live verify #369 (`edad87fb`)
+
+- **Work done**: Merged #369 (after #365/#368). Deployed `05c34f88`→`edad87fb`. Confirmed real prod schema columns + deployed `GradingHelper::levelTypeForStandard()` underscore fix. **Stopped before #370** (passwords/security — last, most careful).
+- **Merge SHA**: #369 `edad87fb` — https://github.com/KlassApp-Foundation/KlassApp/pull/369
+- **Files modified**: `knowledge.md` (Current Status + this entry). App code shipped via PR only.
+- **Key decisions**: Do not start #370 in this pass; report and wait.
+- **Status**: ✅ MERGED + DEPLOYED + VERIFIED
+- **Evidence**: migration DONE in deploy log; `Schema`/`SHOW COLUMNS` both YES for `grading_style` + `sub_group`; container file has `keyword . '_'`.
+- **Edge cases flagged**: `docker compose -f docker-compose.prod.yml exec sms-app` can report “service not running” even when `docker exec sms-app` works — use direct `docker exec` for verify.
 
 ### 2026-08-27: Deploy + live verify #371–#376 (`230b58ac`)
 
