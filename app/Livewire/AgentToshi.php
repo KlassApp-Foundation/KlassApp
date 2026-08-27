@@ -702,6 +702,7 @@ class AgentToshi extends Component
         $actionMap = [
             'curriculum' => 'onboarding_curriculum',
             'country' => 'onboarding_country',
+            'school_category' => 'onboarding_school_category',
             'emis' => 'onboarding_emis',
             'uneb_center' => 'onboarding_uneb_center',
             'plan_selection' => 'onboarding_plan_selection',
@@ -747,6 +748,7 @@ class AgentToshi extends Component
         return match ($key) {
             'school_name' => "What's the real name of your school? (You can keep refining it later.)",
             'curriculum' => "Which curriculum does your school follow? I recommend **UNEB** for most Ugandan schools. Reply with UNEB, Cambridge, Montessori, or Other.",
+            'school_category' => "What type of school is this? Pick a category below — it sets default classes, subjects, and grading (all editable later). You can also reply with **Primary**, **Nursery only**, **Primary + Nursery**, **O-Level**, or **O-Level + A-Level**.",
             'country' => "Which country is your school in? (e.g. **Uganda**, Kenya, Tanzania)",
             'emis' => "What's your school's **EMIS / Ministry code**? This is required for Ugandan schools.",
             'uneb_center' => "If you have a **UNEB centre number**, share it now — or type **skip** (optional).",
@@ -2768,6 +2770,10 @@ class AgentToshi extends Component
             $this->actionOnboardingCurriculum($text);
             return;
         }
+        if ($this->actionStep === 'onboarding_school_category') {
+            $this->actionOnboardingSchoolCategory($text);
+            return;
+        }
         if ($this->actionStep === 'onboarding_country') {
             $this->actionOnboardingCountry($text);
             return;
@@ -3509,27 +3515,34 @@ class AgentToshi extends Component
         $this->botSay("Please use the buttons above to select the school type.");
     }
 
-    // ── Button-driven school type selection ──
+    // ── Button-driven school category selection (canonical onboarding path) ──
+    public function selectSchoolCategory(string $category): void
+    {
+        $this->persistSchoolCategory($category);
+    }
+
+    /**
+     * Legacy create-flow alias — maps old nursery/primary/secondary/mixed buttons to category keys.
+     *
+     * @deprecated Prefer selectSchoolCategory() with SchoolCategorySeeder::CATEGORIES keys.
+     */
     public function setSchoolType(string $type, string $level = '', string $gender = '')
     {
-        $this->schoolType = $type;
-        $this->schoolLevel = $level;
-        $this->schoolGender = $gender;
+        $category = match ($type) {
+            'nursery' => 'nursery',
+            'primary' => 'primary',
+            'secondary' => 'o_level',
+            'mixed' => 'o_a_level',
+            default => null,
+        };
 
-        // Pre-populate curriculum defaults so tests can assert early
-        $defaults = $this->curriculumDefaults();
-        $this->standards = $defaults['classes'] ?? [];
-        $this->subjects = $defaults['subjects'] ?? [];
+        if ($category === null) {
+            $this->botSay('Please choose a school category from the buttons below.');
 
-        $label = ucfirst($type);
-        if ($level) $label .= ' — ' . strtoupper($level);
-        if ($gender) $label .= ' — ' . ucfirst($gender);
+            return;
+        }
 
-        $this->userSay("School type: {$label}");
-        $this->botSay("**{$label}** — got it!");
-        $this->botSay("Now let's set up the admin account. | What is the admin's email address?");
-        $this->substep = 0;
-        $this->advance();
+        $this->selectSchoolCategory($category);
     }
 
     // ════════════════════════════════════════════════
@@ -4050,6 +4063,11 @@ class AgentToshi extends Component
         }
     }
 
+    private function actionOnboardingSchoolCategory(string $text): void
+    {
+        $this->persistSchoolCategoryFromInput($text);
+    }
+
     private function persistSchoolCategoryFromInput(string $text): void
     {
         $category = strtolower(trim($text));
@@ -4057,6 +4075,7 @@ class AgentToshi extends Component
         // Friendly synonyms → canonical keys
         $synonyms = [
             'nursery only' => 'nursery',
+            'nursery' => 'nursery',
             'primary' => 'primary',
             'primary + nursery' => 'primary_nursery',
             'primary_nursery' => 'primary_nursery',
@@ -4074,6 +4093,13 @@ class AgentToshi extends Component
 
         $category = $synonyms[$category] ?? $category;
 
+        if (! array_key_exists($category, \App\Services\SchoolCategorySeeder::CATEGORIES)) {
+            $options = implode(', ', array_values(\App\Services\SchoolCategorySeeder::CATEGORIES));
+            $this->botSay("Please choose a school category: **{$options}** — or use the buttons below.");
+
+            return;
+        }
+
         $this->persistSchoolCategory($category);
     }
 
@@ -4081,7 +4107,8 @@ class AgentToshi extends Component
     {
         $category = trim($category);
         if (! array_key_exists($category, \App\Services\SchoolCategorySeeder::CATEGORIES)) {
-            $this->botSay('Choose a school category.');
+            $this->botSay('Choose a school category from the options below.');
+
             return;
         }
 
@@ -4091,6 +4118,7 @@ class AgentToshi extends Component
                 app(\App\Services\OnboardingEngine::class)->saveSchoolCategory($school, $category);
             } catch (\Illuminate\Validation\ValidationException $e) {
                 $this->botSay($e->getMessage());
+
                 return;
             }
         }
@@ -4114,8 +4142,19 @@ class AgentToshi extends Component
 
         $label = \App\Services\SchoolCategorySeeder::CATEGORIES[$category] ?? ucfirst($category);
 
-        $this->userSay("School type: {$label}");
+        $this->userSay("School category: {$label}");
         $this->botSay("**{$label}** — got it!");
+
+        if ($this->mode === 'complete' && $this->schoolId) {
+            $this->botSay('✅ School category saved.');
+            $this->actionStep = null;
+            $this->actionSubstep = 0;
+            $this->substep = 0;
+            $this->detectMissingSteps();
+
+            return;
+        }
+
         $this->botSay("Now let's set up the admin account. | What is the admin's email address?");
         $this->substep = 0;
         $this->advance();
