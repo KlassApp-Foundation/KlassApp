@@ -309,11 +309,11 @@
 
 ---
 
-## Current Status: August 25, 2026 (`origin/main` tip `e98d7982` — OnboardingEngine Phase 1B complete + bug #4 fix MERGED)
+## Current Status: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 OPEN)
 
-- **✅ Merged #366**: `saveFees` whole-school fee fix — one row per Standard with `section_id=NULL`, not fallback to first Standard — merge `e98d7982` — https://github.com/KlassApp-Foundation/KlassApp/pull/366
-- **✅ Phase 1B complete**: `saveStandards`, `saveSubjects`, `saveTerms`, `saveFees` all extracted into `OnboardingEngine`. 69 engine tests pass (44 ContentStepsTest + 17 IdentityStepsTest + 8 SchoolCategoryStepTest).
-- **Next**: Phase 2 — delegation refactors (AgentToshi `commitAll`/`commitStep`, wizard `saveTeachers`/`saveStudents`/`saveWhatsApp`/`savePlan`).
+- **🔀 PR #373 OPEN**: Rename `id_card_number` → `school_student_id` (PR-A) — https://github.com/KlassApp-Foundation/KlassApp/pull/373
+- **🔀 PR #374 OPEN**: Fix WhatsApp Priority 2 cross-tenant data leak (PR-B) — https://github.com/KlassApp-Foundation/KlassApp/pull/374
+- **Next**: PR-C (wizard/Toshi/UserprofileForm collection wiring for school_student_id)
 - **`origin/main` tip**: `e98d7982`.
 
 ## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
@@ -864,6 +864,24 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-27: PR-B — WhatsApp Priority 2 school_id scoping fix (PR #374 OPEN)
+- **Work done**: Fixed cross-tenant data leak in WhatsApp student ID lookup. Priority 2 had ungrouped OR (`where('school_student_id', X)->orWhere('board_registration_number', X)`) which broke out of any school_id scoping. Also added scope-when-known/global-fallback pattern: if WhatsAppUser has a school_id, scope the query; otherwise search globally and auto-learn the school_id onto the WhatsAppUser for future scoped lookups.
+- **Files touched**: `app/Http/Controllers/Api/WhatsAppController.php`, `tests/Feature/WhatsApp/Priority2SchoolIdScopingTest.php`.
+- **Branch**: `fix/whatsapp-priority2-school-id-scoping` (based on PR-A branch)
+- **PR**: #374 — https://github.com/KlassApp-Foundation/KlassApp/pull/374
+- **Tip**: `61a28421`
+- **Status**: OPEN (awaiting PR-A merge, then review)
+- **Test evidence**: 5 passed, 18 assertions
+
+### 2026-08-27: PR-A — Rename id_card_number → school_student_id (PR #373 OPEN)
+- **Work done**: Renamed `student_academics.id_card_number` to `school_student_id` across ~15 source files + migration + Nova + Vue SPA + npm build. Removed AdmissionUser bug (`$academic->id_card_number = $user->registration_number`). Changed validation from `nullable|numeric` to `nullable|string|max:50`. 8 tests pass.
+- **Files touched**: Migration, StudentAcademic model, AdmissionUser trait, RegisterUser trait, WhatsAppController, StudentController, UserDetail resources, UserProfileUpdateRequest, UserProfileAddRequest, PromotionImport, ImportMemberController, Nova StudentAcademic, Vue Create/Edit/myprofile, public/build assets.
+- **Branch**: `fix/rename-id-card-to-school-student-id`
+- **PR**: #373 — https://github.com/KlassApp-Foundation/KlassApp/pull/373
+- **Tip**: `9f5d04a2`
+- **Status**: OPEN (awaiting review/merge)
+- **Test evidence**: 8 passed, 8 assertions
 
 ### 2026-08-24: Phase 1A remaining identity methods extracted
 - **Work done**: Extracted `saveEmis`, `saveUnebCenter`, and `saveAcademicYear` into `OnboardingEngine`; refactored `ManualOnboardingWizard` and `AgentToshi` callers to one-line engine delegation; extended `tests/Feature/Onboarding/OnboardingEngine/IdentityStepsTest.php` with 9 focused tests.

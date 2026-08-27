@@ -1017,13 +1017,29 @@ class WhatsAppController extends Controller
         }
 
         // ── Priority 2: School's own student ID (school_student_id) ──
-        // Scoped by school_id when a school context is available (multi-tenant safety);
-        // falls back to global search for first-time parents with no school link yet.
-        $schoolIdMatch = \App\Models\StudentAcademic::where('school_student_id', $trimmed)
-            ->orWhere('board_registration_number', $trimmed)
-            ->with(['user', 'standardLink.standard', 'school'])
-            ->first();
+        // Multi-tenant safe: group the OR so school_id scoping (when available)
+        // applies to BOTH columns, not just the first. Global fallback for
+        // first-time parents with no school link yet.
+        $priority2Query = \App\Models\StudentAcademic::where(function ($q) use ($trimmed) {
+            $q->where('school_student_id', $trimmed)
+              ->orWhere('board_registration_number', $trimmed);
+        });
+        // If the phone already has a WhatsAppUser with a school_id, scope by it
+        // (covers re-linking a parent who texts a student ID after being linked to a school).
+        $existingWaUser = \App\Models\WhatsAppUser::where('phone', $phone)->whereNotNull('school_id')->first();
+        if ($existingWaUser) {
+            $priority2Query->where('school_id', $existingWaUser->school_id);
+        }
+        $schoolIdMatch = $priority2Query->with(['user', 'standardLink.standard', 'school'])->first();
         if ($schoolIdMatch && $schoolIdMatch->user) {
+            // If we matched globally (no school scope), auto-learn the school onto
+            // the WhatsAppUser so future lookups are scoped.
+            if (! $existingWaUser && $schoolIdMatch->school_id) {
+                \App\Models\WhatsAppUser::updateOrCreate(
+                    ['phone' => $phone],
+                    ['school_id' => $schoolIdMatch->school_id],
+                );
+            }
             $this->linkParentToStudent($phone, $schoolIdMatch->user->id, $sendText, $sendButtons, $senderName);
             return;
         }
