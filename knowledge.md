@@ -336,14 +336,27 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN + provenance docs PR #376 OPEN)
+## Current Status: August 27, 2026 (`origin/main` tip `3e4d40ee` — KLS ID + school_student_id chains + provenance MERGED)
 
-- **🔀 PR #373 OPEN**: Rename `id_card_number` → `school_student_id` (PR-A) — https://github.com/KlassApp-Foundation/KlassApp/pull/373
-- **🔀 PR #374 OPEN**: Fix WhatsApp Priority 2 cross-tenant data leak (PR-B) — https://github.com/KlassApp-Foundation/KlassApp/pull/374
-- **🔀 PR #375 OPEN**: Wire up school_student_id + board_registration_number collection with UNEB candidate-class gating (PR-C) — https://github.com/KlassApp-Foundation/KlassApp/pull/375 — branch `fix/wire-school-student-id-and-board-reg` @ `97a4485` (2 commits: implementation + docs)
-- **🔀 Provenance docs PR #376 OPEN**: `docs/project-provenance` branch — documents KlassApp's fork origin from GeGoK12 (India) and lists known fork-legacy artifacts. — https://github.com/KlassApp-Foundation/KlassApp/pull/376
-- **Next**: Merge PR-A → PR-B → PR-C, then deploy. Provenance docs PR is independent.
-- **`origin/main` tip**: `e98d7982`.
+- **✅ Chain 1 (KLS ID) MERGED**:
+  - **#371** KLS ID format validation guardrails — merge `7609e687` — https://github.com/KlassApp-Foundation/KlassApp/pull/371
+  - **#372** KLS ID on all three report card templates — merge `b99e293a` — https://github.com/KlassApp-Foundation/KlassApp/pull/372
+- **✅ Chain 2 (school_student_id) MERGED**:
+  - **#373** Rename `id_card_number` → `school_student_id` (PR-A) — merge `a7bc51cd` — https://github.com/KlassApp-Foundation/KlassApp/pull/373
+  - **#374** WhatsApp Priority 2 school_id scoping (PR-B) — merge `72557fa2` — https://github.com/KlassApp-Foundation/KlassApp/pull/374
+  - **#375** Wire school_student_id + board_registration_number / UNEB candidate-class gating (PR-C) — merge `86fb7260` — https://github.com/KlassApp-Foundation/KlassApp/pull/375
+- **✅ #376 provenance docs MERGED** — merge `3e4d40ee` — https://github.com/KlassApp-Foundation/KlassApp/pull/376
+- **Merge notes (keep for later readers)**:
+  - **#373 conflict**: after #371 landed on `main`, #373 conflicted in `app/Models/StudentAcademic.php`. Resolution kept both the `school_student_id` rename/`$fillable` change and the `klassapp_student_id` `/^KLS\d{7}$/i` saving hook from #371; conflict-resolution commit pushed on `fix/rename-id-card-to-school-student-id` before merge.
+  - **#376 was not truly independent in git history**: Goose handoff called it standalone, but `docs/project-provenance` was stacked on the Chain 2 tip (contained #373/#374/#375 commits plus 4 docs-only commits). Merged *after* Chain 2 so only provenance/docs landed; compare vs Chain 2 tip was ahead-by-4 (`AGENTS.md`, `docs/project-provenance.md`, `knowledge.md` only).
+  - Stacked PRs #374/#375 initially had empty CI (non-`main` bases); retargeted to `main`, merged `origin/main`, re-ran conflict-marker scan, then merged.
+- **Post-merge suite (local sqlite)**: 854 passed / 58 failed / 2 skipped (5289 assertions). Merged-PR tests 41/41 pass. Failures are pre-existing Toshi LLM config ambiguity + subscription `current_plans` + one onboarding step drift — not introduced by these six.
+- **Next**: Deploy `3e4d40ee` to prod; verify report-card KLS ID, `school_student_id` admin UI, WhatsApp Priority 2 scoping. UI migration design doc = separate future session (do not start here).
+- **`origin/main` tip**: `3e4d40ee`.
+
+## Previous: August 27, 2026 (`origin/main` tip `e98d7982` — PR-A #373 + PR-B #374 + PR-C #375 OPEN + provenance docs PR #376 OPEN) — superseded above
+
+- Snapshot before six-PR merge wave: tip `e98d7982`; #373–#376 listed OPEN. See Session Log 2026-08-27 merge entry for real SHAs.
 
 ## Previous: August 10, 2026 (`origin/main` tip `ea019997` — #214 exam-create fix MERGED + deployed)
 
@@ -893,6 +906,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-27: Merge six PRs (#371–#376) + knowledge stamp (pre-deploy)
+
+- **Work done**: Merged Chain 1 (#371→#372), Chain 2 (#373→#374→#375), then #376. Stamped Current Status to `origin/main` tip `3e4d40ee`. Deploy + live verify follow in this same session (next log entry once verified).
+- **Merge SHAs**: #371 `7609e687` · #372 `b99e293a` · #373 `a7bc51cd` · #374 `72557fa2` · #375 `86fb7260` · #376 `3e4d40ee`
+- **#373 conflict resolution**: `StudentAcademic.php` conflicted with #371's `booted()` KLS-format saving hook. Kept rename/`school_student_id` fillable **and** the validation hook; pushed merge commit on the PR branch before merging.
+- **#376 not truly independent**: branch was stacked on Chain 2 tip; only docs commits were unique. Merged after Chain 2.
+- **Files modified**: `knowledge.md` (Current Status + this entry). Conflict resolution lived on `fix/rename-id-card-to-school-student-id` only (already on main via #373).
+- **Status**: ✅ Merges done; deploy/verify in progress
+- **Edge cases flagged**: Stacked PRs targeting non-`main` bases get empty GitHub Actions until retargeted/pushed; do not treat empty checks as green.
 
 ### 2026-08-27: Future initiative — UI migration away from GeGoK12 inheritance (docs-only)
 
