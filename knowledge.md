@@ -347,6 +347,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
   - `AgentToshi::commitAll` (create + complete): `saveTeachers`/`saveStudents` → engine — **YES**; no inline teacher/student `bcrypt('password')`.
   - **`app/Traits/RegisterUser.php` still has 4× `bcrypt('password') //demo`** — admin Student/Teacher controller import path; **not** wired through OnboardingEngine in #370. Honest gap vs audit checklist naming.
 - **Still OPEN**: #367 (docs). Broader password/security follow-up (RegisterUser + ActionService co-admin/parent) logged separately — see Session Log **2026-08-27 Phase 1C closed, broader password gap**.
+- **Toshi E2E Step 2 BLOCKED (2026-08-27)**: Fresh school **109** — name/country/curriculum OK via chat; then dead-ends on `school_category` (`null`, 0 standards/subjects). `jumpToIncompleteOnboardingStep` omits `school_category`; `persistSchoolCategory*` is dead code. Report: `tmp/e2e-toshi-step2/STEP2-REPORT.json`. #368 / seeder / students / fees / PDF not verifiable via Toshi until fixed.
 - **`origin/main` / prod tip**: `303fcb69`.
 
 ## Previous: August 27, 2026 (`origin/main` tip `edad87fb` — **DEPLOYED** #365/#368/#369 catch-up) — superseded by #370
@@ -918,6 +919,31 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-27: PR #377 — design proposals (landing/brand/dashboard) — branch corruption fixed + fact-check corrections
+
+- **PR**: [#377](https://github.com/KlassApp-Foundation/KlassApp/pull/377) — branch `docs/landing-page-reframe-proposal`, tip **`a06b5b24`**. Docs-only (landing reframe, brand identity, dashboard redesign) — no functional app changes.
+- **Work done**:
+  - Reviewed three design proposal docs for team discussion (not a code PR).
+  - **Critical bug found and fixed**: original tip (`e8acd58b`) had a corrupted first commit that replaced the entire repo tree with a sparse ~24-file checkout (`docs/` + `routes/` only). Merging as-is would have deleted **4,081+** files (essentially the whole app: `app/`, `resources/`, `tests/`, `config/`, lockfiles, `knowledge.md`). GitHub’s compare API only showed “~300 removals” (300-file cap), which initially masked the true scope — confirmed real via full git fetch + local diff, not a tooling artifact.
+  - Fixed by rebuilding a clean branch from current `main`, single commit adding only the 3 proposal files, force-pushed onto the same PR #377 branch. Verified: exactly **3 files, all additions, 0 deletions** (git diff + GitHub compare API). Original author (@Mucunguzi256) tagged on the PR with an explanation.
+  - Fact-checked `dashboard-analysis-proposal.md` “current state audit” claims against the **live** app (Playwright + computed styles, not source-grep alone). Evidence: `tmp/factcheck-deep/` (`DEEP-FACTCHECK-REPORT.md`, screenshots, `LIVE-REPORT.json`, `admin-menu-count.json`).
+
+    | Claim | Verdict |
+    |---|---|
+    | Toshi invisible on all dashboards | **Overstated** — mounted globally via `layouts.app` for most roles; not a dedicated dashboard widget |
+    | 5 different sidebar colors | Idle bg: consolidated cream `#FFFCF5` on admin + teacher. **BUT** hover still uses leftover Tailwind utilities (`hover:bg-purple-900` teacher, `hover:bg-teal-900` student) — real rendered inconsistency, confirmed live (teacher “Classes” hover → purple-900) |
+    | ~40 admin menu items | **Overstated** — **21** visible leaf links (Playwright, all groups expanded) |
+    | `<x-ds-page-header>` / `<x-ds-empty-state>` components exist | **False** — never existed in repo history. Real equivalents: `ds-page-head` / `ds-empty-state` CSS classes, `layouts.partials.page-header` include, `empty-state-product-demo` partial. Only real `x-ds-*` component: `x-ds-kpi-card` |
+    | 150+ AI tools | **Overstated** — **133** Tool classes (114 `AiAgents/Tools` + 17 `Ai/Tools` + 2 `Mcp/Tools`) |
+
+  - **Product note for eventual design discussion**: Toshi needs a central, subscription-gated on/off control (free tier = on by default now; architecture should support per-plan toggling later). Not addressed in the proposal’s “Toshi Agent Bar” idea — flag this gap when the proposal is discussed/revised.
+- **Files modified**: `knowledge.md` (this stamp). PR branch tip `a06b5b24` = 3 docs under `docs/proposals/` only. Fact-check artifacts under `tmp/factcheck-deep/` (not committed).
+- **Key decisions**:
+  - Treat #377 as read-only documentation for team discussion — content + factual accuracy review only; no tests / usual merge-readiness bar for app code.
+  - Corrected sidebar-color finding stands as evidence that **live/rendered** verification matters — the human’s direct observation (“witnessed inconsistency on teacher dashboard”) was correct; first-pass grep-only fact-check was wrong on that point.
+- **Status**: 📝 PR #377 branch **fixed and safe** (tip `a06b5b24`). Content still awaiting team review/discussion — **no design direction decided yet**. Not merged.
+- **Edge cases flagged**: GitHub compare 300-file cap can hide catastrophic tree deletions — always verify merge risk with full local `git diff --stat` against `main` before approving docs (or any) PRs that touch history oddly.
 
 ### 2026-08-27: Phase 1C closed, but a broader password gap remains — logged separately
 
@@ -8022,3 +8048,16 @@ Ran full suite on base commit (stashed changes) vs this branch:
 
 - **PR**: [#370](https://github.com/KlassApp-Foundation/KlassApp/pull/370) — branch `feat/onboarding-engine-1c`, status: open
 - **Status**: ✅ COMPLETE — all 246 onboarding tests green (933 assertions), PR #370 open
+
+### 2026-08-27: Toshi E2E Step 2 — blocked on school_category wiring
+
+- **Work done**: Fresh prod signup + sequential Toshi chat (no SSH content seeding). School **109** (`e2e.toshi+1787853137760@example.test`). Name → country → curriculum succeeded (DB: name set, `registration_country=Uganda`, `curriculum=uneb`). Next incomplete step is `school_category`; bot only says **"Let's continue setting up."** and `school_category` stays **null** (0 Standards, 0 Subjects). Stopped — no workaround. Full report: `tmp/e2e-toshi-step2/STEP2-REPORT.json` + screenshots `f0*.png` / `f-stuck-continue.png`.
+- **Root cause (code, verified)**:
+  1. `AgentToshi::jumpToIncompleteOnboardingStep()` — neither `actionMap` nor `$map` includes `school_category` (also omits `students`) → silent no-op.
+  2. `onboardingPromptForStep('school_category')` falls through to default **"Let's continue setting up."**
+  3. `persistSchoolCategory` / `persistSchoolCategoryFromInput` are **never called** (dead).
+  4. Blade buttons call legacy `setSchoolType()` — does **not** call `OnboardingEngine::saveSchoolCategory` / `SchoolCategorySeeder`.
+  5. Complete-mode name confirm jumps via `detectMissingSteps()` and never reaches create-flow substep-2 type buttons.
+- **Also logged (code review; not live-reached this run)**: `doneFees`/`feesForEngine` strip amounts/class (`amount=0`); Toshi student form has no `board_registration_number`; `resetSchoolOnboarding` is not a full identity reset (school **108** name was corrupted earlier by bad chat text).
+- **Files modified**: `knowledge.md` (this entry + Current Status note); artifacts under `tmp/e2e-toshi-step2/` (not product code).
+- **Status**: ⏸️ Blocked — needs Toshi fix to wire `school_category` (jump + prompt + button → `saveSchoolCategory`) before Step 2 can continue (#368 multi-tier / seeder / students / fees / PDF).
