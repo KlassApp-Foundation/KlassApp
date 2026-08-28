@@ -107,36 +107,68 @@ function cleanup() {
   return sshTinker(php);
 }
 
+function extractSessionCookie(setCookieHeaders) {
+  const headers = setCookieHeaders ?? [];
+  for (const header of headers) {
+    const segments = header.split(/,(?=[^;]+=[^;]+)/);
+    for (const segment of segments) {
+      const pair = segment.trim().split(';')[0];
+      if (pair.startsWith('klassapp_session=')) {
+        return pair;
+      }
+    }
+  }
+  return '';
+}
+
 async function loginAndFetchDashboard() {
   const loginPage = await fetch(`${BASE}/login`);
   const loginHtml = await loginPage.text();
+  const pageCookies = loginPage.headers.getSetCookie?.() ?? [];
+  const cookieJar = pageCookies.map((c) => c.split(';')[0]).join('; ');
   const tokenMatch = loginHtml.match(/name="_token" value="([^"]+)"/);
   const csrf = tokenMatch?.[1] ?? '';
 
   const loginRes = await fetch(`${BASE}/login`, {
     method: 'POST',
     redirect: 'manual',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Cookie: cookieJar,
+    },
     body: new URLSearchParams({ _token: csrf, email: EMAIL, password: PASSWORD }),
   });
 
-  const rawCookies = loginRes.headers.getSetCookie?.() ?? [];
-  const cookieHeader = rawCookies.map((c) => c.split(';')[0]).join('; ');
+  const loginSetCookies = loginRes.headers.getSetCookie?.() ?? [];
+  const sessionCookie =
+    extractSessionCookie(loginSetCookies) || extractSessionCookie(pageCookies);
 
   let dashboardHtml = '';
   let dashboardStatus = null;
 
-  if (loginRes.status === 302) {
+  if (loginRes.status === 302 && sessionCookie) {
     const loc = loginRes.headers.get('location') || '';
     const dashUrl = loc.startsWith('http') ? loc : `${BASE}${loc}`;
-    const dashRes = await fetch(dashUrl, { headers: { Cookie: cookieHeader } });
+    const dashRes = await fetch(dashUrl, {
+      redirect: 'manual',
+      headers: { Cookie: sessionCookie },
+    });
     dashboardStatus = dashRes.status;
-    dashboardHtml = await dashRes.text();
+    if (dashRes.status === 302) {
+      const follow = await fetch(dashRes.headers.get('location') || `${BASE}/login`, {
+        headers: { Cookie: sessionCookie },
+      });
+      dashboardStatus = follow.status;
+      dashboardHtml = await follow.text();
+    } else {
+      dashboardHtml = await dashRes.text();
+    }
   }
 
   return {
     loginStatus: loginRes.status,
     loginLocation: loginRes.headers.get('location') || '',
+    sessionCookie: sessionCookie ? '(set)' : '',
     dashboardStatus,
     dashboardHtml,
   };

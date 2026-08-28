@@ -143,15 +143,25 @@ function cleanup() {
   return sshTinker(php);
 }
 
+function extractSessionCookie(setCookieHeaders) {
+  const headers = setCookieHeaders ?? [];
+  for (const header of headers) {
+    const segments = header.split(/,(?=[^;]+=[^;]+)/);
+    for (const segment of segments) {
+      const pair = segment.trim().split(';')[0];
+      if (pair.startsWith('klassapp_session=')) {
+        return pair;
+      }
+    }
+  }
+  return '';
+}
+
 async function followMagicLink(url) {
   const res = await fetch(url, { method: 'GET', redirect: 'manual' });
-  const setCookie = res.headers.get('set-cookie') || '';
+  const setCookies = res.headers.getSetCookie?.() ?? [];
   const location = res.headers.get('location') || '';
-  const sessionCookie = setCookie
-    .split(',')
-    .map((c) => c.trim())
-    .find((c) => c.startsWith('klassapp_session='))
-    ?.split(';')[0];
+  const sessionCookie = extractSessionCookie(setCookies);
 
   let dashboardHasTitle = false;
   let dashboardStatus = null;
@@ -160,7 +170,7 @@ async function followMagicLink(url) {
     const dashUrl = location.startsWith('http') ? location : `${BASE}${location}`;
     const dash = await fetch(dashUrl, { headers: { Cookie: sessionCookie } });
     dashboardStatus = dash.status;
-    dashboardHasTitle = (await dash.text()).includes('Parent Dashboard');
+    dashboardHasTitle = (await dash.text()).includes('Parent Portal');
   }
 
   return {
