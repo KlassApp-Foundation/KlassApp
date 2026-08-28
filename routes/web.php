@@ -76,6 +76,15 @@ Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class,
 
 Auth::routes();
 
+Route::get('/parent/magic-login/{user}/{nonce}', \App\Http\Controllers\Auth\ParentMagicLoginController::class)
+    ->middleware('signed')
+    ->name('parent.magic-login');
+
+Route::prefix('parent')
+    ->middleware(['auth', 'parent'])
+    ->group(function () {
+        Route::get('/dashboard', fn () => view('parent.dashboard'))->name('parent.dashboard');
+    });
 
 // Onboarding booking form (from docs)
 Route::post('/api/onboarding/book', [App\Http\Controllers\OnboardingBookingController::class, 'store']);

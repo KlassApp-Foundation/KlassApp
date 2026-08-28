@@ -20,11 +20,13 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
 use App\Services\OutboundWhatsAppService;
 use App\Services\ParentLinkService;
+use App\Services\ParentMagicLoginService;
 use App\Services\WhatsApp\WhatsAppConfirmationBridge;
 use App\Services\WhatsAppBusinessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Carbon\Carbon;
 
 /**
@@ -1529,6 +1531,11 @@ class WhatsAppController extends Controller
 
         // Parent (7)
         if ($role === 7) {
+            if ($match(['web_login', 'web login', 'dashboard'])) {
+                $this->sendParentMagicLoginLink($user, $phone, $whatsAppService);
+
+                return;
+            }
             if ($match(['grades', 'results', 'marks', 'report', 'exams'])) {
                 $this->sendGrades($user, $phone, $whatsAppService);
                 return;
@@ -2480,6 +2487,73 @@ class WhatsAppController extends Controller
             11 => 'accountant',
             default => 'unknown',
         };
+    }
+
+    /**
+     * Send a signed parent dashboard magic link (15 min, single-use).
+     */
+    private function sendParentMagicLoginLink(WhatsAppUser $user, string $phone, $whatsAppService): void
+    {
+        $parent = $user->user;
+
+        if (! $parent || (int) $parent->usergroup_id !== 7) {
+            $whatsAppService->sendText(
+                $phone,
+                'Parent web login is only available for linked parent accounts.',
+                'parent_magic_login_denied',
+                $user->user_id,
+            );
+
+            return;
+        }
+
+        $magicLogin = app(ParentMagicLoginService::class);
+
+        if (! $magicLogin->canIssueLink($parent)) {
+            $whatsAppService->sendText(
+                $phone,
+                "Link at least one child to your WhatsApp number first (send a KlassApp ID such as KLS1020001), then reply *WEB_LOGIN*.",
+                'parent_magic_login_denied',
+                $user->user_id,
+            );
+
+            return;
+        }
+
+        $rateKey = ParentMagicLoginService::rateLimitKey($phone);
+        if (RateLimiter::tooManyAttempts($rateKey, ParentMagicLoginService::RATE_LIMIT_PER_HOUR)) {
+            $whatsAppService->sendText(
+                $phone,
+                'Too many login links requested. Please wait an hour and try again.',
+                'parent_magic_login_rate_limited',
+                $user->user_id,
+            );
+
+            return;
+        }
+
+        $url = $magicLogin->issueLinkForPhone($phone, $parent);
+
+        if (! $url) {
+            $whatsAppService->sendText(
+                $phone,
+                'Unable to generate a login link right now. Please try again shortly.',
+                'parent_magic_login_error',
+                $user->user_id,
+            );
+
+            return;
+        }
+
+        $whatsAppService->sendText(
+            $phone,
+            "🌐 *Parent dashboard login*\n\n"
+            ."Tap the link below to open your dashboard. Valid for ".ParentMagicLoginService::TTL_MINUTES." minutes, one use only:\n\n"
+            .$url,
+            'parent_magic_login',
+            $parent->id,
+            previewUrl: true,
+        );
     }
 
     /**
