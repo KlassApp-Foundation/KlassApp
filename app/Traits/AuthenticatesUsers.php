@@ -79,7 +79,14 @@ trait AuthenticatesUsers
                 return TRUE;
             }
 
-
+            if ((int) $users->usergroup_id === 7 && $users->school_id === null) {
+                return \Illuminate\Support\Facades\DB::table('student_parent_links')
+                    ->where('parent_id', $users->id)
+                    ->where('status', 1)
+                    ->whereNotNull('school_id')
+                    ->whereIn('school_id', School::query()->where('status', 1)->pluck('id'))
+                    ->exists();
+            }
 
             else
             {

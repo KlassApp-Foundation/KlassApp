@@ -149,7 +149,11 @@ class ParentActionService
 
         /** @var User $student */
         $student = $resolved['student'];
-        $schoolId = (int) $parent->school_id;
+        $schoolId = self::schoolIdForLinkedChild($parent, $student);
+        if ($schoolId === null) {
+            return self::result(false, 'Could not determine the school for this child. Please contact the school office.');
+        }
+
         $academic = StudentAcademic::where('school_id', $schoolId)
             ->where('user_id', $student->id)
             ->first();
@@ -247,10 +251,16 @@ class ParentActionService
 
         /** @var User $student */
         $student = $resolved['student'];
-        $academicYear = SiteHelper::getAcademicYear($parent->school_id);
+        $schoolId = self::schoolIdForLinkedChild($parent, $student);
+        if ($schoolId === null) {
+            return self::result(false, 'Could not determine the school for this child. Please contact the school office.');
+        }
+
+        $academicYear = SiteHelper::getAcademicYear($schoolId);
         $examQuery = Exam::whereHas('marks', fn ($q) => $q->where('student_id', $student->id))
+            ->where('school_id', $schoolId)
             ->with([
-                'marks' => fn ($q) => $q->where('student_id', $student->id),
+                'marks' => fn ($q) => $q->where('student_id', $student->id)->with('subject'),
                 'examType',
                 'subject',
             ])
@@ -303,7 +313,12 @@ class ParentActionService
 
         /** @var User $student */
         $student = $resolved['student'];
-        $incidents = StudentHealthIncident::whereSchool($parent->school_id)
+        $schoolId = self::schoolIdForLinkedChild($parent, $student);
+        if ($schoolId === null) {
+            return self::result(false, 'Could not determine the school for this child. Please contact the school office.');
+        }
+
+        $incidents = StudentHealthIncident::whereSchool($schoolId)
             ->where('user_id', $student->id)
             ->orderByDesc('incident_date')
             ->limit(10)
@@ -358,6 +373,28 @@ class ParentActionService
         return self::result(true, "**School events:**\n{$lines}", [
             'count' => $events->count(),
         ]);
+    }
+
+    /**
+     * Tenant scope for a linked child: prefer student_parent_links.school_id, then the student's school.
+     */
+    private static function schoolIdForLinkedChild(User $parent, User $student): ?int
+    {
+        $link = StudentParentLink::query()
+            ->where('parent_id', $parent->id)
+            ->where('student_id', $student->id)
+            ->where('status', 1)
+            ->first();
+
+        if ($link?->school_id) {
+            return (int) $link->school_id;
+        }
+
+        if ($student->school_id) {
+            return (int) $student->school_id;
+        }
+
+        return $parent->school_id ? (int) $parent->school_id : null;
     }
 
     /**
