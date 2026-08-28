@@ -1,20 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Parent Dashboard — KlassApp</title>
-    <link rel="stylesheet" href="{{ asset('build/assets/tailwind-B_WMBoJS.css') }}">
-</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">
-    <main class="mx-auto max-w-3xl px-6 py-16">
-        <p class="text-sm font-medium text-emerald-700">KlassApp Parent Portal</p>
-        <h1 class="mt-2 text-3xl font-semibold tracking-tight">Welcome, {{ auth()->user()->name }}</h1>
-        <p class="mt-4 text-slate-600">
-            This dashboard is a Phase 2 placeholder. You arrived via a signed magic link from WhatsApp.
-            Linked children and cross-school views will ship in a later phase.
+{{-- SPDX-License-Identifier: MIT --}}
+@extends('layouts.parent.layout')
+
+@section('content')
+<div class="dashboard-shell dashboard-shell--parent px-4 md:px-6 py-4">
+    @include('layouts.partials.page-header', [
+        'title' => 'Parent Portal',
+        'subtitle' => 'Signed-in parent web shell — linked children and school views ship in Phase 5.',
+    ])
+
+    @include('partials.message')
+
+    <div class="dashboard-kpi-grid mt-4">
+        <x-ds-kpi-card icon="students" value="—" label="Linked Children" color="blue" />
+        <x-ds-kpi-card icon="messages" value="—" label="Messages" color="green" />
+    </div>
+
+    <div class="ds-card ds-card-padding mt-6">
+        <p class="text-sm" style="color: var(--d-muted);">
+            Welcome, {{ auth()->user()->name }}. Use WhatsApp for fees and grades today; the web dashboard fills in during Phase 5.
         </p>
-        <p class="mt-8 text-sm text-slate-500">Signed in as parent #{{ auth()->id() }}.</p>
-    </main>
-</body>
-</html>
+    </div>
+</div>
+@endsection
