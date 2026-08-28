@@ -4961,6 +4961,7 @@ class AgentToshi extends Component
         }
 
         try {
+            $this->resolveCollectedDataForCommit();
             $this->commitAll();
             $this->deleteDraft();
             $this->reviewData['committed'] = true;
@@ -5001,19 +5002,134 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
 
     /**
-     * Transform Toshi's fees (string[] of names) into the structured array
-     * format expected by OnboardingEngine::saveFees().
-     *
-     * Toshi collects fee names only (no amounts, no class/term scoping),
-     * so each entry gets amount=0 and no class/term — making it a whole-school
-     * fee that the engine will spread across all grading tiers.
+     * Merge session backup and actionData into canonical commit properties so
+     * nested Livewire state collected during the chat survives confirmOnboarding.
+     */
+    private function resolveCollectedDataForCommit(): void
+    {
+        $backup = session('toshi_state');
+        if (is_array($backup) && $backup !== []) {
+            foreach (['actionData', 'terms', 'fees', 'studentList', 'standards', 'subjects'] as $key) {
+                if (! array_key_exists($key, $backup)) {
+                    continue;
+                }
+
+                $backupVal = $backup[$key];
+                $currentVal = $this->{$key} ?? null;
+
+                if ($key === 'actionData' && is_array($backupVal)) {
+                    $currentActionData = is_array($currentVal) ? $currentVal : [];
+                    foreach (['students', 'fees', 'exams', 'subjects', 'teachers'] as $nested) {
+                        $backupNested = $backupVal[$nested] ?? [];
+                        $currentNested = $currentActionData[$nested] ?? [];
+                        if (is_array($backupNested) && count($backupNested) > count($currentNested)) {
+                            $this->actionData[$nested] = $backupNested;
+                        }
+                    }
+
+                    continue;
+                }
+
+                if ($this->isCollectedDataEmpty($currentVal) && ! $this->isCollectedDataEmpty($backupVal)) {
+                    $this->{$key} = $backupVal;
+                }
+            }
+        }
+
+        $this->syncActionDataToCanonicalProperties();
+    }
+
+    private function isCollectedDataEmpty(mixed $value): bool
+    {
+        if ($value === null) {
+            return true;
+        }
+
+        if (is_array($value)) {
+            return $value === [];
+        }
+
+        return $value === '' || $value === false;
+    }
+
+    /**
+     * Copy nested actionData into top-level properties commitAll() reads.
+     */
+    private function syncActionDataToCanonicalProperties(): void
+    {
+        if (! empty($this->actionData['students']) && empty($this->studentList)) {
+            $this->studentList = collect($this->actionData['students'])
+                ->map(fn ($record) => is_array($record) ? trim((string) ($record['name'] ?? '')) : trim((string) $record))
+                ->filter()
+                ->values()
+                ->toArray();
+        }
+
+        if (empty($this->fees) && ! empty($this->actionData['fees'])) {
+            $this->fees = collect($this->actionData['fees'])
+                ->map(fn ($fee) => is_array($fee) ? trim((string) ($fee['name'] ?? '')) : trim((string) $fee))
+                ->filter()
+                ->values()
+                ->toArray();
+        }
+    }
+
+    private function hasFeesToCommit(): bool
+    {
+        if (! empty($this->fees)) {
+            return true;
+        }
+
+        return ! empty($this->actionData['fees']);
+    }
+
+    /**
+     * Transform collected fees into the structured array format expected by
+     * OnboardingEngine::saveFees(). Prefers actionData rows (amount/class/term)
+     * when the form collected them; falls back to string[] names on $this->fees.
      */
     private function feesForEngine(): array
     {
-        return array_map(fn(string $name) => [
+        if (! empty($this->actionData['fees']) && is_array($this->actionData['fees'])) {
+            $structured = [];
+            foreach ($this->actionData['fees'] as $fee) {
+                if (! is_array($fee)) {
+                    continue;
+                }
+
+                $name = trim((string) ($fee['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+
+                $amount = $fee['amount'] ?? 0;
+                $entry = [
+                    'name' => $name,
+                    'amount' => is_numeric($amount) ? (float) $amount : 0,
+                ];
+
+                $class = trim((string) ($fee['class'] ?? ''));
+                if ($class !== '') {
+                    $entry['class'] = $class;
+                }
+
+                $term = trim((string) ($fee['term'] ?? ''));
+                if ($term !== '') {
+                    $entry['term'] = $term;
+                }
+
+                $structured[] = $entry;
+            }
+
+            if ($structured !== []) {
+                return $structured;
+            }
+        }
+
+        return array_map(fn (string $name) => [
             'name' => trim($name),
             'amount' => 0,
-        ], array_filter($this->fees, fn($f) => is_string($f) && trim($f)));
+        ], array_filter($this->fees, fn ($f) => is_string($f) && trim($f) !== ''));
     }
 
     // ════════════════════════════════════════════════
@@ -5215,7 +5331,7 @@ class AgentToshi extends Component
                 }
 
                 // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
-                if (!empty($this->fees)) {
+                if ($this->hasFeesToCommit()) {
                     app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
                 }
 
@@ -5361,7 +5477,7 @@ class AgentToshi extends Component
                 }
 
                 // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
-                if (!empty($this->fees)) {
+                if ($this->hasFeesToCommit()) {
                     app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
                 }
 
