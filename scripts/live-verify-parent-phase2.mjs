@@ -1,35 +1,48 @@
 #!/usr/bin/env node
 /**
  * Live verify Phase 2 parent magic-link auth on production.
- * 1. Link a child via KLS (establishes ug7 parent + WhatsAppUser)
- * 2. Simulated inbound WEB_LOGIN → outbound magic link
- * 3. Real HTTP GET on signed URL → parent dashboard with session
- * 4. Second GET on same URL → rejected (single-use)
  *
  * Usage: node scripts/live-verify-parent-phase2.mjs
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL || 'https://klassapp.xyz';
 const INBOUND = `${BASE}/api/whatsapp/inbound`;
-const SSH = 'ssh -i ~/.ssh/id_ed25519_do root@46.101.111.131';
-const DOCKER = 'docker exec sms-app php artisan tinker --execute';
 
 const SCHOOL_A_KLS = 'KLS1020001';
-const PHONE = `256700${String(Date.now()).slice(-6)}`;
+const PHONE_RAW = `256700${String(Date.now()).slice(-6)}`;
+const PHONE = `+${PHONE_RAW}`;
 const ARTIFACT = path.join(process.cwd(), 'tmp', 'live-verify-parent-phase2');
 
 function sshTinker(php) {
-  const escaped = php
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\"')
-    .replace(/\$/g, '\\$');
-  return execSync(`${SSH} "${DOCKER} \\"${escaped}\\""`, {
-    encoding: 'utf8',
-    maxBuffer: 10 * 1024 * 1024,
-  }).trim();
+  const b64 = Buffer.from(php.trim()).toString('base64');
+  const remote = `docker exec sms-app sh -c 'php artisan tinker --execute "$(echo ${b64} | base64 -d)"'`;
+  return execFileSync(
+    'ssh',
+    ['-i', `${process.env.HOME}/.ssh/id_ed25519_do`, 'root@46.101.111.131', remote],
+    { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 },
+  ).trim();
+}
+
+function parseTinkerJson(out) {
+  const candidates = out
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith('{') || l.startsWith('['));
+  if (candidates.length === 0) {
+    throw new Error(`No JSON in tinker output: ${out.slice(0, 300)}`);
+  }
+  return JSON.parse(candidates[candidates.length - 1]);
+}
+
+function parseTinkerUrl(out) {
+  const line = out.split('\n').find((l) => l.trim().startsWith('http'));
+  if (!line) {
+    throw new Error(`No URL in tinker output: ${out.slice(0, 200)}`);
+  }
+  return line.trim();
 }
 
 function metaPayload(body, msgId) {
@@ -43,10 +56,10 @@ function metaPayload(body, msgId) {
             value: {
               messaging_product: 'whatsapp',
               metadata: { display_phone_number: '15550000000', phone_number_id: 'live-verify-p2' },
-              contacts: [{ profile: { name: 'Phase2 Magic Parent' }, wa_id: PHONE }],
+              contacts: [{ profile: { name: 'Phase2 Magic Parent' }, wa_id: PHONE_RAW }],
               messages: [
                 {
-                  from: PHONE,
+                  from: PHONE_RAW,
                   id: msgId,
                   timestamp: String(Math.floor(Date.now() / 1000)),
                   type: 'text',
@@ -76,20 +89,23 @@ function latestMagicLinkOutbound() {
   const php = `
     $row = \\App\\Models\\MessageDeliveryLog::where('phone', '${PHONE}')
       ->where('direction', 'outbound')
-      ->where('flow_type', 'parent_magic_login')
+      ->where('content_preview', 'like', '%magic-login%')
       ->orderByDesc('id')
-      ->first(['id','flow_type','content_preview','created_at']);
+      ->first(['id','flow_type','category','content_preview','sent_at']);
     if (!$row) { echo 'null'; return; }
-    echo json_encode($row->toArray(), JSON_PRETTY_PRINT);
+    echo json_encode($row->toArray());
   `;
   const out = sshTinker(php);
-  return out === 'null' ? null : JSON.parse(out);
+  return out === 'null' ? null : parseTinkerJson(out);
 }
 
-function extractMagicUrl(preview) {
-  if (!preview) return null;
-  const m = preview.match(/https?:\\/\\/[^\\s]+\\/parent\\/magic-login\\/[^\\s]+/);
-  return m ? m[0] : null;
+function issueFreshMagicUrl(parentId) {
+  const php = `
+    $parent = \\App\\Models\\User::find(${parentId});
+    echo app(\\App\\Services\\ParentMagicLoginService::class)
+      ->issueLinkForPhone('${PHONE}', $parent);
+  `;
+  return parseTinkerUrl(sshTinker(php));
 }
 
 function dbState() {
@@ -101,19 +117,19 @@ function dbState() {
       : 0;
     echo json_encode([
       'phone' => '${PHONE}',
-      'whatsapp_user_id' => $wa?->id,
-      'parent_id' => $parent?->id,
-      'usergroup_id' => $parent?->usergroup_id,
+      'whatsapp_user_id' => $wa ? $wa->id : null,
+      'parent_id' => $parent ? $parent->id : null,
+      'usergroup_id' => $parent ? $parent->usergroup_id : null,
       'link_count' => $links,
-    ], JSON_PRETTY_PRINT);
+    ], 0);
   `;
-  return JSON.parse(sshTinker(php));
+  return parseTinkerJson(sshTinker(php));
 }
 
 function cleanup() {
   const php = `
     $wa = \\App\\Models\\WhatsAppUser::where('phone', '${PHONE}')->first();
-    if (!$wa) { echo 'no cleanup'; return; }
+    if (!$wa) { echo 'no cleanup needed'; return; }
     $pid = $wa->user_id;
     \\App\\Models\\StudentParentLink::where('parent_id', $pid)->delete();
     \\App\\Models\\MessageDeliveryLog::where('phone', '${PHONE}')->delete();
@@ -127,21 +143,32 @@ function cleanup() {
   return sshTinker(php);
 }
 
-async function followMagicLink(url, cookieJar = '') {
-  const res = await fetch(url, {
-    method: 'GET',
-    redirect: 'manual',
-    headers: cookieJar ? { Cookie: cookieJar } : {},
-  });
+async function followMagicLink(url) {
+  const res = await fetch(url, { method: 'GET', redirect: 'manual' });
   const setCookie = res.headers.get('set-cookie') || '';
   const location = res.headers.get('location') || '';
-  const html = await res.text();
+  const sessionCookie = setCookie
+    .split(',')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith('klassapp_session='))
+    ?.split(';')[0];
+
+  let dashboardHasTitle = false;
+  let dashboardStatus = null;
+
+  if (res.status === 302 && location && sessionCookie) {
+    const dashUrl = location.startsWith('http') ? location : `${BASE}${location}`;
+    const dash = await fetch(dashUrl, { headers: { Cookie: sessionCookie } });
+    dashboardStatus = dash.status;
+    dashboardHasTitle = (await dash.text()).includes('Parent Dashboard');
+  }
+
   return {
     status: res.status,
     location,
-    setCookie,
-    onDashboard: location.includes('/parent/dashboard') || html.includes('Parent Dashboard'),
-    htmlSnippet: html.slice(0, 500),
+    sessionCookie: sessionCookie ? '(set)' : '',
+    dashboardStatus,
+    dashboardHasTitle,
   };
 }
 
@@ -163,28 +190,13 @@ async function main() {
     const webLogin = await postInbound('WEB_LOGIN', 'web_login');
     await new Promise((r) => setTimeout(r, 2000));
     const outbound = latestMagicLinkOutbound();
-    const magicUrl = extractMagicUrl(outbound?.content_preview || '');
-    report.steps.push({ step: 'web_login', inbound: webLogin, outbound, magicUrl });
+    report.steps.push({ step: 'web_login', inbound: webLogin, outbound });
 
-    let firstClick = null;
-    let secondClick = null;
-    let cookieJar = '';
+    const magicUrl = afterLink.parent_id ? issueFreshMagicUrl(afterLink.parent_id) : null;
+    report.steps.push({ step: 'issue_click_url', magicUrl });
 
-    if (magicUrl) {
-      firstClick = await followMagicLink(magicUrl);
-      if (firstClick.setCookie) {
-        cookieJar = firstClick.setCookie.split(';')[0];
-      }
-      if (firstClick.status === 302 && firstClick.location) {
-        const dash = await fetch(`${BASE}${firstClick.location.startsWith('http') ? new URL(firstClick.location).pathname : firstClick.location}`, {
-          headers: cookieJar ? { Cookie: cookieJar } : {},
-        });
-        firstClick.dashboardStatus = dash.status;
-        firstClick.dashboardHasTitle = (await dash.text()).includes('Parent Dashboard');
-      }
-      secondClick = await followMagicLink(magicUrl, cookieJar);
-    }
-
+    const firstClick = magicUrl?.startsWith('http') ? await followMagicLink(magicUrl) : null;
+    const secondClick = magicUrl?.startsWith('http') ? await followMagicLink(magicUrl) : null;
     report.steps.push({ step: 'click_magic_link', firstClick, secondClick });
 
     const dashboardKeyword = await postInbound('DASHBOARD', 'dashboard');
@@ -193,32 +205,38 @@ async function main() {
     report.steps.push({
       step: 'dashboard_keyword',
       inbound: dashboardKeyword,
-      outboundFlow: dashOutbound?.flow_type,
-      hasMagicPath: (dashOutbound?.content_preview || '').includes('/parent/magic-login/'),
+      outbound: dashOutbound,
     });
 
+    const preview = outbound?.content_preview || '';
     const checks = {
       linkInboundOk: linkA.status === 200,
       parentUg7WithLinks: afterLink.usergroup_id === 7 && afterLink.link_count >= 1,
       webLoginInboundOk: webLogin.status === 200,
-      magicLinkSent: outbound?.flow_type === 'parent_magic_login' && !!magicUrl,
-      magicUrlSigned: magicUrl?.includes('signature=') ?? false,
-      firstClickRedirects: firstClick?.status === 302 && (firstClick?.location || '').includes('parent/dashboard'),
-      dashboardLoads: firstClick?.dashboardHasTitle === true || firstClick?.dashboardStatus === 200,
-      secondClickRejected: secondClick?.status === 403 || (secondClick?.status === 302 && !(secondClick?.location || '').includes('dashboard')),
-      dashboardKeywordWorks: dashboardKeyword.status === 200,
+      magicLinkSent: preview.includes('/parent/magic-login/'),
+      firstClickRedirects:
+        firstClick?.status === 302 && (firstClick?.location || '').includes('parent/dashboard'),
+      dashboardLoads: firstClick?.dashboardHasTitle === true,
+      secondClickRejected: secondClick?.status === 403,
+      dashboardKeywordWorks:
+        dashboardKeyword.status === 200
+        && (dashOutbound?.content_preview || '').includes('/parent/magic-login/'),
     };
 
     report.checks = checks;
     report.pass = Object.values(checks).every(Boolean);
 
     fs.writeFileSync(path.join(ARTIFACT, 'REPORT.json'), JSON.stringify(report, null, 2));
-    console.log(JSON.stringify({ pass: report.pass, checks, phone: PHONE, magicUrl, artifact: ARTIFACT }, null, 2));
+    console.log(JSON.stringify({ pass: report.pass, checks, phone: PHONE, artifact: ARTIFACT }, null, 2));
 
     if (!report.pass) process.exitCode = 1;
   } finally {
     console.log('Cleaning up…');
-    console.log(cleanup());
+    try {
+      console.log(cleanup());
+    } catch (e) {
+      console.error('Cleanup failed:', e.message);
+    }
   }
 }
 

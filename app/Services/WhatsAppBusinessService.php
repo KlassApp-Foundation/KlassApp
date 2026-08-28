@@ -78,6 +78,8 @@ class WhatsAppBusinessService
             'category'            => $flowType ?? 'service',
             'status'              => $success ? 'sent' : 'failed',
             'content_preview'     => Str::limit($message, 200),
+            'flow_type'           => $flowType,
+            'user_id'             => $userId,
         ]);
 
         if (!$success) {
