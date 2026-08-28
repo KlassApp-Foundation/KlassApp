@@ -7,7 +7,9 @@
                 <h1 class="text-left mt-8 mb-4 text-white text-5xl font-bold leading-normal">School Management Software as Service</h1>
                 <h2 class="text-xl text-left text-white">Manage your school students easily and also manage the Events, Activities and School Website.</h2>
                 <div class="py-8 flex mx-auto justify-start">
-                    @if( (Auth::user()->usergroup_id == 3) || (Auth::user()->usergroup_id == 5) || (Auth::user()->usergroup_id == 7) )
+                    @if(Auth::user()->usergroup_id == 7)
+                        <a href="{{ url('/parent/dashboard') }}" class="button p-4 bg-white border-l-4 border-blue-500 mr-2 font-bold">Go To Dashboard</a>
+                    @elseif( (Auth::user()->usergroup_id == 3) || (Auth::user()->usergroup_id == 5) )
                         <a href="{{ url('/admin/dashboard') }}" class="button p-4 bg-white border-l-4 border-blue-500 mr-2 font-bold">Go To Dashboard</a>
                     @elseif(Auth::user()->usergroup_id == 6)
                         <a href="{{ url('/student/dashboard') }}" class="button p-4 bg-white border-l-4 border-blue-500 mr-2 font-bold">Go To Dashboard</a>
@@ -31,7 +33,9 @@
             <!-- <h1 class="text-6xl font-bold text-white">Improve Your Skill & Learn Excilence In Teaching</h1> -->
         </div>
          <div class="py-8 flex mx-auto justify-start">
-                    @if( (Auth::user()->usergroup_id == 3) || (Auth::user()->usergroup_id == 5) || (Auth::user()->usergroup_id == 7) )
+                    @if(Auth::user()->usergroup_id == 7)
+                        <a href="{{ url('/parent/dashboard') }}" class="button p-4 bg-white border-l-4 border-blue-500 mr-2 font-bold">Go To Dashboard</a>
+                    @elseif( (Auth::user()->usergroup_id == 3) || (Auth::user()->usergroup_id == 5) )
                         <a href="{{ url('/admin/dashboard') }}" class="button p-4 bg-white border-l-4 border-blue-500 mr-2 font-bold">Go To Dashboard</a>
                     @elseif(Auth::user()->usergroup_id == 6)
                         <a href="{{ url('/student/dashboard') }}" class="button p-4 bg-white border-l-4 border-blue-500 mr-2 font-bold">Go To Dashboard</a>

@@ -25,6 +25,7 @@ class RouteServiceProvider extends ServiceProvider
     protected $accountantNamespace = 'App\Http\Controllers\Accountant';
     protected $payrollNamespace = 'App\Http\Controllers\Payroll';
     protected $alumniNamespace = 'App\Http\Controllers\Alumni';
+    protected $parentNamespace = 'App\Http\Controllers\Parent';
     protected $superadminNamespace = 'App\Http\Controllers\Superadmin';
     protected $subadminNamespace = 'App\Http\Controllers\Admin'; // reuses admin controllers
 
@@ -58,6 +59,7 @@ class RouteServiceProvider extends ServiceProvider
         $this->mapStockRoutes();
         $this->mapLibrarianRoutes();
         $this->mapStudentRoutes();
+        $this->mapParentRoutes();
         $this->mapTeacherRoutes();
         $this->mapReceptionistRoutes();
         $this->mapAccountantRoutes();
@@ -143,6 +145,14 @@ class RouteServiceProvider extends ServiceProvider
             ->middleware(['web','auth', 'student'])
             ->namespace($this->studentNamespace)
             ->group(base_path('routes/student.php'));
+    }
+
+    protected function mapParentRoutes()
+    {
+        Route::prefix('parent')
+            ->middleware(['web', 'auth', 'parent'])
+            ->namespace($this->parentNamespace)
+            ->group(base_path('routes/parent.php'));
     }
 
     /*protected function mapStaticRoutes()  //static routes hidden

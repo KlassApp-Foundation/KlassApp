@@ -64,6 +64,9 @@ class LoginController extends Controller implements ShouldQueue
             if ($ug == 4) {
                 return '/subadmin/dashboard';
             }
+            if ($ug == 7) {
+                return '/parent/dashboard';
+            }
         }
         return '/admin/dashboard';
     }

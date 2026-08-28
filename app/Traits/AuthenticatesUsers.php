@@ -144,8 +144,8 @@ trait AuthenticatesUsers
 
         Validator::extend('checkstatus', function ($attribute, $value, $parameters, $validator)
         {
-            $user = User::where('email', request('email'))->with(['userprofile','alumniprofile'])->first();
-            if(count($user)>0)
+            $user = User::where('email', request('email'))->with('userprofile')->first();
+            if ($user)
             {
                 if($user->usergroup_id==1)
                 {
@@ -165,6 +165,10 @@ trait AuthenticatesUsers
                     return TRUE;
                 }
                 elseif ($user->usergroup_id==6)
+                {
+                    return TRUE;
+                }
+                elseif ($user->usergroup_id==7)
                 {
                     return TRUE;
                 }
@@ -194,7 +198,7 @@ trait AuthenticatesUsers
         },'Invalid Credentials');
 
          $this->validate($request,[
-            $this->username() => 'required|string',
+            $this->username() => 'bail|required|string|checkusers|checkactive|checkexit|checkstatus',
             'password' => 'bail|required|string|checkschool',
         ]);
 
