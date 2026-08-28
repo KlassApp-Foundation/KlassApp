@@ -12,6 +12,7 @@ use App\Models\ParentProfile;
 use App\Models\Alumniprofile;
 use App\Models\Userprofile;
 use Illuminate\Support\Str;
+use App\Support\UserProvisioning;
 use App\Models\Scholastic;
 use App\Models\User;
 use App\Models\Mark;
@@ -51,7 +52,9 @@ trait RegisterUser
                 $user->name = $data->name;
             }
 
-            $user->password                 = bcrypt('password'); //demo
+            $provisioning = UserProvisioning::randomPasswordAttributes();
+            $user->password                 = $provisioning['password'];
+            $user->is_reset                 = $provisioning['is_reset'];
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
             $user->email_verification_code  = Str::random(40);
@@ -579,7 +582,9 @@ trait RegisterUser
                 $user->name = $data->name;
             }
 // dd($data);
-            $user->password                 = bcrypt('password'); //demo
+            $provisioning = UserProvisioning::randomPasswordAttributes();
+            $user->password                 = $provisioning['password'];
+            $user->is_reset                 = $provisioning['is_reset'];
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
             $user->email_verification_code  = Str::random(40);
