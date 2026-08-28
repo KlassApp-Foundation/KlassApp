@@ -49,7 +49,7 @@ class WhatsAppBusinessService
      * @param int|null $userId KlassApp user ID (for tracking)
      * @return array{success: bool, message_id: string, error?: string}
      */
-    public function sendText(string $phone, string $message, ?string $flowType = null, ?int $userId = null): array
+    public function sendText(string $phone, string $message, ?string $flowType = null, ?int $userId = null, bool $previewUrl = false): array
     {
         $cleanPhone = $this->cleanPhone($phone);
 
@@ -61,7 +61,7 @@ class WhatsAppBusinessService
                 'to'                => $cleanPhone,
                 'type'              => 'text',
                 'text'              => [
-                    'preview_url' => false,
+                    'preview_url' => $previewUrl,
                     'body'        => $message,
                 ],
             ]);
