@@ -19,6 +19,7 @@ use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
 use App\Services\OutboundWhatsAppService;
+use App\Services\ParentLinkService;
 use App\Services\WhatsApp\WhatsAppConfirmationBridge;
 use App\Services\WhatsAppBusinessService;
 use Illuminate\Http\Request;
@@ -37,6 +38,7 @@ class WhatsAppController extends Controller
 {
     public function __construct(
         protected WhatsAppBusinessService $businessApi,
+        protected ParentLinkService $parentLinks,
     ) {}
     /**
      * Identify a WhatsApp user by phone number.
@@ -1165,117 +1167,54 @@ class WhatsAppController extends Controller
      */
     protected function linkParentToStudent(string $phone, int $studentId, callable $sendText, callable $sendButtons, string $senderName = 'Parent'): void
     {
-        $student = \App\Models\User::with(['studentAcademicLatest.standardLink.standard', 'school'])->find($studentId);
+        $result = $this->parentLinks->linkByStudentId($phone, $studentId, $senderName);
 
-        if (!$student) {
-            $sendText("Student not found. Please try again or contact the school office.", 'link_error');
+        if ($result->outcome === 'student_not_found') {
+            $sendText('Student not found. Please try again or contact the school office.', 'link_error');
+
             return;
         }
 
-        $studentName = $student->name;
-        $className = $student->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A';
-        $schoolName = $student->school?->name ?? 'the school';
-        $schoolId = $student->school_id;
-
-        // Check if this parent is already linked
-        $existingLink = \Illuminate\Support\Facades\DB::table('student_parent_links')
-            ->where('student_id', $studentId)
-            ->where('school_id', $schoolId)
-            ->first();
-
-        if ($existingLink) {
-            // Parent exists — link this WhatsApp number to them
-            $parentId = $existingLink->parent_id;
-            $whatsappUser = WhatsAppUser::where('phone', $phone)->first();
-
-            if ($whatsappUser) {
-                if ($whatsappUser->user_id && $whatsappUser->user_id !== $parentId) {
-                    $sendText(
-                        "This phone number is already linked to a different parent account.\n\n"
-                        . "Contact the school office to update your details.",
-                        'already_linked'
-                    );
-                    return;
-                }
-                $whatsappUser->update([
-                    'user_id' => $parentId,
-                    'school_id' => $schoolId,
-                    'opted_in' => true,
-                    'verified_at' => now(),
-                    'verified_via_schoolpay' => false,
-                ]);
-            } else {
-                WhatsAppUser::create([
-                    'phone' => $phone,
-                    'user_id' => $parentId,
-                    'school_id' => $schoolId,
-                    'opted_in' => true,
-                    'verified_at' => now(),
-                    'verified_via_schoolpay' => false,
-                ]);
-            }
-
-            $sendButtons(
-                "✅ Linked to *{$studentName}* ({$className})!\n\n"
-                . "You can now check fees, grades, and attendance — tap an option below.",
-                [
-                    ['title' => '💰 Fee Balance', 'id' => 'FEES'],
-                    ['title' => '📊 Exam Results', 'id' => 'GRADES'],
-                    ['title' => '📋 Attendance', 'id' => 'ATTENDANCE'],
-                ],
-                'linked_welcome',
+        if ($result->outcome === 'phone_conflict') {
+            $sendText(
+                "This phone number is already linked to a different parent account.\n\n"
+                . 'Contact the school office to update your details.',
+                'already_linked'
             );
+
             return;
         }
 
-        // No parent link exists yet — create parent + link
-        $parentUser = \App\Models\User::create([
-            'school_id' => $schoolId,
-            'usergroup_id' => 7, // Parent role
-            'name' => $senderName ?: 'Parent',
-            'email' => 'parent_' . $studentId . '_' . time() . '@klassapp.sch.ug',
-            'password' => bcrypt(\Illuminate\Support\Str::random(12)),
-            'status' => 'active',
-            'email_verified' => 1,
-        ]);
+        if (! $result->linked) {
+            return;
+        }
 
-        \App\Models\Userprofile::create([
-            'school_id' => $schoolId,
-            'user_id' => $parentUser->id,
-            'usergroup_id' => 7,
-            'firstname' => $senderName ?: 'Parent',
-            'lastname' => '',
-            'status' => 'active',
-        ]);
+        $studentName = $result->studentName;
+        $className = $result->className;
+        $schoolName = $result->schoolName;
+        $welcomeButtons = [
+            ['title' => '💰 Fee Balance', 'id' => 'FEES'],
+            ['title' => '📊 Exam Results', 'id' => 'GRADES'],
+            ['title' => '📋 Attendance', 'id' => 'ATTENDANCE'],
+        ];
 
-        \Illuminate\Support\Facades\DB::table('student_parent_links')->insert([
-            'student_id' => $studentId,
-            'parent_id' => $parentUser->id,
-            'school_id' => $schoolId,
-            'relationship' => 'parent',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        if ($result->isNewParent) {
+            $sendButtons(
+                "✅ Welcome to KlassApp, *{$senderName}*!\n\n"
+                . "You're now linked to *{$studentName}* ({$className}) at {$schoolName}.\n\n"
+                . 'Tap an option to get started:',
+                $welcomeButtons,
+                'linked_welcome_new',
+            );
 
-        WhatsAppUser::create([
-            'phone' => $phone,
-            'user_id' => $parentUser->id,
-            'school_id' => $schoolId,
-            'opted_in' => true,
-            'verified_at' => now(),
-            'verified_via_schoolpay' => false,
-        ]);
+            return;
+        }
 
         $sendButtons(
-            "✅ Welcome to KlassApp, *{$senderName}*!\n\n"
-            . "You're now linked to *{$studentName}* ({$className}) at {$schoolName}.\n\n"
-            . "Tap an option to get started:",
-            [
-                ['title' => '💰 Fee Balance', 'id' => 'FEES'],
-                ['title' => '📊 Exam Results', 'id' => 'GRADES'],
-                ['title' => '📋 Attendance', 'id' => 'ATTENDANCE'],
-            ],
-            'linked_welcome_new',
+            "✅ Linked to *{$studentName}* ({$className})!\n\n"
+            . 'You can now check fees, grades, and attendance — tap an option below.',
+            $welcomeButtons,
+            'linked_welcome',
         );
     }
 
@@ -2519,53 +2458,36 @@ class WhatsAppController extends Controller
         string $code,
         $whatsAppService,
     ): void {
-        $studentAcademic = StudentAcademic::where('std_school_pay_number', $code)
-            ->whereNull('deleted_at')
-            ->first();
+        $result = $this->parentLinks->linkByPaymentCodeForExistingUser($user, $code);
 
-        if (!$studentAcademic) {
+        if ($result->outcome === 'code_not_found') {
             $whatsAppService->sendText(
                 $phone,
                 "We couldn't find a student with payment code *{$code}*.\n\n"
-                . "Check the code and try again, or contact the school office for help.",
+                . 'Check the code and try again, or contact the school office for help.',
                 'link_code_not_found',
                 $user->user_id,
             );
+
             return;
         }
 
-        // Check if this student is already linked to this parent
-        $alreadyLinked = DB::table('student_parent_links')
-            ->where('student_id', $studentAcademic->user_id)
-            ->where('parent_id', $user->user_id)
-            ->whereNull('deleted_at')
-            ->exists();
-
-        if ($alreadyLinked) {
+        if ($result->alreadyLinkedToThisParent) {
             $whatsAppService->sendText(
                 $phone,
-                "This student is already linked to your account.",
+                'This student is already linked to your account.',
                 'link_already_linked',
                 $user->user_id,
             );
+
             return;
         }
 
-        // Link the student to this parent
-        DB::table('student_parent_links')->insert([
-            'student_id' => $studentAcademic->user_id,
-            'parent_id'  => $user->user_id,
-            'status'     => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        if (! $result->linked) {
+            return;
+        }
 
-        // Update the existing whatsapp_user record with this code too
-        WhatsAppUser::where('id', $user->id)->update([
-            'student_payment_code'   => $code,
-            'verified_via_schoolpay' => true,
-            'verified_at'            => now(),
-        ]);
+        $studentName = $result->studentName ?? 'your child';
 
         $whatsAppService->sendList(
             phone: $phone,
@@ -2581,7 +2503,7 @@ class WhatsAppController extends Controller
                     ],
                 ],
             ],
-            description: "Student: {$studentAcademic->user->name}",
+            description: "Student: {$studentName}",
             footerText: 'Tap an option to get started',
             flowType: 'link_another_student',
             userId: $user->user_id,
