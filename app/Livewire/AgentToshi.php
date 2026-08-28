@@ -26,6 +26,7 @@ use App\Models\OnboardingSession;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
 use App\Services\ToshiActionService;
+use App\Support\UserProvisioning;
 
 class AgentToshi extends Component
 {
@@ -5198,11 +5199,14 @@ class AgentToshi extends Component
                 // Co-admin
                 $coAdminUser = null;
                 if ($this->coAdminName && $this->coAdminEmail) {
+                    $coAdminCredentials = UserProvisioning::randomPasswordCredentials();
                     $coAdminUser = User::create([
                         'school_id' => $school->id, 'usergroup_id' => 3,
                         'name' => $this->coAdminName,
                         'email' => $this->coAdminEmail,
-                        'password' => $password, 'status' => 'active', 'email_verified' => 1,
+                        'password' => $coAdminCredentials['password'],
+                        'is_reset' => $coAdminCredentials['is_reset'],
+                        'status' => 'active', 'email_verified' => 1,
                     ]);
                     Userprofile::create([
                         'school_id' => $school->id, 'user_id' => $coAdminUser->id,
@@ -5213,7 +5217,7 @@ class AgentToshi extends Component
                     try {
                         Mail::to($this->coAdminEmail)->queue(new CoAdminInviteMail(
                             $this->coAdminName, $this->coAdminEmail,
-                            $this->adminPassword ?: 'password',
+                            $coAdminCredentials['plain'],
                             $school->name, false
                         ));
                     } catch (\Exception $e) {
