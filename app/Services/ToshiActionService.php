@@ -24,9 +24,12 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Helpers\SiteHelper;
+use App\Mail\CoAdminInviteMail;
+use App\Support\UserProvisioning;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class ToshiActionService
@@ -519,13 +522,16 @@ class ToshiActionService
         try {
             DB::beginTransaction();
 
-            $password = Hash::make('password');
+            $credentials = UserProvisioning::randomPasswordCredentials();
+            $schoolName = School::find($schoolId)?->name ?? 'your school';
+
             $coAdmin = User::create([
                 'school_id'    => $schoolId,
                 'usergroup_id' => 3,
                 'name'         => $name,
                 'email'        => $email,
-                'password'     => $password,
+                'password'     => $credentials['password'],
+                'is_reset'     => $credentials['is_reset'],
                 'status'       => 'active',
                 'email_verified' => 1,
             ]);
@@ -541,7 +547,22 @@ class ToshiActionService
 
             DB::commit();
 
-            return self::result(true, "Co-admin **{$name}** added. Login: `{$email}` / password: `password`", [
+            try {
+                Mail::to($email)->queue(new CoAdminInviteMail(
+                    $name,
+                    $email,
+                    $credentials['plain'],
+                    $schoolName,
+                    false
+                ));
+            } catch (\Exception $e) {
+                Log::warning('ToshiAction: co-admin invite email failed', [
+                    'email' => $email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return self::result(true, "Co-admin **{$name}** added. An invite email was sent to **{$email}** with login credentials.", [
                 'user_id' => $coAdmin->id, 'email' => $email,
             ]);
         } catch (\Exception $e) {
