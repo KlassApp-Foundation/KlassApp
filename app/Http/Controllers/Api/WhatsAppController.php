@@ -1390,6 +1390,37 @@ class WhatsAppController extends Controller
             return;
         }
 
+        // Parent (ug7): KLS ID links an additional child (cross-school via ParentLinkService)
+        if ($role === 7 && preg_match('/^kls\d{7}$/', $normalised)) {
+            $kls = strtoupper($normalised);
+            $academic = \App\Models\StudentAcademic::where('klassapp_student_id', $kls)
+                ->with(['user', 'standardLink.standard', 'school'])
+                ->first();
+
+            if ($academic && $academic->user) {
+                $this->linkParentToStudent(
+                    $phone,
+                    (int) $academic->user->id,
+                    fn (string $message, ?string $flowType = null, ?int $userId = null) =>
+                        $whatsAppService->sendText($phone, $message, $flowType, $userId ?? $user->user_id),
+                    fn (string $bodyText, array $buttons, ?string $flowType = null, ?int $userId = null) =>
+                        $this->businessApi->sendInteractiveButtons($phone, $bodyText, $buttons, $flowType, $userId ?? $user->user_id),
+                    (string) ($user->user->name ?? 'Parent'),
+                );
+
+                return;
+            }
+
+            $whatsAppService->sendText(
+                $phone,
+                "We couldn't find a student with KlassApp ID *{$kls}*.\n\nCheck the ID on your child's report card.",
+                'klassapp_id_not_found',
+                $user->user_id,
+            );
+
+            return;
+        }
+
         // Universal: menu/help
         if ($match(['menu', 'help', 'start', 'options', 'demo', '❓ help & options'])) {
             $this->sendMenu($user, $phone, $whatsAppService);
