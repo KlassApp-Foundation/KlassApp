@@ -11,7 +11,7 @@
     @include('partials.message')
 
     <div class="dashboard-kpi-grid mt-4">
-        <x-ds-kpi-card icon="students" value="—" label="Linked Children" color="blue" />
+        <x-ds-kpi-card icon="students" value="{{ $linkedChildCount ?? '—' }}" label="Linked Children" color="blue" />
         <x-ds-kpi-card icon="messages" value="—" label="Messages" color="green" />
     </div>
 
