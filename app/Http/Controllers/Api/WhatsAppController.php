@@ -1738,10 +1738,12 @@ class WhatsAppController extends Controller
             $studentName = $user->demo_name ? "{$user->demo_name} Demo" : ($student?->name ?? 'Unknown Student');
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
+            $schoolId = (int) ($link->school_id ?? $student?->school_id);
 
             // Find exams that have marks for this student
-            $academicYear = \App\Helpers\SiteHelper::getAcademicYear($user->user->school_id);
+            $academicYear = \App\Helpers\SiteHelper::getAcademicYear($schoolId);
             $examQuery = Exam::whereHas('marks', fn($q) => $q->where('student_id', $student->id))
+                ->where('school_id', $schoolId)
                 ->with(['marks' => fn($q) => $q->where('student_id', $student->id), 'examType', 'subject'])
                 ->latest('id');
             if ($academicYear) {
@@ -1869,12 +1871,13 @@ class WhatsAppController extends Controller
             $studentName = $user->demo_name ? "{$user->demo_name} Demo" : ($student?->name ?? 'Unknown Student');
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
+            $schoolId = (int) ($link->school_id ?? $student?->school_id);
 
             $standardId = $academic?->standardLink?->standard_id;
 
             $feeCategories = collect();
             if ($standardId) {
-                $feeCategories = FeesCategories::where('school_id', $user->user->school_id)
+                $feeCategories = FeesCategories::where('school_id', $schoolId)
                     ->where('standard_id', $standardId)
                     ->get();
             }

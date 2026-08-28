@@ -527,14 +527,38 @@ class AuthServiceProvider extends ServiceProvider
 
         // Parent-scoped Toshi tools only (ug7). Children ownership is enforced in ParentActionService.
         Gate::define('toshi-parent-action', function (User $user): \Illuminate\Auth\Access\Response {
-            if ($user->usergroup_id === 7 && $user->school_id) {
-                return \Illuminate\Auth\Access\Response::allow();
+            if ($user->usergroup_id === 7) {
+                if ($user->school_id) {
+                    return \Illuminate\Auth\Access\Response::allow();
+                }
+
+                $hasActiveLinks = \App\Models\StudentParentLink::query()
+                    ->where('parent_id', $user->id)
+                    ->where('status', 1)
+                    ->whereNotNull('school_id')
+                    ->exists();
+
+                if ($hasActiveLinks) {
+                    return \Illuminate\Auth\Access\Response::allow();
+                }
             }
 
             if ($user->usergroup_id === 1 && $user->isImpersonating()) {
                 $impersonated = User::find(\Session::get('impersonate'));
-                if ($impersonated && $impersonated->usergroup_id === 7 && $impersonated->school_id) {
-                    return \Illuminate\Auth\Access\Response::allow();
+                if ($impersonated && $impersonated->usergroup_id === 7) {
+                    if ($impersonated->school_id) {
+                        return \Illuminate\Auth\Access\Response::allow();
+                    }
+
+                    $hasActiveLinks = \App\Models\StudentParentLink::query()
+                        ->where('parent_id', $impersonated->id)
+                        ->where('status', 1)
+                        ->whereNotNull('school_id')
+                        ->exists();
+
+                    if ($hasActiveLinks) {
+                        return \Illuminate\Auth\Access\Response::allow();
+                    }
                 }
             }
 
