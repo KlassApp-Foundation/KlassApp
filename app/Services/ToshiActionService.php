@@ -1366,10 +1366,13 @@ class ToshiActionService
         try {
             DB::beginTransaction();
             $email = 'parent.' . Str::random(6) . '@school.ug';
+            $passwordAttrs = UserProvisioning::randomPasswordAttributes();
             $parent = User::create([
                 'school_id' => $schoolId, 'usergroup_id' => 7,
                 'name' => $name, 'email' => $email,
-                'password' => Hash::make('password'), 'status' => 'active',
+                'password' => $passwordAttrs['password'],
+                'is_reset' => $passwordAttrs['is_reset'],
+                'status' => 'active',
                 'mobile_no' => $phone,
             ]);
             Userprofile::create([
