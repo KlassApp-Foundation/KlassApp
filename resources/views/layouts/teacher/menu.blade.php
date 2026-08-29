@@ -22,6 +22,16 @@
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['marks','mark']) }}">
         <a href="{{ url('teacher/exam/marks') }}" class="flex items-center"><x-icons.sidebar name="subjects"/><span class="mx-3 whitespace-nowrap">Marks</span></a>
     </li>
+    @php
+        $ctReportLinks = (auth()->check() && auth()->user()->school_id)
+            ? \App\Helpers\SiteHelper::getClassTeacherStandardLinks((int) auth()->user()->school_id, (int) auth()->id())
+            : collect();
+    @endphp
+    @if ($ctReportLinks->isNotEmpty())
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['reports']) }}">
+        <a href="{{ route('teacher.reports.cards.index') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Report Cards</span></a>
+    </li>
+    @endif
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['students','student','classes']) }}">
         <a href="{{ url('teacher/classes') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-nowrap">Students</span></a>
     </li>
