@@ -54,15 +54,18 @@ class AttendanceController extends Controller
                     ['class_teacher_id',Auth::id()]
                 ])->first();
 
-            $studentAcademic = StudentAcademic::with('user')->where([
+            $studentAcademic = $standardLink
+                ? StudentAcademic::with('user')->where([
                     ['school_id',$school_id],
                     ['academic_year_id',$academic_year->id],
                     ['standardLink_id',$standardLink->id]
                 ])->whereHas('user', function($q){
                         $q->where([['status','active'],['deleted_at',null]]);
-                    })->get()->sortBy('user.userprofile.firstname');
+                    })->get()->sortBy('user.userprofile.firstname')
+                : collect();
 
-            $array['standardlist']      = SiteHelper::getStandardLinkList($school_id);
+            $classTeacherLinks = SiteHelper::getClassTeacherStandardLinks((int) $school_id, (int) Auth::id());
+            $array['standardlist']      = \App\Http\Resources\StandardLink::collection($classTeacherLinks);
             $array['studentlist']       = StudentlistResource::collection($studentAcademic);
             $array['absentReasonlist']  = AbsentReason::where('status',1)->get();
 
