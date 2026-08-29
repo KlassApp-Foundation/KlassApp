@@ -90,6 +90,26 @@ class ParentPortalServiceTest extends TestCase
         );
     }
 
+    public function test_fee_balance_subtracts_payments_via_user_id_not_student_id(): void
+    {
+        \App\Models\FeePayment::create([
+            'school_id' => $this->schoolB->id,
+            'fee_category_id' => FeesCategories::where('school_id', $this->schoolB->id)->value('id'),
+            'user_id' => $this->studentB->id,
+            'amount' => 50000,
+            'paid_on' => now()->toDateString(),
+            'payment_method' => 'cash',
+            'status' => 'paid',
+            'recorded_by' => $this->studentB->id,
+        ]);
+
+        $result = $this->portal->feeBalance($this->parent, null, $this->studentB->id);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame(50000.0, (float) $result['data']['total_paid']);
+        $this->assertSame(200000.0, (float) $result['data']['total_balance']);
+    }
+
     public function test_fee_balance_for_school_b_child_uses_school_b_fee_categories(): void
     {
         $result = $this->portal->feeBalance($this->parent, 'Child Beta');

@@ -191,8 +191,9 @@ class ParentPortalService
         }
 
         $totalFees = (float) $categories->sum('amount');
+        // fee_payments.user_id is the student user id (see FeePayment::student()).
         $totalPaid = (float) FeePayment::where('school_id', $schoolId)
-            ->where('student_id', $student->id)
+            ->where('user_id', $student->id)
             ->sum('amount');
         $totalBalance = max(0, $totalFees - $totalPaid);
 
