@@ -955,8 +955,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `tests/Feature/Onboarding/OnboardingEngineParityTest.php`, `docs/onboarding-engine-plan.md`, `knowledge.md`, `app/Livewire/AgentToshi.php` (student draft pass-through for board_reg / school_student_id — required for B).
 - **Key decisions**: Keep wizard private `save*` as thin adapters. Clear `toshi_state` before Toshi commit so session-restored `curriculumDefaults()` (`Primary 1`) cannot override seeder (`Primary One`). Exclude globally-unique `ministry_code` / school name from equality. Skip live-verify (no intentional runtime product change beyond board_reg pass-through).
 - **Tests**: `php artisan test --compact tests/Feature/Onboarding/OnboardingEngineParityTest.php` — **2 passed (18 assertions)**.
-- **Status**: ✅ 1D-a complete locally (not pushed unless requested).
-- **Edge cases flagged**: Skipping wizard teachers via `next()` also skips students (optional-step advance); B uses `goToStep('students')`. 1D-b still needed for `persistSelectedPlan` / `curriculumDefaults` / exams / `$mandatorySteps`.
+- **Status**: 🚧 Shipping — PR opening (parity + board-reg pass-through); live-verify required for the Toshi fix after deploy.
+- **Edge cases flagged**: Skipping wizard teachers via `next()` also skips students (optional-step advance); B uses `goToStep('students')`. 1D-b still needed for `persistSelectedPlan` / `curriculumDefaults` / exams / `$mandatorySteps`. Toshi student form still has no board_reg UI — live verify injects onto `actionData` after `saveStudent` (same commit path as the bug).
 
 ### 2026-08-29: Remaining password gaps — CreateParent / AddAlumni / satellites (DEPLOYED + LIVE-VERIFIED)
 
