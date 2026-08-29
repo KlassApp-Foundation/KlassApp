@@ -336,7 +336,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 (`origin/main` / prod tip `a34f8ab5` — **DEPLOYED + LIVE-VERIFIED** CT report cards)
+## Current Status: August 29, 2026 (`origin/main` tip `a346b20b` — **UI Review Demo School live on prod**)
+
+- **Persistent test school** **id 124** — **UI Review Demo School** (`primary_nursery`, Uganda/UNEB). Keep active (no teardown).
+- Provisioned via `php artisan schools:setup-ui-review-demo` (`SchoolSignupBootstrapService` + `OnboardingEngine` + exams/parent link). Command on `main` @ `a346b20b`.
+- **4 logins** (password `UiReview2026!`): admin / classteacher / subjectteacher / parent `@uireview.klassapp.demo` — smoke login PASS on klassapp.xyz. Parent WhatsApp phone `256700119922`; magic-link `canIssueLink` + issue verified true.
+- **Prior**: CT report cards #393/#394 @ `a150f7a2` / deploy tip `a34f8ab5`.
+
+## Previous: August 29, 2026 (`origin/main` / prod tip `a34f8ab5` — **DEPLOYED + LIVE-VERIFIED** CT report cards)
 
 - **✅ Merged [#393](https://github.com/KlassApp-Foundation/KlassApp/pull/393)** → `0c0b9c9b` — shared `StudentReportCardService` (PR-A extract).
 - **✅ Merged [#394](https://github.com/KlassApp-Foundation/KlassApp/pull/394)** → `783b067c` — teacher `/teacher/reports/cards` (PR-B).
@@ -987,6 +994,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-29: Persistent UI Review Demo School (school 124)
+
+- **Work done**: Added `schools:setup-ui-review-demo` Artisan command; ran on prod. School **124** “UI Review Demo School” — Uganda/UNEB, `primary_nursery`, 3 terms, P.7 + P.1 students, fees, 4 EOT exams with marks, CT on Primary Seven, subject teacher on Math, parent linked with password + WhatsApp magic-link ready (`256700119922`). All four logins smoke-tested on klassapp.xyz.
+- **Files modified**: `app/Console/Commands/SetupUiReviewDemoSchool.php`, `knowledge.md`.
+- **Key decisions**: Use signup bootstrap + OnboardingEngine (not ad-hoc row inserts for structure); keep school permanent (no teardown); shared password for review convenience; `is_reset=0` so logins are not blocked by forced reset.
+- **Status**: ✅ Live on prod; re-runnable via `php artisan schools:setup-ui-review-demo --force`.
+- **Edge cases flagged**: Category seeder attaches tier subjects to first section only — command also creates section-scoped English/Math on P.7 and P.1 for report-card realism.
 
 ### 2026-08-29: Class-teacher report cards — PR-A extract + PR-B teacher surface
 
