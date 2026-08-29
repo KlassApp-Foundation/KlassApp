@@ -961,6 +961,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-29: PR-A — Class-teacher additive exam custodian (auth + marks)
+
+- **Work done**: `ExamAuthorization::canActOnExam()` / `isClassTeacherForExam` / `sectionIdsForClassTeacher`. Wired MarksController: list, save, update, toggle, enter, view, editMark, combinedMarksheet. `updateMark` keys marks without actor `teacher_id` so CT updates same row. Live-verify harness `scripts/live-verify-ct-custodian.mjs`.
+- **Files modified**: `app/Services/ExamAuthorization.php`, `app/Http/Controllers/Teacher/MarksController.php`, `tests/Feature/Teacher/ClassTeacherExamCustodianTest.php`, `scripts/live-verify-ct-custodian.mjs`, `knowledge.md`.
+- **Key decisions**: Additive only; no CT lock bypass; no create UI (PR-B).
+- **Tests**: ClassTeacherExamCustodian + TeacherExamMarksAuthorization + MarksToggleStatusCrossSchool + CombinedMarksheetExport — **24 passed**.
+- **Status**: 🚧 Shipping PR-A.
+- **Edge cases flagged**: List view termMap still assumes "First Term" names (pre-existing); live verify uses First Term.
+
 ### 2026-08-29: Class-teacher custodian exams/marks — investigation + scoped plan (NOT implemented)
 
 - **Work done**: Traced `exams` model (single `teacher_id` + `subject_id` per row), admin create UI, MarksController auth, prod shape (multi-subject = multi-exam rows). Proposed additive custodian model + 3-PR sequence.
