@@ -336,7 +336,13 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 (`origin/main` / prod tip `75697f59` — **DEPLOYED + LIVE-VERIFIED** PR-A CT custodian)
+## Current Status: August 29, 2026 — PR-B teacher exam create (shipping)
+
+- **PR-B**: Teacher-facing `/teacher/exam/create|store|edit|update|destroy` — class-scoped via `ExamAuthorization::canCreateExamForSection` / `canActOnExam`. Default `teacher_id` from Teacherlink. Admin `/admin/exams` unchanged.
+- **Tests**: `ClassTeacherExamCreateTest` (CT create / forbidden other class / assignee list / admin regression / non-CT forbidden).
+- **Prior**: PR-A [#390](https://github.com/KlassApp-Foundation/KlassApp/pull/390) live-verified @ `75697f59` (+ docs tip `2a2be17e`).
+
+## Previous: August 29, 2026 (`origin/main` / prod tip `75697f59` — **DEPLOYED + LIVE-VERIFIED** PR-A CT custodian)
 
 - **✅ Merged [#390](https://github.com/KlassApp-Foundation/KlassApp/pull/390)** → merge `75697f59` (`feat/ct-exam-custodian-pr-a`).
 - **✅ Deployed** via `scripts/deploy-manual.sh` — prod has `ExamAuthorization.php` + MarksController wiring @ `75697f59`.
@@ -962,6 +968,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-29: PR-B — Teacher-facing class-scoped exam create/edit
+
+- **Work done**: `Teacher\ExamController` + `StoreTeacherExamRequest` / `UpdateTeacherExamRequest`; routes under `/teacher/exam/*`; form view; Create Exam CTA on marks list for CTs; `ExamAuthorization::canCreateExamForSection` / `defaultTeacherIdForSubject`; activity log on create/reassign/delete. Live-verify harness `scripts/live-verify-ct-exam-create.mjs`.
+- **Files modified**: `app/Services/ExamAuthorization.php`, `app/Http/Controllers/Teacher/ExamController.php`, `app/Http/Controllers/Teacher/MarksController.php`, `app/Http/Requests/Teacher/*`, `routes/teacher.php`, `resources/views/teacher/exams/form.blade.php`, `resources/views/teacher/marks/teacher-exam-list.blade.php`, `tests/Feature/Teacher/ClassTeacherExamCreateTest.php`, `scripts/live-verify-ct-exam-create.mjs`, `knowledge.md`.
+- **Key decisions**: Auth via same helper family as PR-A (no second path); Teacherlink default assignee with CT override; admin create untouched; no lock bypass.
+- **Tests**: ClassTeacherExamCreate + ClassTeacherExamCustodian + CreateExamSchoolIdValidation — **18 passed**.
+- **Status**: 🚧 Shipping PR-B.
+- **Edge cases flagged**: Subject accessor uppercases names in list assertions; submitted/done exams blocked from teacher delete.
 
 ### 2026-08-29: PR-A — Class-teacher additive exam custodian (auth + marks)
 

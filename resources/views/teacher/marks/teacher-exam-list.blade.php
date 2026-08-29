@@ -2,14 +2,20 @@
 
 @section('content')
     <div class="container-fluid w-full lg:mx-2">
-        <div class="mb-8">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Exams</h1>
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Exams assigned to you - enter or update student marks
-            </p>
-              {{-- Flash Success Message --}}
-                 @include('partials.message')
-             <!-- Page Header -->
+        <div class="mb-8 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Exams</h1>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Exams assigned to you - enter or update student marks
+                </p>
+            </div>
+            @if (!empty($canCreateExams))
+                <a href="{{ route('teacher.exams.create') }}"
+                   class="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium">
+                    Create Exam
+                </a>
+            @endif
+            @include('partials.message')
         </div>
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
@@ -79,7 +85,11 @@
                                    </form>
                                     </div>
                                 </div>
-                                <div class="flex gap-3">
+                                <div class="flex gap-3 flex-wrap">
+                                    <a href="{{ route('teacher.exams.edit', $exam) }}"
+                                       class="py-2 px-4 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">
+                                        Edit Exam
+                                    </a>
                                     <a href="{{ route('teacher.exam.marks.enter', $exam) }}"
                                        class="py-2 px-4 rounded text-white bg-green-500 hover:bg-green-600 text-sm">
                                         Enter / Edit Marks

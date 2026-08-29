@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Academics\Exam;
 use App\Models\Section;
 use App\Models\StandardLink;
+use App\Models\Teacherlink;
 use App\Models\User;
 
 /**
@@ -99,5 +100,51 @@ class ExamAuthorization
         if (! $this->canActOnExam($actor, $exam)) {
             abort(403, $message);
         }
+    }
+
+    /**
+     * Class teachers may create exams only for sections they custodian.
+     */
+    public function canCreateExamForSection(User $actor, int $schoolId, int $academicYearId, int $sectionId): bool
+    {
+        $allowed = $this->sectionIdsForClassTeacher($actor, $schoolId, $academicYearId);
+
+        return in_array($sectionId, $allowed, true);
+    }
+
+    public function authorizeCreateOrAbort(
+        User $actor,
+        int $schoolId,
+        int $academicYearId,
+        int $sectionId,
+        string $message = 'You are not the class teacher for this class.'
+    ): void {
+        if (! $this->canCreateExamForSection($actor, $schoolId, $academicYearId, $sectionId)) {
+            abort(403, $message);
+        }
+    }
+
+    /**
+     * Default assignee: Teacherlink for subject+stream, else the actor.
+     */
+    public function defaultTeacherIdForSubject(
+        int $schoolId,
+        int $academicYearId,
+        int $sectionId,
+        int $subjectId,
+        User $fallback
+    ): int {
+        $linkTeacherId = Teacherlink::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', $academicYearId)
+            ->where('subject_id', $subjectId)
+            ->whereHas('standardLink', function ($q) use ($schoolId, $academicYearId, $sectionId) {
+                $q->where('school_id', $schoolId)
+                    ->where('academic_year_id', $academicYearId)
+                    ->where('section_id', $sectionId);
+            })
+            ->value('teacher_id');
+
+        return $linkTeacherId ? (int) $linkTeacherId : (int) $fallback->id;
     }
 }
