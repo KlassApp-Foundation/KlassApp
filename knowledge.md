@@ -336,11 +336,23 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 (`origin/main` / prod tip `db79c4a4` — **DEPLOYED + LIVE-VERIFIED** Phase 1D-a)
+## Current Status: August 29, 2026 — PR-A class-teacher custodian (shipping)
 
-- **✅ Prod tip**: **`db79c4a4`** (assets after merge `d8ef2620` / [#389](https://github.com/KlassApp-Foundation/KlassApp/pull/389)) @ 2026-08-29 via `scripts/deploy-manual.sh`.
-- **Part 1 (parity + docs)**: `OnboardingEngineParityTest` scenarios A+B; plan §4.4 corrected — zero product behavior; no live verify needed.
-- **Part 2 (real bug fix)**: `AgentToshi` commitAll pass-through of `board_registration_number` + `school_student_id` — **LIVE-VERIFIED** on school **117**: Primary Seven student persisted `U9876/543` + `SCH-LIVE-P7-001`. Artifact: `tmp/live-verify-toshi-board-reg/REPORT.json`. Test school flagged `status=0`.
+- **PR-A**: Additive `ExamAuthorization::canActOnExam()` wired to MarksController list/save/update/toggle/enter/view + combined marksheet. No teacher create UI (PR-B later).
+- **Tests**: `ClassTeacherExamCustodianTest` + existing marks auth suite.
+- **Prior**: Role audit; 1D-a #389 shipped.
+
+## Previous: August 29, 2026 — Class-teacher custodian exams/marks **SCOPED (not built)**
+
+- Design: additive class-wide custodian approved. PR-A auth-first.
+
+## Previous: August 29, 2026 — Role-functionality audit complete (read-only); prod tip still `db79c4a4` / docs tip `75f9a785`
+
+- Exam create = admin-only; marks save was `exam.teacher_id` only (superseded by PR-A when merged).
+
+## Previous: August 29, 2026 (`origin/main` / prod tip `db79c4a4` — **DEPLOYED + LIVE-VERIFIED** Phase 1D-a)
+
+- **✅ Prod tip**: **`db79c4a4`** (assets after merge `d8ef2620` / [#389](https://github.com/KlassApp-Foundation/KlassApp/pull/389)).
 - **Still open (not 1D-a)**: `curriculumDefaults` / exams / `$mandatorySteps`; `persistSelectedPlan`→`savePlan` (1D-b).
 
 ## Previous: August 29, 2026 (`origin/main` tip `79e4b147` — **DEPLOYED** remaining demo-password gaps closed)
@@ -948,6 +960,43 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-29: PR-A — Class-teacher additive exam custodian (auth + marks)
+
+- **Work done**: `ExamAuthorization::canActOnExam()` / `isClassTeacherForExam` / `sectionIdsForClassTeacher`. Wired MarksController: list, save, update, toggle, enter, view, editMark, combinedMarksheet. `updateMark` keys marks without actor `teacher_id` so CT updates same row. Live-verify harness `scripts/live-verify-ct-custodian.mjs`.
+- **Files modified**: `app/Services/ExamAuthorization.php`, `app/Http/Controllers/Teacher/MarksController.php`, `tests/Feature/Teacher/ClassTeacherExamCustodianTest.php`, `scripts/live-verify-ct-custodian.mjs`, `knowledge.md`.
+- **Key decisions**: Additive only; no CT lock bypass; no create UI (PR-B).
+- **Tests**: ClassTeacherExamCustodian + TeacherExamMarksAuthorization + MarksToggleStatusCrossSchool + CombinedMarksheetExport — **24 passed**.
+- **Status**: 🚧 Shipping PR-A.
+- **Edge cases flagged**: List view termMap still assumes "First Term" names (pre-existing); live verify uses First Term.
+
+### 2026-08-29: Class-teacher custodian exams/marks — investigation + scoped plan (NOT implemented)
+
+- **Work done**: Traced `exams` model (single `teacher_id` + `subject_id` per row), admin create UI, MarksController auth, prod shape (multi-subject = multi-exam rows). Proposed additive custodian model + 3-PR sequence.
+- **Files modified**: `knowledge.md` only.
+- **Key decisions (proposed, awaiting Rasta approval)**:
+  1. Custodian = class-scoped **OR** with existing `teacher_id` check — never replace subject-teacher access.
+  2. Reject “only exams CT created” — breaks oversight of admin-created / subject-teacher exams.
+  3. Class scope = `standards_link.class_teacher_id` for exam’s `section_id`+`academic_year_id` (+ school), fallback `sections.class_teacher_id`.
+  4. PR-A auth+marks list/save; PR-B teacher create/edit UI; PR-C polish/live-verify — do not ship create UI before auth helper.
+- **Status**: ⏸️ Awaiting design approval before implementation.
+- **Edge cases flagged**: Import quirk — some `marks` rows have `subject_id ≠ exam.subject_id`; normal save path always writes `exam.subject_id`. CT create should default `teacher_id` from Teacherlink for subject when present.
+
+### 2026-08-29: Full role-functionality audit (read-only — UI migration prerequisite)
+
+- **Work done**: Traced usergroups (prod), middleware, exam/marks auth, roster portal, parent portal, co-admin vs SchoolSubadmin. Built capability matrix for 5 school-facing roles.
+- **Files modified**: `knowledge.md` only (this log). No product code.
+- **Key findings**:
+  1. **Product co-admin** (Toshi invite) creates/promotes to **usergroup_id=3** — same middleware/UI as primary SchoolAdmin. Not ug4.
+  2. **SchoolSubadmin ug4**: middleware + `/subadmin/dashboard` exist; **0 prod users**; `MustBeSchoolAdmin` does **not** allow ug4 → `/admin/*` returns 404. July-10 "reuse admin UI" claim is stale vs current code.
+  3. **Class teacher** is assignment (`standards_link.class_teacher_id` / `sections.class_teacher_id`) + optional `teacher_designations` JSON (`student_leave_checker`) — **same usergroup 5** as subject teachers. Not a separate permission role for exams/marks.
+  4. **Exams**: create/edit only under `/admin/exams*` (`schooladmin`). Teachers cannot create exams.
+  5. **Marks save/update/toggle**: require `exam.school_id` + `exam.teacher_id === auth.id`. Class-teacher assignment alone does not authorize. Prod class teachers (4) currently have **0** exams as `teacher_id`.
+  6. **Roster** `/admin/classes` + `/teacher/classes`: Livewire read-only; teacher sidebar still prefers legacy `/teacher/standardLinks` (school-wide list, Gate only school_id).
+  7. **Teacher web attendance** loads **all** school StandardLinks via `SiteHelper::getStandardLinkList` — not class-teacher scoped (API path does scope by `class_teacher_id`).
+  8. **Parent web portal** routes live (`parent` middleware ug7); prod has **0 active** ug7 users (17 soft-deleted); WhatsApp parent path separate.
+- **Status**: ✅ Audit complete (reference for UI migration scoping).
+- **Edge cases flagged**: `enterExamMarks` GET lacks `teacher_id` check (save does); Gate `exam` is school-only and unused by MarksController; LoginController `redirectTo` sends ug5 through `/admin/dashboard` then middleware bounce to teacher.
 
 ### 2026-08-29: Phase 1D-a — OnboardingEngineParityTest + Toshi board-reg pass-through (DEPLOYED + LIVE-VERIFIED)
 
