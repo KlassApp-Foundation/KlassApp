@@ -336,12 +336,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 (`origin/main` tip `91ea5d27` — UI Review Demo School live; password-gap audit paused)
+## Current Status: August 30, 2026 (`origin/main` tip `56b576ee` — Toshi addParent provisioning **DEPLOYED**; school **124** UI shakedown **complete**)
 
-- **Persistent test school** **id 124** — **UI Review Demo School** (`primary_nursery`, Uganda/UNEB). Keep active (no teardown).
+- **Persistent test school** **id 124** — **UI Review Demo School** (`primary_nursery`, Uganda/UNEB). Keep active (no teardown). Enriched by UI shakedown: **10** students, **5** exams (4 EOT + 1 MID), **4** attendance, **3** fee payments, WhatsApp + Growth plan done.
 - Provisioned via `php artisan schools:setup-ui-review-demo`. Logins: `*@uireview.klassapp.demo` / `UiReview2026!` (admin, CT, subject teacher, parent).
-- **Password security (fresh re-audit 2026-08-29 evening)**: the five paths flagged earlier (AdmissionUser, TeacherLinkImport, EnrollStudents, `RegisterUser::CreateParent`, `AddAlumni`) are **already fixed** on `main` + prod (`79e4b147` / `UserProvisioning`). **Toshi `addParent` gap fixed locally** (`UserProvisioning::randomPasswordAttributes()` + `is_reset`); test `AddParentProvisioningTest` passes; prod live-verify on school **124** PASS (`demo_password=false`, `is_reset=1`, `addParent` grep `Hash::make('password')`=0) after hot-copying `ToshiActionService.php` to container — **not yet on `origin/main` / git-deployed**. Still open separately: `is_reset` web-login enforcement (UX). Out of scope: `LiveAdversarialRunner`, test factories/seeders, alumni portal.
-- **Prior**: CT report cards #393/#394; tip history includes `a346b20b` (command) / `a150f7a2` (docs).
+- **✅ School 124 shakedown** (`scripts/live-shakedown-school-124.mjs`): fees, attendance, CT MID exam create, subject marks, parent APIs **PASS**. **BUG**: report card PDF crashes when MID exam has null `scheduled_at` (`StudentReportCardService` ~L173). Toshi add-student/create-subject flows **not verified** via automation.
+- **✅ Merged [#395](https://github.com/KlassApp-Foundation/KlassApp/pull/395)** → merge `56b576ee` — Toshi `addParent` uses `UserProvisioning::randomPasswordAttributes()` + `is_reset=1`.
+- **Password security**: all six admin-creation paths on `UserProvisioning` on `main` + prod. Still open: `is_reset` web-login enforcement (UX).
+- **Prior**: CT report cards #393/#394; landing OSS mockup v3 (design-review only).
 
 ## Previous: August 29, 2026 (`origin/main` / prod tip `a34f8ab5` — **DEPLOYED + LIVE-VERIFIED** CT report cards)
 
@@ -995,14 +997,70 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-08-30: Toshi `addParent` password provisioning fix (local + prod live-verify; not git-deployed)
+### 2026-08-30: Report card MID `scheduled_at` null crash — fix + live-verify (school 124)
 
-- **Work done**: Replaced `Hash::make('password')` in `ToshiActionService::addParent()` with `UserProvisioning::randomPasswordAttributes()` (`password` + `is_reset=1`), matching admin co-admin / RegisterUser pattern. Added `tests/Feature/Toshi/AddParentProvisioningTest.php` — asserts `Hash::check('password')` false and `is_reset === 1` via returned `parent_id`.
+- **Investigation**: `scheduled_at` is **intentionally nullable** (`StoreTeacherExamRequest`, `CreateExamRequest`, `Exam` model — calendar events only when set). `CombinedMarksheetExport` already handles null. Correct fix = **null-safe report rendering**, not requiring date on create (schools may omit it).
+- **Fix**: `StudentReportCardService::midExamControlColumnLabel()` / `midExamMonthRowLabel()`; wired through service, `DownloadStudentReport`, `GetStudentsMarks`, and report Blade templates (formal/warm/modern/student-report).
+- **Tests**: `tests/Feature/Reports/MidExamNullScheduledAtReportTest.php` — MID null `scheduled_at` + EOT marks → `%PDF`; label helper unit cases; `AdminReportCardExtractionTest` still passes — **7 passed (22 assertions)** total with new file.
+- **Live verify (school 124, Amina 3736)**: pre-fix prod tinker `ERR: Call to a member function format() on null`; post-fix `bytes=670262 header=%PDF`; CT download HTTP **200** `application/pdf` **670262B** `%PDF`.
+- **Files modified**: `app/Services/StudentReportCardService.php`, `app/Http/Controllers/Admin/DownloadStudentReport.php`, `app/Http/Controllers/Admin/GetStudentsMarks.php`, report Blade templates, `tests/Feature/Reports/MidExamNullScheduledAtReportTest.php`, `knowledge.md`.
+- **Status**: 🚧 Fix **implemented + tested + live-verified** on prod via hot-copy (not yet merged/deployed from git — next `deploy-manual.sh` will overwrite unless committed/pushed).
+- **Wizard append (read-only)**: Separate admin paths exist for post-onboarding adds — see session entry below / user report.
+
+### 2026-08-30: School 124 comprehensive UI shakedown (pre–UI-migration)
+
+- **Purpose**: Exercise real UI/UX paths on persistent **UI Review Demo School** (id **124**) — onboarding wizard + Toshi chat data entry; MID+EOT exams, attendance, fees, report cards (CT vs admin), parent portal. Report PASS/FAIL/BUG honestly; do not tear down school 124.
+- **Harness**: `scripts/live-shakedown-school-124.mjs` (Playwright + SSH tinker). Artifacts under `tmp/live-shakedown-school-124/{stamp}/`. Env `START_AT=purpose2b|purpose2c` to resume mid-run.
+- **Logins**: `*@uireview.klassapp.demo` / `UiReview2026!` — admin **3733**, CT **3734**, subject teacher **3735**, parent **3738**, P7 student Amina **3736**, `StandardLink` **174** (Primary Seven).
+- **Prod state after shakedown** (not reset): **10** students (duplicate wizard-run names), **6** subjects, **5** exams (**4× EOT + 1× MID** exam **54**), **4** attendance rows, **3** fee payments, WhatsApp verified, Growth plan selected.
+
+#### Purpose 1 — Onboarding
+
+| Step | Result | Notes |
+|------|--------|-------|
+| Wizard loads | **PASS** | School 124 lands on **whatsapp_verify** + **plan_selection** (not optional — blocks review until done). |
+| Wizard WhatsApp + plan | **PASS** | `+256700119900`, Growth plan → review screen reachable. |
+| Wizard add students (review → Edit) | **PASS** (partial) | Students **2→10** across runs; one run only **+2 of 3** saved. |
+| Wizard add classes/subjects/terms/fees | **LIMITATION** | `ManualOnboardingWizard::saveClass()` (and saveSubject/saveTerm/saveFee) **no-op when data exists** — cannot expand structure on already-seeded school 124. |
+| Toshi add student (`/agent` assistant) | **FAIL** | Student count unchanged after chat flow (headless automation; panel showed “Completing Setup” until wizard finished WhatsApp/plan). |
+| Toshi create subject via assign-teacher | **FAIL** | Subject count unchanged after flow. |
+
+#### Purpose 2 — Day-to-day operations
+
+| Step | Result | Notes |
+|------|--------|-------|
+| Admin fee payment UI | **PASS** | `/admin/fees/payments/create` — payments **0→3** across runs. |
+| Admin attendance UI | **PASS** | Fixed harness: target Vue `select.tw-form-control` with P7 `standardLink_id`, not layout academic-year select. **0→4** rows. |
+| CT attendance UI | **PASS** | Same form path under `/teacher/attendance/add`. |
+| CT create MID exam (PR-B) | **PASS** | Exam **54** created; assigned to subject teacher **3735**. |
+| Subject teacher sees + enters marks | **PASS** | Listed exam **54**; **8** mark inputs filled. |
+| CT report card PDF download | **BUG** | Returns **HTML** (redirect `back()`), not PDF. Tinker: `pdfForStudent()` throws **`Call to a member function format() on null`** — `StudentReportCardService` line **173** assumes `$ex->scheduled_at` on MID exams; CT-created exam **54** has **null** `scheduled_at`. |
+| Admin report preview vs CT | **FAIL** | Both HTML; md5 mismatch expected when generation fails. Only Amina (**3736**) has EOT marks; other P7 students have **no marks** → “no marks for report exam” path. |
+| Parent dashboard | **PASS** | Loads with `?child=3736`. |
+| Parent fees/grades/attendance API | **PASS** | JSON endpoints return `success:true` (attendance: present **1**, absent **0**). |
+| Parent dashboard `data-testid` panels | **TEST GAP** | `<x-card data-testid="...">` does **not** forward attribute to DOM (`resources/views/components/card.blade.php`) — panels render but testids missing. |
+
+#### Bugs filed (fix separately)
+
+1. **Report card PDF crash when MID exam lacks `scheduled_at`** — `StudentReportCardService::generatePdf()` ~L173: null-safe `scheduled_at` or default label (e.g. `MID`) before `format()`.
+2. **Toshi assistant add-student / assign-teacher-create-subject** — not verified working via UI automation; needs manual repro or better harness waits.
+3. **Wizard cannot mutate existing onboarding data** — by design early-return; document for review schools or add “append mode”.
+
+- **Files modified**: `scripts/live-shakedown-school-124.mjs`, `knowledge.md`.
+- **Status**: ✅ Shakedown **complete** (report only — no prod code fixes this session). School **124** kept active with enriched data.
+- **Edge cases**: Duplicate student names from repeated wizard runs (David/Sarah/Joel + stamp suffixes); flag `inactive` if cleaning, never delete. Re-run full harness: `node scripts/live-shakedown-school-124.mjs` (or `START_AT=purpose2c` for ops-only).
+
+### 2026-08-30: Toshi `addParent` password provisioning — **MERGED + DEPLOYED + LIVE-VERIFIED**
+
+- **Work done**: Replaced `Hash::make('password')` in `ToshiActionService::addParent()` with `UserProvisioning::randomPasswordAttributes()` (`password` + `is_reset=1`). Added `tests/Feature/Toshi/AddParentProvisioningTest.php`.
+- **PR**: [#395](https://github.com/KlassApp-Foundation/KlassApp/pull/395) — branch `fix/toshi-add-parent-provisioning`.
+- **Merge**: `56b576ee99194ae5f7b3ac48a743d8f5b5775aa3` (feature commit `6bff8350`).
 - **Files modified**: `app/Services/ToshiActionService.php`, `tests/Feature/Toshi/AddParentProvisioningTest.php`, `knowledge.md`.
 - **Test**: `php artisan test --compact tests/Feature/Toshi/AddParentProvisioningTest.php` — **1 passed (6 assertions)**.
-- **Live verify (prod)**: School **124** admin id **3733** → `ToshiActionService::addParent()` → parent id **3739**: `demo_password=false`, `is_reset=1`, `usergroup_id=7`; test row cleaned up. Container grep inside `addParent` method: `Hash::make('password')` **0** matches; `UserProvisioning::randomPasswordAttributes()` present. Fix applied to container via `docker cp` of local file (prod git tip still pre-fix until commit/deploy).
-- **Status**: ✅ Done locally + live-verified on container; ⏸️ awaiting commit/deploy to `origin/main` for persistent prod.
-- **Edge cases flagged**: `users.name` is normalized on save (observer/slug logic) — test must use `parent_id` from result, not exact name string. Next (separate prompt): fill school 124 with comprehensive data for onboarding + full-app exercise; independent-agent functionality test deferred.
+- **Deploy**: `scripts/deploy-manual.sh` — **complete** (first attempt blocked by hot-copy drift on server; `git checkout -- app/Services/ToshiActionService.php` + pull, then full deploy succeeded). Prod host git: `56b576ee`; container/host `ToshiActionService.php` **same md5** (`358717f27916588fed73ff6fc4763946`).
+- **Live verify (post-deploy, git code)**: School **124** admin **3733** → `ToshiActionService::addParent()` → parent **3740**: `demo_password=false`, `is_reset=1`; row cleaned up. `addParent` method grep: `UserProvisioning::randomPasswordAttributes()` present; `Hash::make('password')` **0**.
+- **Status**: ✅ **MERGED + DEPLOYED + LIVE-VERIFIED** on `origin/main` @ `56b576ee`.
+- **Edge cases flagged**: Test must assert via `parent_id` (name normalized on save). Next (separate prompt): comprehensive school **124** data for onboarding + full-app exercise; independent-agent functionality test deferred.
 
 ### 2026-08-29: Landing mockup — Open Source section → Q1 2027 (design-review only)
 
@@ -1017,7 +1075,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 - **Work done**: Fresh local + prod container verification (do not trust prior session memory). Grepped `bcrypt('password')` / `Hash::make('password')` / `UserProvisioning` on AdmissionUser, TeacherLinkImportController, EnrollStudents, RegisterUser (CreateParent + AddAlumni). All five use `UserProvisioning::randomPasswordAttributes()` locally and in prod container (`TIP` had the fix; `app/` scan for those hardcodes on the four files = UserProvisioning only). Re-ran `RegisterUserProvisioningTest` + `SatellitePasswordProvisioningTest` — **8 passed**. Existing live harness `scripts/live-verify-password-gaps.mjs` already documented PASS at `79e4b147`.
 - **CreateParent vs WhatsApp**: confirmed separate — admin `RegisterUser::CreateParent` is fixed; `ParentLinkService` uses `bcrypt(Str::random(12))` (random, not demo; optional polish = align to UserProvisioning + `is_reset=1`).
-- **Genuinely still broken (product)**: `app/Services/ToshiActionService.php` `addParent()` ~L1372 — `Hash::make('password')`, no `is_reset`. Same class already uses UserProvisioning for teacher/student helpers.
+- **Genuinely still broken (product)**: ~~`ToshiActionService::addParent()`~~ **fixed** — see 2026-08-30 session (#395 / `56b576ee`).
 - **Out of scope this pass**: `is_reset` forced password-change on web login (no Auth/Middleware reads the flag today); `LiveAdversarialRunner` fixture; test/factory/seeder demo passwords; alumni portal.
 - **Proposed next PR (not started)**: fix `addParent` only with UserProvisioning + test + live-verify; leave the five already-fixed files alone.
 - **Files modified**: `knowledge.md` only (this entry).
