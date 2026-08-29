@@ -340,7 +340,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 - **Persistent test school** **id 124** — **UI Review Demo School** (`primary_nursery`, Uganda/UNEB). Keep active (no teardown).
 - Provisioned via `php artisan schools:setup-ui-review-demo`. Logins: `*@uireview.klassapp.demo` / `UiReview2026!` (admin, CT, subject teacher, parent).
-- **Password security (fresh re-audit 2026-08-29 evening)**: the five paths flagged earlier (AdmissionUser, TeacherLinkImport, EnrollStudents, `RegisterUser::CreateParent`, `AddAlumni`) are **already fixed** on `main` + prod (`79e4b147` / `UserProvisioning`). **One remaining product gap:** `ToshiActionService::addParent()` still `Hash::make('password')` (~L1372), no `is_reset`. Plan approved in chat; **not implemented yet — paused**. Still open separately: `is_reset` web-login enforcement (UX). Out of scope: `LiveAdversarialRunner`, test factories/seeders, alumni portal.
+- **Password security (fresh re-audit 2026-08-29 evening)**: the five paths flagged earlier (AdmissionUser, TeacherLinkImport, EnrollStudents, `RegisterUser::CreateParent`, `AddAlumni`) are **already fixed** on `main` + prod (`79e4b147` / `UserProvisioning`). **Toshi `addParent` gap fixed locally** (`UserProvisioning::randomPasswordAttributes()` + `is_reset`); test `AddParentProvisioningTest` passes; prod live-verify on school **124** PASS (`demo_password=false`, `is_reset=1`, `addParent` grep `Hash::make('password')`=0) after hot-copying `ToshiActionService.php` to container — **not yet on `origin/main` / git-deployed**. Still open separately: `is_reset` web-login enforcement (UX). Out of scope: `LiveAdversarialRunner`, test factories/seeders, alumni portal.
 - **Prior**: CT report cards #393/#394; tip history includes `a346b20b` (command) / `a150f7a2` (docs).
 
 ## Previous: August 29, 2026 (`origin/main` / prod tip `a34f8ab5` — **DEPLOYED + LIVE-VERIFIED** CT report cards)
@@ -995,7 +995,25 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-08-29: Password-gap re-audit — flagged paths already fixed; Toshi addParent still open (PAUSED)
+### 2026-08-30: Toshi `addParent` password provisioning fix (local + prod live-verify; not git-deployed)
+
+- **Work done**: Replaced `Hash::make('password')` in `ToshiActionService::addParent()` with `UserProvisioning::randomPasswordAttributes()` (`password` + `is_reset=1`), matching admin co-admin / RegisterUser pattern. Added `tests/Feature/Toshi/AddParentProvisioningTest.php` — asserts `Hash::check('password')` false and `is_reset === 1` via returned `parent_id`.
+- **Files modified**: `app/Services/ToshiActionService.php`, `tests/Feature/Toshi/AddParentProvisioningTest.php`, `knowledge.md`.
+- **Test**: `php artisan test --compact tests/Feature/Toshi/AddParentProvisioningTest.php` — **1 passed (6 assertions)**.
+- **Live verify (prod)**: School **124** admin id **3733** → `ToshiActionService::addParent()` → parent id **3739**: `demo_password=false`, `is_reset=1`, `usergroup_id=7`; test row cleaned up. Container grep inside `addParent` method: `Hash::make('password')` **0** matches; `UserProvisioning::randomPasswordAttributes()` present. Fix applied to container via `docker cp` of local file (prod git tip still pre-fix until commit/deploy).
+- **Status**: ✅ Done locally + live-verified on container; ⏸️ awaiting commit/deploy to `origin/main` for persistent prod.
+- **Edge cases flagged**: `users.name` is normalized on save (observer/slug logic) — test must use `parent_id` from result, not exact name string. Next (separate prompt): fill school 124 with comprehensive data for onboarding + full-app exercise; independent-agent functionality test deferred.
+
+### 2026-08-29: Landing mockup — Open Source section → Q1 2027 (design-review only)
+
+- **Work done**: Factual GitHub check of `KlassApp-Foundation/KlassApp` (public now; 1 star / 0 forks; MIT LICENSE text; no CONTRIBUTING/GOVERNANCE; full app = local `main`, not a scaffold). Open Design daemon used with **`agentId: cursor-agent`** / **`model: auto`** (not opencode/deepseek — China opt-in blocked flash). Rewrote Open Source positioning on the landing mockup from “live GitHub / star now” to a forward-looking **Q1 2027** commitment (security review before public source + self-hosting; MIT badge kept; Get notified email form; no star count / Star on GitHub).
+- **Confirmed product facts used for copy**: Repo is public *now* but will go private before go-live for security audit; source + self-hosting reopen **Q1 2027**; MIT license itself is real and independent of visibility; until then no public browse / self-host / star-count CTA.
+- **Files modified (Open Design project only — not KlassApp Blade)**: `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3.html` (full page restored + OSS rewrite). Note: prior tip `klassapp-landing-v3.html` had been incomplete (hero-only); complete body source was `klassapp-landing-v2.html` / `index.html`.
+- **Key decisions**: Design-review mockup only — **do not** port to `resources/views/landing.blade.php` or `/landing-preview` until human review. Nav “Open Source” stays `#open-source`. Protocol pillar “MCP Compatible” untouched. Open Source pillar + hero self-host trust + footer GitHub link softened to Q1 2027. Newsletter form style matched real footer “Stay in the loop” (`your@email.com` + green primary).
+- **Status**: ⏸️ Design paused pending human review of v3 mockup. Not shipped to production Blade.
+- **Edge cases flagged**: Community-Driven pillar still says “Contributions welcome” (no live repo URL). GitHub API still reports license as `NOASSERTION` / Other despite MIT file text. No in-repo “design engine” class — Open Design lives outside KlassApp (`~/open-design`).
+
+### 2026-08-29: Password-gap re-audit — flagged paths already fixed; Toshi addParent fixed 2026-08-30 (was PAUSED)
 
 - **Work done**: Fresh local + prod container verification (do not trust prior session memory). Grepped `bcrypt('password')` / `Hash::make('password')` / `UserProvisioning` on AdmissionUser, TeacherLinkImportController, EnrollStudents, RegisterUser (CreateParent + AddAlumni). All five use `UserProvisioning::randomPasswordAttributes()` locally and in prod container (`TIP` had the fix; `app/` scan for those hardcodes on the four files = UserProvisioning only). Re-ran `RegisterUserProvisioningTest` + `SatellitePasswordProvisioningTest` — **8 passed**. Existing live harness `scripts/live-verify-password-gaps.mjs` already documented PASS at `79e4b147`.
 - **CreateParent vs WhatsApp**: confirmed separate — admin `RegisterUser::CreateParent` is fixed; `ParentLinkService` uses `bcrypt(Str::random(12))` (random, not demo; optional polish = align to UserProvisioning + `is_reset=1`).
