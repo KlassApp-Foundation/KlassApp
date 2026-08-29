@@ -336,12 +336,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 (`origin/main` tip `a346b20b` — **UI Review Demo School live on prod**)
+## Current Status: August 29, 2026 (`origin/main` tip `5ec795b3` — UI Review Demo School live; password-gap audit paused)
 
 - **Persistent test school** **id 124** — **UI Review Demo School** (`primary_nursery`, Uganda/UNEB). Keep active (no teardown).
-- Provisioned via `php artisan schools:setup-ui-review-demo` (`SchoolSignupBootstrapService` + `OnboardingEngine` + exams/parent link). Command on `main` @ `a346b20b`.
-- **4 logins** (password `UiReview2026!`): admin / classteacher / subjectteacher / parent `@uireview.klassapp.demo` — smoke login PASS on klassapp.xyz. Parent WhatsApp phone `256700119922`; magic-link `canIssueLink` + issue verified true.
-- **Prior**: CT report cards #393/#394 @ `a150f7a2` / deploy tip `a34f8ab5`.
+- Provisioned via `php artisan schools:setup-ui-review-demo`. Logins: `*@uireview.klassapp.demo` / `UiReview2026!` (admin, CT, subject teacher, parent).
+- **Password security (fresh re-audit 2026-08-29 evening)**: the five paths flagged earlier (AdmissionUser, TeacherLinkImport, EnrollStudents, `RegisterUser::CreateParent`, `AddAlumni`) are **already fixed** on `main` + prod (`79e4b147` / `UserProvisioning`). **One remaining product gap:** `ToshiActionService::addParent()` still `Hash::make('password')` (~L1372), no `is_reset`. Plan approved in chat; **not implemented yet — paused**. Still open separately: `is_reset` web-login enforcement (UX). Out of scope: `LiveAdversarialRunner`, test factories/seeders, alumni portal.
+- **Prior**: CT report cards #393/#394; tip history includes `a346b20b` (command) / `a150f7a2` (docs).
 
 ## Previous: August 29, 2026 (`origin/main` / prod tip `a34f8ab5` — **DEPLOYED + LIVE-VERIFIED** CT report cards)
 
