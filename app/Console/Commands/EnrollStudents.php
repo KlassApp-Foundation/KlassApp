@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\StandardLink;
+use App\Support\UserProvisioning;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Illuminate\Support\Facades\DB;
@@ -136,12 +137,14 @@ class EnrollStudents extends Command
 
             DB::beginTransaction();
             try {
+                $provisioning = UserProvisioning::randomPasswordAttributes();
                 $user = User::create([
                     'name' => $fullName,
                     'email' => null,
                     'school_id' => $schoolId,
                     'usergroup_id' => 6,
-                    'password' => bcrypt('password'),
+                    'password' => $provisioning['password'],
+                    'is_reset' => $provisioning['is_reset'],
                     'status' => 'active',
                 ]);
 

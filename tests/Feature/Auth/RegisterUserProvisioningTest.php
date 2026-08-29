@@ -32,6 +32,8 @@ class RegisterUserProvisioningTest extends TestCase
         DB::table('usergroups')->insertOrIgnore([
             ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 6, 'name' => 'student', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 7, 'name' => 'parent', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 9, 'name' => 'alumni', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $this->school = School::create([
@@ -103,6 +105,85 @@ class RegisterUserProvisioningTest extends TestCase
         $this->assertInstanceOf(User::class, $user);
         $this->assertFalse(Hash::check('password', $user->password));
         $this->assertSame(1, (int) $user->is_reset);
+    }
+
+    public function test_create_parent_uses_random_password_and_is_reset(): void
+    {
+        $harness = new class
+        {
+            use RegisterUser;
+        };
+
+        $student = $harness->CreateUser($this->studentPayload('child-for-parent@test.sch.ug'), $this->school->id, $this->year->id, '', 6);
+
+        $data = (object) [
+            'parent' => 'add',
+            'name' => 'Prov Parent',
+            'email' => 'parent-prov@test.sch.ug',
+            'mobile_no' => '+256700555666',
+            'firstname' => 'Prov',
+            'lastname' => 'Parent',
+            'alternate_no' => null,
+            'qualification_id' => null,
+            'profession' => null,
+            'sub_occupation' => null,
+            'designation' => null,
+            'organization_name' => null,
+            'official_address' => null,
+            'relation' => 'father',
+            'annual_income' => null,
+        ];
+
+        $user = $harness->CreateParent($student->id, $data, $this->school->id, 7);
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(7, (int) $user->usergroup_id);
+        $this->assertFalse(Hash::check('password', $user->password));
+        $this->assertSame(1, (int) $user->fresh()->is_reset);
+    }
+
+    public function test_add_alumni_uses_random_password_and_is_reset(): void
+    {
+        $harness = new class
+        {
+            use RegisterUser;
+        };
+
+        $data = (object) [
+            'name' => 'Prov Alumni',
+            'email' => 'alumni-prov@test.sch.ug',
+            'mobile_no' => '+256700777888',
+            'email_verification_code' => null,
+            'registration_number' => null,
+            'passing_session' => '2024',
+            'institution_name' => null,
+            'degree' => null,
+            'specialization' => null,
+            'college_start_year' => null,
+            'current_studying' => 1,
+            'college_end_year' => null,
+            'grade' => null,
+            'company_name' => null,
+            'designation' => null,
+            'location' => null,
+            'job_start_year' => null,
+            'job_start_month' => null,
+            'present' => 1,
+            'job_end_year' => null,
+            'job_end_month' => null,
+            'twitter' => null,
+            'linkedin' => null,
+            'telegram' => null,
+            'facebook' => null,
+            'about_me' => null,
+        ];
+
+        $user = $harness->AddAlumni($data, 9, $this->school->id, '2024');
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(9, (int) $user->usergroup_id);
+        $this->assertFalse(Hash::check('password', $user->password));
+        $this->assertSame(1, (int) $user->fresh()->is_reset);
     }
 
     private function teacherPayload(string $email): object

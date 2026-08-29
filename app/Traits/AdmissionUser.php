@@ -10,6 +10,7 @@ use App\Models\StudentAcademic;
 use App\Models\TeacherProfile;
 use App\Models\ParentProfile;
 use App\Models\Userprofile;
+use App\Support\UserProvisioning;
 use Illuminate\Support\Str;
 use App\Models\FeePayment;
 use App\Models\User;
@@ -38,7 +39,9 @@ trait AdmissionUser
                 $user->name = $data->name;
             }*/
 
-            $user->password                 = bcrypt('password'); //demo
+            $provisioning = UserProvisioning::randomPasswordAttributes();
+            $user->password                 = $provisioning['password'];
+            $user->is_reset                 = $provisioning['is_reset'];
             $user->email                    = null;
             $user->mobile_no                = null;
             $user->email_verification_code  = Str::random(40);
@@ -212,7 +215,9 @@ trait AdmissionUser
             {
                 $user->name = $data->father_name;
             }*/
-            $user->password = bcrypt('password'); //demo
+            $provisioning = UserProvisioning::randomPasswordAttributes();
+            $user->password = $provisioning['password'];
+            $user->is_reset = $provisioning['is_reset'];
             $user->email = $data->father_email;
             $user->mobile_no = $data->father_mobile_no;
             $user->email_verification_code = Str::random(40);
@@ -289,7 +294,9 @@ trait AdmissionUser
             {
                 $user->name = $data->mother_name;
             }*/
-            $user->password = bcrypt('password'); //demo
+            $provisioning = UserProvisioning::randomPasswordAttributes();
+            $user->password = $provisioning['password'];
+            $user->is_reset = $provisioning['is_reset'];
             $user->email = $data->motherr_email;
             $user->mobile_no = $data->mother_mobile_no;
             $user->email_verification_code = Str::random(40);

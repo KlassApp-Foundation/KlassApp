@@ -373,7 +373,9 @@ trait RegisterUser
                 {
                     $user->name = $data->name;
                 }
-                $user->password = bcrypt('password'); //demo
+                $provisioning = UserProvisioning::randomPasswordAttributes();
+                $user->password = $provisioning['password'];
+                $user->is_reset = $provisioning['is_reset'];
                 $user->email = $data->email;
                 $user->mobile_no = $data->mobile_no;
                 $user->email_verification_code = Str::random(40);
@@ -846,7 +848,9 @@ trait RegisterUser
                 $user->school_id                = $school_id;
                 $user->usergroup_id             = $usergroup_id;
                 $user->name                     = $data->name;
-                $user->password                 = bcrypt('password'); //demo
+                $provisioning = UserProvisioning::randomPasswordAttributes();
+                $user->password                 = $provisioning['password'];
+                $user->is_reset                 = $provisioning['is_reset'];
                 $user->email                    = $data->email;
                 $user->mobile_no                = $data->mobile_no;
                 if($data->email_verification_code != null)

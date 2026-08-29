@@ -10,6 +10,7 @@ use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Support\UserProvisioning;
 use App\Traits\LogActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -94,12 +95,14 @@ class TeacherLinkImportController extends Controller
                     ->first();
 
                 if (!$teacher) {
+                    $provisioning = UserProvisioning::randomPasswordAttributes();
                     $teacher = User::create([
                         'school_id' => $schoolId,
                         'usergroup_id' => 5,
                         'name' => $teacherName,
                         'email' => Str::slug($teacherName) . '.' . $schoolId . '@school.edu',
-                        'password' => bcrypt('password'),
+                        'password' => $provisioning['password'],
+                        'is_reset' => $provisioning['is_reset'],
                         'status' => 'active',
                         'email_verified' => 1,
                         'mobile_no' => $phone ?: null,
