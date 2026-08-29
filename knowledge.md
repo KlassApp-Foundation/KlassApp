@@ -995,6 +995,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-08-29: Password-gap re-audit — flagged paths already fixed; Toshi addParent still open (PAUSED)
+
+- **Work done**: Fresh local + prod container verification (do not trust prior session memory). Grepped `bcrypt('password')` / `Hash::make('password')` / `UserProvisioning` on AdmissionUser, TeacherLinkImportController, EnrollStudents, RegisterUser (CreateParent + AddAlumni). All five use `UserProvisioning::randomPasswordAttributes()` locally and in prod container (`TIP` had the fix; `app/` scan for those hardcodes on the four files = UserProvisioning only). Re-ran `RegisterUserProvisioningTest` + `SatellitePasswordProvisioningTest` — **8 passed**. Existing live harness `scripts/live-verify-password-gaps.mjs` already documented PASS at `79e4b147`.
+- **CreateParent vs WhatsApp**: confirmed separate — admin `RegisterUser::CreateParent` is fixed; `ParentLinkService` uses `bcrypt(Str::random(12))` (random, not demo; optional polish = align to UserProvisioning + `is_reset=1`).
+- **Genuinely still broken (product)**: `app/Services/ToshiActionService.php` `addParent()` ~L1372 — `Hash::make('password')`, no `is_reset`. Same class already uses UserProvisioning for teacher/student helpers.
+- **Out of scope this pass**: `is_reset` forced password-change on web login (no Auth/Middleware reads the flag today); `LiveAdversarialRunner` fixture; test/factory/seeder demo passwords; alumni portal.
+- **Proposed next PR (not started)**: fix `addParent` only with UserProvisioning + test + live-verify; leave the five already-fixed files alone.
+- **Files modified**: `knowledge.md` only (this entry).
+- **Status**: ⏸️ Paused after scoped plan — awaiting go to implement Toshi `addParent` only.
+
 ### 2026-08-29: Persistent UI Review Demo School (school 124)
 
 - **Work done**: Added `schools:setup-ui-review-demo` Artisan command; ran on prod. School **124** “UI Review Demo School” — Uganda/UNEB, `primary_nursery`, 3 terms, P.7 + P.1 students, fees, 4 EOT exams with marks, CT on Primary Seven, subject teacher on Math, parent linked with password + WhatsApp magic-link ready (`256700119922`). All four logins smoke-tested on klassapp.xyz.
