@@ -27,9 +27,9 @@
 ### 1. Duplicated business logic across render paths — `generatePdf()`
 - **What happened**: Report-card fixes (position sentence, header, division) reached only SOME surfaces — bulk/class generation served stale output while individual previews looked fixed.
 - **Root cause**: `generatePdf()` was private/duplicated across 7 call sites; patches landed in one copy, not the shared path.
-- **Fix**: One consolidated `public static function generatePdf()` at `app/Http/Controllers/Admin/ReportCardsController.php:358`; every render path calls it (`DownloadStudentReport.php`, `GenerateClassReportsJob.php`, `GenerateP2Reports.php`, `ReportCardsController` itself).
-- **Lesson**: Shared business logic lives in exactly ONE place — a single static/service method — never copy-pasted across call sites. When a fix touches report rendering, grep ALL call sites of the shared method; do not patch one blade/controller.
-- **Verify fix still in place**: `grep -n "function generatePdf" app/Http/Controllers/Admin/ReportCardsController.php` → exactly ONE match, signature `public static function generatePdf(...)`.
+- **Fix**: One consolidated `generatePdf()` on `App\Services\StudentReportCardService` (extracted PR #393); `ReportCardsController::generatePdf` is a thin BC delegate. Every render path calls the service (or the controller facade). Teacher CT surface (#394) uses `pdfForStudent()` / `generatePdf()` on the same service.
+- **Lesson**: Shared business logic lives in exactly ONE place — a single service method — never copy-pasted across call sites. When a fix touches report rendering, grep ALL call sites of the shared method; do not patch one blade/controller.
+- **Verify fix still in place**: `grep -n "function generatePdf" app/Services/StudentReportCardService.php` → exactly ONE real implementation; controller method only `return app(StudentReportCardService::class)->generatePdf(...)`.
 
 ### 2. `standard_id` mistaken for class identity
 - **What happened**: Three separate bugs — duplicate P.7 report card, broken class filter on /admin/students, Position-in-Stream pooling across grade levels (Esther: stream 270 > class 106).
@@ -336,7 +336,16 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 (`origin/main` / prod tip `8fc5ba5d` — **DEPLOYED + LIVE-VERIFIED** attendance scope + sidebar)
+## Current Status: August 29, 2026 (`origin/main` / prod tip `a34f8ab5` — **DEPLOYED + LIVE-VERIFIED** CT report cards)
+
+- **✅ Merged [#393](https://github.com/KlassApp-Foundation/KlassApp/pull/393)** → `0c0b9c9b` — shared `StudentReportCardService` (PR-A extract).
+- **✅ Merged [#394](https://github.com/KlassApp-Foundation/KlassApp/pull/394)** → `783b067c` — teacher `/teacher/reports/cards` (PR-B).
+- **✅ Deployed** via `scripts/deploy-manual.sh` (assets tip `a34f8ab5`).
+- **✅ Live verify** `node scripts/live-verify-ct-report-cards.mjs` — **PASS** (school **123** / stdLink **163** / learner **3732**): CT index own class only; PDF 669 KB `%PDF` with “E2E STUDENT”; subject teacher + peer CT **403**; admin preview OK + payload-equal to CT after DomPDF stamp normalize. Artifacts: `tmp/live-verify-ct-report-cards/`.
+- **Follow-up (documented, not done)**: SiteHelper `sections.class_teacher_id` fallback parity with `ExamAuthorization`.
+- **Prior**: [#392](https://github.com/KlassApp-Foundation/KlassApp/pull/392) attendance/sidebar @ `8fc5ba5d`.
+
+## Previous: August 29, 2026 (`origin/main` / prod tip `8fc5ba5d` — **DEPLOYED + LIVE-VERIFIED** attendance scope + sidebar)
 
 - **✅ Merged [#392](https://github.com/KlassApp-Foundation/KlassApp/pull/392)** → merge `8fc5ba5d`.
 - **✅ Live verify** `node scripts/live-verify-attendance-sidebar.mjs` — **PASS** (school **122**): list only link **161**; other-class store **403**; Classes nav → `/teacher/classes`. Artifact: `tmp/live-verify-attendance-sidebar/REPORT.json`.
@@ -978,6 +987,18 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-29: Class-teacher report cards — PR-A extract + PR-B teacher surface
+
+- **Work done**:
+  1. **PR-A [#393](https://github.com/KlassApp-Foundation/KlassApp/pull/393)** — `StudentReportCardService` owns resolveExam / studentIds / computePositionMap / generatePdf / pdfForStudent; admin controller thin BC delegate; TEMPLATES aliased. Tests: admin route PDF payload matches service (DomPDF timestamps/IDs normalized).
+  2. **PR-B [#394](https://github.com/KlassApp-Foundation/KlassApp/pull/394)** — `Teacher\ReportCardsController` + `/teacher/reports/cards` (index/show/preview/download); auth `SiteHelper::isClassTeacherOfStandardLink`; school template inherited (`null`); subject-fill counts only; sidebar link when CT has ≥1 StandardLink.
+  3. Deploy + live-verify harness `scripts/live-verify-ct-report-cards.mjs`.
+- **Files modified**: `app/Services/StudentReportCardService.php`, `app/Http/Controllers/Admin/ReportCardsController.php`, `app/Http/Controllers/Teacher/ReportCardsController.php`, `routes/teacher.php`, teacher report views, `resources/views/layouts/teacher/menu.blade.php`, tests under `tests/Feature/Reports/` + `tests/Feature/Teacher/TeacherReportCardsTest.php`, live-verify script, `knowledge.md`.
+- **Key decisions**: Not `canActOnExam()`; SiteHelper reuse; no admin batch/template/ZIP on teacher; SiteHelper `sections.class_teacher_id` fallback left as follow-up.
+- **Tests**: AdminReportCardExtractionTest (4) + TeacherReportCardsTest (6) — **10 passed**.
+- **Status**: ✅ MERGED `0c0b9c9b` / `783b067c` + DEPLOYED (`a34f8ab5`) + LIVE-VERIFIED PASS (school 123).
+- **Edge cases flagged**: DomPDF CreationDate/ModDate/ID differ per render — compare normalized payloads; multi-exam-per-class still fills blank cells when subjects missing (same as admin).
 
 ### 2026-08-29: Teacher web attendance CT-scope + sidebar roster link
 
