@@ -16,6 +16,7 @@ use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Services\ExamAuthorization;
 use App\Services\GradingSystemService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,6 +32,10 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class MarksController extends Controller
 {
+    public function __construct(private ExamAuthorization $examAuthorization)
+    {
+    }
+
     /**
      * Get existing marks for an exam (prefill for teacher/app)
      * GET /api/marks/exam/{exam}?subject_id=optional
@@ -39,9 +44,8 @@ class MarksController extends Controller
 {
     $teacher = Auth::user();
     $exam = Exam::findOrFail($exam_id);
-    if($teacher->id !== $exam->teacher_id){
-        abort(403, "You are not authorized.");
-    }
+    $this->examAuthorization->authorizeOrAbort($teacher, $exam, 'You are not authorized.');
+
 
     // Add security check: school_id === auth()->user()->school_id
     $standard = $exam->standard_id; // assuming relation
@@ -68,14 +72,20 @@ public function teacherExamMarksList()
     $teacher = Auth::user();
     $schoolId = $teacher->school_id;
 
-    // Get exams where this teacher is assigned (adjust based on your logic)
-    // Example: exams where teacher is linked via subject or directly
-        $yrId = AcademicYear::where("school_id", $schoolId)->where("name", now()->year)->value("id");
+    $yrId = AcademicYear::where('school_id', $schoolId)->where('name', now()->year)->value('id');
+    $ctSectionIds = $yrId
+        ? $this->examAuthorization->sectionIdsForClassTeacher($teacher, (int) $schoolId, (int) $yrId)
+        : [];
 
     $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear', 'section', 'examType', 'academicTerm'])
-        -> where('school_id', $schoolId)
+        ->where('school_id', $schoolId)
         ->where('academic_year_id', $yrId)
-        ->where("teacher_id", $teacher->id)
+        ->where(function ($q) use ($teacher, $ctSectionIds) {
+            $q->where('teacher_id', $teacher->id);
+            if ($ctSectionIds !== []) {
+                $q->orWhereIn('section_id', $ctSectionIds);
+            }
+        })
         ->orderBy('created_at', 'desc')
         ->get();
 
@@ -102,14 +112,7 @@ public function TogglekStatus(Exam $exam){
         abort(403, 'Not Authorized');
     }
 
-    $schoolId = $teacher->school_id;
-
-    if (
-        $exam->school_id !== $schoolId
-        || (int) $exam->teacher_id !== (int) $teacher->id
-    ) {
-        abort(403, 'Not Authorized');
-    }
+    $this->examAuthorization->authorizeOrAbort($teacher, $exam);
 
     $exam->changeExamStatus();
     return redirect()
@@ -119,7 +122,14 @@ public function TogglekStatus(Exam $exam){
 
 public function enterExamMarks(Exam $exam)
 {
-    $schoolId = Auth::user()->school_id;
+    /** @var User $teacher */
+    $teacher = Auth::user();
+    if (! $teacher instanceof User) {
+        abort(403, 'Not Authorized');
+    }
+    $this->examAuthorization->authorizeOrAbort($teacher, $exam, 'You are not authorized to enter marks for this exam.');
+
+    $schoolId = $teacher->school_id;
         
      $allStudents = User::with(["school", "marks", "studentAcademic.standardLink"])
                     ->where("usergroup_id", 6)
@@ -169,13 +179,12 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
         abort(403, 'Not Authorized');
     }
 
-    $schoolId = $user->school_id;
-    if ($exam->school_id !== $schoolId || (int) $exam->teacher_id !== (int) $user->id) {
-        abort(403, "Not Authorized");
-    }
+    $this->examAuthorization->authorizeOrAbort($user, $exam);
 
     $this->assertSubmittedStudentsBelongToSchool($request, $exam);
     $this->checkSubmissionLocked($exam);
+
+    $schoolId = $user->school_id;
 
     // ===== Nursery branch: save domain ratings instead of numeric marks =====
     $exam->load('standard');
@@ -298,15 +307,12 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
 public function viewExamMarks(Exam $exam)
 {
     $tr = Auth::user();
-
-    if ($exam->school_id !== $tr->school_id || (int) $exam->teacher_id !== (int) $tr->id) {
-        abort(403, 'You are not authorized to view this exam.');
-    }
+    $this->examAuthorization->authorizeOrAbort($tr, $exam, 'You are not authorized to view this exam.');
 
     $exam->load(['examType', 'academicTerm', 'academicYear', 'subject', 'teacher']);
 
+    // Show all marks for this exam/subject (CT may view marks stamped to subject teacher).
     $marks = Marks::with(['exam', 'student.userprofile', 'subject', 'teacher'])
-        ->where('teacher_id', $tr->id)
         ->where('exam_id', $exam->id)
         ->where('school_id', $tr->school_id)
         ->where('subject_id', $exam->subject_id)
@@ -375,13 +381,19 @@ public function combinedMarksheet(StandardLink $stdLink)
         abort(403);
     }
 
-    $assigned = (int) $stdLink->class_teacher_id === (int) $teacher->id
+    $isClassTeacher = (int) $stdLink->class_teacher_id === (int) $teacher->id
+        || (
+            (int) optional($stdLink->section)->class_teacher_id === (int) $teacher->id
+            && (int) optional($stdLink->section)->school_id === (int) $teacher->school_id
+        );
+
+    $assigned = $isClassTeacher
         || Exam::where('school_id', $teacher->school_id)
             ->where('section_id', $stdLink->section_id)
             ->where('teacher_id', $teacher->id)
             ->exists();
 
-    if (!$assigned) {
+    if (! $assigned) {
         abort(403, 'You are not assigned to this class.');
     }
 
@@ -405,6 +417,7 @@ public function combinedMarksheet(StandardLink $stdLink)
 public function editMark(Exam $exam, User $student, Marks $marks)
 {
     $teacher = Auth::user();
+    $this->examAuthorization->authorizeOrAbort($teacher, $exam);
 
     $this->checkSubmissionLocked($exam);
 
@@ -412,15 +425,10 @@ public function editMark(Exam $exam, User $student, Marks $marks)
     $mark = Marks::firstOrNew([
         'exam_id'     => $exam->id,
         'subject_id'  => $exam->subject_id,
-        'student_id'  => $student->student_id,
-        'teacher_id'  => $exam->teacher_id,
+        'student_id'  => $student->id,
         'school_id'   => $exam->school_id,
     ]);
 
-    // Optional: security check
-    if ($mark->exists && $mark->teacher_id !== $teacher->id) {
-        abort(403, "You didn't enter this mark.");
-    }
     // Optional: check if student actually belongs to this exam/standard
     // if ($student->user_id !== $exam->standard_id) {
     //     abort(404, "Student not in this class/exam.");
@@ -437,12 +445,12 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
         abort(403, 'Not Authorized');
     }
 
+    $this->examAuthorization->authorizeOrAbort($teacher, $exam);
+
     $schoolId = $teacher->school_id;
 
     if (
-        $exam->school_id !== $schoolId
-        || (int) $exam->teacher_id !== (int) $teacher->id
-        || $student->school_id !== $schoolId
+        $student->school_id !== $schoolId
         || (int) $student->usergroup_id !== 6
     ) {
         abort(403, 'Not Authorized');
@@ -456,18 +464,19 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
     ]);
      $mark = $validated["marks"];
       $grade = $gradingSystem->grade($mark,$schoolId, $exam);
-    // Find or create
+    // Match saveExamMarks: key without actor teacher_id so CT updates the same row.
     Marks::updateOrCreate(
         [
             'exam_id'     => $exam->id,
             'subject_id'  => $exam->subject_id,
             'student_id'  => $student->id,
-            'teacher_id'  => $teacher->id,
-            'school_id'   => $teacher->school_id,
+            'school_id'   => $exam->school_id,
         ],
         [
+            'teacher_id'  => $exam->teacher_id,
             'marks'       => $validated['marks'],
             'grade'       => $grade ?? null,
+            'section_id'  => $exam->section_id,
         ]
     );
 
