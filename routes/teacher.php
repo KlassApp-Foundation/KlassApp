@@ -343,6 +343,14 @@ Route::get( '/document/get/{name}', 'StudentDetailsController@showDocuments' );
 // Route::get('/marks/show', 'MarkController@show' );
 // Route::get('/marks/viewmark/{standard_id}/{user_id}/{exam_id}/{academic_year_id}', 'MarkController@viewmark' );
 
+// Class-teacher report cards (own streams only — not admin batch/template tools)
+Route::prefix('reports/cards')->name('teacher.reports.cards.')->group(function () {
+    Route::get('/', 'ReportCardsController@index')->name('index');
+    Route::get('/{stdLink}', 'ReportCardsController@show')->name('show');
+    Route::get('/{stdLink}/student/{learner}/preview', 'ReportCardsController@previewStudent')->name('student.preview');
+    Route::get('/{stdLink}/student/{learner}/download', 'ReportCardsController@downloadStudent')->name('student.download');
+});
+
 // ========== ADD MARKS FOR UGANDAN SCHOOLS =========
 
 Route::prefix('exam')->group(function () {
