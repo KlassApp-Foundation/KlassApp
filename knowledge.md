@@ -336,11 +336,13 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 — PR-A class-teacher custodian (shipping)
+## Current Status: August 29, 2026 (`origin/main` / prod tip `75697f59` — **DEPLOYED + LIVE-VERIFIED** PR-A CT custodian)
 
-- **PR-A**: Additive `ExamAuthorization::canActOnExam()` wired to MarksController list/save/update/toggle/enter/view + combined marksheet. No teacher create UI (PR-B later).
-- **Tests**: `ClassTeacherExamCustodianTest` + existing marks auth suite.
-- **Prior**: Role audit; 1D-a #389 shipped.
+- **✅ Merged [#390](https://github.com/KlassApp-Foundation/KlassApp/pull/390)** → merge `75697f59` (`feat/ct-exam-custodian-pr-a`).
+- **✅ Deployed** via `scripts/deploy-manual.sh` — prod has `ExamAuthorization.php` + MarksController wiring @ `75697f59`.
+- **✅ Live verify** `node scripts/live-verify-ct-custodian.mjs` — **PASS** (school 119 / exam 47): CT saved **88** on subject-teacher exam; subject teacher then saved **92** on same exam (`teacher_id` stayed subject teacher). Artifact: `tmp/live-verify-ct-custodian/REPORT.json`.
+- **PR-A scope**: Additive `canActOnExam()` on marks list/save/update/toggle/enter/view + combined marksheet. **No** teacher create UI (PR-B waits for explicit go).
+- **Prior**: Role audit; 1D-a #389.
 
 ## Previous: August 29, 2026 — Class-teacher custodian exams/marks **SCOPED (not built)**
 
@@ -967,8 +969,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `app/Services/ExamAuthorization.php`, `app/Http/Controllers/Teacher/MarksController.php`, `tests/Feature/Teacher/ClassTeacherExamCustodianTest.php`, `scripts/live-verify-ct-custodian.mjs`, `knowledge.md`.
 - **Key decisions**: Additive only; no CT lock bypass; no create UI (PR-B).
 - **Tests**: ClassTeacherExamCustodian + TeacherExamMarksAuthorization + MarksToggleStatusCrossSchool + CombinedMarksheetExport — **24 passed**.
-- **Status**: 🚧 Shipping PR-A.
-- **Edge cases flagged**: List view termMap still assumes "First Term" names (pre-existing); live verify uses First Term.
+- **Status**: ✅ MERGED `75697f59` + DEPLOYED + LIVE-VERIFIED PASS (CT 88 → subject teacher 92, exam 47 / school 119). Login harness selectors fixed post-verify (`#email` + form submit).
+- **Edge cases flagged**: List view termMap still assumes "First Term" names (pre-existing); live verify uses First Term. Playwright `getByLabel(/email/i)` timed out on prod login — use `#email` / form submit.
 
 ### 2026-08-29: Class-teacher custodian exams/marks — investigation + scoped plan (NOT implemented)
 

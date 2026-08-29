@@ -129,10 +129,11 @@ function markSnap(examId, studentId) {
 
 async function loginAs(page, email) {
     await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
-    await page.getByLabel(/email/i).fill(email);
+    await page.locator('#email').fill(email);
     await page.locator('#password').fill(PASSWORD);
-    await page.getByRole('button', { name: /login|sign in/i }).click();
-    await page.waitForURL(/\/(teacher|admin)\/dashboard/, { timeout: 60_000 });
+    await page.locator('form button[type="submit"]').first().click();
+    // Teachers redirect via /admin/dashboard → MustBeSchoolAdmin → /teacher/dashboard
+    await page.waitForURL(/\/(teacher|admin)\//, { timeout: 60_000 });
 }
 
 async function submitMarks(page, examId, studentId, score) {
