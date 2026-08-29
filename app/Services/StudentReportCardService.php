@@ -26,6 +26,31 @@ class StudentReportCardService
         'warm' => ['label' => 'Warm', 'view' => 'admin.marks.report-templates.warm'],
     ];
 
+    /**
+     * MID exam column header for report control rows (e.g. "APR MID").
+     * scheduled_at is optional on exams — CT/admin create forms allow null.
+     */
+    public static function midExamControlColumnLabel(Exam $exam): string
+    {
+        if ($exam->scheduled_at) {
+            return strtoupper($exam->scheduled_at->format('M')).' MID';
+        }
+
+        return 'MID';
+    }
+
+    /**
+     * MID exam row label in monthly results tables (full month name).
+     */
+    public static function midExamMonthRowLabel(Exam $exam): string
+    {
+        if ($exam->scheduled_at) {
+            return strtoupper($exam->scheduled_at->format('F'));
+        }
+
+        return 'MID TERM';
+    }
+
     public function resolveExam(int $schoolId, StandardLink $stdLink): ?Exam
     {
         return Exam::where('school_id', $schoolId)
@@ -170,7 +195,7 @@ class StudentReportCardService
 
         $controls = ['SUBJECT', 'OUT OF'];
         foreach ($midExams as $ex) {
-            $controls[] = strtoupper($ex->scheduled_at->format('M')).' MID';
+            $controls[] = self::midExamControlColumnLabel($ex);
         }
         foreach ($eotExams as $ex) {
             $controls[] = 'EOT';

@@ -338,7 +338,7 @@
                 @if ($showAgg) <th>DIVISION</th> @endif
             </tr>
             @foreach ($midExams as $midExam)
-                @php $monthLabel = strtoupper($midExam->scheduled_at->format('F')); @endphp
+                @php $monthLabel = \App\Services\StudentReportCardService::midExamMonthRowLabel($midExam); @endphp
                 @php $ms = $midStats[$midExam->id] ?? null; @endphp
                 <tr>
                     <td class="left"><strong>{{ $monthLabel }}</strong></td>

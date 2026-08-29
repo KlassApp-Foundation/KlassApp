@@ -16,6 +16,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Services\StudentPromotionService;
 use App\Services\StudentReportHelperService;
+use App\Services\StudentReportCardService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -43,7 +44,7 @@ class GetStudentsMarks extends Controller
 
             $controls = ["SUBJECT", "OUT OF"];
             foreach ($midExams as $ex) {
-                $controls[] = strtoupper($ex->scheduled_at->format('M')) . ' MID';
+                $controls[] = StudentReportCardService::midExamControlColumnLabel($ex);
             }
             foreach ($eotExams as $ex) {
                 $controls[] = 'EOT';

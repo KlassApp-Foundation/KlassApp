@@ -17,6 +17,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Services\StudentReportHelperService;
 use App\Services\ReportCardCommentService;
+use App\Services\StudentReportCardService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
@@ -37,7 +38,7 @@ class DownloadStudentReport extends Controller
 
          $controls = ["SUBJECT", "OUT OF"];
          foreach ($midExams as $ex) {
-             $controls[] = strtoupper($ex->scheduled_at->format('M')) . ' MID';
+             $controls[] = StudentReportCardService::midExamControlColumnLabel($ex);
          }
          foreach ($eotExams as $ex) {
              $controls[] = 'EOT';

@@ -208,7 +208,7 @@
                 @endforeach
             </tr>
             @foreach ($midExams as $midExam)
-                @php $monthLabel = strtoupper($midExam->scheduled_at->format('F')); @endphp
+                @php $monthLabel = \App\Services\StudentReportCardService::midExamMonthRowLabel($midExam); @endphp
                 <tr>
                     <td class="strong">{{ $monthLabel }}</td>
                     @foreach ($subjects as $subject)
