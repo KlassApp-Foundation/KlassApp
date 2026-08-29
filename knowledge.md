@@ -336,12 +336,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 — Phase 1D-a shipping (parity + Toshi board-reg pass-through)
+## Current Status: August 29, 2026 (`origin/main` / prod tip `db79c4a4` — **DEPLOYED + LIVE-VERIFIED** Phase 1D-a)
 
-- **1D-a (two parts in one PR)**: (1) wizard↔Toshi `OnboardingEngineParityTest` + plan §4.4 doc correction — zero product behavior; (2) `AgentToshi` `confirmOnboarding`/`commitAll` pass-through of `board_registration_number` + `school_student_id` — **real bug fix** (same class as earlier confirmOnboarding data-loss); **requires live verify on prod after deploy**.
-- **Tests**: parity **2 passed (18 assertions)**; mutation check confirmed divergence fails the guard.
+- **✅ Prod tip**: **`db79c4a4`** (assets after merge `d8ef2620` / [#389](https://github.com/KlassApp-Foundation/KlassApp/pull/389)) @ 2026-08-29 via `scripts/deploy-manual.sh`.
+- **Part 1 (parity + docs)**: `OnboardingEngineParityTest` scenarios A+B; plan §4.4 corrected — zero product behavior; no live verify needed.
+- **Part 2 (real bug fix)**: `AgentToshi` commitAll pass-through of `board_registration_number` + `school_student_id` — **LIVE-VERIFIED** on school **117**: Primary Seven student persisted `U9876/543` + `SCH-LIVE-P7-001`. Artifact: `tmp/live-verify-toshi-board-reg/REPORT.json`. Test school flagged `status=0`.
 - **Still open (not 1D-a)**: `curriculumDefaults` / exams / `$mandatorySteps`; `persistSelectedPlan`→`savePlan` (1D-b).
-- **Prior prod tip**: `79e4b147` password-gap fix (until this PR merges + deploys).
 
 ## Previous: August 29, 2026 (`origin/main` tip `79e4b147` — **DEPLOYED** remaining demo-password gaps closed)
 
@@ -949,14 +949,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-08-29: Phase 1D-a — OnboardingEngineParityTest (standing wizard↔Toshi guard)
+### 2026-08-29: Phase 1D-a — OnboardingEngineParityTest + Toshi board-reg pass-through (DEPLOYED + LIVE-VERIFIED)
 
-- **Work done**: Implemented `OnboardingEngineParityTest` scenarios A (simple primary) and B (Primary Seven + `board_registration_number`). Drivers: wizard `next()`→`confirmReview()`, Toshi complete-mode `confirmOnboarding()`. Normalized snapshots for schools/content/users/student_academics/whatsapp/plan. Corrected `docs/onboarding-engine-plan.md` §4.4. Mutation: Toshi fee `999999` → A fails; reverted → green.
-- **Files modified**: `tests/Feature/Onboarding/OnboardingEngineParityTest.php`, `docs/onboarding-engine-plan.md`, `knowledge.md`, `app/Livewire/AgentToshi.php` (student draft pass-through for board_reg / school_student_id — required for B).
-- **Key decisions**: Keep wizard private `save*` as thin adapters. Clear `toshi_state` before Toshi commit so session-restored `curriculumDefaults()` (`Primary 1`) cannot override seeder (`Primary One`). Exclude globally-unique `ministry_code` / school name from equality. Skip live-verify (no intentional runtime product change beyond board_reg pass-through).
-- **Tests**: `php artisan test --compact tests/Feature/Onboarding/OnboardingEngineParityTest.php` — **2 passed (18 assertions)**.
-- **Status**: 🚧 Shipping — PR opening (parity + board-reg pass-through); live-verify required for the Toshi fix after deploy.
-- **Edge cases flagged**: Skipping wizard teachers via `next()` also skips students (optional-step advance); B uses `goToStep('students')`. 1D-b still needed for `persistSelectedPlan` / `curriculumDefaults` / exams / `$mandatorySteps`. Toshi student form still has no board_reg UI — live verify injects onto `actionData` after `saveStudent` (same commit path as the bug).
+- **Work done**: (1) `OnboardingEngineParityTest` A+B + plan §4.4 doc correction. (2) `AgentToshi` commitAll pass-through of `board_registration_number` / `school_student_id`. Live-verify harness `scripts/live-verify-toshi-board-reg.mjs`.
+- **PR / merge**: [#389](https://github.com/KlassApp-Foundation/KlassApp/pull/389) merge `d8ef2620`; prod tip **`db79c4a4`** (Vite assets rebuild).
+- **Files modified**: `tests/Feature/Onboarding/OnboardingEngineParityTest.php`, `app/Livewire/AgentToshi.php`, `docs/onboarding-engine-plan.md`, `knowledge.md`, `scripts/live-verify-toshi-board-reg.mjs`.
+- **Key decisions**: Wizard `save*` stay as thin adapters. Live verify injects board_reg onto `actionData` after `saveStudent` (form still has no board_reg UI) then `confirmOnboarding` — same commit path as the bug.
+- **Tests**: parity **2 passed (18 assertions)**; mutation check (Toshi fee `999999`) fails A then green after revert.
+- **Live verify (Part 2 only)**: `node scripts/live-verify-toshi-board-reg.mjs` — **PASS**. School **117**, student `board_registration_number=U9876/543`, `school_student_id=SCH-LIVE-P7-001`. Artifact: `tmp/live-verify-toshi-board-reg/REPORT.json`. School 117 set `status=0` after verify.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED.
+- **Edge cases flagged**: Wizard optional-step skip via `next()` can jump past students; B uses `goToStep('students')`. 1D-b still open.
 
 ### 2026-08-29: Remaining password gaps — CreateParent / AddAlumni / satellites (DEPLOYED + LIVE-VERIFIED)
 
