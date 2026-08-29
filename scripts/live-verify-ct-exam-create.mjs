@@ -137,7 +137,7 @@ try {
     await page.locator('#subject_id').selectOption(String(boot.subject_id));
     await page.locator('#exam_type_id').selectOption(String(boot.exam_type_id));
     await page.locator('#teacher_id').selectOption(String(boot.subj_id));
-    await page.locator('button[type="submit"]').click();
+    await page.getByRole('button', { name: 'Create Exam' }).click();
     await page.waitForURL(/\/teacher\/exam\/marks/, { timeout: 60_000 });
     await page.screenshot({ path: path.join(ARTIFACT, 'after-ct-create.png'), fullPage: true });
 
