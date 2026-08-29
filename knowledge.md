@@ -336,7 +336,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 28, 2026 (`origin/main` tip `e11c9c4e` — **DEPLOYED** #379 Toshi school_category fix)
+## Current Status: August 29, 2026 (`origin/main` tip `05cdd22c` — **DEPLOYED** parent portal Phases 1–4)
+
+- **✅ Prod tip**: **`05cdd22c`** @ 2026-08-29 — parent web auth shell + shared `ParentPortalService` data layer live-verified.
+- **Parent portal Phases 1–4**: Cross-school linking → magic-link auth → web auth shell → shared data layer with `resolveChild()` isolation. Next: Phase 5 dashboard UI.
+- **Live verify Phase 4**: `node scripts/live-verify-parent-phase4.mjs` — all 10 checks PASS (2-school fees 450k/650k, stranger 403). Artifacts: `tmp/live-verify-parent-phase4/REPORT.json`.
+- **Prior tip**: Phase 3 shell `2dbabdf9` (#388); verify-script cookie fix `d33d6c2e`; portal extract `85e13f0a`; fee `user_id` hotfix `05cdd22c`.
+
+## Previous: August 28, 2026 (`origin/main` tip `e11c9c4e` — **DEPLOYED** #379 Toshi school_category fix) — superseded by parent portal Phases 2–4
 
 - **✅ Prod tip**: **`e11c9c4e`** (squash #379) @ **2026-08-27 ~23:13 UTC** via `scripts/deploy-manual.sh`. Migrations: Nothing to migrate.
 - **✅ #379**: Toshi `school_category` resume dead-end fixed — `jumpToIncompleteOnboardingStep` + prompt + `selectSchoolCategory()` → `OnboardingEngine::saveSchoolCategory()`; regression tests in `ToshiSchoolCategoryJumpResumeTest.php`.
@@ -920,6 +927,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-29: Parent portal Phase 4 — ParentPortalService shared data layer (DEPLOYED + LIVE-VERIFIED)
+
+- **Work done**: Extracted fee/grade/attendance/health/listChildren into `App\Services\Parent\ParentPortalService` (single source for WhatsApp + web). `ParentActionService` now delegates queries and only formats WhatsApp messages. Web JSON endpoints under `/parent/children/{student}/{fees|grades|attendance}` all go through `resolveChild()` — unlinked `student_id` → **403**, not empty success. Per-child `student_parent_links.school_id` scoping (never `$parent->school_id`). Also committed Phase 2/3 live-verify cookie/`klassapp_session` fixes.
+- **Commits on `main`**: `d33d6c2e` (verify cookie fix) → `85e13f0a` (ParentPortalService) → `05cdd22c` (fee_payments `user_id` hotfix). Prod tip **`05cdd22c`**.
+- **Files modified**: `app/Services/Parent/ParentPortalService.php`, `app/Services/Toshi/ParentActionService.php`, `app/Http/Controllers/Parent/{ChildData,Children,Dashboard}Controller.php`, `routes/parent.php`, `resources/views/parent/*`, `tests/Feature/Parent/*`, `scripts/live-verify-parent-phase{2,3,4}.mjs`.
+- **Key decisions**: Shared service owns ownership + school scoping; WhatsApp stays a thin compose layer. `fee_payments` column is `user_id` (student), not `student_id` — SQLite tests with zero payments missed the bad column until live 500.
+- **Tests**: 16+ parent portal / cross-school / isolation tests passed locally; web isolation asserts 403 for peer student.
+- **Live verify**: `node scripts/live-verify-parent-phase4.mjs` — **10/10 PASS** (2-school parent, fees 450000/650000, stranger 403, children page). Artifact: `tmp/live-verify-parent-phase4/REPORT.json`.
+- **Status**: ✅ Done — ready for Phase 5 dashboard UI.
+- **Edge cases flagged**: WhatsApp keyword fees path never queried `FeePayment` (category totals only); portal correctly subtracts payments via `user_id`.
 
 ### 2026-08-27: PR #378 — teacher/student sidebar hover cream/DS tokens (MERGED + DEPLOYED)
 
