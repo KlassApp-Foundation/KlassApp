@@ -336,7 +336,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 (`origin/main` tip `5ec795b3` — UI Review Demo School live; password-gap audit paused)
+## Current Status: August 29, 2026 (`origin/main` tip `91ea5d27` — UI Review Demo School live; password-gap audit paused)
 
 - **Persistent test school** **id 124** — **UI Review Demo School** (`primary_nursery`, Uganda/UNEB). Keep active (no teardown).
 - Provisioned via `php artisan schools:setup-ui-review-demo`. Logins: `*@uireview.klassapp.demo` / `UiReview2026!` (admin, CT, subject teacher, parent).
