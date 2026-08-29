@@ -11,11 +11,12 @@ class ChildrenController extends Controller
 
     public function index()
     {
-        $children = $this->portal->listChildren(auth()->user());
+        $listed = $this->portal->listChildren(auth()->user());
 
         return view('parent.children', [
-            'children' => $children['children'] ?? [],
-            'emptyMessage' => $children['success'] ? null : ($children['message'] ?? null),
+            'children' => $listed['children'] ?? [],
+            'groupedBySchool' => $listed['grouped_by_school'] ?? [],
+            'emptyMessage' => ($listed['success'] ?? false) ? null : ($listed['message'] ?? null),
         ]);
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Academics\Exam;
 use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\FeesCategories;
+use App\Models\School;
 use App\Models\StudentAcademic;
 use App\Models\StudentHealthIncident;
 use App\Models\StudentParentLink;
@@ -134,10 +135,15 @@ class ParentPortalService
                 'message' => 'No children linked to your account.',
                 'children' => [],
                 'count' => 0,
+                'grouped_by_school' => [],
             ];
         }
 
-        $children = $students->values()->map(function (User $student, int $i) use ($parent) {
+        $schoolNames = School::query()
+            ->whereIn('id', $students->map(fn (User $s) => $this->schoolIdForLinkedChild($parent, $s))->filter()->unique())
+            ->pluck('name', 'id');
+
+        $children = $students->values()->map(function (User $student, int $i) use ($parent, $schoolNames) {
             $schoolId = $this->schoolIdForLinkedChild($parent, $student);
 
             return [
@@ -145,6 +151,7 @@ class ParentPortalService
                 'student_id' => $student->id,
                 'name' => $student->name,
                 'school_id' => $schoolId,
+                'school_name' => $schoolId ? ($schoolNames[$schoolId] ?? 'School') : 'School',
                 'class' => $student->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A',
             ];
         })->all();
@@ -153,6 +160,76 @@ class ParentPortalService
             'success' => true,
             'children' => $children,
             'count' => count($children),
+            'grouped_by_school' => $this->groupChildrenBySchool($children),
+        ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $children
+     * @return list<array{school_id: int|null, school_name: string, children: list<array<string, mixed>>}>
+     */
+    public function groupChildrenBySchool(array $children): array
+    {
+        $groups = [];
+        foreach ($children as $child) {
+            $key = (string) ($child['school_id'] ?? 'none');
+            if (! isset($groups[$key])) {
+                $groups[$key] = [
+                    'school_id' => $child['school_id'] ?? null,
+                    'school_name' => $child['school_name'] ?? 'School',
+                    'children' => [],
+                ];
+            }
+            $groups[$key]['children'][] = $child;
+        }
+
+        return array_values($groups);
+    }
+
+    /**
+     * Resolve the selected child for the web dashboard.
+     * Unlinked / missing child query params fall back to the first linked child
+     * (never leak whether an unlinked student_id exists).
+     *
+     * @param  list<array<string, mixed>>  $children
+     * @return array<string, mixed>|null
+     */
+    public function selectChild(array $children, ?int $requestedStudentId): ?array
+    {
+        if ($children === []) {
+            return null;
+        }
+
+        if ($requestedStudentId !== null) {
+            foreach ($children as $child) {
+                if ((int) $child['student_id'] === $requestedStudentId) {
+                    return $child;
+                }
+            }
+        }
+
+        return $children[0];
+    }
+
+    /**
+     * Full dashboard payload for one linked child (fees, grades, attendance).
+     *
+     * @return array{child: array<string, mixed>, fees: array<string, mixed>|null, grades: array<string, mixed>|null, attendance: array<string, mixed>|null}
+     */
+    public function childDashboard(User $parent, int $studentId): array
+    {
+        $fees = $this->feeBalance($parent, null, $studentId);
+        $grades = $this->grades($parent, null, $studentId);
+        $attendance = $this->attendance($parent, null, $studentId);
+
+        return [
+            'fees' => ($fees['success'] ?? false) ? ($fees['data'] ?? null) : null,
+            'fees_message' => $fees['message'] ?? null,
+            'grades' => ($grades['success'] ?? false) ? ($grades['data'] ?? null) : null,
+            'grades_message' => $grades['message'] ?? null,
+            'attendance' => ($attendance['success'] ?? false) ? ($attendance['data'] ?? null) : null,
+            'attendance_message' => $attendance['message'] ?? null,
+            'denied' => ($fees['denied'] ?? false) || ($grades['denied'] ?? false) || ($attendance['denied'] ?? false),
         ];
     }
 
