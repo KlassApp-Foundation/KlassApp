@@ -6,6 +6,7 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Resources\Studentlist as StudentlistResource;
+use App\Http\Resources\StandardLink as StandardLinkResource;
 use App\Http\Requests\AttendanceAddRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
@@ -38,6 +39,7 @@ class AttendanceController extends Controller
     public function list()
 {
     $school_id = Auth::user()->school_id;
+    $teacher_id = (int) Auth::id();
     $academic_year = SiteHelper::getAcademicYear($school_id);
 
     if (!$academic_year) {
@@ -48,10 +50,16 @@ class AttendanceController extends Controller
         ];
     }
 
-    $standardLinklist = SiteHelper::getStandardLinkList($school_id);
+    // Same class_teacher_id scope as Api\Teacher\AttendanceController@index
+    $classTeacherLinks = SiteHelper::getClassTeacherStandardLinks((int) $school_id, $teacher_id);
+    $linkIds = $classTeacherLinks->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+    $standardLinklist = StandardLinkResource::collection($classTeacherLinks);
+
     $studentAcademic = StudentAcademic::with('user')
         ->where('school_id', $school_id)
         ->where('academic_year_id', $academic_year->id)
+        ->when($linkIds !== [], fn ($q) => $q->whereIn('standardLink_id', $linkIds), fn ($q) => $q->whereRaw('1 = 0'))
         ->whereHas('user', function($q) {
             $q->where('status', 'active')
               ->whereNull('deleted_at');
@@ -59,6 +67,7 @@ class AttendanceController extends Controller
         ->get();
 
     $studentlist = [];
+    $std_id = null;
 
     foreach ($studentAcademic as $student) {
         $std_id = $student->standardLink_id;
@@ -118,6 +127,10 @@ class AttendanceController extends Controller
             return response()->json(['error' => 'Academic year not set'], 422);
         }
 
+        if (! SiteHelper::isClassTeacherOfStandardLink((int) $school_id, (int) $admin, (int) $request->standardLink_id)) {
+            abort(403, 'You are not the class teacher for this class.');
+        }
+
         $attendance = $this->createAttendance($school_id , $academic_year->id , $admin , $request);
 
         $message = trans('messages.add_success_msg',['module' => 'Attendance']);
@@ -152,6 +165,11 @@ class AttendanceController extends Controller
             //
             $school_id      = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
+
+            if (! SiteHelper::isClassTeacherOfStandardLink((int) $school_id, (int) Auth::id(), (int) $standardLink_id)) {
+                abort(403, 'You are not the class teacher for this class.');
+            }
+
             $standardLink = StandardLink::where('id',$standardLink_id)->first();
             $standard = $standardLink->StandardName;
             $section = $standardLink->section->name;

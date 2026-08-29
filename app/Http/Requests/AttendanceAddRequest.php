@@ -13,6 +13,24 @@ class AttendanceAddRequest extends FormRequest
 {
     public function authorize()
     {
+        $user = Auth::user();
+        if (! $user) {
+            return false;
+        }
+
+        // School admins keep school-wide attendance create.
+        if ((int) $user->usergroup_id === 3) {
+            return true;
+        }
+
+        // Teachers may only post attendance for classes they custodian.
+        if ((int) $user->usergroup_id === 5) {
+            $linkId = (int) $this->input('standardLink_id');
+
+            return $linkId > 0
+                && SiteHelper::isClassTeacherOfStandardLink((int) $user->school_id, (int) $user->id, $linkId);
+        }
+
         return true;
     }
 

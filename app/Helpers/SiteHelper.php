@@ -136,6 +136,33 @@ class SiteHelper
         });
     }
 
+    /**
+     * StandardLinks where the teacher is class_teacher_id for the current academic year.
+     * Same filter the teacher API attendance index uses.
+     *
+     * @return \Illuminate\Support\Collection<int, StandardLink>
+     */
+    public static function getClassTeacherStandardLinks(int $school_id, int $teacher_id)
+    {
+        $academic_year = self::getAcademicYear($school_id);
+        if (! $academic_year) {
+            return collect();
+        }
+
+        return StandardLink::query()
+            ->where('school_id', $school_id)
+            ->where('academic_year_id', $academic_year->id)
+            ->where('class_teacher_id', $teacher_id)
+            ->orderBy('section_id')
+            ->get();
+    }
+
+    public static function isClassTeacherOfStandardLink(int $school_id, int $teacher_id, int $standardLink_id): bool
+    {
+        return self::getClassTeacherStandardLinks($school_id, $teacher_id)
+            ->contains(fn (StandardLink $link) => (int) $link->id === $standardLink_id);
+    }
+
     public static function getStandardList($school_id)
     {
         $standardCacheKey = 'standard_'.$school_id;

@@ -4,8 +4,8 @@
     <li class="py-3 px-3 dashboard-menu-item {{ tActive('dashboard') }}">
         <a href="{{ url('teacher/dashboard') }}" class="flex items-center"><x-icons.sidebar name="dashboard"/><span class="mx-3 whitespace-nowrap">Dashboard</span></a>
     </li>
-    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['standardLinks','standardLink']) }}">
-        <a href="{{ url('teacher/standardLinks') }}" class="flex items-center whitespace-nowrap"><x-icons.sidebar name="classes"/><span class="mx-3 whitespace-nowrap">Classes</span></a>
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['classes','standardLinks','standardLink']) }}">
+        <a href="{{ url('teacher/classes') }}" class="flex items-center whitespace-nowrap"><x-icons.sidebar name="classes"/><span class="mx-3 whitespace-nowrap">Classes</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['timetable']) }}">
         <a href="{{ url('teacher/dashboard') }}#timetable" class="flex items-center"><x-icons.sidebar name="timetable"/><span class="mx-3 whitespace-nowrap">Timetable</span></a>
@@ -22,8 +22,8 @@
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['marks','mark']) }}">
         <a href="{{ url('teacher/exam/marks') }}" class="flex items-center"><x-icons.sidebar name="subjects"/><span class="mx-3 whitespace-nowrap">Marks</span></a>
     </li>
-    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['students','student']) }}">
-        <a href="{{ url('teacher/standardLinks') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-nowrap">Students</span></a>
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['students','student','classes']) }}">
+        <a href="{{ url('teacher/classes') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-nowrap">Students</span></a>
     </li>
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['notices','notice']) }}">
         <a href="{{ url('teacher/dashboard') }}#notices" class="flex items-center"><x-icons.sidebar name="messages"/><span class="mx-3 whitespace-nowrap">Notices</span></a>

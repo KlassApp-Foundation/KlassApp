@@ -336,7 +336,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 (`origin/main` / prod tip `90170690` — **DEPLOYED + LIVE-VERIFIED** PR-B teacher exam create)
+## Current Status: August 29, 2026 — Teacher attendance scope + sidebar roster (shipping)
+
+- **Cleanup**: Web teacher attendance CT-scoped via `SiteHelper::getClassTeacherStandardLinks` (same filter as API); sidebar Classes/Students → `/teacher/classes`.
+- **Prior**: PR-B [#391](https://github.com/KlassApp-Foundation/KlassApp/pull/391) @ `90170690`.
+
+## Previous: August 29, 2026 (`origin/main` / prod tip `90170690` — **DEPLOYED + LIVE-VERIFIED** PR-B teacher exam create)
 
 - **✅ Merged [#391](https://github.com/KlassApp-Foundation/KlassApp/pull/391)** → merge `90170690` (`feat/ct-exam-create-pr-b`).
 - **✅ Deployed** via `scripts/deploy-manual.sh` — prod has `Teacher\ExamController` @ `90170690`.
@@ -971,6 +976,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-29: Teacher web attendance CT-scope + sidebar roster link
+
+- **Work done**: `SiteHelper::getClassTeacherStandardLinks` / `isClassTeacherOfStandardLink`; teacher AttendanceController list/store/export scoped; `AttendanceAddRequest` authorize for ug5; API standardlist aligned; sidebar Classes/Students → `teacher/classes`. Live-verify `scripts/live-verify-attendance-sidebar.mjs`.
+- **Files modified**: `app/Helpers/SiteHelper.php`, `app/Http/Controllers/Teacher/AttendanceController.php`, `app/Http/Controllers/Api/Teacher/AttendanceController.php`, `app/Http/Requests/AttendanceAddRequest.php`, `resources/views/layouts/teacher/menu.blade.php`, tests, script, `knowledge.md`.
+- **Key decisions**: Reuse API's `class_teacher_id` filter (not invent a second scope); admin attendance unchanged.
+- **Tests**: TeacherWebAttendanceScopeTest + TeacherSidebarRosterLinkTest — **5 passed**.
+- **Status**: 🚧 Shipping.
+- **Edge cases flagged**: Admin list still uses MySQL `FIELD()` (sqlite-unfriendly) — regression covered via admin store instead.
 
 ### 2026-08-29: PR-B — Teacher-facing class-scoped exam create/edit
 
