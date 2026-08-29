@@ -247,62 +247,47 @@ Principle: **write the new test before extracting each method**. The engine star
 3. **Refactor:** `ManualOnboardingWizard::saveTeachers`, `saveStudents`, `saveWhatsApp`, `savePlan` become engine calls. `AgentToshi::commitAll()` becomes a thin orchestrator that calls engine methods and then dispatches success messages.
 4. **Run the full suite:** `php artisan test --compact` or the largest practical subset.
 
-### 4.4 Phase 1D — cleanup
+### 4.4 Phase 1D — cleanup (updated Aug 2026 after 1A–1C shipped)
 
-1. Remove `ManualOnboardingWizard::save*()` private methods once all are engine-wired (or keep as thin pass-throughs).
-2. Remove `AgentToshi::curriculumDefaults()` and `handleExams()`/`saveExam()` if the product confirms exam removal.
-3. Remove `AgentToshi::$mandatorySteps` and `isStepMandatory()`.
-4. Add the permanent parity test `OnboardingEngineParityTest` (see §5) and run it.
+**1D-a (this slice): standing parity test + doc correction only.**
+
+What is actually true after 1A–1C (do **not** treat the old checklist as still accurate):
+
+1. **`ManualOnboardingWizard::save*()` private methods are not dead.** They are intentional thin Livewire adapters (`persistCurrentStep` → `OnboardingEngine`). Keep them; do not delete as “dead code.”
+2. **`AgentToshi::curriculumDefaults()`, exams UI (`handleExams` / `saveExam` / …), and `$mandatorySteps` / `isStepMandatory()` are still live.** Removing them is product/behavior work (class-name drift vs `SchoolCategorySeeder`, skip rules, exam UX) — **out of scope for 1D-a**. Track as follow-ups (1D-b+).
+3. **`persistSelectedPlan` vs `OnboardingEngine::savePlan`** remains a dual write path in complete-mode — status/subscription shape can diverge. Deduping is **1D-b**, not 1D-a.
+4. **✅ 1D-a deliverable:** permanent `tests/Feature/Onboarding/OnboardingEngineParityTest.php` (see §5) — wizard `confirmReview()` vs Toshi complete-mode `confirmOnboarding()`, normalized DB snapshot equality.
+
+**Minimal unblocker found while building Scenario B:** Toshi `commitAll` student draft mapping dropped `board_registration_number` / `school_student_id` before calling the engine (wizard already passed them). Pass-through added so both paths can persist candidate-class board reg. No other runtime behavior change in 1D-a.
+
+### 4.4 (original draft — superseded)
+
+~~1. Remove `ManualOnboardingWizard::save*()` private methods once all are engine-wired (or keep as thin pass-throughs).~~  
+~~2. Remove `AgentToshi::curriculumDefaults()` and `handleExams()`/`saveExam()` if the product confirms exam removal.~~  
+~~3. Remove `AgentToshi::$mandatorySteps` and `isStepMandatory()`.~~  
+~~4. Add the permanent parity test `OnboardingEngineParityTest` (see §5) and run it.~~
 
 ## 5. Permanent parity test design
 
-Test file: `tests/Feature/Onboarding/OnboardingEngineParityTest.php`
+Test file: `tests/Feature/Onboarding/OnboardingEngineParityTest.php` (**implemented in 1D-a**)
 
-Two canonical scenarios will be exercised through **both** the manual wizard Livewire component and the Toshi `commitAll()` Livewire component (or, after extraction, directly through `OnboardingEngine` calls for each path).
+Two canonical scenarios exercised through **public** entry points:
 
-### Scenario A: “Zero teachers/students, Uganda/UNEB, free plan”
-- Inputs:
-  - Name: `Sunrise Academy`
-  - Country: `Uganda`, Curriculum: `uneb`, School category: `primary`
-  - EMIS: `EMIS-1001`, UNEB center: skip
-  - Academic year: current year
-  - Classes: `P1`
-  - Subjects: `Mathematics`
-  - Teachers: none
-  - Students: none
-  - Terms: `Term 1`
-  - Fees: `Tuition` (amount 0)
-  - WhatsApp: `+256700111222`
-  - Plan: `Freemium` (amount 0)
+- Wizard: Livewire `next()` chain ending in **`confirmReview()`**
+- Toshi: complete-mode Livewire **`confirmOnboarding()`** (after `selectSchoolCategory` for seeder baseline; session `toshi_state` cleared so `curriculumDefaults()` names cannot override seeder)
 
-### Scenario B: “School with people, paid plan, co-admin”
-- Inputs:
-  - 3 teachers (one with email, two without)
-  - 5 students across `P1` and `P2`
-  - 2 terms
-  - 1 fee `Tuition` with amount `100000`
-  - Plan: paid plan (e.g. `Growth`) → expects `TrialService::startTrial()` to be invoked.
+### Scenario A: Simple primary (Freemium, zero people)
+- Uganda / UNEB / `school_category=primary` / EMIS set / UNEB skip
+- Academic year + `SchoolCategorySeeder` classes/subjects
+- Term 1, school-wide Tuition (wizard uses empty `className`), WhatsApp verified, Freemium
+- No teachers / no students
 
-### DB assertions (identical across both paths)
-For each scenario, assert the following after onboarding is marked complete:
-- `schools` row: same `name`, `slug`, `curriculum`, `registration_country`, `ministry_code`, `uneb_center_number`, `school_category`, `toshi_enabled = 1`
-- `academic_years`: 1 row, `name` and `description`, `status = 1`
-- `standards` + `sections` + `standard_links`: same count and names
-- `subjects`: same per-class set
-- `users`:
-  - 1 admin (`usergroup_id = 3`)
-  - N teachers (`usergroup_id = 5`)
-  - M students (`usergroup_id = 6`)
-  - All have `Userprofile` rows
-  - All have deterministic, school-scoped emails
-- `teacherlinks` and `student_academics`: consistent linking to `standard_links`
-- `academic_terms`: same names and dates
-- `fees_categories`: same names and amounts
-- `whatsapp_users`: 1 row for the admin, `opted_in = 1`, `verified_at` not null
-- `current_plans` + `subscriptions`: same `plan_id`; paid plans have `trial` flags set
-- `OnboardingStepsService::hasBlockingIncompleteSteps($school, $admin->id) === false`
+### Scenario B: Candidate class + board registration
+- Same primary baseline; one student on **Primary Seven** with `board_registration_number` (+ optional `school_student_id`)
+- Asserts board reg persisted and section = Primary Seven on both paths
 
-The test must fail if any of the 9 resolved disharmonies regresses.
+### DB assertions (identical across both paths after normalize)
+Volatile uniqueness excluded from equality (`school` name/slug/phone, exact `ministry_code`, WhatsApp phone digits). Compared: curriculum/country/category/uneb, standards/sections/subjects/terms/fees (name/amount/standard/section), users by usergroup, student_academics (incl. board reg), whatsapp shape (opted_in/verified), current plan **name**, blocking-incomplete = false.
 
 ## 6. Non-goals for this design pass
 

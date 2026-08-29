@@ -336,7 +336,21 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 (`origin/main` tip `7e58529b` — **DEPLOYED** parent portal Phases 1–5 COMPLETE)
+## Current Status: August 29, 2026 — Phase 1D-a shipping (parity + Toshi board-reg pass-through)
+
+- **1D-a (two parts in one PR)**: (1) wizard↔Toshi `OnboardingEngineParityTest` + plan §4.4 doc correction — zero product behavior; (2) `AgentToshi` `confirmOnboarding`/`commitAll` pass-through of `board_registration_number` + `school_student_id` — **real bug fix** (same class as earlier confirmOnboarding data-loss); **requires live verify on prod after deploy**.
+- **Tests**: parity **2 passed (18 assertions)**; mutation check confirmed divergence fails the guard.
+- **Still open (not 1D-a)**: `curriculumDefaults` / exams / `$mandatorySteps`; `persistSelectedPlan`→`savePlan` (1D-b).
+- **Prior prod tip**: `79e4b147` password-gap fix (until this PR merges + deploys).
+
+## Previous: August 29, 2026 (`origin/main` tip `79e4b147` — **DEPLOYED** remaining demo-password gaps closed)
+
+- **✅ Prod tip**: **`79e4b147`** @ 2026-08-29 — `UserProvisioning` on CreateParent / AddAlumni / AdmissionUser / TeacherLinkImport / EnrollStudents.
+- **Finding**: Parent portal Phases 1–5 did **not** fix admin `RegisterUser::CreateParent` (still `bcrypt('password')`). WhatsApp `ParentLinkService` already used random passwords; magic-link does not replace admin CreateParent.
+- **Live verify**: `node scripts/live-verify-password-gaps.mjs` — **PASS** (parent+alumni `demo_password=false`, `is_reset=1`; sources clean of `bcrypt('password')`). Artifact: `tmp/live-verify-password-gaps/REPORT.json`.
+- **Out of scope (still open)**: `is_reset` web-login enforcement; any remaining `Hash::make('password')` outside these paths (e.g. ToshiActionService / adversarial runners).
+
+## Previous: August 29, 2026 (`origin/main` tip `7e58529b` — **DEPLOYED** parent portal Phases 1–5 COMPLETE) — superseded by password-gap fix
 
 - **✅ Prod tip**: **`7e58529b`** @ 2026-08-29 — full parent web dashboard live-verified (fees/grades/attendance UI + school-grouped child selector).
 - **Parent portal initiative CLOSED**: Phase 1 cross-school linking → Phase 2 magic-link → Phase 3 web auth shell → Phase 4 `ParentPortalService` → Phase 5 dashboard UI.
@@ -934,6 +948,26 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-29: Phase 1D-a — OnboardingEngineParityTest (standing wizard↔Toshi guard)
+
+- **Work done**: Implemented `OnboardingEngineParityTest` scenarios A (simple primary) and B (Primary Seven + `board_registration_number`). Drivers: wizard `next()`→`confirmReview()`, Toshi complete-mode `confirmOnboarding()`. Normalized snapshots for schools/content/users/student_academics/whatsapp/plan. Corrected `docs/onboarding-engine-plan.md` §4.4. Mutation: Toshi fee `999999` → A fails; reverted → green.
+- **Files modified**: `tests/Feature/Onboarding/OnboardingEngineParityTest.php`, `docs/onboarding-engine-plan.md`, `knowledge.md`, `app/Livewire/AgentToshi.php` (student draft pass-through for board_reg / school_student_id — required for B).
+- **Key decisions**: Keep wizard private `save*` as thin adapters. Clear `toshi_state` before Toshi commit so session-restored `curriculumDefaults()` (`Primary 1`) cannot override seeder (`Primary One`). Exclude globally-unique `ministry_code` / school name from equality. Skip live-verify (no intentional runtime product change beyond board_reg pass-through).
+- **Tests**: `php artisan test --compact tests/Feature/Onboarding/OnboardingEngineParityTest.php` — **2 passed (18 assertions)**.
+- **Status**: 🚧 Shipping — PR opening (parity + board-reg pass-through); live-verify required for the Toshi fix after deploy.
+- **Edge cases flagged**: Skipping wizard teachers via `next()` also skips students (optional-step advance); B uses `goToStep('students')`. 1D-b still needed for `persistSelectedPlan` / `curriculumDefaults` / exams / `$mandatorySteps`. Toshi student form still has no board_reg UI — live verify injects onto `actionData` after `saveStudent` (same commit path as the bug).
+
+### 2026-08-29: Remaining password gaps — CreateParent / AddAlumni / satellites (DEPLOYED + LIVE-VERIFIED)
+
+- **Work done**: Confirmed CreateParent still needed the fix (parent portal did not cover admin `RegisterUser::CreateParent`). Applied `UserProvisioning::randomPasswordAttributes()` to CreateParent, AddAlumni, AdmissionUser (3 sites), TeacherLinkImportController, EnrollStudents. No alumni portal work; no `is_reset` login UX.
+- **Commit**: `79e4b147` on `main` — `fix(auth): replace remaining demo passwords with UserProvisioning`. Prod reset to **`79e4b147`** + `optimize:clear`.
+- **Files modified**: `app/Traits/RegisterUser.php`, `app/Traits/AdmissionUser.php`, `app/Http/Controllers/Admin/TeacherLinkImportController.php`, `app/Console/Commands/EnrollStudents.php`, `tests/Feature/Auth/RegisterUserProvisioningTest.php`, `tests/Feature/Auth/SatellitePasswordProvisioningTest.php`, `scripts/live-verify-password-gaps.mjs` (verify harness; stub-student path so school 16 without StandardLink still works).
+- **Key decisions**: Same low-risk pattern as teacher/student RegisterUser fix (`Str::random(16)` + `is_reset=1`). Leave `ParentLinkService` alone (already random). Leave login `is_reset` enforcement for a separate decision.
+- **Tests**: RegisterUserProvisioning + SatellitePasswordProvisioning + UserProvisioning unit — **11 passed**.
+- **Live verify**: `node scripts/live-verify-password-gaps.mjs` — **PASS**. Parent/alumni: `Hash::check('password')=false`, `is_reset=1`; container grep counts 0 on all four source files.
+- **Status**: ✅ Done + DEPLOYED + LIVE-VERIFIED (`79e4b147`).
+- **Edge cases flagged**: `app/` has no remaining `bcrypt('password')`; other `Hash::make('password')` call sites (if any outside this scope) were not part of this pass.
 
 ### 2026-08-29: Parent portal Phase 5 — dashboard UI (DEPLOYED + LIVE-VERIFIED) — initiative CLOSED
 
