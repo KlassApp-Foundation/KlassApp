@@ -336,13 +336,15 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 30, 2026 (`origin/main` tip `56b576ee` — Toshi addParent provisioning **DEPLOYED**; school **124** UI shakedown **complete**)
+## Current Status: August 30, 2026 (`origin/main` tip `c4e6dfaa` — report MID `scheduled_at` fix **DEPLOYED + LIVE-VERIFIED**)
 
 - **Persistent test school** **id 124** — **UI Review Demo School** (`primary_nursery`, Uganda/UNEB). Keep active (no teardown). Enriched by UI shakedown: **10** students, **5** exams (4 EOT + 1 MID), **4** attendance, **3** fee payments, WhatsApp + Growth plan done.
 - Provisioned via `php artisan schools:setup-ui-review-demo`. Logins: `*@uireview.klassapp.demo` / `UiReview2026!` (admin, CT, subject teacher, parent).
-- **✅ School 124 shakedown** (`scripts/live-shakedown-school-124.mjs`): fees, attendance, CT MID exam create, subject marks, parent APIs **PASS**. **BUG**: report card PDF crashes when MID exam has null `scheduled_at` (`StudentReportCardService` ~L173). Toshi add-student/create-subject flows **not verified** via automation.
-- **✅ Merged [#395](https://github.com/KlassApp-Foundation/KlassApp/pull/395)** → merge `56b576ee` — Toshi `addParent` uses `UserProvisioning::randomPasswordAttributes()` + `is_reset=1`.
-- **Password security**: all six admin-creation paths on `UserProvisioning` on `main` + prod. Still open: `is_reset` web-login enforcement (UX).
+- **✅ Merged [#396](https://github.com/KlassApp-Foundation/KlassApp/pull/396)** → merge `c4e6dfaa` — report cards handle MID exams with null `scheduled_at` (`midExamControlColumnLabel` / `midExamMonthRowLabel` + regression test).
+- **✅ Deployed** via `scripts/deploy-manual.sh` (first pull blocked by prior hot-patch on host; `git checkout --` on 7 files + re-run). Prod host git + container `StudentReportCardService.php` **md5 `43fae2867be16d962ab1a3c21221f1af`** (matches local).
+- **✅ Live verify (post-deploy, git code)** school **124** Amina **3736**: tinker `pdfForStudent()` **670262B `%PDF`**; CT HTTP download **200** `application/pdf` **670262B `%PDF**.
+- **✅ Merged [#395](https://github.com/KlassApp-Foundation/KlassApp/pull/395)** → merge `56b576ee` — Toshi `addParent` provisioning.
+- **School 124 shakedown** (`scripts/live-shakedown-school-124.mjs`): fees, attendance, CT MID exam, subject marks, parent APIs **PASS**; report PDF bug **fixed in #396**; Toshi add-student/create-subject still unverified via automation.
 - **Prior**: CT report cards #393/#394; landing OSS mockup v3 (design-review only).
 
 ## Previous: August 29, 2026 (`origin/main` / prod tip `a34f8ab5` — **DEPLOYED + LIVE-VERIFIED** CT report cards)
@@ -997,15 +999,18 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-08-30: Report card MID `scheduled_at` null crash — fix + live-verify (school 124)
+### 2026-08-30: Report card MID `scheduled_at` null crash — **MERGED + DEPLOYED + LIVE-VERIFIED**
 
-- **Investigation**: `scheduled_at` is **intentionally nullable** (`StoreTeacherExamRequest`, `CreateExamRequest`, `Exam` model — calendar events only when set). `CombinedMarksheetExport` already handles null. Correct fix = **null-safe report rendering**, not requiring date on create (schools may omit it).
-- **Fix**: `StudentReportCardService::midExamControlColumnLabel()` / `midExamMonthRowLabel()`; wired through service, `DownloadStudentReport`, `GetStudentsMarks`, and report Blade templates (formal/warm/modern/student-report).
-- **Tests**: `tests/Feature/Reports/MidExamNullScheduledAtReportTest.php` — MID null `scheduled_at` + EOT marks → `%PDF`; label helper unit cases; `AdminReportCardExtractionTest` still passes — **7 passed (22 assertions)** total with new file.
-- **Live verify (school 124, Amina 3736)**: pre-fix prod tinker `ERR: Call to a member function format() on null`; post-fix `bytes=670262 header=%PDF`; CT download HTTP **200** `application/pdf` **670262B** `%PDF`.
+- **Investigation**: `scheduled_at` is **intentionally nullable** (`StoreTeacherExamRequest`, `CreateExamRequest`, `Exam` model). Correct fix = **null-safe report rendering** (matches `CombinedMarksheetExport` precedent), not requiring date on CT create.
+- **PR**: [#396](https://github.com/KlassApp-Foundation/KlassApp/pull/396) — branch `fix/report-mid-null-scheduled-at`.
+- **Merge**: `c4e6dfaad6907acaa974434b12d18852575bd57c` (squash feature `490742cc`).
+- **Fix**: `StudentReportCardService::midExamControlColumnLabel()` / `midExamMonthRowLabel()`; service + `DownloadStudentReport` + `GetStudentsMarks` + report Blade templates (formal/warm/modern/student-report).
+- **Tests**: `tests/Feature/Reports/MidExamNullScheduledAtReportTest.php` + `AdminReportCardExtractionTest` — **7 passed (22 assertions)**.
+- **Deploy**: `scripts/deploy-manual.sh` — first attempt blocked (hot-patch local changes on host); `git checkout --` on 7 files, re-run **complete**. Host git `c4e6dfaa`; host + container `StudentReportCardService.php` md5 **`43fae2867be16d962ab1a3c21221f1af`** (matches local); container grep confirms `midExamControlColumnLabel`.
+- **Live verify (post-deploy, git code)** school **124** Amina **3736**: tinker `pdfForStudent()` → **670262B `%PDF`**; CT `/teacher/reports/cards/174/student/3736/download` → **200** `application/pdf` **670262B `%PDF**.
 - **Files modified**: `app/Services/StudentReportCardService.php`, `app/Http/Controllers/Admin/DownloadStudentReport.php`, `app/Http/Controllers/Admin/GetStudentsMarks.php`, report Blade templates, `tests/Feature/Reports/MidExamNullScheduledAtReportTest.php`, `knowledge.md`.
-- **Status**: 🚧 Fix **implemented + tested + live-verified** on prod via hot-copy (not yet merged/deployed from git — next `deploy-manual.sh` will overwrite unless committed/pushed).
-- **Wizard append (read-only)**: Separate admin paths exist for post-onboarding adds — see session entry below / user report.
+- **Status**: ✅ **MERGED + DEPLOYED + LIVE-VERIFIED** on `origin/main` @ `c4e6dfaa`.
+- **Edge cases**: Multiple null-date MID exams in one term all label `"MID"` / `"MID TERM"` (no month disambiguation) — acceptable until schools set dates.
 
 ### 2026-08-30: School 124 comprehensive UI shakedown (pre–UI-migration)
 
@@ -1034,7 +1039,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 | CT attendance UI | **PASS** | Same form path under `/teacher/attendance/add`. |
 | CT create MID exam (PR-B) | **PASS** | Exam **54** created; assigned to subject teacher **3735**. |
 | Subject teacher sees + enters marks | **PASS** | Listed exam **54**; **8** mark inputs filled. |
-| CT report card PDF download | **BUG** | Returns **HTML** (redirect `back()`), not PDF. Tinker: `pdfForStudent()` throws **`Call to a member function format() on null`** — `StudentReportCardService` line **173** assumes `$ex->scheduled_at` on MID exams; CT-created exam **54** has **null** `scheduled_at`. |
+| CT report card PDF download | **FIXED (#396)** | Was HTML crash; now **670KB `%PDF`** for Amina (**3736**) with null-date MID exam **54**. |
 | Admin report preview vs CT | **FAIL** | Both HTML; md5 mismatch expected when generation fails. Only Amina (**3736**) has EOT marks; other P7 students have **no marks** → “no marks for report exam” path. |
 | Parent dashboard | **PASS** | Loads with `?child=3736`. |
 | Parent fees/grades/attendance API | **PASS** | JSON endpoints return `success:true` (attendance: present **1**, absent **0**). |
@@ -1042,9 +1047,9 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 #### Bugs filed (fix separately)
 
-1. **Report card PDF crash when MID exam lacks `scheduled_at`** — `StudentReportCardService::generatePdf()` ~L173: null-safe `scheduled_at` or default label (e.g. `MID`) before `format()`.
+1. ~~**Report card PDF crash when MID exam lacks `scheduled_at`**~~ — **fixed #396** @ `c4e6dfaa`.
 2. **Toshi assistant add-student / assign-teacher-create-subject** — not verified working via UI automation; needs manual repro or better harness waits.
-3. **Wizard cannot mutate existing onboarding data** — by design early-return; document for review schools or add “append mode”.
+3. **Wizard cannot mutate existing onboarding data** — by design early-return; admin has separate CRUD paths (see investigation report).
 
 - **Files modified**: `scripts/live-shakedown-school-124.mjs`, `knowledge.md`.
 - **Status**: ✅ Shakedown **complete** (report only — no prod code fixes this session). School **124** kept active with enriched data.
