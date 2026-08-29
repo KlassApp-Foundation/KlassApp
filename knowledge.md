@@ -336,9 +336,11 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 — Teacher attendance scope + sidebar roster (shipping)
+## Current Status: August 29, 2026 (`origin/main` / prod tip `8fc5ba5d` — **DEPLOYED + LIVE-VERIFIED** attendance scope + sidebar)
 
-- **Cleanup**: Web teacher attendance CT-scoped via `SiteHelper::getClassTeacherStandardLinks` (same filter as API); sidebar Classes/Students → `/teacher/classes`.
+- **✅ Merged [#392](https://github.com/KlassApp-Foundation/KlassApp/pull/392)** → merge `8fc5ba5d`.
+- **✅ Live verify** `node scripts/live-verify-attendance-sidebar.mjs` — **PASS** (school **122**): list only link **161**; other-class store **403**; Classes nav → `/teacher/classes`. Artifact: `tmp/live-verify-attendance-sidebar/REPORT.json`.
+- **Ready signal**: pre-migration cleanup (attendance scope + sidebar) done — UI migration can be scoped next.
 - **Prior**: PR-B [#391](https://github.com/KlassApp-Foundation/KlassApp/pull/391) @ `90170690`.
 
 ## Previous: August 29, 2026 (`origin/main` / prod tip `90170690` — **DEPLOYED + LIVE-VERIFIED** PR-B teacher exam create)
@@ -983,7 +985,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `app/Helpers/SiteHelper.php`, `app/Http/Controllers/Teacher/AttendanceController.php`, `app/Http/Controllers/Api/Teacher/AttendanceController.php`, `app/Http/Requests/AttendanceAddRequest.php`, `resources/views/layouts/teacher/menu.blade.php`, tests, script, `knowledge.md`.
 - **Key decisions**: Reuse API's `class_teacher_id` filter (not invent a second scope); admin attendance unchanged.
 - **Tests**: TeacherWebAttendanceScopeTest + TeacherSidebarRosterLinkTest — **5 passed**.
-- **Status**: 🚧 Shipping.
+- **Status**: ✅ MERGED `8fc5ba5d` + DEPLOYED + LIVE-VERIFIED PASS (school 122; list scoped; store 403; sidebar → classes).
 - **Edge cases flagged**: Admin list still uses MySQL `FIELD()` (sqlite-unfriendly) — regression covered via admin store instead.
 
 ### 2026-08-29: PR-B — Teacher-facing class-scoped exam create/edit
