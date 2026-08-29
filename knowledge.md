@@ -336,7 +336,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 29, 2026 (`origin/main` tip `05cdd22c` — **DEPLOYED** parent portal Phases 1–4)
+## Current Status: August 29, 2026 (`origin/main` tip `7e58529b` — **DEPLOYED** parent portal Phases 1–5 COMPLETE)
+
+- **✅ Prod tip**: **`7e58529b`** @ 2026-08-29 — full parent web dashboard live-verified (fees/grades/attendance UI + school-grouped child selector).
+- **Parent portal initiative CLOSED**: Phase 1 cross-school linking → Phase 2 magic-link → Phase 3 web auth shell → Phase 4 `ParentPortalService` → Phase 5 dashboard UI.
+- **Live verify Phase 5**: `node scripts/live-verify-parent-phase5.mjs` — **17/17 PASS**. Artifacts: `tmp/live-verify-parent-phase5/`.
+- **Prior tips**: Phase 4 `05cdd22c` / `55830d4f`; Phase 3 `#388` `2dbabdf9`.
+
+## Previous: August 29, 2026 (`origin/main` tip `05cdd22c` — **DEPLOYED** parent portal Phases 1–4) — superseded by Phase 5
 
 - **✅ Prod tip**: **`05cdd22c`** @ 2026-08-29 — parent web auth shell + shared `ParentPortalService` data layer live-verified.
 - **Parent portal Phases 1–4**: Cross-school linking → magic-link auth → web auth shell → shared data layer with `resolveChild()` isolation. Next: Phase 5 dashboard UI.
@@ -927,6 +934,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-08-29: Parent portal Phase 5 — dashboard UI (DEPLOYED + LIVE-VERIFIED) — initiative CLOSED
+
+- **Work done**: Real parent dashboard on `ParentPortalService`: school-grouped child selector (`?child=`), `x-ds-kpi-card` KPIs, fees/grades/attendance panels mirroring WhatsApp content, empty states (no children / no fees / no attendance / no marks). Children index also grouped by school.
+- **Commit**: `7e58529b` on `main`. Prod tip **`7e58529b`**.
+- **Files modified**: `ParentPortalService` (`school_name`, `groupChildrenBySchool`, `selectChild`, `childDashboard`), `DashboardController`, `ChildrenController`, `resources/views/parent/{dashboard,children}.blade.php`, `tests/Feature/Parent/ParentDashboardPhase5Test.php`, `scripts/live-verify-parent-phase5.mjs`.
+- **Key decisions**: Invalid/unlinked `?child=` falls back to first linked child (no existence leak). Use `ds-kpi-card` / `x-card` / `ds-empty-state` — not legacy `dashboard-kpi-card`.
+- **Tests**: 5 Phase 5 + full parent suite **26 passed**.
+- **Live verify**: `node scripts/live-verify-parent-phase5.mjs` — **17/17 PASS** (both school names, child chips, 450k/650k scoped fees, ds-kpi-card). Artifact: `tmp/live-verify-parent-phase5/`.
+- **Status**: ✅ Done — parent dashboard initiative Phases 1–5 closed.
+- **Edge cases flagged**: None new; isolation still enforced by Phase 4 `resolveChild` on JSON endpoints.
 
 ### 2026-08-29: Parent portal Phase 4 — ParentPortalService shared data layer (DEPLOYED + LIVE-VERIFIED)
 
