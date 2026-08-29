@@ -72,14 +72,15 @@ public function teacherExamMarksList()
     $teacher = Auth::user();
     $schoolId = $teacher->school_id;
 
-    $yrId = AcademicYear::where('school_id', $schoolId)->where('name', now()->year)->value('id');
+    $yrId = AcademicYear::where('school_id', $schoolId)->where('status', 1)->value('id')
+        ?? AcademicYear::where('school_id', $schoolId)->where('name', (string) now()->year)->value('id');
     $ctSectionIds = $yrId
         ? $this->examAuthorization->sectionIdsForClassTeacher($teacher, (int) $schoolId, (int) $yrId)
         : [];
 
     $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear', 'section', 'examType', 'academicTerm'])
         ->where('school_id', $schoolId)
-        ->where('academic_year_id', $yrId)
+        ->when($yrId, fn ($q) => $q->where('academic_year_id', $yrId))
         ->where(function ($q) use ($teacher, $ctSectionIds) {
             $q->where('teacher_id', $teacher->id);
             if ($ctSectionIds !== []) {
@@ -101,7 +102,9 @@ public function teacherExamMarksList()
         ->get()
         ->keyBy('section_id');
 
-    return view('teacher.marks.teacher-exam-list', compact('exams', 'examsByClass', 'assignedStdLinks'));
+    $canCreateExams = $ctSectionIds !== [];
+
+    return view('teacher.marks.teacher-exam-list', compact('exams', 'examsByClass', 'assignedStdLinks', 'canCreateExams'));
 }
 
 // mark exam as done

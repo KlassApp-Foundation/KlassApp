@@ -350,6 +350,13 @@ Route::prefix('exam')->group(function () {
     // List of exams available for this teacher to enter marks
     Route::get('/marks', 'MarksController@teacherExamMarksList')->name('teacher.exam.marks');
 
+    // Class-teacher exam create/edit (PR-B) — register before /{exam}/... wildcards
+    Route::get('/create', 'ExamController@create')->name('teacher.exams.create');
+    Route::post('/', 'ExamController@store')->name('teacher.exams.store');
+    Route::get('/{exam}/edit', 'ExamController@edit')->name('teacher.exams.edit');
+    Route::put('/{exam}', 'ExamController@update')->name('teacher.exams.update');
+    Route::delete('/{exam}', 'ExamController@destroy')->name('teacher.exams.destroy');
+
     // Enter / edit marks for a specific exam
     Route::get('/{exam}/marks/enter', 'MarksController@enterExamMarks')->name('teacher.exam.marks.enter');
 
