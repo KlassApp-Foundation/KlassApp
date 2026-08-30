@@ -151,17 +151,26 @@ class SchoolCategorySeeder
             }
 
             foreach (self::SUBJECTS[$levelType] as $name => $code) {
-                Subject::firstOrCreate([
-                    'school_id' => $school->id,
-                    'academic_year_id' => $year->id,
-                    'standard_id' => $standard->id,
-                    'section_id' => $firstSection?->id,
-                    'name' => $name,
-                ], [
-                    'code' => $code,
-                    'type' => 'core',
-                    'status' => 1,
-                ]);
+                // Create subject for every section in this level type, not just the first.
+                // Each section needs its own subject row (section_id is NOT NULL in the DB).
+                foreach (self::SECTIONS[$levelType] as $sectionName) {
+                    $section = Section::where('school_id', $school->id)
+                        ->where('name', $sectionName)
+                        ->first();
+                    if (! $section) continue;
+
+                    Subject::firstOrCreate([
+                        'school_id' => $school->id,
+                        'academic_year_id' => $year->id,
+                        'standard_id' => $standard->id,
+                        'section_id' => $section->id,
+                        'name' => $name,
+                    ], [
+                        'code' => $code,
+                        'type' => 'core',
+                        'status' => 1,
+                    ]);
+                }
             }
 
             // Each standard gets its own default grading scale.

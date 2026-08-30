@@ -133,7 +133,7 @@ public function enterExamMarks(Exam $exam)
     $this->examAuthorization->authorizeOrAbort($teacher, $exam, 'You are not authorized to enter marks for this exam.');
 
     $schoolId = $teacher->school_id;
-        
+
      $allStudents = User::with(["school", "marks", "studentAcademic.standardLink"])
                     ->where("usergroup_id", 6)
                     ->where("school_id", $schoolId)
@@ -144,7 +144,7 @@ public function enterExamMarks(Exam $exam)
                         });
                     })
                   ->get();
-     $total = $allStudents->count();             
+     $total = $allStudents->count();
 
     $exam = $exam->load("academicTerm", "section", "subject", "teacher", "standard");
 
@@ -268,7 +268,8 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
         $totalSubjects = Subject::where('school_id', $exam->school_id)
             ->where('standard_id', $exam->standard_id)
             ->where('is_active', 1)
-            ->count();
+            ->distinct('name')
+            ->count('name');
 
         if ($totalSubjects > 0) {
             // All exams of the same exam type + term + class (this exam period)
