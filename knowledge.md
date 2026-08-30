@@ -336,11 +336,11 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 30, 2026 (`origin/main` tip `c4e6dfaa` — report MID `scheduled_at` fix **DEPLOYED + LIVE-VERIFIED**)
+## Current Status: August 31, 2026 (`origin/main` tip `39d7d1ff` — seeder section-subjects fix **MERGED + DEPLOYED + LIVE-VERIFIED**)
 
-- **Persistent test school** **id 124** — **UI Review Demo School** (`primary_nursery`, Uganda/UNEB). Keep active (no teardown). Enriched by UI shakedown: **10** students, **5** exams (4 EOT + 1 MID), **4** attendance, **3** fee payments, WhatsApp + Growth plan done.
-- Provisioned via `php artisan schools:setup-ui-review-demo`. Logins: `*@uireview.klassapp.demo` / `UiReview2026!` (admin, CT, subject teacher, parent).
-- **✅ Merged [#396](https://github.com/KlassApp-Foundation/KlassApp/pull/396)** → merge `c4e6dfaa` — report cards handle MID exams with null `scheduled_at` (`midExamControlColumnLabel` / `midExamMonthRowLabel` + regression test).
+- **Persistent test schools**: **id 124** (UI Review Demo), **id 133** (wizard-onboarded Fresh Test Academy), **id 141** (seeder fix verify school). Keep all active (no teardown).
+- **✅ Merged [#397](https://github.com/KlassApp-Foundation/KlassApp/pull/397)** → merge `39d7d1ff` — SchoolCategorySeeder creates subjects for ALL sections per standard, not just `$firstSection`. MarksController uses `distinct('name')` to count 4, not 28.
+- **✅ Merged [#396](https://github.com/KlassApp-Foundation/KlassApp/pull/396)** → merge `c4e6dfaa` — report cards handle MID exams with null `scheduled_at`.
 - **✅ Deployed** via `scripts/deploy-manual.sh` (first pull blocked by prior hot-patch on host; `git checkout --` on 7 files + re-run). Prod host git + container `StudentReportCardService.php` **md5 `43fae2867be16d962ab1a3c21221f1af`** (matches local).
 - **✅ Live verify (post-deploy, git code)** school **124** Amina **3736**: tinker `pdfForStudent()` **670262B `%PDF`**; CT HTTP download **200** `application/pdf` **670262B `%PDF**.
 - **✅ Merged [#395](https://github.com/KlassApp-Foundation/KlassApp/pull/395)** → merge `56b576ee` — Toshi `addParent` provisioning.
@@ -999,7 +999,20 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-08-30: Report card MID `scheduled_at` null crash — **MERGED + DEPLOYED + LIVE-VERIFIED**
+### 2026-08-31: SchoolCategorySeeder subject-per-section fix — **MERGED + DEPLOYED + LIVE-VERIFIED**
+
+- **Bug**: `SchoolCategorySeeder::seed()` only created subjects for `$firstSection` in each standard level, leaving P.2–P.7 with zero subjects. Root cause: lines 153–165 iterated `SUBJECTS` inside the outer section loop but used `$firstSection?->id` as the `section_id` for ALL subjects.
+- **PR**: [#397](https://github.com/KlassApp-Foundation/KlassApp/pull/397) — branch `fix/seeder-subjects-all-sections`.
+- **Merge**: `39d7d1ff50af3ef604ae9f89786857a774b185e8` (squash PR #397).
+- **Fix**: Inner loop now iterates over ALL sections in `SECTIONS[$levelType]`, creating 4 subjects per section (28 total for primary, 7 sections × 4 subjects).
+- **Secondary fix**: `MarksController::saveExamMarks` changed `->count()` to `->distinct('name')->count('name')` — without dedup, `where('standard_id', ...)->count()` returns 28 instead of 4 with per-section subject rows.
+- **Tests**: `tests/Feature/Subjects/SubjectForSectionScopeTest.php` — 6 tests covering all four query patterns (A: section_id, B: standard_id-only, C: both, D: school-only) + seeder verification + MarksController "has all marks" count. SQLite NOT NULL constraints on `section_id` and `standards.order` prevent local test runs (MySqL production allows defaults).
+- **Files modified**: `app/Services/SchoolCategorySeeder.php`, `app/Http/Controllers/Teacher/MarksController.php`, `tests/Feature/Subjects/SubjectForSectionScopeTest.php`.
+- **Deploy**: `scripts/deploy-manual.sh` — server drift from earlier SCP'd files cleaned (`git checkout --` on 14 modified files + `rm` untracked); pull `39d7d1ff` fast-forward. Host + container + local md5 triple-match: `SchoolCategorySeeder.php` = `3f367c0d89bb02208a6bb3ea4c72ef73`, `MarksController.php` = `9aab502dfdd7bbfaba1ddc91ee138e84`. **Live browser verify post-deploy**: School 141 `/admin/subjects` = **28 rows, all 7 classes** (P1–P7) verified via Playwright screenshot.
+- **Status**: ✅ **MERGED + DEPLOYED + LIVE-VERIFIED** on `origin/main` @ `39d7d1ff`.
+- **Edge cases**: Pattern B (standard_id-only, as in MarksController notification path) now uses `distinct('name')` to return 4, not 28. All other Pattern-B call sites (StudentReportCardService, WhatsApp, grading) use BOTH columns (Pattern C) — unaffected. ToshiActionService `$section->id` restored (was transiently changed to `$stdLink->section_id` during `forSection` revert).
+
+### 2026-08-30: Fresh onboarding + role test — School 133 (browser-based)
 
 - **Investigation**: `scheduled_at` is **intentionally nullable** (`StoreTeacherExamRequest`, `CreateExamRequest`, `Exam` model). Correct fix = **null-safe report rendering** (matches `CombinedMarksheetExport` precedent), not requiring date on CT create.
 - **PR**: [#396](https://github.com/KlassApp-Foundation/KlassApp/pull/396) — branch `fix/report-mid-null-scheduled-at`.
