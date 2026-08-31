@@ -92,13 +92,19 @@ class RegisterController extends Controller
         }
 
         try {
-            Log::channel('slack')->info('A new user registered.', [
-                'Website' => env('APP_URL'),
-                'User_id' => $user->id,
-                'User_name' => $user->name,
-                'School_id' => $user->school_id,
-                'School_name' => optional($user->school)->name,
-            ]);
+            // Guard: only attempt the slack channel if the webhook URL is configured.
+            // On prod (LOG_SLACK_WEBHOOK_URL=null) this throws a TypeError when the
+            // SlackWebhookHandler is constructed — a hard 500 that blocks all signups.
+            $slackUrl = config('logging.channels.slack.url');
+            if (! empty($slackUrl)) {
+                Log::channel('slack')->info('A new user registered.', [
+                    'Website' => env('APP_URL'),
+                    'User_id' => $user->id,
+                    'User_name' => $user->name,
+                    'School_id' => $user->school_id,
+                    'School_name' => optional($user->school)->name,
+                ]);
+            }
         } catch (Throwable $e) {
             Log::warning('Slack registration log skipped', ['message' => $e->getMessage()]);
         }
