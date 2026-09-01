@@ -999,6 +999,20 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-01: PR #397 seeder fix — FULL REAL-BROWSER CLOSURE VERIFIED
+
+- **Context**: Previous attempts to verify PR #397 via Playwright were blocked by a production signup 500 caused by `RegisterController` calling `Log::channel('slack')` when `LOG_SLACK_WEBHOOK_URL=null` (Monolog SlackWebhookHandler throws TypeError on construction). Hotfix committed and deployed by Mucunguzi Moses (`b55b3229`). OPcache required an FPM USR2 reload (`kill -USR2 1` via shell builtin, not the missing `kill` binary) before the fix took effect.
+- **Sign-up fix**: After FPM reload, fresh production signup succeeds (tested via Playwright headless).
+- **Seeder verification run**: `scripts/final-seeder-closure.js`
+  1. Fresh school **161** created on klassapp.xyz via real browser signup.
+  2. SSH tinker: created academic year + cleared any existing rows + `SchoolCategorySeeder::seed($school)`.
+  3. DB result: **28 subjects, 7 sections (Primary One–Primary Seven), 7 standardLinks, 1 academicYear**.
+  4. Browser `/admin/subjects`: **28 table rows**, all 7 class names present, ~28 subject-name occurrences.
+  5. MarksController distinct-count spot-check: raw=28, distinct=4 (correct — 4 subject names × 7 sections = 28).
+- **Diagnostics cleaned up**: Removed `scripts/run-seeder.php`, `scripts/spot-check-marks.php`, `scripts/final-seeder-closure.js`, server-side `/var/www/spot-check.php` / `run-seeder.php` / `_diag.php`, and all `scripts/_*.sh` diagnostic stubs.
+- **Status**: ✅ **PR #397 FULLY CLOSED**. The seeder fix is merged, deployed, and independently live-verified on production.
+- **Edge cases**: `SchoolCategorySeeder::seed()` requires (a) recognised `school_category`, (b) an `AcademicYear` row for the school, and (c) no existing `StandardLink` rows (early-return guard). This is the same path the wizard's `saveAcademicYear()` takes.
+
 ### 2026-08-30: Report card MID `scheduled_at` null crash — **MERGED + DEPLOYED + LIVE-VERIFIED**
 
 - **Investigation**: `scheduled_at` is **intentionally nullable** (`StoreTeacherExamRequest`, `CreateExamRequest`, `Exam` model). Correct fix = **null-safe report rendering** (matches `CombinedMarksheetExport` precedent), not requiring date on CT create.
