@@ -82,7 +82,7 @@ docker exec "\$CONTAINER" php artisan optimize:clear
 # PHP code is still served until someone manually sends a signal.
 # FIX: capture signal result explicitly, wait for workers, then checksum-verify.
 echo "[6/8] Restarting FPM (OPcache flush)..."
-USRSIG="$(docker exec "\$CONTAINER" sh -c "kill -USR2 1 2>&1")"
+USRSIG="\$(docker exec "\$CONTAINER" sh -c "kill -USR2 1 2>&1")"
 if [ -z "\$USRSIG" ]; then
     echo "[6/8] ✅ FPM USR2 signal sent to PID 1"
     echo "      Waiting 2s for workers to drain and reload..."
@@ -108,8 +108,8 @@ echo "[8/8] Verifying deployed file reached FPM workers..."
 # This catches the silent-failure case where git pull succeeded but OPcache
 # still holds the old bytecode, or the volume mount did not sync.
 VERIFY_FILE="app/Http/Controllers/Auth/RegisterController.php"
-LOCAL_SHA="$(git show HEAD:\$VERIFY_FILE | sha256sum | awk '{print \$1}')"
-REMOTE_SHA="$(docker exec "\$CONTAINER" sha256sum "/var/www/\$VERIFY_FILE" | awk '{print \$1}')"
+LOCAL_SHA="\$(git show HEAD:\$VERIFY_FILE | sha256sum | awk '{print $1}')"
+REMOTE_SHA="\$(docker exec "\$CONTAINER" sha256sum "/var/www/\$VERIFY_FILE" | awk '{print $1}')"
 if [ "\$LOCAL_SHA" = "\$REMOTE_SHA" ]; then
     echo "[8/8] ✅ SHA match — deploy reached running FPM workers"
 else
