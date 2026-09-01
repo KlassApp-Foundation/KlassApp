@@ -105,6 +105,13 @@ Route::post('/password/reset/change', 'Auth\ResetPasswordController@reset')->nam
 Route::get('/password/reset-code', 'Auth\PasswordResetCodeController@showCodeForm')->name('password.reset.code');
 Route::post('/password/reset-code/verify', 'Auth\PasswordResetCodeController@verifyCode')->name('password.reset.code.verify');
 Route::get('/password/reset-code/resend', 'Auth\PasswordResetCodeController@resendCode')->name('password.reset.code.resend');
+
+// Force password change for accounts created with temporary/reset credentials
+Route::get('/password/force-change', 'Auth\ForceChangePasswordController@showForm')
+    ->middleware('auth')
+    ->name('password.force-change');
+Route::post('/password/force-change', 'Auth\ForceChangePasswordController@store')
+    ->middleware('auth');
 //Email Verification for Member
 Route::get('/emailverification/{token}', 'Auth\EmailVerificationController@emailverification');
 // OTP Verification
@@ -134,7 +141,7 @@ Route::group(['middleware' => ['siteadmin'], 'namespace' => 'Admin'], function (
 //    Route::get('/superadmin/dashboard', 'DashboardController@index')->name('dashboard');
 // });
 //test pages hidden
-  /*video chat room*/ 
+  /*video chat room*/
   /*Route::view('/video-chat-grid', 'pages.video.grid');
   Route::view('/video-chat-collaboration', 'pages.video.collaboration');
   Route::view('/video-chat-tile', 'pages.video.tile');
@@ -174,7 +181,7 @@ Route::post( '/{slug}/admission-form/validationPersonalDetail', 'AdmissionContro
 Route::group(['middleware' => ['superadmin','auth'],'prefix'=>'superadmin', 'namespace' => 'Superadmin'], function () {
 
       Route::get('/dashboard', 'DashboardSuperController@index')->name('superadmin.dashboard');
-      
+
    //Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 
    //Contact

@@ -284,7 +284,13 @@ trait AuthenticatesUsers
 
         $this->clearLoginAttempts($request);
 
-        return $this->authenticated($request, $this->guard()->user())
+        $user = $this->guard()->user();
+
+        if ((int) $user->is_reset === 1) {
+            return redirect()->route('password.force-change');
+        }
+
+        return $this->authenticated($request, $user)
                 ?: redirect()->intended($this->redirectPath());
     }
 
