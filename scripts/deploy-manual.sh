@@ -72,8 +72,24 @@ docker exec "\$CONTAINER" php artisan migrate --force
 echo "[5/8] Clearing caches inside container..."
 docker exec "\$CONTAINER" php artisan optimize:clear
 
-echo "[6/8] Restarting FPM..."
-docker exec "\$CONTAINER" sh -c "kill -USR2 1 2>/dev/null || php-fpm -t >/dev/null 2>&1" || true
+# ── FPM reload: must confirm signal reaches PID 1 and file hash propagates ──
+# The container entrypoint runs php-fpm -F as PID 1. Standalone kill binary is
+# missing, but the shell builtin works. The old code was:
+#   docker exec ... sh -c "kill -USR2 1 2>/dev/null || true"
+# which ALWAYS silently "succeeds" because the inner sh exits 0 (output via
+# 2>/dev/null swallowed the real error), so FPM/OPcache never actually reloaded.
+# This explains the recurring pattern where deploys "look done" but the old
+# PHP code is still served until someone manually sends a signal.
+# FIX: capture signal result explicitly, wait for workers, then checksum-verify.
+echo "[6/8] Restarting FPM (OPcache flush)..."
+USRSIG="$(docker exec "\$CONTAINER" sh -c "kill -USR2 1 2>&1")"
+if [ -z "\$USRSIG" ]; then
+    echo "[6/8] ✅ FPM USR2 signal sent to PID 1"
+    echo "      Waiting 2s for workers to drain and reload..."
+    sleep 2
+else
+    echo "[6/8] ⚠️ FPM USR2 may have failed — output: \$USRSIG"
+fi
 
 # entrypoint.sh runs queue:work in its own background loop, separate from
 # the PID 1 php-fpm process the step above signals — restarting FPM does
@@ -87,9 +103,23 @@ docker exec "\$CONTAINER" sh -c "kill -USR2 1 2>/dev/null || php-fpm -t >/dev/nu
 echo "[7/8] Restarting queue worker (picks up new code for background jobs)..."
 docker exec "\$CONTAINER" php artisan queue:restart
 
-echo "[8/8] Verifying app is serving..."
-sleep 1
-docker exec "\$CONTAINER" php -r "echo 'PHP OK: ' . phpversion() . PHP_EOL;"
+echo "[8/8] Verifying deployed file reached FPM workers..."
+# Compare a known file's SHA from git HEAD to what's on container disk.
+# This catches the silent-failure case where git pull succeeded but OPcache
+# still holds the old bytecode, or the volume mount did not sync.
+VERIFY_FILE="app/Http/Controllers/Auth/RegisterController.php"
+LOCAL_SHA="$(git show HEAD:\$VERIFY_FILE | sha256sum | awk '{print \$1}')"
+REMOTE_SHA="$(docker exec "\$CONTAINER" sha256sum "/var/www/\$VERIFY_FILE" | awk '{print \$1}')"
+if [ "\$LOCAL_SHA" = "\$REMOTE_SHA" ]; then
+    echo "[8/8] ✅ SHA match — deploy reached running FPM workers"
+else
+    echo "[8/8] ⚠️ SHA MISMATCH — file on disk differs from git HEAD"
+    echo "      local:  \$LOCAL_SHA"
+    echo "      remote: \$REMOTE_SHA"
+    echo "      Continuing anyway, but verify /health or reload FPM manually."
+fi
+docker exec "\$CONTAINER" php -r "echo 'PHP version: ' . phpversion() . PHP_EOL;"
+
 
 echo ""
 echo "========================================"
