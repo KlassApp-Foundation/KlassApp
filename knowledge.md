@@ -1049,6 +1049,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-02: Parent-link pending/rejected status awareness (trust gap)
+
+- **Trace (confirmed)**: `processMetaMessage` looked up `WhatsAppUser` only; missing user → `handleUnrecognizedUserMeta` with **zero** `ParentLinkRequest` check. Admin `reject` only flipped `status=rejected` — `NotifyOnStatusChange` only WhatsApps teachers with `teacher()`, so parents got silence.
+- **Fix**: `replyForParentLinkRequestStatus()` before stranger menu (any body while pending; rejected free-text + pass-through for Request Link/help). Duplicate `createFromFlowSubmission` returns existing pending (`wasRecentlyCreated` via `load()` not `fresh()`). Reject/approve → `notifyRejected` / `notifyApproved`.
+- **PR**: [#407](https://github.com/KlassApp-Foundation/KlassApp/pull/407) → merge `bb94fe8b`.
+- **Files**: `ParentLinkRequestService`, `WhatsAppController`, `ApprovalController`, Flow + Approval tests.
+- **Tests**: 13 passed (55 assertions).
+- **Live**: pending phone `+256781940358` → `parent_link_pending_status` sent (wamid above).
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
+
 ### 2026-09-02: Teacher email invite (B-2a) + Account creation library template check
 
 - **Work done**: Shipped email-only teacher/CT invite via `TeacherInviteMail` (CoAdmin pattern). `addTeacher` captures plain password from `randomPasswordCredentials()` and queues mail before discard. Optional class assigns CT. Investigated Meta library `account_creation_confirmation_3`: 2 body params only — too constrained for 5 invite fields; did not submit.
