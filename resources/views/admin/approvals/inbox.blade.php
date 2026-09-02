@@ -78,7 +78,9 @@
                         @foreach($approvals as $approval)
                             @php
                                 $approvable = $approval->approvable;
-                                $typeName = $approvable ? class_basename($approvable) : 'Unknown';
+                                $typeName = ($approvable && method_exists($approvable, 'displayType'))
+                                    ? $approvable->displayType()
+                                    : ($approvable ? class_basename($approvable) : 'Unknown');
                                 $stateLabel = $approval->state instanceof \App\States\Approval\ApprovalState
                                     ? $approval->state->label()
                                     : 'Unknown';
@@ -86,9 +88,24 @@
                                     ? $approval->state->color()
                                     : '#6B7280';
                                 $canAct = $approval->state instanceof \App\States\Approval\Pending;
+                                $isParentLink = $approvable instanceof \App\Models\ParentLinkRequest;
+                                $candidateStudents = collect();
+                                if ($isParentLink && ! empty($approvable->candidate_student_ids)) {
+                                    $candidateStudents = \App\Models\User::query()
+                                        ->whereIn('id', $approvable->candidate_student_ids)
+                                        ->with(['studentAcademicLatest.standardLink.section'])
+                                        ->get();
+                                }
                             @endphp
                             <tr class="hover:bg-gray-50 transition">
-                                <td class="px-5 py-4 text-gray-700 font-medium">{{ $typeName }}</td>
+                                <td class="px-5 py-4 text-gray-700 font-medium">
+                                    {{ $typeName }}
+                                    @if($isParentLink)
+                                        <span class="text-gray-400 text-xs block font-normal">
+                                            {{ $approvable->phone }} · {{ $approvable->summaryLine() }}
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="px-5 py-4">
                                     @if($approval->requester)
                                         <span class="text-gray-700">{{ $approval->requester->name }}</span>
@@ -111,9 +128,27 @@
                                 </td>
                                 <td class="px-5 py-4">
                                     @if($canAct)
-                                        <div class="flex gap-2">
-                                            <form method="POST" action="{{ route('admin.approvals.approve', $approval) }}" class="inline">
+                                        <div class="flex flex-col gap-2">
+                                            <form method="POST" action="{{ route('admin.approvals.approve', $approval) }}" class="inline flex flex-wrap items-center gap-2">
                                                 @csrf
+                                                @if($isParentLink)
+                                                    @if($candidateStudents->isNotEmpty())
+                                                        <select name="matched_student_id" required
+                                                                class="text-xs border rounded px-2 py-1 max-w-xs">
+                                                            @foreach($candidateStudents as $candidate)
+                                                                <option value="{{ $candidate->id }}"
+                                                                    @selected($candidate->id == $approvable->suggested_student_id)>
+                                                                    {{ $candidate->name }}
+                                                                    ({{ $candidate->studentAcademicLatest?->standardLink?->StandardSection ?? 'class n/a' }})
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    @else
+                                                        <input type="number" name="matched_student_id" min="1" required
+                                                               placeholder="Student user ID"
+                                                               class="text-xs border rounded px-2 py-1 w-28">
+                                                    @endif
+                                                @endif
                                                 <input type="hidden" name="comments" value="">
                                                 <button type="submit"
                                                          class="px-3 py-1 text-xs font-medium rounded text-white border-0 bg-green-600 hover:bg-green-500"

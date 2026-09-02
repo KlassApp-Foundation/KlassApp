@@ -108,8 +108,8 @@ echo "[8/8] Verifying deployed file reached FPM workers..."
 # This catches the silent-failure case where git pull succeeded but OPcache
 # still holds the old bytecode, or the volume mount did not sync.
 VERIFY_FILE="app/Http/Controllers/Auth/RegisterController.php"
-LOCAL_SHA="\$(git show HEAD:\$VERIFY_FILE | sha256sum | awk '{print $1}')"
-REMOTE_SHA="\$(docker exec "\$CONTAINER" sha256sum "/var/www/\$VERIFY_FILE" | awk '{print $1}')"
+LOCAL_SHA="\$(git show HEAD:\$VERIFY_FILE | sha256sum | awk '{print \$1}')"
+REMOTE_SHA="\$(docker exec "\$CONTAINER" sha256sum "/var/www/\$VERIFY_FILE" | awk '{print \$1}')"
 if [ "\$LOCAL_SHA" = "\$REMOTE_SHA" ]; then
     echo "[8/8] ✅ SHA match — deploy reached running FPM workers"
 else
