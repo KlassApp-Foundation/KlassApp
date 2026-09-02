@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('parent_link_requests', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('school_id')->nullable()->index();
+            $table->unsignedBigInteger('school_id')->nullable()->index();
             $table->string('phone', 20);
             $table->string('parent_name', 150);
             $table->string('child_name', 150);
