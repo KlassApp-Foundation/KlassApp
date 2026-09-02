@@ -4,6 +4,7 @@ namespace App\Services\WhatsApp;
 
 use App\Models\Approval;
 use App\Models\ParentLinkRequest;
+use App\Models\School;
 use App\Models\User;
 use App\States\Approval\Pending;
 use Illuminate\Support\Collection;
@@ -14,6 +15,9 @@ class ParentLinkRequestService
 {
     /**
      * Persist a WhatsApp Flow submission and enqueue it for school admin review.
+     *
+     * One submission = one child at one school. Parents with children at
+     * different schools submit the Flow once per child.
      *
      * @param  array<string, mixed>  $payload
      */
@@ -26,22 +30,35 @@ class ParentLinkRequestService
         $parentName = trim((string) ($payload['parent_name'] ?? $senderName));
         $childName = trim((string) ($payload['child_name'] ?? ''));
         $childClass = trim((string) ($payload['child_class'] ?? ''));
+        $schoolName = trim((string) ($payload['school_name'] ?? ''));
 
-        return DB::transaction(function () use ($phone, $parentName, $childName, $childClass, $flowToken) {
-            $candidates = $this->findCandidateStudents($childName, $childClass);
-            $schoolIds = $candidates->pluck('school_id')->unique()->filter()->values();
-            $suggestedStudentId = null;
+        return DB::transaction(function () use ($phone, $parentName, $childName, $childClass, $schoolName, $flowToken) {
+            $resolvedSchool = $this->resolveSchoolByName($schoolName);
+
+            $candidates = $this->findCandidateStudents(
+                $childName,
+                $childClass,
+                $resolvedSchool?->id,
+            );
+
+            // Fallback: if school-name match was ambiguous/missing, infer from
+            // a single platform-wide child candidate (previous Day 2 behaviour).
+            if ($resolvedSchool === null) {
+                $schoolIds = $candidates->pluck('school_id')->unique()->filter()->values();
+                if ($schoolIds->count() === 1) {
+                    $resolvedSchool = School::find((int) $schoolIds->first());
+                }
+            } else {
+                // Narrow candidates to the resolved school only.
+                $candidates = $candidates->where('school_id', $resolvedSchool->id)->values();
+            }
+
+            $suggestedStudentId = $candidates->count() === 1
+                ? (int) $candidates->first()->id
+                : null;
+
             $candidateIds = $candidates->pluck('id')->values()->all();
-
-            if ($candidates->count() === 1) {
-                $suggestedStudentId = (int) $candidates->first()->id;
-            }
-
-            $schoolId = $schoolIds->count() === 1 ? (int) $schoolIds->first() : null;
-
-            if ($schoolId === null && $suggestedStudentId !== null) {
-                $schoolId = (int) $candidates->first()->school_id;
-            }
+            $schoolId = $resolvedSchool?->id;
 
             $request = ParentLinkRequest::create([
                 'school_id' => $schoolId,
@@ -49,6 +66,7 @@ class ParentLinkRequestService
                 'parent_name' => $parentName,
                 'child_name' => $childName,
                 'child_class' => $childClass,
+                'school_name' => $schoolName !== '' ? $schoolName : null,
                 'suggested_student_id' => $suggestedStudentId,
                 'status' => 'pending',
                 'flow_token' => $flowToken,
@@ -66,6 +84,7 @@ class ParentLinkRequestService
             } else {
                 Log::warning('Parent link request has no single-school match — admin inbox skipped', [
                     'parent_link_request_id' => $request->id,
+                    'submitted_school_name' => $schoolName,
                     'candidate_count' => count($candidateIds),
                 ]);
             }
@@ -75,9 +94,42 @@ class ParentLinkRequestService
     }
 
     /**
+     * Fuzzy-match a typed school name against active schools.
+     * Exact (case-insensitive) match wins; otherwise a single LIKE hit.
+     * Ambiguous (0 or 2+) returns null so the caller can fall back.
+     */
+    public function resolveSchoolByName(string $schoolName): ?School
+    {
+        if ($schoolName === '') {
+            return null;
+        }
+
+        $exact = School::query()
+            ->where('status', 1)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($schoolName)])
+            ->first();
+
+        if ($exact !== null) {
+            return $exact;
+        }
+
+        $matches = School::query()
+            ->where('status', 1)
+            ->where('name', 'LIKE', '%'.$schoolName.'%')
+            ->limit(5)
+            ->get();
+
+        if ($matches->count() === 1) {
+            return $matches->first();
+        }
+
+        return null;
+    }
+
+    /**
      * @return Collection<int, User>
      */
-    public function findCandidateStudents(string $childName, string $childClass): Collection
+    public function findCandidateStudents(string $childName, string $childClass, ?int $schoolId = null): Collection
     {
         if ($childName === '') {
             return collect();
@@ -91,6 +143,10 @@ class ParentLinkRequestService
                     ->orWhere('name', 'LIKE', '%'.str_replace(' ', '%', $childName).'%');
             })
             ->with(['studentAcademicLatest.standardLink.section', 'studentAcademicLatest.standardLink.standard', 'school']);
+
+        if ($schoolId !== null) {
+            $query->where('school_id', $schoolId);
+        }
 
         if ($childClass !== '') {
             $normalizedClass = $this->normalizeClassToken($childClass);

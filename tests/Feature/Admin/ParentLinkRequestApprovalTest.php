@@ -73,16 +73,19 @@ class ParentLinkRequestApprovalTest extends TestCase
                 'parent_name' => 'Jane Parent',
                 'child_name' => 'Amope Nandawula',
                 'child_class' => 'P.3',
+                'school_name' => 'Link Request School',
             ],
         );
 
         $this->assertSame('pending', $request->status);
         $this->assertSame($this->school->id, $request->school_id);
+        $this->assertSame('Link Request School', $request->school_name);
         $this->assertSame($this->student->id, $request->suggested_student_id);
 
         $this->assertDatabaseHas('parent_link_requests', [
             'phone' => '+256700111222',
             'child_name' => 'Amope Nandawula',
+            'school_name' => 'Link Request School',
             'status' => 'pending',
         ]);
 
@@ -93,6 +96,31 @@ class ParentLinkRequestApprovalTest extends TestCase
         ]);
     }
 
+    public function test_school_name_is_primary_signal_over_cross_school_child_match(): void
+    {
+        $otherSchool = School::create([
+            'name' => 'Other Primary School',
+            'email' => 'other-link@test.sch.ug',
+            'status' => 1,
+        ]);
+        $otherLink = $this->createStandardLink($otherSchool, 'P.3');
+        $this->createStudent($otherSchool, $otherLink, 'Amope Nandawula');
+
+        $request = app(ParentLinkRequestService::class)->createFromFlowSubmission(
+            '+256700777888',
+            [
+                'parent_name' => 'Jane Parent',
+                'child_name' => 'Amope Nandawula',
+                'child_class' => 'P.3',
+                'school_name' => 'Link Request School',
+            ],
+        );
+
+        $this->assertSame($this->school->id, $request->school_id);
+        $this->assertSame([$this->student->id], $request->candidate_student_ids);
+        $this->assertSame($this->student->id, $request->suggested_student_id);
+    }
+
     public function test_admin_approve_creates_parent_link(): void
     {
         $linkRequest = app(ParentLinkRequestService::class)->createFromFlowSubmission(
@@ -101,6 +129,7 @@ class ParentLinkRequestApprovalTest extends TestCase
                 'parent_name' => 'Jane Parent',
                 'child_name' => 'Amope Nandawula',
                 'child_class' => 'P.3',
+                'school_name' => 'Link Request School',
             ],
         );
 
@@ -150,6 +179,7 @@ class ParentLinkRequestApprovalTest extends TestCase
                 'parent_name' => 'Reject Parent',
                 'child_name' => 'Amope Nandawula',
                 'child_class' => 'P.3',
+                'school_name' => 'Link Request School',
             ],
         );
 

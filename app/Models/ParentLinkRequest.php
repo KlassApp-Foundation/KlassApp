@@ -17,6 +17,7 @@ class ParentLinkRequest extends Model implements Approvable
         'parent_name',
         'child_name',
         'child_class',
+        'school_name',
         'suggested_student_id',
         'matched_student_id',
         'status',
@@ -54,6 +55,19 @@ class ParentLinkRequest extends Model implements Approvable
 
     public function summaryLine(): string
     {
-        return "{$this->parent_name} → {$this->child_name} ({$this->child_class})";
+        $school = $this->school_name
+            ?: $this->school?->name
+            ?: 'unknown school';
+
+        return "{$this->parent_name} → {$this->child_name} ({$this->child_class}) @ {$school}";
+    }
+
+    /**
+     * Display name for confirmation / inbox — prefers resolved school, then submitted text.
+     */
+    public function schoolDisplayName(): string
+    {
+        return $this->school?->name
+            ?: ($this->school_name !== null && $this->school_name !== '' ? $this->school_name : 'the school');
     }
 }

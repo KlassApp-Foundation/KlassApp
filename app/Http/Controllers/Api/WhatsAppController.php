@@ -898,21 +898,17 @@ class WhatsAppController extends Controller
             'parent_link_request_id' => $linkRequest->id,
         ]);
 
-        $parentName = $linkRequest->parent_name;
-        $childName = $linkRequest->child_name;
-        $childClass = $linkRequest->child_class;
-
-        $childLine = $childName !== ''
-            ? "*{$childName}*" . ($childClass !== '' ? " ({$childClass})" : '')
-            : 'your child';
-
-        $thanksSuffix = $parentName !== '' ? ", {$parentName}" : '';
+        $parentName = $linkRequest->parent_name !== '' ? $linkRequest->parent_name : 'Parent';
+        $childName = $linkRequest->child_name !== '' ? $linkRequest->child_name : 'your child';
+        $childClass = $linkRequest->child_class !== '' ? $linkRequest->child_class : 'their class';
+        $schoolName = $linkRequest->schoolDisplayName();
 
         $this->businessApi->sendText(
             $phone,
             "✅ *Request received*\n\n"
-            . "Thanks{$thanksSuffix}! We've sent your link request for {$childLine} to the school for review.\n\n"
-            . "You'll hear back once a staff member approves it — no link is created until then.",
+            . "Thanks, {$parentName}! We've sent your link request for {$childName} "
+            . "of {$childClass} at {$schoolName} for review. "
+            . "You'll be linked to your child once {$schoolName} administration approves your request.",
             'parent_link_flow_ack',
         );
     }
