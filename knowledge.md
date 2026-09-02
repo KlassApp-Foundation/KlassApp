@@ -336,11 +336,13 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 2, 2026 (`origin/main` tip pending — teacher email invite B-2a)
+## Current Status: September 2, 2026 (`origin/main` tip `a35830eb` — teacher email invite B-2a **MERGED + DEPLOYED**)
 
-- **Teacher/CT email invite (B-2a)**: `TeacherInviteMail` + `ToshiActionService::addTeacher` uses `UserProvisioning::randomPasswordCredentials()`, queues invite with plain password in the same request (CoAdmin pattern). Optional class → `class_teacher_id` + named in email.
-- **WhatsApp library template investigation**: `account_creation_confirmation_3` (EN) has **only 2 body variables** (`{{1}}` name, `{{2}}` verify-target) + URL button — **not enough** for teacher name / class / school / temp password / login URL. Not customized/submitted; email remains the reliable invite path.
-- **Prior templates**: 4/6 custom APPROVED; invite+otp names stuck REJECTED; `klassapp_otp` AUTH APPROVED. Merge tip still `72da7311` until this PR lands.
+- **✅ [#405](https://github.com/KlassApp-Foundation/KlassApp/pull/405)** → merge `a35830eb` — `TeacherInviteMail` + `ToshiActionService::addTeacher` with `randomPasswordCredentials()`; optional class → CT assignment + named in email.
+- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`; prod has `TeacherInviteMail.php` + queued invite at `addTeacher`.
+- **Tests**: `AddTeacherInviteEmailTest` — 3 passed (15 assertions).
+- **WhatsApp library**: `account_creation_confirmation_3` EN — **2 body vars only** (`{{1}}` name, `{{2}}` verify-target) + URL button — **too constrained** for 5 invite fields; not submitted. Email is the invite path.
+- **Prior templates** @ `72da7311`: 4/6 APPROVED; `klassapp_otp` AUTH APPROVED; invite name stuck REJECTED.
 
 ## Previous: September 2, 2026 (`origin/main` tip pending — Flow ack bold + template submit scripts)
 
@@ -1042,9 +1044,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 ### 2026-09-02: Teacher email invite (B-2a) + Account creation library template check
 
 - **Work done**: Shipped email-only teacher/CT invite via `TeacherInviteMail` (CoAdmin pattern). `addTeacher` captures plain password from `randomPasswordCredentials()` and queues mail before discard. Optional class assigns CT. Investigated Meta library `account_creation_confirmation_3`: 2 body params only — too constrained for 5 invite fields; did not submit.
+- **PR**: [#405](https://github.com/KlassApp-Foundation/KlassApp/pull/405) → merge `a35830eb`.
 - **Files**: `app/Mail/TeacherInviteMail.php`, `resources/views/emails/teacher-invite.blade.php`, `ToshiActionService::addTeacher`, `AddTeacherTool`, `tests/Feature/Toshi/AddTeacherInviteEmailTest.php`, `knowledge.md`.
 - **Tests**: 3 passed (15 assertions).
-- **Status**: shipping via PR.
+- **Deploy**: `[8/8] ✅ SHA match` @ `a35830eb`.
+- **Status**: ✅ MERGED + DEPLOYED
 
 ### 2026-09-02: WhatsApp template resubmit + Flow ack bold
 
