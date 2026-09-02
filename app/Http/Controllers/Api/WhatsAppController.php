@@ -906,9 +906,9 @@ class WhatsAppController extends Controller
         $this->businessApi->sendText(
             $phone,
             "✅ *Request received*\n\n"
-            . "Thanks, {$parentName}! We've sent your link request for {$childName} "
-            . "of {$childClass} at {$schoolName} for review. "
-            . "You'll be linked to your child once {$schoolName} administration approves your request.",
+            . "Thanks, *{$parentName}*! We've sent your link request for *{$childName}* of "
+            . "*{$childClass}* at *{$schoolName}* for review. "
+            . "You'll be linked to your child once the school administration approves your request.",
             'parent_link_flow_ack',
         );
     }

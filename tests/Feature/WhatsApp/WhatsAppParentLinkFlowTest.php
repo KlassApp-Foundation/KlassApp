@@ -122,11 +122,11 @@ class WhatsAppParentLinkFlowTest extends TestCase
                 return $phone === $this->phone
                     && $flowType === 'parent_link_flow_ack'
                     && str_contains($message, 'Request received')
-                    && str_contains($message, 'Thanks, Jane Parent!')
-                    && str_contains($message, 'Amope Nandawula')
-                    && str_contains($message, 'of P.3 at')
-                    && str_contains($message, 'Demo Primary')
-                    && str_contains($message, 'administration approves');
+                    && str_contains($message, 'Thanks, *Jane Parent*!')
+                    && str_contains($message, '*Amope Nandawula*')
+                    && str_contains($message, '*P.3*')
+                    && str_contains($message, '*Demo Primary*')
+                    && str_contains($message, 'the school administration approves');
             })
             ->andReturn(['success' => true, 'message_id' => 'ack']);
         $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
@@ -153,9 +153,11 @@ class WhatsAppParentLinkFlowTest extends TestCase
 
         $this->assertNotNull($captured);
         $this->assertSame('parent_link_flow_ack', $captured['flowType']);
-        $this->assertStringContainsString('Jane Parent', $captured['message']);
-        $this->assertStringContainsString('P.3', $captured['message']);
-        $this->assertStringContainsString('Demo Primary', $captured['message']);
+        $this->assertStringContainsString('Thanks, *Jane Parent*!', $captured['message']);
+        $this->assertStringContainsString('*Amope Nandawula*', $captured['message']);
+        $this->assertStringContainsString('*P.3*', $captured['message']);
+        $this->assertStringContainsString('*Demo Primary*', $captured['message']);
+        $this->assertStringContainsString('the school administration approves', $captured['message']);
 
         $this->assertDatabaseHas('parent_link_requests', [
             'phone' => $this->phone,

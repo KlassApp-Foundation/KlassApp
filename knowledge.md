@@ -336,7 +336,41 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: August 30, 2026 (`origin/main` tip `c4e6dfaa` — report MID `scheduled_at` fix **DEPLOYED + LIVE-VERIFIED**)
+## Current Status: September 2, 2026 (`origin/main` tip pending — Flow ack bold + template submit scripts)
+
+- **WhatsApp templates (Graph API, WABA `1370231745289565`)** — live statuses after Business Verification:
+  | name | id | status | category | notes |
+  |---|---|---|---|---|
+  | `fee_update` | `1039737312203409` | **APPROVED** | UTILITY | exact wording |
+  | `grade_entered` | `1011462501920458` | **APPROVED** | UTILITY | exact wording + footer |
+  | `report_card_ready` | `935553592927314` | **APPROVED** | UTILITY | exact wording |
+  | `health_incident` | `1621229516246736` | **APPROVED** | UTILITY | header + exact wording |
+  | `teacher_account_invite` | `1989201768464020` | **REJECTED** | UTILITY | `INCORRECT_CATEGORY`; delete needs Business Manager permission; MARKETING/UTILITY retries under alt names also REJECTED |
+  | `toshi_otp` | `1705592420703523` | **REJECTED** | UTILITY | `INCORRECT_CATEGORY`; AUTH custom body not allowed (`text` on BODY → #2388042) |
+  | `klassapp_otp` | `1989075395097636` | **APPROVED** | AUTHENTICATION | Meta-standard OTP body + 5min footer + COPY_CODE (usable AUTH path) |
+- **Flow ack**: bold `*{parent}*`, `*{child}*`, `*{class}*`, `*{school}*`; “once the school administration approves…”
+- **Prior**: [#403](https://github.com/KlassApp-Foundation/KlassApp/pull/403) school_name @ `60cc6aa4`.
+
+## Previous: September 2, 2026 (`origin/main` tip `60cc6aa4` — parent-link Flow **school name** field **MERGED + DEPLOYED + PUBLISHED**)
+
+- **✅ [#403](https://github.com/KlassApp-Foundation/KlassApp/pull/403)** → merge `60cc6aa4` — required `school_name` on Flow; resolve school by name first; new ack copy; `parent_link_requests.school_name` column.
+- **✅ Deploy** `scripts/deploy-manual.sh` — migration DONE; `[8/8] ✅ SHA match`.
+- **✅ Meta Flow republished** `1732491471303297` status `PUBLISHED`, `validation_errors: []`.
+- **✅ Real-device send** to `+256781940358` → `wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSRDM1Q0VFNzA5REE0M0REQjA0AA==` success.
+- **One-child-per-submit**: unchanged — each `createFromFlowSubmission` stores one child + one school; Flow body copy now says submit once per child.
+- **Prior Day 1+2**: [#400](https://github.com/KlassApp-Foundation/KlassApp/pull/400)/[#401](https://github.com/KlassApp-Foundation/KlassApp/pull/401)/[#402](https://github.com/KlassApp-Foundation/KlassApp/pull/402) @ `8ce66452`.
+
+## Previous: September 2, 2026 (`origin/main` tip `8ce66452` — WhatsApp parent-link Flow Day 1+2 **MERGED + DEPLOYED**)
+
+- **✅ Day 1 [#400](https://github.com/KlassApp-Foundation/KlassApp/pull/400)** → merge `29bc7a6c` — Flow JSON v7.0 published (`1732491471303297`), `sendFlow()`, unrecognized-user menu + `nfm_reply` ack path, feature tests (5 passed, no risky).
+- **✅ Day 2 [#401](https://github.com/KlassApp-Foundation/KlassApp/pull/401)** → merge `7e987a9f` — `ParentLinkRequest` model/migration, `ParentLinkRequestService` (fuzzy name/class match), webhook persistence + polymorphic `Approval`, admin inbox approve/reject → `ParentLinkService::linkByStudentId`.
+- **✅ Migration hotfix [#402](https://github.com/KlassApp-Foundation/KlassApp/pull/402)** → merge `8ce66452` — `school_id` → `unsignedBigInteger` (FK mismatch vs `schools.id` on prod).
+- **✅ Deploy** `scripts/deploy-manual.sh` — first run: migration FK fail (partial table); dropped `parent_link_requests` on prod, merged #402, re-deploy **complete**. `[8/8] ✅ SHA match` confirmed (awk `\$1` fix in deploy script @ #401).
+- **Tests**: `WhatsAppParentLinkFlowTest` (5) + `ParentLinkRequestApprovalTest` (3) — **8 passed, 34 assertions**, zero risky (Mockery `once()` + explicit PHPUnit asserts).
+- **Prod config**: `WHATSAPP_PARENT_LINK_FLOW_ID=1732491471303297` on host `.env`.
+- **Next**: Real-device Flow submit → verify row in `/admin/approvals` → approve links parent; optional WhatsApp notify on approve/reject.
+
+## Previous: August 30, 2026 (`origin/main` tip `c4e6dfaa` — report MID `scheduled_at` fix **DEPLOYED + LIVE-VERIFIED**)
 
 - **Persistent test school** **id 124** — **UI Review Demo School** (`primary_nursery`, Uganda/UNEB). Keep active (no teardown). Enriched by UI shakedown: **10** students, **5** exams (4 EOT + 1 MID), **4** attendance, **3** fee payments, WhatsApp + Growth plan done.
 - Provisioned via `php artisan schools:setup-ui-review-demo`. Logins: `*@uireview.klassapp.demo` / `UiReview2026!` (admin, CT, subject teacher, parent).
@@ -998,6 +1032,35 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-02: WhatsApp template resubmit + Flow ack bold
+
+- **Templates**: Submitted exact 6 via Graph API post–Business Verification. 4/6 APPROVED under exact names. `teacher_account_invite` + `toshi_otp` REJECTED (`INCORRECT_CATEGORY`). Token cannot DELETE templates (`Need permission on WABA`). AUTH custom body rejected (#2388042). Fresh AUTH template `klassapp_otp` APPROVED. Teacher invite fails UTILITY and MARKETING under alt names too — needs dashboard Request Review / delete with Business Manager role.
+- **Ack**: bold markdown around parent/child/class/school; “the school administration” phrasing.
+- **Files**: `WhatsAppController`, Flow test, `scripts/submit-whatsapp-message-templates.php` (+ retry helpers), `knowledge.md`.
+- **Status**: templates reported with live IDs; ack shipping via PR.
+
+### 2026-09-02: Parent-link Flow — required School name field
+
+- **Work done**: Added required `school_name` to Flow JSON; `ParentLinkRequestService` resolves school by fuzzy name match first (child-name platform search only as fallback); ack message names parent/child/class/school; migration adds `school_name` column.
+- **PR**: [#403](https://github.com/KlassApp-Foundation/KlassApp/pull/403) branch `feat/whatsapp-parent-link-school-name` → merge `60cc6aa4`.
+- **Tests**: 9 passed, 39 assertions (incl. school-name-over-cross-school-child match).
+- **Deploy**: `[8/8] ✅ SHA match`; migration `add_school_name_to_parent_link_requests_table` DONE.
+- **Meta**: republished flow `1732491471303297` PUBLISHED; live send to `+256781940358` wamid success.
+- **One-child model**: verified — one Flow completion → one `ParentLinkRequest` row; no parent↔single-school assumption in service (parent `school_id` stays null on link).
+- **Status**: ✅ MERGED + DEPLOYED + PUBLISHED
+
+### 2026-09-02: WhatsApp parent-link Flow Day 1+2 — MERGED + DEPLOYED
+
+- **Day 1 PR [#400](https://github.com/KlassApp-Foundation/KlassApp/pull/400)** merge `29bc7a6c`: Flow `parent-link-request.json` (v7.0), publish/send scripts, `WhatsAppBusinessService::sendFlow()` / `sendParentLinkRequestFlow()`, third menu button `parent_link_flow`, `processMetaFlowReply` ack (Day 1 only).
+- **Risky tests resolved**: PHPUnit marks tests risky when they have zero PHPUnit assertions; Mockery `shouldReceive()->once()` alone does not count. Fixed `test_unrecognized_user_request_link_button_triggers_flow_send` and `test_flow_completion_sends_acknowledgment_message` with explicit `assertTrue` / `assertNotNull` / `assertStringContainsString`.
+- **Deploy drift (Day 1)**: Prod had hot-copied WhatsApp files + untracked `resources/whatsapp/` blocking `git pull`; resolved with `git checkout --` + remove untracked copies before pull.
+- **Deploy SHA false-negative**: `deploy-manual.sh` heredoc unescaped `$1` in awk — fixed to `\$1` in #401.
+- **Day 2 PR [#401](https://github.com/KlassApp-Foundation/KlassApp/pull/401)** merge `7e987a9f`: `ParentLinkRequest` + `ParentLinkRequestService`, webhook persistence, `parent-link-request-manage` gate, Approvals inbox candidate picker + approve links via `ParentLinkService`.
+- **Migration hotfix [#402](https://github.com/KlassApp-Foundation/KlassApp/pull/402)** merge `8ce66452`: `school_id` unsignedBigInteger (prod FK 3780 error); dropped partial table, re-migrated successfully.
+- **Tests**: 8 passed (34 assertions), no risky.
+- **Files**: `app/Models/ParentLinkRequest.php`, `app/Services/WhatsApp/ParentLinkRequestService.php`, `app/Http/Controllers/Api/WhatsAppController.php`, `app/Http/Controllers/Admin/ApprovalController.php`, `resources/views/admin/approvals/inbox.blade.php`, migration, tests, `scripts/deploy-manual.sh`.
+- **Status**: ✅ MERGED + DEPLOYED @ `8ce66452`; `[8/8] ✅ SHA match` on second deploy run.
 
 ### 2026-09-01: PR #397 seeder fix — FULL REAL-BROWSER CLOSURE VERIFIED
 
