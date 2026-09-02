@@ -394,6 +394,135 @@ class WhatsAppBusinessService
     }
 
     /**
+     * Send a WhatsApp Flow interactive message (navigate to a published flow screen).
+     *
+     * @param  array<string, mixed>  $screenData  Optional pre-filled data for the target screen
+     * @return array{success: bool, message_id: string, error?: string}
+     */
+    public function sendFlow(
+        string $phone,
+        string $flowId,
+        string $flowToken,
+        string $screenId = 'LINK_REQUEST',
+        string $ctaLabel = 'Open form',
+        string $body = '',
+        string $header = '',
+        string $footer = '',
+        array $screenData = [],
+        ?string $flowType = null,
+        ?int $userId = null,
+    ): array {
+        $cleanPhone = $this->cleanPhone($phone);
+
+        $flowActionPayload = ['screen' => $screenId];
+        if ($screenData !== []) {
+            $flowActionPayload['data'] = $screenData;
+        }
+
+        $interactive = [
+            'type' => 'flow',
+            'body' => ['text' => mb_substr($body ?: 'Fill in the form below.', 0, 1024)],
+            'action' => [
+                'name' => 'flow',
+                'parameters' => [
+                    'flow_message_version' => '3',
+                    'flow_token' => $flowToken,
+                    'flow_id' => $flowId,
+                    'flow_cta' => mb_substr($ctaLabel, 0, 20),
+                    'flow_action' => 'navigate',
+                    'flow_action_payload' => $flowActionPayload,
+                ],
+            ],
+        ];
+
+        if ($header !== '') {
+            $interactive['header'] = [
+                'type' => 'text',
+                'text' => mb_substr($header, 0, 60),
+            ];
+        }
+
+        if ($footer !== '') {
+            $interactive['footer'] = ['text' => mb_substr($footer, 0, 60)];
+        }
+
+        $response = Http::withToken($this->token)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->post("https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages", [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
+                'to' => $cleanPhone,
+                'type' => 'interactive',
+                'interactive' => $interactive,
+            ]);
+
+        $result = $response->json();
+        $messageId = $result['messages'][0]['id'] ?? Str::uuid()->toString();
+        $success = $response->successful();
+
+        MessageDeliveryLog::create([
+            'whatsapp_message_id' => $messageId,
+            'phone' => $phone,
+            'direction' => 'outbound',
+            'category' => 'service',
+            'status' => $success ? 'sent' : 'failed',
+            'content_preview' => "Flow: {$flowId} → {$screenId}",
+            'user_id' => $userId,
+            'flow_type' => $flowType ?? 'parent_link_flow',
+        ]);
+
+        if (! $success) {
+            $error = $result['error']['message'] ?? 'Unknown error';
+            Log::error('WhatsApp Business API: sendFlow failed', [
+                'phone' => $phone,
+                'flow_id' => $flowId,
+                'screen' => $screenId,
+                'error' => $error,
+                'status' => $response->status(),
+            ]);
+
+            return ['success' => false, 'message_id' => $messageId, 'error' => $error];
+        }
+
+        return ['success' => true, 'message_id' => $messageId];
+    }
+
+    /**
+     * Send the published parent-link-request WhatsApp Flow to a phone number.
+     *
+     * @return array{success: bool, message_id: string, error?: string}
+     */
+    public function sendParentLinkRequestFlow(string $phone, ?string $flowToken = null, ?int $userId = null): array
+    {
+        $flowId = config('services.whatsapp.parent_link_flow_id');
+        if (empty($flowId)) {
+            Log::warning('WhatsApp Business: parent link flow ID not configured');
+
+            return [
+                'success' => false,
+                'message_id' => '',
+                'error' => 'Parent link flow is not configured',
+            ];
+        }
+
+        $screenId = config('services.whatsapp.parent_link_flow_screen', 'LINK_REQUEST');
+        $token = $flowToken ?? Str::uuid()->toString();
+
+        return $this->sendFlow(
+            phone: $phone,
+            flowId: $flowId,
+            flowToken: $token,
+            screenId: $screenId,
+            ctaLabel: 'Request link',
+            body: 'Fill in your details and your school will review the request before any link is created.',
+            header: 'Parent link request',
+            footer: 'Reviewed by your school before linking',
+            flowType: 'parent_link_flow',
+            userId: $userId,
+        );
+    }
+
+    /**
      * Send interactive reply buttons via Meta Cloud API.
      * Alias for sendInteractiveButtons with (buttons, title) parameter order.
      */

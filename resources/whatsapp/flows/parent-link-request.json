@@ -1,0 +1,64 @@
+{
+  "version": "7.0",
+  "screens": [
+    {
+      "id": "LINK_REQUEST",
+      "title": "Parent link request",
+      "terminal": true,
+      "data": {},
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "link_request_form",
+            "children": [
+              {
+                "type": "TextHeading",
+                "text": "Link your WhatsApp number"
+              },
+              {
+                "type": "TextBody",
+                "text": "Tell us who you are and which child you are linking. Your school will review this request before any link is created."
+              },
+              {
+                "type": "TextInput",
+                "name": "parent_name",
+                "label": "Your full name",
+                "required": true,
+                "input-type": "text"
+              },
+              {
+                "type": "TextInput",
+                "name": "child_name",
+                "label": "Child's full name",
+                "required": true,
+                "input-type": "text"
+              },
+              {
+                "type": "TextInput",
+                "name": "child_class",
+                "label": "Child's class",
+                "required": true,
+                "input-type": "text",
+                "helper-text": "e.g. P.3 or S.2"
+              }
+            ]
+          },
+          {
+            "type": "Footer",
+            "label": "Submit for school review",
+            "on-click-action": {
+              "name": "complete",
+              "payload": {
+                "parent_name": "${form.parent_name}",
+                "child_name": "${form.child_name}",
+                "child_class": "${form.child_class}"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
