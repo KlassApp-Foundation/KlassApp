@@ -4,6 +4,7 @@ namespace Tests\Feature\WhatsApp;
 
 use App\Http\Controllers\Api\WhatsAppController;
 use App\Models\MessageDeliveryLog;
+use App\Models\ParentLinkRequest;
 use App\Services\WhatsAppBusinessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -211,10 +212,130 @@ class WhatsAppParentLinkFlowTest extends TestCase
         $this->assertSame(200, $response->getStatusCode());
     }
 
+    public function test_any_inbound_text_while_pending_returns_status_not_stranger_menu(): void
+    {
+        ParentLinkRequest::create([
+            'phone' => $this->phone,
+            'parent_name' => 'Worried Parent',
+            'child_name' => 'Amope Nandawula',
+            'child_class' => 'P.3',
+            'school_name' => 'Demo Primary',
+            'status' => 'pending',
+        ]);
+
+        $captured = null;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendText')
+            ->once()
+            ->withArgs(function (string $phone, string $message, ?string $flowType) use (&$captured) {
+                $captured = compact('phone', 'message', 'flowType');
+
+                return $phone === $this->phone
+                    && $flowType === 'parent_link_pending_status'
+                    && str_contains($message, 'Hi Worried Parent')
+                    && str_contains($message, 'Amope Nandawula')
+                    && str_contains($message, 'still being reviewed')
+                    && ! str_contains($message, 'School Pay');
+            })
+            ->andReturn(['success' => true, 'message_id' => 'pending-status']);
+        $whatsApp->shouldReceive('sendInteractiveButtons')->never();
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $this->invokeProcessMetaMessage('hi, any update please?');
+
+        $this->assertNotNull($captured);
+        $this->assertSame('parent_link_pending_status', $captured['flowType']);
+        $this->assertStringContainsString('still being reviewed', $captured['message']);
+    }
+
+    public function test_inbound_after_rejection_returns_rejection_status(): void
+    {
+        ParentLinkRequest::create([
+            'phone' => $this->phone,
+            'parent_name' => 'Rejected Parent',
+            'child_name' => 'Amope Nandawula',
+            'child_class' => 'P.3',
+            'school_name' => 'Demo Primary',
+            'status' => 'rejected',
+        ]);
+
+        $captured = null;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendText')
+            ->once()
+            ->withArgs(function (string $phone, string $message, ?string $flowType) use (&$captured) {
+                $captured = compact('phone', 'message', 'flowType');
+
+                return $phone === $this->phone
+                    && $flowType === 'parent_link_rejected_status'
+                    && str_contains($message, "couldn't approve")
+                    && str_contains($message, 'Request Link');
+            })
+            ->andReturn(['success' => true, 'message_id' => 'rej-status']);
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $this->invokeProcessMetaMessage('hello?');
+
+        $this->assertNotNull($captured);
+        $this->assertSame('parent_link_rejected_status', $captured['flowType']);
+    }
+
+    public function test_duplicate_flow_completion_while_pending_sends_pending_status(): void
+    {
+        ParentLinkRequest::create([
+            'phone' => $this->phone,
+            'parent_name' => 'Existing Parent',
+            'child_name' => 'Existing Child',
+            'child_class' => 'P.3',
+            'school_name' => 'Demo Primary',
+            'status' => 'pending',
+        ]);
+
+        $captured = null;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendText')
+            ->once()
+            ->withArgs(function (string $phone, string $message, ?string $flowType) use (&$captured) {
+                $captured = compact('phone', 'message', 'flowType');
+
+                return $phone === $this->phone
+                    && $flowType === 'parent_link_already_pending'
+                    && str_contains($message, 'still being reviewed')
+                    && str_contains($message, 'Existing Child');
+            })
+            ->andReturn(['success' => true, 'message_id' => 'dup']);
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $controller = app(WhatsAppController::class);
+        $method = new ReflectionMethod(WhatsAppController::class, 'processMetaFlowReply');
+        $method->setAccessible(true);
+        $method->invoke($controller, $this->phone, [
+            'name' => 'flow',
+            'response_json' => json_encode([
+                'parent_name' => 'New Attempt',
+                'child_name' => 'Other Child',
+                'child_class' => 'P.4',
+                'school_name' => 'Demo Primary',
+            ]),
+        ], 'New Attempt');
+
+        $this->assertNotNull($captured);
+        $this->assertSame(1, ParentLinkRequest::where('phone', $this->phone)->count());
+        $this->assertSame('Existing Parent', ParentLinkRequest::where('phone', $this->phone)->first()->parent_name);
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
         parent::tearDown();
+    }
+
+    private function invokeProcessMetaMessage(string $body): void
+    {
+        $controller = app(WhatsAppController::class);
+        $method = new ReflectionMethod(WhatsAppController::class, 'processMetaMessage');
+        $method->setAccessible(true);
+        $method->invoke($controller, $this->phone, $body, 'wamid.test', 'Test Parent');
     }
 
     private function invokeHandleUnrecognizedUserMeta(string $body): void

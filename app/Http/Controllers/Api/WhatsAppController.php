@@ -828,6 +828,12 @@ class WhatsAppController extends Controller
             ->first();
 
         if (!$whatsappUser) {
+            // Pending/rejected link requests beat the generic stranger menu —
+            // a parent who already submitted deserves status, not "who are you?".
+            if ($this->replyForParentLinkRequestStatus($phone, $body)) {
+                return;
+            }
+
             $this->handleUnrecognizedUserMeta($phone, $body, $senderName);
             return;
         }
@@ -896,7 +902,19 @@ class WhatsAppController extends Controller
             'flow_name' => $nfmReply['name'] ?? null,
             'payload' => $payload,
             'parent_link_request_id' => $linkRequest->id,
+            'already_pending' => ! $linkRequest->wasRecentlyCreated,
         ]);
+
+        // Second Flow submit while one is still pending — do not silently duplicate.
+        if (! $linkRequest->wasRecentlyCreated) {
+            $this->businessApi->sendText(
+                $phone,
+                $this->parentLinkRequests->pendingStatusMessage($linkRequest),
+                'parent_link_already_pending',
+            );
+
+            return;
+        }
 
         $parentName = $linkRequest->parent_name !== '' ? $linkRequest->parent_name : 'Parent';
         $childName = $linkRequest->child_name !== '' ? $linkRequest->child_name : 'your child';
@@ -911,6 +929,56 @@ class WhatsAppController extends Controller
             . "You'll be linked to your child once the school administration approves your request.",
             'parent_link_flow_ack',
         );
+    }
+
+    /**
+     * If this phone has a pending (or latest rejected) ParentLinkRequest, reply
+     * with that status instead of the generic unrecognized-user menu.
+     *
+     * Pending: every inbound body (including "Request Link") gets the pending reply.
+     * Rejected: status on free-text; button actions that start a retry still pass through.
+     */
+    protected function replyForParentLinkRequestStatus(string $phone, string $body): bool
+    {
+        $pending = $this->parentLinkRequests->findPendingForPhone($phone);
+        if ($pending !== null) {
+            $this->businessApi->sendText(
+                $phone,
+                $this->parentLinkRequests->pendingStatusMessage($pending),
+                'parent_link_pending_status',
+            );
+
+            return true;
+        }
+
+        $rejected = $this->parentLinkRequests->findLatestRejectedForPhone($phone);
+        if ($rejected === null) {
+            return false;
+        }
+
+        $trimmed = trim($body);
+        // Let the parent start a fresh request / get link help after a rejection.
+        if ($trimmed === 'parent_link_flow'
+            || $trimmed === 'link_help'
+            || $trimmed === 'exit'
+            || str_starts_with($trimmed, 'link_school_')
+            || str_starts_with($trimmed, 'linktype_')
+            || str_starts_with($trimmed, 'link_')) {
+            return false;
+        }
+
+        $rejected->loadMissing('latestApproval');
+
+        $this->businessApi->sendText(
+            $phone,
+            $this->parentLinkRequests->rejectedStatusMessage(
+                $rejected,
+                $rejected->latestApproval?->comments,
+            ),
+            'parent_link_rejected_status',
+        );
+
+        return true;
     }
 
     /**
