@@ -336,7 +336,15 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 2, 2026 (`origin/main` tip `a35830eb` — teacher email invite B-2a **MERGED + DEPLOYED**)
+## Current Status: September 2, 2026 (`origin/main` tip `bb94fe8b` — parent-link pending/rejected status awareness **MERGED + DEPLOYED**)
+
+- **✅ [#407](https://github.com/KlassApp-Foundation/KlassApp/pull/407)** → merge `bb94fe8b` — any inbound from a phone with pending `ParentLinkRequest` gets status (not stranger menu); reject/approve WhatsApp notify; duplicate Flow submit while pending suppressed.
+- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
+- **✅ Live verify** `+256781940358` (pending id=1 Mucunguzi → Mwesigye Ford @ KABALE JUNIOR SCHOOL): outbound `parent_link_pending_status` **sent** `wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSRUVFNzA3MTAzMTRFNUIxQTU5AA==`.
+- **Tests**: 13 passed (55 assertions) — Flow + Approval suites.
+- **Prior**: [#405](https://github.com/KlassApp-Foundation/KlassApp/pull/405) teacher email invite @ `a35830eb`.
+
+## Previous: September 2, 2026 (`origin/main` tip `a35830eb` — teacher email invite B-2a **MERGED + DEPLOYED**)
 
 - **✅ [#405](https://github.com/KlassApp-Foundation/KlassApp/pull/405)** → merge `a35830eb` — `TeacherInviteMail` + `ToshiActionService::addTeacher` with `randomPasswordCredentials()`; optional class → CT assignment + named in email.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`; prod has `TeacherInviteMail.php` + queued invite at `addTeacher`.
