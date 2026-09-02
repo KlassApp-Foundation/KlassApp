@@ -52,6 +52,8 @@ return [
         'business_verify_token' => env('WHATSAPP_BUSINESS_VERIFY_TOKEN', 'klassapp_verify_2026'),
         'business_api_version' => env('WHATSAPP_BUSINESS_API_VERSION', 'v21.0'),
         'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
+        'parent_link_flow_id' => env('WHATSAPP_PARENT_LINK_FLOW_ID'),
+        'parent_link_flow_screen' => env('WHATSAPP_PARENT_LINK_FLOW_SCREEN', 'LINK_REQUEST'),
     ],
 
     'google' => [

@@ -773,6 +773,10 @@ class WhatsAppController extends Controller
                         $body = $msg['text']['body'] ?? '';
                     } elseif ($msgType === 'interactive') {
                         $ir = $msg['interactive'] ?? [];
+                        if (($ir['type'] ?? '') === 'nfm_reply') {
+                            $this->processMetaFlowReply($phone, $ir['nfm_reply'] ?? [], $senderName);
+                            continue;
+                        }
                         $body = $ir['button_reply']['id'] ?? $ir['list_reply']['id']
                             ?? $ir['button_reply']['title'] ?? $ir['list_reply']['title']
                             ?? '';
@@ -866,6 +870,46 @@ class WhatsAppController extends Controller
     }
 
     /**
+     * Handle a completed WhatsApp Flow submission (nfm_reply).
+     * Day 1: acknowledge only — persistence arrives in the ParentLinkRequest pass.
+     *
+     * @param  array<string, mixed>  $nfmReply
+     */
+    protected function processMetaFlowReply(string $phone, array $nfmReply, string $senderName = 'Demo User'): void
+    {
+        $rawJson = $nfmReply['response_json'] ?? '';
+        $payload = is_string($rawJson) ? json_decode($rawJson, true) : [];
+        if (! is_array($payload)) {
+            $payload = [];
+        }
+
+        Log::info('WhatsApp Flow completed', [
+            'phone' => $phone,
+            'sender' => $senderName,
+            'flow_name' => $nfmReply['name'] ?? null,
+            'payload' => $payload,
+        ]);
+
+        $parentName = trim((string) ($payload['parent_name'] ?? $senderName));
+        $childName = trim((string) ($payload['child_name'] ?? ''));
+        $childClass = trim((string) ($payload['child_class'] ?? ''));
+
+        $childLine = $childName !== ''
+            ? "*{$childName}*" . ($childClass !== '' ? " ({$childClass})" : '')
+            : 'your child';
+
+        $thanksSuffix = $parentName !== '' ? ", {$parentName}" : '';
+
+        $this->businessApi->sendText(
+            $phone,
+            "✅ *Request received*\n\n"
+            . "Thanks{$thanksSuffix}! We've sent your link request for {$childLine} to the school for review.\n\n"
+            . "You'll hear back once a staff member approves it — no link is created until then.",
+            'parent_link_flow_ack',
+        );
+    }
+
+    /**
      * Process a delivery status update from Meta Cloud API.
      */
     /**
@@ -899,9 +943,22 @@ class WhatsAppController extends Controller
                 . "1️⃣ *KlassApp ID* — Type the student ID from your child's report card (e.g., KLS0010427)\n\n"
                 . "2️⃣ *Full name* — Type your child's name (e.g., Amope Nandawula)\n\n"
                 . "3️⃣ *School name* — Type your school name first to narrow the search\n\n"
-                . "No code needed if you know your child's name or school.",
+                . "No code needed if you know your child's name or school.\n\n"
+                . "Or tap *Request Link* on the welcome menu for a short form your school will review.",
                 'link_help'
             );
+            return;
+        }
+
+        if ($trimmed === 'parent_link_flow') {
+            $result = $this->businessApi->sendParentLinkRequestFlow($phone);
+            if (! ($result['success'] ?? false)) {
+                $sendText(
+                    "Sorry, the link request form isn't available right now.\n\n"
+                    . "You can still link instantly with your child's KlassApp ID or full name — tap *Link My Number* for help.",
+                    'parent_link_flow_unavailable'
+                );
+            }
             return;
         }
 
@@ -987,16 +1044,18 @@ class WhatsAppController extends Controller
         }
 
         // ── Try to find a student by ID or name ──
-        $searchable = strlen($trimmed) >= 2 && !in_array($trimmed, ['exit', 'link_help', 'demo', 'menu', 'help']);
-        if (!$searchable) {
+        $searchable = strlen($trimmed) >= 2 && ! in_array($trimmed, ['exit', 'link_help', 'parent_link_flow', 'demo', 'menu', 'help'], true);
+        if (! $searchable) {
             // ── Default: unrecognized — offer DEMO or link ──
             $sendButtons(
                 "👋 *Welcome to KlassApp!* 🎓\n\n"
-                . "Tap *Try Demo* to explore KlassApp right now with live sample data.\n"
-                . "Or tap *Link My Number* if you're a parent wanting to connect to your child's school.",
+                . "Tap *Try Demo* to explore with sample data.\n"
+                . "Tap *Link My Number* for instant linking (KlassApp ID or name).\n"
+                . "Tap *Request Link* to submit details for your school to review first.",
                 [
                     ['title' => '🎯 Try Demo', 'id' => 'demo'],
                     ['title' => '🔗 Link My Number', 'id' => 'link_help'],
+                    ['title' => '📋 Request Link', 'id' => 'parent_link_flow'],
                 ],
                 'unrecognized_prompt',
             );
