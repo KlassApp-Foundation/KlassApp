@@ -383,6 +383,22 @@ class AuthServiceProvider extends ServiceProvider
         return false;
       });
 
+      Gate::define('parent-link-request-manage', function ($user, $linkRequest) {
+        if ($linkRequest === null) {
+          return false;
+        }
+
+        if ((int) $user->usergroup_id === 1) {
+          return true;
+        }
+
+        if ((int) $user->usergroup_id === 3) {
+          return (int) $user->school_id === (int) $linkRequest->school_id;
+        }
+
+        return false;
+      });
+
       Gate::define('subscription', function ($user, $subscription) {
         return $user->school_id == $subscription->school_id;
       });

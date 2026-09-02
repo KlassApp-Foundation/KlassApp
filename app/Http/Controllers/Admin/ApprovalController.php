@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Approval;
+use App\Models\ParentLinkRequest;
 use App\Models\TeacherLeaveApplication;
+use App\Models\User;
+use App\Services\ParentLinkService;
 use App\States\Approval\Approved;
 use App\States\Approval\Pending;
 use App\States\Approval\Rejected;
@@ -16,6 +19,10 @@ use Illuminate\Support\Facades\Gate;
 class ApprovalController extends Controller
 {
     use LogActivity;
+
+    public function __construct(
+        protected ParentLinkService $parentLinks,
+    ) {}
 
     public function inbox()
     {
@@ -38,22 +45,38 @@ class ApprovalController extends Controller
             'approvals'     => $approvals,
             'pendingCount'  => $pendingCount,
             'approvedCount' => Approval::where('state', Approved::class)
-                ->whereHas('approvable', fn($q) => $q->where('school_id', $schoolId))
+                ->whereHas('approvable', fn ($q) => $q->where('school_id', $schoolId))
                 ->count(),
             'rejectedCount' => Approval::where('state', Rejected::class)
-                ->whereHas('approvable', fn($q) => $q->where('school_id', $schoolId))
+                ->whereHas('approvable', fn ($q) => $q->where('school_id', $schoolId))
                 ->count(),
         ]);
     }
 
     public function approve(Request $request, Approval $approval)
     {
-        $request->validate(['comments' => 'nullable|string|max:1000']);
+        $approval->loadMissing('approvable');
 
-        $this->authorizeTeacherLeaveManage($approval);
+        if ($approval->approvable instanceof ParentLinkRequest) {
+            $request->validate([
+                'comments' => 'nullable|string|max:1000',
+                'matched_student_id' => 'required|integer|exists:users,id',
+            ]);
+        } else {
+            $request->validate(['comments' => 'nullable|string|max:1000']);
+        }
+
+        $this->authorizeApproval($approval);
 
         if (! $approval->state->canTransitionTo(Approved::class)) {
             return back()->with('error', 'This approval cannot be transitioned to Approved.');
+        }
+
+        if ($approval->approvable instanceof ParentLinkRequest) {
+            $linkResult = $this->approveParentLinkRequest($approval->approvable, $request);
+            if ($linkResult !== null) {
+                return $linkResult;
+            }
         }
 
         $approval->state->transitionTo(Approved::class);
@@ -67,7 +90,7 @@ class ApprovalController extends Controller
             Auth::user(),
             ['approval_id' => $approval->id, 'action' => 'approved'],
             'approval',
-            "Approval #{$approval->id} approved by " . Auth::user()->name
+            "Approval #{$approval->id} approved by ".Auth::user()->name
         );
 
         return back()->with('success', 'Request approved successfully.');
@@ -77,10 +100,14 @@ class ApprovalController extends Controller
     {
         $request->validate(['comments' => 'required|string|max:1000']);
 
-        $this->authorizeTeacherLeaveManage($approval);
+        $this->authorizeApproval($approval);
 
         if (! $approval->state->canTransitionTo(Rejected::class)) {
             return back()->with('error', 'This approval cannot be transitioned to Rejected.');
+        }
+
+        if ($approval->approvable instanceof ParentLinkRequest) {
+            $approval->approvable->update(['status' => 'rejected']);
         }
 
         $approval->state->transitionTo(Rejected::class);
@@ -94,18 +121,59 @@ class ApprovalController extends Controller
             Auth::user(),
             ['approval_id' => $approval->id, 'action' => 'rejected'],
             'approval',
-            "Approval #{$approval->id} rejected by " . Auth::user()->name
+            "Approval #{$approval->id} rejected by ".Auth::user()->name
         );
 
         return back()->with('success', 'Request rejected.');
     }
 
-    private function authorizeTeacherLeaveManage(Approval $approval): void
+    /**
+     * @return \Illuminate\Http\RedirectResponse|null  Error redirect, or null on success.
+     */
+    private function approveParentLinkRequest(ParentLinkRequest $linkRequest, Request $request): ?\Illuminate\Http\RedirectResponse
+    {
+        $studentId = (int) $request->input('matched_student_id');
+
+        $student = User::query()
+            ->where('id', $studentId)
+            ->where('school_id', $linkRequest->school_id)
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            ->first();
+
+        if ($student === null) {
+            return back()->with('error', 'Selected student is not active in this school.');
+        }
+
+        $result = $this->parentLinks->linkByStudentId(
+            $linkRequest->phone,
+            $studentId,
+            $linkRequest->parent_name,
+        );
+
+        if (! $result->linked) {
+            return back()->with('error', 'Could not create parent link ('.$result->outcome.').');
+        }
+
+        $linkRequest->update([
+            'status' => 'approved',
+            'matched_student_id' => $studentId,
+        ]);
+
+        return null;
+    }
+
+    private function authorizeApproval(Approval $approval): void
     {
         $approval->loadMissing('approvable');
 
         if ($approval->approvable instanceof TeacherLeaveApplication
             && ! Gate::allows('teacher-leave-manage', $approval->approvable)) {
+            abort(403);
+        }
+
+        if ($approval->approvable instanceof ParentLinkRequest
+            && ! Gate::allows('parent-link-request-manage', $approval->approvable)) {
             abort(403);
         }
     }

@@ -144,6 +144,14 @@ class WhatsAppParentLinkFlowTest extends TestCase
         $this->assertSame('parent_link_flow_ack', $captured['flowType']);
         $this->assertStringContainsString('Jane Parent', $captured['message']);
         $this->assertStringContainsString('P.3', $captured['message']);
+
+        $this->assertDatabaseHas('parent_link_requests', [
+            'phone' => $this->phone,
+            'parent_name' => 'Jane Parent',
+            'child_name' => 'Amope Nandawula',
+            'child_class' => 'P.3',
+            'status' => 'pending',
+        ]);
     }
 
     public function test_meta_webhook_nfm_reply_is_handled_without_button_body(): void

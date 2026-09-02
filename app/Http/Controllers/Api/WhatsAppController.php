@@ -22,6 +22,7 @@ use App\Services\OutboundWhatsAppService;
 use App\Services\ParentLinkService;
 use App\Services\ParentMagicLoginService;
 use App\Services\WhatsApp\WhatsAppConfirmationBridge;
+use App\Services\WhatsApp\ParentLinkRequestService;
 use App\Services\WhatsAppBusinessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,7 @@ class WhatsAppController extends Controller
     public function __construct(
         protected WhatsAppBusinessService $businessApi,
         protected ParentLinkService $parentLinks,
+        protected ParentLinkRequestService $parentLinkRequests,
     ) {}
     /**
      * Identify a WhatsApp user by phone number.
@@ -871,8 +873,6 @@ class WhatsAppController extends Controller
 
     /**
      * Handle a completed WhatsApp Flow submission (nfm_reply).
-     * Day 1: acknowledge only — persistence arrives in the ParentLinkRequest pass.
-     *
      * @param  array<string, mixed>  $nfmReply
      */
     protected function processMetaFlowReply(string $phone, array $nfmReply, string $senderName = 'Demo User'): void
@@ -883,16 +883,24 @@ class WhatsAppController extends Controller
             $payload = [];
         }
 
+        $linkRequest = $this->parentLinkRequests->createFromFlowSubmission(
+            $phone,
+            $payload,
+            isset($nfmReply['flow_token']) ? (string) $nfmReply['flow_token'] : null,
+            $senderName,
+        );
+
         Log::info('WhatsApp Flow completed', [
             'phone' => $phone,
             'sender' => $senderName,
             'flow_name' => $nfmReply['name'] ?? null,
             'payload' => $payload,
+            'parent_link_request_id' => $linkRequest->id,
         ]);
 
-        $parentName = trim((string) ($payload['parent_name'] ?? $senderName));
-        $childName = trim((string) ($payload['child_name'] ?? ''));
-        $childClass = trim((string) ($payload['child_class'] ?? ''));
+        $parentName = $linkRequest->parent_name;
+        $childName = $linkRequest->child_name;
+        $childClass = $linkRequest->child_class;
 
         $childLine = $childName !== ''
             ? "*{$childName}*" . ($childClass !== '' ? " ({$childClass})" : '')
