@@ -17,10 +17,13 @@ use App\Models\StudentParentLink;
 use App\Models\User;
 use App\Models\WhatsAppUser;
 use App\Services\WhatsApp\ParentLinkRequestService;
+use App\Services\WhatsAppBusinessService;
 use App\States\Approval\Approved;
 use App\States\Approval\Pending;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Mockery;
 use Tests\TestCase;
 
 class ParentLinkRequestApprovalTest extends TestCase
@@ -36,6 +39,16 @@ class ParentLinkRequestApprovalTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Http::fake([
+            'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.test']]], 200),
+        ]);
+
+        config([
+            'services.whatsapp.business_api_token' => 'test-token',
+            'services.whatsapp.business_phone_number_id' => '1416403124879552',
+            'services.whatsapp.business_api_version' => 'v21.0',
+        ]);
 
         $this->withoutMiddleware([
             VerifyCsrfToken::class,
@@ -171,7 +184,7 @@ class ParentLinkRequestApprovalTest extends TestCase
         ]);
     }
 
-    public function test_admin_reject_marks_request_rejected(): void
+    public function test_admin_reject_marks_request_rejected_and_notifies_parent(): void
     {
         $linkRequest = app(ParentLinkRequestService::class)->createFromFlowSubmission(
             '+256700555666',
@@ -187,6 +200,19 @@ class ParentLinkRequestApprovalTest extends TestCase
             ->where('approvable_type', ParentLinkRequest::class)
             ->firstOrFail();
 
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class)->makePartial();
+        $whatsApp->shouldReceive('sendText')
+            ->once()
+            ->withArgs(function (string $phone, string $message, ?string $flowType) {
+                return $phone === '+256700555666'
+                    && $flowType === 'parent_link_rejected'
+                    && str_contains($message, "couldn't approve")
+                    && str_contains($message, 'Student not enrolled here')
+                    && str_contains($message, 'Amope Nandawula');
+            })
+            ->andReturn(['success' => true, 'message_id' => 'rej']);
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
         $response = $this->actingAs($this->admin)->post(route('admin.approvals.reject', $approval), [
             'comments' => 'Student not enrolled here',
         ]);
@@ -201,6 +227,46 @@ class ParentLinkRequestApprovalTest extends TestCase
         $this->assertFalse(
             WhatsAppUser::where('phone', '+256700555666')->exists()
         );
+    }
+
+    public function test_second_flow_submission_while_pending_does_not_duplicate(): void
+    {
+        $service = app(ParentLinkRequestService::class);
+
+        $first = $service->createFromFlowSubmission(
+            '+256700999000',
+            [
+                'parent_name' => 'First Parent',
+                'child_name' => 'Amope Nandawula',
+                'child_class' => 'P.3',
+                'school_name' => 'Link Request School',
+            ],
+        );
+
+        $second = $service->createFromFlowSubmission(
+            '+256700999000',
+            [
+                'parent_name' => 'Second Attempt',
+                'child_name' => 'Different Child',
+                'child_class' => 'P.4',
+                'school_name' => 'Link Request School',
+            ],
+        );
+
+        $this->assertTrue($first->wasRecentlyCreated);
+        $this->assertFalse($second->wasRecentlyCreated);
+        $this->assertSame($first->id, $second->id);
+        $this->assertSame('First Parent', $second->parent_name);
+        $this->assertSame(1, ParentLinkRequest::where('phone', '+256700999000')->count());
+        $this->assertSame(1, Approval::where('approvable_type', ParentLinkRequest::class)
+            ->where('approvable_id', $first->id)
+            ->count());
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
     }
 
     private function createStandardLink(School $school, string $sectionName): StandardLink

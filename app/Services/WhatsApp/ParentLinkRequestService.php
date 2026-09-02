@@ -2,10 +2,12 @@
 
 namespace App\Services\WhatsApp;
 
+use App\Helpers\WhatsAppPhoneHelper;
 use App\Models\Approval;
 use App\Models\ParentLinkRequest;
 use App\Models\School;
 use App\Models\User;
+use App\Services\WhatsAppBusinessService;
 use App\States\Approval\Pending;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -13,11 +15,19 @@ use Illuminate\Support\Facades\Log;
 
 class ParentLinkRequestService
 {
+    public function __construct(
+        protected WhatsAppBusinessService $whatsapp,
+    ) {}
+
     /**
      * Persist a WhatsApp Flow submission and enqueue it for school admin review.
      *
      * One submission = one child at one school. Parents with children at
-     * different schools submit the Flow once per child.
+     * different schools submit the Flow once per child — but only after any
+     * existing pending request for this phone is resolved (approved/rejected).
+     *
+     * If a pending request already exists for the phone, returns that row
+     * unchanged (`wasRecentlyCreated` will be false) instead of creating a duplicate.
      *
      * @param  array<string, mixed>  $payload
      */
@@ -27,6 +37,18 @@ class ParentLinkRequestService
         ?string $flowToken = null,
         string $senderName = 'Parent',
     ): ParentLinkRequest {
+        $phone = WhatsAppPhoneHelper::normalise($phone);
+
+        $existingPending = $this->findPendingForPhone($phone);
+        if ($existingPending !== null) {
+            Log::info('Parent link request duplicate suppressed — pending already exists', [
+                'parent_link_request_id' => $existingPending->id,
+                'phone' => $phone,
+            ]);
+
+            return $existingPending->loadMissing(['school', 'suggestedStudent']);
+        }
+
         $parentName = trim((string) ($payload['parent_name'] ?? $senderName));
         $childName = trim((string) ($payload['child_name'] ?? ''));
         $childClass = trim((string) ($payload['child_class'] ?? ''));
@@ -89,8 +111,121 @@ class ParentLinkRequestService
                 ]);
             }
 
-            return $request->fresh(['school', 'suggestedStudent']);
+            // load() — not fresh() — so wasRecentlyCreated stays true for callers
+            // that distinguish a new insert from a duplicate-pending short-circuit.
+            return $request->load(['school', 'suggestedStudent']);
         });
+    }
+
+    public function findPendingForPhone(string $phone): ?ParentLinkRequest
+    {
+        $phone = WhatsAppPhoneHelper::normalise($phone);
+
+        return ParentLinkRequest::query()
+            ->where('phone', $phone)
+            ->where('status', 'pending')
+            ->latest('id')
+            ->with(['school'])
+            ->first();
+    }
+
+    /**
+     * Latest rejected request for this phone (only when nothing is still pending).
+     */
+    public function findLatestRejectedForPhone(string $phone): ?ParentLinkRequest
+    {
+        $phone = WhatsAppPhoneHelper::normalise($phone);
+
+        if ($this->findPendingForPhone($phone) !== null) {
+            return null;
+        }
+
+        return ParentLinkRequest::query()
+            ->where('phone', $phone)
+            ->where('status', 'rejected')
+            ->latest('id')
+            ->with(['school'])
+            ->first();
+    }
+
+    public function pendingStatusMessage(ParentLinkRequest $request): string
+    {
+        $parentName = $request->parent_name !== '' ? $request->parent_name : 'there';
+        $childName = $request->child_name !== '' ? $request->child_name : 'your child';
+        $schoolName = $request->schoolDisplayName();
+
+        return "Hi {$parentName}, your request to link *{$childName}* at *{$schoolName}* "
+            .'is still being reviewed by the school. '
+            ."We'll let you know as soon as it's approved.";
+    }
+
+    public function rejectedStatusMessage(ParentLinkRequest $request, ?string $adminComment = null): string
+    {
+        $parentName = $request->parent_name !== '' ? $request->parent_name : 'there';
+        $childName = $request->child_name !== '' ? $request->child_name : 'your child';
+        $schoolName = $request->schoolDisplayName();
+
+        $message = "Hi {$parentName}, the school couldn't approve your request to link "
+            ."*{$childName}* at *{$schoolName}*.";
+
+        $comment = $adminComment !== null ? trim($adminComment) : '';
+        if ($comment !== '') {
+            $message .= "\n\nReason: {$comment}";
+        } else {
+            $message .= "\n\nPlease check the child's name, class, and school details, then try again.";
+        }
+
+        $message .= "\n\nTap *Request Link* on the welcome menu (or reply anytime) to submit a new request.";
+
+        return $message;
+    }
+
+    public function approvedStatusMessage(ParentLinkRequest $request): string
+    {
+        $parentName = $request->parent_name !== '' ? $request->parent_name : 'there';
+        $childName = $request->child_name !== '' ? $request->child_name : 'your child';
+        $schoolName = $request->schoolDisplayName();
+
+        return "✅ Hi {$parentName}! You've been linked to *{$childName}* at *{$schoolName}*.\n\n"
+            .'Reply *MENU* anytime for fees, grades, and more.';
+    }
+
+    /**
+     * Push a rejection notice to the parent over WhatsApp (best-effort).
+     */
+    public function notifyRejected(ParentLinkRequest $request, ?string $adminComment = null): void
+    {
+        try {
+            $this->whatsapp->sendText(
+                $request->phone,
+                $this->rejectedStatusMessage($request->loadMissing('school'), $adminComment),
+                'parent_link_rejected',
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Parent link rejection WhatsApp notify failed', [
+                'parent_link_request_id' => $request->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Push an approval notice to the parent over WhatsApp (best-effort).
+     */
+    public function notifyApproved(ParentLinkRequest $request): void
+    {
+        try {
+            $this->whatsapp->sendText(
+                $request->phone,
+                $this->approvedStatusMessage($request->loadMissing('school')),
+                'parent_link_approved',
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Parent link approval WhatsApp notify failed', [
+                'parent_link_request_id' => $request->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Models\ParentLinkRequest;
 use App\Models\TeacherLeaveApplication;
 use App\Models\User;
 use App\Services\ParentLinkService;
+use App\Services\WhatsApp\ParentLinkRequestService;
 use App\States\Approval\Approved;
 use App\States\Approval\Pending;
 use App\States\Approval\Rejected;
@@ -22,6 +23,7 @@ class ApprovalController extends Controller
 
     public function __construct(
         protected ParentLinkService $parentLinks,
+        protected ParentLinkRequestService $parentLinkRequests,
     ) {}
 
     public function inbox()
@@ -85,6 +87,10 @@ class ApprovalController extends Controller
         $approval->resolved_at = now();
         $approval->save();
 
+        if ($approval->approvable instanceof ParentLinkRequest) {
+            $this->parentLinkRequests->notifyApproved($approval->approvable->fresh(['school']));
+        }
+
         $this->doActivityLog(
             $approval->approvable ?? $approval,
             Auth::user(),
@@ -115,6 +121,13 @@ class ApprovalController extends Controller
         $approval->comments = $request->comments;
         $approval->resolved_at = now();
         $approval->save();
+
+        if ($approval->approvable instanceof ParentLinkRequest) {
+            $this->parentLinkRequests->notifyRejected(
+                $approval->approvable->fresh(['school']),
+                $request->comments,
+            );
+        }
 
         $this->doActivityLog(
             $approval->approvable ?? $approval,
