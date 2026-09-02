@@ -25,6 +25,7 @@ use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Helpers\SiteHelper;
 use App\Mail\CoAdminInviteMail;
+use App\Mail\TeacherInviteMail;
 use App\Support\UserProvisioning;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -431,20 +432,21 @@ class ToshiActionService
     // ── Teacher ──
 
     /**
-     * Add a teacher: creates User + Userprofile.
+     * Add a teacher: creates User + Userprofile, emails temporary credentials.
+     * Optional class name sets class-teacher assignment and is named in the invite.
      */
     public static function addTeacher(User $admin, array $data): array
     {
-        if (!self::can($admin, 'add_teacher')) {
+        if (! self::can($admin, 'add_teacher')) {
             return self::result(false, 'You do not have permission to add teachers.');
         }
         $schoolId = $admin->school_id;
-        if (!$schoolId) {
+        if (! $schoolId) {
             return self::result(false, 'You are not assigned to a school.');
         }
 
         $limit = self::enforcePlanLimit($schoolId, 'teachers');
-        if (!$limit['success']) {
+        if (! $limit['success']) {
             return $limit;
         }
 
@@ -457,34 +459,111 @@ class ToshiActionService
         if ($email === '') {
             return self::result(false, 'Teacher email is required.');
         }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return self::result(false, 'Invalid email format.');
+        }
+        if (User::where('email', $email)->exists()) {
+            return self::result(false, "A user with email **{$email}** already exists.");
         }
 
         $phone = trim($data['phone'] ?? '');
+        $classRaw = trim((string) ($data['class'] ?? $data['classes'] ?? ''));
+        $className = $classRaw !== '' ? trim(explode(',', $classRaw)[0]) : null;
 
         $school = School::find($schoolId);
         $academicYear = SiteHelper::getAcademicYear($schoolId);
-        if (!$academicYear) {
+        if (! $academicYear) {
             return self::result(false, 'No academic year configured for this school.');
         }
 
-        $result = app(\App\Services\OnboardingEngine::class)->saveTeachers($school, $academicYear, [[
-            'name'  => $name,
-            'email' => $email,
-            'phone' => $phone,
-        ]]);
-
-        if (!empty($result['skipped'])) {
-            return self::result(false, $result['skipped'][0]['reason'] ?? 'Failed to add teacher.');
+        $schoolName = $school?->name ?? 'your school';
+        $standardLink = null;
+        if ($className !== null) {
+            $standardLink = StandardLink::where('school_id', $schoolId)
+                ->whereHas('section', function ($q) use ($className) {
+                    $q->where('name', 'LIKE', '%'.$className.'%');
+                })
+                ->first();
+            if ($standardLink) {
+                $className = $standardLink->section?->name ?? $className;
+            }
         }
 
-        $created = $result['created'][0] ?? null;
-        $userId = $created['user_id'] ?? null;
+        try {
+            DB::beginTransaction();
 
-        return self::result(true, "Teacher **{$name}** added successfully. A password reset will be required on first login.", [
-            'user_id' => $userId, 'email' => $email,
-        ]);
+            $credentials = UserProvisioning::randomPasswordCredentials();
+
+            $teacher = User::create([
+                'school_id' => $schoolId,
+                'usergroup_id' => 5,
+                'name' => $name,
+                'email' => $email,
+                'password' => $credentials['password'],
+                'is_reset' => $credentials['is_reset'],
+                'status' => 'active',
+                'email_verified' => 1,
+                'mobile_no' => $phone !== '' ? $phone : null,
+            ]);
+
+            Userprofile::create([
+                'school_id' => $schoolId,
+                'user_id' => $teacher->id,
+                'usergroup_id' => 5,
+                'firstname' => $name,
+                'lastname' => '',
+                'profession' => 'teacher',
+                'status' => 'active',
+                'alternate_no' => $phone !== '' ? $phone : null,
+            ]);
+
+            if ($standardLink) {
+                $standardLink->class_teacher_id = $teacher->id;
+                $standardLink->save();
+
+                if ($standardLink->section) {
+                    $standardLink->section->class_teacher_id = $teacher->id;
+                    $standardLink->section->save();
+                }
+            }
+
+            DB::commit();
+
+            try {
+                Mail::to($email)->queue(new TeacherInviteMail(
+                    $name,
+                    $email,
+                    $credentials['plain'],
+                    $schoolName,
+                    $className,
+                ));
+            } catch (\Exception $e) {
+                Log::warning('ToshiAction: teacher invite email failed', [
+                    'email' => $email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $roleLine = $className !== null
+                ? "as class teacher for **{$className}**"
+                : 'as a teacher';
+
+            return self::result(
+                true,
+                "Teacher **{$name}** added {$roleLine}. An invite email was sent to **{$email}** with login credentials.",
+                [
+                    'user_id' => $teacher->id,
+                    'email' => $email,
+                    'class' => $className,
+                    'standardLink_id' => $standardLink?->id,
+                ]
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('ToshiAction: addTeacher failed', ['error' => $e->getMessage()]);
+
+            return self::result(false, 'Failed to add teacher: '.$e->getMessage());
+        }
     }
 
     // ── Co-Admin ──

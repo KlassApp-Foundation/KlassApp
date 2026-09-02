@@ -336,7 +336,13 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 2, 2026 (`origin/main` tip pending — Flow ack bold + template submit scripts)
+## Current Status: September 2, 2026 (`origin/main` tip pending — teacher email invite B-2a)
+
+- **Teacher/CT email invite (B-2a)**: `TeacherInviteMail` + `ToshiActionService::addTeacher` uses `UserProvisioning::randomPasswordCredentials()`, queues invite with plain password in the same request (CoAdmin pattern). Optional class → `class_teacher_id` + named in email.
+- **WhatsApp library template investigation**: `account_creation_confirmation_3` (EN) has **only 2 body variables** (`{{1}}` name, `{{2}}` verify-target) + URL button — **not enough** for teacher name / class / school / temp password / login URL. Not customized/submitted; email remains the reliable invite path.
+- **Prior templates**: 4/6 custom APPROVED; invite+otp names stuck REJECTED; `klassapp_otp` AUTH APPROVED. Merge tip still `72da7311` until this PR lands.
+
+## Previous: September 2, 2026 (`origin/main` tip pending — Flow ack bold + template submit scripts)
 
 - **WhatsApp templates (Graph API, WABA `1370231745289565`)** — live statuses after Business Verification:
   | name | id | status | category | notes |
@@ -1032,6 +1038,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-02: Teacher email invite (B-2a) + Account creation library template check
+
+- **Work done**: Shipped email-only teacher/CT invite via `TeacherInviteMail` (CoAdmin pattern). `addTeacher` captures plain password from `randomPasswordCredentials()` and queues mail before discard. Optional class assigns CT. Investigated Meta library `account_creation_confirmation_3`: 2 body params only — too constrained for 5 invite fields; did not submit.
+- **Files**: `app/Mail/TeacherInviteMail.php`, `resources/views/emails/teacher-invite.blade.php`, `ToshiActionService::addTeacher`, `AddTeacherTool`, `tests/Feature/Toshi/AddTeacherInviteEmailTest.php`, `knowledge.md`.
+- **Tests**: 3 passed (15 assertions).
+- **Status**: shipping via PR.
 
 ### 2026-09-02: WhatsApp template resubmit + Flow ack bold
 
