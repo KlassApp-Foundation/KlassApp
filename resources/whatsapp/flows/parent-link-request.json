@@ -19,7 +19,7 @@
               },
               {
                 "type": "TextBody",
-                "text": "Tell us who you are and which child you are linking. Your school will review this request before any link is created."
+                "text": "Tell us who you are and which child you are linking. Your school will review this request before any link is created. Submit once per child if you have children at different schools."
               },
               {
                 "type": "TextInput",
@@ -42,6 +42,14 @@
                 "required": true,
                 "input-type": "text",
                 "helper-text": "e.g. P.3 or S.2"
+              },
+              {
+                "type": "TextInput",
+                "name": "school_name",
+                "label": "School name",
+                "required": true,
+                "input-type": "text",
+                "helper-text": "This child's school"
               }
             ]
           },
@@ -53,7 +61,8 @@
               "payload": {
                 "parent_name": "${form.parent_name}",
                 "child_name": "${form.child_name}",
-                "child_class": "${form.child_class}"
+                "child_class": "${form.child_class}",
+                "school_name": "${form.school_name}"
               }
             }
           }

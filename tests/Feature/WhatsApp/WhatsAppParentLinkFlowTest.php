@@ -122,11 +122,21 @@ class WhatsAppParentLinkFlowTest extends TestCase
                 return $phone === $this->phone
                     && $flowType === 'parent_link_flow_ack'
                     && str_contains($message, 'Request received')
+                    && str_contains($message, 'Thanks, Jane Parent!')
                     && str_contains($message, 'Amope Nandawula')
-                    && str_contains($message, 'P.3');
+                    && str_contains($message, 'of P.3 at')
+                    && str_contains($message, 'Demo Primary')
+                    && str_contains($message, 'administration approves');
             })
             ->andReturn(['success' => true, 'message_id' => 'ack']);
         $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        // Seed a school so school_name resolves for the ack copy.
+        \App\Models\School::create([
+            'name' => 'Demo Primary',
+            'email' => 'demo-primary@test.sch.ug',
+            'status' => 1,
+        ]);
 
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'processMetaFlowReply');
@@ -137,6 +147,7 @@ class WhatsAppParentLinkFlowTest extends TestCase
                 'parent_name' => 'Jane Parent',
                 'child_name' => 'Amope Nandawula',
                 'child_class' => 'P.3',
+                'school_name' => 'Demo Primary',
             ]),
         ], 'Jane Parent');
 
@@ -144,12 +155,14 @@ class WhatsAppParentLinkFlowTest extends TestCase
         $this->assertSame('parent_link_flow_ack', $captured['flowType']);
         $this->assertStringContainsString('Jane Parent', $captured['message']);
         $this->assertStringContainsString('P.3', $captured['message']);
+        $this->assertStringContainsString('Demo Primary', $captured['message']);
 
         $this->assertDatabaseHas('parent_link_requests', [
             'phone' => $this->phone,
             'parent_name' => 'Jane Parent',
             'child_name' => 'Amope Nandawula',
             'child_class' => 'P.3',
+            'school_name' => 'Demo Primary',
             'status' => 'pending',
         ]);
     }
@@ -183,6 +196,7 @@ class WhatsAppParentLinkFlowTest extends TestCase
                                         'parent_name' => 'Flow Parent',
                                         'child_name' => 'Test Child',
                                         'child_class' => 'P.4',
+                                        'school_name' => 'Some School',
                                     ]),
                                 ],
                             ],
