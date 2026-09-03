@@ -336,12 +336,18 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 3, 2026 (`feat/whatsapp-parent-report-card` — Piece C on-demand REPORT PDF **IN PROGRESS**)
+## Current Status: September 3, 2026 (`origin/main` — Piece C REPORT PDF **#423** `bca78fe3` **DEPLOYED**; perms harden shipping)
 
-- **Branch**: `feat/whatsapp-parent-report-card` — parent-initiated report-card PDF via WhatsApp (`REPORT` keyword / menu). Uses real `StudentReportCardService::pdfForStudent()` + `sendDocument()` + private disk + signed URL + hourly prune. Not on `main` yet.
-- **`origin/main` tip** (unchanged until merge): `21c85ed4` (docs stamp #422); last app ship **#419** `aed31b3f` **DEPLOYED**.
-- **Still open (templates)**: WABA — 4 APPROVED + AUTH; 2 REJECTED (`teacher_account_invite`, `toshi_otp`) unchanged.
-- **Out of scope this pass**: proactive `report_card_ready` push; term picker; rewriting the legacy HTTP `WhatsAppController::report()` stub PDF.
+- **✅ [#423](https://github.com/KlassApp-Foundation/KlassApp/pull/423)** → merge `bca78fe3` — on-demand parent WhatsApp report-card PDF (`REPORT` menu/keyword → real `StudentReportCardService` → signed private URL → `sendDocument`). Hourly `whatsapp:prune-report-files`.
+- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match` (`bca78fe3`).
+- **✅ Live**: signed GET returns **200** `application/pdf` `%PDF` (~670KB formal). Graph `sendDocument` to handset `+256781940358` → wamid accepted, log `sent` (caption `AMINA NABUKEERA`). First live attempt 404’d because root tinker created `storage/app/whatsapp-reports` as `root:root` mode `700` — fixed with `chown appuser` + chmod harden follow-up.
+- **Edge**: parent 3738 has **two** `whatsapp_users` rows (`256700119922` undeliverable + `+256781940358` real). Inbound by phone is fine; `where('user_id')->first()` can hit the bad row — do not use that for sends.
+- **Still open (templates)**: WABA — 4 APPROVED + AUTH; 2 REJECTED unchanged.
+- **Out of scope**: proactive `report_card_ready` push; legacy HTTP `WhatsAppController::report()` stub.
+
+## Previous: September 3, 2026 (`feat/whatsapp-parent-report-card` — Piece C on-demand REPORT PDF **IN PROGRESS**) — superseded above
+
+- Shipped via [#423](https://github.com/KlassApp-Foundation/KlassApp/pull/423).
 
 ## Previous: September 3, 2026 (`origin/main` tip `447cf055` — knowledge audit **#421**; last app ship **#419** `aed31b3f` **DEPLOYED**)
 
@@ -1106,6 +1112,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-03: Piece C — on-demand WhatsApp report-card PDF — **MERGED + DEPLOYED**
+
+- **Work done**: Parent `REPORT` / menu row → `WhatsAppReportCardDeliveryService` → real `StudentReportCardService::pdfForStudent()` → private `whatsapp-reports/` + signed GET → `sendDocument()`. Soft-fail copy; `whatsappDisplayName()`; rate limit 5/h; hourly prune. Split `'report'` off GRADES keywords.
+- **PR**: [#423](https://github.com/KlassApp-Foundation/KlassApp/pull/423) → merge `bca78fe3`.
+- **Live**: formal PDF ~670KB; signed URL 200 after fixing `root:700` dir (FPM `appuser` could not read). Handset `+256781940358` Graph accept / log `sent`. Bad duplicate WA row `256700119922` → Meta “Message undeliverable”.
+- **Follow-up**: chmod 0775/0644 harden on write (this commit) so root/tinker cannot poison the dir again.
+- **Tests**: `ParentReportCardRequestTest` + menu suite green before merge.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED (document send accepted; confirm PDF opens on handset)
 
 ### 2026-09-03: knowledge.md audit vs GitHub #398–#420 (honest gap fill)
 
