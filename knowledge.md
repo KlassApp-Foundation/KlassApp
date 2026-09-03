@@ -336,12 +336,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 3, 2026 (`fix/parent-magic-login-403` — magic-login 403 + branded errors + Dashboard list **PR OPEN**)
+## Current Status: September 3, 2026 (`origin/main` tip `aed31b3f` — parent magic-login 403 + Dashboard list **MERGED + DEPLOYED**)
 
-- WhatsApp `preview_url` on parent magic links let Facebook/WhatsApp crawlers GET the signed URL first and consume the one-use nonce; parents then saw 403 “already been used.”
-- Fix: no URL preview; GET is a Continue landing (crawlers 204); POST consumes nonce + logs in. Parent menu is a 4-row list with Dashboard last. Typed `WEB_LOGIN` hints removed. Error/favicon use committed KlassApp SVG (not GeGo apple-touch PNG). `User::whatsappDisplayName()` for WA copy.
-- Tests: `ParentMagicLoginTest` + WhatsApp menu/hint/login suites green.
-- PR/deploy SHA: fill in on open/merge.
+- **✅ [#419](https://github.com/KlassApp-Foundation/KlassApp/pull/419)** → merge `aed31b3f` — WhatsApp URL previews no longer burn one-use parent dashboard links. GET is Continue; crawlers 204; POST logs in. Parent menu list ends with Dashboard. Typed WEB_LOGIN hints removed. KlassApp SVG on error pages (`images/klassapp-logo.svg` HTTP 200). `User::whatsappDisplayName()`.
+- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match` (`aed31b3f`).
+- **✅ Live HTTP**: crawler GET **204**; human GET **200 Continue**; POST **302** `/parent/dashboard` (**200** with session); reuse GET **403** already-used, KlassApp logo, no GeGo apple-touch PNG.
+- **Handset**: MENU → list with Dashboard last; greeting `displayName` (no digit suffix) — tap on `+256781940358` when convenient.
+- **Tests**: `ParentMagicLoginTest` + WhatsApp menu/hint/login suites.
+- **Prior**: [#417](https://github.com/KlassApp-Foundation/KlassApp/pull/417) two-path linking @ `212e28fa`.
 
 ## Previous: September 3, 2026 (`origin/main` tip `212e28fa` — two-path WA linking + WEB_LOGIN hints **MERGED + DEPLOYED**)
 
@@ -1095,8 +1097,9 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Cause (proven)**: first GET of `/parent/magic-login/{user}/{nonce}` consumes nonce + logs in. WhatsApp `preview_url: true` made Facebook/WhatsApp crawlers hit the URL before the parent; second GET → 403 “This login link has already been used.” Signature/APP_URL were fine (first human GET 302’d). Error page title was KlassApp; apple-touch-icon was fork-era GeGo PNG; `images/klassapp-logo-primary.svg` missing on prod.
 - **Fix**: confirm GET (no consume) + POST confirm; crawler UA 204 without session write; `sendText` default (no preview); parent menu `sendList` with `WEB_LOGIN` last; drop typed WEB_LOGIN hints; copy KlassApp SVG to `public/images/klassapp-logo.svg`; apple-touch-icon → SVG; `User::whatsappDisplayName()`.
 - **Files**: `ParentMagicLoginController`, `WhatsAppController`, `User`, `ParentLinkService`, `OutboundWhatsAppService`, error/favicon views, `routes/web.php`, tests.
-- **PR**: opening from `fix/parent-magic-login-403`.
-- **Status**: 🚧 PR opening
+- **PR**: [#419](https://github.com/KlassApp-Foundation/KlassApp/pull/419) → merge `aed31b3f`.
+- **Live**: crawler 204; Continue GET 200; POST → dashboard 200; reuse 403 branded KlassApp. Logo `https://klassapp.xyz/images/klassapp-logo.svg` 200.
+- **Status**: ✅ MERGED + DEPLOYED + HTTP-VERIFIED
 
 ### 2026-09-03: Two-path WhatsApp linking + WEB_LOGIN dashboard hints
 
