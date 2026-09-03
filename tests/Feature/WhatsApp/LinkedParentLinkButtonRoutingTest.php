@@ -134,6 +134,11 @@ class LinkedParentLinkButtonRoutingTest extends TestCase
 
         $this->assertNotNull($captured);
         $this->assertSame('link_help', $captured['flowType']);
+        $this->assertStringContainsString('2 ways', $captured['message']);
+        $this->assertStringContainsString('KlassApp ID', $captured['message']);
+        $this->assertStringContainsString('Request Form', $captured['message']);
+        $this->assertStringNotContainsString('Full name', $captured['message']);
+        $this->assertStringNotContainsString('3 ways', $captured['message']);
     }
 
     public function test_linked_parent_tapping_menu_still_routes_to_menu(): void

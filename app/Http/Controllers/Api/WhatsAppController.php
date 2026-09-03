@@ -1031,12 +1031,7 @@ class WhatsAppController extends Controller
 
         if ($trimmed === 'link_help') {
             $sendButtons(
-                "🔗 *Link to your child — 3 ways:*\n\n"
-                . "1️⃣ *KlassApp ID* — Type the student ID from your child's report card (e.g., KLS0010427)\n\n"
-                . "2️⃣ *Full name* — Type your child's name (e.g., Amope Nandawula)\n\n"
-                . "3️⃣ *School name* — Type your school name first to narrow the search\n\n"
-                . "No code needed if you know your child's name or school.\n\n"
-                . "Or tap *Request Link* below for a short form your school will review.",
+                $this->parentLinkHelpMessage(),
                 [
                     ['title' => '📋 Request Link', 'id' => 'parent_link_flow'],
                     ['title' => '❌ Not now', 'id' => 'exit'],
@@ -1051,9 +1046,10 @@ class WhatsAppController extends Controller
             if (! ($result['success'] ?? false)) {
                 $sendButtons(
                     "Sorry, the link request form isn't available right now.\n\n"
-                    . "You can still link instantly with your child's KlassApp ID or full name.",
+                    . "You can still link instantly — type your child's KlassApp ID "
+                    . "(e.g., KLS0010427) from their report card.",
                     [
-                        ['title' => '🔗 Link My Number', 'id' => 'link_help'],
+                        ['title' => '🔗 Link help', 'id' => 'link_help'],
                     ],
                     'parent_link_flow_unavailable'
                 );
@@ -1061,44 +1057,15 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // ── Handle "link_school_{schoolId}" button — school selected, show link options ──
-        if (str_starts_with($trimmed, 'link_school_')) {
-            $schoolId = (int) substr($trimmed, 12);
-            $school = \App\Models\School::find($schoolId);
-            $schoolName = $school?->name ?? 'your child\'s school';
+        // Legacy name/school-search button ids (pre two-path linking) → current help.
+        if (str_starts_with($trimmed, 'link_school_')
+            || str_starts_with($trimmed, 'linktype_')) {
+            $this->handleUnrecognizedUserMeta($phone, 'link_help', $senderName);
 
-            $sendButtons(
-                "📚 *{$schoolName}*\n\nHow would you like to link?",
-                [
-                    ['title' => '🔑 KlassApp ID', 'id' => "linktype_klassapp_{$schoolId}"],
-                    ['title' => '📝 Search by name', 'id' => "linktype_name_{$schoolId}"],
-                ],
-                'link_type_choice',
-            );
             return;
         }
 
-        // ── Handle "linktype_klassapp_{schoolId}" — prompt for KlassApp ID ──
-        if (str_starts_with($trimmed, 'linktype_klassapp_')) {
-            $sendText(
-                "Type the *KlassApp Student ID* from your child's report card.\n\n"
-                . "It looks like: KLS0010427 (no dashes, no spaces).",
-                'prompt_klassapp_id'
-            );
-            return;
-        }
-
-        // ── Handle "linktype_name_{schoolId}" — prompt for student name ──
-        if (str_starts_with($trimmed, 'linktype_name_')) {
-            $sendText(
-                "Type your child's *full name* and I'll search for them.\n\n"
-                . "For example: Amope Nandawula",
-                'prompt_student_name'
-            );
-            return;
-        }
-
-        // ── Handle "link_{studentId}" confirmation button ──
+        // ── Handle "link_{studentId}" confirmation button (in-flight Yes, link me) ──
         if (str_starts_with($trimmed, 'link_')) {
             $studentId = (int) substr($trimmed, 5);
             if ($studentId > 0) {
@@ -1136,32 +1103,13 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // ── Is this a School Pay payment code? (10 digits) ──
+        // ── Is this a School Pay payment code? (10 digits) — silent instant path ──
         if (preg_match('/^\d{10}$/', $trimmed)) {
             $this->processCodeVerificationForMeta($phone, $trimmed, $sendText, $sendButtons);
             return;
         }
 
-        // ── Try to find a student by ID or name ──
-        $searchable = strlen($trimmed) >= 2 && ! in_array($trimmed, ['exit', 'link_help', 'parent_link_flow', 'demo', 'menu', 'help'], true);
-        if (! $searchable) {
-            // ── Default: unrecognized — offer DEMO or link ──
-            $sendButtons(
-                "👋 *Welcome to KlassApp!* 🎓\n\n"
-                . "Tap *Try Demo* to explore with sample data.\n"
-                . "Tap *Link My Number* for instant linking (KlassApp ID or name).\n"
-                . "Tap *Request Link* to submit details for your school to review first.",
-                [
-                    ['title' => '🎯 Try Demo', 'id' => 'demo'],
-                    ['title' => '🔗 Link My Number', 'id' => 'link_help'],
-                    ['title' => '📋 Request Link', 'id' => 'parent_link_flow'],
-                ],
-                'unrecognized_prompt',
-            );
-            return;
-        }
-
-        // ── Priority 1: KlassApp Student ID (KLS0010427 — no dashes) ──
+        // ── KlassApp Student ID (instant self-service) ──
         if (preg_match('/^KLS\d{7}$/i', $trimmed)) {
             $academic = \App\Models\StudentAcademic::where('klassapp_student_id', strtoupper($trimmed))
                 ->with(['user', 'standardLink.standard', 'school'])
@@ -1170,32 +1118,30 @@ class WhatsAppController extends Controller
                 $this->linkParentToStudent($phone, $academic->user->id, $sendText, $sendButtons, $senderName);
                 return;
             }
-            $sendText(
+            $sendButtons(
                 "We couldn't find a student with KlassApp ID *{$trimmed}*.\n\n"
-                . "Check the ID on your child's report card or type their name to search.",
+                . "Check the ID on your child's report card, or tap *Request Link* "
+                . "to send details for your school to review.",
+                [
+                    ['title' => '📋 Request Link', 'id' => 'parent_link_flow'],
+                    ['title' => '🔗 Link help', 'id' => 'link_help'],
+                ],
                 'klassapp_id_not_found'
             );
             return;
         }
 
-        // ── Priority 2: School's own student ID (school_student_id) ──
-        // Multi-tenant safe: group the OR so school_id scoping (when available)
-        // applies to BOTH columns, not just the first. Global fallback for
-        // first-time parents with no school link yet.
+        // ── School's own student ID / board registration (instant, when unique enough) ──
         $priority2Query = \App\Models\StudentAcademic::where(function ($q) use ($trimmed) {
             $q->where('school_student_id', $trimmed)
               ->orWhere('board_registration_number', $trimmed);
         });
-        // If the phone already has a WhatsAppUser with a school_id, scope by it
-        // (covers re-linking a parent who texts a student ID after being linked to a school).
         $existingWaUser = \App\Models\WhatsAppUser::where('phone', $phone)->whereNotNull('school_id')->first();
         if ($existingWaUser) {
             $priority2Query->where('school_id', $existingWaUser->school_id);
         }
         $schoolIdMatch = $priority2Query->with(['user', 'standardLink.standard', 'school'])->first();
         if ($schoolIdMatch && $schoolIdMatch->user) {
-            // If we matched globally (no school scope), auto-learn the school onto
-            // the WhatsAppUser so future lookups are scoped.
             if (! $existingWaUser && $schoolIdMatch->school_id) {
                 \App\Models\WhatsAppUser::updateOrCreate(
                     ['phone' => $phone],
@@ -1206,119 +1152,41 @@ class WhatsAppController extends Controller
             return;
         }
 
-        // ── Priority 3: Check if this is a school name — scope subsequent search ──
-        $matchingSchool = null;
-        $schools = \App\Models\School::where('name', 'LIKE', "%{$trimmed}%")->limit(3)->get();
-        if ($schools->count() === 1) {
-            $matchingSchool = $schools->first();
-        } elseif ($schools->count() > 1) {
-            $sendButtons(
-                "Which school? We found " . $schools->count() . " matching \"{$trimmed}\":\n\n"
-                . $schools->take(5)->map(fn($s) => "• {$s->name}")->implode("\n")
-                . "\n\nType the full school name to narrow results.",
-                [
-                    ['title' => '🔍 Search by name', 'id' => 'link_help'],
-                ],
-                'school_search_results',
-            );
-            return;
-        }
+        // Free-text name/school search removed — only KLS ID (above) or Request Link Flow.
+        $sendButtons(
+            "👋 *Welcome to KlassApp!* 🎓\n\n"
+            . "Tap *Try Demo* to explore with sample data.\n"
+            . "Tap *Link help* for KlassApp ID instructions, or *Request Link* "
+            . "to submit a short form your school will review.",
+            [
+                ['title' => '🎯 Try Demo', 'id' => 'demo'],
+                ['title' => '🔗 Link help', 'id' => 'link_help'],
+                ['title' => '📋 Request Link', 'id' => 'parent_link_flow'],
+            ],
+            'unrecognized_prompt',
+        );
+    }
 
-        // ── Priority 4: Exact name match (with school scope if known) ──
-        $exactQuery = \App\Models\User::where('usergroup_id', 6)->where('name', $trimmed);
-        if ($matchingSchool) {
-            $exactQuery->where('school_id', $matchingSchool->id);
-        }
-        $exactMatch = $exactQuery->with(['studentAcademicLatest.standardLink.standard', 'school'])->first();
+    /**
+     * Two-path parent linking copy (KlassApp ID + Request Link Flow).
+     * Free-text name/school search was removed — do not reintroduce it here.
+     */
+    protected function parentLinkHelpMessage(): string
+    {
+        return "🔗 *Link to your child — 2 ways:*\n\n"
+            . "1️⃣ *KlassApp ID* — Type the student ID from your child's report card "
+            . "(e.g., KLS0010427)\n\n"
+            . "2️⃣ *Request Form* — Tap *Request Link* below for a short form your "
+            . "school will review.\n\n"
+            . "No code needed if you don't have the ID — just use the form.";
+    }
 
-        if ($exactMatch) {
-            $studentName = $exactMatch->name;
-            $className = $exactMatch->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A';
-            $schoolName = $exactMatch->school?->name ?? 'the school';
-            $studentId = $exactMatch->id;
-
-            $sendButtons(
-                "Link to *{$studentName}* ({$className}) at {$schoolName}?",
-                [
-                    ['title' => '✅ Yes, link me', 'id' => "link_{$studentId}"],
-                    ['title' => '🔍 Search again', 'id' => 'link_help'],
-                ],
-                'confirm_student_link',
-            );
-            return;
-        }
-
-        // ── Priority 5: Broad name search (scoped by school if known) ──
-        $possibleQuery = \App\Models\User::where('usergroup_id', 6)
-            ->where(function ($q) use ($trimmed) {
-                $q->where('name', 'LIKE', "%{$trimmed}%")
-                  ->orWhere('name', 'LIKE', "%" . str_replace(' ', '%', $trimmed) . "%");
-            });
-        if ($matchingSchool) {
-            $possibleQuery->where('school_id', $matchingSchool->id);
-        }
-        $possibleStudents = $possibleQuery->with(['studentAcademicLatest.standardLink.standard', 'school'])
-            ->limit(8)
-            ->get();
-
-        if ($possibleStudents->isNotEmpty()) {
-            $studentLines = [];
-            foreach ($possibleStudents as $student) {
-                $className = $student->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A';
-                $schoolName = $student->school?->name ?? 'Unknown School';
-                $studentLines[] = "• {$student->name} — {$className} ({$schoolName})";
-            }
-
-            $hint = $matchingSchool
-                ? "Reply with the *full name* to link."
-                : "Reply with the *full name* to link, or type the school name to narrow results.";
-
-            $sendButtons(
-                "We found " . $possibleStudents->count() . " student(s) matching \"{$trimmed}\":\n\n"
-                . implode("\n", $studentLines)
-                . "\n\n{$hint}",
-                [
-                    ['title' => '🔗 Link My Number', 'id' => 'link_help'],
-                    ['title' => '🎯 Try Demo', 'id' => 'demo'],
-                ],
-                'student_search_results',
-            );
-            return;
-        }
-
-        // ── Priority 6: Try matching as a school name ──
-        $matchedSchools = \App\Models\School::where('name', 'LIKE', "%{$trimmed}%")
-            ->orWhere('ministry_code', $trimmed)
-            ->limit(5)
-            ->get(['id', 'name']);
-
-        if ($matchedSchools->isNotEmpty()) {
-            $schoolList = $matchedSchools->map(fn($s) => "• {$s->name}")->implode("\n");
-            $hint = $matchedSchools->count() === 1
-                ? "Tap below to link to *{$matchedSchools->first()->name}*"
-                : "Which school? Tap or type the full name.";
-
-            if ($matchedSchools->count() === 1) {
-                $school = $matchedSchools->first();
-                $sendButtons(
-                    "🏫 *{$school->name}*\n\nHow would you like to link?",
-                    [
-                        ['title' => '🔑 KlassApp ID', 'id' => "linktype_klassapp_{$school->id}"],
-                        ['title' => '📝 Search by name', 'id' => "linktype_name_{$school->id}"],
-                    ],
-                    'link_type_choice',
-                );
-            } else {
-                $sendButtons(
-                    "We found {$matchedSchools->count()} schools matching \"{$trimmed}\":\n\n{$schoolList}\n\n{$hint}",
-                    [
-                        ['title' => '🔍 Search again', 'id' => 'link_help'],
-                    ],
-                    'school_search_results',
-                );
-            }
-            return;
-        }
+    /**
+     * One-line discoverability for the parent web dashboard (WEB_LOGIN magic link).
+     */
+    protected function parentDashboardHintSuffix(): string
+    {
+        return "\n\n_Full web dashboard — reply *WEB_LOGIN*_";
     }
 
     /**
@@ -1867,9 +1735,14 @@ class WhatsAppController extends Controller
             default => 'User',
         };
 
+        $menuBody = "🏫 *KlassApp Menu* — {$label}\n\nTap a button below or type any option keyword.";
+        if ($role === 7) {
+            $menuBody .= $this->parentDashboardHintSuffix();
+        }
+
         $this->businessApi->sendInteractiveButtons(
             $phone,
-            "🏫 *KlassApp Menu* — {$label}\n\nTap a button below or type any option keyword.",
+            $menuBody,
             $buttons,
             'menu',
             $userId,
@@ -1928,8 +1801,11 @@ class WhatsAppController extends Controller
         }
 
         $sentAny = false;
+        $childCount = $children->count();
+        $index = 0;
 
         foreach ($children as $link) {
+            $index++;
             $student = $link->userStudent;
             $studentName = $user->demo_name
                 ? "{$user->demo_name} Demo"
@@ -1952,9 +1828,13 @@ class WhatsAppController extends Controller
             $exams = $examQuery->take(15)->get();
 
             if ($exams->isEmpty()) {
+                $emptyMsg = "📊 *{$studentName}* — _{$className}_\n\nNo results published yet.\n\nResults will appear here automatically once the school releases them.";
+                if ($index === $childCount) {
+                    $emptyMsg .= $this->parentDashboardHintSuffix();
+                }
                 $whatsAppService->sendText(
                     $phone,
-                    "📊 *{$studentName}* — _{$className}_\n\nNo results published yet.\n\nResults will appear here automatically once the school releases them.",
+                    $emptyMsg,
                     'grades_none',
                     $user->user_id,
                 );
@@ -2028,6 +1908,9 @@ class WhatsAppController extends Controller
             }
 
             $message .= "_Send GRADES for latest results._";
+            if ($index === $childCount) {
+                $message .= $this->parentDashboardHintSuffix();
+            }
             $whatsAppService->sendText($phone, $message, 'grades', $user->user_id);
             $sentAny = true;
         }
@@ -2035,7 +1918,8 @@ class WhatsAppController extends Controller
         if (!$sentAny) {
             $whatsAppService->sendText(
                 $phone,
-                "📊 No results found for any of your children.\n\nResults will appear here once published by the school.",
+                "📊 No results found for any of your children.\n\nResults will appear here once published by the school."
+                . $this->parentDashboardHintSuffix(),
                 'grades_none_all',
                 $user->user_id,
             );
@@ -2069,8 +1953,11 @@ class WhatsAppController extends Controller
         }
 
         $sentAny = false;
+        $childCount = $children->count();
+        $index = 0;
 
         foreach ($children as $link) {
+            $index++;
             $student = $link->userStudent;
             $studentName = $user->demo_name
                 ? "{$user->demo_name} Demo"
@@ -2111,6 +1998,10 @@ class WhatsAppController extends Controller
                 $message .= "\n_{$office}_";
             }
 
+            if ($index === $childCount) {
+                $message .= $this->parentDashboardHintSuffix();
+            }
+
             $whatsAppService->sendText($phone, $message, 'fees', $user->user_id);
             $sentAny = true;
         }
@@ -2122,7 +2013,8 @@ class WhatsAppController extends Controller
             );
             $whatsAppService->sendText(
                 $phone,
-                "💰 No fee information found for any of your children.\n\n{$office}",
+                "💰 No fee information found for any of your children.\n\n{$office}"
+                . $this->parentDashboardHintSuffix(),
                 'fees_none_all',
                 $user->user_id,
             );
@@ -2160,8 +2052,11 @@ class WhatsAppController extends Controller
         }
 
         $sentAny = false;
+        $childCount = $children->count();
+        $index = 0;
 
         foreach ($children as $link) {
+            $index++;
             $student = $link->userStudent;
             $studentName = $user->demo_name
                 ? "{$user->demo_name} Demo"
@@ -2177,9 +2072,13 @@ class WhatsAppController extends Controller
                 ->get();
 
             if ($records->isEmpty()) {
+                $emptyMsg = "📅 *Attendance for {$studentName}*\n_{$className}_\n_This month_\n\nNo attendance records found.";
+                if ($index === $childCount) {
+                    $emptyMsg .= $this->parentDashboardHintSuffix();
+                }
                 $whatsAppService->sendText(
                     $phone,
-                    "📅 *Attendance for {$studentName}*\n_{$className}_\n_This month_\n\nNo attendance records found.",
+                    $emptyMsg,
                     'attendance_none',
                     $user->user_id,
                 );
@@ -2187,39 +2086,42 @@ class WhatsAppController extends Controller
             }
 
             $totalDays = $records->count();
-        $presentDays = $records->where('status', 1)->count();
-        $absentDays = $records->where('status', 0)->count();
-        $lateDays = $records->where('status', 2)->count();
-        $rate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
+            $presentDays = $records->where('status', 1)->count();
+            $absentDays = $records->where('status', 0)->count();
+            $lateDays = $records->where('status', 2)->count();
+            $rate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
 
-        $tone = '';
-        if ($rate < 80) {
-            $tone = "⚠️ *{$studentName} has missed {$absentDays} school day(s)* this month.\nThat's " . (100 - $rate) . "% of learning time lost.\n\n";
-        } elseif ($rate > 90) {
-            $tone = "✅ *Great attendance!* {$studentName} has been in class {$presentDays} out of {$totalDays} days.\n\n";
-        }
-
-        $message = "📅 *Attendance — {$studentName}*\n_{$className}_\n_This month_\n\n";
-        $message .= "✅ Present: {$presentDays}\n";
-        $message .= "❌ Absent: {$absentDays}\n";
-        $message .= "⏰ Late: {$lateDays}\n";
-        $message .= "📊 Rate: {$rate}%\n";
-
-        if ($tone) {
-            $message .= "\n{$tone}";
-        }
-
-        $recentAbsent = $records->where('status', '!=', 1)->take(3);
-        if ($recentAbsent->isNotEmpty()) {
-            $message .= "· · · · · · · · · · · · · · · ·\n";
-            $message .= "Recent non-attendance:\n";
-            foreach ($recentAbsent as $record) {
-                $status = $record->status == 2 ? 'Late' : 'Absent';
-                $message .= "  • " . Carbon::parse($record->date)->format('d M Y') . " ({$status})\n";
+            $tone = '';
+            if ($rate < 80) {
+                $tone = "⚠️ *{$studentName} has missed {$absentDays} school day(s)* this month.\nThat's " . (100 - $rate) . "% of learning time lost.\n\n";
+            } elseif ($rate > 90) {
+                $tone = "✅ *Great attendance!* {$studentName} has been in class {$presentDays} out of {$totalDays} days.\n\n";
             }
+
+            $message = "📅 *Attendance — {$studentName}*\n_{$className}_\n_This month_\n\n";
+            $message .= "✅ Present: {$presentDays}\n";
+            $message .= "❌ Absent: {$absentDays}\n";
+            $message .= "⏰ Late: {$lateDays}\n";
+            $message .= "📊 Rate: {$rate}%\n";
+
+            if ($tone) {
+                $message .= "\n{$tone}";
+            }
+
+            $recentAbsent = $records->where('status', '!=', 1)->take(3);
+            if ($recentAbsent->isNotEmpty()) {
+                $message .= "· · · · · · · · · · · · · · · ·\n";
+                $message .= "Recent non-attendance:\n";
+                foreach ($recentAbsent as $record) {
+                    $status = $record->status == 2 ? 'Late' : 'Absent';
+                    $message .= "  • " . Carbon::parse($record->date)->format('d M Y') . " ({$status})\n";
+                }
             }
 
             $message .= "\n_Send ATTENDANCE for updated record._";
+            if ($index === $childCount) {
+                $message .= $this->parentDashboardHintSuffix();
+            }
             $whatsAppService->sendText($phone, $message, 'attendance', $user->user_id);
             $sentAny = true;
         }
@@ -2227,7 +2129,8 @@ class WhatsAppController extends Controller
         if (!$sentAny) {
             $whatsAppService->sendText(
                 $phone,
-                "📅 No attendance records found for any of your children.",
+                "📅 No attendance records found for any of your children."
+                . $this->parentDashboardHintSuffix(),
                 'attendance_none_all',
                 $user->user_id,
             );
