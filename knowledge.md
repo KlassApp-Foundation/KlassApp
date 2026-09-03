@@ -1056,6 +1056,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-03: Approvals empty-candidate Livewire student search
+
+- **Gap**: null `candidate_student_ids` showed raw numeric Student user ID input — unusable for admins.
+- **Fix**: `ParentLinkStudentPicker` Livewire + `searchStudentsForAdmin()` (token OR match, no class filter, school-scoped); selection posts same `matched_student_id`. Dropdown path untouched.
+- **PR**: [#410](https://github.com/KlassApp-Foundation/KlassApp/pull/410) → `8e193de4`.
+- **Live**: PLR#4 approve → link #25 + WA delivered; screenshots under `e2e/screenshots/approvals-empty-candidate-search/`.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
+
 ### 2026-09-02: Parent-link pending/rejected status awareness (trust gap)
 
 - **Trace (confirmed)**: `processMetaMessage` looked up `WhatsAppUser` only; missing user → `handleUnrecognizedUserMeta` with **zero** `ParentLinkRequest` check. Admin `reject` only flipped `status=rejected` — `NotifyOnStatusChange` only WhatsApps teachers with `teacher()`, so parents got silence.
