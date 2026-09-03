@@ -336,7 +336,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 3, 2026 (`origin/main` tip `aed31b3f` — parent magic-login 403 + Dashboard list **MERGED + DEPLOYED**)
+## Current Status: September 3, 2026 (`origin/main` tip `f22c56ac` — knowledge stamp #420; last app ship **#419** `aed31b3f` **DEPLOYED**)
+
+- **Tip**: [#420](https://github.com/KlassApp-Foundation/KlassApp/pull/420) merge `f22c56ac` is docs only. Last product deploy is [#419](https://github.com/KlassApp-Foundation/KlassApp/pull/419) → `aed31b3f` (magic-login crawler 403 + Dashboard list + KlassApp error mark). `[8/8] SHA match` on that deploy.
+- **Still open (templates, not a new finding)**: WABA `1370231745289565` — **4 APPROVED** (`fee_update`, `grade_entered`, `report_card_ready`, `health_incident`) plus AUTH `klassapp_otp`. **2 still blocked**: `teacher_account_invite` and `toshi_otp` REJECTED (`INCORRECT_CATEGORY`); Graph token cannot DELETE; needs Business Manager Request Review / delete. Unchanged since #404 / `72da7311`.
+- **Closed but previously unlogged on this page**: [#399](https://github.com/KlassApp-Foundation/KlassApp/pull/399) `is_reset=1` web login → `/password/force-change` (`f9f2acad`, 2026-09-01). Older Current Status bullets that still say this is “out of scope / still open” are **wrong** — see Session Log 2026-09-01.
+- **Future (not scoped)**: **permanent parent web login** — today dashboard access is a 15-minute single-use signed URL + Continue POST. A lasting session (password after first entry, remember-me, or WhatsApp-bound login so parents are not issued a new magic link every visit) is recorded only; no design or ticket.
+
+## Previous: September 3, 2026 (`origin/main` then `aed31b3f` — parent magic-login 403 + Dashboard list **MERGED + DEPLOYED**)
 
 - **✅ [#419](https://github.com/KlassApp-Foundation/KlassApp/pull/419)** → merge `aed31b3f` — WhatsApp URL previews no longer burn one-use parent dashboard links. GET is Continue; crawlers 204; POST logs in. Parent menu list ends with Dashboard. Typed WEB_LOGIN hints removed. KlassApp SVG on error pages (`images/klassapp-logo.svg` HTTP 200). `User::whatsappDisplayName()`.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match` (`aed31b3f`).
@@ -344,6 +351,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 - **Handset**: MENU → list with Dashboard last; greeting `displayName` (no digit suffix) — tap on `+256781940358` when convenient.
 - **Tests**: `ParentMagicLoginTest` + WhatsApp menu/hint/login suites.
 - **Prior**: [#417](https://github.com/KlassApp-Foundation/KlassApp/pull/417) two-path linking @ `212e28fa`.
+- **Docs stamp**: [#420](https://github.com/KlassApp-Foundation/KlassApp/pull/420) → `f22c56ac` (knowledge only).
 
 ## Previous: September 3, 2026 (`origin/main` tip `212e28fa` — two-path WA linking + WEB_LOGIN hints **MERGED + DEPLOYED**)
 
@@ -395,7 +403,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 - **WhatsApp library**: `account_creation_confirmation_3` EN — **2 body vars only** (`{{1}}` name, `{{2}}` verify-target) + URL button — **too constrained** for 5 invite fields; not submitted. Email is the invite path.
 - **Prior templates** @ `72da7311`: 4/6 APPROVED; `klassapp_otp` AUTH APPROVED; invite name stuck REJECTED.
 
-## Previous: September 2, 2026 (`origin/main` tip pending — Flow ack bold + template submit scripts)
+## Previous: September 2, 2026 (`origin/main` tip `72da7311` — Flow ack bold + template submit scripts **MERGED**)
 
 - **WhatsApp templates (Graph API, WABA `1370231745289565`)** — live statuses after Business Verification:
   | name | id | status | category | notes |
@@ -491,7 +499,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 - **✅ Prod tip**: **`79e4b147`** @ 2026-08-29 — `UserProvisioning` on CreateParent / AddAlumni / AdmissionUser / TeacherLinkImport / EnrollStudents.
 - **Finding**: Parent portal Phases 1–5 did **not** fix admin `RegisterUser::CreateParent` (still `bcrypt('password')`). WhatsApp `ParentLinkService` already used random passwords; magic-link does not replace admin CreateParent.
 - **Live verify**: `node scripts/live-verify-password-gaps.mjs` — **PASS** (parent+alumni `demo_password=false`, `is_reset=1`; sources clean of `bcrypt('password')`). Artifact: `tmp/live-verify-password-gaps/REPORT.json`.
-- **Out of scope (still open)**: `is_reset` web-login enforcement; any remaining `Hash::make('password')` outside these paths (e.g. ToshiActionService / adversarial runners).
+- **Out of scope (still open at the time)**: `is_reset` web-login enforcement — **later shipped** [#399](https://github.com/KlassApp-Foundation/KlassApp/pull/399) / `f9f2acad` (2026-09-01); any remaining `Hash::make('password')` outside these paths (e.g. ToshiActionService — later #395 / adversarial runners).
 
 ## Previous: August 29, 2026 (`origin/main` tip `7e58529b` — **DEPLOYED** parent portal Phases 1–5 COMPLETE) — superseded by password-gap fix
 
@@ -1092,6 +1100,30 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-03: knowledge.md audit vs GitHub #398–#420 (honest gap fill)
+
+- **Method**: Re-read Current Status + Session Log from disk; compared to `gh pr list` merges `#398`–`#420` (not memory of prior chats).
+- **Already present (do not re-log)**: Flow Day 1 [#400](https://github.com/KlassApp-Foundation/KlassApp/pull/400) / Day 2 [#401](https://github.com/KlassApp-Foundation/KlassApp/pull/401) + FK [#402](https://github.com/KlassApp-Foundation/KlassApp/pull/402); school name [#403](https://github.com/KlassApp-Foundation/KlassApp/pull/403); templates+ack [#404](https://github.com/KlassApp-Foundation/KlassApp/pull/404); teacher invite [#405](https://github.com/KlassApp-Foundation/KlassApp/pull/405); pending/rejected WA [#407](https://github.com/KlassApp-Foundation/KlassApp/pull/407); empty-candidate picker [#410](https://github.com/KlassApp-Foundation/KlassApp/pull/410); interactive buttons [#413](https://github.com/KlassApp-Foundation/KlassApp/pull/413); button routing [#415](https://github.com/KlassApp-Foundation/KlassApp/pull/415); two-path linking + WEB_LOGIN hints [#417](https://github.com/KlassApp-Foundation/KlassApp/pull/417); magic-login crawler fix [#419](https://github.com/KlassApp-Foundation/KlassApp/pull/419); docs stamps [#406](https://github.com/KlassApp-Foundation/KlassApp/pull/406)/[#408](https://github.com/KlassApp-Foundation/KlassApp/pull/408)/[#409](https://github.com/KlassApp-Foundation/KlassApp/pull/409)/[#411](https://github.com/KlassApp-Foundation/KlassApp/pull/411)/[#412](https://github.com/KlassApp-Foundation/KlassApp/pull/412)/[#414](https://github.com/KlassApp-Foundation/KlassApp/pull/414)/[#416](https://github.com/KlassApp-Foundation/KlassApp/pull/416)/[#418](https://github.com/KlassApp-Foundation/KlassApp/pull/418)/[#420](https://github.com/KlassApp-Foundation/KlassApp/pull/420). Template table (4 APPROVED / 2 REJECTED) already in Current Status trail.
+- **Flow “Days 3–4”**: PRs only label Day 1 and Day 2. The next two Flow product merges (same arc, unlabeled) are [#403](https://github.com/KlassApp-Foundation/KlassApp/pull/403) school name and [#407](https://github.com/KlassApp-Foundation/KlassApp/pull/407) pending/rejected status — both already have Session Log entries; this audit does not duplicate them.
+- **Genuinely missing before this edit**: [#399](https://github.com/KlassApp-Foundation/KlassApp/pull/399) `is_reset` force-change (never in Session Log / Current Status tip); [#398](https://github.com/KlassApp-Foundation/KlassApp/pull/398) Slack guard cherry-pick onto `main` + deploy SHA/FPM harden (incident narrative lived under #397 session, PR number/`88a004fe` not recorded); Current Status tip still said `aed31b3f` while `origin/main` was already `f22c56ac`; #404 session status still “shipping via PR”; August 29 Current Status still claimed `is_reset` “still open”; permanent parent login never recorded as a future idea.
+- **Future (not scoped)**: permanent parent web login after magic-link (see Current Status).
+- **Status**: ✅ Session Log gap fill — land on `origin/main` via this PR (verify remote SHA after merge)
+
+### 2026-09-01: `is_reset` web-login force-change — **MERGED** (was missing from this log)
+
+- **Work done**: When `users.is_reset=1`, `AuthenticatesUsers::sendLoginResponse()` redirects to `/password/force-change` instead of the dashboard. `ForceChangePasswordController` + Blade form; strong password rules; clears `is_reset=0` on success. `is_reset=0` accounts unchanged.
+- **PR**: [#399](https://github.com/KlassApp-Foundation/KlassApp/pull/399) → merge `f9f2acad`.
+- **Tests**: `IsResetEnforcementTest` 8 + login/provisioning regression suites.
+- **Closes**: the long-standing “flag written, never enforced on login” gap called out in Aug 28–29 password sessions.
+- **Status**: ✅ MERGED (2026-09-01) — first written into Session Log on 2026-09-03 audit
+
+### 2026-09-01: Deploy FPM/SHA harden + Slack signup guard on `main` — **MERGED** (PR #398 was unlogged)
+
+- **Problem**: Signup 500 from `Log::channel('slack')` when `LOG_SLACK_WEBHOOK_URL` null (hotfix `b55b3229` only on a server branch); deploy `kill -USR2` always “succeeded” while OPcache stayed stale.
+- **PR**: [#398](https://github.com/KlassApp-Foundation/KlassApp/pull/398) → merge `88a004fe` — Slack URL guard before channel resolve; `deploy-manual.sh` real USR2 + wait + git↔container SHA match (`[8/8]`).
+- **Note**: Seeder browser closure narrative is under 2026-09-01 #397 session; this entry only stamps the `main` PR that carried the Slack/deploy harden.
+- **Status**: ✅ MERGED (2026-09-01) — first written into Session Log on 2026-09-03 audit
+
 ### 2026-09-03: Parent magic-login 403 + KlassApp error branding + Dashboard list
 
 - **Cause (proven)**: first GET of `/parent/magic-login/{user}/{nonce}` consumes nonce + logs in. WhatsApp `preview_url: true` made Facebook/WhatsApp crawlers hit the URL before the parent; second GET → 403 “This login link has already been used.” Signature/APP_URL were fine (first human GET 302’d). Error page title was KlassApp; apple-touch-icon was fork-era GeGo PNG; `images/klassapp-logo-primary.svg` missing on prod.
@@ -1108,6 +1140,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **PR**: [#417](https://github.com/KlassApp-Foundation/KlassApp/pull/417) → merge `212e28fa`.
 - **Live**: help #167 (2 ways); name text → welcome #168; menu #170 has WEB_LOGIN; fees preview truncates at 200 chars but suffix is on last child body.
 - **Bonus**: on-device `#159` Request Link tap → `#160` Flow (closes #415 handset confirmation).
+- **Superseded (hints only)**: typed `_Full web dashboard — reply *WEB_LOGIN*_` and fees/grades/attendance suffixes removed in [#419](https://github.com/KlassApp-Foundation/KlassApp/pull/419) (Dashboard list row instead).
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 
 ### 2026-09-03: Fix linked-parent interactive button routing (#415)
@@ -1161,7 +1194,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Templates**: Submitted exact 6 via Graph API post–Business Verification. 4/6 APPROVED under exact names. `teacher_account_invite` + `toshi_otp` REJECTED (`INCORRECT_CATEGORY`). Token cannot DELETE templates (`Need permission on WABA`). AUTH custom body rejected (#2388042). Fresh AUTH template `klassapp_otp` APPROVED. Teacher invite fails UTILITY and MARKETING under alt names too — needs dashboard Request Review / delete with Business Manager role.
 - **Ack**: bold markdown around parent/child/class/school; “the school administration” phrasing.
 - **Files**: `WhatsAppController`, Flow test, `scripts/submit-whatsapp-message-templates.php` (+ retry helpers), `knowledge.md`.
-- **Status**: templates reported with live IDs; ack shipping via PR.
+- **Status**: ✅ MERGED [#404](https://github.com/KlassApp-Foundation/KlassApp/pull/404) → `72da7311`. Template statuses unchanged after merge (4 APPROVED + `klassapp_otp`; invite + `toshi_otp` still REJECTED / awaiting Business Manager).
 
 ### 2026-09-02: Parent-link Flow — required School name field
 
@@ -1281,7 +1314,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Fresh local + prod container verification (do not trust prior session memory). Grepped `bcrypt('password')` / `Hash::make('password')` / `UserProvisioning` on AdmissionUser, TeacherLinkImportController, EnrollStudents, RegisterUser (CreateParent + AddAlumni). All five use `UserProvisioning::randomPasswordAttributes()` locally and in prod container (`TIP` had the fix; `app/` scan for those hardcodes on the four files = UserProvisioning only). Re-ran `RegisterUserProvisioningTest` + `SatellitePasswordProvisioningTest` — **8 passed**. Existing live harness `scripts/live-verify-password-gaps.mjs` already documented PASS at `79e4b147`.
 - **CreateParent vs WhatsApp**: confirmed separate — admin `RegisterUser::CreateParent` is fixed; `ParentLinkService` uses `bcrypt(Str::random(12))` (random, not demo; optional polish = align to UserProvisioning + `is_reset=1`).
 - **Genuinely still broken (product)**: ~~`ToshiActionService::addParent()`~~ **fixed** — see 2026-08-30 session (#395 / `56b576ee`).
-- **Out of scope this pass**: `is_reset` forced password-change on web login (no Auth/Middleware reads the flag today); `LiveAdversarialRunner` fixture; test/factory/seeder demo passwords; alumni portal.
+- **Out of scope this pass**: `is_reset` forced password-change on web login — **later shipped** [#399](https://github.com/KlassApp-Foundation/KlassApp/pull/399) / `f9f2acad`; `LiveAdversarialRunner` fixture; test/factory/seeder demo passwords; alumni portal.
 - **Proposed next PR (not started)**: fix `addParent` only with UserProvisioning + test + live-verify; leave the five already-fixed files alone.
 - **Files modified**: `knowledge.md` only (this entry).
 - **Status**: ⏸️ Paused after scoped plan — awaiting go to implement Toshi `addParent` only.
