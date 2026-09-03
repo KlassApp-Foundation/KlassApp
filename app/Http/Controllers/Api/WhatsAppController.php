@@ -20,10 +20,12 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
 use App\Services\OutboundWhatsAppService;
 use App\Services\ParentLinkService;
+use App\Models\StudentParentLink;
 use App\Services\ParentMagicLoginService;
 use App\Services\WhatsApp\WhatsAppConfirmationBridge;
 use App\Services\WhatsApp\ParentLinkRequestService;
 use App\Services\WhatsAppBusinessService;
+use App\Services\WhatsAppReportCardDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -43,6 +45,7 @@ class WhatsAppController extends Controller
         protected WhatsAppBusinessService $businessApi,
         protected ParentLinkService $parentLinks,
         protected ParentLinkRequestService $parentLinkRequests,
+        protected WhatsAppReportCardDeliveryService $reportCardDelivery,
     ) {}
     /**
      * Identify a WhatsApp user by phone number.
@@ -1562,7 +1565,12 @@ class WhatsAppController extends Controller
 
                 return;
             }
-            if ($match(['grades', 'results', 'marks', 'report', 'exams'])) {
+            if ($match(['report', 'report_card', 'report card', 'reportcard'])) {
+                $this->sendParentReportCards($user, $phone, $whatsAppService);
+
+                return;
+            }
+            if ($match(['grades', 'results', 'marks', 'exams'])) {
                 $this->sendGrades($user, $phone, $whatsAppService);
                 return;
             }
@@ -1611,6 +1619,11 @@ class WhatsAppController extends Controller
 
         // Dual-role: any staff member with children can access parent features
         if ($hasChildren && !in_array($role, [6, 7])) {
+            if ($match(['report', 'report_card', 'report card', 'reportcard'])) {
+                $this->sendParentReportCards($user, $phone, $whatsAppService);
+
+                return;
+            }
             if ($match(['my children', 'children', 'kids', 'my kids'])) {
                 $this->sendGrades($user, $phone, $whatsAppService);
                 return;
@@ -1697,8 +1710,9 @@ class WhatsAppController extends Controller
                     'title' => 'Parent',
                     'rows' => [
                         ['id' => 'FEES', 'title' => 'Fee Balance', 'description' => 'Check outstanding fees'],
-                        ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View grades and reports'],
+                        ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View latest exam scores'],
                         ['id' => 'ATTENDANCE', 'title' => 'Attendance', 'description' => 'See attendance records'],
+                        ['id' => 'REPORT', 'title' => 'Report Card', 'description' => 'Download this term\'s PDF'],
                         ['id' => 'WEB_LOGIN', 'title' => 'Dashboard', 'description' => 'Open the full parent portal'],
                     ],
                 ]],
@@ -1773,18 +1787,27 @@ class WhatsAppController extends Controller
 
         $rows = match ($context) {
             'fees' => [
-                ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View grades and reports'],
+                ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View latest exam scores'],
+                ['id' => 'REPORT', 'title' => 'Report Card', 'description' => 'Download this term\'s PDF'],
                 ['id' => 'ATTENDANCE', 'title' => 'Attendance', 'description' => 'See attendance records'],
                 ['id' => 'MENU', 'title' => 'Main Menu', 'description' => 'Back to all options'],
             ],
             'grades' => [
                 ['id' => 'FEES', 'title' => 'Fee Balance', 'description' => 'Check outstanding fees'],
+                ['id' => 'REPORT', 'title' => 'Report Card', 'description' => 'Download this term\'s PDF'],
                 ['id' => 'ATTENDANCE', 'title' => 'Attendance', 'description' => 'See attendance records'],
                 ['id' => 'MENU', 'title' => 'Main Menu', 'description' => 'Back to all options'],
             ],
             'attendance' => [
                 ['id' => 'FEES', 'title' => 'Fee Balance', 'description' => 'Check outstanding fees'],
-                ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View grades and reports'],
+                ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View latest exam scores'],
+                ['id' => 'REPORT', 'title' => 'Report Card', 'description' => 'Download this term\'s PDF'],
+                ['id' => 'MENU', 'title' => 'Main Menu', 'description' => 'Back to all options'],
+            ],
+            'report' => [
+                ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View latest exam scores'],
+                ['id' => 'FEES', 'title' => 'Fee Balance', 'description' => 'Check outstanding fees'],
+                ['id' => 'ATTENDANCE', 'title' => 'Attendance', 'description' => 'See attendance records'],
                 ['id' => 'MENU', 'title' => 'Main Menu', 'description' => 'Back to all options'],
             ],
             default => [
@@ -1809,6 +1832,86 @@ class WhatsAppController extends Controller
             userId: $userId,
         );
     }
+    private function sendParentReportCards(WhatsAppUser $user, string $phone, $whatsAppService): void
+    {
+        $rateKey = 'whatsapp-report:'.$phone;
+        if (RateLimiter::tooManyAttempts($rateKey, WhatsAppReportCardDeliveryService::RATE_LIMIT_PER_HOUR)) {
+            $whatsAppService->sendText(
+                $phone,
+                "You've requested quite a few report cards. Please try again in a little while.",
+                'report_rate_limited',
+                $user->user_id,
+            );
+
+            return;
+        }
+
+        $links = StudentParentLink::query()
+            ->where('parent_id', $user->user_id)
+            ->where('status', 1)
+            ->whereNotNull('school_id')
+            ->with(['userStudent.userprofile', 'userStudent.studentAcademicLatest.standardLink'])
+            ->get();
+
+        if ($links->isEmpty()) {
+            $whatsAppService->sendText(
+                $phone,
+                "📄 No children linked to your account.\n\nPlease contact your school office to link your children.",
+                'report_no_children',
+                $user->user_id,
+            );
+            $this->sendActionButtons($phone, $user->user_id, 'report');
+
+            return;
+        }
+
+        RateLimiter::hit($rateKey, 3600);
+
+        $sentPdf = false;
+        $sentMessage = false;
+
+        foreach ($links as $link) {
+            $student = $link->userStudent;
+            if (! $student) {
+                continue;
+            }
+
+            $result = $this->reportCardDelivery->prepareForStudent($user->user, $student);
+            if (! $result['ok']) {
+                $whatsAppService->sendText(
+                    $phone,
+                    $result['message'],
+                    $result['flow_type'],
+                    $user->user_id,
+                );
+                $sentMessage = true;
+
+                continue;
+            }
+
+            $whatsAppService->sendDocument(
+                $phone,
+                $result['url'],
+                $result['caption'],
+                $result['filename'],
+                'report_card',
+                $user->user_id,
+            );
+            $sentPdf = true;
+        }
+
+        if (! $sentPdf && ! $sentMessage) {
+            $whatsAppService->sendText(
+                $phone,
+                "📄 No report cards are ready yet for your children.\n\nThey will appear here once the school publishes end-of-term results.",
+                'report_none_all',
+                $user->user_id,
+            );
+        }
+
+        $this->sendActionButtons($phone, $user->user_id, 'report');
+    }
+
     private function sendGrades(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $children = $user->user->children()

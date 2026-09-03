@@ -154,8 +154,11 @@ class TwoPathLinkingAndDashboardHintTest extends TestCase
                 $rows = $sections[0]['rows'] ?? [];
                 $last = $rows === [] ? null : $rows[array_key_last($rows)];
 
+                $ids = array_column($rows, 'id');
+
                 return $flowType === 'menu'
                     && ($last['id'] ?? null) === 'WEB_LOGIN'
+                    && in_array('REPORT', $ids, true)
                     && ! str_contains($description, 'WEB_LOGIN');
             })
             ->andReturn(['success' => true, 'message_id' => 'menu']);
