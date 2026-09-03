@@ -336,9 +336,9 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 3, 2026 (`origin/main` tip `f22c56ac` — knowledge stamp #420; last app ship **#419** `aed31b3f` **DEPLOYED**)
+## Current Status: September 3, 2026 (`origin/main` tip `447cf055` — knowledge audit **#421**; last app ship **#419** `aed31b3f` **DEPLOYED**)
 
-- **Tip**: [#420](https://github.com/KlassApp-Foundation/KlassApp/pull/420) merge `f22c56ac` is docs only. Last product deploy is [#419](https://github.com/KlassApp-Foundation/KlassApp/pull/419) → `aed31b3f` (magic-login crawler 403 + Dashboard list + KlassApp error mark). `[8/8] SHA match` on that deploy.
+- **Tip**: [#421](https://github.com/KlassApp-Foundation/KlassApp/pull/421) merge `447cf055` is this audit (docs). Last product deploy is [#419](https://github.com/KlassApp-Foundation/KlassApp/pull/419) → `aed31b3f`. Prior docs tip was `f22c56ac` (#420).
 - **Still open (templates, not a new finding)**: WABA `1370231745289565` — **4 APPROVED** (`fee_update`, `grade_entered`, `report_card_ready`, `health_incident`) plus AUTH `klassapp_otp`. **2 still blocked**: `teacher_account_invite` and `toshi_otp` REJECTED (`INCORRECT_CATEGORY`); Graph token cannot DELETE; needs Business Manager Request Review / delete. Unchanged since #404 / `72da7311`.
 - **Closed but previously unlogged on this page**: [#399](https://github.com/KlassApp-Foundation/KlassApp/pull/399) `is_reset=1` web login → `/password/force-change` (`f9f2acad`, 2026-09-01). Older Current Status bullets that still say this is “out of scope / still open” are **wrong** — see Session Log 2026-09-01.
 - **Future (not scoped)**: **permanent parent web login** — today dashboard access is a 15-minute single-use signed URL + Continue POST. A lasting session (password after first entry, remember-me, or WhatsApp-bound login so parents are not issued a new magic link every visit) is recorded only; no design or ticket.
@@ -1107,7 +1107,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Flow “Days 3–4”**: PRs only label Day 1 and Day 2. The next two Flow product merges (same arc, unlabeled) are [#403](https://github.com/KlassApp-Foundation/KlassApp/pull/403) school name and [#407](https://github.com/KlassApp-Foundation/KlassApp/pull/407) pending/rejected status — both already have Session Log entries; this audit does not duplicate them.
 - **Genuinely missing before this edit**: [#399](https://github.com/KlassApp-Foundation/KlassApp/pull/399) `is_reset` force-change (never in Session Log / Current Status tip); [#398](https://github.com/KlassApp-Foundation/KlassApp/pull/398) Slack guard cherry-pick onto `main` + deploy SHA/FPM harden (incident narrative lived under #397 session, PR number/`88a004fe` not recorded); Current Status tip still said `aed31b3f` while `origin/main` was already `f22c56ac`; #404 session status still “shipping via PR”; August 29 Current Status still claimed `is_reset` “still open”; permanent parent login never recorded as a future idea.
 - **Future (not scoped)**: permanent parent web login after magic-link (see Current Status).
-- **Status**: ✅ Session Log gap fill — land on `origin/main` via this PR (verify remote SHA after merge)
+- **Status**: ✅ on `origin/main` via [#421](https://github.com/KlassApp-Foundation/KlassApp/pull/421) merge `447cf055` (commit `eb94054c`; GitHub `commits/main` confirmed)
 
 ### 2026-09-01: `is_reset` web-login force-change — **MERGED** (was missing from this log)
 
