@@ -1,0 +1,42 @@
+[
+    {
+        "id": 128,
+        "flow_type": "menu",
+        "status": "delivered",
+        "content_preview": "Buttons: 🏫 *KlassApp Menu* — Parent\n\nTap a button below or type any option keyword. — [💰 Fee Balance, 📊 Exam Results, 📋 Attendance]",
+        "whatsapp_message_id": "wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSNDU1NUY2NEUwQ0Y5MTk3OTQ2AA==",
+        "sent_at": "2026-09-03T02:37:00.000000Z"
+    },
+    {
+        "id": 126,
+        "flow_type": "menu",
+        "status": "delivered",
+        "content_preview": "Buttons: 🏫 *KlassApp Menu* — Parent\n\nTap a button below or type any option keyword. — [💰 Fee Balance, 📊 Exam Results, 📋 Attendance]",
+        "whatsapp_message_id": "wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSQTk2N0Y0MUZFQjI2ODE5N0E1AA==",
+        "sent_at": "2026-09-03T02:36:44.000000Z"
+    },
+    {
+        "id": 124,
+        "flow_type": "parent_link_approved",
+        "status": "delivered",
+        "content_preview": "Buttons: ✅ Hi Button Verify Parent! You've been linked to *Button Verify Child* at *UI Review Demo School*.\n\nTap *Menu* below for fees, grades, and more. — [🏠 Menu]",
+        "whatsapp_message_id": "wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSQjVEMkMwNkZENEUwMDU4MzlGAA==",
+        "sent_at": "2026-09-03T02:36:10.000000Z"
+    },
+    {
+        "id": 123,
+        "flow_type": "parent_link_rejected",
+        "status": "delivered",
+        "content_preview": "Buttons: Hi Button Verify Parent, the school couldn't approve your request to link *Button Verify Child* at *UI Review Demo School*.\n\nReason: Interactive button verify (safe to ignore)\n\nTap *Request Link* below to submit a new request. — [📋 Request Link, 🔗 Link help]",
+        "whatsapp_message_id": "wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSQTJGRDNBQUIwNjY4RjFCODI0AA==",
+        "sent_at": "2026-09-03T02:36:08.000000Z"
+    },
+    {
+        "id": 122,
+        "flow_type": "parent_link_approved",
+        "status": "delivered",
+        "content_preview": "✅ Hi Empty Cand Verify! You've been linked to *Brian Okello* at *UI Review Demo School*.\n\nReply *MENU* anytime for fees, grades, and more.",
+        "whatsapp_message_id": "wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSRTdGMEREQjVCMDhGMTMxN0FEAA==",
+        "sent_at": "2026-09-03T02:15:43.000000Z"
+    }
+]

@@ -336,7 +336,15 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 3, 2026 (`origin/main` tip `8e193de4` — empty-candidate Approvals student search **MERGED + DEPLOYED**)
+## Current Status: September 3, 2026 (`origin/main` tip `c486180e` — parent-link interactive buttons **MERGED + DEPLOYED**)
+
+- **✅ [#413](https://github.com/KlassApp-Foundation/KlassApp/pull/413)** → merge `c486180e` — reject/approve WhatsApp notices + inbound rejected-status / `link_help` / flow-unavailable use Meta `interactive` reply buttons instead of typed-command copy.
+- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
+- **✅ Live** `+256781940358`: `parent_link_rejected` #123 **delivered** buttons `[Request Link, Link help]` `wamid.…AAIwNjY4RjFCODI0…`; `parent_link_approved` #124 **delivered** `[Menu]`; simulated MENU tap → parent menu **delivered**. Evidence: `e2e/screenshots/parent-link-interactive-buttons/`.
+- **Tests**: 16 passed (`ParentLinkInteractiveButtonsTest` + Flow + Approval).
+- **Prior**: [#410](https://github.com/KlassApp-Foundation/KlassApp/pull/410) empty-candidate search @ `8e193de4`.
+
+## Previous: September 3, 2026 (`origin/main` tip `8e193de4` — empty-candidate Approvals student search **MERGED + DEPLOYED**)
 
 - **✅ [#410](https://github.com/KlassApp-Foundation/KlassApp/pull/410)** → merge `8e193de4` — Approvals inbox replaces numeric Student user ID fallback with Livewire `ParentLinkStudentPicker` (school-scoped token name search → `matched_student_id`). Matched-candidate `<select>` unchanged.
 - **✅ Deploy** `[8/8] ✅ SHA match`.
@@ -1055,6 +1063,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-03: Parent-link typed-command → interactive WhatsApp buttons
+
+- **Audit (confirmed before fix)**: `notifyRejected` / inbound `parent_link_rejected_status` / `notifyApproved` were plain `sendText` with “Tap Request Link on welcome menu…” / “Reply *MENU*…”. Pending/ack status messages had no typed commands. `sendInteractiveButtons` already existed (max 3).
+- **Fix**: Rejection → buttons `parent_link_flow` + `link_help`; approval → `MENU`; inbound rejected free-text + `link_help` / flow-unavailable also interactive. Copy says “Tap … below”. Behavior of each id unchanged.
+- **PR**: [#413](https://github.com/KlassApp-Foundation/KlassApp/pull/413) → merge `c486180e`.
+- **Files**: `ParentLinkRequestService`, `WhatsAppController`, approval/flow tests + `ParentLinkInteractiveButtonsTest`.
+- **Live**: reject #123 + approve #124 **delivered** to `+256781940358`; MENU tap → parent menu; stranger path `parent_link_flow` → Flow `LINK_REQUEST` sent.
+- **Limitation**: no physical phone camera in this environment — evidence is delivery-log payloads + reconstructed card (not a handset photo). Confirm buttons on device.
+- **Status**: ✅ MERGED + DEPLOYED + API/DELIVERY VERIFIED
 
 ### 2026-09-03: Approvals empty-candidate Livewire student search
 
