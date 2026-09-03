@@ -336,11 +336,20 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 3, 2026 (`origin/main` tip `c486180e` — parent-link interactive buttons **MERGED + DEPLOYED**)
+## Current Status: September 3, 2026 (`origin/main` tip `fe33e07d` — parent-link button routing fix **MERGED + DEPLOYED**)
+
+- **✅ [#415](https://github.com/KlassApp-Foundation/KlassApp/pull/415)** → merge `fe33e07d` — linked parents tapping `parent_link_flow` / `link_help` no longer hit `unknown_keyword`; bridge into `handleUnrecognizedUserMeta`. Also `User::displayName` on portal/WA copy + school-admin WhatsApp on fee office lines.
+- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
+- **✅ Live** `+256781940358` (linked parent 3738): simulated Meta button ids → Flow `#154`, link_help `#155`, menu `#157`; fresh reject buttons `#158`. Zero `unknown_keyword` after fix.
+- **Tests**: `LinkedParentLinkButtonRoutingTest` + related suites green.
+- **Prior**: [#413](https://github.com/KlassApp-Foundation/KlassApp/pull/413) interactive buttons @ `c486180e` (outbound OK, inbound routing broken for linked parents — fixed here).
+
+## Previous: September 3, 2026 (`origin/main` tip `c486180e` — parent-link interactive buttons **MERGED + DEPLOYED**)
 
 - **✅ [#413](https://github.com/KlassApp-Foundation/KlassApp/pull/413)** → merge `c486180e` — reject/approve WhatsApp notices + inbound rejected-status / `link_help` / flow-unavailable use Meta `interactive` reply buttons instead of typed-command copy.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
-- **✅ Live** `+256781940358`: `parent_link_rejected` #123 **delivered** buttons `[Request Link, Link help]` `wamid.…AAIwNjY4RjFCODI0…`; `parent_link_approved` #124 **delivered** `[Menu]`; simulated MENU tap → parent menu **delivered**. Evidence: `e2e/screenshots/parent-link-interactive-buttons/`.
+- **✅ Live** `+256781940358`: `parent_link_rejected` #123 **delivered** buttons `[Request Link, Link help]`; `parent_link_approved` #124 **delivered** `[Menu]`; simulated MENU tap → parent menu. Evidence: `e2e/screenshots/parent-link-interactive-buttons/`.
+- **Regression**: linked-parent taps of Request Link / Link help fell through to unknown_keyword — fixed in #415.
 - **Tests**: 16 passed (`ParentLinkInteractiveButtonsTest` + Flow + Approval).
 - **Prior**: [#410](https://github.com/KlassApp-Foundation/KlassApp/pull/410) empty-candidate search @ `8e193de4`.
 
@@ -1063,6 +1072,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-03: Fix linked-parent interactive button routing (#415)
+
+- **Mismatch**: outbound buttons sent ids `parent_link_flow` / `link_help` / `MENU`. Linked parents hit `routeInbound` only — `MENU`→`menu` worked; the other two fell to `unknown_keyword` ("Sorry, I didn't understand \"parent_link_flow\"").
+- **Fix**: `isParentLinkInteractiveAction()` + bridge in `processMetaMessage` → `handleUnrecognizedUserMeta`. Shared pass-through for rejected-status replies.
+- **Also**: `User::displayName` in `ParentPortalService` + Outbound/WA parent copy; `SiteHelper::schoolAdminWhatsAppPhone` / `schoolOfficeWhatsAppFooter` on fee contact lines.
+- **PR**: [#415](https://github.com/KlassApp-Foundation/KlassApp/pull/415) → merge `fe33e07d`.
+- **Live**: linked parent `+256781940358` → Flow / link_help / menu outs `#154–#157`; reject buttons `#158` for handset tap.
+- **Status**: ✅ MERGED + DEPLOYED + PROD ROUTING VERIFIED (handset UI tap still needs phone holder confirmation/screenshot)
 
 ### 2026-09-03: Parent-link typed-command → interactive WhatsApp buttons
 
