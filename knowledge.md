@@ -336,11 +336,21 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 3, 2026 (`origin/main` tip `fe33e07d` — parent-link button routing fix **MERGED + DEPLOYED**)
+## Current Status: September 3, 2026 (`origin/main` tip `212e28fa` — two-path WA linking + WEB_LOGIN hints **MERGED + DEPLOYED**)
+
+- **✅ [#417](https://github.com/KlassApp-Foundation/KlassApp/pull/417)** → merge `212e28fa` — remove free-text name/school search from `handleUnrecognizedUserMeta`; linking is KLS ID + Request Link Flow only; parent menu/fees/grades/attendance get one-line `WEB_LOGIN` dashboard hint.
+- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
+- **✅ Live**: `link_help` #167 = **2 ways**; free-text “Amope Nandawula” → welcome #168 (no student list); menu #170 includes `WEB_LOGIN` hint.
+- **✅ On-device #415 closeout**: inbound `#159` `parent_link_flow` → outbound `#160` Flow `LINK_REQUEST` (real phone tap after routing fix).
+- **Tests**: `TwoPathLinkingAndDashboardHintTest` + button-routing suite.
+- **Prior**: [#415](https://github.com/KlassApp-Foundation/KlassApp/pull/415) linked-parent button routing @ `fe33e07d`.
+
+## Previous: September 3, 2026 (`origin/main` tip `fe33e07d` — parent-link button routing fix **MERGED + DEPLOYED**)
 
 - **✅ [#415](https://github.com/KlassApp-Foundation/KlassApp/pull/415)** → merge `fe33e07d` — linked parents tapping `parent_link_flow` / `link_help` no longer hit `unknown_keyword`; bridge into `handleUnrecognizedUserMeta`. Also `User::displayName` on portal/WA copy + school-admin WhatsApp on fee office lines.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
 - **✅ Live** `+256781940358` (linked parent 3738): simulated Meta button ids → Flow `#154`, link_help `#155`, menu `#157`; fresh reject buttons `#158`. Zero `unknown_keyword` after fix.
+- **On-device confirm**: later inbound `#159` `parent_link_flow` → `#160` Flow (see Current Status).
 - **Tests**: `LinkedParentLinkButtonRoutingTest` + related suites green.
 - **Prior**: [#413](https://github.com/KlassApp-Foundation/KlassApp/pull/413) interactive buttons @ `c486180e` (outbound OK, inbound routing broken for linked parents — fixed here).
 
@@ -1072,6 +1082,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-03: Two-path WhatsApp linking + WEB_LOGIN dashboard hints
+
+- **Trace**: free-text name/school search only in `handleUnrecognizedUserMeta` (P3–P6 + `link_school_`/`linktype_name_`). Demo / KLS ID / School Pay code / Flow independent; no Toshi dep.
+- **Change**: 2 paths only (KlassApp ID + Request Link Flow); legacy name-search button ids → `link_help`. Parent menu/fees/grades/attendance append `_Full web dashboard — reply *WEB_LOGIN*_` once per response set.
+- **PR**: [#417](https://github.com/KlassApp-Foundation/KlassApp/pull/417) → merge `212e28fa`.
+- **Live**: help #167 (2 ways); name text → welcome #168; menu #170 has WEB_LOGIN; fees preview truncates at 200 chars but suffix is on last child body.
+- **Bonus**: on-device `#159` Request Link tap → `#160` Flow (closes #415 handset confirmation).
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 
 ### 2026-09-03: Fix linked-parent interactive button routing (#415)
 
