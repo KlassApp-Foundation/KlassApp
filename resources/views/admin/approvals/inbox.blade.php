@@ -144,9 +144,11 @@
                                                             @endforeach
                                                         </select>
                                                     @else
-                                                        <input type="number" name="matched_student_id" min="1" required
-                                                               placeholder="Student user ID"
-                                                               class="text-xs border rounded px-2 py-1 w-28">
+                                                        <livewire:admin.parent-link-student-picker
+                                                            :school-id="$approvable->school_id"
+                                                            :initial-query="$approvable->child_name"
+                                                            :key="'plp-'.$approval->id"
+                                                        />
                                                     @endif
                                                 @endif
                                                 <input type="hidden" name="comments" value="">

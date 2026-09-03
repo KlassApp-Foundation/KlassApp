@@ -294,6 +294,47 @@ class ParentLinkRequestService
         return $query->limit(10)->get();
     }
 
+    /**
+     * Admin inbox picker: name search without class filter (class mismatch is
+     * a common reason Flow auto-match returns no candidates).
+     *
+     * Tokens of 3+ chars are OR-matched so "Mwesigye Ford" can still hit
+     * roster names like "KEVIN MWESIGYE".
+     *
+     * @return Collection<int, User>
+     */
+    public function searchStudentsForAdmin(string $query, ?int $schoolId = null): Collection
+    {
+        $query = trim($query);
+        if (mb_strlen($query) < 2) {
+            return collect();
+        }
+
+        $tokens = collect(preg_split('/\s+/', $query) ?: [])
+            ->filter(fn (string $token): bool => mb_strlen($token) >= 3)
+            ->unique()
+            ->values();
+
+        $builder = User::query()
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            ->where(function ($q) use ($query, $tokens) {
+                $q->where('name', 'LIKE', '%'.$query.'%')
+                    ->orWhere('name', 'LIKE', '%'.str_replace(' ', '%', $query).'%');
+
+                foreach ($tokens as $token) {
+                    $q->orWhere('name', 'LIKE', '%'.$token.'%');
+                }
+            })
+            ->with(['studentAcademicLatest.standardLink.section', 'school']);
+
+        if ($schoolId !== null) {
+            $builder->where('school_id', $schoolId);
+        }
+
+        return $builder->orderBy('name')->limit(10)->get();
+    }
+
     private function normalizeClassToken(string $childClass): string
     {
         return preg_replace('/\s+/', ' ', trim($childClass)) ?? $childClass;
