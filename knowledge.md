@@ -336,7 +336,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 3, 2026 (`origin/main` tip `212e28fa` — two-path WA linking + WEB_LOGIN hints **MERGED + DEPLOYED**)
+## Current Status: September 3, 2026 (`fix/parent-magic-login-403` — magic-login 403 + branded errors + Dashboard list **PR OPEN**)
+
+- WhatsApp `preview_url` on parent magic links let Facebook/WhatsApp crawlers GET the signed URL first and consume the one-use nonce; parents then saw 403 “already been used.”
+- Fix: no URL preview; GET is a Continue landing (crawlers 204); POST consumes nonce + logs in. Parent menu is a 4-row list with Dashboard last. Typed `WEB_LOGIN` hints removed. Error/favicon use committed KlassApp SVG (not GeGo apple-touch PNG). `User::whatsappDisplayName()` for WA copy.
+- Tests: `ParentMagicLoginTest` + WhatsApp menu/hint/login suites green.
+- PR/deploy SHA: fill in on open/merge.
+
+## Previous: September 3, 2026 (`origin/main` tip `212e28fa` — two-path WA linking + WEB_LOGIN hints **MERGED + DEPLOYED**)
 
 - **✅ [#417](https://github.com/KlassApp-Foundation/KlassApp/pull/417)** → merge `212e28fa` — remove free-text name/school search from `handleUnrecognizedUserMeta`; linking is KLS ID + Request Link Flow only; parent menu/fees/grades/attendance get one-line `WEB_LOGIN` dashboard hint.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
@@ -1082,6 +1089,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-03: Parent magic-login 403 + KlassApp error branding + Dashboard list
+
+- **Cause (proven)**: first GET of `/parent/magic-login/{user}/{nonce}` consumes nonce + logs in. WhatsApp `preview_url: true` made Facebook/WhatsApp crawlers hit the URL before the parent; second GET → 403 “This login link has already been used.” Signature/APP_URL were fine (first human GET 302’d). Error page title was KlassApp; apple-touch-icon was fork-era GeGo PNG; `images/klassapp-logo-primary.svg` missing on prod.
+- **Fix**: confirm GET (no consume) + POST confirm; crawler UA 204 without session write; `sendText` default (no preview); parent menu `sendList` with `WEB_LOGIN` last; drop typed WEB_LOGIN hints; copy KlassApp SVG to `public/images/klassapp-logo.svg`; apple-touch-icon → SVG; `User::whatsappDisplayName()`.
+- **Files**: `ParentMagicLoginController`, `WhatsAppController`, `User`, `ParentLinkService`, `OutboundWhatsAppService`, error/favicon views, `routes/web.php`, tests.
+- **PR**: opening from `fix/parent-magic-login-403`.
+- **Status**: 🚧 PR opening
 
 ### 2026-09-03: Two-path WhatsApp linking + WEB_LOGIN dashboard hints
 

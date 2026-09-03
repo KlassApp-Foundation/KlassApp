@@ -62,25 +62,56 @@ class ParentMagicLoginTest extends TestCase
     }
 
     /** @test */
-    public function valid_magic_link_logs_in_parent_and_redirects_to_dashboard(): void
+    public function valid_magic_link_shows_confirm_page_then_logs_in_on_post(): void
     {
         $url = app(ParentMagicLoginService::class)->issueLinkForPhone('+256700111222', $this->parent);
 
         $this->assertNotNull($url);
 
-        $response = $this->get($url);
+        $this->get($url)
+            ->assertOk()
+            ->assertSee('Continue to dashboard', false)
+            ->assertSee('MAGIC PARENT', false);
 
-        $response->assertRedirect(route('parent.dashboard'));
+        $this->assertFalse(Auth::check());
+        $this->assertFalse(app(ParentMagicLoginService::class)->isNonceConsumed($this->nonceFromUrl($url)));
+
+        $this->confirmMagicLogin()
+            ->assertRedirect(route('parent.dashboard'));
+
         $this->assertTrue(Auth::check());
         $this->assertSame($this->parent->id, Auth::id());
+        $this->assertTrue(app(ParentMagicLoginService::class)->isNonceConsumed($this->nonceFromUrl($url)));
     }
 
     /** @test */
-    public function magic_link_is_single_use(): void
+    public function preview_crawler_get_does_not_consume_the_link(): void
+    {
+        $url = app(ParentMagicLoginService::class)->issueLinkForPhone('+256700111226', $this->parent);
+
+        $this->call('GET', $url, server: ['HTTP_USER_AGENT' => 'facebookexternalhit/1.1'])
+            ->assertNoContent();
+
+        $this->call('GET', $url, server: ['HTTP_USER_AGENT' => 'WhatsApp/2.24.20.0'])
+            ->assertNoContent();
+
+        $this->assertFalse(app(ParentMagicLoginService::class)->isNonceConsumed($this->nonceFromUrl($url)));
+
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36 WhatsApp/2.24.12.78')
+            ->get($url)
+            ->assertOk();
+
+        $this->confirmMagicLogin()->assertRedirect(route('parent.dashboard'));
+        $this->assertTrue(Auth::check());
+    }
+
+    /** @test */
+    public function magic_link_is_single_use_after_confirm(): void
     {
         $url = app(ParentMagicLoginService::class)->issueLinkForPhone('+256700111223', $this->parent);
 
-        $this->get($url)->assertRedirect(route('parent.dashboard'));
+        $this->get($url)->assertOk();
+        $this->confirmMagicLogin()->assertRedirect(route('parent.dashboard'));
         Auth::logout();
 
         $this->get($url)->assertForbidden();
@@ -141,6 +172,22 @@ class ParentMagicLoginTest extends TestCase
         $this->assertNull($service->issueLinkForPhone($phone, $this->parent));
 
         RateLimiter::clear(ParentMagicLoginService::rateLimitKey($phone));
+    }
+
+    private function nonceFromUrl(string $url): string
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+        $this->assertNotFalse($path);
+        $parts = explode('/', trim($path, '/'));
+
+        return (string) end($parts);
+    }
+
+    private function confirmMagicLogin()
+    {
+        return $this->post(route('parent.magic-login.confirm'), [
+            '_token' => session()->token(),
+        ]);
     }
 
     protected function tearDown(): void

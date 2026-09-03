@@ -76,9 +76,11 @@ Route::get('/schools/{slug}', [App\Http\Controllers\SchoolPageController::class,
 
 Auth::routes();
 
-Route::get('/parent/magic-login/{user}/{nonce}', \App\Http\Controllers\Auth\ParentMagicLoginController::class)
+Route::get('/parent/magic-login/{user}/{nonce}', [\App\Http\Controllers\Auth\ParentMagicLoginController::class, 'show'])
     ->middleware('signed')
     ->name('parent.magic-login');
+Route::post('/parent/magic-login/confirm', [\App\Http\Controllers\Auth\ParentMagicLoginController::class, 'confirm'])
+    ->name('parent.magic-login.confirm');
 
 // Onboarding booking form (from docs)
 Route::post('/api/onboarding/book', [App\Http\Controllers\OnboardingBookingController::class, 'store']);

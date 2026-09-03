@@ -8,6 +8,6 @@
 @if($pngPath)
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset($pngPath) }}?v={{ $version }}">
 @endif
-<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon/apple-icon-180x180.png') }}?v={{ $version }}">
+<link rel="apple-touch-icon" href="{{ asset($svgPath) }}?v={{ $version }}">
 <link rel="manifest" href="{{ asset('favicon/manifest.json') }}">
 <meta name="theme-color" content="#ffffff">

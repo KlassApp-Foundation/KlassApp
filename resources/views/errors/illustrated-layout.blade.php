@@ -104,13 +104,18 @@
 <body>
     <div class="klass-error-shell">
         <div style="margin-bottom:32px;">
-            <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" style="height:36px;width:auto;">
+            <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp" style="height:36px;width:auto;">
         </div>
         @yield('icon', '')
+        @hasSection('code')
         <div class="klass-error-code">@yield('code')</div>
+        @endif
         <h1 class="klass-error-title">@yield('title')</h1>
         <p class="klass-error-message">@yield('message')</p>
         <div class="klass-error-actions">
+            @hasSection('actions')
+                @yield('actions')
+            @else
             <a href="{{ url('/') }}" class="klass-error-btn klass-error-btn-primary">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                 Go Home
@@ -119,6 +124,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                 Go Back
             </button>
+            @endif
         </div>
     </div>
 </body>

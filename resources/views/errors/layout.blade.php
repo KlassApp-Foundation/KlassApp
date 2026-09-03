@@ -70,7 +70,7 @@
 <body>
     <div class="klass-error-shell">
         <div style="margin-bottom:32px;">
-            <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" style="height:36px;width:auto;">
+            <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp" style="height:36px;width:auto;">
         </div>
         <div class="klass-error-code">@yield('code')</div>
         <h1 class="klass-error-title">@yield('title')</h1>
