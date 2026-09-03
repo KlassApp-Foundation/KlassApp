@@ -23,7 +23,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
         <link rel="stylesheet" href="https://unpkg.com/@themesberg/flowbite@1.2.0/dist/flowbite.min.css" />
-        {{-- Font Awesome removed — all icons migrated to inline SVGs (Jul 22, 2026) --}}   
+        {{-- Font Awesome removed — all icons migrated to inline SVGs (Jul 22, 2026) --}}
          <script>
         window.User = {!! json_encode(optional(auth()->user())->only('id')) !!}
     </script>
@@ -42,17 +42,19 @@
                 <div class="flex-grow w-full px-4 superadmin-content" style="width: calc(100vw - 195px); background: #FAFAF5; transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
                     @yield('base-content')
                 </div>
-                @auth
-                    @if(in_array(auth()->user()->usergroup_id, [1, 3]))
-                        <div v-pre>@livewire('agent-toshi')</div>
-                        <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper">
-                            <div id="toshi-toggle" class="toshi-toggle" title="Open Toshi" onclick="document.body.classList.toggle('toshi-collapsed');var t=document.getElementById('toshi-toggle');t.textContent=document.body.classList.contains('toshi-collapsed')?'◀':'▶'">▶</div>
-                        </div>
-                    @endif
-                @endauth
             </main>
             @yield('base-footer')
         </div>
+
+        {{-- Toshi lives OUTSIDE #app so Vue never touches Alpine markup --}}
+        @auth
+            @if(in_array(auth()->user()->usergroup_id, [1, 3]))
+                @livewire('agent-toshi')
+                <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper">
+                    <div id="toshi-toggle" class="toshi-toggle" title="Open Toshi" onclick="document.body.classList.toggle('toshi-collapsed');var t=document.getElementById('toshi-toggle');t.textContent=document.body.classList.contains('toshi-collapsed')?'◀':'▶'">▶</div>
+                </div>
+            @endif
+        @endauth
 
         @yield('outside-app')
 
