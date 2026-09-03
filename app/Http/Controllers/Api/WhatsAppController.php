@@ -969,12 +969,13 @@ class WhatsAppController extends Controller
 
         $rejected->loadMissing('latestApproval');
 
-        $this->businessApi->sendText(
+        $this->businessApi->sendInteractiveButtons(
             $phone,
             $this->parentLinkRequests->rejectedStatusMessage(
                 $rejected,
                 $rejected->latestApproval?->comments,
             ),
+            $this->parentLinkRequests->rejectedActionButtons(),
             'parent_link_rejected_status',
         );
 
@@ -1010,13 +1011,17 @@ class WhatsAppController extends Controller
         }
 
         if ($trimmed === 'link_help') {
-            $sendText(
+            $sendButtons(
                 "🔗 *Link to your child — 3 ways:*\n\n"
                 . "1️⃣ *KlassApp ID* — Type the student ID from your child's report card (e.g., KLS0010427)\n\n"
                 . "2️⃣ *Full name* — Type your child's name (e.g., Amope Nandawula)\n\n"
                 . "3️⃣ *School name* — Type your school name first to narrow the search\n\n"
                 . "No code needed if you know your child's name or school.\n\n"
-                . "Or tap *Request Link* on the welcome menu for a short form your school will review.",
+                . "Or tap *Request Link* below for a short form your school will review.",
+                [
+                    ['title' => '📋 Request Link', 'id' => 'parent_link_flow'],
+                    ['title' => '❌ Not now', 'id' => 'exit'],
+                ],
                 'link_help'
             );
             return;
@@ -1025,9 +1030,12 @@ class WhatsAppController extends Controller
         if ($trimmed === 'parent_link_flow') {
             $result = $this->businessApi->sendParentLinkRequestFlow($phone);
             if (! ($result['success'] ?? false)) {
-                $sendText(
+                $sendButtons(
                     "Sorry, the link request form isn't available right now.\n\n"
-                    . "You can still link instantly with your child's KlassApp ID or full name — tap *Link My Number* for help.",
+                    . "You can still link instantly with your child's KlassApp ID or full name.",
+                    [
+                        ['title' => '🔗 Link My Number', 'id' => 'link_help'],
+                    ],
                     'parent_link_flow_unavailable'
                 );
             }

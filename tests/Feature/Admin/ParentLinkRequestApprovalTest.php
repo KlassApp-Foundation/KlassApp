@@ -201,14 +201,18 @@ class ParentLinkRequestApprovalTest extends TestCase
             ->firstOrFail();
 
         $whatsApp = Mockery::mock(WhatsAppBusinessService::class)->makePartial();
-        $whatsApp->shouldReceive('sendText')
+        $whatsApp->shouldReceive('sendInteractiveButtons')
             ->once()
-            ->withArgs(function (string $phone, string $message, ?string $flowType) {
+            ->withArgs(function (string $phone, string $message, array $buttons, ?string $flowType) {
+                $ids = collect($buttons)->pluck('id')->all();
+
                 return $phone === '+256700555666'
                     && $flowType === 'parent_link_rejected'
                     && str_contains($message, "couldn't approve")
                     && str_contains($message, 'Student not enrolled here')
-                    && str_contains($message, 'Amope Nandawula');
+                    && str_contains($message, 'Amope Nandawula')
+                    && str_contains($message, 'Tap *Request Link* below')
+                    && in_array('parent_link_flow', $ids, true);
             })
             ->andReturn(['success' => true, 'message_id' => 'rej']);
         $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
