@@ -863,6 +863,16 @@ public function scopeStudents($query)
     }
 
     /**
+     * Parent/student name for WhatsApp copy: digit suffixes stripped, never the raw users.name.
+     */
+    public function whatsappDisplayName(string $fallback = 'there'): string
+    {
+        $display = trim((string) $this->displayName);
+
+        return $display !== '' ? $display : $fallback;
+    }
+
+    /**
      * Strip trailing digits and separator junk from a single name token, then upper-case it.
      */
     private function cleanDisplayToken($token)

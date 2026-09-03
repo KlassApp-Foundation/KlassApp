@@ -36,9 +36,7 @@ class OutboundWhatsAppService
             return $fallback;
         }
 
-        $display = trim((string) ($user->displayName ?? ''));
-
-        return $display !== '' ? $display : (trim((string) $user->name) !== '' ? (string) $user->name : $fallback);
+        return $user->whatsappDisplayName($fallback);
     }
 
     // =====================================================================

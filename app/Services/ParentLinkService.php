@@ -127,7 +127,7 @@ class ParentLinkService
                 outcome: 'already_linked',
                 parent: User::find($parentId),
                 student: $student,
-                studentName: $student?->name,
+                studentName: $student?->whatsappDisplayName('your child'),
                 alreadyLinkedToThisParent: true,
             );
         }
@@ -254,7 +254,7 @@ class ParentLinkService
     private function studentDisplayMeta(User $student): array
     {
         return [
-            'name' => $student->name,
+            'name' => $student->whatsappDisplayName('your child'),
             'class' => $student->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A',
             'school' => $student->school?->name ?? 'the school',
         ];

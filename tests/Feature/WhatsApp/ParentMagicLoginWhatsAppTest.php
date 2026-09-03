@@ -79,19 +79,19 @@ class ParentMagicLoginWhatsAppTest extends TestCase
     }
 
     /** @test */
-    public function web_login_keyword_sends_signed_magic_link_with_preview_url(): void
+    public function web_login_keyword_sends_signed_magic_link_without_url_preview(): void
     {
         $captured = null;
 
         $this->whatsApp->shouldReceive('sendText')
             ->once()
-            ->withArgs(function (string $phone, string $message, ?string $flowType, ?int $userId, bool $previewUrl) use (&$captured) {
+            ->withArgs(function (string $phone, string $message, ?string $flowType, ?int $userId, bool $previewUrl = false) use (&$captured) {
                 $captured = compact('phone', 'message', 'flowType', 'userId', 'previewUrl');
 
                 return $phone === $this->phone
                     && $flowType === 'parent_magic_login'
                     && $userId === $this->parent->id
-                    && $previewUrl === true
+                    && $previewUrl === false
                     && str_contains($message, '/parent/magic-login/');
             })
             ->andReturn(['success' => true, 'message_id' => 'test']);

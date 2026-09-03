@@ -89,5 +89,7 @@ vapor.yml
 #.github/workflows/
 tmp/
 public/images/
+!public/images/klassapp-logo.svg
+!public/images/klassapp-logo-primary.svg
 public/js/app.js.LICENSE.txt
 public/css/app.css.map

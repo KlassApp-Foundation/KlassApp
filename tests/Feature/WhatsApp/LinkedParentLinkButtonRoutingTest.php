@@ -149,7 +149,7 @@ class LinkedParentLinkButtonRoutingTest extends TestCase
             ->once()
             ->withArgs(fn (string $phone, string $message, ?string $flowType) => $flowType === 'menu_greeting')
             ->andReturn(['success' => true, 'message_id' => 'greet']);
-        $whatsApp->shouldReceive('sendInteractiveButtons')
+        $whatsApp->shouldReceive('sendList')
             ->once()
             ->andReturnUsing(function () use (&$menuSent) {
                 $menuSent = true;

@@ -134,22 +134,29 @@ class TwoPathLinkingAndDashboardHintTest extends TestCase
         $this->assertSame('link_help', $captured['flowType']);
     }
 
-    public function test_parent_menu_includes_web_login_hint(): void
+    public function test_parent_menu_lists_dashboard_last(): void
     {
+        $greeting = null;
         $captured = null;
         $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
         $whatsApp->shouldReceive('sendText')
             ->once()
-            ->withArgs(fn (string $phone, string $message, ?string $flowType) => $flowType === 'menu_greeting')
+            ->withArgs(function (string $phone, string $message, ?string $flowType) use (&$greeting) {
+                $greeting = $message;
+
+                return $flowType === 'menu_greeting';
+            })
             ->andReturn(['success' => true, 'message_id' => 'greet']);
-        $whatsApp->shouldReceive('sendInteractiveButtons')
+        $whatsApp->shouldReceive('sendList')
             ->once()
-            ->withArgs(function (string $phone, string $message, array $buttons, ?string $flowType) use (&$captured) {
-                $captured = compact('message', 'flowType');
+            ->withArgs(function (string $phone, string $title, array $sections, string $description, string $footerText, string $buttonText, ?string $flowType) use (&$captured) {
+                $captured = compact('sections', 'flowType');
+                $rows = $sections[0]['rows'] ?? [];
+                $last = $rows === [] ? null : $rows[array_key_last($rows)];
 
                 return $flowType === 'menu'
-                    && str_contains($message, 'WEB_LOGIN')
-                    && str_contains($message, 'web dashboard');
+                    && ($last['id'] ?? null) === 'WEB_LOGIN'
+                    && ! str_contains($description, 'WEB_LOGIN');
             })
             ->andReturn(['success' => true, 'message_id' => 'menu']);
         $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
@@ -157,10 +164,11 @@ class TwoPathLinkingAndDashboardHintTest extends TestCase
         $this->invokeProcessMeta($this->parentPhone, 'MENU');
 
         $this->assertNotNull($captured);
-        $this->assertStringContainsString('WEB_LOGIN', $captured['message']);
+        $this->assertStringContainsString('HINT PARENT', $greeting);
+        $this->assertStringNotContainsString('WEB_LOGIN', $greeting);
     }
 
-    public function test_fees_response_appends_web_login_hint_once(): void
+    public function test_fees_response_does_not_append_typed_web_login_hint(): void
     {
         $feeBodies = [];
         $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
@@ -173,6 +181,9 @@ class TwoPathLinkingAndDashboardHintTest extends TestCase
 
                 return ['success' => true, 'message_id' => 'fees'];
             });
+        $whatsApp->shouldReceive('sendList')
+            ->zeroOrMoreTimes()
+            ->andReturn(['success' => true, 'message_id' => 'btns']);
         $whatsApp->shouldReceive('sendInteractiveButtons')
             ->zeroOrMoreTimes()
             ->andReturn(['success' => true, 'message_id' => 'btns']);
@@ -182,7 +193,7 @@ class TwoPathLinkingAndDashboardHintTest extends TestCase
 
         $this->assertNotEmpty($feeBodies);
         $withHint = collect($feeBodies)->filter(fn ($m) => str_contains($m, 'WEB_LOGIN'));
-        $this->assertSame(1, $withHint->count(), 'Hint should appear once across fee child messages');
+        $this->assertSame(0, $withHint->count());
     }
 
     protected function tearDown(): void

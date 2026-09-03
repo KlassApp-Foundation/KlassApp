@@ -84,7 +84,7 @@ class WhatsAppController extends Controller
         $response = [
             'identified' => true,
             'user_id'    => $user->id,
-            'name'       => $user->name,
+            'name'       => $this->whatsappDisplayName($user, $user->name ?? 'User'),
             'user_type'  => $userType,
             'school_id'  => $user->school_id,
             'school_name' => $user->school?->name,
@@ -99,7 +99,7 @@ class WhatsAppController extends Controller
                     return [
                         'student_id'   => $child->id,
                         'maaif_id'     => $child->maaif_id ?? $child->id,
-                        'name'         => $child->name,
+                        'name'         => $this->whatsappDisplayName($child, 'Student'),
                         'class'        => $child->studentAcademic?->standard?->name ?? 'N/A',
                         'section'      => $child->studentAcademic?->section?->name ?? 'N/A',
                     ];
@@ -172,9 +172,9 @@ class WhatsAppController extends Controller
 
         if ($exams->isEmpty()) {
             return response()->json([
-                'student_name' => $student->name,
+                'student_name' => $this->whatsappDisplayName($student, 'Student'),
                 'class'        => $student->studentAcademic?->standard?->name ?? 'N/A',
-                'message'      => 'No results available yet for ' . $student->name . '.',
+                'message'      => 'No results available yet for ' . $this->whatsappDisplayName($student, 'Student') . '.',
                 'exams'        => [],
             ]);
         }
@@ -201,7 +201,7 @@ class WhatsAppController extends Controller
         });
 
         return response()->json([
-            'student_name' => $student->name,
+            'student_name' => $this->whatsappDisplayName($student, 'Student'),
             'class'        => $student->studentAcademic?->standard?->name ?? 'N/A',
             'exams'        => $formattedExams,
         ]);
@@ -264,7 +264,7 @@ class WhatsAppController extends Controller
             });
 
         return response()->json([
-            'student_name'    => $student->name,
+            'student_name'    => $this->whatsappDisplayName($student, 'Student'),
             'class'           => $student->studentAcademic?->standard?->name ?? 'N/A',
             'period'          => $period,
             'total_days'      => $totalDays,
@@ -317,7 +317,7 @@ class WhatsAppController extends Controller
         });
 
         return response()->json([
-            'student_name' => $student->name,
+            'student_name' => $this->whatsappDisplayName($student, 'Student'),
             'class'        => $student->studentAcademic?->standard?->name ?? 'N/A',
             'total_fees'   => number_format($totalFees, 0),
             'currency'     => 'UGX',
@@ -380,7 +380,7 @@ class WhatsAppController extends Controller
 
         if ($approvedCount === 0) {
             return response()->json([
-                'student_name' => $student->name,
+                'student_name' => $this->whatsappDisplayName($student, 'Student'),
                 'message'      => 'Marks are not yet finalized for this term. Please check back after your child\'s teacher has submitted and the school has approved the results.',
                 'approved'     => false,
             ]);
@@ -437,13 +437,13 @@ class WhatsAppController extends Controller
         $pdf->save($path);
 
         $fileUrl = url('storage/reports/' . $filename);
-        $caption = 'Report Card for ' . $student->name . ' — ' . ($term->name ?? '');
+        $caption = 'Report Card for ' . $this->whatsappDisplayName($student, 'Student') . ' — ' . ($term->name ?? '');
 
         $result = $this->businessApi->sendDocument($phone, $fileUrl, $caption, $filename, 'report_card', $student->id);
 
         return $result['success']
-            ? response()->json(['student_name' => $student->name, 'message' => 'Report card sent via WhatsApp.', 'approved' => true, 'partial' => $approvedSubjectIds < count($marksData), 'message_id' => $result['message_id']])
-            : response()->json(['student_name' => $student->name, 'error' => $result['error'] ?? 'Failed to send document via WhatsApp.'], 500);
+            ? response()->json(['student_name' => $this->whatsappDisplayName($student, 'Student'), 'message' => 'Report card sent via WhatsApp.', 'approved' => true, 'partial' => $approvedSubjectIds < count($marksData), 'message_id' => $result['message_id']])
+            : response()->json(['student_name' => $this->whatsappDisplayName($student, 'Student'), 'error' => $result['error'] ?? 'Failed to send document via WhatsApp.'], 500);
     }
 
     /**
@@ -1182,11 +1182,11 @@ class WhatsAppController extends Controller
     }
 
     /**
-     * One-line discoverability for the parent web dashboard (WEB_LOGIN magic link).
+     * Digit-stripped name for WhatsApp copy (User::displayName).
      */
-    protected function parentDashboardHintSuffix(): string
+    protected function whatsappDisplayName(?User $user, string $fallback = 'there'): string
     {
-        return "\n\n_Full web dashboard — reply *WEB_LOGIN*_";
+        return $user?->whatsappDisplayName($fallback) ?? $fallback;
     }
 
     /**
@@ -1277,7 +1277,7 @@ class WhatsAppController extends Controller
 
         if (!$parentLink) {
             // No parent linked — link directly via payment code
-            $studentName = optional($studentAcademic->user)->name ?? 'your child';
+            $studentName = $this->whatsappDisplayName(optional($studentAcademic->user), 'your child');
             $className = optional($studentAcademic->standardLink)->StandardSection ?? '';
 
             WhatsAppUser::create([
@@ -1321,7 +1321,7 @@ class WhatsAppController extends Controller
 
         // Create the WhatsApp user record
         $school = DB::table('schools')->find($studentAcademic->school_id);
-        $studentName = optional($studentAcademic->user)->name ?? 'your child';
+        $studentName = $this->whatsappDisplayName(optional($studentAcademic->user), 'your child');
         $className = optional($studentAcademic->standardLink)->StandardSection ?? '';
 
         WhatsAppUser::create([
@@ -1433,7 +1433,7 @@ class WhatsAppController extends Controller
                         $whatsAppService->sendText($phone, $message, $flowType, $userId ?? $user->user_id),
                     fn (string $bodyText, array $buttons, ?string $flowType = null, ?int $userId = null) =>
                         $this->businessApi->sendInteractiveButtons($phone, $bodyText, $buttons, $flowType, $userId ?? $user->user_id),
-                    (string) ($user->user->name ?? 'Parent'),
+                    (string) ($this->whatsappDisplayName($user->user, 'Parent')),
                 );
 
                 return;
@@ -1672,7 +1672,8 @@ class WhatsAppController extends Controller
      */
     private function sendMenu(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
-        $name = $user->demo_name ?? $user->user->name ?? 'User';
+        $name = $user->demo_name
+            ?: $this->whatsappDisplayName($user->user, 'there');
         $role = $user->user->usergroup_id;
         $hasChildren = $user->user->children()->exists();
 
@@ -1688,6 +1689,29 @@ class WhatsAppController extends Controller
      */
     private function sendMenuButtons(string $phone, int $role, ?int $userId): void
     {
+        if ($role === 7) {
+            $this->businessApi->sendList(
+                phone: $phone,
+                title: 'KlassApp Menu',
+                sections: [[
+                    'title' => 'Parent',
+                    'rows' => [
+                        ['id' => 'FEES', 'title' => 'Fee Balance', 'description' => 'Check outstanding fees'],
+                        ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View grades and reports'],
+                        ['id' => 'ATTENDANCE', 'title' => 'Attendance', 'description' => 'See attendance records'],
+                        ['id' => 'WEB_LOGIN', 'title' => 'Dashboard', 'description' => 'Open the full parent portal'],
+                    ],
+                ]],
+                description: "🏫 *KlassApp Menu* — Parent\n\nTap a button below or type any option keyword.",
+                footerText: 'Select an option',
+                buttonText: 'Open menu',
+                flowType: 'menu',
+                userId: $userId,
+            );
+
+            return;
+        }
+
         $buttons = match ($role) {
             3 => [ // SchoolAdmin
                 ['id' => 'STUDENTS',  'title' => '👥 Students'],
@@ -1703,11 +1727,6 @@ class WhatsAppController extends Controller
                 ['id' => 'GRADES',      'title' => '📊 Results'],
                 ['id' => 'ATTENDANCE',  'title' => '✅ Attendance'],
                 ['id' => 'FEES',        'title' => '💰 Fees'],
-            ],
-            7 => [ // Parent
-                ['id' => 'FEES',        'title' => '💰 Fee Balance'],
-                ['id' => 'GRADES',      'title' => '📊 Exam Results'],
-                ['id' => 'ATTENDANCE',  'title' => '📋 Attendance'],
             ],
             10 => [ // Receptionist
                 ['id' => 'CALLS',   'title' => '📞 Call Log'],
@@ -1736,9 +1755,6 @@ class WhatsAppController extends Controller
         };
 
         $menuBody = "🏫 *KlassApp Menu* — {$label}\n\nTap a button below or type any option keyword.";
-        if ($role === 7) {
-            $menuBody .= $this->parentDashboardHintSuffix();
-        }
 
         $this->businessApi->sendInteractiveButtons(
             $phone,
@@ -1755,33 +1771,42 @@ class WhatsAppController extends Controller
     private function sendActionButtons(string $phone, ?int $userId, string $context = 'fees'): void
     {
 
-        $buttons = match ($context) {
+        $rows = match ($context) {
             'fees' => [
-                ['id' => 'GRADES',      'title' => '📊 Exam Results'],
-                ['id' => 'ATTENDANCE',  'title' => '📋 Attendance'],
-                ['id' => 'MENU',        'title' => '🏠 Main Menu'],
+                ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View grades and reports'],
+                ['id' => 'ATTENDANCE', 'title' => 'Attendance', 'description' => 'See attendance records'],
+                ['id' => 'MENU', 'title' => 'Main Menu', 'description' => 'Back to all options'],
             ],
             'grades' => [
-                ['id' => 'FEES',        'title' => '💰 Fee Balance'],
-                ['id' => 'ATTENDANCE',  'title' => '📋 Attendance'],
-                ['id' => 'MENU',        'title' => '🏠 Main Menu'],
+                ['id' => 'FEES', 'title' => 'Fee Balance', 'description' => 'Check outstanding fees'],
+                ['id' => 'ATTENDANCE', 'title' => 'Attendance', 'description' => 'See attendance records'],
+                ['id' => 'MENU', 'title' => 'Main Menu', 'description' => 'Back to all options'],
             ],
             'attendance' => [
-                ['id' => 'FEES',        'title' => '💰 Fee Balance'],
-                ['id' => 'GRADES',      'title' => '📊 Exam Results'],
-                ['id' => 'MENU',        'title' => '🏠 Main Menu'],
+                ['id' => 'FEES', 'title' => 'Fee Balance', 'description' => 'Check outstanding fees'],
+                ['id' => 'GRADES', 'title' => 'Exam Results', 'description' => 'View grades and reports'],
+                ['id' => 'MENU', 'title' => 'Main Menu', 'description' => 'Back to all options'],
             ],
             default => [
-                ['id' => 'MENU', 'title' => '🏠 Main Menu'],
+                ['id' => 'MENU', 'title' => 'Main Menu', 'description' => 'Back to all options'],
             ],
         };
 
-        $this->businessApi->sendInteractiveButtons(
-            $phone,
-            "What would you like to do next?",
-            $buttons,
-            "{$context}_followup",
-            $userId,
+        $rows[] = [
+            'id' => 'WEB_LOGIN',
+            'title' => 'Dashboard',
+            'description' => 'Open the full parent portal',
+        ];
+
+        $this->businessApi->sendList(
+            phone: $phone,
+            title: 'What next?',
+            sections: [['title' => 'Actions', 'rows' => $rows]],
+            description: 'What would you like to do next?',
+            footerText: 'Select an option',
+            buttonText: 'Open menu',
+            flowType: "{$context}_followup",
+            userId: $userId,
         );
     }
     private function sendGrades(WhatsAppUser $user, string $phone, $whatsAppService): void
@@ -1809,9 +1834,7 @@ class WhatsAppController extends Controller
             $student = $link->userStudent;
             $studentName = $user->demo_name
                 ? "{$user->demo_name} Demo"
-                : (trim((string) ($student?->displayName ?? '')) !== ''
-                    ? (string) $student->displayName
-                    : ($student?->name ?? 'Unknown Student'));
+                : $this->whatsappDisplayName($student, 'Unknown Student');
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
             $schoolId = (int) ($link->school_id ?? $student?->school_id);
@@ -1829,9 +1852,6 @@ class WhatsAppController extends Controller
 
             if ($exams->isEmpty()) {
                 $emptyMsg = "📊 *{$studentName}* — _{$className}_\n\nNo results published yet.\n\nResults will appear here automatically once the school releases them.";
-                if ($index === $childCount) {
-                    $emptyMsg .= $this->parentDashboardHintSuffix();
-                }
                 $whatsAppService->sendText(
                     $phone,
                     $emptyMsg,
@@ -1908,9 +1928,6 @@ class WhatsAppController extends Controller
             }
 
             $message .= "_Send GRADES for latest results._";
-            if ($index === $childCount) {
-                $message .= $this->parentDashboardHintSuffix();
-            }
             $whatsAppService->sendText($phone, $message, 'grades', $user->user_id);
             $sentAny = true;
         }
@@ -1918,8 +1935,7 @@ class WhatsAppController extends Controller
         if (!$sentAny) {
             $whatsAppService->sendText(
                 $phone,
-                "📊 No results found for any of your children.\n\nResults will appear here once published by the school."
-                . $this->parentDashboardHintSuffix(),
+                "📊 No results found for any of your children.\n\nResults will appear here once published by the school.",
                 'grades_none_all',
                 $user->user_id,
             );
@@ -1961,9 +1977,7 @@ class WhatsAppController extends Controller
             $student = $link->userStudent;
             $studentName = $user->demo_name
                 ? "{$user->demo_name} Demo"
-                : (trim((string) ($student?->displayName ?? '')) !== ''
-                    ? (string) $student->displayName
-                    : ($student?->name ?? 'Unknown Student'));
+                : $this->whatsappDisplayName($student, 'Unknown Student');
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
             $schoolId = (int) ($link->school_id ?? $student?->school_id);
@@ -1998,10 +2012,6 @@ class WhatsAppController extends Controller
                 $message .= "\n_{$office}_";
             }
 
-            if ($index === $childCount) {
-                $message .= $this->parentDashboardHintSuffix();
-            }
-
             $whatsAppService->sendText($phone, $message, 'fees', $user->user_id);
             $sentAny = true;
         }
@@ -2013,8 +2023,7 @@ class WhatsAppController extends Controller
             );
             $whatsAppService->sendText(
                 $phone,
-                "💰 No fee information found for any of your children.\n\n{$office}"
-                . $this->parentDashboardHintSuffix(),
+                "💰 No fee information found for any of your children.\n\n{$office}",
                 'fees_none_all',
                 $user->user_id,
             );
@@ -2060,9 +2069,7 @@ class WhatsAppController extends Controller
             $student = $link->userStudent;
             $studentName = $user->demo_name
                 ? "{$user->demo_name} Demo"
-                : (trim((string) ($student?->displayName ?? '')) !== ''
-                    ? (string) $student->displayName
-                    : ($student?->name ?? 'Unknown Student'));
+                : $this->whatsappDisplayName($student, 'Unknown Student');
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
 
@@ -2073,9 +2080,6 @@ class WhatsAppController extends Controller
 
             if ($records->isEmpty()) {
                 $emptyMsg = "📅 *Attendance for {$studentName}*\n_{$className}_\n_This month_\n\nNo attendance records found.";
-                if ($index === $childCount) {
-                    $emptyMsg .= $this->parentDashboardHintSuffix();
-                }
                 $whatsAppService->sendText(
                     $phone,
                     $emptyMsg,
@@ -2119,9 +2123,6 @@ class WhatsAppController extends Controller
             }
 
             $message .= "\n_Send ATTENDANCE for updated record._";
-            if ($index === $childCount) {
-                $message .= $this->parentDashboardHintSuffix();
-            }
             $whatsAppService->sendText($phone, $message, 'attendance', $user->user_id);
             $sentAny = true;
         }
@@ -2129,8 +2130,7 @@ class WhatsAppController extends Controller
         if (!$sentAny) {
             $whatsAppService->sendText(
                 $phone,
-                "📅 No attendance records found for any of your children."
-                . $this->parentDashboardHintSuffix(),
+                "📅 No attendance records found for any of your children.",
                 'attendance_none_all',
                 $user->user_id,
             );
@@ -2197,7 +2197,7 @@ class WhatsAppController extends Controller
     private function sendStudentGrades(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $student = $user->user;
-        $studentName = $student->name;
+        $studentName = $this->whatsappDisplayName($student, 'Student');
         $className = $student->studentAcademic?->standard?->name ?? 'N/A';
 
         // Find exams that have marks for this student
@@ -2272,7 +2272,7 @@ class WhatsAppController extends Controller
         $absentDays = $records->where('status', 0)->count();
         $rate = $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 1) : 0;
 
-        $message = "📅 *My Attendance*\n_{$student->name}_\n\n";
+        $message = "📅 *My Attendance*\n_{$this->whatsappDisplayName($student, 'Student')}_\n\n";
         $message .= "✅ Present: {$presentDays}\n";
         $message .= "❌ Absent: {$absentDays}\n";
         $message .= "📊 Rate: {$rate}%\n\n";
@@ -2306,7 +2306,7 @@ class WhatsAppController extends Controller
             ->get();
 
         $totalFees = $feeCategories->sum('amount');
-        $message = "💰 *My Fee Balance*\n_{$student->name}_\n\n";
+        $message = "💰 *My Fee Balance*\n_{$this->whatsappDisplayName($student, 'Student')}_\n\n";
 
         if ($feeCategories->isEmpty()) {
             $message .= "No fee structure found.";
@@ -2597,7 +2597,7 @@ class WhatsAppController extends Controller
         if (! $magicLogin->canIssueLink($parent)) {
             $whatsAppService->sendText(
                 $phone,
-                "Link at least one child to your WhatsApp number first (send a KlassApp ID such as KLS1020001), then reply *WEB_LOGIN*.",
+                "Link at least one child to your WhatsApp number first (send a KlassApp ID such as KLS1020001), then tap *Dashboard* on the menu.",
                 'parent_magic_login_denied',
                 $user->user_id,
             );
@@ -2633,11 +2633,10 @@ class WhatsAppController extends Controller
         $whatsAppService->sendText(
             $phone,
             "🌐 *Parent dashboard login*\n\n"
-            ."Tap the link below to open your dashboard. Valid for ".ParentMagicLoginService::TTL_MINUTES." minutes, one use only:\n\n"
+            ."Tap the link below, then tap *Continue to dashboard*. Valid for ".ParentMagicLoginService::TTL_MINUTES." minutes, one use only:\n\n"
             .$url,
             'parent_magic_login',
             $parent->id,
-            previewUrl: true,
         );
     }
 
