@@ -336,7 +336,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 2, 2026 (`origin/main` tip `bb94fe8b` — parent-link pending/rejected status awareness **MERGED + DEPLOYED**)
+## Current Status: September 3, 2026 (`origin/main` tip `8e193de4` — empty-candidate Approvals student search **MERGED + DEPLOYED**)
+
+- **✅ [#410](https://github.com/KlassApp-Foundation/KlassApp/pull/410)** → merge `8e193de4` — Approvals inbox replaces numeric Student user ID fallback with Livewire `ParentLinkStudentPicker` (school-scoped token name search → `matched_student_id`). Matched-candidate `<select>` unchanged.
+- **✅ Deploy** `[8/8] ✅ SHA match`.
+- **✅ Live**: null-candidate PLR **#4** (Brian Okello / WrongClass @ school 124) → search → select → Approved; new `student_parent_links` **#25** (parent 3738↔3737); WA `parent_link_approved` **delivered** `wamid.…ETdGMEREQjVCMDhGMTMxN0FE…`. Screenshots `e2e/screenshots/approvals-empty-candidate-search/`.
+- **Tests**: 11 passed (picker + approval suites).
+
+## Previous: September 2, 2026 (`origin/main` tip `bb94fe8b` — parent-link pending/rejected status awareness **MERGED + DEPLOYED**)
 
 - **✅ [#407](https://github.com/KlassApp-Foundation/KlassApp/pull/407)** → merge `bb94fe8b` — any inbound from a phone with pending `ParentLinkRequest` gets status (not stranger menu); reject/approve WhatsApp notify; duplicate Flow submit while pending suppressed.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`.
