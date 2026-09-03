@@ -41,6 +41,7 @@ class Kernel extends ConsoleKernel
         // WhatsApp
             \App\Console\Commands\SendFeeReminders::class,
             \App\Console\Commands\SendWhatsAppPendingNotifications::class,
+            \App\Console\Commands\PruneWhatsAppReportFiles::class,
 
         // Marks
             \App\Console\Commands\LockExpiredExamSubmissions::class,
@@ -142,6 +143,10 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('marks:lock-expired')
                  ->everyFifteenMinutes()
+                 ->withoutOverlapping();
+
+        $schedule->command('whatsapp:prune-report-files')
+                 ->hourly()
                  ->withoutOverlapping();
 
         // Live-LLM adversarial soft-refusal spot check (in-process; no PHPUnit).

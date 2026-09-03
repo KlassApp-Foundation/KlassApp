@@ -82,6 +82,11 @@ Route::get('/parent/magic-login/{user}/{nonce}', [\App\Http\Controllers\Auth\Par
 Route::post('/parent/magic-login/confirm', [\App\Http\Controllers\Auth\ParentMagicLoginController::class, 'confirm'])
     ->name('parent.magic-login.confirm');
 
+Route::get('/whatsapp/report-files/{token}', [\App\Http\Controllers\WhatsAppReportFileController::class, 'show'])
+    ->middleware('signed')
+    ->where('token', '[A-Za-z0-9]{40}')
+    ->name('whatsapp.report-file');
+
 // Onboarding booking form (from docs)
 Route::post('/api/onboarding/book', [App\Http\Controllers\OnboardingBookingController::class, 'store']);
 

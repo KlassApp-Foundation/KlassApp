@@ -336,7 +336,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 3, 2026 (`origin/main` tip `447cf055` — knowledge audit **#421**; last app ship **#419** `aed31b3f` **DEPLOYED**)
+## Current Status: September 3, 2026 (`feat/whatsapp-parent-report-card` — Piece C on-demand REPORT PDF **IN PROGRESS**)
+
+- **Branch**: `feat/whatsapp-parent-report-card` — parent-initiated report-card PDF via WhatsApp (`REPORT` keyword / menu). Uses real `StudentReportCardService::pdfForStudent()` + `sendDocument()` + private disk + signed URL + hourly prune. Not on `main` yet.
+- **`origin/main` tip** (unchanged until merge): `21c85ed4` (docs stamp #422); last app ship **#419** `aed31b3f` **DEPLOYED**.
+- **Still open (templates)**: WABA — 4 APPROVED + AUTH; 2 REJECTED (`teacher_account_invite`, `toshi_otp`) unchanged.
+- **Out of scope this pass**: proactive `report_card_ready` push; term picker; rewriting the legacy HTTP `WhatsAppController::report()` stub PDF.
+
+## Previous: September 3, 2026 (`origin/main` tip `447cf055` — knowledge audit **#421**; last app ship **#419** `aed31b3f` **DEPLOYED**)
 
 - **Tip**: [#421](https://github.com/KlassApp-Foundation/KlassApp/pull/421) merge `447cf055` is this audit (docs). Last product deploy is [#419](https://github.com/KlassApp-Foundation/KlassApp/pull/419) → `aed31b3f`. Prior docs tip was `f22c56ac` (#420).
 - **Still open (templates, not a new finding)**: WABA `1370231745289565` — **4 APPROVED** (`fee_update`, `grade_entered`, `report_card_ready`, `health_incident`) plus AUTH `klassapp_otp`. **2 still blocked**: `teacher_account_invite` and `toshi_otp` REJECTED (`INCORRECT_CATEGORY`); Graph token cannot DELETE; needs Business Manager Request Review / delete. Unchanged since #404 / `72da7311`.
