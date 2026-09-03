@@ -866,6 +866,15 @@ class WhatsAppController extends Controller
             return;
         }
 
+        // Parent-link interactive button ids (Request Link / Link help / link_*) are only
+        // handled in handleUnrecognizedUserMeta. Linked parents still receive those buttons
+        // on rejection notices — without this bridge, taps fall through to unknown_keyword.
+        if ($this->isParentLinkInteractiveAction($trimmedBody)) {
+            $this->handleUnrecognizedUserMeta($phone, trim($body), $senderName);
+
+            return;
+        }
+
         // Route to appropriate handler
         $this->routeInbound($whatsappUser, $phone, $body, $this->businessApi);
 
@@ -932,6 +941,21 @@ class WhatsAppController extends Controller
     }
 
     /**
+     * Button / list reply ids emitted by parent-link interactive messages.
+     * Must stay in sync with ParentLinkRequestService button ids and
+     * handleUnrecognizedUserMeta handlers.
+     */
+    protected function isParentLinkInteractiveAction(string $trimmedLower): bool
+    {
+        return $trimmedLower === 'parent_link_flow'
+            || $trimmedLower === 'link_help'
+            || $trimmedLower === 'exit'
+            || str_starts_with($trimmedLower, 'link_school_')
+            || str_starts_with($trimmedLower, 'linktype_')
+            || (str_starts_with($trimmedLower, 'link_') && ctype_digit(substr($trimmedLower, 5)));
+    }
+
+    /**
      * If this phone has a pending (or latest rejected) ParentLinkRequest, reply
      * with that status instead of the generic unrecognized-user menu.
      *
@@ -956,14 +980,9 @@ class WhatsAppController extends Controller
             return false;
         }
 
-        $trimmed = trim($body);
+        $trimmed = strtolower(trim($body));
         // Let the parent start a fresh request / get link help after a rejection.
-        if ($trimmed === 'parent_link_flow'
-            || $trimmed === 'link_help'
-            || $trimmed === 'exit'
-            || str_starts_with($trimmed, 'link_school_')
-            || str_starts_with($trimmed, 'linktype_')
-            || str_starts_with($trimmed, 'link_')) {
+        if ($this->isParentLinkInteractiveAction($trimmed)) {
             return false;
         }
 
@@ -1895,7 +1914,7 @@ class WhatsAppController extends Controller
     private function sendGrades(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $children = $user->user->children()
-            ->with(['userStudent.studentAcademicLatest.standardLink.standard'])
+            ->with(['userStudent.userprofile', 'userStudent.studentAcademicLatest.standardLink.standard'])
             ->get();
 
         if ($children->isEmpty()) {
@@ -1912,7 +1931,11 @@ class WhatsAppController extends Controller
 
         foreach ($children as $link) {
             $student = $link->userStudent;
-            $studentName = $user->demo_name ? "{$user->demo_name} Demo" : ($student?->name ?? 'Unknown Student');
+            $studentName = $user->demo_name
+                ? "{$user->demo_name} Demo"
+                : (trim((string) ($student?->displayName ?? '')) !== ''
+                    ? (string) $student->displayName
+                    : ($student?->name ?? 'Unknown Student'));
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
             $schoolId = (int) ($link->school_id ?? $student?->school_id);
@@ -2028,13 +2051,17 @@ class WhatsAppController extends Controller
     private function sendFees(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $children = $user->user->children()
-            ->with(['userStudent.studentAcademicLatest.standardLink.standard'])
+            ->with(['userStudent.userprofile', 'userStudent.studentAcademicLatest.standardLink.standard'])
             ->get();
 
         if ($children->isEmpty()) {
+            $office = \App\Helpers\SiteHelper::schoolOfficeWhatsAppFooter(
+                $user->school_id ? (int) $user->school_id : ($user->user->school_id ? (int) $user->user->school_id : null),
+                'Please contact your school office.',
+            );
             $whatsAppService->sendText(
                 $phone,
-                "💰 No children linked to your account.\n\nPlease contact your school office.",
+                "💰 No children linked to your account.\n\n{$office}",
                 'fees_no_children',
                 $user->user_id,
             );
@@ -2045,7 +2072,11 @@ class WhatsAppController extends Controller
 
         foreach ($children as $link) {
             $student = $link->userStudent;
-            $studentName = $user->demo_name ? "{$user->demo_name} Demo" : ($student?->name ?? 'Unknown Student');
+            $studentName = $user->demo_name
+                ? "{$user->demo_name} Demo"
+                : (trim((string) ($student?->displayName ?? '')) !== ''
+                    ? (string) $student->displayName
+                    : ($student?->name ?? 'Unknown Student'));
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
             $schoolId = (int) ($link->school_id ?? $student?->school_id);
@@ -2062,9 +2093,13 @@ class WhatsAppController extends Controller
             $totalFees = $feeCategories->sum('amount');
 
             $message = "💰 *Fee Balance — {$studentName}*\n_{$className}_\n\n";
+            $office = \App\Helpers\SiteHelper::schoolOfficeWhatsAppFooter(
+                $schoolId > 0 ? $schoolId : null,
+                'Contact the school office for details.',
+            );
 
             if ($feeCategories->isEmpty()) {
-                $message .= "No fee structure found.\n\nContact the school office for details.";
+                $message .= "No fee structure found.\n\n{$office}";
             } else {
                 foreach ($feeCategories as $category) {
                     $dueDate = $category->due_date ? date('d M Y', strtotime($category->due_date)) : 'N/A';
@@ -2073,7 +2108,7 @@ class WhatsAppController extends Controller
                 }
                 $message .= "\n· · · · · · · · · · · · · · · ·\n";
                 $message .= "💵 *Total fees: UGX " . number_format($totalFees, 0) . "*\n";
-                $message .= "\n_Contact school office for payment status._";
+                $message .= "\n_{$office}_";
             }
 
             $whatsAppService->sendText($phone, $message, 'fees', $user->user_id);
@@ -2081,9 +2116,13 @@ class WhatsAppController extends Controller
         }
 
         if (!$sentAny) {
+            $office = \App\Helpers\SiteHelper::schoolOfficeWhatsAppFooter(
+                $user->school_id ? (int) $user->school_id : null,
+                'Contact the school office for details.',
+            );
             $whatsAppService->sendText(
                 $phone,
-                "💰 No fee information found for any of your children.\n\nContact the school office for details.",
+                "💰 No fee information found for any of your children.\n\n{$office}",
                 'fees_none_all',
                 $user->user_id,
             );
@@ -2107,7 +2146,7 @@ class WhatsAppController extends Controller
     private function sendAttendance(WhatsAppUser $user, string $phone, $whatsAppService): void
     {
         $children = $user->user->children()
-            ->with(['userStudent.studentAcademicLatest.standardLink.standard'])
+            ->with(['userStudent.userprofile', 'userStudent.studentAcademicLatest.standardLink.standard'])
             ->get();
 
         if ($children->isEmpty()) {
@@ -2124,7 +2163,11 @@ class WhatsAppController extends Controller
 
         foreach ($children as $link) {
             $student = $link->userStudent;
-            $studentName = $user->demo_name ? "{$user->demo_name} Demo" : ($student?->name ?? 'Unknown Student');
+            $studentName = $user->demo_name
+                ? "{$user->demo_name} Demo"
+                : (trim((string) ($student?->displayName ?? '')) !== ''
+                    ? (string) $student->displayName
+                    : ($student?->name ?? 'Unknown Student'));
             $academic = $student?->studentAcademicLatest;
             $className = $academic?->standardLink?->StandardSection ?? 'N/A';
 

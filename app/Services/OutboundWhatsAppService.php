@@ -27,6 +27,20 @@ class OutboundWhatsAppService
         protected WhatsAppBusinessService $businessApi,
     ) {}
 
+    /**
+     * Prefer User::displayName (digit-suffix stripped) for parent-facing WhatsApp copy.
+     */
+    protected function displayNameFor(?User $user, string $fallback = 'Student'): string
+    {
+        if ($user === null) {
+            return $fallback;
+        }
+
+        $display = trim((string) ($user->displayName ?? ''));
+
+        return $display !== '' ? $display : (trim((string) $user->name) !== '' ? (string) $user->name : $fallback);
+    }
+
     // =====================================================================
     //  Direct sends via Business API
     // =====================================================================
@@ -480,7 +494,7 @@ class OutboundWhatsAppService
         }
 
         $message = "📊 *Results Published*\n\n"
-            . "Student: *{$student->name}*\n"
+            . "Student: *{$this->displayNameFor($student)}*\n"
             . "Class: *{($student->studentAcademic?->standard?->name) ?? 'N/A'}*\n"
             . "Exam: *{$triggerExam->name}*\n\n"
             . implode("\n", $rows);
@@ -534,7 +548,7 @@ class OutboundWhatsAppService
         }
 
         $message = "📊 *{$examName} — {$className}*\n";
-        $message .= "_{$student->name}_\n\n";
+        $message .= "_{$this->displayNameFor($student)}_\n\n";
         $message .= implode("\n", $rows);
 
         if ($subjectCount > 0) {
@@ -547,7 +561,7 @@ class OutboundWhatsAppService
             $message .= "\n";
 
             if ($avg >= 80) {
-                $message .= "🎉 *Well done, {$student->name}!* ";
+                $message .= "🎉 *Well done, {$this->displayNameFor($student)}!* ";
                 $message .= "{$avg}% average is a strong performance";
                 if ($rank && $totalStudents) {
                     $message .= " — ranked {$rank}{$ordinal} out of {$totalStudents}";
@@ -579,11 +593,15 @@ class OutboundWhatsAppService
         $className = $student->studentAcademic?->standard?->name ?? 'N/A';
 
         $message = "{$title}\n";
-        $message .= "_{$student->name} — {$className}_\n\n";
+        $message .= "_{$this->displayNameFor($student)} — {$className}_\n\n";
         $message .= implode("\n", $rows);
         $message .= "\n· · · · · · · · · · · · · · · ·\n";
         $message .= "*Total: UGX " . number_format($total, 0) . "*\n";
-        $message .= "\n_Contact the school finance office for payment details._";
+        $office = \App\Helpers\SiteHelper::schoolOfficeWhatsAppFooter(
+            $student->school_id ? (int) $student->school_id : null,
+            'Contact the school finance office for payment details.'
+        );
+        $message .= "\n_{$office}_";
         return $message;
     }
 
@@ -605,7 +623,7 @@ class OutboundWhatsAppService
             }
         }
 
-        $message = "💰 *Fee Balance — {$className}*\n_{$student->name}_\n\n";
+        $message = "💰 *Fee Balance — {$className}*\n_{$this->displayNameFor($student)}_\n\n";
 
         if (!empty($paidLines)) {
             $message .= "✅ *PAID*\n" . implode("\n", $paidLines) . "\n\n";
@@ -618,7 +636,16 @@ class OutboundWhatsAppService
         $message .= "· · · · · · · · · · · · · · · ·\n";
         $message .= "💵 *Total Paid:* UGX " . number_format($totalPaid, 0) . "\n";
         $message .= "💰 *Balance:* UGX " . number_format($totalBalance, 0) . "\n";
-        $message .= "\n_Reply PAY to pay via Mobile Money._";
+        $office = \App\Helpers\SiteHelper::schoolOfficeWhatsAppFooter(
+            $student->school_id ? (int) $student->school_id : null,
+            'Reply PAY to pay via Mobile Money.'
+        );
+        if (str_starts_with($office, 'WhatsApp')) {
+            $message .= "\n_{$office}_";
+            $message .= "\n_Or reply PAY to pay via Mobile Money._";
+        } else {
+            $message .= "\n_Reply PAY to pay via Mobile Money._";
+        }
         return $message;
     }
 
@@ -630,10 +657,10 @@ class OutboundWhatsAppService
         $className = $student->studentAcademic?->standard?->name ?? 'N/A';
         $rate = $total > 0 ? round(($present / $total) * 100) : 100;
 
-        $message = "📅 *Attendance — {$className}*\n_{$student->name}_\n\n";
+        $message = "📅 *Attendance — {$className}*\n_{$this->displayNameFor($student)}_\n\n";
 
         if ($rate < 80) {
-            $message .= "⚠️ *{$student->name} has missed {$absent} school day(s)* — ";
+            $message .= "⚠️ *{$this->displayNameFor($student)} has missed {$absent} school day(s)* — ";
             $message .= "that's " . (100 - $rate) . "% of learning time lost.\n\n";
         } elseif ($rate > 90) {
             $message .= "✅ *Great attendance!* {$present} out of {$total} days present.\n\n";
@@ -671,13 +698,13 @@ class OutboundWhatsAppService
 
         $avg = count($subjects) > 0 ? round($totalScore / count($subjects), 1) : 0;
 
-        $message = "📊 *{$examName} — {$className}*\n_{$student->name}_\n\n";
+        $message = "📊 *{$examName} — {$className}*\n_{$this->displayNameFor($student)}_\n\n";
         $message .= implode("\n", $rows);
         $message .= "\n· · · · · · · · · · · · · · · ·\n";
         $message .= "_Average: {$avg}%_\n";
 
         if ($avg >= 80) {
-            $message .= "🎉 *Well done, {$student->name}!* Strong results across the board.\n";
+            $message .= "🎉 *Well done, {$this->displayNameFor($student)}!* Strong results across the board.\n";
         }
 
         $message .= "\n_Reply REPORT for the full report card._";
@@ -699,7 +726,7 @@ class OutboundWhatsAppService
             $rows[] = "• {$date} — {$type}" . ($notes ? "\n  " . $notes : '');
         }
 
-        $message = "🏥 *Health Records — {$className}*\n_{$student->name}_\n\n";
+        $message = "🏥 *Health Records — {$className}*\n_{$this->displayNameFor($student)}_\n\n";
         $message .= implode("\n", $rows);
 
         $footer = count($records) > 5
@@ -721,7 +748,7 @@ class OutboundWhatsAppService
         };
 
         $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-        $message = "🏥 *Health Incident — {$student->name}*\n";
+        $message = "🏥 *Health Incident — {$this->displayNameFor($student)}*\n";
         $message .= "_{$className}_\n\n";
         $message .= "• Date: {$incident->incident_date->format('d M Y')}\n";
         $message .= "• Severity: {$severityLabel}\n";
@@ -744,7 +771,7 @@ class OutboundWhatsAppService
     public function composeStudentWithdrawn(User $student, string $withdrawalDate, string $reason = '', string $destination = ''): string
     {
         $className = $student->studentAcademic?->standard?->name ?? 'N/A';
-        $message = "📋 *Record Update — Student Withdrawn*\n_{$student->name} — {$className}_\n\n";
+        $message = "📋 *Record Update — Student Withdrawn*\n_{$this->displayNameFor($student)} — {$className}_\n\n";
         $message .= "• Date of departure: {$withdrawalDate}\n";
         if ($reason) {
             $message .= "• Reason: {$reason}\n";

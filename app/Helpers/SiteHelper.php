@@ -22,6 +22,8 @@ use App\Models\Teacherlink;
 use App\Models\Scholastic;
 use App\Models\Standard;
 use App\Models\Country;
+use App\Models\WhatsAppUser;
+use App\Models\School;
 use App\Models\City;
 use App\Models\User;
 
@@ -533,5 +535,63 @@ class SiteHelper
         );
 
        
+    }
+
+    /**
+     * Best-effort school-office WhatsApp number for parent-facing messages.
+     * Prefers an active schooladmin's WhatsAppUser phone, then users.mobile_no, then schools.phone.
+     */
+    public static function schoolAdminWhatsAppPhone(?int $schoolId): ?string
+    {
+        if ($schoolId === null || $schoolId <= 0) {
+            return null;
+        }
+
+        $waPhone = WhatsAppUser::query()
+            ->where('school_id', $schoolId)
+            ->whereHas('user', function ($q) use ($schoolId) {
+                $q->where('school_id', $schoolId)
+                    ->where('usergroup_id', 3)
+                    ->where('status', 'active');
+            })
+            ->orderBy('id')
+            ->value('phone');
+
+        if (is_string($waPhone) && trim($waPhone) !== '') {
+            return WhatsAppPhoneHelper::normalise($waPhone);
+        }
+
+        $mobile = User::query()
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 3)
+            ->where('status', 'active')
+            ->whereNotNull('mobile_no')
+            ->where('mobile_no', '!=', '')
+            ->orderBy('id')
+            ->value('mobile_no');
+
+        if (is_string($mobile) && trim($mobile) !== '') {
+            return WhatsAppPhoneHelper::normalise($mobile);
+        }
+
+        $schoolPhone = School::query()->where('id', $schoolId)->value('phone');
+        if (is_string($schoolPhone) && trim($schoolPhone) !== '') {
+            return WhatsAppPhoneHelper::normalise($schoolPhone);
+        }
+
+        return null;
+    }
+
+    /**
+     * Footer line for fee / office-contact WhatsApp copy.
+     */
+    public static function schoolOfficeWhatsAppFooter(?int $schoolId, string $fallback = 'Contact the school office for details.'): string
+    {
+        $phone = self::schoolAdminWhatsAppPhone($schoolId);
+        if ($phone === null) {
+            return $fallback;
+        }
+
+        return "WhatsApp the school office: {$phone}";
     }
 }

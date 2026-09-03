@@ -32,7 +32,7 @@ class ParentPortalService
         return StudentParentLink::query()
             ->where('parent_id', $parent->id)
             ->where('status', 1)
-            ->with(['userStudent.studentAcademicLatest.standardLink.standard'])
+            ->with(['userStudent.userprofile', 'userStudent.studentAcademicLatest.standardLink.standard'])
             ->get()
             ->map(fn (StudentParentLink $link) => $link->userStudent)
             ->filter()
@@ -82,7 +82,8 @@ class ParentPortalService
             }
 
             $matches = $students->filter(function (User $student) use ($needle) {
-                return str_contains(mb_strtolower((string) $student->name), $needle);
+                return str_contains(mb_strtolower((string) $student->name), $needle)
+                    || str_contains(mb_strtolower((string) $student->displayName), $needle);
             })->values();
 
             if ($matches->count() === 1) {
@@ -90,7 +91,7 @@ class ParentPortalService
             }
 
             if ($matches->isEmpty()) {
-                $names = $students->map(fn (User $s) => $s->name)->implode(', ');
+                $names = $students->map(fn (User $s) => $s->displayName ?: $s->name)->implode(', ');
 
                 return [
                     'ok' => false,
@@ -100,7 +101,7 @@ class ParentPortalService
                 ];
             }
 
-            $names = $matches->map(fn (User $s) => $s->name)->implode(', ');
+            $names = $matches->map(fn (User $s) => $s->displayName ?: $s->name)->implode(', ');
 
             return [
                 'ok' => false,
@@ -149,7 +150,7 @@ class ParentPortalService
             return [
                 'ordinal' => $i + 1,
                 'student_id' => $student->id,
-                'name' => $student->name,
+                'name' => $student->displayName ?: $student->name,
                 'school_id' => $schoolId,
                 'school_name' => $schoolId ? ($schoolNames[$schoolId] ?? 'School') : 'School',
                 'class' => $student->studentAcademicLatest?->standardLink?->StandardSection ?? 'N/A',
@@ -284,7 +285,7 @@ class ParentPortalService
             'success' => true,
             'data' => [
                 'student_id' => $student->id,
-                'student_name' => $student->name,
+                'student_name' => $student->displayName ?: $student->name,
                 'school_id' => $schoolId,
                 'total_fees' => $totalFees,
                 'total_paid' => $totalPaid,
@@ -326,7 +327,7 @@ class ParentPortalService
             'success' => true,
             'data' => [
                 'student_id' => $student->id,
-                'student_name' => $student->name,
+                'student_name' => $student->displayName ?: $student->name,
                 'school_id' => $schoolId,
                 'present' => $present,
                 'absent' => $absent,
@@ -376,11 +377,11 @@ class ParentPortalService
                 'success' => true,
                 'data' => [
                     'student_id' => $student->id,
-                    'student_name' => $student->name,
+                    'student_name' => $student->displayName ?: $student->name,
                     'school_id' => $schoolId,
                     'exam_groups' => [],
                 ],
-                'message' => "No results published yet for {$student->name}.",
+                'message' => "No results published yet for ".($student->displayName ?: $student->name).".",
             ];
         }
 
@@ -408,7 +409,7 @@ class ParentPortalService
             'success' => true,
             'data' => [
                 'student_id' => $student->id,
-                'student_name' => $student->name,
+                'student_name' => $student->displayName ?: $student->name,
                 'school_id' => $schoolId,
                 'exam_groups' => $examGroups,
             ],
@@ -451,12 +452,12 @@ class ParentPortalService
             'success' => true,
             'data' => [
                 'student_id' => $student->id,
-                'student_name' => $student->name,
+                'student_name' => $student->displayName ?: $student->name,
                 'school_id' => $schoolId,
                 'records' => $records,
                 'count' => count($records),
             ],
-            'message' => $records === [] ? "No health records found for {$student->name}." : null,
+            'message' => $records === [] ? 'No health records found for '.($student->displayName ?: $student->name).'.' : null,
         ];
     }
 
