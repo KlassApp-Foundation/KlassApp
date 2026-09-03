@@ -151,7 +151,19 @@ class WhatsAppReportCardDeliveryService
         }
 
         $token = Str::random(40);
-        Storage::disk('local')->put(self::STORAGE_DIR.'/'.$token.'.pdf', $pdf);
+        $relative = self::STORAGE_DIR.'/'.$token.'.pdf';
+        $disk = Storage::disk('local');
+        if (! $disk->exists(self::STORAGE_DIR)) {
+            $disk->makeDirectory(self::STORAGE_DIR);
+        }
+        // Ensure FPM (appuser) can read files even if an earlier root/tinker
+        // process created the directory with restrictive ownership/mode.
+        $dirPath = $disk->path(self::STORAGE_DIR);
+        if (is_dir($dirPath)) {
+            @chmod($dirPath, 0775);
+        }
+        $disk->put($relative, $pdf);
+        @chmod($disk->path($relative), 0644);
 
         $name = $student->whatsappDisplayName('Student');
         $slug = Str::slug($name) ?: 'student';
