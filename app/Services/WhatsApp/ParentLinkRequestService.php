@@ -175,7 +175,7 @@ class ParentLinkRequestService
             $message .= "\n\nPlease check the child's name, class, and school details, then try again.";
         }
 
-        $message .= "\n\nTap *Request Link* on the welcome menu (or reply anytime) to submit a new request.";
+        $message .= "\n\nTap *Request Link* below to submit a new request.";
 
         return $message;
     }
@@ -187,7 +187,28 @@ class ParentLinkRequestService
         $schoolName = $request->schoolDisplayName();
 
         return "✅ Hi {$parentName}! You've been linked to *{$childName}* at *{$schoolName}*.\n\n"
-            .'Reply *MENU* anytime for fees, grades, and more.';
+            .'Tap *Menu* below for fees, grades, and more.';
+    }
+
+    /**
+     * @return list<array{id: string, title: string}>
+     */
+    public function rejectedActionButtons(): array
+    {
+        return [
+            ['id' => 'parent_link_flow', 'title' => '📋 Request Link'],
+            ['id' => 'link_help', 'title' => '🔗 Link help'],
+        ];
+    }
+
+    /**
+     * @return list<array{id: string, title: string}>
+     */
+    public function approvedActionButtons(): array
+    {
+        return [
+            ['id' => 'MENU', 'title' => '🏠 Menu'],
+        ];
     }
 
     /**
@@ -196,9 +217,10 @@ class ParentLinkRequestService
     public function notifyRejected(ParentLinkRequest $request, ?string $adminComment = null): void
     {
         try {
-            $this->whatsapp->sendText(
+            $this->whatsapp->sendInteractiveButtons(
                 $request->phone,
                 $this->rejectedStatusMessage($request->loadMissing('school'), $adminComment),
+                $this->rejectedActionButtons(),
                 'parent_link_rejected',
             );
         } catch (\Throwable $e) {
@@ -215,9 +237,10 @@ class ParentLinkRequestService
     public function notifyApproved(ParentLinkRequest $request): void
     {
         try {
-            $this->whatsapp->sendText(
+            $this->whatsapp->sendInteractiveButtons(
                 $request->phone,
                 $this->approvedStatusMessage($request->loadMissing('school')),
+                $this->approvedActionButtons(),
                 'parent_link_approved',
             );
         } catch (\Throwable $e) {

@@ -261,15 +261,16 @@ class WhatsAppParentLinkFlowTest extends TestCase
 
         $captured = null;
         $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
-        $whatsApp->shouldReceive('sendText')
+        $whatsApp->shouldReceive('sendInteractiveButtons')
             ->once()
-            ->withArgs(function (string $phone, string $message, ?string $flowType) use (&$captured) {
-                $captured = compact('phone', 'message', 'flowType');
+            ->withArgs(function (string $phone, string $message, array $buttons, ?string $flowType) use (&$captured) {
+                $captured = compact('phone', 'message', 'buttons', 'flowType');
 
                 return $phone === $this->phone
                     && $flowType === 'parent_link_rejected_status'
                     && str_contains($message, "couldn't approve")
-                    && str_contains($message, 'Request Link');
+                    && str_contains($message, 'Tap *Request Link* below')
+                    && collect($buttons)->contains(fn ($b) => ($b['id'] ?? '') === 'parent_link_flow');
             })
             ->andReturn(['success' => true, 'message_id' => 'rej-status']);
         $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
@@ -278,6 +279,7 @@ class WhatsAppParentLinkFlowTest extends TestCase
 
         $this->assertNotNull($captured);
         $this->assertSame('parent_link_rejected_status', $captured['flowType']);
+        $this->assertSame('parent_link_flow', $captured['buttons'][0]['id']);
     }
 
     public function test_duplicate_flow_completion_while_pending_sends_pending_status(): void
