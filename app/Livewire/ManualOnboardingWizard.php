@@ -20,12 +20,13 @@ use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolCategorySeeder;
-
+use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -131,6 +132,21 @@ class ManualOnboardingWizard extends Component
     public string $feeAmount = '100000';
 
     public string $whatsappPhone = '';
+
+    /** OTP entered by the admin (wizard WhatsApp step). */
+    public string $whatsappOtpInput = '';
+
+    /**
+     * Code shown in the wizard UI (parity with Toshi chat always displaying the OTP).
+     * Not used for verification — the authoritative code lives in session.
+     */
+    public string $whatsappOtpDisplay = '';
+
+    public string $whatsappOtpStatus = '';
+
+    /** Set true only after a successful OTP match (or hydrate of an already-verified link). */
+    #[Locked]
+    public bool $whatsappVerified = false;
 
     public string $errorMessage = '';
 
@@ -961,6 +977,8 @@ class ManualOnboardingWizard extends Component
                 $wa = WhatsAppUser::where('user_id', Auth::id())->first();
                 if ($wa) {
                     $this->whatsappPhone = (string) $wa->phone;
+                    // Already linked + verified → no need to re-OTP when revisiting the step.
+                    $this->whatsappVerified = $wa->verified_at !== null;
                 }
             })(),
             'plan_selection' => (function () use ($sid) {
@@ -1261,11 +1279,102 @@ class ManualOnboardingWizard extends Component
         }
     }
 
+    /**
+     * Send a 6-digit OTP via the same WhatsAppOnboardingOtpService Toshi uses.
+     * Always surfaces the code in the wizard UI so onboarding is never blocked when
+     * the Meta API is unconfigured (same policy as AgentToshi::sendWhatsAppOtp).
+     */
+    public function sendWhatsAppVerificationCode(): void
+    {
+        $this->errorMessage = '';
+        $this->whatsappOtpStatus = '';
+        $phone = trim($this->whatsappPhone);
+        if ($phone === '') {
+            $this->errorMessage = 'Enter your WhatsApp number (+256…) before sending a code.';
+
+            return;
+        }
+
+        $otpService = app(WhatsAppOnboardingOtpService::class);
+        $otp = $otpService->generateCode();
+
+        session([
+            'wizard_wa_otp.code' => $otp,
+            'wizard_wa_otp.phone' => $phone,
+            'wizard_wa_otp.expires_at' => now()->addMinutes(5)->timestamp,
+        ]);
+
+        $this->whatsappVerified = false;
+        $this->whatsappOtpInput = '';
+        $this->whatsappOtpDisplay = $otp;
+        $this->whatsappOtpStatus = "Your verification code: {$otp}";
+
+        $delivery = $otpService->deliver($phone, $otp);
+        if ($delivery['sent']) {
+            $this->whatsappOtpStatus .= ' — also sent to WhatsApp.';
+        } else {
+            $this->whatsappOtpStatus .= ' — enter this code below (WhatsApp API may be unavailable).';
+        }
+    }
+
+    public function verifyWhatsAppCode(): void
+    {
+        $this->errorMessage = '';
+        $expected = (string) session('wizard_wa_otp.code', '');
+        $sessionPhone = (string) session('wizard_wa_otp.phone', '');
+        $expiresAt = (int) session('wizard_wa_otp.expires_at', 0);
+
+        if ($expected === '' || $sessionPhone === '') {
+            $this->errorMessage = 'Send a verification code first.';
+
+            return;
+        }
+
+        if ($expiresAt > 0 && now()->timestamp > $expiresAt) {
+            $this->errorMessage = 'That code has expired. Send a new one.';
+            $this->whatsappVerified = false;
+
+            return;
+        }
+
+        if (trim($this->whatsappPhone) !== '' && trim($this->whatsappPhone) !== $sessionPhone) {
+            $this->errorMessage = 'Phone number changed after the code was sent. Send a new code.';
+            $this->whatsappVerified = false;
+
+            return;
+        }
+
+        $otpService = app(WhatsAppOnboardingOtpService::class);
+        if (! $otpService->matches($expected, $this->whatsappOtpInput)) {
+            $this->errorMessage = "That code doesn't match. Try again or send a new code.";
+            $this->whatsappVerified = false;
+
+            return;
+        }
+
+        $this->whatsappPhone = $sessionPhone;
+        $this->whatsappVerified = true;
+        $this->whatsappOtpStatus = "WhatsApp verified for {$this->whatsappPhone}.";
+        $this->whatsappOtpDisplay = '';
+        session()->forget(['wizard_wa_otp.code', 'wizard_wa_otp.phone', 'wizard_wa_otp.expires_at']);
+    }
+
     private function saveWhatsApp(School $school): void
     {
         $phone = trim($this->whatsappPhone);
         if ($phone === '') {
             throw ValidationException::withMessages(['whatsappPhone' => 'Enter your WhatsApp number (+256…).']);
+        }
+
+        $existing = WhatsAppUser::where('user_id', Auth::id())->whereNotNull('verified_at')->first();
+        if ($existing && $existing->phone === $phone) {
+            return;
+        }
+
+        if (! $this->whatsappVerified) {
+            throw ValidationException::withMessages([
+                'whatsappOtpInput' => 'Verify the code sent to your WhatsApp before continuing.',
+            ]);
         }
 
         $result = app(OnboardingEngine::class)->saveWhatsApp($school, Auth::id(), $phone);
