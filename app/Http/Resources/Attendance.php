@@ -18,7 +18,7 @@ class Attendance extends JsonResource
         [
             //
             'user_id'       =>  $this->user_id,
-            'user_name'     =>  $this->user->name,
+            'user_name'     =>  $this->user->displayName ?: $this->user->name,
             'user_fullname' =>  $this->user->FullName,
             'date'          =>  date('d M Y',strtotime($this->date)),
             'id_date'       =>  date('d_m_y',strtotime($this->date)).'_'.$this->session,

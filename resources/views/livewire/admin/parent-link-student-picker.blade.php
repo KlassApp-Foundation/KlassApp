@@ -28,7 +28,7 @@
                         <button type="button"
                                 wire:click="selectStudent({{ $student->id }})"
                                 class="w-full text-left px-2 py-1.5 hover:bg-emerald-50">
-                            <span class="font-medium text-gray-800">{{ $student->name }}</span>
+                            <span class="font-medium text-gray-800">{{ $student->displayName ?: $student->name }}</span>
                             <span class="text-gray-500 block">
                                 {{ $student->studentAcademicLatest?->standardLink?->StandardSection ?? 'class n/a' }}
                                 @if($showSchoolName && $student->school)

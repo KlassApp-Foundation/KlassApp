@@ -121,4 +121,37 @@ class UserDisplayNameTest extends TestCase
         $this->assertSame('ESTHER ISHIMME', $user->FullName);
         $this->assertSame('ESTHER ISHIMME', $user->displayName);
     }
+
+    public function test_fullname_strips_numeric_suffix(): void
+    {
+        $user = User::factory()->create([
+            'usergroup_id' => 6,
+            'school_id' => $this->school->id,
+            'name' => 'mary polite33453 akampa',
+        ]);
+
+        Userprofile::factory()->create([
+            'usergroup_id' => 6,
+            'user_id' => $user->id,
+            'school_id' => $this->school->id,
+            'firstname' => 'Mary Polite33453',
+            'lastname' => 'Akampa-2',
+        ]);
+
+        $this->assertSame('MARY POLITE AKAMPA', $user->FullName);
+        $this->assertStringNotContainsString('33453', $user->FullName);
+        $this->assertSame('MARY POLITE AKAMPA', $user->displayName);
+    }
+
+    public function test_display_name_filename_slug_strips_digits(): void
+    {
+        $user = User::factory()->create([
+            'usergroup_id' => 6,
+            'school_id' => $this->school->id,
+            'name' => 'nuwagira darius5373',
+        ]);
+
+        $this->assertSame('NUWAGIRA_DARIUS', $user->displayNameFilenameSlug());
+        $this->assertStringNotContainsString('5373', $user->displayNameFilenameSlug());
+    }
 }

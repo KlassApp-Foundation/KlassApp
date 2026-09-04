@@ -63,7 +63,7 @@
             </div>
 
             <div class="ds-card md:col-span-2">
-                <h3 class="ds-card-title">{{ $student->name }}</h3>
+                <h3 class="ds-card-title">{{ $student->displayName ?: $student->name }}</h3>
                 <div class="mt-2 grid grid-cols-2 gap-4">
                     <p><strong>Reg No:</strong> {{ $student->registration_number ?? '—' }}</p>
                     <p><strong>Email:</strong> {{ $student->email ?? '—' }}</p>

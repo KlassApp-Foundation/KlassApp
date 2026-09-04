@@ -47,7 +47,7 @@
                         <tbody>
                             @foreach ($students as $student)
                                 <tr class="border-b border-gray-100">
-                                    <td class="py-3 pr-4 text-gray-900 font-medium">{{ $student->name }}</td>
+                                    <td class="py-3 pr-4 text-gray-900 font-medium">{{ $student->displayName ?: $student->name }}</td>
                                     <td class="py-3 text-right space-x-2">
                                         <a href="{{ route('teacher.reports.cards.student.preview', [$stdLink, $student]) }}"
                                            target="_blank"

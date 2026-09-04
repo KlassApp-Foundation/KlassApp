@@ -35,7 +35,7 @@
                                                 {{ $member->userprofile ? strtoupper(substr($member->userprofile->firstname, 0, 1) . substr($member->userprofile->lastname ?? '', 0, 1)) : '?' }}
                                             </span>
                                         </div>
-                                        <span class="font-medium text-sm">{{ $member->name }}</span>
+                                        <span class="font-medium text-sm">{{ $member->displayName ?: $member->name }}</span>
                                     </div>
                                 </td>
                                 <td class="text-sm">

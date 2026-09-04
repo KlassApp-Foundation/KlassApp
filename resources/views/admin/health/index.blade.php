@@ -6,7 +6,7 @@
     <div class="dashboard-heading">
         <div>
             <h1 class="dashboard-section-title">Health Records</h1>
-            <p class="dashboard-subtitle">{{ $student->name }} &mdash; medical profile, immunizations, and incidents.</p>
+            <p class="dashboard-subtitle">{{ $student->displayName ?: $student->name }} &mdash; medical profile, immunizations, and incidents.</p>
         </div>
         <a href="{{ url('/admin/students/' . $student->id) }}" class="text-sm text-blue-600 hover:underline">&larr; Back to Student</a>
     </div>

@@ -40,7 +40,7 @@
         <select name="teacher_id" class="ds-input" required>
             <option value="">Select...</option>
             @foreach($teachers as $t)
-                <option value="{{ $t->id }}" {{ old('teacher_id', $slot->teacher_id ?? '') == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
+                <option value="{{ $t->id }}" {{ old('teacher_id', $slot->teacher_id ?? '') == $t->id ? 'selected' : '' }}>{{ $t->displayName ?: $t->name }}</option>
             @endforeach
         </select>
     </div>
@@ -84,7 +84,7 @@
         <select name="academic_term_id" class="ds-input">
             <option value="">—</option>
             @foreach($terms as $t)
-                <option value="{{ $t->id }}" {{ old('academic_term_id', $slot->academic_term_id ?? '') == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
+                <option value="{{ $t->id }}" {{ old('academic_term_id', $slot->academic_term_id ?? '') == $t->id ? 'selected' : '' }}>{{ $t->displayName ?: $t->name }}</option>
             @endforeach
         </select>
     </div>

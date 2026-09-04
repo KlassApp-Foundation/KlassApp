@@ -70,8 +70,9 @@ class ParentLinkStudentPicker extends Component
         $schoolBit = $this->showSchoolName && $student->school
             ? ' · '.$student->school->name
             : '';
-        $this->selectedLabel = $student->name.' ('.$classLabel.')'.$schoolBit;
-        $this->query = $student->name;
+        $labelName = $student->displayName ?: $student->name;
+        $this->selectedLabel = $labelName.' ('.$classLabel.')'.$schoolBit;
+        $this->query = $labelName;
     }
 
     public function clearSelection(): void

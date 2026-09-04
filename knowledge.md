@@ -336,10 +336,17 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 4, 2026 (`origin/main` tip `81317bbd` — **#425 MERGED + DEPLOYED** report-card identity + Alpine shorthand)
+## Current Status: September 4, 2026 (`fix/known-gaps-round-2` — shipping items 1–3)
+
+- **In flight**: known-gaps round 2 — (1) WABA number `+256793844906` (prod `.env` already live; code defaults/docs), (2) digit-suffix `displayName`/`FullName`/PDF filenames, (3) wizard Previous + remount skip of optional teachers/students.
+- **Still open**: (4) wizard WhatsApp-verify OTP (Toshi has real OTP; wizard `saveWhatsApp` still sets `verified_at` immediately), (5) parent Fees/Grades/Attendance routes return JSON (`ChildDataController`).
+- **Prior tip**: `81317bbd` #425 identity + Alpine.
+
+## Previous: September 4, 2026 (`origin/main` tip `81317bbd` — **#425 MERGED + DEPLOYED** + **Fix 2 runtime-verified on prod**) — superseded above
 
 - **✅ [#425](https://github.com/KlassApp-Foundation/KlassApp/pull/425)** → merge `81317bbd` — P0 report-card school identity leak fixed (`resolveSchoolIdentity` + formal/warm/modern); Alpine Vue-shorthand → `x-on:`/`x-bind:` on accountant payroll sidebar, batch payroll, superadmin school-list filters.
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match` (`81317bbd`).
+- **✅ Fix 2 runtime verify (live `klassapp.xyz`)** — Playwright interaction evidence in `e2e/screenshots/alpine-shorthand-runtime/REPORT.json` (`all_pass: true`): payroll sidebar open/close; batch `canPreview` disabled→enabled→disabled; school Filters 74→1→74. No Alpine-fatal console errors. Route note: list is `/superadmin/academics/schools` (plural).
 - **✅ Live verify**: school **124** footer = `UI Review Demo School, UNEB Center No. U0001 Tel: +256700119900` (no Kabale). School **104** PDF clean of hardcoded `+256782255758` / Box 283 / HARD WORK PAYS; uses real `+256779715931` + `U100140`. School **102** Bukoto Springs PDF: name present, Kabale Junior / hardcode phones **clean**.
 - **⏸️ Auth/error Open Design** still paused.
 - **Still open (templates)**: WABA — 4 APPROVED + AUTH; 2 REJECTED unchanged.
@@ -982,7 +989,7 @@ This meant the container ran with code baked into the image at build time. Any `
 EVOLUTION_API_URL=http://10.19.0.6:8081
 EVOLUTION_API_KEY=78E5A6FF-BA89-45C6-987C-C31407BD22B4
 EVOLUTION_INSTANCE_NAME=klassapp
-WHATSAPP_BUSINESS_NUMBER=+256765275289
+WHATSAPP_BUSINESS_NUMBER=+256793844906
 WHATSAPP_BUSINESS_NAME=KlassApp
 ```
 
@@ -1126,12 +1133,23 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-04: P0 report-card school identity leak + Alpine shorthand harden
+### 2026-09-04: Fix 2 Alpine shorthand — **production runtime interaction verify**
+
+- **Work done**: Re-verified #425 Fix 2 on live `https://klassapp.xyz` with Playwright (not source grep). Script `e2e/alpine-shorthand-runtime-verify.cjs`; evidence `e2e/screenshots/alpine-shorthand-runtime/` + `REPORT.json` (`all_pass: true`).
+- **Results**:
+  1. Accountant payroll sidebar — click open (`alpine.open` true + Batch Run visible) / close (false + hidden). Screenshots `01`/`02`.
+  2. Batch payroll — Alpine `canPreview` + `button.disabled`: empty → dates-only (still disabled) → template+dates (enabled) → clear template (disabled again). Screenshots `03`/`04`.
+  3. Superadmin Filters — open panel; search `UI Review` → **74 → 1** (`UI Review Demo School`); clear → **74**. Screenshots `05`–`07`. Correct URL: `/superadmin/academics/schools` (singular `/school` is 404).
+- **Console**: no Alpine-fatal (`@click` / `setAttribute` / `valid attribute name`); only unrelated 404 asset noise on accountant pages.
+- **Status**: ✅ CLOSED — Fix 2 interaction-verified on production
+
+### 2026-09-04: P0 report-card school identity leak + Alpine shorthand harden — **MERGED + DEPLOYED**
 
 - **Work done**: (1) `StudentReportCardService::resolveSchoolIdentity()` builds per-school name, category subtitle, address, phones (`schools.phone` + `landline_no`), UNEB (omit if blank/`-`), motto (`SchoolDetail.moto`), footer line. formal/warm/modern templates consume `$schoolIdentity` — removed hardcoded Kabale name/address/phones/motto. (2) Converted Alpine Vue-shorthand to `x-on:`/`x-bind:` in accountant payroll sidebar, batch payroll, superadmin school-list filters (same pattern as admin sidebar; do not move outside `#app`).
-- **Files**: `StudentReportCardService.php`; `report-templates/{formal,warm,modern}.blade.php`; `layouts/accountant/menu.blade.php`; `accountant/payroll/batch/index.blade.php`; `livewire/superadmin/academics/school-list.blade.php`; `tests/Feature/Reports/ReportCardSchoolIdentityTest.php`.
-- **Tests**: `ReportCardSchoolIdentityTest` 3 passed (76 assertions) — two schools resolve distinct footers; templates source-clean of Kabale; real PDFs generated with distinct names/mottos/UNEB and no Kabale strings in decoded streams. Artifacts: `storage/app/testing/report-identity/{alpha,beta}-formal.pdf`.
-- **Status**: 🚧 shipping via PR (this session)
+- **PR**: [#425](https://github.com/KlassApp-Foundation/KlassApp/pull/425) → merge `81317bbd`.
+- **Tests**: `ReportCardSchoolIdentityTest` 3 passed (76 assertions). Local PDF artifacts `storage/app/testing/report-identity/{alpha,beta}-formal.pdf`.
+- **Live**: deploy SHA match; 124 footer is Demo School not Kabale; 104+102 PDFs clean of hardcoded Kabale phones/motto/Box 283.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 
 ### 2026-09-03: Auth/error nine-frame Open Design — correction pass + breakpoint re-verify — **PAUSED**
 
@@ -3022,7 +3040,7 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 ```
                     ┌──────────────────────────────────────────┐
                     │            Inbound Flow                   │
-                    │  User sends WhatsApp → +256 765 275289    │
+                    │  User sends WhatsApp → +256 793 844906    │
                     │         ↓                                 │
                     │  Meta Cloud API (WABA) receives message    │
                     │         ↓                                 │
@@ -3108,7 +3126,8 @@ User ↔ WhatsApp ↔ Evolution API (Docker) ↔ Laravel Webhook
 - **Business Portfolio ID** (business.facebook.com): `856846937044672` — the Meta Business Account
 - **WABA ID** (WhatsApp Business Account): `1709193870117417` — owns the phone number, receives messages
 - **App ID** (developers.facebook.com): `1674033610469729` — the developer app with webhook callback URL
-- **Phone Number ID**: `1192586767270209` — `+256 765 275289`, verified name "KlassApp", mode LIVE
+- **Phone Number ID**: `1416403124879552` — `+256 793 844906`, verified name "KlassApp", mode LIVE
+  - *(Supersedes earlier `1192586767270209` / `+256 765 275289` and WABA `1709193870117417` — current WABA is `1370231745289565`.)*
 
 **The WABA ID and Business Portfolio ID are DIFFERENT.** Using the wrong WABA ID was the root cause of webhook delivery failure.
 

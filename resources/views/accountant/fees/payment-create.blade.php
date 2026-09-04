@@ -30,7 +30,7 @@
                     class="w-full border border-gray-400 rounded px-3 py-2">
                 <option value="">Select student...</option>
                 @foreach($students as $student)
-                    <option value="{{ $student->id }}">{{ $student->name }} ({{ $student->email }})</option>
+                    <option value="{{ $student->id }}">{{ $student->displayName ?: $student->name }} ({{ $student->email }})</option>
                 @endforeach
             </select>
         </div>

@@ -489,7 +489,7 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
     // Optional: flash message
     return redirect()
         ->route('teacher.exam.marks')
-        ->with('successmessage', $student->name . "'s ". '  Marks updated!');
+        ->with('successmessage', ($student->displayName ?: $student->name) . "'s ". '  Marks updated!');
 }
 
 private function logMarksActivity(

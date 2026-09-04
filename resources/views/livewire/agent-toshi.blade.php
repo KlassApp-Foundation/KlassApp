@@ -515,7 +515,7 @@
                         onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
                     <div style="width: 32px; height: 32px; border-radius: 50%; background: #faf9f5; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #c96442; font-size: 12px;">{{ strtoupper(substr($teacher->name, 0, 1)) }}</div>
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 600;">{{ $teacher->name }}</div>
+                        <div style="font-weight: 600;">{{ $teacher->displayName ?: $teacher->name }}</div>
                         <div class="toshi-sm-text">{{ $teacher->email }}</div>
                     </div>
                 </button>
@@ -1428,7 +1428,7 @@
                                     onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
                                 <div style="width: 32px; height: 32px; border-radius: 50%; background: #faf9f5; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #c96442; font-size: 12px;">{{ strtoupper(substr($teacher->name, 0, 1)) }}</div>
                                 <div style="flex: 1; min-width: 0;">
-                                    <div style="font-weight: 600;">{{ $teacher->name }}</div>
+                                    <div style="font-weight: 600;">{{ $teacher->displayName ?: $teacher->name }}</div>
                                     <div class="toshi-sm-text">{{ $teacher->email }}</div>
                                 </div>
                             </button>

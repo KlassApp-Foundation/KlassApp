@@ -19,7 +19,7 @@
                 $total = 0;
             @endphp
             <tr>
-                <td class="p-2 border border-black">{{ $student->name }}</td>
+                <td class="p-2 border border-black">{{ $student->displayName ?: $student->name }}</td>
                 @foreach ($subjects as $subject)
                     @php
                         $mark = $student->marks->firstWhere('subject_id', $subject->id);

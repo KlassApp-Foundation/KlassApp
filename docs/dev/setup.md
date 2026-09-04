@@ -147,7 +147,7 @@ EVOLUTION_API_URL=http://evolution-api:8081
 EVOLUTION_API_KEY=<api-key-from-step-1.2>
 EVOLUTION_INSTANCE_NAME=klassapp
 WHATSAPP_HMAC_SECRET=<generate: openssl rand -hex 32>
-WHATSAPP_BUSINESS_NUMBER=+256765275289
+WHATSAPP_BUSINESS_NUMBER=+256793844906
 WHATSAPP_BUSINESS_NAME=KlassApp
 WHATSAPP_SEND_DELAY=1200
 WHATSAPP_TEMPLATE_LANGUAGE=en
@@ -200,7 +200,7 @@ All are configured with `withoutOverlapping()` in `app/Console/Kernel.php`.
 # Check config is loaded correctly
 php artisan tinker
 > config('services.whatsapp.business_number')
-> "+256765275289"
+> "+256793844906"
 > config('services.whatsapp.evolution_url')
 > "http://localhost:8081"
 ```

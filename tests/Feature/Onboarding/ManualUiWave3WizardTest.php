@@ -281,7 +281,7 @@ class ManualUiWave3WizardTest extends TestCase
             ->assertSee('U999')
             ->assertSee('Primary One') // seeded by SchoolCategorySeeder
             ->assertSee('ENGLISH') // Subject model accessor uppercases name
-            ->assertSee('helen teacher') // users.name is overwritten by UserprofileObserver to strtolower(firstname).user_id.rand
+            ->assertSee('HELEN TEACHER') // displayName strips digits + uppercases profile names
             ->assertSee('+256700555666')
             ->assertSee('Freemium');
 
@@ -304,7 +304,7 @@ class ManualUiWave3WizardTest extends TestCase
             ->assertSee('Create School')
             ->assertSee('Primary One') // seeded by SchoolCategorySeeder
             ->assertSee('ENGLISH')
-            ->assertSee('helen teacher') // users.name is overwritten by UserprofileObserver to strtolower(firstname).user_id.rand
+            ->assertSee('HELEN TEACHER') // displayName strips digits + uppercases profile names
             ->assertSee('+256700555666')
             ->assertSee('Freemium');
         $this->assertNull($component->get('returnToStepIndex'));

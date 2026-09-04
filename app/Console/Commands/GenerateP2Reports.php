@@ -58,7 +58,7 @@ class GenerateP2Reports extends Command
                     $learner->id, $exam, $stdLink, $schoolId, $helper, new \App\Services\ReportCardCommentService, 0, 0
                 );
 
-                $name = str_replace([' ', '/'], '_', $learner->name);
+                $name = $learner->displayNameFilenameSlug((string) $sid);
                 $path = "{$outDir}/{$sid}_{$name}.pdf";
                 file_put_contents($path, $pdfContent);
                 $generated++;

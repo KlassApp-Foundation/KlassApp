@@ -112,7 +112,7 @@ class ReportCardsController extends Controller
             // Inherit school template (null) — CTs do not pick formal/warm.
             $pdfContent = $this->reports->pdfForStudent($schoolId, $stdLink, $learner, null);
 
-            $name = str_replace([' ', '/'], '_', $learner->name);
+            $name = $learner->displayNameFilenameSlug('student');
             $filename = "{$name}_report_card.pdf";
 
             return response($pdfContent, 200, [
