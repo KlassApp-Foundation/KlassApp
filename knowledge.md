@@ -336,10 +336,11 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 4, 2026 (`fix/known-gaps-round-3` — Round 3 known-gaps, opening PR)
+## Current Status: September 4, 2026 (`origin/main` tip `400e907a` — **#428 MERGED + DEPLOYED** known-gaps Round 3)
 
-- **Round 3**: `/admin/classes` empty (layout yield); report TOTAL AGG 0 (null points); payment Recorded-by + required fee category + Tuition-per-standard labels; teacher → `/teacher/dashboard`; Settings School Name from `schools.name`; gender Girls/Boys 0 = null gender data (no code fix).
-- **Tests**: 23 passed (AGG, class roster, teacher redirect, fee payment, school settings, accountant tools).
+- **✅ [#428](https://github.com/KlassApp-Foundation/KlassApp/pull/428)** → merge `400e907a` — classes layout; AGG effectivePoints + backfill; payment recorder + required category; teacher `/teacher/dashboard`; Settings `schools.name`; gender data-only (no code).
+- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`; migration backfill DONE; live: teacher login → `/teacher/dashboard` 200; `/admin/classes` Livewire present; Settings shows School Name + UI Review Demo School; payments show Tuition (nursery/primary).
+- **Tests**: 23 passed pre-merge.
 
 ## Previous: September 4, 2026 (`origin/main` tip `59efe2e6` — **#427 MERGED + DEPLOYED** known-gaps OTP + parent pages)
 
@@ -1145,7 +1146,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-04: Known-gaps Round 3 (classes / AGG / payments / teacher redirect / settings / gender) — opening PR
+### 2026-09-04: Known-gaps Round 3 (classes / AGG / payments / teacher redirect / settings / gender) — **MERGED + DEPLOYED**
 - **Work done**: Investigated all six gaps with prod evidence (school 124 + SSH). Fixed 1–5; item 6 is data-only (10 students `gender=null`, Unspecified=10 already).
 - **1 Classes empty**: `class-roster/{index,show}.blade.php` extended `layouts.app` and filled `content`, but app layout yields `base-content` — switched to admin/teacher role layouts.
 - **2 TOTAL AGG 0**: Primary bands seeded `points=null`; subject cells fell back oddly while TOTAL summed only `points`. `GradingHelper::effectivePoints`/`formatAggLabel`, helper + templates, config points 1–9, migration backfill.
@@ -1154,7 +1155,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **5 Settings School-Plus**: Form bound to platform `settings.sitename` seeder value; now edits `schools.name` as “School Name”.
 - **6 Gender**: No code change — same donut with Unspecified; demo students lack gender.
 - **Files**: class-roster blades, GradingHelper, StudentReport* services/templates, `config/grading_uganda.php`, grading points migration, FeePayment controllers/views, Toshi/Accountant recordPayment, LoginController, RedirectIfAuthenticated, GeneralController + settings request/view, tests listed in Current Status.
-- **Status**: Branch `fix/known-gaps-round-3`; PR opening.
+- **PR**: [#428](https://github.com/KlassApp-Foundation/KlassApp/pull/428) → merge `400e907a`.
+- **Status**: ✅ MERGED + DEPLOYED + live smoke verified.
 
 ### 2026-09-04: Known-gaps items 4–5 + FullName matching check — **MERGED + DEPLOYED + LIVE-VERIFIED**
 - **FullName matching**: Unaffected. Identification uses `users.name` LIKE / IDs (`ParentLinkRequestService`, EntityResolver, Toshi). `FullName`/`displayName` are display-only. Test: `ParentLinkFullNameMatchingUnaffectedTest`.
