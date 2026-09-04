@@ -57,15 +57,30 @@ class LoginController extends Controller implements ShouldQueue
     public function redirectTo()
     {
         if (auth()->check()) {
-            $ug = auth()->user()->usergroup_id;
-            if ($ug == 1) {
+            $ug = (int) auth()->user()->usergroup_id;
+            if ($ug === 1) {
                 return '/superadmin/dashboard';
             }
-            if ($ug == 4) {
+            if ($ug === 4) {
                 return '/subadmin/dashboard';
             }
-            if ($ug == 7) {
+            if ($ug === 5) {
+                return '/teacher/dashboard';
+            }
+            if ($ug === 6) {
+                return '/student/dashboard';
+            }
+            if ($ug === 7) {
                 return '/parent/dashboard';
+            }
+            if ($ug === 8) {
+                return '/library/dashboard';
+            }
+            if ($ug === 10) {
+                return '/receptionist/dashboard';
+            }
+            if ($ug === 11) {
+                return '/accountant/dashboard';
             }
         }
         return '/admin/dashboard';

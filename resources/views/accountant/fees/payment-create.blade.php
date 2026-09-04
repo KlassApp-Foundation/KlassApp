@@ -42,12 +42,16 @@
         </div>
 
         <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Fee Category</label>
-            <select name="fee_category_id"
+            <label class="block text-sm font-medium mb-1">Fee Category *</label>
+            <select name="fee_category_id" required
                     class="w-full border border-gray-400 rounded px-3 py-2">
-                <option value="">-- None (general payment) --</option>
+                <option value="">Select fee category...</option>
                 @foreach($feeCategories as $fee)
-                    <option value="{{ $fee->id }}">{{ $fee->name }} ({{ number_format($fee->amount, 0) }} UGX)</option>
+                    @php
+                        $tier = optional($fee->standard)->name;
+                        $label = $fee->name.($tier ? ' ('.$tier.')' : '');
+                    @endphp
+                    <option value="{{ $fee->id }}">{{ $label }} ({{ number_format($fee->amount, 0) }} UGX)</option>
                 @endforeach
             </select>
         </div>

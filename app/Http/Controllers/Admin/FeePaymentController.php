@@ -16,7 +16,7 @@ class FeePaymentController extends Controller
     public function index()
     {
         $schoolId = Auth::user()->school_id;
-        $payments = FeePayment::with(['student', 'feeCategory', 'recorder'])
+        $payments = FeePayment::with(['student', 'feeCategory.standard', 'recorder'])
             ->where('school_id', $schoolId)
             ->orderByDesc('created_at')
             ->paginate(50);
@@ -28,7 +28,10 @@ class FeePaymentController extends Controller
     {
         $schoolId = Auth::user()->school_id;
         $students = User::where('school_id', $schoolId)->where('usergroup_id', 6)->orderBy('name')->get();
-        $feeCategories = FeesCategories::where('school_id', $schoolId)->orderBy('name')->get();
+        $feeCategories = FeesCategories::with('standard')
+            ->where('school_id', $schoolId)
+            ->orderBy('name')
+            ->get();
 
         return view('admin.fees.payment-create', compact('students', 'feeCategories'));
     }
@@ -40,7 +43,15 @@ class FeePaymentController extends Controller
         $validated = $request->validate([
             'user_id'        => 'required|exists:users,id',
             'amount'         => 'required|numeric|min:1',
-            'fee_category_id'=> 'nullable|exists:fees_categories,id',
+            'fee_category_id'=> [
+                'required',
+                'exists:fees_categories,id',
+                function (string $attribute, mixed $value, \Closure $fail) use ($schoolId): void {
+                    if (! FeesCategories::where('school_id', $schoolId)->where('id', $value)->exists()) {
+                        $fail('The selected fee category does not belong to your school.');
+                    }
+                },
+            ],
             'payment_method' => 'nullable|string|max:50',
             'reference'      => 'nullable|string|max:255',
             'paid_on'        => 'nullable|date',
@@ -54,7 +65,7 @@ class FeePaymentController extends Controller
 
         FeePayment::create([
             'school_id'       => $schoolId,
-            'fee_category_id' => $validated['fee_category_id'] ?? null,
+            'fee_category_id' => $validated['fee_category_id'],
             'user_id'         => $validated['user_id'],
             'amount'          => $validated['amount'],
             'paid_on'         => $validated['paid_on'] ?? now()->toDateString(),

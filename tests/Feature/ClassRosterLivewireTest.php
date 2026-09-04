@@ -2,6 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\MustBePrivilege;
+use App\Http\Middleware\MustBeSchoolAdmin;
+use App\Http\Middleware\MustBeTeacher;
+use App\Http\Middleware\VerifyCsrfToken;
 use App\Livewire\ClassRoster\Index;
 use App\Livewire\ClassRoster\Show;
 use App\Models\AcademicYear;
@@ -25,6 +29,13 @@ class ClassRosterLivewireTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->withoutMiddleware([
+            VerifyCsrfToken::class,
+            MustBePrivilege::class,
+            MustBeSchoolAdmin::class,
+            MustBeTeacher::class,
+        ]);
 
         DB::table('usergroups')->upsert([
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
@@ -140,6 +151,39 @@ class ClassRosterLivewireTest extends TestCase
             ])
             ->assertSee('Full Roster Student')
             ->assertSee('Academic status');
+    }
+
+    public function test_admin_classes_http_page_renders_roster_in_layout(): void
+    {
+        $school = $this->school('http-roster');
+        $year = $this->year($school);
+        $admin = $this->admin($school);
+        $section = $this->section($school, 'P.7');
+        $standard = $this->standard($school);
+        $this->stream($school, $year, $standard, $section, null, 'A');
+
+        $this->actingAs($admin)
+            ->get(route('admin.classes.index'))
+            ->assertOk()
+            ->assertSee('Classes &amp; streams', false)
+            ->assertSee('P.7')
+            ->assertSee('Open roster');
+    }
+
+    public function test_teacher_classes_http_page_renders_roster_in_layout(): void
+    {
+        $school = $this->school('teacher-http');
+        $year = $this->year($school);
+        $teacher = $this->teacher($school, 'CT Teacher');
+        $section = $this->section($school, 'P.4', $teacher->id);
+        $standard = $this->standard($school);
+        $this->stream($school, $year, $standard, $section, $teacher->id, 'A');
+
+        $this->actingAs($teacher)
+            ->get(route('teacher.classes.index'))
+            ->assertOk()
+            ->assertSee('Classes &amp; streams', false)
+            ->assertSee('P.4');
     }
 
     private function school(string $suffix): School

@@ -19,7 +19,7 @@ class RecordPaymentTool implements Tool, VerifiableTool
 
     public function description(): Stringable|string
     {
-        return 'Record a fee payment for a student. Provide student_id, amount, and optionally payment_method (cash, cheque, mobile_money, bank_transfer).';
+        return 'Record a fee payment for a student. Provide student_id, amount, fee_category_id, and optionally payment_method (cash, cheque, mobile_money, bank_transfer).';
     }
 
     public function schema(JsonSchema $schema): array
@@ -27,8 +27,8 @@ class RecordPaymentTool implements Tool, VerifiableTool
         return [
             'student_id' => $schema->integer()->required(),
             'amount' => $schema->number()->min(1)->required(),
+            'fee_category_id' => $schema->integer()->required(),
             'payment_method' => $schema->string()->enum(['cash', 'cheque', 'mobile_money', 'bank_transfer'])->nullable(),
-            'fee_category_id' => $schema->integer()->nullable(),
             'reference' => $schema->string()->nullable(),
             'paid_on' => $schema->string()->nullable(),
             'notes' => $schema->string()->nullable(),

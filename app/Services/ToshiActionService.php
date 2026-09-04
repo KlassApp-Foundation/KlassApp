@@ -912,11 +912,12 @@ class ToshiActionService
         }
 
         $feeCategoryId = !empty($data['fee_category_id']) ? (int)$data['fee_category_id'] : null;
-        if ($feeCategoryId) {
-            $feeCat = FeesCategories::where('school_id', $schoolId)->where('id', $feeCategoryId)->first();
-            if (!$feeCat) {
-                return self::result(false, 'Fee category not found.');
-            }
+        if (!$feeCategoryId) {
+            return self::result(false, 'A fee category is required to record a payment.');
+        }
+        $feeCat = FeesCategories::where('school_id', $schoolId)->where('id', $feeCategoryId)->first();
+        if (!$feeCat) {
+            return self::result(false, 'Fee category not found.');
         }
 
         try {

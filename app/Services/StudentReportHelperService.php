@@ -119,13 +119,13 @@ return $total;
   {
       return SchoolGradingSystem::where('school_id', $exam->school_id)
           ->where('standard_id', $exam->standard_id)
-          ->whereNotNull('points')
-          ->exists();
+          ->get()
+          ->contains(fn ($row) => \App\Helpers\GradingHelper::effectivePoints($row) !== null);
   }
 
   private function rankByAggregate($learners, $exam){
       $learners = $learners->map(function ($l) use ($exam) {
-          $l->total = $this->grade($l, $exam)['agg'];
+          $l->total = $this->grade($l, $exam)['agg'] ?? PHP_INT_MAX;
           return $l;
       });
       $sorted = $learners->sortBy('total')->values();
@@ -176,7 +176,8 @@ return $total;
   }
 
    public function grade($learner, $exam){
-         $agg = 0;   
+         $agg = 0;
+         $counted = 0;
          $remark = null;
          foreach($learner->marks as $mark){
              if ($mark->marks === null) continue;
@@ -192,12 +193,15 @@ return $total;
                      ->first();
              if (!$gradeMapping) continue;
 
-             if ($gradeMapping->points !== null) {
-                 $agg += $gradeMapping->points;
+             $points = \App\Helpers\GradingHelper::effectivePoints($gradeMapping);
+             if ($points !== null) {
+                 $agg += $points;
+                 $counted++;
              }
              $remark[] = $gradeMapping;
-         }         
-         return ["agg" => $agg, "remark" => $remark];
+         }
+         // 0 with no counted subjects means "no aggregate", not a real total of zero.
+         return ["agg" => $counted > 0 ? $agg : null, "remark" => $remark, "counted" => $counted];
      }
 //   grading school system
 // public function grade(int $mark, int $schoolId, Exam $exam){

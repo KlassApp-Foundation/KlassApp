@@ -248,8 +248,9 @@ class StudentReportCardService
                 $mark = $learner->marks->where('subject_id', $subject->id)->firstWhere('exam_id', $exam->id);
                 if ($mark && $mark->marks !== null) {
                     $g = $gradingSystem->first(fn ($gs) => $gs->min_score <= (float) $mark->marks && $gs->max_score >= (float) $mark->marks);
-                    if ($g && $g->points !== null) {
-                        $sum += (int) $g->points;
+                    $points = $g ? \App\Helpers\GradingHelper::effectivePoints($g) : null;
+                    if ($points !== null) {
+                        $sum += $points;
                         $counted++;
                     }
                 }
@@ -361,6 +362,7 @@ class StudentReportCardService
             'midCount' => $midExams->count(), 'eotCount' => $eotExams->count(),
             'stdLink' => $stdLink,
             'total' => $total, 'grade' => $grade, 'examinedSubjectCount' => $examinedSubjectCount,
+            'eotAgg' => $eotPoints['points'] ?? ($grade['agg'] ?? null),
             'school' => $school,
             'schoolIdentity' => $schoolIdentity,
             'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
