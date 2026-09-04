@@ -336,14 +336,18 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 5, 2026 (`origin/main` tip `d46b50d1` — **#429 MERGED + DEPLOYED** UI Review secondary demo; live-verify pass ✅)
+## Current Status: September 5, 2026 (`origin/main` tip `1e124901` — **#430 MERGED + DEPLOYED** secondary demo onboarding unblock)
+
+- **✅ [#430](https://github.com/KlassApp-Foundation/KlassApp/pull/430)** → merge `1e124901` — `ensureOnboardingUnblocked()` on `schools:setup-ui-review-secondary-demo` (admin WhatsAppUser + CurrentPlan) so Toshi overlay does not block dashboards on re-run.
+- **✅ Deploy** `scripts/deploy-manual.sh` from `KlassApp-main-local` — `[8/8] ✅ SHA match`; live re-run shows `onboarding.admin_whatsapp: true`, `onboarding.current_plan: true`, gender 3F/2M.
+- **Prior**: [#429](https://github.com/KlassApp-Foundation/KlassApp/pull/429) `d46b50d1` — secondary demo school **171** + tuition O'/A'Level labels + primary gender fill; live-verify `e2e/screenshots/ui-review-secondary-demo/REPORT.json` pass 16/16.
+
+## Previous: September 5, 2026 (`origin/main` tip `d46b50d1` — **#429 MERGED + DEPLOYED** UI Review secondary demo)
 
 - **✅ [#429](https://github.com/KlassApp-Foundation/KlassApp/pull/429)** → merge `d46b50d1` — separate persistent **UI Review Secondary Demo School** (`o_a_level`, school **171**); `FeesCategories::labeledName()` for O'/A'Level; primary demo gender backfill.
-- **Decision**: Do **not** extend school 124 (`primary_nursery`) — `SchoolCategorySeeder::CATEGORIES` are mutually exclusive.
-- **Logins** (`UiReview2026!`): `admin@uireview-secondary.klassapp.demo`, `classteacher@…`, `subjectteacher@…`.
-- **Gender**: school **124** = 6F/6M; school **171** = 3F/2M (Girls/Boys live on dashboard after WA + CurrentPlan unblock).
-- **Live verify**: `e2e/screenshots/ui-review-secondary-demo/REPORT.json` (`pass: true`, 16/16); S.4 Diana PDF `diana-s4-report.pdf` / `.txt` — school identity + Senior Four correct.
-- **Follow-up (local, not yet on main)**: `ensureOnboardingUnblocked()` on secondary Artisan command (admin WhatsAppUser + CurrentPlan) so re-runs don't leave Toshi overlay blocking the dashboard. Prod school 171 already unblocked live for walkthrough.
+- **Decision**: Do **not** extend school 124 (`primary_nursery`) — categories mutually exclusive.
+- **Gender**: school **124** = 6F/6M; school **171** = 3F/2M.
+- **Follow-up**: shipped as **#430** (no longer local-only).
 
 ## Previous: September 4, 2026 (`origin/main` tip `400e907a` — **#428 MERGED + DEPLOYED** known-gaps Round 3)
 
@@ -1155,13 +1159,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-05: Secondary demo onboarding unblock — **MERGED + DEPLOYED**
+- **PR**: [#430](https://github.com/KlassApp-Foundation/KlassApp/pull/430) → merge `1e124901`.
+- **Deploy**: `[8/8] ✅ SHA match`; artisan re-run confirms `admin_whatsapp` + `current_plan` true.
+- **Status**: ✅ Truly closed for verification sweep / walkthrough.
+
 ### 2026-09-05: Secondary UI Review demo + gender + live verify — **READY FOR WALKTHROUGH**
 - **Decision**: Separate school (`o_a_level`) not extend 124 — categories mutually exclusive.
-- **Shipped**: [#429](https://github.com/KlassApp-Foundation/KlassApp/pull/429) merge `d46b50d1` — `schools:setup-ui-review-secondary-demo`, tuition O'/A'Level labels, primary gender fill.
-- **Blind spot closed**: First fail was secondary dashboard still behind Toshi (missing admin WhatsApp + CurrentPlan). Prod 171 unblocked live; command gain `ensureOnboardingUnblocked()` locally (tests 2 passed / 22 assertions via PHPStorm terminal).
-- **Live evidence**: `e2e/screenshots/ui-review-secondary-demo/` — REPORT `pass: true` (16/16); gender 6/6 primary + 3/2 secondary; classes S.4/S.6; tuition labels; CT/subject dashboards; wizard; Diana S.4 PDF school identity.
-- **Tooling note**: Prefer PHPStorm MCP + Laravel Boost (search-docs, Laravel Idea models, inspections). Boost `database-query` hits local `klassapp_local` (empty) — prod evidence still needs SSH.
-- **Status**: ✅ Walkthrough-ready; ship follow-up PR for durable onboarding unblock on command re-run.
+- **Shipped**: [#429](https://github.com/KlassApp-Foundation/KlassApp/pull/429) merge `d46b50d1` — secondary demo + tuition labels + primary gender fill.
+- **Blind spot closed**: Toshi overlay (WA + plan) — closed durably via **#430**.
+- **Live evidence**: `e2e/screenshots/ui-review-secondary-demo/` — REPORT `pass: true` (16/16).
+- **Status**: ✅ Walkthrough-ready; **#430** deployed.
 
 ### 2026-09-04: Known-gaps Round 3 (classes / AGG / payments / teacher redirect / settings / gender) — **MERGED + DEPLOYED**
 - **Work done**: Investigated all six gaps with prod evidence (school 124 + SSH). Fixed 1–5; item 6 is data-only (10 students `gender=null`, Unspecified=10 already).
