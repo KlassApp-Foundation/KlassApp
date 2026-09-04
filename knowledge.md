@@ -336,12 +336,17 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 4, 2026 (`fix/report-card-school-identity-and-alpine-shorthand` — shipping P0 identity leak + Alpine shorthand)
+## Current Status: September 4, 2026 (`origin/main` tip `81317bbd` — **#425 MERGED + DEPLOYED** report-card identity + Alpine shorthand)
 
-- **P0 in flight**: report-card Kabale footer/header identity leak — `StudentReportCardService::resolveSchoolIdentity()` + formal/warm/modern templates consume per-school name/address/phones/UNEB/motto (omit blank UNEB). Tests: `ReportCardSchoolIdentityTest` (3 passed).
-- **Also**: Alpine Vue-compat shorthand converted to `x-on:`/`x-bind:` on accountant payroll sidebar toggle, batch payroll (`:disabled="!canPreview"`), superadmin school-list filters.
-- **Prior tip on `main`**: `65788a76` (Toshi outside `#app`). Piece C #423/#424 still live.
-- **⏸️ Auth/error Open Design** still paused (unchanged).
+- **✅ [#425](https://github.com/KlassApp-Foundation/KlassApp/pull/425)** → merge `81317bbd` — P0 report-card school identity leak fixed (`resolveSchoolIdentity` + formal/warm/modern); Alpine Vue-shorthand → `x-on:`/`x-bind:` on accountant payroll sidebar, batch payroll, superadmin school-list filters.
+- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match` (`81317bbd`).
+- **✅ Live verify**: school **124** footer = `UI Review Demo School, UNEB Center No. U0001 Tel: +256700119900` (no Kabale). School **104** PDF clean of hardcoded `+256782255758` / Box 283 / HARD WORK PAYS; uses real `+256779715931` + `U100140`. School **102** Bukoto Springs PDF: name present, Kabale Junior / hardcode phones **clean**.
+- **⏸️ Auth/error Open Design** still paused.
+- **Still open (templates)**: WABA — 4 APPROVED + AUTH; 2 REJECTED unchanged.
+
+## Previous: September 4, 2026 (`fix/report-card-school-identity-and-alpine-shorthand` — shipping P0 identity leak + Alpine shorthand) — superseded above
+
+- Shipped via [#425](https://github.com/KlassApp-Foundation/KlassApp/pull/425).
 
 ## Previous: September 3, 2026 (`origin/main` tip `65788a76` — Piece C **#423/#424** live; auth-error Open Design **PAUSED**) — superseded above
 
