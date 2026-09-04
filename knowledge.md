@@ -336,11 +336,18 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 4, 2026 (`origin/main` tip `f7183955` — **#426 MERGED + DEPLOYED** known-gaps 1–3)
+## Current Status: September 4, 2026 (`origin/main` tip `59efe2e6` — **#427 MERGED + DEPLOYED** known-gaps OTP + parent pages)
+
+- **✅ [#427](https://github.com/KlassApp-Foundation/KlassApp/pull/427)** → merge `59efe2e6` — wizard WhatsApp OTP via shared `WhatsAppOnboardingOtpService` (same generate/deliver/match as Toshi); parent Fees/Grades/Attendance Blade pages over `ParentPortalService`; FullName matching confirmed unaffected (`users.name` LIKE).
+- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`; live browser verify `e2e/screenshots/known-gaps-otp-parent-pages/REPORT.json` (`pass: true`).
+- **✅ FullName matching**: `ParentLinkRequestService::findCandidateStudents` / `searchStudentsForAdmin`, EntityResolver, Toshi student find — all query `users.name` (or IDs), not `FullName`. Digit-suffix display cleanup does not change match accuracy.
+- **⏸️ Auth/error Open Design** still paused.
+
+## Previous: September 4, 2026 (`origin/main` tip `f7183955` — **#426 MERGED + DEPLOYED** known-gaps 1–3) — superseded above
 
 - **✅ [#426](https://github.com/KlassApp-Foundation/KlassApp/pull/426)** → merge `f7183955` — WABA `+256793844906`; digit-suffix `displayName`/`FullName`/PDF filenames; wizard Previous + remount lands on first incomplete (incl. optional teachers/students).
 - **✅ Deploy** SHA match `f7183955`; live `wa.me/256793844906`.
-- **Still open**: (4) wizard WhatsApp-verify OTP — Toshi `handleWhatsAppVerify` has real OTP; wizard `OnboardingEngine::saveWhatsApp` still sets `verified_at` immediately with no OTP. (5) parent child Fees/Grades/Attendance — `ChildDataController` returns JSON only; need Blade wrappers over `ParentPortalService`.
+- **Closed by #427**: wizard WhatsApp OTP; parent child Fees/Grades/Attendance Blade wrappers.
 
 ## Previous: September 4, 2026 (`origin/main` tip `81317bbd` — **#425 MERGED + DEPLOYED** + **Fix 2 runtime-verified on prod**) — superseded above
 
