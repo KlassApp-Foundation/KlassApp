@@ -109,6 +109,50 @@ class GradingHelper
     }
 
     /**
+     * Aggregate points for a grading-system row.
+     * Prefer explicit `points`; fall back to a numeric `grade` label (primary 1–9
+     * bands were historically seeded with points=null while grade held the band).
+     */
+    public static function effectivePoints(object $gradingRow): ?int
+    {
+        if (isset($gradingRow->points) && $gradingRow->points !== null && $gradingRow->points !== '') {
+            return (int) $gradingRow->points;
+        }
+
+        $grade = isset($gradingRow->grade) ? trim((string) $gradingRow->grade) : '';
+        if ($grade !== '' && ctype_digit($grade)) {
+            return (int) $grade;
+        }
+
+        return null;
+    }
+
+    /**
+     * UNEB-style AGG cell label, e.g. "C3". Returns null when the row has no
+     * numeric aggregate points (descriptive nursery / O-level letter scales).
+     */
+    public static function formatAggLabel(?object $gradingRow, array $gradeLetters = []): ?string
+    {
+        if ($gradingRow === null) {
+            return null;
+        }
+
+        $points = self::effectivePoints($gradingRow);
+        if ($points === null) {
+            return null;
+        }
+
+        $defaultLetters = [
+            1 => 'D', 2 => 'D', 3 => 'C', 4 => 'C', 5 => 'C',
+            6 => 'C', 7 => 'P', 8 => 'P', 9 => 'F',
+        ];
+        $letters = $gradeLetters !== [] ? $gradeLetters : $defaultLetters;
+        $letter = $letters[$points] ?? $letters[(string) $points] ?? 'D';
+
+        return $letter.$points;
+    }
+
+    /**
      * Get the applicable grade for a raw percentage mark, given the
      * student's school and standard.
      *

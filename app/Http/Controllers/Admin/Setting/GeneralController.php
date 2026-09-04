@@ -7,8 +7,9 @@ namespace App\Http\Controllers\Admin\Setting;
 
 use App\Http\Requests\SettingGeneralRequest;
 use App\Http\Controllers\Controller;
+use App\Models\School;
 use App\Traits\SettingProcess;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Traits\Common;
 use Exception;
 
@@ -38,8 +39,13 @@ class GeneralController extends Controller
     {
         try
         {
-            $this->updatesettings('sitetitle',$request->sitetitle);
-            $this->updatesettings('sitename',$request->sitename);
+            $this->updatesettings('sitetitle', $request->sitetitle);
+
+            $school = School::where('id', Auth::user()->school_id)->first();
+            if ($school) {
+                $school->name = $request->school_name;
+                $school->save();
+            }
 
             if (($request->sitelogo)==null)
             {
@@ -63,7 +69,7 @@ class GeneralController extends Controller
                 $this->updatesettings('favicon',$faviconpath);
             }
 
-            return redirect()->back();
+            return redirect()->back()->with('successmessage', 'Settings saved.');
         }
         catch(Exception $e)
         {

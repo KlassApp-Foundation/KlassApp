@@ -37,15 +37,15 @@ return [
     | in knowledge.md as a future per-section grading enhancement — not seeded.
     */
     'primary' => [
-        ['grade' => '1', 'points' => null, 'min_score' => 95, 'max_score' => 100, 'remark' => 'Excellent'],
-        ['grade' => '2', 'points' => null, 'min_score' => 85, 'max_score' => 94,  'remark' => 'V.Good'],
-        ['grade' => '3', 'points' => null, 'min_score' => 75, 'max_score' => 84,  'remark' => 'Good'],
-        ['grade' => '4', 'points' => null, 'min_score' => 65, 'max_score' => 74,  'remark' => 'F.Good/Q.Good'],
-        ['grade' => '5', 'points' => null, 'min_score' => 60, 'max_score' => 64,  'remark' => 'Promising'],
-        ['grade' => '6', 'points' => null, 'min_score' => 50, 'max_score' => 59,  'remark' => 'Fair'],
-        ['grade' => '7', 'points' => null, 'min_score' => 45, 'max_score' => 49,  'remark' => 'Work hard'],
-        ['grade' => '8', 'points' => null, 'min_score' => 40, 'max_score' => 44,  'remark' => 'Aim higher'],
-        ['grade' => '9', 'points' => null, 'min_score' => 0,  'max_score' => 39,  'remark' => 'More effort'],
+        ['grade' => '1', 'points' => 1, 'min_score' => 95, 'max_score' => 100, 'remark' => 'Excellent'],
+        ['grade' => '2', 'points' => 2, 'min_score' => 85, 'max_score' => 94,  'remark' => 'V.Good'],
+        ['grade' => '3', 'points' => 3, 'min_score' => 75, 'max_score' => 84,  'remark' => 'Good'],
+        ['grade' => '4', 'points' => 4, 'min_score' => 65, 'max_score' => 74,  'remark' => 'F.Good/Q.Good'],
+        ['grade' => '5', 'points' => 5, 'min_score' => 60, 'max_score' => 64,  'remark' => 'Promising'],
+        ['grade' => '6', 'points' => 6, 'min_score' => 50, 'max_score' => 59,  'remark' => 'Fair'],
+        ['grade' => '7', 'points' => 7, 'min_score' => 45, 'max_score' => 49,  'remark' => 'Work hard'],
+        ['grade' => '8', 'points' => 8, 'min_score' => 40, 'max_score' => 44,  'remark' => 'Aim higher'],
+        ['grade' => '9', 'points' => 9, 'min_score' => 0,  'max_score' => 39,  'remark' => 'More effort'],
     ],
 
     /*

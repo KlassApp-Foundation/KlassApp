@@ -17,7 +17,7 @@ class RecordPaymentTool implements Tool, VerifiableTool
 
     public function description(): string
     {
-        return 'Record a fee payment for a student. Provide student ID, amount, and optionally method (cash, cheque, mobile_money, bank_transfer). Default method is cash.';
+        return 'Record a fee payment for a student. Provide student ID, amount, fee category ID, and optionally method (cash, cheque, mobile_money, bank_transfer). Default method is cash.';
     }
 
     public function schema(JsonSchema $schema): array
@@ -25,6 +25,7 @@ class RecordPaymentTool implements Tool, VerifiableTool
         return [
             'studentId' => $schema->integer()->description('Student user ID'),
             'amount' => $schema->number()->min(0)->description('Amount paid in UGX'),
+            'fee_category_id' => $schema->integer()->description('Fee category ID to attribute the payment to'),
             'payment_method' => $schema->string()->enum(['cash', 'cheque', 'mobile_money', 'bank_transfer'])->description('Payment method')->nullable(),
         ];
     }
@@ -38,6 +39,7 @@ class RecordPaymentTool implements Tool, VerifiableTool
         $args = [
             'student_id' => $request->get('studentId'),
             'amount' => $request->get('amount'),
+            'fee_category_id' => $request->get('fee_category_id'),
             'payment_method' => $request->get('payment_method', 'cash'),
         ];
 

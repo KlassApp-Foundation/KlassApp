@@ -38,6 +38,8 @@ class AccountantOperationsToolsTest extends TestCase
 
     private int $schoolId;
 
+    private int $feeCategoryId;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -94,6 +96,25 @@ class AccountantOperationsToolsTest extends TestCase
             'email' => 'staff.acct@test.sch.ug',
             'name' => 'Payroll Staff',
         ]);
+
+        $standardId = DB::table('standards')->insertGetId([
+            'school_id' => $this->schoolId,
+            'name' => 'primary',
+            'order' => 1,
+            'status' => '1',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->feeCategoryId = (int) DB::table('fees_categories')->insertGetId([
+            'school_id' => $this->schoolId,
+            'standard_id' => $standardId,
+            'section_id' => null,
+            'name' => 'Tuition',
+            'amount' => 450000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     public function test_accountant_agent_tools_exclude_school_admin_tools(): void
@@ -138,16 +159,25 @@ class AccountantOperationsToolsTest extends TestCase
         $ok = (new RecordPaymentTool)->handle(new Request([
             'student_id' => $this->student->id,
             'amount' => 50000,
+            'fee_category_id' => $this->feeCategoryId,
             'payment_method' => 'cash',
         ]));
         $this->assertStringStartsWith('✅', $ok);
-        $this->assertTrue(FeePayment::where('user_id', $this->student->id)->where('amount', 50000)->exists());
+        $this->assertTrue(FeePayment::where('user_id', $this->student->id)->where('amount', 50000)->where('fee_category_id', $this->feeCategoryId)->where('recorded_by', $this->accountant->id)->exists());
 
         $bad = (new RecordPaymentTool)->handle(new Request([
             'student_id' => $this->student->id,
             'amount' => -1,
+            'fee_category_id' => $this->feeCategoryId,
         ]));
         $this->assertStringStartsWith('❌', $bad);
+
+        $missingCategory = (new RecordPaymentTool)->handle(new Request([
+            'student_id' => $this->student->id,
+            'amount' => 25000,
+            'payment_method' => 'cash',
+        ]));
+        $this->assertStringStartsWith('❌', $missingCategory);
 
         ToshiActionService::$bypassConfirm = false;
     }
@@ -161,6 +191,7 @@ class AccountantOperationsToolsTest extends TestCase
         $result = (new RecordPaymentTool)->handle(new Request([
             'student_id' => $this->student->id,
             'amount' => 10000,
+            'fee_category_id' => $this->feeCategoryId,
             'payment_method' => 'mobile_money',
         ]));
 
@@ -264,6 +295,7 @@ class AccountantOperationsToolsTest extends TestCase
                 'args' => [
                     'student_id' => $this->student->id,
                     'amount' => 25000,
+                    'fee_category_id' => $this->feeCategoryId,
                     'payment_method' => 'cash',
                 ],
             ])

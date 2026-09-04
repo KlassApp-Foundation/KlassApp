@@ -46,7 +46,7 @@ class AccountantActionService
         $v = Validator::make($data, [
             'student_id' => 'required|integer',
             'amount' => 'required|numeric|min:1',
-            'fee_category_id' => 'nullable|integer',
+            'fee_category_id' => 'required|integer',
             'payment_method' => 'nullable|string|max:50',
             'reference' => 'nullable|string|max:255',
             'paid_on' => 'nullable|date',
@@ -65,12 +65,10 @@ class AccountantActionService
             return self::result(false, 'Student not found in your school.');
         }
 
-        $feeCategoryId = ! empty($data['fee_category_id']) ? (int) $data['fee_category_id'] : null;
-        if ($feeCategoryId) {
-            $feeCat = FeesCategories::where('school_id', $schoolId)->where('id', $feeCategoryId)->first();
-            if (! $feeCat) {
-                return self::result(false, 'Fee category not found.');
-            }
+        $feeCategoryId = (int) $data['fee_category_id'];
+        $feeCat = FeesCategories::where('school_id', $schoolId)->where('id', $feeCategoryId)->first();
+        if (! $feeCat) {
+            return self::result(false, 'Fee category not found.');
         }
 
         $payment = FeePayment::create([

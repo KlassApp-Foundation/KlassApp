@@ -28,8 +28,12 @@
             placeholder="e.g. 250000"
             :error="$errors->first('amount') ?? null" />
 
-        <x-form-group label="Fee Category" name="fee_category_id" type="select"
-            :options="[ '' => '-- None (general payment) --'] + $feeCategories->pluck('name', 'id')->toArray()"
+        <x-form-group label="Fee Category" name="fee_category_id" type="select" required
+            :options="['' => 'Select fee category...'] + $feeCategories->mapWithKeys(function ($fee) {
+                $tier = optional($fee->standard)->name;
+                $label = $fee->name.($tier ? ' ('.$tier.')' : '');
+                return [$fee->id => $label.' — '.number_format((float) $fee->amount, 0).' UGX'];
+            })->toArray()"
             :error="$errors->first('fee_category_id') ?? null" />
 
         <x-form-group label="Payment Method" name="payment_method" type="select"

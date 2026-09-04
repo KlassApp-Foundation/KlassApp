@@ -274,7 +274,7 @@
                                 $midGrade = '-';
                                 if ($midMark && $midMark->marks !== null) {
                                     $g = $grading_system->first(fn($gs) => $gs->min_score <= $midMark->marks && $gs->max_score >= $midMark->marks);
-                                    $midGrade = $g ? ($gradeLetters[$g->points] ?? 'D') . $g->points : '-';
+                                    $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                                 }
                             @endphp
                             <td>{{ $midMark && $midMark->marks !== null ? floor($midMark->marks) : '-' }}</td>
@@ -310,7 +310,7 @@
                     $eotComment = '-';
                     if ($hasEotMarks) {
                         $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
-                        $eotGrade = $g ? ($gradeLetters[$g->points] ?? 'D') . $g->points : '-';
+                        $eotGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                         $eotComment = $g ? $g->remark : '-';
                     }
                     $teacherLink = \App\Models\Teacherlink::where('standardLink_id', $stdLink->id)
@@ -337,7 +337,7 @@
                 <td class="left"><strong>TOTAL</strong></td>
                 <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
                 <td><strong>{{ $total }}</strong></td>
-                @if ($showAgg) <td><strong>{{ $grade['agg'] ?? '-' }}</strong></td> @endif
+                @if ($showAgg) <td><strong>{{ $eotAgg ?? ($grade['agg'] ?? '-') }}</strong></td> @endif
                 <td colspan="2"></td>
             </tr>
             @if ($showAgg)

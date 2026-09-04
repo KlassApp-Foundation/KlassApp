@@ -25,8 +25,8 @@ class SettingGeneralRequest extends FormRequest
     {
         return [
 
-             'sitetitle'=>'required',
-             'sitename'=>'required',
+             'sitetitle'=>'required|string|max:255',
+             'school_name'=>'required|string|max:255',
              //'sitelogo'=>'required|mimes:jpeg,png|max:2048',
             // 'favicon'=>'required|mimes:jpeg,png|max:2048',
 
@@ -39,7 +39,7 @@ class SettingGeneralRequest extends FormRequest
         return[
 
            'sitetitle.required'=> 'Site Title Required',
-           'sitename.required'=> 'Site Name Required',
+           'school_name.required'=> 'School Name Required',
            //'sitelogo.required'=>__('sites.sitelogo'),
            //'sitelogo.mimes'=>__('sites.sitelogo_mimes'),
            //'favicon.required'=>__('sites.favicon'),

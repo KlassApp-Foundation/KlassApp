@@ -31,9 +31,15 @@
             <td>{{ number_format($payment->amount, 0) }} UGX</td>
             <td>{{ $payment->payment_method ?? '-' }}</td>
             <td><code>{{ $payment->reference ?? '-' }}</code></td>
-            <td>{{ $payment->feeCategory->name ?? '-' }}</td>
+            <td>
+                @if($payment->feeCategory)
+                    {{ $payment->feeCategory->name }}@if(optional($payment->feeCategory->standard)->name) ({{ $payment->feeCategory->standard->name }})@endif
+                @else
+                    —
+                @endif
+            </td>
             <td>{{ \Carbon\Carbon::parse($payment->paid_on)->format('d M Y') }}</td>
-            <td>{{ $payment->recordedBy->name ?? '—' }}</td>
+            <td>{{ $payment->recorder->name ?? '—' }}</td>
         </tr>
         @endforeach
     </x-table>

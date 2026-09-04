@@ -336,7 +336,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 4, 2026 (`origin/main` tip `59efe2e6` — **#427 MERGED + DEPLOYED** known-gaps OTP + parent pages)
+## Current Status: September 4, 2026 (`fix/known-gaps-round-3` — Round 3 known-gaps, opening PR)
+
+- **Round 3**: `/admin/classes` empty (layout yield); report TOTAL AGG 0 (null points); payment Recorded-by + required fee category + Tuition-per-standard labels; teacher → `/teacher/dashboard`; Settings School Name from `schools.name`; gender Girls/Boys 0 = null gender data (no code fix).
+- **Tests**: 23 passed (AGG, class roster, teacher redirect, fee payment, school settings, accountant tools).
+
+## Previous: September 4, 2026 (`origin/main` tip `59efe2e6` — **#427 MERGED + DEPLOYED** known-gaps OTP + parent pages)
 
 - **✅ [#427](https://github.com/KlassApp-Foundation/KlassApp/pull/427)** → merge `59efe2e6` — wizard WhatsApp OTP via shared `WhatsAppOnboardingOtpService` (same generate/deliver/match as Toshi); parent Fees/Grades/Attendance Blade pages over `ParentPortalService`; FullName matching confirmed unaffected (`users.name` LIKE).
 - **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match`; live browser verify `e2e/screenshots/known-gaps-otp-parent-pages/REPORT.json` (`pass: true`).
@@ -1140,11 +1145,31 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-04: Known-gaps Round 3 (classes / AGG / payments / teacher redirect / settings / gender) — opening PR
+- **Work done**: Investigated all six gaps with prod evidence (school 124 + SSH). Fixed 1–5; item 6 is data-only (10 students `gender=null`, Unspecified=10 already).
+- **1 Classes empty**: `class-roster/{index,show}.blade.php` extended `layouts.app` and filled `content`, but app layout yields `base-content` — switched to admin/teacher role layouts.
+- **2 TOTAL AGG 0**: Primary bands seeded `points=null`; subject cells fell back oddly while TOTAL summed only `points`. `GradingHelper::effectivePoints`/`formatAggLabel`, helper + templates, config points 1–9, migration backfill.
+- **3 Payments**: View used `$payment->recordedBy` but relation is `recorder()`; fee category was optional (now required school-scoped); duplicate Tuition 35/36 is intentional one-per-Standard (`saveFeeSchoolWide`) — UI now labels `(nursery)`/`(primary)`.
+- **4 Teacher redirect**: `LoginController::redirectTo` + `RedirectIfAuthenticated` now send ug5 to `/teacher/dashboard` (was `/admin/dashboard` bounce; fragile intended-URL path could 404).
+- **5 Settings School-Plus**: Form bound to platform `settings.sitename` seeder value; now edits `schools.name` as “School Name”.
+- **6 Gender**: No code change — same donut with Unspecified; demo students lack gender.
+- **Files**: class-roster blades, GradingHelper, StudentReport* services/templates, `config/grading_uganda.php`, grading points migration, FeePayment controllers/views, Toshi/Accountant recordPayment, LoginController, RedirectIfAuthenticated, GeneralController + settings request/view, tests listed in Current Status.
+- **Status**: Branch `fix/known-gaps-round-3`; PR opening.
+
+### 2026-09-04: Known-gaps items 4–5 + FullName matching check — **MERGED + DEPLOYED + LIVE-VERIFIED**
+- **FullName matching**: Unaffected. Identification uses `users.name` LIKE / IDs (`ParentLinkRequestService`, EntityResolver, Toshi). `FullName`/`displayName` are display-only. Test: `ParentLinkFullNameMatchingUnaffectedTest`.
+- **WhatsApp OTP**: `WhatsAppOnboardingOtpService` shared by AgentToshi + ManualOnboardingWizard. Wizard: send → verify (session-stored code, `#[Locked] whatsappVerified`) before Next/`saveWhatsApp`. Wrong OTP rejected; correct advances.
+- **Parent pages**: `ChildDataController` → Blade (`child-fees`/`child-grades`/`child-attendance`) + shared dashboard partials; no `ParentPortalService` changes.
+- **PR**: [#427](https://github.com/KlassApp-Foundation/KlassApp/pull/427) → merge `59efe2e6`.
+- **Tests**: 14 passed (OTP, duplicate phone, parent pages, isolation, FullName matching).
+- **Live**: Playwright `e2e/known-gaps-otp-parent-pages-verify.cjs` → `REPORT.json` pass; screenshots under `e2e/screenshots/known-gaps-otp-parent-pages/`. Synthetic verify admin **3845** flagged `inactive` after.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
+
 ### 2026-09-04: Known-gaps round 2 items 1–3 — shipping
 - **Work done**: (1) Replaced stale WABA `+256765275289` → `+256793844906` in config default, phpunit, provision script, docs, seeder; **prod `.env` updated live** — homepage `wa.me/256793844906`. (2) `User::FullName` digit-strip; `displayNameFilenameSlug()` for PDF/zip names; Blade/Livewire/API display surfaces → `displayName`. (3) Wizard mount uses `nextIncompleteStep` (not blocking-only) so reload no longer skips Teachers/Students; `previous()` key-aware. Tests: `UserDisplayNameTest`, `WizardPreviousFromTeachersTest`, ManualUiWave3.
 - **PR**: [#426](https://github.com/KlassApp-Foundation/KlassApp/pull/426) → merge `f7183955`.
 - **Status**: ✅ MERGED + DEPLOYED
-- **Still open**: wizard WhatsApp OTP (#4); parent child Fees/Grades/Attendance Blade wrappers (#5)
+- **Still open**: closed by #427 (OTP + parent Blade pages)
 
 ### 2026-09-04: Fix 2 Alpine shorthand — **production runtime interaction verify**
 
