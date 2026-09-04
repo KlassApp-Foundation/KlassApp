@@ -84,106 +84,21 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-6">
                 {{-- Fees — mirrors WhatsApp fee balance --}}
                 <x-card title="Fee Balance" padding="none" class="parent-panel" data-testid="parent-fees-panel">
-                    <div class="px-4 md:px-5 py-4">
-                        @if ($fees && !empty($fees['categories']))
-                            <ul class="space-y-3">
-                                @foreach ($fees['categories'] as $category)
-                                    <li class="flex items-start justify-between gap-3 text-sm">
-                                        <span style="color: var(--d-text);">{{ $category['name'] }}</span>
-                                        <span class="font-semibold whitespace-nowrap" style="color: var(--d-text);">
-                                            UGX {{ number_format($category['amount'], 0) }}
-                                        </span>
-                                    </li>
-                                @endforeach
-                            </ul>
-                            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between text-sm font-semibold">
-                                <span>Total outstanding</span>
-                                <span>UGX {{ number_format($fees['total_balance'] ?? 0, 0) }}</span>
-                            </div>
-                            <p class="text-xs mt-3" style="color: var(--d-muted);">
-                                Paid to date: UGX {{ number_format($fees['total_paid'] ?? 0, 0) }}. Contact the school office for payment status.
-                            </p>
-                        @else
-                            <div class="ds-empty-state py-6">
-                                <p class="ds-empty-state-title">No fee structure found</p>
-                                <p class="ds-empty-state-desc">Contact the school office for details.</p>
-                            </div>
-                        @endif
-                    </div>
+                    @include('parent.partials.fees-panel', ['fees' => $fees])
                 </x-card>
 
                 {{-- Attendance — mirrors WhatsApp attendance --}}
                 <x-card title="Attendance" padding="none" class="parent-panel" data-testid="parent-attendance-panel">
-                    <div class="px-4 md:px-5 py-4">
-                        @if ($attendance && ($attendance['total'] ?? 0) > 0)
-                            <div class="flex flex-wrap gap-3 mb-4 text-sm">
-                                <span class="ds-badge ds-badge-sm ds-badge-active">Present {{ $attendance['present'] }}</span>
-                                <span class="ds-badge ds-badge-sm ds-badge-unpaid">Absent {{ $attendance['absent'] }}</span>
-                                <span class="ds-badge ds-badge-sm ds-badge-info">Records {{ $attendance['total'] }}</span>
-                            </div>
-                            @if (!empty($attendance['recent_absences']))
-                                <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--d-muted);">Recent absences</p>
-                                <ul class="space-y-2">
-                                    @foreach ($attendance['recent_absences'] as $row)
-                                        <li class="flex justify-between text-sm">
-                                            <span>{{ $row['date'] }}</span>
-                                            <span style="color: var(--d-muted);">{{ $row['reason'] }}</span>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @else
-                                <p class="text-sm" style="color: var(--d-muted);">No recent absences.</p>
-                            @endif
-                        @else
-                            <div class="ds-empty-state py-6">
-                                <p class="ds-empty-state-title">No attendance yet</p>
-                                <p class="ds-empty-state-desc">Attendance for the last 30 days will appear here once recorded.</p>
-                            </div>
-                        @endif
-                    </div>
+                    @include('parent.partials.attendance-panel', ['attendance' => $attendance])
                 </x-card>
             </div>
 
             {{-- Grades — mirrors WhatsApp grades --}}
             <x-card title="Grades" padding="none" class="parent-panel mt-4 md:mt-6" data-testid="parent-grades-panel">
-                <div class="px-4 md:px-5 py-4">
-                    @if ($grades && !empty($grades['exam_groups']))
-                        @foreach ($grades['exam_groups'] as $group)
-                            <div class="mb-5 last:mb-0">
-                                <h4 class="text-sm font-semibold mb-2" style="font-family: Sora, sans-serif; color: var(--d-text);">
-                                    {{ $group['exam_type'] }}
-                                </h4>
-                                <div class="ds-table-wrap overflow-x-auto">
-                                    <table class="ds-table w-full text-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>Subject</th>
-                                                <th>Score</th>
-                                                <th>Grade</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($group['subjects'] as $subject)
-                                                <tr>
-                                                    <td>{{ $subject['name'] }}</td>
-                                                    <td>{{ $subject['score'] }}/{{ $subject['total'] }}</td>
-                                                    <td>{{ $subject['grade'] }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        @endforeach
-                    @else
-                        <div class="ds-empty-state py-6">
-                            <p class="ds-empty-state-title">No results published</p>
-                            <p class="ds-empty-state-desc">
-                                {{ $panel['grades_message'] ?? 'Results will appear here once the school publishes marks.' }}
-                            </p>
-                        </div>
-                    @endif
-                </div>
+                @include('parent.partials.grades-panel', [
+                    'grades' => $grades,
+                    'emptyMessage' => $panel['grades_message'] ?? null,
+                ])
             </x-card>
         @endif
     @endif

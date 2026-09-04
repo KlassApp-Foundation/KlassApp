@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\TestCase;
 
-class WizardWhatsAppDuplicatePhoneTest extends TestCase
+class WizardWhatsAppOtpTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -45,10 +45,10 @@ class WizardWhatsAppDuplicatePhoneTest extends TestCase
         ]);
 
         $this->school = School::create([
-            'name' => "WA Dup's School",
-            'email' => 'wadup@test.sch.ug',
-            'phone' => '0700000088',
-            'slug' => 'wa-dup-school',
+            'name' => 'OTP Wizard School',
+            'email' => 'otp@test.sch.ug',
+            'phone' => '0700000099',
+            'slug' => 'otp-wizard-school',
             'status' => 1,
             'curriculum' => null,
             'toshi_enabled' => 1,
@@ -57,8 +57,8 @@ class WizardWhatsAppDuplicatePhoneTest extends TestCase
         $this->admin = User::create([
             'school_id' => $this->school->id,
             'usergroup_id' => 3,
-            'name' => 'WA Admin',
-            'email' => 'admin@wadup.sch.ug',
+            'name' => 'OTP Admin',
+            'email' => 'admin@otp.sch.ug',
             'password' => bcrypt('password'),
             'status' => 'active',
             'email_verified' => 1,
@@ -68,7 +68,7 @@ class WizardWhatsAppDuplicatePhoneTest extends TestCase
             'school_id' => $this->school->id,
             'user_id' => $this->admin->id,
             'usergroup_id' => 3,
-            'firstname' => 'WA',
+            'firstname' => 'OTP',
             'lastname' => 'Admin',
         ]);
 
@@ -84,22 +84,12 @@ class WizardWhatsAppDuplicatePhoneTest extends TestCase
         ]);
     }
 
-    public function test_duplicate_whatsapp_phone_shows_validation_not_sql(): void
+    private function advanceToWhatsAppStep()
     {
-        WhatsAppUser::create([
-            'phone' => '+256700555666',
-            'user_id' => null,
-            'school_id' => null,
-            'opted_in' => true,
-            'verified_at' => now(),
-        ]);
-
         $this->actingAs($this->admin);
 
-        $component = Livewire::test(ManualOnboardingWizard::class);
-
-        $component
-            ->set('schoolName', 'WA Dup Academy')
+        return Livewire::test(ManualOnboardingWizard::class)
+            ->set('schoolName', 'OTP Academy')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
@@ -107,39 +97,59 @@ class WizardWhatsAppDuplicatePhoneTest extends TestCase
             ->call('next')
             ->set('schoolCategory', 'primary')
             ->call('next')
-            ->set('ministryCode', 'EMIS-WADUP')
+            ->set('ministryCode', 'EMIS-OTP')
             ->call('next')
             ->call('next') // uneb skip
-            ->call('next') // academic year seeds classes/subjects/grading
+            ->call('next') // academic year
             ->call('next') // teachers skip
             ->call('next') // students skip
-            ->call('next') // terms (defaults)
-            ->call('next') // fees (defaults)
-            ->assertSee('WhatsApp verification')
-            ->set('whatsappPhone', '+256700555666')
+            ->call('next') // terms
+            ->call('next') // fees
+            ->assertSee('WhatsApp verification');
+    }
+
+    public function test_next_blocked_until_otp_verified(): void
+    {
+        $component = $this->advanceToWhatsAppStep()
+            ->set('whatsappPhone', '+256700111222')
+            ->call('next')
+            ->assertSet('errorMessage', 'Verify the code sent to your WhatsApp before continuing.')
+            ->assertSet('whatsappVerified', false);
+
+        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
+        $this->assertStringContainsString('Verify the code', $component->get('errorMessage'));
+    }
+
+    public function test_wrong_otp_does_not_verify(): void
+    {
+        $this->advanceToWhatsAppStep()
+            ->set('whatsappPhone', '+256700111222')
+            ->call('sendWhatsAppVerificationCode')
+            ->set('whatsappOtpInput', '000000')
+            ->call('verifyWhatsAppCode')
+            ->assertSet('whatsappVerified', false)
+            ->assertSet('errorMessage', "That code doesn't match. Try again or send a new code.");
+    }
+
+    public function test_correct_otp_then_next_persists_whatsapp_user(): void
+    {
+        $component = $this->advanceToWhatsAppStep()
+            ->set('whatsappPhone', '+256700111222')
             ->call('sendWhatsAppVerificationCode');
 
         $code = (string) $component->get('whatsappOtpDisplay');
-        $this->assertNotSame('', $code);
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
 
         $component
             ->set('whatsappOtpInput', $code)
             ->call('verifyWhatsAppCode')
             ->assertSet('whatsappVerified', true)
             ->call('next')
-            ->assertSet('errorMessage', 'This WhatsApp number is already registered')
-            ->assertDontSee('SQLSTATE', false)
-            ->assertDontSee('Integrity constraint', false)
-            ->assertDontSee('whatsapp_users_phone_unique', false);
+            ->assertSet('errorMessage', '');
 
-        $html = $component->html();
-        $this->assertStringNotContainsString('SQLSTATE', $html);
-        $this->assertStringNotContainsString('Connection:', $html);
-        $this->assertStringContainsString('This WhatsApp number is already registered', $html);
-
-        $this->assertNull(
-            WhatsAppUser::where('user_id', $this->admin->id)->first(),
-            'Duplicate phone must not create a row for the current admin'
-        );
+        $wa = WhatsAppUser::where('user_id', $this->admin->id)->first();
+        $this->assertNotNull($wa);
+        $this->assertEquals('+256700111222', $wa->phone);
+        $this->assertNotNull($wa->verified_at);
     }
 }

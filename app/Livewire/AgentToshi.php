@@ -4711,10 +4711,12 @@ class AgentToshi extends Component
             return;
         }
 
+        $otpService = app(\App\Services\WhatsApp\WhatsAppOnboardingOtpService::class);
+
         // substep 3: verify OTP
         if ($this->substep === 3) {
             $code = trim($text);
-            if ($code === $this->whatsappSentOtp) {
+            if ($otpService->matches($this->whatsappSentOtp, $code)) {
                 $this->whatsappVerified = true;
                 $this->userSay("✅ Code verified!");
                 $this->botSay("✅ WhatsApp verified for **{$this->whatsappPhone}**! The admin will receive school notifications here.");
@@ -4740,7 +4742,7 @@ class AgentToshi extends Component
                 return;
             }
             $code = trim($text);
-            if ($code === $this->whatsappSentOtp) {
+            if ($otpService->matches($this->whatsappSentOtp, $code)) {
                 $this->whatsappVerified = true;
                 $this->userSay("✅ Code verified!");
                 $this->botSay("✅ WhatsApp verified for **{$this->whatsappPhone}**!");
@@ -4754,7 +4756,8 @@ class AgentToshi extends Component
 
     private function sendWhatsAppOtp()
     {
-        $otp = (string) rand(100000, 999999);
+        $otpService = app(\App\Services\WhatsApp\WhatsAppOnboardingOtpService::class);
+        $otp = $otpService->generateCode();
         $this->whatsappSentOtp = $otp;
 
         // Always show the code in the chat so onboarding is never blocked.
@@ -4763,22 +4766,9 @@ class AgentToshi extends Component
         $this->botSay("📱 Your verification code: **{$otp}**");
         $this->botSay("(A message was also sent to your phone if WhatsApp API is configured.)");
 
-        // Attempt to send via WhatsApp API if credentials exist (non-blocking)
-        $waService = app(\App\Services\WhatsAppBusinessService::class);
-        if ($waService->isConfigured() && $this->whatsappPhone) {
-            try {
-                $sent = $waService->sendTextSafe(
-                    $this->whatsappPhone,
-                    "Your KlassApp verification code is: {$otp}. It expires in 5 minutes.",
-                );
-                if (($sent['status'] ?? '') === 'success' || ($sent['success'] ?? false)) {
-                    $this->botSay("✅ WhatsApp message sent to **{$this->whatsappPhone}**.");
-                } else {
-                    \Log::info('WhatsApp OTP API result (non-blocking)', $sent ?? []);
-                }
-            } catch (\Exception $e) {
-                \Log::warning('WhatsApp OTP API send failed (non-blocking): ' . $e->getMessage());
-            }
+        $delivery = $otpService->deliver((string) $this->whatsappPhone, $otp);
+        if ($delivery['sent']) {
+            $this->botSay("✅ WhatsApp message sent to **{$this->whatsappPhone}**.");
         }
 
         $this->botSay("Enter the 6-digit code you received:");

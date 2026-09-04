@@ -257,9 +257,30 @@
 @elseif($stepKey === 'whatsapp_verify')
     <div class="ds-form-group">
         <label class="ds-form-label" for="wizard-wa">Your WhatsApp number<span class="text-red-500">*</span></label>
-        <input id="wizard-wa" type="text" class="ds-form-input w-full" wire:model="whatsappPhone" placeholder="+2567…" />
-        <p class="text-xs text-gray-500 mt-1">Links your admin account the same way the WhatsApp phone page does.</p>
+        <input id="wizard-wa" type="text" class="ds-form-input w-full" wire:model="whatsappPhone" placeholder="+2567…" data-testid="wizard-wa-phone" />
+        <p class="text-xs text-gray-500 mt-1">Same OTP flow as Toshi — we send a 6-digit code, then link the number only after you verify it.</p>
     </div>
+    <div class="flex flex-wrap gap-2 mt-2 mb-3">
+        <button type="button" class="ds-btn ds-btn-sm ds-btn-outline" wire:click="sendWhatsAppVerificationCode" data-testid="wizard-wa-send-otp">
+            Send verification code
+        </button>
+    </div>
+    @if($whatsappOtpStatus !== '')
+        <p class="text-sm mb-3" style="color:#0F766E;" data-testid="wizard-wa-otp-status">{{ $whatsappOtpStatus }}</p>
+    @endif
+    @if(! $whatsappVerified)
+        <div class="ds-form-group">
+            <label class="ds-form-label" for="wizard-wa-otp">6-digit code<span class="text-red-500">*</span></label>
+            <input id="wizard-wa-otp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
+                   class="ds-form-input w-full" wire:model="whatsappOtpInput" placeholder="123456"
+                   data-testid="wizard-wa-otp-input" />
+        </div>
+        <button type="button" class="ds-btn ds-btn-sm ds-btn-primary mt-1" wire:click="verifyWhatsAppCode" data-testid="wizard-wa-verify-otp">
+            Verify code
+        </button>
+    @else
+        <p class="text-sm font-medium" style="color:#15803D;" data-testid="wizard-wa-verified">Verified — you can continue.</p>
+    @endif
 
 @elseif($stepKey === 'plan_selection')
     <p class="text-sm text-gray-600 mb-3" style="color:#64748B;">

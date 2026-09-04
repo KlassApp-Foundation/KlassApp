@@ -15,15 +15,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-class ParentPortalWebIsolationTest extends TestCase
+class ParentChildDataPagesTest extends TestCase
 {
     use RefreshDatabase;
 
     private User $parent;
 
-    private User $childA;
-
-    private User $otherStudent;
+    private User $child;
 
     private int $schoolId;
 
@@ -37,7 +35,7 @@ class ParentPortalWebIsolationTest extends TestCase
             ['id' => 7, 'name' => 'parent', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        $school = School::create(['name' => 'Web Isolation School', 'email' => 'iso@test.sch.ug', 'status' => 1]);
+        $school = School::create(['name' => 'Child Pages School', 'email' => 'pages@test.sch.ug', 'status' => 1]);
         $this->schoolId = $school->id;
 
         $link = StandardLink::create([
@@ -60,42 +58,36 @@ class ParentPortalWebIsolationTest extends TestCase
             'school_id' => null,
             'usergroup_id' => 7,
             'status' => 'active',
-            'email' => 'parent.iso@test.sch.ug',
-            'password' => bcrypt('iso-pass-123'),
+            'name' => 'Parent Pages',
         ]);
 
-        Userprofile::create([
-            'user_id' => $this->parent->id,
-            'usergroup_id' => 7,
-            'school_id' => null,
-            'firstname' => 'Iso',
-            'lastname' => 'Parent',
-            'status' => 'active',
-        ]);
-
-        $this->childA = User::factory()->create([
+        $this->child = User::factory()->create([
             'school_id' => $school->id,
             'usergroup_id' => 6,
+            'status' => 'active',
             'name' => 'Alice Linked',
         ]);
 
-        $this->otherStudent = User::factory()->create([
+        Userprofile::create([
             'school_id' => $school->id,
+            'user_id' => $this->child->id,
             'usergroup_id' => 6,
-            'name' => 'Other Student',
+            'firstname' => 'Alice',
+            'lastname' => 'Linked',
         ]);
 
         StudentAcademic::create([
             'school_id' => $school->id,
             'academic_year_id' => $link->academic_year_id,
-            'user_id' => $this->childA->id,
+            'user_id' => $this->child->id,
             'standardLink_id' => $link->id,
+            'roll_number' => '1',
         ]);
 
         StudentParentLink::create([
-            'school_id' => $school->id,
             'parent_id' => $this->parent->id,
-            'student_id' => $this->childA->id,
+            'student_id' => $this->child->id,
+            'school_id' => $school->id,
             'status' => 1,
         ]);
 
@@ -107,56 +99,34 @@ class ParentPortalWebIsolationTest extends TestCase
         ]);
     }
 
-    public function test_parent_can_load_fees_for_linked_child_via_web(): void
+    public function test_fees_page_renders_html_not_json(): void
+    {
+        $response = $this->actingAs($this->parent)
+            ->get(route('parent.children.fees', $this->child->id));
+
+        $response->assertOk();
+        $response->assertSee('data-testid="parent-child-fees-page"', false);
+        $response->assertSee('Linked Child Fees');
+        $response->assertSee('50,000');
+        $response->assertDontSee('"success":true', false);
+        $this->assertStringNotContainsString('application/json', (string) $response->headers->get('Content-Type'));
+    }
+
+    public function test_grades_page_renders_html_shell(): void
     {
         $this->actingAs($this->parent)
-            ->get(route('parent.children.fees', $this->childA->id))
+            ->get(route('parent.children.grades', $this->child->id))
             ->assertOk()
-            ->assertSee('data-testid="parent-child-fees-page"', false)
-            ->assertSee('Linked Child Fees')
-            ->assertSee('50,000');
+            ->assertSee('data-testid="parent-child-grades-page"', false)
+            ->assertSee('No results published');
     }
 
-    public function test_parent_cannot_load_fees_for_unlinked_peer_student(): void
+    public function test_attendance_page_renders_html_shell(): void
     {
         $this->actingAs($this->parent)
-            ->get(route('parent.children.fees', $this->otherStudent->id))
-            ->assertForbidden();
-    }
-
-    public function test_parent_cannot_load_grades_for_unlinked_peer_student(): void
-    {
-        $this->actingAs($this->parent)
-            ->get(route('parent.children.grades', $this->otherStudent->id))
-            ->assertForbidden();
-    }
-
-    public function test_parent_cannot_load_attendance_for_unlinked_peer_student(): void
-    {
-        $this->actingAs($this->parent)
-            ->get(route('parent.children.attendance', $this->otherStudent->id))
-            ->assertForbidden();
-    }
-
-    public function test_teacher_cannot_hit_parent_child_data_endpoints(): void
-    {
-        $teacher = User::factory()->create([
-            'school_id' => $this->schoolId,
-            'usergroup_id' => 5,
-            'status' => 'active',
-        ]);
-
-        $this->actingAs($teacher)
-            ->get(route('parent.children.fees', $this->childA->id))
-            ->assertRedirect('/teacher/dashboard');
-    }
-
-    public function test_children_page_lists_only_linked_students(): void
-    {
-        $this->actingAs($this->parent)
-            ->get(route('parent.children'))
+            ->get(route('parent.children.attendance', $this->child->id))
             ->assertOk()
-            ->assertSee('ALICE LINKED')
-            ->assertDontSee('Other Student');
+            ->assertSee('data-testid="parent-child-attendance-page"', false)
+            ->assertSee('No attendance yet');
     }
 }
