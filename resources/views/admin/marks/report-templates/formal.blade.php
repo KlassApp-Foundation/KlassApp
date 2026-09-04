@@ -267,10 +267,16 @@
                 @endif
             </td>
             <td class="hdr-details">
-                <div class="school-name">{{ $learner->school->name }}</div>
-                <div class="school-meta">(Nursery And Primary, Day And Boarding)</div>
-                <div class="school-meta">P.O Box 283 - Kabale - UGA</div>
-                <div class="school-meta school-meta-tel">Tel: +256782255758 / +256784119149 / +256704301646</div>
+                <div class="school-name">{{ $schoolIdentity['name'] ?? $learner->school->name }}</div>
+                @if (!empty($schoolIdentity['category_subtitle']))
+                <div class="school-meta">{{ $schoolIdentity['category_subtitle'] }}</div>
+                @endif
+                @if (!empty($schoolIdentity['address']))
+                <div class="school-meta">{{ $schoolIdentity['address'] }}</div>
+                @endif
+                @if (!empty($schoolIdentity['phones_line']))
+                <div class="school-meta school-meta-tel">{{ $schoolIdentity['phones_line'] }}</div>
+                @endif
             </td>
         </tr>
     </table>
@@ -442,15 +448,17 @@
         </table>
     </div>
 
+    @if (!empty($schoolIdentity['motto']))
     <div class="motto-row">
-        <span class="motto">HARD WORK PAYS</span>
+        <span class="motto">{{ $schoolIdentity['motto'] }}</span>
     </div>
+    @endif
 
 </div></div>
 </div>
 
 <div class="footer-band">
-    Kabale Junior School, UNEB Center No. {{ $school->uneb_center_number }} Tel: +256782255758 / +256784119149 / +256704301646
+    {{ $schoolIdentity['footer_line'] ?? $learner->school->name }}
     <div class="powered">Powered by klassapp.xyz</div>
 </div>
 

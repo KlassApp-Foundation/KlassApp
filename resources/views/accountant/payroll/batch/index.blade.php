@@ -37,10 +37,10 @@
                 </div>
             </div>
             <div class="mt-4 flex items-center gap-3">
-                <button @click="preview()"
-                        :disabled="!canPreview"
+                <button x-on:click="preview()"
+                        x-bind:disabled="!canPreview"
                         class="px-6 py-2.5 rounded-lg text-white font-medium text-sm transition-all"
-                        :style="!canPreview ? 'background: var(--d-muted); cursor: not-allowed;' : 'background: var(--d-blue);'"
+                        x-bind:style="!canPreview ? 'background: var(--d-muted); cursor: not-allowed;' : 'background: var(--d-blue);'"
                         style="background: var(--d-blue);">
                     <span x-text="loading ? 'Computing...' : 'Preview Payroll'"></span>
                 </button>
@@ -67,7 +67,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template x-for="(row, idx) in rows" :key="row.staff_id">
+                                <template x-for="(row, idx) in rows" x-bind:key="row.staff_id">
                                     <tr style="border-top: 1px solid var(--d-border);">
                                         <td class="p-3 font-medium" x-text="row.staff_name"></td>
                                         <td class="p-3 text-right" x-text="numberFormat(row.gross)"></td>
@@ -77,7 +77,7 @@
                                         <td class="p-3 text-right">
                                             <input type="number"
                                                    x-model="row.leave_deduction"
-                                                   @input="recalcRow(row)"
+                                                   x-on:input="recalcRow(row)"
                                                    class="w-24 text-right rounded p-1 text-sm"
                                                    style="border: 1px solid var(--d-border);">
                                         </td>
@@ -113,7 +113,7 @@
                                 <span x-text="rows.length"></span> staff members ready for processing
                             </span>
                         </div>
-                        <button @click="showConfirm = !showConfirm"
+                        <button x-on:click="showConfirm = !showConfirm"
                                 class="px-6 py-2.5 rounded-lg text-white font-medium text-sm transition-all"
                                 style="background: var(--d-green);">
                             <span x-text="showConfirm ? 'Cancel' : 'Run Payroll'"></span>
@@ -127,13 +127,13 @@
                             Are you sure you want to proceed?
                         </p>
                         <div class="flex gap-3">
-                            <button @click="confirmRun()"
-                                    :disabled="confirming"
+                            <button x-on:click="confirmRun()"
+                                    x-bind:disabled="confirming"
                                     class="px-5 py-2 rounded-lg text-white text-sm font-medium"
                                     style="background: var(--d-green);">
                                 <span x-text="confirming ? 'Processing...' : 'Yes, Run Payroll'"></span>
                             </button>
-                            <button @click="showConfirm = false"
+                            <button x-on:click="showConfirm = false"
                                     class="px-5 py-2 rounded-lg text-sm font-medium"
                                     style="background: var(--d-shell); color: var(--d-text); border: 1px solid var(--d-border);">
                                 Cancel

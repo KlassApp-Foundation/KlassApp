@@ -336,14 +336,22 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 3, 2026 (`origin/main` — Piece C REPORT PDF **#423** `bca78fe3` **DEPLOYED**; perms harden shipping)
+## Current Status: September 4, 2026 (`fix/report-card-school-identity-and-alpine-shorthand` — shipping P0 identity leak + Alpine shorthand)
 
-- **✅ [#423](https://github.com/KlassApp-Foundation/KlassApp/pull/423)** → merge `bca78fe3` — on-demand parent WhatsApp report-card PDF (`REPORT` menu/keyword → real `StudentReportCardService` → signed private URL → `sendDocument`). Hourly `whatsapp:prune-report-files`.
-- **✅ Deploy** `scripts/deploy-manual.sh` — `[8/8] ✅ SHA match` (`bca78fe3`).
-- **✅ Live**: signed GET returns **200** `application/pdf` `%PDF` (~670KB formal). Graph `sendDocument` to handset `+256781940358` → wamid accepted, log `sent` (caption `AMINA NABUKEERA`). First live attempt 404’d because root tinker created `storage/app/whatsapp-reports` as `root:root` mode `700` — fixed with `chown appuser` + chmod harden follow-up.
-- **Edge**: parent 3738 has **two** `whatsapp_users` rows (`256700119922` undeliverable + `+256781940358` real). Inbound by phone is fine; `where('user_id')->first()` can hit the bad row — do not use that for sends.
-- **Still open (templates)**: WABA — 4 APPROVED + AUTH; 2 REJECTED unchanged.
-- **Out of scope**: proactive `report_card_ready` push; legacy HTTP `WhatsAppController::report()` stub.
+- **P0 in flight**: report-card Kabale footer/header identity leak — `StudentReportCardService::resolveSchoolIdentity()` + formal/warm/modern templates consume per-school name/address/phones/UNEB/motto (omit blank UNEB). Tests: `ReportCardSchoolIdentityTest` (3 passed).
+- **Also**: Alpine Vue-compat shorthand converted to `x-on:`/`x-bind:` on accountant payroll sidebar toggle, batch payroll (`:disabled="!canPreview"`), superadmin school-list filters.
+- **Prior tip on `main`**: `65788a76` (Toshi outside `#app`). Piece C #423/#424 still live.
+- **⏸️ Auth/error Open Design** still paused (unchanged).
+
+## Previous: September 3, 2026 (`origin/main` tip `65788a76` — Piece C **#423/#424** live; auth-error Open Design **PAUSED**) — superseded above
+
+- **✅ [#423](https://github.com/KlassApp-Foundation/KlassApp/pull/423)** → merge `bca78fe3` — on-demand parent WhatsApp report-card PDF.
+- **✅ [#424](https://github.com/KlassApp-Foundation/KlassApp/pull/424)** → merge `5d4df06c` — whatsapp-reports write-time perms.
+- **⏸️ Auth/error UI redesign (Open Design only)** — `klassapp-auth-error-pass2` paused.
+
+## Previous: September 3, 2026 (`origin/main` — Piece C REPORT PDF **#423** `bca78fe3` **DEPLOYED**; perms harden shipping) — superseded above
+
+- Perms harden shipped as [#424](https://github.com/KlassApp-Foundation/KlassApp/pull/424) `5d4df06c`.
 
 ## Previous: September 3, 2026 (`feat/whatsapp-parent-report-card` — Piece C on-demand REPORT PDF **IN PROGRESS**) — superseded above
 
@@ -1113,12 +1121,33 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-04: P0 report-card school identity leak + Alpine shorthand harden
+
+- **Work done**: (1) `StudentReportCardService::resolveSchoolIdentity()` builds per-school name, category subtitle, address, phones (`schools.phone` + `landline_no`), UNEB (omit if blank/`-`), motto (`SchoolDetail.moto`), footer line. formal/warm/modern templates consume `$schoolIdentity` — removed hardcoded Kabale name/address/phones/motto. (2) Converted Alpine Vue-shorthand to `x-on:`/`x-bind:` in accountant payroll sidebar, batch payroll, superadmin school-list filters (same pattern as admin sidebar; do not move outside `#app`).
+- **Files**: `StudentReportCardService.php`; `report-templates/{formal,warm,modern}.blade.php`; `layouts/accountant/menu.blade.php`; `accountant/payroll/batch/index.blade.php`; `livewire/superadmin/academics/school-list.blade.php`; `tests/Feature/Reports/ReportCardSchoolIdentityTest.php`.
+- **Tests**: `ReportCardSchoolIdentityTest` 3 passed (76 assertions) — two schools resolve distinct footers; templates source-clean of Kabale; real PDFs generated with distinct names/mottos/UNEB and no Kabale strings in decoded streams. Artifacts: `storage/app/testing/report-identity/{alpha,beta}-formal.pdf`.
+- **Status**: 🚧 shipping via PR (this session)
+
+### 2026-09-03: Auth/error nine-frame Open Design — correction pass + breakpoint re-verify — **PAUSED**
+
+- **Work done**: Design-only (no Blade / no KlassApp PR). Open Design project `klassapp-auth-error-pass2` → `auth-error.html` (9 frames: login, register, force-change-pw, reset-request/code/newpw, 404/419/500). Correction pass fixed four defects from the prior audit; then re-measured at original desktop/tablet widths the narrower mobile check had skipped.
+- **Four fixes (measured)**:
+  1. Frame 03 `.pw-hints` — **5** items matching `Password::min(8)->mixedCase()->numbers()->symbols()`; no “or” wording.
+  2. `.toggle-eye` (8 instances) — **44×44** tap target, **20×20** SVG; input `padding-right: 46px`; `right: 8px`.
+  3. `.btn-primary` / `.err-btn-primary` — `#22C55E` / hover `#16A34A` (not blue).
+  4. Error tokens — `#DC2626` / `#FEF2F2` / `#FECACA` (no oklch error).
+- **Breakpoint re-verify (Playwright `getBoundingClientRect`)**: **1440 / 1024 / 900 / 760** — all four PASS on the four defect checks. At **900** and **760** specifically: all 8 toggles `overflowsWrap`/`overflowsViewport`/`iconClipped` = false; `overflowRight` = −8 (inset); `docOverflowX` = 0; `.input-wrap` stays **338×44.39** (no layout growth from 44×44).
+- **Artifacts**: `~/open-design/.od/projects/klassapp-auth-error-pass2/audit-pass2-correction/{before,after,breakpoints-desktop-tablet/}` (`metrics.json` + wrap screenshots).
+- **Tooling note**: DeepSeek Flash/Pro failed (China opt-in); correction applied with `opencode-go/qwen3.6-plus`. Prefer non-China models unless DeepSeek opted in.
+- **Conversation**: `0f26dfc3-f365-4a1f-b3e1-f1eb90bd7f33`.
+- **Status**: ⏸️ **PAUSED** — prototype correction complete and breakpoint-verified; implement into Blade auth/error views only when design resumes / approved. Not on `main`.
+
 ### 2026-09-03: Piece C — on-demand WhatsApp report-card PDF — **MERGED + DEPLOYED**
 
 - **Work done**: Parent `REPORT` / menu row → `WhatsAppReportCardDeliveryService` → real `StudentReportCardService::pdfForStudent()` → private `whatsapp-reports/` + signed GET → `sendDocument()`. Soft-fail copy; `whatsappDisplayName()`; rate limit 5/h; hourly prune. Split `'report'` off GRADES keywords.
-- **PR**: [#423](https://github.com/KlassApp-Foundation/KlassApp/pull/423) → merge `bca78fe3`.
+- **PR**: [#423](https://github.com/KlassApp-Foundation/KlassApp/pull/423) → merge `bca78fe3`; perms follow-up [#424](https://github.com/KlassApp-Foundation/KlassApp/pull/424) → merge `5d4df06c`.
 - **Live**: formal PDF ~670KB; signed URL 200 after fixing `root:700` dir (FPM `appuser` could not read). Handset `+256781940358` Graph accept / log `sent`. Bad duplicate WA row `256700119922` → Meta “Message undeliverable”.
-- **Follow-up**: chmod 0775/0644 harden on write (this commit) so root/tinker cannot poison the dir again.
+- **Follow-up**: chmod 0775/0644 harden on write (#424) so root/tinker cannot poison the dir again.
 - **Tests**: `ParentReportCardRequestTest` + menu suite green before merge.
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED (document send accepted; confirm PDF opens on handset)
 
