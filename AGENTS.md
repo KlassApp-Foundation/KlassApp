@@ -83,6 +83,41 @@ Section naming convention: `P.1`–`P.7` = Primary One through Primary Seven; `S
 - Deploy: run the full deploy script (`scripts/deploy-manual.sh`), then verify on the live site — not just that the script exited 0.
 - Env vars: a shell-exported var can silently override `.env` via `Dotenv\Repository` reading `getenv()`/`$_SERVER`/`$_ENV` at boot. If an env value looks wrong, check all three sources, not just the `.env` file.
 
+## PhpStorm MCP direct-HTTP workaround
+
+Devin's platform-level MCP support does **not** include the `phpstorm` server type. The platform explicitly reports `The agent does not support the following MCP servers: phpstorm`. This is **not** a missing header, malformed `mcpServers` config, or authentication problem — do not re-diagnose it.
+
+Instead, call the native PhpStorm MCP server directly with raw HTTP. The native server is built into **PhpStorm 2026.1+** and runs on `http://127.0.0.1:64342/stream` by default. Do **not** confuse it with the old third-party "MCP Server AI Companion" plugin, which runs on a different port/endpoint and rejects these calls with `405` — that is a different problem and unrelated to this one.
+
+### Initialize once per task
+
+```bash
+curl -s -i -X POST http://127.0.0.1:64342/stream \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"devin","version":"1.0"}},"id":1}'
+```
+
+- Save the `mcp-session-id` header from the response.
+- Re-use that exact header on every subsequent call. Header name is `mcp-session-id` (lowercase in the raw response).
+- Each tool call is another JSON-RPC `POST` to `http://127.0.0.1:64342/stream` using `method: "tools/call"` and `params: { "name": "...", "arguments": { ... } }`.
+
+### Confirmed tools and exact required parameters
+
+| Tool | Required arguments | Notes |
+|---|---|---|
+| `get_file_text_by_path` | `projectPath`, `pathInProject` | `pathInProject` is relative to the project root. Do **not** use `path`. Optional `maxLinesCount` and `truncateMode`. |
+| `laravel_idea_get_eloquent_model` | `projectPath`, `modelFqn` | e.g. `App\\Models\\User` |
+| `laravel_idea_get_routes` | `projectPath` | Optional `urlPattern` or `routeTargetPattern` |
+| `run_inspections` | — | Confirmed available; call with the same JSON-RPC shape |
+
+### Verified working examples
+
+- `get_file_text_by_path` with `pathInProject: "knowledge.md"` returned real file content.
+- `laravel_idea_get_eloquent_model` with `modelFqn: "App\\Models\\User"` returned ~12 KB of real fields, relations, and related files.
+
+Use this direct-HTTP pattern whenever structured PHP/Laravel code access is needed instead of `mcp_call_tool` for the `phpstorm` server.
+
 ## Session workflow
 
 1. Read `knowledge.md` first — session history, past incidents, and current state live there, not here.
