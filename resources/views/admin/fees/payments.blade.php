@@ -33,7 +33,7 @@
             <td><code>{{ $payment->reference ?? '-' }}</code></td>
             <td>
                 @if($payment->feeCategory)
-                    {{ $payment->feeCategory->name }}@if(optional($payment->feeCategory->standard)->name) ({{ $payment->feeCategory->standard->name }})@endif
+                    {{ $payment->feeCategory->labeledName() }}
                 @else
                     —
                 @endif

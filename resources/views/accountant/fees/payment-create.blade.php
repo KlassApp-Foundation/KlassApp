@@ -47,11 +47,7 @@
                     class="w-full border border-gray-400 rounded px-3 py-2">
                 <option value="">Select fee category...</option>
                 @foreach($feeCategories as $fee)
-                    @php
-                        $tier = optional($fee->standard)->name;
-                        $label = $fee->name.($tier ? ' ('.$tier.')' : '');
-                    @endphp
-                    <option value="{{ $fee->id }}">{{ $label }} ({{ number_format($fee->amount, 0) }} UGX)</option>
+                    <option value="{{ $fee->id }}">{{ $fee->labeledName() }} ({{ number_format($fee->amount, 0) }} UGX)</option>
                 @endforeach
             </select>
         </div>

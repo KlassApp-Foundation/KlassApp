@@ -99,7 +99,7 @@ class SetupUiReviewDemoSchool extends Command
 
         // Mark Term 1 current; others upcoming (engine defaults all to current)
         AcademicTerm::where('school_id', $school->id)->where('name', 'Term 1')->update(['status' => 'current']);
-        AcademicTerm::where('school_id', $school->id)->whereIn('name', ['Term 2', 'Term 3'])->update(['status' => 'upcoming']);
+        AcademicTerm::where('school_id', $school->id)->whereIn('name', ['Term 2', 'Term 3'])->update(['status' => 'next']);
 
         $engine->saveFees($school, [
             ['name' => 'Tuition', 'amount' => 450000],
@@ -150,6 +150,11 @@ class SetupUiReviewDemoSchool extends Command
                 'email' => 'brian.okello@uireview.klassapp.demo',
                 'school_student_id' => 'UIREV-P1-001',
             ],
+        ]);
+
+        $this->ensureDemoGenders($school, [
+            'Amina Nabukeera' => 'female',
+            'Brian Okello' => 'male',
         ]);
 
         $p7StudentId = collect($students['created'])->firstWhere('name', 'Amina Nabukeera')['user_id']
@@ -373,5 +378,59 @@ class SetupUiReviewDemoSchool extends Command
         );
 
         return $teacher;
+    }
+
+    /**
+     * Assign genders for known demo students, then fill remaining active
+     * students without gender so the dashboard donut is verifiable.
+     *
+     * @param  array<string, 'male'|'female'>  $named
+     */
+    private function ensureDemoGenders(School $school, array $named): void
+    {
+        foreach ($named as $name => $gender) {
+            $user = User::where('school_id', $school->id)
+                ->where('usergroup_id', 6)
+                ->where('name', $name)
+                ->first();
+            if (! $user) {
+                continue;
+            }
+            Userprofile::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'school_id' => $school->id,
+                    'usergroup_id' => 6,
+                    'firstname' => $user->name,
+                    'lastname' => '',
+                    'profession' => 'student',
+                    'status' => 'active',
+                    'gender' => $gender,
+                ]
+            );
+        }
+
+        $unset = User::where('school_id', $school->id)
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            ->whereDoesntHave('userprofile', fn ($q) => $q->whereIn('gender', ['male', 'female']))
+            ->orderBy('id')
+            ->get();
+
+        foreach ($unset as $i => $user) {
+            $gender = $i % 2 === 0 ? 'female' : 'male';
+            Userprofile::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'school_id' => $school->id,
+                    'usergroup_id' => 6,
+                    'firstname' => $user->name,
+                    'lastname' => '',
+                    'profession' => 'student',
+                    'status' => 'active',
+                    'gender' => $gender,
+                ]
+            );
+        }
     }
 }
