@@ -30,9 +30,7 @@
 
         <x-form-group label="Fee Category" name="fee_category_id" type="select" required
             :options="['' => 'Select fee category...'] + $feeCategories->mapWithKeys(function ($fee) {
-                $tier = optional($fee->standard)->name;
-                $label = $fee->name.($tier ? ' ('.$tier.')' : '');
-                return [$fee->id => $label.' — '.number_format((float) $fee->amount, 0).' UGX'];
+                return [$fee->id => $fee->labeledName().' — '.number_format((float) $fee->amount, 0).' UGX'];
             })->toArray()"
             :error="$errors->first('fee_category_id') ?? null" />
 

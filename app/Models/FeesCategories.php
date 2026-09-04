@@ -44,4 +44,20 @@ class FeesCategories extends Model
         return $this->belongsTo(AcademicTerm::class, "academic_term_id");
     }
 
+    /**
+     * Display label used in payment UIs: "Tuition (nursery)", "Tuition (O'Level)", etc.
+     * Same pattern as Round 3 fee-category disambiguation — standard name in parentheses,
+     * with human-friendly O/A Level labels for secondary tiers.
+     */
+    public function labeledName(): string
+    {
+        $tier = match ($this->standard?->name) {
+            'o-level' => "O'Level",
+            'a-level' => "A'Level",
+            default => $this->standard?->name,
+        };
+
+        return $tier ? $this->name.' ('.$tier.')' : (string) $this->name;
+    }
+
 }
