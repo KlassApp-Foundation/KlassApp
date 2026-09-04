@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\AcademicTerm;
 use App\Models\Academics\Exam;
+use App\Models\School;
+use App\Models\SchoolDetail;
 use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\User;
@@ -344,9 +346,10 @@ class StudentReportCardService
             ? $svc->headTeacherCommentFor((int) $total, $standard->name, $learner->id, $exam->id, $teacherComment)
             : '';
 
-        $school = \App\Models\School::find($schoolId);
+        $school = School::find($schoolId);
         $view = self::TEMPLATES[$templateKey ?? $school->report_template ?? ''] ?? self::TEMPLATES['formal'];
         $logoPath = $this->resolveLogoPath($schoolId);
+        $schoolIdentity = $this->resolveSchoolIdentity($school);
 
         $pdf = Pdf::loadView($view['view'], [
             'subjects' => $subjects, 'learner' => $learner, 'controls' => $controls,
@@ -359,6 +362,7 @@ class StudentReportCardService
             'stdLink' => $stdLink,
             'total' => $total, 'grade' => $grade, 'examinedSubjectCount' => $examinedSubjectCount,
             'school' => $school,
+            'schoolIdentity' => $schoolIdentity,
             'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
             'teacherComment' => $teacherComment,
             'headTeacherComment' => $headTeacherComment,
@@ -376,6 +380,99 @@ class StudentReportCardService
     }
 
     /**
+     * Per-school header/footer identity for report cards.
+     * Never hardcode another school's name, address, phones, or motto.
+     *
+     * @return array{
+     *     name: string,
+     *     category_subtitle: ?string,
+     *     address: ?string,
+     *     phones: list<string>,
+     *     phones_line: ?string,
+     *     uneb_center_number: ?string,
+     *     motto: ?string,
+     *     footer_line: string
+     * }
+     */
+    public function resolveSchoolIdentity(?School $school): array
+    {
+        if (! $school) {
+            return [
+                'name' => '',
+                'category_subtitle' => null,
+                'address' => null,
+                'phones' => [],
+                'phones_line' => null,
+                'uneb_center_number' => null,
+                'motto' => null,
+                'footer_line' => '',
+            ];
+        }
+
+        $details = SchoolDetail::where('school_id', $school->id)
+            ->whereIn('meta_key', ['moto', 'landline_no'])
+            ->pluck('meta_value', 'meta_key');
+
+        $categorySubtitles = [
+            'nursery' => 'Nursery',
+            'primary' => 'Primary',
+            'primary_nursery' => 'Nursery And Primary',
+            'o_level' => 'O-Level',
+            'o_a_level' => 'O-Level And A-Level',
+        ];
+        $categoryKey = $school->school_category;
+        $categorySubtitle = ($categoryKey && isset($categorySubtitles[$categoryKey]))
+            ? '('.$categorySubtitles[$categoryKey].')'
+            : null;
+
+        $address = $this->nonEmptyMeta($school->address);
+
+        $phones = [];
+        foreach ([$school->phone, $details['landline_no'] ?? null] as $raw) {
+            foreach (preg_split('/\s*\/\s*/', (string) $raw) ?: [] as $part) {
+                $phone = $this->nonEmptyMeta(trim($part));
+                if ($phone !== null && ! in_array($phone, $phones, true)) {
+                    $phones[] = $phone;
+                }
+            }
+        }
+        $phonesLine = $phones === [] ? null : 'Tel: '.implode(' / ', $phones);
+
+        $uneb = $this->nonEmptyMeta($school->uneb_center_number);
+        $motto = $this->nonEmptyMeta($details['moto'] ?? null);
+
+        $footer = $school->name;
+        if ($uneb !== null) {
+            $footer .= ', UNEB Center No. '.$uneb;
+        }
+        if ($phonesLine !== null) {
+            $footer .= ' '.$phonesLine;
+        }
+
+        return [
+            'name' => $school->name,
+            'category_subtitle' => $categorySubtitle,
+            'address' => $address,
+            'phones' => $phones,
+            'phones_line' => $phonesLine,
+            'uneb_center_number' => $uneb,
+            'motto' => $motto,
+            'footer_line' => $footer,
+        ];
+    }
+
+    private function nonEmptyMeta(?string $value): ?string
+    {
+        $trimmed = trim((string) $value);
+
+        if ($trimmed === '' || $trimmed === '-') {
+            return null;
+        }
+
+        return $trimmed;
+    }
+
+    /**
      * Resolve the school's uploaded logo to a local filesystem path for
      * DomPDF (which needs a real path, not a public URL). Uses the same
      * SchoolDetail (meta_key=school_logo) record every other part of the
@@ -389,7 +486,7 @@ class StudentReportCardService
         // row (meta_value='-') at creation; the real upload flow always
         // updateOrCreate()s a single row per school+meta_key, but order by
         // most-recent and explicitly skip the '-' sentinel defensively.
-        $meta = \App\Models\SchoolDetail::where('school_id', $schoolId)
+        $meta = SchoolDetail::where('school_id', $schoolId)
             ->where('meta_key', 'school_logo')
             ->latest('id')
             ->first();

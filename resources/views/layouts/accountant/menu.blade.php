@@ -18,9 +18,9 @@
     </li>
     {{-- Payroll section with sub-items --}}
     <li x-data="{ open: {{ in_array(Request()->segment('2'), ['payroll']) ? 'true' : 'false' }} }" class="py-0">
-        <div @click="open = !open" class="py-3 px-3 flex items-center cursor-pointer hover:font-semibold {{ aActive(['payroll']) }}">
+        <div x-on:click="open = !open" class="py-3 px-3 flex items-center cursor-pointer hover:font-semibold {{ aActive(['payroll']) }}">
             <x-icons.sidebar name="accountant"/><span class="mx-3 whitespace-nowrap">Payroll</span>
-            <svg class="w-3 h-3 ml-auto transition-transform" :class="open ? 'rotate-90' : ''" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <svg class="w-3 h-3 ml-auto transition-transform" x-bind:class="open ? 'rotate-90' : ''" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </div>
         <ul x-show="open" class="ml-4 border-l-2" style="border-color: var(--d-border);">
             <li class="py-2 px-3 hover:font-semibold"><a href="{{ url('accountant/payroll/template') }}" class="flex items-center"><span class="mx-2">Templates</span></a></li>

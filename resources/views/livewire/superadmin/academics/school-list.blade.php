@@ -7,7 +7,7 @@
             <p class="ds-page-head-sub">{{ $schools->total() }} school(s) found</p>
         </div>
         <div class="flex items-center gap-2">
-            <button @click="showFilters = !showFilters" class="ds-btn ds-btn-ghost ds-btn-sm">
+            <button x-on:click="showFilters = !showFilters" class="ds-btn ds-btn-ghost ds-btn-sm">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="18" y2="12"/><line x1="11" y1="18" x2="15" y2="18"/></svg>
                 Filters
             </button>
