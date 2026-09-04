@@ -7,7 +7,9 @@ use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
+use App\Models\CurrentPlan;
 use App\Models\FeesCategories;
+use App\Models\Plan;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\StandardLink;
@@ -15,6 +17,8 @@ use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Models\WhatsAppUser;
+use App\Services\FreeTierPlanService;
 use App\Services\OnboardingEngine;
 use App\Services\SchoolSignupBootstrapService;
 use Illuminate\Console\Command;
@@ -45,7 +49,9 @@ class SetupUiReviewSecondaryDemoSchool extends Command
 
     private const SUBJECT_EMAIL = 'subjectteacher@uireview-secondary.klassapp.demo';
 
-    public function handle(SchoolSignupBootstrapService $bootstrap, OnboardingEngine $engine): int
+    private const ADMIN_PHONE = '+256700119910';
+
+    public function handle(SchoolSignupBootstrapService $bootstrap, OnboardingEngine $engine, FreeTierPlanService $freeTier): int
     {
         $password = (string) $this->option('password');
         $force = (bool) $this->option('force');
@@ -309,6 +315,8 @@ class SetupUiReviewSecondaryDemoSchool extends Command
         $admin->email = self::ADMIN_EMAIL;
         $admin->save();
 
+        $this->ensureOnboardingUnblocked($school, $admin, $freeTier);
+
         $tuitionLabels = FeesCategories::with('standard')
             ->where('school_id', $school->id)
             ->where('name', 'Tuition')
@@ -332,6 +340,10 @@ class SetupUiReviewSecondaryDemoSchool extends Command
             'gender_counts' => [
                 'female' => User::ByActive()->BySchool($school->id)->ByRole(6)->ByGender('female')->count(),
                 'male' => User::ByActive()->BySchool($school->id)->ByRole(6)->ByGender('male')->count(),
+            ],
+            'onboarding' => [
+                'admin_whatsapp' => WhatsAppUser::where('user_id', $admin->id)->exists(),
+                'current_plan' => CurrentPlan::where('school_id', $school->id)->exists(),
             ],
             'logins' => [
                 ['role' => 'School admin', 'email' => self::ADMIN_EMAIL, 'password' => $password, 'url' => '/admin/dashboard'],
@@ -472,5 +484,49 @@ class SetupUiReviewSecondaryDemoSchool extends Command
                 'gender' => $gender,
             ]
         );
+    }
+
+    /**
+     * Demo schools must clear the blocking Toshi overlay (WhatsApp + plan)
+     * so dashboards (gender donut, etc.) are reachable for UI review.
+     */
+    private function ensureOnboardingUnblocked(School $school, User $admin, FreeTierPlanService $freeTier): void
+    {
+        WhatsAppUser::updateOrCreate(
+            ['user_id' => $admin->id],
+            [
+                'phone' => self::ADMIN_PHONE,
+                'school_id' => $school->id,
+                'verified_at' => now(),
+                'opted_in' => true,
+            ]
+        );
+
+        if (CurrentPlan::where('school_id', $school->id)->exists()) {
+            return;
+        }
+
+        $assigned = $freeTier->assignIfEligible($school->fresh(), $admin->id);
+        if ($assigned) {
+            return;
+        }
+
+        $plan = Plan::query()
+            ->where('is_active', 1)
+            ->where(function ($q) {
+                $q->whereRaw('LOWER(name) = ?', ['freemium'])
+                    ->orWhereRaw('LOWER(display_name) = ?', ['freemium']);
+            })
+            ->orderBy('order')
+            ->first()
+            ?? Plan::query()->where('is_active', 1)->orderBy('order')->first();
+
+        if ($plan) {
+            CurrentPlan::create([
+                'school_id' => $school->id,
+                'plan_id' => $plan->id,
+                'status' => 'running',
+            ]);
+        }
     }
 }

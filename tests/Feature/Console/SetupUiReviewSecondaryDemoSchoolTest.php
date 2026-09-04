@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Console;
 
+use App\Models\CurrentPlan;
 use App\Models\FeesCategories;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StudentAcademic;
 use App\Models\User;
+use App\Models\WhatsAppUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -105,6 +107,11 @@ class SetupUiReviewSecondaryDemoSchoolTest extends TestCase
         $this->assertTrue(
             User::where('email', 'classteacher@uireview-secondary.klassapp.demo')->where('usergroup_id', 5)->exists()
         );
+
+        $admin = User::where('email', 'admin@uireview-secondary.klassapp.demo')->first();
+        $this->assertNotNull($admin);
+        $this->assertTrue(WhatsAppUser::where('user_id', $admin->id)->exists());
+        $this->assertTrue(CurrentPlan::where('school_id', $school->id)->exists());
     }
 
     public function test_command_is_idempotent_on_rerun(): void
