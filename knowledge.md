@@ -336,11 +336,11 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 4, 2026 (`fix/known-gaps-round-2` — shipping items 1–3)
+## Current Status: September 4, 2026 (`origin/main` tip `f7183955` — **#426 MERGED + DEPLOYED** known-gaps 1–3)
 
-- **In flight**: known-gaps round 2 — (1) WABA number `+256793844906` (prod `.env` already live; code defaults/docs), (2) digit-suffix `displayName`/`FullName`/PDF filenames, (3) wizard Previous + remount skip of optional teachers/students.
-- **Still open**: (4) wizard WhatsApp-verify OTP (Toshi has real OTP; wizard `saveWhatsApp` still sets `verified_at` immediately), (5) parent Fees/Grades/Attendance routes return JSON (`ChildDataController`).
-- **Prior tip**: `81317bbd` #425 identity + Alpine.
+- **✅ [#426](https://github.com/KlassApp-Foundation/KlassApp/pull/426)** → merge `f7183955` — WABA `+256793844906`; digit-suffix `displayName`/`FullName`/PDF filenames; wizard Previous + remount lands on first incomplete (incl. optional teachers/students).
+- **✅ Deploy** SHA match `f7183955`; live `wa.me/256793844906`.
+- **Still open**: (4) wizard WhatsApp-verify OTP — Toshi `handleWhatsAppVerify` has real OTP; wizard `OnboardingEngine::saveWhatsApp` still sets `verified_at` immediately with no OTP. (5) parent child Fees/Grades/Attendance — `ChildDataController` returns JSON only; need Blade wrappers over `ParentPortalService`.
 
 ## Previous: September 4, 2026 (`origin/main` tip `81317bbd` — **#425 MERGED + DEPLOYED** + **Fix 2 runtime-verified on prod**) — superseded above
 
@@ -1132,6 +1132,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-04: Known-gaps round 2 items 1–3 — shipping
+- **Work done**: (1) Replaced stale WABA `+256765275289` → `+256793844906` in config default, phpunit, provision script, docs, seeder; **prod `.env` updated live** — homepage `wa.me/256793844906`. (2) `User::FullName` digit-strip; `displayNameFilenameSlug()` for PDF/zip names; Blade/Livewire/API display surfaces → `displayName`. (3) Wizard mount uses `nextIncompleteStep` (not blocking-only) so reload no longer skips Teachers/Students; `previous()` key-aware. Tests: `UserDisplayNameTest`, `WizardPreviousFromTeachersTest`, ManualUiWave3.
+- **PR**: [#426](https://github.com/KlassApp-Foundation/KlassApp/pull/426) → merge `f7183955`.
+- **Status**: ✅ MERGED + DEPLOYED
+- **Still open**: wizard WhatsApp OTP (#4); parent child Fees/Grades/Attendance Blade wrappers (#5)
 
 ### 2026-09-04: Fix 2 Alpine shorthand — **production runtime interaction verify**
 
