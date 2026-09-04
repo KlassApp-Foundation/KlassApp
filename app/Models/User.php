@@ -827,7 +827,20 @@ public function scopeStudents($query)
 
     public function getFullNameAttribute()
     {
-        return $this->userprofile->firstname.' '.$this->userprofile->lastname;
+        $profile = $this->userprofile;
+
+        if ($profile) {
+            $first = $this->stripTrailingDigitSuffix((string) $profile->firstname);
+            $last = $this->stripTrailingDigitSuffix((string) $profile->lastname);
+            $combined = trim($first.' '.$last);
+            if ($combined !== '') {
+                return $combined;
+            }
+        }
+
+        $display = trim((string) $this->displayName);
+
+        return $display !== '' ? $display : (string) ($this->attributes['name'] ?? '');
     }
 
     /**
@@ -873,11 +886,34 @@ public function scopeStudents($query)
     }
 
     /**
+     * Safe slug for download filenames (PDF/zip entries) based on displayName.
+     */
+    public function displayNameFilenameSlug(string $fallback = 'student'): string
+    {
+        $base = trim((string) $this->displayName);
+        if ($base === '') {
+            $base = $this->stripTrailingDigitSuffix((string) $this->name);
+        }
+        if ($base === '') {
+            $base = $fallback;
+        }
+
+        $slug = preg_replace('/[^\p{L}\p{N}\-_]+/u', '_', str_replace([' ', '/'], '_', $base));
+
+        return trim((string) $slug, '_') ?: $fallback;
+    }
+
+    /**
      * Strip trailing digits and separator junk from a single name token, then upper-case it.
      */
     private function cleanDisplayToken($token)
     {
-        return mb_strtoupper((string) preg_replace('/[\d\s\-]+$/', '', trim((string) $token)));
+        return mb_strtoupper($this->stripTrailingDigitSuffix((string) $token));
+    }
+
+    private function stripTrailingDigitSuffix(string $token): string
+    {
+        return (string) preg_replace('/[\d\s\-]+$/', '', trim($token));
     }
 
     public function standardLink()

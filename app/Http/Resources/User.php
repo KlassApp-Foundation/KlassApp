@@ -33,7 +33,7 @@ class User extends JsonResource
             'label'                 =>  $this->email,
             'mobile_no'             =>  $this->mobile_no,
             'avatar'                =>  optional($this->userprofile)->AvatarPath,
-            'firstname'             =>  $this->userprofile->firstname.' '.$this->userprofile->lastname,
+            'firstname'             =>  $this->FullName,
             'lastname'              =>  $this->userprofile->lastname,
             'fullname'              =>  $this->FullName,
             'display_name'          =>  $this->displayName,

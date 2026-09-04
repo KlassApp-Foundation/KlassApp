@@ -25,7 +25,7 @@
                 @foreach ($users as $user)
                     <tr class="border-b">
                         <td class="py-3 px-2">
-                            <label class="">{{ $user->name }}</label>
+                            <label class="">{{ $user->displayName ?: $user->name }}</label>
                         </td>
 
                         <td class="py-3 px-2">

@@ -112,7 +112,7 @@
                                     </span>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium" style="color: var(--d-text);">{{ $fellow->name }}</p>
+                                    <p class="text-sm font-medium" style="color: var(--d-text);">{{ $fellow->displayName ?: $fellow->name }}</p>
                                     @if($fellow->mobile_no)
                                         <p class="text-xs" style="color: var(--d-muted);">{{ $fellow->mobile_no }}</p>
                                     @endif

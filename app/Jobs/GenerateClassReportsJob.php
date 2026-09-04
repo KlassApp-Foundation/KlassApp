@@ -98,7 +98,7 @@ class GenerateClassReportsJob implements ShouldQueue
                     $pdf = \App\Http\Controllers\Admin\ReportCardsController::generatePdf(
                         $sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count(), $myPos
                     );
-                    $name = str_replace([' ', '/'], '_', $learner->name ?? $sid);
+                    $name = $learner->displayNameFilenameSlug((string) $sid);
                     $zip->addFromString("{$sid}_{$name}.pdf", $pdf);
                 }
                 $zip->close();

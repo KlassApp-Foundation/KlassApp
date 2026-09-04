@@ -152,11 +152,12 @@ class ManualOnboardingWizard extends Component
         $this->termEndsOn = now()->startOfYear()->addMonths(4)->toDateString();
         $this->teacherEmail = 'teacher.'.Str::lower(Str::random(6)).'@'.($school->slug ?: 'school').'.test';
 
-        // Land on the first incomplete step that is *not* optional. Optional
-        // teachers/students do not block reaching plan_selection or review.
-        $next = OnboardingStepsService::nextBlockingIncompleteStep($school->fresh(), Auth::id());
+        // Land on the first incomplete step (including optional teachers/students).
+        // Skipping optional steps on mount jumped users from Teachers → Terms on reload
+        // and made Previous appear to "go forward" after a remount mid-flow.
+        $next = OnboardingStepsService::nextIncompleteStep($school->fresh(), Auth::id());
         if ($next === null) {
-            // Blocking checklist complete → land on the synthetic review screen (do not auto-finish).
+            // Checklist complete → land on the synthetic review screen (do not auto-finish).
             $this->completedDuringSession = collect($this->steps)
                 ->where('key', '!=', 'review')
                 ->where('is_complete', true)
@@ -539,11 +540,22 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        if ($this->stepIndex > 0) {
-            $this->setStepIndex($this->stepIndex - 1);
-            if ($this->currentKey() === 'review') {
-                $this->buildReviewSummary();
-            }
+        if ($this->stepIndex <= 0) {
+            return;
+        }
+
+        // Navigate by key so a mid-request steps refresh cannot turn "back" into "forward".
+        $keys = array_column($this->steps, 'key');
+        $currentKey = $keys[$this->stepIndex] ?? null;
+        $currentPos = $currentKey !== null ? array_search($currentKey, $keys, true) : false;
+        $target = $currentPos === false ? $this->stepIndex - 1 : ((int) $currentPos - 1);
+        if ($target < 0) {
+            return;
+        }
+
+        $this->setStepIndex($target);
+        if ($this->currentKey() === 'review') {
+            $this->buildReviewSummary();
         }
     }
 
@@ -813,14 +825,15 @@ class ManualOnboardingWizard extends Component
         $year = AcademicYear::where('school_id', $sid)->first();
         $links = StandardLink::with('section')->where('school_id', $sid)->get();
         $subjects = Subject::where('school_id', $sid)->pluck('name')->filter()->values();
-        $teachers = Teacherlink::with('teacher')
+        $teachers = Teacherlink::with('teacher.userprofile')
             ->where('school_id', $sid)
             ->get()
-            ->map(fn ($tl) => $tl->teacher?->name)
+            ->map(fn ($tl) => $tl->teacher?->displayName ?: $tl->teacher?->name)
             ->filter()
             ->unique()
             ->values();
         $students = User::query()
+            ->with('userprofile')
             ->where('school_id', $sid)
             ->where('usergroup_id', 6)
             ->where(function ($q) {
@@ -828,7 +841,8 @@ class ManualOnboardingWizard extends Component
             })
             ->orderBy('id')
             ->limit(20)
-            ->pluck('name')
+            ->get()
+            ->map(fn (User $u) => $u->displayName ?: $u->name)
             ->filter()
             ->values();
         $studentCount = OnboardingStepsService::countActiveStudents($sid);

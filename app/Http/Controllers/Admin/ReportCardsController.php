@@ -315,7 +315,7 @@ class ReportCardsController extends Controller
 
             $pdfContent = $reports->pdfForStudent($schoolId, $stdLink, $learner);
 
-            $name = str_replace([' ', '/'], '_', $learner->name);
+            $name = $learner->displayNameFilenameSlug('student');
             $filename = "{$name}_report_card.pdf";
 
             return response($pdfContent, 200, [

@@ -31,7 +31,7 @@ class UsersSiteAdminTableSeeder extends Seeder
             [
                 'name'       => 'superadmin',
                 'email'      => 'superadmin@gmail.com',
-                'mobile_no'  => '+256765275289',
+                'mobile_no'  => '+256793844906',
                 'firstname'  => 'Super',
                 'lastname'   => 'Admin',
             ],

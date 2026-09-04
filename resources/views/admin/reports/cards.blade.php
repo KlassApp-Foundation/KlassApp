@@ -142,7 +142,7 @@
                         <tbody>
                             @foreach ($link->students as $student)
                             <tr class="border-t hover:bg-gray-50">
-                                <td class="px-2 py-1 text-gray-700">{{ $student->name }}</td>
+                                <td class="px-2 py-1 text-gray-700">{{ $student->displayName ?: $student->name }}</td>
                                 <td class="px-2 py-1 flex gap-1 justify-center">
                                     <a href="{{ route('admin.reports.cards.student.preview', ['stdLink' => $link, 'learner' => $student]) }}"
                                        target="_blank"

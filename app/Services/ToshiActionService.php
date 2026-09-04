@@ -1495,7 +1495,7 @@ class ToshiActionService
             $ids = \App\Models\User::where('school_id', $schoolId)
                 ->where('name', $student->name)
                 ->pluck('id')->implode(', ');
-            return "❌ Cannot confirm — multiple {$label}s named \"{$student->name}\" exist (IDs: {$ids}). Please specify which one before proceeding.";
+            return "❌ Cannot confirm — multiple {$label}s named \"".($student->displayName ?: $student->name)."\" exist (IDs: {$ids}). Please specify which one before proceeding.";
         }
 
         return null;

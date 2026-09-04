@@ -51,7 +51,7 @@ SPDX-License-Identifier: MIT
           </div>
           <div class="mb-2">
             <select class="tw-form-control w-full cursor-not-allowed" wire:model.live="user">
-              <option value="{{ $user->id}}" disabled>{{ $user->name }}</option>
+              <option value="{{ $user->id}}" disabled>{{ $user->displayName ?: $user->name }}</option>
             </select>
             @error('user')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
           </div>

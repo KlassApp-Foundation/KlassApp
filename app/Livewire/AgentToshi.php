@@ -2044,7 +2044,7 @@ class AgentToshi extends Component
             $sa = $u->studentAcademicLatest;
             $class = $sa?->standardLink?->section?->name ?? '—';
             $kid = $sa?->klassapp_student_id ?? '';
-            return "  • **{$u->name}** ({$class}) — {$kid}";
+            return "  • **".($u->displayName ?: $u->name)."** ({$class}) — {$kid}";
         })->implode("\n");
         $more = $students->count() > 8 ? "\n  … and " . ($students->count() - 8) . " more" : '';
         $this->botSay("Found **{$students->count()}** students matching \"**{$nameHint}**\":\n{$lines}{$more}\n\nType a more specific name.");
@@ -2094,7 +2094,7 @@ class AgentToshi extends Component
             ->where('user_id', $studentId)
             ->count();
 
-        $this->botSay("👤 **{$student->name}**\n"
+        $this->botSay("👤 **".($student->displayName ?: $student->name)."**\n"
             . "🆔 KlassApp ID: {$klassappId}\n"
             . "📚 Class: {$className}\n"
             . "💰 Fees: {$feeStatus}\n"
@@ -2983,9 +2983,9 @@ class AgentToshi extends Component
                 return;
             }
             $this->actionData['student_id'] = $student->id;
-            $this->actionData['student_name'] = $student->name;
+            $this->actionData['student_name'] = $student->displayName ?: $student->name;
             $this->actionSubstep = 1;
-            $this->botSay("Student: **{$student->name}**. | What is the payment amount in UGX?");
+            $this->botSay("Student: **".($student->displayName ?: $student->name)."**. | What is the payment amount in UGX?");
             return;
         }
 
