@@ -336,11 +336,15 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 5, 2026 (`origin/main` tip `1e124901` — **#430 MERGED + DEPLOYED** secondary demo onboarding unblock)
+## Current Status: September 5, 2026 (`origin/main` tip `"'abe44eb3'"` — design **PAUSED**; Phase A local; stranger WA ready; #430 deployed)
 
-- **✅ [#430](https://github.com/KlassApp-Foundation/KlassApp/pull/430)** → merge `1e124901` — `ensureOnboardingUnblocked()` on `schools:setup-ui-review-secondary-demo` (admin WhatsAppUser + CurrentPlan) so Toshi overlay does not block dashboards on re-run.
-- **✅ Deploy** `scripts/deploy-manual.sh` from `KlassApp-main-local` — `[8/8] ✅ SHA match`; live re-run shows `onboarding.admin_whatsapp: true`, `onboarding.current_plan: true`, gender 3F/2M.
-- **Prior**: [#429](https://github.com/KlassApp-Foundation/KlassApp/pull/429) `d46b50d1` — secondary demo school **171** + tuition O'/A'Level labels + primary gender fill; live-verify `e2e/screenshots/ui-review-secondary-demo/REPORT.json` pass 16/16.
+- **⏸️ Design paused** — stop landing / auth / error Open Design work for now. Do **not** start Phases B/C or cut `/` / auth / error pages over until explicitly resumed.
+- **Phase A (local WIP only, uncommitted on `docs/stamp-430-deploy`)**: `/landing-preview` → `resources/views/landing-v2.blade.php` + `resources/css/landing-preview.css` + `resources/js/landing-preview.js` ported from locked absolute OD file `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3.html`. Live `/` and `/landing` untouched. Screenshots: `e2e/screenshots/landing-preview-v3/`.
+- **Why `/landing-preview` seemed “gone”**: Aug 28 v2 preview was **never committed** anywhere (`git log --all` empty). Survives only in stashes — `stash@{5}` `landing-wip` (route/vite/knowledge); `stash@{2}` untracked `landing-v2.blade.php` / `landing-v2.css` / `landing-v2.js` / `LandingV2PreviewTest.php`. Tonight’s work is a fresh **v3** port, not that stash.
+- **✅ Prod stranger prep** `+256781940358` — Eloquent removed WhatsAppUser **56**, ParentLinkRequests **1–6**, Approvals **1–4**. Kept demo parent WA `256700119922` (id **52**) + StudentParentLinks. Siteadmin `users.id=4` mobile untouched. Simulated inbound → stranger welcome (`demo` / `link_help` / `parent_link_flow`).
+- **Local (not on `main`)**: `whatsapp:disconnect-phone` (+ PHPUnit); landing Phase A files above. Admin unlink only nulls `user_id` — insufficient for stranger flow.
+- **✅ [#430](https://github.com/KlassApp-Foundation/KlassApp/pull/430)** → merge `1e124901` (stamped via [#431](https://github.com/KlassApp-Foundation/KlassApp/pull/431)); OD absolute-path gotcha logged in `fd80ed5c`.
+- **Prior**: [#429](https://github.com/KlassApp-Foundation/KlassApp/pull/429) `d46b50d1` — secondary demo school **171**.
 
 ## Previous: September 5, 2026 (`origin/main` tip `d46b50d1` — **#429 MERGED + DEPLOYED** UI Review secondary demo)
 
@@ -1158,6 +1162,29 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-05: Design pause + landing-preview archaeology — **KB UPDATED**
+- **Ask**: Pause design for a while; log why earlier `/landing-preview` seemed gone.
+- **Verdict**: Never on any branch (`git log --all` empty for those paths). Aug 28 v2 preview survived only in **stashes** — `stash@{5}` `landing-wip` (route/vite/knowledge); `stash@{2}` untracked `landing-v2.blade.php` / `landing-v2.css` / `landing-v2.js` / `LandingV2PreviewTest.php`. Confusion = stale compiled Blade + old screenshots under `tmp/`.
+- **Tonight Phase A (local WIP, uncommitted on `docs/stamp-430-deploy`)**: fresh **v3** port from absolute locked mockup `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3.html` → `landing-v2.blade.php` + `landing-preview.{css,js}` + Vite + `GET /landing-preview` + `LandingPreviewV3Test`. Not the Aug 28 stash contents.
+- **Verify (Phase A)**: feature test pass; Playwright 1440/1024/390 — sections, dashed hero grid, desktop connectors 8/8, mobile wrap, no console errors; `e2e/screenshots/landing-preview-v3/`.
+- **Status**: ⏸️ **Design paused** — do not start Phases B/C or production cutover until explicitly resumed. Local preview files stay uncommitted unless asked.
+- **Resume later**: Phase B = auth restyle + preview routes; Phase C = 404/419/500 + `/preview/errors/{code}`; always pass **absolute** paths to Open Design (relative paths can escape the OD project lock — see OD gotcha `fd80ed5c` on `main`).
+
+### 2026-09-05: Phase A — landing v3 Blade preview port — **PREVIEW READY; DESIGN PAUSED**
+- **Finding**: Earlier `/landing-preview` + `landing-v2.blade.php` sources were not on this branch (stale compiled remnant only). Recreated from locked absolute path `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3.html`.
+- **Shipped (local, not cut over)**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/js/landing-preview.js` (measured Toshi connector `layout()`), Vite entries, `GET /landing-preview` → `landing.preview`. Live `/` and `/landing` untouched.
+- **Verify**: `LandingPreviewV3Test` pass; Playwright 1440/1024/390 — all sections, dashed hero grid, desktop connectors 8/8 measured, mobile wrap, zero console errors. Artifacts `e2e/screenshots/landing-preview-v3/`.
+- **Deviations**: hero primary CTA → `/register` (mockup `#`); footer Docs/Community/Contact → real routes; preview `noindex`; mobile hamburger still non-functional (same as mockup).
+- **Status**: ✅ Phase A done; ⏸️ design paused before Phases B/C / cutover (see session entry above).
+
+### 2026-09-05: Disconnect `+256781940358` for stranger E2E — **PROD DONE**; command local
+- **Investigated (prod)**: WA id **56** → parent user **3738** (`parent@uireview.klassapp.demo`) @ school **124**; also WA id **52** on same parent for demo phone `256700119922`. PLRs **1–6** (Kabale 104 rejected + UI Review 124 approved/rejected). Links kept (parent still has demo WA). Pending links empty. Siteadmin user **4** also has this mobile — not a WA recognition path.
+- **Existing unlink insufficient**: admin unlink only nulls `user_id`/`verified_at`; rejected PLRs still intercept strangers.
+- **Action**: Eloquent delete on prod — WA 56, PLRs 1–6, Approvals 1–4; kept StudentParentLinks. Built `whatsapp:disconnect-phone` (+ PHPUnit) locally for reuse.
+- **Verify**: simulated Meta inbound → stranger welcome buttons (`demo` / `link_help` / `parent_link_flow`); find-by-phone / pending / rejected all null.
+- **Status**: ✅ Prod ready for onboarding-test agents; command not pushed/deployed yet.
+- **Edge**: Do not re-run `schools:setup-ui-review-demo` in a way that re-attaches this real number; demo parent phone remains `256700119922`.
 
 ### 2026-09-05: Open Design gotcha — project-mode runs can read outside the project directory
 - **Finding**: During Pass 2 (auth/error page mockups), an Open Design run initially read `~/open-design/klassapp-landing.html` — a stale Aug 28 file — instead of the locked `klassapp-landing-v3.html`, despite running inside a project directory scoped to the auth-error work. The model reached outside the project dir via a relative path (`../../../` style) rather than staying confined to the project's own files.
