@@ -336,15 +336,10 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 5, 2026 (`origin/main` tip `56689674` — design **PAUSED**; Phase A local; stranger WA ready; #430 deployed)
+## Current Status: September 5, 2026 (`origin/main` tip pending — Laravel Cloud API setup in progress; design paused)
 
-- **⏸️ Design paused** — stop landing / auth / error Open Design work for now. Do **not** start Phases B/C or cut `/` / auth / error pages over until explicitly resumed.
-- **Phase A (local WIP only, uncommitted on `docs/stamp-430-deploy`)**: `/landing-preview` → `resources/views/landing-v2.blade.php` + `resources/css/landing-preview.css` + `resources/js/landing-preview.js` ported from locked absolute OD file `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3.html`. Live `/` and `/landing` untouched. Screenshots: `e2e/screenshots/landing-preview-v3/`.
-- **Why `/landing-preview` seemed “gone”**: Aug 28 v2 preview was **never committed** anywhere (`git log --all` empty). Survives only in stashes — `stash@{5}` `landing-wip` (route/vite/knowledge); `stash@{2}` untracked `landing-v2.blade.php` / `landing-v2.css` / `landing-v2.js` / `LandingV2PreviewTest.php`. Tonight’s work is a fresh **v3** port, not that stash.
-- **✅ Prod stranger prep** `+256781940358` — Eloquent removed WhatsAppUser **56**, ParentLinkRequests **1–6**, Approvals **1–4**. Kept demo parent WA `256700119922` (id **52**) + StudentParentLinks. Siteadmin `users.id=4` mobile untouched. Simulated inbound → stranger welcome (`demo` / `link_help` / `parent_link_flow`).
-- **Local (not on `main`)**: `whatsapp:disconnect-phone` (+ PHPUnit); landing Phase A files above. Admin unlink only nulls `user_id` — insufficient for stranger flow.
-- **✅ [#430](https://github.com/KlassApp-Foundation/KlassApp/pull/430)** → merge `1e124901` (stamped via [#431](https://github.com/KlassApp-Foundation/KlassApp/pull/431)); OD absolute-path gotcha logged in `fd80ed5c`.
-- **Prior**: [#429](https://github.com/KlassApp-Foundation/KlassApp/pull/429) `d46b50d1` — secondary demo school **171**.
+- **🚧 Laravel Cloud (API, no DNS/deploy yet)**: App `klassapp` (`app-a2ac7a87-…`) region `eu-west-1`, env `production` (`env-a2ac7a89-…`), vanity `klassapp-production-xsisi4.laravel.cloud`. PHP **8.4**; build `composer install --no-dev && npm run build`; deploy `php artisan migrate --force`; MySQL 8.4 flex + Valkey flex attached; queue worker `php artisan queue:work redis …` on App instance; push-to-deploy **OFF**; custom domain **not** attached; **0** deployments. Prod droplet SSH from this agent network **unreachable** — WhatsApp/LLM secrets **not** copied yet (structural env vars + fresh APP_KEY only).
+- **⏸️ Design paused** — Phase A landing preview local-only; no B/C / cutover.
 
 ## Previous: September 5, 2026 (`origin/main` tip `d46b50d1` — **#429 MERGED + DEPLOYED** UI Review secondary demo)
 
@@ -1162,6 +1157,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-05: Laravel Cloud API migration setup — **PARTIAL** (no DNS/deploy)
+- **Work done**: Via Cloud REST API (`https://cloud.laravel.com/api`) with org token: created application from `KlassApp-Foundation/KlassApp` (token org had **0** apps — GitHub connect alone had not created one), production env configured PHP 8.4 + build/deploy cmds, provisioned/attached MySQL 8.4 + Valkey (Redis-protocol) in `eu-west-1`, added worker background process, set structural env vars + fresh APP_KEY, disabled push-to-deploy.
+- **Blocked**: Production droplet `46.101.111.131` SSH/ping timeout from this network — cannot pull live `.env` for WhatsApp Business / Groq / Claude / mail / etc. Local `.env` copies are not production.
+- **Not done (intentional)**: custom domain `klassapp.xyz`, any deploy, Meta webhook cutover.
+- **Status**: 🚧 Infra configured; secrets + DNS/deploy remain separate steps.
+- **Edge**: Rotate the Cloud API token that was pasted in chat.
+
 
 ### 2026-09-05: Design pause + landing-preview archaeology — **KB UPDATED**
 - **Ask**: Pause design for a while; log why earlier `/landing-preview` seemed gone.
