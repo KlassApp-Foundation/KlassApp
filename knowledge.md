@@ -336,7 +336,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 5, 2026 (`origin/main` tip `"'abe44eb3'"` — design **PAUSED**; Phase A local; stranger WA ready; #430 deployed)
+## Current Status: September 5, 2026 (`origin/main` tip `d9adf80c` — design **PAUSED**; Phase A local; stranger WA ready; #430 deployed)
 
 - **⏸️ Design paused** — stop landing / auth / error Open Design work for now. Do **not** start Phases B/C or cut `/` / auth / error pages over until explicitly resumed.
 - **Phase A (local WIP only, uncommitted on `docs/stamp-430-deploy`)**: `/landing-preview` → `resources/views/landing-v2.blade.php` + `resources/css/landing-preview.css` + `resources/js/landing-preview.js` ported from locked absolute OD file `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3.html`. Live `/` and `/landing` untouched. Screenshots: `e2e/screenshots/landing-preview-v3/`.
