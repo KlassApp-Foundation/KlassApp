@@ -1159,6 +1159,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-05: Open Design gotcha — project-mode runs can read outside the project directory
+- **Finding**: During Pass 2 (auth/error page mockups), an Open Design run initially read `~/open-design/klassapp-landing.html` — a stale Aug 28 file — instead of the locked `klassapp-landing-v3.html`, despite running inside a project directory scoped to the auth-error work. The model reached outside the project dir via a relative path (`../../../` style) rather than staying confined to the project's own files.
+- **Impact in this case**: caught before it corrupted the deliverable — the `:root` token block was verified to match v3 exactly after passing the correct absolute path in a follow-up turn. But this could easily have gone unnoticed if the two files' tokens had differed more subtly.
+- **Mitigation**: ALWAYS pass the correct file as an explicit **absolute** path in Open Design briefs, never rely on the model inferring which file in a project directory is the "current" or "locked" one — project-mode scoping does not prevent reads outside the project directory.
+- **Action for future sessions**: when reviewing any Open Design output that's supposed to build on a prior locked file (tokens, structure, copy), verify the actual output against the real locked file's content directly (diff or spot-check key values) rather than trusting the brief was followed — same "verify, don't trust" standard as everything else.
+- **Status**: ✅ Documented so it does not bite a future session.
+
 ### 2026-09-05: Secondary demo onboarding unblock — **MERGED + DEPLOYED**
 - **PR**: [#430](https://github.com/KlassApp-Foundation/KlassApp/pull/430) → merge `1e124901`.
 - **Deploy**: `[8/8] ✅ SHA match`; artisan re-run confirms `admin_whatsapp` + `current_plan` true.
@@ -1227,6 +1234,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Breakpoint re-verify (Playwright `getBoundingClientRect`)**: **1440 / 1024 / 900 / 760** — all four PASS on the four defect checks. At **900** and **760** specifically: all 8 toggles `overflowsWrap`/`overflowsViewport`/`iconClipped` = false; `overflowRight` = −8 (inset); `docOverflowX` = 0; `.input-wrap` stays **338×44.39** (no layout growth from 44×44).
 - **Artifacts**: `~/open-design/.od/projects/klassapp-auth-error-pass2/audit-pass2-correction/{before,after,breakpoints-desktop-tablet/}` (`metrics.json` + wrap screenshots).
 - **Tooling note**: DeepSeek Flash/Pro failed (China opt-in); correction applied with `opencode-go/qwen3.6-plus`. Prefer non-China models unless DeepSeek opted in.
+- **Gotcha (logged 2026-09-05)**: Open Design project-mode does **not** confine reads to the project directory — a Pass 2 run walked out via relative path to stale `~/open-design/klassapp-landing.html` instead of locked `klassapp-landing-v3.html`. Always pass locked reference files as **absolute** paths and diff/spot-check tokens against the real locked file. See Session Log entry same date.
 - **Conversation**: `0f26dfc3-f365-4a1f-b3e1-f1eb90bd7f33`.
 - **Status**: ⏸️ **PAUSED** — prototype correction complete and breakpoint-verified; implement into Blade auth/error views only when design resumes / approved. Not on `main`.
 
