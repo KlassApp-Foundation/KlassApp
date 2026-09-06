@@ -339,7 +339,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 ## Current Status: September 6, 2026 (`origin/main` tip `cbe3a46d` — **#432 MERGED**; Cloud Valkey **verified**)
 
 - **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d` — Redis config honors TLS (`REDIS_SCHEME`) + ACL username (`REDIS_USERNAME`); `CACHE_STORE` preferred over legacy `CACHE_DRIVER`. Deploy `depl-a2adfe81-…` **succeeded** with `CACHE_STORE`/`SESSION_DRIVER`/`QUEUE_CONNECTION=redis`. Live `php artisan klassapp:verify-redis` → ping + cache put/get/forget (incl. `standardLink104_51`) + queue dispatch/`queue:work --once` all **OK** (exit 0). Vanity `/` and `/login` **200**.
-- **Still not domain cutover**: droplet unreachable → no prod DB dump; AI/mail secrets incomplete; `klassapp.xyz` still on old host.
+- **Domain**: `klassapp.xyz` attached/verified on Cloud; WA inbound reaches app, **outbound Graph token blocked** (see Session Log 2026-09-06 WA probe). AI/mail secrets / full DB restore still incomplete for full cutover confidence.
 - **⏸️ Design paused** — Phase A landing preview local-only; no B/C / cutover.
 
 ## Previous: September 5, 2026 (`origin/main` tip pending — Laravel Cloud API setup in progress; design paused) — superseded above
@@ -8795,4 +8795,11 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Evidence**: deploy `deployment.succeeded`; Cloud command `command.success` exit 0 with OK lines for ping/cache/queue; vanity home/login HTTP 200.
 - **PR**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) → merge `cbe3a46d`
 - **Status**: ✅ Done for Valkey connectivity (cutover still blocked on DB restore + remaining secrets)
+
+### 2026-09-06: WhatsApp Cloud connectivity probe (klassapp.xyz on Laravel Cloud)
+
+- **Work done**: Focused WA pipe check on production domain after Cloud cutover. Confirmed webhook GET verify on `/api/whatsapp/inbound` returns challenge HTTP 200 with `klassapp_verify_2026` (~1.5–3s). Cloud env has WhatsApp token/phone/WABA set; `WHATSAPP_BUSINESS_VERIFY_TOKEN` unset but config default matches. Meta Graph `GET /{waba}/subscribed_apps` returns OAuthException **API access blocked** (code 200) for the Cloud System User token — cannot re-confirm subscription fields via Graph. Despite that, **real Meta inbound wamids are landing** in Cloud `message_delivery_log` (e.g. inbound id=3 `Hi` / id=1 `parent_link_flow` from …358). Outbound welcome/stranger menu rows are **status=failed** (ids 2,4,6) — reply send broken. Simulated stranger POST after warm-up: HTTP 200 `{"status":"ok"}` in **20.67s**, inbound row id=5 + failed outbound id=6 (welcome buttons). Env `uses_hibernation=true` (flex).
+- **Root cause (replies)**: Invalid/blocked Meta Graph token — **not** missing verify-token (challenge works) and **not** “inbound never reaches Cloud” (real wamids present). Hibernation/sync outbound makes first responses slow (~20s, Meta’s limit).
+- **Files modified**: none (probe only); `knowledge.md` this entry.
+- **Status**: ⏸️ Blocked on **new Meta System User token** (+ re-check `subscribed_apps`); then re-test stranger inbound→reply. Keep …358 for later onboarding test if possible (already touched today).
 
