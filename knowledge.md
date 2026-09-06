@@ -336,10 +336,15 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 5, 2026 (`origin/main` tip pending — Laravel Cloud API setup in progress; design paused)
+## Current Status: September 6, 2026 (`origin/main` tip `cbe3a46d` — **#432 MERGED**; Cloud Valkey **verified**)
 
-- **🚧 Laravel Cloud (API, no DNS/deploy yet)**: App `klassapp` (`app-a2ac7a87-…`) region `eu-west-1`, env `production` (`env-a2ac7a89-…`), vanity `klassapp-production-xsisi4.laravel.cloud`. PHP **8.4**; build `composer install --no-dev && npm run build`; deploy `php artisan migrate --force`; MySQL 8.4 flex + Valkey flex attached; queue worker `php artisan queue:work redis …` on App instance; push-to-deploy **OFF**; custom domain **not** attached; **0** deployments. Prod droplet SSH from this agent network **unreachable** — WhatsApp/LLM secrets **not** copied yet (structural env vars + fresh APP_KEY only).
+- **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d` — Redis config honors TLS (`REDIS_SCHEME`) + ACL username (`REDIS_USERNAME`); `CACHE_STORE` preferred over legacy `CACHE_DRIVER`. Deploy `depl-a2adfe81-…` **succeeded** with `CACHE_STORE`/`SESSION_DRIVER`/`QUEUE_CONNECTION=redis`. Live `php artisan klassapp:verify-redis` → ping + cache put/get/forget (incl. `standardLink104_51`) + queue dispatch/`queue:work --once` all **OK** (exit 0). Vanity `/` and `/login` **200**.
+- **Still not domain cutover**: droplet unreachable → no prod DB dump; AI/mail secrets incomplete; `klassapp.xyz` still on old host.
 - **⏸️ Design paused** — Phase A landing preview local-only; no B/C / cutover.
+
+## Previous: September 5, 2026 (`origin/main` tip pending — Laravel Cloud API setup in progress; design paused) — superseded above
+
+- Cloud app/env/MySQL/Valkey scaffolded; first vanity deploys blocked on Redis AUTH until #432.
 
 ## Previous: September 5, 2026 (`origin/main` tip `d46b50d1` — **#429 MERGED + DEPLOYED** UI Review secondary demo)
 
@@ -8781,3 +8786,13 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Files modified**: `app/Livewire/AgentToshi.php`, `resources/views/livewire/agent-toshi.blade.php`, `tests/Feature/Onboarding/ToshiSchoolCategoryJumpResumeTest.php`, `knowledge.md`.
 - **PR**: [#379](https://github.com/KlassApp-Foundation/KlassApp/pull/379) — branch `fix/toshi-school-category-resume`, squash merge **`e11c9c4e`**, deployed **2026-08-27 ~23:13 UTC**.
 - **Status**: ✅ Shipped. Toshi E2E Step 2 unblocked for category; continue #368 multi-tier / students / fees from school 110 or next fresh signup.
+
+### 2026-09-06: Laravel Cloud Valkey TLS/username fix (#432)
+
+- **Work done**: Root-caused Cloud migrate failure (`Cache::forget` in `2026_08_13_030000_backfill_school104_streams`) to incomplete Redis config (hardcoded Predis; no `scheme`/`username`). Updated `config/database.php` + `config/cache.php`; added `klassapp:verify-redis` + `RedisConfigTest`. Restored Cloud env to redis/TLS/`application` username from Valkey resource connection (private host). Deployed `cbe3a46d`; live verify exit 0.
+- **Files modified**: `config/database.php`, `config/cache.php`, `.env.example`, `app/Console/Commands/VerifyRedisCommand.php`, `tests/Feature/RedisConfigTest.php`, `knowledge.md`
+- **Key decisions**: Default Redis client remains `predis` locally; Cloud sets `REDIS_CLIENT=phpredis`. Cache DB stays `0` (managed Valkey single-DB). Credentials sourced from Cloud cache API connection object — never hardcoded in repo.
+- **Evidence**: deploy `deployment.succeeded`; Cloud command `command.success` exit 0 with OK lines for ping/cache/queue; vanity home/login HTTP 200.
+- **PR**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) → merge `cbe3a46d`
+- **Status**: ✅ Done for Valkey connectivity (cutover still blocked on DB restore + remaining secrets)
+
