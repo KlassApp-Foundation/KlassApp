@@ -336,11 +336,11 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 6, 2026 (`origin/main` tip pending — **Toshi complete-mode plan→Review fix shipping**)
+## Current Status: September 6, 2026 (`origin/main` tip `c215146d` — **#433 MERGED + Cloud-deployed**; Toshi complete-mode plan→Review **FIXED**)
 
-- **🚧 CRITICAL fix shipping**: complete-mode `selectPlan()` called `detectMissingSteps()` (DB-only), so Review/`commitAll()` was unreachable for new schools with draft teachers/students/terms/fees. Fix advances to Review after plan persist. Branch `fix/toshi-complete-plan-advances-to-review`.
-- **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d` — Redis TLS + ACL username; live `klassapp:verify-redis` OK. Vanity `/` and `/login` **200**.
-- **Domain**: `klassapp.xyz` / vanity `klassapp-production-xsisi4.laravel.cloud` on Cloud. AI/mail secrets / full DB restore still incomplete for full cutover confidence.
+- **✅ CRITICAL #433**: complete-mode `selectPlan()` now advances to Review/`commitAll()` instead of `detectMissingSteps()` (DB-only loop). Merge `c215146d`; Cloud deploy `depl-a2af1408-…` **succeeded**. Live chat on `klassapp.xyz` school **17**: plan → Review → Confirm; DB has teachers/students/terms/fees/plan.
+- **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d` — Redis TLS + ACL username verified earlier.
+- **Domain**: `klassapp.xyz` / vanity `klassapp-production-xsisi4.laravel.cloud` on Cloud.
 - **⏸️ Design paused** — Phase A landing preview local-only; no B/C / cutover.
 
 ## Previous: September 6, 2026 (`origin/main` tip `cbe3a46d` — **#432 MERGED**; Cloud Valkey **verified**) — superseded above
@@ -8817,6 +8817,8 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Files modified**: `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/ToshiCompleteModePlanAdvancesToReviewTest.php`, `knowledge.md`
 - **Key decisions**: Do **not** call `detectMissingSteps()` after complete-mode plan selection; that helper is for post-commit gap filling, not draft-mode flow control.
 - **Tests**: `ToshiCompleteModePlanAdvancesToReviewTest` + `ToshiCountryEmisPlanFlowTest` — 7 passed.
-- **PR**: opening on `fix/toshi-complete-plan-advances-to-review` this session (number TBD until `gh pr create`).
-- **Status**: 🚧 Shipping — live Cloud Toshi verify after merge/deploy.
+- **PR**: [#433](https://github.com/KlassApp-Foundation/KlassApp/pull/433) → merge `c215146d`, branch `fix/toshi-complete-plan-advances-to-review`
+- **Deploy**: Cloud `depl-a2af1408-f3c2-457c-8543-4e404c0db359` **succeeded** (commit `c215146d`)
+- **Live evidence**: Playwright chat on https://klassapp.xyz school **17** (`toshi.plan.review.1788730418@example.test`) — teachers→students→terms→fees→skip exams/WA→**Freemium**→Review→Confirm. `e2e/screenshots/toshi-complete-plan-review/REPORT.json` `pass: true`. DB after: 2 teacher users, 2 students, 3 terms, Tuition fee, CurrentPlan plan_id=1. Also Cloud Livewire::test school **18**: `landed_on_review=true`, no detectMissingSteps checklist, committed students/terms/fees/plan.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 
