@@ -336,7 +336,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 6, 2026 (`origin/main` tip `cbe3a46d` — **#432 MERGED**; Cloud Valkey **verified**)
+## Current Status: September 6, 2026 (`origin/main` tip pending — **Toshi complete-mode plan→Review fix shipping**)
+
+- **🚧 CRITICAL fix shipping**: complete-mode `selectPlan()` called `detectMissingSteps()` (DB-only), so Review/`commitAll()` was unreachable for new schools with draft teachers/students/terms/fees. Fix advances to Review after plan persist. Branch `fix/toshi-complete-plan-advances-to-review`.
+- **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d` — Redis TLS + ACL username; live `klassapp:verify-redis` OK. Vanity `/` and `/login` **200**.
+- **Domain**: `klassapp.xyz` / vanity `klassapp-production-xsisi4.laravel.cloud` on Cloud. AI/mail secrets / full DB restore still incomplete for full cutover confidence.
+- **⏸️ Design paused** — Phase A landing preview local-only; no B/C / cutover.
+
+## Previous: September 6, 2026 (`origin/main` tip `cbe3a46d` — **#432 MERGED**; Cloud Valkey **verified**) — superseded above
 
 - **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d` — Redis config honors TLS (`REDIS_SCHEME`) + ACL username (`REDIS_USERNAME`); `CACHE_STORE` preferred over legacy `CACHE_DRIVER`. Deploy `depl-a2adfe81-…` **succeeded** with `CACHE_STORE`/`SESSION_DRIVER`/`QUEUE_CONNECTION=redis`. Live `php artisan klassapp:verify-redis` → ping + cache put/get/forget (incl. `standardLink104_51`) + queue dispatch/`queue:work --once` all **OK** (exit 0). Vanity `/` and `/login` **200**.
 - **Domain**: `klassapp.xyz` attached/verified on Cloud; WA inbound reaches app, **outbound Graph token blocked** (see Session Log 2026-09-06 WA probe). AI/mail secrets / full DB restore still incomplete for full cutover confidence.
@@ -8802,4 +8809,14 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Root cause (replies)**: Invalid/blocked Meta Graph token — **not** missing verify-token (challenge works) and **not** “inbound never reaches Cloud” (real wamids present). Hibernation/sync outbound makes first responses slow (~20s, Meta’s limit).
 - **Files modified**: none (probe only); `knowledge.md` this entry.
 - **Status**: ⏸️ Blocked on **new Meta System User token** (+ re-check `subscribed_apps`); then re-test stranger inbound→reply. Keep …358 for later onboarding test if possible (already touched today).
+
+
+### 2026-09-06: CRITICAL — Toshi complete-mode plan selection never reaches Review
+
+- **Work done**: Root-caused complete-mode `selectPlan()` calling `detectMissingSteps()` after plan persist. That scan is DB-only; teachers/students/terms/fees stay in draft until Review `commitAll()`, so optional gaps loop back (“let’s add teachers”) and Review is unreachable for genuinely new schools. Fixed by advancing to the `review` step (same destination create-mode already used via `$this->advance()`). Added regression test with draft-only data asserting Review + successful `confirmOnboarding` DB commits.
+- **Files modified**: `app/Livewire/AgentToshi.php`, `tests/Feature/Onboarding/ToshiCompleteModePlanAdvancesToReviewTest.php`, `knowledge.md`
+- **Key decisions**: Do **not** call `detectMissingSteps()` after complete-mode plan selection; that helper is for post-commit gap filling, not draft-mode flow control.
+- **Tests**: `ToshiCompleteModePlanAdvancesToReviewTest` + `ToshiCountryEmisPlanFlowTest` — 7 passed.
+- **PR**: opening on `fix/toshi-complete-plan-advances-to-review` this session (number TBD until `gh pr create`).
+- **Status**: 🚧 Shipping — live Cloud Toshi verify after merge/deploy.
 
