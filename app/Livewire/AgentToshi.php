@@ -3391,13 +3391,25 @@ class AgentToshi extends Component
         $this->selectedPlanId = $plan->id;
         $this->userSay("Selected plan: **{$plan->name}**");
 
-        // Complete-mode plan step: persist CurrentPlan + Subscription immediately
+        // Complete-mode plan step: persist CurrentPlan + Subscription immediately,
+        // then advance to Review so draft teachers/students/terms/fees can be
+        // committed via commitAll(). detectMissingSteps() scans the DB only and
+        // would loop back to those steps while drafts are still uncommitted —
+        // making Review structurally unreachable for new schools.
         if ($this->mode === 'complete' && $this->schoolId) {
             $this->persistSelectedPlan($this->schoolId, $this->selectedPlanId);
-            $this->botSay("**{$plan->name}** plan selected and saved.");
+            $this->botSay("**{$plan->name}** plan selected and saved. | Review your setup next.");
             $this->actionStep = null;
             $this->actionSubstep = 0;
-            $this->detectMissingSteps();
+            $this->substep = 0;
+            $reviewIdx = array_search('review', $this->steps, true);
+            if ($reviewIdx === false) {
+                $this->botSay("I couldn't open the review step. Please try again.");
+
+                return;
+            }
+            $this->advance((int) $reviewIdx);
+
             return;
         }
 
