@@ -139,7 +139,8 @@
         </div>
         <div class="ds-form-group">
             <label class="ds-form-label" for="wizard-teacher-email">Email</label>
-            <input id="wizard-teacher-email" type="email" class="ds-form-input w-full" wire:model="teacherEmail" />
+            {{-- type=text: native type=email + deferred wire:model blocked Next after Add (empty/invalid sync). --}}
+            <input id="wizard-teacher-email" type="text" inputmode="email" autocomplete="email" class="ds-form-input w-full" wire:model="teacherEmail" />
         </div>
         <div class="ds-form-group">
             <label class="ds-form-label" for="wizard-teacher-phone">Phone</label>
@@ -147,7 +148,13 @@
         </div>
         <button type="button" class="ds-btn ds-btn-outline ds-btn-sm" wire:click="addTeacherDraft" data-testid="wizard-teacher-add">+ Add teacher</button>
         <p class="text-xs text-gray-500 mt-3" style="color:#64748B;">Optional — skip if you’ll add teachers later. Continue saves everyone in the list.</p>
-        <button type="button" class="ds-btn ds-btn-ghost ds-btn-sm mt-2" wire:click="skipOptionalStep" data-testid="wizard-teachers-skip">Skip for now</button>
+        <button type="button"
+                class="ds-btn ds-btn-ghost ds-btn-sm mt-2"
+                wire:click="skipOptionalStep"
+                @if(count($teacherDrafts ?? []) > 0)
+                    wire:confirm="You have teachers in the list that will not be saved. Skip anyway?"
+                @endif
+                data-testid="wizard-teachers-skip">Skip for now</button>
     </div>
 
 @elseif($stepKey === 'students')
@@ -225,7 +232,13 @@
         </div>
         <button type="button" class="ds-btn ds-btn-outline ds-btn-sm" wire:click="addStudentDraft" data-testid="wizard-student-add">+ Add student</button>
         <p class="text-xs text-gray-500 mt-3" style="color:#64748B;">Optional — skip if you’ll enrol students later. KlassApp IDs are generated automatically.</p>
-        <button type="button" class="ds-btn ds-btn-ghost ds-btn-sm mt-2" wire:click="skipOptionalStep" data-testid="wizard-students-skip">Skip for now</button>
+        <button type="button"
+                class="ds-btn ds-btn-ghost ds-btn-sm mt-2"
+                wire:click="skipOptionalStep"
+                @if(count($studentDrafts ?? []) > 0)
+                    wire:confirm="You have students in the list that will not be saved. Skip anyway?"
+                @endif
+                data-testid="wizard-students-skip">Skip for now</button>
     </div>
 
 @elseif($stepKey === 'terms')
