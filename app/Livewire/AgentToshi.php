@@ -1483,11 +1483,158 @@ class AgentToshi extends Component
         $this->showTeacherForm = false;
         $this->teacherList = !empty($this->actionData['teachers']) ? $this->actionData['teachers'] : $this->teacherList;
         $this->teacherPhones = $this->actionData['teacherPhones'] ?? [];
+        $this->hydrateTeacherLinksFromFormData();
 
         $preview = implode(', ', array_slice($this->teacherList, 0, 3));
-        $this->botSay("**" . count($this->teacherList) . "** teacher(s) added: {$preview}" . (count($this->teacherList) > 3 ? '...' : '') . ".");
+        $linked = count($this->teacherLinks);
+        $linkNote = $linked > 0
+            ? " ({$linked} class/subject assignment".($linked === 1 ? '' : 's').")"
+            : '';
+        $this->botSay("**" . count($this->teacherList) . "** teacher(s) added: {$preview}" . (count($this->teacherList) > 3 ? '...' : '') . "{$linkNote}.");
         $this->substep = 0;
         $this->advance();
+    }
+
+    /**
+     * Expand form-collected teacherClasses × teacherSubjects into $teacherLinks
+     * rows with the same shape file-upload / commitAll already use:
+     * ['teacher' => …, 'class' => …, 'subject' => …].
+     *
+     * Only creates assignments when both class and subject were provided for
+     * that teacher. Leaves existing $teacherLinks (file upload) intact.
+     */
+    private function hydrateTeacherLinksFromFormData(): void
+    {
+        $classesByTeacher = $this->actionData['teacherClasses'] ?? [];
+        $subjectsByTeacher = $this->actionData['teacherSubjects'] ?? [];
+
+        if (! is_array($classesByTeacher) || ! is_array($subjectsByTeacher)) {
+            return;
+        }
+        if ($classesByTeacher === [] && $subjectsByTeacher === []) {
+            return;
+        }
+
+        $seen = [];
+        foreach ($this->teacherLinks as $link) {
+            if (! is_array($link)) {
+                continue;
+            }
+            $key = strtolower(trim((string) ($link['teacher'] ?? '')).'|'
+                .trim((string) ($link['class'] ?? '')).'|'
+                .trim((string) ($link['subject'] ?? '')));
+            if ($key !== '||') {
+                $seen[$key] = true;
+            }
+        }
+
+        $teachers = ! empty($this->teacherList)
+            ? $this->teacherList
+            : array_values(array_unique(array_merge(
+                array_keys($classesByTeacher),
+                array_keys($subjectsByTeacher)
+            )));
+
+        foreach ($teachers as $teacherName) {
+            $teacherName = trim((string) $teacherName);
+            if ($teacherName === '') {
+                continue;
+            }
+
+            $classes = $classesByTeacher[$teacherName] ?? [];
+            $subjects = $subjectsByTeacher[$teacherName] ?? [];
+            if (! is_array($classes) || ! is_array($subjects) || $classes === [] || $subjects === []) {
+                continue;
+            }
+
+            foreach ($classes as $class) {
+                $class = trim((string) $class);
+                if ($class === '') {
+                    continue;
+                }
+                foreach ($subjects as $subject) {
+                    $subject = trim((string) $subject);
+                    if ($subject === '') {
+                        continue;
+                    }
+                    $key = strtolower("{$teacherName}|{$class}|{$subject}");
+                    if (isset($seen[$key])) {
+                        continue;
+                    }
+                    $this->teacherLinks[] = [
+                        'teacher' => $teacherName,
+                        'class' => $class,
+                        'subject' => $subject,
+                        'phone' => $this->teacherPhones[$teacherName] ?? '',
+                    ];
+                    $seen[$key] = true;
+                }
+            }
+        }
+    }
+
+    /**
+     * Persist Teacherlink rows from $teacherLinks — same firstOrCreate shape
+     * both commitAll branches already used. Hydrates form class/subject data
+     * first so the form path matches the file-upload path.
+     */
+    private function persistTeacherLinksFromCollectedData(School $school, AcademicYear $academicYear): void
+    {
+        $this->hydrateTeacherLinksFromFormData();
+
+        if (empty($this->teacherLinks)) {
+            return;
+        }
+
+        $engine = app(OnboardingEngine::class);
+
+        foreach ($this->teacherLinks as $link) {
+            if (! is_array($link)) {
+                continue;
+            }
+
+            $teacherName = trim((string) ($link['teacher'] ?? ''));
+            $className = trim((string) ($link['class'] ?? ''));
+            $subjectName = trim((string) ($link['subject'] ?? ''));
+            if ($teacherName === '' || $className === '' || $subjectName === '') {
+                continue;
+            }
+
+            $teacherUser = User::where('school_id', $school->id)
+                ->where('usergroup_id', 5)
+                ->where(function ($q) use ($teacherName) {
+                    $q->where('name', $teacherName)
+                        ->orWhere('name', 'like', strtolower($teacherName).'%');
+                })
+                ->first();
+
+            // Same StandardLink resolution as students/fees — supports S.4 ↔ Senior Four.
+            $linkStandardLink = $engine->resolveStandardLinkForClass($school, $academicYear, $className);
+            if (! $linkStandardLink) {
+                continue;
+            }
+
+            $linkSubject = Subject::where('school_id', $school->id)
+                ->where('section_id', $linkStandardLink->section_id)
+                ->whereRaw('LOWER(name) = ?', [strtolower($subjectName)])
+                ->first();
+
+            if (! $linkSubject) {
+                $linkSubject = Subject::where('school_id', $school->id)
+                    ->whereRaw('LOWER(name) = ?', [strtolower($subjectName)])
+                    ->first();
+            }
+
+            if ($teacherUser && $linkStandardLink && $linkSubject) {
+                Teacherlink::firstOrCreate([
+                    'school_id' => $school->id,
+                    'academic_year_id' => $academicYear->id,
+                    'standardLink_id' => $linkStandardLink->id,
+                    'subject_id' => $linkSubject->id,
+                    'teacher_id' => $teacherUser->id,
+                ]);
+            }
+        }
     }
 
     // ── Student Form ──
@@ -5362,34 +5509,8 @@ class AgentToshi extends Component
                 }, $this->teacherList);
                 app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
 
-                // Create teacher-class-subject links from parsed data
-                foreach ($this->teacherLinks as $link) {
-                    // Look up teacher by name — case-insensitive LIKE match
-                    $teacherUser = User::where('school_id', $school->id)
-                        ->where('usergroup_id', 5)
-                        ->where(function ($q) use ($link) {
-                            $q->where('name', $link['teacher'])
-                              ->orWhere('name', 'like', strtolower($link['teacher']) . '%');
-                        })
-                        ->first();
-                    $linkSection = Section::where('school_id', $school->id)->where('name', $link['class'])->first();
-                    $linkStandardLink = $linkSection
-                        ? StandardLink::where('school_id', $school->id)->where('section_id', $linkSection->id)->where('academic_year_id', $academicYear->id)->first()
-                        : null;
-                    $linkSubject = $linkSection
-                        ? Subject::where('school_id', $school->id)->where('section_id', $linkSection->id)->where('name', $link['subject'])->first()
-                        : null;
-
-                    if ($teacherUser && $linkStandardLink && $linkSubject) {
-                        Teacherlink::firstOrCreate([
-                            'school_id' => $school->id,
-                            'academic_year_id' => $academicYear->id,
-                            'standardLink_id' => $linkStandardLink->id,
-                            'subject_id' => $linkSubject->id,
-                            'teacher_id' => $teacherUser->id,
-                        ]);
-                    }
-                }
+                // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink
+                $this->persistTeacherLinksFromCollectedData($school, $academicYear);
 
                 // ── Students: delegate to OnboardingEngine ──
                 // Fixes: random password per student (not shared admin password),
@@ -5528,35 +5649,8 @@ class AgentToshi extends Component
                     app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
                 }
 
-                // Create teacher-class-subject links from parsed data
-                foreach ($this->teacherLinks as $link) {
-                    $teacherUser = User::where('school_id', $schoolId)
-                        ->where('usergroup_id', 5)
-                        ->where(function ($q) use ($link) {
-                            $q->where('name', $link['teacher'])
-                              ->orWhere('name', 'like', strtolower($link['teacher']) . '%');
-                        })
-                        ->first();
-                    $linkSection = Section::where('school_id', $schoolId)->where('name', $link['class'])->first();
-                    $linkStandardLink = $linkSection
-                        ? StandardLink::where('school_id', $schoolId)->where('section_id', $linkSection->id)
-                            ->where('academic_year_id', $academicYear->id)->first()
-                        : null;
-                    $linkSubject = $linkSection
-                        ? Subject::where('school_id', $schoolId)->where('section_id', $linkSection->id)
-                            ->where('name', $link['subject'])->first()
-                        : null;
-
-                    if ($teacherUser && $linkStandardLink && $linkSubject) {
-                        Teacherlink::firstOrCreate([
-                            'school_id' => $schoolId,
-                            'academic_year_id' => $academicYear->id,
-                            'standardLink_id' => $linkStandardLink->id,
-                            'subject_id' => $linkSubject->id,
-                            'teacher_id' => $teacherUser->id,
-                        ]);
-                    }
-                }
+                // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink
+                $this->persistTeacherLinksFromCollectedData($school, $academicYear);
 
                 // ── Terms: delegate to OnboardingEngine (idempotent) ──
                 if (!empty($this->terms)) {

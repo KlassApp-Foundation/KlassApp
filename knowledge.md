@@ -336,9 +336,11 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 7, 2026 (branch `fix/toshi-six-defects-complete-mode` — six Toshi complete-mode defects; **#3 awaiting product decision**)
+## Current Status: September 7, 2026 (branch `fix/toshi-six-defects-complete-mode` — six Toshi complete-mode defects; **#3 A-lite landed**)
 
-- **In progress**: Six defects from latest Toshi complete-mode test. **#1/#2/#4/#5/#6 fixed** on branch; **#3 (Teachers completion / Teacherlink) needs product decision before code**.
+- **In progress**: [#437](https://github.com/KlassApp-Foundation/KlassApp/pull/437) — all six defects coded. **#3 A-lite**: form `teacherClasses` × `teacherSubjects` → `$teacherLinks` → shared `persistTeacherLinksFromCollectedData` in create+complete `commitAll`; Teachers completion stays `Teacherlink::exists()`; no class-teacher Toshi prompt.
+- **Evidence**: `ToshiFormTeacherlinkCommitTest` 3 passed (hydrate + Teacherlink rows + `OnboardingStepsService::isStepComplete('teachers')` + S.4↔Senior Four alias).
+- **Blocked for Agent 1 re-run**: droplet SSH `root@46.101.111.131` **timed out** this session — full secondary Toshi journey from a fresh school still needs Cloud/register or restored SSH after merge/deploy.
 - **Prior tip on main**: `11e62e6c` (#435 four findings). Docs stamp branch `docs/stamp-435-four-findings` / `68d41d5b`.
 
 ## Previous: September 7, 2026 (`origin/main` tip `11e62e6c` — **#435 MERGED + Cloud-deployed**; Toshi complete-mode four findings **FIXED**) — superseded above
@@ -1176,13 +1178,23 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-07: Toshi complete-mode six defects — **#3 A-lite landed** (all six on #437)
+- **Work done**: Product decision **A-lite** for Teachers: expand form `teacherClasses` × `teacherSubjects` into `$teacherLinks`, then one shared `persistTeacherLinksFromCollectedData()` used by create + complete `commitAll` (alias-aware `resolveStandardLinkForClass`; keep `Teacherlink::exists()` completion; **no** class-teacher Toshi prompt). Prior session already shipped #1/#2/#4/#5/#6.
+- **Files**: `AgentToshi.php`, `ToshiFormTeacherlinkCommitTest.php`, `knowledge.md`
+- **Tests**: `php artisan test --compact tests/Feature/Onboarding/ToshiFormTeacherlinkCommitTest.php` — **3 passed** (9 assertions)
+- **Branch**: `fix/toshi-six-defects-complete-mode`
+- **PR**: [#437](https://github.com/KlassApp-Foundation/KlassApp/pull/437)
+- **Status**: 🚧 PR open with all six fixes; Agent 1 fresh-school re-run blocked (droplet SSH timeout)
+- **Edge**: `UserprofileObserver` slugs `users.name`; Teacherlink lookup still works via `LOWER(name) LIKE '{firstname}%'`
+
 ### 2026-09-07: Toshi complete-mode six defects — investigate + fix (except #3)
 - **Work done**: Investigated six defects with code evidence. Fixed **#1** (class alias resolve + no silent first-class fallback), **#2** (`OnboardingEngine::saveExams` + `commitAll` write path; honest "ready" copy), **#4** (review school type / displayName / classCount from DB / Confirm & Complete Setup), **#5** (`tierDisplayLabel` on fee lists + documented All Levels per-tier rows), **#6** (Edit.vue `value=""` + `v-bind:value` conflict on class options). Also fixed `Events` `$fillable` for exam calendar `batch`/`color`.
-- **#3 blocked on product decision**: Teachers step completion requires `Teacherlink`; Toshi form collects classes/subjects but never builds `$teacherLinks` (only file upload does). Recommend wiring form → Teacherlinks + optional class-teacher prompt (custodian-aligned) rather than relaxing the check — awaiting confirm.
+- **#3**: later decided A-lite — see session entry above.
 - **Files**: `OnboardingEngine.php`, `AgentToshi.php`, `agent-toshi.blade.php`, `student/Edit.vue`, `admin/school/fees/index.blade.php`, `FeesCategories.php`, `Exam.php`, `Events.php`, `SaveStudentsClassMatchTest.php`, `SaveExamsTest.php`, `knowledge.md`
 - **Tests**: SaveStudentsClassMatch + SaveExams 7 passed; ContentSteps/SaveStudents filter 63 passed
 - **Branch**: `fix/toshi-six-defects-complete-mode`
-- **Status**: 🚧 Code ready for #1/#2/#4/#5/#6; #3 awaiting decision before implement; live Agent 1 re-run after PR
+- **PR**: [#437](https://github.com/KlassApp-Foundation/KlassApp/pull/437)
+- **Status**: superseded by #3 A-lite entry above
 
 ### 2026-09-07: Toshi complete-mode four findings — **MERGED + DEPLOYED + LIVE-VERIFIED**
 - **Work done**: (1) Reload: `reconcileSchoolOnboardingMode` uses `nextIncompleteStep` (wizard pattern); keeps restored complete-mode step instead of re-jumping to first DB gap. (2) Fee levels: O'Level/A'Level options + `saveFees` level scoping + `tierDisplayLabel()`. (3) Routing: create/complete no longer runs `tryKeywordRoute`/`tryStudentLookup` before active step handlers. (4) Skip: `handleSchoolPay('')` is intro-only so WA skip does not auto-skip School Pay.
