@@ -1176,6 +1176,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-07: Toshi complete-mode six defects — investigate + fix (except #3)
+- **Work done**: Investigated six defects with code evidence. Fixed **#1** (class alias resolve + no silent first-class fallback), **#2** (`OnboardingEngine::saveExams` + `commitAll` write path; honest "ready" copy), **#4** (review school type / displayName / classCount from DB / Confirm & Complete Setup), **#5** (`tierDisplayLabel` on fee lists + documented All Levels per-tier rows), **#6** (Edit.vue `value=""` + `v-bind:value` conflict on class options). Also fixed `Events` `$fillable` for exam calendar `batch`/`color`.
+- **#3 blocked on product decision**: Teachers step completion requires `Teacherlink`; Toshi form collects classes/subjects but never builds `$teacherLinks` (only file upload does). Recommend wiring form → Teacherlinks + optional class-teacher prompt (custodian-aligned) rather than relaxing the check — awaiting confirm.
+- **Files**: `OnboardingEngine.php`, `AgentToshi.php`, `agent-toshi.blade.php`, `student/Edit.vue`, `admin/school/fees/index.blade.php`, `FeesCategories.php`, `Exam.php`, `Events.php`, `SaveStudentsClassMatchTest.php`, `SaveExamsTest.php`, `knowledge.md`
+- **Tests**: SaveStudentsClassMatch + SaveExams 7 passed; ContentSteps/SaveStudents filter 63 passed
+- **Branch**: `fix/toshi-six-defects-complete-mode`
+- **Status**: 🚧 Code ready for #1/#2/#4/#5/#6; #3 awaiting decision before implement; live Agent 1 re-run after PR
 
 ### 2026-09-07: Toshi complete-mode four findings — **MERGED + DEPLOYED + LIVE-VERIFIED**
 - **Work done**: (1) Reload: `reconcileSchoolOnboardingMode` uses `nextIncompleteStep` (wizard pattern); keeps restored complete-mode step instead of re-jumping to first DB gap. (2) Fee levels: O'Level/A'Level options + `saveFees` level scoping + `tierDisplayLabel()`. (3) Routing: create/complete no longer runs `tryKeywordRoute`/`tryStudentLookup` before active step handlers. (4) Skip: `handleSchoolPay('')` is intro-only so WA skip does not auto-skip School Pay.
