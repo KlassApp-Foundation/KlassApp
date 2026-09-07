@@ -336,10 +336,11 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 6, 2026 (`origin/main` tip `c215146d` — **#433 MERGED + Cloud-deployed**; Toshi complete-mode plan→Review **FIXED**)
+## Current Status: September 7, 2026 (`origin/main` tip `11e62e6c` — **#435 MERGED + Cloud-deployed**; Toshi complete-mode four findings **FIXED**)
 
-- **✅ CRITICAL #433**: complete-mode `selectPlan()` now advances to Review/`commitAll()` instead of `detectMissingSteps()` (DB-only loop). Merge `c215146d`; Cloud deploy `depl-a2af1408-…` **succeeded**. Live chat on `klassapp.xyz` school **17**: plan → Review → Confirm; DB has teachers/students/terms/fees/plan.
-- **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d` — Redis TLS + ACL username verified earlier.
+- **✅ #435**: complete-mode reload keeps draft step; fee form O'Level/A'Level via `FeesCategories::tierDisplayLabel`; active-step handlers before student-lookup; WhatsApp skip no longer auto-skips School Pay. Merge `11e62e6c`; Cloud deploy `depl-a2afd53b-…` **succeeded**. Live Playwright school **19** `REPORT.json` `pass: true` (all four).
+- **✅ #433**: complete-mode `selectPlan()` → Review/`commitAll()` (merge `c215146d`).
+- **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d`.
 - **Domain**: `klassapp.xyz` / vanity `klassapp-production-xsisi4.laravel.cloud` on Cloud.
 - **⏸️ Design paused** — Phase A landing preview local-only; no B/C / cutover.
 
@@ -1169,6 +1170,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+
+### 2026-09-07: Toshi complete-mode four findings — **MERGED + DEPLOYED + LIVE-VERIFIED**
+- **Work done**: (1) Reload: `reconcileSchoolOnboardingMode` uses `nextIncompleteStep` (wizard pattern); keeps restored complete-mode step instead of re-jumping to first DB gap. (2) Fee levels: O'Level/A'Level options + `saveFees` level scoping + `tierDisplayLabel()`. (3) Routing: create/complete no longer runs `tryKeywordRoute`/`tryStudentLookup` before active step handlers. (4) Skip: `handleSchoolPay('')` is intro-only so WA skip does not auto-skip School Pay.
+- **Files**: `AgentToshi.php`, `FeesCategories.php`, `OnboardingEngine.php`, `agent-toshi.blade.php`, tests, `e2e/toshi-complete-four-findings-live.cjs`
+- **PR**: [#435](https://github.com/KlassApp-Foundation/KlassApp/pull/435) → merge `11e62e6c`
+- **Deploy**: Cloud `depl-a2afd53b-e741-467e-8914-6ad23ef99726` **succeeded**
+- **Tests**: `ToshiCompleteModeFourFindingsTest` 5 passed; ContentSteps level fee test passed
+- **Live**: school **19** (`toshi.four.1788761173@example.test`) — findings 1–4 all `ok: true` in `e2e/screenshots/toshi-complete-four-findings/REPORT.json`
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 
 ### 2026-09-05: Laravel Cloud API migration setup — **PARTIAL** (no DNS/deploy)
 - **Work done**: Via Cloud REST API (`https://cloud.laravel.com/api`) with org token: created application from `KlassApp-Foundation/KlassApp` (token org had **0** apps — GitHub connect alone had not created one), production env configured PHP 8.4 + build/deploy cmds, provisioned/attached MySQL 8.4 + Valkey (Redis-protocol) in `eu-west-1`, added worker background process, set structural env vars + fresh APP_KEY, disabled push-to-deploy.
