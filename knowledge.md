@@ -1219,7 +1219,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `TeacherLinkImportController.php`, `WizardTeachersNextAfterAddTest.php`, `TeacherLinkImportMatchesExistingTeacherTest.php`, `knowledge.md`
 - **Tests**: both new files **4 passed**. `ManualWizardBulkTeachersStudentsTest` teacher paths pass; one pre-existing whatsapp→plan_selection assert still fails (OTP step — unrelated).
 - **Quick import audit**: only teacher-links admin import had the blind `@school.edu` create-after-name-lookup pattern. Toshi `commitAll` uses `Str::slug($name).'@school.edu'` via OnboardingEngine (dedupes email in-engine) — different path, not the same collision.
-- **Status**: 🚧 Local on `fix/wizard-teachers-next-and-teacher-link-match` — needs PR + Cloud deploy before Agent 2 Teachers→report re-run with fresh WA number
+- **Status**: 🚧 PR open [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) (`fix/wizard-teachers-next-and-teacher-link-match` @ `75692271`) — awaiting merge + Cloud deploy before Agent 2 Teachers→report re-run with fresh WA number
 - **Edge**: Skip silent discard flagged + mitigated with `wire:confirm` (not “make Skip smarter” alone). Bug 3 (headless dropdowns) / Bug 4 (slug suffix) still out of scope.
 
 ### 2026-09-07: Parent-link Flow duplicate guard phone+school + username triage — **MERGED**
