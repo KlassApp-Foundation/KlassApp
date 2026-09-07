@@ -633,6 +633,7 @@ class OnboardingEngine
 
             $className = trim((string) ($fee['class'] ?? ''));
             $termName = trim((string) ($fee['term'] ?? ''));
+            $level = strtolower(trim((string) ($fee['level'] ?? '')));
 
             // Resolve academic_term_id from term name if provided
             $academicTermId = null;
@@ -648,6 +649,9 @@ class OnboardingEngine
             if ($className !== '') {
                 // Class-specific fee: resolve to one Standard + Section
                 $this->saveFeeForClass($school, $name, $amount, $className, $academicTermId);
+            } elseif ($level !== '' && $level !== 'all') {
+                // Level-scoped fee (nursery / primary / o-level / a-level / secondary)
+                $this->saveFeeForLevels($school, $name, $amount, $level, $academicTermId);
             } else {
                 // Whole-school fee: one row per Standard, section_id = NULL
                 $this->saveFeeSchoolWide($school, $name, $amount, $academicTermId);
@@ -707,6 +711,59 @@ class OnboardingEngine
                 'academic_term_id' => $academicTermId,
             ],
         );
+    }
+
+    /**
+     * Save a fee scoped to one or more grading-tier Standards (section_id = NULL).
+     *
+     * Level values match Standard.name / Toshi feeFormLevel: nursery, primary,
+     * o-level, a-level. Legacy "secondary" expands to both O'Level and A'Level.
+     */
+    private function saveFeeForLevels(
+        School $school,
+        string $name,
+        float $amount,
+        string $level,
+        ?int $academicTermId
+    ): void {
+        $tiers = match ($level) {
+            'o-level', 'o_level', 'olevel' => ['o-level'],
+            'a-level', 'a_level', 'alevel' => ['a-level'],
+            'secondary' => ['o-level', 'a-level'],
+            'nursery', 'primary' => [$level],
+            default => [$level],
+        };
+
+        $found = false;
+        foreach ($tiers as $tier) {
+            $standard = Standard::where('school_id', $school->id)
+                ->where('name', $tier)
+                ->first();
+
+            if (! $standard) {
+                continue;
+            }
+
+            $found = true;
+            FeesCategories::firstOrCreate(
+                [
+                    'school_id' => $school->id,
+                    'standard_id' => $standard->id,
+                    'section_id' => null,
+                    'name' => $name,
+                ],
+                [
+                    'amount' => $amount,
+                    'academic_term_id' => $academicTermId,
+                ],
+            );
+        }
+
+        if (! $found) {
+            throw ValidationException::withMessages([
+                'fees' => "Level '{$level}' does not exist for this school. Add matching classes first.",
+            ]);
+        }
     }
 
     /**

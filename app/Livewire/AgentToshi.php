@@ -597,7 +597,7 @@ class AgentToshi extends Component
         }
 
         $incomplete = \App\Services\OnboardingStepsService::incompleteSteps($school, auth()->id());
-        if (! \App\Helpers\OnboardingHelper::hasMissingSteps($school->id, auth()->id())) {
+        if ($incomplete === []) {
             $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
             return;
         }
@@ -607,7 +607,13 @@ class AgentToshi extends Component
             $this->botSay("  ❌ " . ($step['icon'] ?? '') . ' ' . $step['label']);
         }
 
-        $first = $incomplete[0];
+        // Same landing rule as ManualOnboardingWizard mount: nextIncompleteStep
+        // (includes optional teachers/students), not blocking-only.
+        $first = \App\Services\OnboardingStepsService::nextIncompleteStep($school, auth()->id());
+        if ($first === null) {
+            $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
+            return;
+        }
         $this->jumpToIncompleteOnboardingStep($first['key']);
         if ($first['key'] === 'plan_selection') {
             $this->promptPlanSelection();
@@ -635,6 +641,12 @@ class AgentToshi extends Component
      * Align mode + progress UI with OnboardingStepsService (same source as the manual wizard).
      * The "1/18 Required" counter is $step+1 / count($steps) in create-flow indices — it only
      * makes sense while mode === complete. Once onboarding is done, switch to assistant.
+     *
+     * Resume after reload mirrors the wizard: land via nextIncompleteStep() (includes
+     * optional teachers/students), never nextBlockingIncompleteStep() / hasMissingSteps()
+     * which skip optional steps and jump ahead. When session already restored a complete-mode
+     * position (draft teachers/fees/etc. not yet in DB), keep that step — re-jumping from the
+     * DB checklist would always snap back to the first draft-only gap.
      */
     private function reconcileSchoolOnboardingMode($user): void
     {
@@ -644,9 +656,9 @@ class AgentToshi extends Component
         }
 
         $this->schoolId = $user->school_id;
-        $incomplete = \App\Services\OnboardingStepsService::incompleteSteps($school, $user->id);
+        $next = \App\Services\OnboardingStepsService::nextIncompleteStep($school, $user->id);
 
-        if (! \App\Helpers\OnboardingHelper::hasMissingSteps($school->id, $user->id)) {
+        if ($next === null) {
             if ($this->mode !== 'assistant' || $this->step !== 99) {
                 $this->exitCompletingSetupMode();
             }
@@ -654,21 +666,30 @@ class AgentToshi extends Component
             return;
         }
 
-        // Still incomplete — enter/refresh complete mode from the shared step list.
+        // Still incomplete (including optional) — enter/refresh complete mode.
         if ($this->mode !== 'complete') {
             $this->mode = 'complete';
             $this->messages = [];
             $name = $school->name ?: 'your school';
             $this->botSay("Hello! Let's finish setting up **{$name}** on KlassApp.");
-            $this->detectMissingSteps();
+            $this->jumpToIncompleteOnboardingStep($next['key']);
+            if ($next['key'] === 'plan_selection') {
+                $this->promptPlanSelection();
+            } else {
+                $this->botSay(self::onboardingPromptForStep($next['key']));
+            }
             $this->persistState();
 
             return;
         }
 
-        // Already in complete mode with stale step index — jump to first incomplete key.
-        $first = $incomplete[0];
-        $this->jumpToIncompleteOnboardingStep($first['key']);
+        // Already in complete mode — typically after restoreState(). Keep the restored
+        // step/substep so mid-flow draft progress survives reload. Only re-land when the
+        // restored index is invalid.
+        $restoredStep = $this->steps[$this->step] ?? null;
+        if ($restoredStep === null) {
+            $this->jumpToIncompleteOnboardingStep($next['key']);
+        }
         $this->persistState();
     }
 
@@ -724,9 +745,14 @@ class AgentToshi extends Component
             'standards' => 'standards',
             'subjects' => 'subjects',
             'teachers' => 'teachers',
+            'students' => 'students',
             'terms' => 'terms',
             'fees' => 'fees',
             'whatsapp_verify' => 'whatsapp_verify',
+            // Toshi-only steps (not in OnboardingStepsService::ALL_STEPS) — keep mappable
+            // when detectMissingSteps / resume ever surfaces them.
+            'exams' => 'exams',
+            'school_pay' => 'school_pay',
         ];
 
         $stepName = $map[$key] ?? null;
@@ -3303,37 +3329,11 @@ class AgentToshi extends Component
                 }
             }
 
-            // Collecting a school name (complete or create): never treat the answer as
-            // student lookup / assistant keyword routing — multi-word names like
-            // "Sunrise Primary School" would otherwise hit tryStudentLookup.
-            $collectingSchoolName = ($this->steps[$this->step] ?? null) === 'school_info'
-                && (int) $this->substep === 0;
-
-            if (! $collectingSchoolName) {
-                // Try the keyword router first (zero-cost). If it matches, switch to assistant.
-                if ($this->tryKeywordRoute(strtolower($text), $text)) {
-                    $this->mode = 'assistant';
-                    $this->step = 99;
-                    $this->saveDraft();
-                    return;
-                }
-
-                // Heuristic: detect natural language queries vs. setup answers.
-                $isQuestion = (bool) preg_match('/^(what|how|why|when|where|who|which|can|could|would|will|do|does|did|is|are|has|have|show|tell|list|find|give)\b/i', $text);
-                $hasQueryVerb = (bool) preg_match('/\b(show|list|tell|find|give|add|create|record|mark|assign|report|how many|what is|who is|i want|i need|can you)\b/i', $lower);
-                $isMultiWord = str_word_count($text) >= 3;
-                $isSetupAnswer = in_array($lower, ['yes', 'y', 'no', 'n', 'correct', 'right', 'ok', 'default', 'skip', 'later', 'cash', 'cheque', 'mobile_money', 'bank_transfer', 'can we go on', 'go on', 'continue', 'proceed', 'next', 'lets go', 'move on'])
-                    || preg_match('/^\+?256\d{9,12}$/', $text)
-                    || preg_match('/^[\w\.\-]+@[\w\.\-]+\.\w+$/', $text);
-
-                if ($this->mode !== 'create' && ($isQuestion || ($hasQueryVerb && $isMultiWord)) && !$isSetupAnswer) {
-                    $this->mode = 'assistant';
-                    $this->step = 99;
-                    $this->saveDraft();
-                    $this->handleAssistantQuery($text);
-                    return;
-                }
-            }
+            // Create/complete onboarding: the ACTIVE step handler claims free-text first.
+            // tryKeywordRoute → tryStudentLookup used to run here and treat names like
+            // "Jane Auma", answers like "yes"/"skip", and multi-word school names as
+            // student lookups, switching mode to assistant mid-flow. Assistant-mode
+            // queries still use tryKeywordRoute via handleAssistantQuery().
         }
 
         // Handle draft resume commands — full reset to clear ALL stale data
@@ -4794,9 +4794,16 @@ class AgentToshi extends Component
     {
         // substep 0: ask if they want to configure School Pay now
         if ($this->substep === 0) {
-            $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none', '']);
-            if ($skip || $text === '') {
-                $this->botSay("School Pay integration skipped. You can configure it later from the school settings.\n\n> **What is School Pay?** It automatically links parent fee payments to student accounts and sends WhatsApp receipts when a payment is made.");
+            // Empty text is the advance()/callStepHandler('') intro — show the prompt.
+            // Treating '' as skip made WhatsApp "Skip this step" also auto-skip School Pay
+            // because advance() always re-enters the next handler with ''.
+            if (trim($text) === '') {
+                $this->botSay("Would you like to configure **School Pay** now?\n\n> **What is School Pay?** It automatically links parent fee payments to student accounts and sends WhatsApp receipts when a payment is made.\n\nType **yes** to continue, or **skip** to do this later.");
+                return;
+            }
+            $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
+            if ($skip) {
+                $this->botSay("School Pay integration skipped. You can configure it later from the school settings.");
                 $this->substep = 0;
                 $this->advance();
                 return;
@@ -5114,6 +5121,11 @@ class AgentToshi extends Component
                 $class = trim((string) ($fee['class'] ?? ''));
                 if ($class !== '') {
                     $entry['class'] = $class;
+                }
+
+                $level = trim((string) ($fee['level'] ?? ''));
+                if ($level !== '') {
+                    $entry['level'] = $level;
                 }
 
                 $term = trim((string) ($fee['term'] ?? ''));

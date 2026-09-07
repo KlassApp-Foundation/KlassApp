@@ -316,7 +316,9 @@
                         <option value="">Level (optional)</option>
                         <option value="nursery">Nursery</option>
                         <option value="primary">Primary</option>
-                        <option value="secondary">Secondary</option>
+                        <option value="o-level">{{ \App\Models\FeesCategories::tierDisplayLabel('o-level') }}</option>
+                        <option value="a-level">{{ \App\Models\FeesCategories::tierDisplayLabel('a-level') }}</option>
+                        <option value="secondary">Secondary (O'+A')</option>
                         <option value="all">All Levels</option>
                     </select>
                     <input type="text" wire:model="feeFormClass" placeholder="Class (optional)" list="fee-class-list"
@@ -1233,7 +1235,9 @@
                                                 <option value="">Level (optional)</option>
                                                 <option value="nursery">Nursery</option>
                                                 <option value="primary">Primary</option>
-                                                <option value="secondary">Secondary</option>
+                                                <option value="o-level">{{ \App\Models\FeesCategories::tierDisplayLabel('o-level') }}</option>
+                                                <option value="a-level">{{ \App\Models\FeesCategories::tierDisplayLabel('a-level') }}</option>
+                                                <option value="secondary">Secondary (O'+A')</option>
                                                 <option value="all">All Levels</option>
                                             </select>
                                             <input type="text" wire:model="feeFormClass" placeholder="Class (optional)" list="fee-class-list-modal"
