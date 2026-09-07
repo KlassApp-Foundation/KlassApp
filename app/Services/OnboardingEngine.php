@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\AcademicYear;
+use App\Models\Academics\Exam;
+use App\Models\Academics\ExamType;
 use App\Models\CurrentPlan;
 use App\Models\Plan;
 use App\Models\School;
@@ -320,6 +322,150 @@ class OnboardingEngine
 
         // Default: primary
         return 'primary';
+    }
+
+    /**
+     * Canonical UNEB word forms for Primary 1–7 / Senior 1–6 ordinals.
+     *
+     * @return array<int, string>
+     */
+    private static function classOrdinalWords(): array
+    {
+        return [
+            1 => 'One',
+            2 => 'Two',
+            3 => 'Three',
+            4 => 'Four',
+            5 => 'Five',
+            6 => 'Six',
+            7 => 'Seven',
+        ];
+    }
+
+    /**
+     * Expand a class token into every known alias (S.4 ↔ Senior Four ↔ Senior 4, etc.).
+     *
+     * Used so Toshi short-forms and SchoolCategorySeeder long-forms resolve to the
+     * same Section. Never invents a match against an arbitrary first class.
+     *
+     * @return list<string>
+     */
+    public static function classNameCandidates(string $className): array
+    {
+        $raw = trim($className);
+        if ($raw === '') {
+            return [];
+        }
+
+        $candidates = [$raw];
+        $lower = strtolower($raw);
+        $words = self::classOrdinalWords();
+        $wordToNum = [];
+        foreach ($words as $num => $word) {
+            $wordToNum[strtolower($word)] = $num;
+        }
+
+        // Primary: P.1 / P1 / Primary 1 / Primary One
+        if (preg_match('/^(?:p\.?\s*|primary\s+)([1-7]|one|two|three|four|five|six|seven)\b(.*)$/i', $lower, $m)) {
+            $n = ctype_digit($m[1]) ? (int) $m[1] : ($wordToNum[$m[1]] ?? 0);
+            $suffix = trim($m[2] ?? '');
+            if ($n >= 1 && $n <= 7) {
+                $word = $words[$n];
+                foreach (["P.{$n}", "P{$n}", "P {$n}", "Primary {$n}", "Primary {$word}"] as $alias) {
+                    $candidates[] = $suffix !== '' ? "{$alias} {$suffix}" : $alias;
+                }
+            }
+        }
+
+        // Senior: S.4 / S4 / Senior 4 / Senior Four
+        if (preg_match('/^(?:s\.?\s*|senior\s+)([1-6]|one|two|three|four|five|six)\b(.*)$/i', $lower, $m)) {
+            $n = ctype_digit($m[1]) ? (int) $m[1] : ($wordToNum[$m[1]] ?? 0);
+            $suffix = trim($m[2] ?? '');
+            if ($n >= 1 && $n <= 6) {
+                $word = $words[$n];
+                foreach (["S.{$n}", "S{$n}", "S {$n}", "Senior {$n}", "Senior {$word}"] as $alias) {
+                    $candidates[] = $suffix !== '' ? "{$alias} {$suffix}" : $alias;
+                }
+            }
+        }
+
+        // Nursery fixed names
+        if (in_array($lower, ['baby', 'baby class', 'bc'], true)) {
+            $candidates[] = 'Baby Class';
+        }
+        if (in_array($lower, ['middle', 'middle class', 'mc'], true)) {
+            $candidates[] = 'Middle Class';
+        }
+        if (in_array($lower, ['top', 'top class', 'tc'], true)) {
+            $candidates[] = 'Top Class';
+        }
+
+        $unique = [];
+        foreach ($candidates as $c) {
+            $trimmed = trim($c);
+            if ($trimmed === '') {
+                continue;
+            }
+            $key = strtolower($trimmed);
+            if (! isset($unique[$key])) {
+                $unique[$key] = $trimmed;
+            }
+        }
+
+        return array_values($unique);
+    }
+
+    /**
+     * Resolve a StandardLink for a class/section name with short-form aliases.
+     *
+     * Returns null when no section matches — callers must not invent a fallback.
+     */
+    public function resolveStandardLinkForClass(School $school, AcademicYear $year, string $className): ?StandardLink
+    {
+        $className = trim($className);
+        if ($className === '') {
+            return null;
+        }
+
+        $candidates = self::classNameCandidates($className);
+
+        foreach ($candidates as $candidate) {
+            $link = StandardLink::with(['standard', 'section'])
+                ->where('school_id', $school->id)
+                ->where('academic_year_id', $year->id)
+                ->whereHas('section', function ($query) use ($school, $candidate) {
+                    $query->where('school_id', $school->id)
+                        ->where(function ($q) use ($candidate) {
+                            $q->whereRaw('LOWER(name) = ?', [strtolower($candidate)])
+                                ->orWhereRaw('LOWER(name) LIKE ?', [strtolower($candidate).' %']);
+                        });
+                })
+                ->first();
+
+            if ($link) {
+                return $link;
+            }
+        }
+
+        // Bidirectional: existing section aliases include the input (e.g. DB "Senior Four", input "S.4")
+        $links = StandardLink::with(['standard', 'section'])
+            ->where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->get();
+
+        $inputKeys = array_map('strtolower', $candidates);
+        foreach ($links as $link) {
+            $sectionName = trim((string) ($link->section?->name ?? ''));
+            if ($sectionName === '') {
+                continue;
+            }
+            $sectionKeys = array_map('strtolower', self::classNameCandidates($sectionName));
+            if (array_intersect($inputKeys, $sectionKeys) !== []) {
+                return $link;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -667,16 +813,10 @@ class OnboardingEngine
         $standardId = null;
         $sectionId = null;
 
-        // Find a StandardLink whose section name matches the class
-        $link = StandardLink::where('school_id', $school->id)
-            ->whereHas('section', function ($query) use ($school, $className) {
-                $query->where('school_id', $school->id)
-                    ->where(function ($q) use ($className) {
-                        $q->where('name', $className)
-                          ->orWhere('name', 'like', $className.' %');
-                    });
-            })
-            ->first();
+        $year = AcademicYear::where('school_id', $school->id)->orderByDesc('id')->first();
+        $link = $year
+            ? $this->resolveStandardLinkForClass($school, $year, $className)
+            : null;
 
         if ($link) {
             $standardId = $link->standard_id;
@@ -696,6 +836,13 @@ class OnboardingEngine
         if ($standardId === null) {
             throw ValidationException::withMessages([
                 'fees' => "Class '{$className}' does not exist. Add it on the classes step first.",
+            ]);
+        }
+
+        // Class was named but no section matched — refuse silent tier-only placement.
+        if ($sectionId === null && $year) {
+            throw ValidationException::withMessages([
+                'fees' => "Class '{$className}' does not match any class at this school. Use the exact name or a known short form (e.g. S.4 for Senior Four).",
             ]);
         }
 
@@ -773,6 +920,14 @@ class OnboardingEngine
      * fees as whereNull('section_id'), and WhatsApp queries that filter by
      * standard_id. A fee on just one Standard would be invisible to students
      * in other grading tiers.
+     */
+    /**
+     * Save a whole-school fee as one row per Standard (section_id = NULL).
+     *
+     * WhatsApp and some fee queries filter by standard_id, so a single null-standard
+     * row would be invisible to students in other tiers. The admin list therefore
+     * shows one row per grading tier for "All Levels" fees — that is intentional,
+     * not accidental duplication. Display uses tierDisplayLabel() / labeledName().
      */
     private function saveFeeSchoolWide(School $school, string $name, float $amount, ?int $academicTermId): void
     {
@@ -899,6 +1054,27 @@ class OnboardingEngine
             ->where('academic_year_id', $year->id)
             ->first();
 
+        // Pass 1: refuse unmatched class names before creating anyone.
+        // Silent first-class fallback when a name was provided is never acceptable.
+        $unmatchedClasses = [];
+        foreach ($students as $draft) {
+            $name = trim((string) ($draft['name'] ?? ''));
+            $className = trim((string) ($draft['class'] ?? ''));
+            if ($name === '' || $className === '') {
+                continue;
+            }
+            if (! $this->resolveStandardLinkForClass($school, $year, $className)) {
+                $unmatchedClasses[] = "{$name} → '{$className}'";
+            }
+        }
+        if ($unmatchedClasses !== []) {
+            throw ValidationException::withMessages([
+                'students' => 'Could not place student(s) into a class: '
+                    .implode('; ', $unmatchedClasses)
+                    .'. Use the exact class name (e.g. Senior Four) or a known short form (e.g. S.4) — students were not silently assigned to another class.',
+            ]);
+        }
+
         foreach ($students as $draft) {
             $name = trim((string) ($draft['name'] ?? ''));
 
@@ -948,27 +1124,13 @@ class OnboardingEngine
             // Generate KlassApp student ID
             $klassappId = StudentIdGeneratorService::nextForStudent($student);
 
-            // Resolve class assignment
             $className = trim((string) ($draft['class'] ?? ''));
             $link = null;
 
             if ($className !== '') {
-                // Find StandardLink whose section name matches the class
-                $link = StandardLink::with(['standard', 'section'])
-                    ->where('school_id', $school->id)
-                    ->where('academic_year_id', $year->id)
-                    ->whereHas('section', function ($query) use ($school, $className) {
-                        $query->where('school_id', $school->id)
-                            ->where(function ($q) use ($className) {
-                                $q->where('name', $className)
-                                  ->orWhere('name', 'like', $className.' %');
-                            });
-                    })
-                    ->first();
-            }
-
-            // Fallback: first StandardLink for this school/year
-            if (! $link && $firstLink) {
+                $link = $this->resolveStandardLinkForClass($school, $year, $className);
+            } elseif ($firstLink) {
+                // No class provided: keep legacy first-link assignment for paste-name paths.
                 $link = StandardLink::with(['standard', 'section'])->find($firstLink->id) ?? $firstLink;
             }
 
@@ -999,10 +1161,162 @@ class OnboardingEngine
                 'email'        => $email,
                 'user_id'      => $student->id,
                 'klassapp_id'  => $klassappId,
+                'class'        => $link?->section?->name,
+                'standardLink_id' => $link?->id,
             ];
         }
 
         return ['created' => $created, 'skipped' => $skipped];
+    }
+
+    /**
+     * Persist exams collected during Toshi onboarding.
+     *
+     * Each entry should include at least 'type' (exam type / label) and 'class'.
+     * Optional: 'term', 'subject', 'teacher', 'status', 'scheduled_at'.
+     *
+     * Fails loudly when class/subject cannot be resolved — never invents defaults.
+     *
+     * @param  array<int, array<string, mixed>>  $exams
+     * @return array{created: list<array{exam_id: int, type: string, class: string}>}
+     *
+     * @throws ValidationException
+     */
+    public function saveExams(School $school, AcademicYear $year, array $exams, ?int $fallbackTeacherId = null): array
+    {
+        if ($exams === []) {
+            return ['created' => []];
+        }
+
+        $created = [];
+
+        foreach ($exams as $index => $draft) {
+            $typeName = trim((string) ($draft['type'] ?? $draft['name'] ?? ''));
+            $className = trim((string) ($draft['class'] ?? ''));
+            $termName = trim((string) ($draft['term'] ?? ''));
+            $subjectName = trim((string) ($draft['subject'] ?? ''));
+            $teacherName = trim((string) ($draft['teacher'] ?? ''));
+            $status = trim((string) ($draft['status'] ?? 'undone')) ?: 'undone';
+
+            if ($typeName === '') {
+                throw ValidationException::withMessages([
+                    'exams' => 'Each exam needs a type/name (e.g. Mid-Term, End of Term).',
+                ]);
+            }
+
+            if ($className === '') {
+                throw ValidationException::withMessages([
+                    'exams' => "Exam '{$typeName}' is missing a class. Pick the class before confirming.",
+                ]);
+            }
+
+            $link = $this->resolveStandardLinkForClass($school, $year, $className);
+            if (! $link || ! $link->section_id || ! $link->standard_id) {
+                throw ValidationException::withMessages([
+                    'exams' => "Exam '{$typeName}': class '{$className}' does not match any class at this school.",
+                ]);
+            }
+
+            $examType = ExamType::query()
+                ->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($typeName).'%'])
+                ->orWhereRaw('LOWER(code) = ?', [strtolower($typeName)])
+                ->first();
+            if (! $examType) {
+                $examType = ExamType::query()->first();
+            }
+            if (! $examType) {
+                throw ValidationException::withMessages([
+                    'exams' => "Exam '{$typeName}': no exam types are configured on this platform.",
+                ]);
+            }
+
+            $term = null;
+            if ($termName !== '') {
+                $term = AcademicTerm::where('school_id', $school->id)
+                    ->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($termName).'%'])
+                    ->first();
+                if (! $term) {
+                    throw ValidationException::withMessages([
+                        'exams' => "Exam '{$typeName}': term '{$termName}' was not found. Add terms first.",
+                    ]);
+                }
+            } else {
+                $term = AcademicTerm::where('school_id', $school->id)->orderBy('id')->first();
+            }
+
+            $subject = null;
+            if ($subjectName !== '') {
+                $subject = Subject::where('school_id', $school->id)
+                    ->where('section_id', $link->section_id)
+                    ->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($subjectName).'%'])
+                    ->first();
+                if (! $subject) {
+                    // School-wide / standard-scoped subject rows
+                    $subject = Subject::where('school_id', $school->id)
+                        ->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($subjectName).'%'])
+                        ->first();
+                }
+                if (! $subject) {
+                    throw ValidationException::withMessages([
+                        'exams' => "Exam '{$typeName}': subject '{$subjectName}' was not found for class '{$className}'.",
+                    ]);
+                }
+            } else {
+                $subject = Subject::where('school_id', $school->id)
+                    ->where('section_id', $link->section_id)
+                    ->orderBy('id')
+                    ->first()
+                    ?? Subject::where('school_id', $school->id)->orderBy('id')->first();
+                if (! $subject) {
+                    throw ValidationException::withMessages([
+                        'exams' => "Exam '{$typeName}': no subjects exist for class '{$className}'. Add subjects first.",
+                    ]);
+                }
+            }
+
+            $teacherId = $fallbackTeacherId;
+            if ($teacherName !== '') {
+                $teacher = User::where('school_id', $school->id)
+                    ->where('usergroup_id', 5)
+                    ->where(function ($q) use ($teacherName) {
+                        $q->where('name', $teacherName)
+                            ->orWhereRaw('LOWER(name) LIKE ?', [strtolower($teacherName).'%']);
+                    })
+                    ->first();
+                if (! $teacher) {
+                    throw ValidationException::withMessages([
+                        'exams' => "Exam '{$typeName}': teacher '{$teacherName}' was not found.",
+                    ]);
+                }
+                $teacherId = $teacher->id;
+            }
+            if (! $teacherId) {
+                throw ValidationException::withMessages([
+                    'exams' => "Exam '{$typeName}': assign a teacher (or confirm as a school admin so one can be used).",
+                ]);
+            }
+
+            $exam = Exam::create([
+                'school_id' => $school->id,
+                'standard_id' => $link->standard_id,
+                'academic_year_id' => $year->id,
+                'academic_term_id' => $term?->id,
+                'exam_type_id' => $examType->id,
+                'section_id' => $link->section_id,
+                'subject_id' => $subject->id,
+                'teacher_id' => $teacherId,
+                'scheduled_at' => $draft['scheduled_at'] ?? now(),
+                'status' => in_array($status, ['undone', 'ongoing', 'completed'], true) ? $status : 'undone',
+            ]);
+
+            $created[] = [
+                'exam_id' => $exam->id,
+                'type' => $typeName,
+                'class' => $link->section?->name ?? $className,
+            ];
+        }
+
+        return ['created' => $created];
     }
 
     // ── Phase 1C methods: saveWhatsApp, savePlan ─────────────────────────

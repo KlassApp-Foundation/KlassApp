@@ -299,7 +299,7 @@
                 <div class="toshi-spacer-8">
                     @foreach($fees as $fi => $f)
                     <div class="toshi-list-item">
-                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif</span>
+                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif</span>
                         <button wire:click="removeFee({{ $fi }})" type="button"
                                 class="toshi-remove-btn">✕</button>
                     </div>
@@ -724,7 +724,7 @@
                         class="toshi-btn-confirm toshi-confirm-full"
                         onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'"
                         id="confirm-btn">
-                    🎉 Confirm &amp; Create School
+                    🎉 {{ ($reviewData['mode'] ?? 'create') === 'complete' ? 'Confirm & Complete Setup' : 'Confirm & Create School' }}
                 </button>
                 <button type="button" wire:click="editBeforeCommit"
                         class="toshi-btn-secondary toshi-btn-edit"
@@ -1218,7 +1218,7 @@
                                         <div class="toshi-spacer-8">
                                             @foreach($fees as $fi => $f)
                                             <div class="toshi-list-item">
-                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif</span>
+                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif</span>
                                                 <button wire:click="removeFee({{ $fi }})" type="button"
                                                         class="toshi-remove-btn">✕</button>
                                             </div>
@@ -1524,7 +1524,7 @@
                                 <button type="button" wire:click="confirmOnboarding"
                                         class="toshi-btn-confirm toshi-confirm-full"
                                         onmouseover="this.style.background='#16A34A'" onmouseout="this.style.background='#22C55E'">
-                                    🎉 Confirm &amp; Create School
+                                    🎉 {{ ($reviewData['mode'] ?? 'create') === 'complete' ? 'Confirm & Complete Setup' : 'Confirm & Create School' }}
                                 </button>
                                 <button type="button" wire:click="editBeforeCommit"
                                         style="padding: 11px 14px;"

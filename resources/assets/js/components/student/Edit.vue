@@ -713,9 +713,9 @@
                                         Select Class
                                     </option>
                                     <option
-                                        value=""
                                         v-for="standardLink in standardLinklist"
                                         v-bind:value="standardLink.id"
+                                        :key="standardLink.id"
                                     >
                                         {{ standardLink.standard_section }}
                                     </option>
@@ -921,9 +921,9 @@
                             name="standard"
                         >
                             <option
-                                value=""
                                 v-for="standardLink in standardLinklist"
                                 v-bind:value="standardLink.id"
+                                :key="standardLink.id"
                             >
                                 {{ standardLink.standard_section }}
                             </option>

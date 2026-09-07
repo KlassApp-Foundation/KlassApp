@@ -1483,11 +1483,158 @@ class AgentToshi extends Component
         $this->showTeacherForm = false;
         $this->teacherList = !empty($this->actionData['teachers']) ? $this->actionData['teachers'] : $this->teacherList;
         $this->teacherPhones = $this->actionData['teacherPhones'] ?? [];
+        $this->hydrateTeacherLinksFromFormData();
 
         $preview = implode(', ', array_slice($this->teacherList, 0, 3));
-        $this->botSay("**" . count($this->teacherList) . "** teacher(s) added: {$preview}" . (count($this->teacherList) > 3 ? '...' : '') . ".");
+        $linked = count($this->teacherLinks);
+        $linkNote = $linked > 0
+            ? " ({$linked} class/subject assignment".($linked === 1 ? '' : 's').")"
+            : '';
+        $this->botSay("**" . count($this->teacherList) . "** teacher(s) added: {$preview}" . (count($this->teacherList) > 3 ? '...' : '') . "{$linkNote}.");
         $this->substep = 0;
         $this->advance();
+    }
+
+    /**
+     * Expand form-collected teacherClasses × teacherSubjects into $teacherLinks
+     * rows with the same shape file-upload / commitAll already use:
+     * ['teacher' => …, 'class' => …, 'subject' => …].
+     *
+     * Only creates assignments when both class and subject were provided for
+     * that teacher. Leaves existing $teacherLinks (file upload) intact.
+     */
+    private function hydrateTeacherLinksFromFormData(): void
+    {
+        $classesByTeacher = $this->actionData['teacherClasses'] ?? [];
+        $subjectsByTeacher = $this->actionData['teacherSubjects'] ?? [];
+
+        if (! is_array($classesByTeacher) || ! is_array($subjectsByTeacher)) {
+            return;
+        }
+        if ($classesByTeacher === [] && $subjectsByTeacher === []) {
+            return;
+        }
+
+        $seen = [];
+        foreach ($this->teacherLinks as $link) {
+            if (! is_array($link)) {
+                continue;
+            }
+            $key = strtolower(trim((string) ($link['teacher'] ?? '')).'|'
+                .trim((string) ($link['class'] ?? '')).'|'
+                .trim((string) ($link['subject'] ?? '')));
+            if ($key !== '||') {
+                $seen[$key] = true;
+            }
+        }
+
+        $teachers = ! empty($this->teacherList)
+            ? $this->teacherList
+            : array_values(array_unique(array_merge(
+                array_keys($classesByTeacher),
+                array_keys($subjectsByTeacher)
+            )));
+
+        foreach ($teachers as $teacherName) {
+            $teacherName = trim((string) $teacherName);
+            if ($teacherName === '') {
+                continue;
+            }
+
+            $classes = $classesByTeacher[$teacherName] ?? [];
+            $subjects = $subjectsByTeacher[$teacherName] ?? [];
+            if (! is_array($classes) || ! is_array($subjects) || $classes === [] || $subjects === []) {
+                continue;
+            }
+
+            foreach ($classes as $class) {
+                $class = trim((string) $class);
+                if ($class === '') {
+                    continue;
+                }
+                foreach ($subjects as $subject) {
+                    $subject = trim((string) $subject);
+                    if ($subject === '') {
+                        continue;
+                    }
+                    $key = strtolower("{$teacherName}|{$class}|{$subject}");
+                    if (isset($seen[$key])) {
+                        continue;
+                    }
+                    $this->teacherLinks[] = [
+                        'teacher' => $teacherName,
+                        'class' => $class,
+                        'subject' => $subject,
+                        'phone' => $this->teacherPhones[$teacherName] ?? '',
+                    ];
+                    $seen[$key] = true;
+                }
+            }
+        }
+    }
+
+    /**
+     * Persist Teacherlink rows from $teacherLinks — same firstOrCreate shape
+     * both commitAll branches already used. Hydrates form class/subject data
+     * first so the form path matches the file-upload path.
+     */
+    private function persistTeacherLinksFromCollectedData(School $school, AcademicYear $academicYear): void
+    {
+        $this->hydrateTeacherLinksFromFormData();
+
+        if (empty($this->teacherLinks)) {
+            return;
+        }
+
+        $engine = app(OnboardingEngine::class);
+
+        foreach ($this->teacherLinks as $link) {
+            if (! is_array($link)) {
+                continue;
+            }
+
+            $teacherName = trim((string) ($link['teacher'] ?? ''));
+            $className = trim((string) ($link['class'] ?? ''));
+            $subjectName = trim((string) ($link['subject'] ?? ''));
+            if ($teacherName === '' || $className === '' || $subjectName === '') {
+                continue;
+            }
+
+            $teacherUser = User::where('school_id', $school->id)
+                ->where('usergroup_id', 5)
+                ->where(function ($q) use ($teacherName) {
+                    $q->where('name', $teacherName)
+                        ->orWhere('name', 'like', strtolower($teacherName).'%');
+                })
+                ->first();
+
+            // Same StandardLink resolution as students/fees — supports S.4 ↔ Senior Four.
+            $linkStandardLink = $engine->resolveStandardLinkForClass($school, $academicYear, $className);
+            if (! $linkStandardLink) {
+                continue;
+            }
+
+            $linkSubject = Subject::where('school_id', $school->id)
+                ->where('section_id', $linkStandardLink->section_id)
+                ->whereRaw('LOWER(name) = ?', [strtolower($subjectName)])
+                ->first();
+
+            if (! $linkSubject) {
+                $linkSubject = Subject::where('school_id', $school->id)
+                    ->whereRaw('LOWER(name) = ?', [strtolower($subjectName)])
+                    ->first();
+            }
+
+            if ($teacherUser && $linkStandardLink && $linkSubject) {
+                Teacherlink::firstOrCreate([
+                    'school_id' => $school->id,
+                    'academic_year_id' => $academicYear->id,
+                    'standardLink_id' => $linkStandardLink->id,
+                    'subject_id' => $linkSubject->id,
+                    'teacher_id' => $teacherUser->id,
+                ]);
+            }
+        }
     }
 
     // ── Student Form ──
@@ -1692,7 +1839,7 @@ class AgentToshi extends Component
         $this->showExamForm = false;
         $this->exams = collect($this->actionData['exams'])->pluck('type')->values()->toArray();
         $count = count($this->exams);
-        $this->botSay("**{$count}** exam(s) saved.");
+        $this->botSay("**{$count}** exam(s) ready — they will be created when you confirm setup.");
         $this->substep = 0;
         $this->advance();
     }
@@ -4641,7 +4788,7 @@ class AgentToshi extends Component
                 $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
                 if ($yes) {
                     $this->exams = collect($this->actionData['exams'])->pluck('type')->values()->toArray();
-                    $this->botSay("**" . count($this->exams) . "** exam(s) saved.");
+                    $this->botSay("**" . count($this->exams) . "** exam(s) ready — they will be created when you confirm setup.");
                     $this->substep = 0;
                     $this->advance();
                     return;
@@ -4883,23 +5030,47 @@ class AgentToshi extends Component
         // Build review data once (on first entry, or after failed edit navigation)
         if (empty($this->reviewData)) {
             $planName = $this->selectedPlanId ? \App\Models\Plan::find($this->selectedPlanId)?->name : '—';
+            $schoolModel = $this->schoolId ? \App\Models\School::find($this->schoolId) : null;
             $schoolDisplay = $this->mode === 'complete'
-                ? optional(\App\Models\School::find($this->schoolId))->name ?? 'Your school'
+                ? ($schoolModel?->name ?? 'Your school')
                 : $this->schoolName;
+
+            $categoryKey = $schoolModel?->school_category
+                ?: match ($this->schoolType) {
+                    'nursery' => 'nursery',
+                    'primary' => $this->hasNursery ? 'primary_nursery' : 'primary',
+                    'secondary', 'o-level' => 'o_level',
+                    'a-level' => 'o_a_level',
+                    'mixed' => 'o_a_level',
+                    default => $this->schoolType ?: null,
+                };
+            $schoolTypeLabel = $categoryKey
+                ? (\App\Services\SchoolCategorySeeder::CATEGORIES[$categoryKey] ?? ucfirst((string) $this->schoolType))
+                : ucfirst((string) ($this->schoolType ?: '—'));
+
+            $adminUser = auth()->user();
+            $adminDisplay = $this->adminName
+                ?: ($adminUser?->displayName ?: ($adminUser?->name ?? '—'));
+
+            $classCount = count($this->standards);
+            if ($classCount === 0 && $this->mode === 'complete' && $this->schoolId) {
+                $classCount = \App\Models\StandardLink::where('school_id', $this->schoolId)->count();
+            }
+
             $this->reviewData = [
                 'plan'         => ucfirst($planName ?: '—'),
                 'schoolName'   => $schoolDisplay,
-                'schoolType'   => $this->schoolType,
+                'schoolType'   => $schoolTypeLabel,
                 'country'      => $this->schoolCountry ?: '—',
                 'ministryCode' => $this->ministryCode ?: '—',
                 'unebCenter'   => $this->unebCenterNumber ?: '—',
                 'curriculum'   => strtoupper($this->curriculum ?: 'UNEB'),
-                'adminName'    => $this->adminName ?: (auth()->user()->name ?? '—'),
+                'adminName'    => $adminDisplay,
                 'adminEmail'   => $this->adminEmail ?: (auth()->user()->email ?? '—'),
                 'adminPhone'   => $this->schoolPhone,
                 'coAdminName'  => $this->coAdminName ?: '',
                 'coAdminEmail' => $this->coAdminEmail ?: '',
-                'classCount'   => count($this->standards),
+                'classCount'   => $classCount,
                 'classList'    => implode(', ', array_column($this->standards, 'name')),
                 'teacherCount' => count($this->teacherList),
                 'teacherLinkCount' => count($this->teacherLinks),
@@ -5091,6 +5262,51 @@ class AgentToshi extends Component
         }
 
         return ! empty($this->actionData['fees']);
+    }
+
+    private function hasExamsToCommit(): bool
+    {
+        if (! empty($this->exams)) {
+            return true;
+        }
+
+        return ! empty($this->actionData['exams']);
+    }
+
+    /**
+     * Structured exam drafts for OnboardingEngine::saveExams().
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function examsForEngine(): array
+    {
+        if (! empty($this->actionData['exams']) && is_array($this->actionData['exams'])) {
+            $structured = [];
+            foreach ($this->actionData['exams'] as $exam) {
+                if (! is_array($exam)) {
+                    continue;
+                }
+                $type = trim((string) ($exam['type'] ?? $exam['name'] ?? ''));
+                if ($type === '') {
+                    continue;
+                }
+                $structured[] = [
+                    'type' => $type,
+                    'term' => trim((string) ($exam['term'] ?? '')),
+                    'status' => trim((string) ($exam['status'] ?? '')),
+                    'level' => trim((string) ($exam['level'] ?? '')),
+                    'class' => trim((string) ($exam['class'] ?? '')),
+                    'subject' => trim((string) ($exam['subject'] ?? '')),
+                    'teacher' => trim((string) ($exam['teacher'] ?? '')),
+                ];
+            }
+            if ($structured !== []) {
+                return $structured;
+            }
+        }
+
+        // Legacy string[] of exam type names — cannot persist without class.
+        return [];
     }
 
     /**
@@ -5293,34 +5509,8 @@ class AgentToshi extends Component
                 }, $this->teacherList);
                 app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
 
-                // Create teacher-class-subject links from parsed data
-                foreach ($this->teacherLinks as $link) {
-                    // Look up teacher by name — case-insensitive LIKE match
-                    $teacherUser = User::where('school_id', $school->id)
-                        ->where('usergroup_id', 5)
-                        ->where(function ($q) use ($link) {
-                            $q->where('name', $link['teacher'])
-                              ->orWhere('name', 'like', strtolower($link['teacher']) . '%');
-                        })
-                        ->first();
-                    $linkSection = Section::where('school_id', $school->id)->where('name', $link['class'])->first();
-                    $linkStandardLink = $linkSection
-                        ? StandardLink::where('school_id', $school->id)->where('section_id', $linkSection->id)->where('academic_year_id', $academicYear->id)->first()
-                        : null;
-                    $linkSubject = $linkSection
-                        ? Subject::where('school_id', $school->id)->where('section_id', $linkSection->id)->where('name', $link['subject'])->first()
-                        : null;
-
-                    if ($teacherUser && $linkStandardLink && $linkSubject) {
-                        Teacherlink::firstOrCreate([
-                            'school_id' => $school->id,
-                            'academic_year_id' => $academicYear->id,
-                            'standardLink_id' => $linkStandardLink->id,
-                            'subject_id' => $linkSubject->id,
-                            'teacher_id' => $teacherUser->id,
-                        ]);
-                    }
-                }
+                // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink
+                $this->persistTeacherLinksFromCollectedData($school, $academicYear);
 
                 // ── Students: delegate to OnboardingEngine ──
                 // Fixes: random password per student (not shared admin password),
@@ -5353,6 +5543,22 @@ class AgentToshi extends Component
                 // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
                 if ($this->hasFeesToCommit()) {
                     app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
+                }
+
+                // ── Exams: actually persist (Review previously claimed save with no write path) ──
+                if ($this->hasExamsToCommit()) {
+                    $examDrafts = $this->examsForEngine();
+                    if ($examDrafts === []) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'exams' => 'Exams need a class (and usually subject/term) before they can be created. Go back to Exams and fill those fields.',
+                        ]);
+                    }
+                    app(OnboardingEngine::class)->saveExams(
+                        $school,
+                        $academicYear,
+                        $examDrafts,
+                        $adminUser->id
+                    );
                 }
 
                 // ── WhatsApp: delegate to OnboardingEngine ──
@@ -5443,35 +5649,8 @@ class AgentToshi extends Component
                     app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
                 }
 
-                // Create teacher-class-subject links from parsed data
-                foreach ($this->teacherLinks as $link) {
-                    $teacherUser = User::where('school_id', $schoolId)
-                        ->where('usergroup_id', 5)
-                        ->where(function ($q) use ($link) {
-                            $q->where('name', $link['teacher'])
-                              ->orWhere('name', 'like', strtolower($link['teacher']) . '%');
-                        })
-                        ->first();
-                    $linkSection = Section::where('school_id', $schoolId)->where('name', $link['class'])->first();
-                    $linkStandardLink = $linkSection
-                        ? StandardLink::where('school_id', $schoolId)->where('section_id', $linkSection->id)
-                            ->where('academic_year_id', $academicYear->id)->first()
-                        : null;
-                    $linkSubject = $linkSection
-                        ? Subject::where('school_id', $schoolId)->where('section_id', $linkSection->id)
-                            ->where('name', $link['subject'])->first()
-                        : null;
-
-                    if ($teacherUser && $linkStandardLink && $linkSubject) {
-                        Teacherlink::firstOrCreate([
-                            'school_id' => $schoolId,
-                            'academic_year_id' => $academicYear->id,
-                            'standardLink_id' => $linkStandardLink->id,
-                            'subject_id' => $linkSubject->id,
-                            'teacher_id' => $teacherUser->id,
-                        ]);
-                    }
-                }
+                // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink
+                $this->persistTeacherLinksFromCollectedData($school, $academicYear);
 
                 // ── Terms: delegate to OnboardingEngine (idempotent) ──
                 if (!empty($this->terms)) {
@@ -5501,6 +5680,22 @@ class AgentToshi extends Component
                 // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
                 if ($this->hasFeesToCommit()) {
                     app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
+                }
+
+                // ── Exams: actually persist (Review previously claimed save with no write path) ──
+                if ($this->hasExamsToCommit()) {
+                    $examDrafts = $this->examsForEngine();
+                    if ($examDrafts === []) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'exams' => 'Exams need a class (and usually subject/term) before they can be created. Go back to Exams and fill those fields.',
+                        ]);
+                    }
+                    app(OnboardingEngine::class)->saveExams(
+                        $school,
+                        $academicYear,
+                        $examDrafts,
+                        $user->id
+                    );
                 }
 
                 // ── WhatsApp: delegate to OnboardingEngine ──

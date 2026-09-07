@@ -57,6 +57,10 @@ class FeesCategories extends Model
         return match ($standardName) {
             'o-level' => "O'Level",
             'a-level' => "A'Level",
+            'all' => 'All Levels',
+            'secondary' => "Secondary (O'+A')",
+            'nursery' => 'Nursery',
+            'primary' => 'Primary',
             default => $standardName,
         };
     }

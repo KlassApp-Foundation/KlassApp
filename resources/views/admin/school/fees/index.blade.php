@@ -33,8 +33,8 @@
                             <td>{{ $loop->iteration }}</td>
                             <td class="font-medium">{{ $fee->name }}</td>
                             <td>{{ $fee->amount ?? '-' }}</td>
-                            <td>{{ $fee->standard->name ?? '-' }}</td>
-                            <td>{{ $fee->section->name ?? 'All' }}</td>
+                            <td>{{ \App\Models\FeesCategories::tierDisplayLabel($fee->standard->name ?? null) ?? ($fee->standard->name ?? '-') }}</td>
+                            <td>{{ $fee->section->name ?? 'All Levels' }}</td>
                             <td>{{ $fee->term->name ?? 'All' }}</td>
                             <td>
                                 <div class="flex items-center justify-center gap-2">
