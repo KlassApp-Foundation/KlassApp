@@ -748,6 +748,30 @@ class ContentStepsTest extends TestCase
             ->count());
     }
 
+    public function test_save_fees_scopes_to_o_level_and_a_level_with_labeled_names(): void
+    {
+        $school = $this->createSchool();
+        Standard::create(['school_id' => $school->id, 'name' => 'o-level', 'order' => 3, 'status' => '1']);
+        Standard::create(['school_id' => $school->id, 'name' => 'a-level', 'order' => 4, 'status' => '1']);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 650000, 'level' => 'o-level'],
+            ['name' => 'Tuition', 'amount' => 750000, 'level' => 'a-level'],
+        ]);
+
+        $labels = FeesCategories::with('standard')
+            ->where('school_id', $school->id)
+            ->where('name', 'Tuition')
+            ->get()
+            ->map(fn (FeesCategories $fee) => $fee->labeledName())
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame(["Tuition (A'Level)", "Tuition (O'Level)"], $labels);
+        $this->assertEquals(2, FeesCategories::where('school_id', $school->id)->count());
+    }
+
     public function test_save_fees_additive_adds_new_fee_to_existing(): void
     {
         $school = $this->createSchool();
