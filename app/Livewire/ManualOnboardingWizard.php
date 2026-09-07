@@ -166,7 +166,7 @@ class ManualOnboardingWizard extends Component
         $this->academicYearEnd = now()->endOfYear()->toDateString();
         $this->termStartsOn = now()->startOfYear()->toDateString();
         $this->termEndsOn = now()->startOfYear()->addMonths(4)->toDateString();
-        $this->teacherEmail = 'teacher.'.Str::lower(Str::random(6)).'@'.($school->slug ?: 'school').'.test';
+        $this->teacherEmail = $this->freshTeacherEmail($school);
 
         // Land on the first incomplete step (including optional teachers/students).
         // Skipping optional steps on mount jumped users from Teachers → Terms on reload
@@ -216,10 +216,23 @@ class ManualOnboardingWizard extends Component
         }
 
         $email = trim($this->teacherEmail);
-        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->errorMessage = 'Enter a valid teacher email.';
+        $emailMissing = $email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL);
 
-            return;
+        // After "+ Add", Next often re-syncs the cleared name with a blank deferred email.
+        // Treat that as "already listed" — do not create a second draft or block Next.
+        if ($emailMissing) {
+            foreach ($this->teacherDrafts as $draft) {
+                if (strcasecmp((string) ($draft['name'] ?? ''), $name) === 0) {
+                    $this->teacherName = '';
+                    $this->teacherPhone = '';
+                    $this->teacherEmail = $this->freshTeacherEmail();
+                    $this->errorMessage = '';
+
+                    return;
+                }
+            }
+            $email = $this->freshTeacherEmail();
+            $this->teacherEmail = $email;
         }
 
         $this->teacherDrafts[] = [
@@ -229,7 +242,7 @@ class ManualOnboardingWizard extends Component
         ];
         $this->teacherName = '';
         $this->teacherPhone = '';
-        $this->teacherEmail = 'teacher.'.Str::lower(Str::random(6)).'@'.($this->school()->slug ?: 'school').'.test';
+        $this->teacherEmail = $this->freshTeacherEmail();
         $this->errorMessage = '';
     }
 
@@ -248,7 +261,7 @@ class ManualOnboardingWizard extends Component
         foreach ($names as $name) {
             $this->teacherDrafts[] = [
                 'name' => $name,
-                'email' => 'teacher.'.Str::lower(Str::random(6)).'@'.($this->school()->slug ?: 'school').'.test',
+                'email' => $this->freshTeacherEmail(),
                 'phone' => '',
             ];
         }
@@ -329,6 +342,20 @@ class ManualOnboardingWizard extends Component
         $key = $this->currentKey();
         if (! in_array($key, OnboardingStepsService::OPTIONAL_STEPS, true)) {
             return;
+        }
+
+        // Discard in-memory drafts on skip. The Skip button uses wire:confirm when the
+        // list is non-empty so this is never a silent wipe from the UI.
+        if ($key === 'teachers') {
+            $this->teacherDrafts = [];
+            $this->teacherName = '';
+            $this->teacherPhone = '';
+            $this->teacherPaste = '';
+        }
+        if ($key === 'students') {
+            $this->studentDrafts = [];
+            $this->studentName = '';
+            $this->studentPaste = '';
         }
 
         $this->errorMessage = '';
@@ -1151,7 +1178,7 @@ class ManualOnboardingWizard extends Component
 
     private function saveTeachers(School $school): void
     {
-        // Flush a pending single-add form into the draft list.
+        // Flush a pending single-add form into the draft list (auto-email if needed).
         if (trim($this->teacherName) !== '') {
             $this->addTeacherDraft();
             if ($this->errorMessage !== '') {
@@ -1165,7 +1192,14 @@ class ManualOnboardingWizard extends Component
 
         $year = AcademicYear::where('school_id', $school->id)->first();
         $link = StandardLink::where('school_id', $school->id)->first();
-        $subject = Subject::where('school_id', $school->id)->first();
+        // Prefer a subject on the same section as the class link so Teacherlink rows are coherent.
+        $subject = null;
+        if ($link) {
+            $subject = Subject::where('school_id', $school->id)
+                ->where('section_id', $link->section_id)
+                ->first();
+        }
+        $subject ??= Subject::where('school_id', $school->id)->first();
         if (! $year || ! $link || ! $subject) {
             throw ValidationException::withMessages(['teacherName' => 'Add class and subject first.']);
         }
@@ -1180,9 +1214,21 @@ class ManualOnboardingWizard extends Component
             ];
         }, $this->teacherDrafts);
 
-        app(OnboardingEngine::class)->saveTeachers($school, $year, $drafts);
+        $result = app(OnboardingEngine::class)->saveTeachers($school, $year, $drafts);
+        if (($result['created'] ?? []) === []) {
+            $reason = collect($result['skipped'] ?? [])->pluck('reason')->filter()->first()
+                ?: 'Could not save teachers. Check the list and try again.';
+            throw ValidationException::withMessages(['teacherName' => $reason]);
+        }
 
         $this->teacherDrafts = [];
+    }
+
+    private function freshTeacherEmail(?School $school = null): string
+    {
+        $slug = ($school ?? $this->school())->slug ?: 'school';
+
+        return 'teacher.'.Str::lower(Str::random(6)).'@'.$slug.'.test';
     }
 
     private function saveStudents(School $school): void

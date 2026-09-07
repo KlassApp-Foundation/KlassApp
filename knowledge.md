@@ -349,7 +349,13 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 7, 2026 (`origin/main` tip `dd5da3fe` — **#438 MERGED + Cloud-deployed**; parent-link Flow duplicate guard **phone+school**)
+## Current Status: September 7, 2026 (branch `fix/wizard-teachers-next-and-teacher-link-match` — Agent 2 wizard blockers; **NOT MERGED**)
+
+- **In progress**: [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) — Agent 2 wizard blockers (Teachers Next + teacher-links match). Branch `fix/wizard-teachers-next-and-teacher-link-match` @ `75692271`. Agent 2 re-run after merge + Cloud deploy.
+- **`origin/main` tip**: `9dae1530` (#439 docs stamp for #438). Prior live: #438 phone+school Flow dup guard Cloud-deployed.
+- **Username digit-suffix**: intentional slug — leave alone (confirmed again this pass).
+
+## Previous: September 7, 2026 (`origin/main` tip `dd5da3fe` / docs `9dae1530` — **#438 MERGED + Cloud-deployed**; parent-link Flow duplicate guard **phone+school**) — superseded above
 
 - **✅ #438**: `createFromFlowSubmission` duplicate check scoped to **phone + school** (not phone alone). Merge `dd5da3fe`; Cloud deploy `depl-a2b0e2d5-…` **succeeded**.
 - **Live evidence**: pending school **22** + new submission school **24** (same phone `+256781940358`) both created; same-school re-submit suppressed; Approvals-style `linkByStudentId` approve → SPL=1; Flow outbound wamid sent. `e2e/screenshots/agent1-secondary-full/FLOW-DUP-GUARD-LIVE.json`.
@@ -1205,6 +1211,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-07: Agent 2 wizard blockers — Teachers Next + teacher-links match — **LOCAL FIX**
+- **Work done**:
+  1. **Bug 1 root cause**: After `+ Add teacher`, Next re-synced stale `teacherName` with blank deferred `teacherEmail` (`type="email"` + Livewire morph). `saveTeachers` → `addTeacherDraft` set “Enter a valid teacher email” and returned — Next looked dead; Skip bypassed persist and discarded the list. Fix: auto-email / treat stale blank-email+existing-draft as no-op; `type="text" inputmode="email"`; `wire:confirm` on Skip when list non-empty; verify engine created ≥1 teacher; prefer subject on same section as StandardLink.
+  2. **Bug 2**: `TeacherLinkImportController` matched `users.name` (slug after `UserprofileObserver`) then blind-inserted `slug.schoolId@school.edu` → unique collision. Fix: phone-first then `userprofiles` display name; create only if no match. Also fixed broken `$this->log()` (trait only has `doActivityLog`) which rolled back successful imports.
+- **Files**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `TeacherLinkImportController.php`, `WizardTeachersNextAfterAddTest.php`, `TeacherLinkImportMatchesExistingTeacherTest.php`, `knowledge.md`
+- **Tests**: both new files **4 passed**. `ManualWizardBulkTeachersStudentsTest` teacher paths pass; one pre-existing whatsapp→plan_selection assert still fails (OTP step — unrelated).
+- **Quick import audit**: only teacher-links admin import had the blind `@school.edu` create-after-name-lookup pattern. Toshi `commitAll` uses `Str::slug($name).'@school.edu'` via OnboardingEngine (dedupes email in-engine) — different path, not the same collision.
+- **Status**: 🚧 PR open [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) (`fix/wizard-teachers-next-and-teacher-link-match` @ `75692271`) — awaiting merge + Cloud deploy before Agent 2 Teachers→report re-run with fresh WA number
+- **Edge**: Skip silent discard flagged + mitigated with `wire:confirm` (not “make Skip smarter” alone). Bug 3 (headless dropdowns) / Bug 4 (slug suffix) still out of scope.
 
 ### 2026-09-07: Parent-link Flow duplicate guard phone+school + username triage — **MERGED**
 - **Work done**:

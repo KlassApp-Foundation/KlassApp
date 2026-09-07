@@ -88,11 +88,10 @@ class TeacherLinkImportController extends Controller
                 $className = $parts[2];
                 $phone = $parts[3] ?? '';
 
-                // Find or create teacher
-                $teacher = User::where('school_id', $schoolId)
-                    ->where('name', $teacherName)
-                    ->where('usergroup_id', 5)
-                    ->first();
+                // Match existing teachers first (phone → display name). users.name is a
+                // post-create URL slug (UserprofileObserver), so exact name lookup misses
+                // CSV-imported teachers and the deterministic @school.edu insert collides.
+                $teacher = $this->findExistingTeacher($schoolId, $teacherName, $phone);
 
                 if (!$teacher) {
                     $provisioning = UserProvisioning::randomPasswordAttributes();
@@ -173,7 +172,13 @@ class TeacherLinkImportController extends Controller
                 if (count($errors) > 3) $message .= " (+" . (count($errors) - 3) . " more)";
             }
 
-            $this->log("Imported {$created} teacher links", 'teacher-link-import');
+            $this->doActivityLog(
+                Auth::user(),
+                Auth::user(),
+                ['ip' => $request->ip(), 'details' => (string) $request->userAgent()],
+                'teacher-link-import',
+                "Imported {$created} teacher links"
+            );
 
             return back()->with('success', $message);
         } catch (\Exception $e) {
@@ -186,7 +191,13 @@ class TeacherLinkImportController extends Controller
     {
         $link = Teacherlink::where('school_id', Auth::user()->school_id)->findOrFail($id);
         $link->delete();
-        $this->log("Deleted teacher link #{$id}", 'teacher-link-delete');
+        $this->doActivityLog(
+            Auth::user(),
+            Auth::user(),
+            ['ip' => request()->ip(), 'details' => (string) request()->userAgent()],
+            'teacher-link-delete',
+            "Deleted teacher link #{$id}"
+        );
         return back()->with('success', 'Teacher link deleted.');
     }
 
@@ -212,5 +223,77 @@ class TeacherLinkImportController extends Controller
         }
 
         return $rows;
+    }
+
+    /**
+     * Resolve an existing school teacher by phone (preferred), then display name on
+     * userprofiles — never by users.name alone (that column is a slug after profile create).
+     */
+    private function findExistingTeacher(int $schoolId, string $teacherName, string $phone): ?User
+    {
+        $base = User::query()
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 5)
+            ->where('status', 'active');
+
+        $phone = trim($phone);
+        if ($phone !== '') {
+            $digits = preg_replace('/\D+/', '', $phone) ?: '';
+            $candidates = (clone $base)
+                ->where(function ($q) use ($phone, $digits) {
+                    $q->where('mobile_no', $phone);
+                    if ($digits !== '') {
+                        $q->orWhere('mobile_no', $digits)
+                            ->orWhere('mobile_no', '+'.$digits)
+                            ->orWhere('mobile_no', 'like', '%'.$digits);
+                    }
+                })
+                ->get();
+
+            if ($candidates->count() === 1) {
+                return $candidates->first();
+            }
+            if ($candidates->count() > 1 && $teacherName !== '') {
+                $named = $candidates->first(function (User $user) use ($teacherName) {
+                    return $this->teacherDisplayNameMatches($user, $teacherName);
+                });
+                if ($named) {
+                    return $named;
+                }
+            }
+            if ($candidates->isNotEmpty()) {
+                return $candidates->first();
+            }
+        }
+
+        if ($teacherName === '') {
+            return null;
+        }
+
+        $byProfile = (clone $base)
+            ->whereHas('userprofile', function ($q) use ($teacherName) {
+                $q->where('firstname', $teacherName)
+                    ->orWhereRaw("TRIM(CONCAT(COALESCE(firstname,''), ' ', COALESCE(lastname,''))) = ?", [$teacherName]);
+            })
+            ->first();
+        if ($byProfile) {
+            return $byProfile;
+        }
+
+        // Legacy: exact users.name (pre-observer slug or manually set).
+        return (clone $base)->where('name', $teacherName)->first();
+    }
+
+    private function teacherDisplayNameMatches(User $user, string $teacherName): bool
+    {
+        $profile = $user->userprofile;
+        if (! $profile) {
+            return strcasecmp((string) $user->name, $teacherName) === 0;
+        }
+
+        $full = trim(($profile->firstname ?? '').' '.($profile->lastname ?? ''));
+
+        return strcasecmp($full, $teacherName) === 0
+            || strcasecmp((string) $profile->firstname, $teacherName) === 0;
     }
 }
