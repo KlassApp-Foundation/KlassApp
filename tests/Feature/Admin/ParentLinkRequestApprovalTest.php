@@ -267,6 +267,65 @@ class ParentLinkRequestApprovalTest extends TestCase
             ->count());
     }
 
+    public function test_pending_at_school_a_does_not_block_flow_submission_at_school_b(): void
+    {
+        $schoolB = School::create([
+            'name' => 'Second Link School',
+            'email' => 'second-link@test.sch.ug',
+            'status' => 1,
+        ]);
+        $linkB = $this->createStandardLink($schoolB, 'P.4');
+        $studentB = $this->createStudent($schoolB, $linkB, 'Eric Ssempala');
+
+        $phone = '+256700111333';
+        $service = app(ParentLinkRequestService::class);
+
+        $pendingAtA = $service->createFromFlowSubmission($phone, [
+            'parent_name' => 'Cross School Parent',
+            'child_name' => 'Amope Nandawula',
+            'child_class' => 'P.3',
+            'school_name' => 'Link Request School',
+        ]);
+
+        $this->assertTrue($pendingAtA->wasRecentlyCreated);
+        $this->assertSame($this->school->id, $pendingAtA->school_id);
+        $this->assertSame('pending', $pendingAtA->status);
+
+        $atSchoolB = $service->createFromFlowSubmission($phone, [
+            'parent_name' => 'Cross School Parent',
+            'child_name' => 'Eric Ssempala',
+            'child_class' => 'P.4',
+            'school_name' => 'Second Link School',
+        ]);
+
+        $this->assertTrue(
+            $atSchoolB->wasRecentlyCreated,
+            'Pending at school A must not suppress a new Flow submission for school B'
+        );
+        $this->assertNotSame($pendingAtA->id, $atSchoolB->id);
+        $this->assertSame($schoolB->id, $atSchoolB->school_id);
+        $this->assertSame($studentB->id, $atSchoolB->suggested_student_id);
+        $this->assertSame('pending', $atSchoolB->status);
+
+        $this->assertSame(2, ParentLinkRequest::where('phone', $phone)->where('status', 'pending')->count());
+        $this->assertDatabaseHas('approvals', [
+            'approvable_type' => ParentLinkRequest::class,
+            'approvable_id' => $atSchoolB->id,
+            'state' => Pending::class,
+        ]);
+
+        // Same-school duplicate still suppressed
+        $dupAtB = $service->createFromFlowSubmission($phone, [
+            'parent_name' => 'Cross School Parent',
+            'child_name' => 'Someone Else',
+            'child_class' => 'P.5',
+            'school_name' => 'Second Link School',
+        ]);
+        $this->assertFalse($dupAtB->wasRecentlyCreated);
+        $this->assertSame($atSchoolB->id, $dupAtB->id);
+        $this->assertSame(2, ParentLinkRequest::where('phone', $phone)->count());
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
