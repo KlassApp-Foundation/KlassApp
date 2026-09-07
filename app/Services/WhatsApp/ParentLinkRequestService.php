@@ -23,11 +23,11 @@ class ParentLinkRequestService
      * Persist a WhatsApp Flow submission and enqueue it for school admin review.
      *
      * One submission = one child at one school. Parents with children at
-     * different schools submit the Flow once per child — but only after any
-     * existing pending request for this phone is resolved (approved/rejected).
+     * different schools submit the Flow once per child (phone may have a
+     * pending request at school A while still submitting for school B).
      *
-     * If a pending request already exists for the phone, returns that row
-     * unchanged (`wasRecentlyCreated` will be false) instead of creating a duplicate.
+     * Duplicate suppression is scoped to phone + school (resolved school_id,
+     * or submitted school_name when unresolved) — never phone alone.
      *
      * @param  array<string, mixed>  $payload
      */
@@ -39,23 +39,29 @@ class ParentLinkRequestService
     ): ParentLinkRequest {
         $phone = WhatsAppPhoneHelper::normalise($phone);
 
-        $existingPending = $this->findPendingForPhone($phone);
+        $parentName = trim((string) ($payload['parent_name'] ?? $senderName));
+        $childName = trim((string) ($payload['child_name'] ?? ''));
+        $childClass = trim((string) ($payload['child_class'] ?? ''));
+        $schoolName = trim((string) ($payload['school_name'] ?? ''));
+        $resolvedSchool = $this->resolveSchoolByName($schoolName);
+
+        $existingPending = $this->findPendingForPhoneAtSchool(
+            $phone,
+            $resolvedSchool?->id,
+            $schoolName,
+        );
         if ($existingPending !== null) {
-            Log::info('Parent link request duplicate suppressed — pending already exists', [
+            Log::info('Parent link request duplicate suppressed — pending already exists for this phone+school', [
                 'parent_link_request_id' => $existingPending->id,
                 'phone' => $phone,
+                'school_id' => $resolvedSchool?->id,
+                'school_name' => $schoolName !== '' ? $schoolName : null,
             ]);
 
             return $existingPending->loadMissing(['school', 'suggestedStudent']);
         }
 
-        $parentName = trim((string) ($payload['parent_name'] ?? $senderName));
-        $childName = trim((string) ($payload['child_name'] ?? ''));
-        $childClass = trim((string) ($payload['child_class'] ?? ''));
-        $schoolName = trim((string) ($payload['school_name'] ?? ''));
-
-        return DB::transaction(function () use ($phone, $parentName, $childName, $childClass, $schoolName, $flowToken) {
-            $resolvedSchool = $this->resolveSchoolByName($schoolName);
+        return DB::transaction(function () use ($phone, $parentName, $childName, $childClass, $schoolName, $flowToken, $resolvedSchool) {
 
             $candidates = $this->findCandidateStudents(
                 $childName,
@@ -127,6 +133,45 @@ class ParentLinkRequestService
             ->latest('id')
             ->with(['school'])
             ->first();
+    }
+
+    /**
+     * Pending request for this phone at a specific school.
+     *
+     * When $schoolId is known, match that school_id (also treating an older
+     * unresolved pending row with the same submitted school_name as a duplicate).
+     * When unresolved, match on submitted school_name only — never another school.
+     */
+    public function findPendingForPhoneAtSchool(
+        string $phone,
+        ?int $schoolId,
+        string $schoolName = '',
+    ): ?ParentLinkRequest {
+        $phone = WhatsAppPhoneHelper::normalise($phone);
+        $schoolName = trim($schoolName);
+
+        $query = ParentLinkRequest::query()
+            ->where('phone', $phone)
+            ->where('status', 'pending');
+
+        if ($schoolId !== null) {
+            $query->where(function ($q) use ($schoolId, $schoolName) {
+                $q->where('school_id', $schoolId);
+                if ($schoolName !== '') {
+                    $q->orWhere(function ($inner) use ($schoolName) {
+                        $inner->whereNull('school_id')
+                            ->whereRaw('LOWER(school_name) = ?', [mb_strtolower($schoolName)]);
+                    });
+                }
+            });
+        } elseif ($schoolName !== '') {
+            $query->whereRaw('LOWER(COALESCE(school_name, "")) = ?', [mb_strtolower($schoolName)]);
+        } else {
+            // No school identity — do not suppress against other schools' pending rows.
+            return null;
+        }
+
+        return $query->latest('id')->with(['school'])->first();
     }
 
     /**
