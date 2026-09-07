@@ -351,7 +351,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ## Current Status: September 7, 2026 (branch `fix/wizard-teachers-next-and-teacher-link-match` — Agent 2 wizard blockers; **NOT MERGED**)
 
-- **In progress**: two Agent 2 primary-wizard blockers fixed locally — Teachers Next after add; teacher-links import match-existing. Branch tip not on Cloud yet → **Agent 2 re-run blocked until PR merge + deploy**.
+- **In progress**: [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) — Agent 2 wizard blockers (Teachers Next + teacher-links match). Branch `fix/wizard-teachers-next-and-teacher-link-match` @ `75692271`. Agent 2 re-run after merge + Cloud deploy.
 - **`origin/main` tip**: `9dae1530` (#439 docs stamp for #438). Prior live: #438 phone+school Flow dup guard Cloud-deployed.
 - **Username digit-suffix**: intentional slug — leave alone (confirmed again this pass).
 
