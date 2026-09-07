@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "pr": "https://github.com/KlassApp-Foundation/KlassApp/pull/438",
+  "merge": "dd5da3fe",
+  "deploy": "depl-a2b0e2d5-8321-4f95-81a7-bd5047b3a361",
+  "school_a": {
+    "id": 22,
+    "name": "Agent's School-3",
+    "plr_id": 3,
+    "created": true
+  },
+  "school_b": {
+    "id": 24,
+    "name": "Bunyoro Crest Secondary School",
+    "plr_id": 4,
+    "created": true,
+    "student_id": 59
+  },
+  "cross_school_ok": true,
+  "same_school_blocked": true,
+  "approval_id": 4,
+  "approve_ok": true,
+  "link_outcome": "linked_existing_parent_record",
+  "spl": 1,
+  "pending_count_phone": 1,
+  "flow_send": {
+    "success": true,
+    "message_id": "wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSNkNFRkYxRjQ5NDc1QzhBMjEzAA=="
+  },
+  "phone": "+256781940358",
+  "note": "createFromFlowSubmission x2 schools + Approvals-style linkByStudentId approve; not KLS-ID WhatsApp fallback"
+}

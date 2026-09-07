@@ -316,6 +316,19 @@
 
 ### Future Initiatives (flagged, not yet in progress)
 
+#### Optional: invite class teacher to set up their own class
+
+**Flagged**: 2026-09-07 — **Not yet scoped / not started.**
+
+**Idea**: After (or during) school setup, an admin may optionally invite a teacher to configure **their own class** — roster, subjects, and related class-level details — instead of the admin doing every class themselves.
+
+**Product constraint (refined 2026-09-07)**: this is an **OPTIONAL, nullable alternative**, not a replacement for admin-driven setup.
+- Admins **keep** the ability to add classes and students directly (Toshi complete mode, manual wizard, admin CRUD) — that remains the default path.
+- Inviting a teacher to set up their own class is additive: use it when useful; skip it when the admin prefers to enter everything themselves.
+- No school should be blocked on a teacher accepting an invite; teacher self-setup must never become a mandatory gate.
+
+**Not yet scoped**: invite UX (WhatsApp vs email vs in-app), what the teacher is allowed to create vs edit, how Teacherlink / class-teacher assignment interacts, and how this sits next to existing Teachers + Students onboarding steps.
+
 #### UI migration: away from inherited GeGoK12 UI, toward KlassApp's own modern UI
 
 **Flagged**: 2026-08-27 (provenance documentation session) — **Not yet scoped.**
@@ -336,7 +349,22 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 7, 2026 (branch `fix/toshi-six-defects-complete-mode` — six Toshi complete-mode defects; **#3 A-lite landed**)
+## Current Status: September 7, 2026 (`origin/main` tip `dd5da3fe` — **#438 MERGED + Cloud-deployed**; parent-link Flow duplicate guard **phone+school**)
+
+- **✅ #438**: `createFromFlowSubmission` duplicate check scoped to **phone + school** (not phone alone). Merge `dd5da3fe`; Cloud deploy `depl-a2b0e2d5-…` **succeeded**.
+- **Live evidence**: pending school **22** + new submission school **24** (same phone `+256781940358`) both created; same-school re-submit suppressed; Approvals-style `linkByStudentId` approve → SPL=1; Flow outbound wamid sent. `e2e/screenshots/agent1-secondary-full/FLOW-DUP-GUARD-LIVE.json`.
+- **Username digit-suffix triage**: `users.name` (e.g. `asiimwe brenda576`) is the **intentional URL slug / login identifier** rewritten by `UserprofileObserver` — **leave alone**. Human-facing UI must use `displayName` (firstname+lastname). Same treatment as route slugs.
+- **Prior**: #437 Agent 1 pass (school 22); `WHATSAPP_PARENT_LINK_FLOW_ID` persisted on Cloud.
+
+## Previous: September 7, 2026 (`origin/main` tip `1a030cde` — **#437 MERGED + Cloud-deployed**; Agent 1 secondary full journey **PASS**) — superseded above
+
+- **✅ #437** six Toshi complete-mode defects + Teacherlink A-lite — merge `1a030cde`; Cloud deploy `depl-a2b08852-…` **succeeded**.
+- **✅ Agent 1 full pass (Cloud, not droplet SSH)**: fresh secondary school **22** “Agent's School-3” via web signup + in-app Toshi complete mode (admin WhatsApp skipped) → Review/Confirm → Teacherlink + exam → marks → Flow PLR + approve → **%PDF-1.7** report (668 959 bytes). Evidence: `e2e/screenshots/agent1-secondary-full/REPORT.json` + `SCHOOL22-FINAL.json`.
+- **Ops**: production is **Laravel Cloud** (`klassapp.xyz`). Do **not** SSH `46.101.111.131` for prod commands — use Cloud Commands API / dashboard (same pattern as Redis/seeder fixes).
+- **✅ `WHATSAPP_PARENT_LINK_FLOW_ID=1732491471303297`** persisted on Cloud via `POST …/variables` (`method: set` + local JSON patch file); redeploy `depl-a2b0c2c1-…` **succeeded**. Live verify **without override**: `config`/`env` = Flow ID; Flow send `success` + wamid `…D3929B574844F3AE6D`. Evidence: `e2e/screenshots/agent1-secondary-full/FLOW-ID-PERSIST.json`.
+- **Future (docs)**: optional “invite class teacher to set up their own class” logged under Future Initiatives — admin-driven setup remains default; teacher invite is nullable/optional.
+
+## Previous: September 7, 2026 (branch `fix/toshi-six-defects-complete-mode` — six Toshi complete-mode defects; **#3 A-lite landed**) — superseded above
 
 - **In progress**: [#437](https://github.com/KlassApp-Foundation/KlassApp/pull/437) — all six defects coded. **#3 A-lite**: form `teacherClasses` × `teacherSubjects` → `$teacherLinks` → shared `persistTeacherLinksFromCollectedData` in create+complete `commitAll`; Teachers completion stays `Teacherlink::exists()`; no class-teacher Toshi prompt.
 - **Evidence**: `ToshiFormTeacherlinkCommitTest` 3 passed (hydrate + Teacherlink rows + `OnboardingStepsService::isStepComplete('teachers')` + S.4↔Senior Four alias).
@@ -1177,6 +1205,36 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-07: Parent-link Flow duplicate guard phone+school + username triage — **MERGED**
+- **Work done**:
+  1. Fixed `ParentLinkRequestService::createFromFlowSubmission` — duplicate suppression now `findPendingForPhoneAtSchool(phone, school_id|school_name)` instead of phone-only. Regression test: pending School A does not block School B; same-school still blocked. Live Cloud verify after #438 deploy: schools 22+24, Approvals-path approve, Flow send.
+  2. Triaged teacher “username” digit suffix (`asiimwe brenda576`): **not a missed displayName site** — `UserprofileObserver` explicitly documents `users.name` as internal URL slug/unique identifier; display names live in `userprofiles.firstname/lastname` via `displayName`. Left alone.
+- **Files**: `ParentLinkRequestService.php`, `ParentLinkRequestApprovalTest.php`, `knowledge.md`
+- **PR**: [#438](https://github.com/KlassApp-Foundation/KlassApp/pull/438) merge `dd5da3fe`
+- **Tests**: `ParentLinkRequestApprovalTest` + `WhatsAppParentLinkFlowTest` — 14 passed
+- **Live**: `FLOW-DUP-GUARD-LIVE.json` — `cross_school_ok`, `same_school_blocked`, `approve_ok`, Flow wamid
+- **Status**: ✅ MERGED + Cloud-deployed + live-verified
+
+### 2026-09-07: Persist WA parent-link Flow ID on Cloud + log optional teacher class-setup — **DONE**
+- **Work done**:
+  1. Set `WHATSAPP_PARENT_LINK_FLOW_ID=1732491471303297` on Cloud production via API (`POST /api/environments/{id}/variables` with `method: set`, payload from local `/tmp/klassapp-cloud-env-patch.json`). Redeployed `depl-a2b0c2c1-8383-4ee6-9f77-0faad37a59c2` → `deployment.succeeded`. Verified **without runtime override**: `env()` + `config('services.whatsapp.parent_link_flow_id')` return the ID; `sendParentLinkRequestFlow(+256781940358)` → `success` + wamid.
+  2. Logged future initiative: optional invite for a class teacher to set up their own class — **nullable alternative**, not a replacement for admin adding classes/students directly.
+- **Files modified**: `knowledge.md`; evidence `e2e/screenshots/agent1-secondary-full/FLOW-ID-PERSIST.json`
+- **Status**: ✅ Done
+- **Edge**: Cloud env vars applied only after redeploy (config:clear alone was not enough).
+
+### 2026-09-07: Agent 1 secondary full journey on Laravel Cloud — **PASS** (school 22)
+- **Work done**: Stopped droplet SSH; used Laravel Cloud Commands API. Ran fresh secondary signup on `klassapp.xyz` + Toshi complete mode (WA skip) through Confirm after #437 deploy `1a030cde`. Completed marks, WhatsApp Flow PLR + approve, report PDF, Flow outbound send (runtime flow ID).
+- **Files modified**: `e2e/agent1-secondary-full-journey.cjs`, `e2e/support/laravel-cloud.js`, `e2e/screenshots/agent1-secondary-full/REPORT.json`, `knowledge.md`
+- **Key decisions / evidence**:
+  - School **22** Agent's School-3 / `agent1.sec.1788791729953@example.test`
+  - After Confirm: 1 Teacherlink, 1 teacher, 2 students, teachers step complete; Toshi created BOT exam; Cloud added EOT (`contributes_to_report_total`) + 4 mark rows
+  - PLR #1 approved → parent linked to student 50; Flow send `wamid.HBgMMjU2NzgxOTQwMzU4FQIAERgSOTJGRTdBNEYyQjk3NzE2MTAxAA==`
+  - Report PDF **668959** bytes, head `%PDF-1.7`, sha256 `7454e03e58c44f7f13aa923f697ccc095c7a025909f3ce4a7f82f30840822f02`
+  - Cloud blockers cleared: empty `exam_types` table; subject name `GENERAL MATHEMATICS` (not `Mathematics`)
+- **Status**: ✅ Done (Agent 1 evidence). Persist `WHATSAPP_PARENT_LINK_FLOW_ID` on Cloud; investigate school-23 confirm “already exists” false positive if re-running harness.
+- **Edge cases flagged**: Marks must use `exam.section_id` (not nonexistent `standardLink_id`); report cards require an exam whose ExamType `contributes_to_report_total=1`.
 
 ### 2026-09-07: Toshi complete-mode six defects — **#3 A-lite landed** (all six on #437)
 - **Work done**: Product decision **A-lite** for Teachers: expand form `teacherClasses` × `teacherSubjects` into `$teacherLinks`, then one shared `persistTeacherLinksFromCollectedData()` used by create + complete `commitAll` (alias-aware `resolveStandardLinkForClass`; keep `Teacherlink::exists()` completion; **no** class-teacher Toshi prompt). Prior session already shipped #1/#2/#4/#5/#6.
