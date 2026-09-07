@@ -336,7 +336,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 7, 2026 (`origin/main` tip `11e62e6c` — **#435 MERGED + Cloud-deployed**; Toshi complete-mode four findings **FIXED**)
+## Current Status: September 7, 2026 (branch `fix/toshi-six-defects-complete-mode` — six Toshi complete-mode defects; **#3 awaiting product decision**)
+
+- **In progress**: Six defects from latest Toshi complete-mode test. **#1/#2/#4/#5/#6 fixed** on branch; **#3 (Teachers completion / Teacherlink) needs product decision before code**.
+- **Prior tip on main**: `11e62e6c` (#435 four findings). Docs stamp branch `docs/stamp-435-four-findings` / `68d41d5b`.
+
+## Previous: September 7, 2026 (`origin/main` tip `11e62e6c` — **#435 MERGED + Cloud-deployed**; Toshi complete-mode four findings **FIXED**) — superseded above
 
 - **✅ #435**: complete-mode reload keeps draft step; fee form O'Level/A'Level via `FeesCategories::tierDisplayLabel`; active-step handlers before student-lookup; WhatsApp skip no longer auto-skips School Pay. Merge `11e62e6c`; Cloud deploy `depl-a2afd53b-…` **succeeded**. Live Playwright school **19** `REPORT.json` `pass: true` (all four).
 - **✅ #433**: complete-mode `selectPlan()` → Review/`commitAll()` (merge `c215146d`).

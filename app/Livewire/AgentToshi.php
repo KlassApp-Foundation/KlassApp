@@ -1692,7 +1692,7 @@ class AgentToshi extends Component
         $this->showExamForm = false;
         $this->exams = collect($this->actionData['exams'])->pluck('type')->values()->toArray();
         $count = count($this->exams);
-        $this->botSay("**{$count}** exam(s) saved.");
+        $this->botSay("**{$count}** exam(s) ready — they will be created when you confirm setup.");
         $this->substep = 0;
         $this->advance();
     }
@@ -4641,7 +4641,7 @@ class AgentToshi extends Component
                 $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
                 if ($yes) {
                     $this->exams = collect($this->actionData['exams'])->pluck('type')->values()->toArray();
-                    $this->botSay("**" . count($this->exams) . "** exam(s) saved.");
+                    $this->botSay("**" . count($this->exams) . "** exam(s) ready — they will be created when you confirm setup.");
                     $this->substep = 0;
                     $this->advance();
                     return;
@@ -4883,23 +4883,47 @@ class AgentToshi extends Component
         // Build review data once (on first entry, or after failed edit navigation)
         if (empty($this->reviewData)) {
             $planName = $this->selectedPlanId ? \App\Models\Plan::find($this->selectedPlanId)?->name : '—';
+            $schoolModel = $this->schoolId ? \App\Models\School::find($this->schoolId) : null;
             $schoolDisplay = $this->mode === 'complete'
-                ? optional(\App\Models\School::find($this->schoolId))->name ?? 'Your school'
+                ? ($schoolModel?->name ?? 'Your school')
                 : $this->schoolName;
+
+            $categoryKey = $schoolModel?->school_category
+                ?: match ($this->schoolType) {
+                    'nursery' => 'nursery',
+                    'primary' => $this->hasNursery ? 'primary_nursery' : 'primary',
+                    'secondary', 'o-level' => 'o_level',
+                    'a-level' => 'o_a_level',
+                    'mixed' => 'o_a_level',
+                    default => $this->schoolType ?: null,
+                };
+            $schoolTypeLabel = $categoryKey
+                ? (\App\Services\SchoolCategorySeeder::CATEGORIES[$categoryKey] ?? ucfirst((string) $this->schoolType))
+                : ucfirst((string) ($this->schoolType ?: '—'));
+
+            $adminUser = auth()->user();
+            $adminDisplay = $this->adminName
+                ?: ($adminUser?->displayName ?: ($adminUser?->name ?? '—'));
+
+            $classCount = count($this->standards);
+            if ($classCount === 0 && $this->mode === 'complete' && $this->schoolId) {
+                $classCount = \App\Models\StandardLink::where('school_id', $this->schoolId)->count();
+            }
+
             $this->reviewData = [
                 'plan'         => ucfirst($planName ?: '—'),
                 'schoolName'   => $schoolDisplay,
-                'schoolType'   => $this->schoolType,
+                'schoolType'   => $schoolTypeLabel,
                 'country'      => $this->schoolCountry ?: '—',
                 'ministryCode' => $this->ministryCode ?: '—',
                 'unebCenter'   => $this->unebCenterNumber ?: '—',
                 'curriculum'   => strtoupper($this->curriculum ?: 'UNEB'),
-                'adminName'    => $this->adminName ?: (auth()->user()->name ?? '—'),
+                'adminName'    => $adminDisplay,
                 'adminEmail'   => $this->adminEmail ?: (auth()->user()->email ?? '—'),
                 'adminPhone'   => $this->schoolPhone,
                 'coAdminName'  => $this->coAdminName ?: '',
                 'coAdminEmail' => $this->coAdminEmail ?: '',
-                'classCount'   => count($this->standards),
+                'classCount'   => $classCount,
                 'classList'    => implode(', ', array_column($this->standards, 'name')),
                 'teacherCount' => count($this->teacherList),
                 'teacherLinkCount' => count($this->teacherLinks),
@@ -5091,6 +5115,51 @@ class AgentToshi extends Component
         }
 
         return ! empty($this->actionData['fees']);
+    }
+
+    private function hasExamsToCommit(): bool
+    {
+        if (! empty($this->exams)) {
+            return true;
+        }
+
+        return ! empty($this->actionData['exams']);
+    }
+
+    /**
+     * Structured exam drafts for OnboardingEngine::saveExams().
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function examsForEngine(): array
+    {
+        if (! empty($this->actionData['exams']) && is_array($this->actionData['exams'])) {
+            $structured = [];
+            foreach ($this->actionData['exams'] as $exam) {
+                if (! is_array($exam)) {
+                    continue;
+                }
+                $type = trim((string) ($exam['type'] ?? $exam['name'] ?? ''));
+                if ($type === '') {
+                    continue;
+                }
+                $structured[] = [
+                    'type' => $type,
+                    'term' => trim((string) ($exam['term'] ?? '')),
+                    'status' => trim((string) ($exam['status'] ?? '')),
+                    'level' => trim((string) ($exam['level'] ?? '')),
+                    'class' => trim((string) ($exam['class'] ?? '')),
+                    'subject' => trim((string) ($exam['subject'] ?? '')),
+                    'teacher' => trim((string) ($exam['teacher'] ?? '')),
+                ];
+            }
+            if ($structured !== []) {
+                return $structured;
+            }
+        }
+
+        // Legacy string[] of exam type names — cannot persist without class.
+        return [];
     }
 
     /**
@@ -5355,6 +5424,22 @@ class AgentToshi extends Component
                     app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
                 }
 
+                // ── Exams: actually persist (Review previously claimed save with no write path) ──
+                if ($this->hasExamsToCommit()) {
+                    $examDrafts = $this->examsForEngine();
+                    if ($examDrafts === []) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'exams' => 'Exams need a class (and usually subject/term) before they can be created. Go back to Exams and fill those fields.',
+                        ]);
+                    }
+                    app(OnboardingEngine::class)->saveExams(
+                        $school,
+                        $academicYear,
+                        $examDrafts,
+                        $adminUser->id
+                    );
+                }
+
                 // ── WhatsApp: delegate to OnboardingEngine ──
                 // Fixes: updateOrCreate by user_id for idempotency, UniqueConstraintViolationException catch for phone dedup.
                 if ($this->whatsappVerified && $this->whatsappPhone) {
@@ -5501,6 +5586,22 @@ class AgentToshi extends Component
                 // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
                 if ($this->hasFeesToCommit()) {
                     app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
+                }
+
+                // ── Exams: actually persist (Review previously claimed save with no write path) ──
+                if ($this->hasExamsToCommit()) {
+                    $examDrafts = $this->examsForEngine();
+                    if ($examDrafts === []) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'exams' => 'Exams need a class (and usually subject/term) before they can be created. Go back to Exams and fill those fields.',
+                        ]);
+                    }
+                    app(OnboardingEngine::class)->saveExams(
+                        $school,
+                        $academicYear,
+                        $examDrafts,
+                        $user->id
+                    );
                 }
 
                 // ── WhatsApp: delegate to OnboardingEngine ──
