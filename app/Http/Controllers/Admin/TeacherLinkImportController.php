@@ -88,9 +88,8 @@ class TeacherLinkImportController extends Controller
                 $className = $parts[2];
                 $phone = $parts[3] ?? '';
 
-                // Match existing teachers first (phone → display name). users.name is a
-                // post-create URL slug (UserprofileObserver), so exact name lookup misses
-                // CSV-imported teachers and the deterministic @school.edu insert collides.
+                // Match existing teachers first (phone → display name). Keep users.name as
+                // the human name from create (UserprofileObserver no longer digit-slugifies).
                 $teacher = $this->findExistingTeacher($schoolId, $teacherName, $phone);
 
                 if (!$teacher) {

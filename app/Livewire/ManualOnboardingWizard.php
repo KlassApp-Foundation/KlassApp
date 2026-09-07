@@ -890,7 +890,7 @@ class ManualOnboardingWizard extends Component
             ->values();
         $studentCount = OnboardingStepsService::countActiveStudents($sid);
         $terms = AcademicTerm::where('school_id', $sid)->get();
-        $fees = FeesCategories::where('school_id', $sid)->get();
+        $fees = FeesCategories::with('standard')->where('school_id', $sid)->get();
         $whatsapp = WhatsAppUser::where('user_id', Auth::id())->first();
         $currentPlan = CurrentPlan::with('plan')->where('school_id', $sid)->first();
         $plan = $currentPlan?->plan;
@@ -912,7 +912,7 @@ class ManualOnboardingWizard extends Component
 
         $feeValue = $fees->isEmpty()
             ? '—'
-            : $fees->map(fn ($f) => $f->name.' ('.number_format((float) $f->amount).')')->implode(', ');
+            : $fees->map(fn ($f) => $f->labeledName().' · '.number_format((float) $f->amount).' UGX')->implode(', ');
 
         $planValue = $plan
             ? ($plan->display_name ?: ucfirst((string) $plan->name))
@@ -1314,11 +1314,13 @@ class ManualOnboardingWizard extends Component
             throw ValidationException::withMessages(['feeAmount' => 'Enter a fee amount greater than zero.']);
         }
 
-        $className = trim($this->className);
-
+        // Do not reuse $this->className from the Classes step — that silently scoped
+        // Tuition to one class (e.g. leftover "P1") and skipped school-wide / tier rows.
+        // School-wide save creates one FeesCategories row per Standard (section_id null)
+        // so labeledName() can show Nursery/Primary/O'Level/A'Level like Toshi.
         try {
             app(OnboardingEngine::class)->saveFees($school, [
-                ['name' => $name, 'amount' => $amount, 'class' => $className],
+                ['name' => $name, 'amount' => $amount],
             ]);
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(['feeName' => collect($e->errors())->flatten()->first()]);

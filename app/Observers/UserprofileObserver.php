@@ -16,19 +16,37 @@ class UserprofileObserver
      */
     public function created(Userprofile $userprofile)
     {
-        // NOTE: users.name is an internal URL slug / unique identifier, NOT a display name.
-        // Display names are sourced from userprofiles.firstname + userprofiles.lastname
-        // in all student/teacher/parent-facing views (attendance, marks, reports, class lists).
-        // This transform produces a stable, unique, lowercase slug suitable for route URLs.
-        // If you change this, ensure all routes using ->name as a slug still resolve correctly.
-        try
-        {
-            $name = strtolower($userprofile->firstname) . $userprofile->user_id . rand(1,10);
-            User::where('id', $userprofile->user_id)->update(['name' => $name]);
-        }
-        catch(Exception $e)
-        {
-            //dd($e->getMessage());
+        // users.name is the human name set at User::create (teacher/student/parent).
+        // Historically this observer overwrote it to firstname+user_id+rand (e.g. "sarah631")
+        // for URL-slug uniqueness — but users_name_unique was dropped (2026_03_19) so full
+        // names are allowed, and credential UIs / agent checks still read users.name as the
+        // "username". Never inject digit suffixes here. Display names still come from
+        // userprofiles.firstname + lastname via User::displayName / full_name.
+        //
+        // Only fill an empty name (legacy creates that omit it).
+        try {
+            $user = User::query()->find($userprofile->user_id);
+            if (! $user) {
+                return;
+            }
+
+            $current = trim((string) $user->name);
+            if ($current !== '') {
+                return;
+            }
+
+            $fromProfile = trim(implode(' ', array_filter([
+                trim((string) $userprofile->firstname),
+                trim((string) $userprofile->lastname),
+            ])));
+
+            if ($fromProfile === '') {
+                return;
+            }
+
+            $user->update(['name' => $fromProfile]);
+        } catch (Exception $e) {
+            //
         }
     }
 

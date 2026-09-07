@@ -1,4 +1,3 @@
-<!-- <FILE file_path="/home/workdir/attachments/pasted-text.txt"> -->
 <template>
     <div class="bg-white shadow px-4 py-3">
         <div
@@ -441,7 +440,6 @@ export default {
             academic_year_id: "",
             firstname: "",
             lastname: "",
-            // mobile_no: "",           // commented
             email: "",
             gender: "",
             date_of_birth: "",
@@ -452,12 +450,10 @@ export default {
             pincode: "",
             birth_place: "",
             native_place: "",
-            // mother_tongue: "",       // commented
             caste: "",
             sub_caste: "",
             aadhar_number: "",
             joining_date: "",
-            // registration_number: "", // commented
             lin: "",
             std_school_pay_number: "",
             school_student_id: "",
@@ -490,9 +486,171 @@ export default {
             ],
             errors: [],
             success: null,
+            sibling_date_of_birth: "",
         };
     },
-    // ... rest of your script methods remain same
+    methods: {
+        getData() {
+            axios.get("/admin/student").then((response) => {
+                this.user = response.data;
+                this.setData();
+            });
+        },
+
+        setData() {
+            if (Object.keys(this.user).length > 0) {
+                this.academic_year_id = this.user.academic_year_id;
+                if (this.academic_year_id == null) {
+                    alert("Add Academic Year");
+                } else {
+                    this.countrylist = this.user.countrylist;
+                    this.citylist = this.user.citylist;
+                    this.standardLinklist = this.user.standardLinklist;
+                    this.blood_groups = this.user.blood_groups;
+                    this.castelist = this.user.castelist;
+                    this.transportlist = this.user.transportlist;
+                    this.date_of_birth = this.user.date_of_birth;
+                    this.joining_date = this.user.joining_date;
+                    this.sibling_date_of_birth = this.user.joining_date;
+                    this.deleteRow(0);
+                    this.addRow();
+                }
+            }
+        },
+
+        resetForm() {
+            this.firstname = "";
+            this.lastname = "";
+            this.email = "";
+            this.gender = "";
+            this.date_of_birth = "";
+            this.blood_group = "";
+            this.standard = "";
+            this.city_id = "";
+            this.country_id = 7;
+            this.pincode = "";
+            this.birth_place = "";
+            this.native_place = "";
+            this.caste = "";
+            this.sub_caste = "";
+            this.aadhar_number = "";
+            this.joining_date = "";
+            this.lin = "";
+            this.std_school_pay_number = "";
+            this.school_student_id = "";
+            this.board_registration_number = "";
+            this.mode_of_transport = "";
+            this.driver_name = "";
+            this.driver_contact_number = "";
+            this.siblings = "";
+            this.siblings_count = "";
+            this.notes = "";
+            this.avatar = "";
+        },
+
+        submitForm() {
+            this.errors = [];
+            this.success = null;
+
+            let formData = new FormData();
+
+            formData.append("firstname", this.firstname);
+            formData.append("lastname", this.lastname);
+            formData.append("email", this.email);
+            formData.append("gender", this.gender);
+            formData.append("date_of_birth", this.date_of_birth);
+            formData.append("blood_group", this.blood_group);
+            formData.append("standard", this.standard);
+            formData.append("city_id", this.city_id);
+            formData.append("country_id", this.country_id);
+            formData.append("pincode", this.pincode);
+            formData.append("birth_place", this.birth_place);
+            formData.append("native_place", this.native_place);
+            formData.append("caste", this.caste);
+            formData.append("sub_caste", this.sub_caste);
+            formData.append("aadhar_number", this.aadhar_number);
+            formData.append("joining_date", this.joining_date);
+            formData.append("lin", this.lin);
+            formData.append("std_school_pay_number", this.std_school_pay_number);
+            formData.append("school_student_id", this.school_student_id);
+            formData.append(
+                "board_registration_number",
+                this.board_registration_number
+            );
+            formData.append("mode_of_transport", this.mode_of_transport);
+            formData.append("driver_name", this.driver_name);
+            formData.append(
+                "driver_contact_number",
+                this.driver_contact_number
+            );
+            formData.append("siblings", this.siblings);
+            formData.append("siblings_count", this.siblings_count);
+            formData.append("notes", this.notes);
+            formData.append("avatar", this.avatar);
+
+            if (this.siblings == "yes") {
+                for (let i = 0; i < this.inputs.length; i++) {
+                    formData.append(
+                        "sibling_relation" + i,
+                        this.inputs[i]["sibling_relation"] || ""
+                    );
+                    formData.append(
+                        "sibling_name" + i,
+                        this.inputs[i]["sibling_name"] || ""
+                    );
+                    formData.append(
+                        "sibling_date_of_birth" + i,
+                        this.inputs[i]["sibling_date_of_birth"] || ""
+                    );
+                    formData.append(
+                        "sibling_standard" + i,
+                        this.inputs[i]["sibling_standard"] || ""
+                    );
+                }
+            }
+
+            axios
+                .post("/admin/student/add/validationUser", formData, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                })
+                .then(() => {
+                    // Prefer native click — do not depend on CDN jQuery for submit.
+                    const btn = document.getElementById("submit-btn");
+                    if (btn) {
+                        btn.click();
+                    }
+                })
+                .catch((error) => {
+                    this.errors = error.response.data.errors;
+                });
+        },
+
+        OnFileSelected(event) {
+            this.avatar = event.target.files[0];
+        },
+
+        checkInArray(array, value) {
+            if (array.includes(value)) {
+                return true;
+            }
+        },
+
+        addRow() {
+            this.inputs.push({
+                sibling_relation: "",
+                sibling_name: "",
+                sibling_date_of_birth: this.sibling_date_of_birth,
+                sibling_standard: "",
+            });
+        },
+
+        deleteRow(index) {
+            this.inputs.splice(index, 1);
+        },
+    },
+
+    created() {
+        this.getData();
+    },
 };
 </script>
-<!-- </FILE> -->
