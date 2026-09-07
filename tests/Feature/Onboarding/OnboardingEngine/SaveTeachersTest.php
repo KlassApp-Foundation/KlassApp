@@ -100,12 +100,13 @@ class SaveTeachersTest extends TestCase
         $this->assertNotNull($teacher);
         $this->assertEquals(5, $teacher->usergroup_id);
         $this->assertEquals($this->school->id, $teacher->school_id);
+        // users.name stays the human name from create — observer must not inject digits
+        $this->assertSame('John Teacher', $teacher->name);
+        $this->assertDoesNotMatchRegularExpression('/\d/', $teacher->name);
         // Random password — NOT 'password'
         $this->assertFalse(\Hash::check('password', $teacher->password));
         // Password is a real bcrypt hash (60 chars)
         $this->assertEquals(60, strlen($teacher->password));
-        // Note: users.name is overwritten by UserprofileObserver to a slug,
-        // so we don't assert name here — display name lives in userprofiles.firstname
     }
 
     public function test_sets_is_reset_on_created_teacher(): void

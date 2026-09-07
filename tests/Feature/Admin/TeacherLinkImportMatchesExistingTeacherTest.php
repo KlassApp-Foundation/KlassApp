@@ -157,7 +157,8 @@ class TeacherLinkImportMatchesExistingTeacherTest extends TestCase
         ]);
 
         $teacher->refresh();
-        $this->assertNotSame('Sarah Okello', $teacher->name);
+        $this->assertSame('Sarah Okello', $teacher->name);
+        $this->assertDoesNotMatchRegularExpression('/\d/', $teacher->name);
 
         $beforeUsers = User::where('school_id', $schoolId)->where('usergroup_id', 5)->count();
 
@@ -204,6 +205,22 @@ class TeacherLinkImportMatchesExistingTeacherTest extends TestCase
         $this->assertTrue($response->isRedirect());
         $this->assertTrue(session()->has('success'));
         $this->assertSame(1, User::where('school_id', $schoolId)->where('usergroup_id', 5)->count());
+        $this->assertSame(1, Teacherlink::where('teacher_id', $teacher->id)->count());
+    }
+
+    public function test_import_creates_new_teacher_without_digit_suffix_username(): void
+    {
+        $schoolId = $this->school->id;
+
+        $response = $this->runImport("Amina Nabukeera | Mathematics | P.1 | +256700333444\n");
+
+        $this->assertTrue($response->isRedirect());
+        $this->assertTrue(session()->has('success'), 'Expected success; got: '.json_encode(session()->all()));
+
+        $teacher = User::where('school_id', $schoolId)->where('usergroup_id', 5)->first();
+        $this->assertNotNull($teacher);
+        $this->assertSame('Amina Nabukeera', $teacher->name);
+        $this->assertDoesNotMatchRegularExpression('/\d/', $teacher->name);
         $this->assertSame(1, Teacherlink::where('teacher_id', $teacher->id)->count());
     }
 }

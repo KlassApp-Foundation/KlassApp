@@ -349,11 +349,17 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 7, 2026 (branch `fix/wizard-teachers-next-and-teacher-link-match` — Agent 2 wizard blockers; **NOT MERGED**)
+## Current Status: September 7, 2026 (branch `fix/agent2-fee-username-student-form-gaps` — Agent 2 remaining three gaps; **NOT MERGED**)
 
-- **In progress**: [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) — Agent 2 wizard blockers (Teachers Next + teacher-links match). Branch `fix/wizard-teachers-next-and-teacher-link-match` @ `75692271`. Agent 2 re-run after merge + Cloud deploy.
+- **In progress**: [#441](https://github.com/KlassApp-Foundation/KlassApp/pull/441) — Agent 2 remaining gaps (fee tier / Create.vue / username digits) on `fix/agent2-fee-username-student-form-gaps` @ `53f2bc43` (stacks on #440). Merge #440+#441 + Cloud deploy before Agent 2 Teachers→report re-run.
 - **`origin/main` tip**: `9dae1530` (#439 docs stamp for #438). Prior live: #438 phone+school Flow dup guard Cloud-deployed.
-- **Username digit-suffix**: intentional slug — leave alone (confirmed again this pass).
+- **Username digit-suffix**: **FIXED this pass** — `UserprofileObserver` no longer injects `firstname+user_id+rand`; prior “leave alone / intentional slug” triage superseded.
+
+## Previous: September 7, 2026 (branch `fix/wizard-teachers-next-and-teacher-link-match` — Agent 2 wizard blockers; **NOT MERGED**) — superseded above
+
+- **In progress**: [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) — Agent 2 wizard blockers (Teachers Next + teacher-links match). Branch `fix/wizard-teachers-next-and-teacher-link-match` @ `5e16a3d1`. Agent 2 re-run after merge + Cloud deploy.
+- **`origin/main` tip**: `9dae1530` (#439 docs stamp for #438). Prior live: #438 phone+school Flow dup guard Cloud-deployed.
+- **Username digit-suffix**: was triaged as intentional slug — **superseded** by Agent 2 remaining-gaps fix (stop observer digit injection).
 
 ## Previous: September 7, 2026 (`origin/main` tip `dd5da3fe` / docs `9dae1530` — **#438 MERGED + Cloud-deployed**; parent-link Flow duplicate guard **phone+school**) — superseded above
 
@@ -1211,6 +1217,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-07: Agent 2 remaining gaps — fee tier / Create.vue dropdowns / username digits — **LOCAL FIX**
+- **Work done**:
+  1. **Fee tier (primary)**: Not an exclusion in `tierDisplayLabel()` (nursery/primary already mapped). Real gaps: wizard `saveFee` reused leftover `$className` (e.g. `P1`) so fees were class-scoped, and review showed raw `$f->name`. Fix: school-wide `saveFees` (no class) + review uses `labeledName()`. DB evidence via tests: primary category school-wide → `standard.name=primary`, `labeledName()=Tuition (Primary)`; nursery+primary levels → Nursery/Primary labels.
+  2. **Student dropdowns**: Not headless-only. `Create.vue` had been truncated since mid-2026 (`// rest of your script methods remain same`) — `created()`/`getData()` never ran, so Country/District/Class stayed empty in any browser. Restored methods; submit no longer requires CDN `$()`. Also pointed admin layouts at local `public/js/jquery.min.js` + vendored `sweetalert.min.js` (MTN/Airtel CDN risk).
+  3. **Username digit suffix**: `UserprofileObserver` stopped writing `firstname+user_id+rand`. Keep create-time human `users.name`; fill empty names from profile without digits. Verified wizard `saveTeachers` + teacher-links CSV create paths.
+- **Files**: `ManualOnboardingWizard.php`, `UserprofileObserver.php`, `Create.vue`, `layouts/app|main|minimal|superadmin-app.blade.php`, `public/js/sweetalert.min.js`, `TeacherLinkImportController.php`, `ContentStepsTest.php`, `SaveTeachersTest.php`, `TeacherLinkImportMatchesExistingTeacherTest.php`, `UserprofileObserverUsernameTest.php`, `knowledge.md`
+- **Tests**: fee labeled_names + primary school-wide; SaveTeachers username; UserprofileObserverUsername; TeacherLinkImport (3) — all green; WizardTeachersNextAfterAdd still green.
+- **Status**: 🚧 PR open [#441](https://github.com/KlassApp-Foundation/KlassApp/pull/441) (`fix/agent2-fee-username-student-form-gaps` @ `53f2bc43`, stacks on #440) — merge + Cloud deploy before Agent 2 re-run
+- **Edge**: Prior “username is intentional slug / leave alone” (#438 triage) **superseded**. Sweetalert v1 still used by many Blade `swal()` calls — now local asset, not unpkg.
 
 ### 2026-09-07: Agent 2 wizard blockers — Teachers Next + teacher-links match — **LOCAL FIX**
 - **Work done**:

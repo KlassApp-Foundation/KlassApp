@@ -772,6 +772,50 @@ class ContentStepsTest extends TestCase
         $this->assertEquals(2, FeesCategories::where('school_id', $school->id)->count());
     }
 
+    public function test_save_fees_scopes_to_nursery_and_primary_with_labeled_names(): void
+    {
+        $school = $this->createSchool(['school_category' => 'primary_nursery']);
+        Standard::create(['school_id' => $school->id, 'name' => 'nursery', 'order' => 1, 'status' => '1']);
+        Standard::create(['school_id' => $school->id, 'name' => 'primary', 'order' => 2, 'status' => '1']);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 200000, 'level' => 'nursery'],
+            ['name' => 'Tuition', 'amount' => 300000, 'level' => 'primary'],
+        ]);
+
+        $labels = FeesCategories::with('standard')
+            ->where('school_id', $school->id)
+            ->where('name', 'Tuition')
+            ->get()
+            ->map(fn (FeesCategories $fee) => $fee->labeledName())
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame(['Tuition (Nursery)', 'Tuition (Primary)'], $labels);
+        $this->assertEquals(2, FeesCategories::where('school_id', $school->id)->count());
+    }
+
+    public function test_save_fees_school_wide_on_primary_category_labels_primary(): void
+    {
+        $school = $this->createSchool(['school_category' => 'primary']);
+        $year = $this->createYear($school);
+        SchoolCategorySeeder::seed($school);
+
+        app(OnboardingEngine::class)->saveFees($school, [
+            ['name' => 'Tuition', 'amount' => 250000],
+        ]);
+
+        $fees = FeesCategories::with('standard')->where('school_id', $school->id)->get();
+        $this->assertNotEmpty($fees);
+        foreach ($fees as $fee) {
+            $this->assertNotNull($fee->standard_id);
+            $this->assertNull($fee->section_id);
+            $this->assertSame('Tuition (Primary)', $fee->labeledName());
+            $this->assertSame('primary', $fee->standard->name);
+        }
+    }
+
     public function test_save_fees_additive_adds_new_fee_to_existing(): void
     {
         $school = $this->createSchool();
