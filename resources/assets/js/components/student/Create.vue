@@ -341,12 +341,13 @@
                             name="standard"
                         >
                             <option value="" disabled>Select Class</option>
+                            <!-- static value="" overrode v-bind:value under @vue/compat (Vue 3) -->
                             <option
-                                value=""
                                 v-for="standardLink in standardLinklist"
-                                v-bind:value="standardLink.id"
+                                :key="standardLink.id"
+                                :value="standardLink.id"
                             >
-                                {{ standardLink.standard_section }}
+                                {{ standardLink.section_name || standardLink.standard_section }}
                             </option>
                         </select>
                     </div>
