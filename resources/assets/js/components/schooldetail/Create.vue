@@ -418,7 +418,7 @@ export default {
             school_logo: "",
             landline_no: "",
             about_us: "",
-            country_id: 7,
+            country_id: "",
             city_id: "",
             pincode: "",
             countrylist: [],
@@ -447,11 +447,20 @@ export default {
             });
         },
 
+        resolveUgandaCountryId() {
+            const uganda = (this.countrylist || []).find(
+                (country) => country.name === "Uganda"
+            );
+            return uganda ? uganda.id : "";
+        },
+
         setData() {
             if (Object.keys(this.list).length > 0) {
                 this.name = this.list.school_name;
                 this.countrylist = this.list.countrylist;
-            this.citylist = this.list.citylist;
+                this.citylist = this.list.citylist;
+                this.country_id = this.resolveUgandaCountryId();
+                this.city_id = "";
             }
         },
 

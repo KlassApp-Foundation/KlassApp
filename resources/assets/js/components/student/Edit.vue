@@ -1056,7 +1056,7 @@ export default {
             standard_name: "",
             section_name: "",
             city_id: "",
-            country_id: 7,
+            country_id: "",
             pincode: "",
             birth_place: "",
             native_place: "",

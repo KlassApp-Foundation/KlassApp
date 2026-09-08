@@ -95,7 +95,7 @@
             </div>
 
             <!-- ==================== ADMISSION SECTION COMMENTED OUT ==================== -->
-            <!-- 
+            <!--
             <div class="flex flex-col lg:flex-row">
                 ... (admission fields)
             </div>
@@ -395,7 +395,7 @@ export default {
             school_logo: "",
             school_logo_display: "",
             about_us: "",
-            country_id: 7,
+            country_id: "",
             city_id: "",
             website: "",
             ministry_code: "",
