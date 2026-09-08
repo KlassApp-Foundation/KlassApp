@@ -1,0 +1,34 @@
+{
+  "steps": [
+    {
+      "step": "login",
+      "url": "https://klassapp.xyz/admin/dashboard"
+    },
+    {
+      "step": "inbox_loaded",
+      "pendingCount": 1,
+      "hasGrace": true,
+      "hasSunday": true,
+      "bodySnippet": "Greenfield Primary School\nSelect Academic Year\n2026\nDashboard\nACADEMICS\nOPERATIONS\nFINANCE\nCOMMUNICATION\nSYSTEM\nApprovals\nData Exports\nSettings\nHelp & Docs\nApprovals\n\nReview and manage pending requests from staff.\n\n1\nPending\n0\nApproved\n0\nRejected\nAll Requests\nTYPE\tREQUESTER\tSTATUS\tCOMMENTS\tREQUESTED\tACTIONS\nParent link (WhatsApp)\n+256789843175 · Sunday Johnson → Grace Auma (P.7) @ Green field primary school\n\t—\tPending\tSunday Johnson → Grace Auma (P.7) @ Green field primary school\t10 minutes ago\t\nGrace Auma ( - Primary Seven)\nApprove\nReject\nToshi\n●\nToshi Agent\n↻ Restart\nToshi\nHi! I'm Toshi. Ask me about Greenfield Primary School — add students, add teachers, add co-admins, manage fees, create terms, record attendance, record fee payments, assign teachers to classes, create subjects, view cl"
+    },
+    {
+      "step": "candidate_options",
+      "options": [
+        "\n                                                                    Grace Auma\n                                                                    ( - Primary Seven)\n                                                                "
+      ]
+    },
+    {
+      "step": "confirm_dialog",
+      "message": "Approve this request?"
+    },
+    {
+      "step": "after_approve",
+      "pendingCountAfter": 0,
+      "approvedCount": 0,
+      "successFlash": false,
+      "url": "https://klassapp.xyz/admin/approvals"
+    }
+  ],
+  "pass": false,
+  "error": "Expected Approved 1 after approve, got 0"
+}
