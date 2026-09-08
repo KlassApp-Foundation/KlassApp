@@ -1275,11 +1275,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Edge cases flagged**: Class-dropdown `value=""` finding → **FIXED in #451** (see session above).
 
 
-### 2026-09-08: Greenfield Approvals→REPORT closeout (Grace Auma) — **PASS**
-- **Work done**: Web `/admin/approvals` as Greenfield admin: confirmed **1 Pending**, approved Approval **#6** → **0 Pending / 1 Approved** (DB: PLR approved, link #4 parent 113↔student 112). Simulated parent WhatsApp `REPORT` for `+256789843175` → inbound logged + outbound document **delivered** (`📄 Report card — GRACE AUMA`). Downloaded PDF 668 947 bytes `%PDF-1.7`; visual page render confirms school/class/name/Maths 75.
+### 2026-09-08: Greenfield Approvals→REPORT closeout (Grace Auma) — **PARTIAL (REPORT simulated)**
+- **Work done**: Web `/admin/approvals` as Greenfield admin: confirmed **1 Pending**, approved Approval **#6** → **0 Pending / 1 Approved** (DB: PLR approved, link #4 parent 113↔student 112). **Simulated** parent WhatsApp `REPORT` for `+256789843175` via inbound API (msgid `wamid.sim.grace.report.1788885585` — not a handset) → outbound document **delivered** (`📄 Report card — GRACE AUMA`). Downloaded PDF 668 947 bytes `%PDF-1.7`; visual page render confirms school/class/name/Maths 75.
 - **Files modified**: `e2e/greenfield-approve-grace-auma.cjs`, `e2e/screenshots/greenfield-grace-approve/*`, `knowledge.md`
-- **Key decisions**: Real web Approvals path (not Toshi); REPORT via inbound webhook interactive button id.
-- **Status**: ✅ PASS — primary/wizard E2E path closed for Greenfield/Grace
+- **Key decisions**: Real web Approvals path (not Toshi); REPORT was synthetic inbound payload, not a real phone tap.
+- **Status**: ⚠️ Approvals real; REPORT simulated — does not meet later real-phone-only rule
 - **Edge cases flagged**: Signed report-file URL host is Cloud vanity (`laravel.cloud`); `klassapp.xyz` rewrite returned 403 — download via Cloud host.
 
 ### 2026-09-08: Parent Flow LINK_REQUEST invisible in Approvals — **MERGED #446 + REPAIRED**
