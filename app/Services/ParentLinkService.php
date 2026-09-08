@@ -28,63 +28,69 @@ class ParentLinkService
 
         $schoolId = (int) $student->school_id;
         $meta = $this->studentDisplayMeta($student);
-
-        $existingLink = StudentParentLink::query()
-            ->where('student_id', $studentId)
-            ->where('school_id', $schoolId)
-            ->first();
-
-        if ($existingLink) {
-            return $this->attachWhatsAppToExistingParentLink(
-                $phone,
-                (int) $existingLink->parent_id,
-                $schoolId,
-                $student,
-                $meta,
-            );
-        }
-
         $whatsappUser = WhatsAppUser::where('phone', $phone)->first();
 
-        if ($whatsappUser?->user_id) {
-            $parent = User::find($whatsappUser->user_id);
-            if (! $parent || (int) $parent->usergroup_id !== 7) {
-                return ParentLinkResult::notLinked('phone_conflict');
-            }
+        // Do not short-circuit on "student already has a parent link". Students may have
+        // multiple parents (Flow / Approvals). The prior path attached every new phone to
+        // the first parent and returned phone_conflict when WhatsAppUser pointed elsewhere.
 
-            if ($this->linkExists($parent->id, $studentId)) {
-                $this->syncWhatsAppUser($whatsappUser, $parent->id, $schoolId);
+        if ($whatsappUser?->user_id) {
+            $bound = User::find($whatsappUser->user_id);
+
+            if ($bound && (int) $bound->usergroup_id === 7) {
+                if ($this->linkExists($bound->id, $studentId)) {
+                    $this->syncWhatsAppUser($whatsappUser, $bound->id, $schoolId);
+
+                    return new ParentLinkResult(
+                        linked: true,
+                        outcome: 'already_linked',
+                        parent: $bound,
+                        student: $student,
+                        studentName: $meta['name'],
+                        className: $meta['class'],
+                        schoolName: $meta['school'],
+                        alreadyLinkedToThisParent: true,
+                    );
+                }
+
+                $this->createLink($bound->id, $studentId, $schoolId);
+                $this->syncWhatsAppUser($whatsappUser, $bound->id, $schoolId);
 
                 return new ParentLinkResult(
                     linked: true,
-                    outcome: 'already_linked',
+                    outcome: 'linked_additional_child',
+                    parent: $bound,
+                    student: $student,
+                    studentName: $meta['name'],
+                    className: $meta['class'],
+                    schoolName: $meta['school'],
+                );
+            }
+
+            // Phone was previously bound to a non-parent (schooladmin / teacher from testing).
+            // Reclaim the WhatsApp identity for a new parent — one phone → one WA user row.
+            return DB::transaction(function () use ($phone, $studentId, $schoolId, $senderName, $student, $meta, $whatsappUser): ParentLinkResult {
+                $parent = $this->createParentUser($senderName, $studentId);
+                $this->createLink($parent->id, $studentId, $schoolId);
+                $this->syncWhatsAppUser($whatsappUser, $parent->id, $schoolId, $phone);
+
+                return new ParentLinkResult(
+                    linked: true,
+                    outcome: 'linked_reclaimed_phone',
                     parent: $parent,
                     student: $student,
                     studentName: $meta['name'],
                     className: $meta['class'],
                     schoolName: $meta['school'],
-                    alreadyLinkedToThisParent: true,
+                    isNewParent: true,
                 );
-            }
-
-            $this->createLink($parent->id, $studentId, $schoolId);
-            $this->syncWhatsAppUser($whatsappUser, $parent->id, $schoolId);
-
-            return new ParentLinkResult(
-                linked: true,
-                outcome: 'linked_additional_child',
-                parent: $parent,
-                student: $student,
-                studentName: $meta['name'],
-                className: $meta['class'],
-                schoolName: $meta['school'],
-            );
+            });
         }
 
-        return DB::transaction(function () use ($phone, $studentId, $schoolId, $senderName, $student, $meta): ParentLinkResult {
+        return DB::transaction(function () use ($phone, $studentId, $schoolId, $senderName, $student, $meta, $whatsappUser): ParentLinkResult {
             $parent = $this->createParentUser($senderName, $studentId);
             $this->createLink($parent->id, $studentId, $schoolId);
-            $this->syncWhatsAppUser(null, $parent->id, $schoolId, $phone);
+            $this->syncWhatsAppUser($whatsappUser, $parent->id, $schoolId, $phone);
 
             return new ParentLinkResult(
                 linked: true,
@@ -151,32 +157,6 @@ class ParentLinkService
             student: $student,
             studentName: $meta['name'],
             className: $meta['class'],
-        );
-    }
-
-    private function attachWhatsAppToExistingParentLink(
-        string $phone,
-        int $parentId,
-        int $schoolId,
-        User $student,
-        array $meta,
-    ): ParentLinkResult {
-        $whatsappUser = WhatsAppUser::where('phone', $phone)->first();
-
-        if ($whatsappUser?->user_id && (int) $whatsappUser->user_id !== $parentId) {
-            return ParentLinkResult::notLinked('phone_conflict');
-        }
-
-        $this->syncWhatsAppUser($whatsappUser, $parentId, $schoolId, $phone);
-
-        return new ParentLinkResult(
-            linked: true,
-            outcome: 'linked_existing_parent_record',
-            parent: User::find($parentId),
-            student: $student,
-            studentName: $meta['name'],
-            className: $meta['class'],
-            schoolName: $meta['school'],
         );
     }
 
