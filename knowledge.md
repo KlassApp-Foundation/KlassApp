@@ -349,7 +349,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 8, 2026 (`origin/main` tip `97645451` — **#443+#444 MERGED + Cloud-deployed**; admin exam store double-prefix **FIXED on prod**)
+## Current Status: September 8, 2026 (`origin/main` tip `02567e9e` — **#446 MERGED + Cloud-deployed**; parent-link Approvals orphan **REPAIRED on prod**)
+
+- **✅ #446**: Parent WhatsApp Flow school/class matching — alphanumeric school-name normalize (`Green field` → `Greenfield`), `P.7` → `Primary Seven` class variants, `whatsapp:repair-parent-link-requests`. Merge `02567e9e`.
+- **✅ Cloud deploy** `depl-a2b2b7f4-9dff-4f1b-9602-318e67c32997` **succeeded** on `02567e9e`.
+- **✅ Prod repair**: PLR **#6** (`+256789843175`) → `school_id=32`, `suggested_student_id=112`, Approval **#6** Pending; school-32 pending Approvals count **1**.
+- **Not Toshi**: school-admin WhatsApp agent is read-only; no ParentLink approval tools — web `/admin/approvals` is the intended inbox.
+
+## Previous: September 8, 2026 (`origin/main` tip `97645451` — **#443+#444 MERGED + Cloud-deployed**; admin exam store double-prefix **FIXED on prod**) — superseded above
 
 - **✅ #443**: Removed redundant `/admin/` from exam store/archive routes; renamed `archieve` → `archive`. Merge `11f15643`.
 - **✅ #444**: knowledge stamp. Merge `97645451`.
@@ -1234,6 +1241,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-08: Parent Flow LINK_REQUEST invisible in Approvals — **MERGED #446 + REPAIRED**
+- **Work done**: Queried prod `ParentLinkRequest` for `+256789843175` (no school filter): id **6**, `school_id=null`, `school_name="Green field primary school"`, status `pending`, **0** Approvals. School **32** = `Greenfield Primary School`. Grace Auma uid **112** section **Primary Seven** (not `P.7`) — so school-name resolve **and** class filter both failed; candidate fallback also empty. Confirmed Toshi has no parent-link approval path (`SchoolAdminWhatsAppReadAgent` read-only; zero ParentLink tools). Fixed normalize + class aliases + repair command. Merged [#446](https://github.com/KlassApp-Foundation/KlassApp/pull/446) `02567e9e`, Cloud deploy `depl-a2b2b7f4-…`, ran `whatsapp:repair-parent-link-requests --id=6` → school_id 32 + Approval #6 Pending + suggested 112.
+- **Files modified**: `ParentLinkRequestService.php`, `RepairParentLinkRequests.php`, `ParentLinkSchoolNameResolveTest.php`, `knowledge.md`
+- **Key decisions**: Web `/admin/approvals` remains the admin inbox (Approval only created when `school_id` resolves). Repair command for orphans already in DB.
+- **Status**: ✅ MERGED + DEPLOYED + PLR #6 repaired (school-32 pending Approvals = 1)
+- **Edge cases flagged**: Flow free-text school names with inserted spaces; section names as words (`Primary Seven`) vs Flow tokens (`P.7`)
 
 ### 2026-09-08: Admin exam create 404 — double `/admin` route prefix — **MERGED #443**
 - **Work done**: Confirmed `mapAdminRoutes()` already prefixes `admin`. Removed redundant `/admin/` from `admin.exams.store` + archive routes. Renamed `archieve` → `archive` (route path, name, controller method, Blade `route()`). Added URI regression asserts. Scanned other `routes/*.php` Route definitions — only these two had the double-prefix pattern (absolute redirects elsewhere are fine). Local browser: seeded school → login → Create Exam → POST `/admin/exams/store` 302 success. Opened/merged [#443](https://github.com/KlassApp-Foundation/KlassApp/pull/443).
