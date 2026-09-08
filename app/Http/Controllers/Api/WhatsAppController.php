@@ -962,13 +962,26 @@ class WhatsAppController extends Controller
      * If this phone has a pending (or latest rejected) ParentLinkRequest, reply
      * with that status instead of the generic unrecognized-user menu.
      *
-     * Pending: every inbound body (including "Request Link") gets the pending reply.
+     * Pending: free-text gets the pending reply. Interactive actions that start
+     * a new Request Link / link help still pass through so a parent can open
+     * Flow for another school while a request is pending elsewhere.
+     * Same-school duplicates remain suppressed in createFromFlowSubmission
+     * (phone + school_id / school_name — never phone alone).
+     *
      * Rejected: status on free-text; button actions that start a retry still pass through.
      */
     protected function replyForParentLinkRequestStatus(string $phone, string $body): bool
     {
+        $trimmed = strtolower(trim($body));
+
         $pending = $this->parentLinkRequests->findPendingForPhone($phone);
         if ($pending !== null) {
+            // Mirror the rejected path: Request Link must not be blocked by a
+            // pending row at a different school (phone-only guard was the bug).
+            if ($this->isParentLinkInteractiveAction($trimmed)) {
+                return false;
+            }
+
             $this->businessApi->sendText(
                 $phone,
                 $this->parentLinkRequests->pendingStatusMessage($pending),
@@ -983,7 +996,6 @@ class WhatsAppController extends Controller
             return false;
         }
 
-        $trimmed = strtolower(trim($body));
         // Let the parent start a fresh request / get link help after a rejection.
         if ($this->isParentLinkInteractiveAction($trimmed)) {
             return false;

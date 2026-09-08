@@ -248,6 +248,40 @@ class WhatsAppParentLinkFlowTest extends TestCase
         $this->assertStringContainsString('still being reviewed', $captured['message']);
     }
 
+    public function test_request_link_button_while_pending_opens_flow_for_another_school(): void
+    {
+        ParentLinkRequest::create([
+            'phone' => $this->phone,
+            'parent_name' => 'Cross School Parent',
+            'child_name' => 'Child At School A',
+            'child_class' => 'P.3',
+            'school_name' => 'School A Primary',
+            'school_id' => 21,
+            'status' => 'pending',
+        ]);
+
+        $flowSent = false;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendParentLinkRequestFlow')
+            ->once()
+            ->with($this->phone)
+            ->andReturnUsing(function () use (&$flowSent) {
+                $flowSent = true;
+
+                return ['success' => true, 'message_id' => 'wamid.cross-school'];
+            });
+        $whatsApp->shouldReceive('sendText')->never();
+        $whatsApp->shouldReceive('sendInteractiveButtons')->never();
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $this->invokeProcessMetaMessage('parent_link_flow');
+
+        $this->assertTrue(
+            $flowSent,
+            'Request Link must open Flow even when another school already has a pending request for this phone'
+        );
+    }
+
     public function test_inbound_after_rejection_returns_rejection_status(): void
     {
         ParentLinkRequest::create([
