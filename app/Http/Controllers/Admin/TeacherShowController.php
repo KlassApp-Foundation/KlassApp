@@ -31,7 +31,7 @@ class TeacherShowController extends Controller
       //
       $users = User::with('standardLink')->where('name', $name)->get();
       $users = TeacherDetailResource::collection($users);
-         
+
       return $users;
     }
 
@@ -67,7 +67,7 @@ class TeacherShowController extends Controller
       //
       $user = User::with('teacherlink')->where('name', $name)->first();
       $users = TeacherClassesResource::collection($user->teacherlink);
-         
+
       return $users;
     }
 
@@ -83,7 +83,7 @@ class TeacherShowController extends Controller
       $user = User::with('standardLink')->where('name', $name)->first();
       $array['standard']  = $user->standardLink->StandardName;
       $array['section']   = $user->standardLink->section->name;
-         
+
       return $array;
     }
 
@@ -105,7 +105,7 @@ class TeacherShowController extends Controller
                 ['academic_year_id',$academic_year->id]
               ])->paginate(5);
       $leave = LeaveHistoryResource::collection($leave);
-         
+
       return $leave;
     }
 
@@ -115,7 +115,7 @@ class TeacherShowController extends Controller
       $user = User::with('userprofile')->where('name', $name)->first();
       $activitylog = ActivityLog::where('subject_id',$user->userprofile->id)->orWhere('subject_id',$user->members[0]['id'])->paginate(5);
       $activitylog = ActivityLogResource::collection($activitylog);
-         
+
       return $activitylog;
     }
 
@@ -125,7 +125,7 @@ class TeacherShowController extends Controller
       $user = User::with('userprofile')->where('name', $name)->first();
       $activitylog = ActivityLog::where('causer_id',$user->userprofile->id)->orWhere('causer_id',$user->members[0]['id'])->paginate(5);
       $activitylog = ActivityLogResource::collection($activitylog);
-         
+
       return $activitylog;
     }
 
@@ -137,8 +137,13 @@ class TeacherShowController extends Controller
      */
     public function show($name)
     {
-      //
-      $user = User::where('name',$name)->first(); 
+      // Prefer username slug; fall back to numeric id when users.name is null
+      // (avoids /admin/teacher/show/null from JS string concat).
+      $user = User::where('name', $name)->first();
+
+      if ($user === null && ctype_digit((string) $name)) {
+          $user = User::where('id', (int) $name)->first();
+      }
 
       return view('/admin/teacher/show',['user' => $user]);
     }

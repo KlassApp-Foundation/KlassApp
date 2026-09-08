@@ -349,7 +349,15 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 8, 2026 (`origin/main` tip `bd5bfddc` — **#461+#462 MERGED+DEPLOYED**; exam create date/class picker live-verified)
+## Current Status: September 9, 2026 (branch `fix/minor-findings-dash-show-null-dob` — **PR opening**; `origin/main` tip `26ea8d7b`)
+
+- **✅ #457 dual-school live evidence**: Same phone pending at Kampala **33** + Greenfield **32**; approve one leaves the other pending. Evidence: `e2e/screenshots/dual-school-plr-457/` (`CREATE.json`, `UI-VERIFY.json`, `SUMMARY.json`). Cloud Commands API: **flat** body `{"command":"…"}` (not JSON:API-wrapped); poll `GET /api/commands/{id}`; status `command.success`. `laravel cloud` CLI **not** logged in here (`~/.config/cloud/config.json` missing).
+- **🚧 Minor display fixes PR**: Leading-dash class label (`StandardLink::StandardSection`), `/admin/teacher/show/null` (username fallback + id resolve), null DOB → epoch in Teacher/UserDetail resources. Tests: `MinorFindingsDisplayFixesTest`.
+- **Minor triage**: (1) leading dash **fixing** (2) `/show/null` **fixing** (3) DOB epoch **fixing** (4) Toshi overlay **real, deferred** (5) fee fan-out **not a bug** (intentional `saveFeeSchoolWide`) (6–7) already covered by #460/#461–#462 majors.
+- **✅ #461+#462**: Exam create picker live-verified (see Previous).
+- **❌ Kampala REPORT — simulated, not real WhatsApp**.
+
+## Previous: September 8, 2026 (`origin/main` tip `bd5bfddc` / docs tip `26ea8d7b` — **#461+#462 MERGED+DEPLOYED**; exam create date/class picker live-verified) — superseded above
 
 - **✅ #462**: Hotfix `@json` inside double-quoted `onchange` → `data-create-url`. Merge `bd5bfddc`; Cloud `depl-a2b322c9-…` **deployment.succeeded**. Live: class→`?section=201`, `#scheduled_at` fill+Enter stays on page (`e2e/screenshots/kampala-exam-create-post/VERIFY.json`).
 - **✅ #461**: Remove nested auto-submit class GET form. Merge `08e11a08` (live attribute break fixed by #462).
@@ -1282,6 +1290,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-09: #457 dual-school verify + minor findings triage/fixes — **IN PROGRESS (PR)**
+- **Work done**: (1) Confirmed Cloud Commands API accepts **flat** `{"command":"php artisan about"}` → 201 → poll `/api/commands/{id}` → `command.success` with `php artisan about` output. JSON:API-wrapped body was the prior 422 cause. No `laravel cloud` CLI login in this environment. (2) Dual-school #457: PLRs for same phone at schools 33+32; UI approve one leaves other pending — `e2e/screenshots/dual-school-plr-457/`. (3) Cheap fixes on branch `fix/minor-findings-dash-show-null-dob`: `StandardLink::getStandardSectionAttribute` (no leading ` - ` when roman empty), ClassTeacher/Teacher resources username→id fallback, `TeacherShowController@show` id resolve, null-safe DOB in Teacher + UserDetail resources. Test: `tests/Feature/MinorFindingsDisplayFixesTest.php` (5 passing).
+- **Files modified**: `StandardLink.php`, `ClassTeacher.php`, `Teacher.php`, `Teacher/Teacher.php`, `UserDetail.php`, `TeacherShowController.php`, `MinorFindingsDisplayFixesTest.php`, `knowledge.md`
+- **Key decisions**: Fee per-tier rows intentional; Toshi overlay real but deferred (CSS); items 6–7 map to already-shipped exam list/create majors.
+- **Status**: 🚧 PR opening; deploy + live Approvals label verify after merge
+- **Edge cases flagged**: Cloudflare may ban default Python urllib UA — set a User-Agent; poll URL is `/api/commands/{id}` not under `/environments/…`.
 
 ### 2026-09-08: Exam create class picker `@json` attribute break — **MERGED #462 + LIVE-VERIFIED**
 - **Work done**: After #461 deploy, live HTML mangled `onchange` because `@json()` emits double quotes inside a double-quoted attribute. Switched to `data-create-url` + `dataset.createUrl`. Merged [#462](https://github.com/KlassApp-Foundation/KlassApp/pull/462) `bd5bfddc`; Cloud `depl-a2b322c9-…` **deployment.succeeded**. Live: class→`?section=201`, datetime `2026-09-15T10:30` + Enter stays on create.

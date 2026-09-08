@@ -14,11 +14,12 @@ class ClassTeacher extends JsonResource
      */
     public function toArray($request)
     {
-        return 
+        return
         [
             //
             'teacher_avatar'    =>  $this->teacher->userprofile->AvatarPath,
-            'teacher_name'      =>  $this->teacher->name,
+            // Username slug for /admin/teacher/show/{name}; never null (avoids /show/null).
+            'teacher_name'      =>  $this->teacher->name ?: (string) $this->teacher->id,
             'teacher_fullname'  =>  $this->teacher->FullName,
             'subject_name'      =>  $this->subject->name,
         ];
