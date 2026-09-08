@@ -298,7 +298,8 @@ class ParentLinkRequestService
 
     /**
      * Fuzzy-match a typed school name against active schools.
-     * Exact (case-insensitive) match wins; otherwise a single LIKE hit.
+     * Exact (case-insensitive) match wins; otherwise a single LIKE hit;
+     * otherwise a unique alphanumeric-normalized match ("Green field" ↔ "Greenfield").
      * Ambiguous (0 or 2+) returns null so the caller can fall back.
      */
     public function resolveSchoolByName(string $schoolName): ?School
@@ -326,7 +327,122 @@ class ParentLinkRequestService
             return $matches->first();
         }
 
+        // WhatsApp Flow free-text often inserts spaces ("Green field" vs "Greenfield").
+        // Collapse non-alphanumerics so those variants still resolve uniquely.
+        $needle = $this->normalizeSchoolNameKey($schoolName);
+        if ($needle === '') {
+            return null;
+        }
+
+        $normalizedHits = School::query()
+            ->where('status', 1)
+            ->get(['id', 'name'])
+            ->filter(fn (School $school): bool => $this->normalizeSchoolNameKey((string) $school->name) === $needle)
+            ->values();
+
+        if ($normalizedHits->count() === 1) {
+            return School::query()->where('status', 1)->find($normalizedHits->first()->id);
+        }
+
         return null;
+    }
+
+    /**
+     * Lowercase alphanumeric-only key for fuzzy school-name matching.
+     */
+    public function normalizeSchoolNameKey(string $name): string
+    {
+        $collapsed = mb_strtolower(trim($name));
+        $collapsed = preg_replace('/[^a-z0-9]+/u', '', $collapsed) ?? '';
+
+        return $collapsed;
+    }
+
+    /**
+     * Re-resolve pending ParentLinkRequests that never got a school_id (and thus no Approval).
+     *
+     * @return array{scanned: int, resolved: int, approvals_created: int, still_unresolved: int}
+     */
+    public function repairUnresolvedPending(?int $id = null, bool $dryRun = false): array
+    {
+        $query = ParentLinkRequest::query()
+            ->where('status', 'pending')
+            ->whereNull('school_id')
+            ->orderBy('id');
+
+        if ($id !== null) {
+            $query->where('id', $id);
+        }
+
+        $stats = [
+            'scanned' => 0,
+            'resolved' => 0,
+            'approvals_created' => 0,
+            'still_unresolved' => 0,
+        ];
+
+        foreach ($query->get() as $request) {
+            $stats['scanned']++;
+
+            $school = $this->resolveSchoolByName((string) $request->school_name);
+            $candidates = $this->findCandidateStudents(
+                (string) $request->child_name,
+                (string) ($request->child_class ?? ''),
+                $school?->id
+            );
+
+            if ($school === null && $candidates->isNotEmpty()) {
+                $schoolIds = $candidates->pluck('school_id')->unique()->filter()->values();
+                if ($schoolIds->count() === 1) {
+                    $school = School::query()->where('status', 1)->find($schoolIds->first());
+                }
+            }
+
+            if ($school === null) {
+                $stats['still_unresolved']++;
+                Log::warning('ParentLinkRequest repair: still unresolved', [
+                    'parent_link_request_id' => $request->id,
+                    'school_name' => $request->school_name,
+                ]);
+
+                continue;
+            }
+
+            $suggestedId = $candidates->count() === 1 ? $candidates->first()->id : null;
+            $hadApproval = $request->approvals()->exists();
+
+            if (! $dryRun) {
+                $request->update([
+                    'school_id' => $school->id,
+                    'suggested_student_id' => $suggestedId,
+                    'candidate_student_ids' => $candidates->pluck('id')->values()->all(),
+                ]);
+
+                if (! $hadApproval) {
+                    $request->refresh();
+                    Approval::create([
+                        'approvable_type' => ParentLinkRequest::class,
+                        'approvable_id' => $request->id,
+                        'state' => Pending::class,
+                        'requested_by' => null,
+                        'comments' => $request->summaryLine(),
+                    ]);
+                    $stats['approvals_created']++;
+                }
+            } elseif (! $hadApproval) {
+                $stats['approvals_created']++;
+            }
+
+            $stats['resolved']++;
+            Log::info('ParentLinkRequest repair: resolved', [
+                'parent_link_request_id' => $request->id,
+                'school_id' => $school->id,
+                'dry_run' => $dryRun,
+                'approval_would_create' => ! $hadApproval,
+            ]);
+        }
+
+        return $stats;
     }
 
     /**
@@ -352,10 +468,13 @@ class ParentLinkRequestService
         }
 
         if ($childClass !== '') {
-            $normalizedClass = $this->normalizeClassToken($childClass);
-            $query->whereHas('studentAcademicLatest.standardLink.section', function ($q) use ($childClass, $normalizedClass) {
-                $q->where('name', 'LIKE', '%'.$childClass.'%')
-                    ->orWhere('name', 'LIKE', '%'.$normalizedClass.'%');
+            $variants = $this->classMatchVariants($childClass);
+            $query->whereHas('studentAcademicLatest.standardLink.section', function ($q) use ($variants) {
+                $q->where(function ($inner) use ($variants) {
+                    foreach ($variants as $variant) {
+                        $inner->orWhere('name', 'LIKE', '%'.$variant.'%');
+                    }
+                });
             });
         }
 
@@ -406,5 +525,52 @@ class ParentLinkRequestService
     private function normalizeClassToken(string $childClass): string
     {
         return preg_replace('/\s+/', ' ', trim($childClass)) ?? $childClass;
+    }
+
+    /**
+     * Expand Flow class tokens (P.7 / S.1) into roster section names (Primary Seven / Senior One).
+     *
+     * @return list<string>
+     */
+    public function classMatchVariants(string $childClass): array
+    {
+        $raw = $this->normalizeClassToken($childClass);
+        $variants = [$raw];
+
+        $primaryWords = [
+            1 => 'One',
+            2 => 'Two',
+            3 => 'Three',
+            4 => 'Four',
+            5 => 'Five',
+            6 => 'Six',
+            7 => 'Seven',
+        ];
+        $seniorWords = [
+            1 => 'One',
+            2 => 'Two',
+            3 => 'Three',
+            4 => 'Four',
+            5 => 'Five',
+            6 => 'Six',
+        ];
+
+        if (preg_match('/^P\.?\s*([1-7])$/i', $raw, $m)) {
+            $n = (int) $m[1];
+            $variants[] = 'P.'.$n;
+            $variants[] = 'P'.$n;
+            $variants[] = 'Primary '.$primaryWords[$n];
+            $variants[] = 'Primary'.$primaryWords[$n];
+        } elseif (preg_match('/^S\.?\s*([1-6])$/i', $raw, $m)) {
+            $n = (int) $m[1];
+            $variants[] = 'S.'.$n;
+            $variants[] = 'S'.$n;
+            $variants[] = 'Senior '.$seniorWords[$n];
+            $variants[] = 'Secondary '.$seniorWords[$n];
+        } elseif (preg_match('/^Primary\s+([1-7]|One|Two|Three|Four|Five|Six|Seven)$/i', $raw)) {
+            $variants[] = $raw;
+        }
+
+        return array_values(array_unique(array_filter($variants, fn (string $v): bool => $v !== '')));
     }
 }
