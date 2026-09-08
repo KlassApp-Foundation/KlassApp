@@ -326,6 +326,107 @@ class ParentLinkRequestApprovalTest extends TestCase
         $this->assertSame(2, ParentLinkRequest::where('phone', $phone)->count());
     }
 
+    public function test_approve_second_parent_when_student_already_has_a_link(): void
+    {
+        $firstParent = User::factory()->create([
+            'school_id' => null,
+            'usergroup_id' => 7,
+            'name' => 'First Parent',
+            'status' => 'active',
+        ]);
+        StudentParentLink::create([
+            'school_id' => $this->school->id,
+            'parent_id' => $firstParent->id,
+            'student_id' => $this->student->id,
+            'status' => 1,
+        ]);
+
+        $linkRequest = app(ParentLinkRequestService::class)->createFromFlowSubmission(
+            '+256700444555',
+            [
+                'parent_name' => 'Aladini',
+                'child_name' => 'Amope Nandawula',
+                'child_class' => 'P.3',
+                'school_name' => 'Link Request School',
+            ],
+        );
+
+        $approval = Approval::where('approvable_id', $linkRequest->id)
+            ->where('approvable_type', ParentLinkRequest::class)
+            ->firstOrFail();
+
+        $response = $this->actingAs($this->admin)->post(route('admin.approvals.approve', $approval), [
+            'matched_student_id' => $this->student->id,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $whatsappUser = WhatsAppUser::where('phone', '+256700444555')->firstOrFail();
+        $secondParent = User::findOrFail($whatsappUser->user_id);
+        $this->assertSame(7, (int) $secondParent->usergroup_id);
+        $this->assertSame('Aladini', $secondParent->name);
+        $this->assertNotSame($firstParent->id, $secondParent->id);
+
+        $this->assertSame(2, StudentParentLink::where('student_id', $this->student->id)->where('status', 1)->count());
+        $this->assertDatabaseHas('student_parent_links', [
+            'parent_id' => $secondParent->id,
+            'student_id' => $this->student->id,
+            'school_id' => $this->school->id,
+        ]);
+        $this->assertSame('approved', $linkRequest->fresh()->status);
+    }
+
+    public function test_approve_reclaims_whatsapp_phone_bound_to_non_parent(): void
+    {
+        $adminUser = User::factory()->create([
+            'school_id' => $this->school->id,
+            'usergroup_id' => 3,
+            'name' => 'Stuck Admin',
+            'status' => 'active',
+        ]);
+        WhatsAppUser::create([
+            'phone' => '+256700666777',
+            'user_id' => $adminUser->id,
+            'school_id' => $this->school->id,
+            'opted_in' => true,
+        ]);
+
+        $linkRequest = app(ParentLinkRequestService::class)->createFromFlowSubmission(
+            '+256700666777',
+            [
+                'parent_name' => 'Aladini',
+                'child_name' => 'Amope Nandawula',
+                'child_class' => 'P.3',
+                'school_name' => 'Link Request School',
+            ],
+        );
+
+        $approval = Approval::where('approvable_id', $linkRequest->id)
+            ->where('approvable_type', ParentLinkRequest::class)
+            ->firstOrFail();
+
+        $response = $this->actingAs($this->admin)->post(route('admin.approvals.approve', $approval), [
+            'matched_student_id' => $this->student->id,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $whatsappUser = WhatsAppUser::where('phone', '+256700666777')->firstOrFail();
+        $this->assertNotSame($adminUser->id, $whatsappUser->user_id);
+
+        $parent = User::findOrFail($whatsappUser->user_id);
+        $this->assertSame(7, (int) $parent->usergroup_id);
+        $this->assertSame('Aladini', $parent->name);
+        $this->assertDatabaseHas('student_parent_links', [
+            'parent_id' => $parent->id,
+            'student_id' => $this->student->id,
+            'school_id' => $this->school->id,
+        ]);
+        $this->assertSame(3, (int) $adminUser->fresh()->usergroup_id);
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
