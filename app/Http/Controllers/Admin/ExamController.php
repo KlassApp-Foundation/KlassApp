@@ -34,8 +34,8 @@ public function sections(){
    public function create(Request $request){
 
    $school_id = Auth::user()->school_id;
-    
-    // $standards   = Standard::where('school_id', $school_id)->get(); 
+
+    // $standards   = Standard::where('school_id', $school_id)->get();
     $sections = Section::where("school_id", $school_id)->orderByDesc("id")->get();
     $academicYears = AcademicYear::where('school_id', $school_id)->where("end_date", ">", now()) ->get();
     // dd($academicYears);
@@ -49,13 +49,13 @@ public function sections(){
         ->latest()
         ->get();
          $teachers    = User::where('school_id', $school_id)
-            ->where('usergroup_id', 5) 
+            ->where('usergroup_id', 5)
             ->get();
             // dd($teachers);
     $examTypes =  ExamType::all();
     return view('admin.exams.create', compact(
         'exams', "teachers", "sections", "academicYears", "terms", "subjects", "examTypes"
-        ));  
+        ));
 }
 
     public function index()
@@ -167,7 +167,7 @@ public function sections(){
         Exam::create($validated);
     return redirect()->route('admin.exams')
       ->with('successmessage', 'Exam created successfully!');
-            
+
     }
 
     // To add edit/update/destroy later...
@@ -177,7 +177,7 @@ public function sections(){
         $school_id = Auth::user()->school_id;
         // $exam_types = ExamType::all();
         $subjects    = Subject::where('school_id', $school_id)->where("section_id", $exam->section_id)->get();
-        $standards   = Standard::where('school_id', $school_id)->get(); 
+        $standards   = Standard::where('school_id', $school_id)->get();
         $academicYears = AcademicYear::where('school_id', $school_id)->get();
         $sections = Section::where("school_id", $school_id)->get();
         $teachers = User::where('usergroup_id', 5)->where("school_id", $school_id)->get();
@@ -197,7 +197,7 @@ public function sections(){
     return redirect()->route("admin.exams")->with("successmessage", "Exam updated successfully!");
     }
 
-    public function archieve(string $exam){
+    public function archive(string $exam){
         $school_id = Auth::user()->school_id;
         Exam::where("id", $exam)->where("school_id", $school_id)->delete();
         return redirect()->route("admin.exams")->with("successmessage", "Exam deleted successfully!");
