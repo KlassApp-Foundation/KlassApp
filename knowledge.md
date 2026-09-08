@@ -1254,25 +1254,19 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-08: Kampala closeout — parent Approvals→REPORT + student-add class dropdown #451 — **PASS**
+- **Work done**: (1) Fresh parent `+256702223344` PLR **#7** already in Approvals; web approve (confirm dialog) → Approved; `student_parent_links` **#5** parent **119**↔Grace **116**. Simulated REPORT via `POST /api/whatsapp/inbound` (not `/webhook`). Outbound document generated (`📄 Report card — GRACE NAKAMYA`, wamid present) but Meta delivery **failed** (`Re-engagement message`). Regenerated PDF via `WhatsAppReportCardDeliveryService` — **669 813** bytes `%PDF-1.7`; EOT MATHEMATICS **81**; mid-term ENGLISH **74** (exam **11** is `exam_type_id=2` mid, exam **10** is type **3** EOT). (2) Root-caused student-add class dropdown: `standardLinklist` **was** populating; static `value=""` on the same `<option>` as `:value` under `@vue/compat` emptied every selection (same family as #441 bind issues, incomplete for this dropdown). Fixed in [#451](https://github.com/KlassApp-Foundation/KlassApp/pull/451) merge `b9d9614c`; Cloud `depl-a2b2e800-5673-41dd-8c15-65c9fc6078dd` **succeeded**. Live verify: class options **195–201**, Primary Seven selects **201** and sticks.
+- **Files modified**: `resources/assets/js/components/student/Create.vue`, Vite `public/build/*`, `tests/Feature/Admin/StudentCreateClassOptionBindingTest.php`, `e2e/kampala-parent-link-report.cjs`, `e2e/kampala-student-add-class.cjs`, `e2e/screenshots/kampala-parent-report/*`, `e2e/screenshots/kampala-student-add/*`, `knowledge.md`
+- **Key decisions**: Approvals Playwright must accept `confirm()` (greenfield pattern); REPORT inbound path is `/api/whatsapp/inbound`; download signed PDF from Cloud vanity host when `klassapp.xyz` returns 403.
+- **Status**: ✅ School 33 parent REPORT PDF verified + #451 MERGED/DEPLOYED + live class dropdown PASS
+- **Edge cases flagged**: Fresh WhatsApp numbers outside Meta's 24h session get outbound **failed** (`Re-engagement message`) even when PDF generation succeeds — verify PDF via `prepareForStudent` / signed URL, not delivery status alone.
+
 ### 2026-09-08: Independent E2E — empty exam marksheet (Kampala Primary Academy) — **MERGED #449 + DEPLOYED**
 - **Work done**: Prod school **33** "Kampala Primary Academy"; student Grace Nakamya uid **116** on `standards_link` **201** (Primary Seven). Exams **10** (Math `subject_id=1033`) and **11** (English `subject_id=1026`) FKs saved correctly — list "-" was cosmetic. Pre-deploy marksheet = header-only (`STUDENT NAME` only). Teacher enter-marks already listed Grace. Shipped `ExamMarksheetService` + index fallbacks. Merged [#449](https://github.com/KlassApp-Foundation/KlassApp/pull/449) `537f771d`; Cloud `depl-a2b2dfcc-…` **succeeded**. Post UI: list shows MATHEMATICS/ENGLISH (0 dash cells); marksheet includes subject + Grace; saved Math mark **81** for uid 116 on exam 10.
 - **Files modified**: `ExamMarksheetService.php`, `Admin/ExamController.php`, `Teacher/MarksController.php`, `ExamMarksheetEnrolledStudentsTest.php`, `e2e/kampala-exam-marksheet-verify.cjs`, `knowledge.md`
 - **Key decisions**: Empty marksheet is generation bug (marks-only query), not silent exam-create persist failure.
 - **Status**: ✅ MERGED `537f771d` + Cloud-deployed `depl-a2b2dfcc-737c-4d82-a459-90141c9f9f09` + live UI verify PASS
-- **Edge cases flagged**: **FINDING (doc-only, do not fix this pass)**: `resources/assets/js/components/student/Create.vue` lines 343–350:
-
-```html
-<option value="" disabled>Select Class</option>
-<option
-    value=""
-    v-for="standardLink in standardLinklist"
-    v-bind:value="standardLink.id"
->
-    {{ standardLink.standard_section }}
-</option>
-```
-
-Static `value=""` on every class option can render empty values in HTML before/without Vue bind winning — class selection fails without a JS workaround.
+- **Edge cases flagged**: Class-dropdown `value=""` finding → **FIXED in #451** (see session above).
 
 
 ### 2026-09-08: Greenfield Approvals→REPORT closeout (Grace Auma) — **PASS**
