@@ -15,11 +15,11 @@ class Teacher extends JsonResource
     public function toArray($request)
     {
         $details = $this->getTeacherDetails();
-        return 
+        return
         [
             //
             'id'                =>  $this->id,
-            'name'              =>  $this->name,
+            'name'              =>  $this->name ?: (string) $this->id,
             'email'             =>  $this->email,
             'mobile_no'         =>  $this->mobile_no,
             'avatar'            =>  $this->userprofile->AvatarPath,
@@ -27,7 +27,9 @@ class Teacher extends JsonResource
             'designation'       =>  $details['designation'],
             'designation_name'  =>  $details['designation_name'],
             'sub_designation'   =>  $details['sub_designation'],
-            'date_of_birth'     =>  date('d M Y',strtotime($this->userprofile->date_of_birth)),
+            'date_of_birth'     =>  blank(optional($this->userprofile)->date_of_birth)
+                ? null
+                : date('d M Y', strtotime($this->userprofile->date_of_birth)),
             'status'            =>  $this->status,
         ];
     }

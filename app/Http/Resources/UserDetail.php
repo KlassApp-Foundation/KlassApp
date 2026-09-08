@@ -45,7 +45,9 @@ class UserDetail extends JsonResource
             'school_name'               => $this->school->name,
             'fullname'                  => $this->FullName,
             'gender'                    => $this->userprofile->gender,
-            'date_of_birth'             => date('d-m-Y',strtotime(optional($this->userprofile)->date_of_birth)),
+            'date_of_birth'             => blank(optional($this->userprofile)->date_of_birth)
+                ? null
+                : date('d-m-Y', strtotime($this->userprofile->date_of_birth)),
             'address'                   => $this->userprofile->address,
             'city'                      => $this->userprofile->city->name ?? null,
             'country'                   => $this->userprofile->country->name,
@@ -56,7 +58,9 @@ class UserDetail extends JsonResource
             'avatar'                    => $avatarpath,
             'created_at'                => optional($this->userprofile)->created_at=="" ? null:date('d-m-Y H:i:s',strtotime(optional($this->userprofile)->created_at)),
             'updated_at'                => optional($this->userprofile)->updated_at=="" ? null:date('d-m-Y H:i:s',strtotime(optional($this->userprofile)->updated_at)),
-            'age'                       => date('Y')-date('Y',strtotime(optional($this->userprofile)->date_of_birth)),
+            'age'                       => blank(optional($this->userprofile)->date_of_birth)
+                ? null
+                : date('Y') - date('Y', strtotime($this->userprofile->date_of_birth)),
             'ref_id'                    => $this->ref_id,
             'class'                     => $this->studentAcademicLatest->standardLink->StandardSection,
             'transport_mode'            => ucwords(str_replace('_', ' ', $this->studentAcademicLatest->mode_of_transport)),
