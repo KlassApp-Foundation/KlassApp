@@ -1,0 +1,43 @@
+{
+  "pass": true,
+  "school": {
+    "id": 32,
+    "name": "Greenfield Primary School"
+  },
+  "approvals": {
+    "before": { "pending": 1, "approved": 0 },
+    "after": { "pending": 0, "approved": 1 },
+    "approval_id": 6,
+    "state": "App\\States\\Approval\\Approved",
+    "matched_student_id": 112,
+    "plr_status": "approved",
+    "student_parent_link_id": 4,
+    "evidence": [
+      "02-approvals-inbox.png",
+      "03-after-approve.png"
+    ]
+  },
+  "whatsapp_report": {
+    "phone": "+256789843175",
+    "inbound_msgid": "wamid.sim.grace.report.1788885585",
+    "inbound_preview": "REPORT",
+    "outbound_document_preview": "📄 Report card — GRACE AUMA",
+    "outbound_wamid": "wamid.HBgMMjU2Nzg5ODQzMTc1FQIAERgSMjhDQjlBMkY2NzFFMTUxRkVFAA==",
+    "outbound_status": "delivered",
+    "followup_flow_type": "report_followup",
+    "pdf": {
+      "path": "Grace-Auma-report-card.pdf",
+      "bytes": 668947,
+      "magic": "%PDF-1.7",
+      "pages": 1,
+      "visual": {
+        "school": "GREENFIELD PRIMARY SCHOOL",
+        "class": "Primary Seven",
+        "student": "GRACE AUMA",
+        "no_digit_suffix": true,
+        "mathematics_row": "MATHEMATICS 100 75",
+        "page_render": "grace-page-1.png"
+      }
+    }
+  }
+}

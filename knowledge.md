@@ -349,7 +349,13 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 8, 2026 (`origin/main` tip `02567e9e` — **#446 MERGED + Cloud-deployed**; parent-link Approvals orphan **REPAIRED on prod**)
+## Current Status: September 8, 2026 (`origin/main` tip `65dde369` — **#446+#447**; Greenfield Grace Auma Approvals→REPORT **PASS**)
+
+- **✅ #446**: Parent Flow school/class matching + repair command. Merge `02567e9e`; Cloud `depl-a2b2b7f4-…`.
+- **✅ #447**: knowledge stamp. Merge `65dde369`.
+- **✅ Live closeout (school 32)**: Approvals inbox **1→0 Pending / 0→1 Approved** for Approval **#6** (Grace Auma). Parent `+256789843175` REPORT → Meta document **delivered**; PDF **668 947** bytes `%PDF-1.7` — Greenfield Primary School, Primary Seven, GRACE AUMA (no digit suffix), MATHEMATICS **75/100**. Evidence: `e2e/screenshots/greenfield-grace-approve/FINAL.json`.
+
+## Previous: September 8, 2026 (`origin/main` tip `02567e9e` — **#446 MERGED + Cloud-deployed**; parent-link Approvals orphan **REPAIRED on prod**) — superseded above
 
 - **✅ #446**: Parent WhatsApp Flow school/class matching — alphanumeric school-name normalize (`Green field` → `Greenfield`), `P.7` → `Primary Seven` class variants, `whatsapp:repair-parent-link-requests`. Merge `02567e9e`.
 - **✅ Cloud deploy** `depl-a2b2b7f4-9dff-4f1b-9602-318e67c32997` **succeeded** on `02567e9e`.
@@ -1241,6 +1247,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-08: Greenfield Approvals→REPORT closeout (Grace Auma) — **PASS**
+- **Work done**: Web `/admin/approvals` as Greenfield admin: confirmed **1 Pending**, approved Approval **#6** → **0 Pending / 1 Approved** (DB: PLR approved, link #4 parent 113↔student 112). Simulated parent WhatsApp `REPORT` for `+256789843175` → inbound logged + outbound document **delivered** (`📄 Report card — GRACE AUMA`). Downloaded PDF 668 947 bytes `%PDF-1.7`; visual page render confirms school/class/name/Maths 75.
+- **Files modified**: `e2e/greenfield-approve-grace-auma.cjs`, `e2e/screenshots/greenfield-grace-approve/*`, `knowledge.md`
+- **Key decisions**: Real web Approvals path (not Toshi); REPORT via inbound webhook interactive button id.
+- **Status**: ✅ PASS — primary/wizard E2E path closed for Greenfield/Grace
+- **Edge cases flagged**: Signed report-file URL host is Cloud vanity (`laravel.cloud`); `klassapp.xyz` rewrite returned 403 — download via Cloud host.
 
 ### 2026-09-08: Parent Flow LINK_REQUEST invisible in Approvals — **MERGED #446 + REPAIRED**
 - **Work done**: Queried prod `ParentLinkRequest` for `+256789843175` (no school filter): id **6**, `school_id=null`, `school_name="Green field primary school"`, status `pending`, **0** Approvals. School **32** = `Greenfield Primary School`. Grace Auma uid **112** section **Primary Seven** (not `P.7`) — so school-name resolve **and** class filter both failed; candidate fallback also empty. Confirmed Toshi has no parent-link approval path (`SchoolAdminWhatsAppReadAgent` read-only; zero ParentLink tools). Fixed normalize + class aliases + repair command. Merged [#446](https://github.com/KlassApp-Foundation/KlassApp/pull/446) `02567e9e`, Cloud deploy `depl-a2b2b7f4-…`, ran `whatsapp:repair-parent-link-requests --id=6` → school_id 32 + Approval #6 Pending + suggested 112.
