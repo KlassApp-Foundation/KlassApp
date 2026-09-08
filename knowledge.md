@@ -349,13 +349,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 8, 2026 (branch `fix/exam-routes-double-prefix` — admin exam store/archive double `/admin` prefix; **shipping**)
+## Current Status: September 8, 2026 (`origin/main` tip `11f15643` — **#443 MERGED**; admin exam store double-prefix fix — **awaiting Cloud deploy**)
 
-- **Bug**: `routes/admin.php` registered `POST /admin/exams/store` and `DELETE /admin/exams/{id}/archieve` inside `RouteServiceProvider::mapAdminRoutes()` which already applies `prefix('admin')` → live URIs `/admin/admin/exams/...`. Forms use `route('admin.exams.store')` → silent **404** on create.
-- **Prod evidence (pre-fix)**: `POST https://klassapp.xyz/admin/exams/store` → **404**; `POST …/admin/admin/exams/store` → **419** (CSRF — wrong path is the one registered).
-- **Fix**: drop redundant `/admin/` from both paths; rename archive path/name/method `archieve` → `archive` (caller was named-route only in `admin/exams/index.blade.php`).
-- **Verify**: PHPUnit `CreateExamSchoolIdValidationTest` + `ClassTeacherExamCreateTest` **10 passed**; local Playwright form POST `/admin/exams/store` → **302** → `/admin/exams` + success flash; exam row persisted (school 1). No client asset change (`npm run build` N/A).
-- **`origin/main` tip before this PR**: `edc8419e` (#442 wizard school-category Next).
+- **✅ #443**: Removed redundant `/admin/` from exam store/archive routes inside the already-prefixed admin group; renamed `archieve` → `archive`. Merge `11f15643` from `fix/exam-routes-double-prefix` @ `1514b49b`.
+- **Local verify**: PHPUnit 10 passed; Playwright create → `POST /admin/exams/store` **302** + exam row. No frontend asset change.
+- **Prod pre-deploy**: `POST /admin/exams/store` still **404**; `POST /admin/admin/exams/store` still **419** — Cloud redeploy needed (this session has no Cloud API token).
+- **After deploy check**: `POST /admin/exams/store` must not be 404 (expect 302/419 without session).
 
 ## Previous: September 8, 2026 (`origin/main` tip `edc8419e` — **#442 MERGED**; wizard school-category Next) — superseded above
 
@@ -1235,12 +1234,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-08: Admin exam create 404 — double `/admin` route prefix — **SHIPPING**
-- **Work done**: Confirmed `mapAdminRoutes()` already prefixes `admin`. Removed redundant `/admin/` from `admin.exams.store` + archive routes. Renamed `archieve` → `archive` (route path, name, controller method, Blade `route()`). Added URI regression asserts. Scanned other `routes/*.php` Route definitions — only these two had the double-prefix pattern (absolute redirects elsewhere are fine). Local browser: seeded school → login → Create Exam → POST `/admin/exams/store` 302 success.
+### 2026-09-08: Admin exam create 404 — double `/admin` route prefix — **MERGED #443**
+- **Work done**: Confirmed `mapAdminRoutes()` already prefixes `admin`. Removed redundant `/admin/` from `admin.exams.store` + archive routes. Renamed `archieve` → `archive` (route path, name, controller method, Blade `route()`). Added URI regression asserts. Scanned other `routes/*.php` Route definitions — only these two had the double-prefix pattern (absolute redirects elsewhere are fine). Local browser: seeded school → login → Create Exam → POST `/admin/exams/store` 302 success. Opened/merged [#443](https://github.com/KlassApp-Foundation/KlassApp/pull/443).
 - **Files modified**: `routes/admin.php`, `ExamController.php`, `resources/views/admin/exams/index.blade.php`, `CreateExamSchoolIdValidationTest.php`, `knowledge.md`
 - **Key decisions**: Rename archive by name (only Blade caller); leave subject-list `archievedSubjects` variable typos alone (unrelated).
-- **Status**: 🚧 PR / merge / Cloud deploy (this session has no `CLOUDBUILD_API_TOKEN` — may need dashboard redeploy after merge)
-- **Edge cases flagged**: Prod pre-fix confirms bug; after deploy expect `POST /admin/exams/store` → 302/419 (auth/CSRF), not 404.
+- **Status**: ✅ MERGED `11f15643` — ⏸️ Cloud deploy blocked this session (no org API token; push-to-deploy is disabled — trigger Redeploy in Cloud dashboard for `klassapp` / `eu-west-1`)
+- **Edge cases flagged**: Prod still `POST /admin/exams/store` **404** / `…/admin/admin/exams/store` **419** until redeploy; after deploy expect store → 302/419 (auth/CSRF), not 404. No `npm run build` needed (routes/PHP/Blade only).
 
 ### 2026-09-08: P0 wizard School Category Next never advances — **MERGED #442**
 - **Work done**: Re-verified on then-`origin/main` (`5442eb4c`): category cards still used `wire:click="set('schoolCategory', …)"` (no Livewire public `set()`). Added `ManualOnboardingWizard::selectSchoolCategory()` (same pattern as `selectPlan` / AgentToshi) and wired cards to `selectSchoolCategory('…')`.
