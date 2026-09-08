@@ -24,7 +24,8 @@
             @unless($exam)
                 <select id="section"
                         class="p-2 rounded border border-gray-300 text-sm"
-                        onchange="if (this.value) { window.location.assign(@json(route('teacher.exams.create')) + '?section=' + encodeURIComponent(this.value)); }">
+                        data-create-url="{{ route('teacher.exams.create') }}"
+                        onchange="if (this.value) { window.location.assign(this.dataset.createUrl + '?section=' + encodeURIComponent(this.value)); }">
                     @foreach ($sections as $section)
                         <option value="{{ $section->id }}" @selected((int) $selectedSectionId === (int) $section->id)>
                             {{ $section->name }}

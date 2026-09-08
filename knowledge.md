@@ -349,7 +349,16 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 8, 2026 (branch `fix/exam-create-date-and-class-select` — exam create date/class-select PR **OPENING**; `origin/main` tip `3742b22e` = **#460**)
+## Current Status: September 8, 2026 (branch `fix/exam-create-class-picker-attr` — **#461 follow-up**; `origin/main` tip `08e11a08`)
+
+- **🚧 Hotfix**: `#461` used `@json(route(...))` inside a double-quoted `onchange`, which broke the attribute and mangled the create form HTML (datetime missing in DOM). Switch to `data-create-url` + `dataset.createUrl`.
+- **✅ #461**: Exam create class picker no longer auto-submits nested GET; merge `08e11a08`; Cloud `depl-a2b31ecc-…` **deployment.succeeded** — then live HTML broke from the `@json` attribute bug (caught in verify).
+- **✅ #460**: Exam list Subject/Teacher from exam FKs. Merge `3742b22e`.
+- **✅ #457–#459**: Request Link + Uganda location defaults — live-verified.
+- **Triaged (no PR)**: Teachers wizard Next — already #440/#442.
+- **❌ Kampala REPORT — simulated, not real WhatsApp**.
+
+## Previous: September 8, 2026 (branch `fix/exam-create-date-and-class-select` — exam create date/class-select PR **OPENING**; `origin/main` tip `3742b22e` = **#460**) — superseded above
 
 - **🚧 Exam create date picker / class select**: Nested GET class form (`onchange=this.form.submit()`) + undefined `$exam`/`$subjects` on create + wrong back link to students — replaced with `location.assign` picker, init `$exam=null`/`$subjects=collect()`, back → `admin.exams`, Enter-guard on `datetime-local`; FullCalendar `navLinks: false`. Test: `ExamCreatePageDoesNotAutoSubmitClassSelectTest`.
 - **✅ #460**: Exam list Subject/Teacher always from exam’s own FKs (not marks/teacherlinks). Merge `3742b22e`; Cloud deploy succeeded. Live: ENGLISH/JAMES OKELLO + MATHEMATICS/GRACE NAMBOGO.
@@ -1267,6 +1276,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-08: Exam create — date picker / class select navigation — **PR OPENING**
+- **Work done**: Root cause of “setting date navigates away”: adjacent nested GET class form with `onchange="this.form.submit()"`, plus create view using `$exam`/`$subjects` without init, back link to `/admin/students`. Fixed admin + teacher exam forms to use `window.location.assign` class picker; `ExamController::create` inits `$subjects=collect()`, `$exam=null`, `$selectedClassId`; datetime Enter-prevent; FullCalendar `navLinks: false` (events calendar hardening). PHPUnit `ExamCreatePageDoesNotAutoSubmitClassSelectTest` PASS.
+- **Files modified**: `ExamController.php`, `admin/exams/create.blade.php`, `teacher/exams/form.blade.php`, `event/show.vue`, `public/build/*`, test, `knowledge.md`
+- **Key decisions**: Prefer `location.assign` over nested auto-submit GET form next to datetime-local; create URL remains `/admin/exams/add-new` (not `/create`).
+- **Status**: 🚧 branch `fix/exam-create-date-and-class-select` — opening PR next; Cloud deploy + real UI verify after merge
+- **Edge cases flagged**: Native OS datetime picker not fully exercisable in headless Playwright; verify on live with real mouse after deploy.
+
+### 2026-09-08: Exam list Subject/Teacher from exam FKs — **MERGED #460**
+- **Work done**: List preferred marks/teacherlinks over `exam.subject_id`/`teacher_id` (English showed Grace from class links). Always display exam’s own subject + teacher. Merge [#460](https://github.com/KlassApp-Foundation/KlassApp/pull/460) `3742b22e`.
+- **Status**: ✅ MERGED + Cloud-deployed + live list verify PASS
 
 ### 2026-09-08: Correction — Kampala/Greenfield REPORT was simulated inbound; Approvals was real form — **DOCS**
 - **Work done**: Clarified evidence after challenge. Greenfield REPORT msgid `wamid.sim.grace.report.1788885585` and Kampala `wamid.e2e.report.*` are synthetic `POST /api/whatsapp/inbound` payloads — **not** Meta webhooks from a real phone. Approvals for Kampala **was** the real web form (no product PR; Playwright harness missed `confirm()` on first attempt). #451 class-dropdown fix remains valid.
