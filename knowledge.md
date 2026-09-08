@@ -1291,6 +1291,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-09: #457 dual-school verify + minor findings triage/fixes — **IN PROGRESS (PR)**
+- **Work done**: (1) Confirmed Cloud Commands API accepts **flat** `{"command":"php artisan about"}` → 201 → poll `/api/commands/{id}` → `command.success` with `php artisan about` output. JSON:API-wrapped body was the prior 422 cause. No `laravel cloud` CLI login in this environment. (2) Dual-school #457: PLRs for same phone at schools 33+32; UI approve one leaves other pending — `e2e/screenshots/dual-school-plr-457/`. (3) Cheap fixes on branch `fix/minor-findings-dash-show-null-dob`: `StandardLink::getStandardSectionAttribute` (no leading ` - ` when roman empty), ClassTeacher/Teacher resources username→id fallback, `TeacherShowController@show` id resolve, null-safe DOB in Teacher + UserDetail resources. Test: `tests/Feature/MinorFindingsDisplayFixesTest.php` (5 passing).
+- **Files modified**: `StandardLink.php`, `ClassTeacher.php`, `Teacher.php`, `Teacher/Teacher.php`, `UserDetail.php`, `TeacherShowController.php`, `MinorFindingsDisplayFixesTest.php`, `knowledge.md`
+- **Key decisions**: Fee per-tier rows intentional; Toshi overlay real but deferred (CSS); items 6–7 map to already-shipped exam list/create majors.
+- **Status**: 🚧 PR opening; deploy + live Approvals label verify after merge
+- **Edge cases flagged**: Cloudflare may ban default Python urllib UA — set a User-Agent; poll URL is `/api/commands/{id}` not under `/environments/…`.
+
 ### 2026-09-08: Exam create class picker `@json` attribute break — **MERGED #462 + LIVE-VERIFIED**
 - **Work done**: After #461 deploy, live HTML mangled `onchange` because `@json()` emits double quotes inside a double-quoted attribute. Switched to `data-create-url` + `dataset.createUrl`. Merged [#462](https://github.com/KlassApp-Foundation/KlassApp/pull/462) `bd5bfddc`; Cloud `depl-a2b322c9-…` **deployment.succeeded**. Live: class→`?section=201`, datetime `2026-09-15T10:30` + Enter stays on create.
 - **Status**: ✅ MERGED + DEPLOYED + live verify PASS
