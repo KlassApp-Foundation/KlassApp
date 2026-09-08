@@ -149,8 +149,12 @@ export default {
         },
 
         resolveUgandaCountryId() {
-            const uganda = (this.countrylist || []).find(
-                (country) => country.name === "Uganda"
+            const list = this.countrylist || [];
+            const countries = Array.isArray(list)
+                ? list
+                : Object.values(list);
+            const uganda = countries.find(
+                (country) => country && country.name === "Uganda"
             );
             return uganda ? uganda.id : "";
         },
