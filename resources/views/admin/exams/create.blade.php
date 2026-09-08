@@ -2,10 +2,10 @@
 
 @section('content')
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        
+
         {{-- Back Button + Title --}}
         <div class="flex items-center gap-4 mb-8">
-            <a href="{{ url('/admin/students') }}" 
+            <a href="{{ route('admin.exams') }}"
                class="rounded-full p-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
                title="Back">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -25,14 +25,19 @@
                     <span class='text-lg font-semibold'>Create / Edit Exam</span>
                     <span class='text-xs bg-blue-300 px-2 rounded-full text-white'>First select class to add an exam</span>
                 </div>
-                <form action="{{ route("admin.exams.create") }}" method='GET'>
-                    <select name="section" id="section" class='p-2 rounded bg-gray-400' onchange='this.form.submit()'>
-                        <option value="">Select Class</option>
-                        @foreach ($sections as $section )
-                            <option value="{{$section->id}}">{{ $section->name }}</option>
-                        @endforeach
-                    </select>
-                </form>
+                {{-- Use location.assign (not a nested/auto-submit form) so the class
+                     picker cannot accidentally navigate while interacting with the
+                     scheduled_at datetime picker. --}}
+                <select id="section"
+                        class="p-2 rounded bg-gray-400"
+                        onchange="if (this.value) { window.location.assign(@json(route('admin.exams.create')) + '?section=' + encodeURIComponent(this.value)); }">
+                    <option value="">Select Class</option>
+                    @foreach ($sections as $section )
+                        <option value="{{$section->id}}" @selected((string) ($selectedClassId ?? '') === (string) $section->id)>
+                            {{ $section->name }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
 
             <div class="p-6">
@@ -47,7 +52,7 @@
                     </div>
                 @endif
 
-                <form action="{{ $exam ? route('admin.exams.update', $exam->id) : route('admin.exams.store') }}" 
+                <form action="{{ $exam ? route('admin.exams.update', $exam->id) : route('admin.exams.store') }}"
                       method="POST">
                     @csrf
                     @if ($exam)
@@ -66,7 +71,7 @@
                             <select name="academic_year_id" id="academic_year_id" required class="tw-form-control w-full">
                                 <option value="">Select Year</option>
                                 @foreach($academicYears as $year)
-                                    <option value="{{ $year->id }}" 
+                                    <option value="{{ $year->id }}"
                                         {{ old('academic_year_id', optional($exam)->academic_year_id) == $year->id ? 'selected' : '' }}>
                                         {{ $year->name ?? $year->start_year . ' - ' . $year->end_year }}
                                     </option>
@@ -96,14 +101,16 @@
                             <label for="scheduled_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Scheduled Date & Time <span class="text-red-500">*</span>
                             </label>
-                            <input type="datetime-local" 
-                                   name="scheduled_at" 
+                            <input type="datetime-local"
+                                   name="scheduled_at"
                                    id="scheduled_at"
                                    value="{{ old('scheduled_at', optional($exam)->scheduled_at ? \Carbon\Carbon::parse($exam->scheduled_at)->format('Y-m-d\TH:i') : '') }}"
-                                   class="tw-form-control w-full" />
+                                   class="tw-form-control w-full"
+                                   onclick="event.stopPropagation();"
+                                   onkeydown="if (event.key === 'Enter') { event.preventDefault(); }" />
                         </div>
 
-                      
+
                         <!-- Subject -->
                         <div>
                             <label for="subject_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -117,7 +124,7 @@
                                         {{ old('subject_id', optional($exam)->subject_id) == $subject->id ? 'selected' : '' }}>
                                         {{ $subject->name }}
                                     </option>
-                                   
+
                                 @endforeach
                             </select>
                         </div>
@@ -126,7 +133,7 @@
                         <div>
                             <label for="exam_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Exam Type <span class="text-red-500">*</span>
-                            </label>       
+                            </label>
                    <select name="exam_type_id" class="tw-form-control w-full">
                                 <option value="">Select Exam Type</option>
                                 @foreach($examTypes as $examType)
@@ -134,14 +141,14 @@
                                         {{ old('exam_type_id', optional($exam)->exam_type_id) == $examType->id ? 'selected' : '' }}>
                                         {{ $examType->name }}
                                     </option>
-                                   
+
                                 @endforeach
                             </select>
 
                         </div>
-                        
 
-                       
+
+
                         <!-- Assigned Teacher -->
                         <div class="">
                             <label for="teacher_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -154,7 +161,7 @@
                                @php
                                    $tr = $teacher->userprofile;
                                @endphp
-                                    <option value="{{ $teacher->id }}" 
+                                    <option value="{{ $teacher->id }}"
                                         {{ old('teacher_id', optional($exam)->teacher_id) == $teacher->id ? 'selected' : '' }} >
                                         {{ ucwords(strtolower($tr->firstname)) . " " .  ucwords(strtolower($tr->lastname))}}
                                     </option>
@@ -166,11 +173,11 @@
 
                     <!-- Action Buttons -->
                     <div class="flex items-center justify-end gap-4 mt-10">
-                        <a href="{{ route('admin.exams') }}" 
+                        <a href="{{ route('admin.exams') }}"
                            class="px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                             Cancel
                         </a>
-                        <button type="submit" 
+                        <button type="submit"
                                 class="px-8 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium transition-colors">
                             {{ $exam ? 'Update Exam' : 'Create Exam' }}
                         </button>

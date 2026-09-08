@@ -22,15 +22,15 @@
                 <p class="text-xs text-gray-500 mt-1">Only your class teacher sections are listed.</p>
             </div>
             @unless($exam)
-                <form action="{{ route('teacher.exams.create') }}" method="GET">
-                    <select name="section" id="section" class="p-2 rounded border border-gray-300 text-sm" onchange="this.form.submit()">
-                        @foreach ($sections as $section)
-                            <option value="{{ $section->id }}" @selected((int) $selectedSectionId === (int) $section->id)>
-                                {{ $section->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </form>
+                <select id="section"
+                        class="p-2 rounded border border-gray-300 text-sm"
+                        onchange="if (this.value) { window.location.assign(@json(route('teacher.exams.create')) + '?section=' + encodeURIComponent(this.value)); }">
+                    @foreach ($sections as $section)
+                        <option value="{{ $section->id }}" @selected((int) $selectedSectionId === (int) $section->id)>
+                            {{ $section->name }}
+                        </option>
+                    @endforeach
+                </select>
             @endunless
         </div>
 
@@ -91,7 +91,9 @@
                                name="scheduled_at"
                                id="scheduled_at"
                                value="{{ old('scheduled_at', optional($exam)->scheduled_at ? \Carbon\Carbon::parse($exam->scheduled_at)->format('Y-m-d\TH:i') : '') }}"
-                               class="tw-form-control w-full" />
+                               class="tw-form-control w-full"
+                               onclick="event.stopPropagation();"
+                               onkeydown="if (event.key === 'Enter') { event.preventDefault(); }" />
                     </div>
 
                     <div>
