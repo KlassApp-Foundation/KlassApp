@@ -206,6 +206,23 @@ class ManualOnboardingWizard extends Component
         $this->errorMessage = '';
     }
 
+    /**
+     * Button-driven school category selection (same shape as AgentToshi::selectSchoolCategory).
+     * Livewire 3 has no public set() — wire:click="set(...)" was a no-op and blocked Next.
+     */
+    public function selectSchoolCategory(string $category): void
+    {
+        if (! array_key_exists($category, SchoolCategorySeeder::CATEGORIES)) {
+            $this->errorMessage = 'Please choose a school category.';
+
+            return;
+        }
+
+        $this->schoolCategory = $category;
+        $this->errorMessage = '';
+        $this->resetErrorBag('schoolCategory');
+    }
+
     public function addTeacherDraft(): void
     {
         $name = trim($this->teacherName);
