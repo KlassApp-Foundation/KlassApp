@@ -81,7 +81,8 @@ class SiteHelper
     public static function getCities()
     {
         return Cache::remember( "cities", env('CACHE_TIME'), function ()  {
-            $city  = City::get();
+            $city = City::query()->where('status', 1)->whereNull('deleted_at')->get();
+
             return CityResource::collection($city)->groupby('country_id');
         });
     }

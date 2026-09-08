@@ -131,7 +131,7 @@ export default {
             profile_tab: "",
             user: [],
             city_id: "",
-            country_id: 7,
+            country_id: "",
             pincode: "",
             countrylist: [],
             citylist: [],
@@ -148,11 +148,20 @@ export default {
             });
         },
 
+        resolveUgandaCountryId() {
+            const uganda = (this.countrylist || []).find(
+                (country) => country.name === "Uganda"
+            );
+            return uganda ? uganda.id : "";
+        },
+
         setData() {
             if (Object.keys(this.user).length > 0) {
                 if (this.type == "add") {
                     this.countrylist = this.user.countrylist;
                     this.citylist = this.user.citylist;
+                    this.country_id = this.resolveUgandaCountryId();
+                    this.city_id = "";
                 } else {
                     this.country_id = this.user.country_id;
                     this.city_id = this.user.city_id;
@@ -171,7 +180,7 @@ export default {
 
         resetForm() {
             this.city_id = "";
-            this.country_id = 7;
+            this.country_id = this.resolveUgandaCountryId();
         },
 
         previous(tab) {

@@ -447,7 +447,7 @@ export default {
             blood_group: "",
             standard: "",
             city_id: "",
-            country_id: 7,
+            country_id: "",
             pincode: "",
             birth_place: "",
             native_place: "",
@@ -498,6 +498,13 @@ export default {
             });
         },
 
+        resolveUgandaCountryId() {
+            const uganda = (this.countrylist || []).find(
+                (country) => country.name === "Uganda"
+            );
+            return uganda ? uganda.id : "";
+        },
+
         setData() {
             if (Object.keys(this.user).length > 0) {
                 this.academic_year_id = this.user.academic_year_id;
@@ -513,6 +520,8 @@ export default {
                     this.date_of_birth = this.user.date_of_birth;
                     this.joining_date = this.user.joining_date;
                     this.sibling_date_of_birth = this.user.joining_date;
+                    this.country_id = this.resolveUgandaCountryId();
+                    this.city_id = "";
                     this.deleteRow(0);
                     this.addRow();
                 }
@@ -528,7 +537,7 @@ export default {
             this.blood_group = "";
             this.standard = "";
             this.city_id = "";
-            this.country_id = 7;
+            this.country_id = this.resolveUgandaCountryId();
             this.pincode = "";
             this.birth_place = "";
             this.native_place = "";

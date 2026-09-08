@@ -72,29 +72,31 @@ $country = DB::table("countries")->where("name", "Uganda")->first();
         }
     }
 
-    // Foreign Cities (continue state_id)
+    // Capitals / major cities for neighbouring countries (names must match CountriesTableSeeder).
     $foreignCities = [
-        ['country' => "Kenya", 'name' => 'Nairobi'],
-        ['country' => "Tanzania", 'name' => 'Dodoma'],
-        ['country' => "Rwanda", 'name' => 'Bujumbura'],
-        ['country' => "Burundi", 'name' => 'Juba'],
-        ['country' => "South Sudan", 'name' => 'Kinshasa'],
-        ['country' => "DRC", 'name' => 'Johannesburg'],
-        ['country' => "Nigeria", 'name' => 'Lagos'],
-        ['country' => "Egypt", 'name' => 'Cairo'],
-        ['country' => "Other", 'name' => 'Other'],
-        
+        ['country' => 'Kenya', 'name' => 'Nairobi'],
+        ['country' => 'Tanzania', 'name' => 'Dodoma'],
+        ['country' => 'Rwanda', 'name' => 'Kigali'],
+        ['country' => 'Burundi', 'name' => 'Bujumbura'],
+        ['country' => 'South Sudan', 'name' => 'Juba'],
+        ['country' => 'DRC', 'name' => 'Kinshasa'],
+        ['country' => 'Nigeria', 'name' => 'Lagos'],
+        ['country' => 'Egypt', 'name' => 'Cairo'],
+        ['country' => 'Other', 'name' => 'Other'],
     ];
-foreach ($foreignCities as $city) {
-        $country = DB::table("countries")->where("name", $city["country"])->first();
+    foreach ($foreignCities as $city) {
+        $country = DB::table('countries')->where('name', $city['country'])->first();
+        if ($country === null) {
+            continue;
+        }
         DB::table('cities')->updateOrInsert(
-            ['name'=> $city['name']],
-             [
-            'country_id' => $country->id,
-            'status'     => 1,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
+            ['name' => $city['name'], 'country_id' => $country->id],
+            [
+                'status' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
     }
 
 }
