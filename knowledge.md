@@ -1248,11 +1248,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-08: Independent E2E — empty exam marksheet (Kampala Primary Academy) — 🚧 in progress
-- **Work done**: Prod school **33** "Kampala Primary Academy"; student Grace Nakamya uid **116** on `standards_link` **201** (Primary Seven). Exams **10** (Math `subject_id=1033`) and **11** (English `subject_id=1026`) have FKs saved correctly — list UI "-" was cosmetic (`subjects_list`/`teachers_list` derived only from existing marks / teacherlinks). Pre-deploy marksheet xlsx for exam 10 = header-only (`STUDENT NAME`, 0 data rows, no subject column). Teacher enter-marks for exam 10 already lists Grace (`1 students`) — marks entry path OK. Fix: `ExamMarksheetService` builds sheet from enrolled class students + exam subject; admin/teacher download + exams index fallbacks. Documented (not fixed): `/admin/student/add` Vue `Create.vue` class options have static `value=""` alongside `v-bind:value="standardLink.id"`.
+### 2026-09-08: Independent E2E — empty exam marksheet (Kampala Primary Academy) — **MERGED #449 + DEPLOYED**
+- **Work done**: Prod school **33** "Kampala Primary Academy"; student Grace Nakamya uid **116** on `standards_link` **201** (Primary Seven). Exams **10** (Math `subject_id=1033`) and **11** (English `subject_id=1026`) FKs saved correctly — list "-" was cosmetic. Pre-deploy marksheet = header-only (`STUDENT NAME` only). Teacher enter-marks already listed Grace. Shipped `ExamMarksheetService` + index fallbacks. Merged [#449](https://github.com/KlassApp-Foundation/KlassApp/pull/449) `537f771d`; Cloud `depl-a2b2dfcc-…` **succeeded**. Post UI: list shows MATHEMATICS/ENGLISH (0 dash cells); marksheet includes subject + Grace; saved Math mark **81** for uid 116 on exam 10.
 - **Files modified**: `ExamMarksheetService.php`, `Admin/ExamController.php`, `Teacher/MarksController.php`, `ExamMarksheetEnrolledStudentsTest.php`, `e2e/kampala-exam-marksheet-verify.cjs`, `knowledge.md`
 - **Key decisions**: Empty marksheet is generation bug (marks-only query), not silent exam-create persist failure.
-- **Status**: 🚧 tests green locally; awaiting PR merge + Cloud deploy + post UI verify
+- **Status**: ✅ MERGED `537f771d` + Cloud-deployed `depl-a2b2dfcc-737c-4d82-a459-90141c9f9f09` + live UI verify PASS
 - **Edge cases flagged**: **FINDING (doc-only, do not fix this pass)**: `resources/assets/js/components/student/Create.vue` lines 343–350:
 
 ```html
