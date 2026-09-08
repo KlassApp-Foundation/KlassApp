@@ -17,6 +17,7 @@ use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
+use App\Services\ExamMarksheetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -62,7 +63,7 @@ public function sections(){
     {
         $schoolId = Auth::user()->school_id;
 
-        $exams = Exam::with(['standard', 'section', 'examType', 'academicTerm'])
+        $exams = Exam::with(['standard', 'section', 'examType', 'academicTerm', 'subject', 'teacher'])
             ->where('school_id', $schoolId)
             ->latest()
             ->get();
@@ -83,10 +84,15 @@ public function sections(){
         foreach ($exams as $exam) {
             $examMarks = $marksByExam->get($exam->id) ?? collect();
 
+            // Prefer marks-derived names when present; otherwise show the exam's own subject
+            // (list used to show "-" for brand-new exams even when subject_id was saved).
             $exam->subjects_list = $examMarks->pluck('subject_id')->unique()
                 ->map(fn ($id) => $subjectNames[$id] ?? null)
                 ->filter()
                 ->values();
+            if ($exam->subjects_list->isEmpty() && $exam->subject?->name) {
+                $exam->subjects_list = collect([$exam->subject->name]);
+            }
 
             $exam->has_marks = $examMarks->isNotEmpty();
 
@@ -99,6 +105,11 @@ public function sections(){
                     ->unique()
                     ->values()
                 : collect();
+            if ($exam->teachers_list->isEmpty() && ($exam->teacher?->name || $exam->teacher?->email)) {
+                $exam->teachers_list = collect([
+                    $exam->teacher->name ?: $exam->teacher->email,
+                ]);
+            }
         }
 
         $standards = Standard::where('school_id', $schoolId)->get();
@@ -114,48 +125,14 @@ public function sections(){
         ));
     }
 
-    public function marksheet(Exam $exam)
+    public function marksheet(Exam $exam, ExamMarksheetService $marksheets)
     {
         $schoolId = Auth::user()->school_id;
-
-        // Subjects that have marks for this exam (ordered by name)
-        $subjects = \App\Models\Academics\Marks::where('exam_id', $exam->id)
-            ->join('subjects', 'marks.subject_id', '=', 'subjects.id')
-            ->select('subjects.id', 'subjects.name')
-            ->distinct()
-            ->orderBy('subjects.name')
-            ->get();
-
-        // Students who have marks for this exam (active, non-junk)
-        $students = \App\Models\User::whereIn('id', function ($q) use ($exam) {
-                $q->select('student_id')->from('marks')->where('exam_id', $exam->id)->distinct();
-            })
-            ->where('school_id', $schoolId)
-            ->where('usergroup_id', 6)
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
-
-        $headings = array_merge(['STUDENT NAME'], $subjects->pluck('name')->toArray());
-        $rows = [];
-
-        foreach ($students as $student) {
-            $row = [$student->name];
-            foreach ($subjects as $subject) {
-                $mark = \App\Models\Academics\Marks::where('exam_id', $exam->id)
-                    ->where('student_id', $student->id)
-                    ->where('subject_id', $subject->id)
-                    ->value('marks');
-                $row[] = $mark !== null ? (float) $mark : '';
-            }
-            $rows[] = $row;
-        }
-
-        $title = str_replace(' ', '_', $exam->section?->name ?? 'class') . '_' . ($exam->examType?->code ?? 'exam');
+        $sheet = $marksheets->build($exam, (int) $schoolId);
 
         return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\MarksheetExport($headings, $rows, $title),
-            "{$title}_marksheet.xlsx"
+            new \App\Exports\MarksheetExport($sheet['headings'], $sheet['rows'], $sheet['title']),
+            "{$sheet['title']}_marksheet.xlsx"
         );
     }
 

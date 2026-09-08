@@ -1248,6 +1248,27 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-08: Independent E2E — empty exam marksheet (Kampala Primary Academy) — 🚧 in progress
+- **Work done**: Prod school **33** "Kampala Primary Academy"; student Grace Nakamya uid **116** on `standards_link` **201** (Primary Seven). Exams **10** (Math `subject_id=1033`) and **11** (English `subject_id=1026`) have FKs saved correctly — list UI "-" was cosmetic (`subjects_list`/`teachers_list` derived only from existing marks / teacherlinks). Pre-deploy marksheet xlsx for exam 10 = header-only (`STUDENT NAME`, 0 data rows, no subject column). Teacher enter-marks for exam 10 already lists Grace (`1 students`) — marks entry path OK. Fix: `ExamMarksheetService` builds sheet from enrolled class students + exam subject; admin/teacher download + exams index fallbacks. Documented (not fixed): `/admin/student/add` Vue `Create.vue` class options have static `value=""` alongside `v-bind:value="standardLink.id"`.
+- **Files modified**: `ExamMarksheetService.php`, `Admin/ExamController.php`, `Teacher/MarksController.php`, `ExamMarksheetEnrolledStudentsTest.php`, `e2e/kampala-exam-marksheet-verify.cjs`, `knowledge.md`
+- **Key decisions**: Empty marksheet is generation bug (marks-only query), not silent exam-create persist failure.
+- **Status**: 🚧 tests green locally; awaiting PR merge + Cloud deploy + post UI verify
+- **Edge cases flagged**: **FINDING (doc-only, do not fix this pass)**: `resources/assets/js/components/student/Create.vue` lines 343–350:
+
+```html
+<option value="" disabled>Select Class</option>
+<option
+    value=""
+    v-for="standardLink in standardLinklist"
+    v-bind:value="standardLink.id"
+>
+    {{ standardLink.standard_section }}
+</option>
+```
+
+Static `value=""` on every class option can render empty values in HTML before/without Vue bind winning — class selection fails without a JS workaround.
+
+
 ### 2026-09-08: Greenfield Approvals→REPORT closeout (Grace Auma) — **PASS**
 - **Work done**: Web `/admin/approvals` as Greenfield admin: confirmed **1 Pending**, approved Approval **#6** → **0 Pending / 1 Approved** (DB: PLR approved, link #4 parent 113↔student 112). Simulated parent WhatsApp `REPORT` for `+256789843175` → inbound logged + outbound document **delivered** (`📄 Report card — GRACE AUMA`). Downloaded PDF 668 947 bytes `%PDF-1.7`; visual page render confirms school/class/name/Maths 75.
 - **Files modified**: `e2e/greenfield-approve-grace-auma.cjs`, `e2e/screenshots/greenfield-grace-approve/*`, `knowledge.md`
