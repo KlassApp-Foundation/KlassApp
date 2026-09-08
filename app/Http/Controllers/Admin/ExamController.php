@@ -13,9 +13,7 @@ use App\Models\AcademicYear;
 use App\Models\School;          // probably not needed if school_id from auth
 use App\Models\Section;
 use App\Models\Standard;
-use App\Models\StandardLink;
 use App\Models\Subject;
-use App\Models\Teacherlink;
 use App\Models\User;
 use App\Services\ExamMarksheetService;
 use Illuminate\Http\Request;
@@ -63,53 +61,36 @@ public function sections(){
     {
         $schoolId = Auth::user()->school_id;
 
-        $exams = Exam::with(['standard', 'section', 'examType', 'academicTerm', 'subject', 'teacher'])
+        $exams = Exam::with([
+            'standard',
+            'section',
+            'examType',
+            'academicTerm',
+            'subject',
+            'teacher.userprofile',
+        ])
             ->where('school_id', $schoolId)
             ->latest()
             ->get();
-
-        $subjectNames = Subject::where('school_id', $schoolId)->pluck('name', 'id');
 
         $marksByExam = Marks::where('school_id', $schoolId)
             ->whereIn('exam_id', $exams->pluck('id'))
             ->get()
             ->groupBy('exam_id');
 
-        $stdLinks = StandardLink::where('school_id', $schoolId)->get();
-
-        $teacherLinks = Teacherlink::where('school_id', $schoolId)
-            ->get()
-            ->groupBy('standardLink_id');
-
         foreach ($exams as $exam) {
             $examMarks = $marksByExam->get($exam->id) ?? collect();
-
-            // Prefer marks-derived names when present; otherwise show the exam's own subject
-            // (list used to show "-" for brand-new exams even when subject_id was saved).
-            $exam->subjects_list = $examMarks->pluck('subject_id')->unique()
-                ->map(fn ($id) => $subjectNames[$id] ?? null)
-                ->filter()
-                ->values();
-            if ($exam->subjects_list->isEmpty() && $exam->subject?->name) {
-                $exam->subjects_list = collect([$exam->subject->name]);
-            }
-
             $exam->has_marks = $examMarks->isNotEmpty();
 
-            $sl = $stdLinks->first(fn ($s) => $s->section_id == $exam->section_id && $s->standard_id == $exam->standard_id);
+            // Always display the exam record's own subject/teacher — marks rows and
+            // class teacherlinks are the wrong source (blank until marks exist, or
+            // wrong teacher when multiple teachers share a class).
+            $exam->subjects_list = collect([$exam->subject?->name])->filter()->values();
 
-            $exam->teachers_list = $sl
-                ? collect($teacherLinks->get($sl->id) ?? [])
-                    ->map(fn ($tl) => $tl->teacher?->name ?: $tl->teacher?->email)
-                    ->filter()
-                    ->unique()
-                    ->values()
-                : collect();
-            if ($exam->teachers_list->isEmpty() && ($exam->teacher?->name || $exam->teacher?->email)) {
-                $exam->teachers_list = collect([
-                    $exam->teacher->name ?: $exam->teacher->email,
-                ]);
-            }
+            $teacherLabel = $exam->teacher?->display_name
+                ?: $exam->teacher?->name
+                ?: $exam->teacher?->email;
+            $exam->teachers_list = collect([$teacherLabel])->filter()->values();
         }
 
         $standards = Standard::where('school_id', $schoolId)->get();
