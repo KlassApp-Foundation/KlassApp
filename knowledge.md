@@ -349,7 +349,13 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 8, 2026 (`origin/main` tip `65dde369` — **#446+#447**; Greenfield Grace Auma Approvals→REPORT **PASS**)
+## Current Status: September 8, 2026 (`origin/main` tip `b9d9614c` — **#451 MERGED + Cloud-deployed**; Kampala school **33** parent REPORT + student-add class dropdown **PASS**)
+
+- **✅ #451**: Student-add class `<option>` static `value=""` override under `@vue/compat` — merge `b9d9614c`; Cloud `depl-a2b2e800-…` **succeeded**. Live `/admin/student/add`: options **195–201**, select Primary Seven → `standard=201` sticky. Evidence: `e2e/screenshots/kampala-student-add/REPORT.json`.
+- **✅ Kampala Primary Academy (school 33) closeout**: PLR **#7** / Approval **#7** (`+256702223344` Daniel Okello → Grace Nakamya **116**) web Approvals **1→0 Pending / 0→1 Approved**; link **#5** parent **119**. REPORT inbound → PDF **669 813** bytes `%PDF-1.7` — MATHEMATICS EOT **81**, English mid-term **74**. Meta outbound document status **failed** (`Re-engagement message` — 24h window); PDF regenerated via `WhatsAppReportCardDeliveryService`. Evidence: `e2e/screenshots/kampala-parent-report/FINAL.json`.
+- **✅ Prior tonight**: #449 marksheet + #450 stamp; Greenfield Grace Approvals→REPORT; #446 parent-link matching.
+
+## Previous: September 8, 2026 (`origin/main` tip `65dde369` — **#446+#447**; Greenfield Grace Auma Approvals→REPORT **PASS**) — superseded above
 
 - **✅ #446**: Parent Flow school/class matching + repair command. Merge `02567e9e`; Cloud `depl-a2b2b7f4-…`.
 - **✅ #447**: knowledge stamp. Merge `65dde369`.
