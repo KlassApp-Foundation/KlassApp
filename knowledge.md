@@ -349,17 +349,27 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 7, 2026 (branch `fix/agent2-fee-username-student-form-gaps` — Agent 2 remaining three gaps; **NOT MERGED**)
+## Current Status: September 8, 2026 (branch `fix/wizard-school-category-next` — P0 wizard Step 4 blocked; **NOT MERGED**)
 
-- **In progress**: [#441](https://github.com/KlassApp-Foundation/KlassApp/pull/441) — Agent 2 remaining gaps (fee tier / Create.vue / username digits) on `fix/agent2-fee-username-student-form-gaps` @ `53f2bc43` (stacks on #440). Merge #440+#441 + Cloud deploy before Agent 2 Teachers→report re-run.
-- **`origin/main` tip**: `9dae1530` (#439 docs stamp for #438). Prior live: #438 phone+school Flow dup guard Cloud-deployed.
-- **Username digit-suffix**: **FIXED this pass** — `UserprofileObserver` no longer injects `firstname+user_id+rand`; prior “leave alone / intentional slug” triage superseded.
+- **In progress**: Wizard `school_category` cards used `wire:click="set('schoolCategory', …)"` — Livewire 3 has no public `set()`; `$schoolCategory` stayed empty and `next()` always failed. Fix: `selectSchoolCategory()` (mirrors `selectPlan` / AgentToshi) + `wire:click="selectSchoolCategory('…')"`. PHPUnit `WizardSchoolCategoryNextTest` **4 passed**.
+- **`origin/main` tip**: `5442eb4c` (#441). Prior: Agent 2 primary resume PASS on school 25.
+
+## Previous: September 7–8, 2026 (`origin/main` tip `5442eb4c` — **#440+#441 MERGED + Cloud-deployed**; Agent 2 primary resume **PASS**) — superseded above
+
+- **✅ #440** Teachers Next + teacher-links match — merge `26658af1`.
+- **✅ #441** fee tier / Create.vue dropdowns / username digits — merge `5442eb4c` (stacks on #440).
+- **✅ Cloud deploy** `depl-a2b11458-fd4c-4c53-a428-5d66c27ea2a3` **succeeded** on commit `5442eb4c`; build `composer install --no-dev && npm run build`; Vite `app-zD1FlQXy.js` contains `getData`+`/admin/student`.
+- **✅ Live three-fix verify** on school **25** Bright Stars Primary — fee `Tuition (Primary)` / `Boarding (Primary)`; student add Country/District/Class populated; wizard+CSV teachers without observer digit suffix. Evidence: `e2e/screenshots/agent2-primary-wizard/LIVE-THREE-FIXES.json`.
+- **✅ Agent 2 Teachers→REPORT resume (school 25)**: teacher-links import 4× P.7; P.7 student **Nakato Miriam** `KLS0250001` + 4 EOT marks; Flow PLR #5 → Approvals Approve; REPORT **%PDF-1.7** 669 209 bytes, Meta `wamid…Qzg4OAA=`, school/student/primary correct, no digit suffix. Evidence: `e2e/screenshots/agent2-primary-wizard/AGENT2-FINAL.json` + `Nakato-Miriam-report-card.pdf`.
+- **Flag**: PDF text extract lists **ENGLISH LANGUAGE** row explicitly while TOTAL **400/306** matches all four marks — open PDF visually for other subject rows.
+
+## Previous: September 7, 2026 (branch `fix/agent2-fee-username-student-form-gaps` — Agent 2 remaining three gaps; **NOT MERGED**) — superseded above
+
+- **Was**: [#441](https://github.com/KlassApp-Foundation/KlassApp/pull/441) stacks on #440 — now merged + deployed + Agent 2 resume pass (see Current Status).
 
 ## Previous: September 7, 2026 (branch `fix/wizard-teachers-next-and-teacher-link-match` — Agent 2 wizard blockers; **NOT MERGED**) — superseded above
 
-- **In progress**: [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) — Agent 2 wizard blockers (Teachers Next + teacher-links match). Branch `fix/wizard-teachers-next-and-teacher-link-match` @ `5e16a3d1`. Agent 2 re-run after merge + Cloud deploy.
-- **`origin/main` tip**: `9dae1530` (#439 docs stamp for #438). Prior live: #438 phone+school Flow dup guard Cloud-deployed.
-- **Username digit-suffix**: was triaged as intentional slug — **superseded** by Agent 2 remaining-gaps fix (stop observer digit injection).
+- **Was**: [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) — now merged `26658af1` (see Current Status).
 
 ## Previous: September 7, 2026 (`origin/main` tip `dd5da3fe` / docs `9dae1530` — **#438 MERGED + Cloud-deployed**; parent-link Flow duplicate guard **phone+school**) — superseded above
 
@@ -1218,25 +1228,39 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-07: Agent 2 remaining gaps — fee tier / Create.vue dropdowns / username digits — **LOCAL FIX**
+### 2026-09-08: P0 wizard School Category Next never advances — **LOCAL FIX**
+- **Work done**: Re-verified on current `origin/main` (`5442eb4c`): category cards still used `wire:click="set('schoolCategory', …)"` (no Livewire public `set()`). Added `ManualOnboardingWizard::selectSchoolCategory()` (same pattern as `selectPlan` / AgentToshi) and wired cards to `selectSchoolCategory('…')`.
+- **Files modified**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `WizardSchoolCategoryNextTest.php`, `e2e/wizard-school-category-next.cjs`, `knowledge.md`
+- **Key decisions**: Prefer real public method over `$set` to match existing plan cards.
+- **Status**: 🚧 Local fix + PHPUnit green — opening PR / merge / Cloud deploy; headed Playwright after deploy
+- **Edge cases flagged**: Local MySQL migrate incomplete — browser smoke against production after deploy
+
+### 2026-09-07/08: Agent 2 — merge #440+#441, Cloud deploy, live three-fix verify, Teachers→REPORT resume — **PASS**
+- **Work done**: Merged [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) (`26658af1`) then [#441](https://github.com/KlassApp-Foundation/KlassApp/pull/441) (`5442eb4c`). Cloud deploy `depl-a2b11458-…` with `npm run build` (Vite `app-zD1FlQXy.js` has Create.vue `getData`). Live-verified fee labels, student dropdowns, username digits on school **25**. Resumed Agent 2: teacher-links import (4 P.7 links; Namukasa match + Birungi create), P.7 **Nakato Miriam** + 4 EOT marks, Flow PLR #5 → Approvals Approve (fresh `+2567708814903`), REPORT PDF 669 209 bytes `%PDF-1.7` + Meta wamid.
+- **Files modified**: `knowledge.md`; evidence under `e2e/screenshots/agent2-primary-wizard/` (`LIVE-THREE-FIXES.json`, `AGENT2-FINAL.json`, `Nakato-Miriam-report-card.pdf`, screenshots 10–13); harnesses `e2e/agent2-live-verify-three-fixes.cjs`, `e2e/agent2-resume-*.cjs|py` (local).
+- **Key decisions**: Resume on school 25 (prior wizard steps already done); parent phone never used before; Approvals inbox not KLS-ID fallback; REPORT via real `WhatsAppReportCardDeliveryService` + `sendDocument`.
+- **Status**: ✅ Done (Agent 2 evidence).
+- **Edge cases flagged**: PDF text extract shows ENGLISH LANGUAGE row + TOTAL 400/306 matching all four marks — confirm other subject rows visually. Admin password for school 25 was temporarily set for live verify (`/tmp/agent2-admin-creds-local.json` — do not commit). Pre-fix student usernames on school 25 (`amina6510`, etc.) remain digit-suffixed historical data.
+
+### 2026-09-07: Agent 2 remaining gaps — fee tier / Create.vue dropdowns / username digits — **MERGED**
 - **Work done**:
   1. **Fee tier (primary)**: Not an exclusion in `tierDisplayLabel()` (nursery/primary already mapped). Real gaps: wizard `saveFee` reused leftover `$className` (e.g. `P1`) so fees were class-scoped, and review showed raw `$f->name`. Fix: school-wide `saveFees` (no class) + review uses `labeledName()`. DB evidence via tests: primary category school-wide → `standard.name=primary`, `labeledName()=Tuition (Primary)`; nursery+primary levels → Nursery/Primary labels.
   2. **Student dropdowns**: Not headless-only. `Create.vue` had been truncated since mid-2026 (`// rest of your script methods remain same`) — `created()`/`getData()` never ran, so Country/District/Class stayed empty in any browser. Restored methods; submit no longer requires CDN `$()`. Also pointed admin layouts at local `public/js/jquery.min.js` + vendored `sweetalert.min.js` (MTN/Airtel CDN risk).
   3. **Username digit suffix**: `UserprofileObserver` stopped writing `firstname+user_id+rand`. Keep create-time human `users.name`; fill empty names from profile without digits. Verified wizard `saveTeachers` + teacher-links CSV create paths.
 - **Files**: `ManualOnboardingWizard.php`, `UserprofileObserver.php`, `Create.vue`, `layouts/app|main|minimal|superadmin-app.blade.php`, `public/js/sweetalert.min.js`, `TeacherLinkImportController.php`, `ContentStepsTest.php`, `SaveTeachersTest.php`, `TeacherLinkImportMatchesExistingTeacherTest.php`, `UserprofileObserverUsernameTest.php`, `knowledge.md`
 - **Tests**: fee labeled_names + primary school-wide; SaveTeachers username; UserprofileObserverUsername; TeacherLinkImport (3) — all green; WizardTeachersNextAfterAdd still green.
-- **Status**: 🚧 PR open [#441](https://github.com/KlassApp-Foundation/KlassApp/pull/441) (`fix/agent2-fee-username-student-form-gaps` @ `53f2bc43`, stacks on #440) — merge + Cloud deploy before Agent 2 re-run
+- **Status**: ✅ MERGED [#441](https://github.com/KlassApp-Foundation/KlassApp/pull/441) → `5442eb4c` + Cloud-deployed (see merge/resume session above)
 - **Edge**: Prior “username is intentional slug / leave alone” (#438 triage) **superseded**. Sweetalert v1 still used by many Blade `swal()` calls — now local asset, not unpkg.
 
-### 2026-09-07: Agent 2 wizard blockers — Teachers Next + teacher-links match — **LOCAL FIX**
+### 2026-09-07: Agent 2 wizard blockers — Teachers Next + teacher-links match — **MERGED**
 - **Work done**:
   1. **Bug 1 root cause**: After `+ Add teacher`, Next re-synced stale `teacherName` with blank deferred `teacherEmail` (`type="email"` + Livewire morph). `saveTeachers` → `addTeacherDraft` set “Enter a valid teacher email” and returned — Next looked dead; Skip bypassed persist and discarded the list. Fix: auto-email / treat stale blank-email+existing-draft as no-op; `type="text" inputmode="email"`; `wire:confirm` on Skip when list non-empty; verify engine created ≥1 teacher; prefer subject on same section as StandardLink.
   2. **Bug 2**: `TeacherLinkImportController` matched `users.name` (slug after `UserprofileObserver`) then blind-inserted `slug.schoolId@school.edu` → unique collision. Fix: phone-first then `userprofiles` display name; create only if no match. Also fixed broken `$this->log()` (trait only has `doActivityLog`) which rolled back successful imports.
 - **Files**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `TeacherLinkImportController.php`, `WizardTeachersNextAfterAddTest.php`, `TeacherLinkImportMatchesExistingTeacherTest.php`, `knowledge.md`
 - **Tests**: both new files **4 passed**. `ManualWizardBulkTeachersStudentsTest` teacher paths pass; one pre-existing whatsapp→plan_selection assert still fails (OTP step — unrelated).
 - **Quick import audit**: only teacher-links admin import had the blind `@school.edu` create-after-name-lookup pattern. Toshi `commitAll` uses `Str::slug($name).'@school.edu'` via OnboardingEngine (dedupes email in-engine) — different path, not the same collision.
-- **Status**: 🚧 PR open [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) (`fix/wizard-teachers-next-and-teacher-link-match` @ `75692271`) — awaiting merge + Cloud deploy before Agent 2 Teachers→report re-run with fresh WA number
-- **Edge**: Skip silent discard flagged + mitigated with `wire:confirm` (not “make Skip smarter” alone). Bug 3 (headless dropdowns) / Bug 4 (slug suffix) still out of scope.
+- **Status**: ✅ MERGED [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) → `26658af1` (then #441 + Agent 2 resume — see above)
+- **Edge**: Skip silent discard flagged + mitigated with `wire:confirm` (not “make Skip smarter” alone).
 
 ### 2026-09-07: Parent-link Flow duplicate guard phone+school + username triage — **MERGED**
 - **Work done**:

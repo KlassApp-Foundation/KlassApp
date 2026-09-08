@@ -45,7 +45,7 @@
                 @php $isSelected = $schoolCategory === $value; @endphp
                 <button type="button"
                         class="manual-wizard-plan-card {{ $isSelected ? 'is-selected' : '' }}"
-                        wire:click="set('schoolCategory', '{{ $value }}')"
+                        wire:click="selectSchoolCategory('{{ $value }}')"
                         role="radio"
                         aria-checked="{{ $isSelected ? 'true' : 'false' }}"
                         data-testid="wizard-category-{{ $value }}">
