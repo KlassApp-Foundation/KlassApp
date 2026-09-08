@@ -158,6 +158,10 @@ class CreateExamSchoolIdValidationTest extends TestCase
         // School ids and standard ids diverge in real data — create must still succeed.
         $this->assertNotSame($this->school->id, $this->standard->id);
 
+        // Double-prefix regression: mapAdminRoutes() already prefixes /admin — store URI must not be /admin/admin/...
+        $this->assertSame(url('/admin/exams/store'), route('admin.exams.store'));
+        $this->assertSame('admin/exams/store', ltrim(parse_url(route('admin.exams.store'), PHP_URL_PATH), '/'));
+
         $response = $this->actingAs($this->admin)->post(route('admin.exams.store'), [
             'academic_year_id' => $this->year->id,
             'academic_term_id' => $this->term->id,
@@ -184,6 +188,13 @@ class CreateExamSchoolIdValidationTest extends TestCase
         ]);
 
         $this->assertSame(1, Exam::where('school_id', $this->school->id)->count());
+    }
+
+    public function test_exam_archive_route_uri_is_not_double_prefixed(): void
+    {
+        $this->assertSame(url('/admin/exams/42/archive'), route('admin.exams.archive', 42));
+        $this->assertStringNotContainsString('/admin/admin/', route('admin.exams.archive', 42));
+        $this->assertStringNotContainsString('archieve', route('admin.exams.archive', 42));
     }
 
     public function test_create_exam_page_reloads_subjects_for_selected_class(): void

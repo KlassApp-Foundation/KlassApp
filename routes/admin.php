@@ -394,7 +394,7 @@ Route::post( '/promotion/import', 'PromotionController@import' );
 	Route::delete("/subjects/{subject}/destroy", "UgSubjectController@destroy")->name("admin.subject.destroy");
 	Route::post("/subjects/{subject}/restore", "UgSubjectController@restore")->name("admin.subject.restore");
 	Route::delete("/subjects/{subject}/force-delete", "UgSubjectController@forceDestroy")->name("admin.subject.force-delete");
-	
+
 
 Route::get( '/standardLink/id-card/{id}', 'StandardsLinkController@idcard' );
 Route::get( '/standardLink/id-card-print/{id}', 'StandardsLinkController@printidcard' );
@@ -848,8 +848,8 @@ Route::get('/exams/add-new', 'ExamController@create')->name('admin.exams.create'
 // Route::get('/exams/classes/all', 'ExamController@sections')->name('admin.exams.classes.all');
 Route::get('/exams/{exam}/edit', 'ExamController@edit')->name('admin.exams.edit');
 Route::put('/exams/{exam}/update', 'ExamController@update')->name('admin.exams.update');
-Route::post('/admin/exams/store', 'ExamController@store')->name('admin.exams.store');
-Route::delete('/admin/exams/{examId}/archieve', 'ExamController@archieve')->name('admin.exams.archieve');
+Route::post('/exams/store', 'ExamController@store')->name('admin.exams.store');
+Route::delete('/exams/{examId}/archive', 'ExamController@archive')->name('admin.exams.archive');
 
 
 Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
@@ -873,7 +873,7 @@ Route::post('/marks/submissions/{exam}/reject', 'ExamMarksSubmissionController@r
 Route::get("/classes/add", "ClassesController@create")->name("admin.classes.add");
 Route::post("/classes/store", "ClassesController@store")->name("admin.classes.store");
 
-// ========== ACADEMIC TERM ============	
+// ========== ACADEMIC TERM ============
 Route::get("/academic-term", "Academics\AcademicTermController@index")->name("admin.academic-term");
 Route::get("/academic-term/create", "Academics\AcademicTermController@create")->name("admin.academic-term.create");
 Route::post("/academic-term/store", "Academics\AcademicTermController@store")->name("admin.academic-term.store");

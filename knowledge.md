@@ -349,10 +349,17 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 8, 2026 (branch `fix/wizard-school-category-next` — P0 wizard Step 4 blocked; **NOT MERGED**)
+## Current Status: September 8, 2026 (branch `fix/exam-routes-double-prefix` — admin exam store/archive double `/admin` prefix; **shipping**)
 
-- **In progress**: Wizard `school_category` cards used `wire:click="set('schoolCategory', …)"` — Livewire 3 has no public `set()`; `$schoolCategory` stayed empty and `next()` always failed. Fix: `selectSchoolCategory()` (mirrors `selectPlan` / AgentToshi) + `wire:click="selectSchoolCategory('…')"`. PHPUnit `WizardSchoolCategoryNextTest` **4 passed**.
-- **`origin/main` tip**: `5442eb4c` (#441). Prior: Agent 2 primary resume PASS on school 25.
+- **Bug**: `routes/admin.php` registered `POST /admin/exams/store` and `DELETE /admin/exams/{id}/archieve` inside `RouteServiceProvider::mapAdminRoutes()` which already applies `prefix('admin')` → live URIs `/admin/admin/exams/...`. Forms use `route('admin.exams.store')` → silent **404** on create.
+- **Prod evidence (pre-fix)**: `POST https://klassapp.xyz/admin/exams/store` → **404**; `POST …/admin/admin/exams/store` → **419** (CSRF — wrong path is the one registered).
+- **Fix**: drop redundant `/admin/` from both paths; rename archive path/name/method `archieve` → `archive` (caller was named-route only in `admin/exams/index.blade.php`).
+- **Verify**: PHPUnit `CreateExamSchoolIdValidationTest` + `ClassTeacherExamCreateTest` **10 passed**; local Playwright form POST `/admin/exams/store` → **302** → `/admin/exams` + success flash; exam row persisted (school 1). No client asset change (`npm run build` N/A).
+- **`origin/main` tip before this PR**: `edc8419e` (#442 wizard school-category Next).
+
+## Previous: September 8, 2026 (`origin/main` tip `edc8419e` — **#442 MERGED**; wizard school-category Next) — superseded above
+
+- **✅ #442**: `selectSchoolCategory()` + card `wire:click` — Livewire 3 has no public `set()`. Merge `edc8419e`.
 
 ## Previous: September 7–8, 2026 (`origin/main` tip `5442eb4c` — **#440+#441 MERGED + Cloud-deployed**; Agent 2 primary resume **PASS**) — superseded above
 
@@ -1228,12 +1235,19 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-08: P0 wizard School Category Next never advances — **LOCAL FIX**
-- **Work done**: Re-verified on current `origin/main` (`5442eb4c`): category cards still used `wire:click="set('schoolCategory', …)"` (no Livewire public `set()`). Added `ManualOnboardingWizard::selectSchoolCategory()` (same pattern as `selectPlan` / AgentToshi) and wired cards to `selectSchoolCategory('…')`.
+### 2026-09-08: Admin exam create 404 — double `/admin` route prefix — **SHIPPING**
+- **Work done**: Confirmed `mapAdminRoutes()` already prefixes `admin`. Removed redundant `/admin/` from `admin.exams.store` + archive routes. Renamed `archieve` → `archive` (route path, name, controller method, Blade `route()`). Added URI regression asserts. Scanned other `routes/*.php` Route definitions — only these two had the double-prefix pattern (absolute redirects elsewhere are fine). Local browser: seeded school → login → Create Exam → POST `/admin/exams/store` 302 success.
+- **Files modified**: `routes/admin.php`, `ExamController.php`, `resources/views/admin/exams/index.blade.php`, `CreateExamSchoolIdValidationTest.php`, `knowledge.md`
+- **Key decisions**: Rename archive by name (only Blade caller); leave subject-list `archievedSubjects` variable typos alone (unrelated).
+- **Status**: 🚧 PR / merge / Cloud deploy (this session has no `CLOUDBUILD_API_TOKEN` — may need dashboard redeploy after merge)
+- **Edge cases flagged**: Prod pre-fix confirms bug; after deploy expect `POST /admin/exams/store` → 302/419 (auth/CSRF), not 404.
+
+### 2026-09-08: P0 wizard School Category Next never advances — **MERGED #442**
+- **Work done**: Re-verified on then-`origin/main` (`5442eb4c`): category cards still used `wire:click="set('schoolCategory', …)"` (no Livewire public `set()`). Added `ManualOnboardingWizard::selectSchoolCategory()` (same pattern as `selectPlan` / AgentToshi) and wired cards to `selectSchoolCategory('…')`.
 - **Files modified**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `WizardSchoolCategoryNextTest.php`, `e2e/wizard-school-category-next.cjs`, `knowledge.md`
 - **Key decisions**: Prefer real public method over `$set` to match existing plan cards.
-- **Status**: 🚧 Local fix + PHPUnit green — opening PR / merge / Cloud deploy; headed Playwright after deploy
-- **Edge cases flagged**: Local MySQL migrate incomplete — browser smoke against production after deploy
+- **Status**: ✅ MERGED [#442](https://github.com/KlassApp-Foundation/KlassApp/pull/442) → `edc8419e`
+- **Edge cases flagged**: Local MySQL migrate incomplete for some browser smokes
 
 ### 2026-09-07/08: Agent 2 — merge #440+#441, Cloud deploy, live three-fix verify, Teachers→REPORT resume — **PASS**
 - **Work done**: Merged [#440](https://github.com/KlassApp-Foundation/KlassApp/pull/440) (`26658af1`) then [#441](https://github.com/KlassApp-Foundation/KlassApp/pull/441) (`5442eb4c`). Cloud deploy `depl-a2b11458-…` with `npm run build` (Vite `app-zD1FlQXy.js` has Create.vue `getData`). Live-verified fee labels, student dropdowns, username digits on school **25**. Resumed Agent 2: teacher-links import (4 P.7 links; Namukasa match + Birungi create), P.7 **Nakato Miriam** + 4 EOT marks, Flow PLR #5 → Approvals Approve (fresh `+2567708814903`), REPORT PDF 669 209 bytes `%PDF-1.7` + Meta wamid.
