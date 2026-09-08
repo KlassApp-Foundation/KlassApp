@@ -70,7 +70,8 @@ class ExamCreatePageDoesNotAutoSubmitClassSelectTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.exams.create'));
 
         $response->assertOk();
-        $response->assertSee('window.location.assign', false);
+        $response->assertSee('data-create-url', false);
+        $response->assertSee('this.dataset.createUrl', false);
         $response->assertDontSee('onchange="this.form.submit()"', false);
         $response->assertSee('type="datetime-local"', false);
         $response->assertSee('href="'.route('admin.exams').'"', false);

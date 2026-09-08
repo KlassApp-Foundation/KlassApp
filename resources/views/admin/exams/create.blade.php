@@ -30,7 +30,8 @@
                      scheduled_at datetime picker. --}}
                 <select id="section"
                         class="p-2 rounded bg-gray-400"
-                        onchange="if (this.value) { window.location.assign(@json(route('admin.exams.create')) + '?section=' + encodeURIComponent(this.value)); }">
+                        data-create-url="{{ route('admin.exams.create') }}"
+                        onchange="if (this.value) { window.location.assign(this.dataset.createUrl + '?section=' + encodeURIComponent(this.value)); }">
                     <option value="">Select Class</option>
                     @foreach ($sections as $section )
                         <option value="{{$section->id}}" @selected((string) ($selectedClassId ?? '') === (string) $section->id)>
