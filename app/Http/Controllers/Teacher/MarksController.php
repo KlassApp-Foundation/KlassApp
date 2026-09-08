@@ -17,6 +17,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Services\ExamAuthorization;
+use App\Services\ExamMarksheetService;
 use App\Services\GradingSystemService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -328,52 +329,20 @@ public function viewExamMarks(Exam $exam)
     return view('teacher.marks.view', compact('marks', 'exam'));
 }
 
-public function downloadMarksheet(Exam $exam)
+public function downloadMarksheet(Exam $exam, ExamMarksheetService $marksheets)
 {
     $teacher = Auth::user();
+    $this->examAuthorization->authorizeOrAbort(
+        $teacher,
+        $exam,
+        'You are not authorized to download this marksheet.'
+    );
 
-    if ($exam->school_id !== $teacher->school_id) {
-        abort(403, 'You are not authorized to download this marksheet.');
-    }
-
-    $schoolId = $teacher->school_id;
-
-    $subjects = Marks::where('exam_id', $exam->id)
-        ->join('subjects', 'marks.subject_id', '=', 'subjects.id')
-        ->select('subjects.id', 'subjects.name')
-        ->distinct()
-        ->orderBy('subjects.name')
-        ->get();
-
-    $students = User::whereIn('id', function ($q) use ($exam) {
-            $q->select('student_id')->from('marks')->where('exam_id', $exam->id)->distinct();
-        })
-        ->where('school_id', $schoolId)
-        ->where('usergroup_id', 6)
-        ->where('status', 'active')
-        ->orderBy('name')
-        ->get();
-
-    $headings = array_merge(['STUDENT NAME'], $subjects->pluck('name')->toArray());
-    $rows = [];
-
-    foreach ($students as $student) {
-        $row = [$student->name];
-        foreach ($subjects as $subject) {
-            $mark = Marks::where('exam_id', $exam->id)
-                ->where('student_id', $student->id)
-                ->where('subject_id', $subject->id)
-                ->value('marks');
-            $row[] = $mark !== null ? (float) $mark : '';
-        }
-        $rows[] = $row;
-    }
-
-    $title = str_replace(' ', '_', $exam->section?->name ?? 'class') . '_' . ($exam->examType?->code ?? 'exam');
+    $sheet = $marksheets->build($exam, (int) $teacher->school_id);
 
     return \Maatwebsite\Excel\Facades\Excel::download(
-        new \App\Exports\MarksheetExport($headings, $rows, $title),
-        "{$title}_marksheet.xlsx"
+        new \App\Exports\MarksheetExport($sheet['headings'], $sheet['rows'], $sheet['title']),
+        "{$sheet['title']}_marksheet.xlsx"
     );
 }
 
