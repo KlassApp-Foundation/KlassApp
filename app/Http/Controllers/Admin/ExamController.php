@@ -39,6 +39,7 @@ public function sections(){
     $academicYears = AcademicYear::where('school_id', $school_id)->where("end_date", ">", now()) ->get();
     // dd($academicYears);
     $selectedClassId = $request->get("section");
+    $subjects = collect();
     if($selectedClassId){
     $subjects = Subject::where('section_id', $selectedClassId) ->where("school_id", $school_id)->get();
     }
@@ -52,8 +53,9 @@ public function sections(){
             ->get();
             // dd($teachers);
     $examTypes =  ExamType::all();
+    $exam = null;
     return view('admin.exams.create', compact(
-        'exams', "teachers", "sections", "academicYears", "terms", "subjects", "examTypes"
+        'exams', "teachers", "sections", "academicYears", "terms", "subjects", "examTypes", "exam", "selectedClassId"
         ));
 }
 

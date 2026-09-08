@@ -31,6 +31,7 @@
                     selectMirror: true,
                     dayMaxEvents: true,
                     weekends: true,
+                    navLinks: false,
                     select: this.handleDateSelect,
                     eventClick: this.handleEventClick,
                     eventsSet: this.handleEvents,       

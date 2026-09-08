@@ -349,12 +349,25 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 8, 2026 (`origin/main` tip `d4ebb431` — **#451 class dropdown MERGED+DEPLOYED**; Kampala Approvals **real web form**; REPORT **NOT a real closeout**)
+## Current Status: September 8, 2026 (branch `fix/exam-create-date-and-class-select` — exam create date/class-select PR **OPENING**; `origin/main` tip `3742b22e` = **#460**)
 
+- **🚧 Exam create date picker / class select**: Nested GET class form (`onchange=this.form.submit()`) + undefined `$exam`/`$subjects` on create + wrong back link to students — replaced with `location.assign` picker, init `$exam=null`/`$subjects=collect()`, back → `admin.exams`, Enter-guard on `datetime-local`; FullCalendar `navLinks: false`. Test: `ExamCreatePageDoesNotAutoSubmitClassSelectTest`.
+- **✅ #460**: Exam list Subject/Teacher always from exam’s own FKs (not marks/teacherlinks). Merge `3742b22e`; Cloud deploy succeeded. Live: ENGLISH/JAMES OKELLO + MATHEMATICS/GRACE NAMBOGO.
+- **✅ #457–#459**: Request Link pending passthrough; Uganda location defaults + keyed `countrylist` fix — live-verified student add.
+- **Triaged (no PR)**: Teachers wizard Next — already fixed in **#440/#442**; remaining “dead Next” was Playwright/actionability vs real `wire:click="next"`.
+- **❌ Kampala REPORT — simulated, not real WhatsApp** (still open under real-phone rule).
+
+## Previous: September 8, 2026 (`origin/main` tip `2d802199` — **#457–#459 MERGED+DEPLOYED**; student location Uganda defaults live-verified) — superseded above
+
+- **✅ #457**: Request Link while pending at another school (phone-only pending guard → passthrough). Merge `fc0b98b6`.
+- **✅ #458**: Uganda location defaults + scrambled city remapping. Merge `f401f5cd`; Cloud `depl-a2b310b0-…` **succeeded**. Migration applied (Johannesburg inactive; Kinshasa→DRC; real Uganda districts).
+- **✅ #459**: Follow-up — `resolveUgandaCountryId()` handles keyed `countrylist`. Merge `2d802199`; Cloud `depl-a2b3176d-…` **succeeded**. Live `/admin/student/add`: Country=Uganda, districts include Kampala/Wakiso, no Johannesburg (`e2e/screenshots/kampala-student-location/`).
 - **✅ #451**: Student-add class `<option>` static `value=""` override under `@vue/compat` — merge `b9d9614c`; Cloud `depl-a2b2e800-…` **succeeded**. Live class select Primary Seven → `standard=201`.
 - **✅ Kampala Approvals (school 33)**: PLR **#7** / Approval **#7** approved via **real** `/admin/approvals` HTML form (Playwright click + `confirm()`). Link **#5** parent **119**↔Grace **116**. No Approvals product-code PR — first attempt failed only because Playwright did not accept the browser confirm dialog.
 - **❌ Kampala REPORT — simulated, not real WhatsApp**: triggered by `POST /api/whatsapp/inbound` with synthetic `wamid.e2e.report.*` (same shortcut class as Greenfield’s `wamid.sim.grace.report.*`). PDF bytes/Math 81 verified after the fact, but **does not satisfy real-phone inbound rule**. Must redo: parent taps Report Card on a real phone; then confirm Meta-origin inbound + outbound delivery/PDF.
 - **Correction**: Greenfield Grace REPORT earlier today was **also** simulated inbound (msgid `wamid.sim.grace.report.1788885585`), not a handset message — session wording that implied otherwise was wrong.
+
+## Previous: September 8, 2026 (`origin/main` tip `d4ebb431` — **#451 class dropdown MERGED+DEPLOYED**; Kampala Approvals **real web form**; REPORT **NOT a real closeout**) — superseded above
 
 ## Previous: September 8, 2026 (`origin/main` tip `65dde369` — **#446+#447**; Greenfield Grace Auma Approvals→REPORT **PASS**) — superseded above
 
