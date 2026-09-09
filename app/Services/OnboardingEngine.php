@@ -416,28 +416,69 @@ class OnboardingEngine
     }
 
     /**
+     * Compose a section lookup name from class + optional stream.
+     *
+     * Onboarding streams create sections named "{Class} {Stream}" (e.g. "P1 A").
+     * If $className already ends with the stream token, it is returned unchanged
+     * so "P1 A" + stream "A" does not become "P1 A A".
+     */
+    public static function composeClassAndStream(string $className, string $stream): string
+    {
+        $className = trim($className);
+        $stream = trim($stream);
+        if ($className === '' || $stream === '') {
+            return $className;
+        }
+
+        $classLower = strtolower($className);
+        $streamLower = strtolower($stream);
+        if ($classLower === $streamLower || str_ends_with($classLower, ' '.$streamLower)) {
+            return $className;
+        }
+
+        return $className.' '.$stream;
+    }
+
+    /**
      * Resolve a StandardLink for a class/section name with short-form aliases.
+     *
+     * When $stream is provided, matches the specific stream section (exact / alias
+     * equality only — no prefix LIKE) so "P1"+"A" lands on "P1 A", not the first
+     * "P1 …" section. When $stream is empty, keeps the legacy first-match behaviour
+     * including prefix LIKE for backward compatibility.
      *
      * Returns null when no section matches — callers must not invent a fallback.
      */
-    public function resolveStandardLinkForClass(School $school, AcademicYear $year, string $className): ?StandardLink
-    {
+    public function resolveStandardLinkForClass(
+        School $school,
+        AcademicYear $year,
+        string $className,
+        ?string $stream = null
+    ): ?StandardLink {
         $className = trim($className);
         if ($className === '') {
             return null;
         }
 
-        $candidates = self::classNameCandidates($className);
+        $stream = trim((string) $stream);
+        $lookupName = $stream !== ''
+            ? self::composeClassAndStream($className, $stream)
+            : $className;
+        $allowPrefixMatch = $stream === '';
+
+        $candidates = self::classNameCandidates($lookupName);
 
         foreach ($candidates as $candidate) {
             $link = StandardLink::with(['standard', 'section'])
                 ->where('school_id', $school->id)
                 ->where('academic_year_id', $year->id)
-                ->whereHas('section', function ($query) use ($school, $candidate) {
+                ->whereHas('section', function ($query) use ($school, $candidate, $allowPrefixMatch) {
                     $query->where('school_id', $school->id)
-                        ->where(function ($q) use ($candidate) {
-                            $q->whereRaw('LOWER(name) = ?', [strtolower($candidate)])
-                                ->orWhereRaw('LOWER(name) LIKE ?', [strtolower($candidate).' %']);
+                        ->where(function ($q) use ($candidate, $allowPrefixMatch) {
+                            $q->whereRaw('LOWER(name) = ?', [strtolower($candidate)]);
+                            if ($allowPrefixMatch) {
+                                $q->orWhereRaw('LOWER(name) LIKE ?', [strtolower($candidate).' %']);
+                            }
                         });
                 })
                 ->first();
@@ -1060,18 +1101,21 @@ class OnboardingEngine
         foreach ($students as $draft) {
             $name = trim((string) ($draft['name'] ?? ''));
             $className = trim((string) ($draft['class'] ?? ''));
+            $stream = trim((string) ($draft['stream'] ?? ''));
             if ($name === '' || $className === '') {
                 continue;
             }
-            if (! $this->resolveStandardLinkForClass($school, $year, $className)) {
-                $unmatchedClasses[] = "{$name} → '{$className}'";
+            if (! $this->resolveStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
+                $label = $stream !== '' ? "{$className} / stream {$stream}" : "'{$className}'";
+                $unmatchedClasses[] = "{$name} → {$label}";
             }
         }
         if ($unmatchedClasses !== []) {
             throw ValidationException::withMessages([
                 'students' => 'Could not place student(s) into a class: '
                     .implode('; ', $unmatchedClasses)
-                    .'. Use the exact class name (e.g. Senior Four) or a known short form (e.g. S.4) — students were not silently assigned to another class.',
+                    .'. Use the exact class/section name (e.g. Senior Four, P1 A) or class + stream (e.g. class P1 and stream A). '
+                    .'Known short forms (e.g. S.4) are accepted — students were not silently assigned to another class.',
             ]);
         }
 
@@ -1125,10 +1169,16 @@ class OnboardingEngine
             $klassappId = StudentIdGeneratorService::nextForStudent($student);
 
             $className = trim((string) ($draft['class'] ?? ''));
+            $stream = trim((string) ($draft['stream'] ?? ''));
             $link = null;
 
             if ($className !== '') {
-                $link = $this->resolveStandardLinkForClass($school, $year, $className);
+                $link = $this->resolveStandardLinkForClass(
+                    $school,
+                    $year,
+                    $className,
+                    $stream !== '' ? $stream : null
+                );
             } elseif ($firstLink) {
                 // No class provided: keep legacy first-link assignment for paste-name paths.
                 $link = StandardLink::with(['standard', 'section'])->find($firstLink->id) ?? $firstLink;

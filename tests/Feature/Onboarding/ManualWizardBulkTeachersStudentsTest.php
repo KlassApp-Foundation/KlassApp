@@ -154,14 +154,16 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
 
         $this->assertSame(2, Teacherlink::where('school_id', $this->school->id)->count());
 
-        $csv = "Name,Class,Stream,Parent Name,Parent Phone\nAmina Student,P1,A,Parent A,+256700333444\nBrian Student,P1,B,Parent B,+256700555666\n";
+        $csv = "Name,Class,Stream,Parent Name,Parent Phone\nAmina Student,P.1,,Parent A,+256700333444\nBrian Student,P.1,,Parent B,+256700555666\n";
         $file = UploadedFile::fake()->createWithContent('students.csv', $csv);
 
         $component
             ->set('studentUpload', $file)
             ->assertCount('studentDrafts', 2)
+            ->assertSet('studentDrafts.0.stream', '')
+            ->assertSet('studentDrafts.1.stream', '')
             ->set('studentName', 'Solo Student')
-            ->set('studentClass', 'P1')
+            ->set('studentClass', 'P.1')
             ->call('addStudentDraft')
             ->assertCount('studentDrafts', 3)
             ->call('next');

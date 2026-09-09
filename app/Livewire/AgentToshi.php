@@ -5528,6 +5528,7 @@ class AgentToshi extends Component
                     return [
                         'name'  => trim((string) $name),
                         'class' => trim((string) (is_array($record) ? ($record['class'] ?? '') : '')),
+                        'stream' => trim((string) (is_array($record) ? ($record['stream'] ?? '') : '')),
                         'phone' => trim((string) (is_array($record) ? ($record['phone'] ?? '') : '')),
                         'school_student_id' => trim((string) (is_array($record) ? ($record['school_student_id'] ?? '') : '')),
                         'board_registration_number' => trim((string) (is_array($record) ? ($record['board_registration_number'] ?? '') : '')),
@@ -5669,6 +5670,7 @@ class AgentToshi extends Component
                         return [
                             'name'  => trim((string) $name),
                             'class' => trim((string) (is_array($record) ? ($record['class'] ?? '') : '')),
+                            'stream' => trim((string) (is_array($record) ? ($record['stream'] ?? '') : '')),
                             'phone' => trim((string) (is_array($record) ? ($record['phone'] ?? '') : '')),
                             'school_student_id' => trim((string) (is_array($record) ? ($record['school_student_id'] ?? '') : '')),
                             'board_registration_number' => trim((string) (is_array($record) ? ($record['board_registration_number'] ?? '') : '')),
