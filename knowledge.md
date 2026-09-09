@@ -349,12 +349,18 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 ([#466](https://github.com/KlassApp-Foundation/KlassApp/pull/466) **MERGED+DEPLOYED+LIVE-VERIFIED**; `origin/main` tip `db0bfe3e`)
+## Current Status: September 9, 2026 ([#469](https://github.com/KlassApp-Foundation/KlassApp/pull/469) **MERGED+DEPLOYED+LIVE-VERIFIED**; `origin/main` tip `7e5d506f`)
 
-- **✅ #466 Show/profile legacy labels strip** (follow-up to #465): Removed Blood Group / Aadhaar / Marital Status from teacher+staff show blades and teacher `myprofile.vue`; removed student show Track A leftovers (Blood Group, Aadhaar, Birth/Native Place, Mother Tongue, Caste) from admin `member/show` + `teacher/student/show`.
-- **Merge**: `db0bfe3e` · Cloud `depl-a2b36923-8bcc-4e99-addf-56e3562c133d` **deployment.succeeded**.
-- **Live Kampala (school 33)**: `e2e/screenshots/show-legacy-labels-466/REPORT.json` **pass: true** — teacher show (GRACE NAMBOGO) + student show (DAVID SSEMPIJJA) have no leftover labels.
-- **✅ #465** (prior): form/filter/export/import strip + optional DOB — merge `fb4c9ace`, Cloud `depl-a2b35eb1-…` succeeded; live `legacy-demographics-live-465/`.
+- **✅ #469 Medical-history height/weight strip** (Track A follow-up): Removed height/weight from Admin edit (`CreateMedicalHistory.vue` + `MedicalHistoryRequest`), Admin/Teacher show APIs, and shared `medicalHistory.vue` display. DB columns on `student_academics` **kept** (UI-only).
+- **Admission blade**: `resources/views/pages/admission/student-detail.blade.php` (+ sibling fieldset blades) are **dead / unrouted** — live admission uses Vue `<add-admission>` / `StudentDetail.vue` (already stripped in #465). Flagged for future cleanup; not polished in #469.
+- **Merge**: `7e5d506f` · Cloud `depl-a2b375c2-f1df-4fa8-b585-e8c5de1be689` **deployment.succeeded** (`composer install --no-dev && npm run build`).
+- **Live Kampala (school 33)**: `e2e/screenshots/medical-history-height-weight/REPORT.json` **pass: true** — medical tab + edit form have no Height/Weight (student DAVID SSEMPIJJA).
+- **✅ #466** (prior): show/profile label strip — merge `db0bfe3e`; live `show-legacy-labels-466/`.
+- **✅ #465** (prior): form/filter/export/import strip + optional DOB — merge `fb4c9ace`; live `legacy-demographics-live-465/`.
+
+## Previous: September 9, 2026 ([#466](https://github.com/KlassApp-Foundation/KlassApp/pull/466) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `db0bfe3e`) — superseded above
+
+- Show/profile Blood Group / Aadhaar / Marital Status / student Track A leftovers stripped; live-verified.
 
 ## Previous: September 9, 2026 ([#465](https://github.com/KlassApp-Foundation/KlassApp/pull/465) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `fb4c9ace`) — superseded above
 
@@ -9127,4 +9133,14 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **PR**: [#466](https://github.com/KlassApp-Foundation/KlassApp/pull/466) — merge `db0bfe3e`.
 - **Deploy**: Cloud `depl-a2b36923-8bcc-4e99-addf-56e3562c133d` **deployment.succeeded**.
 - **Live evidence**: `e2e/screenshots/show-legacy-labels-466/REPORT.json` pass=true (Kampala school 33 teacher + student show).
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
+
+### 2026-09-09: Strip height/weight from medical-history UI (#469)
+
+- **Work done**: UI-only removal matching Track A — `CreateMedicalHistory.vue`, `medicalHistory.vue` (Admin+Teacher `mode`), `MedicalHistoryRequest`, Admin+Teacher `StudentDetailsController` show/add medical history. No longer gate medical tab on `height && weight` (now medication/allergy content). DB `student_academics.height`/`weight` retained.
+- **Admission investigation**: `pages/admission/student-detail.blade.php` (+ related fieldset blades) **dead code** — not routed; live public admission is Vue via `pages/admission/admission.blade.php`. Flag only; cleanup deferred.
+- **Tests**: `MedicalHistoryHeightWeightStripTest` + `LegacyDemographicsValidationTest` — 25 passed.
+- **PR**: [#469](https://github.com/KlassApp-Foundation/KlassApp/pull/469) — merge `7e5d506f`.
+- **Deploy**: Cloud `depl-a2b375c2-f1df-4fa8-b585-e8c5de1be689` **deployment.succeeded** on `7e5d506f` (includes `npm run build`).
+- **Live evidence**: `e2e/screenshots/medical-history-height-weight/REPORT.json` pass=true (Kampala school 33, DAVID SSEMPIJJA medical tab + edit).
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
