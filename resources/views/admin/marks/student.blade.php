@@ -48,13 +48,14 @@
 {{-- ============== performance summary ============== --}}
 <div class="flex items-center justify-center py-4">
     @php
-        $termMap = ["First Term" => 1, "Second Term" => 2, "Third Term" => 3];
-        $termName = $learner->marks->first()->exam->academicTerm->name;
+        $academicTerm = $learner->marks->first()->exam->academicTerm;
+        $termPosition = $academicTerm?->positionLabel() ?? '-';
+        $yearName = $academicTerm?->academicYear?->name;
     @endphp
     <h3 class="ds-section-title text-center">
         {{ $learner->marks->first()->exam->examType->name }}
-        {{ $termMap[$termName] ?? "-" }}
-        {{ $termName->academicYear }}
+        {{ $termPosition }}
+        {{ $yearName }}
         <span>STUDENT REPORT CARD</span>
     </h3>
 </div>

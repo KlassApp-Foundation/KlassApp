@@ -45,9 +45,8 @@
                             <div class="space-y-4">
                         @foreach($classExams as $exam)
                          @php
-                            $termMap = ["First Term" => 1, "Second Term" => 2, "Third Term" => 3];
-                            $term = strtolower($termMap[$exam->academicTerm->name])
-                        @endphp
+                            $termPosition = $exam->academicTerm?->positionLabel() ?? '-';
+                         @endphp
                             <div class="flex items-center justify-between p-4 borderr shadow-md hover:shadow-lg dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/30 relative">
                                 <p class='bg-yellow-400 px-1 text-red-500 rounded-full text-xs absolute top-0 right-0'>
                                         {{ $exam->status }}
@@ -62,7 +61,7 @@
                                         <p class="text-xs text-gray-600 dark:text-gray-400">
                                         <span>{{ $exam->section->name ?? '-' }}</span>
                                         <span>{{ $exam->examType->name ?? "-" }}</span>
-                                         <span>{{ $term ?? '-' }}</span>
+                                         <span>{{ $termPosition }}</span>
                                     </p>
                                     
                                     {{-- to mark the exam as done --}}
