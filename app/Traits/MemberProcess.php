@@ -32,13 +32,13 @@ trait MemberProcess
             {
                 $users = User::BySchool($school_id)->ByRole($usergroup_id);
             }
-           
-            
+
+
             $alphabet = $request->alphabet ? $request->alphabet:'';
             if($alphabet)
             {
-                $users =$users->ByFirstName($alphabet);     
-            } 
+                $users =$users->ByFirstName($alphabet);
+            }
 
             $standard = $request->standard;
             if($standard!='')
@@ -54,9 +54,11 @@ trait MemberProcess
 
             if($status=='')
             {
-                $users = $users->where('status','!=','exit');
+                // Default list: currently active only — `!= 'exit'` silently
+                // included junk-flagged `inactive` rows (bug pattern #6).
+                $users = $users->ByActive();
             }
-            
+
             if(count((array)\Request::getQueryString())>0)
             {
                 $firstname = $request->firstname;
@@ -78,11 +80,11 @@ trait MemberProcess
                 }
 
                 $date_of_birth = $request->date_of_birth;
-                if ($date_of_birth != '1970-01-01') 
+                if ($date_of_birth != '1970-01-01')
                 {
-                    if($date_of_birth != '') 
+                    if($date_of_birth != '')
                     {
-                        $users = $users->ByDateOfBirth($date_of_birth); 
+                        $users = $users->ByDateOfBirth($date_of_birth);
                     }
                 }
 
@@ -135,7 +137,7 @@ trait MemberProcess
         {
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
+        }
     }
 
     public function TeacherFilter($request,$school_id,$usergroup_id)
@@ -149,8 +151,8 @@ trait MemberProcess
             $alphabet = $request->alphabet ? $request->alphabet:'';
                 if($alphabet)
                 {
-                    $users =$users->ByFirstName($alphabet);     
-                } 
+                    $users =$users->ByFirstName($alphabet);
+                }
             if(count((array)\Request::getQueryString())>0)
             {
                 $firstname = $request->firstname;
@@ -170,13 +172,13 @@ trait MemberProcess
                 {
                     $users = $users->ByGender($gender);
                 }
-                
+
                $date_of_birth = $request->date_of_birth;
-                if ($date_of_birth != '1970-01-01') 
+                if ($date_of_birth != '1970-01-01')
                 {
-                    if($date_of_birth != '') 
+                    if($date_of_birth != '')
                     {
-                        $users = $users->ByDateOfBirth($date_of_birth); 
+                        $users = $users->ByDateOfBirth($date_of_birth);
                     }
                 }
 
@@ -231,7 +233,7 @@ trait MemberProcess
         {
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
+        }
     }
 
     public function StaffFilter($request,$school_id,$usergroup_id)
@@ -241,12 +243,12 @@ trait MemberProcess
             $users = User::where('school_id',$school_id)->whereIn('usergroup_id',$usergroup_id)->whereHas('userprofile', function($q){
                         $q->where('status','active')->orWhere('status','inactive');
                     });
-            
+
             $alphabet = $request->alphabet ? $request->alphabet:'';
                 if($alphabet)
                 {
-                    $users =$users->ByFirstName($alphabet);     
-                } 
+                    $users =$users->ByFirstName($alphabet);
+                }
             if(count((array)\Request::getQueryString())>0)
             {
                 $firstname = $request->firstname;
@@ -266,13 +268,13 @@ trait MemberProcess
                 {
                     $users = $users->ByGender($gender);
                 }
-                
+
                 $date_of_birth = $request->date_of_birth;
-                if ($date_of_birth != '1970-01-01') 
+                if ($date_of_birth != '1970-01-01')
                 {
-                    if($date_of_birth != '') 
+                    if($date_of_birth != '')
                     {
-                        $users = $users->ByDateOfBirth($date_of_birth); 
+                        $users = $users->ByDateOfBirth($date_of_birth);
                     }
                 }
 
@@ -320,24 +322,24 @@ trait MemberProcess
             }
             $users=$users->get();
             $users = TeacherResource::collection($users);
-            return $users;   
+            return $users;
         }
         catch(Exception $e)
         {
             Log::info($e->getMessage());
             //dd($e->getMessage());
         }
-    } 
+    }
 
     public function ParentFilter($request,$school_id,$usergroup_id)
     {
         try
         {
             $users = User::where('school_id',$school_id)->ByRole($usergroup_id)->whereHas('children', function($q) use ($search){
-    
-                $q->whereHas('userStudent', function($q) 
+
+                $q->whereHas('userStudent', function($q)
                 {
-                    $q->where([['status','!=','exit']]);
+                    $q->ByActive();
                 });
             })->whereHas('userprofile', function($q){
                     $q->where('status','active')->orWhere('status','inactive');
@@ -407,8 +409,8 @@ trait MemberProcess
         {
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
-    }  
+        }
+    }
 
     public function AlumniFilter($request,$school_id,$usergroup_id)
     {
@@ -419,14 +421,14 @@ trait MemberProcess
             $alphabet = $request->alphabet ? $request->alphabet:'';
             if($alphabet)
             {
-                $users =$users->ByName($alphabet);     
-            } 
+                $users =$users->ByName($alphabet);
+            }
 
             $passing_session = $request->passing_session;
             if($passing_session)
             {
-                $users =$users->ByBatch($passing_session);     
-            } 
+                $users =$users->ByBatch($passing_session);
+            }
 
             $users=$users->get();
 
@@ -445,7 +447,7 @@ trait MemberProcess
         {
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
+        }
    }
 
     public function AlumniProfileFilter($request,$school_id,$usergroup_id,$user_id)
@@ -457,17 +459,17 @@ trait MemberProcess
             $alphabet = $request->alphabet ? $request->alphabet:'';
             if($alphabet)
             {
-                $users =$users->ByName($alphabet);     
-            } 
+                $users =$users->ByName($alphabet);
+            }
 
             $passing_session = $request->passing_session;
             if($passing_session)
             {
-                $users =$users->ByBatch($passing_session);     
-            } 
+                $users =$users->ByBatch($passing_session);
+            }
 
             $users=$users->get();
-            
+
             if(class_exists('Gegok12\Alumni\Http\Resources\Alumni')) //new
             {
                 $users = \Gegok12\Alumni\Http\Resources\Alumni::collection($users);
@@ -483,6 +485,6 @@ trait MemberProcess
         {
             Log::info($e->getMessage());
             //dd($e->getMessage());
-        } 
-    } 
+        }
+    }
 }

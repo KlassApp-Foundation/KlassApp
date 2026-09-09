@@ -191,9 +191,7 @@ class OnboardingStepsService
             'students'   => User::query()
                 ->where('school_id', $sid)
                 ->where('usergroup_id', 6)
-                ->where(function ($q) {
-                    $q->whereNull('status')->orWhere('status', '!=', 'exit');
-                })
+                ->ByActive()
                 ->exists(),
             'terms'      => AcademicTerm::where('school_id', $sid)->exists(),
             'fees'       => FeesCategories::where('school_id', $sid)->exists(),
@@ -293,17 +291,15 @@ class OnboardingStepsService
     }
 
     /**
-     * Active students for plan suggestion (excludes exited).
+     * Active students for plan suggestion.
+     * Positive equality on users.status — never `!= 'exit'` (that includes inactive junk).
      */
     public static function countActiveStudents(int $schoolId): int
     {
         return User::query()
             ->where('school_id', $schoolId)
             ->where('usergroup_id', 6)
-            ->where(function ($q) {
-                $q->whereNull('status')
-                    ->orWhere('status', '!=', 'exit');
-            })
+            ->ByActive()
             ->count();
     }
 

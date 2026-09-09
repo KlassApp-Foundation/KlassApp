@@ -106,7 +106,8 @@ class StudentController extends Controller
             if ($statusFilter === 'active') {
                 $query->where('users.status', 'active');
             } elseif ($statusFilter === 'inactive') {
-                $query->where('users.status', '!=', 'active');
+                // Positive equality — `!= 'active'` would also pull `exit`.
+                $query->where('users.status', 'inactive');
             }
         } else {
             // Default view: only currently-active students. The broad

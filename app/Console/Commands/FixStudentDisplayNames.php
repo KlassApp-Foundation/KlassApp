@@ -16,7 +16,7 @@ class FixStudentDisplayNames extends Command
 
         $users = User::where('school_id', $schoolId)
             ->where('usergroup_id', 6)
-            ->where('status', '!=', 'exit')
+            ->ByActive()
             ->with('userprofile')
             ->get();
 
