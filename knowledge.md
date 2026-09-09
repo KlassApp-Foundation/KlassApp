@@ -349,11 +349,16 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 ([#465](https://github.com/KlassApp-Foundation/KlassApp/pull/465) open — `fix/admin-strip-legacy-demographics`; `origin/main` tip `e369dbf4`)
+## Current Status: September 9, 2026 ([#466](https://github.com/KlassApp-Foundation/KlassApp/pull/466) **MERGED+DEPLOYED+LIVE-VERIFIED**; `origin/main` tip `db0bfe3e`)
 
-- **🚧 Admin legacy demographics strip (Track A+B)**: UI-only removal (DB columns kept). Dropped blood_group / aadhaar / caste / sub_caste / mother_tongue / birth_place / native_place from student/teacher/staff create·edit·filter·export·import surfaces; admission also drops religion/nationality/height/weight + parent aadhaar. Removed teacher/staff `marital_status` from forms/filters/validation. `date_of_birth` nullable everywhere it was required; null-safe age/birthday CSV/resources. LIN left alone.
-- **Evidence**: PHPUnit `LegacyDemographicsValidationTest` + `NullDateOfBirthAgeTest` (21 passed); local Playwright `e2e/screenshots/legacy-demographics/` (teacher add/edit clean, export modal no Blood/Aadhaar, birthday API 200 `[]`, student edit without Track A fields).
-- **✅ #464**: Leading-dash class labels, teacher `/show/null`, null DOB epoch — merge `e369dbf4`, Cloud deployed (see Previous).
+- **✅ #466 Show/profile legacy labels strip** (follow-up to #465): Removed Blood Group / Aadhaar / Marital Status from teacher+staff show blades and teacher `myprofile.vue`; removed student show Track A leftovers (Blood Group, Aadhaar, Birth/Native Place, Mother Tongue, Caste) from admin `member/show` + `teacher/student/show`.
+- **Merge**: `db0bfe3e` · Cloud `depl-a2b36923-8bcc-4e99-addf-56e3562c133d` **deployment.succeeded**.
+- **Live Kampala (school 33)**: `e2e/screenshots/show-legacy-labels-466/REPORT.json` **pass: true** — teacher show (GRACE NAMBOGO) + student show (DAVID SSEMPIJJA) have no leftover labels.
+- **✅ #465** (prior): form/filter/export/import strip + optional DOB — merge `fb4c9ace`, Cloud `depl-a2b35eb1-…` succeeded; live `legacy-demographics-live-465/`.
+
+## Previous: September 9, 2026 ([#465](https://github.com/KlassApp-Foundation/KlassApp/pull/465) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `fb4c9ace`) — superseded above
+
+- Show-page leftover labels flagged; fixed in #466.
 
 ## Previous: September 9, 2026 (branch `fix/minor-findings-dash-show-null-dob` — **#464 MERGED+DEPLOYED**; `origin/main` tip `e369dbf4`) — superseded above
 
@@ -9108,6 +9113,9 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Track A removed** from create/edit/filter/export/import: blood_group, aadhar_number/adhaar, caste, sub_caste, mother_tongue, birth_place, native_place. Admission also: religion, nationality, height, weight + parent aadhaar.
 - **Track B**: marital_status removed from teacher/staff forms/filters/`TeacherProfileAddRequest`; `date_of_birth` → `nullable` on student/teacher/admission requests. Null-safe age/birthday CSV/resources.
 - **Tests**: `LegacyDemographicsValidationTest` + `NullDateOfBirthAgeTest` — 21 passed.
-- **UI evidence**: `e2e/screenshots/legacy-demographics/` (teacher add/edit, Custom Export modal, student edit).
+- **UI evidence (local)**: `e2e/screenshots/legacy-demographics/`.
 - **PR**: [#465](https://github.com/KlassApp-Foundation/KlassApp/pull/465) — branch `fix/admin-strip-legacy-demographics`.
-- **Status**: 🚧 PR open
+- **Merge**: `fb4c9ace` (squash via GitHub API; local `gh pr merge` blocked by `KlassApp-main-local` worktree holding `main`).
+- **Deploy**: Cloud `depl-a2b35eb1-c8ed-491b-a9d1-6957304ccaa4` **deployment.succeeded** on `fb4c9ace`.
+- **Live evidence (Kampala school 33)**: `e2e/screenshots/legacy-demographics-live-465/REPORT.json` pass=true — add/edit/export/DOB-optional/birthday checks. Flag: teacher SHOW still shows Blood Group / Aadhaar / Marital Status labels.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED (show-page strip deferred)
