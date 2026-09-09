@@ -4,6 +4,11 @@ namespace App\Http\Middleware;
 
 use Closure;
 
+/**
+ * Allow SiteAdmin (1), SchoolAdmin (3), and SchoolSubadmin (4) through /admin/*
+ * feature routes. SchoolSubadmin reuses the admin UI; Settings stay blocked by
+ * MustBeFullSchoolAdmin (see routes/setting.php).
+ */
 class MustBeSchoolAdmin
 {
     /**
@@ -15,53 +20,37 @@ class MustBeSchoolAdmin
      */
     public function handle($request, Closure $next)
     {
-        
-        if(\Auth::user()->usergroup_id==3)
-        {
-            return $next($request);
-        }
-          
-        if(\Auth::user()->usergroup_id==1)
-        {
-            // Superadmins pass through to admin routes (they handle null school_id gracefully).
+        $ug = (int) \Auth::user()->usergroup_id;
+
+        // SiteAdmin, SchoolAdmin, SchoolSubadmin — admin modules (minus Settings for ug4).
+        if (in_array($ug, [1, 3, 4], true)) {
             return $next($request);
         }
 
-        if(\Auth::user()->usergroup_id==3)
-        {
-            return $next($request);
-        }
-
-        if(\Auth::user()->usergroup_id==5)
-        {
+        if ($ug === 5) {
             return redirect('/teacher/dashboard');
         }
 
-        if(\Auth::user()->usergroup_id==6)
-        {
+        if ($ug === 6) {
             return redirect('/student/dashboard');
         }
-        
-        if(\Auth::user()->usergroup_id==8)
-        {
-            return redirect('/library/dashboard');          
+
+        if ($ug === 8) {
+            return redirect('/library/dashboard');
         }
-        
-        if(\Auth::user()->usergroup_id==9)
-        {
-            return redirect('/alumni/dashboard');          
+
+        if ($ug === 9) {
+            return redirect('/alumni/dashboard');
         }
-        
-        if(\Auth::user()->usergroup_id==10)
-        {
-            return redirect('/receptionist/dashboard');          
+
+        if ($ug === 10) {
+            return redirect('/receptionist/dashboard');
         }
-        
-        if(\Auth::user()->usergroup_id==11)
-        {
-            return redirect('/accountant/dashboard');          
+
+        if ($ug === 11) {
+            return redirect('/accountant/dashboard');
         }
-            
+
         abort(404);
     }
 }
