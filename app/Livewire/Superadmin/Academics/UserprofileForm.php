@@ -55,7 +55,8 @@ class UserprofileForm extends Component
 
 		$this->segment = \Request::segment ('5');
 
-		if($this->userId != '')
+		// create/{userId}: leave fields blank. update/{userprofileId}: hydrate.
+		if($this->segment === 'update' && $this->userId != '')
 		{
 			$userprofile = Userprofile::where('id', $this->userId)->first();
 			$this->school = $userprofile->school_id;
