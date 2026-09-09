@@ -1273,6 +1273,7 @@ class ManualOnboardingWizard extends Component
             return [
                 'name' => trim((string) ($draft['name'] ?? '')),
                 'class' => trim((string) ($draft['class'] ?? '')),
+                'stream' => trim((string) ($draft['stream'] ?? '')),
                 'school_student_id' => trim((string) ($draft['school_student_id'] ?? '')),
                 'board_registration_number' => trim((string) ($draft['board_registration_number'] ?? '')),
             ];
