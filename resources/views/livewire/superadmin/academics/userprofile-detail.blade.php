@@ -22,13 +22,13 @@
 				  <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
 				</svg>
                 </a>
-            </div> 
+            </div>
         </div>
 
         </div>
-   
+
    <div class="my-3 p-3 w-full bg-white shadow">
-    <div class="">                      
+    <div class="">
         <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
             <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
                 <p>School</p>
@@ -36,8 +36,8 @@
             <div class="text-sm lg:w-3/4 md:w-3/4">
                 <p class="leading-loose txt-gray-light">{{ $userprofileDetail->school->name }}</p>
             </div>
-        </div> 
-        
+        </div>
+
         <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
             <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
                 <p>User</p>
@@ -110,52 +110,11 @@
                 <p>Date Of Birth</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $userprofileDetail->date_of_birth }}</p>
-            </div>
-        </div>
-
-        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
-            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
-                <p>Blood Group</p>
-            </div>
-            <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ strtoupper($userprofileDetail->blood_group) }}</p>
-            </div>
-        </div>
-
-        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
-            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
-                <p>Birth Place</p>
-            </div>
-            <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $userprofileDetail->birth_place }}</p>
-            </div>
-        </div>
-
-        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
-            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
-                <p>Native Place</p>
-            </div>
-            <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $userprofileDetail->native_place }}</p>
-            </div>
-        </div>
-
-        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
-            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
-                <p>Mother Tongue</p>
-            </div>
-            <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $userprofileDetail->mother_tongue }}</p>
-            </div>
-        </div>
-
-        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
-            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
-                <p>Caste</p>
-            </div>
-            <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $userprofileDetail->caste }}</p>
+                @if($userprofileDetail->date_of_birth)
+                    <p class="leading-loose txt-gray-light">{{ $userprofileDetail->date_of_birth }}</p>
+                @else
+                    <p class="leading-loose txt-gray-light">--</p>
+                @endif
             </div>
         </div>
 
@@ -201,15 +160,6 @@
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
                 <p class="leading-loose txt-gray-light">{{ $userprofileDetail->pincode }}</p>
-            </div>
-        </div>
-
-        <div class="flex flex-col lg:flex-row md:flex-row px-2 py-2">
-            <div class="font-bold text-sm lg:w-1/4 md:w-1/4">
-                <p>Aadhar Number</p>
-            </div>
-            <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $userprofileDetail->aadhar_number }}</p>
             </div>
         </div>
 

@@ -8,9 +8,9 @@
                 {{ session('message') }}
             </div>
         @endif
-            
+
         <div class="">
-            <table class="w-full border my-3"> 
+            <table class="w-full border my-3">
                 <thead class="bg-gray-400">
                     <tr class="border-b">
                         <th class="tw-form-label px-2 py-2 text-left">Firstname</th>
@@ -41,7 +41,7 @@
                         	@endif
                         </td>
                         <td class="py-3 px-2">
-                            <label class="">{{ $userprofile->date_of_birth }}</label>
+                            <label class="">{{ $userprofile->date_of_birth ?: '--' }}</label>
                         </td>
                         <td class="py-3 px-2">
 			                @if($userprofile->status == 'active')
@@ -67,7 +67,7 @@
 								</svg>
 			                </a>
 			              </div>
-          				</td> 
+          				</td>
                     </tr>
                 @endforeach
                 @else
