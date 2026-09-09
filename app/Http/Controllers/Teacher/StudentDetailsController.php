@@ -44,8 +44,8 @@ class StudentDetailsController extends Controller
      */
     public function show($name)
     {
-        // 
-      	$user = User::with('studentAcademicLatest')->where('name',$name)->first(); 
+        //
+      	$user = User::with('studentAcademicLatest')->where('name',$name)->first();
       	$parents = $user->parent;
       	if(Gate::allows('member',$user))
       	{
@@ -54,7 +54,7 @@ class StudentDetailsController extends Controller
       	else
       	{
         	abort(403);
-      	} 
+      	}
     }
 
     /**
@@ -83,9 +83,9 @@ class StudentDetailsController extends Controller
     {
         //
         $student = User::with('userprofile')->where('name', $name)->first();
-      
+
         $parents = UserRelationResource::collection($student->parents);
-         
+
         return $parents;
     }
 
@@ -99,9 +99,9 @@ class StudentDetailsController extends Controller
     {
         //
         $student = User::with('userprofile')->where('name', $name)->get();
-      
+
         $siblings = UserSiblingResource::collection($student);
-         
+
         return $siblings;
     }
 
@@ -114,13 +114,13 @@ class StudentDetailsController extends Controller
             $activitylog = ActivityLog::where('subject_id',$user->userprofile->id)->orWhere('subject_id',$user->members[0]['id'])->paginate(5);
 
             $activitylog = ActivityLogResource::collection($activitylog);
-         
+
             return $activitylog;
         }
         else
         {
             abort(403);
-        } 
+        }
     }
 
     public function showActivityLog($name)
@@ -132,13 +132,13 @@ class StudentDetailsController extends Controller
             $activitylog = ActivityLog::where('causer_id',$user->userprofile->id)->orWhere('causer_id',$user->members[0]['id'])->paginate(5);
 
             $activitylog = ActivityLogResource::collection($activitylog);
-         
+
             return $activitylog;
         }
         else
         {
             abort(403);
-        } 
+        }
     }
 
     /**
@@ -151,9 +151,9 @@ class StudentDetailsController extends Controller
     {
         //
         $student = User::with('disciplineUser','disciplineTeacher')->where('name', $name)->first();
-      
+
         $discipline = DisciplineResource::collection($student->disciplineUser);
-         
+
         return $discipline;
     }
 
@@ -167,9 +167,9 @@ class StudentDetailsController extends Controller
     {
         //
         $student = User::where('name', $name)->first();
-      
+
         $attendances = AttendanceUserResource::collection($student->AttendanceUserAbsent);
-         
+
         return $attendances;
     }
 
@@ -183,18 +183,16 @@ class StudentDetailsController extends Controller
     {
         //
         $student = User::where('name', $name)->first();
-      
+
         $medicals = [];
-        
-        $medicals['height']                     = $student->studentAcademicLatest->height;
-        $medicals['weight']                     = $student->studentAcademicLatest->weight;
+
         $medicals['medication_problems']        = $student->studentAcademicLatest->medication_problems;
         $medicals['medication_needs']           = $student->studentAcademicLatest->medication_needs;
         $medicals['medication_allergies']       = $student->studentAcademicLatest->medication_allergies;
         $medicals['food_allergies']             = $student->studentAcademicLatest->food_allergies;
         $medicals['other_allergies']            = $student->studentAcademicLatest->other_allergies;
         $medicals['other_medical_information']  = $student->studentAcademicLatest->other_medical_information;
-         
+
         return $medicals;
     }
 
@@ -242,7 +240,7 @@ class StudentDetailsController extends Controller
         }
         else{
             $exam=Mark::where('school_id',Auth::user()->school_id)->where('standard_id',$standardId)->take(2)->orderBy('exam_id','DESC')->groupBy('exam_id')->pluck('exam_id')->toArray();
-        }  
+        }
         $examIdOne=$exam[0];
         $examIdTwo=$exam[1];
 
@@ -265,5 +263,5 @@ class StudentDetailsController extends Controller
         $documents = UserDocumentResource::collection($documents);
 
         return $documents;
-    } 
+    }
 }

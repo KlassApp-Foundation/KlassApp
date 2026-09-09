@@ -1,33 +1,7 @@
 <template>
     <div class="bg-white shadow px-4 py-3">
         <div v-if="this.success!=null" class="alert alert-success" id="success-alert">{{ this.success }}</div>
-        <div class="flex flex-col lg:flex-row">
-            <div class="tw-form-group w-full lg:w-1/3">
-                <div class="lg:mr-8 md:mr-8">
-                    <div class="mb-2">
-                        <label for="height" class="tw-form-label">Height ( in cm's )<span class="text-red-500">*</span></label>
-                    </div>
-                    <div class="mb-2">
-                        <input type="text" class="tw-form-control w-full" id="height" v-model="height" name="height" placeholder="Height">
-                    </div>
-                    <span v-if="errors.height" class="text-red-500 text-xs font-semibold">{{ errors.height[0] }}</span>
-                </div> 
-            </div>
 
-            <div class="tw-form-group w-full lg:w-1/3">
-                <div class="lg:mr-8 md:mr-8">
-                    <div class="mb-2">
-                        <label for="weight" class="tw-form-label">Weight ( in kg's )<span class="text-red-500">*</span></label>
-                    </div>
-                    <div class="mb-2">
-                        <input type="text" v-model="weight" name="weight" id="weight" class="tw-form-control w-full" placeholder="Weight">
-                    </div>
-                    <span v-if="errors.weight" class="text-red-500 text-xs font-semibold">{{ errors.weight[0] }}</span>
-                </div> 
-            </div>
-        </div>
-
-        <hr style="border-width: 1px;" class="mb-2">
         <h1><b>Medical Problems</b></h1>
         <div class="flex flex-col lg:flex-row">
             <div class="tw-form-group w-full lg:w-1/2">
@@ -121,7 +95,7 @@
 
         <div class="my-6">
             <a href="#" class="btn btn-primary submit-btn" @click="submitForm()">Submit</a>
-            <a href="#" class="btn btn-reset reset-btn" @click="resetForm()" v-if="this.height == ''">Reset</a>
+            <a href="#" class="btn btn-reset reset-btn" @click="resetForm()" v-if="!hasAnyMedicalValue">Reset</a>
         </div>
     </div>
 </template>
@@ -132,8 +106,6 @@
         data(){
             return {
                 user:[],
-                height:'',
-                weight:'',
                 medication_problems:'',
                 medication_needs:'',
                 medication_allergies:'',
@@ -145,13 +117,25 @@
             }
         },
 
+        computed: {
+            hasAnyMedicalValue() {
+                return [
+                    this.medication_problems,
+                    this.medication_needs,
+                    this.medication_allergies,
+                    this.food_allergies,
+                    this.other_allergies,
+                    this.other_medical_information,
+                ].some((value) => value != null && String(value).trim() !== '');
+            },
+        },
+
         methods:
         {
             getData()
             {
                 axios.get('/admin/student/show/medicalHistory/'+this.name).then(response => {
                     this.user = response.data;
-                    //console.log(this.user);
                     this.setData();   
                 });
             },
@@ -160,8 +144,6 @@
             {
                 if(Object.keys(this.user).length > 0)
                 {
-                    this.height                     = this.user.height;
-                    this.weight                     = this.user.weight;
                     this.medication_problems        = this.user.medication_problems;
                     this.medication_needs           = this.user.medication_needs;
                     this.medication_allergies       = this.user.medication_allergies;
@@ -173,8 +155,6 @@
 
             resetForm()
             {
-                this.height                     = '';
-                this.weight                     = '';
                 this.medication_problems        = '';
                 this.medication_needs           = '';
                 this.medication_allergies       = '';
@@ -190,8 +170,6 @@
 
                 let formData=new FormData(); 
 
-                formData.append('height',this.height);          
-                formData.append('weight',this.weight);
                 formData.append('medication_problems',this.medication_problems);          
                 formData.append('medication_needs',this.medication_needs);           
                 formData.append('medication_allergies',this.medication_allergies);          
