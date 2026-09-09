@@ -349,7 +349,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 (branch `fix/admin-strip-legacy-demographics` — **PR opening**; `origin/main` tip `e369dbf4`)
+## Current Status: September 9, 2026 ([#465](https://github.com/KlassApp-Foundation/KlassApp/pull/465) open — `fix/admin-strip-legacy-demographics`; `origin/main` tip `e369dbf4`)
 
 - **🚧 Admin legacy demographics strip (Track A+B)**: UI-only removal (DB columns kept). Dropped blood_group / aadhaar / caste / sub_caste / mother_tongue / birth_place / native_place from student/teacher/staff create·edit·filter·export·import surfaces; admission also drops religion/nationality/height/weight + parent aadhaar. Removed teacher/staff `marital_status` from forms/filters/validation. `date_of_birth` nullable everywhere it was required; null-safe age/birthday CSV/resources. LIN left alone.
 - **Evidence**: PHPUnit `LegacyDemographicsValidationTest` + `NullDateOfBirthAgeTest` (21 passed); local Playwright `e2e/screenshots/legacy-demographics/` (teacher add/edit clean, export modal no Blood/Aadhaar, birthday API 200 `[]`, student edit without Track A fields).
