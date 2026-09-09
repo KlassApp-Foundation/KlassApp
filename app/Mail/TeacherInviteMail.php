@@ -14,7 +14,7 @@ class TeacherInviteMail extends Mailable
 
     public string $email;
 
-    public string $password;
+    public ?string $password;
 
     public string $schoolName;
 
@@ -25,14 +25,14 @@ class TeacherInviteMail extends Mailable
     public function __construct(
         string $name,
         string $email,
-        string $password,
-        string $schoolName,
+        ?string $password = null,
+        string $schoolName = '',
         ?string $className = null,
         ?string $loginUrl = null,
     ) {
         $this->name = $name;
         $this->email = $email;
-        $this->password = $password;
+        $this->password = ($password !== null && trim($password) !== '') ? trim($password) : null;
         $this->schoolName = $schoolName;
         $this->className = $className !== null && trim($className) !== '' ? trim($className) : null;
         $this->loginUrl = $loginUrl ?: url('/login');
