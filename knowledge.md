@@ -394,7 +394,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 ([#483](https://github.com/KlassApp-Foundation/KlassApp/pull/483) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `fb3744e6`)
+## Current Status: September 10, 2026 ([#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) **OPEN** — README rewrite; tip pending merge)
+
+- **✅ README.md rewritten from scratch** on branch `docs/readme-rewrite`: GeGoK12-era ops manual replaced with Open Design v3 product narrative (Toshi / agentic protocol / Q1 2027 OSS) adapted for GitHub README register (stack, local setup, contributing). Contact: `community@klassapp.xyz` only. Zero em dashes; WhatsApp documented as live; production = Laravel Cloud (not DO).
+- **Prior tip on `main`**: still reflects #483 stream work until this PR merges; see Previous.
+
+## Previous: September 9, 2026 ([#483](https://github.com/KlassApp-Foundation/KlassApp/pull/483) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `fb3744e6`) — superseded above for docs track
 
 - **✅ Wizard student stream persistence**: `stream` now passed into `OnboardingEngine::saveStudents`; with stream set, resolves exact section (`P1`+`A` → `P1 A`) without prefix-LIKE first-match. Class-only keeps legacy first-match.
 - **Parents**: **not** implemented — `parent`/`parent_phone` still collected in UI/CSV but no engine create/link path is defined (Approvals/Flow remain the real parent link). Needs product decision.
@@ -1389,6 +1394,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-10: README rewrite (Open Design v3 narrative) — **PR OPEN**
+- **Work done**: Replaced stale GeGoK12-era `README.md` (Signu/typos, "Upcoming: WhatsApp", admin/teacher/librarian walkthrough) with a developer-facing README grounded in Open Design `klassapp-landing-v3.html` / `brand-spec.md`: Toshi as agentic orchestrator, "not just software, a protocol," Q1 2027 MIT OSS as a real plan. Included accurate stack (Laravel 12, Vite 8, Vue 3.5 compat, Tailwind 4, Livewire 3, Laravel Cloud), working local setup (`composer`/`npm`/`migrate`/`serve`), contributing notes, `community@klassapp.xyz` only.
+- **Files modified**: `README.md`, `knowledge.md`
+- **Key decisions**: README register (not marketing hero/CTA dump). Honest about live surfaces (WhatsApp Meta Cloud + dashboard + Toshi) vs roadmap connectors (Drive/Slack). Separate PR from `security/remove-embedded-secrets`. Did not touch `WelcomeController` SPDX/GeGo header.
+- **Verification**: zero `team@`/`support@`/`hello@`/`info@klassapp.com`; zero U+2014 em dashes; zero listed typos; no DO/Hetzner as current host.
+- **PR**: [#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) branch `docs/readme-rewrite` (number confirmed at open).
+- **Status**: 🚧 PR open / awaiting review
+- **Edge cases flagged**: Older `docs/dev/*` (Evolution API, DigitalOcean) still stale; README points readers at itself + `knowledge.md` for current facts. Live marketing landing still on WhatsApp-parent story, not OD v3 cutover.
 
 ### 2026-09-09: Wizard student stream persistence (#483) — **MERGED+DEPLOYED+LIVE-VERIFIED**; parents **STOPPED**
 - **Work done**: Discovery found wizard/CSV/one-at-a-time collect `stream` (and parent fields) but `ManualOnboardingWizard::saveStudents` / Toshi `commitAll` dropped them before `OnboardingEngine::saveStudents`. Fixed stream wire-through + `resolveStandardLinkForClass(..., ?string $stream)` exact match when stream present. Toshi create+complete commit paths also pass `stream`.
