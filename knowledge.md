@@ -9117,5 +9117,14 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **PR**: [#465](https://github.com/KlassApp-Foundation/KlassApp/pull/465) — branch `fix/admin-strip-legacy-demographics`.
 - **Merge**: `fb4c9ace` (squash via GitHub API; local `gh pr merge` blocked by `KlassApp-main-local` worktree holding `main`).
 - **Deploy**: Cloud `depl-a2b35eb1-c8ed-491b-a9d1-6957304ccaa4` **deployment.succeeded** on `fb4c9ace`.
-- **Live evidence (Kampala school 33)**: `e2e/screenshots/legacy-demographics-live-465/REPORT.json` pass=true — add/edit/export/DOB-optional/birthday checks. Flag: teacher SHOW still shows Blood Group / Aadhaar / Marital Status labels.
-- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED (show-page strip deferred)
+- **Live evidence (Kampala school 33)**: `e2e/screenshots/legacy-demographics-live-465/REPORT.json` pass=true — add/edit/export/DOB-optional/birthday checks. Flag: teacher SHOW still showed Blood Group / Aadhaar / Marital Status labels → fixed in #466.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
+
+### 2026-09-09: Strip leftover legacy labels from show/profile views (#466)
+
+- **Work done**: Removed Blood Group + Aadhaar from `admin/teacher/show`, `admin/staff/show`; Marital Status from `teacher/profile/myprofile.vue`; student Track A labels from `admin/member/show` + `teacher/student/show`.
+- **Tests**: `ShowProfileLegacyLabelsTest` — 5 passed.
+- **PR**: [#466](https://github.com/KlassApp-Foundation/KlassApp/pull/466) — merge `db0bfe3e`.
+- **Deploy**: Cloud `depl-a2b36923-8bcc-4e99-addf-56e3562c133d` **deployment.succeeded**.
+- **Live evidence**: `e2e/screenshots/show-legacy-labels-466/REPORT.json` pass=true (Kampala school 33 teacher + student show).
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
