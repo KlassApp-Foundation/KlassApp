@@ -55,8 +55,19 @@ class UserprofileForm extends Component
 
 		$this->segment = \Request::segment ('5');
 
-		// create/{userId}: leave fields blank. update/{userprofileId}: hydrate.
-		if($this->segment === 'update' && $this->userId != '')
+		// create/{userId}: prefill school/usergroup/readonly KLS ID from user.
+		// update/{userprofileId}: hydrate full profile.
+		if($this->segment === 'create' && $this->userId != '')
+		{
+			$user = User::where('id', $this->userId)->first();
+			if($user)
+			{
+				$this->school = $user->school_id;
+				$this->usergroup = $user->usergroup_id;
+				$this->registration_number = $user->registration_number;
+			}
+		}
+		elseif($this->segment === 'update' && $this->userId != '')
 		{
 			$userprofile = Userprofile::where('id', $this->userId)->first();
 			$this->school = $userprofile->school_id;
