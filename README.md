@@ -1,150 +1,168 @@
-# KLASSAPP, THE UGANDA'S SCHOOL MANAGEMENT SYSTEM
+# KlassApp
 
-## Flow of setting the system up to start working for a school
+**Tools connected by intelligence.**
 
-# ADMIN SETUP
-## **1. Signu**
+KlassApp is a multi-tenant school management platform built around **Toshi**, an AI agent that orchestrates the channels schools already use: WhatsApp, email, Drive, Slack, SMS, and the web dashboard. It is not just another SMS admin panel. The product direction is an **agentic protocol** for education: role-aware actions, human-in-the-loop approvals, and connectors that grow with the school.
 
-The school admin signs up by providing the School Name, Name Of The Admin(eg HM, Secretary or any other assigned person), Country, Mobile number, Approximate number of students, Email Address, Password
+Live product: [https://klassapp.xyz](https://klassapp.xyz)
 
-## **2. Level And Board Of Curriculum Setup**
+Public open-source release (MIT, self-hostable) is planned for **Q1 2027**, after a full security review. Until then this repository is the working codebase for the hosted SaaS. Contributions and early feedback are welcome via GitHub and `community@klassapp.xyz`.
 
-After signup, the user will be taken to school standard setup, here, the school is expected to choose the board of education (preferably UNEB) and the highest level of education provided, eg nursery, primary, o'level etc
-NOTE: Chosing primary, nursery is created along, so primary schools don't need to set nursery section as it's auto created for them.
-There are some default models setupautomatically anlong Level setup, they include;
+## What you get today
 
--   Subjects for each class
--   Grading System
+- **Multi-tenant SaaS**: every school is scoped by `school_id` end to end (queries, jobs, caches, UI).
+- **School operations**: academics, attendance, exams and report cards, fees, staff and parent roles, onboarding wizard.
+- **WhatsApp (live)**: Meta Cloud API for parent messaging, interactive menus, notifications, and delivery logging. This is shipped, not "upcoming."
+- **Toshi**: in-product AI assistant for school workflows (role-aware, gated, auditable). Broader connector orchestration (Drive, Slack, and friends) is the protocol roadmap; WhatsApp and the dashboard are the primary live surfaces today.
+- **Hosted on Laravel Cloud** at `klassapp.xyz` (EU-West-1). Local development uses Docker Compose or your own MySQL/Redis.
 
-## **3. Add Teachers**
+## Stack
 
-After, the user adds teachers from users > Staff > Teachers
-Here the admin views all teachers in the school, and to add, in top right corner, you'll get three oprions ie(Add, Export, Import)
+| Layer | Version / notes |
+|---|---|
+| PHP | 8.4 |
+| Laravel | 12.x |
+| Frontend | Blade, Livewire 3, Vue 3.5 via `@vue/compat` (MODE 2), Vite 8 |
+| CSS | Tailwind CSS 4 (CSS-first; no `tailwind.config.js`) |
+| Data | MySQL 8, Redis 7 |
+| Auth / API | Session web auth, Laravel Sanctum |
+| AI | Laravel AI SDK + OpenAI-compatible LLM config for Toshi |
+| Production | Laravel Cloud (`klassapp.xyz`) |
 
--   **Add**
-    Here, you'll be adding a single user, prefered when you have few teachers to add, like 2
--   **Import**
-    This' the most efficient for the first school setup, the user is expected to have teachers in an excel or csv file with the following values
+Agent and contributor conventions live in [`AGENTS.md`](AGENTS.md). Project history and verified ops notes live in [`knowledge.md`](knowledge.md). Provenance of the GeGoK12 fork is documented in [`docs/project-provenance.md`](docs/project-provenance.md).
 
-    firstname,lastname,mobile_no,email,gender,date_of_birth,address,district,region,country,joining_date,employee_id, specialization, designation, notes
+## Local setup
 
-    To achieve this, on the top right corner, click Import, this takes you to a page where you'll be required to choose the file from your local machine, then the job is accomplished.
-    **Note:** You can download the format by clicking Download Sample Format button
+### Requirements
 
-## **4. Assigning Teachers to Classes and subjects**
+- PHP 8.4+, Composer 2, Node.js 20+ (or current LTS), npm
+- MySQL 8 and Redis 7 (or Docker Compose from this repo)
+- Git
 
-On step 3, head over to Classes, you'll see all teachers assigned to classes and subjects. If you haven't set anything on this module, you'll see nothing.
-On the top right corner, there are three buttons, ie, Levels, Classes and Setup A Class.
-Head over to Setup A Class, here you'll be required to select the following;
+### 1. Clone and install
 
--   Level (eg primary)
--   Class (eg P.6)
--   Class Teacher
-    after selecting those, there will appear a form to link subjects to teachers. The subjects of a selected class are auto filled, and in front of each, you'll just select a teacher, then after click the save class details button to save.
+```bash
+git clone https://github.com/KlassApp-Foundation/KlassApp.git
+cd KlassApp
+composer install
+cp .env.example .env
+php artisan key:generate
+npm ci
+```
 
-## **5. Add Learners**
+If `npm ci` fails on peer deps, the repo ships `.npmrc` with `legacy-peer-deps=true` for known Vue 2-era peer declarations. Prefer that over deleting packages without an audit.
 
-The same process as adding teachers
+### 2. Configure `.env`
 
-To import students from an excel or csv file, here is the format to follow
-firstname,lastname,gender,date_of_birth,class,address,region,district,country,mother_tongue,joining_date
+Minimum for a local boot:
 
-## **Settings**
+```ini
+APP_URL=http://localhost:8000
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=klassapp_local
+DB_USERNAME=root
+DB_PASSWORD=
 
-**Academic Years**
-Here, you'll see 2 years, the current year and the next year. Make sure in the type column, the current academic year is highlighted as "Current Academic Year", if not, click the "Change Current Academic Year" on the top right corner
-OR
-Edit years, by clicking the pen icon under actions on a specific year you want to edit
-Verdict: when editing, on the type
-New Academic Year = Next Year
-Current Academic Year = Current year (today)
-Old Year = Last Year
+CACHE_STORE=file
+SESSION_DRIVER=file
+QUEUE_CONNECTION=database
 
-**School Details**
-You can edit the school details here before you move on, like address, school motto etc. This helps in providing the correct school info on learner's report cards
+# Optional: Toshi (disabled by default)
+TOSHI_LLM_ENABLED=false
+OPENAI_COMPATIBLE_URL=
+OPENAI_COMPATIBLE_API_KEY=
+OPENAI_COMPATIBLE_MODEL=
 
-**Grading System**
-This' straight forward, ther's a default grading system, so you can modify it the way you want, or even add a new range by clicking the Add Grading Rule on the top right corner
+# Optional: WhatsApp Meta Cloud API (only if testing messaging locally)
+WHATSAPP_BUSINESS_API_TOKEN=
+WHATSAPP_BUSINESS_PHONE_NUMBER_ID=
+WHATSAPP_BUSINESS_WABA_ID=
+WHATSAPP_BUSINESS_VERIFY_TOKEN=
+```
 
-**Promotion Rules**
-If you have added a rule, you'll see it here and if not, you can add it by clicking the + Add Promotion Rule
-on the top right corner
-Here, you'll select a;
+Generate `APP_KEY` with `php artisan key:generate` if you have not already. Toshi LLM calls fail loudly when enabled without an API key; leave Toshi off for a plain local UI smoke test.
 
--   class
--   Rule Type (eg points, aggregates or average). After selecting this, there will appear an input to ennter either
-    Minimum Average, Minimum Points or Maximum Aggregate, according to the rule type you select
-    Forexample, here you can select aggregates as a rule type > then set maximum aggregate to be 20, meaning those who have 20 aggregates and below will have passed and promoted
+### 3. Database and Redis
 
-## **Academic Term**
+**Option A: Docker Compose** (app + MySQL + Redis + nginx on port 8080):
 
-This' straight forward to, at this page, you'll see academic terms if you have added them, if not, clicke the Add Term on the top right corner
-You'll need to provide the following info
+```bash
+docker compose up -d
+# Point DB_HOST / REDIS_HOST at the compose services when running PHP inside the app container,
+# or keep 127.0.0.1 when using published ports from the host.
+```
 
--   Name: The name of the term
--   Starts on: The date When the term starts
--   Ends on: The date when the term end
-    After selecting these, click the Save Academic Term button and add other terms in the same process
-    **Note:** When an academic year ends, you just have to update dates of the academic terms by clicking the edit button of a term to be updated under Actions column
+**Option B: Host MySQL/Redis** matching the `.env` values above.
 
-## **Fees Structure**
+Then:
 
-On this page, you'll see your school's fees structure if added, if not, click + Add Category button on the top right corner, to add a fee
-Here, you'll select the following
+```bash
+php artisan migrate
+php artisan storage:link
+```
 
--   Level: Eg primary
--   Class: Select All if the fee is the same for all classes
--   Academic Term: Select All if the fee is the same for all classes
--   Fee Name: Eg Academics, School System, Food, Security etc
--   Amount: The fee amount for that fee name (Not all total school fees amount)
+Seed data, if you use it, depends on the seeders you need for your task. Prefer factories and feature tests over production-like school data.
 
-## **Exams**
+### 4. Frontend and app server
 
-Here, you'll see a list of exams and assigned teachers
-You can add an exam by clicking the Add Exam button in the top right corner, when there, you'll need to first select a class before others
+```bash
+# Terminal 1: Vite (writes public/hot while running)
+npm run dev
 
-## **Marks, Report card & marksheet generation and prototion of students**
+# Terminal 2: Laravel
+php artisan serve
+```
 
-Here, you'll need to filter by Term, Class and Exam type to see marks
-After getting results, you can proceed to download the marks sheet by clicking download marks sheet on the top right corner just after the filter form
-You can view student's marks in a report format or download the reports for each student, reports are in pdf format
-**Note:** If it's the end of year exam, you'll first download marks sheet and reports before proceeding to promote students
-After everything, you can proceed to finalize student promotion just below the marks table
+Open `http://127.0.0.1:8000`. For a production-like asset build without Vite HMR:
 
-# TEACHER SETUP
-The teacher automates his tasks to by accessing his dashboard. 
-**Classes:** A teacher sees the classes he teaches by navigating to Classes menu on the side bar, all the classes and subjects assigned to him live here
+```bash
+npm run build
+php artisan serve
+```
 
-**Lesson Plans** On this page, the teacher sets up his/her lesson plans which are later verified by the system admin. It's found just after classes
+Do not leave `public/hot` behind when testing a production-style build; Laravel will try to load assets from a dead Vite server.
 
-**Student Attendance:** This is where the teacher carries out roll calls. To record an attendance, the teacher navigates to this page, then he's required to select class, date (this is usually auto selected) and the session.
+### 5. Tests
 
-**Homeworks:** On this page, the teacher notes the homeworks given to students of a specific class. After ading the homework, the admin approves it. This enables teachers to track students who haven't submitted in time or who missed
+```bash
+php artisan test --compact
+# or a focused file:
+php artisan test --compact tests/Feature/ExampleTest.php
+```
 
-**Assignments:** The same idea as homeworks
+PHPUnit is the project standard. Prefer factories and school-scoped fixtures. Never use real student or parent data for verification.
 
-**Exam & Marks:** Student's performance is recorded here, forexample after the end of Term exams, the teacher navigates to this page and enters student marks, then after all marks are entered, he submits by clicking the submit button. To enter students marks, navigate to Exams on the side menu
+## Repository layout (high level)
 
-**Todo List:** This is the second last on the teacher's menu. It enables the teacher to note and track tasks he'll do on the desired date and time. This boosts his performance
+- `app/` Laravel application code (HTTP, Livewire, services, jobs, console)
+- `resources/views/` Blade (including the public marketing landing)
+- `resources/assets/js/` Vue SFCs and app bootstrap (Vite entry)
+- `routes/` web, API, and role-scoped route files
+- `docs/` deeper guides (WhatsApp, testing, provenance). Some older `docs/dev/*` pages still describe retired stacks; trust this README and `knowledge.md` for current hosting and bundler facts.
+- `AGENTS.md` standing rules for anyone (human or agent) changing the codebase
 
-# LIBRARIAN SETUP
-This' the easiest dashboard to onboard users(Librarians)
-**Enter Book Categories** This' seen on the librarian dashboard side menu. On this page, the librarian can view and add book categories. To add a book category, click "Add Book Category" on the top right corner. Here you'll enter a correct name of the book category and save by hitting the submit button
+## Contributing
 
-**Books** The same idea for book categories, the librarian can view and add books. To add a book, you'll Click add book on the top right corner
+1. Open a focused branch off `main`. Prefer small, atomic PRs.
+2. Match existing conventions in sibling files. Read `AGENTS.md` before non-trivial work.
+3. Add or update PHPUnit coverage for behavior you change, then run the affected tests.
+4. Keep every feature multi-tenant: scope by `school_id` throughout.
+5. Do not commit secrets (`.env`, API keys, deploy keys). Fail loud when required keys are missing rather than baking defaults into config.
 
-**Book Lending** The librarian can view book lending records and add also lend a book . To add a new record, you'll Click add on the top right corner, and provide Library Card No, Book Code and Issue Date
+Questions and community contact: **community@klassapp.xyz**.
 
-**Todo List** The librarian can take notes of todos, to help him keep track of his tasks. To add a new task, click Add on the top right corner and enter the task.
+## Open source timeline
 
-**Holidays** Holidays are automatically updated on this page so that the librarian can know when he's off duty
+| Milestone | Target |
+|---|---|
+| Hosted SaaS (`klassapp.xyz`) | Live now |
+| Public MIT source + self-hosting docs | **Q1 2027** |
+| MCP-compatible connectors as a first-class protocol surface | Roadmap alongside the OSS release |
 
-**Activity Logs** On this page, the librarian views all activities he has done
-## Upcoming modules
+Until the public release, treat this tree as the private/working product codebase. The Q1 2027 open-source date is a real shipping plan, not a placeholder slogan.
 
--   Student and teacher Attendance
--   WhatsApp integration
--   Bulk messaging
+## License
 
-https://klassapp.xyz/
-✅
+Open-source licensing (MIT) lands with the **Q1 2027** public release. Until then, all rights are reserved by KlassApp Foundation unless a separate agreement says otherwise.
