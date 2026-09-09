@@ -349,7 +349,15 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 ([#481](https://github.com/KlassApp-Foundation/KlassApp/pull/481) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `b7bbe232`)
+## Current Status: September 9, 2026 ([#483](https://github.com/KlassApp-Foundation/KlassApp/pull/483) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `fb3744e6`)
+
+- **✅ Wizard student stream persistence**: `stream` now passed into `OnboardingEngine::saveStudents`; with stream set, resolves exact section (`P1`+`A` → `P1 A`) without prefix-LIKE first-match. Class-only keeps legacy first-match.
+- **Parents**: **not** implemented — `parent`/`parent_phone` still collected in UI/CSV but no engine create/link path is defined (Approvals/Flow remain the real parent link). Needs product decision.
+- **Tests**: `SaveStudentsStreamMatchTest` + related SaveStudents/bulk persist. Cloud `depl-a2b47828-…` **deployment.succeeded** tip `fb3744e6`.
+- **Live** (school **33**): synthetic `P1 A`/`P1 B` links; `saveStudents` Alice→linkA, Bob→linkB; probe users flagged `inactive`.
+- **✅ #481 / #482** (prior): dynamic term ordinal.
+
+## Previous: September 9, 2026 ([#481](https://github.com/KlassApp-Foundation/KlassApp/pull/481) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `b7bbe232`) — superseded above
 
 - **✅ Hardcoded 3-term display closed**: Admin student marks + teacher exam list no longer map `First/Second/Third Term` → `1/2/3`. Use `AcademicTerm::positionLabel()` (`N of M` by `starts_on`). Aug 25 loose-end item #3 **CLOSED**.
 - **Tests**: `AcademicTermPositionLabelTest` 2 passed. Cloud `depl-a2b46623-…` **deployment.succeeded** tip `b7bbe232`.
@@ -1336,6 +1344,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-09: Wizard student stream persistence (#483) — **MERGED+DEPLOYED+LIVE-VERIFIED**; parents **STOPPED**
+- **Work done**: Discovery found wizard/CSV/one-at-a-time collect `stream` (and parent fields) but `ManualOnboardingWizard::saveStudents` / Toshi `commitAll` dropped them before `OnboardingEngine::saveStudents`. Fixed stream wire-through + `resolveStandardLinkForClass(..., ?string $stream)` exact match when stream present. Toshi create+complete commit paths also pass `stream`.
+- **Files modified**: `OnboardingEngine.php`, `ManualOnboardingWizard.php`, `AgentToshi.php`, `SaveStudentsStreamMatchTest.php`, `ManualWizardBulkTeachersStudentsTest.php` (CSV without inventing non-existent streams on primary seed)
+- **Key decisions**: Stream provided → exact/alias only (no prefix LIKE). Stream empty → legacy first-match. **Parents not implemented** — plan lists inputs but no DB writes; no `saveParents`; real linking is Approvals/`student_parent_links` via WhatsApp Flow. Stopped rather than inventing parent User + link create.
+- **Tests**: Stream match suite + SaveStudents* + bulk persist filter — green. Pre-existing `test_skipping_teachers…reaches_plan` whatsapp_verify assert still flaky/unrelated.
+- **PR / merge**: [#483](https://github.com/KlassApp-Foundation/KlassApp/pull/483) `fb3744e6`; Cloud `depl-a2b47828-04ed-4243-8c8f-acc7389941f7` **deployment.succeeded**.
+- **Live**: school 33 year 25 — created sections `P1 A`/`P1 B` + links 202/203; Alice/`P1`+`A` → 202, Bob/`P1`+`B` → 203; probe users `inactive`.
+- **Status**: ✅ Stream MERGED + DEPLOYED + LIVE-VERIFIED; ❌ parents deferred pending product decision
+- **Edge cases flagged**: Class already `P1 A` + stream `A` composes without double-append. Unknown stream throws (does not fall back to wrong section). Temp `P1 A`/`P1 B` sections left on school 33 (harmless extras alongside seeded Primary One… names).
 
 ### 2026-09-09: Dynamic academic term ordinal (hardcoded 3-term display) (#481) — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Closed Aug 25 loose-end #3. Replaced hardcoded `$termMap = ["First Term"=>1,"Second Term"=>2,"Third Term"=>3]` in `resources/views/admin/marks/student.blade.php` and `resources/views/teacher/marks/teacher-exam-list.blade.php` with `AcademicTerm::positionLabel()` (`N of M`). Added `ordinalsForYear()` / `positionLabel()` on `AcademicTerm` (order by `starts_on` nulls-last, then `id`). Also fixed admin blade using string `$termName` as if it were a model for academic year.
