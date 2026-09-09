@@ -9101,3 +9101,13 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Live evidence**: Playwright chat on https://klassapp.xyz school **17** (`toshi.plan.review.1788730418@example.test`) — teachers→students→terms→fees→skip exams/WA→**Freemium**→Review→Confirm. `e2e/screenshots/toshi-complete-plan-review/REPORT.json` `pass: true`. DB after: 2 teacher users, 2 students, 3 terms, Tuition fee, CurrentPlan plan_id=1. Also Cloud Livewire::test school **18**: `landed_on_review=true`, no detectMissingSteps checklist, committed students/terms/fees/plan.
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 
+
+### 2026-09-09: Admin dashboard legacy demographics strip (Track A+B)
+
+- **Decision**: **UI-only** removal — DB columns kept for rollback/safety. No drop migrations this pass. **LIN left as-is**.
+- **Track A removed** from create/edit/filter/export/import: blood_group, aadhar_number/adhaar, caste, sub_caste, mother_tongue, birth_place, native_place. Admission also: religion, nationality, height, weight + parent aadhaar.
+- **Track B**: marital_status removed from teacher/staff forms/filters/`TeacherProfileAddRequest`; `date_of_birth` → `nullable` on student/teacher/admission requests. Null-safe age/birthday CSV/resources.
+- **Tests**: `LegacyDemographicsValidationTest` + `NullDateOfBirthAgeTest` — 21 passed.
+- **UI evidence**: `e2e/screenshots/legacy-demographics/` (teacher add/edit, Custom Export modal, student edit).
+- **PR**: [#465](https://github.com/KlassApp-Foundation/KlassApp/pull/465) — branch `fix/admin-strip-legacy-demographics`.
+- **Status**: 🚧 PR open
