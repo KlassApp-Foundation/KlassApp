@@ -349,12 +349,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 (bug pattern #6 users.status sweep — **PR shipping**; prior tip `04d97a6a`)
+## Current Status: September 9, 2026 ([#479](https://github.com/KlassApp-Foundation/KlassApp/pull/479) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `32334fb7`)
 
-- **✅ Bug pattern #6 full sweep**: Replaced remaining `users.status != 'exit'` (and equivalent) with `ByActive()` / `= 'active'` across Dashboard staff counts, MemberProcess, onboarding steps/count, ManualOnboardingWizard, SchoolList teacher_count, FixStudentDisplayNames; StudentController inactive filter → `= 'inactive'`.
-- **Tests**: `UsersStatusPositiveActiveTest` + `DashboardStudentCountExcludesInactiveTest` (7 passing).
-- **Live proof (pre-deploy)**: school **4** has only `inactive` students (1) — old `countActiveStudents` returned **1** / students step complete **true** (leak). Post-deploy expect **0** / **false**.
-- **✅ #477 / #478** (prior): ug4 restore + credential rotation blocked docs — tip `04d97a6a`.
+- **✅ Bug pattern #6 full sweep**: Remaining `users.status != 'exit'` → `ByActive()` / `= 'active'` (Dashboard staff, MemberProcess, onboarding, SchoolList teacher_count, FixStudentDisplayNames; StudentController inactive → `= 'inactive'`).
+- **Tests**: 7 passed. Cloud `depl-a2b46155-…` **deployment.succeeded** tip `32334fb7`.
+- **Live**: school **4** (1 inactive student only): pre-deploy `countActiveStudents=1` / students step **true** (leak) → post-deploy **0** / **false**.
+- **✅ #477 / #478** (prior): ug4 + credential rotation blocked docs.
 
 ## Previous: September 9, 2026 ([#477](https://github.com/KlassApp-Foundation/KlassApp/pull/477) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `eedcd39e` — credential rotation **BLOCKED**; docs [#478](https://github.com/KlassApp-Foundation/KlassApp/pull/478) `04d97a6a`) — superseded above
 
@@ -1330,13 +1330,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-09: Bug pattern #6 — users.status positive-equality sweep — **SHIPPING**
+### 2026-09-09: Bug pattern #6 — users.status positive-equality sweep (#479) — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Full `app/` sweep for `users.status != 'exit'` / `orWhere(…!= exit)`. Fixed remaining sites to `ByActive()` / `where('status','active')`. Also fixed StudentController `?status=inactive` from `!= 'active'` → `= 'inactive'`.
 - **Files modified**: `Dashboard.php`, `MemberProcess.php`, `OnboardingStepsService.php`, `ManualOnboardingWizard.php`, `SchoolList.php`, `FixStudentDisplayNames.php`, `StudentController.php`, `UsersStatusPositiveActiveTest.php`, `knowledge.md` (pattern #6 verify text)
 - **Key decisions**: Onboarding no longer uses `whereNull('status')` — column is NOT NULL default `active`. Did **not** change attendance/leave/exam/subscription negative filters (different status domains).
 - **Tests**: 7 passed (`UsersStatusPositiveActiveTest` 5 + dashboard inactive exclusion 2).
-- **Live**: Pre-deploy school 4: `countActiveStudents=1` with only inactive row (leak). Post-deploy verify expects 0.
-- **Status**: 🚧 PR / deploy / post-verify in progress
+- **PR / merge**: [#479](https://github.com/KlassApp-Foundation/KlassApp/pull/479) `32334fb7`; Cloud `depl-a2b46155-…` **deployment.succeeded**.
+- **Live**: school 4 (status breakdown: inactive=1 only): pre `countActiveStudents=1` / step complete true → post **0** / **false**.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 - **Edge cases flagged**: Cloud prod has almost no inactive students (school 4 is the live proof case); Kabale 104 inactive junk is not present on this Cloud DB.
 
 ### 2026-09-09: Credential rotation closeout (SSH / Laravel Cloud / WhatsApp) — **BLOCKED (all three)**
