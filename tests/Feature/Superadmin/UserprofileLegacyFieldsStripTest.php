@@ -123,9 +123,8 @@ class UserprofileLegacyFieldsStripTest extends TestCase
             'registration_number' => 'KLS0000473',
         ]);
 
-        // Create route passes user id; mount only hydrates when id matches a userprofile PK.
-        // Empty mount id + explicit userId mirrors create after segment is set.
-        Livewire::test(UserprofileForm::class, ['id' => ''])
+        // create/{userId}: mount must not hydrate from a userprofile PK.
+        Livewire::test(UserprofileForm::class, ['id' => $user->id])
             ->set('segment', 'create')
             ->set('userId', $user->id)
             ->set('school', $school->id)
