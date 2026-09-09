@@ -131,95 +131,11 @@ SPDX-License-Identifier: MIT
         <div class="w-full lg:w-1/2">
         <div class="lg:mr-8 md:mr-8 mb-2">
         <div class="mb-2">
-        <label for="" class="tw-form-label">Date Of Birth<span class="text-red-500">*</span></label>
+        <label for="" class="tw-form-label">Date Of Birth</label>
         </div>
           <input name="dob" value="" type="date" placeholder="Date Of Birth" class="tw-form-control w-full" wire:model.live="dob" />
           @error('dob')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
-        </div>
-      </div>
-
-      <div class="tw-form-group w-full lg:w-1/2">
-        <div class="lg:mr-8 ">
-          <div class="mb-2">
-            <label for="relation" class="tw-form-label">Blood Group<span class="text-red-500">*</span></label>
-          </div>
-          <div class="mb-2">
-            <select class="tw-form-control w-full" wire:model.live="blood_group">
-              <option value="">Select Blood Group</option>
-
-	            <option value="a+">A+</option>
-	            <option value="b+">B+</option>
-	            <option value="o+">O+</option>
-	            <option value="ab+">AB+</option>
-	            <option value="a-">A-</option>
-	            <option value="b-">B-</option>
-	            <option value="o-">O-</option>
-	            <option value="ab-">AB-</option>
-
-            </select>
-            @error('blood_group')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div>
-        </div>
-      </div>
-
-      <div class="flex flex-col lg:flex-row">
-        <div class="w-full lg:w-1/2">
-        <div class="lg:mr-8 md:mr-8 mb-2">
-        <div class="mb-2">
-        <label for="" class="tw-form-label">Birth Place<span class="text-red-500">*</span></label>
-        </div>
-          <input name="birth_place" value="" type="text" placeholder="Birth Place" class="tw-form-control w-full" wire:model.live="birth_place">
-          @error('birth_place')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-        </div>
-        </div>
-      </div>
-
-      <div class="flex flex-col lg:flex-row">
-        <div class="w-full lg:w-1/2">
-        <div class="lg:mr-8 md:mr-8 mb-2">
-        <div class="mb-2">
-        <label for="" class="tw-form-label">Native Place<span class="text-red-500">*</span></label>
-        </div>
-          <input name="native_place" value="" type="text" placeholder="Native Place" class="tw-form-control w-full" wire:model.live="native_place">
-          @error('native_place')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-        </div>
-        </div>
-      </div>
-
-      <div class="flex flex-col lg:flex-row">
-        <div class="w-full lg:w-1/2">
-        <div class="lg:mr-8 md:mr-8 mb-2">
-        <div class="mb-2">
-        <label for="" class="tw-form-label">Mother Tongue<span class="text-red-500">*</span></label>
-        </div>
-          <input name="mother_tongue" value="" type="text" placeholder="Mother Tongue" class="tw-form-control w-full" wire:model.live="mother_tongue">
-          @error('mother_tongue')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-        </div>
-        </div>
-      </div>
-
-      <div class="tw-form-group w-full lg:w-1/2">
-        <div class="lg:mr-8 ">
-          <div class="mb-2">
-            <label for="relation" class="tw-form-label">Caste<span class="text-red-500">*</span></label>
-          </div>
-          <div class="mb-2">
-            <select class="tw-form-control w-full" wire:model.live="caste">
-            <option value="others">Select caste</option>
-            <option value="bc">BC</option>
-            <option value="bcm">BCM</option>
-            <option value="fc">FC</option>
-            <option value="mbc">MBC</option>
-            <option value="obc">OBC</option>
-            <option value="others">OTHERS</option>
-            <option value="sc">SC</option>
-            <option value="sca">SCA</option>
-            <option value="st">ST</option>
-
-            </select>
-            @error('caste')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-          </div>
         </div>
       </div>
 
@@ -277,18 +193,6 @@ SPDX-License-Identifier: MIT
         </div>
           <input name="pincode" value="" type="text" placeholder="Pincode" class="tw-form-control w-full" wire:model.live="pincode">
           @error('pincode')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
-        </div>
-        </div>
-      </div>
-
-      <div class="flex flex-col lg:flex-row">
-        <div class="w-full lg:w-1/2">
-        <div class="lg:mr-8 md:mr-8 mb-2">
-        <div class="mb-2">
-        <label for="" class="tw-form-label">Aadhar Number<span class="text-red-500">*</span></label>
-        </div>
-          <input name="aadhar_number" value="" type="number" placeholder="Aadhar Number" class="tw-form-control w-full" wire:model.live="aadhar_number">
-          @error('aadhar_number')<span class="text-red-600 text-xs font-normal"><strong>{{ $message }}</strong></span>@enderror
         </div>
         </div>
       </div>

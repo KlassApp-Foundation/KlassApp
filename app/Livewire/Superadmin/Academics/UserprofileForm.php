@@ -25,18 +25,8 @@ class UserprofileForm extends Component
 	public $alternate_no;
 	#[Rule('required')]
 	public $gender;
-	#[Rule('required')]
+	// Optional — matches Track B Admin/Teacher DOB (birthday features tolerate null)
 	public $dob;
-	#[Rule('required')]
-	public $blood_group;
-	#[Rule('required')]
-	public $birth_place;
-	#[Rule('required')]
-	public $native_place;
-	#[Rule('required')]
-	public $mother_tongue;
-	#[Rule('required')]
-	public $caste;
 	#[Rule('required')]
 	public $address;
 	#[Rule('required')]
@@ -45,8 +35,6 @@ class UserprofileForm extends Component
 	public $country;
 	#[Rule('required')]
 	public $pincode;
-	#[Rule('required')]
-	public $aadhar_number;
 	#[Rule(['required', 'regex:/^KLS\d{7}$/i'])]
 	public $registration_number;
 	#[Rule('required')]
@@ -78,16 +66,10 @@ class UserprofileForm extends Component
 			$this->alternate_no = $userprofile->alternate_no;
 			$this->gender = $userprofile->gender;
 			$this->dob = $userprofile->date_of_birth;
-			$this->blood_group = $userprofile->blood_group;
-			$this->birth_place = $userprofile->birth_place;
-			$this->native_place = $userprofile->native_place;
-			$this->mother_tongue = $userprofile->mother_tongue;
-			$this->caste = $userprofile->caste;
 			$this->address = $userprofile->address;
 			$this->city = $userprofile->city_id;
 			$this->country = $userprofile->country_id;
 			$this->pincode = $userprofile->pincode;
-			$this->aadhar_number = $userprofile->aadhar_number;
 			$this->registration_number = $userprofile->registration_number;
 			$this->LIN = $userprofile->LIN;
 			$this->joining_date = $userprofile->joining_date;
@@ -108,17 +90,11 @@ class UserprofileForm extends Component
 			'lastname' => $this->lastname,
 			'alternate_no' => $this->alternate_no,
 			'gender' => $this->gender,
-			'date_of_birth' => $this->dob,
-			'blood_group' => $this->blood_group,
-			'birth_place' => $this->birth_place,
-			'native_place' => $this->native_place,
-			'mother_tongue' => $this->mother_tongue,
-			'caste' => $this->caste,
+			'date_of_birth' => blank($this->dob) ? null : $this->dob,
 			'address' => $this->address,
 			'city_id' => $this->city,
 			'country_id' => $this->country,
 			'pincode' => $this->pincode,
-			'aadhar_number' => $this->aadhar_number,
 			'registration_number' => $this->registration_number,
 			'LIN' => $this->LIN,
 			'joining_date' => $this->joining_date,
