@@ -55,28 +55,18 @@ class MedicalHistoryRequest extends FormRequest
         });
 
         return [
-            //
-            'height'                    =>  'required|numeric',
-            'weight'                    =>  'required|numeric',
             'medication_problems'       =>  'nullable|check_medication_problems|max:300',
             'medication_needs'          =>  'nullable|check_medication_needs|max:300',
             'medication_allergies'      =>  'nullable|check_medication_allergies|max:300',
             'food_allergies'            =>  'nullable|check_food_allergies|max:300',
             'other_allergies'           =>  'nullable|check_other_allergies|max:500',
             'other_medical_information' =>  'nullable|check_other_medical_information|max:500',
-        ];  
+        ];
     }
 
     public function messages()
     {
         return [
-            //
-            'height.required'                                           =>  'Height is required',
-            'height.numeric'                                            =>  "Height should be in cm's",
-
-            'weight.required'                                           =>  'Weight is required',
-            'weight.numeric'                                            =>  "Weight should be in kg's",
-
             'medication_problems.check_medication_problems'             =>  'Enter Valid Medication Problems',
             'medication_problems.max'                                   =>  'Medication Problems cannot be more than 300 characters',
 
