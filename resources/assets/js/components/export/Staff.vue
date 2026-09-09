@@ -44,10 +44,6 @@
                         <label for="gender">Gender</label><br>
                         <input type="checkbox" id="Joining_date" value="Joining_date" v-model="checkedNames">
                         <label for="Joining_date">Joining Date</label><br>
-                        <input type="checkbox" id="adhaar" value="adhaar" v-model="checkedNames">
-                        <label for="adhaar">Adhaar Number</label><br>
-                        <input type="checkbox" id="blood_group" value="blood_group" v-model="checkedNames">
-                        <label for="blood_group">Blood Group</label><br>
                         <input type="checkbox" id="date_of_birth" value="date_of_birth" v-model="checkedNames">
                         <label for="date_of_birth">Date_of_birth</label><br>
                         <input type="checkbox" id="address" value="address" v-model="checkedNames">
@@ -83,7 +79,7 @@ export default {
                 exporttab:'',
                 isCheckAll: false,
                 checkedNames:[],
-                value:['employee_id','designation','name','email','mobile_no','gender','Joining_date','adhaar','blood_group','date_of_birth','address','city','state','country','pincode',],
+                value:['employee_id','designation','name','email','mobile_no','gender','Joining_date','date_of_birth','address','city','state','country','pincode',],
 
     }
   },

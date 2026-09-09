@@ -95,9 +95,7 @@
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="date_of_birth" class="tw-form-label"
-                            >Date Of Birth<span class="text-red-500"
-                                >*</span
-                            ></label
+                            >Date Of Birth</label
                         >
                     </div>
                     <div class="mb-2">
@@ -160,62 +158,6 @@
                 </div>
             </div>
 
-            <div class="tw-form-group w-full lg:w-1/3">
-                <div class="lg:mr-8 md:mr-8">
-                    <div class="mb-2">
-                        <label for="blood_group" class="tw-form-label">
-                            Blood Group
-                            <!-- <span class="text-red-500" >*</span> -->
-                        </label>
-                    </div>
-                    <div class="mb-2">
-                        <select
-                            class="tw-form-control w-full"
-                            id="blood_group"
-                            v-model="blood_group"
-                            name="blood_group"
-                        >
-                            <option
-                                value=""
-                                v-for="blood_group in blood_groups"
-                                v-bind:value="blood_group.num"
-                            >
-                                {{ blood_group.name }}
-                            </option>
-                        </select>
-                    </div>
-                    <span
-                        v-if="errors.blood_group"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.blood_group[0] }}</span
-                    >
-                </div>
-            </div>
-
-            <div class="tw-form-group w-full lg:w-1/3">
-                <div class="lg:mr-8 md:mr-8">
-                    <div class="mb-2">
-                        <label for="aadhar_number" class="tw-form-label"
-                            >Aadhaar Number</label
-                        >
-                    </div>
-                    <div class="mb-2">
-                        <input
-                            type="text"
-                            class="tw-form-control w-full"
-                            id="aadhar_number"
-                            v-model="aadhar_number"
-                            name="aadhar_number"
-                            Placeholder="Aadhar Number"
-                        />
-                    </div>
-                    <span
-                        v-if="errors.aadhar_number"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.aadhar_number[0] }}</span
-                    >
-                </div>
-            </div>
         </div>
 
         <portal-target name="edit_address"></portal-target>
@@ -300,135 +242,6 @@
                         v-if="errors.pincode"
                         class="text-red-500 text-xs font-semibold"
                         >{{ errors.pincode[0] }}</span
-                    >
-                </div>
-            </div>
-        </div>
-
-        <div class="tw-form-group">
-            <div class="flex flex-col lg:flex-row">
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
-                    <div class="mb-2">
-                        <label for="birth_place" class="tw-form-label"
-                            >Birth Place</label
-                        >
-                    </div>
-                    <div class="mb-2">
-                        <input
-                            type="text"
-                            class="tw-form-control w-full"
-                            id="birth_place"
-                            v-model="birth_place"
-                            name="birth_place"
-                            placeholder="Birth Place"
-                        />
-                    </div>
-                    <span
-                        v-if="errors.birth_place"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.birth_place[0] }}</span
-                    >
-                </div>
-
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
-                    <div class="mb-2">
-                        <label for="native_place" class="tw-form-label"
-                            >Native Place</label
-                        >
-                    </div>
-                    <div class="mb-2">
-                        <input
-                            type="text"
-                            class="tw-form-control w-full"
-                            id="native_place"
-                            v-model="native_place"
-                            name="native_place"
-                            placeholder="Native Place"
-                        />
-                    </div>
-                    <span
-                        v-if="errors.native_place"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.native_place[0] }}</span
-                    >
-                </div>
-
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8">
-                    <div class="mb-2">
-                        <label for="mother_tongue" class="tw-form-label"
-                            >Mother Tongue<span class="text-red-500"
-                                >*</span
-                            ></label
-                        >
-                    </div>
-                    <div class="mb-2">
-                        <input
-                            type="text"
-                            class="tw-form-control w-full"
-                            id="mother_tongue"
-                            v-model="mother_tongue"
-                            name="mother_tongue"
-                            placeholder="Mother Tongue"
-                        />
-                    </div>
-                    <span
-                        v-if="errors.mother_tongue"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.mother_tongue[0] }}</span
-                    >
-                </div>
-
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
-                    <div class="mb-2">
-                        <label for="caste" class="tw-form-label"
-                            >Caste<span class="text-red-500">*</span></label
-                        >
-                    </div>
-                    <div class="mb-2">
-                        <select
-                            class="tw-form-control w-full"
-                            v-model="caste"
-                            name="caste"
-                            id="caste"
-                        >
-                            <option value="Others" disabled>
-                                Select Caste
-                            </option>
-                            <option
-                                v-for="castes in castelist"
-                                v-bind:value="castes.id"
-                            >
-                                {{ castes.name }}
-                            </option>
-                        </select>
-                    </div>
-                    <span
-                        v-if="errors.caste"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.caste[0] }}</span
-                    >
-                </div>
-
-                <div class="w-full lg:w-1/4 lg:mr-8 md:mr-8 hidden">
-                    <div class="mb-2">
-                        <label for="sub_caste" class="tw-form-label"
-                            >Sub Caste<span class="text-red-500"></span
-                        ></label>
-                    </div>
-                    <div class="mb-2">
-                        <input
-                            type="text"
-                            class="tw-form-control w-full"
-                            id="sub_caste"
-                            v-model="sub_caste"
-                            name="sub_caste"
-                            placeholder="Sub Caste"
-                        />
-                    </div>
-                    <span
-                        v-if="errors.sub_caste"
-                        class="text-red-500 text-xs font-semibold"
-                        >{{ errors.sub_caste[0] }}</span
                     >
                 </div>
             </div>
@@ -1051,19 +864,12 @@ export default {
             lastname: "",
             gender: "",
             date_of_birth: "",
-            blood_group: "",
             standard: "",
             standard_name: "",
             section_name: "",
             city_id: "",
             country_id: "",
             pincode: "",
-            birth_place: "",
-            native_place: "",
-            mother_tongue: "",
-            caste: "",
-            sub_caste: "",
-            aadhar_number: "",
             joining_date: "",
             registration_number: "",
             lin: "",
@@ -1094,8 +900,6 @@ export default {
                     sibling_standard: "",
                 },
             ],
-            blood_groups: [],
-            castelist: [],
             transportlist: [],
             lists: ["auto", "rickshaw", "taxi"],
             siblinglist: [
@@ -1123,16 +927,9 @@ export default {
                 this.lastname = this.user.lastname;
                 this.date_of_birth = this.user.date_of_birth;
                 this.gender = this.user.gender;
-                this.blood_group = this.user.blood_group;
-                this.aadhar_number = this.user.aadhar_number;
                 this.city_id = this.user.city_id;
                 this.country_id = this.user.country_id;
                 this.pincode = this.user.pincode;
-                this.birth_place = this.user.birth_place;
-                this.native_place = this.user.native_place;
-                this.mother_tongue = this.user.mother_tongue;
-                this.caste = this.user.caste;
-                this.sub_caste = this.user.sub_caste;
                 this.avatar_display = this.user.avatar;
                 this.notes = this.user.notes;
                 this.registration_number = this.user.registration_number;
@@ -1156,8 +953,6 @@ export default {
                 this.countrylist = this.user.countrylist;
                 this.citylist = this.user.citylist;
                 this.standardLinklist = this.user.standardLinklist;
-                this.blood_groups = this.user.blood_groups;
-                this.castelist = this.user.castelist;
                 this.transportlist = this.user.transportlist;
                 this.today = this.user.today;
             }
@@ -1173,17 +968,10 @@ export default {
             formData.append("lastname", this.lastname);
             formData.append("gender", this.gender);
             formData.append("date_of_birth", this.date_of_birth);
-            formData.append("blood_group", this.blood_group);
             formData.append("standard", this.standard);
             formData.append("city_id", this.city_id);
             formData.append("country_id", this.country_id);
             formData.append("pincode", this.pincode);
-            formData.append("birth_place", this.birth_place);
-            formData.append("native_place", this.native_place);
-            formData.append("mother_tongue", this.mother_tongue);
-            formData.append("caste", this.caste);
-            formData.append("sub_caste", this.sub_caste);
-            formData.append("aadhar_number", this.aadhar_number);
             formData.append("joining_date", this.joining_date);
             formData.append("registration_number", this.registration_number);
             formData.append("lin", this.lin);

@@ -65,9 +65,7 @@
                 <div class="lg:mr-8 md:mr-8">
                     <div class="mb-2">
                         <label for="date_of_birth" class="tw-form-label"
-                            >Date Of Birth<span class="text-red-500"
-                                >*</span
-                            ></label
+                            >Date Of Birth</label
                         >
                     </div>
                     <div class="mb-2">
@@ -444,16 +442,10 @@ export default {
             email: "",
             gender: "",
             date_of_birth: "",
-            blood_group: "",
             standard: "",
             city_id: "",
             country_id: "",
             pincode: "",
-            birth_place: "",
-            native_place: "",
-            caste: "",
-            sub_caste: "",
-            aadhar_number: "",
             joining_date: "",
             lin: "",
             std_school_pay_number: "",
@@ -477,8 +469,6 @@ export default {
                     sibling_standard: "",
                 },
             ],
-            blood_groups: [],
-            castelist: [],
             transportlist: [],
             lists: ["auto", "rickshaw", "taxi"],
             siblinglist: [
@@ -518,8 +508,6 @@ export default {
                     this.countrylist = this.user.countrylist;
                     this.citylist = this.user.citylist;
                     this.standardLinklist = this.user.standardLinklist;
-                    this.blood_groups = this.user.blood_groups;
-                    this.castelist = this.user.castelist;
                     this.transportlist = this.user.transportlist;
                     this.date_of_birth = this.user.date_of_birth;
                     this.joining_date = this.user.joining_date;
@@ -538,16 +526,10 @@ export default {
             this.email = "";
             this.gender = "";
             this.date_of_birth = "";
-            this.blood_group = "";
             this.standard = "";
             this.city_id = "";
             this.country_id = this.resolveUgandaCountryId();
             this.pincode = "";
-            this.birth_place = "";
-            this.native_place = "";
-            this.caste = "";
-            this.sub_caste = "";
-            this.aadhar_number = "";
             this.joining_date = "";
             this.lin = "";
             this.std_school_pay_number = "";
@@ -573,16 +555,10 @@ export default {
             formData.append("email", this.email);
             formData.append("gender", this.gender);
             formData.append("date_of_birth", this.date_of_birth);
-            formData.append("blood_group", this.blood_group);
             formData.append("standard", this.standard);
             formData.append("city_id", this.city_id);
             formData.append("country_id", this.country_id);
             formData.append("pincode", this.pincode);
-            formData.append("birth_place", this.birth_place);
-            formData.append("native_place", this.native_place);
-            formData.append("caste", this.caste);
-            formData.append("sub_caste", this.sub_caste);
-            formData.append("aadhar_number", this.aadhar_number);
             formData.append("joining_date", this.joining_date);
             formData.append("lin", this.lin);
             formData.append("std_school_pay_number", this.std_school_pay_number);

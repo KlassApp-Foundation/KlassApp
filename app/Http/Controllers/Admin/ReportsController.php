@@ -266,7 +266,9 @@ class ReportsController extends Controller
                             $user->studentAcademicLatest->standardLink->StandardSection,
                             $user->userprofile->firstname,
                             $user->userprofile->lastname,
-                            date('d-m-Y',strtotime($user->userprofile->date_of_birth)),
+                            blank(optional($user->userprofile)->date_of_birth)
+                                ? ''
+                                : date('d-m-Y', strtotime($user->userprofile->date_of_birth)),
                         ]);
                     }
                 }
@@ -305,7 +307,9 @@ class ReportsController extends Controller
                             $user->getTeacherDetails()['designation']=='others' ? $user->getTeacherDetails()['sub_designation']:$user->getTeacherDetails()['designation'],
                             $user->userprofile->firstname,
                             $user->userprofile->lastname,
-                            date('d-m-Y',strtotime($user->userprofile->date_of_birth)),
+                            blank(optional($user->userprofile)->date_of_birth)
+                                ? ''
+                                : date('d-m-Y', strtotime($user->userprofile->date_of_birth)),
                             $user->mobile_no,
                         ]);
                     }

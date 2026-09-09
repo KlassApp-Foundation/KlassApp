@@ -112,32 +112,9 @@
                       </select>     
                     </div>
                   </div>
-                  <div class="flex flex-col lg:flex-row md:flex-row items-center my-1 px-4 w-1/2">
-                    <div class="person_filter_name_title w-full  lg:w-2/5 md:w-2/5">
-                      <p class="text-gray-700">Blood Group</p>
-                    </div>
-                    <div class="advanced_search_option_container my-2 lg:my-1 md:my-1 flex w-full lg:w-3/5 md:w-3/5" id="blood_group"> 
-                      <select class="filter-form-control" id="blood_group" v-model="blood_group" name="blood_group" data-type="dropdown">
-                        <option value="" disabled="disabled">Blood Group</option>
-                        <option value="" v-for="blood_group in blood_groups" v-bind:value="blood_group.num">{{ blood_group.name }}</option>
-                      </select>
-                    </div>      
-                  </div> 
                 </li>
 
-                <li id="filter-content-marital_status" class="filter_container hide flex">
-                  <div class="flex flex-col lg:flex-row md:flex-row items-center my-1 w-1/2 px-4 ">
-                    <div class="person_filter_name_title w-full lg:w-2/5 md:w-2/5">
-                      <p class="text-gray-700">Marital Status</p>
-                    </div>
-                    <div class="advanced_search_option_container flex my-2 lg:my-1 md:my-1 w-full lg:w-3/5 md:w-3/5" id="marital_status">
-                      <select name="marital_status" v-model="marital_status" id="marital_status" class="filter-form-control" data-type="dropdown">
-                        <option value="" disabled="disabled">Marital Status</option>
-                        <option v-for="marital in maritalList" v-bind:value="marital.id">{{ marital.name }}</option>    
-                      </select>     
-                    </div>
-                  </div>
-
+                <li id="filter-content-date_of_birth" class="filter_container hide flex">
                 <div class="flex flex-col lg:flex-row md:flex-row items-center my-1 px-4 w-1/2">
                     <div class="person_filter_name_title w-full  lg:w-2/5 md:w-2/5">
                           <p class="text-gray-700">Birthday</p>
@@ -151,7 +128,7 @@
                     </div> 
                 </li>
 
-                <li id="filter-content-marital_status" class="filter_container hide flex">
+                <li id="filter-content-job_type" class="filter_container hide flex">
                    <div class="flex flex-col lg:flex-row md:flex-row items-center my-1 px-4 w-1/2">
                     <div class="person_filter_name_title w-full  lg:w-2/5 md:w-2/5">
                       <p class="text-gray-700">Job Type</p>
@@ -225,8 +202,6 @@ import { bus } from "../../event-bus";
           job_type:'',
           mobile_no:'',
           email:'',
-          marital_status:'',
-          maritalList:[],
           qualification:'',
           qualificationlist:[],
           count:100,
@@ -237,9 +212,6 @@ import { bus } from "../../event-bus";
           params:{},
           show_filter:0,
           designation:'',
-          blood_group:'' ,          
-          blood_groups:[],
-          maritalList:[],
           designationlist:[],
           months:[{id:'01' , name:'January'} , {id:'02' , name:'February'} , {id:'03' , name:'March'} , {id:'04' , name:'April'} , {id:'05' , name:'May'} , {id:'06' , name:'June'} , {id:'07' , name:'July'} , {id:'08' , name:'August'} , {id:'09' , name:'September'} , {id:'10' , name:'October'} , {id:'11' , name:'November'} , {id:'12' , name:'December'}],
           jobs:[{id:'full_time' , name:'Full Time'} , {id:'part_time' , name:'Part Time'}],  
@@ -261,9 +233,7 @@ import { bus } from "../../event-bus";
           this.email='';
           this.location='';
           this.qualification='';
-          this.blood_group='';
           this.designation='';
-          this.marital_status='';
           window.location.href=this.url+"/admin/teachers";
         },
 
@@ -290,9 +260,7 @@ import { bus } from "../../event-bus";
                 email:this.email,
                 job_type:this.job_type,
                 qualification:this.qualification,
-                blood_group:this.blood_group,
                 designation:this.designation,
-                marital_status:this.marital_status,
              };
 
             this.final=this.url+'/admin/teachers/?'+this.searchquery;
@@ -353,8 +321,6 @@ import { bus } from "../../event-bus";
         {
           this.qualificationlist=this.user.qualificationlist;
           this.designationlist  = this.user.designationlist;
-          this.blood_groups     = this.user.blood_groups;
-          this.maritalList      = this.user.maritalList;
           //console.log(this.qualificationlist)
         }
       },

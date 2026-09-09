@@ -88,13 +88,6 @@
                         </div>
                         <span v-if="errors.father_email" class="text-red-500 text-xs font-semibold">{{ errors.father_email[0] }}</span>
                     </div>
-                    <div class="w-full lg:w-1/3 lg:mr-2">
-                        <div class="my-1">
-                            <label for="father_aadhar_number" class="tw-form-label">Aadhaar ID</label>
-                            <input type="text" name="father_aadhar_number" v-model="father_aadhar_number" placeholder="Aadhar Number" class="tw-form-control w-full my-1 py-2">
-                        </div>
-                        <span v-if="errors.father_aadhar_number" class="text-red-500 text-xs font-semibold">{{ errors.father_aadhar_number[0] }}</span>
-                    </div>
                 </div>
 
                 <h2 class="text-lg my-2">Mother's Detail</h2>
@@ -185,13 +178,6 @@
                         </div>
                         <span v-if="errors.mother_email" class="text-red-500 text-xs font-semibold">{{ errors.mother_email[0] }}</span>
                     </div>
-                    <div class="w-full lg:w-1/3 lg:mr-2">
-                        <div class="my-1">
-                            <label for="mother_aadhar_number" class="tw-form-label">Aadhaar ID</label>
-                            <input type="text" name="mother_aadhar_number" v-model="mother_aadhar_number" placeholder="Aadhar Number" class="tw-form-control w-full my-1 py-2">
-                        </div>
-                        <span v-if="errors.mother_aadhar_number" class="text-red-500 text-xs font-semibold">{{ errors.mother_aadhar_number[0] }}</span>
-                    </div>
                 </div>
 
                 <h2 class="text-lg my-2">Emergency Contact<span class="text-red-500">*</span></h2>
@@ -252,7 +238,6 @@
                 father_income:'',
                 father_mobile_no:'',
                 father_email:'',
-                father_aadhar_number:'',
                 father_avatar:'',
                 father_image:'',
                 mother_name:'',
@@ -263,7 +248,6 @@
                 mother_income:'',
                 mother_mobile_no:'',
                 mother_email:'',
-                mother_aadhar_number:'',
                 mother_avatar:'',
                 mother_image:'',
                 emergency_contact_1:'',
@@ -328,7 +312,6 @@
                 formData.append('father_income',this.father_income);                
                 formData.append('father_mobile_no',this.father_mobile_no);                
                 formData.append('father_email',this.father_email);                
-                formData.append('father_aadhar_number',this.father_aadhar_number);                
                 formData.append('father_avatar',this.father_avatar);                
 
                 formData.append('mother_name',this.mother_name);          
@@ -339,7 +322,6 @@
                 formData.append('mother_income',this.mother_income);                
                 formData.append('mother_mobile_no',this.mother_mobile_no);                
                 formData.append('mother_email',this.mother_email);                
-                formData.append('mother_aadhar_number',this.mother_aadhar_number);                
                 formData.append('mother_avatar',this.mother_avatar);                
 
                 formData.append('emergency_contact_1',this.emergency_contact_1);                    

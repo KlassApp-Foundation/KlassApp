@@ -70,10 +70,8 @@ class TeacherUpdateRequest extends FormRequest
             //
             'firstname'             => 'required|alpha|max:15',
             'lastname'              => 'nullable|alpha|max:15',
-            'date_of_birth'         => 'required|date|check_date_of_birth',
+            'date_of_birth'         => 'nullable|date|check_date_of_birth',
             'gender'                => 'required',
-            'blood_group'           => 'nullable',
-            'aadhar_number'         => 'nullable|numeric|digits:12',
             'employee_id'           => 'required|alpha_num|checkunique_employee_id',
             'joining_date'          => 'required|date|check_joining_date',
             'designation'           => 'required',

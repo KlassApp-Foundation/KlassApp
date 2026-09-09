@@ -27,7 +27,9 @@ class TeacherDetail extends JsonResource
             'fullname'          => $this->FullName,
             'city'              => $this->userprofile->city->name,
             'joining_date'      => $this->userprofile->joining_date=='' ? null:date('Y-m-d',strtotime($this->userprofile->joining_date)),
-            'age'               => date('Y')-date('Y',strtotime(optional($this->userprofile)->date_of_birth)),
+            'age'               => blank(optional($this->userprofile)->date_of_birth)
+                ? null
+                : date('Y') - date('Y', strtotime($this->userprofile->date_of_birth)),
             'marital_status'    => $this->userprofile->marital_status=='' ? null:ucwords($this->userprofile->marital_status),
             'details'           => $details,
             'designation_name'  => $details['designation_name'],

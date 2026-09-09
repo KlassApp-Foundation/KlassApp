@@ -105,17 +105,6 @@
                                             </select>     
                                         </div>
                                     </div>
-                                    <div class="flex flex-col lg:flex-row md:flex-row items-center my-1 px-4 w-1/2">
-                                        <div class="person_filter_name_title w-full  lg:w-2/5 md:w-2/5">
-                                            <p class="text-gray-700">Blood Group</p>
-                                        </div>
-                                        <div class="advanced_search_option_container my-2 lg:my-1 md:my-1 flex w-full lg:w-3/5 md:w-3/5" id="blood_group"> 
-                                            <select class="filter-form-control" id="blood_group" v-model="blood_group" name="blood_group" data-type="dropdown">
-                                                <option value="" disabled="disabled">Blood Group</option>
-                                                <option v-for="blood_group in blood_groups" v-bind:value="blood_group.num">{{ blood_group.name }}</option>
-                                            </select>
-                                        </div>      
-                                    </div> 
                                 </li>
 
                                 <li id="filter-content-gender" class="filter_container hide flex">
@@ -130,17 +119,6 @@
                                             </select>
                                         </div>      
                                     </div> 
-                                    <div class="flex flex-col lg:flex-row md:flex-row items-center my-1 px-4 w-1/2">
-                                        <div class="person_filter_name_title w-full  lg:w-2/5 md:w-2/5">
-                                            <p class="text-gray-700">Caste</p>
-                                        </div>
-                                        <div class="advanced_search_option_container my-2 lg:my-1 md:my-1 flex w-full lg:w-3/5 md:w-3/5" id="caste"> 
-                                            <select class="filter-form-control" id="caste" v-model="caste" name="caste" data-type="dropdown">
-                                                <option value="" disabled="disabled">Caste</option>
-                                                <option v-for="castes in castelist" v-bind:value="castes.id">{{ castes.name }}</option>
-                                            </select>
-                                        </div>      
-                                    </div>  
                                 </li>
 
                                 <li id="filter-content-gender" class="filter_container hide flex">
@@ -202,13 +180,9 @@
                 success:null,
                 params:{},
                 show_filter:0,
-                blood_group:'' ,  
                 transport:'', 
-                caste:'',      
                 standard:'',
-                blood_groups:[],
-                transportlist:[],  
-                castelist:[], 
+                transportlist:[], 
                 months:[{id:'01' , name:'January'} , {id:'02' , name:'February'} , {id:'03' , name:'March'} , {id:'04' , name:'April'} , {id:'05' , name:'May'} , {id:'06' , name:'June'} , {id:'07' , name:'July'} , {id:'08' , name:'August'} , {id:'09' , name:'September'} , {id:'10' , name:'October'} , {id:'11' , name:'November'} , {id:'12' , name:'December'}],
                 admission_number:'',
                 status:'',
@@ -251,9 +225,7 @@
                     email:this.email,
                     mobile_no:this.mobile_no,
                     standard:this.selected_standard,
-                    blood_group:this.blood_group,
                     transport:this.transport,
-                    caste:this.caste,
                     admission_number:this.admission_number,
                     status:this.status,
                 };
@@ -268,9 +240,7 @@
                         email:this.email,
                         mobile_no:this.mobile_no,
                         standard:this.selected_standard,
-                        blood_group:this.blood_group,
                         transport:this.transport,
-                        caste:this.caste,
                         standard:this.standard,
                         status:this.status,
                     };
@@ -340,8 +310,6 @@
                 {
                     this.standardLinklist = this.user.standardLinklist;
                     this.transportlist    = this.user.transportlist;
-                    this.blood_groups     = this.user.blood_groups;
-                    this.castelist        = this.user.castelist;
                     //console.log(this.standardLinklist)
                 }
             },
