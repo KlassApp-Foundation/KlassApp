@@ -349,7 +349,13 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 ([#473](https://github.com/KlassApp-Foundation/KlassApp/pull/473)–[#475](https://github.com/KlassApp-Foundation/KlassApp/pull/475) **MERGED+DEPLOYED+LIVE-VERIFIED**; `origin/main` tip `0b420458`)
+## Current Status: September 9, 2026 ([#477](https://github.com/KlassApp-Foundation/KlassApp/pull/477) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `eedcd39e` — credential rotation **BLOCKED**)
+
+- **✅ #477 SchoolSubadmin (ug4) admin access**: Restored ug4 in `MustBeSchoolAdmin` (accident in `398285e9`). Settings still 404 via `fullschooladmin`. Live: synthetic user 125 — students/teachers 200, settings 404; then `inactive`. Cloud `depl-a2b45660-…` tip `eedcd39e`.
+- **❌ Credential rotation (SSH / Laravel Cloud API / WhatsApp Business)**: **Blocked** this session — no DO console path (SSH timeout), no Cloud dashboard token mint/revoke, no Meta BM admin. `.secrets.local` now gitignored for future storage.
+- **✅ #473–#475** (prior): Superadmin userprofile strip — tip was `0b420458` before #477.
+
+## Previous: September 9, 2026 ([#473](https://github.com/KlassApp-Foundation/KlassApp/pull/473)–[#475](https://github.com/KlassApp-Foundation/KlassApp/pull/475) **MERGED+DEPLOYED+LIVE-VERIFIED**; `origin/main` tip `0b420458`) — superseded above
 
 - **✅ #473 Superadmin userprofile legacy strip + optional DOB**: UI-only removal of blood_group / birth_place / native_place / mother_tongue / caste / aadhar_number on Livewire create/edit/detail (DB columns kept). DOB kept but no longer `#[Rule('required')]`. List still shows DOB only (`--` when null).
 - **✅ #474 create mount**: hydrate only when `segment === 'update'` (create passes user id, not userprofile id).
@@ -1316,6 +1322,25 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-09: Credential rotation closeout (SSH / Laravel Cloud / WhatsApp) — **BLOCKED (all three)**
+- **Work done**: Attempted rotation of the three credentials previously flagged as exposed. Confirmed storage hygiene: `.secrets.local` added to `.gitignore` (was **not** covered by `.env.*`). No secrets written to chat, knowledge, or commits.
+- **Per credential**:
+  1. **SSH key (`~/.ssh/id_ed25519_do`)** — **BLOCKED**. Local keypair still present; `ssh -i … root@46.101.111.131` times out (port 22). No DigitalOcean API token in this environment to install a replacement key or revoke the old one on droplet 578598104. Production app traffic is on **Laravel Cloud** (`klassapp.xyz`); droplet SSH rotation needs DO console or network access that this session lacks.
+  2. **Laravel Cloud API token** — **BLOCKED**. Current `LC_TOKEN` still authenticates env/deploy/command APIs (HTTP 200). Creating a **new** token and revoking the old one requires the Cloud dashboard (Settings → API tokens). Token management endpoints (`/api/user`, `/api/tokens`, …) return **401** with this token — cannot self-rotate via API.
+  3. **WhatsApp Business API token** — **BLOCKED**. Local `.env` `WHATSAPP_BUSINESS_API_TOKEN` is empty; Cloud env has the key present (value not read into logs). Rotation requires Meta Business Manager admin to issue a new permanent token, then update Cloud environment variables and revoke the old Meta token. No Meta admin access in this session.
+- **Files modified**: `.gitignore` (`.secrets.local`), `knowledge.md`
+- **Key decisions**: Do not invent “rotated” status without revoke proof. Hand off to a human with DO console + Cloud dashboard + Meta BM admin; after they mint new secrets, store only in gitignored `.secrets.local` / Cloud env — never paste into chat.
+- **Status**: ❌ Not rotated — blocked on external admin access for all three.
+- **Edge cases flagged**: Even after LC token rotation, update any agent/shell env exporting the old bearer; confirm old token returns 401 on `GET /api/environments/{id}` before calling rotation complete.
+
+### 2026-09-09: Restore SchoolSubadmin (ug4) `MustBeSchoolAdmin` allowlist (#477) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Restored ug4 passthrough in `MustBeSchoolAdmin` (admin modules). Root cause: `398285e9` removed SiteSubadmin (ug2) and accidentally replaced the ug4 block with a duplicate ug3 check. Intent unchanged from July 10: ug4 reuses `/admin/*`; Settings stay on `MustBeFullSchoolAdmin` + sidebar hide. PHPUnit `SchoolSubadminAdminAccessTest` (6). Prod had **0** ug4 users — created synthetic user **125**, live-verified, then flagged `inactive`.
+- **Live verify (klassapp.xyz)**: login → `/subadmin/dashboard` 200; `/admin/students` 200; `/admin/teachers` 200; `/admin/settings` + `/admin/settings/generalsettings` **404**; Settings nav absent for ug4. `/admin/classes` returned **403** (not middleware 404 — separate Gate/Livewire authorization; not introduced by this fix).
+- **Files modified**: `app/Http/Middleware/MustBeSchoolAdmin.php`, `tests/Feature/Auth/SchoolSubadminAdminAccessTest.php`
+- **PR / merge**: [#477](https://github.com/KlassApp-Foundation/KlassApp/pull/477) `eedcd39e`; Cloud `depl-a2b45660-…` **deployment.succeeded** tip `eedcd39e`
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
+- **Edge cases flagged**: Product co-admin invites still create ug3, not ug4 (Aug 29 audit). Follow-up if Quick Access “Classes” 403 reproduces for a real Deputy Admin.
 
 ### 2026-09-09: Superadmin userprofile legacy strip + optional DOB (#473–#475) — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Strip India-era demographics from Superadmin Livewire userprofile form/detail (UI only); make DOB optional; fix create mount (update-only hydrate) + create prefill (school/usergroup/KLS ID). PHPUnit `UserprofileLegacyFieldsStripTest` + `NullDateOfBirthAgeTest`. Live create-without-DOB on klassapp.xyz; probe flagged inactive.
