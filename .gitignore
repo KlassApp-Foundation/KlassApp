@@ -12,6 +12,7 @@ yarn-error.log
 .env
 .env.dusk.local
 .env.*
+.secrets.local
 .phpunit.result.cache
 .phpunit.cache/
 .DS_Store
