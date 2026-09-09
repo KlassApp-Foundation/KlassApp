@@ -349,7 +349,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 ([#479](https://github.com/KlassApp-Foundation/KlassApp/pull/479) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `32334fb7`)
+## Current Status: September 9, 2026 ([#481](https://github.com/KlassApp-Foundation/KlassApp/pull/481) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `b7bbe232`)
+
+- **✅ Hardcoded 3-term display closed**: Admin student marks + teacher exam list no longer map `First/Second/Third Term` → `1/2/3`. Use `AcademicTerm::positionLabel()` (`N of M` by `starts_on`). Aug 25 loose-end item #3 **CLOSED**.
+- **Tests**: `AcademicTermPositionLabelTest` 2 passed. Cloud `depl-a2b46623-…` **deployment.succeeded** tip `b7bbe232`.
+- **Live**: school **33** term `"Term 1"` → `positionLabel` **`1 of 1`** (old map → `-`); school **17** year 12 → `1 of 3` / `2 of 3` / `3 of 3`. Deployed blades contain `positionLabel()`, no `Third Term` map.
+- **✅ #479 / #480** (prior): bug pattern #6 status sweep.
+
+## Previous: September 9, 2026 ([#479](https://github.com/KlassApp-Foundation/KlassApp/pull/479) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `32334fb7`) — superseded above
 
 - **✅ Bug pattern #6 full sweep**: Remaining `users.status != 'exit'` → `ByActive()` / `= 'active'` (Dashboard staff, MemberProcess, onboarding, SchoolList teacher_count, FixStudentDisplayNames; StudentController inactive → `= 'inactive'`).
 - **Tests**: 7 passed. Cloud `depl-a2b46155-…` **deployment.succeeded** tip `32334fb7`.
@@ -1330,6 +1337,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-09: Dynamic academic term ordinal (hardcoded 3-term display) (#481) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Closed Aug 25 loose-end #3. Replaced hardcoded `$termMap = ["First Term"=>1,"Second Term"=>2,"Third Term"=>3]` in `resources/views/admin/marks/student.blade.php` and `resources/views/teacher/marks/teacher-exam-list.blade.php` with `AcademicTerm::positionLabel()` (`N of M`). Added `ordinalsForYear()` / `positionLabel()` on `AcademicTerm` (order by `starts_on` nulls-last, then `id`). Also fixed admin blade using string `$termName` as if it were a model for academic year.
+- **Files modified**: `app/Models/AcademicTerm.php`, `resources/views/admin/marks/student.blade.php`, `resources/views/teacher/marks/teacher-exam-list.blade.php`, `tests/Feature/AcademicTermPositionLabelTest.php`
+- **Key decisions**: Show ordinal-of-total (not English First/Second/Third) so custom names (`Term 1`, `Term I`) and ≠3-term schools work. No DB writes for live verify.
+- **Tests**: 2 passed (`AcademicTermPositionLabelTest` — 2-term + 3-term years; blades assert `positionLabel()` and no `Third Term` map).
+- **PR / merge**: [#481](https://github.com/KlassApp-Foundation/KlassApp/pull/481) `b7bbe232`; Cloud `depl-a2b46623-9509-43eb-a789-721d7817d101` **deployment.succeeded**.
+- **Live**: school 33 (`Term 1`, count=1) → **`1 of 1`**; school 17 year 12 (`Term I/II/III`) → **`1 of 3`…`3 of 3`**. Deployed file check: both blades use `positionLabel()`, old map gone.
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
+- **Edge cases flagged**: No 2-term school on Cloud prod yet; covered by PHPUnit. Display still does not show raw term `name` beside ordinal (name remains available on the model if a later UI wants both).
+
 ### 2026-09-09: Bug pattern #6 — users.status positive-equality sweep (#479) — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Full `app/` sweep for `users.status != 'exit'` / `orWhere(…!= exit)`. Fixed remaining sites to `ByActive()` / `where('status','active')`. Also fixed StudentController `?status=inactive` from `!= 'active'` → `= 'inactive'`.
 - **Files modified**: `Dashboard.php`, `MemberProcess.php`, `OnboardingStepsService.php`, `ManualOnboardingWizard.php`, `SchoolList.php`, `FixStudentDisplayNames.php`, `StudentController.php`, `UsersStatusPositiveActiveTest.php`, `knowledge.md` (pattern #6 verify text)
@@ -1908,7 +1925,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: Additive only; no CT lock bypass; no create UI (PR-B).
 - **Tests**: ClassTeacherExamCustodian + TeacherExamMarksAuthorization + MarksToggleStatusCrossSchool + CombinedMarksheetExport — **24 passed**.
 - **Status**: ✅ MERGED `75697f59` + DEPLOYED + LIVE-VERIFIED PASS (CT 88 → subject teacher 92, exam 47 / school 119). Login harness selectors fixed post-verify (`#email` + form submit).
-- **Edge cases flagged**: List view termMap still assumes "First Term" names (pre-existing); live verify uses First Term. Playwright `getByLabel(/email/i)` timed out on prod login — use `#email` / form submit.
+- **Edge cases flagged**: List view termMap hardcoded First/Second/Third — **CLOSED** 2026-09-09 [#481]. Playwright `getByLabel(/email/i)` timed out on prod login — use `#email` / form submit.
 
 ### 2026-08-29: Class-teacher custodian exams/marks — investigation + scoped plan (NOT implemented)
 
@@ -2179,7 +2196,7 @@ This needs its own scoped follow-up, distinct from and broader than the now-clos
 - **Investigated items (no code action needed now)**:
   1. **Secondary school support** — CONFIRMED working. `SchoolCategorySeeder` handles `o_level` and `o_a_level`.
   2. **Class teacher subject editing** — `RosterScopeService`/`ClassRoster` are read-only; `OnboardingEngine::saveSubjects()` is already safe for reuse. Design intent documented.
-  3. **Hardcoded 3-term assumptions** — Found in `student.blade.php` L51 and `teacher-exam-list.blade.php` L42. Display-only, not data-corruption. Logged as future UI polish.
+  3. **Hardcoded 3-term assumptions** — Found in `student.blade.php` L51 and `teacher-exam-list.blade.php` L42. Display-only, not data-corruption. **CLOSED 2026-09-09** via [#481](https://github.com/KlassApp-Foundation/KlassApp/pull/481) (`AcademicTerm::positionLabel()`).
 - **Status**: ✅ MERGED — `main` tip now `e98d7982`.
 
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
