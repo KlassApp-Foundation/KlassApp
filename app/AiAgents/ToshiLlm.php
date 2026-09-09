@@ -3,6 +3,7 @@
 namespace App\AiAgents;
 
 use App\Exceptions\AmbiguousToshiLlmConfigException;
+use App\Exceptions\MissingToshiLlmApiKeyException;
 
 /**
  * Single resolution path for Toshi's openai-compatible provider + model.
@@ -35,9 +36,9 @@ use App\Exceptions\AmbiguousToshiLlmConfigException;
  * when family matches URL host; both model envs set to the same value;
  * unknown custom hosts (no false positive on self-hosted gateways).
  *
- * Failure mode: AmbiguousToshiLlmConfigException on first model()/provider()
- * resolve and from toshi:llm-health — NOT AppServiceProvider boot (unrelated
- * HTTP routes must keep working). Alerting evidence: no Sentry/Bugsnag in
+ * Failure mode: AmbiguousToshiLlmConfigException / MissingToshiLlmApiKeyException
+ * on first model()/provider() resolve and from toshi:llm-health — NOT AppServiceProvider
+ * boot (unrelated HTTP routes must keep working). Alerting evidence: no Sentry/Bugsnag in
  * composer; ActivityLog is user-action audit, not infra. Monitored signal =
  * exception + Log::critical (health command) + non-zero Artisan exit for
  * cron/k8s (schedule wiring is ops/OpenCode follow-up — not in Kernel here).
@@ -47,6 +48,7 @@ final class ToshiLlm
     public static function provider(): string
     {
         self::assertConfigConsistent();
+        self::assertApiKeyConfigured();
 
         return 'openai-compatible';
     }
@@ -54,6 +56,7 @@ final class ToshiLlm
     public static function model(): string
     {
         self::assertConfigConsistent();
+        self::assertApiKeyConfigured();
 
         return self::resolvedModel();
     }
@@ -89,6 +92,30 @@ final class ToshiLlm
             self::model(),
             self::urlHost(),
         ])), 0, 16);
+    }
+
+    /**
+     * Fail loudly when the openai-compatible API key is missing from the environment.
+     * Hardcoded keys in config are forbidden — set OPENAI_COMPATIBLE_API_KEY
+     * (preferred) or TOSHI_LLM_API_KEY (legacy).
+     *
+     * @throws MissingToshiLlmApiKeyException
+     */
+    public static function assertApiKeyConfigured(): void
+    {
+        if (self::keyConfigured()) {
+            return;
+        }
+
+        throw new MissingToshiLlmApiKeyException(
+            'Toshi LLM API key is not configured. Set OPENAI_COMPATIBLE_API_KEY in the environment '
+            .'(legacy alias: TOSHI_LLM_API_KEY). Hardcoded keys in config are not allowed.',
+            [
+                'provider' => 'openai-compatible',
+                'url_host' => self::urlHost(),
+                'env_keys' => ['OPENAI_COMPATIBLE_API_KEY', 'TOSHI_LLM_API_KEY'],
+            ],
+        );
     }
 
     /**

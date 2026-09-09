@@ -100,6 +100,7 @@ class ToshiLlmConfigConsistencyTest extends TestCase
                 'toshi_llm_base_url' => null,
             ],
             'ai.providers.openai-compatible.url' => 'https://api.deepseek.com',
+            'ai.providers.openai-compatible.key' => 'sk-test',
         ]);
 
         ToshiLlm::assertConfigConsistent();
@@ -119,10 +120,31 @@ class ToshiLlmConfigConsistencyTest extends TestCase
                 'toshi_llm_base_url' => null,
             ],
             'ai.providers.openai-compatible.url' => 'https://api.deepseek.com',
+            'ai.providers.openai-compatible.key' => 'sk-test',
         ]);
 
         ToshiLlm::assertConfigConsistent();
 
         $this->assertSame('deepseek-v4-flash', ToshiLlm::model());
+    }
+
+    public function test_missing_api_key_fails_loudly_on_model_resolve(): void
+    {
+        config([
+            'toshi.model' => 'deepseek-v4-flash',
+            'toshi.llm_env' => [
+                'openai_compatible_model' => 'deepseek-v4-flash',
+                'toshi_llm_model' => null,
+                'openai_compatible_url' => 'https://api.deepseek.com',
+                'toshi_llm_base_url' => null,
+            ],
+            'ai.providers.openai-compatible.url' => 'https://api.deepseek.com',
+            'ai.providers.openai-compatible.key' => null,
+        ]);
+
+        $this->expectException(\App\Exceptions\MissingToshiLlmApiKeyException::class);
+        $this->expectExceptionMessage('OPENAI_COMPATIBLE_API_KEY');
+
+        ToshiLlm::model();
     }
 }

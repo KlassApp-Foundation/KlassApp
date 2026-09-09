@@ -9361,3 +9361,10 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - `.cursor/mcp.json` created (was not present globally before)
 - `~/.config/goose/config.yaml` updated in place
 - Both files verified: structure correct, git-safe, token is placeholder only
+
+### 2026-09-10: Security — remove embedded DO deploy key + hardcoded LLM API key
+
+- **Work done**: Confirmed embedded OpenSSH key in `scripts/provision-klassapp.sh` is **not** `~/.ssh/id_ed25519_do` (fingerprints differ: script=`klassapp-deploy` SHA256:X3nxxH0X… vs DO=`moemucu@gmail.com` SHA256:Q1eW4cVt…). Deleted the script (DO droplet provisioner for `46.101.111.131` — retired; dead code). Removed hardcoded `sk-2ccccb77…` defaults from `config/ai.php` + `config/toshi.php`; `ToshiLlm::model()`/`provider()` now throw `MissingToshiLlmApiKeyException` when `OPENAI_COMPATIBLE_API_KEY` / `TOSHI_LLM_API_KEY` unset.
+- **Key prefix to rotate/check**: `sk-2ccccb77` (was baked as default for openai-compatible / DeepSeek-style provider — verify in provider dashboard whether still live).
+- **Files modified**: deleted `scripts/provision-klassapp.sh`; `config/ai.php`, `config/toshi.php`, `app/AiAgents/ToshiLlm.php`, `app/Exceptions/MissingToshiLlmApiKeyException.php`, `tests/Feature/Toshi/ToshiLlmConfigConsistencyTest.php`, `.env.example`, `knowledge.md`.
+- **Status**: Security PR (this change).
