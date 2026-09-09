@@ -349,14 +349,20 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 ([#471](https://github.com/KlassApp-Foundation/KlassApp/pull/471) **MERGED+DEPLOYED+LIVE-VERIFIED**; `origin/main` tip `08420fa6`)
+## Current Status: September 9, 2026 ([#473](https://github.com/KlassApp-Foundation/KlassApp/pull/473)–[#475](https://github.com/KlassApp-Foundation/KlassApp/pull/475) **MERGED+DEPLOYED+LIVE-VERIFIED**; `origin/main` tip `0b420458`)
 
-- **✅ #471 Role-aware profile dropdown**: Shared `layouts/partials/profile-dropdown` no longer hardcodes `/admin` (or `/superadmin`) for every role. `App\Support\PortalProfileLinks` maps usergroup → real routes; missing equivalents (e.g. Student edit-profile/avatar/settings; Parent mutators) are hidden.
-- **Merge**: `08420fa6` · Cloud `depl-a2b43789-3c8f-45dd-af14-7610c344f440` **deployment.succeeded**.
-- **Live**: `e2e/screenshots/profile-dropdown-role-aware/REPORT.json` **pass: true** — Student → `/student/changepassword` only; Parent portal Logout-only (no Admin account links). Synthetic verify users cleaned up.
-- **✅ #469** (prior): medical height/weight strip — merge `7e5d506f`; live `medical-history-height-weight/`.
-- **✅ #466** (prior): show/profile label strip — merge `db0bfe3e`.
-- **✅ #465** (prior): form/filter/export/import strip + optional DOB — merge `fb4c9ace`.
+- **✅ #473 Superadmin userprofile legacy strip + optional DOB**: UI-only removal of blood_group / birth_place / native_place / mother_tongue / caste / aadhar_number on Livewire create/edit/detail (DB columns kept). DOB kept but no longer `#[Rule('required')]`. List still shows DOB only (`--` when null).
+- **✅ #474 create mount**: hydrate only when `segment === 'update'` (create passes user id, not userprofile id).
+- **✅ #475 create prefill**: school / usergroup / readonly KLS ID from User on create.
+- **Merges**: #473 `2ae3ce59` · #474 `cc82cb18` · #475 `0b420458`. Cloud deploys `depl-a2b4447f-…` (#473), `depl-a2b447be-…` (#474), `depl-a2b44ca9-…` (#475) **deployment.succeeded**.
+- **Live**: `e2e/screenshots/superadmin-userprofile-strip-473/REPORT.json` **pass: true** — create without DOB → profile 118 `date_of_birth=null`; legacy labels absent on create/detail/update; age presenter null-safe. Probe user 124 / profile 118 flagged `inactive`.
+- **Null-DOB downstream**: same as Track B — `UserprofilePresenter::getAge` returns null; birthday `DATE_FORMAT` queries skip nulls.
+- **✅ #471** (prior): role-aware profile dropdown — merge `08420fa6`.
+- **✅ #469/#466/#465** (prior): medical / show / admin form demographics strip.
+
+## Previous: September 9, 2026 ([#471](https://github.com/KlassApp-Foundation/KlassApp/pull/471) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `08420fa6`) — superseded above
+
+- Role-aware shared profile dropdown; live `profile-dropdown-role-aware/`.
 
 ## Previous: September 9, 2026 ([#469](https://github.com/KlassApp-Foundation/KlassApp/pull/469) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `7e5d506f`) — superseded above
 
@@ -1310,6 +1316,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-09: Superadmin userprofile legacy strip + optional DOB (#473–#475) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Strip India-era demographics from Superadmin Livewire userprofile form/detail (UI only); make DOB optional; fix create mount (update-only hydrate) + create prefill (school/usergroup/KLS ID). PHPUnit `UserprofileLegacyFieldsStripTest` + `NullDateOfBirthAgeTest`. Live create-without-DOB on klassapp.xyz; probe flagged inactive.
+- **Files modified**: `UserprofileForm.php`, `userprofile-{form,detail,list}.blade.php`, `UserprofileLegacyFieldsStripTest.php`, `knowledge.md`
+- **Key decisions**: Same Track A/B as #465 — no DB column drops; DOB kept for birthday features but optional; list was already DOB-only (null → `--`).
+- **PRs**: [#473](https://github.com/KlassApp-Foundation/KlassApp/pull/473) `2ae3ce59`, [#474](https://github.com/KlassApp-Foundation/KlassApp/pull/474) `cc82cb18`, [#475](https://github.com/KlassApp-Foundation/KlassApp/pull/475) `0b420458`
+- **Status**: ✅ Done
+- **Edge cases flagged**: Create form `registration_number` is readonly — must be prefilled from User (#475). Blade `wire:model.live="lin"` vs PHP `$LIN` case mismatch is pre-existing; Livewire.set used `LIN` successfully in live verify.
 
 ### 2026-09-09: Role-aware shared profile dropdown (#471) — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: See end-of-file Session Log entry for #471 (PortalProfileLinks + dropdown fix).
