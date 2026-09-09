@@ -394,7 +394,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 ([#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) **MERGED**; `origin/main` tip `a91183ae`)
+## Current Status: September 10, 2026 ([#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) **OPEN** — repo root hygiene; tip pending merge)
+
+- **✅ Root hygiene**: Deleted 28 session PNG artifacts + `students-screenshot.html` + `fix-note.md` + superseded `LARAVEL-CLOUD-ASSESSMENT.md`. Relocated `toshi-chat-kit-evaluation.md` → `docs/archive/toshi-chat-kit-evaluation.md`.
+- **Prior**: [#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) README rewrite **MERGED** `a91183ae`; knowledge stamp [#490](https://github.com/KlassApp-Foundation/KlassApp/pull/490) `a9ecc641`.
+
+## Previous: September 10, 2026 ([#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) **MERGED**; `origin/main` tip `a91183ae`) — superseded above
 
 - **✅ README.md on `main`**: GeGoK12-era ops manual replaced with Open Design v3 product narrative (Toshi / agentic protocol / Q1 2027 OSS) adapted for GitHub README register. Contact: `community@klassapp.xyz` only. Merge commit `a91183ae` @ 2026-09-09T23:20:30Z (admin merge; was blocked on `REVIEW_REQUIRED` until then). Verified `README.md` on `main` starts with `# KlassApp` / “Tools connected by intelligence.”
 - **Note**: GitHub repo **About** sidebar description already showed agentic-protocol framing (with typos `KlasssApp` / `Deive`) since at least **2026-09-04** (CreateEvent payloads); that is **separate** from `README.md` and was **not** changed by #489.
@@ -1396,6 +1401,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-10: Repo root hygiene (session screenshots + stale root docs) — **PR OPEN**
+- **Work done**: Removed loose root artifacts unfit for a public tree: 28 verification PNGs (`toshi-e2e-*`, `phase4-*`, `pulse-*`, `issue*`, misc e2e), `students-screenshot.html` (saved page + CSRF meta), empty `fix-note.md`, and superseded `LARAVEL-CLOUD-ASSESSMENT.md` (Aug 14 “do not migrate” planning; Cloud migration already done; SoT is knowledge Verified Stack / Cloud MCP). Relocated `toshi-chat-kit-evaluation.md` → `docs/archive/toshi-chat-kit-evaluation.md` (Jul 14 reject-kit rationale still useful).
+- **Files modified**: deletes as above; `docs/archive/toshi-chat-kit-evaluation.md` (moved); `knowledge.md`
+- **Key decisions**: Delete Cloud assessment rather than archive (would mislead as current guidance). Chat-kit eval kept in archive. No references to deleted PNGs/HTML existed in repo.
+- **PR**: [#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) branch `chore/repo-root-hygiene` (number confirmed at open).
+- **Status**: 🚧 PR open / awaiting review
+- **Edge cases flagged**: Historical knowledge session still mentions root `LARAVEL-CLOUD-ASSESSMENT.md` path — annotated as removed.
+
 ### 2026-09-10: README rewrite (Open Design v3 narrative) — **MERGED**
 - **Work done**: Replaced stale GeGoK12-era `README.md` with developer-facing README grounded in Open Design v3 (Toshi / agentic protocol / Q1 2027 OSS) + accurate stack and local setup. Contact `community@klassapp.xyz` only.
 - **Files modified**: `README.md`, `knowledge.md`
@@ -2279,10 +2292,10 @@ This needs its own scoped follow-up, distinct from and broader than the now-clos
 - **Status**: ✅ MERGED — `main` tip now `e98d7982`.
 
 ### 2026-08-14: Laravel Cloud migration assessment — PLANNING ONLY (no migration)
-- **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14.
+- **Work done**: Scoped whether to migrate KlassApp from self-hosted Docker to Laravel Cloud. Produced decision-input doc `LARAVEL-CLOUD-ASSESSMENT.md` (repo root) from: live prod metrics (SSH), codebase infra inventory, and official Laravel Cloud docs/pricing fetched 2026-08-14. **Later removed** in root-hygiene cleanup (#491, 2026-09-10): recommendation superseded (production is on Laravel Cloud); TL;DR remains in this session entry + Verified Stack.
 - **Key findings**: (1) Production host is **DigitalOcean** (2 vCPU/2 GB, ~$18–24/mo), NOT Hetzner as older notes claim — corrected above. (2) Live scale: 20 schools, 1,376 users, 664,336 marks, 203 exams, 18 report_generations all-time; load 0.09 (idle); nginx access logging DISABLED. (3) Laravel Cloud pricing (verified live): Starter $5/mo, Growth $20/mo, Business $200/mo, each + $5 usage credit, scale-to-zero default → realistic all-in $5–30/mo, **comparable/cheaper than current VPS** (earlier "Pro $59/Scale $199" figures were wrong). (4) Migration effort medium (2–4 days): dump/import DB, R2 blob for 418 MB PDFs, re-point WhatsApp webhooks; no app-code changes required (no vapor.yml, no schedules, queue on redis already).
 - **Decision**: DO NOT migrate now. Tonight's queue-stale-worker incident already fixed in place (`queue:restart` in deploy script). Re-open if: 3rd deploy incident, sustained load >0.7, >2 GB data / >50 schools, or need for per-PR preview envs (Business plan only).
-- **Files**: `LARAVEL-CLOUD-ASSESSMENT.md` (new), `knowledge.md` (host correction + this entry)
+- **Files**: `LARAVEL-CLOUD-ASSESSMENT.md` (new at the time; **deleted 2026-09-10** #491), `knowledge.md` (host correction + this entry)
 - **Status**: 📋 assessment complete — no code changes, nothing migrated, no PR
 
 ### 2026-08-10: Teacher mark view 500 + save ownership (opening PR)
