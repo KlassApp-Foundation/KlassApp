@@ -14,10 +14,57 @@
 | **Bundler** | **Vite 8** (sole) | Phase 3 **CLOSED on `main`** — merge `9bdf185` (from `migration/vite` / `3bc5c70`). Scripts: `npm run dev` / `npm run build`. Blade `@vite([...])`. |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
-| **Production host** | Docker on **DigitalOcean** droplet (46.101.111.131, droplet 578598104, 2 vCPU/2 GB) — ⚠️ NOT Hetzner (older notes wrong; confirmed via DO metadata 2026-08-14) | `scripts/deploy-manual.sh` |
+| **Production host** | **Laravel Cloud** (`klassapp.xyz`, EU-West-1, via Composer Build + Valkey). DigitalOcean droplet (`46.101.111.131`) is **retired** — do not SSH it. | Laravel Cloud MCP / Commands API |
 
-> ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — always verify via SSH.
+> ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — verify via Cloud Commands, not SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
+
+## Laravel Cloud MCP (preferred over raw Commands API)
+
+Laravel Cloud has an official MCP server for deploy/environment/command tooling: `https://mcp.laravel.cloud/mcp`
+
+### Getting the token
+
+The token lives in Doppler under the `klassapp` project, `dev` config, key name **`CLOUD_AGENT_TOOLING`**:
+```bash
+doppler secrets get CLOUD_AGENT_TOOLING --config dev --plain
+```
+Do **not** hardcode or commit this token. Every agent session should retrieve it fresh from Doppler.
+
+### Wiring into an MCP-capable agent
+
+All clients need the same URL + `X-Auth-Token` header:
+
+```json
+{
+  "laravel-cloud": {
+    "url": "https://mcp.laravel.cloud/mcp",
+    "headers": {
+      "X-Auth-Token": "<token from Doppler>"
+    }
+  }
+}
+```
+
+| Agent / Tool | Config location | Type | Notes |
+|---|---|---|---|
+| **Cursor** | `~/.cursor/mcp.json` under `mcpServers` | HTTP | Add alongside existing `laravel-boost` entry. Do not remove other entries. |
+| **Goose** | `~/.config/goose/config.yaml` under `mcp_servers` | `streamable_http` | Match indentation level of existing `phpstorm` entry. |
+| **Claude Code** | `claude mcp add --transport http laravel-cloud https://mcp.laravel.cloud/mcp --header "X-Auth-Token: <token>"` | HTTP | Then `claude mcp enable laravel-cloud`. |
+| **MCP Inspector / generic** | Same URL + header pattern | HTTP | Add via that tool's own UI or config file. |
+
+Once wired, agents get native deploy/environment/command tools — no more hand-rolled `curl` to the raw Commands API.
+
+### Raw Commands API (fallback for non-MCP tools)
+
+If you must call the REST API directly (e.g. from a script that isn't MCP-capable):
+- Base URL: `https://cloud.laravel.com/api`
+- Commands endpoint: `POST /api/commands` (flat body `{"command":"php artisan …"}`, **not** JSON:API-wrapped)
+- Poll: `GET /api/commands/{id}` until `command.success == true`
+- Environment vars: `POST /api/environments/{id}/variables` with `"method": "set"` (also flat body)
+- Env vars are applied only after a redeploy, not immediately (see `config:clear` alone is insufficient)
+
+> 🔐 **Security**: `~/.cursor/mcp.json` is gitignored inside the repo (`.gitignore` line `.cursor/mcp.json`). `~/.cursor` and `~/.config/goose` live outside any repo entirely. Never paste the real token value into a PR description, commit message, or knowledge.md — always retrieve it from Doppler.
 
 ## Known Bug Patterns & Lessons (reference — check before touching related code)
 
@@ -316,18 +363,16 @@
 
 ### Future Initiatives (flagged, not yet in progress)
 
-#### Optional: invite class teacher to set up their own class
+#### Invite class teacher to take ownership of a class (admin-driven)
 
-**Flagged**: 2026-09-07 — **Not yet scoped / not started.**
+**Phase 1: Admin CRUD trigger — MERGED** (#485, `5830f747`, 2026-09-09). Admin invites a teacher (new or existing) as CT from the class list. Email-only; schools-scoped; `TeacherInviteMail` backward-compat.
 
-**Idea**: After (or during) school setup, an admin may optionally invite a teacher to configure **their own class** — roster, subjects, and related class-level details — instead of the admin doing every class themselves.
+**Phase 2: Wizard onboarding trigger — NOT YET BUILT** (separate PR). After `saveClass()` creates a `StandardLink` in `ManualOnboardingWizard`, show a prominent "Invite Class Teacher for {className}" nudge before advancing to subjects step. Connect to existing `ClassTeacherInviteService`.
 
-**Product constraint (refined 2026-09-07)**: this is an **OPTIONAL, nullable alternative**, not a replacement for admin-driven setup.
-- Admins **keep** the ability to add classes and students directly (Toshi complete mode, manual wizard, admin CRUD) — that remains the default path.
-- Inviting a teacher to set up their own class is additive: use it when useful; skip it when the admin prefers to enter everything themselves.
-- No school should be blocked on a teacher accepting an invite; teacher self-setup must never become a mandatory gate.
-
-**Not yet scoped**: invite UX (WhatsApp vs email vs in-app), what the teacher is allowed to create vs edit, how Teacherlink / class-teacher assignment interacts, and how this sits next to existing Teachers + Students onboarding steps.
+**Product constraint (refined 2026-09-07)**: this is an **OPTIONAL, nullable alternative**, not a replacement for admin-driven setup — both paths remain available.
+- Admins **keep** the ability to add classes and students directly (Toshi complete mode, manual wizard, admin CRUD).
+- Inviting a teacher to own their class is additive: use it when useful; skip it when the admin prefers to enter everything themselves.
+- WhatsApp channel remains blocked (template `teacher_account_invite` REJECTED on Meta — email is the working channel).
 
 #### UI migration: away from inherited GeGoK12 UI, toward KlassApp's own modern UI
 
@@ -9255,3 +9300,64 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Live evidence**: `e2e/screenshots/profile-dropdown-role-aware/REPORT.json` pass=true (synthetic Student + Parent on school 33; cleaned up after).
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 - **Edge cases flagged**: Librarian/Alumni still include the dropdown but now correctly show Logout-only account section (no Admin 404s). Parent never used the shared dropdown.
+
+### 2026-09-09 — Class Teacher Invite feature, Phase 1 (PRs #484-#485, pending open)
+
+**Branch**: feature/admin-invite-class-teacher
+**Scope**: Admin invites a Class Teacher to take ownership of a specific class (StandardLink + Section). Email-only Phase 1.
+
+**Shipped commits**:
+- 6468c40c - ClassTeacherInviteService (single source of truth)
+  - New-teacher path: creates User (usergroup=5, is_reset=1, random password), Userprofile, sets class_teacher_id on both StandardLink and Section, queues TeacherInviteMail with credentials.
+  - Existing-teacher path: updates CT fields, sends reassignment notice (null password in mail).
+  - Validation: school-scoping, usergroup=5, email match, duplicate-CT guard, inactive-link guard.
+  - Tests: 14 cases / 43 assertions (ClassTeacherInviteServiceTest).
+- 7b96ea61 - Admin CRUD trigger
+  - ClassTeacherInviteController@create/store with school-scoped guards.
+  - Blade form at /admin/class-teacher-invite/{section}/create with existing-teacher dropdown + JS toggle for new-teacher fields.
+  - "Invite Class Teacher" button added to admin/school/sections/list.blade.php when class_teacher_id is null.
+  - Tests: 3 browser cases (ClassTeacherInviteControllerTest).
+
+**Backward-compat changes**:
+- TeacherInviteMail::$password changed from string to ?string (default null); schoolName gets default ''. Blade updated to show credential block only when password is non-null.
+- ToshiActionService::addTeacher() continues to work unchanged - it already passes a non-null password.
+
+**Not yet built (Phase 2, separate PR)**:
+- Wizard onboarding trigger: after saveClass() creates a StandardLink, present an inline "Invite Class Teacher for {className}" nudge before advancing to subjects. This requires extending ManualOnboardingWizard + manual-wizard-step-fields.blade.php standards step.
+- WhatsApp channel remains blocked (template teacher_account_invite REJECTED on Meta).
+
+**Status**: pushed to origin/feature/admin-invite-class-teacher, PR not yet opened. Ready for review.
+
+**2026-09-09 update**: PR #485 merged (squash `5830f747`). Deploy blocked this session — no `LC_TOKEN` in shell env, Doppler, or local cache; multiple sessions hit the same dead end (see 2026-09-10 entry below for resolution). Live verification will confirm:
+- /admin/sections shows "Invite Class Teacher" button for no-CT classes
+- New-teacher flow: User created, CT fields set, email delivered
+- Existing-teacher flow: CT fields reassigned, notification sent
+- Invited teacher login → scoped to assigned class only via RosterScopeService
+
+### 2026-09-10: Laravel Cloud MCP wiring + knowledge update + deploy unblock
+
+**Problem**: Multiple sessions (this one + earlier ones) got stuck trying to trigger a Laravel Cloud deploy because `LC_TOKEN` was not discoverable — not in shell env, Doppler, local keyring, or file cache. The only documented path was the raw Commands API (`POST /api/commands` with flat body), but session after session failed because the Bearer token was absent.
+
+**Resolution**: Instead of finding/proxying the token, wired the **official Laravel Cloud MCP server** into both Cursor and Goose so future sessions get native deploy/environment/command tools, not raw REST calls.
+
+**Files modified**:
+- `~/.cursor/mcp.json` — added `laravel-cloud` entry under `mcpServers` (HTTP, URL `https://mcp.laravel.cloud/mcp`, `X-Auth-Token: PASTE_TOKEN_HERE`)
+- `~/.config/goose/config.yaml` — added `laravel-cloud` entry under `mcp_servers` (`type: streamable_http`, matching existing `phpstorm` indentation)
+- `knowledge.md` — added new top-level section "Laravel Cloud MCP (preferred over raw Commands API)" with full wiring instructions for Cursor, Goose, Claude Code, and generic MCP clients. Token retrieval: `doppler secrets get CLOUD_AGENT_TOOLING --config dev --plain`
+- `knowledge.md` — updated "Verified Stack" production host line from DO droplet to Laravel Cloud; added `⚠️` note about not SSHing the retired droplet
+- `knowledge.md` — updated Future Initiatives "Optional: invite class teacher" → "Invite class teacher to take ownership of a class" with Phase 1 shipped / Phase 2 pending split
+
+**Security**
+- `~/.cursor/mcp.json` lives outside any repo (home dir) — safe from accidental commits
+- `~/.config/goose/config.yaml` also outside any repo
+- `public/.gitignore` already contains `.cursor/mcp.json` line — repo-level file would be ignored if present
+- Token placeholder `PASTE_TOKEN_HERE` intentionally left as placeholder — real value to be pasted by the user directly, never by an agent
+
+**Token source**: Doppler `klassapp` project, `dev` config, secret name `CLOUD_AGENT_TOOLING`. User confirmed they will paste this directly into both config files.
+
+**Next**: Once the real token is pasted + Cursor/Goose restarted, the agent will have native `laravel-cloud` MCP tools for deploy triggers, environment management, and command execution. Raw Commands API docs preserved as fallback.
+
+**Status**: ✅ Docs-only PR (knowledge.md update). `feature/admin-invite-class-teacher` branch has knowledge.md changes ready to ship.
+- `.cursor/mcp.json` created (was not present globally before)
+- `~/.config/goose/config.yaml` updated in place
+- Both files verified: structure correct, git-safe, token is placeholder only
