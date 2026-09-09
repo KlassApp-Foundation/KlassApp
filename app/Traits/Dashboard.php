@@ -59,7 +59,7 @@ trait Dashboard
             $array['setupIncomplete'] = true;
             $array['studentCount'] = User::ByActive()->BySchool($school_id)->ByRole(6)->count();
             $array['parentCount'] = 0;
-            $array['teacherCount'] = User::where([['status','!=','exit']])->BySchool($school_id)->ByRole(5)->count();
+            $array['teacherCount'] = User::ByActive()->BySchool($school_id)->ByRole(5)->count();
             $array['nonteachingCount'] = 0;
             $array['maleCount'] = 0;
             $array['femaleCount'] = 0;
@@ -84,26 +84,26 @@ trait Dashboard
 
             return $array;
         }
-    
+
         $array['studentCount'] = Cache::remember('studentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)  {
                                   return User::ByActive()->BySchool($school_id)->ByRole(6)->count();
                               });
 
         $array['parentCount']    =  Cache::remember('parentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
                                   return User::BySchool($school_id)->ByRole(7)->whereHas('children', function($q) {
-    
-                $q->whereHas('userStudent', function($q) 
+
+                $q->whereHas('userStudent', function($q)
                 {
-                    $q->where([['status','!=','exit']]);
+                    $q->ByActive();
                 });
             })->count();
                                 });
 
         $array['teacherCount']   = Cache::remember('teacherCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
-                                  return User::where([['status','!=','exit']])->BySchool($school_id)->ByRole(5)->count();
+                                  return User::ByActive()->BySchool($school_id)->ByRole(5)->count();
                                 });
 
-        $array['nonteachingCount']   = User::where([['status','!=','exit']])->where('school_id',$school_id)->whereIn('usergroup_id',[8,10,11,12,13])->count();
+        $array['nonteachingCount']   = User::ByActive()->where('school_id',$school_id)->whereIn('usergroup_id',[8,10,11,12,13])->count();
 
 
         $array['maleCount']      = Cache::remember('maleCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
@@ -173,17 +173,17 @@ trait Dashboard
         $array['products'] =[];
         if (class_exists('App\Models\Product')) {
             $array['products']    = Product::where('school_id',$school_id)->where('product_type','sellable')->orderBy('created_at','DESC')->take(5)->get();
-        } 
+        }
 
-   
+
 
         // $array['nonteachingCount']   = User::where('school_id',$school_id)->Where('usergroup_id',13)->count();
                 $array['upcomingExam'] =[];
       if (class_exists('Gegok12\Exam\Models\ExamSchedule')) {
         $array['upcomingExam']   = \Gegok12\Exam\Models\ExamSchedule::with('exam')->whereHas('exam',function($query) use($academic_year)
-                              { 
+                              {
                                 $query->where('academic_year_id',$academic_year->id);
-                              })->where('start_time','>=',date('Y-m-d H:i:s'))->orderBy('start_time','DESC')->take(10)->get()->groupBy('start_time'); 
+                              })->where('start_time','>=',date('Y-m-d H:i:s'))->orderBy('start_time','DESC')->take(10)->get()->groupBy('start_time');
     }
 
         $array['standardLinks']  = SiteHelper::getStandardLinkList($school_id);
@@ -217,9 +217,9 @@ trait Dashboard
         $array['teachers']  = SiteHelper::getTeachingStaffList($school_id,$academic_year->id);
 
         //working
-        /*$startDate  = date('Y-m-d',strtotime($academic_year->start_date));  
+        /*$startDate  = date('Y-m-d',strtotime($academic_year->start_date));
         $endDate    = date('Y-m-d',strtotime($academic_year->end_date));
-            
+
         $attendances    = Attendance::with('user')->where([
             ['school_id',$school_id],
             ['academic_year_id',$academic_year->id],
@@ -227,14 +227,14 @@ trait Dashboard
             ['date','>=',$startDate],
             ['date','<=',$endDate]
         ])->orderBy('date','DESC')->get()->groupBy([function($attendance) {
-                    return Carbon::parse($attendance->date)->format('M Y'); 
+                    return Carbon::parse($attendance->date)->format('M Y');
                 },'user_id','session']);
         $i = 0;
-            
-        foreach ($attendances as $key => $attendance) 
+
+        foreach ($attendances as $key => $attendance)
         {
             //$array['attendances']['months'][$i] = $key;
-            foreach ($attendance as $user_id => $sessions) 
+            foreach ($attendance as $user_id => $sessions)
             {
                 $user = User::where('id',$user_id)->first();
                 $array['attendances']['students'][$user->name]['FullName'] = $user->FullName;
@@ -326,17 +326,17 @@ trait Dashboard
         $absent             =   Attendance::where([['user_id',$user_id->id],['status',0]])->count();
 
         $date=date('Y-m-d H:i:s');
-        
+
         if(class_exists('Gegok12\Exam\Models\Mark'))
         {
 
             $marks              =   \Gegok12\Exam\Models\Mark::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['user_id',$user_id->id]]);
 
-            
+
             if($mark != '')
-            { 
+            {
                 $marks = $marks->where(function ($query) use($mark)
-                { 
+                {
                     $query->where('obtained_marks',$mark);
 
                 });
@@ -344,7 +344,7 @@ trait Dashboard
             if($subject != '')
             {
                 $marks = $marks->whereHas('subject',function ($query) use($subject)
-                { 
+                {
                     $query->where('name','LIKE','%'.$subject.'%');
                 });
             }
@@ -356,7 +356,7 @@ trait Dashboard
                 });
             }
         }
-   
+
         if($present != 0)
         {
             $array['presentPercentage'] = $present=='' ? 0:number_format((float)( $present / $total )*100);
@@ -376,7 +376,7 @@ trait Dashboard
         {
             $array['marks']             = $marks->take(5)->get();
         }
-        
+
 
         return $array;
     }
@@ -391,7 +391,7 @@ trait Dashboard
         $teacherlinks   = $teacher->teacherlinkCurrentAcademicYear;
 
         $teachersubjects = [];
-        foreach ($teacherlinks as $teacherlink) 
+        foreach ($teacherlinks as $teacherlink)
         {
             $teachersubjects[$teacherlink->id]['subject']   = $teacherlink->subject->name;
             $teachersubjects[$teacherlink->id]['class']     = $teacherlink->standardLink->StandardSection;
@@ -404,14 +404,14 @@ trait Dashboard
          $array['timetable'] = [];
          if (class_exists('Gegok12\Timetable\Models\Timetable')) {
         $timetables     = Timetable::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['day',date('l')]])->whereIn('standardLink_id',$standardLinks)->get();
-       
-        foreach ($timetables as $key => $timetable) 
+
+        foreach ($timetables as $key => $timetable)
         {
-            foreach ($teachersubjects as $teachersubject) 
+            foreach ($teachersubjects as $teachersubject)
             {
-                foreach ($timetable->schedule as $key1 => $schedule) 
+                foreach ($timetable->schedule as $key1 => $schedule)
                 {
-                    foreach ($schedule as $index => $value) 
+                    foreach ($schedule as $index => $value)
                     {
                         if($index == 'subject_id')
                         {
@@ -433,7 +433,7 @@ trait Dashboard
         $array['upcomingExam']=[];
          if (class_exists('Gegok12\Exam\Models\ExamSchedule')) {
         $array['upcomingExam']  = \Gegok12\Exam\Models\ExamSchedule::with('exam','subject')->whereIn('standard_id',$standardLinks)->whereHas('exam',function($query) use($academic_year)
-        { 
+        {
             $query->where('academic_year_id',$academic_year->id);
         })->where('start_time','>=',date('Y-m-d H:i:s'))->orderBy('start_time','DESC')->take(10)->get()->groupBy('start_time');
     }
@@ -466,11 +466,11 @@ trait Dashboard
         $date=date('Y-m-d H:i:s');
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
-    
+
         $array['studentCount'] = Cache::remember('studentCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)  {
                                   return User::BySchool($school_id)->ByRole(6)->count();
                               });
-   
+
         $array['teacherCount']   = Cache::remember('teacherCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
                                   return User::BySchool($school_id)->ByRole(5)->count();
                                 });
@@ -478,11 +478,11 @@ trait Dashboard
         $array['eventCount']     = Cache::remember('eventCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
                                   return Events::where([['school_id',$school_id],['category','!=','holidays']])->count();
                                 });
- 
+
         $array['noticeboard']    = NoticeBoard::where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->orderBy('created_at','DESC')->take(5)->get();
         $array['events']    = Events::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['category','!=','holidays'],['end_date','>',$date]])->orderBy('created_at','DESC')->take(5)->get();
         //$array['activitylog']    = ActivityLog::where('causer_id',$admin_id)->orderBy('id','DESC')->take(6)->get();
-  
+
 
         return $array;
     }
@@ -495,7 +495,7 @@ trait Dashboard
         $date=date('Y-m-d H:i:s');
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
-    
+
         $array['bookCount'] =  Cache::remember('bookCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
                                   return Book::where('school_id',$school_id)->count();
                                 });
@@ -513,7 +513,7 @@ trait Dashboard
         $array['categoryCount']      = Cache::remember('categoryCount_'.$school_id, env('CACHE_TIME'), function () use ($school_id)                          {
                                   return BookCategory::where('school_id',$school_id)->count();
                                    });
-  
+
         $array['noticeboard']    = NoticeBoard::where([['school_id',$school_id],['academic_year_id',$academic_year->id]])->orderBy('created_at','DESC')->take(5)->get();
 
         $array['events']    = Events::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['category','!=','holidays'],['end_date','>',$date]])->orderBy('created_at','DESC')->take(5)->get();

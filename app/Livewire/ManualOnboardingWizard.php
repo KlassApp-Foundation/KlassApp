@@ -896,9 +896,7 @@ class ManualOnboardingWizard extends Component
             ->with('userprofile')
             ->where('school_id', $sid)
             ->where('usergroup_id', 6)
-            ->where(function ($q) {
-                $q->whereNull('status')->orWhere('status', '!=', 'exit');
-            })
+            ->ByActive()
             ->orderBy('id')
             ->limit(20)
             ->get()

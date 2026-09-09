@@ -121,7 +121,7 @@ class SchoolList extends Component
                 $q->where('usergroup_id', 6)->where('status', 'active');
             }])
             ->withCount(['user as teacher_count' => function ($q) {
-                $q->where('usergroup_id', 5)->where('status', '!=', 'exit');
+                $q->where('usergroup_id', 5)->where('status', 'active');
             }])
             ->withCount('user as total_users_count')
             ->withCount('subscription as subscription_count')
