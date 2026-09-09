@@ -349,14 +349,18 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 ([#469](https://github.com/KlassApp-Foundation/KlassApp/pull/469) **MERGED+DEPLOYED+LIVE-VERIFIED**; `origin/main` tip `7e5d506f`)
+## Current Status: September 9, 2026 ([#471](https://github.com/KlassApp-Foundation/KlassApp/pull/471) **MERGED+DEPLOYED+LIVE-VERIFIED**; `origin/main` tip `08420fa6`)
 
-- **✅ #469 Medical-history height/weight strip** (Track A follow-up): Removed height/weight from Admin edit (`CreateMedicalHistory.vue` + `MedicalHistoryRequest`), Admin/Teacher show APIs, and shared `medicalHistory.vue` display. DB columns on `student_academics` **kept** (UI-only).
-- **Admission blade**: `resources/views/pages/admission/student-detail.blade.php` (+ sibling fieldset blades) are **dead / unrouted** — live admission uses Vue `<add-admission>` / `StudentDetail.vue` (already stripped in #465). Flagged for future cleanup; not polished in #469.
-- **Merge**: `7e5d506f` · Cloud `depl-a2b375c2-f1df-4fa8-b585-e8c5de1be689` **deployment.succeeded** (`composer install --no-dev && npm run build`).
-- **Live Kampala (school 33)**: `e2e/screenshots/medical-history-height-weight/REPORT.json` **pass: true** — medical tab + edit form have no Height/Weight (student DAVID SSEMPIJJA).
-- **✅ #466** (prior): show/profile label strip — merge `db0bfe3e`; live `show-legacy-labels-466/`.
-- **✅ #465** (prior): form/filter/export/import strip + optional DOB — merge `fb4c9ace`; live `legacy-demographics-live-465/`.
+- **✅ #471 Role-aware profile dropdown**: Shared `layouts/partials/profile-dropdown` no longer hardcodes `/admin` (or `/superadmin`) for every role. `App\Support\PortalProfileLinks` maps usergroup → real routes; missing equivalents (e.g. Student edit-profile/avatar/settings; Parent mutators) are hidden.
+- **Merge**: `08420fa6` · Cloud `depl-a2b43789-3c8f-45dd-af14-7610c344f440` **deployment.succeeded**.
+- **Live**: `e2e/screenshots/profile-dropdown-role-aware/REPORT.json` **pass: true** — Student → `/student/changepassword` only; Parent portal Logout-only (no Admin account links). Synthetic verify users cleaned up.
+- **✅ #469** (prior): medical height/weight strip — merge `7e5d506f`; live `medical-history-height-weight/`.
+- **✅ #466** (prior): show/profile label strip — merge `db0bfe3e`.
+- **✅ #465** (prior): form/filter/export/import strip + optional DOB — merge `fb4c9ace`.
+
+## Previous: September 9, 2026 ([#469](https://github.com/KlassApp-Foundation/KlassApp/pull/469) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `7e5d506f`) — superseded above
+
+- Medical-history height/weight UI strip; live-verified Kampala school 33.
 
 ## Previous: September 9, 2026 ([#466](https://github.com/KlassApp-Foundation/KlassApp/pull/466) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `db0bfe3e`) — superseded above
 
@@ -1306,6 +1310,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-09: Role-aware shared profile dropdown (#471) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: See end-of-file Session Log entry for #471 (PortalProfileLinks + dropdown fix).
+- **PR**: [#471](https://github.com/KlassApp-Foundation/KlassApp/pull/471) merge `08420fa6`; Cloud `depl-a2b43789-…` succeeded; live `profile-dropdown-role-aware/REPORT.json` pass.
+- **Status**: ✅ Done
 
 ### 2026-09-09: #457 dual-school verify + minor findings triage/fixes — **IN PROGRESS (PR)**
 - **Work done**: (1) Confirmed Cloud Commands API accepts **flat** `{"command":"php artisan about"}` → 201 → poll `/api/commands/{id}` → `command.success` with `php artisan about` output. JSON:API-wrapped body was the prior 422 cause. No `laravel cloud` CLI login in this environment. (2) Dual-school #457: PLRs for same phone at schools 33+32; UI approve one leaves other pending — `e2e/screenshots/dual-school-plr-457/`. (3) Cheap fixes on branch `fix/minor-findings-dash-show-null-dob`: `StandardLink::getStandardSectionAttribute` (no leading ` - ` when roman empty), ClassTeacher/Teacher resources username→id fallback, `TeacherShowController@show` id resolve, null-safe DOB in Teacher + UserDetail resources. Test: `tests/Feature/MinorFindingsDisplayFixesTest.php` (5 passing).
@@ -9144,3 +9153,14 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Deploy**: Cloud `depl-a2b375c2-f1df-4fa8-b585-e8c5de1be689` **deployment.succeeded** on `7e5d506f` (includes `npm run build`).
 - **Live evidence**: `e2e/screenshots/medical-history-height-weight/REPORT.json` pass=true (Kampala school 33, DAVID SSEMPIJJA medical tab + edit).
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
+
+### 2026-09-09: Role-aware shared profile dropdown (#471)
+
+- **Work done**: Fixed shared nav dropdown that pointed Change Password / Edit Profile / Settings / avatar at `/admin/...` for every non-superadmin role. Added `App\Support\PortalProfileLinks` (usergroup → real routes only) and updated `resources/views/layouts/partials/profile-dropdown.blade.php` to hide missing equivalents.
+- **Route map verified**: Student password-only (`/student/changepassword`); Teacher/Receptionist/Accountant password+avatar; SchoolAdmin full admin set; Superadmin password+avatar+settings (no `editprofile`); Parent/Librarian/Alumni/Subadmin/Stock → hide mutators. Parent layout already Logout-only (does not include the dropdown).
+- **Tests**: `PortalProfileLinksTest` + `ProfileDropdownRoleAwareTest` — 16 passed.
+- **PR**: [#471](https://github.com/KlassApp-Foundation/KlassApp/pull/471) — merge `08420fa6`.
+- **Deploy**: Cloud `depl-a2b43789-3c8f-45dd-af14-7610c344f440` **deployment.succeeded** on `08420fa6`.
+- **Live evidence**: `e2e/screenshots/profile-dropdown-role-aware/REPORT.json` pass=true (synthetic Student + Parent on school 33; cleaned up after).
+- **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
+- **Edge cases flagged**: Librarian/Alumni still include the dropdown but now correctly show Logout-only account section (no Admin 404s). Parent never used the shared dropdown.
