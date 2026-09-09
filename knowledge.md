@@ -394,12 +394,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 ([#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) **OPEN** — repo root hygiene; tip pending merge)
+## Current Status: September 10, 2026 ([#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) **MERGED**; `origin/main` tip `30aeffc1`)
 
-- **✅ Root hygiene**: Deleted 28 session PNG artifacts + `students-screenshot.html` + `fix-note.md` + superseded `LARAVEL-CLOUD-ASSESSMENT.md`. Relocated `toshi-chat-kit-evaluation.md` → `docs/archive/toshi-chat-kit-evaluation.md`.
+- **✅ Root hygiene**: Deleted 28 session PNG artifacts + `students-screenshot.html` + `fix-note.md` + superseded `LARAVEL-CLOUD-ASSESSMENT.md`. Relocated `toshi-chat-kit-evaluation.md` → `docs/archive/toshi-chat-kit-evaluation.md`. Merge `30aeffc1` @ 2026-09-09T23:35:17Z.
 - **Prior**: [#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) README rewrite **MERGED** `a91183ae`; knowledge stamp [#490](https://github.com/KlassApp-Foundation/KlassApp/pull/490) `a9ecc641`.
 
-## Previous: September 10, 2026 ([#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) **MERGED**; `origin/main` tip `a91183ae`) — superseded above
+## Previous: September 10, 2026 ([#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) **MERGED**; tip `a91183ae`) — superseded above
 
 - **✅ README.md on `main`**: GeGoK12-era ops manual replaced with Open Design v3 product narrative (Toshi / agentic protocol / Q1 2027 OSS) adapted for GitHub README register. Contact: `community@klassapp.xyz` only. Merge commit `a91183ae` @ 2026-09-09T23:20:30Z (admin merge; was blocked on `REVIEW_REQUIRED` until then). Verified `README.md` on `main` starts with `# KlassApp` / “Tools connected by intelligence.”
 - **Note**: GitHub repo **About** sidebar description already showed agentic-protocol framing (with typos `KlasssApp` / `Deive`) since at least **2026-09-04** (CreateEvent payloads); that is **separate** from `README.md` and was **not** changed by #489.
@@ -1401,12 +1401,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-10: Repo root hygiene (session screenshots + stale root docs) — **PR OPEN**
+### 2026-09-10: Repo root hygiene (session screenshots + stale root docs) — **MERGED**
 - **Work done**: Removed loose root artifacts unfit for a public tree: 28 verification PNGs (`toshi-e2e-*`, `phase4-*`, `pulse-*`, `issue*`, misc e2e), `students-screenshot.html` (saved page + CSRF meta), empty `fix-note.md`, and superseded `LARAVEL-CLOUD-ASSESSMENT.md` (Aug 14 “do not migrate” planning; Cloud migration already done; SoT is knowledge Verified Stack / Cloud MCP). Relocated `toshi-chat-kit-evaluation.md` → `docs/archive/toshi-chat-kit-evaluation.md` (Jul 14 reject-kit rationale still useful).
 - **Files modified**: deletes as above; `docs/archive/toshi-chat-kit-evaluation.md` (moved); `knowledge.md`
 - **Key decisions**: Delete Cloud assessment rather than archive (would mislead as current guidance). Chat-kit eval kept in archive. No references to deleted PNGs/HTML existed in repo.
-- **PR**: [#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) branch `chore/repo-root-hygiene` (number confirmed at open).
-- **Status**: 🚧 PR open / awaiting review
+- **PR / merge**: [#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) merge `30aeffc1` @ 2026-09-09T23:35:17Z. Confirmed archive path on `main`; root assessment 404.
+- **Status**: ✅ MERGED
 - **Edge cases flagged**: Historical knowledge session still mentions root `LARAVEL-CLOUD-ASSESSMENT.md` path — annotated as removed.
 
 ### 2026-09-10: README rewrite (Open Design v3 narrative) — **MERGED**
