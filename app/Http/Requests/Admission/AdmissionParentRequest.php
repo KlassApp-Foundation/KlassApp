@@ -122,7 +122,6 @@ class AdmissionParentRequest extends FormRequest
             'father_income'             => 'required|numeric|check_father_annual_income|check_father_annual_income_value',
             'father_mobile_no'          => 'required|numeric|digits:10',
             'father_email'              => 'required|email',
-            'father_aadhar_number'      => 'required|numeric|digits:12',
       
             'mother_name'               => 'required|check_mother_name',
             'mother_qualification_id'   => 'required',
@@ -132,7 +131,6 @@ class AdmissionParentRequest extends FormRequest
             'mother_income'             => 'required|numeric|check_mother_annual_income|check_mother_annual_income_value',
             'mother_mobile_no'          => 'nullable|numeric|digits:10',
             'mother_email'              => 'nullable|email',
-            'mother_aadhar_number'      => 'required|numeric|digits:12',
 
             'emergency_contact_1'       => 'required|numeric|digits:10',
             'relation_with_student_1'   => 'required|check_relation',

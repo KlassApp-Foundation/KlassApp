@@ -201,7 +201,7 @@ exit;
     //dd($heads);
      $users = $this->TeacherFilter($request,Auth::user()->school_id,5);    
         $csv = Writer::createFromFileObject(new \SplTempFileObject());
-     $default=array('employee_id','designation','name','email','mobile_no','gender','Joining_date','adhaar','blood_group','date_of_birth','address','region','district','country','pincode',);
+     $default=array('employee_id','designation','name','email','mobile_no','gender','Joining_date','date_of_birth','address','region','district','country','pincode',);
      $result=[];
      $result = array_intersect($default, $heads);
      $result = array_map('ucfirst', $result);
@@ -242,21 +242,11 @@ exit;
                 {
                     $data[]=$user->userprofile->joining_date;
                 }
-                 if(in_array('caste', $heads))
-                {
-                    $data[]=$user->userprofile->caste;
-                }
-                 if(in_array('adhaar', $heads))
-                {
-                    $data[]=$user->userprofile->aadhar_number;
-                }
-                 if(in_array('blood_group', $heads))
-                {
-                    $data[]=$user->userprofile->blood_group;
-                }
                  if(in_array('date_of_birth', $heads))
                 {
-                    $data[]=date('d-m-Y',strtotime($user->userprofile->date_of_birth));
+                    $data[]=blank(optional($user->userprofile)->date_of_birth)
+                        ? ''
+                        : date('d-m-Y', strtotime($user->userprofile->date_of_birth));
                 }
                 if(in_array('address', $heads))
                 {

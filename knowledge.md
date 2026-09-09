@@ -349,12 +349,17 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 9, 2026 (branch `fix/minor-findings-dash-show-null-dob` — **PR opening**; `origin/main` tip `26ea8d7b`)
+## Current Status: September 9, 2026 ([#465](https://github.com/KlassApp-Foundation/KlassApp/pull/465) open — `fix/admin-strip-legacy-demographics`; `origin/main` tip `e369dbf4`)
 
-- **✅ #457 dual-school live evidence**: Same phone pending at Kampala **33** + Greenfield **32**; approve one leaves the other pending. Evidence: `e2e/screenshots/dual-school-plr-457/` (`CREATE.json`, `UI-VERIFY.json`, `SUMMARY.json`). Cloud Commands API: **flat** body `{"command":"…"}` (not JSON:API-wrapped); poll `GET /api/commands/{id}`; status `command.success`. `laravel cloud` CLI **not** logged in here (`~/.config/cloud/config.json` missing).
-- **🚧 Minor display fixes PR**: Leading-dash class label (`StandardLink::StandardSection`), `/admin/teacher/show/null` (username fallback + id resolve), null DOB → epoch in Teacher/UserDetail resources. Tests: `MinorFindingsDisplayFixesTest`.
-- **Minor triage**: (1) leading dash **fixing** (2) `/show/null` **fixing** (3) DOB epoch **fixing** (4) Toshi overlay **real, deferred** (5) fee fan-out **not a bug** (intentional `saveFeeSchoolWide`) (6–7) already covered by #460/#461–#462 majors.
-- **✅ #461+#462**: Exam create picker live-verified (see Previous).
+- **🚧 Admin legacy demographics strip (Track A+B)**: UI-only removal (DB columns kept). Dropped blood_group / aadhaar / caste / sub_caste / mother_tongue / birth_place / native_place from student/teacher/staff create·edit·filter·export·import surfaces; admission also drops religion/nationality/height/weight + parent aadhaar. Removed teacher/staff `marital_status` from forms/filters/validation. `date_of_birth` nullable everywhere it was required; null-safe age/birthday CSV/resources. LIN left alone.
+- **Evidence**: PHPUnit `LegacyDemographicsValidationTest` + `NullDateOfBirthAgeTest` (21 passed); local Playwright `e2e/screenshots/legacy-demographics/` (teacher add/edit clean, export modal no Blood/Aadhaar, birthday API 200 `[]`, student edit without Track A fields).
+- **✅ #464**: Leading-dash class labels, teacher `/show/null`, null DOB epoch — merge `e369dbf4`, Cloud deployed (see Previous).
+
+## Previous: September 9, 2026 (branch `fix/minor-findings-dash-show-null-dob` — **#464 MERGED+DEPLOYED**; `origin/main` tip `e369dbf4`) — superseded above
+
+- **✅ #457 dual-school live evidence**: Same phone pending at Kampala **33** + Greenfield **32**; approve one leaves the other pending. Evidence: `e2e/screenshots/dual-school-plr-457/`. Cloud Commands API: **flat** body `{"command":"…"}` (not JSON:API-wrapped); poll `GET /api/commands/{id}`; status `command.success`.
+- **✅ #464 Minor display fixes**: Leading-dash class label (`StandardLink::StandardSection`), `/admin/teacher/show/null`, null DOB → epoch in Teacher/UserDetail resources. Merge `e369dbf4`.
+- **✅ #461+#462**: Exam create picker live-verified.
 - **❌ Kampala REPORT — simulated, not real WhatsApp**.
 
 ## Previous: September 8, 2026 (`origin/main` tip `bd5bfddc` / docs tip `26ea8d7b` — **#461+#462 MERGED+DEPLOYED**; exam create date/class picker live-verified) — superseded above
@@ -9096,3 +9101,13 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Live evidence**: Playwright chat on https://klassapp.xyz school **17** (`toshi.plan.review.1788730418@example.test`) — teachers→students→terms→fees→skip exams/WA→**Freemium**→Review→Confirm. `e2e/screenshots/toshi-complete-plan-review/REPORT.json` `pass: true`. DB after: 2 teacher users, 2 students, 3 terms, Tuition fee, CurrentPlan plan_id=1. Also Cloud Livewire::test school **18**: `landed_on_review=true`, no detectMissingSteps checklist, committed students/terms/fees/plan.
 - **Status**: ✅ MERGED + DEPLOYED + LIVE-VERIFIED
 
+
+### 2026-09-09: Admin dashboard legacy demographics strip (Track A+B)
+
+- **Decision**: **UI-only** removal — DB columns kept for rollback/safety. No drop migrations this pass. **LIN left as-is**.
+- **Track A removed** from create/edit/filter/export/import: blood_group, aadhar_number/adhaar, caste, sub_caste, mother_tongue, birth_place, native_place. Admission also: religion, nationality, height, weight + parent aadhaar.
+- **Track B**: marital_status removed from teacher/staff forms/filters/`TeacherProfileAddRequest`; `date_of_birth` → `nullable` on student/teacher/admission requests. Null-safe age/birthday CSV/resources.
+- **Tests**: `LegacyDemographicsValidationTest` + `NullDateOfBirthAgeTest` — 21 passed.
+- **UI evidence**: `e2e/screenshots/legacy-demographics/` (teacher add/edit, Custom Export modal, student edit).
+- **PR**: [#465](https://github.com/KlassApp-Foundation/KlassApp/pull/465) — branch `fix/admin-strip-legacy-demographics`.
+- **Status**: 🚧 PR open

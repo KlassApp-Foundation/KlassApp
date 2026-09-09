@@ -117,7 +117,6 @@ class TeachersImport implements ToCollection, WithHeadingRow
                     ? Carbon::parse($row['date_of_birth'])->format('Y-m-d')
                     : null;
 
-                $teacher->blood_group      = $row['blood_group'] ?? null;
                 $teacher->address          = $row['address'] ?? null;
                 $teacher->city_id          = $city->id ?? null;
                 $teacher->country_id       = $country->id ?? null;

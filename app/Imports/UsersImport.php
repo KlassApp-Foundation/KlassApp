@@ -127,7 +127,6 @@ class UsersImport implements ToCollection, WithHeadingRow
                 | OPTIONAL FIELDS (IGNORED IF EMPTY)
                 |--------------------------------------------------------------------------
                 */
-                $student->blood_group   = !empty($row['blood_group']) ? strtolower($row['blood_group']) : null;
                 $student->joining_date  = !empty($row['joining_date'])
                     ? Carbon::parse($row['joining_date'])->format('Y-m-d')
                     : null;

@@ -129,32 +129,6 @@
                             />
                             <label for="Joining_date">Joining Date</label><br />
                             <input
-                                class="hidden"
-                                type="checkbox"
-                                id="caste"
-                                value="caste"
-                                v-model="checkedNames"
-                            />
-                            <label class="hidden" for="caste">Caste</label
-                            ><br />
-                            <input
-                                class="hidden"
-                                type="checkbox"
-                                id="adhaar"
-                                value="adhaar"
-                                v-model="checkedNames"
-                            />
-                            <label class="hidden" for="adhaar"
-                                >Adhaar Number</label
-                            ><br />
-                            <input
-                                type="checkbox"
-                                id="blood_group"
-                                value="blood_group"
-                                v-model="checkedNames"
-                            />
-                            <label for="blood_group">Blood Group</label><br />
-                            <input
                                 type="checkbox"
                                 id="date_of_birth"
                                 value="date_of_birth"
@@ -241,9 +215,6 @@ export default {
                 "admission_number",
                 "LIN",
                 "Joining_date",
-                "caste",
-                "adhaar",
-                "blood_group",
                 "date_of_birth",
                 "address",
                 "city",

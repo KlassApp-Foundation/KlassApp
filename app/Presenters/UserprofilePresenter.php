@@ -29,7 +29,11 @@ class UserprofilePresenter extends Presenter
   }
 
   public function getAge($date_of_birth)
-  {         
+  {
+    if (blank($date_of_birth)) {
+      return null;
+    }
+
     $to     = date('Y', strtotime($date_of_birth));
     $now    = Carbon::now();
     $from   = date('Y', strtotime($now));

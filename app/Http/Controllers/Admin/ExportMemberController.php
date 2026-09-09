@@ -44,7 +44,7 @@ class ExportMemberController extends Controller
 
         if(count($users) > 0)
         {
-            $csv->insertOne(['firstname','lastname','parent_name','standard','admission_number','lin','Joining_date','caste','adhaar','blood_group','gender','date_of_birth','address','city','state','country','pincode','mobile_no','email','notes','status',]);
+            $csv->insertOne(['firstname','lastname','parent_name','standard','admission_number','lin','Joining_date','gender','date_of_birth','address','city','state','country','pincode','mobile_no','email','notes','status',]);
       
             foreach($users as $user)
             {
@@ -57,11 +57,10 @@ class ExportMemberController extends Controller
                     $user->userprofile->registration_number,
                     $user->userprofile->LIN,
                     $user->userprofile->joining_date,
-                    $user->userprofile->caste,
-                    $user->userprofile->aadhar_number,
-                    $user->userprofile->blood_group,
                     $user->userprofile->gender,
-                    date('d-m-Y',strtotime($user->userprofile->date_of_birth)),
+                    blank(optional($user->userprofile)->date_of_birth)
+                        ? ''
+                        : date('d-m-Y', strtotime($user->userprofile->date_of_birth)),
                     $user->userprofile->address,
                     $user->userprofile->city->name,
                     $user->userprofile->country->name,
@@ -112,7 +111,7 @@ class ExportMemberController extends Controller
     //dd($heads);
      $users = $this->MemberFilter($request,Auth::user()->school_id,6,'active');    
         $csv = Writer::createFromFileObject(new \SplTempFileObject());
-     $default=array('name','email','mobile_no','parent_name','standard','gender','admission_number','LIN','Joining_date','caste','adhaar','blood_group','date_of_birth','address','city','state','country','pincode','notes');
+     $default=array('name','email','mobile_no','parent_name','standard','gender','admission_number','LIN','Joining_date','date_of_birth','address','city','state','country','pincode','notes');
      $result=[];
      $result = array_intersect($default, $heads);
      $result = array_map('ucfirst', $result);
@@ -170,21 +169,11 @@ class ExportMemberController extends Controller
                 {
                     $data[]=$user->userprofile->joining_date;
                 }
-                 if(in_array('caste', $heads))
-                {
-                    $data[]=$user->userprofile->caste;
-                }
-                 if(in_array('adhaar', $heads))
-                {
-                    $data[]=$user->userprofile->aadhar_number;
-                }
-                 if(in_array('blood_group', $heads))
-                {
-                    $data[]=$user->userprofile->blood_group;
-                }
                  if(in_array('date_of_birth', $heads))
                 {
-                    $data[]=date('d-m-Y',strtotime($user->userprofile->date_of_birth));
+                    $data[]=blank(optional($user->userprofile)->date_of_birth)
+                        ? ''
+                        : date('d-m-Y', strtotime($user->userprofile->date_of_birth));
                 }
                 if(in_array('address', $heads))
                 {
@@ -240,7 +229,7 @@ class ExportMemberController extends Controller
     //dd($heads);
        
         $csv = Writer::createFromFileObject(new \SplTempFileObject());
-     $default=array('name','email','mobile_no','parent_name','standard','gender','admission_number','LIN','Joining_date','caste','adhaar','blood_group','date_of_birth','address','city','state','country','pincode','notes');
+     $default=array('name','email','mobile_no','parent_name','standard','gender','admission_number','LIN','Joining_date','date_of_birth','address','city','state','country','pincode','notes');
      $result=[];
      $result = array_intersect($default, $heads);
      $result = array_map('ucfirst', $result);

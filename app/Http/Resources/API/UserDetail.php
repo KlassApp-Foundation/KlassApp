@@ -25,7 +25,9 @@ class UserDetail extends JsonResource
 
             'gender'                    =>  $this->userprofile->gender,
 
-            'dateOfBirth'               =>  date('d-m-Y',strtotime($this->userprofile->date_of_birth)),
+            'dateOfBirth'               =>  blank(optional($this->userprofile)->date_of_birth)
+                ? null
+                : date('d-m-Y', strtotime($this->userprofile->date_of_birth)),
 
             'bloodGroup'                =>  strtoupper($this->userprofile->blood_group),
 

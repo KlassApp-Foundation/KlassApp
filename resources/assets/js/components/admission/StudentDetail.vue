@@ -46,23 +46,6 @@
                                 <span v-if="errors.gender" class="text-red-500 text-xs font-semibold">{{ errors.gender[0] }}</span>
                             </div>
                         </div>
-
-                        <div class="flex flex-col lg:flex-row">
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="height" class="tw-form-label">Height</label>
-                                    <input type="text" name="height" v-model="height" placeholder="Height" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.height" class="text-red-500 text-xs font-semibold">{{ errors.height[0] }}</span>
-                            </div>
-                            <div class="w-full lg:w-1/2 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="weight" class="tw-form-label">Weight</label>
-                                    <input type="text" name="weight" v-model="weight" placeholder="Weight" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.weight" class="text-red-500 text-xs font-semibold">{{ errors.weight[0] }}</span>
-                            </div>
-                        </div>
                     </div>
                     <div class="w-full lg:w-1/3">
                         <div class="relative w-10/12 mx-auto my-2">
@@ -79,42 +62,11 @@
                 </div>
 
                 <div class="flex flex-col lg:flex-row">
-                    <div class="w-full lg:w-full">
-                        <div class="flex flex-col lg:flex-row">
-                            <div class="w-full lg:w-1/3 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="birth_place" class="tw-form-label">Birth Place</label>
-                                    <input type="text" name="birth_place" v-model="birth_place" placeholder="Birth Place" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.birth_place" class="text-red-500 text-xs font-semibold">{{ errors.birth_place[0] }}</span>
-                            </div>
-                            <div class="w-full lg:w-1/3 lg:mr-2">
-                                <div class="my-1">
-                                    <label for="nationality" class="tw-form-label">Nationality</label>
-                                    <input type="text" name="nationality" v-model="nationality" placeholder="Nationality" class="tw-form-control w-full my-1 py-2">
-                                </div>
-                                <span v-if="errors.nationality" class="text-red-500 text-xs font-semibold">{{ errors.nationality[0] }}</span>
-                            </div>
-                            <div class="my-1 w-full lg:w-1/3 lg:mr-2">
-                                <label for="religion" class="tw-form-label">Religion</label>
-                                <input type="text" name="religion" v-model="religion" placeholder="Religion" class="tw-form-control w-full my-1 py-2">
-                                <span v-if="errors.religion" class="text-red-500 text-xs font-semibold">{{ errors.religion[0] }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col lg:flex-row">
                     <div class="my-1 w-full lg:w-1/2 lg:mr-2">
                         <label for="community" class="tw-form-label">Community</label>
                         <input type="text" name="community" v-model="community" placeholder="Community" class="tw-form-control w-full my-1 py-2">
                         <p class="text-xs mb-0">(BC / BCM / FC / MBC / OBC / Others / SC / SCA / ST )</p>
                         <span v-if="errors.community" class="text-red-500 text-xs font-semibold">{{ errors.community[0] }}</span>
-                    </div>
-                    <div class="my-1 w-full lg:w-1/2 lg:mr-2">
-                        <label for="mother_tongue" class="tw-form-label">Mother tongue</label>
-                        <input type="text" name="mother_tongue" v-model="mother_tongue" placeholder="Mother tongue" class="tw-form-control w-full my-1 py-2">
-                        <span v-if="errors.mother_tongue" class="text-red-500 text-xs font-semibold">{{ errors.mother_tongue[0] }}</span>
                     </div>
                 </div>
 
@@ -129,22 +81,6 @@
                             <input type="text" name="identification_marks_1" placeholder="Identification Marks" v-model="identification_marks_1" class="tw-form-control w-full my-1 py-2">
                             <span v-if="errors.identification_marks_1" class="text-red-500 text-xs font-semibold">{{ errors.identification_marks_1[0] }}</span>
                         </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col lg:flex-row">
-                    <div class="my-1 w-full lg:w-1/2 lg:mr-2">
-                        <label for="aadhar_number" class="tw-form-label">Aadhaar Number</label>
-                        <input type="text" name="aadhar_number" v-model="aadhar_number" placeholder="Aadhar Number" class="tw-form-control w-full my-1 py-2">
-                        <span v-if="errors.aadhar_number" class="text-red-500 text-xs font-semibold">{{ errors.aadhar_number[0] }}</span>
-                    </div>
-                    <div class="w-full lg:w-1/2 lg:mr-2 my-1">
-                        <label for="blood_group" class="tw-form-label">Blood Group</label>
-                        <select name="blood_group" id="type" v-model="blood_group" class="tw-form-control w-full my-1 py-2">
-                            <option value="" disabled="disabled">Select Blood Group</option> 
-                            <option v-for="blood in blood_group_list" v-bind:value="blood.num">{{ blood.name }}</option>
-                        </select>
-                        <span v-if="errors.blood_group"><p class="text-red-500 text-xs font-semibold">{{errors.blood_group[0]}}</p></span>
                     </div>
                 </div>
 
@@ -217,17 +153,9 @@
                 lastname:'',
                 date_of_birth:'',
                 gender:'',
-                height:'',
-                weight:'',
-                birth_place:'',
-                nationality:'',
-                religion:'',
                 community:'',
-                mother_tongue:'',
                 identification_marks:'',
                 identification_marks_1:'',
-                aadhar_number:'',
-                blood_group:'',
                 school_last_studied:'',
                 reason_for_leaving:'',
                 permanent_address:'',
@@ -235,7 +163,6 @@
                 siblings:'',
                 avatar:'',
                 image:'',
-                blood_group_list:[],
                 standard_id:'',
                 errors:[],
                 success:null,
@@ -244,13 +171,6 @@
         
         methods:
         {
-            getData()
-            {
-                axios.get(this.url+'/'+this.slug+'/standardlist').then(response => {
-                    this.blood_group_list = response.data.blood_group_list;
-                });
-            },
-
             OnFileSelected(event)
             {
                 this.avatar=event.target.files[0];
@@ -281,17 +201,9 @@
                 formData.append('lastname',this.lastname);          
                 formData.append('date_of_birth',this.date_of_birth);          
                 formData.append('gender',this.gender);          
-                formData.append('height',this.height);          
-                formData.append('weight',this.weight);          
                 formData.append('avatar',this.avatar);          
-                formData.append('birth_place',this.birth_place);          
-                formData.append('nationality',this.nationality);                  
-                formData.append('religion',this.religion);          
                 formData.append('community',this.community);          
-                formData.append('mother_tongue',this.mother_tongue);          
                 formData.append('identification_marks',this.identification_marks);          
-                formData.append('aadhar_number',this.aadhar_number);          
-                formData.append('blood_group',this.blood_group);          
                 formData.append('school_last_studied',this.school_last_studied);          
                 formData.append('reason_for_leaving',this.reason_for_leaving);          
                 formData.append('permanent_address',this.permanent_address);          
@@ -321,7 +233,6 @@
 
         created()
         {
-            this.getData();
             bus.$on("dataAdmissionTab", data => {
                 if(data!='')
                 {

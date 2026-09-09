@@ -72,23 +72,15 @@ class AdmissionStudentRequest extends FormRequest
         return [
             //
             'name'                      => 'required|check_name',
-            'date_of_birth'             => 'required|date',
+            'date_of_birth'             => 'nullable|date',
             'gender'                    => 'required',
-            'height'                    => 'required|numeric|digits:3',
-            'weight'                    => 'required|numeric|min:1|max:150',
-            'birth_place'               => 'required|check_birth_place',
-            'nationality'               => 'required|check_nationality',
-            'religion'                  => 'required|check_religion',
             'community'                 => 'required|check_community',
-            'mother_tongue'             => 'required|check_mother_tongue',
             'identification_marks'      => 'required|check_identification_marks',
-            'aadhar_number'             => 'nullable|digits:12',
-            'blood_group'               => 'nullable',
             'school_last_studied'       => 'nullable|check_school_last_studied',
             'reason_for_leaving'        => 'nullable|check_reason_for_leaving',
             'permanent_address'         => 'required',
             'address_for_communication' => 'required',
-            'siblings'                  => 'required',  
+            'siblings'                  => 'required',
         ];
     }
 

@@ -97,9 +97,7 @@
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
                             <label for="date_of_birth" class="tw-form-label"
-                                >Date Of Birth<span class="text-red-500"
-                                    >*</span
-                                ></label
+                                >Date Of Birth</label
                             >
                         </div>
                         <div class="mb-2">
@@ -253,102 +251,9 @@
                         >
                     </div>
                 </div>
-
-                <div class="tw-form-group w-full lg:w-1/3">
-                    <div class="lg:mr-8 md:mr-8">
-                        <div class="mb-2">
-                            <label for="blood_group" class="tw-form-label">
-                                Blood Group
-                                <!-- <span class="text-red-500">*</span> -->
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <select
-                                class="tw-form-control w-full"
-                                id="blood_group"
-                                v-model="blood_group"
-                                name="blood_group"
-                            >
-                                <option value="" disabled>
-                                    Select Blood Group
-                                </option>
-                                <option
-                                    v-for="blood_group in blood_groups"
-                                    v-bind:value="blood_group.num"
-                                >
-                                    {{ blood_group.name }}
-                                </option>
-                            </select>
-                        </div>
-                        <span
-                            v-if="errors.blood_group"
-                            class="text-red-500 text-xs font-semibold"
-                            >{{ errors.blood_group[0] }}</span
-                        >
-                    </div>
-                </div>
-
-                <div class="tw-form-group w-full lg:w-1/3 hidden">
-                    <div class="lg:mr-8 md:mr-8">
-                        <div class="mb-2">
-                            <label for="aadhar_number" class="tw-form-label"
-                                >Aadhaar Number</label
-                            >
-                        </div>
-                        <div class="mb-2">
-                            <input
-                                type="text"
-                                class="tw-form-control w-full"
-                                id="aadhar_number"
-                                v-model="aadhar_number"
-                                name="aadhar_number"
-                            />
-                        </div>
-                        <span
-                            v-if="errors.aadhar_number"
-                            class="text-red-500 text-xs font-semibold"
-                            >{{ errors.aadhar_number[0] }}</span
-                        >
-                    </div>
-                </div>
             </div>
 
             <div class="flex flex-col lg:flex-row">
-                <div class="tw-form-group w-full lg:w-1/3">
-                    <div class="lg:mr-8 md:mr-8">
-                        <div class="mb-2">
-                            <label for="marital_status" class="tw-form-label"
-                                >Marital Status<span class="text-red-500"
-                                    >*</span
-                                ></label
-                            >
-                        </div>
-                        <div class="mb-2">
-                            <select
-                                name="marital_status"
-                                v-model="marital_status"
-                                id="marital_status"
-                                class="tw-form-control w-full"
-                            >
-                                <option value="" disabled>
-                                    Select Marital Status
-                                </option>
-                                <option
-                                    v-for="marital in maritalList"
-                                    v-bind:value="marital.id"
-                                >
-                                    {{ marital.name }}
-                                </option>
-                            </select>
-                        </div>
-                        <span
-                            v-if="errors.marital_status"
-                            class="text-red-500 text-xs font-semibold"
-                            >{{ errors.marital_status[0] }}</span
-                        >
-                    </div>
-                </div>
-
                 <div class="tw-form-group w-full lg:w-1/3">
                     <div class="lg:mr-8 md:mr-8">
                         <div class="mb-2">
@@ -534,8 +439,6 @@ export default {
             lastname: "",
             gender: "",
             date_of_birth: "",
-            blood_group: "",
-            aadhar_number: "",
             employee_id: "",
             joining_date: "",
             designation: "",
@@ -543,12 +446,9 @@ export default {
             job_type: "",
             interested_in: "",
             avatar: "",
-            marital_status: "",
             reporting_to: "",
             errors: [],
             success: null,
-            maritalList: [],
-            blood_groups: [],
             designationlist: [],
             HODList: [],
             principalList: [],
@@ -577,14 +477,9 @@ export default {
                 this.job_type = this.user.job_type;
                 this.interested_in = this.user.interested_in;
                 this.gender = this.user.gender;
-                this.blood_group = this.user.blood_group;
-                this.aadhar_number = this.user.aadhar_number;
-                this.marital_status = this.user.marital_status;
                 this.joining_date = this.user.joining_date;
                 this.reporting_to = this.user.reporting_to;
                 //this.designationlist    = this.user.designationlist;
-                this.blood_groups = this.user.blood_groups;
-                this.maritalList = this.user.maritalList;
                 this.HODList = this.user.HODList;
                 this.principalList = this.user.principalList;
                 if (this.staff == "teaching") {
@@ -607,8 +502,6 @@ export default {
             formData.append("lastname", this.lastname);
             formData.append("gender", this.gender);
             formData.append("date_of_birth", this.date_of_birth);
-            formData.append("blood_group", this.blood_group);
-            formData.append("aadhar_number", this.aadhar_number);
             formData.append("joining_date", this.joining_date);
             formData.append("employee_id", this.employee_id);
             formData.append("designation", this.designation);
@@ -616,7 +509,6 @@ export default {
             formData.append("job_type", this.job_type);
             formData.append("interested_in", this.interested_in);
             formData.append("avatar", this.avatar);
-            formData.append("marital_status", this.marital_status);
             formData.append("reporting_to", this.reporting_to);
 
             axios
