@@ -19,6 +19,13 @@
                @endif
             </td>
             <td data-label="Actions" class="flex items-center gap-2">
+               @if(is_null($section->class_teacher_id))
+                  <a href="{{ route('admin.class-teacher-invite.create', $section) }}" class="ds-btn ds-btn-primary ds-btn-sm">
+                     Invite Class Teacher
+                  </a>
+               @else
+                  <span class="text-sm text-gray-500">{{ $section->classTeacher?->name ?? 'CT set' }}</span>
+               @endif
                <a href="#" class="ds-btn ds-btn-ghost ds-btn-sm">Edit</a>
                <form action="{{ route('admin.classes.delete', $section) }}" method='POST' class='inline'>
                   @csrf
@@ -53,7 +60,7 @@
             },
             allowOutsideClick: false,
          }).then((willChange) => {
-            if (willChange) 
+            if (willChange)
             {
                $.ajax({
                   url: link,
@@ -70,11 +77,11 @@
                      });
                   }
                })
-            } 
-            else 
+            }
+            else
             {
                swal("Cancelled");
-            } 
+            }
          });
       });
    });
@@ -91,7 +98,7 @@
             },
             allowOutsideClick: false,
          }).then((willChange) => {
-            if (willChange) 
+            if (willChange)
             {
                $.ajax({
                   url: link,
@@ -108,13 +115,13 @@
                   }
                })
             }
-            else 
+            else
             {
                swal("Cancelled");
-            } 
+            }
          });
       });
    });
 </script>
 
-@endpush 
+@endpush
