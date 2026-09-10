@@ -87,6 +87,23 @@ Route::prefix('preview')->name('preview.')->group(function () {
             'password' => 'The password must contain at least one symbol.',
         ]);
     })->name('force-change-password');
+
+    // Phase C — preview-only renderer for Pass-2 error shells (does not trigger a real failure).
+    Route::get('/errors/{code}', function (string $code) {
+        $allowed = ['404', '419', '500'];
+        abort_unless(in_array($code, $allowed, true), 404);
+
+        $exception = new \Symfony\Component\HttpKernel\Exception\HttpException(
+            (int) $code,
+            'Preview: synthetic HttpException for design review (not a real failure).'
+        );
+
+        return response()->view("errors.{$code}", [
+            'errors' => new \Illuminate\Support\ViewErrorBag,
+            'exception' => $exception,
+            'isPreview' => true,
+        ], 200);
+    })->where('code', '404|419|500')->name('errors');
 });
 
 // Landing page v2 (Flare-style)

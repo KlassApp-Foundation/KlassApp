@@ -394,12 +394,22 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 (`feature/auth-pages-preview` **PUSHED to origin** tip `897c208c` — Phase B auth preview; lineage from `feature/landing-preview-v3`; **NOT merged to main**; **NOT live cutover**)
+## Current Status: September 10, 2026 (`feature/auth-pages-preview` — Phases A+B+C **preview track PUSHED**; **NOT merged to main**)
+
+- **✅ Phase C error pages (404/419/500)**: Pass-2 restyle of existing `resources/views/errors/{404,419,500}.blade.php` + new `errors/pass2-layout.blade.php` (self-contained CSS, no Vite). Preview `GET /preview/errors/{404|419|500}` (`preview.errors`). `ErrorsPreviewTest` + Playwright `e2e/errors-preview-verify.cjs`.
+- **Laravel 12.63 confirmed**: dedicated `404`/`500`/`503` views required — `4xx`/`5xx` fallbacks do **not** cover them (docs + `Handler::getHttpExceptionView`).
+- **$exception**: still passed by `renderHttpException`; 500 keeps **static** calm copy (does **not** echo TypeError / `$schoolId` messages when non-HTTP exceptions are wrapped as `HttpException(500, $e->getMessage())` with `APP_DEBUG=false`).
+- **⚠️ Cutover asymmetry vs auth**: Phase B left live `/login` untouched. Phase C **edited the real error blades** — on this branch (and on merge to main) real 404/419/500 **are** the Pass-2 shells. Preview route is for review without forcing a failure; merge ≈ error cutover. Approve before merging.
+- **Phase B** auth preview still on same branch (`/preview/login` etc.; live auth untouched).
+- **Phase A** landing still on `origin/feature/landing-preview-v3` (`/landing-preview`; live `/` untouched).
+- **NOT done / separate decisions**: merge to main; live cutover of `/`, `/login`, `/register`; whether 401/403/429/503 also get Pass-2; six-box OTP.
+
+## Previous: September 10, 2026 (`feature/auth-pages-preview` tip `897c208c` / knowledge `0c6bbdbf` — Phase B auth preview) — superseded above
 
 - **✅ Phase B auth pages preview**: branch `origin/feature/auth-pages-preview` @ `897c208c` (from `origin/feature/landing-preview-v3`). Preview-only restyle of login / register / reset-request / reset-code / reset-newpw / force-change-password against locked Pass 2 mockup `~/open-design/.od/projects/klassapp-auth-error-pass2/auth-error.html`.
 - **On branch**: `resources/css/auth-preview.css`, `resources/views/layouts/auth-preview.blade.php`, `resources/views/auth/preview/*`, Vite entry, preview routes `/preview/{login,register,reset-request,reset-code,reset-newpw,force-change-password}`, `AuthPreviewTest`, Playwright `e2e/auth-preview-verify.cjs` + `e2e/screenshots/auth-preview/` (`REPORT.json` pass: true).
 - **Verify**: PHPUnit `AuthPreviewTest` **6 passed** (54 asserts). Playwright 1440/1024/900/760 **pass: true**, **zero console errors**; Pass-2 metrics measured (44×44 toggles / 20px icons, `#22C55E`/`#16A34A`, error `#DC2626`/`#FEF2F2`/`#FECACA`, Google asymmetry, single 6-digit code input, force-change 5 rules + no escape hatch). Real form POSTs hit live endpoints and return validation redirects.
-- **NOT done**: Phase C (404/419/500); live cutover of `/login` `/register` etc. (live blades untouched); six discrete OTP boxes (explicitly deferred — keep single input).
+- **NOT done**: live cutover of `/login` `/register` etc. (live blades untouched); six discrete OTP boxes (explicitly deferred — keep single input). Phase C continued on same branch (see Current Status).
 - **Phase A** still on `origin/feature/landing-preview-v3` (landing preview); not merged.
 
 ## Previous: September 10, 2026 (`feature/landing-preview-v3` **PUSHED to origin** — Phase A secured; **NOT merged to main**; **NOT live**) — superseded above for design-track
