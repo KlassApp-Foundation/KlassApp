@@ -891,6 +891,12 @@ class ManualOnboardingWizard extends Component
             ->unique()
             ->values()
             ->all();
+
+        // Checkpoint land via setStepIndex does not run prepareStepFields — clear the
+        // default "Mathematics" so Next is a true no-op when subjects already exist.
+        if ($this->existingSubjectNames !== []) {
+            $this->subjectName = '';
+        }
     }
 
     public function render()

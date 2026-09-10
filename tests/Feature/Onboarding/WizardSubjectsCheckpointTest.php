@@ -116,6 +116,7 @@ class WizardSubjectsCheckpointTest extends TestCase
         );
         $this->assertTrue(Subject::where('school_id', $this->school->id)->exists());
         $this->assertNotEmpty($component->get('existingSubjectNames'));
+        $this->assertSame('', $component->get('subjectName'));
         $component->assertSeeHtml('data-testid="wizard-subjects-seeded"');
         $component->assertSee('Subjects already set up');
     }
