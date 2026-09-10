@@ -394,10 +394,10 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 (`feature/auth-pages-preview` **PUSHED to origin** — Phase B auth preview; lineage from `feature/landing-preview-v3`; **NOT merged to main**; **NOT live cutover**)
+## Current Status: September 10, 2026 (`feature/auth-pages-preview` **PUSHED to origin** tip `897c208c` — Phase B auth preview; lineage from `feature/landing-preview-v3`; **NOT merged to main**; **NOT live cutover**)
 
-- **✅ Phase B auth pages preview**: branch `feature/auth-pages-preview` (from `origin/feature/landing-preview-v3`). Preview-only restyle of login / register / reset-request / reset-code / reset-newpw / force-change-password against locked Pass 2 mockup `~/open-design/.od/projects/klassapp-auth-error-pass2/auth-error.html`.
-- **On branch**: `resources/css/auth-preview.css`, `resources/views/layouts/auth-preview.blade.php`, `resources/views/auth/preview/*`, Vite entry, preview routes `/preview/{login,register,reset-request,reset-code,reset-newpw,force-change-password}`, `AuthPreviewTest`, Playwright `e2e/auth-preview-verify.cjs` + `e2e/screenshots/auth-preview/`.
+- **✅ Phase B auth pages preview**: branch `origin/feature/auth-pages-preview` @ `897c208c` (from `origin/feature/landing-preview-v3`). Preview-only restyle of login / register / reset-request / reset-code / reset-newpw / force-change-password against locked Pass 2 mockup `~/open-design/.od/projects/klassapp-auth-error-pass2/auth-error.html`.
+- **On branch**: `resources/css/auth-preview.css`, `resources/views/layouts/auth-preview.blade.php`, `resources/views/auth/preview/*`, Vite entry, preview routes `/preview/{login,register,reset-request,reset-code,reset-newpw,force-change-password}`, `AuthPreviewTest`, Playwright `e2e/auth-preview-verify.cjs` + `e2e/screenshots/auth-preview/` (`REPORT.json` pass: true).
 - **Verify**: PHPUnit `AuthPreviewTest` **6 passed** (54 asserts). Playwright 1440/1024/900/760 **pass: true**, **zero console errors**; Pass-2 metrics measured (44×44 toggles / 20px icons, `#22C55E`/`#16A34A`, error `#DC2626`/`#FEF2F2`/`#FECACA`, Google asymmetry, single 6-digit code input, force-change 5 rules + no escape hatch). Real form POSTs hit live endpoints and return validation redirects.
 - **NOT done**: Phase C (404/419/500); live cutover of `/login` `/register` etc. (live blades untouched); six discrete OTP boxes (explicitly deferred — keep single input).
 - **Phase A** still on `origin/feature/landing-preview-v3` (landing preview); not merged.
@@ -1414,13 +1414,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-10: Phase B auth-pages preview — **PUSHED on `feature/auth-pages-preview`**
+### 2026-09-10: Phase B auth-pages preview — **PUSHED** `origin/feature/auth-pages-preview` @ `897c208c`
 - **Work done**: Restyled auth flows as **preview-only** blades (live `resources/views/auth/*` untouched) from Pass 2 locked mockup. Shared `auth-preview.css` tokens; forms POST to real endpoints. Preview GETs optionally `?demo_errors=1` for banner measurement.
 - **Files modified**: `resources/css/auth-preview.css`, `resources/views/layouts/auth-preview.blade.php`, `resources/views/auth/preview/*`, `routes/web.php`, `vite.config.js`, `public/build/*` (auth-preview asset), `tests/Feature/AuthPreviewTest.php`, `e2e/auth-preview-verify.cjs`, `e2e/screenshots/auth-preview/`, `knowledge.md`
 - **Key decisions**: Keep single 6-digit code input (not mockup six boxes). Sora/DM Sans over mockup Bricolage/Inter (match app auth brand). Force-change: 5 rules + no escape hatch. Google asymmetry preserved (login GET `/auth/google`, register POST `auth.google.start` + `formnovalidate`). Branch lineage from Phase A, not disconnected from main alone.
 - **Verify**: `AuthPreviewTest` 6/6; Playwright REPORT `pass: true` at 1440/1024/900/760; Pass-2 properties measured true; validation POSTs 302 back.
 - **NOT done**: Phase C; live `/login` cutover.
-- **Status**: ✅ Pushed to origin; ⏸️ awaiting review; do not start Phase C until reviewed
+- **Status**: ✅ Pushed to origin @ `897c208c`; ⏸️ awaiting review; do not start Phase C until reviewed
 
 ### 2026-09-10: Phase A landing-preview restored to `origin/feature/landing-preview-v3` — **PUSHED; not merged**
 - **Work done**: Compared `stash@{6}` vs `@{7}`: Phase A file blobs (blade/css/js/REPORT) **identical**; untracked trees differed only by a bogus `'<main'` path in `@{6}`. Both stashes also held large unrelated e2e trees — applied **surgical checkout** of Phase A paths from `stash@{6}^3` onto branch from `origin/main` (`9f1c35ba`), plus route + Vite wiring (not full `stash apply`). Rebuilt Vite; re-verified.
