@@ -419,7 +419,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 - **Verify**: PHPUnit `LandingPreviewV3Test` 1 passed (13 asserts). Local `http://127.0.0.1:8010/landing-preview` **200**; Playwright 1440/1024/390 **pass: true**, **zero console errors** (`e2e/screenshots/landing-preview-v3-restore/REPORT.json`).
 - **NOT** on `main`, **NOT** cut over to `/` or `/landing`, prod `/landing-preview` still 404 until merge+deploy.
 - **Stashes**: after push confirmed, dropped `stash@{6}`, `@{7}` (v3 Phase A bags), and `stash@{12}` (older Aug `landing-v2.css/js` port — superseded).
-- **Phases B/C**: Phase B continued on `feature/auth-pages-preview` (see Current Status); Phase C not started.
+- **Phases B/C**: continued on `feature/auth-pages-preview` (see Current Status).
 - **Prior on main**: #491 root hygiene / #489 README (see Previous).
 
 ## Previous: September 10, 2026 ([#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) **MERGED**; tip `30aeffc1` / knowledge stamp `9f1c35ba`) — superseded above for design-track
@@ -1423,6 +1423,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-10: Phase C error pages Pass-2 — **PUSHED on `feature/auth-pages-preview`**
+- **Work done**: Confirmed `resources/views/errors/` already had custom 401–503 + layouts (Sora/DM Sans). Restyled 404/419/500 onto new `errors/pass2-layout.blade.php` from locked mockup frames. Added `/preview/errors/{code}` (HTTP 200 + Preview badge + synthetic `$exception`). Did not touch 401/403/429/503.
+- **Laravel 12.63**: re-verified dedicated 404/500/503 required; `4xx`/`5xx` fallbacks do not cover them.
+- **$exception / TypeError**: production wraps non-HTTP throwables as `HttpException(500, $message)`; 500 view keeps static copy and never prints exception text (verified in `ErrorsPreviewTest`).
+- **419 copy**: verbatim “no changes have been lost” + amber “Refresh and try again” primary.
+- **Verify**: `ErrorsPreviewTest` 7/7; Playwright 1440/1024/900/760 pass; real missing URL returns 404 Pass-2 without Preview badge.
+- **Open decision**: merge activates live 404/419/500 (asymmetry vs auth preview-only copies).
+- **Status**: ✅ Pushed; ⏸️ awaiting review; cutover of `/` + auth + errors = separate future decision
 
 ### 2026-09-10: Phase B auth-pages preview — **PUSHED** `origin/feature/auth-pages-preview` @ `897c208c`
 - **Work done**: Restyled auth flows as **preview-only** blades (live `resources/views/auth/*` untouched) from Pass 2 locked mockup. Shared `auth-preview.css` tokens; forms POST to real endpoints. Preview GETs optionally `?demo_errors=1` for banner measurement.
