@@ -449,13 +449,18 @@
             </div>
             @endif
 
-            {{-- Plan Selection Buttons --}}
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection' && !$selectedPlanId)
-            <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
+            {{-- Plan Selection Buttons — same cards for step-index land AND any leftover actionStep --}}
+            @if(!$selectedPlanId && (
+                (!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection')
+                || $actionStep === 'onboarding_plan_selection'
+            ))
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;" data-testid="toshi-plan-cards">
                 @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
                 @foreach($plans as $plan)
                 <button wire:click="selectPlan({{ $plan->id }})"
                         class="toshi-option-card"
+                        data-testid="toshi-plan-{{ $plan->id }}"
+                        data-plan-name="{{ $plan->name }}"
                         onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
                         onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
                     <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
@@ -1371,21 +1376,26 @@
                                                 </div>
                                                 @endif
                                     
-                        {{-- Buttons inside maximize modal --}}
-                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection' && !$selectedPlanId)
-                        <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;">
+                        {{-- Buttons inside maximize modal — same cards for step land + leftover actionStep --}}
+                        @if(!$selectedPlanId && (
+                            (!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection')
+                            || $actionStep === 'onboarding_plan_selection'
+                        ))
+                        <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" data-testid="toshi-plan-cards">
                             @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
                             @foreach($plans as $plan)
                             <button wire:click="selectPlan({{ $plan->id }})"
                                     class="toshi-option-card"
+                                    data-testid="toshi-plan-{{ $plan->id }}"
+                                    data-plan-name="{{ $plan->name }}"
                                     onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
                                     onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
                                 <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
                                 <div class="flex-1">
                                     <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
                                     <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
-                                        @if(strtolower($plan->name) === 'premium')
-                                            Contact sales
+                                        @if($plan->is_custom_pricing)
+                                            Contact Us
                                         @elseif($plan->amount > 0)
                                             ${{ number_format($plan->amount) }} / {{ $plan->cycle }} days
                                         @else
