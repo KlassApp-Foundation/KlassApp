@@ -394,7 +394,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 (`feature/auth-pages-preview` — Phases A+B+C **genuine preview-only**; **NOT merged to main**)
+## Current Status: September 10, 2026 (`feature/auth-pages-preview` tip `83bfa772` — Phases A+B+C **genuine preview-only**; **NOT merged to main**)
 
 - **✅ Phase C corrected to preview-only**: initial `7b32a7dc` had edited live `resources/views/errors/{404,419,500}` (scope violation). **Reverted** those three to byte-identical `origin/main` / `illustrated-layout`. Pass-2 now lives only under `resources/views/errors-preview/{layout,404,419,500}.blade.php`; `/preview/errors/{code}` points there. `git diff origin/main -- resources/views/errors/` = **empty**.
 - **Verify (post-fix)**: real missing URL → `klass-error-shell` (illustrated), **not** Pass-2. Preview → `data-error-shell="pass2"`. `ErrorsPreviewTest` 8 passed; Playwright 1440/1024/900/760 pass; 500 leak guard on preview view; live `errors.500` still illustrated + no TypeError leak.
@@ -1427,7 +1427,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Fix**: Restored those three blades to pre-`7b32a7dc` / byte-identical `origin/main`. Moved shell to `resources/views/errors-preview/layout.blade.php` + `404|419|500`. Rewired `/preview/errors/{code}` to `errors-preview.*`. Deleted misleading `real-404-1440.png` (Pass-2); new shot `real-404-illustrated-1440.png`.
 - **Proof**: `git diff origin/main -- resources/views/errors/` empty; blob hashes match main for 404/419/500. HTTP: real 404 → `klass-error-shell`; preview → `data-error-shell="pass2"`.
 - **Verify**: `ErrorsPreviewTest` 8/8; Playwright REPORT pass; live 500 view leak guard still holds.
-- **Status**: ✅ Correction pushed; cutover of live errors still a separate decision
+- **Status**: ✅ Correction pushed @ `83bfa772`; cutover of live errors still a separate decision
 
 ### 2026-09-10: Phase C error pages Pass-2 — **PUSHED** `origin/feature/auth-pages-preview` @ `7b32a7dc` — **SUPERSEDED (scope violation fixed)**
 - **Work done**: Confirmed `resources/views/errors/` already had custom 401–503 + layouts (Sora/DM Sans). Restyled 404/419/500 onto new `errors/pass2-layout.blade.php` from locked mockup frames. Added `/preview/errors/{code}` (HTTP 200 + Preview badge + synthetic `$exception`). Did not touch 401/403/429/503.
