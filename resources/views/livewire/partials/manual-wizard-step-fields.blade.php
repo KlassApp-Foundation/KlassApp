@@ -98,9 +98,101 @@
     </div>
 
 @elseif($stepKey === 'standards')
-    <div class="ds-form-group">
-        <label class="ds-form-label" for="wizard-class">First class / stream<span class="text-red-500">*</span></label>
-        <input id="wizard-class" type="text" class="ds-form-input w-full" wire:model="className" placeholder="e.g. P1" />
+    <div class="manual-wizard-structure" data-testid="wizard-structure-step">
+        <p class="text-sm text-gray-600 mb-4" style="color:#64748B;">
+            Your classes are ready from school category. Optionally add streams or invite a class teacher —
+            both are optional. Click Continue anytime to skip.
+        </p>
+
+        @if($structureFlash ?? false)
+            <div class="mb-4 text-sm text-green-700 font-medium" data-testid="wizard-structure-flash">{{ $structureFlash }}</div>
+        @endif
+
+        @if(count($structureClasses ?? []) === 0)
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-class">First class / stream<span class="text-red-500">*</span></label>
+                <input id="wizard-class" type="text" class="ds-form-input w-full" wire:model="className" placeholder="e.g. P1" />
+                <p class="text-xs text-gray-500 mt-1">No classes yet — add one to continue, or finish Academic Year with a UNEB category so classes auto-seed.</p>
+            </div>
+        @else
+            <div class="space-y-4">
+                @foreach($structureClasses as $class)
+                    @php $sid = (int) $class['section_id']; @endphp
+                    <div class="border border-gray-200 rounded-lg p-4" style="border-color:#E2E8F0;" wire:key="structure-class-{{ $sid }}" data-testid="wizard-structure-class-{{ $sid }}">
+                        <div class="flex flex-wrap items-start justify-between gap-2 mb-3">
+                            <div>
+                                <h3 class="font-semibold text-gray-900" style="color:#0F172A;">{{ $class['name'] }}</h3>
+                                @if(!empty($class['streams']))
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Streams:
+                                        @foreach($class['streams'] as $stream)
+                                            <span class="inline-block bg-gray-100 px-2 py-0.5 rounded mr-1">{{ $stream['label'] }}</span>
+                                        @endforeach
+                                    </p>
+                                @else
+                                    <p class="text-xs text-gray-500 mt-1">No streams yet — undivided base class.</p>
+                                @endif
+                            </div>
+                            <div class="text-xs text-gray-600">
+                                @if(!empty($class['class_teacher_name']))
+                                    CT: <strong>{{ $class['class_teacher_name'] }}</strong>
+                                    @if(!empty($class['class_teacher_email']))
+                                        <span class="text-gray-400">({{ $class['class_teacher_email'] }})</span>
+                                    @endif
+                                @else
+                                    <span class="text-gray-400">No class teacher yet</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="ds-form-group mb-0">
+                                <label class="ds-form-label" for="wizard-stream-{{ $sid }}">Add stream</label>
+                                <div class="flex gap-2">
+                                    <input id="wizard-stream-{{ $sid }}" type="text" class="ds-form-input w-full"
+                                           wire:model="structureStreamDrafts.{{ $sid }}"
+                                           placeholder="e.g. A, East, Science"
+                                           data-testid="wizard-structure-stream-input-{{ $sid }}" />
+                                    <button type="button" class="ds-btn ds-btn-outline ds-btn-sm whitespace-nowrap"
+                                            wire:click="addStructureStream({{ $sid }})"
+                                            data-testid="wizard-structure-add-stream-{{ $sid }}">Add</button>
+                                </div>
+                            </div>
+
+                            @if(empty($class['class_teacher_id']))
+                                <div class="space-y-2" data-testid="wizard-structure-ct-{{ $sid }}">
+                                    <label class="ds-form-label">Invite Class Teacher</label>
+                                    <input type="text" inputmode="email" autocomplete="email" class="ds-form-input w-full"
+                                           wire:model="structureCtDrafts.{{ $sid }}.email"
+                                           placeholder="teacher@school.ug"
+                                           data-testid="wizard-structure-ct-email-{{ $sid }}" />
+                                    <select class="ds-form-input w-full"
+                                            wire:model.live="structureCtDrafts.{{ $sid }}.existing_teacher_id"
+                                            data-testid="wizard-structure-ct-existing-{{ $sid }}">
+                                        <option value="">— Create a new teacher —</option>
+                                        @foreach($structureTeachers ?? [] as $teacher)
+                                            <option value="{{ $teacher['id'] }}">{{ $teacher['name'] }} ({{ $teacher['email'] }})</option>
+                                        @endforeach
+                                    </select>
+                                    @if(empty($structureCtDrafts[$sid]['existing_teacher_id'] ?? ''))
+                                        <input type="text" class="ds-form-input w-full"
+                                               wire:model="structureCtDrafts.{{ $sid }}.name"
+                                               placeholder="Teacher name"
+                                               data-testid="wizard-structure-ct-name-{{ $sid }}" />
+                                        <input type="text" class="ds-form-input w-full"
+                                               wire:model="structureCtDrafts.{{ $sid }}.phone"
+                                               placeholder="Phone (optional)" />
+                                    @endif
+                                    <button type="button" class="ds-btn ds-btn-outline ds-btn-sm"
+                                            wire:click="inviteStructureClassTeacher({{ $sid }})"
+                                            data-testid="wizard-structure-invite-ct-{{ $sid }}">Send invite</button>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 
 @elseif($stepKey === 'subjects')
@@ -176,7 +268,11 @@
                class="manual-wizard-bulk-link"
                data-testid="wizard-student-template">Download template</a>
             <p class="text-xs text-gray-500 w-full mt-1" data-testid="wizard-student-stream-help">
-                Leave Stream blank if your school doesn't use streams.
+                @if(!empty($schoolHasStreams))
+                    When a class has streams, pick a stream by default. You can still choose “Base class (no stream)” to enrol on the undivided class.
+                @else
+                    Leave Stream blank if your school doesn't use streams.
+                @endif
             </p>
             <label class="manual-wizard-bulk-upload">
                 Upload file
@@ -217,11 +313,44 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="ds-form-group">
                 <label class="ds-form-label" for="wizard-student-class">Class</label>
-                <input id="wizard-student-class" type="text" class="ds-form-input w-full" wire:model="studentClass" placeholder="e.g. P1" />
+                @if(count($structureClasses ?? []) > 0)
+                    <select id="wizard-student-class" class="ds-form-input w-full" wire:model.live="studentClass" data-testid="wizard-student-class">
+                        <option value="">Select class…</option>
+                        @foreach($structureClasses as $class)
+                            <option value="{{ $class['name'] }}">{{ $class['name'] }}</option>
+                        @endforeach
+                    </select>
+                @else
+                    <input id="wizard-student-class" type="text" class="ds-form-input w-full" wire:model.live="studentClass" placeholder="e.g. P1" data-testid="wizard-student-class" />
+                @endif
             </div>
             <div class="ds-form-group">
                 <label class="ds-form-label" for="wizard-student-stream">Stream</label>
-                <input id="wizard-student-stream" type="text" class="ds-form-input w-full" wire:model="studentStream" placeholder="Optional" />
+                @php
+                    $studentStreamOptions = [];
+                    $selectedStudentClass = trim($studentClass ?? '');
+                    if ($selectedStudentClass !== '') {
+                        foreach ($structureClasses ?? [] as $structureRow) {
+                            if (strcasecmp((string) ($structureRow['name'] ?? ''), $selectedStudentClass) === 0) {
+                                $studentStreamOptions = array_values(array_map(
+                                    fn ($stream) => (string) ($stream['label'] ?? ''),
+                                    $structureRow['streams'] ?? []
+                                ));
+                                break;
+                            }
+                        }
+                    }
+                @endphp
+                @if(count($studentStreamOptions) > 0)
+                    <select id="wizard-student-stream" class="ds-form-input w-full" wire:model="studentStream" data-testid="wizard-student-stream">
+                        <option value="">Base class (no stream)</option>
+                        @foreach($studentStreamOptions as $streamLabel)
+                            <option value="{{ $streamLabel }}">{{ $streamLabel }}</option>
+                        @endforeach
+                    </select>
+                @else
+                    <input id="wizard-student-stream" type="text" class="ds-form-input w-full" wire:model="studentStream" placeholder="Optional" data-testid="wizard-student-stream" />
+                @endif
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

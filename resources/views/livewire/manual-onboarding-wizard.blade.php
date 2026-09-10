@@ -68,7 +68,7 @@
                 ])
             </div>
 
-            @if(!empty($step['route']) && !in_array($step['key'], ['school_name', 'curriculum', 'country', 'emis', 'uneb_center', 'academic_year', 'plan_selection', 'review'], true))
+            @if(!empty($step['route']) && !in_array($step['key'], ['school_name', 'curriculum', 'country', 'emis', 'uneb_center', 'academic_year', 'standards', 'plan_selection', 'review'], true))
                 <p class="mt-4 text-xs text-gray-500" style="color:#64748B;">
                     Prefer the full admin form?
                     <a href="{{ url($step['route']) }}" class="text-blue-600 underline" style="color:#1E6FD9;">Open {{ $step['label'] }}</a>

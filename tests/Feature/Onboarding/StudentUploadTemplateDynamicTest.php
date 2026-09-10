@@ -141,4 +141,13 @@ class StudentUploadTemplateDynamicTest extends TestCase
         $this->assertStringContainsString("Leave Stream blank if your school doesn't use streams.", $html);
         $this->assertStringNotContainsString('templates/student-upload-template.xlsx', $html);
     }
+
+    public function test_sample_rows_prefer_stream_rows_first(): void
+    {
+        $rows = app(StudentUploadTemplateService::class)
+            ->sampleClassStreamRows($this->school, $this->year);
+
+        $this->assertSame('East', $rows[0]['stream']);
+        $this->assertContains(['class' => 'Primary One', 'stream' => ''], $rows);
+    }
 }

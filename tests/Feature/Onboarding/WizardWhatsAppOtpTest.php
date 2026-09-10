@@ -103,6 +103,7 @@ class WizardWhatsAppOtpTest extends TestCase
             ->call('next')
             ->call('next') // uneb skip
             ->call('next') // academic year
+            ->call('next') // structure checkpoint (optional)
             ->call('next') // teachers skip
             ->call('next') // students skip
             ->call('next') // terms

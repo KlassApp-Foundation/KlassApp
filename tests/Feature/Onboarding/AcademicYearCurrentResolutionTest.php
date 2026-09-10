@@ -170,6 +170,7 @@ class AcademicYearCurrentResolutionTest extends TestCase
             ->set('academicYearStart', '2026-01-01')
             ->set('academicYearEnd', '2026-12-31')
             ->call('next') // seeds classes/subjects/grading
+            ->call('next') // structure checkpoint (optional)
             ->set('teacherName', 'Ada')
             ->set('teacherEmail', 'ada@ayresolve.sch.ug')
             ->call('next')
