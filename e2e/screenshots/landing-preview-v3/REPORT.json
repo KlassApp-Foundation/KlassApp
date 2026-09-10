@@ -1,0 +1,109 @@
+{
+  "url": "http://127.0.0.1:8010/landing-preview",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "present": {
+        "hero": 1,
+        "connectors": 1,
+        "toshi": 1,
+        "how-it-works": 1,
+        "protocol": 1,
+        "open-source": 1
+      },
+      "pathsNonEmpty": 8,
+      "pathsTotal": 8,
+      "wrapped": 0,
+      "heroGrid": {
+        "content": "\"\"",
+        "bg": "url(\"data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns=",
+        "display": "block"
+      },
+      "tokens": {
+        "green": "#22c55e",
+        "blue": "#1e6fd9",
+        "dark": "#0f172a"
+      },
+      "consoleErrors": [],
+      "screenshots": [
+        "e2e/screenshots/landing-preview-v3/desktop-full.png",
+        "e2e/screenshots/landing-preview-v3/desktop-hero.png",
+        "e2e/screenshots/landing-preview-v3/desktop-toshi.png"
+      ]
+    },
+    {
+      "name": "tablet",
+      "width": 1024,
+      "height": 768,
+      "present": {
+        "hero": 1,
+        "connectors": 1,
+        "toshi": 1,
+        "how-it-works": 1,
+        "protocol": 1,
+        "open-source": 1
+      },
+      "pathsNonEmpty": 8,
+      "pathsTotal": 8,
+      "wrapped": 0,
+      "heroGrid": {
+        "content": "\"\"",
+        "bg": "url(\"data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns=",
+        "display": "block"
+      },
+      "tokens": {
+        "green": "#22c55e",
+        "blue": "#1e6fd9",
+        "dark": "#0f172a"
+      },
+      "consoleErrors": [],
+      "screenshots": [
+        "e2e/screenshots/landing-preview-v3/tablet-full.png",
+        "e2e/screenshots/landing-preview-v3/tablet-hero.png",
+        "e2e/screenshots/landing-preview-v3/tablet-toshi.png"
+      ]
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "present": {
+        "hero": 1,
+        "connectors": 1,
+        "toshi": 1,
+        "how-it-works": 1,
+        "protocol": 1,
+        "open-source": 1
+      },
+      "pathsNonEmpty": 0,
+      "pathsTotal": 8,
+      "wrapped": 1,
+      "heroGrid": {
+        "content": "\"\"",
+        "bg": "url(\"data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns=",
+        "display": "block"
+      },
+      "tokens": {
+        "green": "#22c55e",
+        "blue": "#1e6fd9",
+        "dark": "#0f172a"
+      },
+      "consoleErrors": [],
+      "screenshots": [
+        "e2e/screenshots/landing-preview-v3/mobile-full.png",
+        "e2e/screenshots/landing-preview-v3/mobile-hero.png",
+        "e2e/screenshots/landing-preview-v3/mobile-toshi.png"
+      ]
+    }
+  ],
+  "consoleErrors": [],
+  "checks": {
+    "ok": true,
+    "desktopConnectors": true,
+    "mobileWrapsConnectors": true,
+    "heroDashedGrid": true,
+    "tokenCaseNote": "getComputedStyle returns lowercase hex; mockup :root uses #22C55E"
+  }
+}

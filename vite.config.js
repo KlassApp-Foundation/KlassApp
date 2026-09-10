@@ -28,6 +28,8 @@ export default defineConfig({
                 'resources/assets/sass/app.scss',
                 'resources/css/tailwind.css',
                 'resources/css/landing.css',
+                'resources/css/landing-preview.css',
+                'resources/js/landing-preview.js',
             ],
             refresh: true,
         }),

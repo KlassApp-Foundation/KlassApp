@@ -394,12 +394,17 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 ([#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) **MERGED**; `origin/main` tip `30aeffc1`)
+## Current Status: September 10, 2026 (`feature/landing-preview-v3` **PUSHED to origin** — Phase A secured; **NOT merged to main**; **NOT live**)
 
-- **✅ Root hygiene**: Deleted 28 session PNG artifacts + `students-screenshot.html` + `fix-note.md` + superseded `LARAVEL-CLOUD-ASSESSMENT.md`. Relocated `toshi-chat-kit-evaluation.md` → `docs/archive/toshi-chat-kit-evaluation.md`. Merge `30aeffc1` @ 2026-09-09T23:35:17Z.
-- **Prior**: [#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) README rewrite **MERGED** `a91183ae`; knowledge stamp [#490](https://github.com/KlassApp-Foundation/KlassApp/pull/490) `a9ecc641`.
+- **✅ Phase A landing preview restored from stash → real branch**: `origin/feature/landing-preview-v3`. Source: surgical extract from `stash@{6}` (Phase A blobs **byte-identical** to `stash@{7}`; trees differed only by a corrupt `'<main'` path in `@{6}`). Did **not** apply whole stash (bags unrelated e2e / WhatsAppDisconnectPhoneCommand).
+- **On branch**: `resources/views/landing-v2.blade.php`, `resources/css|js/landing-preview.*`, `GET /landing-preview` (`landing.preview`), Vite entries, `LandingPreviewV3Test`, screenshots under `e2e/screenshots/landing-preview-v3/` (+ restore re-verify `…-v3-restore/`).
+- **Verify**: PHPUnit `LandingPreviewV3Test` 1 passed (13 asserts). Local `http://127.0.0.1:8010/landing-preview` **200**; Playwright 1440/1024/390 **pass: true**, **zero console errors** (`e2e/screenshots/landing-preview-v3-restore/REPORT.json`).
+- **NOT** on `main`, **NOT** cut over to `/` or `/landing`, prod `/landing-preview` still 404 until merge+deploy.
+- **Stashes**: after push confirmed, dropped `stash@{6}`, `@{7}` (v3 Phase A bags), and `stash@{12}` (older Aug `landing-v2.css/js` port — superseded).
+- **Phases B/C**: not started.
+- **Prior on main**: #491 root hygiene / #489 README (see Previous).
 
-## Previous: September 10, 2026 ([#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) **MERGED**; tip `a91183ae`) — superseded above
+## Previous: September 10, 2026 ([#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) **MERGED**; tip `30aeffc1` / knowledge stamp `9f1c35ba`) — superseded above for design-track
 
 - **✅ README.md on `main`**: GeGoK12-era ops manual replaced with Open Design v3 product narrative (Toshi / agentic protocol / Q1 2027 OSS) adapted for GitHub README register. Contact: `community@klassapp.xyz` only. Merge commit `a91183ae` @ 2026-09-09T23:20:30Z (admin merge; was blocked on `REVIEW_REQUIRED` until then). Verified `README.md` on `main` starts with `# KlassApp` / “Tools connected by intelligence.”
 - **Note**: GitHub repo **About** sidebar description already showed agentic-protocol framing (with typos `KlasssApp` / `Deive`) since at least **2026-09-04** (CreateEvent payloads); that is **separate** from `README.md` and was **not** changed by #489.
@@ -1401,6 +1406,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-10: Phase A landing-preview restored to `origin/feature/landing-preview-v3` — **PUSHED; not merged**
+- **Work done**: Compared `stash@{6}` vs `@{7}`: Phase A file blobs (blade/css/js/REPORT) **identical**; untracked trees differed only by a bogus `'<main'` path in `@{6}`. Both stashes also held large unrelated e2e trees — applied **surgical checkout** of Phase A paths from `stash@{6}^3` onto branch from `origin/main` (`9f1c35ba`), plus route + Vite wiring (not full `stash apply`). Rebuilt Vite; re-verified.
+- **Branch**: `feature/landing-preview-v3` pushed to **origin**. Preview route only; live `/` untouched.
+- **Verify**: `LandingPreviewV3Test` pass; Playwright restore REPORT `pass: true`, empty `consoleErrors`.
+- **Stashes dropped** after push confirm: former `stash@{6}`, `@{7}`, and superseded Aug port `stash@{12}` (`landing-v2.css/js` + `LandingV2PreviewTest`).
+- **Knowledge correction**: prior “Phase A local-only / uncommitted” framing was the root of the “missing preview” confusion — real state is **on origin branch, awaiting merge**, not local-only.
+- **Status**: ✅ Secured on origin; ⏸️ not merged; B/C not started
+- **Edge cases flagged**: Stash indices shift; always compare blob hashes before drop. Do not `stash apply` bags that mix Phase A with unrelated WIP.
+
 ### 2026-09-10: Repo root hygiene (session screenshots + stale root docs) — **MERGED**
 - **Work done**: Removed loose root artifacts unfit for a public tree: 28 verification PNGs (`toshi-e2e-*`, `phase4-*`, `pulse-*`, `issue*`, misc e2e), `students-screenshot.html` (saved page + CSRF meta), empty `fix-note.md`, and superseded `LARAVEL-CLOUD-ASSESSMENT.md` (Aug 14 “do not migrate” planning; Cloud migration already done; SoT is knowledge Verified Stack / Cloud MCP). Relocated `toshi-chat-kit-evaluation.md` → `docs/archive/toshi-chat-kit-evaluation.md` (Jul 14 reject-kit rationale still useful).
 - **Files modified**: deletes as above; `docs/archive/toshi-chat-kit-evaluation.md` (moved); `knowledge.md`
@@ -1650,12 +1664,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Status**: ⏸️ **Design paused** — do not start Phases B/C or production cutover until explicitly resumed. Local preview files stay uncommitted unless asked.
 - **Resume later**: Phase B = auth restyle + preview routes; Phase C = 404/419/500 + `/preview/errors/{code}`; always pass **absolute** paths to Open Design (relative paths can escape the OD project lock — see OD gotcha `fd80ed5c` on `main`).
 
-### 2026-09-05: Phase A — landing v3 Blade preview port — **PREVIEW READY; DESIGN PAUSED**
+### 2026-09-05: Phase A — landing v3 Blade preview port — **LATER RESTORED TO `origin/feature/landing-preview-v3` (2026-09-10)**
 - **Finding**: Earlier `/landing-preview` + `landing-v2.blade.php` sources were not on this branch (stale compiled remnant only). Recreated from locked absolute path `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3.html`.
-- **Shipped (local, not cut over)**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/js/landing-preview.js` (measured Toshi connector `layout()`), Vite entries, `GET /landing-preview` → `landing.preview`. Live `/` and `/landing` untouched.
-- **Verify**: `LandingPreviewV3Test` pass; Playwright 1440/1024/390 — all sections, dashed hero grid, desktop connectors 8/8 measured, mobile wrap, zero console errors. Artifacts `e2e/screenshots/landing-preview-v3/`.
+- **Originally**: local uncommitted WIP only (never on a branch) — that “local-only” state caused later archaeology confusion.
+- **2026-09-10**: restored surgically from stash onto **`origin/feature/landing-preview-v3`** (pushed; **not** merged to `main`; **not** live). See Session Log that date.
+- **Shipped (preview branch)**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/js/landing-preview.js` (measured Toshi connector `layout()`), Vite entries, `GET /landing-preview` → `landing.preview`. Live `/` and `/landing` untouched.
+- **Verify**: `LandingPreviewV3Test` pass; Playwright 1440/1024/390 — all sections, dashed hero grid, desktop connectors 8/8 measured, mobile wrap, zero console errors. Artifacts `e2e/screenshots/landing-preview-v3/` (+ restore `…-v3-restore/`).
 - **Deviations**: hero primary CTA → `/register` (mockup `#`); footer Docs/Community/Contact → real routes; preview `noindex`; mobile hamburger still non-functional (same as mockup).
-- **Status**: ✅ Phase A done; ⏸️ design paused before Phases B/C / cutover (see session entry above).
+- **Status**: ✅ On origin feature branch; ⏸️ merge/cutover / Phases B–C still pending human decision.
 
 ### 2026-09-05: Disconnect `+256781940358` for stranger E2E — **PROD DONE**; command local
 - **Investigated (prod)**: WA id **56** → parent user **3738** (`parent@uireview.klassapp.demo`) @ school **124**; also WA id **52** on same parent for demo phone `256700119922`. PLRs **1–6** (Kabale 104 rejected + UI Review 124 approved/rejected). Links kept (parent still has demo WA). Pending links empty. Siteadmin user **4** also has this mobile — not a WA recognition path.

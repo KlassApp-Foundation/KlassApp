@@ -27,6 +27,11 @@ Route::get('/docs/community/{path?}', function ($path = '') {
     return response(file_get_contents("{$base}/index.html"), 200, ['Content-Type' => 'text/html']);
 })->where('path', '.*');
 
+// Locked v3 landing preview (Open Design klassapp-landing-v3.html). Preview only — do not cut over / or /landing without an explicit decision.
+Route::get('/landing-preview', function () {
+    return view('landing-v2');
+})->name('landing.preview');
+
 // Landing page v2 (Flare-style)
 Route::get('/landing2', function () {
     return view('landing2');
