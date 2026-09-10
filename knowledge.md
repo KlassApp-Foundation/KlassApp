@@ -577,13 +577,13 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 - **✅ #433**: complete-mode `selectPlan()` → Review/`commitAll()` (merge `c215146d`).
 - **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d`.
 - **Domain**: `klassapp.xyz` / vanity `klassapp-production-xsisi4.laravel.cloud` on Cloud.
-- **⏸️ Design paused** — Phase A landing preview local-only; no B/C / cutover.
+- **⏸️ Design** — Phase A later secured on `origin/feature/landing-preview-v3` (2026-09-10); still not merged / not live; no B/C.
 
 ## Previous: September 6, 2026 (`origin/main` tip `cbe3a46d` — **#432 MERGED**; Cloud Valkey **verified**) — superseded above
 
 - **✅ Laravel Cloud Valkey**: [#432](https://github.com/KlassApp-Foundation/KlassApp/pull/432) merge `cbe3a46d` — Redis config honors TLS (`REDIS_SCHEME`) + ACL username (`REDIS_USERNAME`); `CACHE_STORE` preferred over legacy `CACHE_DRIVER`. Deploy `depl-a2adfe81-…` **succeeded** with `CACHE_STORE`/`SESSION_DRIVER`/`QUEUE_CONNECTION=redis`. Live `php artisan klassapp:verify-redis` → ping + cache put/get/forget (incl. `standardLink104_51`) + queue dispatch/`queue:work --once` all **OK** (exit 0). Vanity `/` and `/login` **200**.
 - **Domain**: `klassapp.xyz` attached/verified on Cloud; WA inbound reaches app, **outbound Graph token blocked** (see Session Log 2026-09-06 WA probe). AI/mail secrets / full DB restore still incomplete for full cutover confidence.
-- **⏸️ Design paused** — Phase A landing preview local-only; no B/C / cutover.
+- **⏸️ Design** — Phase A later secured on `origin/feature/landing-preview-v3` (2026-09-10); still not merged / not live; no B/C.
 
 ## Previous: September 5, 2026 (`origin/main` tip pending — Laravel Cloud API setup in progress; design paused) — superseded above
 
