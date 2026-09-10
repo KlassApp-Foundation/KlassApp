@@ -31,6 +31,9 @@
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['reports']) }}">
         <a href="{{ route('teacher.reports.cards.index') }}" class="flex items-center"><x-icons.sidebar name="reports"/><span class="mx-3 whitespace-nowrap">Report Cards</span></a>
     </li>
+    <li class="py-3 px-3 dashboard-menu-item {{ tActive(['class-streams']) }}">
+        <a href="{{ route('teacher.class-stream.index') }}" class="flex items-center" data-testid="ct-streams-nav"><x-icons.sidebar name="classes"/><span class="mx-3 whitespace-nowrap">Class Streams</span></a>
+    </li>
     @endif
     <li class="py-3 px-3 dashboard-menu-item {{ tActive(['students','student','classes']) }}">
         <a href="{{ url('teacher/classes') }}" class="flex items-center"><x-icons.sidebar name="students"/><span class="mx-3 whitespace-nowrap">Students</span></a>

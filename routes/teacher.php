@@ -351,6 +351,15 @@ Route::prefix('reports/cards')->name('teacher.reports.cards.')->group(function (
     Route::get('/{stdLink}/student/{learner}/download', 'ReportCardsController@downloadStudent')->name('student.download');
 });
 
+// Class-teacher stream surface (add/rename only — delete/merge stay admin)
+Route::prefix('class-streams')->name('teacher.class-stream.')->group(function () {
+    Route::get('/', 'ClassStreamController@index')->name('index');
+    Route::get('/{section}/create', 'ClassStreamController@create')->name('create');
+    Route::post('/{section}', 'ClassStreamController@store')->name('store');
+    Route::get('/{section}/edit', 'ClassStreamController@edit')->name('edit');
+    Route::put('/{section}', 'ClassStreamController@update')->name('update');
+});
+
 // ========== ADD MARKS FOR UGANDAN SCHOOLS =========
 
 Route::prefix('exam')->group(function () {
