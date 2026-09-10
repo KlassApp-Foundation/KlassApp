@@ -395,7 +395,14 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 — shipping Stage 3 CT stream surface
+## Current Status: September 10, 2026 ([#497](https://github.com/KlassApp-Foundation/KlassApp/pull/497) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `ad18baa6`) — stages 2–4 complete
+
+- **✅ Stage 4 dynamic student template**: Per-school `admin.students.upload-template` XLSX from current sections; help text “Leave Stream blank…”; hard-fail unmatched streams unchanged. Cloud `depl-a2b6748c-…` **deployment.succeeded** tip `ad18baa6`. Live school **33**: route/views/help present; 9 sample class rows (real sections, not static Baby Class); hard-fail markers still in `OnboardingEngine::saveStudents`.
+- **✅ Stage 3 CT streams**: [#496](https://github.com/KlassApp-Foundation/KlassApp/pull/496) tip `f652cfe3` / `depl-a2b671e0-…`. Live: CT auth owns assigned section not peer; routes/menu present; probe cleaned.
+- **✅ Stage 2 additive streams**: [#495](https://github.com/KlassApp-Foundation/KlassApp/pull/495) tip `8813f513` / `depl-a2b66c54-…`. Live: name-encoded addStream, base kept, `stream` col unused.
+- **✅ Student size (stage 1)**: [#493](https://github.com/KlassApp-Foundation/KlassApp/pull/493) `fe846881`.
+
+## Previous: September 10, 2026 — shipping Stage 3 CT stream surface — superseded above
 
 - **🚧 Stage 3 (CT add/rename)**: Teacher `/teacher/class-streams` — auth via `ExamAuthorization::sectionIdsForClassTeacher()`; no delete/merge. Branch `feature/ct-stream-surface`.
 - **✅ Stage 2 additive streams**: [#495](https://github.com/KlassApp-Foundation/KlassApp/pull/495) **MERGED+DEPLOYED+LIVE-VERIFIED** tip `8813f513`. Cloud `depl-a2b66c54-…` **deployment.succeeded**. Live school **33**: `addStream(Primary One, Vz4281)` → section **214** `Primary One Vz4281`, base **195** kept, `standards_link.stream=null`, subjects 4→4; probe section/link flagged `status=0`. Routes/views present on prod.
