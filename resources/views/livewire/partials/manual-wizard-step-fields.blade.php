@@ -172,10 +172,12 @@
 @elseif($stepKey === 'students')
     <div class="manual-wizard-bulk" data-testid="wizard-students-bulk">
         <div class="manual-wizard-bulk-toolbar">
-            <a href="{{ asset('templates/student-upload-template.xlsx') }}"
-               download
+            <a href="{{ route('admin.students.upload-template') }}"
                class="manual-wizard-bulk-link"
                data-testid="wizard-student-template">Download template</a>
+            <p class="text-xs text-gray-500 w-full mt-1" data-testid="wizard-student-stream-help">
+                Leave Stream blank if your school doesn't use streams.
+            </p>
             <label class="manual-wizard-bulk-upload">
                 Upload file
                 <input type="file" class="hidden" wire:model="studentUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-student-upload" />
