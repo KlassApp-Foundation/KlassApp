@@ -169,6 +169,7 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 	Route::post("/class-teacher-invite/{standardLink}/store", "ClassTeacherInviteController@store")->name("admin.class-teacher-invite.store");
 	Route::get("/class-stream/{section}/create", "ClassStreamController@create")->name("admin.class-stream.create");
 	Route::post("/class-stream/{section}/store", "ClassStreamController@store")->name("admin.class-stream.store");
+	Route::get('/students/upload-template', 'StudentUploadTemplateController@download')->name('admin.students.upload-template');
 	Route::get('/classes/{section}', function ($section) {
 	    return view('class-roster.show', [
 	        'sectionId' => (int) $section,

@@ -215,6 +215,9 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
     public function test_template_assets_exist(): void
     {
         $this->assertFileExists(public_path('templates/teacher-upload-template.xlsx'));
-        $this->assertFileExists(public_path('templates/student-upload-template.xlsx'));
+        $this->assertTrue(
+            \Illuminate\Support\Facades\Route::has('admin.students.upload-template'),
+            'Student upload template must be the dynamic per-school route'
+        );
     }
 }

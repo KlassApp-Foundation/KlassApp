@@ -218,14 +218,17 @@
                 <div class="toshi-flex-row">
                     <span class="toshi-section-title">Add Student</span>
                     <div class="flex items-center gap-2 toshi-ml-auto">
-                        <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
-                           class="toshi-tag-link">Download Template</a>
+                        <a href="{{ route('admin.students.upload-template') }}"
+                           class="toshi-tag-link" data-testid="toshi-student-template">Download Template</a>
                         <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
                     </div>
                 </div>
+                <p class="text-xs mt-1" style="color:#87867f;" data-testid="toshi-student-stream-help">
+                    Leave Stream blank if your school doesn't use streams.
+                </p>
                 @php $students = $this->actionData['students'] ?? []; @endphp
                 @if(count($students) > 0)
                 <div class="toshi-spacer-8">
@@ -1146,14 +1149,17 @@
                                                     <div class="toshi-flex-row">
                                                         <span class="toshi-section-title">Add Student</span>
                     <div class="flex items-center gap-2 toshi-ml-auto">
-                        <a href="{{ asset('templates/student-upload-template.xlsx') }}" download
-                           class="toshi-tag-link">Download Template</a>
+                        <a href="{{ route('admin.students.upload-template') }}"
+                           class="toshi-tag-link" data-testid="toshi-student-template">Download Template</a>
                         <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
                             Upload File
                             <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
                         </label>
                     </div>
                                                     </div>
+                                                    <p class="text-xs mt-1" style="color:#87867f;" data-testid="toshi-student-stream-help">
+                                                        Leave Stream blank if your school doesn't use streams.
+                                                    </p>
                                                     @php $students = $this->actionData['students'] ?? []; @endphp
                                                     @if(count($students) > 0)
                                                     <div class="toshi-spacer-8">
