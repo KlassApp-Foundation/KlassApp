@@ -101,6 +101,8 @@ class WizardWhatsAppDuplicatePhoneTest extends TestCase
         $component
             ->set('schoolName', 'WA Dup Academy')
             ->call('next')
+            ->set('studentSize', 'Under 100 students')
+            ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
             ->set('curriculum', 'uneb')

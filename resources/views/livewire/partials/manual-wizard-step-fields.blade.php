@@ -7,6 +7,18 @@
         <input id="wizard-school-name" type="text" class="ds-form-input w-full" wire:model="schoolName" placeholder="e.g. Sunrise Academy" />
     </div>
 
+@elseif($stepKey === 'student_size')
+    <div class="ds-form-group">
+        <label class="ds-form-label" for="wizard-student-size">Approximate number of students<span class="text-red-500">*</span></label>
+        <select id="wizard-student-size" class="ds-form-input ds-form-select w-full" wire:model="studentSize" data-testid="wizard-student-size">
+            <option value="" disabled>Select range</option>
+            @foreach(\App\Services\OnboardingStepsService::STUDENT_SIZE_OPTIONS as $option)
+                <option value="{{ $option }}">{{ $option }}</option>
+            @endforeach
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Helps tailor setup defaults for your school. You can change this later.</p>
+    </div>
+
 @elseif($stepKey === 'country')
     <div class="ds-form-group">
         <label class="ds-form-label" for="wizard-country">Country<span class="text-red-500">*</span></label>

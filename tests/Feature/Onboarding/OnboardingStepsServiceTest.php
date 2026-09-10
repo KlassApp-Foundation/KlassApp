@@ -156,6 +156,17 @@ class OnboardingStepsServiceTest extends TestCase
             'country incomplete until registration_country is set'
         );
 
+        $this->assertFalse(
+            OnboardingStepsService::isStepComplete('student_size', $this->school),
+            'student_size incomplete until schools.student_size is set'
+        );
+
+        $this->school->update(['student_size' => 'Under 100 students']);
+        $this->assertTrue(
+            OnboardingStepsService::isStepComplete('student_size', $this->school->fresh()),
+            'student_size complete when a size bucket is stored'
+        );
+
         // subjects: no subjects exist yet
         $this->assertFalse(
             OnboardingStepsService::isStepComplete('subjects', $this->school),
@@ -191,15 +202,16 @@ class OnboardingStepsServiceTest extends TestCase
 
         $keys = array_keys(OnboardingStepsService::ALL_STEPS);
         $this->assertSame('school_name', $keys[0]);
-        $this->assertSame('country', $keys[1]);
+        $this->assertSame('student_size', $keys[1]);
+        $this->assertSame('country', $keys[2]);
         // Curriculum leads into the school-category step; EMIS / UNEB centre
         // sit before academic year.
-        $this->assertSame('curriculum', $keys[2]);
-        $this->assertSame('school_category', $keys[3]);
-        $this->assertSame('emis', $keys[4]);
-        $this->assertSame('uneb_center', $keys[5]);
-        $this->assertSame('academic_year', $keys[6]);
-        $this->assertSame('standards', $keys[7]);
+        $this->assertSame('curriculum', $keys[3]);
+        $this->assertSame('school_category', $keys[4]);
+        $this->assertSame('emis', $keys[5]);
+        $this->assertSame('uneb_center', $keys[6]);
+        $this->assertSame('academic_year', $keys[7]);
+        $this->assertSame('standards', $keys[8]);
 
         // plan_selection is the very last step (after content).
         $this->assertSame('plan_selection', array_key_last(OnboardingStepsService::ALL_STEPS));

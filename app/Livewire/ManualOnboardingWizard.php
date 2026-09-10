@@ -65,6 +65,8 @@ class ManualOnboardingWizard extends Component
     // Form fields (bound per step)
     public string $schoolName = '';
 
+    public string $studentSize = '';
+
     public string $curriculum = 'uneb';
 
     public string $schoolCategory = '';
@@ -935,6 +937,7 @@ class ManualOnboardingWizard extends Component
 
         $this->reviewSummary = [
             ['key' => 'school_name', 'label' => 'School name', 'icon' => '🏫', 'value' => (string) ($school->name ?: '—')],
+            ['key' => 'student_size', 'label' => 'School size', 'icon' => '👥', 'value' => (string) ($school->student_size ?: '—')],
             ['key' => 'curriculum', 'label' => 'Curriculum', 'icon' => '📚', 'value' => strtoupper((string) ($school->curriculum ?: '—'))],
             [
                 'key' => 'school_category',
@@ -1046,6 +1049,7 @@ class ManualOnboardingWizard extends Component
         $this->schoolName = OnboardingStepsService::isPlaceholderSchoolName($school->name)
             ? ''
             : (string) $school->name;
+        $this->studentSize = (string) ($school->student_size ?: '');
         $this->curriculum = $school->curriculum ?: 'uneb';
         $this->schoolCategory = (string) ($school->school_category ?: '');
         $this->countryName = $school->registration_country ?: 'Uganda';
@@ -1059,6 +1063,7 @@ class ManualOnboardingWizard extends Component
 
         match ($key) {
             'school_name' => $this->saveSchoolName($school),
+            'student_size' => $this->saveStudentSize($school),
             'curriculum' => $this->saveCurriculum($school),
             'school_category' => $this->saveSchoolCategory($school),
             'country' => $this->saveCountry($school),
@@ -1083,6 +1088,15 @@ class ManualOnboardingWizard extends Component
             app(OnboardingEngine::class)->saveSchoolName($school, $this->schoolName);
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(['schoolName' => $e->getMessage()]);
+        }
+    }
+
+    private function saveStudentSize(School $school): void
+    {
+        try {
+            app(OnboardingEngine::class)->saveStudentSize($school, $this->studentSize);
+        } catch (ValidationException $e) {
+            throw ValidationException::withMessages(['studentSize' => collect($e->errors())->flatten()->first()]);
         }
     }
 

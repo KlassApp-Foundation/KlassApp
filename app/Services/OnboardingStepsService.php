@@ -25,14 +25,32 @@ use Illuminate\Support\Facades\Schema;
 class OnboardingStepsService
 {
     /**
-     * Ordered steps. Country comes before curriculum; the board/curriculum
-     * choice then leads into the school-category smart-default step. EMIS /
-     * UNEB center sit before academic year. Plan selection is last.
+     * Canonical approximate-size buckets for onboarding (wizard + Toshi).
+     * Matches auth/onboarding.blade.php — not the broader superadmin CreateSchool set.
+     *
+     * @var list<string>
+     */
+    public const STUDENT_SIZE_OPTIONS = [
+        'Under 100 students',
+        '100-300 students',
+        '300-500 students',
+        '500+ students',
+    ];
+
+    /**
+     * Ordered steps. School size sits right after name. Country comes before
+     * curriculum; the board/curriculum choice then leads into the school-category
+     * smart-default step. EMIS / UNEB center sit before academic year. Plan
+     * selection is last.
      */
     const ALL_STEPS = [
         'school_name' => [
             'label' => 'School name',
             'icon'  => '🏫',
+        ],
+        'student_size' => [
+            'label' => 'Approximate school size',
+            'icon'  => '👥',
         ],
         'country' => [
             'label' => 'Country',
@@ -176,6 +194,7 @@ class OnboardingStepsService
 
         return match ($step) {
             'school_name' => ! self::isPlaceholderSchoolName($school->name),
+            'student_size' => filled($school->student_size),
             'curriculum' => filled($school->curriculum),
             'country' => filled($school->registration_country),
             'school_category' => filled($school->school_category)
@@ -340,7 +359,7 @@ class OnboardingStepsService
 
     /**
      * Persist registration country (+ country_id when a matching countries row exists).
-     * Mirrors historical RegisterController / CreateSchool persistence (no student_size).
+     * Mirrors historical RegisterController / CreateSchool country persistence.
      */
     public static function persistCountry(School $school, string $countryName): void
     {
@@ -374,6 +393,7 @@ class OnboardingStepsService
     {
         return match ($step) {
             'school_name' => '/admin/schooldetails',
+            'student_size' => '/admin/schooldetails',
             'curriculum' => '/admin/schooldetails',
             'country' => '/admin/schooldetails',
             'school_category' => '/admin/schooldetails',

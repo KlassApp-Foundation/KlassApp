@@ -113,6 +113,8 @@ class WizardSchoolCategoryNextTest extends TestCase
         $component
             ->set('schoolName', 'Category Block School')
             ->call('next')
+            ->set('studentSize', 'Under 100 students')
+            ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
             ->set('curriculum', 'uneb')
@@ -142,6 +144,8 @@ class WizardSchoolCategoryNextTest extends TestCase
 
         $component
             ->set('schoolName', 'Category Block School')
+            ->call('next')
+            ->set('studentSize', 'Under 100 students')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')

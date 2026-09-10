@@ -225,6 +225,8 @@ class OnboardingEngineParityTest extends TestCase
         $component
             ->set('schoolName', $payload['school_name'])
             ->call('next')
+            ->set('studentSize', '100-300 students')
+            ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
             ->set('curriculum', 'uneb')
@@ -277,6 +279,14 @@ class OnboardingEngineParityTest extends TestCase
             ->set('feeAmount', (string) $payload['fee_amount'])
             ->call('next')
             ->set('whatsappPhone', $payload['whatsapp'])
+            ->call('sendWhatsAppVerificationCode');
+
+        $otp = (string) $component->get('whatsappOtpDisplay');
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $otp);
+
+        $component
+            ->set('whatsappOtpInput', $otp)
+            ->call('verifyWhatsAppCode')
             ->call('next')
             ->set('selectedPlanId', (int) $this->freemium->id)
             ->call('next'); // plan → review
@@ -315,6 +325,7 @@ class OnboardingEngineParityTest extends TestCase
             ->set('mode', 'complete')
             ->set('schoolId', $school->id)
             ->set('schoolName', $payload['school_name'])
+            ->set('studentSize', '100-300 students')
             ->set('curriculum', 'uneb')
             ->set('schoolCountry', 'Uganda')
             ->set('ministryCode', $payload['ministry_code'])

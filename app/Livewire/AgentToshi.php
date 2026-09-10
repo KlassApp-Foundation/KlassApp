@@ -122,6 +122,8 @@ class AgentToshi extends Component
     public $schoolLevel = '';   // o-level, a-level, both
     public $schoolGender = '';  // boys, girls, mixed
     public $schoolCountry = '';
+    /** @var string Approximate size bucket (OnboardingStepsService::STUDENT_SIZE_OPTIONS) */
+    public $studentSize = '';
     public $schoolEmail = '';
     public $schoolPhone = '';
     public $ministryCode = '';
@@ -185,6 +187,7 @@ class AgentToshi extends Component
 
     public $steps = [
         'school_info',
+        'student_size',
         'country',
         'emis',
         'uneb_center',
@@ -210,6 +213,7 @@ class AgentToshi extends Component
      */
     public $mandatorySteps = [
         'school_info',
+        'student_size',
         'country',
         'admin_account',
         'academic_year',
@@ -490,6 +494,7 @@ class AgentToshi extends Component
         $this->schoolLevel = $data['schoolLevel'] ?? '';
         $this->schoolGender = $data['schoolGender'] ?? '';
         $this->schoolCountry = $data['schoolCountry'] ?? '';
+        $this->studentSize = $data['studentSize'] ?? '';
         $this->schoolEmail = $data['schoolEmail'] ?? '';
         $this->schoolPhone = $data['schoolPhone'] ?? '';
         $this->ministryCode = $data['ministryCode'] ?? '';
@@ -532,6 +537,7 @@ class AgentToshi extends Component
             'schoolLevel'       => $this->schoolLevel,
             'schoolGender'      => $this->schoolGender,
             'schoolCountry'     => $this->schoolCountry,
+            'studentSize'       => $this->studentSize,
             'schoolEmail'       => $this->schoolEmail,
             'schoolPhone'       => $this->schoolPhone,
             'ministryCode'      => $this->ministryCode,
@@ -723,6 +729,7 @@ class AgentToshi extends Component
 
         $actionMap = [
             'curriculum' => 'onboarding_curriculum',
+            'student_size' => 'onboarding_student_size',
             'country' => 'onboarding_country',
             'school_category' => 'onboarding_school_category',
             'emis' => 'onboarding_emis',
@@ -774,6 +781,7 @@ class AgentToshi extends Component
     {
         return match ($key) {
             'school_name' => "What's the real name of your school? (You can keep refining it later.)",
+            'student_size' => "Roughly how many students does your school have? Reply with one of: **Under 100 students**, **100-300 students**, **300-500 students**, or **500+ students**.",
             'curriculum' => "Which curriculum does your school follow? I recommend **UNEB** for most Ugandan schools. Reply with UNEB, Cambridge, Montessori, or Other.",
             'school_category' => "What type of school is this? Pick a category below — it sets default classes, subjects, and grading (all editable later). You can also reply with **Primary**, **Nursery only**, **Primary + Nursery**, **O-Level**, or **O-Level + A-Level**.",
             'country' => "Which country is your school in? (e.g. **Uganda**, Kenya, Tanzania)",
@@ -2389,6 +2397,7 @@ class AgentToshi extends Component
         $handler = match ($stepName) {
             'plan_selection'  => 'handlePlanSelection',
             'school_info'     => 'handleSchoolInfo',
+            'student_size'    => 'handleStudentSize',
             'country'         => 'handleCountry',
             'emis'            => 'handleEmis',
             'uneb_center'     => 'handleUnebCenter',
@@ -2942,6 +2951,10 @@ class AgentToshi extends Component
     {
         if ($this->actionStep === 'onboarding_curriculum') {
             $this->actionOnboardingCurriculum($text);
+            return;
+        }
+        if ($this->actionStep === 'onboarding_student_size') {
+            $this->actionOnboardingStudentSize($text);
             return;
         }
         if ($this->actionStep === 'onboarding_school_category') {
@@ -3504,6 +3517,7 @@ class AgentToshi extends Component
         match ($stepName) {
             'plan_selection'  => $this->handlePlanSelection($text),
             'school_info'     => $this->handleSchoolInfo($text),
+            'student_size'    => $this->handleStudentSize($text),
             'country'         => $this->handleCountry($text),
             'emis'            => $this->handleEmis($text),
             'uneb_center'     => $this->handleUnebCenter($text),
@@ -4006,6 +4020,21 @@ class AgentToshi extends Component
         $this->detectMissingSteps();
     }
 
+    private function actionOnboardingStudentSize(string $text): void
+    {
+        $this->persistStudentSizeFromInput($text, completeMode: true);
+    }
+
+    private function handleStudentSize(string $text): void
+    {
+        if ($text === '' && $this->substep === 0) {
+            $this->botSay(self::onboardingPromptForStep('student_size'));
+
+            return;
+        }
+        $this->persistStudentSizeFromInput($text, completeMode: false);
+    }
+
     private function actionOnboardingCountry(string $text): void
     {
         $this->persistCountryFromInput($text, completeMode: true);
@@ -4095,6 +4124,83 @@ class AgentToshi extends Component
 
         $this->botSay("✅ Country: **{$country}**");
         $this->advance();
+    }
+
+    private function persistStudentSizeFromInput(string $text, bool $completeMode): void
+    {
+        $normalized = $this->normalizeStudentSizeInput($text);
+        if ($normalized === null) {
+            $options = implode(', ', array_map(
+                fn (string $o) => "**{$o}**",
+                \App\Services\OnboardingStepsService::STUDENT_SIZE_OPTIONS
+            ));
+            $this->botSay("Please choose one of: {$options}.");
+
+            return;
+        }
+
+        $this->studentSize = $normalized;
+
+        if ($completeMode && $this->schoolId) {
+            $school = \App\Models\School::find($this->schoolId);
+            if ($school) {
+                try {
+                    app(\App\Services\OnboardingEngine::class)->saveStudentSize($school, $normalized);
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    $this->botSay(collect($e->errors())->flatten()->first() ?: $e->getMessage());
+
+                    return;
+                }
+            }
+            $this->botSay("✅ Approximate school size set to **{$normalized}**.");
+            $this->actionStep = null;
+            $this->actionSubstep = 0;
+            $this->detectMissingSteps();
+
+            return;
+        }
+
+        $this->botSay("✅ School size: **{$normalized}**");
+        $this->advance();
+    }
+
+    /**
+     * Map free-text / shorthand answers onto STUDENT_SIZE_OPTIONS.
+     */
+    private function normalizeStudentSizeInput(string $text): ?string
+    {
+        $raw = trim($text);
+        if ($raw === '') {
+            return null;
+        }
+
+        foreach (\App\Services\OnboardingStepsService::STUDENT_SIZE_OPTIONS as $option) {
+            if (strcasecmp($raw, $option) === 0) {
+                return $option;
+            }
+        }
+
+        $compact = strtolower(preg_replace('/\s+/', '', $raw) ?? '');
+        $aliases = [
+            'under100' => 'Under 100 students',
+            'under100students' => 'Under 100 students',
+            '<100' => 'Under 100 students',
+            '100-300' => '100-300 students',
+            '100-300students' => '100-300 students',
+            '100to300' => '100-300 students',
+            '100to300students' => '100-300 students',
+            '300-500' => '300-500 students',
+            '300-500students' => '300-500 students',
+            '300to500' => '300-500 students',
+            '300to500students' => '300-500 students',
+            '500+' => '500+ students',
+            '500+students' => '500+ students',
+            '500plus' => '500+ students',
+            '500plusstudents' => '500+ students',
+            'over500' => '500+ students',
+        ];
+
+        return $aliases[$compact] ?? null;
     }
 
     private function persistEmisFromInput(string $text, bool $completeMode): void
@@ -5061,6 +5167,7 @@ class AgentToshi extends Component
                 'plan'         => ucfirst($planName ?: '—'),
                 'schoolName'   => $schoolDisplay,
                 'schoolType'   => $schoolTypeLabel,
+                'studentSize'  => $this->studentSize ?: '—',
                 'country'      => $this->schoolCountry ?: '—',
                 'ministryCode' => $this->ministryCode ?: '—',
                 'unebCenter'   => $this->unebCenterNumber ?: '—',
@@ -5386,6 +5493,7 @@ class AgentToshi extends Component
                     'status'  => 1,
                     'slug'    => Str::slug($this->schoolName),
                     'registration_country' => $this->schoolCountry ?: 'Uganda',
+                    'student_size' => $this->studentSize ?: null,
                 ]);
                 if ($this->schoolCountry) {
                     \App\Services\OnboardingStepsService::persistCountry($school->fresh(), $this->schoolCountry);
@@ -5597,6 +5705,14 @@ class AgentToshi extends Component
                     if (filled($this->schoolCountry)) {
                         \App\Services\OnboardingStepsService::persistCountry($school, $this->schoolCountry);
                         $school->refresh();
+                    }
+                    if (filled($this->studentSize) && $school->student_size !== $this->studentSize) {
+                        try {
+                            app(OnboardingEngine::class)->saveStudentSize($school, $this->studentSize);
+                            $school->refresh();
+                        } catch (\Illuminate\Validation\ValidationException $e) {
+                            // Leave existing value if draft/input is not a canonical bucket.
+                        }
                     }
                     if (filled($this->ministryCode)) {
                         $school->ministry_code = $this->ministryCode;

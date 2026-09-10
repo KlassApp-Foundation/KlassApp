@@ -99,6 +99,28 @@ class ManualUiWave3WizardTest extends TestCase
         $response->assertSee('data-testid="wizard-next"', false);
     }
 
+    /**
+     * Complete WhatsApp OTP so wizard walks can leave the verify step.
+     * OTP became required after these Wave3 walks were written; without this they stall.
+     *
+     * @param  \Livewire\Features\SupportTesting\Testable  $component
+     */
+    private function verifyWhatsAppAndAdvance(object $component, string $phone): void
+    {
+        $component
+            ->set('whatsappPhone', $phone)
+            ->call('sendWhatsAppVerificationCode');
+
+        $code = (string) $component->get('whatsappOtpDisplay');
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
+
+        $component
+            ->set('whatsappOtpInput', $code)
+            ->call('verifyWhatsAppCode')
+            ->assertSet('whatsappVerified', true)
+            ->call('next');
+    }
+
     public function test_prev_next_and_progress_indicator_state(): void
     {
         $this->actingAs($this->admin);
@@ -114,8 +136,15 @@ class ManualUiWave3WizardTest extends TestCase
             ->set('schoolName', 'Wave3 Primary')
             ->call('next')
             ->assertSet('stepIndex', 1)
+            ->assertSee('Approximate school size')
+            ->set('studentSize', 'Under 100 students')
+            ->call('next')
+            ->assertSet('stepIndex', 2)
             ->assertSee('Country')
             ->call('previous')
+            ->assertSet('stepIndex', 1)
+            ->assertSee('Approximate school size')
+            ->call('goToStep', 0)
             ->assertSet('stepIndex', 0)
             ->assertSee('School name')
             ->call('goToStep', 1)
@@ -130,6 +159,8 @@ class ManualUiWave3WizardTest extends TestCase
 
         $component
             ->set('schoolName', 'Plan Step Academy')
+            ->call('next')
+            ->set('studentSize', 'Under 100 students')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
@@ -147,15 +178,14 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next') // students skip
             ->call('next') // terms
             ->call('next') // fees
-            ->assertSee('WhatsApp verification')
-            ->set('whatsappPhone', '+256700111222')
-            ->call('next');
+            ->assertSee('WhatsApp verification');
+
+        $this->verifyWhatsAppAndAdvance($component, '+256700111222');
 
         $instance = $component->instance();
-        $this->assertSame(14, $instance->stepIndex);
-        $this->assertSame('plan_selection', $instance->steps[14]['key']);
+        $this->assertSame('plan_selection', $instance->steps[$instance->stepIndex]['key'] ?? null);
         // Livewire test HTML can lag one tick after stepIndex-only updates; re-enter step.
-        $component->call('goToStep', 14);
+        $component->call('goToStep', $instance->stepIndex);
         $component
             ->assertSee('Plan selection')
             ->assertSeeHtml('data-testid="wizard-plan-cards"')
@@ -194,6 +224,8 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->set('schoolName', 'Personalized Academy')
             ->call('next')
+            ->set('studentSize', '100-300 students')
+            ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
             ->set('curriculum', 'uneb')
@@ -210,9 +242,9 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next')
             ->call('next') // students skip
             ->call('next') // term defaults
-            ->call('next') // fee defaults
-            ->set('whatsappPhone', '+256700333444')
-            ->call('next');
+            ->call('next'); // fee defaults
+
+        $this->verifyWhatsAppAndAdvance($component, '+256700333444');
 
         $this->assertSame('plan_selection', $component->instance()->steps[$component->instance()->stepIndex]['key'] ?? null);
         $component->call('goToStep', $component->instance()->stepIndex);
@@ -244,6 +276,8 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->set('schoolName', 'Preview Academy')
             ->call('next')
+            ->set('studentSize', '300-500 students')
+            ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
             ->set('curriculum', 'uneb')
@@ -260,9 +294,9 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next')
             ->call('next') // students skip
             ->call('next') // terms
-            ->call('next') // fees
-            ->set('whatsappPhone', '+256700555666')
-            ->call('next'); // plan
+            ->call('next'); // fees
+
+        $this->verifyWhatsAppAndAdvance($component, '+256700555666');
 
         $component->call('goToStep', $component->instance()->stepIndex);
         $component->call('next'); // plan → review
@@ -336,6 +370,8 @@ class ManualUiWave3WizardTest extends TestCase
 
         $component
             ->set('schoolName', 'Prev Nav Academy')
+            ->call('next')
+            ->set('studentSize', 'Under 100 students')
             ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')

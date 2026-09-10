@@ -155,6 +155,8 @@ class AcademicYearCurrentResolutionTest extends TestCase
         $component
             ->set('schoolName', 'Custom AY Academy')
             ->call('next')
+            ->set('studentSize', '100-300 students')
+            ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
             ->set('curriculum', 'uneb')
@@ -175,6 +177,14 @@ class AcademicYearCurrentResolutionTest extends TestCase
             ->call('next') // terms
             ->call('next') // fees
             ->set('whatsappPhone', '+256700999111')
+            ->call('sendWhatsAppVerificationCode');
+
+        $otp = (string) $component->get('whatsappOtpDisplay');
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $otp);
+
+        $component
+            ->set('whatsappOtpInput', $otp)
+            ->call('verifyWhatsAppCode')
             ->call('next')
             ->call('next') // plan (freemium default)
             ->call('next'); // review → finish
