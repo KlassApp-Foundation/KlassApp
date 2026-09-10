@@ -91,3 +91,6 @@ tmp/
 public/images/
 public/js/app.js.LICENSE.txt
 public/css/app.css.map
+
+doppler.env
+.env*
