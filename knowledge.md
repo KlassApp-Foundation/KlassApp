@@ -395,7 +395,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 ([#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d661aec8`) — Structure & Class Teachers wizard checkpoint
+## Current Status: September 11, 2026 ([#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) **PR OPEN**; tip `5e1f14b2`) — presentation caveats
+
+- **🚧 PR** [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) branch `fix/onboarding-presentation-caveats` tip `5e1f14b2` — six demo-readiness caveats fixed; local focused tests green; deploy + live-verify pending.
+- **Prior**: [#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) Structure & Class Teachers **MERGED+DEPLOYED+LIVE-VERIFIED** tip `d661aec8` (stamp [#503](https://github.com/KlassApp-Foundation/KlassApp/pull/503) `e1124471`).
+
+## Previous: September 10, 2026 ([#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d661aec8`) — Structure & Class Teachers wizard checkpoint
 
 - **✅ Wizard Structure & Class Teachers**: Repurposed dead `standards` step (label **Structure & Class Teachers**) after Academic Year. Per auto-seeded class: optional Add stream + optional Invite CT (neither blocks Next). `ClassStructureService::structureSnapshot()` feeds the UI; wires existing `addStream` / `ClassTeacherInviteService`. After AY, Next **always** lands on `standards` even when StandardLinks already exist (seeded complete no longer skips the checkpoint).
 - **✅ Students stream default**: When a class has streams, wizard class select defaults stream to the first stream; “Base class (no stream)” remains selectable. CSV template sample rows prefer stream rows first.
@@ -1438,6 +1443,20 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: Presentation caveats (subjects checkpoint / Toshi yes / exam term / labels) — **PR OPEN**
+- **Work done**: Six live-demo caveats investigated with evidence, then fixed:
+  1. Wizard Subjects silently skipped after category seed → force-land subjects after Structure (mirror AY→standards); seeded list + “already set up” cue; blank Next is no-op; can add another.
+  2. Teacher name/phone mix-up → name placeholder + helper + soft reject phone-like names.
+  3. Exam Term blank default → prefill current (else first) term; drop empty Select when defaulted; “(current)” label.
+  4–5. Toshi typed `yes`/`yeah` ≠ Yes chip / Confirm → free-text affirmatives/negatives call `confirmYes`/`confirmNo` **before** `actionStep` and assistant early-return; review accepts `yes`/`confirm`/`ok`/… as commit aliases.
+  6. Toshi checklist “Structure & Class Teachers” → `toshi_label` **Classes** via `OnboardingStepsService::labelForContext`; wizard label unchanged.
+- **Files modified**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `ExamController.php`, `teacher/exams/form.blade.php`, `AgentToshi.php`, `OnboardingStepsService.php`, `OnboardingHelper.php`, `WizardStructureClassTeacherTest.php`, `ClassTeacherExamCreateTest.php`, + `WizardSubjectsCheckpointTest.php`, `ToshiFreeTextConfirmParityTest.php`
+- **Key decisions**: Subjects checkpoint mirrors Structure (reviewable seeded step, not silent skip). Confirm free-text must beat action flows (student_size was swallowing `yes`). Exam term sort is PHP-side (SQLite has no `FIELD()`).
+- **Tests**: 29 passed focused suite (wizard subjects/structure, Toshi free-text parity + school-name yes, CT exam create term prefill, confirmation gate).
+- **PR**: [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) tip `5e1f14b2` on `fix/onboarding-presentation-caveats`.
+- **Status**: 🚧 PR open — deploy + live-verify still pending
+- **Edge cases flagged**: Non yes/no text while `awaitingConfirm` still falls through in setup (school-name correction). Assistant + pending tool + unclear text prompts yes/no only.
 
 ### 2026-09-10: Structure & Class Teachers wizard checkpoint — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Repurposed `standards` step as Structure & Class Teachers (optional streams + CT invite per class). Forced post-AY landing on `standards` despite seeder marking the step complete. Students enrollment defaults to first stream when streams exist; base class remains selectable. CSV template prefers stream sample rows.

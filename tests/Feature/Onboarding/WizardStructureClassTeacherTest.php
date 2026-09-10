@@ -133,8 +133,10 @@ class WizardStructureClassTeacherTest extends TestCase
         $component->call('next');
 
         $key = $component->instance()->steps[$component->get('stepIndex')]['key'] ?? null;
-        $this->assertNotSame('standards', $key);
+        // Structure → subjects checkpoint (seeded subjects still get a review land).
+        $this->assertSame('subjects', $key);
         $this->assertSame('', $component->get('errorMessage'));
+        $component->assertSeeHtml('data-testid="wizard-subjects-seeded"');
     }
 
     public function test_add_structure_stream_creates_name_encoded_section(): void

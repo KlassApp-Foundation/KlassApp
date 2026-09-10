@@ -610,7 +610,12 @@ class AgentToshi extends Component
 
         $this->botSay("I found **" . count($incomplete) . "** thing" . (count($incomplete) > 1 ? 's' : '') . " to set up:");
         foreach ($incomplete as $step) {
-            $this->botSay("  ❌ " . ($step['icon'] ?? '') . ' ' . $step['label']);
+            $label = \App\Services\OnboardingStepsService::labelForContext(
+                (string) ($step['key'] ?? ''),
+                (string) ($step['label'] ?? ''),
+                'toshi'
+            );
+            $this->botSay("  ❌ " . ($step['icon'] ?? '') . ' ' . $label);
         }
 
         // Same landing rule as ManualOnboardingWizard mount: nextIncompleteStep
@@ -3444,6 +3449,35 @@ class AgentToshi extends Component
             return;
         }
 
+        // Yes/No free-text must match chips in every mode (onboarding + assistant tool gates).
+        // Must run before actionStep and assistant early-return — otherwise an active
+        // onboarding action flow (e.g. student_size) swallows typed "yes".
+        if ($this->awaitingConfirm) {
+            $affirmatives = [
+                'yes', 'y', 'yeah', 'yep', 'yup', 'sure', 'ok', 'okay', 'confirm',
+                'can we go on', 'go on', 'continue', 'proceed', 'next', 'lets go',
+                "let's go", 'move on', 'yes continue', 'yeah continue',
+            ];
+            $negatives = ['no', 'n', 'nope', 'nah', 'cancel', 'stop'];
+            if (in_array($lower, $affirmatives, true)) {
+                $this->confirmYes();
+
+                return;
+            }
+            if (in_array($lower, $negatives, true)) {
+                $this->confirmNo();
+
+                return;
+            }
+            // Non yes/no in setup modes: fall through (e.g. re-type school name).
+            // In assistant mode with a pending tool, unclear text should not run the orchestrator.
+            if ($this->mode === 'assistant' && $this->pendingToolConfirm !== null) {
+                $this->botSay('Please reply **yes** or **no**, or tap the buttons.');
+
+                return;
+            }
+        }
+
         // Active action flow (multi-step, e.g. add student, enter marks)
         if ($this->actionStep) {
             $this->handleActionFlow($text);
@@ -3466,15 +3500,7 @@ class AgentToshi extends Component
         }
 
         // ── Setup mode: auto-detect if user wants assistant instead ──
-        // Skip heuristic if awaiting a yes/no confirmation
-        if ($this->awaitingConfirm) {
-            // Treat affirmative continuations as "yes"
-            if (in_array($lower, ['can we go on', 'go on', 'continue', 'proceed', 'next', 'lets go', 'move on', 'yes continue', 'yeah continue'])) {
-                $this->confirmYes();
-                return;
-            }
-            // Fall through to step handler normally
-        } else {
+        if (! $this->awaitingConfirm) {
             // Check if user wants to resume onboarding (setup mode)
             $isSetupIntent = preg_match('/\b(setup|set.?up|finish|onboard|continue setting|resume|what.?next|next step)\b/i', $text)
                 && !preg_match('/\b(add|create|record|mark|enter)\b.*\b(student|exam|attendance|mark|fee|parent)\b/i', $text);
@@ -5214,8 +5240,9 @@ class AgentToshi extends Component
             $this->botSay("Review the summary below, then click **Confirm** to {$action}.");
         }
 
-        // Chat fallback: typing "commit" works too
-        if (strtolower($text) === 'commit') {
+        // Chat fallback: Confirm button aliases (parity with confirmOnboarding())
+        $reviewConfirm = strtolower(trim($text));
+        if (in_array($reviewConfirm, ['commit', 'confirm', 'yes', 'y', 'ok', 'okay', 'proceed', 'save'], true)) {
             $this->commit();
         }
     }

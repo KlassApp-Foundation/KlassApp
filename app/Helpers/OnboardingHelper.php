@@ -21,6 +21,8 @@ class OnboardingHelper
         'emis'            => 'EMIS / Ministry code',
         'uneb_center'     => 'UNEB centre number',
         'academic_year'   => 'Academic year',
+        // Banner/admin dashboard use the wizard-facing label; Toshi chat uses
+        // OnboardingStepsService::labelForContext(..., 'toshi') → "Classes".
         'standards'       => 'Structure & Class Teachers',
         'subjects'        => 'Subjects',
         'teachers'        => 'Teachers',

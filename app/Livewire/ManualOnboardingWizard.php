@@ -119,6 +119,13 @@ class ManualOnboardingWizard extends Component
 
     public string $subjectName = 'Mathematics';
 
+    /**
+     * Names already in DB for the subjects step (auto-seeded or previously saved).
+     *
+     * @var list<string>
+     */
+    public array $existingSubjectNames = [];
+
     public string $teacherName = '';
 
     public string $teacherEmail = '';
@@ -262,6 +269,13 @@ class ManualOnboardingWizard extends Component
         $name = trim($this->teacherName);
         if ($name === '') {
             $this->errorMessage = 'Enter a teacher name.';
+
+            return;
+        }
+
+        // Soft guard: phone typed into the name field (common demo mix-up).
+        if (preg_match('/^\+?\d[\d\s\-]{6,}$/', $name) === 1) {
+            $this->errorMessage = 'That looks like a phone number. Put the teacher name in Teacher name and the number in Phone.';
 
             return;
         }
@@ -722,6 +736,18 @@ class ManualOnboardingWizard extends Component
             }
         }
 
+        // Subjects checkpoint: after Structure, always land on subjects once even when
+        // category auto-seed already created them — admin can review / add more.
+        if (($step['key'] ?? '') === 'standards') {
+            foreach ($this->steps as $i => $candidate) {
+                if (($candidate['key'] ?? '') === 'subjects') {
+                    $this->setStepIndex($i);
+
+                    return;
+                }
+            }
+        }
+
         if (! OnboardingStepsService::hasBlockingIncompleteSteps($this->school()->fresh(), Auth::id())) {
             $this->setStepIndex($this->reviewStepIndex());
             $this->buildReviewSummary();
@@ -850,6 +876,21 @@ class ManualOnboardingWizard extends Component
                 $this->applyStudentStreamDefaultForClass();
             }
         }
+        if ($key === 'subjects') {
+            $this->refreshExistingSubjects();
+        }
+    }
+
+    private function refreshExistingSubjects(): void
+    {
+        $this->existingSubjectNames = Subject::query()
+            ->where('school_id', $this->school()->id)
+            ->orderBy('name')
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     public function render()
@@ -1043,9 +1084,13 @@ class ManualOnboardingWizard extends Component
                 }
             })(),
             'subjects' => (function () use ($sid) {
-                $subject = Subject::where('school_id', $sid)->first();
-                if ($subject) {
-                    $this->subjectName = (string) $subject->name;
+                $this->refreshExistingSubjects();
+                // Leave the add field empty when subjects already exist so Next is a
+                // clear no-op review; only prefill Mathematics when starting from scratch.
+                if ($this->existingSubjectNames !== []) {
+                    $this->subjectName = '';
+                } elseif (trim($this->subjectName) === '') {
+                    $this->subjectName = 'Mathematics';
                 }
             })(),
             'teachers' => (function () use ($sid) {
@@ -1425,14 +1470,18 @@ class ManualOnboardingWizard extends Component
 
     private function saveSubject(School $school): void
     {
-        if (Subject::where('school_id', $school->id)->exists()) {
+        $name = trim($this->subjectName);
+
+        // Already seeded/saved and add field left blank → Next is a review no-op.
+        if (Subject::where('school_id', $school->id)->exists() && $name === '') {
             return;
         }
 
-        $name = trim($this->subjectName);
         if ($name === '') {
             throw ValidationException::withMessages(['subjectName' => 'Enter a subject name.']);
         }
+
+        // Adding another subject on top of an existing seed is allowed.
 
         $year = AcademicYear::where('school_id', $school->id)->first();
         if (! $year) {
