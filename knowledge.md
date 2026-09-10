@@ -394,10 +394,15 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 ([#493](https://github.com/KlassApp-Foundation/KlassApp/pull/493) **MERGED**; `origin/main` tip `fe846881`)
+## Current Status: September 10, 2026 — shipping Stage 2 additive streams
 
-- **✅ Student size onboarding (stage 1)**: Early `student_size` step after school name on wizard + Toshi; `OnboardingEngine::saveStudentSize()` → `schools.student_size`. Squash merge `fe846881` @ 2026-09-10T12:17:41Z. Stages 2–4 (additive streams / CT stream UI / dynamic CSV) **not started**.
-- **Prior**: [#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) root hygiene **MERGED** `30aeffc1`; [#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) README rewrite **MERGED** `a91183ae`.
+- **🚧 Stage 2 (local → PR)**: `ClassStructureService::addStream` — name-encoded sections (`Primary One A`), base kept, subjects copied, `standards_link.stream` unused. Admin Add stream UI on `/admin/sections`.
+- **✅ Student size onboarding (stage 1)**: [#493](https://github.com/KlassApp-Foundation/KlassApp/pull/493) **MERGED** `fe846881`. Knowledge stamp [#494](https://github.com/KlassApp-Foundation/KlassApp/pull/494).
+- **Prior**: [#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) root hygiene; [#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) README.
+
+## Previous: September 10, 2026 ([#493](https://github.com/KlassApp-Foundation/KlassApp/pull/493) **MERGED**; tip `fe846881`) — superseded above
+
+- **✅ Student size onboarding (stage 1)**: Early `student_size` step after school name on wizard + Toshi; `OnboardingEngine::saveStudentSize()` → `schools.student_size`. Squash merge `fe846881` @ 2026-09-10T12:17:41Z. Stages 2–4 were not started at merge time.
 
 ## Previous: September 10, 2026 ([#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) **MERGED**; tip `30aeffc1`) — superseded above
 
@@ -1404,6 +1409,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-10: Stage 2 additive stream creation (name-encoded) — **SHIPPING**
+- **Work done**: Added `ClassStructureService` (`addStream` / `renameStream` / `resolveBaseSection`). Creates `{Base} {Label}` sections via `OnboardingEngine::composeClassAndStream`; keeps undivided base; copies subjects from base; never writes `standards_link.stream`. Admin UI: Add stream on `/admin/sections` → `ClassStreamController`.
+- **Files modified**: `app/Services/ClassStructureService.php`, `app/Http/Controllers/Admin/ClassStreamController.php`, `resources/views/admin/class-stream/create.blade.php`, `resources/views/admin/school/sections/list.blade.php`, `routes/admin.php`, `tests/Feature/ClassStructureServiceTest.php`, `knowledge.md`
+- **Key decisions**: Reuse saveStandards name-encoding (not CreateStreamTool’s `stream` column). Seeder unchanged. Rename helper included for Stage 3 reuse.
+- **Tests**: `ClassStructureServiceTest` — 6 passed. Live local DB script: Primary Two + A → Primary Two A, base kept, stream col null, subjects copied (`pass: true`).
+- **Status**: 🚧 Opening PR `feature/additive-stream-creation`
+- **Edge cases flagged**: Adding stream from an existing stream section resolves to base name (`Primary One A` + B → `Primary One B`). Accidental local `migrate:fresh` during verify wiped agent local DB — do not repeat; use tests / Cloud for evidence.
 
 ### 2026-09-10: Student size onboarding step (wizard + Toshi) — **MERGED**
 - **Work done**: Restored approximate school size as an early onboarding step (`student_size`) after school name on both the manual wizard and Toshi. Canonical buckets match `auth/onboarding.blade.php` (`STUDENT_SIZE_OPTIONS`). Persists via `OnboardingEngine::saveStudentSize()` → `schools.student_size`. Finished create-mode gaps left incomplete mid-session: `handleStudentSize`, draft restore, create `commitAll` write, review summary, complete-mode commit persist, `OnboardingHelper` label.

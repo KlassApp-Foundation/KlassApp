@@ -19,6 +19,11 @@
                @endif
             </td>
             <td data-label="Actions" class="flex items-center gap-2">
+               <a href="{{ route('admin.class-stream.create', $section) }}"
+                  class="ds-btn ds-btn-ghost ds-btn-sm"
+                  data-testid="admin-add-stream-{{ $section->id }}">
+                  Add stream
+               </a>
                @if(is_null($section->class_teacher_id))
                   <a href="{{ route('admin.class-teacher-invite.create', $section) }}" class="ds-btn ds-btn-primary ds-btn-sm">
                      Invite Class Teacher
