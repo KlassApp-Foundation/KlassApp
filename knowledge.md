@@ -1494,6 +1494,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-11: Document Laravel Cloud deploy-trigger API (vs Commands API / MCP) — **MERGED**
+- **Work done**: Promoted empty-body `POST …/environments/{env}/deployments` + `Authorization: Bearer` into its own top-level **Triggering a real deployment** section beside Commands API. Corrected MCP docs (read-only; no deploy tool). Clarified Commands API ≠ deploy; push-to-deploy is off.
+- **Files modified**: `knowledge.md`
+- **PR / merge**: [#508](https://github.com/KlassApp-Foundation/KlassApp/pull/508) squash `39410e86`.
+- **Status**: ✅ MERGED
+
 ### 2026-09-11: Toshi typed skip on Continue forms + plan card/sidebar parity — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Fixed two design-audit findings left after #504/#505:
   1. Continue-form `substep=6` ignored typed `skip`/`continue`/`done` and `skipStep()` — routed via `finishInlineCollectionForm()` / early `send()` handling (same class as typed-yes order bug).
