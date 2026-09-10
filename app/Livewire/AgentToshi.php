@@ -739,7 +739,9 @@ class AgentToshi extends Component
             'school_category' => 'onboarding_school_category',
             'emis' => 'onboarding_emis',
             'uneb_center' => 'onboarding_uneb_center',
-            'plan_selection' => 'onboarding_plan_selection',
+            // plan_selection is intentionally NOT an actionStep — it must land on the
+            // create-flow step index so Freemium/Growth/Premium cards render the same
+            // whether the user arrived via checklist resume or the progress sidebar.
         ];
 
         if (isset($actionMap[$key])) {
@@ -761,6 +763,7 @@ class AgentToshi extends Component
             'terms' => 'terms',
             'fees' => 'fees',
             'whatsapp_verify' => 'whatsapp_verify',
+            'plan_selection' => 'plan_selection',
             // Toshi-only steps (not in OnboardingStepsService::ALL_STEPS) — keep mappable
             // when detectMissingSteps / resume ever surfaces them.
             'exams' => 'exams',
@@ -1332,11 +1335,64 @@ class AgentToshi extends Component
 
     /**
      * Custom action button — routes to the "no" path of the current step.
+     * When a Continue inline form is open (substep 6), must finish via the same
+     * done*() path as the Continue button — callStepHandler('skip') alone is a
+     * no-op there because teachers/students/fees/exams handlers only handle 0/1.
      */
     public function skipStep()
     {
         $this->awaitingConfirm = false;
+        if ($this->finishInlineCollectionForm()) {
+            return;
+        }
         $this->callStepHandler('skip');
+    }
+
+    /**
+     * True when an optional collection step is showing its Continue form UI.
+     */
+    private function isInlineCollectionFormOpen(): bool
+    {
+        return $this->showTeacherForm
+            || $this->showStudentForm
+            || $this->showFeeForm
+            || $this->showExamForm
+            || (
+                $this->substep === 6
+                && in_array($this->steps[$this->step] ?? null, ['teachers', 'students', 'fees', 'exams'], true)
+            );
+    }
+
+    /**
+     * Finish/skip an open Continue form the same way the Continue button does.
+     * Returns true when handled.
+     */
+    private function finishInlineCollectionForm(): bool
+    {
+        $stepName = $this->steps[$this->step] ?? null;
+
+        if ($this->showTeacherForm || ($stepName === 'teachers' && $this->substep === 6)) {
+            $this->doneTeachers();
+
+            return true;
+        }
+        if ($this->showStudentForm || ($stepName === 'students' && $this->substep === 6)) {
+            $this->doneStudents();
+
+            return true;
+        }
+        if ($this->showFeeForm || ($stepName === 'fees' && $this->substep === 6)) {
+            $this->doneFees();
+
+            return true;
+        }
+        if ($this->showExamForm || ($stepName === 'exams' && $this->substep === 6)) {
+            $this->doneExams();
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -1904,12 +1960,16 @@ class AgentToshi extends Component
 
     /**
      * Jump to a specific step in the onboarding flow (clickable progress bar).
+     * Clears actionStep so sidebar navigation and card UIs share one surface
+     * (e.g. plan_selection cards, not a text-only action-step fallback).
      */
     public function jumpToStep(int $step): void
     {
         if ($step < 0 || $step >= count($this->steps) || $step > $this->step) {
             return; // can only go back, not skip forward
         }
+        $this->actionStep = null;
+        $this->actionSubstep = 0;
         $this->step = $step;
         $this->substep = 0;
         $this->saveDraft();
@@ -3474,6 +3534,17 @@ class AgentToshi extends Component
             if ($this->mode === 'assistant' && $this->pendingToolConfirm !== null) {
                 $this->botSay('Please reply **yes** or **no**, or tap the buttons.');
 
+                return;
+            }
+        }
+
+        // Continue-form free-text must match Continue / Skip this step buttons.
+        // Inline forms set substep=6; teachers/students/fees/exams handlers only
+        // handled 0/1, so typed "skip" was a silent no-op while the form stayed open.
+        if ($this->isInlineCollectionFormOpen()
+            && in_array($lower, ['skip', 'later', 'none', 'no', 'n', 'done', 'continue', 'next', 'finish'], true)
+        ) {
+            if ($this->finishInlineCollectionForm()) {
                 return;
             }
         }
