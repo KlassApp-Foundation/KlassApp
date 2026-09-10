@@ -394,15 +394,13 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 (`feature/auth-pages-preview` tip `7b32a7dc` — Phases A+B+C **preview track PUSHED**; **NOT merged to main**)
+## Current Status: September 10, 2026 (`feature/auth-pages-preview` — Phases A+B+C **genuine preview-only**; **NOT merged to main**)
 
-- **✅ Phase C error pages (404/419/500)**: Pass-2 restyle of existing `resources/views/errors/{404,419,500}.blade.php` + new `errors/pass2-layout.blade.php` (self-contained CSS, no Vite). Preview `GET /preview/errors/{404|419|500}` (`preview.errors`). `ErrorsPreviewTest` + Playwright `e2e/errors-preview-verify.cjs`.
-- **Laravel 12.63 confirmed**: dedicated `404`/`500`/`503` views required — `4xx`/`5xx` fallbacks do **not** cover them (docs + `Handler::getHttpExceptionView`).
-- **$exception**: still passed by `renderHttpException`; 500 keeps **static** calm copy (does **not** echo TypeError / `$schoolId` messages when non-HTTP exceptions are wrapped as `HttpException(500, $e->getMessage())` with `APP_DEBUG=false`).
-- **⚠️ Cutover asymmetry vs auth**: Phase B left live `/login` untouched. Phase C **edited the real error blades** — on this branch (and on merge to main) real 404/419/500 **are** the Pass-2 shells. Preview route is for review without forcing a failure; merge ≈ error cutover. Approve before merging.
-- **Phase B** auth preview still on same branch (`/preview/login` etc.; live auth untouched).
-- **Phase A** landing still on `origin/feature/landing-preview-v3` (`/landing-preview`; live `/` untouched).
-- **NOT done / separate decisions**: merge to main; live cutover of `/`, `/login`, `/register`; whether 401/403/429/503 also get Pass-2; six-box OTP.
+- **✅ Phase C corrected to preview-only**: initial `7b32a7dc` had edited live `resources/views/errors/{404,419,500}` (scope violation). **Reverted** those three to byte-identical `origin/main` / `illustrated-layout`. Pass-2 now lives only under `resources/views/errors-preview/{layout,404,419,500}.blade.php`; `/preview/errors/{code}` points there. `git diff origin/main -- resources/views/errors/` = **empty**.
+- **Verify (post-fix)**: real missing URL → `klass-error-shell` (illustrated), **not** Pass-2. Preview → `data-error-shell="pass2"`. `ErrorsPreviewTest` 8 passed; Playwright 1440/1024/900/760 pass; 500 leak guard on preview view; live `errors.500` still illustrated + no TypeError leak.
+- **Laravel 12.63**: dedicated 404/500/503 still required (unchanged finding).
+- **Phase B** auth preview on same branch (live auth untouched). **Phase A** on `origin/feature/landing-preview-v3`.
+- **NOT done**: merge; live cutover of `/`, `/login`, `/register`, **and** live `errors/*` (all separate decisions).
 
 ## Previous: September 10, 2026 (`feature/auth-pages-preview` tip `897c208c` / knowledge `0c6bbdbf` — Phase B auth preview) — superseded above
 

@@ -60,28 +60,30 @@ class ErrorsPreviewTest extends TestCase
         $response->assertDontSee('$schoolId');
     }
 
-    public function test_real_404_uses_pass2_view_with_exception(): void
+    public function test_real_404_still_uses_illustrated_layout_not_pass2(): void
     {
         $response = $this->get('/this-route-definitely-does-not-exist-phase-c-'.uniqid());
 
         $response->assertNotFound();
-        $response->assertSee('data-error-shell="pass2"', false);
+        $response->assertSee('klass-error-shell', false);
+        $response->assertSee('klass-error-code', false);
         $response->assertSee('Page Not Found');
-        $response->assertSee('data-testid="exception-present"', false);
+        $response->assertDontSee('data-error-shell="pass2"', false);
+        $response->assertDontSee('err-card', false);
         $response->assertDontSee('Preview');
     }
 
-    public function test_real_500_view_is_structurally_sound_with_http_exception(): void
+    public function test_preview_500_view_is_structurally_sound_with_http_exception(): void
     {
-        // Mirrors Laravel prepareResponse wrapping a non-HTTP throwable as HttpException(500, $e->getMessage()).
         $exception = new HttpException(
             500,
             'TypeError: App\\Services\\Foo::bar(): Argument #1 ($schoolId) must be of type int, null given'
         );
 
-        $html = view('errors.500', [
+        $html = view('errors-preview.500', [
             'errors' => new \Illuminate\Support\ViewErrorBag,
             'exception' => $exception,
+            'isPreview' => true,
         ])->render();
 
         $this->assertStringContainsString('data-error-shell="pass2"', $html);
@@ -92,6 +94,25 @@ class ErrorsPreviewTest extends TestCase
         $this->assertStringNotContainsString('TypeError', $html);
         $this->assertStringNotContainsString('$schoolId', $html);
         $this->assertStringNotContainsString('must be of type int', $html);
+    }
+
+    public function test_live_500_view_still_illustrated_and_does_not_leak_exception_text(): void
+    {
+        $exception = new HttpException(
+            500,
+            'TypeError: App\\Services\\Foo::bar(): Argument #1 ($schoolId) must be of type int, null given'
+        );
+
+        $html = view('errors.500', [
+            'errors' => new \Illuminate\Support\ViewErrorBag,
+            'exception' => $exception,
+        ])->render();
+
+        $this->assertStringContainsString('klass-error-shell', $html);
+        $this->assertStringContainsString('Server Error', $html);
+        $this->assertStringNotContainsString('data-error-shell="pass2"', $html);
+        $this->assertStringNotContainsString('TypeError', $html);
+        $this->assertStringNotContainsString('$schoolId', $html);
     }
 
     public function test_preview_rejects_unknown_error_codes(): void

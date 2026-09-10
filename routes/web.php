@@ -88,7 +88,7 @@ Route::prefix('preview')->name('preview.')->group(function () {
         ]);
     })->name('force-change-password');
 
-    // Phase C — preview-only renderer for Pass-2 error shells (does not trigger a real failure).
+    // Phase C — preview-only Pass-2 error shells (errors-preview/*, not live errors/*).
     Route::get('/errors/{code}', function (string $code) {
         $allowed = ['404', '419', '500'];
         abort_unless(in_array($code, $allowed, true), 404);
@@ -98,7 +98,7 @@ Route::prefix('preview')->name('preview.')->group(function () {
             'Preview: synthetic HttpException for design review (not a real failure).'
         );
 
-        return response()->view("errors.{$code}", [
+        return response()->view("errors-preview.{$code}", [
             'errors' => new \Illuminate\Support\ViewErrorBag,
             'exception' => $exception,
             'isPreview' => true,

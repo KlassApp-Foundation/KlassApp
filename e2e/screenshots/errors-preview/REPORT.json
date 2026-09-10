@@ -194,15 +194,17 @@
   "deviations": [
     "Typography: Sora/DM Sans (existing errors.illustrated-layout + auth), not mockup Bricolage/Inter.",
     "Logo: SVG asset (klassapp-logo-primary.svg) instead of mockup text wordmark.",
-    "Editing resources/views/errors/{404,419,500} means merge-to-main activates live error UI (unlike Phase B auth preview copies). Flagged for cutover decision.",
-    "401/403/429/503 still use illustrated-layout — not in Pass-2 mockup scope."
+    "Pass-2 lives only under resources/views/errors-preview/; live resources/views/errors/ untouched (A/B pattern).",
+    "401/403/429/503 not in Pass-2 mockup scope."
   ],
   "real404": {
     "status": 404,
     "real": {
-      "statusShell": "pass2",
+      "pass2Shell": null,
+      "hasKlassShell": true,
+      "hasErrCard": false,
       "previewBadge": false,
-      "exception": true
+      "title": "Page Not Found"
     },
     "pass": true
   }

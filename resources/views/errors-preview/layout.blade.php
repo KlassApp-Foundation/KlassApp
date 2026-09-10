@@ -1,8 +1,9 @@
 {{-- SPDX-License-Identifier: MIT --}}
-{{-- Pass-2 error shell (auth-error.html frames 404/419/500).
-     Self-contained CSS — do NOT @vite here; error pages must render when the asset pipeline is down.
-     Typography: Sora/DM Sans — same as live auth + existing errors.illustrated-layout (not landing Bricolage/Inter).
-     Receives $exception from Laravel renderHttpException; message copy is static (never echo raw exception text on 500). --}}
+{{-- Preview-only Pass-2 error shell (auth-error.html frames 404/419/500).
+     Path: resources/views/errors-preview/ — NOT resources/views/errors/ (live cutover is a separate decision).
+     Self-contained CSS — do NOT @vite here (mirrors live error reliability).
+     Typography: Sora/DM Sans (live auth + errors.illustrated-layout), not landing Bricolage/Inter.
+     Preview routes pass a synthetic $exception; never echo raw exception text on 500. --}}
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>

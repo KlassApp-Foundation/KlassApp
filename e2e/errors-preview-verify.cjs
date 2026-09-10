@@ -24,8 +24,8 @@ const path = require('path');
     deviations: [
       'Typography: Sora/DM Sans (existing errors.illustrated-layout + auth), not mockup Bricolage/Inter.',
       'Logo: SVG asset (klassapp-logo-primary.svg) instead of mockup text wordmark.',
-      'Editing resources/views/errors/{404,419,500} means merge-to-main activates live error UI (unlike Phase B auth preview copies). Flagged for cutover decision.',
-      '401/403/429/503 still use illustrated-layout — not in Pass-2 mockup scope.',
+      'Pass-2 lives only under resources/views/errors-preview/; live resources/views/errors/ untouched (A/B pattern).',
+      '401/403/429/503 not in Pass-2 mockup scope.',
     ],
   };
 
@@ -119,7 +119,7 @@ const path = require('path');
     await page.close();
   }
 
-  // Real 404 path (not preview)
+  // Real 404 path must still use illustrated-layout (NOT Pass-2)
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     const resp = await page.goto(`${base}/phase-c-missing-${Date.now()}`, {
@@ -127,17 +127,24 @@ const path = require('path');
       timeout: 60000,
     });
     const real = await page.evaluate(() => ({
-      statusShell: document.body.getAttribute('data-error-shell'),
+      pass2Shell: document.body.getAttribute('data-error-shell'),
+      hasKlassShell: !!document.querySelector('.klass-error-shell'),
+      hasErrCard: !!document.querySelector('.err-card'),
       previewBadge: !!document.querySelector('.err-preview-badge'),
-      exception: !!document.querySelector('[data-testid="exception-present"]'),
+      title: document.querySelector('.klass-error-title, .err-title')?.textContent?.trim() || null,
     }));
     report.real404 = {
       status: resp.status(),
       real,
-      pass: resp.status() === 404 && real.statusShell === 'pass2' && !real.previewBadge && real.exception,
+      pass:
+        resp.status() === 404 &&
+        real.hasKlassShell === true &&
+        real.hasErrCard === false &&
+        real.pass2Shell !== 'pass2' &&
+        !real.previewBadge,
     };
     if (!report.real404.pass) report.pass = false;
-    await page.screenshot({ path: path.join(outDir, 'real-404-1440.png'), fullPage: true });
+    await page.screenshot({ path: path.join(outDir, 'real-404-illustrated-1440.png'), fullPage: true });
     await page.close();
   }
 
