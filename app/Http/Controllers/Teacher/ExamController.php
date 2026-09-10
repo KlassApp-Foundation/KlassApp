@@ -71,6 +71,26 @@ class ExamController extends Controller
             );
         }
 
+        $terms = AcademicTerm::where('school_id', $schoolId)
+            ->where('academic_year_id', $year->id)
+            ->orderBy('id')
+            ->get()
+            ->sortBy(fn (AcademicTerm $term) => match ($term->status) {
+                'current' => 0,
+                'next' => 1,
+                default => 2,
+            })
+            ->values();
+
+        // Prefill Term on create: current term if present, else first term — blank
+        // "Select Term" was easy to miss with HTML required and no default.
+        $defaultTermId = (int) old(
+            'academic_term_id',
+            $terms->firstWhere('status', 'current')?->id
+                ?? $terms->first()?->id
+                ?? 0
+        );
+
         return view('teacher.exams.form', [
             'exam' => null,
             'sections' => $sections,
@@ -78,7 +98,8 @@ class ExamController extends Controller
             'subjects' => $subjects,
             'academicYears' => AcademicYear::where('school_id', $schoolId)->orderByDesc('id')->get(),
             'currentYearId' => $year->id,
-            'terms' => AcademicTerm::where('school_id', $schoolId)->where('academic_year_id', $year->id)->get(),
+            'terms' => $terms,
+            'defaultTermId' => $defaultTermId,
             'examTypes' => ExamType::query()->orderBy('name')->get(),
             'teachers' => $this->schoolTeachers($schoolId),
             'defaultTeacherId' => $defaultTeacherId ?? $teacher->id,

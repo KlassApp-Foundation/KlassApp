@@ -73,15 +73,25 @@
                         <label for="academic_term_id" class="block text-sm font-medium text-gray-700 mb-1">
                             Term <span class="text-red-500">*</span>
                         </label>
-                        <select name="academic_term_id" id="academic_term_id" required class="tw-form-control w-full">
-                            <option value="">Select Term</option>
+                        <select name="academic_term_id" id="academic_term_id" required class="tw-form-control w-full" data-testid="exam-term-select">
+                            @php
+                                $selectedTermId = (int) old(
+                                    'academic_term_id',
+                                    optional($exam)->academic_term_id
+                                        ?? ($defaultTermId ?? 0)
+                                );
+                            @endphp
+                            @if($selectedTermId === 0)
+                                <option value="">Select Term</option>
+                            @endif
                             @foreach ($terms as $term)
                                 <option value="{{ $term->id }}"
-                                    @selected((int) old('academic_term_id', optional($exam)->academic_term_id) === (int) $term->id)>
-                                    {{ $term->name }}
+                                    @selected($selectedTermId === (int) $term->id)>
+                                    {{ $term->name }}{{ $term->status === 'current' ? ' (current)' : '' }}
                                 </option>
                             @endforeach
                         </select>
+                        <p class="text-xs text-gray-500 mt-1">Defaults to the current term for this academic year when available.</p>
                     </div>
 
                     <div>

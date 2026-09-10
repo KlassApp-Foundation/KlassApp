@@ -196,9 +196,31 @@
     </div>
 
 @elseif($stepKey === 'subjects')
-    <div class="ds-form-group">
-        <label class="ds-form-label" for="wizard-subject">First subject<span class="text-red-500">*</span></label>
-        <input id="wizard-subject" type="text" class="ds-form-input w-full" wire:model="subjectName" placeholder="e.g. Mathematics" />
+    <div class="manual-wizard-subjects" data-testid="wizard-subjects">
+        @if(count($existingSubjectNames ?? []) > 0)
+            <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3" data-testid="wizard-subjects-seeded">
+                <p class="text-sm font-medium text-green-900" style="color:#14532D;">
+                    Subjects already set up
+                </p>
+                <p class="text-xs text-green-800 mt-1" style="color:#166534;">
+                    These came from your school category (or a previous save). Review them below — click Next to continue, or add another subject.
+                </p>
+                <ul class="mt-2 flex flex-wrap gap-2" data-testid="wizard-subjects-seeded-list">
+                    @foreach($existingSubjectNames as $existingSubject)
+                        <li class="text-xs font-medium px-2 py-1 rounded bg-white border border-green-200 text-green-900">{{ $existingSubject }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-subject">Add another subject (optional)</label>
+                <input id="wizard-subject" type="text" class="ds-form-input w-full" wire:model="subjectName" placeholder="e.g. Music" autocomplete="off" />
+            </div>
+        @else
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-subject">First subject<span class="text-red-500">*</span></label>
+                <input id="wizard-subject" type="text" class="ds-form-input w-full" wire:model="subjectName" placeholder="e.g. Mathematics" autocomplete="off" />
+            </div>
+        @endif
     </div>
 
 @elseif($stepKey === 'teachers')
@@ -239,16 +261,17 @@
 
         <div class="ds-form-group">
             <label class="ds-form-label" for="wizard-teacher-name">Teacher name</label>
-            <input id="wizard-teacher-name" type="text" class="ds-form-input w-full" wire:model="teacherName" />
+            <input id="wizard-teacher-name" type="text" class="ds-form-input w-full" wire:model="teacherName" placeholder="e.g. Jane Nabirye" autocomplete="name" data-testid="wizard-teacher-name" />
+            <p class="text-xs text-gray-500 mt-1" style="color:#64748B;">Full name only — put the phone number in the Phone field below.</p>
         </div>
         <div class="ds-form-group">
             <label class="ds-form-label" for="wizard-teacher-email">Email</label>
             {{-- type=text: native type=email + deferred wire:model blocked Next after Add (empty/invalid sync). --}}
-            <input id="wizard-teacher-email" type="text" inputmode="email" autocomplete="email" class="ds-form-input w-full" wire:model="teacherEmail" />
+            <input id="wizard-teacher-email" type="text" inputmode="email" autocomplete="email" class="ds-form-input w-full" wire:model="teacherEmail" placeholder="teacher@school.ug" data-testid="wizard-teacher-email" />
         </div>
         <div class="ds-form-group">
-            <label class="ds-form-label" for="wizard-teacher-phone">Phone</label>
-            <input id="wizard-teacher-phone" type="text" class="ds-form-input w-full" wire:model="teacherPhone" placeholder="+2567…" />
+            <label class="ds-form-label" for="wizard-teacher-phone">Phone (optional)</label>
+            <input id="wizard-teacher-phone" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="teacherPhone" placeholder="+2567…" data-testid="wizard-teacher-phone" />
         </div>
         <button type="button" class="ds-btn ds-btn-outline ds-btn-sm" wire:click="addTeacherDraft" data-testid="wizard-teacher-add">+ Add teacher</button>
         <p class="text-xs text-gray-500 mt-3" style="color:#64748B;">Optional — skip if you’ll add teachers later. Continue saves everyone in the list.</p>

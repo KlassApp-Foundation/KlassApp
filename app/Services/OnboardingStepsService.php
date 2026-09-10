@@ -77,7 +77,10 @@ class OnboardingStepsService
             'icon'  => '📆',
         ],
         'standards' => [
+            // Wizard: streams + class-teacher invites live on this step.
+            // Toshi: conversation only covers classes — use toshi_label in chat checklists.
             'label' => 'Structure & Class Teachers',
+            'toshi_label' => 'Classes',
             'icon'  => '📚',
         ],
         'subjects' => [
@@ -149,7 +152,7 @@ class OnboardingStepsService
     /**
      * Steps that apply to this school right now (conditionals filtered out).
      *
-     * @return array<string, array{label: string, icon: string}>
+     * @return array<string, array{label: string, icon: string, toshi_label?: string}>
      */
     public static function applicableSteps(School $school): array
     {
@@ -165,6 +168,22 @@ class OnboardingStepsService
         }
 
         return $steps;
+    }
+
+    /**
+     * Display label for a step in a given UI context.
+     * Wizard keeps stream/CT wording; Toshi chat uses shorter class-focused labels.
+     */
+    public static function labelForContext(string $key, string $defaultLabel, string $context = 'wizard'): string
+    {
+        if ($context === 'toshi') {
+            $toshi = self::ALL_STEPS[$key]['toshi_label'] ?? null;
+            if (is_string($toshi) && $toshi !== '') {
+                return $toshi;
+            }
+        }
+
+        return $defaultLabel !== '' ? $defaultLabel : (self::ALL_STEPS[$key]['label'] ?? ucfirst($key));
     }
 
     /**
