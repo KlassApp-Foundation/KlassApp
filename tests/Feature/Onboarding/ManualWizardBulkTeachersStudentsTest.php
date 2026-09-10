@@ -94,6 +94,8 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
         $component
             ->set('schoolName', 'Bulk Upload Academy')
             ->call('next')
+            ->set('studentSize', '100-300 students')
+            ->call('next')
             ->set('countryName', 'Uganda')
             ->call('next')
             ->set('curriculum', 'uneb')
@@ -192,6 +194,14 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
             ->call('next') // terms
             ->call('next') // fees
             ->set('whatsappPhone', '+256700777888')
+            ->call('sendWhatsAppVerificationCode');
+
+        $otp = (string) $component->get('whatsappOtpDisplay');
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $otp);
+
+        $component
+            ->set('whatsappOtpInput', $otp)
+            ->call('verifyWhatsAppCode')
             ->call('next');
 
         $this->assertSame('plan_selection', $component->instance()->steps[$component->instance()->stepIndex]['key'] ?? null);

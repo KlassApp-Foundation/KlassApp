@@ -396,6 +396,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ## Current Status: September 10, 2026 ([#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) **MERGED**; `origin/main` tip `30aeffc1`)
 
+- **🚧 Shipping**: `feature/student-size-onboarding` — early `student_size` step for wizard + Toshi (`schools.student_size`). Stage 1 only (streams/CT/CSV later).
 - **✅ Root hygiene**: Deleted 28 session PNG artifacts + `students-screenshot.html` + `fix-note.md` + superseded `LARAVEL-CLOUD-ASSESSMENT.md`. Relocated `toshi-chat-kit-evaluation.md` → `docs/archive/toshi-chat-kit-evaluation.md`. Merge `30aeffc1` @ 2026-09-09T23:35:17Z.
 - **Prior**: [#489](https://github.com/KlassApp-Foundation/KlassApp/pull/489) README rewrite **MERGED** `a91183ae`; knowledge stamp [#490](https://github.com/KlassApp-Foundation/KlassApp/pull/490) `a9ecc641`.
 
@@ -1400,6 +1401,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-10: Student size onboarding step (wizard + Toshi) — **LOCAL, NOT PUSHED**
+- **Work done**: Restored approximate school size as an early onboarding step (`student_size`) after school name on both the manual wizard and Toshi. Canonical buckets match `auth/onboarding.blade.php` (`STUDENT_SIZE_OPTIONS`). Persists via `OnboardingEngine::saveStudentSize()` → `schools.student_size`. Finished create-mode gaps left incomplete mid-session: `handleStudentSize`, draft restore, create `commitAll` write, review summary, complete-mode commit persist, `OnboardingHelper` label.
+- **Files modified**: `OnboardingStepsService.php`, `OnboardingEngine.php`, `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `AgentToshi.php`, `agent-toshi.blade.php`, `OnboardingHelper.php`, `StudentSizeOnboardingTest.php` (+ fixture updates across wizard/parity/signup tests)
+- **Key decisions**: Auth signup buckets only (not superadmin’s broader set). Size is mandatory/blocking like country. Toshi accepts shorthand (`100-300`, `500+`, etc.). Unrelated local e2e granularity scripts/screenshots left untracked (not part of this feature).
+- **Tests**: 68 passed (`StudentSizeOnboardingTest` + related wizard/parity/steps/signup suite).
+- **Status**: 🚧 Local on `feature/student-size-onboarding` — not committed/pushed/PR’d yet
+- **Edge cases flagged**: Schools that already have `student_size` from legacy auth onboarding skip the step; SaaS minimal signup leaves it null so checklist starts there after name.
 
 ### 2026-09-10: Repo root hygiene (session screenshots + stale root docs) — **MERGED**
 - **Work done**: Removed loose root artifacts unfit for a public tree: 28 verification PNGs (`toshi-e2e-*`, `phase4-*`, `pulse-*`, `issue*`, misc e2e), `students-screenshot.html` (saved page + CSRF meta), empty `fix-note.md`, and superseded `LARAVEL-CLOUD-ASSESSMENT.md` (Aug 14 “do not migrate” planning; Cloud migration already done; SoT is knowledge Verified Stack / Cloud MCP). Relocated `toshi-chat-kit-evaluation.md` → `docs/archive/toshi-chat-kit-evaluation.md` (Jul 14 reject-kit rationale still useful).

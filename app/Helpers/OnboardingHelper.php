@@ -15,6 +15,7 @@ class OnboardingHelper
 {
     const STEP_LABELS = [
         'school_name'     => 'School name',
+        'student_size'    => 'Approximate school size',
         'curriculum'      => 'Board / Curriculum',
         'country'         => 'Country',
         'emis'            => 'EMIS / Ministry code',

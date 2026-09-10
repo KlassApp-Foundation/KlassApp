@@ -71,6 +71,25 @@ class OnboardingEngine
     }
 
     /**
+     * Persist approximate school size (onboarding segmentation).
+     *
+     * @throws ValidationException
+     */
+    public function saveStudentSize(School $school, string $studentSize): void
+    {
+        $studentSize = trim($studentSize);
+
+        if ($studentSize === '' || ! in_array($studentSize, OnboardingStepsService::STUDENT_SIZE_OPTIONS, true)) {
+            throw ValidationException::withMessages([
+                'studentSize' => 'Choose an approximate school size.',
+            ]);
+        }
+
+        $school->student_size = $studentSize;
+        $school->save();
+    }
+
+    /**
      * Persist the school's registration country and linked country_id if known.
      *
      * @throws ValidationException

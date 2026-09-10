@@ -118,6 +118,21 @@ class IdentityStepsTest extends TestCase
         $this->assertSame('uneb', $school->fresh()->curriculum);
     }
 
+    public function test_save_student_size_persists_and_rejects_invalid(): void
+    {
+        $school = $this->createSchool('Size Test School');
+
+        app(OnboardingEngine::class)->saveStudentSize($school, 'Under 100 students');
+        $this->assertSame('Under 100 students', $school->fresh()->student_size);
+
+        try {
+            app(OnboardingEngine::class)->saveStudentSize($school, 'Over 3,000 students');
+            $this->fail('Expected ValidationException for invalid student size.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('studentSize', $e->errors());
+        }
+    }
+
     public function test_save_curriculum_rejects_invalid_value(): void
     {
         $school = $this->createSchool('Curriculum Test School');

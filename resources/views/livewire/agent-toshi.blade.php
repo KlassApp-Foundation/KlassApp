@@ -638,7 +638,7 @@
                             <div class="toshi-uppercase-label">School</div>
                             <div class="toshi-section-title toshi-gap-3">{{ $reviewData['schoolName'] }}</div>
                             <div class="toshi-sm-text">{{ ucfirst($reviewData['schoolType']) }} · {{ $reviewData['curriculum'] ?? 'UNEB' }}</div>
-                            <div class="toshi-tiny-note">EMIS: {{ $reviewData['ministryCode'] ?? '—' }}</div>
+                            <div class="toshi-tiny-note">Size: {{ $reviewData['studentSize'] ?? '—' }} · EMIS: {{ $reviewData['ministryCode'] ?? '—' }}</div>
                         </div>
                     </div>
 

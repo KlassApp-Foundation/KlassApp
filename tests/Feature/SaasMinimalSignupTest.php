@@ -64,11 +64,13 @@ class SaasMinimalSignupTest extends TestCase
         $this->assertFalse(AcademicYear::where('school_id', $school->id)->exists());
 
         $this->assertTrue(OnboardingStepsService::isStepComplete('school_name', $school) === false);
+        $this->assertFalse(OnboardingStepsService::isStepComplete('student_size', $school));
         $this->assertFalse(OnboardingStepsService::isStepComplete('curriculum', $school));
         $this->assertFalse(OnboardingStepsService::isStepComplete('academic_year', $school));
 
         $keys = array_column(OnboardingStepsService::incompleteSteps($school, $user->id), 'key');
         $this->assertSame('school_name', $keys[0]);
+        $this->assertSame('student_size', $keys[1]);
         $this->assertContains('curriculum', $keys);
         $academicIdx = array_search('academic_year', $keys, true);
         $standardsIdx = array_search('standards', $keys, true);
