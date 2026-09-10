@@ -395,7 +395,12 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 ([#497](https://github.com/KlassApp-Foundation/KlassApp/pull/497) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `ad18baa6`) — stages 2–4 complete
+## Current Status: September 10, 2026 ([#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `c851a168`) — CT report-cards singular → plural redirect
+
+- **✅ Teacher report-cards URL fix**: Guessed `/teacher/report-cards/...` 404'd; canonical CT routes are `/teacher/reports/cards/...`. Product menu already used `route('teacher.reports.cards.*')` (no hardcoded singular in app Blade/JS). [#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) adds 301 redirects via named routes. Cloud `depl-a2b68967-…` **deployment.succeeded** tip `c851a168`. Live CT (school **33**): `/teacher/report-cards` → `/teacher/reports/cards`; sidebar only canonical; stream show `…/cards/195` OK; singular show redirects.
+- **Prior tip (stages 2–4)**: [#497](https://github.com/KlassApp-Foundation/KlassApp/pull/497) `ad18baa6` / [#496](https://github.com/KlassApp-Foundation/KlassApp/pull/496) / [#495](https://github.com/KlassApp-Foundation/KlassApp/pull/495) / [#493](https://github.com/KlassApp-Foundation/KlassApp/pull/493) — see Previous.
+
+## Previous: September 10, 2026 ([#497](https://github.com/KlassApp-Foundation/KlassApp/pull/497) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `ad18baa6`) — stages 2–4 complete — superseded above
 
 - **✅ Stage 4 dynamic student template**: Per-school `admin.students.upload-template` XLSX from current sections; help text “Leave Stream blank…”; hard-fail unmatched streams unchanged. Cloud `depl-a2b6748c-…` **deployment.succeeded** tip `ad18baa6`. Live school **33**: route/views/help present; 9 sample class rows (real sections, not static Baby Class); hard-fail markers still in `OnboardingEngine::saveStudents`.
 - **✅ Stage 3 CT streams**: [#496](https://github.com/KlassApp-Foundation/KlassApp/pull/496) tip `f652cfe3` / `depl-a2b671e0-…`. Live: CT auth owns assigned section not peer; routes/menu present; probe cleaned.
@@ -1423,6 +1428,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-10: CT singular `/teacher/report-cards` → canonical `reports/cards` — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Investigated 404 on `/teacher/report-cards/...`. App UI already emits `teacher.reports.cards.*` (sidebar/asserted). Root cause of live 404s: guessed/harness singular paths, not a hardcoded product link. Added 301 redirects in `routes/teacher.php` via `redirect()->route(..., 301)` (plain `permanentRedirect` to relative `reports/cards` dropped the `teacher` prefix). Tests cover sidebar never emits singular + four legacy paths 301.
+- **Files modified**: `routes/teacher.php`, `tests/Feature/Teacher/TeacherReportCardsTest.php`
+- **PR / merge / deploy**: [#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) squash `c851a168`. Cloud `depl-a2b68967-75d3-44b8-a443-baa13e16073e` **deployment.succeeded**.
+- **Live** (school **33** CT): `/teacher/report-cards` → `/teacher/reports/cards` (200, Report Cards UI); sidebar hrefs canonical only; open stream `195`; `/teacher/report-cards/195` → canonical show. Evidence `/tmp/report-cards-redirect-verify-*/VERIFY.json`.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: `Route::permanentRedirect` destinations inside a prefix group are root-absolute unless named-route redirects are used.
 
 ### 2026-09-10: Stage 4 dynamic student upload template — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: `StudentUploadTemplateService` builds per-school XLSX from current year sections. Route `admin.students.upload-template`. Wizard + Toshi links updated; help text “Leave Stream blank if your school doesn't use streams.” Hard-fail unmatched streams unchanged.
