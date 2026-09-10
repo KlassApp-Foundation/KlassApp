@@ -1406,8 +1406,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Restored approximate school size as an early onboarding step (`student_size`) after school name on both the manual wizard and Toshi. Canonical buckets match `auth/onboarding.blade.php` (`STUDENT_SIZE_OPTIONS`). Persists via `OnboardingEngine::saveStudentSize()` → `schools.student_size`. Finished create-mode gaps left incomplete mid-session: `handleStudentSize`, draft restore, create `commitAll` write, review summary, complete-mode commit persist, `OnboardingHelper` label.
 - **Files modified**: `OnboardingStepsService.php`, `OnboardingEngine.php`, `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `AgentToshi.php`, `agent-toshi.blade.php`, `OnboardingHelper.php`, `StudentSizeOnboardingTest.php` (+ fixture updates across wizard/parity/signup tests)
 - **Key decisions**: Auth signup buckets only (not superadmin’s broader set). Size is mandatory/blocking like country. Toshi accepts shorthand (`100-300`, `500+`, etc.). Unrelated local e2e granularity scripts/screenshots left untracked (not part of this feature).
-- **Tests**: 68 passed (`StudentSizeOnboardingTest` + related wizard/parity/steps/signup suite).
-- **Status**: 🚧 Local on `feature/student-size-onboarding` — not committed/pushed/PR’d yet
+- **Tests**: `StudentSizeOnboardingTest` + related wizard/parity/steps/signup suite green (re-verified 41 passed / 184 assertions on core slice).
+- **Status**: 🚧 Shipping stage 1 only on `feature/student-size-onboarding` (no additive streams / CT stream UI / dynamic CSV in this PR)
 - **Edge cases flagged**: Schools that already have `student_size` from legacy auth onboarding skip the step; SaaS minimal signup leaves it null so checklist starts there after name.
 
 ### 2026-09-10: Repo root hygiene (session screenshots + stale root docs) — **MERGED**
