@@ -128,7 +128,7 @@
 }
 
 .ap-input::placeholder { color: #94A3B8; }
-.ap-input.is-invalid { border-color: #EF4444; }
+.ap-input.is-invalid { border-color: var(--ap-error); }
 
 .ap-input--code {
   font-size: 24px;
