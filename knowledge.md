@@ -394,14 +394,22 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 (`feature/landing-preview-v3` **PUSHED to origin** — Phase A secured; **NOT merged to main**; **NOT live**)
+## Current Status: September 10, 2026 (`feature/auth-pages-preview` **PUSHED to origin** — Phase B auth preview; lineage from `feature/landing-preview-v3`; **NOT merged to main**; **NOT live cutover**)
+
+- **✅ Phase B auth pages preview**: branch `feature/auth-pages-preview` (from `origin/feature/landing-preview-v3`). Preview-only restyle of login / register / reset-request / reset-code / reset-newpw / force-change-password against locked Pass 2 mockup `~/open-design/.od/projects/klassapp-auth-error-pass2/auth-error.html`.
+- **On branch**: `resources/css/auth-preview.css`, `resources/views/layouts/auth-preview.blade.php`, `resources/views/auth/preview/*`, Vite entry, preview routes `/preview/{login,register,reset-request,reset-code,reset-newpw,force-change-password}`, `AuthPreviewTest`, Playwright `e2e/auth-preview-verify.cjs` + `e2e/screenshots/auth-preview/`.
+- **Verify**: PHPUnit `AuthPreviewTest` **6 passed** (54 asserts). Playwright 1440/1024/900/760 **pass: true**, **zero console errors**; Pass-2 metrics measured (44×44 toggles / 20px icons, `#22C55E`/`#16A34A`, error `#DC2626`/`#FEF2F2`/`#FECACA`, Google asymmetry, single 6-digit code input, force-change 5 rules + no escape hatch). Real form POSTs hit live endpoints and return validation redirects.
+- **NOT done**: Phase C (404/419/500); live cutover of `/login` `/register` etc. (live blades untouched); six discrete OTP boxes (explicitly deferred — keep single input).
+- **Phase A** still on `origin/feature/landing-preview-v3` (landing preview); not merged.
+
+## Previous: September 10, 2026 (`feature/landing-preview-v3` **PUSHED to origin** — Phase A secured; **NOT merged to main**; **NOT live**) — superseded above for design-track
 
 - **✅ Phase A landing preview restored from stash → real branch**: `origin/feature/landing-preview-v3`. Source: surgical extract from `stash@{6}` (Phase A blobs **byte-identical** to `stash@{7}`; trees differed only by a corrupt `'<main'` path in `@{6}`). Did **not** apply whole stash (bags unrelated e2e / WhatsAppDisconnectPhoneCommand).
 - **On branch**: `resources/views/landing-v2.blade.php`, `resources/css|js/landing-preview.*`, `GET /landing-preview` (`landing.preview`), Vite entries, `LandingPreviewV3Test`, screenshots under `e2e/screenshots/landing-preview-v3/` (+ restore re-verify `…-v3-restore/`).
 - **Verify**: PHPUnit `LandingPreviewV3Test` 1 passed (13 asserts). Local `http://127.0.0.1:8010/landing-preview` **200**; Playwright 1440/1024/390 **pass: true**, **zero console errors** (`e2e/screenshots/landing-preview-v3-restore/REPORT.json`).
 - **NOT** on `main`, **NOT** cut over to `/` or `/landing`, prod `/landing-preview` still 404 until merge+deploy.
 - **Stashes**: after push confirmed, dropped `stash@{6}`, `@{7}` (v3 Phase A bags), and `stash@{12}` (older Aug `landing-v2.css/js` port — superseded).
-- **Phases B/C**: not started.
+- **Phases B/C**: Phase B continued on `feature/auth-pages-preview` (see Current Status); Phase C not started.
 - **Prior on main**: #491 root hygiene / #489 README (see Previous).
 
 ## Previous: September 10, 2026 ([#491](https://github.com/KlassApp-Foundation/KlassApp/pull/491) **MERGED**; tip `30aeffc1` / knowledge stamp `9f1c35ba`) — superseded above for design-track
@@ -1405,6 +1413,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-10: Phase B auth-pages preview — **PUSHED on `feature/auth-pages-preview`**
+- **Work done**: Restyled auth flows as **preview-only** blades (live `resources/views/auth/*` untouched) from Pass 2 locked mockup. Shared `auth-preview.css` tokens; forms POST to real endpoints. Preview GETs optionally `?demo_errors=1` for banner measurement.
+- **Files modified**: `resources/css/auth-preview.css`, `resources/views/layouts/auth-preview.blade.php`, `resources/views/auth/preview/*`, `routes/web.php`, `vite.config.js`, `public/build/*` (auth-preview asset), `tests/Feature/AuthPreviewTest.php`, `e2e/auth-preview-verify.cjs`, `e2e/screenshots/auth-preview/`, `knowledge.md`
+- **Key decisions**: Keep single 6-digit code input (not mockup six boxes). Sora/DM Sans over mockup Bricolage/Inter (match app auth brand). Force-change: 5 rules + no escape hatch. Google asymmetry preserved (login GET `/auth/google`, register POST `auth.google.start` + `formnovalidate`). Branch lineage from Phase A, not disconnected from main alone.
+- **Verify**: `AuthPreviewTest` 6/6; Playwright REPORT `pass: true` at 1440/1024/900/760; Pass-2 properties measured true; validation POSTs 302 back.
+- **NOT done**: Phase C; live `/login` cutover.
+- **Status**: ✅ Pushed to origin; ⏸️ awaiting review; do not start Phase C until reviewed
 
 ### 2026-09-10: Phase A landing-preview restored to `origin/feature/landing-preview-v3` — **PUSHED; not merged**
 - **Work done**: Compared `stash@{6}` vs `@{7}`: Phase A file blobs (blade/css/js/REPORT) **identical**; untracked trees differed only by a bogus `'<main'` path in `@{6}`. Both stashes also held large unrelated e2e trees — applied **surgical checkout** of Phase A paths from `stash@{6}^3` onto branch from `origin/main` (`9f1c35ba`), plus route + Vite wiring (not full `stash apply`). Rebuilt Vite; re-verified.

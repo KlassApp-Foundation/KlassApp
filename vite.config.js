@@ -30,6 +30,7 @@ export default defineConfig({
                 'resources/css/landing.css',
                 'resources/css/landing-preview.css',
                 'resources/js/landing-preview.js',
+                'resources/css/auth-preview.css',
             ],
             refresh: true,
         }),
