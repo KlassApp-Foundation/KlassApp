@@ -167,6 +167,8 @@ Route::post( '/schooldetails/update/{school_id}', 'SchoolDetailsController@updat
 	Route::delete("/classes/delete/{class}", "SectionController@destroy")->name("admin.classes.delete")->can('delete', 'class');
 	Route::get("/class-teacher-invite/{section}/create", "ClassTeacherInviteController@create")->name("admin.class-teacher-invite.create");
 	Route::post("/class-teacher-invite/{standardLink}/store", "ClassTeacherInviteController@store")->name("admin.class-teacher-invite.store");
+	Route::get("/class-stream/{section}/create", "ClassStreamController@create")->name("admin.class-stream.create");
+	Route::post("/class-stream/{section}/store", "ClassStreamController@store")->name("admin.class-stream.store");
 	Route::get('/classes/{section}', function ($section) {
 	    return view('class-roster.show', [
 	        'sectionId' => (int) $section,
