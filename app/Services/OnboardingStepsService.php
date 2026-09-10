@@ -77,7 +77,7 @@ class OnboardingStepsService
             'icon'  => '📆',
         ],
         'standards' => [
-            'label' => 'Classes',
+            'label' => 'Structure & Class Teachers',
             'icon'  => '📚',
         ],
         'subjects' => [

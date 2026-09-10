@@ -21,7 +21,7 @@ class OnboardingHelper
         'emis'            => 'EMIS / Ministry code',
         'uneb_center'     => 'UNEB centre number',
         'academic_year'   => 'Academic year',
-        'standards'       => 'Classes',
+        'standards'       => 'Structure & Class Teachers',
         'subjects'        => 'Subjects',
         'teachers'        => 'Teachers',
         'terms'           => 'Academic terms',

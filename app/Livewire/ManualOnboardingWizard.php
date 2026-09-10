@@ -16,12 +16,15 @@ use App\Models\Teacherlink;
 use App\Models\User;
 
 use App\Models\WhatsAppUser;
+use App\Services\ClassStructureService;
+use App\Services\ClassTeacherInviteService;
 use App\Services\OnboardingNameListExtractor;
 use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolCategorySeeder;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 
+use App\Models\Section;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -84,6 +87,35 @@ class ManualOnboardingWizard extends Component
     public string $academicYearEnd = '';
 
     public string $className = 'P1';
+
+    /**
+     * Structure step: base classes with streams + CT (from ClassStructureService snapshot).
+     *
+     * @var list<array<string, mixed>>
+     */
+    public array $structureClasses = [];
+
+    /**
+     * @var array<string, string>
+     */
+    public array $structureStreamDrafts = [];
+
+    /**
+     * @var array<string, array{email: string, existing_teacher_id: string, name: string, phone: string}>
+     */
+    public array $structureCtDrafts = [];
+
+    /**
+     * Active teachers for CT invite select.
+     *
+     * @var list<array{id: int, name: string, email: string}>
+     */
+    public array $structureTeachers = [];
+
+    /** True when any base class has at least one stream (Students help / defaults). */
+    public bool $schoolHasStreams = false;
+
+    public string $structureFlash = '';
 
     public string $subjectName = 'Mathematics';
 
@@ -337,7 +369,7 @@ class ManualOnboardingWizard extends Component
             $this->studentDrafts[] = [
                 'name' => $name,
                 'class' => $this->studentClass ?: $this->className,
-                'stream' => '',
+                'stream' => trim($this->studentStream),
                 'parent' => '',
                 'parent_phone' => '',
                 'school_student_id' => '',
@@ -543,9 +575,9 @@ class ManualOnboardingWizard extends Component
 
         if (in_array('standards', $done, true)) {
             $suggestions[] = [
-                'title' => 'Add more classes',
-                'body' => 'You started with '.$this->className.'. Add streams or higher levels next.',
-                'href' => url('/admin/standard/create'),
+                'title' => 'Manage classes & streams',
+                'body' => 'Add streams or invite class teachers anytime from Classes.',
+                'href' => url('/admin/classes'),
             ];
         }
 
@@ -678,6 +710,18 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
+        // Structure checkpoint: after Academic Year, always land on standards once
+        // even when StandardLinks were auto-seeded (step is_complete but actions are optional).
+        if (($step['key'] ?? '') === 'academic_year') {
+            foreach ($this->steps as $i => $candidate) {
+                if (($candidate['key'] ?? '') === 'standards') {
+                    $this->setStepIndex($i);
+
+                    return;
+                }
+            }
+        }
+
         if (! OnboardingStepsService::hasBlockingIncompleteSteps($this->school()->fresh(), Auth::id())) {
             $this->setStepIndex($this->reviewStepIndex());
             $this->buildReviewSummary();
@@ -798,6 +842,14 @@ class ManualOnboardingWizard extends Component
     {
         $this->stepIndex = $index;
         unset($this->currentStep);
+
+        $key = $this->currentKey();
+        if (in_array($key, ['standards', 'students'], true)) {
+            $this->refreshStructureSnapshot();
+            if ($key === 'students') {
+                $this->applyStudentStreamDefaultForClass();
+            }
+        }
     }
 
     public function render()
@@ -949,7 +1001,7 @@ class ManualOnboardingWizard extends Component
             ['key' => 'emis', 'label' => 'EMIS / Ministry code', 'icon' => '🔢', 'value' => $emis !== '' ? $emis : '—'],
             ['key' => 'uneb_center', 'label' => 'UNEB centre', 'icon' => '🎓', 'value' => $unebDisplay],
             ['key' => 'academic_year', 'label' => 'Academic year', 'icon' => '📅', 'value' => $yearValue],
-            ['key' => 'standards', 'label' => 'Classes', 'icon' => '🏷️', 'value' => $classNames->isEmpty() ? '—' : $classNames->implode(', ')],
+            ['key' => 'standards', 'label' => 'Structure & Class Teachers', 'icon' => '🏷️', 'value' => $classNames->isEmpty() ? '—' : $classNames->implode(', ')],
             ['key' => 'subjects', 'label' => 'Subjects', 'icon' => '📖', 'value' => $subjects->isEmpty() ? '—' : $subjects->implode(', ')],
             ['key' => 'teachers', 'label' => 'Teachers', 'icon' => '👩‍🏫', 'value' => $teachers->isEmpty() ? '—' : $teachers->implode(', ')],
             [
@@ -984,6 +1036,7 @@ class ManualOnboardingWizard extends Component
                 }
             })(),
             'standards' => (function () use ($sid) {
+                $this->refreshStructureSnapshot();
                 $link = StandardLink::with('section')->where('school_id', $sid)->first();
                 if ($link?->section?->name) {
                     $this->className = (string) $link->section->name;
@@ -1141,6 +1194,197 @@ class ManualOnboardingWizard extends Component
         app(OnboardingEngine::class)->saveUnebCenter($school, $this->unebCenterNumber);
     }
 
+    public function updatedStudentClass(): void
+    {
+        $this->applyStudentStreamDefaultForClass();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function streamsForStudentClass(): array
+    {
+        $class = trim($this->studentClass);
+        if ($class === '') {
+            return [];
+        }
+
+        foreach ($this->structureClasses as $row) {
+            if (strcasecmp((string) ($row['name'] ?? ''), $class) === 0) {
+                return array_values(array_map(
+                    fn (array $stream) => (string) $stream['label'],
+                    $row['streams'] ?? []
+                ));
+            }
+        }
+
+        return [];
+    }
+
+    public function addStructureStream(int $sectionId): void
+    {
+        $this->errorMessage = '';
+        $this->structureFlash = '';
+
+        $key = (string) $sectionId;
+        $label = trim((string) ($this->structureStreamDrafts[$key] ?? ''));
+        if ($label === '') {
+            $this->errorMessage = 'Enter a stream name (e.g. A, East, Science).';
+
+            return;
+        }
+
+        $school = $this->school()->fresh();
+        $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
+            ?? AcademicYear::where('school_id', $school->id)->first();
+        if (! $year) {
+            $this->errorMessage = 'Create an academic year first.';
+
+            return;
+        }
+
+        $section = Section::query()
+            ->where('school_id', $school->id)
+            ->whereKey($sectionId)
+            ->first();
+        if (! $section) {
+            $this->errorMessage = 'Class not found.';
+
+            return;
+        }
+
+        try {
+            $result = app(ClassStructureService::class)->addStream($school, $year, $section, $label);
+            $this->structureStreamDrafts[$key] = '';
+            $this->structureFlash = $result['created']
+                ? 'Added stream “'.$label.'” to '.$section->name.'.'
+                : 'Stream “'.$label.'” is already set up for '.$section->name.'.';
+            $this->refreshStructureSnapshot();
+        } catch (ValidationException $e) {
+            $this->errorMessage = (string) collect($e->errors())->flatten()->first();
+        }
+    }
+
+    public function inviteStructureClassTeacher(int $sectionId): void
+    {
+        $this->errorMessage = '';
+        $this->structureFlash = '';
+
+        $key = (string) $sectionId;
+        $draft = $this->structureCtDrafts[$key] ?? [
+            'email' => '',
+            'existing_teacher_id' => '',
+            'name' => '',
+            'phone' => '',
+        ];
+
+        $school = $this->school()->fresh();
+        $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
+            ?? AcademicYear::where('school_id', $school->id)->first();
+        if (! $year) {
+            $this->errorMessage = 'Create an academic year first.';
+
+            return;
+        }
+
+        $link = StandardLink::query()
+            ->where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->where('section_id', $sectionId)
+            ->where(function ($q) {
+                $q->where('status', 1)->orWhere('status', '1');
+            })
+            ->first();
+
+        if (! $link) {
+            $this->errorMessage = 'Class not found for the current academic year.';
+
+            return;
+        }
+
+        $result = ClassTeacherInviteService::invite(Auth::user(), $link, [
+            'email' => $draft['email'] ?? '',
+            'existing_teacher_id' => $draft['existing_teacher_id'] ?? '',
+            'name' => $draft['name'] ?? '',
+            'phone' => $draft['phone'] ?? '',
+        ]);
+
+        if (! ($result['success'] ?? false)) {
+            $this->errorMessage = (string) ($result['message'] ?? 'Could not invite class teacher.');
+
+            return;
+        }
+
+        $this->structureCtDrafts[$key] = [
+            'email' => '',
+            'existing_teacher_id' => '',
+            'name' => '',
+            'phone' => '',
+        ];
+        $this->structureFlash = (string) ($result['message'] ?? 'Class teacher invited.');
+        $this->refreshStructureSnapshot();
+    }
+
+    private function refreshStructureSnapshot(): void
+    {
+        $school = $this->school()->fresh();
+        $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
+            ?? AcademicYear::where('school_id', $school->id)->first();
+
+        $this->structureClasses = [];
+        $this->schoolHasStreams = false;
+        $this->structureTeachers = User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 5)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name', 'email'])
+            ->map(fn (User $u) => [
+                'id' => (int) $u->id,
+                'name' => (string) $u->name,
+                'email' => (string) $u->email,
+            ])
+            ->values()
+            ->all();
+
+        if (! $year) {
+            return;
+        }
+
+        $this->structureClasses = app(ClassStructureService::class)->structureSnapshot($school, $year);
+
+        foreach ($this->structureClasses as $row) {
+            $sid = (string) $row['section_id'];
+            if (! isset($this->structureStreamDrafts[$sid])) {
+                $this->structureStreamDrafts[$sid] = '';
+            }
+            if (! isset($this->structureCtDrafts[$sid])) {
+                $this->structureCtDrafts[$sid] = [
+                    'email' => '',
+                    'existing_teacher_id' => '',
+                    'name' => '',
+                    'phone' => '',
+                ];
+            }
+            if (($row['streams'] ?? []) !== []) {
+                $this->schoolHasStreams = true;
+            }
+        }
+    }
+
+    private function applyStudentStreamDefaultForClass(): void
+    {
+        $streams = $this->streamsForStudentClass();
+        if ($streams === []) {
+            return;
+        }
+
+        // Default to first stream when the class is split; blank remains selectable.
+        if ($this->studentStream === '' || ! in_array($this->studentStream, $streams, true)) {
+            $this->studentStream = $streams[0];
+        }
+    }
+
     private function saveAcademicYear(School $school): void
     {
         app(OnboardingEngine::class)->saveAcademicYear(
@@ -1154,6 +1398,8 @@ class ManualOnboardingWizard extends Component
 
     private function saveClass(School $school): void
     {
+        // Structure checkpoint: when classes already exist (auto-seed), Next is a no-op.
+        // Stream/CT actions persist immediately via addStructureStream / inviteStructureClassTeacher.
         if (StandardLink::where('school_id', $school->id)->exists()) {
             return;
         }

@@ -236,7 +236,8 @@ class OnboardingEngineParityTest extends TestCase
             ->set('ministryCode', $payload['ministry_code'])
             ->call('next')
             ->call('next') // uneb skip
-            ->call('next'); // academic year → seeder fills classes/subjects
+            ->call('next') // academic year → seeder fills classes/subjects
+            ->call('next'); // structure checkpoint (optional)
 
         // Optional teachers / students. Skipping teachers via next() jumps past other
         // optional steps (students) to the next blocking step — so when we need

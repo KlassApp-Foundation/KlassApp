@@ -106,6 +106,7 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
             ->call('next')
             ->call('next') // uneb
             ->call('next') // academic year seeds classes/subjects/grading
+            ->call('next') // structure checkpoint (optional)
             ;
     }
 
