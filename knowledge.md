@@ -59,11 +59,14 @@ Once wired, agents get native deploy/environment/command tools — no more hand-
 
 If you must call the REST API directly (e.g. from a script that isn't MCP-capable):
 - Base URL: `https://cloud.laravel.com/api`
+- Auth: `Authorization: Bearer <token>` + `Accept: application/json` (official). `X-Auth-Token` is what the unofficial read-only MCP expects; Bearer is what the REST API accepts for writes.
+- **Deploy (initiate)**: `POST /api/environments/{environment_id}/deployments` with **empty body** (no JSON). Deploys current `main` tip for that app. Poll `GET /api/deployments/{id}` until `deployment.succeeded` / failed. Production env id: `env-a2ac7a89-dbf5-43aa-ac95-ca88d3065873`. Push-to-deploy is **off** — merge alone does not ship.
 - Commands endpoint: `POST /api/environments/{environment_id}/commands` with flat body `{"command":"php artisan …"}` (not JSON:API-wrapped). Top-level `POST /api/commands` redirects and is not usable.
 - Poll: `GET /api/commands/{id}` until status is `command.success`
 - Environment vars: `POST /api/environments/{id}/variables` with `"method": "set"` (also flat body)
 - Env vars are applied only after a redeploy, not immediately (see `config:clear` alone is insufficient)
 - Prefer `curl` over Python `urllib` — Cloudflare may block non-browser User-Agents on some paths.
+- Token source: Doppler `my-agent` / `LARAVEL_CLOUD`, or `~/.cursor/mcp.json` `laravel-cloud` header (same org token). Official MCP is **read-only** — deploys go through this REST call, not MCP tools.
 
 > 🔐 **Security**: `~/.cursor/mcp.json` is gitignored inside the repo (`.gitignore` line `.cursor/mcp.json`). `~/.cursor` and `~/.config/goose` live outside any repo entirely. Never paste the real token value into a PR description, commit message, or knowledge.md — always retrieve it from Doppler.
 
@@ -395,10 +398,23 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 11, 2026 ([#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) **PR OPEN**; tip `5e1f14b2`) — presentation caveats
+## Current Status: September 11, 2026 ([#506](https://github.com/KlassApp-Foundation/KlassApp/pull/506) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `2682fac2`) — Toshi skip Continue + plan card/sidebar parity
 
-- **🚧 PR** [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) branch `fix/onboarding-presentation-caveats` tip `5e1f14b2` — six demo-readiness caveats fixed; local focused tests green; deploy + live-verify pending.
-- **Prior**: [#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) Structure & Class Teachers **MERGED+DEPLOYED+LIVE-VERIFIED** tip `d661aec8` (stamp [#503](https://github.com/KlassApp-Foundation/KlassApp/pull/503) `e1124471`).
+- **✅ Design-audit follow-up (separate from #504 caveats)** live on `klassapp.xyz`:
+  1. Typed **`skip`** (and Skip this step / typed `continue`) on teachers/students/fees/exams **Continue** forms advances — was a silent no-op while `substep=6` and handlers only covered 0/1.
+  2. **Plan selection** checklist resume and sidebar `jumpToStep` both land on create-flow `plan_selection` **with plan cards** (not text-only `actionStep=onboarding_plan_selection`).
+- **Merge**: [#506](https://github.com/KlassApp-Foundation/KlassApp/pull/506) squash `2682fac2f7603bc44af6a9f3b195def4a2483100` @ 2026-09-10T22:49:51Z.
+- **Cloud**: `depl-a2b74a33-9f2e-474e-b117-323f542b63d1` **deployment.succeeded** @ 2026-09-10T22:59:21Z (commit `2682fac2`).
+- **Live** (`caveats504.1789078396536@live-verify.test`): typed skip closed teachers form + advanced; plan cards visible after jump; Freemium `selectPlan` → `selectedPlanId=1`. Evidence `e2e/screenshots/toshi-skip-plan-parity-506/VERIFY.json` (**pass: true**).
+- **UI design flag (not rebuilt now)**: prefer chips/buttons over free-text for Toshi actions; free-text-only paths still include school name / EMIS / UNEB / some fee & exam entry — for upcoming UI design phase.
+- **Prior**: [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504)+[#505](https://github.com/KlassApp-Foundation/KlassApp/pull/505) presentation caveats tip `e26dba5f` — see Previous.
+
+## Previous: September 11, 2026 ([#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504)+[#505](https://github.com/KlassApp-Foundation/KlassApp/pull/505) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e26dba5f`) — presentation caveats
+
+- **✅ Six presentation caveats** live after [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) + follow-up [#505](https://github.com/KlassApp-Foundation/KlassApp/pull/505).
+- **Merges**: #504 squash `de312b0c` @ 2026-09-10T22:05:57Z; #505 squash `e26dba5f` @ 2026-09-10T22:16:09Z.
+- **Cloud**: `depl-a2b73809-…` (#504) + `depl-a2b73b5f-…` (#505) **deployment.succeeded**.
+- **Live** school `caveats504.1789078396536@live-verify.test`: subjects checkpoint, teacher phone soft-reject, exam term prefill, typed `yeah`, review confirm, Toshi **Classes** label.
 
 ## Previous: September 10, 2026 ([#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d661aec8`) — Structure & Class Teachers wizard checkpoint
 
@@ -1444,7 +1460,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-11: Presentation caveats (subjects checkpoint / Toshi yes / exam term / labels) — **PR OPEN**
+### 2026-09-11: Toshi typed skip on Continue forms + plan card/sidebar parity — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Fixed two design-audit findings left after #504/#505:
+  1. Continue-form `substep=6` ignored typed `skip`/`continue`/`done` and `skipStep()` — routed via `finishInlineCollectionForm()` / early `send()` handling (same class as typed-yes order bug).
+  2. `jumpToIncompleteOnboardingStep('plan_selection')` used text-only `actionStep`; removed from actionMap, map to create-flow `plan_selection` step; `jumpToStep` clears leftover actionStep; blade shows cards for step or legacy actionStep.
+- **Files modified**: `AgentToshi.php`, `agent-toshi.blade.php`, `ToshiSkipContinueFormParityTest.php`, `ToshiSchoolCategoryJumpResumeTest.php`
+- **PR / merge / deploy**: [#506](https://github.com/KlassApp-Foundation/KlassApp/pull/506) squash `2682fac2`. Cloud `depl-a2b74a33-…` **deployment.succeeded**.
+- **Live**: `e2e/screenshots/toshi-skip-plan-parity-506/VERIFY.json` pass; school `caveats504.1789078396536@live-verify.test`.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged / design note**: Prefer chips/buttons over free-text for Toshi actions. Free-text-only paths still include school name, EMIS, UNEB, some fee/exam entry — flag for UI design phase (not rebuilt in #506). Cloud deploy: empty-body `POST …/deployments` + `Authorization: Bearer` (MCP is read-only).
+
+### 2026-09-11: Presentation caveats (subjects checkpoint / Toshi yes / exam term / labels) — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Six live-demo caveats investigated with evidence, then fixed:
   1. Wizard Subjects silently skipped after category seed → force-land subjects after Structure (mirror AY→standards); seeded list + “already set up” cue; blank Next is no-op; can add another.
   2. Teacher name/phone mix-up → name placeholder + helper + soft reject phone-like names.
@@ -1453,9 +1479,10 @@ Phase B: Mix→Vite + Vue 3 runtime
   6. Toshi checklist “Structure & Class Teachers” → `toshi_label` **Classes** via `OnboardingStepsService::labelForContext`; wizard label unchanged.
 - **Files modified**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `ExamController.php`, `teacher/exams/form.blade.php`, `AgentToshi.php`, `OnboardingStepsService.php`, `OnboardingHelper.php`, `WizardStructureClassTeacherTest.php`, `ClassTeacherExamCreateTest.php`, + `WizardSubjectsCheckpointTest.php`, `ToshiFreeTextConfirmParityTest.php`
 - **Key decisions**: Subjects checkpoint mirrors Structure (reviewable seeded step, not silent skip). Confirm free-text must beat action flows (student_size was swallowing `yes`). Exam term sort is PHP-side (SQLite has no `FIELD()`).
-- **Tests**: 29 passed focused suite (wizard subjects/structure, Toshi free-text parity + school-name yes, CT exam create term prefill, confirmation gate).
-- **PR**: [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) tip `5e1f14b2` on `fix/onboarding-presentation-caveats`.
-- **Status**: 🚧 PR open — deploy + live-verify still pending
+- **Tests**: focused suites green; #505 cleared default subject on seeded checkpoint.
+- **PR / merge / deploy**: [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) `de312b0c` + [#505](https://github.com/KlassApp-Foundation/KlassApp/pull/505) `e26dba5f`. Cloud `depl-a2b73809-…` / `depl-a2b73b5f-…` **deployment.succeeded**.
+- **Live**: `caveats504.1789078396536@live-verify.test` — subjects, teacher phone soft-reject, exam term, typed yeah, review confirm, Classes label.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
 - **Edge cases flagged**: Non yes/no text while `awaitingConfirm` still falls through in setup (school-name correction). Assistant + pending tool + unclear text prompts yes/no only.
 
 ### 2026-09-10: Structure & Class Teachers wizard checkpoint — **MERGED+DEPLOYED+LIVE-VERIFIED**
