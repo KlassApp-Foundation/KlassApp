@@ -14,26 +14,26 @@
 | **Bundler** | **Vite 8** (sole) | Phase 3 **CLOSED on `main`** — merge `9bdf185` (from `migration/vite` / `3bc5c70`). Scripts: `npm run dev` / `npm run build`. Blade `@vite([...])`. |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
-| **Production host** | **Laravel Cloud** (`klassapp.xyz`, EU-West-1, via Composer Build + Valkey). DigitalOcean droplet (`46.101.111.131`) is **retired** — do not SSH it. | Laravel Cloud MCP / Commands API |
+| **Production host** | **Laravel Cloud** (`klassapp.xyz`, EU-West-1, via Composer Build + Valkey). DigitalOcean droplet (`46.101.111.131`) is **retired** — do not SSH it. | MCP (read) · Commands API · **Deploy POST** (see below) |
 
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — verify via Cloud Commands, not SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Laravel Cloud MCP (preferred over raw Commands API)
+## Laravel Cloud MCP (read-only inspect; not a deploy trigger)
 
-Laravel Cloud has an official MCP server for deploy/environment/command tooling: `https://mcp.laravel.cloud/mcp`
+Laravel Cloud MCP (`https://mcp.laravel.cloud/mcp`) is **READ-ONLY**. It can list applications, environments, deployments, logs, metrics, etc. It has **no** tool that starts a deployment or runs shell commands. Do not assume MCP can ship code after a merge.
 
 ### Getting the token
 
-The token lives in Doppler under the `klassapp` project, `dev` config, key name **`CLOUD_AGENT_TOOLING`**:
+Same org API token for MCP, Commands API, and the deploy-trigger endpoint. Prefer Doppler key **`CLOUD_AGENT_TOOLING`**:
 ```bash
 doppler secrets get CLOUD_AGENT_TOOLING --config dev --plain
 ```
-Do **not** hardcode or commit this token. Every agent session should retrieve it fresh from Doppler.
+(Fallback names seen in agent configs: `LARAVEL_CLOUD` under Doppler `my-agent`, or the value already in `~/.cursor/mcp.json` → `laravel-cloud` → `X-Auth-Token`.) Do **not** hardcode or commit the token.
 
 ### Wiring into an MCP-capable agent
 
-All clients need the same URL + `X-Auth-Token` header:
+MCP clients send the token as **`X-Auth-Token`**. REST write calls (Commands + Deploy) use **`Authorization: Bearer <token>`** instead.
 
 ```json
 {
@@ -53,20 +53,54 @@ All clients need the same URL + `X-Auth-Token` header:
 | **Claude Code** | `claude mcp add --transport http laravel-cloud https://mcp.laravel.cloud/mcp --header "X-Auth-Token: <token>"` | HTTP | Then `claude mcp enable laravel-cloud`. |
 | **MCP Inspector / generic** | Same URL + header pattern | HTTP | Add via that tool's own UI or config file. |
 
-Once wired, agents get native deploy/environment/command tools — no more hand-rolled `curl` to the raw Commands API.
+Once wired, agents can **inspect** Cloud state (including `list-deployments` / `get-deployment`). To **ship**, use the deploy-trigger REST call below. To run `php artisan …` on prod, use the Commands API.
 
-### Raw Commands API (fallback for non-MCP tools)
+### Raw Commands API (run artisan / shell on the environment — not a deploy)
 
-If you must call the REST API directly (e.g. from a script that isn't MCP-capable):
-- Base URL: `https://cloud.laravel.com/api`
-- Auth: `Authorization: Bearer <token>` + `Accept: application/json` (official). `X-Auth-Token` is what the unofficial read-only MCP expects; Bearer is what the REST API accepts for writes.
-- **Deploy (initiate)**: `POST /api/environments/{environment_id}/deployments` with **empty body** (no JSON). Deploys current `main` tip for that app. Poll `GET /api/deployments/{id}` until `deployment.succeeded` / failed. Production env id: `env-a2ac7a89-dbf5-43aa-ac95-ca88d3065873`. Push-to-deploy is **off** — merge alone does not ship.
-- Commands endpoint: `POST /api/environments/{environment_id}/commands` with flat body `{"command":"php artisan …"}` (not JSON:API-wrapped). Top-level `POST /api/commands` redirects and is not usable.
+Base URL: `https://cloud.laravel.com/api`
+
+- Auth: `Authorization: Bearer <token>` + `Accept: application/json`
+- Commands: `POST /api/environments/{environment_id}/commands` with flat body `{"command":"php artisan …"}` (not JSON:API-wrapped). Top-level `POST /api/commands` redirects and is not usable.
 - Poll: `GET /api/commands/{id}` until status is `command.success`
 - Environment vars: `POST /api/environments/{id}/variables` with `"method": "set"` (also flat body)
-- Env vars are applied only after a redeploy, not immediately (see `config:clear` alone is insufficient)
-- Prefer `curl` over Python `urllib` — Cloudflare may block non-browser User-Agents on some paths.
-- Token source: Doppler `my-agent` / `LARAVEL_CLOUD`, or `~/.cursor/mcp.json` `laravel-cloud` header (same org token). Official MCP is **read-only** — deploys go through this REST call, not MCP tools.
+- Env vars are applied only after a **real deployment**, not after `config:clear` alone
+- Prefer `curl` over Python `urllib` — Cloudflare may block some User-Agents
+- Production environment id: `env-a2ac7a89-dbf5-43aa-ac95-ca88d3065873`
+
+This endpoint runs a one-off command. It does **not** build/release a new commit. For that, use the section below.
+
+## Triggering a real deployment (distinct from the Commands API)
+
+Laravel Cloud's MCP server is **READ-ONLY** — it has no deploy-trigger tool. Push-to-deploy is **off** on production; merging to `main` alone does not ship. To actually start a deployment programmatically:
+
+```http
+POST https://cloud.laravel.com/api/environments/{environment}/deployments
+Authorization: Bearer <token>
+Accept: application/json
+
+(empty body — no JSON)
+```
+
+Example (`curl`):
+
+```bash
+TOKEN="$(doppler secrets get CLOUD_AGENT_TOOLING --config dev --plain)"
+ENV_ID="env-a2ac7a89-dbf5-43aa-ac95-ca88d3065873"   # KlassApp production
+
+curl -sS -X POST \
+  "https://cloud.laravel.com/api/environments/${ENV_ID}/deployments" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "Accept: application/json"
+# → 201 with data.id like depl-… and attributes.commit_hash
+```
+
+This is **different from the Commands API** (which runs arbitrary shell via a `"command"` field). This endpoint starts a **real deployment** of the environment’s latest commit (typically current `main` tip).
+
+**After triggering**, poll status with either:
+- REST: `GET https://cloud.laravel.com/api/deployments/{deployment_id}` (or list `GET …/environments/{environment}/deployments`) until `attributes.status` is `deployment.succeeded` / failed / cancelled
+- MCP (read-capable): `list-deployments` / `get-deployment`
+
+**Token:** same `CLOUD_AGENT_TOOLING` (or equivalent) already used for the Commands API and MCP config.
 
 > 🔐 **Security**: `~/.cursor/mcp.json` is gitignored inside the repo (`.gitignore` line `.cursor/mcp.json`). `~/.cursor` and `~/.config/goose` live outside any repo entirely. Never paste the real token value into a PR description, commit message, or knowledge.md — always retrieve it from Doppler.
 
