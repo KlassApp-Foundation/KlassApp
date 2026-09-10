@@ -1424,24 +1424,25 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-10: Stage 3 CT stream surface (add/rename) — **SHIPPING**
-- **Work done**: Teacher `/teacher/class-streams` — list owned sections, add stream, rename. Auth exclusively via `ExamAuthorization::sectionIdsForClassTeacher()` (403 on peer class). Reuses `ClassStructureService`. Sidebar “Class Streams” next to Report Cards when CT links exist. No delete/merge routes.
-- **Files modified**: `Teacher/ClassStreamController.php`, `resources/views/teacher/class-stream/*`, `routes/teacher.php`, `layouts/teacher/menu.blade.php`, `ClassTeacherStreamSurfaceTest.php`, `knowledge.md`
-- **Key decisions**: Dedicated CT controller (not school-wide SectionPolicy; not muddying read-only ClassRoster). Nav gated with same CT links helper as Report Cards.
-- **Tests**: `ClassTeacherStreamSurfaceTest` — 5 passed.
-- **Also stamped**: Stage 2 live-verify on Cloud (school 33) after `depl-a2b66c54` succeeded; Commands API path is `POST /api/environments/{env}/commands` (flat `/api/commands` redirects).
-- **Status**: 🚧 Opening PR `feature/ct-stream-surface`
-- **Edge cases flagged**: Subject name accessor uppercases on copy (`ENGLISH`); assert by section_id count in tests.
+### 2026-09-10: Stage 4 dynamic student upload template — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: `StudentUploadTemplateService` builds per-school XLSX from current year sections. Route `admin.students.upload-template`. Wizard + Toshi links updated; help text “Leave Stream blank if your school doesn't use streams.” Hard-fail unmatched streams unchanged.
+- **PR / merge / deploy**: [#497](https://github.com/KlassApp-Foundation/KlassApp/pull/497) squash `ad18baa6`. Cloud `depl-a2b6748c-…` **deployment.succeeded**.
+- **Live** (school **33**): route/help/dynamic link present; 9 real class samples (no Baby Class static set); hard-fail source markers intact.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: Full name-encoded sections without a shorter base (e.g. `P1 A`) appear as Class=`P1 A` with blank Stream — valid for class-only `saveStudents` matching.
+
+### 2026-09-10: Stage 3 CT stream surface (add/rename) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Teacher `/teacher/class-streams` — list/add/rename owned sections via `ExamAuthorization::sectionIdsForClassTeacher()`. No delete/merge.
+- **PR / merge / deploy**: [#496](https://github.com/KlassApp-Foundation/KlassApp/pull/496) squash `f652cfe3`. Cloud `depl-a2b671e0-…` **deployment.succeeded**.
+- **Live**: routes/views/menu; owns assigned not peer; probe CT 136 / section 215 cleaned.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
 
 ### 2026-09-10: Stage 2 additive stream creation (name-encoded) — **MERGED+DEPLOYED+LIVE-VERIFIED**
-- **Work done**: Added `ClassStructureService` (`addStream` / `renameStream` / `resolveBaseSection`). Creates `{Base} {Label}` sections via `OnboardingEngine::composeClassAndStream`; keeps undivided base; copies subjects from base; never writes `standards_link.stream`. Admin UI: Add stream on `/admin/sections` → `ClassStreamController`.
-- **Files modified**: `app/Services/ClassStructureService.php`, `app/Http/Controllers/Admin/ClassStreamController.php`, `resources/views/admin/class-stream/create.blade.php`, `resources/views/admin/school/sections/list.blade.php`, `routes/admin.php`, `tests/Feature/ClassStructureServiceTest.php`, `knowledge.md`
-- **Key decisions**: Reuse saveStandards name-encoding (not CreateStreamTool’s `stream` column). Seeder unchanged. Rename helper included for Stage 3 reuse.
-- **Tests**: `ClassStructureServiceTest` — 6 passed.
+- **Work done**: `ClassStructureService::addStream` / admin Add stream UI; name-encoding; base kept; subjects copied; `standards_link.stream` unused.
 - **PR / merge / deploy**: [#495](https://github.com/KlassApp-Foundation/KlassApp/pull/495) squash `8813f513`. Cloud `depl-a2b66c54-…` **deployment.succeeded**.
-- **Live** (school **33**): `Primary One` + `Vz4281` → section 214 `Primary One Vz4281`; base 195 kept; `link.stream=null`; subjects 4=4; probe flagged `status=0`. Routes/views confirmed on prod.
+- **Live** (school **33**): Primary One + Vz4281 → section 214; base kept; stream col null; subjects 4=4.
 - **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
-- **Edge cases flagged**: Adding stream from an existing stream section resolves to base name (`Primary One A` + B → `Primary One B`). Accidental local `migrate:fresh` during early verify wiped agent local DB — use Cloud Commands for evidence.
+- **Note**: Cloud Commands API is `POST /api/environments/{env}/commands` (flat `/api/commands` redirects).
 
 ### 2026-09-10: Student size onboarding step (wizard + Toshi) — **MERGED**
 - **Work done**: Restored approximate school size as an early onboarding step (`student_size`) after school name on both the manual wizard and Toshi. Canonical buckets match `auth/onboarding.blade.php` (`STUDENT_SIZE_OPTIONS`). Persists via `OnboardingEngine::saveStudentSize()` → `schools.student_size`. Finished create-mode gaps left incomplete mid-session: `handleStudentSize`, draft restore, create `commitAll` write, review summary, complete-mode commit persist, `OnboardingHelper` label.
