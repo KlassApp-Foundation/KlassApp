@@ -394,7 +394,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 (`feature/auth-pages-preview` — Phases A+B+C **preview track PUSHED**; **NOT merged to main**)
+## Current Status: September 10, 2026 (`feature/auth-pages-preview` tip `7b32a7dc` — Phases A+B+C **preview track PUSHED**; **NOT merged to main**)
 
 - **✅ Phase C error pages (404/419/500)**: Pass-2 restyle of existing `resources/views/errors/{404,419,500}.blade.php` + new `errors/pass2-layout.blade.php` (self-contained CSS, no Vite). Preview `GET /preview/errors/{404|419|500}` (`preview.errors`). `ErrorsPreviewTest` + Playwright `e2e/errors-preview-verify.cjs`.
 - **Laravel 12.63 confirmed**: dedicated `404`/`500`/`503` views required — `4xx`/`5xx` fallbacks do **not** cover them (docs + `Handler::getHttpExceptionView`).
@@ -1424,14 +1424,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-10: Phase C error pages Pass-2 — **PUSHED on `feature/auth-pages-preview`**
+### 2026-09-10: Phase C error pages Pass-2 — **PUSHED** `origin/feature/auth-pages-preview` @ `7b32a7dc`
 - **Work done**: Confirmed `resources/views/errors/` already had custom 401–503 + layouts (Sora/DM Sans). Restyled 404/419/500 onto new `errors/pass2-layout.blade.php` from locked mockup frames. Added `/preview/errors/{code}` (HTTP 200 + Preview badge + synthetic `$exception`). Did not touch 401/403/429/503.
 - **Laravel 12.63**: re-verified dedicated 404/500/503 required; `4xx`/`5xx` fallbacks do not cover them.
 - **$exception / TypeError**: production wraps non-HTTP throwables as `HttpException(500, $message)`; 500 view keeps static copy and never prints exception text (verified in `ErrorsPreviewTest`).
 - **419 copy**: verbatim “no changes have been lost” + amber “Refresh and try again” primary.
 - **Verify**: `ErrorsPreviewTest` 7/7; Playwright 1440/1024/900/760 pass; real missing URL returns 404 Pass-2 without Preview badge.
 - **Open decision**: merge activates live 404/419/500 (asymmetry vs auth preview-only copies).
-- **Status**: ✅ Pushed; ⏸️ awaiting review; cutover of `/` + auth + errors = separate future decision
+- **Status**: ✅ Pushed @ `7b32a7dc`; ⏸️ awaiting review; cutover of `/` + auth + errors = separate future decision
 
 ### 2026-09-10: Phase B auth-pages preview — **PUSHED** `origin/feature/auth-pages-preview` @ `897c208c`
 - **Work done**: Restyled auth flows as **preview-only** blades (live `resources/views/auth/*` untouched) from Pass 2 locked mockup. Shared `auth-preview.css` tokens; forms POST to real endpoints. Preview GETs optionally `?demo_errors=1` for banner measurement.
