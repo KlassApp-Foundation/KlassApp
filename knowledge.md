@@ -395,9 +395,9 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 11, 2026 — presentation caveats (wizard subjects / Toshi yes / exam term) — **PR OPEN**
+## Current Status: September 11, 2026 ([#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) **PR OPEN**; tip `5e1f14b2`) — presentation caveats
 
-- **🚧 Branch** `fix/onboarding-presentation-caveats` — six demo-readiness caveats investigated + fixed (local tests green; PR open / deploy+live-verify pending).
+- **🚧 PR** [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) branch `fix/onboarding-presentation-caveats` tip `5e1f14b2` — six demo-readiness caveats fixed; local focused tests green; deploy + live-verify pending.
 - **Prior**: [#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) Structure & Class Teachers **MERGED+DEPLOYED+LIVE-VERIFIED** tip `d661aec8` (stamp [#503](https://github.com/KlassApp-Foundation/KlassApp/pull/503) `e1124471`).
 
 ## Previous: September 10, 2026 ([#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d661aec8`) — Structure & Class Teachers wizard checkpoint
@@ -1454,7 +1454,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `ExamController.php`, `teacher/exams/form.blade.php`, `AgentToshi.php`, `OnboardingStepsService.php`, `OnboardingHelper.php`, `WizardStructureClassTeacherTest.php`, `ClassTeacherExamCreateTest.php`, + `WizardSubjectsCheckpointTest.php`, `ToshiFreeTextConfirmParityTest.php`
 - **Key decisions**: Subjects checkpoint mirrors Structure (reviewable seeded step, not silent skip). Confirm free-text must beat action flows (student_size was swallowing `yes`). Exam term sort is PHP-side (SQLite has no `FIELD()`).
 - **Tests**: 29 passed focused suite (wizard subjects/structure, Toshi free-text parity + school-name yes, CT exam create term prefill, confirmation gate).
-- **PR**: opening on `fix/onboarding-presentation-caveats` (number/URL stamped when `gh pr create` returns).
+- **PR**: [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) tip `5e1f14b2` on `fix/onboarding-presentation-caveats`.
 - **Status**: 🚧 PR open — deploy + live-verify still pending
 - **Edge cases flagged**: Non yes/no text while `awaitingConfirm` still falls through in setup (school-name correction). Assistant + pending tool + unclear text prompts yes/no only.
 
