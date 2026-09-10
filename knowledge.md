@@ -1422,14 +1422,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-10: Phase C error pages Pass-2 — **PUSHED** `origin/feature/auth-pages-preview` @ `7b32a7dc`
+### 2026-09-10: Phase C scope fix — real errors/* reverted; Pass-2 → `errors-preview/` only
+- **What was wrong**: `7b32a7dc` edited live `resources/views/errors/{404,419,500}.blade.php`, so a real 404 on the branch already showed Pass-2 (unlike A/B preview-only pattern). Caught in review.
+- **Fix**: Restored those three blades to pre-`7b32a7dc` / byte-identical `origin/main`. Moved shell to `resources/views/errors-preview/layout.blade.php` + `404|419|500`. Rewired `/preview/errors/{code}` to `errors-preview.*`. Deleted misleading `real-404-1440.png` (Pass-2); new shot `real-404-illustrated-1440.png`.
+- **Proof**: `git diff origin/main -- resources/views/errors/` empty; blob hashes match main for 404/419/500. HTTP: real 404 → `klass-error-shell`; preview → `data-error-shell="pass2"`.
+- **Verify**: `ErrorsPreviewTest` 8/8; Playwright REPORT pass; live 500 view leak guard still holds.
+- **Status**: ✅ Correction pushed; cutover of live errors still a separate decision
+
+### 2026-09-10: Phase C error pages Pass-2 — **PUSHED** `origin/feature/auth-pages-preview` @ `7b32a7dc` — **SUPERSEDED (scope violation fixed)**
 - **Work done**: Confirmed `resources/views/errors/` already had custom 401–503 + layouts (Sora/DM Sans). Restyled 404/419/500 onto new `errors/pass2-layout.blade.php` from locked mockup frames. Added `/preview/errors/{code}` (HTTP 200 + Preview badge + synthetic `$exception`). Did not touch 401/403/429/503.
-- **Laravel 12.63**: re-verified dedicated 404/500/503 required; `4xx`/`5xx` fallbacks do not cover them.
-- **$exception / TypeError**: production wraps non-HTTP throwables as `HttpException(500, $message)`; 500 view keeps static copy and never prints exception text (verified in `ErrorsPreviewTest`).
-- **419 copy**: verbatim “no changes have been lost” + amber “Refresh and try again” primary.
-- **Verify**: `ErrorsPreviewTest` 7/7; Playwright 1440/1024/900/760 pass; real missing URL returns 404 Pass-2 without Preview badge.
-- **Open decision**: merge activates live 404/419/500 (asymmetry vs auth preview-only copies).
-- **Status**: ✅ Pushed @ `7b32a7dc`; ⏸️ awaiting review; cutover of `/` + auth + errors = separate future decision
+- **Correction**: See session entry above — real blades reverted; Pass-2 only under `errors-preview/`.
+- **Status**: ⚠️ Initial ship touched live error blades; fixed same night
 
 ### 2026-09-10: Phase B auth-pages preview — **PUSHED** `origin/feature/auth-pages-preview` @ `897c208c`
 - **Work done**: Restyled auth flows as **preview-only** blades (live `resources/views/auth/*` untouched) from Pass 2 locked mockup. Shared `auth-preview.css` tokens; forms POST to real endpoints. Preview GETs optionally `?demo_errors=1` for banner measurement.
