@@ -59,10 +59,11 @@ Once wired, agents get native deploy/environment/command tools — no more hand-
 
 If you must call the REST API directly (e.g. from a script that isn't MCP-capable):
 - Base URL: `https://cloud.laravel.com/api`
-- Commands endpoint: `POST /api/commands` (flat body `{"command":"php artisan …"}`, **not** JSON:API-wrapped)
-- Poll: `GET /api/commands/{id}` until `command.success == true`
+- Commands endpoint: `POST /api/environments/{environment_id}/commands` with flat body `{"command":"php artisan …"}` (not JSON:API-wrapped). Top-level `POST /api/commands` redirects and is not usable.
+- Poll: `GET /api/commands/{id}` until status is `command.success`
 - Environment vars: `POST /api/environments/{id}/variables` with `"method": "set"` (also flat body)
 - Env vars are applied only after a redeploy, not immediately (see `config:clear` alone is insufficient)
+- Prefer `curl` over Python `urllib` — Cloudflare may block non-browser User-Agents on some paths.
 
 > 🔐 **Security**: `~/.cursor/mcp.json` is gitignored inside the repo (`.gitignore` line `.cursor/mcp.json`). `~/.cursor` and `~/.config/goose` live outside any repo entirely. Never paste the real token value into a PR description, commit message, or knowledge.md — always retrieve it from Doppler.
 
