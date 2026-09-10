@@ -395,7 +395,17 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 10, 2026 ([#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `c851a168`) — CT report-cards singular → plural redirect
+## Current Status: September 10, 2026 ([#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d661aec8`) — Structure & Class Teachers wizard checkpoint
+
+- **✅ Wizard Structure & Class Teachers**: Repurposed dead `standards` step (label **Structure & Class Teachers**) after Academic Year. Per auto-seeded class: optional Add stream + optional Invite CT (neither blocks Next). `ClassStructureService::structureSnapshot()` feeds the UI; wires existing `addStream` / `ClassTeacherInviteService`. After AY, Next **always** lands on `standards` even when StandardLinks already exist (seeded complete no longer skips the checkpoint).
+- **✅ Students stream default**: When a class has streams, wizard class select defaults stream to the first stream; “Base class (no stream)” remains selectable. CSV template sample rows prefer stream rows first.
+- **Tests**: `WizardStructureClassTeacherTest` + wizard walk fixtures (extra Next after AY).
+- **PR / merge / deploy**: [#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) squash `d661aec8`. Cloud `depl-a2b69b59-991d-4228-bbb7-bf721c7f3662` **deployment.succeeded**.
+- **Live** (`klassapp.xyz`): register → Structure: stream **East** on Primary Five + CT invite; Students (progress-dot): Primary Five → stream **East**, base option present. Evidence `/tmp/structure-wizard-verify-1789052203275/`, `/tmp/structure-students-verify-1789052703182/VERIFY.json`.
+- **Out of scope**: Toshi parity; making streams required.
+- **Prior**: [#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) / [#501](https://github.com/KlassApp-Foundation/KlassApp/pull/501) report-cards redirect; stages 2–4 `#497`/`#496`/`#495`/`#493` — see Previous.
+
+## Previous: September 10, 2026 ([#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `c851a168`) — CT report-cards singular → plural redirect
 
 - **✅ Teacher report-cards URL fix**: Guessed `/teacher/report-cards/...` 404'd; canonical CT routes are `/teacher/reports/cards/...`. Product menu already used `route('teacher.reports.cards.*')` (no hardcoded singular in app Blade/JS). [#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) adds 301 redirects via named routes. Cloud `depl-a2b68967-…` **deployment.succeeded** tip `c851a168`. Live CT (school **33**): `/teacher/report-cards` → `/teacher/reports/cards`; sidebar only canonical; stream show `…/cards/195` OK; singular show redirects.
 - **Prior tip (stages 2–4)**: [#497](https://github.com/KlassApp-Foundation/KlassApp/pull/497) `ad18baa6` / [#496](https://github.com/KlassApp-Foundation/KlassApp/pull/496) / [#495](https://github.com/KlassApp-Foundation/KlassApp/pull/495) / [#493](https://github.com/KlassApp-Foundation/KlassApp/pull/493) — see Previous.
@@ -1428,6 +1438,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-10: Structure & Class Teachers wizard checkpoint — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Repurposed `standards` step as Structure & Class Teachers (optional streams + CT invite per class). Forced post-AY landing on `standards` despite seeder marking the step complete. Students enrollment defaults to first stream when streams exist; base class remains selectable. CSV template prefers stream sample rows.
+- **Files modified**: `ClassStructureService.php`, `OnboardingStepsService.php`, `OnboardingHelper.php`, `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `StudentUploadTemplateService.php`, `tests/Feature/Onboarding/WizardStructureClassTeacherTest.php` (+ wizard walk fixture updates)
+- **Key decisions**: Reuse existing `standards` slot (no new step). Neither stream nor CT blocks Next. Optional `students`/`teachers` still skipped by Next when empty — live Students verify used progress-dot `goToStep` (`data-step-key="students"`). Toshi out of scope.
+- **PR / merge / deploy**: [#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) squash `d661aec8` @ 2026-09-10T14:48:41Z. Cloud `depl-a2b69b59-991d-4228-bbb7-bf721c7f3662` **deployment.succeeded**.
+- **Live**: Structure stream East + CT invite OK (`/tmp/structure-wizard-verify-1789052203275/`). Students: Primary Five → `streamVal=East`, base option present (`/tmp/structure-students-verify-1789052703182/VERIFY.json` **ok: true**).
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: Empty Next on Teachers jumps past optional Students to next blocking step (WhatsApp); use progress dots or Review Edit to open Students. Full-name registration rejects digit characters.
 
 ### 2026-09-10: CT singular `/teacher/report-cards` → canonical `reports/cards` — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Investigated 404 on `/teacher/report-cards/...`. App UI already emits `teacher.reports.cards.*` (sidebar/asserted). Root cause of live 404s: guessed/harness singular paths, not a hardcoded product link. Added 301 redirects in `routes/teacher.php` via `redirect()->route(..., 301)` (plain `permanentRedirect` to relative `reports/cards` dropped the `teacher` prefix). Tests cover sidebar never emits singular + four legacy paths 301.
