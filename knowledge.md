@@ -66,6 +66,7 @@ Base URL: `https://cloud.laravel.com/api`
 - Env vars are applied only after a **real deployment**, not after `config:clear` alone
 - Prefer `curl` over Python `urllib` — Cloudflare may block some User-Agents
 - Production environment id: `env-a2ac7a89-dbf5-43aa-ac95-ca88d3065873`
+- Staging environment id: `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016` (see **Staging & Preview Environments** below)
 
 This endpoint runs a one-off command. It does **not** build/release a new commit. For that, use the section below.
 
@@ -103,6 +104,100 @@ This is **different from the Commands API** (which runs arbitrary shell via a `"
 **Token:** same `CLOUD_AGENT_TOOLING` (or equivalent) already used for the Commands API and MCP config.
 
 > 🔐 **Security**: `~/.cursor/mcp.json` is gitignored inside the repo (`.gitignore` line `.cursor/mcp.json`). `~/.cursor` and `~/.config/goose` live outside any repo entirely. Never paste the real token value into a PR description, commit message, or knowledge.md — always retrieve it from Doppler.
+
+## Staging & Preview Environments (contributor reference — provisioned 2026-09-11)
+
+Application: **KlassApp** (`app-a2ac7a87-f8aa-42db-8055-ba41bab5be50`, eu-west-1, repo `KlassApp-Foundation/KlassApp`).
+
+### What exists today
+
+| Environment | ID | URL | Git branch | Data | Notes |
+|---|---|---|---|---|---|
+| **production** | `env-a2ac7a89-dbf5-43aa-ac95-ca88d3065873` | `https://klassapp-production-xsisi4.laravel.cloud` (+ custom `klassapp.xyz`) | `main` | Real schools (live) | Push-to-deploy **off**; deploy via `POST …/deployments` |
+| **staging** | `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016` | `https://klassapp-staging-7mpoqg.laravel.cloud` | `main` | **Demo/seed only** — never production dumps | Push-to-deploy **on**; hibernates; scheduler enabled |
+
+**Before 2026-09-11:** Cloud had **only production** (confirmed via `list-environments` / API — 1 environment).
+
+### Staging isolation (verified)
+
+- Logical MySQL schema **`klassapp-staging`** on cluster `klassapp-mysql` (`db-schema-a2b86c6f-ceb7-49aa-8d45-0cc891e61e25`) — **empty** at create; **not** restored/cloned from production.
+- Production schema remains `production` on the same cluster (compute shared; **data namespaces separate**).
+- Staging Valkey: same `klassapp-redis` cache with **`CACHE_PREFIX` / `REDIS_PREFIX` = `klassapp_staging_`** so keys do not collide with prod.
+- Staging filesystem: **local** (no prod R2 bucket attached).
+- Staging does **not** carry production WhatsApp Business tokens (mail uses `MAIL_MAILER=log`).
+- Live check after first deploy (`depl-a2b86d10-…` **succeeded**):
+  - Staging: `APP_ENV=staging`, `db=klassapp-staging`, HTTP **200** on `/` and `/login`
+  - Staging school count after demo seed: **1**; production school count unchanged: **42** / `db=production`
+
+### Staging demo seed (test data only)
+
+```bash
+# Via Cloud Commands API on staging env id above:
+php artisan db:seed --class=UsergroupTableSeeder --force
+php artisan db:seed --class=RolesTableSeeder --force
+php artisan db:seed --class=CountriesTableSeeder --force
+php artisan db:seed --class=Phase4RosterDemoSeeder --force
+```
+
+Demo accounts (staging only — password `demo123`):
+
+| Role | Email |
+|---|---|
+| School admin | `phase4.admin@klassapp.xyz` |
+| Subject teacher | `phase4.teacher@klassapp.xyz` |
+| Class teacher | `phase4.class-teacher@klassapp.xyz` |
+
+School: **Phase 4 Roster Demo School** (`phase4-roster-demo@klassapp.xyz`).
+
+**Rule:** never restore a production snapshot into staging; re-seed demo data if you wipe the schema.
+
+### Deploying staging
+
+```bash
+TOKEN="$(doppler secrets get CLOUD_AGENT_TOOLING --config dev --plain)"
+STAGING="env-a2b86c90-4bf8-4889-9c2d-d10fe62db016"
+curl -sS -X POST "https://cloud.laravel.com/api/environments/${STAGING}/deployments" \
+  -H "Authorization: Bearer ${TOKEN}" -H "Accept: application/json"
+```
+
+Staging also has **push-to-deploy** enabled for `main` (production does not). Prefer Commands/Deploy API for intentional releases when in doubt.
+
+### Preview Environments (per-PR) — status & how to finish enablement
+
+Laravel Cloud **Preview Environments** auto-create an isolated environment per pull request (unique `*.laravel.cloud` URL, posted as a PR comment), then destroy it when the PR merges/closes. Docs: https://cloud.laravel.com/docs/preview-environments
+
+**Status as of 2026-09-11 (agent-verified):**
+
+- **Not configured yet.** No preview automation exists on production or staging.
+- The **public Cloud API OpenAPI** and **`laravel/cloud-cli` v0.6** expose **zero** endpoints/commands to create or list preview automations (probed paths all 404; CLI has no `preview*` commands). Enabling requires the **Cloud dashboard UI** once.
+- Historical PRs (#520–#523) have **no** Laravel Cloud preview URL comments.
+
+**One-time dashboard setup (do this before external contributors rely on previews):**
+
+1. Open [Laravel Cloud](https://cloud.laravel.com) → application **KlassApp**.
+2. Prefer target **staging** (not production) → **Settings → Preview environments → New automation**.
+3. Recommended automation defaults for isolation:
+   - Auto-deploy on creation: **on**
+   - Delete on merge/close: **on**
+   - Database: **Create new and scale to zero** (or new schema) — **never “Share with target”** for contributor PRs
+   - Cache: new/scale-to-zero **or** share with prefix only
+   - Object storage: none or new bucket (do **not** share `klassapp-prod`)
+   - Environment variables: set a **fresh** set for previews (Cloud does **not** auto-copy target secrets — good). Include at least `APP_KEY` (Cloud prefills), `APP_ENV=preview`, `APP_DEBUG=true`, and any non-secret config the app needs. **Do not** paste production WhatsApp tokens.
+4. Save. Open a test PR against `main` and confirm:
+   - A new environment appears with `created_from_automation: true`
+   - Cloud posts a live preview URL on the PR
+   - That URL is **not** production or persistent staging
+   - Closing/merging the PR removes the preview environment
+
+**What a contributor should expect after automation is live:**
+
+1. Open a PR targeting `main` (or the branch configured on the automation’s target environment).
+2. Wait for Cloud to provision + deploy (minutes; scales to zero when idle).
+3. Find the preview URL in the PR timeline comment from Laravel Cloud.
+4. Test against **demo/seed data only** on that ephemeral environment — never against production.
+5. Persistent **staging** (`klassapp-staging-7mpoqg.laravel.cloud`) remains the long-lived shared sandbox for manual QA; previews are short-lived per PR.
+
+**Until the dashboard automation exists:** contributors use local Docker / CI + the persistent **staging** URL for live checks; opening a PR will **not** spin a Cloud preview.
 
 ## Known Bug Patterns & Lessons (reference — check before touching related code)
 
@@ -471,7 +566,13 @@ User wants a formal GTM plan scoped as its own future initiative, same discovery
 
 ---
 
-## Current Status: September 11, 2026 ([#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519)+[#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `85452439`) — Cloud object storage + scheduler + Uganda admission copy
+## Current Status: September 11, 2026 (**staging provisioned**; tip pending docs stamp) — Cloud staging + preview contributor reference
+
+- **✅ Persistent staging** on Laravel Cloud: `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016` → `https://klassapp-staging-7mpoqg.laravel.cloud` (separate schema `klassapp-staging`, demo-seeded, not a prod clone). Deploy `depl-a2b86d10-…` **succeeded**. Isolation verified (staging schools=1 / prod schools=42).
+- **⚠️ Preview Environments**: feature **not yet enabled** in Cloud dashboard (API/CLI cannot create automations). Dashboard one-time setup steps documented in knowledge **Staging & Preview Environments**. Negative check: no historical PR Cloud preview comments; no `created_from_automation` envs.
+- **Prior tip**: `85452439` / docs `cee46482` / AGENTS rule `b49d0c61` / Future Initiatives `1772aba4`.
+
+## Previous: September 11, 2026 ([#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519)+[#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `85452439`) — Cloud object storage + scheduler + Uganda admission copy
 
 - **✅ Object storage (Laravel Cloud R2)**: Bucket `klassapp-prod` provisioned; env `FILESYSTEM_DISK=s3` (+ AWS_* / endpoint). Config prefers `FILESYSTEM_DISK` over legacy `FILESYSTEM_DRIVER`; S3 disk omits ACL `visibility` (R2 rejects it). WhatsApp report PDFs use default disk and stream via `Storage::response` when not local.
 - **✅ Scheduler**: App instance `uses_scheduler: true`. Every-minute `scheduler-heartbeat` writes `Cache::put('scheduler_heartbeat_at', …)`. After clear + ~95s wait: heartbeat=`2026-09-11T13:58:19+03:00` (autonomous `schedule:run`, not manual).
