@@ -44,6 +44,50 @@ class StudentDetailsController extends Controller
     use LogActivity;
     use Common;
 
+
+    /**
+     * Resolve a student by route name within the actor's school.
+     * Bare users.name is not globally unique (PR #517 / AGENTS.md rule 18).
+     *
+     * @param  list<string>  $with
+     */
+    private function findSchoolStudentByName(string $name, array $with = []): User
+    {
+        $actor = Auth::user();
+
+        if ($actor === null) {
+            abort(403);
+        }
+
+        $query = User::query()->exactNameInSchool($name, (int) $actor->school_id, 6);
+
+        if ($with !== []) {
+            $query->with($with);
+        }
+
+        $user = $query->first();
+
+        if ($user === null) {
+            abort(404);
+        }
+
+        return $user;
+    }
+
+    /**
+     * @param  list<string>  $with
+     */
+    private function findSchoolStudentMemberOrAbort(string $name, array $with = []): User
+    {
+        $user = $this->findSchoolStudentByName($name, $with);
+
+        if (! Gate::allows('member', $user)) {
+            abort(403);
+        }
+
+        return $user;
+    }
+
     /**
      * Display the specified resource.
      *
@@ -53,7 +97,7 @@ class StudentDetailsController extends Controller
     public function showDetails($name)
     {
         //
-        $users = User::with('userprofile')->where('name', $name)->get();
+        $users = collect([$this->findSchoolStudentByName($name, ['userprofile'])]);
 
         $users = UserDetailResource::collection($users);
 
@@ -69,7 +113,7 @@ class StudentDetailsController extends Controller
     public function showRelations($name)
     {
         //
-        $student = User::with('userprofile')->where('name', $name)->first();
+        $student = $this->findSchoolStudentByName($name, ['userprofile']);
 
         $parents = UserRelationResource::collection($student->parents);
 
@@ -86,7 +130,7 @@ class StudentDetailsController extends Controller
     {
         //
 
-        $student = User::with('userprofile')->where('name', $name)->first();
+        $student = $this->findSchoolStudentByName($name, ['userprofile']);
         $parents=StudentParentLink::where('student_id',$student->id)->pluck('parent_id')->toArray();
        $siblings=StudentParentLink::where('student_id','!=',$student->id)->whereIn('parent_id',$parents)->get()->unique('student_id');
 
@@ -97,7 +141,7 @@ class StudentDetailsController extends Controller
     public function showActivity($name)
     {
         //
-        $user = User::with('userprofile')->where('name', $name)->first();
+        $user = $this->findSchoolStudentByName($name, ['userprofile']);
         if(Gate::allows('member',$user))
         {
             $activitylog = ActivityLog::where('subject_id',$user->userprofile->id)->orWhere('subject_id',$user->members[0]['id'])->paginate(5);
@@ -115,7 +159,7 @@ class StudentDetailsController extends Controller
     public function showActivityLog($name)
     {
         //
-        $user = User::with('userprofile')->where('name', $name)->first();
+        $user = $this->findSchoolStudentByName($name, ['userprofile']);
         if(Gate::allows('member',$user))
         {
             $activitylog = ActivityLog::where('causer_id',$user->userprofile->id)->orWhere('causer_id',$user->members[0]['id'])->paginate(5);
@@ -139,7 +183,7 @@ class StudentDetailsController extends Controller
     public function showDisciplines($name)
     {
         //
-        $student = User::with('disciplineUser','disciplineTeacher')->where('name', $name)->first();
+        $student = $this->findSchoolStudentByName($name, ['disciplineUser', 'disciplineTeacher']);
 
         $discipline = DisciplineResource::collection($student->disciplineUser);
 
@@ -155,7 +199,7 @@ class StudentDetailsController extends Controller
     public function showAttendance($name)
     {
         //
-        $student = User::where('name', $name)->first();
+        $student = $this->findSchoolStudentByName($name);
 
         $attendances = AttendanceUserResource::collection($student->AttendanceUserAbsent);
 
@@ -171,7 +215,7 @@ class StudentDetailsController extends Controller
     public function showMedicalHistory($name)
     {
         //
-        $student = User::where('name', $name)->first();
+        $student = $this->findSchoolStudentByName($name);
 
         $studentacademic = StudentAcademic::where('user_id', $student->id)
             ->whereIn('academic_year_id', function ($query) {
@@ -203,7 +247,7 @@ class StudentDetailsController extends Controller
     public function showFees($name)
     {
         //
-        $student = User::where('name', $name)->first();
+        $student = $this->findSchoolStudentByName($name);
 
         $school_id = Auth::user()->school_id;
         $academic_year = SiteHelper::getAcademicYear($school_id);
@@ -240,7 +284,7 @@ class StudentDetailsController extends Controller
     public function createMedicalHistory($name)
     {
         //
-        $user = User::where('name', $name)->first();
+        $user = $this->findSchoolStudentByName($name);
 
         return view('/admin/member/create_medical_history' , ['user' => $user]);
     }
@@ -256,7 +300,7 @@ class StudentDetailsController extends Controller
         //
         try
         {
-            $user = User::where('name', $name)->first();
+            $user = $this->findSchoolStudentByName($name);
 
             $studentacademic = StudentAcademic::where('id',$user->studentAcademicLatest->id)->orderBy('id','DESC')->first();
 
@@ -293,7 +337,7 @@ class StudentDetailsController extends Controller
     public function showBookLent($name)
     {
         //
-        $student = User::with('lending')->where('name', $name)->first();
+        $student = $this->findSchoolStudentByName($name, ['lending']);
 
         $lent = BookLendingResource::collection($student->lending);
 
@@ -302,26 +346,16 @@ class StudentDetailsController extends Controller
 
     public function show($name)
     {
-        //
-        $user = User::with('studentAcademicLatest')->where('name',$name)->first();
+        $user = $this->findSchoolStudentMemberOrAbort($name, ['studentAcademicLatest']);
         $parents = $user->parent;
-        if(Gate::allows('member',$user))
-        {
-            if($_SERVER['HTTP_REFERER'] != null)
-            {
-                $prev_url = $_SERVER['HTTP_REFERER'];
-            }
-            else
-            {
-                $prev_url = url('/admin/students');
-            }
 
-            return view('/admin/member/show',['user' => $user , 'parents' => $parents , 'prev_url' => $prev_url]);
+        if ($_SERVER['HTTP_REFERER'] != null) {
+            $prev_url = $_SERVER['HTTP_REFERER'];
+        } else {
+            $prev_url = url('/admin/students');
         }
-        else
-        {
-            abort(403);
-        }
+
+        return view('/admin/member/show', ['user' => $user, 'parents' => $parents, 'prev_url' => $prev_url]);
     }
 
     /**
@@ -331,7 +365,7 @@ class StudentDetailsController extends Controller
      */
     public function showmark($name)
     {
-       $users = User::with('marks')->where('name', $name)->first();
+       $users = $this->findSchoolStudentByName($name, ['marks']);
        $studentId=$users->id;
        $examId=$users->marks[0]['exam_id'];
 
@@ -340,7 +374,7 @@ class StudentDetailsController extends Controller
 
     public function showAllMark($name)
     {
-        $users = User::where('name', $name)->first();
+        $users = $this->findSchoolStudentByName($name);
 
         $studentId=$users->id;
 
@@ -351,7 +385,7 @@ class StudentDetailsController extends Controller
     {
         try
         {
-        $users=User::with('studentAcademic')->where('name',$name)->get();
+        $users=collect([$this->findSchoolStudentByName($name, ['studentAcademic'])]);
         $studentId=$users[0]['id'];
         $standardId=$users[0]['studentAcademicLatest']['standardLink_id'];
 
@@ -398,7 +432,7 @@ class StudentDetailsController extends Controller
     {
         $school_id      =   Auth::user()->school_id;
         $academic_year  =   SiteHelper::getAcademicYear($school_id);
-        $users=User::with('studentAcademic')->where('name',$name)->get();
+        $users=collect([$this->findSchoolStudentByName($name, ['studentAcademic'])]);
         $studentId=$users[0]['id'];
         $standardId=$users[0]['studentAcademicLatest']['standardLink_id'];
 

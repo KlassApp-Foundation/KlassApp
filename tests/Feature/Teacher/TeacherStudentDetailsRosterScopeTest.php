@@ -347,6 +347,12 @@ class TeacherStudentDetailsRosterScopeTest extends TestCase
             ->assertOk()
             ->assertJsonFragment(['medication_problems' => 'Asthma']);
 
+        // Residual API loads (details/relations/documents) must also use the
+        // school-scoped authorized user, not a bare where('name') first().
+        $this->actingAs($this->classTeacher)
+            ->get('/teacher/student/show/details/'.$sharedName)
+            ->assertOk();
+
         $this->actingAs($this->classTeacher)
             ->get('/teacher/document/get/'.$sharedName)
             ->assertOk();

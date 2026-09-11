@@ -92,7 +92,10 @@ class UserProfileUpdateRequest extends FormRequest
 
         Validator::extend('check_unique_aadhar_number',function($attribute,$value,$parameters,$validator)
         {
-            $user = User::where('name',request('name'))->first();
+            $user = User::findByExactNameInSchool(request('name'), (int) Auth::user()->school_id);
+            if ($user === null) {
+                return true;
+            }
             $userprofile = Userprofile::where('aadhar_number',request('aadhar_number'))->where('user_id','!=',$user->id)->exists();
             if($userprofile)
             {

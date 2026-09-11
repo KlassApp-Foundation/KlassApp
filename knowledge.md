@@ -586,7 +586,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 11, 2026 — #488+#527 **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `56db335d`)
+## Current Status: September 11, 2026 — User name-lookup school-scope sweep (**PR OPEN** — branch `fix/user-name-lookup-school-scope`)
+
+- **Bug pattern** (extends [#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) / AGENTS.md rule 18): identity lookups via bare `users.name` (or other non-unique display fields) can resolve the wrong tenant row when names collide across schools.
+- **Fix**: `User::exactNameInSchool` / `User::findByExactNameInSchool`; Teacher `StudentDetailsController` reuses the authorized user (no second unscoped `where('name')`); Admin student/teacher/staff/document/bank/attendance/dashboard/discipline surfaces + parent-link traits + related FormRequests school-scoped; API user search scoped when auth present.
+- **Tests**: `StudentDetailsNameScopeTest` (Admin medicalHistory survives lower-id foreign twin); Teacher roster collision test extended to details endpoint.
+- **Prior tip**: `56db335d` (#488+#527).
+
+
+## Previous: September 11, 2026 — #488+#527 **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `56db335d`)
 
 - **#488 API**: `merged:true` at **2026-09-11T15:39:44Z** (squash `24f4be71`). **Not** merged on 2026-09-09 — that was only the PR **open** date; earlier “merged two days ago” claims were wrong.
 - **#527 API**: `merged:true` at **2026-09-11T15:42:20Z** (squash `56db335d`), rebased onto post-#488 main (duplicate key-removal hunks dropped; kept staging 402 evidence + unit guard + enable-block notes).

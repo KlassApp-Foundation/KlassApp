@@ -220,7 +220,8 @@ class StaffAttendanceController extends Controller
     public function getStudentAttendance($name)
     {
         //
-        $staff = User::where('name',$name)->first();
+        $staff = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+        if ($staff === null) { abort(404); }
 
             $array = [];
             $academic_year  = SiteHelper::getAcademicYear(Auth::user()->school_id);
@@ -264,7 +265,8 @@ class StaffAttendanceController extends Controller
     public function showAttendance($name)
     {
         //
-        $staff = User::where('name', $name)->first();
+        $staff = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+        if ($staff === null) { abort(404); }
       
         $attendances = AttendanceUserResource::collection($staff->AttendanceUserAbsent);
          

@@ -51,11 +51,7 @@ class StudentDetailsController extends Controller
             abort(403);
         }
 
-        $user = User::query()
-            ->where('name', $name)
-            ->where('school_id', $actor->school_id)
-            ->where('usergroup_id', 6)
-            ->first();
+        $user = User::findByExactNameInSchool($name, (int) $actor->school_id, 6);
 
         if (
             $user === null
@@ -90,13 +86,10 @@ class StudentDetailsController extends Controller
      */
     public function showDetails($name)
     {
-        $this->authorizeRosterStudent($name);
+        $user = $this->authorizeRosterStudent($name);
+        $user->load('userprofile');
 
-        $users = User::with('userprofile')->where('name', $name)->get();
-
-        $users = UserDetailResource::collection($users);
-
-        return $users;
+        return UserDetailResource::collection(collect([$user]));
     }
 
     /**
@@ -107,9 +100,8 @@ class StudentDetailsController extends Controller
      */
     public function showRelations($name)
     {
-        $this->authorizeRosterStudent($name);
-
-        $student = User::with('userprofile')->where('name', $name)->first();
+        $student = $this->authorizeRosterStudent($name);
+        $student->load('userprofile');
 
         $parents = UserRelationResource::collection($student->parents);
 
@@ -124,11 +116,10 @@ class StudentDetailsController extends Controller
      */
     public function showSiblings($name)
     {
-        $this->authorizeRosterStudent($name);
+        $student = $this->authorizeRosterStudent($name);
+        $student->load('userprofile');
 
-        $student = User::with('userprofile')->where('name', $name)->get();
-
-        $siblings = UserSiblingResource::collection($student);
+        $siblings = UserSiblingResource::collection(collect([$student]));
 
         return $siblings;
     }
@@ -161,9 +152,8 @@ class StudentDetailsController extends Controller
      */
     public function showDisciplines($name)
     {
-        $this->authorizeRosterStudent($name);
-
-        $student = User::with('disciplineUser','disciplineTeacher')->where('name', $name)->first();
+        $student = $this->authorizeRosterStudent($name);
+        $student->load('disciplineUser', 'disciplineTeacher');
 
         $discipline = DisciplineResource::collection($student->disciplineUser);
 
@@ -178,9 +168,7 @@ class StudentDetailsController extends Controller
      */
     public function showAttendance($name)
     {
-        $this->authorizeRosterStudent($name);
-
-        $student = User::where('name', $name)->first();
+        $student = $this->authorizeRosterStudent($name);
 
         $attendances = AttendanceUserResource::collection($student->AttendanceUserAbsent);
 
@@ -195,9 +183,7 @@ class StudentDetailsController extends Controller
      */
     public function showMedicalHistory($name)
     {
-        $this->authorizeRosterStudent($name);
-
-        $student = User::where('name', $name)->first();
+        $student = $this->authorizeRosterStudent($name);
 
         $medicals = [];
 
@@ -213,9 +199,8 @@ class StudentDetailsController extends Controller
 
     public function showBookLent($name)
     {
-        $this->authorizeRosterStudent($name);
-
-        $student = User::with('lending')->where('name', $name)->first();
+        $student = $this->authorizeRosterStudent($name);
+        $student->load('lending');
 
         $lent = BookLendingResource::collection($student->lending);
 
@@ -229,9 +214,8 @@ class StudentDetailsController extends Controller
      */
     public function showmark($name)
     {
-       $this->authorizeRosterStudent($name);
-
-       $users = User::with('marks')->where('name', $name)->first();
+       $users = $this->authorizeRosterStudent($name);
+       $users->load('marks');
        $studentId=$users->id;
        $examId=$users->marks[0]['exam_id'];
 
@@ -240,9 +224,7 @@ class StudentDetailsController extends Controller
 
     public function showAllMark($name)
     {
-        $this->authorizeRosterStudent($name);
-
-        $users = User::where('name', $name)->first();
+        $users = $this->authorizeRosterStudent($name);
 
         $studentId=$users->id;
 
@@ -251,11 +233,10 @@ class StudentDetailsController extends Controller
 
     public function compareMarks($name)
     {
-        $this->authorizeRosterStudent($name);
-
-        $users=User::with('studentAcademic')->where('name',$name)->get();
-        $studentId=$users[0]['id'];
-        $standardId=$users[0]['studentAcademicLatest']['standardLink_id'];
+        $users = $this->authorizeRosterStudent($name);
+        $users->load('studentAcademic');
+        $studentId=$users->id;
+        $standardId=$users->studentAcademicLatest->standardLink_id;
         if(class_exists('Gegok12\Exam\Models\Mark'))
         {
             $exam=\Gegok12\Exam\Models\Mark::where('school_id',Auth::user()->school_id)->where('standard_id',$standardId)->take(2)->orderBy('exam_id','DESC')->groupBy('exam_id')->pluck('exam_id')->toArray();
@@ -278,9 +259,7 @@ class StudentDetailsController extends Controller
      */
     public function showDocuments($name)
     {
-        $this->authorizeRosterStudent($name);
-
-        $user = User::where('name',$name)->first();
+        $user = $this->authorizeRosterStudent($name);
         $documents = Document::where('user_id',$user->id)->where('status',1)->get();
 
         $documents = UserDocumentResource::collection($documents);
