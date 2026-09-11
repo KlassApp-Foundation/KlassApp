@@ -432,7 +432,23 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 11, 2026 ([#506](https://github.com/KlassApp-Foundation/KlassApp/pull/506) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `2682fac2`) — Toshi skip Continue + plan card/sidebar parity
+## Current Status: September 11, 2026 ([#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e61174f9`) — Toshi Structure streams + CT invite parity (KLS.1)
+
+- **✅ Toshi parity with wizard #502 Structure & Class Teachers** live on `klassapp.xyz`:
+  1. Complete-mode after Academic Year **always** lands on `standards` structure checkpoint (even when StandardLinks seeded).
+  2. Optional `stream Class: labels` → `ClassStructureService::addStream` (base kept); optional `ct Class: Name, email` → `ClassTeacherInviteService`; **done**/**skip** advances (never blocks).
+  3. `OnboardingEngine::saveStandards` with streams keeps undivided base + additive name-encoded children.
+  4. Student form stream `<select>` defaults to first stream when class is split; base option remains.
+- **Merge (GitHub API `merged: true`)**: [#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) squash `e61174f9fa52ad1369e9145d1f26fae2bf995563` @ **2026-09-11T00:21:35Z**.
+- **Cloud deploy** (empty-body `POST …/deployments`, not Commands API): `depl-a2b76847-1830-4a07-ae21-834d3da2a78d` **deployment.succeeded** @ **2026-09-11T00:23:28Z** (commit `e61174f9`).
+- **Live** school **45** (`caveats504.1789078396536@live-verify.test`):
+  - UI: `stream Primary One: Kls1305461` → ✅ added (base kept); `ct Primary One: KLS1 Teacher, ct.kls1…@live-verify.test` → ✅ invited; student form streams = `["Kls1305461"]` (default).
+  - **DB** (`comm-a2b769f8-…` **command.success**): section **274** `Primary One Kls1305461`; base **267** `Primary One` kept; teacher **188** (usergroup 5); `standards_link` **260** `class_teacher_id=188`.
+  - Evidence: `e2e/screenshots/toshi-streams-parity-510/VERIFY.json` (**pass: true**) + screenshots `03`–`06`.
+- **Tracker**: **KLS.1 done** — mark complete in Nimbalyst UI (`tracker_update` not available this session).
+- **Prior**: [#506](https://github.com/KlassApp-Foundation/KlassApp/pull/506) tip `2682fac2` — see Previous.
+
+## Previous: September 11, 2026 ([#506](https://github.com/KlassApp-Foundation/KlassApp/pull/506) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `2682fac2`) — Toshi skip Continue + plan card/sidebar parity
 
 - **✅ Design-audit follow-up (separate from #504 caveats)** live on `klassapp.xyz`:
   1. Typed **`skip`** (and Skip this step / typed `continue`) on teachers/students/fees/exams **Continue** forms advances — was a silent no-op while `substep=6` and handlers only covered 0/1.
@@ -457,7 +473,7 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 - **Tests**: `WizardStructureClassTeacherTest` + wizard walk fixtures (extra Next after AY).
 - **PR / merge / deploy**: [#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) squash `d661aec8`. Cloud `depl-a2b69b59-991d-4228-bbb7-bf721c7f3662` **deployment.succeeded**.
 - **Live** (`klassapp.xyz`): register → Structure: stream **East** on Primary Five + CT invite; Students (progress-dot): Primary Five → stream **East**, base option present. Evidence `/tmp/structure-wizard-verify-1789052203275/`, `/tmp/structure-students-verify-1789052703182/VERIFY.json`.
-- **Out of scope**: Toshi parity; making streams required.
+- **Out of scope (at #502 ship)**: Making streams required. **Toshi parity**: shipped [#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) (see Current Status).
 - **Prior**: [#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) / [#501](https://github.com/KlassApp-Foundation/KlassApp/pull/501) report-cards redirect; stages 2–4 `#497`/`#496`/`#495`/`#493` — see Previous.
 
 ## Previous: September 10, 2026 ([#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `c851a168`) — CT report-cards singular → plural redirect
@@ -1493,6 +1509,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: Toshi Structure streams + CT invite parity (KLS.1) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Shipped previously-local `feature/toshi-streams-parity` end-to-end — Structure checkpoint after AY, `stream`/`ct` commands, additive `saveStandards`, student stream default.
+- **Files modified**: `AgentToshi.php`, `agent-toshi.blade.php`, `OnboardingEngine.php`, `OnboardingStepsService.php`, `ToshiStructureStreamsParityTest.php`, `ContentStepsTest.php`
+- **PR / merge**: [#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) — GitHub API **`merged: true`**, squash `e61174f9` @ 2026-09-11T00:21:35Z.
+- **Deploy**: empty-body `POST …/deployments` → `depl-a2b76847-…` **deployment.succeeded** @ 2026-09-11T00:23:28Z (commit `e61174f9`).
+- **Live DB**: school **45** section **274** `Primary One Kls1305461`; base **267** kept; teacher **188** / link **260** (`comm-a2b769f8-…`). Evidence `e2e/screenshots/toshi-streams-parity-510/VERIFY.json`.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED — **KLS.1 done** (mark in Nimbalyst UI manually; no `tracker_update` tool here).
+- **Edge cases**: Create-mode (no schoolId) still uses in-memory class+stream Q&A until commit. Prefer chips over free-text commands for UI design phase.
 
 ### 2026-09-11: Document Laravel Cloud deploy-trigger API (vs Commands API / MCP) — **MERGED**
 - **Work done**: Promoted empty-body `POST …/environments/{env}/deployments` + `Authorization: Bearer` into its own top-level **Triggering a real deployment** section beside Commands API. Corrected MCP docs (read-only; no deploy tool). Clarified Commands API ≠ deploy; push-to-deploy is off.
