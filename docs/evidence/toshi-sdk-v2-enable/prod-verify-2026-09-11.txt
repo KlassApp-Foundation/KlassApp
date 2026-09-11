@@ -1,0 +1,13 @@
+[11-Sep-2026 18:45:10 Africa/Kampala] PHP Deprecated:  App\Traits\Common::getFilePathforDownload(): Optional parameter $disk declared before required parameter $file is implicitly treated as a required parameter in /var/www/html/app/Traits/Common.php on line 176
+commit_file=no_git
+provision_script_exists=NO_GONE_OK
+ai_has_sk_literal=NO_OK
+toshi_has_sk_literal=NO_OK
+ai_key_config_len=0
+toshi_api_key_config_len=0
+runtime_ai_key=EMPTY
+exception_class=OK
+fail_loud=THREW_MissingToshiLlmApiKeyException_OK
+fail_loud_msg=Toshi LLM API key is not configured. Set OPENAI_COMPATIBLE_API_KEY in the environment (legacy alias: TOSHI_LLM_API_KEY). Hardcoded keys in config are not allowed.
+staging_evidence=OK
+unit_guard_test=OK
