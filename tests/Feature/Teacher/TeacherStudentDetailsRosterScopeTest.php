@@ -314,6 +314,44 @@ class TeacherStudentDetailsRosterScopeTest extends TestCase
         }
     }
 
+    public function test_ct_access_survives_cross_school_duplicate_student_name(): void
+    {
+        // Another school already has the same users.name — unscoped first() is ambiguous.
+        $otherSchool = School::create([
+            'name' => 'Collision School',
+            'slug' => 'collision-'.uniqid(),
+            'email' => 'collision-'.uniqid().'@t.sch.ug',
+            'phone' => '070'.random_int(1000000, 9999999),
+            'status' => 1,
+            'registration_country' => 'Uganda',
+        ]);
+
+        $sharedName = $this->rosterStudent->name;
+
+        User::factory()->create([
+            'usergroup_id' => 6,
+            'school_id' => $otherSchool->id,
+            'name' => $sharedName,
+            'email' => 'twin.collision@t.sch.ug',
+            'status' => 'active',
+        ]);
+
+        $this->assertGreaterThan(
+            1,
+            User::where('name', $sharedName)->count(),
+            'Fixture must collide on users.name across schools'
+        );
+
+        $this->actingAs($this->classTeacher)
+            ->get('/teacher/student/show/medicalHistory/'.$sharedName)
+            ->assertOk()
+            ->assertJsonFragment(['medication_problems' => 'Asthma']);
+
+        $this->actingAs($this->classTeacher)
+            ->get('/teacher/document/get/'.$sharedName)
+            ->assertOk();
+    }
+
     public function test_teacher_class_browse_students_vue_strips_deep_profile_links(): void
     {
         $source = file_get_contents(resource_path('assets/js/components/academic/class/students.vue'));

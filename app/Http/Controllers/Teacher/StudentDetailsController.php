@@ -39,15 +39,26 @@ class StudentDetailsController extends Controller
     /**
      * Hard deny unless the student is on the teacher's current-year roster
      * (stream/section CT or Teacherlink) — same boundary as RosterScopeService.
+     *
+     * Name lookup is school-scoped: bare users.name is not globally unique
+     * (cross-school collisions must not authorize/deny the wrong student).
      */
     private function authorizeRosterStudent(string $name): User
     {
-        $user = User::where('name', $name)->first();
         $actor = Auth::user();
+
+        if ($actor === null) {
+            abort(403);
+        }
+
+        $user = User::query()
+            ->where('name', $name)
+            ->where('school_id', $actor->school_id)
+            ->where('usergroup_id', 6)
+            ->first();
 
         if (
             $user === null
-            || $actor === null
             || ! app(RosterScopeService::class)->actorCanAccessStudent($actor, $user)
         ) {
             abort(403);
