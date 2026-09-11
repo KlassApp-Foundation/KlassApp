@@ -1,0 +1,37 @@
+# Toshi SDK v2 staging enable attempt — 2026-09-11
+
+## Why the flag was historically OFF (repo evidence)
+- config/toshi.php: default env('TOSHI_SDK_V2_ENABLED', false); comment "Internal accounts only until parity is verified with the legacy paths."
+- knowledge.md (post PHP 8.4 / laravel/ai deployable): "TOSHI_SDK_V2_ENABLED is still not set in production .env — enabling it requires a controlled rollout (test school first, not global)."
+- Earlier (pre PHP 8.4): left unset because App\AiAgents\* required laravel/ai + PHP ^8.4 and would break production autoload — that deployability blocker is resolved.
+- No record of a lasting functional bug that required keeping the flag permanently false after the stack became deployable.
+
+## Staging actions
+- Set Cloud env TOSHI_SDK_V2_ENABLED=true on env-a2b86c90-4bf8-4889-9c2d-d10fe62db016
+- Deploy depl-a2b87faa-4780-4a48-8bf2-80ddad336d35 → deployment.succeeded @ 2026-09-11T13:24:50Z
+- Forced schools.toshi_enabled=1 on Phase 4 Roster Demo School for gate testing (was false after seed)
+
+## Staging verification (Commands API transcripts)
+sdk=true
+ai_key=SET (from committed config default — NOT a Cloud env var)
+admin_available=true
+admin ask → null (~762ms) — caught failure, no LLM text
+teacher_available=true
+teacher ask → null (~657ms)
+Direct TeacherOperationsAgent / ToshiOrchestrator:
+  ERR=Laravel\Ai\Exceptions\InsufficientCreditsException
+  MSG=AI provider [openai-compatible] has insufficient credits or quota.
+  PREV=HTTP 402 {"error":{"message":"Insufficient Balance",...}}
+
+Onboarding path (structural):
+  sdk path only inside AgentToshi::handleAssistantQuery (YES)
+  guided complete-mode does not go through that gate
+  onboarding_missing_count=7 for demo admin (steps still resolvable; SDK flag does not remove them)
+
+## Production (probe only — flag NOT enabled)
+sdk=false (unchanged)
+Same key_prefix as staging committed default
+Direct orchestrator probe returned empty / same insufficient-balance class of failure — do NOT flip production until OPENAI_COMPATIBLE_API_KEY is a funded key set via Cloud variables (not git).
+
+## Blocker to proceed
+Need a funded OPENAI_COMPATIBLE_API_KEY (DeepSeek or other OpenAI-compatible) set on staging Cloud env, redeploy, re-run Admin+Teacher free-form asks, then production.

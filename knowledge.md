@@ -566,15 +566,14 @@ User wants a formal GTM plan scoped as its own future initiative, same discovery
 
 ---
 
-## Current Status: September 11, 2026 ([#524](https://github.com/KlassApp-Foundation/KlassApp/pull/524) **MERGED**; tip `69024c35`) — Cloud staging live; Preview Environments dashboard-gated
+## Current Status: September 11, 2026 — #488 **MERGED NOW** (`24f4be71`); #527 rebased onto it
 
-- **✅ Persistent staging** `env-a2b86c90-…` → https://klassapp-staging-7mpoqg.laravel.cloud — schema `klassapp-staging`, demo-seeded (`phase4.admin@klassapp.xyz` / `demo123`). Isolation: staging schools=1 vs prod=42.
-- **⚠️ Preview Environments**: still **not** auto-provisioning. While [#524](https://github.com/KlassApp-Foundation/KlassApp/pull/524) was open (~2.5+ min): still only 2 envs (`created_from_automation=false`); **zero** Cloud preview comments on the PR. Dashboard one-time automation required (steps in knowledge Staging & Preview section).
-- **Docs**: [#524](https://github.com/KlassApp-Foundation/KlassApp/pull/524) squash `69024c35624a481912b5b5775af6002f579d26be`.
+- **#488 (API-confirmed merge)**: `merged:true` at **2026-09-11T15:39:44Z** — squash `24f4be711d929d15c0da10b241afc8380adfc323` on `origin/main`. **Not** merged on 2026-09-09 (that was only the PR open date; earlier records that said otherwise were wrong).
+- **#488 landed on main**: hardcoded LLM key gone; `MissingToshiLlmApiKeyException` present; `scripts/provision-klassapp.sh` **deleted**.
+- **#527**: rebased onto post-#488 main; dropped duplicate key-removal hunks; kept staging 402 evidence, unit guard, enable-block notes.
+- **Production deploy**: pending after #527 merges.
+- **Prior tip before #488**: `34f93d12`.
 
-- **✅ Persistent staging** on Laravel Cloud: `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016` → `https://klassapp-staging-7mpoqg.laravel.cloud` (separate schema `klassapp-staging`, demo-seeded, not a prod clone). Deploy `depl-a2b86d10-…` **succeeded**. Isolation verified (staging schools=1 / prod schools=42).
-- **⚠️ Preview Environments**: feature **not yet enabled** in Cloud dashboard (API/CLI cannot create automations). Dashboard one-time setup steps documented in knowledge **Staging & Preview Environments**. Negative check: no historical PR Cloud preview comments; no `created_from_automation` envs.
-- **Prior tip**: `85452439` / docs `cee46482` / AGENTS rule `b49d0c61` / Future Initiatives `1772aba4`.
 
 ## Previous: September 11, 2026 ([#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519)+[#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `85452439`) — Cloud object storage + scheduler + Uganda admission copy
 
@@ -1692,6 +1691,29 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: Merge #488 for real + rebase #527 — **IN PROGRESS → ship**
+- **Work done**: Merged [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) via `gh pr merge --admin --squash`. API confirm: `merged:true`, `merged_at=2026-09-11T15:39:44Z`, squash on main `24f4be71`. Verified on `origin/main`: key env-only, `MissingToshiLlmApiKeyException` present, `scripts/provision-klassapp.sh` gone. Rebased [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527) onto that tip; kept #488 config, retained #527 evidence/unit/notes; deduped `.env.example` OPENAI_COMPATIBLE keys.
+- **Correction**: #488 was **never** merged on 2026-09-09 — only opened then. Real merge is **2026-09-11T15:39:44Z**.
+- **Files modified**: rebase of #527 branch; `knowledge.md`, `.env.example`
+- **Status**: 🚧 merging #527 next, then Cloud production deploy + live verify
+- **Edge cases flagged**: During rebase, take #488 (`ours`/main) for overlapping `config/ai.php` / `config/toshi.php` hunks.
+
+### 2026-09-11: PR #488 status correction (API) — **#527 resolved against main**
+- **Work done**: GitHub API confirm: `#488` `merged:false` / `state:open` / `merged_at:null` (opened 2026-09-09, never merged). Speculative `merge_commit_sha` not on `origin/main`. Main still ships hardcoded LLM key. Rebased/verified `#527` onto current `main` (already up to date). Framing “wait for merged #488 then rebase” was wrong — #488 was never on main.
+- **Files modified**: `knowledge.md`
+- **Key decisions**: Resolve #527 against current main; treat #488 as a parallel open security PR to coordinate with, not a predecessor already landed.
+- **PR / merge**: [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527)
+- **Status**: ✅ Corrected
+- **Edge cases flagged**: Earlier “merged two days ago” memory likely conflated PR **open** date (2026-09-09) with merge.
+
+### 2026-09-11: TOSHI_SDK_V2_ENABLED enable attempt — **BLOCKED (DeepSeek 402)**
+- **Work done**: Investigated why flag was off (staged rollout, not a known app bug). Enabled `TOSHI_SDK_V2_ENABLED=true` on **staging** + redeployed; ran Admin/Teacher free-form `ToshiSdkV2Service::ask` + direct agent prompts. LLM path fails with DeepSeek HTTP 402 Insufficient Balance. Production flag left **false**. Removed hardcoded API key from config (env-only). Logged evidence under `docs/evidence/toshi-sdk-v2-enable/`.
+- **Files modified**: `config/ai.php`, `config/toshi.php`, `.env.example`, `knowledge.md`, `docs/evidence/toshi-sdk-v2-enable/staging-2026-09-11.txt`
+- **Key decisions**: Do not flip production until staging shows real LLM transcripts with a funded `OPENAI_COMPATIBLE_API_KEY`. Guided onboarding is not gated by SDK flag (assistant-mode only).
+- **PR / merge**: [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527) branch `ops/toshi-sdk-v2-enable-staging`
+- **Status**: ⏸️ Blocked on funded LLM API key (PR open)
+- **Edge cases flagged**: Staging demo school had `toshi_enabled=0` after seed — forced on for gate test; Cloud env had no OPENAI_* vars (relied on committed default).
 
 ### 2026-09-11: Cloud object storage + scheduler heartbeat — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Provisioned Cloud R2 bucket `klassapp-prod` + env `FILESYSTEM_DISK=s3`/AWS_*; updated `config/filesystems.php` (no S3 ACL visibility); WhatsApp report PDFs on default disk with stream serve; every-minute `scheduler-heartbeat` Cache key for autonomous scheduler proof.
