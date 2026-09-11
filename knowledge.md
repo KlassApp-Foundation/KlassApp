@@ -507,6 +507,8 @@ Laravel Cloud **Preview Environments** auto-create an isolated environment per p
 - Inviting a teacher to own their class is additive: use it when useful; skip it when the admin prefers to enter everything themselves.
 - WhatsApp channel remains blocked (template `teacher_account_invite` REJECTED on Meta — email is the working channel).
 
+**Small future improvement (not a bug, not urgent — flagged 2026-09-10)**: a bounced invite email still silently assigns the class teacher in the database. This matches the existing co-admin invite pattern (assignment happens immediately; email is a notification, not a gate). Confirmed with real Mailtrap evidence during CT invite Phase 1 live verification (2026-09-09): fake `@klassapp.xyz` test address bounced (`554`, mailbox does not exist) while `class_teacher_id` was still set correctly (Cloud school **34**, Baby Class section/link **204** → user **134**). Possible follow-up: flag unreachable/bounced invites for admin review so an admin knows a CT assignment exists but the invited person was never notified. No product decision yet.
+
 #### UI migration: away from inherited GeGoK12 UI, toward KlassApp's own modern UI
 
 **Flagged**: 2026-08-27 (provenance documentation session) — **Not yet scoped.**
@@ -1727,6 +1729,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: Land bounced-CT-invite Future Initiative note — **MERGING via #487**
+- **Work done**: Rebased wanted content from [#487](https://github.com/KlassApp-Foundation/KlassApp/pull/487) onto current main (dropped stale Current Status stamps from the old branch tip). Adds Future Initiative note that bounced invite email still assigns `class_teacher_id`.
+- **Files modified**: `knowledge.md`
+- **PR / merge**: [#487](https://github.com/KlassApp-Foundation/KlassApp/pull/487)
+- **Status**: 🚧 merging
 
 ### 2026-09-11: Sweep unscoped User name lookups (#517 pattern) — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **PR / merge**: [#530](https://github.com/KlassApp-Foundation/KlassApp/pull/530) squash `075e25c5` @ 2026-09-11T16:03:34Z · branch `fix/user-name-lookup-school-scope`
