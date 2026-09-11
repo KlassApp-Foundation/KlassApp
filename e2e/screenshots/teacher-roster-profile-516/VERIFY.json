@@ -1,0 +1,90 @@
+{
+  "deploy_commit_grep": {
+    "school_scope": true,
+    "authorizeRosterStudent": true
+  },
+  "subject": {
+    "service": true,
+    "medical": {
+      "status": 200,
+      "snippet": "{\"medication_problems\":null,\"medication_needs\":null,\"medication_allergies\":null,\"food_allergies\":null,\"other_allergies\":null,\"other_medical_information\":null}"
+    },
+    "details": {
+      "status": 200,
+      "snippet": "{\"data\":[{\"name\":\"diana namukasa504\",\"school_name\":\"Agent's School-3\",\"fullname\":\"DIANA NAMUKASA\",\"gender\":null,\"date_of_birth\":null,\"address\":null,\"city\":null,"
+    },
+    "docs": {
+      "status": 200,
+      "snippet": "{\"data\":[]}"
+    },
+    "show": {
+      "status": 200,
+      "view": ".teacher.student.show"
+    }
+  },
+  "ct": {
+    "service": true,
+    "name_lookup_id": 161,
+    "unscoped_first_id": 112,
+    "medical": {
+      "status": 200,
+      "snippet": "{\"medication_problems\":null,\"medication_needs\":null,\"medication_allergies\":null,\"food_allergies\":null,\"other_allergies\":null,\"other_medical_information\":null}"
+    },
+    "details": {
+      "status": 200,
+      "snippet": "{\"data\":[{\"name\":\"Grace Auma\",\"school_name\":\"Greenfield Primary School\",\"fullname\":\"GRACE AUMA\",\"gender\":null,\"date_of_birth\":null,\"address\":null,\"city\":null,\"c"
+    },
+    "docs": {
+      "status": 200,
+      "snippet": "{\"data\":[]}"
+    },
+    "show": {
+      "status": 200,
+      "view": ".teacher.student.show"
+    },
+    "discipline": {
+      "status": 200,
+      "snippet": "{\"data\":[]}"
+    }
+  },
+  "deny": {
+    "service": false,
+    "show": {
+      "status": 403
+    },
+    "details": {
+      "status": 403
+    },
+    "medical": {
+      "status": 403
+    },
+    "discipline": {
+      "status": 403
+    },
+    "attendance": {
+      "status": 403
+    },
+    "library": {
+      "status": 403
+    },
+    "docs": {
+      "status": 403
+    },
+    "relations": {
+      "status": 403
+    },
+    "siblings": {
+      "status": 403
+    }
+  },
+  "class_browse": {
+    "status": 200,
+    "has_student": true
+  },
+  "visitorlog_list": {
+    "status": 200
+  },
+  "vue_no_teacher_deep_link": true,
+  "pass": true,
+  "functional_pass": true
+}
