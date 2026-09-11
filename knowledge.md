@@ -430,6 +430,45 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 - `app/Traits/AdmissionUser.php` — Indian demographic fields (aadhar_number, caste, sub_caste, community, mother_tongue, lin)
 - Various Blade views still using GeGoK12-era layout patterns (un-audited)
 
+#### Security & Trust Roadmap (added 2026-09-11)
+
+**Internal access minimization ("break-glass" access)**
+Currently, Superadmin has real cross-tenant access to all schools' data (legitimate today for support/billing/troubleshooting). Future goal: staff access to any individual school's data should require an explicit reason, get logged, and potentially need a second approver for sensitive data — matching how serious cloud companies handle internal access. Not built. Needs its own scoping pass.
+
+**CT invite: replace temp-password email with a tokenized magic link**
+Current CT invite flow emails a temp password + direct login (deliberately reused an existing pattern under time pressure). Better UX identified: a tokenized magic-link accept flow instead. Deferred, real future work.
+
+**Toshi as an MCP server**
+Confirmed technically real and buildable via Laravel's first-party `laravel/mcp` package (pairs with `laravel/ai`, which Toshi already runs on) — would let external AI clients (Cursor, Claude, others) call INTO KlassApp/Toshi directly, not just the other way around. Not started.
+
+**Business-facing unique ID for teachers/staff**
+Same pattern as students' KLS ID — a clean, platform-wide identifier for staff. Useful for Toshi monetization plans. Not built.
+
+**Cryptographically verifiable, tamper-evident student records**
+Real need: Uganda's new progressive-assessment curriculum means student records need to stay trustworthy from nursery through university, across institutions, over many years. Concrete driving use case: STUDENT TRANSFERS between schools — a receiving school could verify a transferring student's records weren't tampered with, without needing to trust/contact the original school directly. Technical approach (deliberately NOT blockchain): hash-chaining (each record stores a hash of its own data plus the previous record's hash, fully self-hosted, no external service, no wallets, no gas fees) + digital signatures on final transcripts/report cards (same technique universities use for verifiable digital diplomas). Optional future-future enhancement: external independent timestamp anchoring via OpenTimestamps (free, Bitcoin-based, much lighter than a platform like Hedera) if truly independent verifiability beyond KlassApp's own database is ever needed — not needed for v1. Positioned as a genuinely differentiated, technically credible product/marketing claim: "cryptographically verifiable transcripts."
+
+**Voting module for Guilds and PTA/School Board elections**
+Same hash-chain tamper-evidence primitive as above, applied to school governance voting (student Guild elections, PTA/School Board votes) — records structured so post-hoc tampering becomes mathematically detectable. Real, distinct feature idea, not yet scoped.
+
+**Agent identity for cross-organization trust (ERC-8004-style) — explicitly NOT now**
+Only becomes relevant if Toshi is ever called by OTHER organizations' independent AI agents in a real multi-vendor agent economy — a genuinely different problem than internal KlassApp auth. Noted for a possible distant future, not an active plan.
+
+#### Security Maturity Ladder (added 2026-09-11)
+1. Continuous test coverage growth — ongoing habit, not a one-time push.
+2. A real professional security audit/pentest before WIDE public launch (not necessarily before the Oct 10 n8n demo). Realistic 2026 US market budget for KlassApp's current stage: $4,000-$15,000 for a properly scoped, genuinely manual engagement (anything under ~$2,000-3,000 is likely just an automated scan rebranded — be wary). Should test against the current OWASP Top 10 (2025 edition).
+3. A bug bounty program only AFTER the professional audit, never instead of or before it.
+
+#### Real security talking point for demos/media (added 2026-09-11)
+Tonight, a real access-control gap was found, root-caused, and fixed with real evidence (PR #514, #516, #517: a teacher could access another school's — and in some cases any school's — student data, including medical records, through several ungated endpoints). This falls under OWASP's current #1-ranked risk category, "Broken Access Control" (2025 list). Honest, accurate, technically credible framing for public conversations: "We found and fixed a real access-control gap in exactly the category OWASP ranks as the single most critical web security risk." Real cryptography already in production use: bcrypt password hashing, secure session tokens, HTTPS/TLS encryption in transit.
+
+#### Go-to-market plan
+User wants a formal GTM plan scoped as its own future initiative, same discovery-then-build treatment as tonight's other major work. Not started.
+
+#### Deferred until after the UI phase
+- Sweep for other instances of the "unscoped name-based lookup" bug pattern found tonight (fixed once in PR #517, may recur elsewhere).
+- WhatsApp OAuth to replace manual phone-entry parent linking.
+- Toshi parity broadly for anything else built wizard-first tonight.
+
 ---
 
 ## Current Status: September 11, 2026 ([#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519)+[#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `85452439`) — Cloud object storage + scheduler + Uganda admission copy
