@@ -21,6 +21,7 @@
                         <div class="px-2">
                             <h2 class="font-bold text-base text-gray-700">
                                 <a
+                                    v-if="mode === 'admin'"
                                     :href="
                                         url +
                                         '/' +
@@ -30,6 +31,7 @@
                                     "
                                     >{{ student.fullname }}</a
                                 >
+                                <span v-else>{{ student.fullname }}</span>
                             </h2>
                             <p>{{ student.class }}</p>
                         </div>
