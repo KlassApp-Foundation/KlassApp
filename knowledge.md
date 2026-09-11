@@ -199,6 +199,21 @@ Laravel Cloud **Preview Environments** auto-create an isolated environment per p
 
 **Until the dashboard automation exists:** contributors use local Docker / CI + the persistent **staging** URL for live checks; opening a PR will **not** spin a Cloud preview.
 
+## Monthly Release Strategy (added 2026-09-11)
+
+Adopted cadence: continuous small fixes/improvements ship as normal (no batching needed). Real feature work lands on staging first via the normal PR/review workflow, gets tested there, then batches into a deliberate release once or twice a month — tagged (git tag or GitHub Release), deployed to production as one intentional event rather than a constant drip. Each release pairs with a changelog/announcement (email to school admins, in-app "What's New" banner, or a public changelog page) — this is what turns shipped code into something users and the market actually notice.
+
+## Staging Environment (added 2026-09-11)
+
+Product-facing compact notes (contributor detail remains in **Staging & Preview Environments** above):
+
+- URL: https://klassapp-staging-7mpoqg.laravel.cloud (temporary — real custom subdomain like staging.klassapp.xyz not yet set up, planned via Spaceship DNS)
+- Environment id: `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016`
+- Separate isolated database schema (`klassapp-staging`) — NOT a production clone, seeded with demo data only
+- Demo login: `phase4.admin@klassapp.xyz` / `demo123` (plus teacher accounts from Phase4RosterDemoSeeder)
+- Isolation confirmed: 1 school on staging vs 42 on production at time of setup
+- Preview Environments (auto-provision per PR) NOT yet enabled — must be manually turned on once via Cloud dashboard (staging → Settings → Preview environments → New automation); no API/CLI path exists for this step. Must isolate DB and NOT share production WhatsApp/R2 credentials when configuring.
+
 ## Known Bug Patterns & Lessons (reference — check before touching related code)
 
 > **Purpose**: Regression-prevention reference, not a historical log. Before editing code that touches any area below, verify the "fix still in place" markers are present. Each entry: what happened → root cause → fix → generalizable lesson → how to confirm the fix survives.
@@ -1730,10 +1745,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+<<<<<<< HEAD
 ### 2026-09-11: Land bounced-CT-invite Future Initiative note — **MERGING via #487**
 - **Work done**: Rebased wanted content from [#487](https://github.com/KlassApp-Foundation/KlassApp/pull/487) onto current main (dropped stale Current Status stamps from the old branch tip). Adds Future Initiative note that bounced invite email still assigns `class_teacher_id`.
 - **Files modified**: `knowledge.md`
 - **PR / merge**: [#487](https://github.com/KlassApp-Foundation/KlassApp/pull/487)
+=======
+### 2026-09-11: Land monthly release strategy + staging product notes — **MERGING via #526**
+- **Work done**: Rebased wanted content from [#526](https://github.com/KlassApp-Foundation/KlassApp/pull/526) onto current main (dropped stale Current Status / Toshi-readiness stamps that conflicted with later #528–#532). Adds Monthly Release Strategy + compact Staging Environment product notes.
+- **Files modified**: `knowledge.md`
+- **PR / merge**: [#526](https://github.com/KlassApp-Foundation/KlassApp/pull/526)
+>>>>>>> 9d6854ff (docs(knowledge): monthly release strategy + staging product notes)
 - **Status**: 🚧 merging
 
 ### 2026-09-11: Sweep unscoped User name lookups (#517 pattern) — **MERGED+DEPLOYED+LIVE-VERIFIED**
