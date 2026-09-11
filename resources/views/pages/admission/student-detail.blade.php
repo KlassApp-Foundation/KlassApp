@@ -42,36 +42,6 @@
     </div>
     </div>
     </div>
-    <!-- *** -->
-    <div class="flex flex-col lg:flex-row">
-    <div class="w-full lg:w-1/2 lg:mr-2">
-    <div class="my-1">
-    <label for="name" class="tw-form-label">Height</label>
-    <input type="text"  name="height" placeholder="" class="tw-form-control w-full my-1 py-2">
-    </div>
-    </div>
-       <div class="w-full lg:w-1/2 lg:mr-2">
-      <div class="my-1">
-    <label for="name" class="tw-form-label">Weight</label>
-    <input type="text"  name="weight" placeholder="" class="tw-form-control w-full my-1 py-2">
-    </div>
-    </div>
-    </div>
-    <!-- *** -->
-     <!-- *** -->
-    <div class="flex flex-col lg:flex-row">
-    <div class="w-full lg:w-1/2 lg:mr-2">
-    <div class="my-1">
-    <label for="name" class="tw-form-label">Birth Place</label>
-    <input type="text"  name="birthplace" placeholder="" class="tw-form-control w-full my-1 py-2">
-    </div>
-    </div>
-       <div class="w-full lg:w-1/2 lg:mr-2">
-      <div class="my-1">
-    <label for="name" class="tw-form-label">Nationality</label>
-    <input type="text"  name="nationality" placeholder="" class="tw-form-control w-full my-1 py-2">
-    </div>
-    </div>
     </div>
     <!-- *** -->
     </div>
@@ -86,23 +56,6 @@
     <!-- ** -->
 
     <!-- ** -->
-    <div class="flex flex-col lg:flex-row ">
-    <div class="my-1 w-full lg:w-1/3 lg:mr-2">
-    <label for="name" class="tw-form-label">Religion</label>
-    <input type="text"  name="religion" placeholder="" class="tw-form-control w-full my-1 py-2">
-    </div>
-    <div class="my-1 w-full lg:w-1/3 lg:mr-2">
-    <label for="name" class="tw-form-label">Community</label>
-    <input type="text"  name="community" placeholder="" class="tw-form-control w-full my-1 py-2">
-    <p class="text-xs mb-0">(BC / MBC / DNC / SC / ST / OC)</p>
-    </div>
-    <div class="my-1 w-full lg:w-1/3 lg:mr-2">
-    <label for="name" class="tw-form-label">Mother tongue</label>
-    <input type="text"  name="community" placeholder="" class="tw-form-control w-full my-1 py-2">
-    </div>
-    </div>
-    <!-- ** -->
-     <!-- ** -->
     <div class="">
      <label for="name" class="tw-form-label">Identification Marks</label>
      <div class="flex flex-col lg:flex-row">
@@ -112,35 +65,6 @@
     <div class="my-1 w-full lg:w-1/2 lg:mr-2">
     <input type="text"  name="m2" placeholder="" class="tw-form-control w-full my-1 py-2">
     </div>
-    </div>
-    </div>
-    <!-- ** -->
-    <!-- ** -->
-    <div class="flex flex-col lg:flex-row">
-    <div class="my-1 w-full lg:w-1/2 lg:mr-2">
-    <label for="name" class="tw-form-label">Aadhar Number</label>
-    <input type="text"  name="address" placeholder="" class="tw-form-control w-full my-1 py-2">
-    </div>
-   
-     <div class="w-full lg:w-1/2 lg:mr-2 my-1">
-    <label for="name" class="tw-form-label">Blood Group</label>
-    <select name="type" id="type" class="tw-form-control w-full my-1 py-2">
-   <option value="" disabled="disabled">Select Blood Group</option> 
-   <option value="a+">A+</option>
-   <option value="a1+">A1+</option>
-   <option value="b+">B+</option>
-   <option value="b1+">B1+</option>
-   <option value="o+">O+</option>
-   <option value="ab+">AB+</option>
-   <option value="a1b+">A1B+</option>
-   <option value="a-">A-</option>
-   <option value="a1-">A1-</option>
-   <option value="b-">B-</option>
-   <option value="b1-">B1-</option>
-   <option value="o-">O-</option>
-   <option value="ab-">AB-</option>
-   <option value="a1b-">A1B-</option>
-    </select>
     </div>
     </div>
     <!-- ** -->
@@ -155,7 +79,7 @@
        <div class="w-full lg:w-1/2 lg:mr-2">
       <div class="my-1">
     <label for="name" class="tw-form-label">Reason for leaving</label>
-    <input type="text"  name="nationality" placeholder="" class="tw-form-control w-full my-1 py-2">
+    <input type="text"  name="leaving_reason" placeholder="" class="tw-form-control w-full my-1 py-2">
     </div>
     </div>
     </div>

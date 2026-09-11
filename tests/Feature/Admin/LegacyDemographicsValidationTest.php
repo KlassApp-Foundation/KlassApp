@@ -51,6 +51,9 @@ class LegacyDemographicsValidationTest extends TestCase
             'aadhar_number',
             'mother_tongue',
             'birth_place',
+            'community',
+            'v-model="community"',
+            'name="community"',
             'v-model="religion"',
             'v-model="nationality"',
             'v-model="height"',
@@ -122,6 +125,21 @@ class LegacyDemographicsValidationTest extends TestCase
                 "/['\"]{$field}['\"]\s*=>/",
                 $source,
                 "TeacherProfileAddRequest must not validate {$field}"
+            );
+        }
+    }
+
+    #[Test]
+    public function admission_student_request_does_not_require_community_or_other_track_a_fields(): void
+    {
+        $path = app_path('Http/Requests/Admission/AdmissionStudentRequest.php');
+        $source = file_get_contents($path);
+
+        foreach (['community', 'religion', 'nationality', 'height', 'weight', 'mother_tongue', 'aadhar_number', 'blood_group', 'birth_place'] as $field) {
+            $this->assertDoesNotMatchRegularExpression(
+                "/['\"]{$field}['\"]\s*=>/",
+                $source,
+                "AdmissionStudentRequest must not validate {$field}"
             );
         }
     }

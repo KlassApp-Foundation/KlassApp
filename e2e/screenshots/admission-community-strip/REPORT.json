@@ -1,0 +1,13 @@
+{
+  "base": "http://127.0.0.1:8000",
+  "slug": "verify-streams",
+  "community_visible_on_student_step": false,
+  "student_step_next_ok": true,
+  "screenshots": [
+    "01-admission-open.png",
+    "02-student-detail.png",
+    "03-after-student-next.png"
+  ],
+  "errors": [],
+  "pass": true
+}

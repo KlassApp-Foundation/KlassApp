@@ -61,15 +61,6 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col lg:flex-row">
-                    <div class="my-1 w-full lg:w-1/2 lg:mr-2">
-                        <label for="community" class="tw-form-label">Community</label>
-                        <input type="text" name="community" v-model="community" placeholder="Community" class="tw-form-control w-full my-1 py-2">
-                        <p class="text-xs mb-0">(BC / BCM / FC / MBC / OBC / Others / SC / SCA / ST )</p>
-                        <span v-if="errors.community" class="text-red-500 text-xs font-semibold">{{ errors.community[0] }}</span>
-                    </div>
-                </div>
-
                 <div class="">
                     <label for="identification_marks" class="tw-form-label">Identification Marks</label>
                     <div class="flex flex-col lg:flex-row">
@@ -153,7 +144,6 @@
                 lastname:'',
                 date_of_birth:'',
                 gender:'',
-                community:'',
                 identification_marks:'',
                 identification_marks_1:'',
                 school_last_studied:'',
@@ -202,7 +192,6 @@
                 formData.append('date_of_birth',this.date_of_birth);          
                 formData.append('gender',this.gender);          
                 formData.append('avatar',this.avatar);          
-                formData.append('community',this.community);          
                 formData.append('identification_marks',this.identification_marks);          
                 formData.append('school_last_studied',this.school_last_studied);          
                 formData.append('reason_for_leaving',this.reason_for_leaving);          
