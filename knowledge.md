@@ -573,6 +573,7 @@ User wants a formal GTM plan scoped as its own future initiative, same discovery
 - **Verification FAILED**: Admin+Teacher `isAvailable=true` but `ask()` → null; direct agent → `InsufficientCreditsException` / DeepSeek **HTTP 402 Insufficient Balance** (committed default key). Evidence: `docs/evidence/toshi-sdk-v2-enable/staging-2026-09-11.txt`.
 - **Production**: flag **still false** — not enabled. Same dead default key; do not flip until funded `OPENAI_COMPATIBLE_API_KEY` is on Cloud.
 - **Code**: remove hardcoded LLM API key from `config/ai.php` / `config/toshi.php` (env-only). Guided onboarding remains outside `handleAssistantQuery` SDK gate.
+- **#488 status (API-verified 2026-09-11)**: PR #488 is still **OPEN / not merged** (`merged:false`, `merged_at:null`). GitHub's `merge_commit_sha` is a speculative merge preview — **not** on `origin/main`. Main still has the hardcoded `sk-2ccc…` defaults; `MissingToshiLlmApiKeyException` absent; `scripts/provision-klassapp.sh` still present. #527 rebases onto current `main` directly (already up to date). Coordinate with open #488 to avoid double-landing the same config hunks.
 - **Unblock**: set funded `OPENAI_COMPATIBLE_API_KEY` on staging → redeploy → re-run Admin/Teacher free-form transcripts → then production.
 
 
@@ -1692,6 +1693,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: PR #488 status correction (API) — **#527 resolved against main**
+- **Work done**: GitHub API confirm: `#488` `merged:false` / `state:open` / `merged_at:null` (opened 2026-09-09, never merged). Speculative `merge_commit_sha` not on `origin/main`. Main still ships hardcoded LLM key. Rebased/verified `#527` onto current `main` (already up to date). Framing “wait for merged #488 then rebase” was wrong — #488 was never on main.
+- **Files modified**: `knowledge.md`
+- **Key decisions**: Resolve #527 against current main; treat #488 as a parallel open security PR to coordinate with, not a predecessor already landed.
+- **PR / merge**: [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527)
+- **Status**: ✅ Corrected
+- **Edge cases flagged**: Earlier “merged two days ago” memory likely conflated PR **open** date (2026-09-09) with merge.
 
 ### 2026-09-11: TOSHI_SDK_V2_ENABLED enable attempt — **BLOCKED (DeepSeek 402)**
 - **Work done**: Investigated why flag was off (staged rollout, not a known app bug). Enabled `TOSHI_SDK_V2_ENABLED=true` on **staging** + redeployed; ran Admin/Teacher free-form `ToshiSdkV2Service::ask` + direct agent prompts. LLM path fails with DeepSeek HTTP 402 Insufficient Balance. Production flag left **false**. Removed hardcoded API key from config (env-only). Logged evidence under `docs/evidence/toshi-sdk-v2-enable/`.
