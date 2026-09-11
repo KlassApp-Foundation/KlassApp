@@ -566,7 +566,11 @@ User wants a formal GTM plan scoped as its own future initiative, same discovery
 
 ---
 
-## Current Status: September 11, 2026 (**staging provisioned**; tip pending docs stamp) — Cloud staging + preview contributor reference
+## Current Status: September 11, 2026 ([#524](https://github.com/KlassApp-Foundation/KlassApp/pull/524) **MERGED**; tip `69024c35`) — Cloud staging live; Preview Environments dashboard-gated
+
+- **✅ Persistent staging** `env-a2b86c90-…` → https://klassapp-staging-7mpoqg.laravel.cloud — schema `klassapp-staging`, demo-seeded (`phase4.admin@klassapp.xyz` / `demo123`). Isolation: staging schools=1 vs prod=42.
+- **⚠️ Preview Environments**: still **not** auto-provisioning. While [#524](https://github.com/KlassApp-Foundation/KlassApp/pull/524) was open (~2.5+ min): still only 2 envs (`created_from_automation=false`); **zero** Cloud preview comments on the PR. Dashboard one-time automation required (steps in knowledge Staging & Preview section).
+- **Docs**: [#524](https://github.com/KlassApp-Foundation/KlassApp/pull/524) squash `69024c35624a481912b5b5775af6002f579d26be`.
 
 - **✅ Persistent staging** on Laravel Cloud: `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016` → `https://klassapp-staging-7mpoqg.laravel.cloud` (separate schema `klassapp-staging`, demo-seeded, not a prod clone). Deploy `depl-a2b86d10-…` **succeeded**. Isolation verified (staging schools=1 / prod schools=42).
 - **⚠️ Preview Environments**: feature **not yet enabled** in Cloud dashboard (API/CLI cannot create automations). Dashboard one-time setup steps documented in knowledge **Staging & Preview Environments**. Negative check: no historical PR Cloud preview comments; no `created_from_automation` envs.
