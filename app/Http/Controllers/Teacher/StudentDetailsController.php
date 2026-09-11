@@ -37,6 +37,21 @@ class StudentDetailsController extends Controller
     use Common;
 
     /**
+     * Same school_id Gate as show(): deny when the student is not in the teacher's school.
+     * Cross-tenant floor only; class-scoped tightening is separate product work.
+     */
+    private function authorizeMemberStudent(string $name): User
+    {
+        $user = User::where('name', $name)->first();
+
+        if ($user === null || ! Gate::allows('member', $user)) {
+            abort(403);
+        }
+
+        return $user;
+    }
+
+    /**
      * Display the specified resource.
      *
      * @param  int  $id
@@ -65,7 +80,8 @@ class StudentDetailsController extends Controller
      */
     public function showDetails($name)
     {
-        //
+        $this->authorizeMemberStudent($name);
+
         $users = User::with('userprofile')->where('name', $name)->get();
 
         $users = UserDetailResource::collection($users);
@@ -81,7 +97,8 @@ class StudentDetailsController extends Controller
      */
     public function showRelations($name)
     {
-        //
+        $this->authorizeMemberStudent($name);
+
         $student = User::with('userprofile')->where('name', $name)->first();
 
         $parents = UserRelationResource::collection($student->parents);
@@ -97,7 +114,8 @@ class StudentDetailsController extends Controller
      */
     public function showSiblings($name)
     {
-        //
+        $this->authorizeMemberStudent($name);
+
         $student = User::with('userprofile')->where('name', $name)->get();
 
         $siblings = UserSiblingResource::collection($student);
@@ -149,7 +167,8 @@ class StudentDetailsController extends Controller
      */
     public function showDisciplines($name)
     {
-        //
+        $this->authorizeMemberStudent($name);
+
         $student = User::with('disciplineUser','disciplineTeacher')->where('name', $name)->first();
 
         $discipline = DisciplineResource::collection($student->disciplineUser);
@@ -165,7 +184,8 @@ class StudentDetailsController extends Controller
      */
     public function showAttendance($name)
     {
-        //
+        $this->authorizeMemberStudent($name);
+
         $student = User::where('name', $name)->first();
 
         $attendances = AttendanceUserResource::collection($student->AttendanceUserAbsent);
@@ -181,7 +201,8 @@ class StudentDetailsController extends Controller
      */
     public function showMedicalHistory($name)
     {
-        //
+        $this->authorizeMemberStudent($name);
+
         $student = User::where('name', $name)->first();
 
         $medicals = [];
@@ -198,7 +219,8 @@ class StudentDetailsController extends Controller
 
     public function showBookLent($name)
     {
-        //
+        $this->authorizeMemberStudent($name);
+
         $student = User::with('lending')->where('name', $name)->first();
 
         $lent = BookLendingResource::collection($student->lending);
@@ -213,6 +235,8 @@ class StudentDetailsController extends Controller
      */
     public function showmark($name)
     {
+       $this->authorizeMemberStudent($name);
+
        $users = User::with('marks')->where('name', $name)->first();
        $studentId=$users->id;
        $examId=$users->marks[0]['exam_id'];
@@ -222,6 +246,8 @@ class StudentDetailsController extends Controller
 
     public function showAllMark($name)
     {
+        $this->authorizeMemberStudent($name);
+
         $users = User::where('name', $name)->first();
 
         $studentId=$users->id;
@@ -231,6 +257,8 @@ class StudentDetailsController extends Controller
 
     public function compareMarks($name)
     {
+        $this->authorizeMemberStudent($name);
+
         $users=User::with('studentAcademic')->where('name',$name)->get();
         $studentId=$users[0]['id'];
         $standardId=$users[0]['studentAcademicLatest']['standardLink_id'];
@@ -256,7 +284,8 @@ class StudentDetailsController extends Controller
      */
     public function showDocuments($name)
     {
-        //
+        $this->authorizeMemberStudent($name);
+
         $user = User::where('name',$name)->first();
         $documents = Document::where('user_id',$user->id)->where('status',1)->get();
 
