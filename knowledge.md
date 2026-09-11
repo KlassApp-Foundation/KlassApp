@@ -566,15 +566,13 @@ User wants a formal GTM plan scoped as its own future initiative, same discovery
 
 ---
 
-## Current Status: September 11, 2026 — TOSHI_SDK_V2 enable **BLOCKED** (DeepSeek 402); staging flag on, prod untouched
+## Current Status: September 11, 2026 — #488 **MERGED NOW** (`24f4be71`); #527 rebased onto it
 
-- **Why the flag was historically OFF**: deliberate **controlled rollout** after SDK became deployable — knowledge: "test school first, not global"; `config/toshi.php` default `false` + "Internal accounts only until parity is verified." Earlier PHP 8.4/`laravel/ai` deployability gap is **resolved**. No separate lasting functional bug required permanent disable.
-- **Staging**: `TOSHI_SDK_V2_ENABLED=true` set on `env-a2b86c90-…`; deploy `depl-a2b87faa-…` **succeeded**. Demo school `toshi_enabled` forced on for gate test.
-- **Verification FAILED**: Admin+Teacher `isAvailable=true` but `ask()` → null; direct agent → `InsufficientCreditsException` / DeepSeek **HTTP 402 Insufficient Balance** (committed default key). Evidence: `docs/evidence/toshi-sdk-v2-enable/staging-2026-09-11.txt`.
-- **Production**: flag **still false** — not enabled. Same dead default key; do not flip until funded `OPENAI_COMPATIBLE_API_KEY` is on Cloud.
-- **Code**: remove hardcoded LLM API key from `config/ai.php` / `config/toshi.php` (env-only). Guided onboarding remains outside `handleAssistantQuery` SDK gate.
-- **#488 status (API-verified 2026-09-11)**: PR #488 is still **OPEN / not merged** (`merged:false`, `merged_at:null`). GitHub's `merge_commit_sha` is a speculative merge preview — **not** on `origin/main`. Main still has the hardcoded `sk-2ccc…` defaults; `MissingToshiLlmApiKeyException` absent; `scripts/provision-klassapp.sh` still present. #527 rebases onto current `main` directly (already up to date). Coordinate with open #488 to avoid double-landing the same config hunks.
-- **Unblock**: set funded `OPENAI_COMPATIBLE_API_KEY` on staging → redeploy → re-run Admin/Teacher free-form transcripts → then production.
+- **#488 (API-confirmed merge)**: `merged:true` at **2026-09-11T15:39:44Z** — squash `24f4be711d929d15c0da10b241afc8380adfc323` on `origin/main`. **Not** merged on 2026-09-09 (that was only the PR open date; earlier records that said otherwise were wrong).
+- **#488 landed on main**: hardcoded LLM key gone; `MissingToshiLlmApiKeyException` present; `scripts/provision-klassapp.sh` **deleted**.
+- **#527**: rebased onto post-#488 main; dropped duplicate key-removal hunks; kept staging 402 evidence, unit guard, enable-block notes.
+- **Production deploy**: pending after #527 merges.
+- **Prior tip before #488**: `34f93d12`.
 
 
 ## Previous: September 11, 2026 ([#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519)+[#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `85452439`) — Cloud object storage + scheduler + Uganda admission copy
@@ -1693,6 +1691,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: Merge #488 for real + rebase #527 — **IN PROGRESS → ship**
+- **Work done**: Merged [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) via `gh pr merge --admin --squash`. API confirm: `merged:true`, `merged_at=2026-09-11T15:39:44Z`, squash on main `24f4be71`. Verified on `origin/main`: key env-only, `MissingToshiLlmApiKeyException` present, `scripts/provision-klassapp.sh` gone. Rebased [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527) onto that tip; kept #488 config, retained #527 evidence/unit/notes; deduped `.env.example` OPENAI_COMPATIBLE keys.
+- **Correction**: #488 was **never** merged on 2026-09-09 — only opened then. Real merge is **2026-09-11T15:39:44Z**.
+- **Files modified**: rebase of #527 branch; `knowledge.md`, `.env.example`
+- **Status**: 🚧 merging #527 next, then Cloud production deploy + live verify
+- **Edge cases flagged**: During rebase, take #488 (`ours`/main) for overlapping `config/ai.php` / `config/toshi.php` hunks.
 
 ### 2026-09-11: PR #488 status correction (API) — **#527 resolved against main**
 - **Work done**: GitHub API confirm: `#488` `merged:false` / `state:open` / `merged_at:null` (opened 2026-09-09, never merged). Speculative `merge_commit_sha` not on `origin/main`. Main still ships hardcoded LLM key. Rebased/verified `#527` onto current `main` (already up to date). Framing “wait for merged #488 then rebase” was wrong — #488 was never on main.
