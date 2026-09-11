@@ -43,7 +43,8 @@ class TeacherEditController extends Controller
     public function editTeacher($name)
     {
       //
-      $user           = User::where('name',$name)->first();
+      $user           = User::findByExactNameInSchool($name, (int) Auth::user()->school_id, 5);
+      if ($user === null) { abort(404); }
       $userprofile    = Userprofile::where('user_id',$user->id)->first();
       $teacherprofile = $user->getTeacherDetails();
         
@@ -99,7 +100,8 @@ class TeacherEditController extends Controller
     public function edit($name)
     {
       //
-      $user = User::where('name',$name)->first();
+      $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id, 5);
+      if ($user === null) { abort(404); }
       $userprofile = Userprofile::where('user_id',$user->id)->first();
        
       return view('/admin/teacher/edit',['user' => $user , 'userprofile' => $userprofile ]);
@@ -187,7 +189,8 @@ class TeacherEditController extends Controller
           $usergroup_id = 5;
         }
 
-        $user = User::where('name',$name)->first();
+        $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id, 5);
+      if ($user === null) { abort(404); }
         $userprofile = Userprofile::where('user_id',$user->id)->first();
         if(Request('avatar'))
         {

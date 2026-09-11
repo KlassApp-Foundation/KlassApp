@@ -448,7 +448,7 @@ trait RegisterUser
             }
             else
             {
-                $student = User::where('name',$data->ref_name)->first();
+                $student = User::findByExactNameInSchool($data->ref_name, (int) $school_id, 6);
             }
             $studentparentlink = StudentParentLink::where([['school_id',$school_id],['student_id',$student->id],['parent_id',$user->id]])->first();
 

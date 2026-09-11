@@ -258,6 +258,32 @@ public function scopeStudents($query)
         return $query;
     }
 
+    /**
+     * Exact users.name match scoped to a school (and optional usergroup).
+     * Bare name is not globally unique — see PR #517 / AGENTS.md rule 18.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    public function scopeExactNameInSchool($query, string $name, int $schoolId, ?int $usergroupId = null)
+    {
+        $query->where('name', $name)->where('school_id', $schoolId);
+
+        if ($usergroupId !== null) {
+            $query->where('usergroup_id', $usergroupId);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Resolve one user by exact display name within a school.
+     * Prefer id (or another unique column) when the caller has it.
+     */
+    public static function findByExactNameInSchool(string $name, int $schoolId, ?int $usergroupId = null): ?self
+    {
+        return static::query()->exactNameInSchool($name, $schoolId, $usergroupId)->first();
+    }
+
     public function scopeByFirstName($query , $firstname)
     {
         $query->wherehas('userprofile',function ($query) use($firstname)

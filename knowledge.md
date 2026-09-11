@@ -586,7 +586,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 11, 2026 — #488+#527 **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `56db335d`)
+## Current Status: September 11, 2026 — User name-lookup school-scope sweep ([#530](https://github.com/KlassApp-Foundation/KlassApp/pull/530) **PR OPEN** — branch `fix/user-name-lookup-school-scope`)
+
+- **Bug pattern** (extends [#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) / AGENTS.md rule 18): identity lookups via bare `users.name` (or other non-unique display fields) can resolve the wrong tenant row when names collide across schools.
+- **Fix**: `User::exactNameInSchool` / `User::findByExactNameInSchool`; Teacher `StudentDetailsController` reuses the authorized user (no second unscoped `where('name')`); Admin student/teacher/staff/document/bank/attendance/dashboard/discipline surfaces + parent-link traits + related FormRequests school-scoped; API user search scoped when auth present.
+- **Tests**: `StudentDetailsNameScopeTest` (Admin medicalHistory survives lower-id foreign twin); Teacher roster collision test extended to details endpoint.
+- **Prior tip**: `56db335d` (#488+#527).
+
+
+## Previous: September 11, 2026 — #488+#527 **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `56db335d`)
 
 - **#488 API**: `merged:true` at **2026-09-11T15:39:44Z** (squash `24f4be71`). **Not** merged on 2026-09-09 — that was only the PR **open** date; earlier “merged two days ago” claims were wrong.
 - **#527 API**: `merged:true` at **2026-09-11T15:42:20Z** (squash `56db335d`), rebased onto post-#488 main (duplicate key-removal hunks dropped; kept staging 402 evidence + unit guard + enable-block notes).
@@ -1716,6 +1724,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: Sweep unscoped User name lookups (#517 pattern) — **PR OPEN**
+- **PR / merge**: [#530](https://github.com/KlassApp-Foundation/KlassApp/pull/530) · branch `fix/user-name-lookup-school-scope`
+- **Work done**: Codebase sweep for `User::where('name', …)` / equivalent identity lookups without `school_id` (or id). PHPStorm MCP first wave; completed coverage with ripgrep/scripted co-occurrence classification (scoped vs unscoped). Fixed real-risk route-name and write-path lookups; left already-scoped Parent/TeacherList/UserProfile and intentional search/LIKE as safe. Added `User::findByExactNameInSchool` + Admin/Teacher student-detail helpers; Teacher residual loads use authorized user.
+- **Files modified**: `app/Models/User.php`; Admin/Teacher `StudentDetailsController`; `StudentController`, `TeacherShowController`, `TeacherEditController`, `StaffController`, `DocumentsController`, `BankDetailController`, `StaffAttendanceController`, `UserController`, Admin+Accountant `DashboardController`, `DisciplineController`; traits `AdmissionUser`/`RegisterUser`; FormRequests; `Api/Search/UserSearchController`; tests `StudentDetailsNameScopeTest` + Teacher roster collision extension; `knowledge.md`.
+- **Key decisions**: Prefer id/authorized-model reuse after gate; else exact name + `school_id` (+ usergroup when role-known). Within-school same-name collisions remain possible (still not unique) — school scope closes the Grace Auma cross-tenant class.
+- **Status**: 🚧 PR open / awaiting merge+deploy
+- **Edge cases flagged**: Within-school duplicate names still ambiguous; long-term prefer id in routes. Commented-out API user search still scoped if re-enabled.
 
 ### 2026-09-11: #488+#527 overlap resolved — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Merged #488 then #527 with API `merged:true` confirmations; rebased #527 onto post-#488 main; production Cloud deploy tip `56db335d`; live Commands verify script gone, no hardcoded sk, fail-loud exception throws.

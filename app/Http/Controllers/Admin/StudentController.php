@@ -251,7 +251,8 @@ class StudentController extends Controller
     public function editStudent($name)
     {
       //
-      $user             = User::where('name',$name)->first();
+      $user             = User::findByExactNameInSchool($name, (int) Auth::user()->school_id, 6);
+      if ($user === null) { abort(404); }
       $userprofile      = Userprofile::where('user_id',$user->id)->first();
       $studentAcademic  = $user->studentAcademicLatest;
 
@@ -316,7 +317,8 @@ class StudentController extends Controller
     public function edit($name)
     {
       //
-      $user = User::where('name',$name)->first();
+      $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id, 6);
+      if ($user === null) { abort(404); }
       $userprofile = Userprofile::where('user_id',$user->id)->first();
       if(Gate::allows('member',$user))
       {

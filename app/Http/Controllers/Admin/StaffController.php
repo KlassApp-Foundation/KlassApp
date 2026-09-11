@@ -143,7 +143,8 @@ class StaffController extends Controller
     public function show($name)
     {
       //
-      $user = User::where('name',$name)->first(); 
+      $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+      if ($user === null) { abort(404); } 
 
       return view('/admin/staff/show',['user' => $user]);
     }
@@ -157,7 +158,8 @@ class StaffController extends Controller
     public function edit($name)
     {
         //
-        $user = User::where('name',$name)->first();
+        $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+      if ($user === null) { abort(404); }
       $userprofile = Userprofile::where('user_id',$user->id)->first();
        
       return view('/admin/staff/edit',['user' => $user , 'userprofile' => $userprofile ]);
@@ -204,7 +206,8 @@ class StaffController extends Controller
           $usergroup_id=13;
         }
 
-        $user = User::where('name',$name)->first();
+        $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+      if ($user === null) { abort(404); }
         $userprofile = Userprofile::where('user_id',$user->id)->first();
         if(Request('avatar'))
         {
@@ -340,7 +343,8 @@ class StaffController extends Controller
     {
         try
         {
-            $user = User::where('name',$name)->first();
+            $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+      if ($user === null) { abort(404); }
             $user->delete();
 
             $message=trans('messages.delete_success_msg',['module' => 'Teacher']);

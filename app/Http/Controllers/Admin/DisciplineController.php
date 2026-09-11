@@ -104,7 +104,7 @@ class DisciplineController extends Controller
         try
         {
             $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-            $student = User::where('name',$request->ref_name)->first();
+            $student = User::findByExactNameInSchool($request->ref_name, (int) Auth::user()->school_id, 6);
         
             $discipline = new Discipline;
 

@@ -31,7 +31,10 @@ class TeacherUpdateRequest extends FormRequest
     { 
         Validator::extend('checkunique_employee_id',function($attribute,$value,$parameters,$validator)
         {
-            $user = User::where('name',Request('teacher_name'))->first();
+            $user = User::findByExactNameInSchool(Request('teacher_name'), (int) Auth::user()->school_id, 5);
+            if ($user === null) {
+                return true;
+            }
             $teacher=TeacherProfile::where([['school_id',Auth::user()->school_id],['employee_id','=',request('employee_id')],['id',$user->id]])->exists();
             if($teacher)
             {
