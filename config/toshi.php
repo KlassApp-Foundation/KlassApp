@@ -25,7 +25,7 @@ return [
     | When enabled, assistant-mode queries are routed through the new Laravel AI
     | SDK agent stack (ToshiOrchestrator → Skill Agents with Tool classes).
     | Uses the 'openai-compatible' provider from config/ai.php which reads
-    | TOSHI_LLM_* env vars for backward compatibility.
+    | OPENAI_COMPATIBLE_API_KEY (preferred) or TOSHI_LLM_API_KEY (legacy).
     |
     | Internal accounts only until parity is verified with the legacy paths.
     */
@@ -84,13 +84,17 @@ return [
     | OpenAI:      https://api.openai.com/v1
     | DeepSeek:    https://api.deepseek.com
     | Nvidia NIM:  https://api.nvcf.nvidia.com/v1
+    |
+    | Prefer OPENAI_COMPATIBLE_URL; TOSHI_LLM_BASE_URL is a legacy alias.
     */
-    'base_url' => 'https://api.deepseek.com',
+    'base_url' => env('OPENAI_COMPATIBLE_URL', env('TOSHI_LLM_BASE_URL', 'https://api.deepseek.com')),
 
     /*
-    | API key for the LLM provider.
+    | API key for the LLM provider (legacy mirror of ai.providers.openai-compatible.key).
+    | Runtime resolution uses config/ai.php. Never hardcode a key here.
+    | Prefer OPENAI_COMPATIBLE_API_KEY; TOSHI_LLM_API_KEY is a legacy alias.
     */
-    'api_key' => 'sk-2ccccb77847d446aa75105000aafab98',
+    'api_key' => env('OPENAI_COMPATIBLE_API_KEY', env('TOSHI_LLM_API_KEY')),
 
     /*
     | Model name to use (same slug agents + toshi:adversarial-live resolve).
