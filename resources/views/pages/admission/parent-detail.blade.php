@@ -70,16 +70,10 @@
     <input type="text"  name="mobile" placeholder="" class="tw-form-control w-full my-1 py-2">
     </div>
     </div>
-    <div class="w-full lg:w-1/3 lg:mr-2">
+    <div class="w-full lg:w-1/2 lg:mr-2">
     <div class="my-1">
     <label for="name" class="tw-form-label">Email ID</label>
     <input type="text"  name="email" placeholder="" class="tw-form-control w-full my-1 py-2">
-    </div>
-    </div>
-     <div class="w-full lg:w-1/3 lg:mr-2">
-    <div class="my-1">
-    <label for="name" class="tw-form-label">Aadhar ID</label>
-    <input type="text"  name="aadhar" placeholder="" class="tw-form-control w-full my-1 py-2">
     </div>
     </div>
     </div>
@@ -155,16 +149,10 @@
     <input type="text"  name="mobile" placeholder="" class="tw-form-control w-full my-1 py-2">
     </div>
     </div>
-    <div class="w-full lg:w-1/3 lg:mr-2">
+    <div class="w-full lg:w-1/2 lg:mr-2">
     <div class="my-1">
     <label for="name" class="tw-form-label">Email ID</label>
     <input type="text"  name="email" placeholder="" class="tw-form-control w-full my-1 py-2">
-    </div>
-    </div>
-     <div class="w-full lg:w-1/3 lg:mr-2">
-    <div class="my-1">
-    <label for="name" class="tw-form-label">Aadhar ID</label>
-    <input type="text"  name="aadhar" placeholder="" class="tw-form-control w-full my-1 py-2">
     </div>
     </div>
     </div>

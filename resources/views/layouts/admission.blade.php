@@ -24,7 +24,8 @@
             </div>
         </div>
         <!-- Scripts -->
-        <script src="{{ asset('js/app.js') }}"></script>
+        @vite(['resources/assets/js/app.js'])
+        <script src="{{ asset('js/jquery.min.js') }}"></script>
         <script src="{{ asset('js/custom.js') }}" ></script>
         @stack('scripts')
     </body>
