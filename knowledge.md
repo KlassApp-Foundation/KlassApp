@@ -432,7 +432,17 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 11, 2026 ([#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e61174f9`) — Toshi Structure streams + CT invite parity (KLS.1)
+## Current Status: September 11, 2026 ([#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e4402052`) — Admission caste Community strip
+
+- **✅ Public Admission student-detail** no longer collects Indian caste-category **Community** (UI + `AdmissionStudentRequest`); DB `admissions.community` kept.
+- **Also cleaned** dead admission fieldset blades (height/weight/religion/community/mother tongue/aadhaar/blood group) deferred since #469.
+- **Root cause of prior miss**: `layouts/admission` still loaded Mix `public/js/app.js` — Vite Vue edits never reached the browser. Layout now `@vite(app.js)` + local jQuery.
+- **Merge**: [#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) squash `e4402052b17cbc7c19f04a17d7083c5329d3992b` @ **2026-09-11T01:02:58Z**.
+- **Cloud**: `depl-a2b776fc-6390-4bc8-9627-0a1ea53db4d8` **deployment.succeeded** @ **2026-09-11T01:04:40Z** (commit `e4402052`).
+- **Live** (`kampala-primary-academy` / school **33**, admission temporarily opened then closed): Community absent; student-detail Next → academic step; Vite app asset present. `e2e/screenshots/admission-community-strip-live-512/REPORT.json` **pass: true**.
+- **Prior**: [#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) tip `e61174f9` — see Previous.
+
+## Previous: September 11, 2026 ([#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e61174f9`) — Toshi Structure streams + CT invite parity (KLS.1)
 
 - **✅ Toshi parity with wizard #502 Structure & Class Teachers** live on `klassapp.xyz`:
   1. Complete-mode after Academic Year **always** lands on `standards` structure checkpoint (even when StandardLinks seeded).
@@ -1509,6 +1519,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: Admission caste Community strip — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: UI-only strip of Admission **Community** (caste) from live Vue + `AdmissionStudentRequest`; cleaned deferred Track A leftovers on dead admission blades; pointed `layouts/admission` at Vite so Mix `public/js/app.js` no longer served the stale field.
+- **Files modified**: `StudentDetail.vue`, `AdmissionStudentRequest.php`, `layouts/admission.blade.php`, dead `pages/admission/*-detail.blade.php`, tests, Vite build assets, `e2e/admission-community-strip-ui.cjs`.
+- **Key decisions**: Keep DB columns; wire admission layout to Vite (required for UI to reflect Vue source); temporarily open then close admissions on school 33 for live verify.
+- **Status**: ✅ MERGED [#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) `e4402052` · Cloud `depl-a2b776fc-…` succeeded · live `e2e/screenshots/admission-community-strip-live-512/REPORT.json` pass=true
+- **Edge cases flagged**: AcademicDetail still has Indian board/Tamil mark labels (out of Track A scope). Stale Mix `public/js/app.js` remains in repo for any other leftover Mix consumers.
 
 ### 2026-09-11: Toshi Structure streams + CT invite parity (KLS.1) — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Shipped previously-local `feature/toshi-streams-parity` end-to-end — Structure checkpoint after AY, `stream`/`ct` commands, additive `saveStandards`, student stream default.
@@ -9507,7 +9524,7 @@ Ran full suite on base commit (stashed changes) vs this branch:
 ### 2026-09-09: Strip height/weight from medical-history UI (#469)
 
 - **Work done**: UI-only removal matching Track A — `CreateMedicalHistory.vue`, `medicalHistory.vue` (Admin+Teacher `mode`), `MedicalHistoryRequest`, Admin+Teacher `StudentDetailsController` show/add medical history. No longer gate medical tab on `height && weight` (now medication/allergy content). DB `student_academics.height`/`weight` retained.
-- **Admission investigation**: `pages/admission/student-detail.blade.php` (+ related fieldset blades) **dead code** — not routed; live public admission is Vue via `pages/admission/admission.blade.php`. Flag only; cleanup deferred.
+- **Admission investigation**: `pages/admission/student-detail.blade.php` (+ related fieldset blades) were dead code at the time — not routed; live public admission is Vue via `pages/admission/admission.blade.php`. **✅ Cleaned in [#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512)** (Track A leftovers + Community).
 - **Tests**: `MedicalHistoryHeightWeightStripTest` + `LegacyDemographicsValidationTest` — 25 passed.
 - **PR**: [#469](https://github.com/KlassApp-Foundation/KlassApp/pull/469) — merge `7e5d506f`.
 - **Deploy**: Cloud `depl-a2b375c2-f1df-4fa8-b585-e8c5de1be689` **deployment.succeeded** on `7e5d506f` (includes `npm run build`).
