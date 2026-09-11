@@ -432,18 +432,25 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 11, 2026 ([#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516)+[#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `98a7dd47`) — Teacher student-profile roster scope
+## Current Status: September 11, 2026 ([#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519)+[#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `85452439`) — Cloud object storage + scheduler + Uganda admission copy
+
+- **✅ Object storage (Laravel Cloud R2)**: Bucket `klassapp-prod` provisioned; env `FILESYSTEM_DISK=s3` (+ AWS_* / endpoint). Config prefers `FILESYSTEM_DISK` over legacy `FILESYSTEM_DRIVER`; S3 disk omits ACL `visibility` (R2 rejects it). WhatsApp report PDFs use default disk and stream via `Storage::response` when not local.
+- **✅ Scheduler**: App instance `uses_scheduler: true`. Every-minute `scheduler-heartbeat` writes `Cache::put('scheduler_heartbeat_at', …)`. After clear + ~95s wait: heartbeat=`2026-09-11T13:58:19+03:00` (autonomous `schedule:run`, not manual).
+- **✅ Uganda admission copy** [#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519): `AcademicDetail.vue` / student `Edit.vue` — Previous School Marks, Local Language, Examination Board, UNEB candidate classes (S.4/S.6). v-model field names unchanged (copy-only).
+- **Investigation (no code) — promotion vs academic year**: Finalize promotion / `PromotionImport` create next-year `StudentAcademic` rows but **do not** flip `academic_years.status` to make the upcoming year current. Admin must separately set the new year current. Docs silent — treat as **unclear intentional vs oversight**; do not auto-advance until product confirms.
+- **Merges**: [#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519) squash `8e6a364d`; [#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) squash `85452439db808f91baecc866e88b7e1f3536c0a6`.
+- **Cloud**: `depl-a2b848b2-8b23-4cee-b2dd-4c0447a31cfb` **deployment.succeeded** @ **2026-09-11T10:50:58Z** (commit `85452439`).
+- **Live storage**: `config('filesystems.default')=s3`; `Storage::disk('s3')->put/exists/get/delete` on `cloud-verify/*.txt` **ok**.
+- **Live copy**: Cloud `grep` on deployed `AcademicDetail.vue` / `Edit.vue` shows UNEB / Examination Board / Previous School Marks / Local Language.
+- **Tests**: CloudObjectStorageConfigTest, SchedulerHeartbeatRegistrationTest, WhatsAppReportDiskRoutingTest, ParentReportCardRequestTest (11 passed); UgandaAdmissionCopyLabelsTest (in #519).
+- **Prior**: [#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516)+[#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) tip `98a7dd47` — teacher roster profile scope.
+
+## Previous: September 11, 2026 ([#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516)+[#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `98a7dd47`) — Teacher student-profile roster scope
 
 - **✅ Roster gate** replaces school-only `Gate::member` on Teacher `StudentDetailsController` (show + JSON tabs including medical/discipline/docs/marks). Boundary = `RosterScopeService::actorCanAccessStudent()` (stream/section CT **or** current-year Teacherlink). Hard **403** otherwise — no partial profile.
 - **✅ #517** school-scopes name lookup (`name` + `school_id` + `usergroup_id=6`) — bare `users.name` is not globally unique; live CT was false-403'd when unscoped `first()` returned a cross-school twin.
-- **Merges**: [#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516) squash `6179e34f92087c722cda0d1757098cf9114cdd05` @ 2026-09-11T08:51:52Z; [#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) squash `98a7dd47b8235331506729eeff21192f9ff7cf96`.
-- **Cloud**: `depl-a2b81ee3-…` (#516) + `depl-a2b82c50-a336-45a6-a75b-8bf8e17c7c42` (#517) **deployment.succeeded** @ **2026-09-11T09:31:44Z** (commit `98a7dd47`).
-- **Live** (`comm-a2b82d22-…` **command.success**):
-  - Subject teacher **49** + Teacherlink student **50** (`diana namukasa504`) → medical/details/docs/show **200**.
-  - CT **160** (`Jane Nabirye`) + `Grace Auma` (school **43**) → medical/details/docs/show/discipline **200** (unscoped name still hits id **112** other school; school-scoped lookup succeeds).
-  - Same-school unrelated teacher **152** → student **167** (`SARAH NAMUKASA`) → **403** on show/details/medical/discipline/attendance/library/docs/relations/siblings.
-  - Class-browse `standardLink/show/students/114` **200** (list OK); teacher `students.vue` deep profile links admin-only; visitorlog list **200**.
-- **Tests**: `TeacherStudentDetailsRosterScopeTest` + updated `TeacherStudentDetailsMemberGateTest` (9 passed locally).
+- **Merges**: [#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516) squash `6179e34f`; [#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) squash `98a7dd47`.
+- **Cloud**: `depl-a2b82c50-…` **deployment.succeeded** @ **2026-09-11T09:31:44Z** (commit `98a7dd47`).
 - **Prior**: [#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) tip `d60abafc` — school-only Gate::member floor (superseded by roster scope).
 
 ## Previous: September 11, 2026 ([#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d60abafc`) — Teacher student-detail Gate::member parity
@@ -1541,6 +1548,28 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: Cloud object storage + scheduler heartbeat — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Provisioned Cloud R2 bucket `klassapp-prod` + env `FILESYSTEM_DISK=s3`/AWS_*; updated `config/filesystems.php` (no S3 ACL visibility); WhatsApp report PDFs on default disk with stream serve; every-minute `scheduler-heartbeat` Cache key for autonomous scheduler proof.
+- **Files modified**: `config/filesystems.php`, `app/Services/WhatsAppReportCardDeliveryService.php`, `app/Http/Controllers/WhatsAppReportFileController.php`, `app/Console/Kernel.php`, new feature tests.
+- **Key decisions**: Copy-only Uganda labels shipped separately (#519); promotion year-advance left as product question (no code).
+- **PR / merge**: [#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) squash `85452439`
+- **Cloud**: `depl-a2b848b2-…` **deployment.succeeded** @ 2026-09-11T10:50:58Z tip `85452439`
+- **Live**: S3 put/get/delete ok; heartbeat after clear+~95s = `2026-09-11T13:58:19+03:00`; instance `uses_scheduler: true`
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+
+### 2026-09-11: Uganda admission / student Edit copy (GeGoK12 leftovers) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Replaced India-era labels in `AcademicDetail.vue` + `student/Edit.vue` with Uganda-facing copy (Examination Board, Local Language, Previous School Marks, UNEB S.4/S.6 hints). No v-model/schema changes.
+- **PR / merge**: [#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519) squash `8e6a364d`
+- **Cloud**: shipped with tip `85452439` deploy (same as #520)
+- **Live**: Cloud `grep` on deployed Vue sources confirms new labels
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+
+### 2026-09-11: Student promotion vs academic-year advance — **INVESTIGATION ONLY**
+- **Finding**: Promotion finalize / import writes next-year `StudentAcademic` (and related) rows against the upcoming year; **does not** change `academic_years.status` so the school’s “current” year stays put until an admin flips it.
+- **Key files**: `StudentPromotionService`, `PromotionController`, `PromotionImport`
+- **Product flag**: Looks like a deliberate two-step (promote into upcoming while old year stays current for archives), but docs are silent — **do not auto-advance without product confirmation**
+- **Status**: ✅ Reported; no code change
 
 ### 2026-09-11: Teacher student-profile roster scope — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Replaced Teacher `StudentDetailsController` `Gate::member` with `RosterScopeService::actorCanAccessStudent()` (CT or current-year Teacherlink → full profile incl. medical; else hard 403). Stripped teacher deep links from StandardsLink class-browse `students.vue`. Follow-up #517 school-scopes name lookup after live CT false-403 from cross-school duplicate `users.name`.
