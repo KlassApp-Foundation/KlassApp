@@ -147,6 +147,9 @@ class AgentToshi extends Component
     public $studentList = [];
     public $hasNursery = null; // null = not asked, true/false for primary schools
     public $streamClassIndex = 0; // tracks which class we're adding streams for
+    /** @var list<array<string, mixed>> */
+    public array $structureClasses = [];
+    public bool $schoolHasStreams = false;
     public $showSubjectForm = false;
     public $subjectFormName = '';
     public $subjectFormCode = '';
@@ -796,7 +799,7 @@ class AgentToshi extends Component
             'emis' => "What's your school's **EMIS / Ministry code**? This is required for Ugandan schools.",
             'uneb_center' => "If you have a **UNEB centre number**, share it now — or type **skip** (optional).",
             'academic_year' => "Let's set your academic year next — classes and terms depend on it. Is **" . date('Y') . "** correct? (yes / no)",
-            'standards'  => "Let's set up classes. What classes does your school have?",
+            'standards'  => "Your classes are ready. Optionally add streams or invite class teachers — or type **done** to continue.",
             'subjects'   => "Let's set up subjects per class.",
             'teachers'   => "Let's add teachers. Paste their names (one per line) or type 'skip'.",
             'terms'      => "Let's set up academic terms.",
@@ -1319,11 +1322,24 @@ class AgentToshi extends Component
 
     /**
      * Skip adding streams for all remaining classes and advance.
+     * Structure checkpoint: same as typing done (optional actions).
      */
     public function confirmSkipAll()
     {
         $stepName = $this->steps[$this->step] ?? '';
-        if ($stepName !== 'standards' || empty($this->standards)) {
+        if ($stepName !== 'standards') {
+            $this->confirmNo();
+            return;
+        }
+
+        if ($this->shouldUseStructureCheckpoint()) {
+            $this->awaitingConfirm = false;
+            $this->substep = 0;
+            $this->advance();
+            return;
+        }
+
+        if (empty($this->standards)) {
             $this->confirmNo();
             return;
         }
@@ -1720,7 +1736,63 @@ class AgentToshi extends Component
         $this->studentFormParent = '';
         $this->studentFormParentPhone = '';
         $this->substep = 6;
+        if ($this->schoolId) {
+            $this->refreshToshiStructureSnapshot();
+        }
         $this->botSay("Let's add students. Use the form below to add each student.");
+    }
+
+    public function updatedStudentFormClass(): void
+    {
+        $this->applyStudentFormStreamDefault();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function streamsForStudentFormClass(): array
+    {
+        $class = trim((string) $this->studentFormClass);
+        if ($class === '') {
+            return [];
+        }
+
+        if ($this->structureClasses === [] && $this->schoolId) {
+            $this->refreshToshiStructureSnapshot();
+        }
+
+        foreach ($this->structureClasses as $row) {
+            if (strcasecmp((string) ($row['name'] ?? ''), $class) === 0) {
+                return array_values(array_map(
+                    fn (array $stream) => (string) $stream['label'],
+                    $row['streams'] ?? []
+                ));
+            }
+        }
+
+        // Create-mode: streams may only exist on in-memory $this->standards
+        foreach ($this->standards ?? [] as $std) {
+            if (strcasecmp((string) ($std['name'] ?? ''), $class) === 0) {
+                return array_values(array_filter(array_map(
+                    'strval',
+                    $std['streams'] ?? []
+                )));
+            }
+        }
+
+        return [];
+    }
+
+    private function applyStudentFormStreamDefault(): void
+    {
+        $streams = $this->streamsForStudentFormClass();
+        if ($streams === []) {
+            return;
+        }
+
+        if ($this->studentFormStream === '' || ! in_array($this->studentFormStream, $streams, true)) {
+            $this->studentFormStream = $streams[0];
+        }
     }
 
     public function saveStudent()
@@ -1747,12 +1819,15 @@ class AgentToshi extends Component
 
         $this->actionData['students'][] = $entry;
         $this->studentFormName = '';
-        $this->studentFormClass = '';
+        // Keep class + stream sticky for batch entry (wizard defaults stream when class has streams)
         $this->studentFormParent = '';
         $this->studentFormParentPhone = '';
 
         $count = count($this->actionData['students']);
-        $this->botSay("Added **{$name}** ({$count} so far). Add another or click **Continue**.");
+        $streamBit = trim((string) $this->studentFormStream) !== ''
+            ? ' · '.$this->studentFormStream
+            : '';
+        $this->botSay("Added **{$name}** ({$class}{$streamBit}) — {$count} so far. Add another or click **Continue**.");
     }
 
     function doneStudents()
@@ -3604,11 +3679,14 @@ class AgentToshi extends Component
 
         $stepName = $this->steps[$this->step];
 
-        // Block explicit skip on mandatory steps ('no' is still allowed — it routes to custom input)
+        // Block explicit skip on mandatory steps ('no' is still allowed — it routes to custom input).
+        // Structure checkpoint is optional once classes are seeded (wizard parity) — allow skip/done.
         if ($this->isStepMandatory($stepName) && in_array(strtolower($text), ['skip', 'later'])) {
-            $label = str_replace('_', ' ', $stepName);
-            $this->botSay("**" . ucwords($label) . "** is required to set up the school. Please complete this step.");
-            return;
+            if (! ($stepName === 'standards' && $this->shouldUseStructureCheckpoint())) {
+                $label = str_replace('_', ' ', $stepName);
+                $this->botSay("**" . ucwords($label) . "** is required to set up the school. Please complete this step.");
+                return;
+            }
         }
 
         match ($stepName) {
@@ -4042,8 +4120,9 @@ class AgentToshi extends Component
             if ($yes) {
                 if ($this->mode === 'complete' && $this->schoolId) {
                     $this->persistAcademicYearIfMissing($this->academicYearLabel ?: (string) date('Y'));
-                    $this->substep = 0;
-                    $this->detectMissingSteps();
+                    // Wizard parity: always land on Structure & Class Teachers after AY,
+                    // even when StandardLinks were auto-seeded.
+                    $this->enterStructureCheckpoint();
                     return;
                 }
                 $this->substep = 0;
@@ -4061,8 +4140,7 @@ class AgentToshi extends Component
             $this->botSay("Academic year set to **{$this->academicYearLabel}**.");
             if ($this->mode === 'complete' && $this->schoolId) {
                 $this->persistAcademicYearIfMissing($this->academicYearLabel);
-                $this->substep = 0;
-                $this->detectMissingSteps();
+                $this->enterStructureCheckpoint();
                 return;
             }
             $this->substep = 0;
@@ -4562,16 +4640,308 @@ class AgentToshi extends Component
     }
 
     // ════════════════════════════════════════════════
-    //  Step 6: Standards / Classes (confirm/edit substeps)
+    //  Step 6: Standards / Classes / Structure checkpoint
     // ════════════════════════════════════════════════
+
+    /**
+     * True when classes already exist in DB — use wizard-parity structure checkpoint
+     * (optional streams via ClassStructureService + optional CT invite) instead of
+     * re-collecting class names.
+     */
+    public function shouldUseStructureCheckpoint(): bool
+    {
+        if (! $this->schoolId) {
+            return false;
+        }
+
+        return StandardLink::where('school_id', $this->schoolId)->exists();
+    }
+
+    private function enterStructureCheckpoint(): void
+    {
+        $idx = array_search('standards', $this->steps, true);
+        if ($idx !== false) {
+            $this->step = $idx;
+        }
+        $this->substep = 0;
+        $this->awaitingConfirm = false;
+        $this->handleStructureCheckpoint('');
+    }
+
+    private function refreshToshiStructureSnapshot(): void
+    {
+        $this->structureClasses = [];
+        $this->schoolHasStreams = false;
+        $this->standards = [];
+
+        if (! $this->schoolId) {
+            return;
+        }
+
+        $school = School::find($this->schoolId);
+        if (! $school) {
+            return;
+        }
+
+        $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
+            ?? AcademicYear::where('school_id', $school->id)->first();
+        if (! $year) {
+            return;
+        }
+
+        $this->structureClasses = app(\App\Services\ClassStructureService::class)
+            ->structureSnapshot($school, $year);
+
+        foreach ($this->structureClasses as $row) {
+            $this->standards[] = [
+                'name' => (string) ($row['name'] ?? ''),
+                'section_id' => (int) ($row['section_id'] ?? 0),
+                'streams' => array_values(array_map(
+                    fn (array $s) => (string) ($s['label'] ?? ''),
+                    $row['streams'] ?? []
+                )),
+            ];
+            if (($row['streams'] ?? []) !== []) {
+                $this->schoolHasStreams = true;
+            }
+        }
+    }
+
+    /**
+     * Wizard-parity structure checkpoint: optional addStream + CT invite; never blocks.
+     */
+    private function handleStructureCheckpoint(string $text): void
+    {
+        $lower = strtolower(trim($text));
+
+        if ($text === '' || $lower === 'help') {
+            $this->refreshToshiStructureSnapshot();
+            if ($this->structureClasses === []) {
+                $this->botSay(
+                    "I couldn't load your class list right now. Type **done** to continue — you can add streams later from the admin panel."
+                );
+
+                return;
+            }
+
+            $lines = [];
+            foreach ($this->structureClasses as $row) {
+                $streamLabels = array_column($row['streams'] ?? [], 'label');
+                $streamBit = $streamLabels === [] ? 'no streams' : 'streams: '.implode(', ', $streamLabels);
+                $ctBit = ! empty($row['class_teacher_name'])
+                    ? 'CT: '.$row['class_teacher_name']
+                    : 'no class teacher';
+                $lines[] = '• **'.($row['name'] ?? '')."** — {$streamBit}; {$ctBit}";
+            }
+
+            $this->botSay(
+                "Your classes are ready (both actions optional — type **done** anytime):\n"
+                .implode("\n", $lines)."\n\n"
+                ."• Add streams: `stream Primary One: East` or `stream Primary One: A, B`\n"
+                ."• Invite class teacher: `ct Primary One: Grace Namukasa, grace@school.ug`"
+            );
+
+            return;
+        }
+
+        if (in_array($lower, ['done', 'continue', 'skip', 'later', 'no', 'n', 'ok', 'yes', 'y', 'yeah'], true)) {
+            $this->substep = 0;
+            $this->awaitingConfirm = false;
+            $this->advance();
+
+            return;
+        }
+
+        if (preg_match('/^stream\s+(.+?)\s*:\s*(.+)$/i', trim($text), $m)) {
+            $this->applyStructureStreams(trim($m[1]), trim($m[2]));
+
+            return;
+        }
+
+        if (preg_match('/^ct\s+(.+?)\s*:\s*(.+)$/i', trim($text), $m)) {
+            $this->applyStructureCtInvite(trim($m[1]), trim($m[2]));
+
+            return;
+        }
+
+        $this->botSay(
+            "I didn't catch that. Use `stream Class: labels`, `ct Class: Name, email`, or type **done** to continue."
+        );
+    }
+
+    private function applyStructureStreams(string $className, string $labelsRaw): void
+    {
+        $this->refreshToshiStructureSnapshot();
+        $row = $this->findStructureClassRow($className);
+        if ($row === null) {
+            $this->botSay("I couldn't find a class named **{$className}**. Check the list and try again.");
+
+            return;
+        }
+
+        $school = School::find($this->schoolId);
+        $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
+            ?? AcademicYear::where('school_id', $school->id)->first();
+        $section = Section::query()
+            ->where('school_id', $school->id)
+            ->whereKey((int) $row['section_id'])
+            ->first();
+
+        if (! $school || ! $year || ! $section) {
+            $this->botSay("Couldn't load that class right now. Try again in a moment.");
+
+            return;
+        }
+
+        $labels = array_values(array_filter(array_map('trim', explode(',', $labelsRaw)), fn ($n) => $n !== ''));
+        if ($labels === []) {
+            $this->botSay('Enter at least one stream label (e.g. A, East).');
+
+            return;
+        }
+
+        $added = [];
+        foreach ($labels as $label) {
+            try {
+                $result = app(\App\Services\ClassStructureService::class)
+                    ->addStream($school, $year, $section, $label);
+                if ($result['created']) {
+                    $added[] = $label;
+                }
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $msg = (string) collect($e->errors())->flatten()->first();
+                $this->botSay($msg !== '' ? $msg : "Couldn't add stream **{$label}**.");
+
+                return;
+            }
+        }
+
+        $this->refreshToshiStructureSnapshot();
+        if ($added === []) {
+            $this->botSay("Those streams are already set up for **{$row['name']}**. Add another or type **done**.");
+        } else {
+            $this->botSay(
+                '✅ Added stream'.(count($added) === 1 ? '' : 's').' **'
+                .implode(', ', $added)."** under **{$row['name']}** (base class kept). "
+                .'Add more or type **done**.'
+            );
+        }
+    }
+
+    private function applyStructureCtInvite(string $className, string $detailsRaw): void
+    {
+        $this->refreshToshiStructureSnapshot();
+        $row = $this->findStructureClassRow($className);
+        if ($row === null) {
+            $this->botSay("I couldn't find a class named **{$className}**. Check the list and try again.");
+
+            return;
+        }
+
+        if (! empty($row['class_teacher_id'])) {
+            $this->botSay(
+                '**'.($row['name'] ?? '').'** already has a class teacher ('
+                .($row['class_teacher_name'] ?? 'assigned').'). Pick another class or type **done**.'
+            );
+
+            return;
+        }
+
+        $parts = array_values(array_filter(array_map('trim', explode(',', $detailsRaw)), fn ($p) => $p !== ''));
+        $email = null;
+        $name = null;
+        foreach ($parts as $part) {
+            if (filter_var($part, FILTER_VALIDATE_EMAIL)) {
+                $email = mb_strtolower($part);
+            } elseif ($name === null) {
+                $name = $part;
+            }
+        }
+
+        if ($email === null && isset($parts[0]) && filter_var($parts[0], FILTER_VALIDATE_EMAIL)) {
+            $email = mb_strtolower($parts[0]);
+        }
+
+        if ($email === null) {
+            $this->botSay('Include a valid email, e.g. `ct Primary One: Grace Namukasa, grace@school.ug`.');
+
+            return;
+        }
+
+        if ($name === null || mb_strlen($name) < 3) {
+            $local = explode('@', $email)[0] ?? 'Teacher';
+            $name = Str::title(str_replace(['.', '_', '-'], ' ', $local));
+            if (mb_strlen($name) < 3) {
+                $name = 'Class Teacher';
+            }
+        }
+
+        $link = StandardLink::query()
+            ->where('school_id', $this->schoolId)
+            ->whereKey((int) ($row['standard_link_id'] ?? 0))
+            ->first();
+
+        $inviter = auth()->user() ?? auth('web')->user();
+        if (! $link || ! $inviter) {
+            $this->botSay("Couldn't invite right now. Try again in a moment.");
+
+            return;
+        }
+
+        $result = \App\Services\ClassTeacherInviteService::invite($inviter, $link, [
+            'email' => $email,
+            'name' => $name,
+            'phone' => '',
+        ]);
+
+        $this->refreshToshiStructureSnapshot();
+        if (! ($result['success'] ?? false)) {
+            $this->botSay($result['message'] ?? 'Invite failed.');
+
+            return;
+        }
+
+        $this->botSay('✅ '.($result['message'] ?? "Class teacher invited for **{$row['name']}**. Add more or type **done**."));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function findStructureClassRow(string $className): ?array
+    {
+        $needle = strtolower(trim($className));
+        foreach ($this->structureClasses as $row) {
+            if (strtolower((string) ($row['name'] ?? '')) === $needle) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
     private function handleStandards(string $text)
+    {
+        if ($this->shouldUseStructureCheckpoint()) {
+            $this->handleStructureCheckpoint($text);
+
+            return;
+        }
+
+        $this->handleStandardsCreateFlow($text);
+    }
+
+    /**
+     * Create-mode class confirm + in-memory stream collection (persisted on commitAll
+     * via OnboardingEngine::saveStandards, which keeps the base section).
+     */
+    private function handleStandardsCreateFlow(string $text)
     {
         // substep -1: ask about nursery for primary schools
         if ($this->substep === -1) {
             $yes = in_array(strtolower(trim($text)), ['yes', 'y', 'correct', 'right', 'ok', 'true', 'yeah']);
             $this->hasNursery = $yes;
             $this->substep = 0;
-            $this->handleStandards('');
+            $this->handleStandardsCreateFlow('');
             return;
         }
 
@@ -4599,7 +4969,7 @@ class AgentToshi extends Component
             if ($yes) {
                 $this->streamClassIndex = 0;
                 $this->substep = 3;
-                $this->handleStandards('');
+                $this->handleStandardsCreateFlow('');
                 return;
             }
             // Detect nursery request in natural language
@@ -4607,7 +4977,7 @@ class AgentToshi extends Component
             if (($this->schoolType === 'primary' && !$this->hasNursery) && preg_match('/nursery|baby class|pre.?primary|kindergarten/', $lower)) {
                 $this->hasNursery = true;
                 $this->substep = 0;
-                $this->handleStandards('');
+                $this->handleStandardsCreateFlow('');
                 return;
             }
             $this->botSay("Please enter the class names separated by commas (e.g. Primary 1, Primary 2, Primary 3):");
@@ -4628,7 +4998,7 @@ class AgentToshi extends Component
             $this->botSay("Classes set to: **{$classList}**.");
             $this->streamClassIndex = 0;
             $this->substep = 3;
-            $this->handleStandards('');
+            $this->handleStandardsCreateFlow('');
             return;
         }
 
@@ -4659,7 +5029,7 @@ class AgentToshi extends Component
             $this->standards[$this->streamClassIndex]['streams'] = [];
             $this->streamClassIndex++;
             $this->substep = 3;
-            $this->handleStandards('');
+            $this->handleStandardsCreateFlow('');
             return;
         }
 
@@ -4676,7 +5046,7 @@ class AgentToshi extends Component
             }
             $this->streamClassIndex++;
             $this->substep = 3;
-            $this->handleStandards('');
+            $this->handleStandardsCreateFlow('');
             return;
         }
     }

@@ -77,8 +77,8 @@ class OnboardingStepsService
             'icon'  => '📆',
         ],
         'standards' => [
-            // Wizard: streams + class-teacher invites live on this step.
-            // Toshi: conversation only covers classes — use toshi_label in chat checklists.
+            // Wizard + Toshi (complete/seeded): optional streams + class-teacher invites.
+            // Toshi chat checklist uses toshi_label "Classes".
             'label' => 'Structure & Class Teachers',
             'toshi_label' => 'Classes',
             'icon'  => '📚',
