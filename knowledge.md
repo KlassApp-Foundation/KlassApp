@@ -559,6 +559,26 @@ Tonight, a real access-control gap was found, root-caused, and fixed with real e
 #### Go-to-market plan
 User wants a formal GTM plan scoped as its own future initiative, same discovery-then-build treatment as tonight's other major work. Not started.
 
+
+#### Toshi Readiness & Design Scope (added 2026-09-11)
+
+Two distinct Toshi capabilities exist, confirmed via real production data:
+1. **Guided/known-method flows** (structure setup, CT invite, onboarding commands) — a separate code path that does NOT touch the SDK or LLM API key at all. Fully functional today, no funding required.
+2. **Free-form open-ended chat** (ask anything, get an AI-generated answer) — gated behind TOSHI_SDK_V2_ENABLED, currently false in production. Blocked on a funded LLM API key (user has one ready, not yet provided — not urgent, this is a design phase, not an activation phase).
+
+Access map, confirmed via real production queries:
+- Web chat panel (floating "Toshi Agent" pill) mounts for usergroup_id in [1,3,4,5,11,8,10,6] — SiteAdmin, SchoolAdmin, Deputy, Teacher, Accountant, Librarian, Receptionist, Student.
+- Student has web Toshi access. Parent does NOT — Parent is WhatsApp-only, and the WhatsApp Toshi channel is also currently disabled (TOSHI_WHATSAPP_CHANNEL_ENABLED=false).
+- All 42 live schools have toshi_enabled=1 — no schools sitting disabled.
+- Separate /admin/toshi-activity page exists (activity log, not the chat panel).
+- School Admin has extra entry points: incomplete-setup banner, ?toshi_onboarding=1, admin dashboard trigger.
+
+Design scope decision: design should cover BOTH capabilities honestly — guided/known-methods as fully real and demo-ready now, free-form chat designed as its own clearly-scoped piece that activates once funded, not assumed live. Practical note for the Oct 10 n8n demo: if the free-form key stays unprovided by then, lean on the guided/known-methods surface for any live demo, avoid open-ended free-form chat on stage to prevent a silent-failure moment.
+
+Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from config (env-only now via OPENAI_COMPATIBLE_API_KEY) — coordinated with PR #488.
+
+**#488 vs #527 check (closed 2026-09-11):** #488 was **opened** 2026-09-09 but **not** merged until **2026-09-11T15:39:44Z** (`24f4be71`) — do not treat the open date as a merge. #527 then rebased onto that tip and merged **2026-09-11T15:42:20Z** (`56db335d`). Unique pieces from both are on `main` and production: #488 → dead `provision-klassapp.sh` deleted + `MissingToshiLlmApiKeyException`; #527 → staging 402 evidence, unit guard, enable-block notes. Live-verified after Cloud deploy `depl-a2b8b180-…` (see `docs/evidence/toshi-sdk-v2-enable/prod-verify-2026-09-11.txt`).
+
 #### Deferred until after the UI phase
 - Sweep for other instances of the "unscoped name-based lookup" bug pattern found tonight (fixed once in PR #517, may recur elsewhere).
 - WhatsApp OAuth to replace manual phone-entry parent linking.
