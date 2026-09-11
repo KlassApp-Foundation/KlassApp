@@ -16,8 +16,9 @@ use Throwable;
  * Parent-initiated report-card PDF for WhatsApp.
  *
  * Uses the same StudentReportCardService pipeline as admin/teacher downloads
- * (not the stripped whatsapp.report-card view). Files live on the private
- * local disk and are fetched by Meta via a short-lived signed URL.
+ * (not the stripped whatsapp.report-card view). Files live on the default
+ * filesystem disk (object storage on Laravel Cloud) and are fetched by Meta
+ * via a short-lived signed URL.
  */
 class WhatsAppReportCardDeliveryService
 {
@@ -30,6 +31,21 @@ class WhatsAppReportCardDeliveryService
     public const META_DOCUMENT_MAX_BYTES = 100 * 1024 * 1024;
 
     public function __construct(private StudentReportCardService $reports) {}
+
+    /**
+     * Disk used for temporary WhatsApp report PDFs (default filesystem).
+     */
+    public function reportDisk(): \Illuminate\Contracts\Filesystem\Filesystem
+    {
+        return Storage::disk(config('filesystems.default', 'local'));
+    }
+
+    private function usesLocalReportDisk(): bool
+    {
+        $name = (string) config('filesystems.default', 'local');
+
+        return (config("filesystems.disks.{$name}.driver") ?? 'local') === 'local';
+    }
 
     /**
      * @return array{ok: true, url: string, filename: string, caption: string, bytes: int}|array{ok: false, message: string, flow_type: string}
@@ -152,18 +168,23 @@ class WhatsAppReportCardDeliveryService
 
         $token = Str::random(40);
         $relative = self::STORAGE_DIR.'/'.$token.'.pdf';
-        $disk = Storage::disk('local');
-        if (! $disk->exists(self::STORAGE_DIR)) {
-            $disk->makeDirectory(self::STORAGE_DIR);
-        }
-        // Ensure FPM (appuser) can read files even if an earlier root/tinker
-        // process created the directory with restrictive ownership/mode.
-        $dirPath = $disk->path(self::STORAGE_DIR);
-        if (is_dir($dirPath)) {
-            @chmod($dirPath, 0775);
+        $disk = $this->reportDisk();
+        $isLocal = $this->usesLocalReportDisk();
+        if ($isLocal) {
+            if (! $disk->exists(self::STORAGE_DIR)) {
+                $disk->makeDirectory(self::STORAGE_DIR);
+            }
+            // Ensure FPM (appuser) can read files even if an earlier root/tinker
+            // process created the directory with restrictive ownership/mode.
+            $dirPath = $disk->path(self::STORAGE_DIR);
+            if (is_dir($dirPath)) {
+                @chmod($dirPath, 0775);
+            }
         }
         $disk->put($relative, $pdf);
-        @chmod($disk->path($relative), 0644);
+        if ($isLocal) {
+            @chmod($disk->path($relative), 0644);
+        }
 
         $name = $student->whatsappDisplayName('Student');
         $slug = Str::slug($name) ?: 'student';
@@ -183,7 +204,7 @@ class WhatsAppReportCardDeliveryService
 
     public function pruneOlderThanHours(int $hours = 2): int
     {
-        $disk = Storage::disk('local');
+        $disk = $this->reportDisk();
         if (! $disk->exists(self::STORAGE_DIR)) {
             return 0;
         }
@@ -211,11 +232,31 @@ class WhatsAppReportCardDeliveryService
         }
 
         $relative = self::STORAGE_DIR.'/'.$token.'.pdf';
-        if (! Storage::disk('local')->exists($relative)) {
+        $disk = $this->reportDisk();
+        if (! $disk->exists($relative)) {
             return null;
         }
 
-        return Storage::disk('local')->path($relative);
+        // Local disks expose a real path; object storage does not.
+        if ($this->usesLocalReportDisk()) {
+            return $disk->path($relative);
+        }
+
+        return null;
+    }
+
+    /**
+     * Relative path on the report disk for a valid token, or null.
+     */
+    public function relativePathForToken(string $token): ?string
+    {
+        if (! preg_match('/^[A-Za-z0-9]{40}$/', $token)) {
+            return null;
+        }
+
+        $relative = self::STORAGE_DIR.'/'.$token.'.pdf';
+
+        return $this->reportDisk()->exists($relative) ? $relative : null;
     }
 
     private function emptyCopy(User $student, string $body): string

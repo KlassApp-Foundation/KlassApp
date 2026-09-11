@@ -52,6 +52,7 @@ class ParentReportCardRequestTest extends TestCase
             'services.whatsapp.business_phone_number_id' => '1416403124879552',
             'services.whatsapp.business_api_version' => 'v21.0',
             'app.url' => 'http://localhost',
+            'filesystems.default' => 'local',
         ]);
 
         DB::table('usergroups')->upsert([

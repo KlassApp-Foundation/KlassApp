@@ -69,14 +69,14 @@ class Kernel extends ConsoleKernel
         $schedule->command('gego:checkbirthday')
                  ->daily()
                  ->withoutOverlapping();
-                 
+
          $schedule->command('gego:checkbirthdayreminder')
                  ->daily()
-                 ->withoutOverlapping();         
+                 ->withoutOverlapping();
 
         $schedule->command('gego:checkanniversary')
                  ->daily()
-                 ->withoutOverlapping(); 
+                 ->withoutOverlapping();
 
         $schedule->command('gego:checktask')
                  ->everyMinute()
@@ -119,7 +119,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('gego:checksendmail')
                  ->everyMinute()
                  ->withoutOverlapping();
-                 
+
         $schedule->command('gego:checkwebnotification')
                  ->everyMinute()
                  ->withoutOverlapping();
@@ -148,6 +148,15 @@ class Kernel extends ConsoleKernel
         $schedule->command('whatsapp:prune-report-files')
                  ->hourly()
                  ->withoutOverlapping();
+
+        // Heartbeat so Cloud scheduler can be verified without relying on LOG_LEVEL.
+        $schedule->call(function () {
+            \Illuminate\Support\Facades\Cache::put(
+                'scheduler_heartbeat_at',
+                now()->toIso8601String(),
+                now()->addMinutes(10)
+            );
+        })->everyMinute()->name('scheduler-heartbeat');
 
         // Live-LLM adversarial soft-refusal spot check (in-process; no PHPUnit).
         // Safe for --no-dev prod images. No-ops without TOSHI_ADVERSARIAL_LIVE=1 /
