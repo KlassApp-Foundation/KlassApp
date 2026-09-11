@@ -603,9 +603,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — landing/auth preview build on `feature/landing-auth-preview-build` (local, not pushed)
+## Current Status: September 12, 2026 — landing/auth preview build — [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) open (`feature/landing-auth-preview-build`, tip `2d9d5b5b`)
 
-- **Branch**: `feature/landing-auth-preview-build` off current `main` (`6333b0a5`). Preview routes only — live `/`, `/login`, `/register`, live `errors/*` untouched.
+- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `2d9d5b5b` off `main` (`6333b0a5`). Preview routes only — live `/`, `/login`, `/register`, live `errors/*` untouched.
 - **Port**: Source-only from `origin/feature/auth-pages-preview` (Blade/CSS/JS/routes/tests/e2e). No hand-ported `knowledge.md` conflict; Vite `public/build` regenerated fresh (`landing-preview-DJ3HvCyn.css`).
 - **Open Design**: `agentId: cursor-agent` + `model: auto` (Cursor agent inside OD — not opencode/deepseek; China opt-in blocked). Mocks:
   - `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3-pillars-community.html`
@@ -1749,7 +1749,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Fresh branch `feature/landing-auth-preview-build` off `main`. Ported auth-pages-preview source only (no stale `public/build` / no conflicted `knowledge.md`). Open Design via **cursor-agent/auto** for pillars+community and how-it-works enrich mocks; implemented into `landing-v2` + `landing-preview.css`. Auth/errors preview routes unchanged.
 - **Files modified**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/css/auth-preview.css`, `resources/js/landing-preview.js`, `resources/views/auth/preview/*`, `resources/views/errors-preview/*`, `resources/views/layouts/auth-preview.blade.php`, `routes/web.php`, `vite.config.js`, `tests/Feature/{LandingPreviewV3,AuthPreview,ErrorsPreview}Test.php`, `e2e/*`, `public/build/*` (regenerated), `knowledge.md`
 - **Key decisions**: OD agent = `cursor-agent` (adopts Cursor model); Secure pillar uses real PR #514/#516/#517 access-control talking points; stay on preview routes (no live cutover); design-system isolation (no `--d-*` / `.ds-*`).
-- **Status**: 🚧 Local on `feature/landing-auth-preview-build` — verified; not pushed / no PR yet.
+- **Status**: 📝 PR open — [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`, tip `2d9d5b5b`). Awaiting review. Not cut over to live routes.
 - **Edge cases flagged**: DeepSeek `opencode-go/deepseek-v4-flash` still China-opt-in blocked for OD; use cursor-agent. Live `/` still Tailwind CDN + inline (unchanged).
 
 ### 2026-09-11: Land monthly release strategy + staging product notes — **MERGED**
