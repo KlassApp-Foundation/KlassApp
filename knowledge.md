@@ -566,13 +566,18 @@ User wants a formal GTM plan scoped as its own future initiative, same discovery
 
 ---
 
-## Current Status: September 11, 2026 — #488 **MERGED NOW** (`24f4be71`); #527 rebased onto it
+## Current Status: September 11, 2026 — #488+#527 **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `56db335d`)
 
-- **#488 (API-confirmed merge)**: `merged:true` at **2026-09-11T15:39:44Z** — squash `24f4be711d929d15c0da10b241afc8380adfc323` on `origin/main`. **Not** merged on 2026-09-09 (that was only the PR open date; earlier records that said otherwise were wrong).
-- **#488 landed on main**: hardcoded LLM key gone; `MissingToshiLlmApiKeyException` present; `scripts/provision-klassapp.sh` **deleted**.
-- **#527**: rebased onto post-#488 main; dropped duplicate key-removal hunks; kept staging 402 evidence, unit guard, enable-block notes.
-- **Production deploy**: pending after #527 merges.
-- **Prior tip before #488**: `34f93d12`.
+- **#488 API**: `merged:true` at **2026-09-11T15:39:44Z** (squash `24f4be71`). **Not** merged on 2026-09-09 — that was only the PR **open** date; earlier “merged two days ago” claims were wrong.
+- **#527 API**: `merged:true` at **2026-09-11T15:42:20Z** (squash `56db335d`), rebased onto post-#488 main (duplicate key-removal hunks dropped; kept staging 402 evidence + unit guard + enable-block notes).
+- **Cloud prod deploy**: `depl-a2b8b180-6ea4-4339-8349-fecc68c972f0` **deployment.succeeded** @ tip `56db335d`.
+- **Live verify** (Commands API `comm-a2b8b268-…`, evidence `docs/evidence/toshi-sdk-v2-enable/prod-verify-2026-09-11.txt`):
+  - `scripts/provision-klassapp.sh` → **NO_GONE_OK**
+  - `config/ai.php` / `config/toshi.php` literal `sk-…` → **NO_OK**
+  - runtime AI key → **EMPTY** (no hardcoded fallback)
+  - `MissingToshiLlmApiKeyException` class → **OK**; clearing key then `ToshiLlm::model()` → **THREW_MissingToshiLlmApiKeyException_OK** with message requiring `OPENAI_COMPATIBLE_API_KEY`
+  - staging evidence + unit guard files present on deploy
+- **Prior tip**: `34f93d12` (#525).
 
 
 ## Previous: September 11, 2026 ([#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519)+[#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `85452439`) — Cloud object storage + scheduler + Uganda admission copy
@@ -1691,6 +1696,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: #488+#527 overlap resolved — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Merged #488 then #527 with API `merged:true` confirmations; rebased #527 onto post-#488 main; production Cloud deploy tip `56db335d`; live Commands verify script gone, no hardcoded sk, fail-loud exception throws.
+- **API evidence**: #488 `merged_at=2026-09-11T15:39:44Z` squash `24f4be71`; #527 `merged_at=2026-09-11T15:42:20Z` squash `56db335d`. Deploy `depl-a2b8b180-…` **succeeded**.
+- **Live evidence**: `docs/evidence/toshi-sdk-v2-enable/prod-verify-2026-09-11.txt` — `provision_script_exists=NO_GONE_OK`, `*_has_sk_literal=NO_OK`, `fail_loud=THREW_MissingToshiLlmApiKeyException_OK`.
+- **Correction**: #488 was **not** merged on 2026-09-09; real merge is 2026-09-11T15:39:44Z.
+- **Files modified**: landed via #488+#527; this stamp + prod evidence file.
+- **PR / merge**: [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) + [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527)
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
 
 ### 2026-09-11: Merge #488 for real + rebase #527 — **IN PROGRESS → ship**
 - **Work done**: Merged [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) via `gh pr merge --admin --squash`. API confirm: `merged:true`, `merged_at=2026-09-11T15:39:44Z`, squash on main `24f4be71`. Verified on `origin/main`: key env-only, `MissingToshiLlmApiKeyException` present, `scripts/provision-klassapp.sh` gone. Rebased [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527) onto that tip; kept #488 config, retained #527 evidence/unit/notes; deduped `.env.example` OPENAI_COMPATIBLE keys.
