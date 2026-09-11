@@ -432,7 +432,17 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 11, 2026 ([#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e4402052`) — Admission caste Community strip
+## Current Status: September 11, 2026 ([#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d60abafc`) — Teacher student-detail Gate::member parity
+
+- **✅ Cross-tenant floor** on Teacher `StudentDetailsController` JSON endpoints that previously had **no** gate (weaker than `show()`): details, relations, siblings, discipline, attendance, library, showmark/showallmark/comparemark, medicalHistory, documents. Same `Gate::member` (`school_id`) via `authorizeMemberStudent()`.
+- **Not** class-scoped CT tightening — separate product follow-up.
+- **Merge**: [#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) squash `d60abafcd49678ab022c11deb3a5a55bb4d1d0fa` @ **2026-09-11T01:23:43Z**.
+- **Cloud**: `depl-a2b77e77-e9bb-4b1b-b3ae-d6e879254103` **deployment.succeeded** @ **2026-09-11T01:25:33Z** (commit `d60abafc`).
+- **Live**: `comm-a2b77f2c-…` source grep shows `authorizeMemberStudent` call sites; `comm-a2b77f7a-…` internal HTTP teacher **22** (school **17**) → `/teacher/student/show/details/alice nakato293` student **29** (school **18**) → **403** (`ok:true`).
+- **Tests**: `TeacherStudentDetailsMemberGateTest` (2 passed locally).
+- **Prior**: [#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) tip `e4402052` (+ docs [#513](https://github.com/KlassApp-Foundation/KlassApp/pull/513) `74290460`) — see Previous.
+
+## Previous: September 11, 2026 ([#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e4402052`) — Admission caste Community strip
 
 - **✅ Public Admission student-detail** no longer collects Indian caste-category **Community** (UI + `AdmissionStudentRequest`); DB `admissions.community` kept.
 - **Also cleaned** dead admission fieldset blades (height/weight/religion/community/mother tongue/aadhaar/blood group) deferred since #469.
@@ -1519,6 +1529,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: Teacher student-detail Gate::member parity — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Added `authorizeMemberStudent()` (`Gate::member` / same `school_id`) to previously ungated Teacher `StudentDetailsController` JSON endpoints so they match `show()`’s cross-tenant floor.
+- **Files modified**: `app/Http/Controllers/Teacher/StudentDetailsController.php`, `tests/Feature/Teacher/TeacherStudentDetailsMemberGateTest.php`
+- **Key decisions**: Minimal parity only — not class-scoped CT access; class scope remains product follow-up.
+- **PR / merge**: [#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) squash `d60abafc` @ 2026-09-11T01:23:43Z
+- **Deploy**: `depl-a2b77e77-…` **deployment.succeeded** @ 2026-09-11T01:25:33Z
+- **Live**: teacher 22/school 17 denied details for student 29/school 18 → HTTP **403** (`comm-a2b77f7a-…`)
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: Same-school teacher profile access remains school-wide (pre-existing); `showmark`/`showAllMark` still reference missing `Student` class after gate (pre-existing breakage).
 
 ### 2026-09-11: Admission caste Community strip — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: UI-only strip of Admission **Community** (caste) from live Vue + `AdmissionStudentRequest`; cleaned deferred Track A leftovers on dead admission blades; pointed `layouts/admission` at Vite so Mix `public/js/app.js` no longer served the stale field.
