@@ -566,15 +566,15 @@ User wants a formal GTM plan scoped as its own future initiative, same discovery
 
 ---
 
-## Current Status: September 11, 2026 ([#524](https://github.com/KlassApp-Foundation/KlassApp/pull/524) **MERGED**; tip `69024c35`) — Cloud staging live; Preview Environments dashboard-gated
+## Current Status: September 11, 2026 — TOSHI_SDK_V2 enable **BLOCKED** (DeepSeek 402); staging flag on, prod untouched
 
-- **✅ Persistent staging** `env-a2b86c90-…` → https://klassapp-staging-7mpoqg.laravel.cloud — schema `klassapp-staging`, demo-seeded (`phase4.admin@klassapp.xyz` / `demo123`). Isolation: staging schools=1 vs prod=42.
-- **⚠️ Preview Environments**: still **not** auto-provisioning. While [#524](https://github.com/KlassApp-Foundation/KlassApp/pull/524) was open (~2.5+ min): still only 2 envs (`created_from_automation=false`); **zero** Cloud preview comments on the PR. Dashboard one-time automation required (steps in knowledge Staging & Preview section).
-- **Docs**: [#524](https://github.com/KlassApp-Foundation/KlassApp/pull/524) squash `69024c35624a481912b5b5775af6002f579d26be`.
+- **Why the flag was historically OFF**: deliberate **controlled rollout** after SDK became deployable — knowledge: "test school first, not global"; `config/toshi.php` default `false` + "Internal accounts only until parity is verified." Earlier PHP 8.4/`laravel/ai` deployability gap is **resolved**. No separate lasting functional bug required permanent disable.
+- **Staging**: `TOSHI_SDK_V2_ENABLED=true` set on `env-a2b86c90-…`; deploy `depl-a2b87faa-…` **succeeded**. Demo school `toshi_enabled` forced on for gate test.
+- **Verification FAILED**: Admin+Teacher `isAvailable=true` but `ask()` → null; direct agent → `InsufficientCreditsException` / DeepSeek **HTTP 402 Insufficient Balance** (committed default key). Evidence: `docs/evidence/toshi-sdk-v2-enable/staging-2026-09-11.txt`.
+- **Production**: flag **still false** — not enabled. Same dead default key; do not flip until funded `OPENAI_COMPATIBLE_API_KEY` is on Cloud.
+- **Code**: remove hardcoded LLM API key from `config/ai.php` / `config/toshi.php` (env-only). Guided onboarding remains outside `handleAssistantQuery` SDK gate.
+- **Unblock**: set funded `OPENAI_COMPATIBLE_API_KEY` on staging → redeploy → re-run Admin/Teacher free-form transcripts → then production.
 
-- **✅ Persistent staging** on Laravel Cloud: `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016` → `https://klassapp-staging-7mpoqg.laravel.cloud` (separate schema `klassapp-staging`, demo-seeded, not a prod clone). Deploy `depl-a2b86d10-…` **succeeded**. Isolation verified (staging schools=1 / prod schools=42).
-- **⚠️ Preview Environments**: feature **not yet enabled** in Cloud dashboard (API/CLI cannot create automations). Dashboard one-time setup steps documented in knowledge **Staging & Preview Environments**. Negative check: no historical PR Cloud preview comments; no `created_from_automation` envs.
-- **Prior tip**: `85452439` / docs `cee46482` / AGENTS rule `b49d0c61` / Future Initiatives `1772aba4`.
 
 ## Previous: September 11, 2026 ([#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519)+[#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `85452439`) — Cloud object storage + scheduler + Uganda admission copy
 
@@ -1692,6 +1692,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: TOSHI_SDK_V2_ENABLED enable attempt — **BLOCKED (DeepSeek 402)**
+- **Work done**: Investigated why flag was off (staged rollout, not a known app bug). Enabled `TOSHI_SDK_V2_ENABLED=true` on **staging** + redeployed; ran Admin/Teacher free-form `ToshiSdkV2Service::ask` + direct agent prompts. LLM path fails with DeepSeek HTTP 402 Insufficient Balance. Production flag left **false**. Removed hardcoded API key from config (env-only). Logged evidence under `docs/evidence/toshi-sdk-v2-enable/`.
+- **Files modified**: `config/ai.php`, `config/toshi.php`, `.env.example`, `knowledge.md`, `docs/evidence/toshi-sdk-v2-enable/staging-2026-09-11.txt`
+- **Key decisions**: Do not flip production until staging shows real LLM transcripts with a funded `OPENAI_COMPATIBLE_API_KEY`. Guided onboarding is not gated by SDK flag (assistant-mode only).
+- **PR / merge**: opening
+- **Status**: ⏸️ Blocked on funded LLM API key
+- **Edge cases flagged**: Staging demo school had `toshi_enabled=0` after seed — forced on for gate test; Cloud env had no OPENAI_* vars (relied on committed default).
 
 ### 2026-09-11: Cloud object storage + scheduler heartbeat — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Provisioned Cloud R2 bucket `klassapp-prod` + env `FILESYSTEM_DISK=s3`/AWS_*; updated `config/filesystems.php` (no S3 ACL visibility); WhatsApp report PDFs on default disk with stream serve; every-minute `scheduler-heartbeat` Cache key for autonomous scheduler proof.
