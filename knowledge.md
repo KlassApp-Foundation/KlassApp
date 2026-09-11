@@ -1697,8 +1697,8 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Investigated why flag was off (staged rollout, not a known app bug). Enabled `TOSHI_SDK_V2_ENABLED=true` on **staging** + redeployed; ran Admin/Teacher free-form `ToshiSdkV2Service::ask` + direct agent prompts. LLM path fails with DeepSeek HTTP 402 Insufficient Balance. Production flag left **false**. Removed hardcoded API key from config (env-only). Logged evidence under `docs/evidence/toshi-sdk-v2-enable/`.
 - **Files modified**: `config/ai.php`, `config/toshi.php`, `.env.example`, `knowledge.md`, `docs/evidence/toshi-sdk-v2-enable/staging-2026-09-11.txt`
 - **Key decisions**: Do not flip production until staging shows real LLM transcripts with a funded `OPENAI_COMPATIBLE_API_KEY`. Guided onboarding is not gated by SDK flag (assistant-mode only).
-- **PR / merge**: opening
-- **Status**: ⏸️ Blocked on funded LLM API key
+- **PR / merge**: [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527) branch `ops/toshi-sdk-v2-enable-staging`
+- **Status**: ⏸️ Blocked on funded LLM API key (PR open)
 - **Edge cases flagged**: Staging demo school had `toshi_enabled=0` after seed — forced on for gate test; Cloud env had no OPENAI_* vars (relied on committed default).
 
 ### 2026-09-11: Cloud object storage + scheduler heartbeat — **MERGED+DEPLOYED+LIVE-VERIFIED**
