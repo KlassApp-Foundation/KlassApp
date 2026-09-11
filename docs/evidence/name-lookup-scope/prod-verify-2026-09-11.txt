@@ -1,0 +1,12 @@
+deployment=depl-a2b8b963-2b17-4c79-9f5c-f635f178b469
+commit=075e25c5ec613ef40bcbc04dc719fe2529f411ae
+command=comm-a2b8ba96-d6e9-4d07-b0e4-4b2383138c89
+status=command.success
+
+user_exactNameInSchool=OK
+user_findByExactNameInSchool=OK
+teacher_authorizeRosterStudent=OK
+teacher_bare_User_where_name=GONE_OK
+admin_findSchoolStudentByName=OK
+admin_bare_User_where_name=GONE_OK
+
