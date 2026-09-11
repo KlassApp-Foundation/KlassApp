@@ -432,14 +432,26 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 
 ---
 
-## Current Status: September 11, 2026 ([#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d60abafc`) — Teacher student-detail Gate::member parity
+## Current Status: September 11, 2026 ([#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516)+[#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `98a7dd47`) — Teacher student-profile roster scope
+
+- **✅ Roster gate** replaces school-only `Gate::member` on Teacher `StudentDetailsController` (show + JSON tabs including medical/discipline/docs/marks). Boundary = `RosterScopeService::actorCanAccessStudent()` (stream/section CT **or** current-year Teacherlink). Hard **403** otherwise — no partial profile.
+- **✅ #517** school-scopes name lookup (`name` + `school_id` + `usergroup_id=6`) — bare `users.name` is not globally unique; live CT was false-403'd when unscoped `first()` returned a cross-school twin.
+- **Merges**: [#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516) squash `6179e34f92087c722cda0d1757098cf9114cdd05` @ 2026-09-11T08:51:52Z; [#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) squash `98a7dd47b8235331506729eeff21192f9ff7cf96`.
+- **Cloud**: `depl-a2b81ee3-…` (#516) + `depl-a2b82c50-a336-45a6-a75b-8bf8e17c7c42` (#517) **deployment.succeeded** @ **2026-09-11T09:31:44Z** (commit `98a7dd47`).
+- **Live** (`comm-a2b82d22-…` **command.success**):
+  - Subject teacher **49** + Teacherlink student **50** (`diana namukasa504`) → medical/details/docs/show **200**.
+  - CT **160** (`Jane Nabirye`) + `Grace Auma` (school **43**) → medical/details/docs/show/discipline **200** (unscoped name still hits id **112** other school; school-scoped lookup succeeds).
+  - Same-school unrelated teacher **152** → student **167** (`SARAH NAMUKASA`) → **403** on show/details/medical/discipline/attendance/library/docs/relations/siblings.
+  - Class-browse `standardLink/show/students/114` **200** (list OK); teacher `students.vue` deep profile links admin-only; visitorlog list **200**.
+- **Tests**: `TeacherStudentDetailsRosterScopeTest` + updated `TeacherStudentDetailsMemberGateTest` (9 passed locally).
+- **Prior**: [#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) tip `d60abafc` — school-only Gate::member floor (superseded by roster scope).
+
+## Previous: September 11, 2026 ([#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d60abafc`) — Teacher student-detail Gate::member parity
 
 - **✅ Cross-tenant floor** on Teacher `StudentDetailsController` JSON endpoints that previously had **no** gate (weaker than `show()`): details, relations, siblings, discipline, attendance, library, showmark/showallmark/comparemark, medicalHistory, documents. Same `Gate::member` (`school_id`) via `authorizeMemberStudent()`.
-- **Not** class-scoped CT tightening — separate product follow-up.
+- **Superseded** by roster scope [#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516)+[#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517).
 - **Merge**: [#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) squash `d60abafcd49678ab022c11deb3a5a55bb4d1d0fa` @ **2026-09-11T01:23:43Z**.
 - **Cloud**: `depl-a2b77e77-e9bb-4b1b-b3ae-d6e879254103` **deployment.succeeded** @ **2026-09-11T01:25:33Z** (commit `d60abafc`).
-- **Live**: `comm-a2b77f2c-…` source grep shows `authorizeMemberStudent` call sites; `comm-a2b77f7a-…` internal HTTP teacher **22** (school **17**) → `/teacher/student/show/details/alice nakato293` student **29** (school **18**) → **403** (`ok:true`).
-- **Tests**: `TeacherStudentDetailsMemberGateTest` (2 passed locally).
 - **Prior**: [#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) tip `e4402052` (+ docs [#513](https://github.com/KlassApp-Foundation/KlassApp/pull/513) `74290460`) — see Previous.
 
 ## Previous: September 11, 2026 ([#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e4402052`) — Admission caste Community strip
@@ -1529,6 +1541,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-11: Teacher student-profile roster scope — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Replaced Teacher `StudentDetailsController` `Gate::member` with `RosterScopeService::actorCanAccessStudent()` (CT or current-year Teacherlink → full profile incl. medical; else hard 403). Stripped teacher deep links from StandardsLink class-browse `students.vue`. Follow-up #517 school-scopes name lookup after live CT false-403 from cross-school duplicate `users.name`.
+- **Files modified**: `app/Services/RosterScopeService.php`, `app/Http/Controllers/Teacher/StudentDetailsController.php`, `resources/assets/js/components/academic/class/students.vue`, `tests/Feature/Teacher/TeacherStudentDetailsRosterScopeTest.php`, `tests/Feature/Teacher/TeacherStudentDetailsMemberGateTest.php`, `knowledge.md`
+- **Key decisions**: Reuse roster visibility (no new role model); admin remains only cross-class PII path; visitor log picker kept (no profile deep links found); medical/discipline same boundary as general profile.
+- **PR / merge**: [#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516) `6179e34f`; [#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) `98a7dd47`
+- **Cloud**: `depl-a2b82c50-…` **deployment.succeeded** @ 2026-09-11T09:31:44Z tip `98a7dd47`
+- **Live**: subject allow + CT allow (post-#517) + same-school deny 403 matrix + class-browse/visitorlog browse OK (`comm-a2b82d22-…`)
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: Same-school duplicate `users.name` still ambiguous (first match within school); no principal/substitute/delegation exceptions (out of scope).
 
 ### 2026-09-11: Teacher student-detail Gate::member parity — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **Work done**: Added `authorizeMemberStudent()` (`Gate::member` / same `school_id`) to previously ungated Teacher `StudentDetailsController` JSON endpoints so they match `show()`’s cross-tenant floor.
