@@ -810,7 +810,7 @@
                             class="tw-form-label whitespace-nowrap"
                             >Board Registration Number<span
                                 class="text-red-500 whitespace-nowrap"
-                                >*Only For Class X , XI , XII</span
+                                >*Only for UNEB candidate classes (e.g. S.4, S.6)</span
                             ></label
                         >
                     </div>
