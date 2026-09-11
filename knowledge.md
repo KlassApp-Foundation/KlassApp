@@ -1745,18 +1745,16 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-<<<<<<< HEAD
-### 2026-09-11: Land bounced-CT-invite Future Initiative note — **MERGING via #487**
-- **Work done**: Rebased wanted content from [#487](https://github.com/KlassApp-Foundation/KlassApp/pull/487) onto current main (dropped stale Current Status stamps from the old branch tip). Adds Future Initiative note that bounced invite email still assigns `class_teacher_id`.
-- **Files modified**: `knowledge.md`
-- **PR / merge**: [#487](https://github.com/KlassApp-Foundation/KlassApp/pull/487)
-=======
-### 2026-09-11: Land monthly release strategy + staging product notes — **MERGING via #526**
+### 2026-09-11: Land monthly release strategy + staging product notes — **MERGED**
 - **Work done**: Rebased wanted content from [#526](https://github.com/KlassApp-Foundation/KlassApp/pull/526) onto current main (dropped stale Current Status / Toshi-readiness stamps that conflicted with later #528–#532). Adds Monthly Release Strategy + compact Staging Environment product notes.
 - **Files modified**: `knowledge.md`
-- **PR / merge**: [#526](https://github.com/KlassApp-Foundation/KlassApp/pull/526)
->>>>>>> 9d6854ff (docs(knowledge): monthly release strategy + staging product notes)
-- **Status**: 🚧 merging
+- **PR / merge**: [#526](https://github.com/KlassApp-Foundation/KlassApp/pull/526) squash `cf41530b`
+
+### 2026-09-11: Land bounced-CT-invite Future Initiative note — **MERGED**
+- **Work done**: Rebased wanted content from [#487](https://github.com/KlassApp-Foundation/KlassApp/pull/487) onto current main (dropped stale Current Status stamps from the old branch tip). Adds Future Initiative note that bounced invite email still assigns `class_teacher_id`.
+- **Files modified**: `knowledge.md`
+- **PR / merge**: [#487](https://github.com/KlassApp-Foundation/KlassApp/pull/487) squash `02851568`
+- **Status**: ✅ MERGED (`merged:true` @ 2026-09-11T16:49:47Z)
 
 ### 2026-09-11: Sweep unscoped User name lookups (#517 pattern) — **MERGED+DEPLOYED+LIVE-VERIFIED**
 - **PR / merge**: [#530](https://github.com/KlassApp-Foundation/KlassApp/pull/530) squash `075e25c5` @ 2026-09-11T16:03:34Z · branch `fix/user-name-lookup-school-scope`
