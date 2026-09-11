@@ -1,0 +1,173 @@
+{
+  "base": "http://127.0.0.1:8000",
+  "at": "2026-09-11T23:53:33.759Z",
+  "viewports": {
+    "desktop": {
+      "status": 200,
+      "consoleErrors": [],
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "connectors",
+          "present": true
+        },
+        {
+          "id": "toshi",
+          "present": true
+        },
+        {
+          "id": "how-it-works",
+          "present": true
+        },
+        {
+          "id": "trust",
+          "present": true
+        },
+        {
+          "id": "community",
+          "present": true
+        },
+        {
+          "id": "protocol",
+          "present": true
+        },
+        {
+          "id": "open-source",
+          "present": true
+        }
+      ],
+      "productUi": {
+        "uiChrome": 3,
+        "waBubble": 3,
+        "teachShell": 1,
+        "adminStack": 1,
+        "pillars": 4,
+        "owasp": true
+      },
+      "isolation": {
+        "dsElements": 0,
+        "dVarInInline": false,
+        "dVarInLandingCss": false,
+        "htmlHasDsKpi": false
+      },
+      "screenshot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-preview-build/desktop-full.png"
+    },
+    "tablet": {
+      "status": 200,
+      "consoleErrors": [],
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "connectors",
+          "present": true
+        },
+        {
+          "id": "toshi",
+          "present": true
+        },
+        {
+          "id": "how-it-works",
+          "present": true
+        },
+        {
+          "id": "trust",
+          "present": true
+        },
+        {
+          "id": "community",
+          "present": true
+        },
+        {
+          "id": "protocol",
+          "present": true
+        },
+        {
+          "id": "open-source",
+          "present": true
+        }
+      ],
+      "productUi": {
+        "uiChrome": 3,
+        "waBubble": 3,
+        "teachShell": 1,
+        "adminStack": 1,
+        "pillars": 4,
+        "owasp": true
+      },
+      "isolation": {
+        "dsElements": 0,
+        "dVarInInline": false,
+        "dVarInLandingCss": false,
+        "htmlHasDsKpi": false
+      },
+      "screenshot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-preview-build/tablet-full.png"
+    },
+    "mobile": {
+      "status": 200,
+      "consoleErrors": [],
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "connectors",
+          "present": true
+        },
+        {
+          "id": "toshi",
+          "present": true
+        },
+        {
+          "id": "how-it-works",
+          "present": true
+        },
+        {
+          "id": "trust",
+          "present": true
+        },
+        {
+          "id": "community",
+          "present": true
+        },
+        {
+          "id": "protocol",
+          "present": true
+        },
+        {
+          "id": "open-source",
+          "present": true
+        }
+      ],
+      "productUi": {
+        "uiChrome": 3,
+        "waBubble": 3,
+        "teachShell": 1,
+        "adminStack": 1,
+        "pillars": 4,
+        "owasp": true
+      },
+      "isolation": {
+        "dsElements": 0,
+        "dVarInInline": false,
+        "dVarInLandingCss": false,
+        "htmlHasDsKpi": false
+      },
+      "screenshot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-preview-build/mobile-full.png"
+    }
+  },
+  "isolation": {},
+  "ok": true,
+  "/preview/login": {
+    "status": 200
+  },
+  "/preview/errors/404": {
+    "status": 200
+  }
+}

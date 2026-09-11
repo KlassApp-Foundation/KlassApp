@@ -603,16 +603,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 11, 2026 — [#530](https://github.com/KlassApp-Foundation/KlassApp/pull/530) **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `075e25c5`)
+## Current Status: September 12, 2026 — landing/auth preview build on `feature/landing-auth-preview-build` (local, not pushed)
 
-- **Bug pattern** (extends [#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) / AGENTS.md rule 18): identity lookups via bare `users.name` (or other non-unique display fields) can resolve the wrong tenant row when names collide across schools.
-- **Fix**: `User::exactNameInSchool` / `User::findByExactNameInSchool`; Teacher `StudentDetailsController` reuses the authorized user (no second unscoped `where('name')`); Admin student/teacher/staff/document/bank/attendance/dashboard/discipline surfaces + parent-link traits + related FormRequests school-scoped; API user search scoped when auth present.
-- **Merge**: squash `075e25c5` @ **2026-09-11T16:03:34Z**.
-- **Cloud**: `depl-a2b8b963-2b17-4c79-9f5c-f635f178b469` **deployment.succeeded** @ commit `075e25c5`.
-- **Live verify** (Commands `comm-a2b8ba96-…`, evidence `docs/evidence/name-lookup-scope/prod-verify-2026-09-11.txt`): helpers **OK**; Teacher/Admin bare `User::where('name'` **GONE_OK**.
-- **Tests**: `StudentDetailsNameScopeTest` + Teacher roster collision (9 passed locally).
-- **Prior tip**: `56db335d` (#488+#527).
-
+- **Branch**: `feature/landing-auth-preview-build` off current `main` (`6333b0a5`). Preview routes only — live `/`, `/login`, `/register`, live `errors/*` untouched.
+- **Port**: Source-only from `origin/feature/auth-pages-preview` (Blade/CSS/JS/routes/tests/e2e). No hand-ported `knowledge.md` conflict; Vite `public/build` regenerated fresh (`landing-preview-DJ3HvCyn.css`).
+- **Open Design**: `agentId: cursor-agent` + `model: auto` (Cursor agent inside OD — not opencode/deepseek; China opt-in blocked). Mocks:
+  - `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3-pillars-community.html`
+  - `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3-how-it-works-enrich.html`
+- **Landing direction built**: locked hero/core narrative retained; new `#trust` (Secure/Scalable/Private/Interoperable, Nimbalyst density, real OWASP access-control talking points from Future Initiatives); new `#community` (Q1 2027 OSS path); `#how-it-works` enriched with product UI mockups (WhatsApp / teacher dash / admin stack + subtle perspective).
+- **Verify**: Feature tests 15 passed (139 assertions). Playwright `e2e/landing-preview-build-verify.cjs` — desktop/tablet/mobile, zero console errors, 4 pillars, OWASP copy present, `ds-*` / `--d-*` isolation clean; `/preview/login` + `/preview/errors/404` 200. Artifacts `e2e/screenshots/landing-preview-build/`.
+- **Still prior**: [#530](https://github.com/KlassApp-Foundation/KlassApp/pull/530) **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `075e25c5`) — name-lookup tenant scope.
 
 ## Previous: September 11, 2026 — #488+#527 **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `56db335d`)
 
@@ -1744,6 +1744,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-12: Landing + auth preview build (OD cursor-agent) — **LOCAL BRANCH**
+- **Work done**: Fresh branch `feature/landing-auth-preview-build` off `main`. Ported auth-pages-preview source only (no stale `public/build` / no conflicted `knowledge.md`). Open Design via **cursor-agent/auto** for pillars+community and how-it-works enrich mocks; implemented into `landing-v2` + `landing-preview.css`. Auth/errors preview routes unchanged.
+- **Files modified**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/css/auth-preview.css`, `resources/js/landing-preview.js`, `resources/views/auth/preview/*`, `resources/views/errors-preview/*`, `resources/views/layouts/auth-preview.blade.php`, `routes/web.php`, `vite.config.js`, `tests/Feature/{LandingPreviewV3,AuthPreview,ErrorsPreview}Test.php`, `e2e/*`, `public/build/*` (regenerated), `knowledge.md`
+- **Key decisions**: OD agent = `cursor-agent` (adopts Cursor model); Secure pillar uses real PR #514/#516/#517 access-control talking points; stay on preview routes (no live cutover); design-system isolation (no `--d-*` / `.ds-*`).
+- **Status**: 🚧 Local on `feature/landing-auth-preview-build` — verified; not pushed / no PR yet.
+- **Edge cases flagged**: DeepSeek `opencode-go/deepseek-v4-flash` still China-opt-in blocked for OD; use cursor-agent. Live `/` still Tailwind CDN + inline (unchanged).
 
 ### 2026-09-11: Land monthly release strategy + staging product notes — **MERGED**
 - **Work done**: Rebased wanted content from [#526](https://github.com/KlassApp-Foundation/KlassApp/pull/526) onto current main (dropped stale Current Status / Toshi-readiness stamps that conflicted with later #528–#532). Adds Monthly Release Strategy + compact Staging Environment product notes.
@@ -9928,3 +9935,10 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Key prefix to rotate/check**: `sk-2ccccb77` (was baked as default for openai-compatible / DeepSeek-style provider — verify in provider dashboard whether still live).
 - **Files modified**: deleted `scripts/provision-klassapp.sh`; `config/ai.php`, `config/toshi.php`, `app/AiAgents/ToshiLlm.php`, `app/Exceptions/MissingToshiLlmApiKeyException.php`, `tests/Feature/Toshi/ToshiLlmConfigConsistencyTest.php`, `.env.example`, `knowledge.md`.
 - **Status**: ✅ Security PR open — [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) (`security/remove-embedded-secrets`).
+
+### 2026-09-12: Landing v3 how-it-works enrich mock
+- **Work done**: Standalone HTML mock enriching #how-it-works with CrewAI-style product UI previews (Parent WhatsApp, Teacher attendance dash, Admin isometric digest) above existing role steps; copy preserved; locked v3 untouched.
+- **Files modified**: open-design project `klassapp-landing-v3-how-it-works-enrich.html` (design artifact only)
+- **Key decisions**: Per-column UI chrome over grid; subtle 3D only on admin floating card stack; brand tokens only (no --d-*/.ds-*); omit hairline column bridge so it does not cut through previews.
+- **Status**: ✅ Done (section mock — not merged into locked v3)
+- **Edge cases flagged**: Re-add bridge below previews if merge needs the original connector motif.
