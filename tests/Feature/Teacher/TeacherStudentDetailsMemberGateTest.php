@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Cross-tenant floor for Teacher\StudentDetailsController JSON endpoints.
- * Same Gate::member (school_id) parity as show() — not class-scoped tightening.
+ * Cross-tenant + same-school-without-roster denials for Teacher\StudentDetailsController.
+ * Full roster allow/deny matrix lives in TeacherStudentDetailsRosterScopeTest.
  */
 class TeacherStudentDetailsMemberGateTest extends TestCase
 {
@@ -127,17 +127,12 @@ class TeacherStudentDetailsMemberGateTest extends TestCase
         }
     }
 
-    public function test_same_school_teacher_passes_member_gate_on_documents(): void
+    public function test_same_school_teacher_without_roster_relationship_is_denied(): void
     {
-        // documents endpoint returns an empty collection without S3 avatar URL work
+        // School membership alone is no longer enough — no CT / Teacherlink → 403.
         $response = $this->actingAs($this->teacherSchoolA)
             ->get('/teacher/document/get/'.$this->studentSchoolA->name);
 
-        $this->assertNotSame(
-            403,
-            $response->getStatusCode(),
-            'Same-school teacher must pass Gate::member (got '.$response->getStatusCode().')'
-        );
-        $response->assertOk();
+        $this->assertSame(403, $response->getStatusCode());
     }
 }
