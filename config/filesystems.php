@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DRIVER', 'local'),
+    'default' => env('FILESYSTEM_DISK', env('FILESYSTEM_DRIVER', 'local')),
 
     /*
     |--------------------------------------------------------------------------
@@ -57,12 +57,18 @@ return [
 
         's3' => [
             'driver' => 's3',
-            'key' => env('AWS_KEY'),
-            'secret' => env('AWS_SECRET'),
-            'region' => env('AWS_REGION'),
+            // Laravel Cloud injects AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY;
+            // keep AWS_KEY / AWS_SECRET as legacy fallbacks.
+            'key' => env('AWS_ACCESS_KEY_ID', env('AWS_KEY')),
+            'secret' => env('AWS_SECRET_ACCESS_KEY', env('AWS_SECRET')),
+            'region' => env('AWS_DEFAULT_REGION', env('AWS_REGION', 'auto')),
             'bucket' => env('AWS_BUCKET'),
             'endpoint' => env('AWS_ENDPOINT'),
-            'visibility' => 'public',
+            'use_path_style_endpoint' => filter_var(
+                env('AWS_USE_PATH_STYLE_ENDPOINT', true),
+                FILTER_VALIDATE_BOOLEAN
+            ),
+            // Cloudflare R2 rejects per-object ACL/visibility headers.
         ],
 
         'uploads' => [
