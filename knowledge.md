@@ -603,12 +603,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Auth brand-header balance on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
+## Current Status: September 12, 2026 — Landing/auth/error LIVE CUTOVER shipped ([PR #536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
+
+- **Merged**: [#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536) merge `638d359b` (includes prior [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) `749940c5` + [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) designs).
+- **What went live**: `/` → landing-v2 (Protocol Cores, HITL, prod footer, vintage hero v2); `/login` `/register` password-reset pages → vintage Pass-2 auth shells; live `errors/{404,419,500}` → Pass-2 vintage shells. `/landing-preview` → 301 `/`.
+- **Staging deploy**: `depl-a2bad172-875e-44eb-950d-8c67762424f8` @ `638d359b` — **succeeded**; functional verify OK (login, register, full password reset, 404).
+- **Production deploy**: `depl-a2bad357-d8a4-4e02-8838-d111e6cc3da2` @ `638d359b` — **succeeded**; functional verify OK with synthetic probe users only (then flagged `inactive`).
+- **Rollback point (pre-cutover prod)**: `depl-a2b8b963-2b17-4c79-9f5c-f635f178b469` @ commit `075e25c5` — redeploy that Cloud deployment / commit if needed.
+- **Not fully verified**: end-to-end Google OAuth *callback* — `/auth/google` redirects to Google on staging+prod, but `redirect_uri` is still `http://localhost:8000/auth/google/callback` (pre-existing Cloud env misconfig; cutover did not change OAuth controllers). Interactive Google consent was not completed in this session.
+
+## Previous: September 12, 2026 — Auth brand-header balance on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
 
 - **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper` tip `ad73f45c`. Preview routes only.
 - **This pass**: OD `klassapp-auth-brand-header-balance-v1.html` (desktop + mobile). Desktop brand block top-aligned (`justify-content: flex-start`, `padding-top: 130px`) so logo + heading are not floating in the lower half. Mobile brand is a **logo | copy** row (not a tall vertical stack) before the form. Mirrored on error preview brand panel.
 - **Verify**: Feature tests 15 passed (220 assertions). Playwright `ok=true` — desktop `brandTopAligned` (register `logoTop≈130`); mobile `brandLogoCopyRow`; prior locks held (`sideBySide`/`stacked`, transparent shell, paperRules, grain 0.22, toggle44, greens, forceNoEscape). Artifacts `e2e/screenshots/auth-error-vintage/{desktop,mobile}-*.png`.
-- **Status**: 📝 PR open — brand-header balance pushed.
+- **Status**: ✅ MERGED as `749940c5` (then cut over live via #536).
 
 ## Previous: September 12, 2026 — Auth/error desktop+mobile vintage v2 on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
 
@@ -616,7 +625,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **This pass (review fixes)**: OD `klassapp-auth-error-vintage-paper-v2-breakpoints.html` — genuine **desktop two-column** (brand | form) vs **mobile stacked**. Removed opaque white form card. Paper CSS is the **exact** landing `.hero-bg-vintage` (wash + ruled lines + grain 0.22). Applied to all auth + error previews. Typography remains Sora/DM Sans.
 - **Standing design rule**: every new surface must be mocked for **desktop AND mobile as separate compositions** in Open Design before Blade/CSS — never a mobile layout merely centered on a wide canvas.
 - **Verify**: Feature tests 15 passed (202 assertions). Playwright `ok=true` — desktop `sideBySide` / mobile `stacked`; `opaqueWhite=false`; `paperRules=true`; `grain022=true`; locks held. Artifacts `e2e/screenshots/auth-error-vintage/{desktop,mobile}-*.png`.
-- **Status**: 📝 PR open — review fixes pushed.
+- **Status**: ✅ MERGED via #535.
 
 ## Previous: September 12, 2026 — Auth/error vintage paper v1 on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) (`feature/auth-error-vintage-paper`)
 
@@ -1782,11 +1791,20 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-09-12: Landing/auth/error LIVE CUTOVER — **MERGED+DEPLOYED+VERIFIED** ([#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
+- **Work done**: Confirmed #535 was still open (`merged:false`) → admin-merged `749940c5`. Implemented live cutover on `feature/landing-auth-error-cutover`: WelcomeController → `landing-v2`; auth controllers → `auth.preview.*`; live `errors/{404,419,500}` → Pass-2 vintage; `/landing-preview` 301 → `/`; preview badge only when `isPreview`. Merged #536 (`638d359b`). Staged then production Cloud deploys of that tip.
+- **Files modified**: `WelcomeController`, auth controllers (login/register/forgot/reset-code/reset/force-change), `routes/web.php`, `landing-v2.blade.php`, auth preview blades (live route links), `errors/{404,419,500}.blade.php`, cutover + preview tests, `knowledge.md`
+- **Key decisions**: Real route/view swap (not parallel forever). Synthetic probe accounts only on production (users 189/190 + school 46 flagged `inactive` after verify). Rollback = prior prod deploy `depl-a2b8b963-…` @ `075e25c5`.
+- **Status**: ✅ MERGED `638d359b` · staging `depl-a2bad172-…` succeeded · production `depl-a2bad357-…` succeeded
+- **Verify (staging)**: Landing Protocol Cores/HITL/vintage/footer OK; login `phase4.admin@klassapp.xyz` → `/admin/dashboard` + session; register new account → dashboard; password reset request→code→new password→login OK (demo pw restored); 404 Pass-2 OK; `/auth/google` → Google (redirect_uri still localhost — pre-existing).
+- **Verify (production)**: Same page shells on `klassapp.xyz`; login probe user → `/superadmin/dashboard`; full password reset with DB-fetched code; register synthetic → `/admin/dashboard`; 404 Pass-2 OK; Google redirect starts (callback URI still localhost — **not** full OAuth complete).
+- **Edge cases flagged**: Google OAuth `redirect_uri=http://localhost:8000/...` on staging+prod Cloud env — separate fix before Monday if schools use Google sign-in.
+
 ### 2026-09-12: Auth brand-header balance (desktop top-align + mobile logo|copy) — **PR #535**
 - **Work done**: OD mock `klassapp-auth-brand-header-balance-v1.html` first (both breakpoints). Desktop: brand panel `flex-start` + `130px` top padding (was vertically centered / floating low). Mobile: `.ap-brand-row` / `.err-brand-row` — logo left, heading+subtitle right. Applied across auth preview shared brand panel + error preview layout.
 - **Files modified**: `resources/css/auth-preview.css`, `resources/views/auth/preview/_brand-panel.blade.php`, `resources/views/errors-preview/layout.blade.php`, `tests/Feature/{AuthPreview,ErrorsPreview}Test.php`, `e2e/auth-error-vintage-verify.cjs`, screenshots, `public/build/*`, `knowledge.md`
 - **Key decisions**: Mobile horizontal brand unit; desktop stays stacked logo→copy but top-aligned in the column. Locks unchanged (Sora/DM Sans, 44×44 toggle, error reds, green CTAs, force-change no escape).
-- **Status**: 📝 Pushed on [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
+- **Status**: ✅ MERGED via [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) (`749940c5`) then live cutover [#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536)
 - **Verify**: Feature 220 assertions; Playwright desktop `brandTopAligned` + mobile `brandLogoCopyRow` on auth + error previews; prior vintage/layout locks still `ok=true`
 
 ### 2026-09-12: Auth/error desktop split + transparent paper (v2 breakpoints) — **PR #535**
