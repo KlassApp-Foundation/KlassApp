@@ -4,6 +4,8 @@
 >
 > For full project history, past incidents, and session-by-session decisions, read `knowledge.md` in the repo root **first**, before starting any task. Update it before ending a phase of work (see "Session workflow" below). This file is the distilled, standing rule set; `knowledge.md` is the historical record.
 
+See TOOLING.md for the full stack reference — which tool to use for which kind of task.
+
 ## Environment reality check
 
 **Do not assume you have production access.** Whether a given session has real SSH access to `root@46.101.111.131` (the DigitalOcean droplet running the `sms-app` Docker container) is inconsistent across sessions and tools — some have it, some don't. Check for real (attempt an SSH connection or confirm the binary/key exist) before planning work that depends on it, and scope your work to what you've actually confirmed. If you don't have production access, say so plainly and hand off anything that genuinely needs it rather than guessing at production state.

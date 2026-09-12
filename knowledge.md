@@ -511,6 +511,12 @@ Product-facing compact notes (contributor detail remains in **Staging & Preview 
 
 ### Future Initiatives (flagged, not yet in progress)
 
+#### Public status page via Instatus — deferred until after the UI design phase
+
+**Flagged**: 2026-09-13 — **Deferred** until after the UI design phase.
+
+Free tier to start (unlimited subscribers/teams, no custom domain), upgrade to paid tier ($20/mo) for a custom domain like `status.klassapp.xyz` later. Purpose: real trust signal for schools depending on the platform daily, lets people check status themselves during an incident instead of messaging individually. Also listed in `TOOLING.md` under Monitoring & reliability.
+
 #### Invite class teacher to take ownership of a class (admin-driven)
 
 **Phase 1: Admin CRUD trigger — MERGED** (#485, `5830f747`, 2026-09-09). Admin invites a teacher (new or existing) as CT from the class list. Email-only; schools-scoped; `TeacherInviteMail` backward-compat.
@@ -10114,8 +10120,13 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Edge cases flagged**: Re-add bridge below previews if merge needs the original connector motif.
 
 ### 2026-09-13: Laravel Nightwatch on staging + production
-- **Work done**: Installed `laravel/nightwatch` ^1.30; published config; made `LOG_STACK` env-driven (preserve `daily` + add `nightwatch` on Cloud). Merged [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) `7683a604`. Set Cloud env vars on staging + production (token not in repo). Added `php artisan nightwatch:agent` background processes. Deployed staging then production (`depl-a2bb46d3-…` succeeded). Verified `nightwatch:status` agent running on both; prod agent logs Listening `:2407` v1.30.0; HTTP 200 probes.
+- **Work done**: Installed `laravel/nightwatch` ^1.30; published config; made `LOG_STACK` env-driven (preserve `daily` + add `nightwatch` on Cloud). Merged [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) `7683a604`. Set Cloud env vars on staging + production (token not in repo). Added `php artisan nightwatch:agent` background processes. Deployed staging then production (`depl-a2bb46d3-…` succeeded). Verified `nightwatch:status` agent running on both; prod agent logs Listening `:2407` v1.30.0; HTTP 200 probes. `NIGHTWATCH_TOKEN` also stored in Doppler (`klassapp` / `dev`+`stg`+`prd`).
 - **Files modified**: `composer.json`/`lock`, `config/nightwatch.php`, `config/logging.php`, `.env.example`, `knowledge.md` (this stamp).
 - **Key decisions**: Stack channel `daily,nightwatch` (not replacing daily); do not enable Cloud “Connect Nightwatch” UI on top without checking for a double agent; ingest token ≠ Nightwatch dashboard API (403 on public REST).
-- **Status**: ✅ MERGED + DEPLOYED staging & prod. Dashboard chart confirm is UI-side. `TOOLING.md` docs PR blocked — `klassapp-tool-stack.md` content not found on disk / not pasted.
+- **Status**: ✅ MERGED + DEPLOYED staging & prod. Dashboard chart confirm is UI-side.
 - **Edge cases flagged**: Staging has empty `__probe` env var leftover; rotate Nightwatch token if it was ever pasted into chat logs.
+
+### 2026-09-13: TOOLING.md + Instatus Future Initiative
+- **Work done**: Added root `TOOLING.md` (full tool stack reference). One-line pointer from `AGENTS.md`. Logged Instatus public status page as deferred Future Initiative (after UI design phase; free tier → paid custom domain later).
+- **Files modified**: `TOOLING.md` (new), `AGENTS.md`, `knowledge.md`.
+- **Status**: docs PR (this session) — no deploy.
