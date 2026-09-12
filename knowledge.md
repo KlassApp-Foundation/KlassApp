@@ -603,17 +603,24 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Landing Toshi hub + rotating hero polish (`feature/landing-toshi-hero-polish`)
+## Current Status: September 12, 2026 — Landing Toshi hub + rotating hero LIVE ([PR #539](https://github.com/KlassApp-Foundation/KlassApp/pull/539) MERGED+DEPLOYED)
 
-- **Branch**: `feature/landing-toshi-hero-polish` — ports approved OD mocks into live Blade/CSS/JS.
-- **Shipped in this PR (local verified)**:
-  1. Meet Toshi hub: mist glow, glass/depth framing, filled channel tiles, stronger gradient strokes (kept measured DOM connectors).
-  2. Hero: Parent WhatsApp / Teacher Drive / Admin Slack rotate with 3D-ish CSS transitions; `prefers-reduced-motion` static Parent + dots hidden.
-  3. Footer socials: real `https://x.com/klassapp`, `https://github.com/KlassApp-Foundation`, `/contact` (removed dead `#` FB/IG/LinkedIn placeholders — no confirmed profiles for those).
-- **Legal audit**: `/terms-of-service` has substantive copy (~6k visible chars, Uganda-oriented sections). `/privacy-policy` has real but **thinner legacy Gegosoft** copy (~2.8k) — not an empty stub, but worth a counsel rewrite before heavy media attention.
-- **Perf (local, before→after landing-preview assets)**: CSS 63.7→67.6 kB (+~4 kB); JS 4.2→4.7 kB (+~0.5 kB). FCP ~1.8s on cold local — no heavy media added.
-- **Verify**: `LandingPreviewV3Test` 61 assertions; `e2e/verify-landing-creative-polish.cjs` all PASS (desktop/mobile/reduced-motion + legal).
-- **Deploy plan**: staging first, then production.
+- **Merged**: [#539](https://github.com/KlassApp-Foundation/KlassApp/pull/539) merge `4f442325` (`feature/landing-toshi-hero-polish`).
+- **Shipped**: Meet Toshi mist/glass/filled tiles; Parent WhatsApp / Teacher Drive / Admin Slack hero rotate + `prefers-reduced-motion` static Parent; footer socials → X + GitHub + Contact.
+- **Legal**: Terms substantive (~6k); Privacy real but thinner legacy Gegosoft (~2.8k) — counsel rewrite before heavy media.
+- **Perf**: CSS ~63.7→67.6 kB; JS ~4.2→4.7 kB. Staging transferSize ~12k reported for landing assets; prod FCP ~2.7s cold.
+- **Staging**: `depl-a2bb12eb-…` @ `4f442325` (push-to-deploy) — Playwright creative polish PASS.
+- **Production**: `depl-a2bb13ce-…` @ `4f442325` — Playwright creative polish PASS on `klassapp.xyz`.
+
+## Previous: September 12, 2026 — Landing mobile bugfixes LIVE ([PR #538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) MERGED+DEPLOYED)
+
+- **Merged**: [#538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) merge `e9c3b22c` (`fix/landing-mobile-bugs`).
+- **Earlier mobile sweep claim was wrong**: page-level “mobile sweep passed” after cutover missed real live bugs (compare overflow, protocol Layer/KA overlap, dead hamburger, hero phone-above-text, footer `href="#"`). Re-verified **per section**.
+- **Shipped fixes**: stacked compare cards; hide `.protocol-visual` ≤900px; real mobile nav panel + `initMobileNav()`; footer → `/terms-of-service` + `/privacy-policy`; hero text before phone (`order: 0`).
+- **Hamburger root cause**: toggle with **no panel DOM and no JS handler**.
+- **Staging**: `depl-a2bb070e-…` @ `e9c3b22c` succeeded — Playwright 5/5 PASS.
+- **Production**: `depl-a2bb084e-…` @ `e9c3b22c` succeeded — Playwright 5/5 PASS on `klassapp.xyz`.
+- **Creative**: OD mocks approved and shipped in [#539](https://github.com/KlassApp-Foundation/KlassApp/pull/539).
 
 ## Previous: September 12, 2026 — Landing mobile bugfixes LIVE ([PR #538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) MERGED+DEPLOYED)
 
@@ -1813,11 +1820,11 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-12: Landing Toshi hub + rotating hero polish — **IN PROGRESS** (`feature/landing-toshi-hero-polish`)
-- **Work done**: Ported approved OD mocks into live landing. Toshi hub cloud-quality CSS (mist/glass/tiles/stronger strokes); hero Parent/Teacher/Admin rotate with reduced-motion fallback; footer socials → X + GitHub + Contact. Audited Terms (substantive) vs Privacy (real but thin/legacy Gegosoft).
+### 2026-09-12: Landing Toshi hub + rotating hero polish — **MERGED+DEPLOYED** ([#539](https://github.com/KlassApp-Foundation/KlassApp/pull/539))
+- **Work done**: Ported approved OD mocks into live landing. Toshi hub cloud-quality CSS (mist/glass/tiles/stronger strokes); hero Parent/Teacher/Admin rotate with reduced-motion fallback; footer socials → X + GitHub + Contact. Audited Terms (substantive) vs Privacy (real but thin/legacy Gegosoft). Staging auto-deploy + prod manual deploy; Playwright creative polish PASS on both.
 - **Files modified**: `landing-v2.blade.php`, `landing-preview.css`, `landing-preview.js`, `LandingPreviewV3Test.php`, `e2e/verify-landing-creative-polish.cjs`, `e2e/screenshots/landing-creative-polish/*`, `public/build/*`, `knowledge.md`
-- **Key decisions**: Kept measured DOM Toshi connectors (better than static mock SVG) while applying mock visual language. Only link socials with confirmed presence. Landing page bandwidth concern lifted for creative ambition; still recorded asset delta.
-- **Status**: 🚧 Local verified; opening PR → staging → prod
+- **Key decisions**: Kept measured DOM Toshi connectors while applying mock visual language. Only link socials with confirmed presence. Landing page bandwidth concern lifted for creative ambition; still recorded asset delta.
+- **Status**: ✅ MERGED `4f442325` · staging `depl-a2bb12eb-…` · production `depl-a2bb13ce-…`
 - **Edge cases flagged**: Privacy policy needs counsel rewrite before media push; no Facebook/Instagram/LinkedIn profiles confirmed so those icons were removed rather than left as `#`
 
 ### 2026-09-12: Landing mobile bugs (live) + OD creative mocks — **MERGED+DEPLOYED** ([#538](https://github.com/KlassApp-Foundation/KlassApp/pull/538))
