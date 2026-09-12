@@ -605,7 +605,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Current Status: September 12, 2026 — Auth/error desktop+mobile vintage v2 on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
 
-- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper` tip `d981a81c`. Preview routes only.
+- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper` tip `1e9e8ebb`. Preview routes only.
 - **This pass (review fixes)**: OD `klassapp-auth-error-vintage-paper-v2-breakpoints.html` — genuine **desktop two-column** (brand | form) vs **mobile stacked**. Removed opaque white form card. Paper CSS is the **exact** landing `.hero-bg-vintage` (wash + ruled lines + grain 0.22). Applied to all auth + error previews. Typography remains Sora/DM Sans.
 - **Standing design rule**: every new surface must be mocked for **desktop AND mobile as separate compositions** in Open Design before Blade/CSS — never a mobile layout merely centered on a wide canvas.
 - **Verify**: Feature tests 15 passed (202 assertions). Playwright `ok=true` — desktop `sideBySide` / mobile `stacked`; `opaqueWhite=false`; `paperRules=true`; `grain022=true`; locks held. Artifacts `e2e/screenshots/auth-error-vintage/{desktop,mobile}-*.png`.
@@ -1779,7 +1779,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Local review of #535 found desktop was a centered mobile card, opaque white form card, and paper not matching hero rules. OD remock `klassapp-auth-error-vintage-paper-v2-breakpoints.html` (desktop 1440 two-col + mobile 390 stack). Ported: `.ap-bg-vintage` / `.err-bg-vintage` = exact `.hero-bg-vintage` layers; transparent form/error shells; brand+form split on all auth + error previews.
 - **Files modified**: `resources/css/auth-preview.css`, `resources/views/auth/preview/*`, `resources/views/errors-preview/layout.blade.php`, tests, `e2e/auth-error-vintage-verify.cjs`, screenshots, `public/build/*`, `knowledge.md`
 - **Key decisions**: Desktop and mobile are different compositions (standing rule going forward). Opaque white card removed so ruled paper shows through. Fonts stay Sora/DM Sans.
-- **Status**: 📝 Pushed on [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) tip `d981a81c`
+- **Status**: 📝 Pushed on [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) tip `1e9e8ebb`
 - **Verify**: Feature 202 assertions; Playwright desktop/mobile `ok=true` (sideBySide/stacked, no opaque white, paperRules, grain 0.22, locks)
 
 ### 2026-09-12: Auth/error vintage paper (OD → preview) — **PR #535**
