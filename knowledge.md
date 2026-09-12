@@ -603,7 +603,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Landing mobile bugfixes + creative review mocks (`fix/landing-mobile-bugs`)
+## Current Status: September 12, 2026 — Landing mobile bugfixes + creative review mocks ([PR #538](https://github.com/KlassApp-Foundation/KlassApp/pull/538))
 
 - **Branch**: `fix/landing-mobile-bugs` (off `main` tip after #537). Shipping verified mobile bugs first; Toshi hub + rotating hero are **OD review mocks only** — not in Blade yet.
 - **Earlier mobile sweep claim was wrong**: a page-level “mobile sweep passed” after cutover missed real live bugs on `klassapp.xyz` (compare table overflow, protocol Layer/KA overlap, dead hamburger, hero phone-above-text, footer `href="#"`). This pass re-verified **per section** with Playwright screenshots.
@@ -1806,7 +1806,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Re-diagnosed live `klassapp.xyz` with per-section Playwright (not page-level sweep). Fixed: compare → stacked cards; protocol mesh hidden on mobile; hamburger panel+JS; footer Terms/Privacy real routes; hero text-before-phone. Built review mocks for Toshi hub (vs real Laravel Cloud screenshot) and 3-state rotating hero + reduced-motion. **Did not** implement rotating hero / Toshi polish in Blade — awaiting review.
 - **Files modified**: `landing-v2.blade.php`, `landing-preview.css`, `landing-preview.js`, `LandingPreviewV3Test.php`, `public/build/*`, `e2e/verify-landing-mobile-fixes.cjs`, `e2e/screenshots/landing-fix-verify/*`, `docs/od-mocks/*`, `knowledge.md`
 - **Key decisions**: Earlier cutover “mobile sweep passed” claim was incorrect and is recorded as such. Hide protocol decorative mesh on ≤900px rather than fight overlap. Creative hero rotation stays mock-only until approved (perf / reduced-motion constraints).
-- **Status**: 🚧 Local verified; opening PR → staging deploy → prod after staging clean
+- **Status**: 📝 PR open — [#538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) (`fix/landing-mobile-bugs`, tip `7affdac0`). Staging→prod after merge.
 - **Edge cases flagged**: Footer social links still `#`; Terms/Privacy linked but may need real legal copy; OD daemon stalled on discovery forms — mocks authored from real side-by-side screenshots into OD project + `docs/od-mocks/`
 
 ### 2026-09-12: Landing/auth/error LIVE CUTOVER — **MERGED+DEPLOYED+VERIFIED** ([#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
