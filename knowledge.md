@@ -603,16 +603,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Landing mobile bugfixes + creative review mocks ([PR #538](https://github.com/KlassApp-Foundation/KlassApp/pull/538))
+## Current Status: September 12, 2026 — Landing mobile bugfixes LIVE ([PR #538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) MERGED+DEPLOYED)
 
-- **Branch**: `fix/landing-mobile-bugs` (off `main` tip after #537). Shipping verified mobile bugs first; Toshi hub + rotating hero are **OD review mocks only** — not in Blade yet.
-- **Earlier mobile sweep claim was wrong**: a page-level “mobile sweep passed” after cutover missed real live bugs on `klassapp.xyz` (compare table overflow, protocol Layer/KA overlap, dead hamburger, hero phone-above-text, footer `href="#"`). This pass re-verified **per section** with Playwright screenshots.
-- **Fixed in code (local verified)**: stacked compare cards; hide `.protocol-visual` ≤900px; real mobile nav panel + `initMobileNav()`; footer → `/terms-of-service` + `/privacy-policy`; hero `.phone-wrapper { order: 0 }` so copy reads first.
-- **Hamburger root cause**: toggle existed with **no panel DOM and no JS handler** — click was a no-op.
-- **Creative (review before Blade)**: real screenshots of `cloud.laravel.com` vs live Toshi hub; mocks at `docs/od-mocks/klassapp-landing-v3-toshi-hub-cloud-quality.html` + `klassapp-landing-v3-hero-role-rotate.html` (3 role states + reduced-motion panel).
-- **Still open**: rotating hero + Toshi cloud-quality polish need design approval before production implement; footer social icons still `href="#"` (separate gap); Terms/Privacy *pages* exist but remain thin legal stubs if content quality is insufficient.
-- **Verify**: `LandingPreviewV3Test` passed; `e2e/verify-landing-mobile-fixes.cjs` all PASS locally; artifacts `e2e/screenshots/landing-fix-verify/`.
-- **Deploy**: staging first, then production once staging confirms — see Session Log / PR when opened.
+- **Merged**: [#538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) merge `e9c3b22c` (`fix/landing-mobile-bugs`).
+- **Earlier mobile sweep claim was wrong**: page-level “mobile sweep passed” after cutover missed real live bugs (compare overflow, protocol Layer/KA overlap, dead hamburger, hero phone-above-text, footer `href="#"`). Re-verified **per section**.
+- **Shipped fixes**: stacked compare cards; hide `.protocol-visual` ≤900px; real mobile nav panel + `initMobileNav()`; footer → `/terms-of-service` + `/privacy-policy`; hero text before phone (`order: 0`).
+- **Hamburger root cause**: toggle with **no panel DOM and no JS handler**.
+- **Staging**: `depl-a2bb070e-…` @ `e9c3b22c` succeeded — Playwright 5/5 PASS.
+- **Production**: `depl-a2bb084e-…` @ `e9c3b22c` succeeded — Playwright 5/5 PASS on `klassapp.xyz`.
+- **Creative still review-only**: `docs/od-mocks/` Toshi hub cloud-quality + rotating role hero (3 states + reduced-motion) — **not** in Blade yet; approve before implement.
+- **Still open**: footer socials still `#`; Terms/Privacy pages exist but may need real legal copy.
 
 ## Previous: September 12, 2026 — Landing/auth/error LIVE CUTOVER shipped ([PR #536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
 
@@ -1806,7 +1806,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Re-diagnosed live `klassapp.xyz` with per-section Playwright (not page-level sweep). Fixed: compare → stacked cards; protocol mesh hidden on mobile; hamburger panel+JS; footer Terms/Privacy real routes; hero text-before-phone. Built review mocks for Toshi hub (vs real Laravel Cloud screenshot) and 3-state rotating hero + reduced-motion. **Did not** implement rotating hero / Toshi polish in Blade — awaiting review.
 - **Files modified**: `landing-v2.blade.php`, `landing-preview.css`, `landing-preview.js`, `LandingPreviewV3Test.php`, `public/build/*`, `e2e/verify-landing-mobile-fixes.cjs`, `e2e/screenshots/landing-fix-verify/*`, `docs/od-mocks/*`, `knowledge.md`
 - **Key decisions**: Earlier cutover “mobile sweep passed” claim was incorrect and is recorded as such. Hide protocol decorative mesh on ≤900px rather than fight overlap. Creative hero rotation stays mock-only until approved (perf / reduced-motion constraints).
-- **Status**: 📝 PR open — [#538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) (`fix/landing-mobile-bugs`, tip `7affdac0`). Staging→prod after merge.
+- **Status**: ✅ MERGED `e9c3b22c` · staging `depl-a2bb070e-…` · production `depl-a2bb084e-…` — Playwright 5/5 on staging + `klassapp.xyz`
 - **Edge cases flagged**: Footer social links still `#`; Terms/Privacy linked but may need real legal copy; OD daemon stalled on discovery forms — mocks authored from real side-by-side screenshots into OD project + `docs/od-mocks/`
 
 ### 2026-09-12: Landing/auth/error LIVE CUTOVER — **MERGED+DEPLOYED+VERIFIED** ([#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
