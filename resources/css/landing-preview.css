@@ -713,6 +713,26 @@ body.nav-open { overflow: hidden; }
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
+/* Official brand marks: keep platform colors, clear space via padding, never recolor. */
+.brand-mark {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.connector-icon .brand-mark { width: 18px; height: 18px; }
+.panel-connector-icon .brand-mark { width: 18px; height: 18px; }
+.connector-chip .brand-mark { width: 14px; height: 14px; }
+.channel-ico .brand-mark { width: 16px; height: 16px; }
+.brand-well {
+  background: #fff !important;
+  border-color: rgba(15, 23, 42, 0.10) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.brand-well.panel-connector-icon {
+  --node-tint: rgba(15, 23, 42, 0.03);
+  --node-border: rgba(15, 23, 42, 0.10);
+}
 .connector-line {
   position: absolute;
   left: -40px;
@@ -1315,9 +1335,19 @@ body.nav-open { overflow: hidden; }
 .toshi-visual-channel.n-amber .channel-ico {
   background: linear-gradient(145deg, #F59E0B, #D97706);
 }
+.toshi-visual-channel .channel-ico.brand-well {
+  background: #fff !important;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  color: inherit;
+  box-shadow: 0 4px 10px -6px rgba(15, 23, 42, 0.25);
+}
 .toshi-visual-channel .channel-ico svg {
   width: 15px;
   height: 15px;
+}
+.toshi-visual-channel .channel-ico.brand-well .brand-mark {
+  width: 16px;
+  height: 16px;
 }
 .toshi-visual-channel span:not(.channel-ico) {
   font-size: 0.6875rem;
