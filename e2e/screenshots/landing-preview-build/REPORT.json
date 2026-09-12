@@ -1,6 +1,6 @@
 {
   "base": "http://127.0.0.1:8000",
-  "at": "2026-09-11T23:53:33.759Z",
+  "at": "2026-09-12T01:12:30.800Z",
   "viewports": {
     "desktop": {
       "status": 200,
@@ -27,7 +27,15 @@
           "present": true
         },
         {
+          "id": "compare",
+          "present": true
+        },
+        {
           "id": "community",
+          "present": true
+        },
+        {
+          "id": "faq",
           "present": true
         },
         {
@@ -44,8 +52,12 @@
         "waBubble": 3,
         "teachShell": 1,
         "adminStack": 1,
-        "pillars": 4,
-        "owasp": true
+        "pillars": 5,
+        "provable": true,
+        "compare": true,
+        "faq": true,
+        "emDash": false,
+        "q1": false
       },
       "isolation": {
         "dsElements": 0,
@@ -80,7 +92,15 @@
           "present": true
         },
         {
+          "id": "compare",
+          "present": true
+        },
+        {
           "id": "community",
+          "present": true
+        },
+        {
+          "id": "faq",
           "present": true
         },
         {
@@ -97,8 +117,12 @@
         "waBubble": 3,
         "teachShell": 1,
         "adminStack": 1,
-        "pillars": 4,
-        "owasp": true
+        "pillars": 5,
+        "provable": true,
+        "compare": true,
+        "faq": true,
+        "emDash": false,
+        "q1": false
       },
       "isolation": {
         "dsElements": 0,
@@ -133,7 +157,15 @@
           "present": true
         },
         {
+          "id": "compare",
+          "present": true
+        },
+        {
           "id": "community",
+          "present": true
+        },
+        {
+          "id": "faq",
           "present": true
         },
         {
@@ -150,8 +182,12 @@
         "waBubble": 3,
         "teachShell": 1,
         "adminStack": 1,
-        "pillars": 4,
-        "owasp": true
+        "pillars": 5,
+        "provable": true,
+        "compare": true,
+        "faq": true,
+        "emDash": false,
+        "q1": false
       },
       "isolation": {
         "dsElements": 0,

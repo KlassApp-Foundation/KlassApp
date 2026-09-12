@@ -32,7 +32,7 @@ const viewports = [
     await page.waitForTimeout(400);
 
     const ids = await page.evaluate(() =>
-      ['hero', 'connectors', 'toshi', 'how-it-works', 'trust', 'community', 'protocol', 'open-source']
+      ['hero', 'connectors', 'toshi', 'how-it-works', 'trust', 'compare', 'community', 'faq', 'protocol', 'open-source']
         .map((id) => ({ id, present: !!document.getElementById(id) }))
     );
     const productUi = await page.evaluate(() => ({
@@ -41,7 +41,11 @@ const viewports = [
       teachShell: document.querySelectorAll('.teach-shell').length,
       adminStack: document.querySelectorAll('.admin-stack').length,
       pillars: document.querySelectorAll('.pillar').length,
-      owasp: (document.body.innerText || '').includes('OWASP'),
+      provable: (document.body.textContent || '').includes('Provable'),
+      compare: !!document.getElementById('compare'),
+      faq: !!document.getElementById('faq'),
+      emDash: (document.body.textContent || '').includes('\u2014'),
+      q1: (document.body.textContent || '').includes('Q1 2027'),
     }));
 
     // isolation: no --d-* computed vars on body / no .ds-* elements
@@ -79,7 +83,7 @@ const viewports = [
       screenshot: shot,
     };
     report.viewports[vp.name] = entry;
-    if (res.status() !== 200 || consoleErrors.length || ids.some((x) => !x.present) || productUi.pillars < 4) {
+    if (res.status() !== 200 || consoleErrors.length || ids.some((x) => !x.present) || productUi.pillars < 5 || productUi.emDash || productUi.q1 || !productUi.provable) {
       report.ok = false;
     }
     if (isolation.dsElements > 0 || isolation.htmlHasDsKpi) report.ok = false;

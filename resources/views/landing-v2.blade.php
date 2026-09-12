@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KlassApp — Your school's tools, connected by intelligence</title>
-    <meta name="description" content="KlassApp is an open-source agentic protocol for education. Connect WhatsApp, Google Drive, Slack, Email, and SMS through Toshi, an AI agent built for schools.">
+    <title>KlassApp : The school platform for tools educationists already use</title>
+    <meta name="description" content="KlassApp is an open-source agentic school protocol. It operates in the tools educationists already use: WhatsApp, Drive, Slack, email, and more.">
     <meta name="robots" content="noindex,nofollow">
 
     <link rel="canonical" href="{{ url()->current() }}">
@@ -17,7 +17,7 @@
     @vite(['resources/css/landing-preview.css', 'resources/js/landing-preview.js'])
 </head>
 <body>
-{{-- Preview-only port of locked Open Design klassapp-landing-v3.html. Route: /landing-preview only — no live cutover. --}}
+{{-- Preview-only port of locked Open Design klassapp-landing-v3.html. Route: /landing-preview only : no live cutover. --}}
 <nav class="navbar" id="navbar">
   <div class="navbar-inner">
     <a href="{{ route('landing.preview') }}#hero" class="navbar-logo">Klass<span>App</span></a>
@@ -26,10 +26,11 @@
       <li><a href="#toshi">Toshi</a></li>
       <li><a href="#how-it-works">How it works</a></li>
       <li><a href="#trust">Trust</a></li>
+      <li><a href="#compare">What we address</a></li>
       <li><a href="#community">Community</a></li>
-      <li><a href="#open-source">Open Source</a></li>
+      <li><a href="#faq">FAQ</a></li>
     </ul>
-    <a href="#open-source" class="navbar-cta">Start free</a>
+    <a href="{{ url('/register') }}" class="navbar-cta">Start free</a>
     <button class="navbar-mobile-toggle" aria-label="Menu">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
@@ -40,16 +41,16 @@
   <div class="container">
     <div class="hero-inner">
       <div class="hero-content reveal">
-        <div class="hero-kicker">Open-source agentic protocol</div>
-        <h1>Tools connected by <span class="accent">intelligence</span></h1>
-        <p class="hero-sub">Toshi orchestrates WhatsApp, Drive, Slack, and email — one AI agent built for how schools actually work.</p>
+        <div class="hero-kicker">Open-source agentic school protocol</div>
+        <h1>The school platform that operates in the tools educationists already use.</h1>
+        <p class="hero-sub">Toshi orchestrates WhatsApp, Drive, Slack, and email: one AI agent built for how schools actually work.</p>
         <div class="hero-actions">
           <a href="{{ url('/register') }}" class="btn btn-primary">Start free <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></a>
-          <a href="#open-source" class="btn btn-secondary">Get notified · Q1 2027</a>
+          <a href="#community" class="btn btn-secondary">Get notified when we open source</a>
         </div>
         <div class="hero-trust">
-          <span>Open source (MIT)</span><span class="dot"></span>
-          <span>Self-hostable (Q1 2027)</span><span class="dot"></span>
+          <span>Free and open (MIT)</span><span class="dot"></span>
+          <span>Self-hostable</span><span class="dot"></span>
           <span>MCP-compatible</span>
         </div>
       </div>
@@ -270,9 +271,9 @@
     </div>
 
     <div class="toshi-grid">
-      <div class="toshi-card reveal reveal-delay-1"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0112 0v1"/></svg></div><h3>Role-Aware</h3><p>Toshi adapts its responses based on who's asking — teacher, parent, admin, or student. Each role gets exactly what they need.</p></div>
+      <div class="toshi-card reveal reveal-delay-1"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0112 0v1"/></svg></div><h3>Role-Aware</h3><p>Toshi adapts its responses based on who's asking : teacher, parent, admin, or student. Each role gets exactly what they need.</p></div>
       <div class="toshi-card reveal reveal-delay-2"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div><h3>Multi-Channel</h3><p>Works across WhatsApp, email, Slack, SMS, and the dashboard simultaneously. One agent, every channel your school uses.</p></div>
-      <div class="toshi-card violet-accent reveal reveal-delay-3"><div class="toshi-card-icon" style="color: var(--violet-accent);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Action-Taking</h3><p>Doesn't just answer questions — sends messages, generates reports, updates records, and schedules follow-ups automatically.</p></div>
+      <div class="toshi-card violet-accent reveal reveal-delay-3"><div class="toshi-card-icon" style="color: var(--violet-accent);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Action-Taking</h3><p>Doesn't just answer questions : sends messages, generates reports, updates records, and schedules follow-ups automatically.</p></div>
       <div class="toshi-card amber-accent reveal reveal-delay-4"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 2a7 7 0 017 7c0 2.5-1.5 4.5-3 6l-1.5 2.5a1 1 0 01-1.7 0L11 15c-1.5-1.5-3-3.5-3-6a7 7 0 017-7z"/><circle cx="12" cy="9" r="2"/></svg></div><h3>Context-Aware</h3><p>Remembers term dates, student histories, school policies, and communication patterns. Every interaction builds on the last.</p></div>
       <div class="toshi-card reveal reveal-delay-5"><div class="toshi-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div><h3>Extensible</h3><p>Connect new tools through MCP servers or custom connectors. Toshi's capabilities grow with your school's needs.</p></div>
       <div class="toshi-card violet-accent reveal reveal-delay-5"><div class="toshi-card-icon" style="color: var(--violet-accent);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Safe by Design</h3><p>Role-based access, audit trails, and human-in-the-loop approvals. Toshi never acts without clear boundaries and oversight.</p></div>
@@ -309,7 +310,7 @@
                 </div>
               </div>
               <div class="wa-bubble in">
-                <strong>Fee reminder</strong> — Nakato has a balance of UGX 85,000 for Term 2.
+                <strong>Fee reminder</strong> : Nakato has a balance of UGX 85,000 for Term 2.
                 <span class="link">Pay securely →</span>
                 <span class="wa-time">7:02 AM</span>
               </div>
@@ -487,7 +488,7 @@
               <div class="how-step" data-delay="300">
                 <span class="how-step-dot"></span>
                 <div class="how-step-title"><span class="how-step-num">01</span> Weekly digest</div>
-                <p>Toshi generates a weekly school summary: attendance rates, fee collection, communication metrics — emailed to leadership and saved to Drive.</p>
+                <p>Toshi generates a weekly school summary: attendance rates, fee collection, communication metrics : emailed to leadership and saved to Drive.</p>
               </div>
               <div class="how-step" data-delay="700">
                 <span class="how-step-dot"></span>
@@ -508,240 +509,169 @@
 </section>
 
 
-<section class="trust" id="trust" data-screen-label="Trust pillars">
+<section class="trust" id="trust">
   <div class="container">
     <div class="trust-header">
       <div class="reveal">
-        <div class="trust-kicker">Built for trust</div>
-        <h2>School data is sensitive. The platform is built like it.</h2>
-        <p class="lead">Four operating principles — with concrete engineering behind each one. No invented certifications; what ships is what we claim.</p>
-      </div>
-      <div class="trust-motif reveal reveal-delay-2" aria-hidden="true">
-        <!-- Subtle isometric shield / node motif -->
-        <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="shieldGrad" x1="40" y1="20" x2="120" y2="140" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#FFFFFF"/>
-              <stop offset="1" stop-color="#DCFCE7"/>
-            </linearGradient>
-          </defs>
-          <rect x="28" y="28" width="104" height="104" rx="20" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="4 4" opacity="0.9"/>
-          <path d="M80 36 L118 52 V86 C118 108 100 126 80 134 C60 126 42 108 42 86 V52 Z"
-                fill="url(#shieldGrad)" stroke="#22C55E" stroke-width="2"/>
-          <circle cx="80" cy="78" r="14" fill="#FFFFFF" stroke="#22C55E" stroke-width="1.75"/>
-          <circle cx="80" cy="78" r="5" fill="#22C55E"/>
-          <circle cx="52" cy="48" r="4" fill="#1E6FD9" opacity="0.35"/>
-          <circle cx="118" cy="108" r="3.5" fill="#22C55E" opacity="0.45"/>
-          <path d="M52 48 L66 62 M118 108 L96 92" stroke="#E2E8F0" stroke-width="1.25"/>
-        </svg>
+        <div class="trust-kicker">Infrastructure</div>
+        <h2>Built the way real infrastructure should be</h2>
+        <p class="lead">Five commitments that shape how KlassApp is built: four live platform primitives, and one honest forward direction.</p>
       </div>
     </div>
 
-    <div class="pillars">
-      <!-- SECURE -->
-      <article class="pillar reveal reveal-delay-1">
+    <div class="pillars pillars-5">
+      <article class="pillar reveal">
         <div class="pillar-top">
           <div class="pillar-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
           </div>
           <div>
-            <div class="pillar-label">01 — Secure</div>
-            <h3>Real access control, real crypto</h3>
-            <p class="pillar-blurb">Security work that shipped — not a badge wall.</p>
+            <div class="pillar-label">Secure</div>
+            <h3>Protected by design</h3>
           </div>
         </div>
-        <ul class="pillar-list">
-          <li>
-            <span><strong>Access-control gap found and fixed</strong> — teacher endpoints that could reach another school’s student data, including medical records. Framed against OWASP’s #1 web risk category.
-              <span class="meta">PRs #514 · #516 · #517</span>
-            </span>
-          </li>
-          <li><span><strong>Production cryptography</strong> — bcrypt password hashing, secure session tokens, HTTPS/TLS in transit.</span></li>
-          <li><span><strong>Role-based access</strong> with <strong>school_id</strong> tenant scoping throughout the app.</span></li>
-          <li><span><strong>Human-in-the-loop</strong> for agent actions, with audit trails on sensitive operations.</span></li>
-        </ul>
-        <div class="evidence">
-          <div class="evidence-label">Evidence, not theater</div>
-          <p>We found and fixed a real access-control gap in exactly the category OWASP ranks as the single most critical web security risk.</p>
-          <div class="prs">
-            <span class="pr">#514</span>
-            <span class="pr">#516</span>
-            <span class="pr">#517</span>
-          </div>
-        </div>
-        <div class="pillar-foot">
-          <span class="chip green">OWASP #1 class fix</span>
-          <span class="chip">Shipped PRs</span>
-        </div>
+        <p class="pillar-blurb">Your school's data is protected by design, not by promise. Access controls are built into the platform itself, not added as an afterthought.</p>
       </article>
 
-      <!-- SCALABLE -->
-      <article class="pillar reveal reveal-delay-2">
+      <article class="pillar reveal reveal-delay-1">
         <div class="pillar-top">
           <div class="pillar-icon blue" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
           </div>
           <div>
-            <div class="pillar-label">02 — Scalable</div>
-            <h3>Many schools, one deployment</h3>
-            <p class="pillar-blurb">Built as a multi-tenant platform from day one.</p>
+            <div class="pillar-label">Scalable</div>
+            <h3>Grows with your school</h3>
           </div>
         </div>
-        <ul class="pillar-list">
-          <li><span><strong>Multi-tenant school platform</strong> with real <strong>school_id</strong> scoping on data and APIs.</span></li>
-          <li><span><strong>Async queues</strong> — Redis-backed jobs for WhatsApp traffic and heavy PDF report generation.</span></li>
-          <li><span><strong>One deployment, many schools</strong> — designed for shared Laravel Cloud production, not one-server-per-school.</span></li>
-          <li><span><strong>Workload isolation by job type</strong> so messaging bursts don’t block reporting (and vice versa).</span></li>
-        </ul>
-        <div class="pillar-foot">
-          <span class="chip blue">Laravel Cloud</span>
-          <span class="chip">Redis jobs</span>
-          <span class="chip">school_id</span>
-        </div>
+        <p class="pillar-blurb">KlassApp runs on modern cloud infrastructure that grows with your school, from a single classroom to an entire district, without anyone having to manage a server.</p>
       </article>
 
-      <!-- PRIVATE -->
-      <article class="pillar reveal reveal-delay-3">
+      <article class="pillar reveal reveal-delay-2">
         <div class="pillar-top">
           <div class="pillar-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
           <div>
-            <div class="pillar-label">03 — Private</div>
-            <h3>Tenant boundaries, privileged data</h3>
-            <p class="pillar-blurb">Isolation first — then a deliberate path to public source.</p>
+            <div class="pillar-label">Private</div>
+            <h3>Scoped by default</h3>
           </div>
         </div>
-        <ul class="pillar-list">
-          <li><span><strong>Per-school data isolation</strong> — tenant boundaries enforced so one school cannot read another’s records.</span></li>
-          <li><span><strong>Sensitive student data</strong> (including medical) treated as privileged — the access-control fixes above exist for that reason.</span></li>
-          <li><span><strong>Repo is public for development visibility today</strong>; it will go private for a professional security audit before wide launch.</span></li>
-          <li><span><strong>Source + self-hosting reopen Q1 2027</strong> under MIT — after that audit lands.</span></li>
-        </ul>
-        <div class="pillar-foot">
-          <span class="chip green">Tenant isolation</span>
-          <span class="chip">Audit before wide launch</span>
-        </div>
+        <p class="pillar-blurb">Parents see only their own children. Teachers see only the students in their own classes. These are not settings you have to configure. They are the platform primitives.</p>
       </article>
 
-      <!-- INTEROPERABLE -->
-      <article class="pillar reveal reveal-delay-4">
+      <article class="pillar reveal reveal-delay-3">
         <div class="pillar-top">
           <div class="pillar-icon blue" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6h7M6 8.5v7M18 8.5v7M8.5 18h7"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
           </div>
           <div>
-            <div class="pillar-label">04 — Interoperable</div>
-            <h3>Protocol, not a closed silo</h3>
-            <p class="pillar-blurb">Connectors and standards so schools keep their tools.</p>
+            <div class="pillar-label">Interoperable</div>
+            <h3>Tools you already use</h3>
           </div>
         </div>
-        <ul class="pillar-list">
-          <li><span><strong>Connectors shipping:</strong> WhatsApp, Google Drive, Slack, Email, SMS, Calendar.</span></li>
-          <li><span><strong>MCP-compatible</strong> — Model Context Protocol so compatible agents and models can plug in.</span></li>
-          <li><span><strong>MIT license</strong> — protocol orientation, not a locked SaaS island.</span></li>
-          <li><span><strong>Extend without forking the core</strong> — add connectors, workflows, and translations as the community grows.</span></li>
-        </ul>
-        <div class="pillar-foot">
-          <span class="chip blue">MCP</span>
-          <span class="chip">MIT</span>
-          <span class="chip">6+ connectors</span>
-        </div>
+        <p class="pillar-blurb">KlassApp connects to the tools your community already uses: WhatsApp, Drive, Slack. No need to learn new tools.</p>
       </article>
-    </div>
 
-    <div class="trust-footnote reveal">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-      <p>We don’t claim certifications we haven’t earned. Claims above map to shipped code and a published launch timeline — not aspirational logo walls.</p>
+      <article class="pillar pillar-future reveal reveal-delay-4">
+        <div class="pillar-top">
+          <div class="pillar-icon amber" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg>
+          </div>
+          <div>
+            <div class="pillar-label">Provable <span class="pillar-badge" title="Forward direction, not a shipped feature today">Coming</span></div>
+            <h3>Cryptographically verifiable records</h3>
+          </div>
+        </div>
+        <p class="pillar-blurb">Student records are recorded progressively, term by term, year by year. We're building toward records that are cryptographically provable, so a transcript can be verified as authentic without anyone having to take our word for it.</p>
+        <p class="pillar-note">Stated direction. Not a live feature yet.</p>
+      </article>
     </div>
   </div>
 </section>
 
-<section class="community" id="community" data-screen-label="Community">
+<section class="compare" id="compare">
+  <div class="container">
+    <div class="compare-header reveal">
+      <h2>What we actually address</h2>
+      <p class="lead">Illustrative of real product capability. Not sourced from a named school.</p>
+    </div>
+    <div class="compare-table-wrap reveal">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th scope="col">Before</th>
+            <th scope="col">KlassApp way</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fee reminders mean phone calls and follow-up visits</td>
+            <td>Automated reminders on WhatsApp, email, or Telegram, whichever channel your parents already use</td>
+          </tr>
+          <tr>
+            <td>Report cards are printed and sent home, sometimes lost along the way</td>
+            <td>Parents get results the moment marks are finalized, on their connected channels</td>
+          </tr>
+          <tr>
+            <td>Setting up a new term means days of spreadsheet work</td>
+            <td>A guided setup configures classes and streams in minutes, through any connected channel</td>
+          </tr>
+          <tr>
+            <td>Every setup step means filling out forms, one field at a time</td>
+            <td>Just tell Toshi what you need, in plain language, and it does the rest</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="community" id="community">
   <div class="container">
     <div class="community-layout">
-      <div class="community-copy">
-        <div class="reveal">
-          <div class="community-kicker">Community-driven</div>
-          <h2>Built in the open — opened carefully.</h2>
-          <p class="lead">The repo is visible for development today. Before wide launch we close for a professional security audit, then reopen source and self-hosting in Q1 2027 under MIT.</p>
-        </div>
-
-        <ol class="timeline reveal reveal-delay-1">
-          <li>
-            <div class="tl-when">Now</div>
-            <div class="tl-title">Public for development</div>
-            <p class="tl-desc">Repo stays visible so educators and engineers can follow progress and discuss direction.</p>
-          </li>
-          <li class="pending">
-            <div class="tl-when">Next</div>
-            <div class="tl-title">Private for security audit</div>
-            <p class="tl-desc">Source goes private for a professional review before wide launch — student data deserves that bar.</p>
-          </li>
-          <li class="future">
-            <div class="tl-when">Q1 2027</div>
-            <div class="tl-title">Source + self-hosting reopen</div>
-            <p class="tl-desc">MIT-licensed public reopen. Contribute connectors, translations, and workflows when the doors open.</p>
-          </li>
-        </ol>
-
-        <div class="who-row reveal reveal-delay-2">
-          <span class="who-chip">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            Educators
-          </span>
-          <span class="who-chip">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
-            Engineers
-          </span>
-          <span class="who-chip">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-            Contributors
-          </span>
-        </div>
+      <div class="community-copy reveal">
+        <div class="community-kicker">Community-driven</div>
+        <h2>Built in the open, so it grows with what your school needs</h2>
+        <p class="lead">KlassApp's code is public today. Before we launch widely, we're closing it briefly for an independent security review.</p>
+        <p>It will be free, open, and self-hostable: you'll be able to read the source code, and if you want, run your own copy of KlassApp yourself.</p>
+        <p>We built KlassApp first for the hardest real-world constraints: limited bandwidth, everyday phones, real classrooms. If it works there, it works anywhere schools need it.</p>
       </div>
-
-      <div class="community-panel reveal reveal-delay-2">
-        <div class="panel-inner">
-          <div class="panel-eyebrow">Get involved · Q1 2027 reopen</div>
-          <h3>Shape the protocol. <em>Get notified.</em></h3>
-          <p class="panel-desc">Connectors, translations, and school workflows — built with educators and engineers, not locked behind a vendor wall.</p>
-
-          <div class="license-row">
-            <span class="lic-badge mit">MIT License</span>
-            <span class="lic-badge">Self-hosting Q1 2027</span>
-            <span class="lic-badge">MCP-compatible</span>
-          </div>
-
-          <div class="contrib-grid">
-            <div class="contrib">
-              <strong>Connectors</strong>
-              <span>WhatsApp, Drive, Slack, Email, SMS, Calendar — and more</span>
-            </div>
-            <div class="contrib">
-              <strong>Translations</strong>
-              <span>Localize UI and agent copy for your region</span>
-            </div>
-            <div class="contrib">
-              <strong>Workflows</strong>
-              <span>Attendance, fees, reports — school-shaped automations</span>
-            </div>
-            <div class="contrib">
-              <strong>Protocol</strong>
-              <span>MCP surfaces and agent tools for education</span>
-            </div>
-          </div>
-
-          <form class="notify-form" action="#" method="post" onsubmit="return false;">
-            <input type="email" name="email" placeholder="your@school.edu" required autocomplete="email" aria-label="Email address">
-            <button type="submit" class="btn btn-primary">Get notified</button>
-          </form>
-          <div class="panel-actions">
-            <a href="{{ url('/docs/community') }}" class="btn btn-secondary">Read the docs</a>
-          </div>
-          <p class="panel-note">We’ll email you when source and self-hosting reopen in Q1 2027. Until then, the docs are the best place to follow along.</p>
+      <div class="community-panel reveal reveal-delay-1">
+        <form class="notify-form" action="#" method="post" onsubmit="return false;">
+          <input type="email" name="email" placeholder="your@school.edu" required autocomplete="email" aria-label="Email address">
+          <button type="submit" class="btn btn-primary">Get notified when we open source</button>
+        </form>
+        <div class="panel-actions">
+          <a href="{{ url('/docs/community') }}" class="btn btn-secondary">Read the docs</a>
         </div>
+        <p class="panel-note">We'll email you when source and self-hosting open publicly. No date promised here.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="faq-header reveal">
+      <h2>FAQ</h2>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item reveal">
+        <summary>Do parents need to download an app?</summary>
+        <p>No. Everything works through WhatsApp, a tool most families already use every day.</p>
+      </details>
+      <details class="faq-item reveal reveal-delay-1">
+        <summary>What if our school doesn't have separate class streams?</summary>
+        <p>KlassApp works the same way whether your school has one class per grade or several streams. Streams are entirely optional.</p>
+      </details>
+      <details class="faq-item reveal reveal-delay-2">
+        <summary>Is our students' data safe?</summary>
+        <p>Yes. Access is limited by design. Parents see only their own children, teachers see only their own students.</p>
+      </details>
+      <details class="faq-item reveal reveal-delay-3">
+        <summary>Can we try it before committing?</summary>
+        <p>Yes. KlassApp has a free tier so you can set up your school and see how it works before choosing a paid plan.</p>
+      </details>
     </div>
   </div>
 </section>
@@ -752,7 +682,7 @@
       <div class="protocol-left">
         <div class="protocol-header reveal">
           <h2>Not just software. A protocol.</h2>
-          <p>KlassApp is open infrastructure — designed to be extended, self-hosted from Q1 2027, and shaped by the education community.</p>
+          <p>KlassApp is open infrastructure : designed to be extended, self-hosted when we open source, and shaped by the education community.</p>
         </div>
         <div class="protocol-visual reveal reveal-delay-1">
           <div class="protocol-diagram">
@@ -765,9 +695,9 @@
         </div>
       </div>
       <div class="protocol-grid">
-        <div class="protocol-card ka-node n-blue reveal reveal-delay-1"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="protocol-card-body"><h3>Open Source</h3><p>MIT licensed. Source and self-hosting open publicly in Q1 2027 — after a full security review. No vendor lock-in.</p></div></div>
+        <div class="protocol-card ka-node n-blue reveal reveal-delay-1"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="protocol-card-body"><h3>Open Source</h3><p>MIT licensed. Source and self-hosting will open publicly after an independent security review. No vendor lock-in.</p></div></div>
         <div class="protocol-card ka-node n-violet reveal reveal-delay-2"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div><div class="protocol-card-body"><h3>MCP Compatible</h3><p>Model Context Protocol support means any MCP-compatible AI can connect. Bring your own models.</p></div></div>
-        <div class="protocol-card ka-node n-amber amber-accent reveal reveal-delay-3"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="protocol-card-body"><h3>Community-Driven</h3><p>Built by educators and engineers. Contributions welcome — connectors, translations, features.</p></div></div>
+        <div class="protocol-card ka-node n-amber amber-accent reveal reveal-delay-3"><div class="protocol-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="protocol-card-body"><h3>Community-Driven</h3><p>Built by educators and engineers. Contributions welcome : connectors, translations, features.</p></div></div>
       </div>
     </div>
   </div>
@@ -777,15 +707,15 @@
   <div class="container">
     <div class="oss-cta-card reveal">
       <div class="oss-cta-inner">
-        <h2>Open source. <em>Coming Q1 2027.</em></h2>
-        <p>KlassApp is being built carefully, with a full security review before the source and self-hosting option open publicly. MIT-licensed. Follow along and get notified when it launches.</p>
+        <h2>Free. Open. <em>Self-hostable.</em></h2>
+        <p>KlassApp's code is public today. Before wide launch, we close briefly for an independent security review. Then it will be free, open, and self-hostable.</p>
         <div class="oss-badges">
           <span class="oss-badge amber">MIT License</span>
-          <span class="oss-badge">Q1 2027</span>
+          <span class="oss-badge">Security review first</span>
         </div>
         <form class="oss-notify" action="#" method="post" onsubmit="return false;">
           <input type="email" name="email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address">
-          <button type="submit" class="btn btn-primary">Get notified</button>
+          <button type="submit" class="btn btn-primary">Get notified when we open source</button>
         </form>
         <div class="oss-actions-secondary">
           <a href="{{ url('/docs/community') }}" class="btn btn-amber">Read the docs</a>
@@ -801,7 +731,7 @@
       <div class="footer-logo">KlassApp</div>
       <ul class="footer-links">
         <li><a href="{{ url('/docs/community') }}">Docs</a></li>
-        <li><a href="#open-source">Coming Q1 2027</a></li>
+        <li><a href="#community">Open source</a></li>
         <li><a href="{{ url('/docs/community') }}">Community</a></li>
         <li><a href="{{ url('/contact') }}">Contact</a></li>
       </ul>

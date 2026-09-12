@@ -603,7 +603,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — landing/auth preview build — [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) open (`feature/landing-auth-preview-build`, tip `2d9d5b5b`)
+## Current Status: September 12, 2026 — landing v4 content on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
 
 - **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `2d9d5b5b` off `main` (`6333b0a5`). Preview routes only — live `/`, `/login`, `/register`, live `errors/*` untouched.
 - **Port**: Source-only from `origin/feature/auth-pages-preview` (Blade/CSS/JS/routes/tests/e2e). No hand-ported `knowledge.md` conflict; Vite `public/build` regenerated fresh (`landing-preview-DJ3HvCyn.css`).
@@ -1744,6 +1744,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-12: Landing content FINAL v4 + README OSS date scrub — **PR #534**
+- **Work done**: Implemented locked `docs/klassapp-landing-content-final-v4.md` into `/landing-preview` (hero tagline, 5 pillars incl. Provable-as-coming, community silent-on-date, comparison table, FAQ). Narrow README edit: removed explicit Q1 2027 open-source date; free/open/self-hostable framing. Vintage hero mock not ported (no lock decision yet).
+- **Files modified**: `README.md`, `docs/klassapp-landing-content-final-v4.md`, `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-preview-build-verify.cjs`, `e2e/screenshots/landing-preview-build/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Provable uses Coming badge + "Stated direction. Not a live feature yet." Comparison flagged as illustrative. No em dashes. Preview routes only.
+- **Status**: 📝 Pushed on [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534)
+- **Verify**: Feature tests 15 passed; Playwright desktop/tablet/mobile ok=true, 5 pillars, Provable present, no Q1 2027 / em dash / ds-* leakage
 
 ### 2026-09-12: Landing + auth preview build (OD cursor-agent) — **LOCAL BRANCH**
 - **Work done**: Fresh branch `feature/landing-auth-preview-build` off `main`. Ported auth-pages-preview source only (no stale `public/build` / no conflicted `knowledge.md`). Open Design via **cursor-agent/auto** for pillars+community and how-it-works enrich mocks; implemented into `landing-v2` + `landing-preview.css`. Auth/errors preview routes unchanged.

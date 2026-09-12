@@ -6,7 +6,7 @@ KlassApp is a multi-tenant school management platform built around **Toshi**, an
 
 Live product: [https://klassapp.xyz](https://klassapp.xyz)
 
-Public open-source release (MIT, self-hostable) is planned for **Q1 2027**, after a full security review. Until then this repository is the working codebase for the hosted SaaS. Contributions and early feedback are welcome via GitHub and `community@klassapp.xyz`.
+KlassApp will be free, open, and self-hostable: you will be able to read the source code, and if you want, run your own copy yourself. Before wide launch, the codebase closes briefly for an independent security review. This repository is the working tree for the hosted SaaS today. Contributions and early feedback are welcome via GitHub and `community@klassapp.xyz`.
 
 ## What you get today
 
@@ -153,16 +153,16 @@ PHPUnit is the project standard. Prefer factories and school-scoped fixtures. Ne
 
 Questions and community contact: **community@klassapp.xyz**.
 
-## Open source timeline
+## Open source
 
-| Milestone | Target |
+| Milestone | Status |
 |---|---|
 | Hosted SaaS (`klassapp.xyz`) | Live now |
-| Public MIT source + self-hosting docs | **Q1 2027** |
-| MCP-compatible connectors as a first-class protocol surface | Roadmap alongside the OSS release |
+| Free, open, self-hostable MIT source | Coming after an independent security review (no public date stated) |
+| MCP-compatible connectors as a first-class protocol surface | Roadmap alongside the open-source release |
 
-Until the public release, treat this tree as the private/working product codebase. The Q1 2027 open-source date is a real shipping plan, not a placeholder slogan.
+Until the public open-source release, treat this tree as the working product codebase. KlassApp will be free, open, and self-hostable: you will be able to read the source, and if you want, run your own copy.
 
 ## License
 
-Open-source licensing (MIT) lands with the **Q1 2027** public release. Until then, all rights are reserved by KlassApp Foundation unless a separate agreement says otherwise.
+Open-source licensing (MIT) lands with the public free/open/self-hostable release after the security review. Until then, all rights are reserved by KlassApp Foundation unless a separate agreement says otherwise.
