@@ -1,6 +1,6 @@
 {
   "base": "http://127.0.0.1:8000",
-  "at": "2026-09-12T09:53:54.705Z",
+  "at": "2026-09-12T10:36:49.916Z",
   "viewports": {
     "desktop": {
       "status": 200,
@@ -31,10 +31,6 @@
           "present": true
         },
         {
-          "id": "community",
-          "present": true
-        },
-        {
           "id": "faq",
           "present": true
         },
@@ -43,32 +39,35 @@
           "present": true
         },
         {
+          "id": "community",
+          "present": false
+        },
+        {
           "id": "open-source",
-          "present": true
+          "present": false
         }
       ],
       "productUi": {
-        "uiChrome": 3,
-        "waBubble": 3,
-        "teachShell": 1,
-        "adminStack": 1,
         "pillars": 5,
         "provable": true,
         "protocolCores": true,
         "howProtocol": true,
-        "compare": true,
-        "faq": true,
         "emDash": false,
         "q1": false,
         "vintageHero": true,
         "navPrimaryLogo": true,
-        "toshiHubLogo": true,
-        "simpleFooter": true
+        "toshiHubMark": true,
+        "toshiFlowArrows": true,
+        "toshiStreaks": true,
+        "humanInLoop": true,
+        "protocolMesh": true,
+        "openSourceCard": true,
+        "prodFooter": true,
+        "noCommunitySection": true
       },
       "isolation": {
         "dsElements": 0,
         "dVarInInline": false,
-        "dVarInLandingCss": false,
         "htmlHasDsKpi": false
       },
       "screenshot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-preview-build/desktop-full.png"
@@ -102,10 +101,6 @@
           "present": true
         },
         {
-          "id": "community",
-          "present": true
-        },
-        {
           "id": "faq",
           "present": true
         },
@@ -114,32 +109,35 @@
           "present": true
         },
         {
+          "id": "community",
+          "present": false
+        },
+        {
           "id": "open-source",
-          "present": true
+          "present": false
         }
       ],
       "productUi": {
-        "uiChrome": 3,
-        "waBubble": 3,
-        "teachShell": 1,
-        "adminStack": 1,
         "pillars": 5,
         "provable": true,
         "protocolCores": true,
         "howProtocol": true,
-        "compare": true,
-        "faq": true,
         "emDash": false,
         "q1": false,
         "vintageHero": true,
         "navPrimaryLogo": true,
-        "toshiHubLogo": true,
-        "simpleFooter": true
+        "toshiHubMark": true,
+        "toshiFlowArrows": true,
+        "toshiStreaks": true,
+        "humanInLoop": true,
+        "protocolMesh": true,
+        "openSourceCard": true,
+        "prodFooter": true,
+        "noCommunitySection": true
       },
       "isolation": {
         "dsElements": 0,
         "dVarInInline": false,
-        "dVarInLandingCss": false,
         "htmlHasDsKpi": false
       },
       "screenshot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-preview-build/tablet-full.png"
@@ -173,10 +171,6 @@
           "present": true
         },
         {
-          "id": "community",
-          "present": true
-        },
-        {
           "id": "faq",
           "present": true
         },
@@ -185,32 +179,35 @@
           "present": true
         },
         {
+          "id": "community",
+          "present": false
+        },
+        {
           "id": "open-source",
-          "present": true
+          "present": false
         }
       ],
       "productUi": {
-        "uiChrome": 3,
-        "waBubble": 3,
-        "teachShell": 1,
-        "adminStack": 1,
         "pillars": 5,
         "provable": true,
         "protocolCores": true,
         "howProtocol": true,
-        "compare": true,
-        "faq": true,
         "emDash": false,
         "q1": false,
         "vintageHero": true,
         "navPrimaryLogo": true,
-        "toshiHubLogo": true,
-        "simpleFooter": true
+        "toshiHubMark": true,
+        "toshiFlowArrows": true,
+        "toshiStreaks": true,
+        "humanInLoop": true,
+        "protocolMesh": true,
+        "openSourceCard": true,
+        "prodFooter": true,
+        "noCommunitySection": true
       },
       "isolation": {
         "dsElements": 0,
         "dVarInInline": false,
-        "dVarInLandingCss": false,
         "htmlHasDsKpi": false
       },
       "screenshot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-preview-build/mobile-full.png"

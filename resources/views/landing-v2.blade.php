@@ -29,7 +29,6 @@
       <li><a href="#how-it-works">How it works</a></li>
       <li><a href="#trust">Protocol Cores</a></li>
       <li><a href="#compare">What we address</a></li>
-      <li><a href="#community">Community</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
     <a href="{{ url('/register') }}" class="navbar-cta">Start free</a>
@@ -57,7 +56,7 @@
         <p class="hero-sub">Toshi orchestrates WhatsApp, Drive, Slack, and email: one AI agent built for how schools actually work.</p>
         <div class="hero-actions">
           <a href="{{ url('/register') }}" class="btn btn-primary">Start free <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></a>
-          <a href="#community" class="btn btn-secondary">Get notified when we open source</a>
+          <a href="#protocol" class="btn btn-secondary">Get notified when we open source</a>
         </div>
         <div class="hero-trust">
           <span>Free and open (MIT)</span><span class="dot"></span>
@@ -221,21 +220,50 @@
                 <feGaussianBlur stdDeviation="2.6" result="b" />
                 <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
+              <filter id="tSoftGlow" x="-80%" y="-80%" width="260%" height="260%">
+                <feGaussianBlur stdDeviation="1.8" result="b" />
+                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <filter id="tPacketGlow" x="-150%" y="-150%" width="400%" height="400%">
+                <feGaussianBlur stdDeviation="2.8" result="b" />
+                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <marker id="arrowInGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#22C55E" />
+              </marker>
+              <marker id="arrowInBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#1E6FD9" />
+              </marker>
+              <marker id="arrowInViolet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#8B5CF6" />
+              </marker>
+              <marker id="arrowInAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#D97706" />
+              </marker>
+              <marker id="arrowOutGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#22C55E" />
+              </marker>
+              <marker id="arrowOutBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#1E6FD9" />
+              </marker>
+              <marker id="arrowOutAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+                <path d="M0,1.2 L9,5 L0,8.8 Z" fill="#D97706" />
+              </marker>
             </defs>
 
             <!-- Channels → hub. Order matches the channel cards below. -->
             <g class="t-base-in">
-              <path class="toshi-line" stroke="url(#tInGreen)" />
-              <path class="toshi-line" stroke="url(#tInBlue)" />
-              <path class="toshi-line" stroke="url(#tInViolet)" />
-              <path class="toshi-line" stroke="url(#tInGreen)" />
-              <path class="toshi-line" stroke="url(#tInAmber)" />
+              <path class="toshi-line" stroke="url(#tInGreen)" marker-end="url(#arrowInGreen)" />
+              <path class="toshi-line" stroke="url(#tInBlue)" marker-end="url(#arrowInBlue)" />
+              <path class="toshi-line" stroke="url(#tInViolet)" marker-end="url(#arrowInViolet)" />
+              <path class="toshi-line" stroke="url(#tInGreen)" marker-end="url(#arrowInGreen)" />
+              <path class="toshi-line" stroke="url(#tInAmber)" marker-end="url(#arrowInAmber)" />
             </g>
             <!-- Hub → roles. Order matches the role pills below. -->
             <g class="t-base-out">
-              <path class="toshi-line" stroke="url(#tOutGreen)" />
-              <path class="toshi-line" stroke="url(#tOutBlue)" />
-              <path class="toshi-line" stroke="url(#tOutAmber)" />
+              <path class="toshi-line" stroke="url(#tOutGreen)" marker-end="url(#arrowOutGreen)" />
+              <path class="toshi-line" stroke="url(#tOutBlue)" marker-end="url(#arrowOutBlue)" />
+              <path class="toshi-line" stroke="url(#tOutAmber)" marker-end="url(#arrowOutAmber)" />
             </g>
 
             <!-- Energy streaks, travelling in toward the hub and out to the roles -->
@@ -252,13 +280,29 @@
               <path class="toshi-line-flow f-amber" style="animation-delay: 2.6s" />
             </g>
 
-            <!-- Glowing packets drifting toward the centre -->
+            <g class="t-streak-in">
+              <path class="toshi-line-streak f-green" />
+              <path class="toshi-line-streak f-blue" style="animation-delay: 0.9s" />
+              <path class="toshi-line-streak f-violet" style="animation-delay: 0.35s" />
+              <path class="toshi-line-streak f-green" style="animation-delay: 1.5s" />
+              <path class="toshi-line-streak f-amber" style="animation-delay: 0.65s" />
+            </g>
+            <g class="t-streak-out">
+              <path class="toshi-line-streak f-green" style="animation-delay: 1.8s" />
+              <path class="toshi-line-streak f-blue" style="animation-delay: 1.2s" />
+              <path class="toshi-line-streak f-amber" style="animation-delay: 2.1s" />
+            </g>
             <g class="toshi-particles">
-              <circle class="toshi-particle p-green"  cx="0" cy="0" r="3.2" filter="url(#tGlow)" />
-              <circle class="toshi-particle p-blue"   cx="0" cy="0" r="3"   filter="url(#tGlow)" style="animation-delay: 1.1s" />
-              <circle class="toshi-particle p-violet" cx="0" cy="0" r="3.4" filter="url(#tGlow)" style="animation-delay: 0.4s" />
-              <circle class="toshi-particle p-green"  cx="0" cy="0" r="3"   filter="url(#tGlow)" style="animation-delay: 1.8s" />
-              <circle class="toshi-particle p-amber"  cx="0" cy="0" r="3.2" filter="url(#tGlow)" style="animation-delay: 0.8s" />
+              <circle class="toshi-particle p-green"  cx="0" cy="0" r="3.4" filter="url(#tPacketGlow)" />
+              <circle class="toshi-particle p-blue"   cx="0" cy="0" r="3.1" filter="url(#tPacketGlow)" style="animation-delay: 0.9s" />
+              <circle class="toshi-particle p-violet" cx="0" cy="0" r="3.5" filter="url(#tPacketGlow)" style="animation-delay: 0.35s" />
+              <circle class="toshi-particle p-green"  cx="0" cy="0" r="3.1" filter="url(#tPacketGlow)" style="animation-delay: 1.5s" />
+              <circle class="toshi-particle p-amber"  cx="0" cy="0" r="3.3" filter="url(#tPacketGlow)" style="animation-delay: 0.65s" />
+            </g>
+            <g class="toshi-particles toshi-particles-out">
+              <circle class="toshi-particle p-green"  cx="0" cy="0" r="3.2" filter="url(#tPacketGlow)" style="animation-delay: 1.8s" />
+              <circle class="toshi-particle p-blue"   cx="0" cy="0" r="3"   filter="url(#tPacketGlow)" style="animation-delay: 1.2s" />
+              <circle class="toshi-particle p-amber"  cx="0" cy="0" r="3.2" filter="url(#tPacketGlow)" style="animation-delay: 2.1s" />
             </g>
           </svg>
         </div>
@@ -271,16 +315,30 @@
         </div>
         <div class="toshi-visual-hub">
           <div class="toshi-visual-core" aria-label="KlassApp · Toshi hub">
-            <img src="{{ asset('images/klassapp-logo.svg') }}" alt="" class="toshi-hub-logo" width="40" height="40" />
-            <span class="toshi-hub-name">Toshi</span>
+            <span class="hub-ring-mid" aria-hidden="true"></span>
+            <div class="hub-mark" title="KlassApp">
+              <img src="{{ asset('images/klassapp-logo.svg') }}" alt="" width="40" height="40" />
+            </div>
           </div>
           <div class="toshi-visual-label">Control Center</div>
+          <div class="hub-sub">Toshi · KlassApp</div>
         </div>
         <div class="toshi-visual-roles">
           <div class="toshi-visual-role toshi-node n-green"><span class="role-dot parent"></span> Parent</div>
           <div class="toshi-visual-role toshi-node n-blue"><span class="role-dot teacher"></span> Teacher</div>
           <div class="toshi-visual-role toshi-node n-amber"><span class="role-dot admin"></span> Admin</div>
         </div>
+      </div>
+    </div>
+
+
+    <div class="toshi-hitl reveal" role="note">
+      <div class="toshi-hitl-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 12l2 2 4-4"/><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/></svg>
+      </div>
+      <div class="toshi-hitl-body">
+        <strong>Human in the loop</strong>
+        <p>Before consequential writes, Toshi asks for confirmation. You approve, then it acts. Creation tools stay on an explicit Yes/No gate so a person remains in control.</p>
       </div>
     </div>
 
@@ -640,29 +698,6 @@
   </div>
 </section>
 
-<section class="community" id="community">
-  <div class="container">
-    <div class="community-layout">
-      <div class="community-copy reveal">
-        <div class="community-kicker">Community-driven</div>
-        <h2>Built in the open, so it grows with what your school needs</h2>
-        <p class="lead">KlassApp's code is public today. Before we launch widely, we're closing it briefly for an independent security review.</p>
-        <p>It will be free, open, and self-hostable: you'll be able to read the source code, and if you want, run your own copy of KlassApp yourself.</p>
-        <p>We built KlassApp first for the hardest real-world constraints: limited bandwidth, everyday phones, real classrooms. If it works there, it works anywhere schools need it.</p>
-      </div>
-      <div class="community-panel reveal reveal-delay-1">
-        <form class="notify-form" action="#" method="post" onsubmit="return false;">
-          <input type="email" name="email" placeholder="your@school.edu" required autocomplete="email" aria-label="Email address">
-          <button type="submit" class="btn btn-primary">Get notified when we open source</button>
-        </form>
-        <div class="panel-actions">
-          <a href="{{ url('/docs/community') }}" class="btn btn-secondary">Read the docs</a>
-        </div>
-        <p class="panel-note">We'll email you when source and self-hosting open publicly. No date promised here.</p>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section class="faq" id="faq">
   <div class="container">
@@ -698,13 +733,41 @@
           <h2>Not just software. A protocol.</h2>
           <p>KlassApp is open infrastructure : designed to be extended, self-hosted when we open source, and shaped by the education community.</p>
         </div>
-        <div class="protocol-visual reveal reveal-delay-1">
-          <div class="protocol-diagram">
-            <div class="protocol-orbit"></div>
-            <div class="protocol-diagram-center">KA</div>
-            <div class="protocol-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
-            <div class="protocol-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div>
-            <div class="protocol-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <div class="protocol-visual reveal reveal-delay-1" aria-hidden="true">
+          <div class="mesh">
+            <div class="mesh-glow"></div>
+            <div class="mesh-stars">
+              <span></span><span></span><span></span>
+              <span></span><span></span><span></span>
+            </div>
+            <svg class="mesh-svg" viewBox="0 0 460 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle class="mesh-ring soft" cx="230" cy="230" r="198" />
+              <circle class="mesh-ring dashed" cx="230" cy="230" r="168" />
+              <circle class="mesh-ring soft" cx="230" cy="230" r="92" />
+              <path class="mesh-link oss" d="M230 172 C230 140, 230 110, 230 78" />
+              <path class="mesh-link mcp" d="M186 268 C140 300, 110 330, 88 352" />
+              <path class="mesh-link com" d="M274 268 C320 300, 350 330, 372 352" />
+              <path class="mesh-link-pulse oss" d="M230 172 C230 140, 230 110, 230 78" />
+              <path class="mesh-link-pulse mcp" d="M186 268 C140 300, 110 330, 88 352" />
+              <path class="mesh-link-pulse com" d="M274 268 C320 300, 350 330, 372 352" />
+            </svg>
+            <div class="mesh-hub">
+              <span class="mesh-hub-mark">KA</span>
+              <span class="mesh-hub-label">Protocol</span>
+            </div>
+            <div class="mesh-chip">Open infrastructure</div>
+            <div class="mesh-node oss">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+              <div class="meta"><span class="kicker">Layer 01</span><span class="title">Open Source</span></div>
+            </div>
+            <div class="mesh-node mcp">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/></svg></div>
+              <div class="meta"><span class="kicker">Layer 02</span><span class="title">MCP Compatible</span></div>
+            </div>
+            <div class="mesh-node com">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+              <div class="meta"><span class="kicker">Layer 03</span><span class="title">Community-Driven</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -717,41 +780,30 @@
   </div>
 </section>
 
-<section class="oss-cta" id="open-source">
-  <div class="container">
-    <div class="oss-cta-card reveal">
-      <div class="oss-cta-inner">
-        <h2>Free. Open. <em>Self-hostable.</em></h2>
-        <p>KlassApp's code is public today. Before wide launch, we close briefly for an independent security review. Then it will be free, open, and self-hostable.</p>
-        <div class="oss-badges">
-          <span class="oss-badge amber">MIT License</span>
-          <span class="oss-badge">Security review first</span>
-        </div>
-        <form class="oss-notify" action="#" method="post" onsubmit="return false;">
-          <input type="email" name="email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address">
-          <button type="submit" class="btn btn-primary">Get notified when we open source</button>
-        </form>
-        <div class="oss-actions-secondary">
-          <a href="{{ url('/docs/community') }}" class="btn btn-amber">Read the docs</a>
-        </div>
+
+{{-- Production footer block from resources/views/landing.blade.php (footer only; no Stay-in-the-loop newsletter). --}}
+<footer class="site-footer">
+  <div class="site-footer-wordmark" aria-hidden="true">KlassApp</div>
+  <div class="container site-footer-inner">
+    <div class="site-footer-row">
+      <div class="site-footer-brand">
+        <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="site-footer-logo" width="56" height="56" />
+        <p class="site-footer-tagline">Smarter schools start here.</p>
+      </div>
+      <nav class="site-footer-links" aria-label="Footer">
+        <a href="#">Terms</a>
+        <a href="#">Privacy</a>
+        <a href="/docs/community/">Docs</a>
+        <a href="/contact">Contact</a>
+      </nav>
+      <div class="site-footer-socials">
+        <a href="#" class="site-footer-social" aria-label="Facebook">f</a>
+        <a href="#" class="site-footer-social" aria-label="X">𝕏</a>
+        <a href="#" class="site-footer-social" aria-label="Instagram">◉</a>
+        <a href="#" class="site-footer-social" aria-label="LinkedIn">in</a>
       </div>
     </div>
-  </div>
-</section>
-
-{{-- Footer: explicit decision — keep simple KlassApp wordmark; do NOT expand to Nimbalyst multi-column density. --}}
-<footer class="footer">
-  <div class="container">
-    <div class="footer-inner">
-      <div class="footer-logo">KlassApp</div>
-      <ul class="footer-links">
-        <li><a href="{{ url('/docs/community') }}">Docs</a></li>
-        <li><a href="#community">Open source</a></li>
-        <li><a href="{{ url('/docs/community') }}">Community</a></li>
-        <li><a href="{{ url('/contact') }}">Contact</a></li>
-      </ul>
-      <div class="footer-copy">&copy; 2026 KlassApp</div>
-    </div>
+    <div class="site-footer-copy">&copy; {{ date('Y') }} KlassApp. All rights reserved.</div>
   </div>
 </footer>
 

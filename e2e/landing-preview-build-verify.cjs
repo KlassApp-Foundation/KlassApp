@@ -12,6 +12,9 @@ const viewports = [
   { name: 'mobile', width: 390, height: 844 },
 ];
 
+const requiredIds = ['hero', 'connectors', 'toshi', 'how-it-works', 'trust', 'compare', 'faq', 'protocol'];
+const absentIds = ['community', 'open-source'];
+
 (async () => {
   const browser = await chromium.launch({ headless: true });
   const report = { base: BASE, at: new Date().toISOString(), viewports: {}, isolation: {}, ok: true };
@@ -25,79 +28,68 @@ const viewports = [
     page.on('pageerror', (err) => consoleErrors.push(String(err)));
 
     const res = await page.goto(`${BASE}/landing-preview`, { waitUntil: 'networkidle', timeout: 60000 });
-    // reveal all
     await page.evaluate(() => {
       document.querySelectorAll('.reveal').forEach((el) => el.classList.add('visible'));
     });
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(500);
 
-    const ids = await page.evaluate(() =>
-      ['hero', 'connectors', 'toshi', 'how-it-works', 'trust', 'compare', 'community', 'faq', 'protocol', 'open-source']
-        .map((id) => ({ id, present: !!document.getElementById(id) }))
+    const ids = await page.evaluate((all) =>
+      all.map((id) => ({ id, present: !!document.getElementById(id) })),
+      [...requiredIds, ...absentIds]
     );
-    const productUi = await page.evaluate(() => ({
-      uiChrome: document.querySelectorAll('.ui-chrome').length,
-      waBubble: document.querySelectorAll('.wa-bubble').length,
-      teachShell: document.querySelectorAll('.teach-shell').length,
-      adminStack: document.querySelectorAll('.admin-stack').length,
-      pillars: document.querySelectorAll('.pillar').length,
-      provable: (document.body.textContent || '').includes('Provable'),
-      protocolCores: (document.body.textContent || '').includes('Protocol Cores'),
-      howProtocol: (document.body.textContent || '').includes('One protocol layer')
-        && (document.body.textContent || '').includes('protocol orchestration')
-        && (document.body.textContent || '').includes('Protocol path')
-        && !(document.body.textContent || '').includes('One intelligence layer orchestrating three perspectives'),
-      compare: !!document.getElementById('compare'),
-      faq: !!document.getElementById('faq'),
-      emDash: (document.body.textContent || '').includes('\u2014'),
-      q1: (document.body.textContent || '').includes('Q1 2027'),
-      vintageHero: !!document.querySelector('.hero-bg-vintage'),
-      navPrimaryLogo: !!document.querySelector('.navbar-logo-img[src*="klassapp-logo-primary"]'),
-      toshiHubLogo: !!document.querySelector('.toshi-hub-logo[src*="klassapp-logo.svg"]'),
-      simpleFooter: !!document.querySelector('.footer-logo')
-        && (document.querySelector('.footer-logo')?.textContent || '').trim() === 'KlassApp'
-        && !document.querySelector('.footer-columns'),
-    }));
-
-    // isolation: no --d-* computed vars on body / no .ds-* elements
-    const isolation = await page.evaluate(() => {
-      const styles = getComputedStyle(document.documentElement);
-      const cssText = Array.from(document.styleSheets)
-        .map((s) => {
-          try {
-            return Array.from(s.cssRules || [])
-              .map((r) => r.cssText)
-              .join('\n');
-          } catch (e) {
-            return '';
-          }
-        })
-        .join('\n');
+    const productUi = await page.evaluate(() => {
+      const text = document.body.textContent || '';
       return {
-        dsElements: document.querySelectorAll('[class*="ds-"]').length,
-        dVarInInline: (document.documentElement.getAttribute('style') || '').includes('--d-'),
-        dVarInLandingCss: /--d-[a-z]/.test(cssText) && cssText.includes('landing-preview'),
-        // simpler: page HTML shouldn't reference ds-kpi
-        htmlHasDsKpi: document.documentElement.outerHTML.includes('ds-kpi'),
+        pillars: document.querySelectorAll('.pillar').length,
+        provable: text.includes('Provable'),
+        protocolCores: text.includes('Protocol Cores'),
+        howProtocol: text.includes('One protocol layer')
+          && text.includes('protocol orchestration')
+          && text.includes('Protocol path')
+          && !text.includes('One intelligence layer orchestrating three perspectives'),
+        emDash: text.includes('\u2014'),
+        q1: text.includes('Q1 2027'),
+        vintageHero: !!document.querySelector('.hero-bg-vintage'),
+        navPrimaryLogo: !!document.querySelector('.navbar-logo-img[src*="klassapp-logo-primary"]'),
+        toshiHubMark: !!document.querySelector('.hub-mark img[src*="klassapp-logo.svg"]'),
+        toshiFlowArrows: !!document.querySelector('marker#arrowInGreen'),
+        toshiStreaks: document.querySelectorAll('.toshi-line-streak').length >= 5,
+        humanInLoop: text.includes('Human in the loop')
+          && text.includes('Before consequential writes, Toshi asks for confirmation'),
+        protocolMesh: !!document.querySelector('.mesh .mesh-hub'),
+        openSourceCard: text.includes('MIT licensed. Source and self-hosting will open publicly after an independent security review'),
+        prodFooter: !!document.querySelector('footer.site-footer')
+          && text.includes('Smarter schools start here.')
+          && !!document.querySelector('.site-footer-wordmark')
+          && !text.includes('Stay in the loop')
+          && !document.querySelector('.footer-columns'),
+        noCommunitySection: !document.getElementById('community') && !document.getElementById('open-source'),
       };
     });
+
+    const isolation = await page.evaluate(() => ({
+      dsElements: document.querySelectorAll('[class*="ds-"]').length,
+      dVarInInline: (document.documentElement.getAttribute('style') || '').includes('--d-'),
+      htmlHasDsKpi: document.documentElement.outerHTML.includes('ds-kpi'),
+    }));
 
     const shot = path.join(OUT, `${vp.name}-full.png`);
     await page.screenshot({ path: shot, fullPage: true });
 
-    // Focus shots for the three requested visual changes
-    const heroEl = await page.$('#hero');
-    if (heroEl) {
-      await heroEl.screenshot({ path: path.join(OUT, `${vp.name}-hero.png`) });
+    for (const [sel, name] of [
+      ['#hero', 'hero'],
+      ['#toshi', 'toshi'],
+      ['#protocol', 'protocol'],
+      ['footer.site-footer', 'footer'],
+    ]) {
+      const el = await page.$(sel);
+      if (el) {
+        await el.screenshot({ path: path.join(OUT, `${vp.name}-${name}.png`) });
+      }
     }
-    const toshiEl = await page.$('#toshi');
-    if (toshiEl) {
-      await toshiEl.screenshot({ path: path.join(OUT, `${vp.name}-toshi.png`) });
-    }
-    const footerEl = await page.$('footer.footer');
-    if (footerEl) {
-      await footerEl.screenshot({ path: path.join(OUT, `${vp.name}-footer.png`) });
-    }
+
+    const requiredPresent = ids.filter((x) => requiredIds.includes(x.id)).every((x) => x.present);
+    const absentGone = ids.filter((x) => absentIds.includes(x.id)).every((x) => !x.present);
 
     const entry = {
       status: res.status(),
@@ -108,10 +100,12 @@ const viewports = [
       screenshot: shot,
     };
     report.viewports[vp.name] = entry;
+
     if (
       res.status() !== 200
       || consoleErrors.length
-      || ids.some((x) => !x.present)
+      || !requiredPresent
+      || !absentGone
       || productUi.pillars < 5
       || productUi.emDash
       || productUi.q1
@@ -120,16 +114,22 @@ const viewports = [
       || !productUi.howProtocol
       || !productUi.vintageHero
       || !productUi.navPrimaryLogo
-      || !productUi.toshiHubLogo
-      || !productUi.simpleFooter
+      || !productUi.toshiHubMark
+      || !productUi.toshiFlowArrows
+      || !productUi.toshiStreaks
+      || !productUi.humanInLoop
+      || !productUi.protocolMesh
+      || !productUi.openSourceCard
+      || !productUi.prodFooter
+      || !productUi.noCommunitySection
+      || isolation.dsElements > 0
+      || isolation.htmlHasDsKpi
     ) {
       report.ok = false;
     }
-    if (isolation.dsElements > 0 || isolation.htmlHasDsKpi) report.ok = false;
     await page.close();
   }
 
-  // Auth + errors smoke (preview routes still up)
   const page = await browser.newPage();
   for (const url of ['/preview/login', '/preview/errors/404']) {
     const r = await page.goto(`${BASE}${url}`, { waitUntil: 'domcontentloaded', timeout: 30000 });

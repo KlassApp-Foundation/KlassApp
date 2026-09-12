@@ -603,11 +603,23 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Vintage hero v2 + logo marks on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
+## Current Status: September 12, 2026 — Footer/Community/HITL/protocol mesh/Toshi hub flow on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
 
-- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` (preview routes only — live `/`, `/login`, `/register`, live `errors/*` untouched).
+- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` (preview routes only).
+- **This pass**:
+  1. Production footer from `landing.blade.php` (large KlassApp wordmark, logo + “Smarter schools start here.”, Terms/Privacy/Docs/Contact, socials, ©) — newsletter omitted.
+  2. Removed `#community` and redundant `#open-source` (Free. Open. Self-hostable.) — Protocol Open Source card remains the OSS message.
+  3. Meet Toshi: “Human in the loop” callout (confirm-before-write / Yes/No gate).
+  4. OD `klassapp-landing-v3-protocol-visual-v2.html` statement mesh ported (no Q1 dates).
+  5. OD `klassapp-landing-v3-toshi-hub-flow-v2.html` hub mark + directional/streak flow lines (badges unchanged).
+- **Verify**: `LandingPreviewV3Test` 43 assertions. Playwright `ok=true` 1440/1024/390 — prodFooter, noCommunitySection, humanInLoop, protocolMesh, toshiHubMark/arrows/streaks; zero console errors; `ds-*` isolation clean; no em dashes / Q1 2027. Artifacts `e2e/screenshots/landing-preview-build/{desktop,tablet,mobile}-{hero,toshi,protocol,footer,full}.png`.
+- **Still prior**: Vintage hero v2 + FINAL v4 copy + Protocol Cores framing on same PR.
+
+## Previous: September 12, 2026 — Vintage hero v2 + logo marks on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
+
+- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `34980e98` (preview routes only — live `/`, `/login`, `/register`, live `errors/*` untouched).
 - **This pass**: OD remock `klassapp-landing-v3-hero-vintage-paper-v2.html` (fainter grain + ledger rules) → ported to `/landing-preview`. Nav uses `klassapp-logo-primary.svg` (was text wordmark). Toshi hub center uses icon `klassapp-logo.svg`. Footer kept simple KlassApp wordmark (explicit no Nimbalyst multi-column).
-- **Verify**: `LandingPreviewV3Test` 1 passed (33 assertions). Playwright `ok=true` desktop/tablet/mobile — vintageHero, navPrimaryLogo, toshiHubLogo, simpleFooter; zero console errors; `ds-*` / `--d-*` isolation clean. Artifacts `e2e/screenshots/landing-preview-build/{desktop,tablet,mobile}-{hero,toshi,footer,full}.png`.
+- **Verify**: `LandingPreviewV3Test` 1 passed (33 assertions). Playwright `ok=true` desktop/tablet/mobile — vintageHero, navPrimaryLogo, toshiHubLogo, simpleFooter; zero console errors; `ds-*` / `--d-*` isolation clean. Artifacts `e2e/screenshots/landing-preview-build/{desktop,tablet,mobile}-{hero,toshi,footer,full}.png`. Vite `landing-preview-BVj0D0oE.css`.
 - **Still prior**: Protocol Cores + How It Works framing + FINAL v4 copy on same PR.
 
 ## Previous: September 12, 2026 — Protocol Cores + How It Works protocol framing on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)

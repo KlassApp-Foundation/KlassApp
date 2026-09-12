@@ -94,7 +94,10 @@ window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', wi
   const baseOut = Array.from(svg.querySelectorAll('.t-base-out path'));
   const flowIn = Array.from(svg.querySelectorAll('.t-flow-in path'));
   const flowOut = Array.from(svg.querySelectorAll('.t-flow-out path'));
-  const packets = Array.from(svg.querySelectorAll('.toshi-particle'));
+  const streakIn = Array.from(svg.querySelectorAll('.t-streak-in path'));
+  const streakOut = Array.from(svg.querySelectorAll('.t-streak-out path'));
+  const packetsIn = Array.from(svg.querySelectorAll('.toshi-particles:not(.toshi-particles-out) .toshi-particle'));
+  const packetsOut = Array.from(svg.querySelectorAll('.toshi-particles-out .toshi-particle'));
 
   const r1 = (n) => Math.round(n * 10) / 10;
   /* Inbound: leaves the channel vertically, arrives at the hub laterally so it
@@ -159,7 +162,8 @@ window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', wi
       const d = curve(sx, sy, ex, ey);
       assign(baseIn[i], d);
       assignFlow(flowIn[i], d);
-      if (packets[i]) { packets[i].style.offsetPath = 'path("' + d + '")'; }
+      assignFlow(streakIn[i], d);
+      if (packetsIn[i]) { packetsIn[i].style.offsetPath = 'path("' + d + '")'; }
     });
 
     /* Fan the role connectors from below the Control Center pill so they
@@ -172,6 +176,8 @@ window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', wi
       const d = curveS(ox, oy, n.cx, n.top - 4);
       assign(baseOut[j], d);
       assignFlow(flowOut[j], d);
+      assignFlow(streakOut[j], d);
+      if (packetsOut[j]) { packetsOut[j].style.offsetPath = 'path("' + d + '")'; }
     });
   }
 
