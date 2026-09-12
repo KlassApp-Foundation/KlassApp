@@ -391,7 +391,151 @@ body.nav-open { overflow: hidden; }
   margin: 0 4px;
 }
 
-/* ---- Phone Mockup ---- */
+/* ---- Hero role-rotate preview (OD klassapp-landing-v3-hero-role-rotate) ---- */
+.hero-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.hero-stage {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  perspective: 1400px;
+}
+.hero-deck {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.hero-role-card {
+  position: absolute;
+  inset: 12px 18px;
+  border-radius: 22px;
+  background: #0B1220;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 24px 50px -24px rgba(15,23,42,0.65), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateZ(-80px) rotateY(18deg) scale(0.92);
+  transition: transform 0.7s cubic-bezier(.2,.8,.2,1), opacity 0.55s ease;
+  pointer-events: none;
+}
+.hero-role-card.is-active {
+  opacity: 1;
+  transform: translateZ(0) rotateY(0) scale(1);
+  pointer-events: auto;
+  z-index: 3;
+}
+.hero-role-card.is-exit {
+  opacity: 0;
+  transform: translateZ(-40px) rotateY(-16deg) scale(0.94);
+  z-index: 2;
+}
+.hero-role-hd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.hero-role-card.wa .hero-role-hd { background: #075E54; }
+.hero-role-card.drive .hero-role-hd { background: #1E3A5F; }
+.hero-role-card.slack .hero-role-hd { background: #3F1F5C; }
+.hero-role-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  background: rgba(255,255,255,0.18);
+}
+.hero-role-body {
+  padding: 16px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #E2E8F0;
+}
+.hero-bubble {
+  background: #fff;
+  color: #0F172A;
+  border-radius: 12px 12px 12px 4px;
+  padding: 10px 12px;
+  max-width: 92%;
+  margin-bottom: 8px;
+}
+.hero-bubble.out {
+  margin-left: auto;
+  background: #DCF8C6;
+  border-radius: 12px 12px 4px 12px;
+}
+.hero-meta {
+  font-size: 0.6875rem;
+  color: #94A3B8;
+  margin-top: 4px;
+}
+.hero-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  margin-bottom: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  font-size: 0.75rem;
+}
+.hero-role-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  position: relative;
+  z-index: 4;
+}
+.hero-role-dots button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 0;
+  background: color-mix(in srgb, var(--paper-edge) 70%, var(--text-muted));
+  cursor: pointer;
+  padding: 0;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+.hero-role-dots button.on {
+  background: var(--brand-green);
+  width: 18px;
+  border-radius: 999px;
+}
+.hero-preview .connector-float {
+  position: absolute;
+  right: -28px;
+  top: 42%;
+  z-index: 5;
+  transform: translateY(-50%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-role-card {
+    transition: none !important;
+    transform: none !important;
+    opacity: 0;
+  }
+  .hero-role-card.is-active { opacity: 1; }
+  .hero-role-card.is-exit { opacity: 0; }
+  .hero-role-dots { display: none; }
+}
+
+/* Legacy phone mockup selectors kept for any residual markup */
 .phone-wrapper {
   display: flex;
   justify-content: center;
@@ -869,28 +1013,52 @@ body.nav-open { overflow: hidden; }
 .toshi-header h2 .toshi-name { color: var(--brand-green); }
 .toshi-header p { font-size: 1.0625rem; }
 
-/* Toshi control center visual — dimensional node network */
+/* Toshi control center visual — cloud-quality surface (OD toshi-hub-cloud-quality) */
 .toshi-visual {
   margin-bottom: 48px;
   padding: 40px 32px;
-  background: linear-gradient(180deg, var(--brand-light) 0%, var(--brand-white) 100%);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.78));
+  border: 1px solid rgba(226,232,240,0.95);
+  border-radius: 24px;
   position: relative;
   overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.85) inset,
+    0 24px 60px -28px rgba(30,111,217,0.35),
+    0 10px 28px -12px rgba(15,23,42,0.12);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
 }
-/* Layered ambient depth — violet core bloom over a cool floor wash. */
+/* Soft ethereal mist behind the product surface */
 .toshi-visual::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: -22% -12% auto -12%;
+  height: 72%;
   background:
-    radial-gradient(ellipse 58% 44% at 50% 50%, rgba(139,92,246,0.10) 0%, transparent 70%),
-    radial-gradient(ellipse 88% 55% at 50% 104%, rgba(30,111,217,0.05) 0%, transparent 72%);
+    radial-gradient(ellipse 55% 60% at 50% 0%, rgba(30,111,217,0.28), transparent 70%),
+    radial-gradient(ellipse 40% 50% at 20% 30%, rgba(139,92,246,0.16), transparent 65%),
+    radial-gradient(ellipse 40% 50% at 80% 25%, rgba(34,197,94,0.14), transparent 65%);
   pointer-events: none;
+  filter: blur(2px);
+  z-index: 0;
+}
+.toshi-visual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(15,23,42,0.05) 1px, transparent 1px);
+  background-size: 18px 18px;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.45), transparent 85%);
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.45), transparent 85%);
+  pointer-events: none;
+  opacity: 0.55;
+  z-index: 0;
 }
 .toshi-visual-inner {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1100,13 +1268,17 @@ body.nav-open { overflow: hidden; }
   margin-bottom: 10px;
 }
 .toshi-visual-channel {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  display: inline-flex;
+  flex-direction: row;
   align-items: center;
-  gap: 7px;
-  padding: 13px 16px 11px;
-  border-radius: var(--radius-md);
-  min-width: 92px;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  min-width: 0;
+  background: rgba(255,255,255,0.88);
+  border: 1px solid rgba(226,232,240,0.95);
+  box-shadow: 0 8px 18px -14px rgba(15,23,42,0.45), 0 1px 0 rgba(255,255,255,0.9) inset;
 }
 /* Brand-tinted top edge, lit on hover. */
 .toshi-visual-channel::after {
@@ -1121,14 +1293,36 @@ body.nav-open { overflow: hidden; }
 }
 .toshi-visual-channel:hover { transform: translateY(-4px); }
 .toshi-visual-channel:hover::after { opacity: 1; }
-.toshi-visual-channel svg {
-  position: relative;
-  width: 21px; height: 21px;
+.toshi-visual-channel .channel-ico {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  box-shadow: 0 6px 12px -8px rgba(15,23,42,0.5);
+  flex-shrink: 0;
 }
-.toshi-visual-channel span {
-  font-size: 0.625rem;
+.toshi-visual-channel.n-green .channel-ico {
+  background: linear-gradient(145deg, #25D366, #128C7E);
+}
+.toshi-visual-channel.n-blue .channel-ico {
+  background: linear-gradient(145deg, #3B82F6, #1E6FD9);
+}
+.toshi-visual-channel.n-violet .channel-ico {
+  background: linear-gradient(145deg, #A78BFA, #8B5CF6);
+}
+.toshi-visual-channel.n-amber .channel-ico {
+  background: linear-gradient(145deg, #F59E0B, #D97706);
+}
+.toshi-visual-channel .channel-ico svg {
+  width: 15px;
+  height: 15px;
+}
+.toshi-visual-channel span:not(.channel-ico) {
+  font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1151,7 +1345,10 @@ body.nav-open { overflow: hidden; }
   border-radius: 100px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.9);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 14px -12px rgba(15,23,42,0.4);
 }
 .toshi-visual-role:hover { transform: translateY(-3px); }
 .toshi-visual-role .role-dot {
@@ -1179,12 +1376,12 @@ body.nav-open { overflow: hidden; }
 .toshi-visual.t-wrapped .toshi-visual-lines { display: none; }
 .toshi-line {
   fill: none;
-  stroke-width: 2;
+  stroke-width: 2.5;
   stroke-linecap: round;
   opacity: 0;
   transition: opacity 0.9s ease;
 }
-.toshi-visual.visible .toshi-line { opacity: 0.55; }
+.toshi-visual.visible .toshi-line { opacity: 0.9; }
 /* Gradient stops kept on brand tokens rather than raw hex. */
 .stop-green  { stop-color: var(--brand-green); }
 .stop-blue   { stop-color: var(--brand-blue); }
@@ -2076,8 +2273,10 @@ body.nav-open { overflow: hidden; }
   .hero-sub { margin-left: auto; margin-right: auto; }
   .hero-actions { justify-content: center; }
   .hero-trust { justify-content: center; }
-  /* Headline/copy first on mobile — phone mockup follows (was order:-1). */
-  .phone-wrapper { order: 0; }
+  /* Headline/copy first on mobile — role preview follows. */
+  .hero-preview { order: 0; max-width: 320px; }
+  .hero-stage { height: 380px; }
+  .hero-preview .connector-float { display: none; }
   .connector-float { display: none; }
   .panel-table-header { display: none; }
   .panel-row {
@@ -2114,7 +2313,10 @@ body.nav-open { overflow: hidden; }
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
 }
-.phone-frame { animation: float 6s ease-in-out infinite; }
+.hero-stage { animation: float 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-stage { animation: none; }
+}
 
 /* ==== OD BUILD: trust pillars + community + how-it-works enrich (cursor-agent) ==== */
 

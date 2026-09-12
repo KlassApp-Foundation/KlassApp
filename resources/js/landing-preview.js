@@ -32,52 +32,82 @@ window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', wi
   });
 })();
 
-/* Hero chat sequence: typing indicator → message appears */
-(function initChatSequence() {
-  const messages = document.querySelectorAll('#phone-messages .msg');
-  const typing = document.getElementById('typing-indicator');
-  if (!messages.length || !typing) return;
+/* Hero chat sequence replaced by rotating role preview */
+(function initHeroRoleRotate() {
+  const deck = document.getElementById('heroRoleDeck');
+  const dots = document.getElementById('heroRoleDots');
+  if (!deck || !dots) return;
 
-  const delays = { in: 1200, out: 800 };
-  let idx = 0;
-  let loopTimer = null;
+  const cards = Array.from(deck.querySelectorAll('.hero-role-card'));
+  if (cards.length < 2) return;
 
-  function showTyping(isIncoming) {
-    typing.classList.add('active');
-    typing.style.alignSelf = isIncoming ? 'flex-start' : 'flex-end';
-  }
-  function hideTyping() { typing.classList.remove('active'); }
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let i = 0;
+  let timer = null;
 
-  function showNext() {
-    if (idx >= messages.length) {
-      hideTyping();
-      loopTimer = setTimeout(() => {
-        loopTimer = null;
-        idx = 0;
-        messages.forEach(m => m.classList.remove('msg-visible'));
-        setTimeout(showNext, 400);
-      }, 3500);
-      return;
+  function setActive(next) {
+    const prev = cards[i];
+    if (prev && prev !== cards[next]) {
+      prev.classList.remove('is-active');
+      prev.setAttribute('aria-hidden', 'true');
+      if (!reduceMotion) {
+        prev.classList.add('is-exit');
+        setTimeout(() => prev.classList.remove('is-exit'), 700);
+      }
     }
-    const msg = messages[idx];
-    const isIncoming = msg.classList.contains('msg-in');
-    showTyping(isIncoming);
-    setTimeout(() => {
-      hideTyping();
-      msg.classList.add('msg-visible');
-      idx++;
-      setTimeout(showNext, isIncoming ? delays.in : delays.out);
-    }, isIncoming ? 900 : 500);
+    i = next;
+    cards.forEach((card, idx) => {
+      const on = idx === i;
+      card.classList.toggle('is-active', on);
+      card.setAttribute('aria-hidden', on ? 'false' : 'true');
+    });
+    Array.from(dots.children).forEach((d, di) => {
+      d.classList.toggle('on', di === i);
+      d.setAttribute('aria-selected', di === i ? 'true' : 'false');
+    });
   }
 
-  const phoneObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting && idx === 0 && !loopTimer) {
-        setTimeout(showNext, 600);
+  cards.forEach((card, idx) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-label', card.getAttribute('aria-label') || ('Show preview ' + (idx + 1)));
+    if (idx === 0) b.classList.add('on');
+    b.addEventListener('click', () => {
+      setActive(idx);
+      restart();
+    });
+    dots.appendChild(b);
+  });
+
+  function tick() {
+    setActive((i + 1) % cards.length);
+  }
+  function restart() {
+    clearInterval(timer);
+    timer = null;
+    if (!reduceMotion) {
+      timer = setInterval(tick, 3200);
+    }
+  }
+
+  if (reduceMotion) {
+    setActive(0);
+    return;
+  }
+
+  const stage = document.getElementById('heroRoleStage') || deck;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        restart();
+      } else {
+        clearInterval(timer);
+        timer = null;
       }
     });
-  }, { threshold: 0.3 });
-  phoneObserver.observe(document.querySelector('.phone-frame'));
+  }, { threshold: 0.25 });
+  io.observe(stage);
 })();
 
 /* How it works: sequential step reveal */

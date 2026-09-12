@@ -1,0 +1,12 @@
+{
+  "domContentLoaded": 1942,
+  "loadEvent": 2244,
+  "fcp": 1756,
+  "transferSize": 63063,
+  "css": [
+    "http://127.0.0.1:8000/build/assets/landing-preview-DA8Yz-xR.css"
+  ],
+  "js": [
+    "http://127.0.0.1:8000/build/assets/landing-preview-Bcub0Fad.js"
+  ]
+}

@@ -74,28 +74,39 @@
           <span>MCP-compatible</span>
         </div>
       </div>
-      <div class="phone-wrapper reveal reveal-delay-2">
-        <div class="phone-frame">
-          <div class="phone-notch"></div>
-          <div class="phone-screen">
-            <div class="phone-header">
-              <div class="phone-avatar">KA</div>
-              <div>
-                <div class="phone-contact">KlassApp · Toshi</div>
-                <div class="phone-contact-sub">online</div>
+      {{-- Rotating role preview (OD klassapp-landing-v3-hero-role-rotate): Parent / Teacher / Admin --}}
+      <div class="hero-preview reveal reveal-delay-2">
+        <div class="hero-stage" id="heroRoleStage">
+          <div class="hero-deck" id="heroRoleDeck" data-auto="1">
+            <article class="hero-role-card wa is-active" data-role="parent" aria-label="Parent WhatsApp preview">
+              <div class="hero-role-hd"><span class="hero-role-avatar">KA</span> Parent · WhatsApp</div>
+              <div class="hero-role-body">
+                <div class="hero-bubble">Good morning! P.4 attendance is in. Amina is present today.</div>
+                <div class="hero-bubble out">Thanks : fee reminder for next week too?</div>
+                <div class="hero-bubble">Scheduled on WhatsApp for Monday 8am. <span class="hero-meta">8:14</span></div>
               </div>
-            </div>
-            <div class="phone-messages" id="phone-messages">
-              <div class="typing-indicator" id="typing-indicator"><span></span><span></span><span></span></div>
-              <div class="msg msg-in">Good morning! Here's today's attendance summary for P.4.<div class="msg-time">8:12 AM</div></div>
-              <div class="msg msg-out">Thanks, Toshi. Any absences I should follow up on?<div class="msg-time">8:14 AM ✓✓</div></div>
-              <div class="msg msg-in">3 students marked absent. I've drafted WhatsApp messages to their parents. Ready to send?<div class="msg-time">8:14 AM</div></div>
-              <div class="msg msg-out">Yes, send them<div class="msg-time">8:15 AM ✓✓</div></div>
-              <div class="msg msg-in">All 3 messages delivered. Parent responses will appear here.<div class="msg-time">8:15 AM</div></div>
-              <div class="msg msg-in"><strong>Weekly report</strong> is ready. I'll email it to the headteacher and upload to Google Drive.<div class="msg-time">8:16 AM</div></div>
-            </div>
+            </article>
+            <article class="hero-role-card drive" data-role="teacher" aria-label="Teacher Drive preview" aria-hidden="true">
+              <div class="hero-role-hd"><span class="hero-role-avatar">DR</span> Teacher · Drive</div>
+              <div class="hero-role-body">
+                <div class="hero-row"><span>P.4 Midterm report.pdf</span><span>Ready</span></div>
+                <div class="hero-row"><span>Marks sheet · Term 2</span><span>Synced</span></div>
+                <div class="hero-row"><span>Share to parents</span><span>Queued</span></div>
+                <p class="hero-meta">Toshi filed the PDF to the class Drive folder after you confirmed.</p>
+              </div>
+            </article>
+            <article class="hero-role-card slack" data-role="admin" aria-label="Admin Slack preview" aria-hidden="true">
+              <div class="hero-role-hd"><span class="hero-role-avatar">#</span> Admin · Slack</div>
+              <div class="hero-role-body">
+                <div class="hero-row"><span>#school-ops</span><span>Today</span></div>
+                <div class="hero-bubble">Fee collection: 86% · 3 reminders left for overdue families.</div>
+                <div class="hero-bubble">Staff: 2 teachers still need Term 2 mark entry for P.5.</div>
+                <p class="hero-meta">Posted by Toshi · needs your Yes to escalate.</p>
+              </div>
+            </article>
           </div>
         </div>
+        <div class="hero-role-dots" id="heroRoleDots" role="tablist" aria-label="Preview role"></div>
         <div class="connector-float">
           <div class="connector-line"></div>
           <h4>Connected</h4>
@@ -317,11 +328,11 @@
           </svg>
         </div>
         <div class="toshi-visual-channels">
-          <div class="toshi-visual-channel toshi-node n-green"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><span>WhatsApp</span></div>
-          <div class="toshi-visual-channel toshi-node n-blue"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg><span>Email</span></div>
-          <div class="toshi-visual-channel toshi-node n-violet"><svg viewBox="0 0 24 24" fill="none" stroke="var(--violet-accent)" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Slack</span></div>
-          <div class="toshi-visual-channel toshi-node n-green"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>SMS</span></div>
-          <div class="toshi-visual-channel toshi-node n-amber"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-amber)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Drive</span></div>
+          <div class="toshi-visual-channel toshi-node n-green"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></span><span>WhatsApp</span></div>
+          <div class="toshi-visual-channel toshi-node n-blue"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span><span>Email</span></div>
+          <div class="toshi-visual-channel toshi-node n-violet"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span>Slack</span></div>
+          <div class="toshi-visual-channel toshi-node n-green"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span>SMS</span></div>
+          <div class="toshi-visual-channel toshi-node n-amber"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span>Drive</span></div>
         </div>
         <div class="toshi-visual-hub">
           <div class="toshi-visual-core" aria-label="KlassApp · Toshi hub">
@@ -821,10 +832,9 @@
         <a href="/contact">Contact</a>
       </nav>
       <div class="site-footer-socials">
-        <a href="#" class="site-footer-social" aria-label="Facebook">f</a>
-        <a href="#" class="site-footer-social" aria-label="X">𝕏</a>
-        <a href="#" class="site-footer-social" aria-label="Instagram">◉</a>
-        <a href="#" class="site-footer-social" aria-label="LinkedIn">in</a>
+        <a href="https://x.com/klassapp" class="site-footer-social" aria-label="KlassApp on X" rel="noopener noreferrer" target="_blank">𝕏</a>
+        <a href="https://github.com/KlassApp-Foundation" class="site-footer-social" aria-label="KlassApp on GitHub" rel="noopener noreferrer" target="_blank">GH</a>
+        <a href="{{ url('/contact') }}" class="site-footer-social" aria-label="Contact KlassApp">✉</a>
       </div>
     </div>
     <div class="site-footer-copy">&copy; {{ date('Y') }} KlassApp. All rights reserved.</div>
