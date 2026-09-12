@@ -95,6 +95,8 @@ class AuthPreviewTest extends TestCase
             $response->assertSee('data-ap-layout="split"', false);
             $response->assertSee('ap-bg-vintage', false);
             $response->assertSee('ap-brand-panel', false);
+            $response->assertSee('ap-brand-row', false);
+            $response->assertSee('ap-brand-copy', false);
             $response->assertSee('ap-form-shell', false);
             $response->assertSee('family=Sora', false);
             $response->assertSee('family=DM+Sans', false);

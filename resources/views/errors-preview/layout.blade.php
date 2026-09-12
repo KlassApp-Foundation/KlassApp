@@ -84,29 +84,44 @@
             flex-direction: column;
             align-items: flex-start;
             gap: 12px;
-            padding: 28px 20px 8px;
+            padding: 20px 20px 12px;
+        }
+        .err-brand-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
         }
         .err-brand-logo {
             display: block;
-            height: 36px;
+            height: 40px;
             width: auto;
+            flex-shrink: 0;
+        }
+        .err-brand-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+            flex: 1;
         }
         .err-brand-tagline {
-            margin: 8px 0 0;
+            margin: 0;
             font-family: 'Sora', sans-serif;
-            font-size: 1.375rem;
+            font-size: 1.0625rem;
             font-weight: 600;
-            letter-spacing: -0.03em;
+            letter-spacing: -0.02em;
             line-height: 1.25;
             color: #0F172A;
-            max-width: 18ch;
+            max-width: none;
         }
         .err-brand-support {
             margin: 0;
-            font-size: 0.875rem;
+            font-size: 0.8125rem;
             color: #64748B;
-            line-height: 1.5;
-            max-width: 32ch;
+            line-height: 1.45;
+            max-width: none;
         }
         .err-form-panel {
             flex: 1;
@@ -228,8 +243,8 @@
                 align-items: stretch;
             }
             .err-brand-panel {
-                justify-content: center;
-                padding: 64px 72px 64px 80px;
+                justify-content: flex-start;
+                padding: 130px 72px 64px 80px;
                 border-right: 1px solid color-mix(in srgb, var(--paper-edge) 40%, transparent);
             }
             .err-brand-panel .err-preview-badge {
@@ -237,9 +252,14 @@
                 top: 32px;
                 left: 80px;
             }
-            .err-brand-logo { height: 40px; margin-bottom: 20px; }
-            .err-brand-tagline { font-size: 1.75rem; margin-top: 0; }
-            .err-brand-support { margin-top: 16px; font-size: 0.9375rem; }
+            .err-brand-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0;
+            }
+            .err-brand-logo { height: 40px; width: auto; margin-bottom: 20px; }
+            .err-brand-tagline { font-size: 1.75rem; letter-spacing: -0.03em; max-width: 18ch; }
+            .err-brand-support { margin-top: 16px; font-size: 0.9375rem; max-width: 32ch; }
             .err-form-panel {
                 justify-content: center;
                 padding: 64px 96px 64px 72px;
@@ -255,9 +275,13 @@
             @if (! empty($isPreview))
                 <span class="err-preview-badge">Preview</span>
             @endif
-            <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="err-brand-logo" alt="KlassApp">
-            <p class="err-brand-tagline">Something went off the page</p>
-            <p class="err-brand-support">You are still on KlassApp. Use the actions to get back on track.</p>
+            <div class="err-brand-row">
+                <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="err-brand-logo" alt="KlassApp">
+                <div class="err-brand-copy">
+                    <p class="err-brand-tagline">Something went off the page</p>
+                    <p class="err-brand-support">You are still on KlassApp. Use the actions to get back on track.</p>
+                </div>
+            </div>
         </aside>
         <div class="err-form-panel">
             <div class="err-card">

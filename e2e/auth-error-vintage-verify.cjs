@@ -1,8 +1,10 @@
 /**
- * Playwright: auth/error vintage v2 - desktop split + mobile stack.
+ * Playwright: auth/error vintage — desktop split + mobile stack + brand-header balance.
  * OD: klassapp-auth-error-vintage-paper-v2-breakpoints.html
- * Confirms intentional desktop layout (not centered mobile card),
- * transparent form shell, hero-exact paper (rules + grain 0.22), locks.
+ * OD: klassapp-auth-brand-header-balance-v1.html
+ * Desktop: brand block top-aligned (not vertically centered / floating low).
+ * Mobile: logo | copy side-by-side (not a tall stacked brand block).
+ * Also: transparent form shell, hero-exact paper (rules + grain 0.22), locks.
  */
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -50,6 +52,9 @@ const errorCodes = ['404', '419', '500'];
         const pageEl = document.querySelector('.ap-page');
         const shell = document.querySelector('.ap-shell');
         const brand = document.querySelector('.ap-brand-panel');
+        const brandRow = document.querySelector('.ap-brand-row');
+        const logo = document.querySelector('.ap-brand-logo');
+        const copy = document.querySelector('.ap-brand-copy');
         const formPanel = document.querySelector('.ap-form-panel');
         const formShell = document.querySelector('.ap-form-shell, .ap-card');
         const bg = document.querySelector('.ap-bg-vintage');
@@ -64,6 +69,8 @@ const errorCodes = ['404', '419', '500'];
         const bodyFont = cs(document.body)?.fontFamily || '';
         const brandBox = brand?.getBoundingClientRect();
         const formBox = formPanel?.getBoundingClientRect();
+        const logoBox = logo?.getBoundingClientRect();
+        const copyBox = copy?.getBoundingClientRect();
         const sideBySide =
           desktop &&
           brandBox &&
@@ -75,6 +82,21 @@ const errorCodes = ['404', '419', '500'];
           brandBox &&
           formBox &&
           formBox.top >= brandBox.bottom - 4;
+        // Desktop: brand content starts in upper half (top-aligned, not vertically centered)
+        const brandTopAligned =
+          desktop &&
+          brandBox &&
+          logoBox &&
+          logoBox.top < window.innerHeight * 0.42 &&
+          (cs(brand)?.justifyContent || '') === 'flex-start';
+        // Mobile: logo left of copy (horizontal brand header)
+        const brandLogoCopyRow =
+          !desktop &&
+          logoBox &&
+          copyBox &&
+          Math.abs(logoBox.top - copyBox.top) < 40 &&
+          copyBox.left > logoBox.right - 4 &&
+          (cs(brandRow)?.flexDirection || '') === 'row';
         const formBg = formCs?.backgroundColor || '';
         const opaqueWhite =
           formBg === 'rgb(255, 255, 255)' ||
@@ -91,6 +113,9 @@ const errorCodes = ['404', '419', '500'];
           gridCols: shellCs?.gridTemplateColumns || '',
           sideBySide: !!sideBySide,
           stacked: !!stacked,
+          brandTopAligned: !!brandTopAligned,
+          brandLogoCopyRow: !!brandLogoCopyRow,
+          logoTop: logoBox ? Math.round(logoBox.top) : null,
           opaqueWhite,
           formBg,
           paperRules,
@@ -108,12 +133,14 @@ const errorCodes = ['404', '419', '500'];
       await page.screenshot({ path: shot, fullPage: true });
 
       const layoutOk = isDesktop ? checks.sideBySide : checks.stacked;
+      const brandBalanceOk = isDesktop ? checks.brandTopAligned : checks.brandLogoCopyRow;
       const pass =
         res.ok() &&
         checks.paper &&
         checks.layout &&
         checks.hasBg &&
         layoutOk &&
+        brandBalanceOk &&
         !checks.opaqueWhite &&
         checks.paperRules &&
         checks.sora &&
@@ -136,13 +163,19 @@ const errorCodes = ['404', '419', '500'];
       await page.waitForTimeout(300);
       const checks = await page.evaluate((desktop) => {
         const brand = document.querySelector('.err-brand-panel');
+        const brandRow = document.querySelector('.err-brand-row');
+        const logo = document.querySelector('.err-brand-logo');
+        const copy = document.querySelector('.err-brand-copy');
         const panel = document.querySelector('.err-form-panel');
         const card = document.querySelector('.err-card');
         const bg = document.querySelector('.err-bg-vintage');
         const html = document.documentElement.outerHTML;
         const bodyText = document.body.innerText || '';
+        const cs = (el) => (el ? getComputedStyle(el) : null);
         const brandBox = brand?.getBoundingClientRect();
         const formBox = panel?.getBoundingClientRect();
+        const logoBox = logo?.getBoundingClientRect();
+        const copyBox = copy?.getBoundingClientRect();
         const sideBySide =
           desktop &&
           brandBox &&
@@ -150,6 +183,19 @@ const errorCodes = ['404', '419', '500'];
           Math.abs(brandBox.top - formBox.top) < 120 &&
           formBox.left > brandBox.right - 8;
         const stacked = !desktop && brandBox && formBox && formBox.top >= brandBox.bottom - 4;
+        const brandTopAligned =
+          desktop &&
+          brandBox &&
+          logoBox &&
+          logoBox.top < window.innerHeight * 0.42 &&
+          (cs(brand)?.justifyContent || '') === 'flex-start';
+        const brandLogoCopyRow =
+          !desktop &&
+          logoBox &&
+          copyBox &&
+          Math.abs(logoBox.top - copyBox.top) < 40 &&
+          copyBox.left > logoBox.right - 4 &&
+          (cs(brandRow)?.flexDirection || '') === 'row';
         const cardBg = card ? getComputedStyle(card).backgroundColor : '';
         const opaqueWhite =
           cardBg === 'rgb(255, 255, 255)' || cardBg.startsWith('rgba(255, 255, 255, 1)');
@@ -160,6 +206,9 @@ const errorCodes = ['404', '419', '500'];
           hasBg: !!bg,
           sideBySide: !!sideBySide,
           stacked: !!stacked,
+          brandTopAligned: !!brandTopAligned,
+          brandLogoCopyRow: !!brandLogoCopyRow,
+          logoTop: logoBox ? Math.round(logoBox.top) : null,
           opaqueWhite,
           paperRules: html.includes('repeating-linear-gradient'),
           sora: /Sora/i.test(getComputedStyle(document.querySelector('.err-title') || document.body).fontFamily),
@@ -172,6 +221,7 @@ const errorCodes = ['404', '419', '500'];
       const shot = path.join(OUT, `${vp.name}-error-${code}.png`);
       await page.screenshot({ path: shot, fullPage: true });
       const layoutOk = isDesktop ? checks.sideBySide : checks.stacked;
+      const brandBalanceOk = isDesktop ? checks.brandTopAligned : checks.brandLogoCopyRow;
       const pass =
         res.ok() &&
         checks.paper &&
@@ -179,6 +229,7 @@ const errorCodes = ['404', '419', '500'];
         checks.shell &&
         checks.hasBg &&
         layoutOk &&
+        brandBalanceOk &&
         !checks.opaqueWhite &&
         checks.paperRules &&
         checks.sora &&
@@ -269,8 +320,8 @@ const errorCodes = ['404', '419', '500'];
       {
         ok: report.ok,
         pass2: report.pass2,
-        desktopLogin: report.viewports.desktop?.screens?.login?.checks,
-        mobileLogin: report.viewports.mobile?.screens?.login?.checks,
+        desktopRegister: report.viewports.desktop?.screens?.register?.checks,
+        mobileRegister: report.viewports.mobile?.screens?.register?.checks,
       },
       null,
       2

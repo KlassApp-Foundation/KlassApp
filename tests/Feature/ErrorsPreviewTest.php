@@ -18,6 +18,8 @@ class ErrorsPreviewTest extends TestCase
             $response->assertSee('data-error-layout="split"', false);
             $response->assertSee('err-bg-vintage', false);
             $response->assertSee('err-brand-panel', false);
+            $response->assertSee('err-brand-row', false);
+            $response->assertSee('err-brand-copy', false);
             $response->assertSee('data-error-code="'.$code.'"', false);
             $response->assertSee('Error '.$code);
             $response->assertSee('Preview');

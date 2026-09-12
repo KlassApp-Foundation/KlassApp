@@ -107,32 +107,50 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  padding: 28px 20px 8px;
+  padding: 20px 20px 12px;
+}
+
+/* Mobile: logo left + copy right (OD brand-header-balance-v1) */
+.ap-brand-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
 }
 
 .ap-brand-logo {
   display: block;
-  width: 148px;
+  width: 64px;
   height: auto;
+  flex-shrink: 0;
+}
+
+.ap-brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
 }
 
 .ap-brand-tagline {
-  margin: 8px 0 0;
+  margin: 0;
   font-family: 'Sora', sans-serif;
-  font-size: 1.375rem;
+  font-size: 1.0625rem;
   font-weight: 600;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   line-height: 1.25;
   color: var(--ap-ink);
-  max-width: 18ch;
+  max-width: none;
 }
 
 .ap-brand-support {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--ap-muted);
-  line-height: 1.5;
-  max-width: 32ch;
+  line-height: 1.45;
+  max-width: none;
 }
 
 .ap-form-panel {
@@ -505,9 +523,10 @@
     align-items: stretch;
   }
 
+  /* Top-aligned brand block (not vertically centered / floating low) */
   .ap-brand-panel {
-    justify-content: center;
-    padding: 64px 72px 64px 80px;
+    justify-content: flex-start;
+    padding: 130px 72px 64px 80px;
     border-right: 1px solid color-mix(in srgb, var(--paper-edge) 40%, transparent);
     gap: 0;
   }
@@ -518,6 +537,12 @@
     left: 80px;
   }
 
+  .ap-brand-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+
   .ap-brand-logo {
     width: 180px;
     margin-bottom: 20px;
@@ -525,12 +550,14 @@
 
   .ap-brand-tagline {
     font-size: 1.75rem;
-    margin-top: 0;
+    letter-spacing: -0.03em;
+    max-width: 18ch;
   }
 
   .ap-brand-support {
     margin-top: 16px;
     font-size: 0.9375rem;
+    max-width: 32ch;
   }
 
   .ap-form-panel {

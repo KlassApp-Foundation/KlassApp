@@ -603,7 +603,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Auth/error desktop+mobile vintage v2 on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
+## Current Status: September 12, 2026 — Auth brand-header balance on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
+
+- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper`. Preview routes only.
+- **This pass**: OD `klassapp-auth-brand-header-balance-v1.html` (desktop + mobile). Desktop brand block top-aligned (`justify-content: flex-start`, `padding-top: 130px`) so logo + heading are not floating in the lower half. Mobile brand is a **logo | copy** row (not a tall vertical stack) before the form. Mirrored on error preview brand panel.
+- **Verify**: Feature tests 15 passed (220 assertions). Playwright `ok=true` — desktop `brandTopAligned` (register `logoTop≈130`); mobile `brandLogoCopyRow`; prior locks held (`sideBySide`/`stacked`, transparent shell, paperRules, grain 0.22, toggle44, greens, forceNoEscape). Artifacts `e2e/screenshots/auth-error-vintage/{desktop,mobile}-*.png`.
+- **Status**: 📝 PR open — brand-header balance pushed.
+
+## Previous: September 12, 2026 — Auth/error desktop+mobile vintage v2 on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
 
 - **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper` tip `1e9e8ebb`. Preview routes only.
 - **This pass (review fixes)**: OD `klassapp-auth-error-vintage-paper-v2-breakpoints.html` — genuine **desktop two-column** (brand | form) vs **mobile stacked**. Removed opaque white form card. Paper CSS is the **exact** landing `.hero-bg-vintage` (wash + ruled lines + grain 0.22). Applied to all auth + error previews. Typography remains Sora/DM Sans.
@@ -1774,6 +1781,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-12: Auth brand-header balance (desktop top-align + mobile logo|copy) — **PR #535**
+- **Work done**: OD mock `klassapp-auth-brand-header-balance-v1.html` first (both breakpoints). Desktop: brand panel `flex-start` + `130px` top padding (was vertically centered / floating low). Mobile: `.ap-brand-row` / `.err-brand-row` — logo left, heading+subtitle right. Applied across auth preview shared brand panel + error preview layout.
+- **Files modified**: `resources/css/auth-preview.css`, `resources/views/auth/preview/_brand-panel.blade.php`, `resources/views/errors-preview/layout.blade.php`, `tests/Feature/{AuthPreview,ErrorsPreview}Test.php`, `e2e/auth-error-vintage-verify.cjs`, screenshots, `public/build/*`, `knowledge.md`
+- **Key decisions**: Mobile horizontal brand unit; desktop stays stacked logo→copy but top-aligned in the column. Locks unchanged (Sora/DM Sans, 44×44 toggle, error reds, green CTAs, force-change no escape).
+- **Status**: 📝 Pushed on [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
+- **Verify**: Feature 220 assertions; Playwright desktop `brandTopAligned` + mobile `brandLogoCopyRow` on auth + error previews; prior vintage/layout locks still `ok=true`
 
 ### 2026-09-12: Auth/error desktop split + transparent paper (v2 breakpoints) — **PR #535**
 - **Work done**: Local review of #535 found desktop was a centered mobile card, opaque white form card, and paper not matching hero rules. OD remock `klassapp-auth-error-vintage-paper-v2-breakpoints.html` (desktop 1440 two-col + mobile 390 stack). Ported: `.ap-bg-vintage` / `.err-bg-vintage` = exact `.hero-bg-vintage` layers; transparent form/error shells; brand+form split on all auth + error previews.
