@@ -603,16 +603,35 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 11, 2026 — [#530](https://github.com/KlassApp-Foundation/KlassApp/pull/530) **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `075e25c5`)
+## Current Status: September 12, 2026 — Footer/Community/HITL/protocol mesh/Toshi hub flow on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
 
-- **Bug pattern** (extends [#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) / AGENTS.md rule 18): identity lookups via bare `users.name` (or other non-unique display fields) can resolve the wrong tenant row when names collide across schools.
-- **Fix**: `User::exactNameInSchool` / `User::findByExactNameInSchool`; Teacher `StudentDetailsController` reuses the authorized user (no second unscoped `where('name')`); Admin student/teacher/staff/document/bank/attendance/dashboard/discipline surfaces + parent-link traits + related FormRequests school-scoped; API user search scoped when auth present.
-- **Merge**: squash `075e25c5` @ **2026-09-11T16:03:34Z**.
-- **Cloud**: `depl-a2b8b963-2b17-4c79-9f5c-f635f178b469` **deployment.succeeded** @ commit `075e25c5`.
-- **Live verify** (Commands `comm-a2b8ba96-…`, evidence `docs/evidence/name-lookup-scope/prod-verify-2026-09-11.txt`): helpers **OK**; Teacher/Admin bare `User::where('name'` **GONE_OK**.
-- **Tests**: `StudentDetailsNameScopeTest` + Teacher roster collision (9 passed locally).
-- **Prior tip**: `56db335d` (#488+#527).
+- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `893f1bc5` (preview routes only).
+- **This pass**:
+  1. Production footer from `landing.blade.php` (large KlassApp wordmark, logo + “Smarter schools start here.”, Terms/Privacy/Docs/Contact, socials, ©) — newsletter omitted.
+  2. Removed `#community` and redundant `#open-source` (Free. Open. Self-hostable.) — Protocol Open Source card remains the OSS message.
+  3. Meet Toshi: “Human in the loop” callout (confirm-before-write / Yes/No gate).
+  4. OD `klassapp-landing-v3-protocol-visual-v2.html` statement mesh ported (no Q1 dates).
+  5. OD `klassapp-landing-v3-toshi-hub-flow-v2.html` hub mark + directional/streak flow lines (badges unchanged).
+- **Verify**: `LandingPreviewV3Test` 43 assertions. Playwright `ok=true` 1440/1024/390 — prodFooter, noCommunitySection, humanInLoop, protocolMesh, toshiHubMark/arrows/streaks; zero console errors; `ds-*` isolation clean; no em dashes / Q1 2027. Artifacts `e2e/screenshots/landing-preview-build/{desktop,tablet,mobile}-{hero,toshi,protocol,footer,full}.png`.
+- **Still prior**: Vintage hero v2 + FINAL v4 copy + Protocol Cores framing on same PR.
 
+## Previous: September 12, 2026 — Vintage hero v2 + logo marks on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
+
+- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `34980e98` (preview routes only — live `/`, `/login`, `/register`, live `errors/*` untouched).
+- **This pass**: OD remock `klassapp-landing-v3-hero-vintage-paper-v2.html` (fainter grain + ledger rules) → ported to `/landing-preview`. Nav uses `klassapp-logo-primary.svg` (was text wordmark). Toshi hub center uses icon `klassapp-logo.svg`. Footer kept simple KlassApp wordmark (explicit no Nimbalyst multi-column).
+- **Verify**: `LandingPreviewV3Test` 1 passed (33 assertions). Playwright `ok=true` desktop/tablet/mobile — vintageHero, navPrimaryLogo, toshiHubLogo, simpleFooter; zero console errors; `ds-*` / `--d-*` isolation clean. Artifacts `e2e/screenshots/landing-preview-build/{desktop,tablet,mobile}-{hero,toshi,footer,full}.png`. Vite `landing-preview-BVj0D0oE.css`.
+- **Still prior**: Protocol Cores + How It Works framing + FINAL v4 copy on same PR.
+
+## Previous: September 12, 2026 — Protocol Cores + How It Works protocol framing on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
+
+- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `2d9d5b5b` off `main` (`6333b0a5`). Preview routes only — live `/`, `/login`, `/register`, live `errors/*` untouched.
+- **Port**: Source-only from `origin/feature/auth-pages-preview` (Blade/CSS/JS/routes/tests/e2e). No hand-ported `knowledge.md` conflict; Vite `public/build` regenerated fresh (`landing-preview-DJ3HvCyn.css`).
+- **Open Design**: `agentId: cursor-agent` + `model: auto` (Cursor agent inside OD — not opencode/deepseek; China opt-in blocked). Mocks:
+  - `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3-pillars-community.html`
+  - `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3-how-it-works-enrich.html`
+- **Landing direction built**: locked hero/core narrative retained; new `#trust` (Secure/Scalable/Private/Interoperable, Nimbalyst density, real OWASP access-control talking points from Future Initiatives); new `#community` (Q1 2027 OSS path); `#how-it-works` enriched with product UI mockups (WhatsApp / teacher dash / admin stack + subtle perspective).
+- **Verify**: Feature tests 15 passed (139 assertions). Playwright `e2e/landing-preview-build-verify.cjs` — desktop/tablet/mobile, zero console errors, 4 pillars, OWASP copy present, `ds-*` / `--d-*` isolation clean; `/preview/login` + `/preview/errors/404` 200. Artifacts `e2e/screenshots/landing-preview-build/`.
+- **Still prior**: [#530](https://github.com/KlassApp-Foundation/KlassApp/pull/530) **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `075e25c5`) — name-lookup tenant scope.
 
 ## Previous: September 11, 2026 — #488+#527 **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `56db335d`)
 
@@ -1744,6 +1763,41 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-12: Prod footer + strip Community/OSS CTA + HITL + protocol mesh + Toshi hub flow — **PR #534**
+- **Work done**: Replaced preview footer with production `landing.blade.php` footer block (no Stay-in-the-loop newsletter). Removed `#community` and `#open-source` sections (redundant with Protocol Open Source card). Added Meet Toshi human-in-the-loop callout. OD remocks `klassapp-landing-v3-protocol-visual-v2.html` + `klassapp-landing-v3-toshi-hub-flow-v2.html` ported (mesh visual; hub mark + directional/streak connectors). Hero CTA / nav Community retargeted to `#protocol`.
+- **Files modified**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/js/landing-preview.js`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-preview-build-verify.cjs`, `e2e/screenshots/landing-preview-build/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Copy production footer links/socials as-is (`Terms`/`Privacy` `#`). Strip both community + Free.Open.Self-hostable CTA because user description matched that heading. No Q1 dates from OD mock copy. Badges in Toshi diagram untouched.
+- **Status**: 📝 Pushed on [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534)
+- **Verify**: Feature 43 assertions; Playwright 3bp `ok=true` (prodFooter, noCommunity, HITL, mesh, hub arrows/streaks); isolation clean; no em dash / Q1 2027
+
+### 2026-09-12: Vintage hero v2 + nav/hub logos; footer stay simple — **PR #534**
+- **Work done**: Open Design remock `klassapp-landing-v3-hero-vintage-paper-v2.html` (grain opacity ~half of v1; ledger ruled lines via `--paper-rule`) then ported as default hero on `/landing-preview`. Nav text wordmark → `images/klassapp-logo-primary.svg`. Toshi connector hub center → icon `images/klassapp-logo.svg` + compact “Toshi” label. Footer intentionally unchanged (KlassApp wordmark + Docs/Open source/Community/Contact) — denser Nimbalyst-style footer rejected.
+- **Files modified**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-preview-build-verify.cjs`, `e2e/screenshots/landing-preview-build/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Vintage is the preview hero surface (not a review toggle). Nav uses primary mark used across auth/admission; hub uses compact green icon (not white PNG) on light glass core. Footer comment documents the no-expand decision.
+- **Status**: 📝 Pushed on [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534)
+- **Verify**: Feature test 33 assertions pass. Playwright 1440/1024/390 `ok=true` with `vintageHero`/`navPrimaryLogo`/`toshiHubLogo`/`simpleFooter`; isolation `dsElements=0`; focus shots hero/toshi/footer per breakpoint.
+
+### 2026-09-12: Protocol Cores rename + How It Works protocol framing — **PR #534**
+- **Work done**: Renamed `#trust` section label/nav from Trust/Pillars framing to **Protocol Cores** (same 5 pillars/content). Refined How It Works copy to infuse protocol orchestration (WhatsApp/Drive/Slack as one connected system) into existing numbered steps; step 03 titles now "Protocol path".
+- **Files modified**: `resources/views/landing-v2.blade.php`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-preview-build-verify.cjs`, `e2e/screenshots/landing-preview-build/*`, `knowledge.md`
+- **Key decisions**: Keep `id="trust"` anchor; display name is Protocol Cores. How It Works is a language/framing refinement, not a structural rewrite.
+- **Status**: 📝 Pushed on [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534)
+- **Verify**: 15 feature tests passed; Playwright 1440/1024/390 `ok=true`, `protocolCores=true`, `howProtocol=true`, zero console errors, no ds-* leakage
+
+### 2026-09-12: Landing content FINAL v4 + README OSS date scrub — **PR #534**
+- **Work done**: Implemented locked `docs/klassapp-landing-content-final-v4.md` into `/landing-preview` (hero tagline, 5 pillars incl. Provable-as-coming, community silent-on-date, comparison table, FAQ). Narrow README edit: removed explicit Q1 2027 open-source date; free/open/self-hostable framing. Vintage hero mock not ported (no lock decision yet).
+- **Files modified**: `README.md`, `docs/klassapp-landing-content-final-v4.md`, `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-preview-build-verify.cjs`, `e2e/screenshots/landing-preview-build/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Provable uses Coming badge + "Stated direction. Not a live feature yet." Comparison flagged as illustrative. No em dashes. Preview routes only.
+- **Status**: 📝 Pushed on [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534)
+- **Verify**: Feature tests 15 passed; Playwright desktop/tablet/mobile ok=true, 5 pillars, Provable present, no Q1 2027 / em dash / ds-* leakage
+
+### 2026-09-12: Landing + auth preview build (OD cursor-agent) — **LOCAL BRANCH**
+- **Work done**: Fresh branch `feature/landing-auth-preview-build` off `main`. Ported auth-pages-preview source only (no stale `public/build` / no conflicted `knowledge.md`). Open Design via **cursor-agent/auto** for pillars+community and how-it-works enrich mocks; implemented into `landing-v2` + `landing-preview.css`. Auth/errors preview routes unchanged.
+- **Files modified**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/css/auth-preview.css`, `resources/js/landing-preview.js`, `resources/views/auth/preview/*`, `resources/views/errors-preview/*`, `resources/views/layouts/auth-preview.blade.php`, `routes/web.php`, `vite.config.js`, `tests/Feature/{LandingPreviewV3,AuthPreview,ErrorsPreview}Test.php`, `e2e/*`, `public/build/*` (regenerated), `knowledge.md`
+- **Key decisions**: OD agent = `cursor-agent` (adopts Cursor model); Secure pillar uses real PR #514/#516/#517 access-control talking points; stay on preview routes (no live cutover); design-system isolation (no `--d-*` / `.ds-*`).
+- **Status**: 📝 PR open — [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`, tip `2d9d5b5b`). Awaiting review. Not cut over to live routes.
+- **Edge cases flagged**: DeepSeek `opencode-go/deepseek-v4-flash` still China-opt-in blocked for OD; use cursor-agent. Live `/` still Tailwind CDN + inline (unchanged).
 
 ### 2026-09-11: Land monthly release strategy + staging product notes — **MERGED**
 - **Work done**: Rebased wanted content from [#526](https://github.com/KlassApp-Foundation/KlassApp/pull/526) onto current main (dropped stale Current Status / Toshi-readiness stamps that conflicted with later #528–#532). Adds Monthly Release Strategy + compact Staging Environment product notes.
@@ -9928,3 +9982,10 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Key prefix to rotate/check**: `sk-2ccccb77` (was baked as default for openai-compatible / DeepSeek-style provider — verify in provider dashboard whether still live).
 - **Files modified**: deleted `scripts/provision-klassapp.sh`; `config/ai.php`, `config/toshi.php`, `app/AiAgents/ToshiLlm.php`, `app/Exceptions/MissingToshiLlmApiKeyException.php`, `tests/Feature/Toshi/ToshiLlmConfigConsistencyTest.php`, `.env.example`, `knowledge.md`.
 - **Status**: ✅ Security PR open — [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) (`security/remove-embedded-secrets`).
+
+### 2026-09-12: Landing v3 how-it-works enrich mock
+- **Work done**: Standalone HTML mock enriching #how-it-works with CrewAI-style product UI previews (Parent WhatsApp, Teacher attendance dash, Admin isometric digest) above existing role steps; copy preserved; locked v3 untouched.
+- **Files modified**: open-design project `klassapp-landing-v3-how-it-works-enrich.html` (design artifact only)
+- **Key decisions**: Per-column UI chrome over grid; subtle 3D only on admin floating card stack; brand tokens only (no --d-*/.ds-*); omit hairline column bridge so it does not cut through previews.
+- **Status**: ✅ Done (section mock — not merged into locked v3)
+- **Edge cases flagged**: Re-add bridge below previews if merge needs the original connector motif.

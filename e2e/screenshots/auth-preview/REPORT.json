@@ -1,0 +1,486 @@
+{
+  "pass": true,
+  "base": "http://127.0.0.1:8020",
+  "viewports": {
+    "760": {
+      "screens": {
+        "login": {
+          "status": 200,
+          "checks": {
+            "screen": "login",
+            "names": [
+              "_token",
+              "email",
+              "password",
+              "remember"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/login-760.png",
+          "pass": true
+        },
+        "register": {
+          "status": 200,
+          "checks": {
+            "screen": "register",
+            "names": [
+              "_token",
+              "name",
+              "email",
+              "phone",
+              "password",
+              "password_confirmation",
+              "termsandcondn"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/register-760.png",
+          "pass": true
+        },
+        "reset-request": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-request",
+            "names": [
+              "_token",
+              "email"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-request-760.png",
+          "pass": true
+        },
+        "reset-code": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-code",
+            "names": [
+              "_token",
+              "email",
+              "code"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-code-760.png",
+          "pass": true
+        },
+        "reset-newpw": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-newpw",
+            "names": [
+              "_token",
+              "token",
+              "email",
+              "password",
+              "password_confirmation"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-newpw-760.png",
+          "pass": true
+        },
+        "force-change-password": {
+          "status": 200,
+          "checks": {
+            "screen": "force-change-password",
+            "names": [
+              "_token",
+              "current_password",
+              "password",
+              "password_confirmation"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/force-change-password-760.png",
+          "pass": true
+        }
+      },
+      "pass": true,
+      "errors": []
+    },
+    "900": {
+      "screens": {
+        "login": {
+          "status": 200,
+          "checks": {
+            "screen": "login",
+            "names": [
+              "_token",
+              "email",
+              "password",
+              "remember"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/login-900.png",
+          "pass": true
+        },
+        "register": {
+          "status": 200,
+          "checks": {
+            "screen": "register",
+            "names": [
+              "_token",
+              "name",
+              "email",
+              "phone",
+              "password",
+              "password_confirmation",
+              "termsandcondn"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/register-900.png",
+          "pass": true
+        },
+        "reset-request": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-request",
+            "names": [
+              "_token",
+              "email"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-request-900.png",
+          "pass": true
+        },
+        "reset-code": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-code",
+            "names": [
+              "_token",
+              "email",
+              "code"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-code-900.png",
+          "pass": true
+        },
+        "reset-newpw": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-newpw",
+            "names": [
+              "_token",
+              "token",
+              "email",
+              "password",
+              "password_confirmation"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-newpw-900.png",
+          "pass": true
+        },
+        "force-change-password": {
+          "status": 200,
+          "checks": {
+            "screen": "force-change-password",
+            "names": [
+              "_token",
+              "current_password",
+              "password",
+              "password_confirmation"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/force-change-password-900.png",
+          "pass": true
+        }
+      },
+      "pass": true,
+      "errors": []
+    },
+    "1024": {
+      "screens": {
+        "login": {
+          "status": 200,
+          "checks": {
+            "screen": "login",
+            "names": [
+              "_token",
+              "email",
+              "password",
+              "remember"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/login-1024.png",
+          "pass": true
+        },
+        "register": {
+          "status": 200,
+          "checks": {
+            "screen": "register",
+            "names": [
+              "_token",
+              "name",
+              "email",
+              "phone",
+              "password",
+              "password_confirmation",
+              "termsandcondn"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/register-1024.png",
+          "pass": true
+        },
+        "reset-request": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-request",
+            "names": [
+              "_token",
+              "email"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-request-1024.png",
+          "pass": true
+        },
+        "reset-code": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-code",
+            "names": [
+              "_token",
+              "email",
+              "code"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-code-1024.png",
+          "pass": true
+        },
+        "reset-newpw": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-newpw",
+            "names": [
+              "_token",
+              "token",
+              "email",
+              "password",
+              "password_confirmation"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-newpw-1024.png",
+          "pass": true
+        },
+        "force-change-password": {
+          "status": 200,
+          "checks": {
+            "screen": "force-change-password",
+            "names": [
+              "_token",
+              "current_password",
+              "password",
+              "password_confirmation"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/force-change-password-1024.png",
+          "pass": true
+        }
+      },
+      "pass": true,
+      "errors": []
+    },
+    "1440": {
+      "screens": {
+        "login": {
+          "status": 200,
+          "checks": {
+            "screen": "login",
+            "names": [
+              "_token",
+              "email",
+              "password",
+              "remember"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/login-1440.png",
+          "pass": true
+        },
+        "register": {
+          "status": 200,
+          "checks": {
+            "screen": "register",
+            "names": [
+              "_token",
+              "name",
+              "email",
+              "phone",
+              "password",
+              "password_confirmation",
+              "termsandcondn"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/register-1440.png",
+          "pass": true
+        },
+        "reset-request": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-request",
+            "names": [
+              "_token",
+              "email"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-request-1440.png",
+          "pass": true
+        },
+        "reset-code": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-code",
+            "names": [
+              "_token",
+              "email",
+              "code"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-code-1440.png",
+          "pass": true
+        },
+        "reset-newpw": {
+          "status": 200,
+          "checks": {
+            "screen": "reset-newpw",
+            "names": [
+              "_token",
+              "token",
+              "email",
+              "password",
+              "password_confirmation"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/reset-newpw-1440.png",
+          "pass": true
+        },
+        "force-change-password": {
+          "status": 200,
+          "checks": {
+            "screen": "force-change-password",
+            "names": [
+              "_token",
+              "current_password",
+              "password",
+              "password_confirmation"
+            ],
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-preview/force-change-password-1440.png",
+          "pass": true
+        }
+      },
+      "pass": true,
+      "errors": []
+    }
+  },
+  "screens": {},
+  "pass2": {
+    "toggle44": true,
+    "icon20": true,
+    "primaryGreen": true,
+    "primaryHover": true,
+    "errorTokens": true,
+    "loginGoogleGet": true,
+    "registerGooglePost": true,
+    "singleCodeInput": true,
+    "forceFiveRules": true,
+    "forceNoEscape": true,
+    "raw": {
+      "loginMetrics": {
+        "toggle": {
+          "w": 44,
+          "h": 44
+        },
+        "icon": {
+          "w": 20,
+          "h": 20
+        },
+        "submitBg": "rgb(34, 197, 94)",
+        "alert": {
+          "color": "rgb(220, 38, 38)",
+          "backgroundColor": "rgb(254, 242, 242)",
+          "borderColor": "rgb(254, 202, 202)"
+        },
+        "googleHref": "http://127.0.0.1:8020/auth/google",
+        "googleTag": "A"
+      },
+      "hoverBg": "rgb(22, 163, 74)",
+      "registerGoogle": {
+        "tag": "BUTTON",
+        "formaction": "http://127.0.0.1:8020/auth/google/start",
+        "formnovalidate": true,
+        "formmethod": "post"
+      },
+      "codeInput": {
+        "name": "code",
+        "pattern": "[0-9]{6}",
+        "maxlength": "6",
+        "boxCount": 0
+      },
+      "force": {
+        "rules": [
+          "At least 8 characters",
+          "One uppercase letter",
+          "One lowercase letter",
+          "One number",
+          "One special character"
+        ],
+        "hasSkip": false,
+        "hasCancel": false,
+        "hasSignOut": false
+      }
+    },
+    "pass": true
+  },
+  "formValidation": {
+    "loginEmpty": {
+      "status": 302,
+      "location": "http://127.0.0.1:8020/preview/login",
+      "pass": true
+    },
+    "resetRequestInvalid": {
+      "status": 302,
+      "location": "http://127.0.0.1:8020/preview/reset-request",
+      "pass": true
+    },
+    "resetCodeVerify": {
+      "status": 302,
+      "location": "http://127.0.0.1:8020/preview/reset-code",
+      "pass": true
+    },
+    "registerInvalid": {
+      "status": 302,
+      "location": "http://127.0.0.1:8020/preview/register",
+      "pass": true
+    },
+    "forceChangeUnauthed": {
+      "status": 302,
+      "location": "http://127.0.0.1:8020/login",
+      "pass": true
+    }
+  },
+  "consoleErrors": [],
+  "deviations": [
+    "Reset code keeps single input (pattern=[0-9]{6} maxlength=6); mockup six-box UI not ported (open decision).",
+    "Typography: Sora/DM Sans (app brand / layouts.empty) instead of mockup Bricolage/Inter.",
+    "Live /login /register etc. untouched — preview routes only until cutover."
+  ]
+}
