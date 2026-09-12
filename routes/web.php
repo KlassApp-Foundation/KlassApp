@@ -27,14 +27,14 @@ Route::get('/docs/community/{path?}', function ($path = '') {
     return response(file_get_contents("{$base}/index.html"), 200, ['Content-Type' => 'text/html']);
 })->where('path', '.*');
 
-// Locked v3 landing preview (Open Design klassapp-landing-v3.html). Preview only — do not cut over / or /landing without an explicit decision.
-Route::get('/landing-preview', function () {
-    return view('landing-v2');
-})->name('landing.preview');
+// Locked v3 landing — live cutover on /. Legacy preview URL redirects.
+Route::redirect('/landing-preview', '/', 301)->name('landing.preview');
 
-// Phase B auth-page preview restyle (Open Design klassapp-auth-error-pass2). Preview only — live /login etc. untouched until cutover.
+// Auth/error design-review URLs (still serve the same shells for e2e/regression).
+// Live /login, /register, password/*, and errors/{404,419,500} now use these designs.
 Route::prefix('preview')->name('preview.')->group(function () {
     $withDemo = function (string $view, array $data = [], array $fieldErrors = []) {
+        $data['isPreview'] = true;
         $response = view($view, $data);
         if (! request()->boolean('demo_errors')) {
             return $response;

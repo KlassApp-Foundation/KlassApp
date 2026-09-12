@@ -29,7 +29,7 @@ class PasswordResetCodeController extends Controller
                 ->withErrors(['email' => 'Please enter your email first.']);
         }
 
-        return view('auth.passwords.code', ['email' => $email]);
+        return view('auth.preview.reset-code', ['email' => $email]);
     }
 
     /**

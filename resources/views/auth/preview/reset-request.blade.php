@@ -19,13 +19,13 @@
 
         @if (session('status'))
           <div class="ap-alert ap-alert--success" role="status">{{ session('status') }}</div>
-          <a href="{{ route('preview.login') }}" class="ap-back">← Back to sign in</a>
+          <a href="{{ route('login') }}" class="ap-back">← Back to sign in</a>
         @else
           @if ($errors->has('email'))
             <div class="ap-alert ap-alert--error" role="alert" data-testid="auth-flash-error">{{ $errors->first('email') }}</div>
           @endif
 
-          <form method="POST" action="{{ route('password.email') }}" class="ap-form" aria-label="{{ __('Reset Password') }}" data-testid="preview-reset-request-form">
+          <form method="POST" action="{{ url('/password/reset') }}" class="ap-form" aria-label="{{ __('Reset Password') }}" data-testid="preview-reset-request-form">
             @csrf
             <div class="ap-field">
               <label class="ap-label" for="email">{{ __('E-Mail Address') }}</label>
@@ -36,7 +36,7 @@
             </div>
             <button type="submit" class="ap-submit" data-testid="ap-primary-submit">{{ __('Send Reset Code') }}</button>
           </form>
-          <a href="{{ route('preview.login') }}" class="ap-back">← Back to sign in</a>
+          <a href="{{ route('login') }}" class="ap-back">← Back to sign in</a>
         @endif
       </div>
     </div>

@@ -27,7 +27,7 @@ class ForceChangePasswordController extends Controller
             return redirect()->intended('/');
         }
 
-        return view('auth.force-change-password');
+        return view('auth.preview.force-change-password');
     }
 
     public function store(Request $request)

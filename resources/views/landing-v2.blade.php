@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KlassApp : The school platform for tools educationists already use</title>
     <meta name="description" content="KlassApp is an open-source agentic school protocol. It operates in the tools educationists already use: WhatsApp, Drive, Slack, email, and more.">
-    <meta name="robots" content="noindex,nofollow">
-
     <link rel="canonical" href="{{ url()->current() }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/klassapp-logo.svg') }}">
 
@@ -17,10 +15,10 @@
     @vite(['resources/css/landing-preview.css', 'resources/js/landing-preview.js'])
 </head>
 <body>
-{{-- Preview-only port of locked Open Design klassapp-landing-v3.html. Route: /landing-preview only : no live cutover. --}}
+{{-- Live cutover: Open Design klassapp-landing-v3 on /. Legacy /landing-preview redirects here. --}}
 <nav class="navbar" id="navbar">
   <div class="navbar-inner">
-    <a href="{{ route('landing.preview') }}#hero" class="navbar-logo" aria-label="KlassApp">
+    <a href="{{ url('/') }}#hero" class="navbar-logo" aria-label="KlassApp">
       <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="navbar-logo-img" width="36" height="36" />
     </a>
     <ul class="navbar-links">
