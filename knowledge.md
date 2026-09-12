@@ -603,7 +603,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Landing Toshi hub + rotating hero LIVE ([PR #539](https://github.com/KlassApp-Foundation/KlassApp/pull/539) MERGED+DEPLOYED)
+## Current Status: September 13, 2026 — Landing official brand connector icons (`fix/landing-official-brand-icons`)
+
+- **Branch**: `fix/landing-official-brand-icons` — replaces Lucide stroke approximations with official WhatsApp / Slack / Google Drive SVG marks.
+- **Guidelines care**: Meta WhatsApp (no recolor / no implied partnership); Slack Brand Center; Google Drive triangle in official colors. Neutral `brand-well` wells for clear space.
+- **Surfaces**: hero Connected float, orchestration panel, connector chips, Toshi hub channels.
+- **Verify**: `LandingPreviewV3Test` + `e2e/verify-landing-brand-icons.cjs` PASS with screenshots.
+
+## Previous: September 12, 2026 — Landing Toshi hub + rotating hero LIVE ([PR #539](https://github.com/KlassApp-Foundation/KlassApp/pull/539) MERGED+DEPLOYED)
 
 - **Merged**: [#539](https://github.com/KlassApp-Foundation/KlassApp/pull/539) merge `4f442325` (`feature/landing-toshi-hero-polish`).
 - **Shipped**: Meet Toshi mist/glass/filled tiles; Parent WhatsApp / Teacher Drive / Admin Slack hero rotate + `prefers-reduced-motion` static Parent; footer socials → X + GitHub + Contact.
@@ -1819,6 +1826,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-13: Landing official brand connector icons — **IN PROGRESS** (`fix/landing-official-brand-icons`)
+- **Work done**: Confirmed prior icons were Lucide-style stroke glyphs. Added `<x-brand.whatsapp|slack|google-drive>` with official color marks; wired into hero float, connectors panel/chips, Toshi hub. Neutral brand-well CSS (no recolor). Playwright screenshots confirm recognizable official marks.
+- **Files modified**: `resources/views/components/brand/*`, `landing-v2.blade.php`, `landing-preview.css`, `LandingPreviewV3Test.php`, `e2e/verify-landing-brand-icons.cjs`, screenshots, `public/build/*`, `knowledge.md`
+- **Key decisions**: Email/SMS/Calendar stay generic (no single official brand). Keep "Works with" framing; do not imply partnership.
+- **Status**: 🚧 Local verified; opening PR → staging → prod
+- **Edge cases flagged**: WhatsApp official glyph is itself a green circle + white handset — do not confuse with Lucide speech-bubble approximation
 
 ### 2026-09-12: Landing Toshi hub + rotating hero polish — **MERGED+DEPLOYED** ([#539](https://github.com/KlassApp-Foundation/KlassApp/pull/539))
 - **Work done**: Ported approved OD mocks into live landing. Toshi hub cloud-quality CSS (mist/glass/tiles/stronger strokes); hero Parent/Teacher/Admin rotate with reduced-motion fallback; footer socials → X + GitHub + Contact. Audited Terms (substantive) vs Privacy (real but thin/legacy Gegosoft). Staging auto-deploy + prod manual deploy; Playwright creative polish PASS on both.

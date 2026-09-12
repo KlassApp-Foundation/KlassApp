@@ -111,9 +111,9 @@
           <div class="connector-line"></div>
           <h4>Connected</h4>
           <div class="connector-icons">
-            <div class="connector-icon" title="WhatsApp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
-            <div class="connector-icon" title="Google Drive"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-            <div class="connector-icon" title="Slack"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+            <div class="connector-icon brand-well" title="WhatsApp"><x-brand.whatsapp /></div>
+            <div class="connector-icon brand-well" title="Google Drive"><x-brand.google-drive /></div>
+            <div class="connector-icon brand-well" title="Slack"><x-brand.slack /></div>
             <div class="connector-icon" title="Email"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></div>
             <div class="connector-icon" title="SMS"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
             <div class="connector-icon" title="Calendar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
@@ -147,19 +147,19 @@
           <span>Status</span>
         </div>
         <div class="panel-row">
-          <div class="panel-connector"><div class="panel-connector-icon whatsapp"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div> WhatsApp</div>
+          <div class="panel-connector"><div class="panel-connector-icon whatsapp brand-well"><x-brand.whatsapp /></div> WhatsApp</div>
           <div class="panel-flow"><strong>Fee reminder</strong> sent to 24 parents · P.4 group</div>
           <div class="panel-metric">142 msg</div>
           <span class="panel-badge live">Live</span>
         </div>
         <div class="panel-row">
-          <div class="panel-connector"><div class="panel-connector-icon drive"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-amber)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div> Google Drive</div>
+          <div class="panel-connector"><div class="panel-connector-icon drive brand-well"><x-brand.google-drive /></div> Google Drive</div>
           <div class="panel-flow"><strong>Weekly report</strong> uploaded to /reports/term-2/</div>
           <div class="panel-metric">8 files</div>
           <span class="panel-badge sync">Sync</span>
         </div>
         <div class="panel-row">
-          <div class="panel-connector"><div class="panel-connector-icon slack"><svg viewBox="0 0 24 24" fill="none" stroke="var(--violet-accent)" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div> Slack</div>
+          <div class="panel-connector"><div class="panel-connector-icon slack brand-well"><x-brand.slack /></div> Slack</div>
           <div class="panel-flow"><strong>#staff-alerts</strong> · 3 absences flagged for review</div>
           <div class="panel-metric">12 posts</div>
           <span class="panel-badge live">Live</span>
@@ -186,9 +186,9 @@
     </div>
 
     <div class="connector-grid-compact reveal reveal-delay-1">
-      <div class="connector-chip ka-node n-green"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> WhatsApp</div>
-      <div class="connector-chip ka-node n-amber"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-amber)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Drive</div>
-      <div class="connector-chip ka-node n-violet"><svg viewBox="0 0 24 24" fill="none" stroke="var(--violet-accent)" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Slack</div>
+      <div class="connector-chip ka-node n-green"><x-brand.whatsapp /> WhatsApp</div>
+      <div class="connector-chip ka-node n-amber"><x-brand.google-drive /> Drive</div>
+      <div class="connector-chip ka-node n-violet"><x-brand.slack /> Slack</div>
       <div class="connector-chip ka-node n-blue"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg> Email</div>
       <div class="connector-chip ka-node n-green"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> SMS</div>
       <div class="connector-chip ka-node n-blue"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Calendar</div>
@@ -328,11 +328,11 @@
           </svg>
         </div>
         <div class="toshi-visual-channels">
-          <div class="toshi-visual-channel toshi-node n-green"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></span><span>WhatsApp</span></div>
+          <div class="toshi-visual-channel toshi-node n-green"><span class="channel-ico brand-well" aria-hidden="true"><x-brand.whatsapp /></span><span>WhatsApp</span></div>
           <div class="toshi-visual-channel toshi-node n-blue"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span><span>Email</span></div>
-          <div class="toshi-visual-channel toshi-node n-violet"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span>Slack</span></div>
+          <div class="toshi-visual-channel toshi-node n-violet"><span class="channel-ico brand-well" aria-hidden="true"><x-brand.slack /></span><span>Slack</span></div>
           <div class="toshi-visual-channel toshi-node n-green"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span><span>SMS</span></div>
-          <div class="toshi-visual-channel toshi-node n-amber"><span class="channel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span>Drive</span></div>
+          <div class="toshi-visual-channel toshi-node n-amber"><span class="channel-ico brand-well" aria-hidden="true"><x-brand.google-drive /></span><span>Drive</span></div>
         </div>
         <div class="toshi-visual-hub">
           <div class="toshi-visual-core" aria-label="KlassApp · Toshi hub">

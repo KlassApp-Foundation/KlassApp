@@ -73,6 +73,14 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('Teacher · Drive', false);
         $response->assertSee('Admin · Slack', false);
         $response->assertSee('channel-ico', false);
+        $response->assertSee('brand-mark--whatsapp', false);
+        $response->assertSee('brand-mark--slack', false);
+        $response->assertSee('brand-mark--drive', false);
+        $response->assertSee('fill="#25D366"', false);
+        $response->assertSee('fill="#E01E5A"', false);
+        $response->assertSee('fill="#0066da"', false);
+        // Generic Lucide-style approximations must not remain for WA/Drive/Slack connectors
+        $this->assertStringNotContainsString('stroke="#16A34A" stroke-width="2"><path d="M21 11.5a8.38', $content);
         $response->assertSee('https://x.com/klassapp', false);
         $response->assertSee('https://github.com/KlassApp-Foundation', false);
         $this->assertStringNotContainsString('href="#" class="site-footer-social"', $content);
