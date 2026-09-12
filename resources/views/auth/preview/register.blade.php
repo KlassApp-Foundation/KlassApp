@@ -10,7 +10,7 @@
     <span class="ap-preview-badge">Preview</span>
     <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="ap-logo" alt="KlassApp">
     <h1 class="ap-title">Create your KlassApp account</h1>
-    <p class="ap-sub">Name, email, and WhatsApp — then finish school setup with Toshi.</p>
+    <p class="ap-sub">Name, email, and WhatsApp: then finish school setup with Toshi.</p>
 
     @if(\Config::get('settings.register')==1)
       <div class="ap-maintenance">Register page is under maintenance!!!</div>

@@ -5,7 +5,7 @@
 
 @section('code', '419')
 @section('title', __('Page Expired'))
-@section('message', __('Your session has expired. Please refresh the page and try again. Your data is safe — no changes have been lost.'))
+@section('message', __('Your session has expired. Please refresh the page and try again. Your data is safe: no changes have been lost.'))
 
 @section('icon')
 <div class="err-icon err-icon-amber" aria-hidden="true">
