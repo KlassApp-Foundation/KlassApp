@@ -62,7 +62,10 @@ async function measurePerf(page) {
       };
     });
     await page.locator('#hero').screenshot({ path: path.join(outDir, 'desktop-hero.png') });
-    if (!report('desktop hero deck present', hero.deck && hero.cardCount === 3 && hero.activeRole === 'parent', JSON.stringify(hero))) failures++;
+    // Rotation may already have advanced past parent by the time Playwright evaluates;
+    // require deck structure + a valid active role, then assert auto-rotate separately.
+    const roleOk = ['parent', 'teacher', 'admin'].includes(hero.activeRole);
+    if (!report('desktop hero deck present', hero.deck && hero.cardCount === 3 && roleOk, JSON.stringify(hero))) failures++;
 
     // Wait for rotation to teacher
     await page.waitForTimeout(3500);
