@@ -51,6 +51,12 @@ const viewports = [
       faq: !!document.getElementById('faq'),
       emDash: (document.body.textContent || '').includes('\u2014'),
       q1: (document.body.textContent || '').includes('Q1 2027'),
+      vintageHero: !!document.querySelector('.hero-bg-vintage'),
+      navPrimaryLogo: !!document.querySelector('.navbar-logo-img[src*="klassapp-logo-primary"]'),
+      toshiHubLogo: !!document.querySelector('.toshi-hub-logo[src*="klassapp-logo.svg"]'),
+      simpleFooter: !!document.querySelector('.footer-logo')
+        && (document.querySelector('.footer-logo')?.textContent || '').trim() === 'KlassApp'
+        && !document.querySelector('.footer-columns'),
     }));
 
     // isolation: no --d-* computed vars on body / no .ds-* elements
@@ -79,6 +85,20 @@ const viewports = [
     const shot = path.join(OUT, `${vp.name}-full.png`);
     await page.screenshot({ path: shot, fullPage: true });
 
+    // Focus shots for the three requested visual changes
+    const heroEl = await page.$('#hero');
+    if (heroEl) {
+      await heroEl.screenshot({ path: path.join(OUT, `${vp.name}-hero.png`) });
+    }
+    const toshiEl = await page.$('#toshi');
+    if (toshiEl) {
+      await toshiEl.screenshot({ path: path.join(OUT, `${vp.name}-toshi.png`) });
+    }
+    const footerEl = await page.$('footer.footer');
+    if (footerEl) {
+      await footerEl.screenshot({ path: path.join(OUT, `${vp.name}-footer.png`) });
+    }
+
     const entry = {
       status: res.status(),
       consoleErrors,
@@ -88,7 +108,21 @@ const viewports = [
       screenshot: shot,
     };
     report.viewports[vp.name] = entry;
-    if (res.status() !== 200 || consoleErrors.length || ids.some((x) => !x.present) || productUi.pillars < 5 || productUi.emDash || productUi.q1 || !productUi.provable || !productUi.protocolCores || !productUi.howProtocol) {
+    if (
+      res.status() !== 200
+      || consoleErrors.length
+      || ids.some((x) => !x.present)
+      || productUi.pillars < 5
+      || productUi.emDash
+      || productUi.q1
+      || !productUi.provable
+      || !productUi.protocolCores
+      || !productUi.howProtocol
+      || !productUi.vintageHero
+      || !productUi.navPrimaryLogo
+      || !productUi.toshiHubLogo
+      || !productUi.simpleFooter
+    ) {
       report.ok = false;
     }
     if (isolation.dsElements > 0 || isolation.htmlHasDsKpi) report.ok = false;

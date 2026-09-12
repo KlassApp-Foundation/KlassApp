@@ -20,7 +20,9 @@
 {{-- Preview-only port of locked Open Design klassapp-landing-v3.html. Route: /landing-preview only : no live cutover. --}}
 <nav class="navbar" id="navbar">
   <div class="navbar-inner">
-    <a href="{{ route('landing.preview') }}#hero" class="navbar-logo">Klass<span>App</span></a>
+    <a href="{{ route('landing.preview') }}#hero" class="navbar-logo" aria-label="KlassApp">
+      <img src="{{ asset('images/klassapp-logo-primary.svg') }}" alt="KlassApp" class="navbar-logo-img" width="36" height="36" />
+    </a>
     <ul class="navbar-links">
       <li><a href="#connectors">Integrations</a></li>
       <li><a href="#toshi">Toshi</a></li>
@@ -38,6 +40,15 @@
 </nav>
 
 <section class="hero" id="hero">
+  {{-- Vintage paper v2 (Open Design klassapp-landing-v3-hero-vintage-paper-v2): fainter grain + ledger rules --}}
+  <div class="hero-bg-vintage" aria-hidden="true"></div>
+  <div class="hero-deckle" aria-hidden="true">
+    <svg viewBox="0 0 1200 700" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,12 C18,4 32,22 48,10 C64,-2 78,18 96,8 C112,0 128,20 148,6 C168,-4 184,16 204,10 C224,2 240,22 260,8 C280,-2 296,18 316,12 C336,4 352,24 372,10 C392,0 408,20 428,8 C448,-2 464,18 484,12 C504,4 520,22 540,10 C560,0 576,18 596,8 C616,-2 632,20 652,10 C672,2 688,22 708,8 C728,-2 744,16 764,12 C784,4 800,24 820,10 C840,0 856,18 876,8 C896,-2 912,20 932,12 C952,4 968,22 988,10 C1008,0 1024,18 1044,8 C1064,-2 1080,20 1100,10 C1120,2 1136,22 1156,8 C1172,0 1188,14 1200,6 L1200,0 L0,0 Z" fill="rgba(180,155,110,0.11)"/>
+      <path d="M0,700 L0,688 C12,692 24,680 40,690 C56,696 72,682 88,690 C104,698 120,684 136,690 C152,696 168,682 184,690 C200,698 216,684 232,690 C248,696 264,682 280,690 C296,698 312,684 328,690 C344,696 360,682 376,690 C392,698 408,684 424,690 C440,696 456,682 472,690 C488,698 504,684 520,690 C536,696 552,682 568,690 C584,698 600,684 616,690 C632,696 648,682 664,690 C680,698 696,684 712,690 C728,696 744,682 760,690 C776,698 792,684 808,690 C824,696 840,682 856,690 C872,698 888,684 904,690 C920,696 936,682 952,690 C968,698 984,684 1000,690 C1016,696 1032,682 1048,690 C1064,698 1080,684 1096,690 C1112,696 1128,682 1144,690 C1160,698 1176,684 1192,692 L1200,688 L1200,700 Z" fill="rgba(160,135,95,0.1)"/>
+      <path d="M0,0 L8,0 C4,40 14,80 6,120 C-2,160 12,200 8,240 C4,280 14,320 6,360 C-2,400 12,440 8,480 C4,520 14,560 6,600 C0,640 10,680 4,700 L0,700 Z" fill="rgba(140,115,75,0.07)"/>
+    </svg>
+  </div>
   <div class="container">
     <div class="hero-inner">
       <div class="hero-content reveal">
@@ -259,7 +270,10 @@
           <div class="toshi-visual-channel toshi-node n-amber"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-amber)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Drive</span></div>
         </div>
         <div class="toshi-visual-hub">
-          <div class="toshi-visual-core">Toshi</div>
+          <div class="toshi-visual-core" aria-label="KlassApp · Toshi hub">
+            <img src="{{ asset('images/klassapp-logo.svg') }}" alt="" class="toshi-hub-logo" width="40" height="40" />
+            <span class="toshi-hub-name">Toshi</span>
+          </div>
           <div class="toshi-visual-label">Control Center</div>
         </div>
         <div class="toshi-visual-roles">
@@ -725,6 +739,7 @@
   </div>
 </section>
 
+{{-- Footer: explicit decision — keep simple KlassApp wordmark; do NOT expand to Nimbalyst multi-column density. --}}
 <footer class="footer">
   <div class="container">
     <div class="footer-inner">

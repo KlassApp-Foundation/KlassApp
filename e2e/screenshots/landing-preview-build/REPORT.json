@@ -1,6 +1,6 @@
 {
   "base": "http://127.0.0.1:8000",
-  "at": "2026-09-12T09:34:02.004Z",
+  "at": "2026-09-12T09:53:54.705Z",
   "viewports": {
     "desktop": {
       "status": 200,
@@ -59,7 +59,11 @@
         "compare": true,
         "faq": true,
         "emDash": false,
-        "q1": false
+        "q1": false,
+        "vintageHero": true,
+        "navPrimaryLogo": true,
+        "toshiHubLogo": true,
+        "simpleFooter": true
       },
       "isolation": {
         "dsElements": 0,
@@ -126,7 +130,11 @@
         "compare": true,
         "faq": true,
         "emDash": false,
-        "q1": false
+        "q1": false,
+        "vintageHero": true,
+        "navPrimaryLogo": true,
+        "toshiHubLogo": true,
+        "simpleFooter": true
       },
       "isolation": {
         "dsElements": 0,
@@ -193,7 +201,11 @@
         "compare": true,
         "faq": true,
         "emDash": false,
-        "q1": false
+        "q1": false,
+        "vintageHero": true,
+        "navPrimaryLogo": true,
+        "toshiHubLogo": true,
+        "simpleFooter": true
       },
       "isolation": {
         "dsElements": 0,

@@ -32,6 +32,13 @@ class LandingPreviewV3Test extends TestCase
         $response->assertSee('Protocol path', false);
         $response->assertSee('Through the WhatsApp connector', false);
         $response->assertDontSee('One intelligence layer orchestrating three perspectives on the same school.', false);
+        $response->assertSee('klassapp-logo-primary.svg', false);
+        $response->assertSee('navbar-logo-img', false);
+        $response->assertSee('hero-bg-vintage', false);
+        $response->assertSee('toshi-hub-logo', false);
+        $response->assertSee('images/klassapp-logo.svg', false);
+        $response->assertSee('footer-logo">KlassApp', false);
+        $response->assertDontSee('footer-columns', false);
         $response->assertSee('build/assets/landing-preview-', false);
         $response->assertDontSee('Q1 2027', false);
         $response->assertDontSee('ds-kpi-card', false);

@@ -29,6 +29,14 @@
   --shadow-glow-violet: 0 0 16px rgba(139,92,246,0.2);
   --shadow-glow-amber: 0 0 16px rgba(217,119,6,0.18);
 
+  /* Hero vintage paper (OD v2) — background only; never replaces brand text/CTA tokens */
+  --paper-base: #F5F0E6;
+  --paper-mid: #EFE6D5;
+  --paper-deep: #E8DCC8;
+  --paper-edge: #D4C4A8;
+  --paper-ink-wash: rgba(92, 74, 48, 0.03);
+  --paper-rule: rgba(120, 95, 60, 0.07);
+
   scroll-behavior: smooth;
 }
 
@@ -89,8 +97,8 @@ section {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: #FFFFFF;
-  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--paper-base) 70%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--paper-edge) 55%, var(--border));
   transition: box-shadow 0.3s ease;
   isolation: isolate;
 }
@@ -107,14 +115,14 @@ section {
   padding: 0 24px;
 }
 .navbar-logo {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.375rem;
-  letter-spacing: -0.03em;
-  color: var(--brand-dark);
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
 }
-.navbar-logo span {
-  color: var(--brand-blue);
+.navbar-logo-img {
+  display: block;
+  height: 36px;
+  width: auto;
 }
 .navbar-links {
   display: flex;
@@ -223,34 +231,60 @@ section {
   height: 18px;
 }
 
-/* ---- Hero ---- */
+/* ---- Hero (vintage paper v2 — fainter grain + ledger rules; OD klassapp-landing-v3-hero-vintage-paper-v2) ---- */
 .hero {
   padding: 64px 0 88px;
-  background: var(--brand-white);
+  background: var(--paper-base);
   position: relative;
   overflow: hidden;
 }
-.hero::before {
+.hero-bg-vintage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 90% 80% at 50% 30%, var(--paper-base) 0%, var(--paper-mid) 55%, var(--paper-deep) 100%);
+}
+/* Soft vignette + ledger ruled lines (v2: ~half prior vignette strength) */
+.hero-bg-vintage::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 16h32M16 0v32' stroke='%23E2E8F0' stroke-width='0.5' fill='none' stroke-dasharray='4 4'/%3E%3C/svg%3E");
-  background-size: 32px 32px;
-  opacity: 0.55;
-  pointer-events: none;
-  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 75%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 75%);
+  background:
+    radial-gradient(ellipse 75% 70% at 50% 40%, transparent 40%, var(--paper-ink-wash) 100%),
+    linear-gradient(180deg, rgba(212, 196, 168, 0.16) 0%, transparent 18%, transparent 82%, rgba(196, 176, 140, 0.18) 100%),
+    linear-gradient(90deg, rgba(180, 155, 110, 0.09) 0%, transparent 8%, transparent 92%, rgba(180, 155, 110, 0.08) 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 31px,
+      var(--paper-rule) 31px,
+      var(--paper-rule) 32px
+    );
 }
-.hero::after {
+/* Paper grain (v2: opacity 0.22 vs prior 0.45) */
+.hero-bg-vintage::after {
   content: '';
   position: absolute;
-  top: -120px;
-  right: -80px;
-  width: 480px;
-  height: 480px;
-  background: radial-gradient(circle, rgba(30,111,217,0.04) 0%, transparent 70%);
-  border-radius: 50%;
+  inset: 0;
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+.hero-deckle {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   pointer-events: none;
+  opacity: 0.28;
+}
+.hero-deckle svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
 .hero-inner {
   display: grid;
@@ -458,8 +492,8 @@ section {
   right: -32px;
   top: 50%;
   transform: translateY(-50%);
-  background: var(--brand-white);
-  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--paper-base) 40%, white);
+  border: 1px solid color-mix(in srgb, var(--paper-edge) 40%, var(--border));
   border-radius: var(--radius-md);
   padding: 14px 16px;
   box-shadow: var(--shadow-md);
@@ -852,7 +886,11 @@ section {
   position: relative;
   width: 104px; height: 104px;
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 1.1875rem;
@@ -869,6 +907,23 @@ section {
     0 10px 28px rgba(139,92,246,0.22),
     0 4px 10px rgba(15,23,42,0.07);
   animation: toshiCoreBreath 4.5s ease-in-out infinite;
+}
+.toshi-hub-logo {
+  width: 36px;
+  height: 36px;
+  display: block;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+}
+.toshi-hub-name {
+  position: relative;
+  z-index: 1;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: var(--violet-accent);
 }
 /* Two counter-rotating orbit rings read as depth rather than decoration. */
 .toshi-visual-core::before {
