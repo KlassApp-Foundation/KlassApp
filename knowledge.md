@@ -603,13 +603,17 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Auth/error vintage paper on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) (`feature/auth-error-vintage-paper`)
+## Current Status: September 12, 2026 — Auth/error desktop+mobile vintage v2 on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
 
-- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper` tip `6067e036` off `main` (`dfae51ed` = #534 merge). Preview routes only — live `/login`, `/register`, live `errors/*` untouched.
-- **Prior**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) **merged** (`merged:true`, SHA `dfae51ed`). [#377](https://github.com/KlassApp-Foundation/KlassApp/pull/377) **closed** (design-proposal blocking question resolved via #534).
-- **This pass**: OD mock `klassapp-auth-error-vintage-paper-v1.html` → additive vintage paper bg on `/preview/login|register|reset-*|force-change-password` + `/preview/errors/{404,419,500}`. Typography stays **Sora/DM Sans** (not landing Bricolage/Inter). Locks held: 44×44 toggle, `#DC2626/#FEF2F2/#FECACA`, green CTAs, force-change zero escape hatch.
-- **Verify**: AuthPreview + ErrorsPreview **15 passed (166 assertions)**. Playwright `e2e/auth-error-vintage-verify.cjs` `ok=true` desktop/tablet/mobile; pass2 locks true; `dsElements=0`; no em dashes. Artifacts `e2e/screenshots/auth-error-vintage/`.
-- **Status**: 📝 PR open — awaiting review. Not cut over to live routes.
+- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper` tip `d981a81c`. Preview routes only.
+- **This pass (review fixes)**: OD `klassapp-auth-error-vintage-paper-v2-breakpoints.html` — genuine **desktop two-column** (brand | form) vs **mobile stacked**. Removed opaque white form card. Paper CSS is the **exact** landing `.hero-bg-vintage` (wash + ruled lines + grain 0.22). Applied to all auth + error previews. Typography remains Sora/DM Sans.
+- **Standing design rule**: every new surface must be mocked for **desktop AND mobile as separate compositions** in Open Design before Blade/CSS — never a mobile layout merely centered on a wide canvas.
+- **Verify**: Feature tests 15 passed (202 assertions). Playwright `ok=true` — desktop `sideBySide` / mobile `stacked`; `opaqueWhite=false`; `paperRules=true`; `grain022=true`; locks held. Artifacts `e2e/screenshots/auth-error-vintage/{desktop,mobile}-*.png`.
+- **Status**: 📝 PR open — review fixes pushed.
+
+## Previous: September 12, 2026 — Auth/error vintage paper v1 on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) (`feature/auth-error-vintage-paper`)
+
+- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — tip `6067e036` / `e7b873a7`. First vintage paper pass (centered card); superseded by desktop+mobile v2 above.
 ## Previous: September 12, 2026 — Footer/Community/HITL/protocol mesh/Toshi hub flow on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
 
 - **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `893f1bc5` (preview routes only).
@@ -1770,6 +1774,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-12: Auth/error desktop split + transparent paper (v2 breakpoints) — **PR #535**
+- **Work done**: Local review of #535 found desktop was a centered mobile card, opaque white form card, and paper not matching hero rules. OD remock `klassapp-auth-error-vintage-paper-v2-breakpoints.html` (desktop 1440 two-col + mobile 390 stack). Ported: `.ap-bg-vintage` / `.err-bg-vintage` = exact `.hero-bg-vintage` layers; transparent form/error shells; brand+form split on all auth + error previews.
+- **Files modified**: `resources/css/auth-preview.css`, `resources/views/auth/preview/*`, `resources/views/errors-preview/layout.blade.php`, tests, `e2e/auth-error-vintage-verify.cjs`, screenshots, `public/build/*`, `knowledge.md`
+- **Key decisions**: Desktop and mobile are different compositions (standing rule going forward). Opaque white card removed so ruled paper shows through. Fonts stay Sora/DM Sans.
+- **Status**: 📝 Pushed on [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) tip `d981a81c`
+- **Verify**: Feature 202 assertions; Playwright desktop/mobile `ok=true` (sideBySide/stacked, no opaque white, paperRules, grain 0.22, locks)
 
 ### 2026-09-12: Auth/error vintage paper (OD → preview) — **PR #535**
 - **Work done**: After merging #534 and closing #377: Open Design mock `klassapp-auth-error-vintage-paper-v1.html` (cursor-agent/auto); ported full-page paper (ledger + grain 0.22, `#F5F0E6` family) onto auth-preview CSS + errors-preview layout. Kept Sora/DM Sans and all Pass-2 locks. New Playwright `e2e/auth-error-vintage-verify.cjs`.
