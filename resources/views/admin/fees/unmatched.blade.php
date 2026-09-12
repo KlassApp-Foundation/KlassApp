@@ -18,7 +18,7 @@
         <p class="text-gray-400 text-sm">All payments have been matched to fee categories.</p>
     </x-card>
 @else
-    <x-table :headers="['Date', 'Student', 'Receipt', 'Amount', 'Channel', 'Match Fee Category']" hover class="mt-4">
+    <x-table :headers="['Date', 'Student', 'Receipt', 'Amount', 'Channel', 'Match Fee Category']" class="mt-4">
         @foreach($transactions as $txn)
         <tr>
             <td class="text-xs whitespace-nowrap">

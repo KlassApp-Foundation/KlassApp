@@ -13,7 +13,7 @@
 
 @include('partials.message')
 
-<x-table :headers="$headers" hover>
+<x-table :headers="$headers">
     @forelse ($exams as $exam)
     <tr>
         <td>{{ $loop->iteration }}</td>
