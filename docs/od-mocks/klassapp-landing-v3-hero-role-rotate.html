@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KlassApp — Hero role-rotate mock (REVIEW · 3 states)</title>
+<!--
+  REVIEW MOCK — not production Blade. Judge the rotation concept before committing to live hero.
+  States:
+    A Parent WhatsApp conversation
+    B Teacher Drive / report view
+    C Admin Slack / ops view
+  Constraints:
+    CSS transforms only · prefers-reduced-motion static fallback · text-first on mobile · no video/Lottie/WebGL
+-->
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --brand-blue: #1E6FD9;
+  --brand-green: #22C55E;
+  --brand-dark: #0F172A;
+  --paper: #F5F0E6;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --border: #E2E8F0;
+  --violet: #8B5CF6;
+  --amber: #D97706;
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: Inter, system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--font-body); color: var(--brand-dark); background: #ebe6dc; }
+.banner {
+  background: #0F172A; color: #E2E8F0; padding: 14px 20px; font-size: 13px; line-height: 1.5;
+}
+.banner strong { color: #fff; }
+.modes {
+  max-width: 1180px; margin: 20px auto; padding: 0 16px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+@media (max-width: 900px) { .modes { grid-template-columns: 1fr; } }
+.panel {
+  background: var(--paper);
+  border: 1px solid #ddd4c4;
+  border-radius: 18px;
+  padding: 18px 16px 28px;
+  box-shadow: 0 10px 30px -22px rgba(15,23,42,0.4);
+}
+.panel h3 {
+  margin: 0 0 6px; font-family: var(--font-display); font-size: 15px;
+}
+.panel .hint { margin: 0 0 16px; font-size: 12px; color: var(--text-secondary); }
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 24px;
+  align-items: center;
+}
+@media (max-width: 700px) {
+  .hero { grid-template-columns: 1fr; }
+  /* Text first — intentional mobile order */
+  .hero-copy { order: 0; }
+  .hero-stage { order: 1; }
+}
+.kicker {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--brand-blue); margin-bottom: 8px;
+}
+h1 {
+  font-family: var(--font-display); font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+  line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 10px;
+}
+.sub { margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; }
+
+.stage {
+  position: relative;
+  height: 340px;
+  perspective: 1200px;
+}
+.deck {
+  position: absolute; inset: 0;
+  transform-style: preserve-3d;
+}
+.card {
+  position: absolute; inset: 18px 24px;
+  border-radius: 22px;
+  background: #0B1220;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 24px 50px -24px rgba(15,23,42,0.65);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateZ(-80px) rotateY(18deg) scale(0.92);
+  transition: transform 0.7s cubic-bezier(.2,.8,.2,1), opacity 0.55s ease;
+  pointer-events: none;
+}
+.card.is-active {
+  opacity: 1;
+  transform: translateZ(0) rotateY(0) scale(1);
+  pointer-events: auto;
+  z-index: 3;
+}
+.card.is-exit {
+  opacity: 0;
+  transform: translateZ(-40px) rotateY(-16deg) scale(0.94);
+  z-index: 2;
+}
+.card-hd {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; font-size: 13px; font-weight: 600;
+}
+.card.wa .card-hd { background: #075E54; }
+.card.drive .card-hd { background: #1E3A5F; }
+.card.slack .card-hd { background: #3F1F5C; }
+.avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 11px; font-weight: 800;
+  background: rgba(255,255,255,0.18);
+}
+.body { padding: 14px; font-size: 13px; line-height: 1.45; color: #E2E8F0; }
+.bubble {
+  background: #fff; color: #0F172A; border-radius: 12px 12px 12px 4px;
+  padding: 10px 12px; max-width: 92%; margin-bottom: 8px;
+}
+.bubble.out {
+  margin-left: auto; background: #DCF8C6; border-radius: 12px 12px 4px 12px;
+}
+.meta { font-size: 11px; color: #94A3B8; margin-top: 4px; }
+.row {
+  display: flex; justify-content: space-between; gap: 8px;
+  padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.06);
+  margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.06);
+}
+.dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+.dots button {
+  width: 8px; height: 8px; border-radius: 50%; border: 0; background: #c4bba8; cursor: pointer;
+}
+.dots button.on { background: var(--brand-green); width: 18px; border-radius: 999px; }
+
+/* Animated mode autoplay */
+.panel.animated .deck[data-auto="1"] .card { /* driven by JS class swaps */ }
+
+/* Reduced motion: single static card, no transforms animating */
+.panel.reduced .card {
+  transition: none !important;
+  transform: none !important;
+  opacity: 0;
+}
+.panel.reduced .card.is-active { opacity: 1; }
+.panel.reduced .dots { display: none; }
+
+.perf {
+  margin: 8px 16px 28px; max-width: 1180px; margin-left: auto; margin-right: auto;
+  font-size: 12px; color: var(--text-secondary); padding: 0 16px;
+}
+</style>
+</head>
+<body>
+<div class="banner">
+  <strong>Review mock — rotating role preview.</strong>
+  Left = animated CSS 3D-ish rotate through Parent / Teacher / Admin.
+  Right = <code>prefers-reduced-motion</code> fallback (static Parent only).
+  Mobile: copy stays above stage. Do not port to Blade until this concept is approved.
+</div>
+
+<div class="modes">
+  <section class="panel animated" id="animatedPanel">
+    <h3>Animated (default)</h3>
+    <p class="hint">CSS transform + opacity only. ~3 lightweight transitions. No canvas / video / Lottie.</p>
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="kicker">Open-source agentic school protocol</div>
+        <h1>The school platform that operates in the tools educationists already use.</h1>
+        <p class="sub">Toshi orchestrates WhatsApp, Drive, Slack, and email — preview cycles by role.</p>
+      </div>
+      <div class="hero-stage">
+        <div class="stage">
+          <div class="deck" data-auto="1" id="deckA">
+            <article class="card wa is-active" data-i="0">
+              <div class="card-hd"><span class="avatar">KA</span> Parent · WhatsApp</div>
+              <div class="body">
+                <div class="bubble">Good morning! P.4 attendance is in. Amina is present today.</div>
+                <div class="bubble out">Thanks — fee reminder for next week too?</div>
+                <div class="bubble">Scheduled on WhatsApp for Monday 8am. <span class="meta">8:14</span></div>
+              </div>
+            </article>
+            <article class="card drive" data-i="1">
+              <div class="card-hd"><span class="avatar">DR</span> Teacher · Drive</div>
+              <div class="body">
+                <div class="row"><span>P.4 Midterm report.pdf</span><span>Ready</span></div>
+                <div class="row"><span>Marks sheet · Term 2</span><span>Synced</span></div>
+                <div class="row"><span>Share to parents</span><span>Queued</span></div>
+                <p class="meta">Toshi filed the PDF to the class Drive folder after you confirmed.</p>
+              </div>
+            </article>
+            <article class="card slack" data-i="2">
+              <div class="card-hd"><span class="avatar">#</span> Admin · Slack</div>
+              <div class="body">
+                <div class="row"><span>#school-ops</span><span>Today</span></div>
+                <div class="bubble">Fee collection: 86% · 3 reminders left for overdue families.</div>
+                <div class="bubble">Staff: 2 teachers still need Term 2 mark entry for P.5.</div>
+                <p class="meta">Posted by Toshi · needs your Yes to escalate.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+        <div class="dots" id="dotsA" aria-label="Preview state"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel reduced">
+    <h3>Reduced motion fallback</h3>
+    <p class="hint">When <code>prefers-reduced-motion: reduce</code> — show State A only, no rotation.</p>
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="kicker">Open-source agentic school protocol</div>
+        <h1>The school platform that operates in the tools educationists already use.</h1>
+        <p class="sub">Static Parent WhatsApp preview — same weight as today’s hero phone.</p>
+      </div>
+      <div class="hero-stage">
+        <div class="stage">
+          <div class="deck">
+            <article class="card wa is-active">
+              <div class="card-hd"><span class="avatar">KA</span> Parent · WhatsApp</div>
+              <div class="body">
+                <div class="bubble">Good morning! Here's today's attendance summary for P.4.</div>
+                <div class="bubble out">Got it — thank you.</div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<p class="perf">
+  Performance intent for production: one CSS keyframe/transition set, reuse existing phone chrome if possible,
+  lazy-init after first paint, pause when offscreen. Measure LCP against current static hero before shipping.
+</p>
+
+<script>
+(function () {
+  const deck = document.getElementById('deckA');
+  const cards = [...deck.querySelectorAll('.card')];
+  const dots = document.getElementById('dotsA');
+  let i = 0;
+  let timer;
+
+  cards.forEach((_, idx) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-label', 'Show state ' + (idx + 1));
+    if (idx === 0) b.classList.add('on');
+    b.addEventListener('click', () => go(idx, true));
+    dots.appendChild(b);
+  });
+
+  function go(next, manual) {
+    const prev = cards[i];
+    prev.classList.remove('is-active');
+    prev.classList.add('is-exit');
+    setTimeout(() => prev.classList.remove('is-exit'), 700);
+    i = next;
+    cards[i].classList.add('is-active');
+    [...dots.children].forEach((d, di) => d.classList.toggle('on', di === i));
+    if (manual) restart();
+  }
+
+  function tick() {
+    go((i + 1) % cards.length, false);
+  }
+  function restart() {
+    clearInterval(timer);
+    timer = setInterval(tick, 3200);
+  }
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    restart();
+  }
+})();
+</script>
+</body>
+</html>

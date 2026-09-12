@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KlassApp — Toshi hub cloud-quality mock (REVIEW)</title>
+<!--
+  REVIEW MOCK — not production Blade.
+  Source comparison (real screenshots in refs/):
+    refs/ref-laravel-cloud-hero.png vs refs/live-klassapp-toshi.png
+  Gaps closed vs live Toshi hub:
+    1) Soft ethereal mist/glow BEHIND the product surface (Laravel Cloud quality)
+    2) Layered glass card framing + deeper shadow stack
+    3) Gradient-stroke connectors (not thin dotted diagram lines)
+    4) Filled soft channel tiles with subtle shadow
+    5) Optional flow motion (respects prefers-reduced-motion)
+  Tokens locked to landing v3.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --brand-blue: #1E6FD9;
+  --brand-green: #22C55E;
+  --brand-dark: #0F172A;
+  --brand-light: #F8FAFC;
+  --brand-white: #FFFFFF;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --border: #E2E8F0;
+  --violet-accent: #8B5CF6;
+  --brand-amber: #D97706;
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: Inter, system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--brand-dark);
+  background: #F3F6FA;
+}
+.note {
+  max-width: 920px;
+  margin: 24px auto 0;
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background: #fff8e6;
+  border: 1px solid #f0e0a8;
+  border-radius: 10px;
+}
+.toshi {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+.toshi-header { text-align: center; margin-bottom: 28px; }
+.toshi-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand-blue);
+  margin-bottom: 10px;
+}
+h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
+}
+.toshi-name { color: var(--brand-green); }
+.lead {
+  margin: 0 auto;
+  max-width: 540px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+/* Product surface — Laravel Cloud-like depth */
+.hub-stage {
+  position: relative;
+  margin-top: 36px;
+  padding: 28px 20px 32px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.78));
+  border: 1px solid rgba(226,232,240,0.9);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.8) inset,
+    0 24px 60px -28px rgba(30,111,217,0.35),
+    0 10px 28px -12px rgba(15,23,42,0.12);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.hub-mist {
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 70%;
+  background:
+    radial-gradient(ellipse 55% 60% at 50% 0%, rgba(30,111,217,0.28), transparent 70%),
+    radial-gradient(ellipse 40% 50% at 20% 30%, rgba(139,92,246,0.16), transparent 65%),
+    radial-gradient(ellipse 40% 50% at 80% 25%, rgba(34,197,94,0.14), transparent 65%);
+  pointer-events: none;
+  filter: blur(2px);
+}
+.hub-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(15,23,42,0.05) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.45), transparent 85%);
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.hub-layout {
+  position: relative;
+  display: grid;
+  gap: 22px;
+  z-index: 1;
+}
+.channels, .roles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.88);
+  border: 1px solid rgba(226,232,240,0.95);
+  box-shadow: 0 8px 18px -14px rgba(15,23,42,0.45), 0 1px 0 rgba(255,255,255,0.9) inset;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--brand-dark);
+}
+.tile .ico {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 6px 12px -8px rgba(15,23,42,0.5);
+}
+.ico.wa { background: linear-gradient(145deg, #25D366, #128C7E); }
+.ico.em { background: linear-gradient(145deg, #3B82F6, #1E6FD9); }
+.ico.sl { background: linear-gradient(145deg, #A78BFA, #8B5CF6); }
+.ico.sm { background: linear-gradient(145deg, #4ADE80, #22C55E); }
+.ico.dr { background: linear-gradient(145deg, #F59E0B, #D97706); }
+
+.core-wrap { display: grid; place-items: center; gap: 10px; margin: 4px 0; }
+.core {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55), transparent 45%),
+    linear-gradient(160deg, #2DD46A, #16A34A 55%, #15803D);
+  box-shadow:
+    0 0 0 8px rgba(34,197,94,0.12),
+    0 0 0 16px rgba(30,111,217,0.08),
+    0 18px 40px -16px rgba(22,163,74,0.55);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 28px;
+}
+.core-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-green);
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.25);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+.core-sub { font-size: 12px; color: var(--text-muted); }
+
+svg.connectors {
+  width: 100%;
+  max-width: 720px;
+  height: 72px;
+  margin: 0 auto;
+  display: block;
+}
+.stroke-base {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+.flow {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 6 14;
+  animation: dash 2.8s linear infinite;
+}
+@keyframes dash { to { stroke-dashoffset: -80; } }
+@media (prefers-reduced-motion: reduce) {
+  .flow { animation: none; stroke-dasharray: none; opacity: 0.55; }
+}
+
+.role {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 6px 14px -12px rgba(15,23,42,0.4);
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.p { background: var(--brand-green); }
+.dot.t { background: var(--brand-blue); }
+.dot.a { background: var(--brand-amber); }
+
+.compare {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+.compare article {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.compare strong { display: block; color: var(--brand-dark); margin-bottom: 6px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<p class="note">
+  <strong>Review mock only.</strong> Side-by-side: Laravel Cloud’s hero product surface has mist glow + glass depth;
+  live KlassApp Toshi hub was flatter with thin dotted connectors. This mock elevates mist, glass framing,
+  gradient strokes, and soft filled tiles. Prefer this direction before porting to Blade/CSS.
+</p>
+<section class="toshi">
+  <div class="toshi-header">
+    <div class="toshi-badge">AI Agent</div>
+    <h2>Meet <span class="toshi-name">Toshi</span>. Your school's AI agent.</h2>
+    <p class="lead">One control center. Channels in, roles out — with the same layered product depth as a managed cloud surface.</p>
+  </div>
+
+  <div class="hub-stage" aria-label="Toshi control center visual">
+    <div class="hub-mist" aria-hidden="true"></div>
+    <div class="hub-grid" aria-hidden="true"></div>
+    <div class="hub-layout">
+      <div class="channels">
+        <div class="tile"><span class="ico wa">W</span> WhatsApp</div>
+        <div class="tile"><span class="ico em">E</span> Email</div>
+        <div class="tile"><span class="ico sl">S</span> Slack</div>
+        <div class="tile"><span class="ico sm">M</span> SMS</div>
+        <div class="tile"><span class="ico dr">D</span> Drive</div>
+      </div>
+
+      <svg class="connectors" viewBox="0 0 720 72" aria-hidden="true">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22C55E"/><stop offset="1" stop-color="#1E6FD9"/></linearGradient>
+          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#22C55E"/></linearGradient>
+          <linearGradient id="g3" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#D97706"/><stop offset="1" stop-color="#1E6FD9"/></linearGradient>
+        </defs>
+        <path class="stroke-base" stroke="url(#g1)" d="M80,8 C160,8 220,64 360,64" />
+        <path class="stroke-base" stroke="url(#g2)" d="M360,8 C400,8 420,64 360,64" />
+        <path class="stroke-base" stroke="url(#g3)" d="M640,8 C560,8 500,64 360,64" />
+        <path class="flow" stroke="url(#g1)" d="M80,8 C160,8 220,64 360,64" />
+        <path class="flow" stroke="url(#g3)" d="M640,8 C560,8 500,64 360,64" style="animation-delay:.8s" />
+      </svg>
+
+      <div class="core-wrap">
+        <div class="core" aria-hidden="true">K</div>
+        <div class="core-label">Control Center</div>
+        <div class="core-sub">Toshi · KlassApp</div>
+      </div>
+
+      <svg class="connectors" viewBox="0 0 720 72" aria-hidden="true">
+        <defs>
+          <linearGradient id="o1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1E6FD9"/><stop offset="1" stop-color="#22C55E"/></linearGradient>
+          <linearGradient id="o2" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#22C55E"/><stop offset="1" stop-color="#D97706"/></linearGradient>
+        </defs>
+        <path class="stroke-base" stroke="url(#o1)" d="M360,8 C280,8 200,64 120,64" />
+        <path class="stroke-base" stroke="url(#o1)" d="M360,8 C360,20 360,50 360,64" />
+        <path class="stroke-base" stroke="url(#o2)" d="M360,8 C440,8 520,64 600,64" />
+        <path class="flow" stroke="url(#o1)" d="M360,8 C280,8 200,64 120,64" style="animation-delay:1.2s" />
+        <path class="flow" stroke="url(#o2)" d="M360,8 C440,8 520,64 600,64" style="animation-delay:1.6s" />
+      </svg>
+
+      <div class="roles">
+        <div class="role"><span class="dot p"></span> Parent</div>
+        <div class="role"><span class="dot t"></span> Teacher</div>
+        <div class="role"><span class="dot a"></span> Admin</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="compare">
+    <article><strong>Before (live)</strong> Flat white diagram card, thin dotted SVG paths, stroke-only channel icons — reads as a flowchart.</article>
+    <article><strong>After (this mock)</strong> Mist glow behind glass surface, gradient-stroke flow, filled soft tiles, deeper hub halo — reads as a product surface.</article>
+  </div>
+</section>
+</body>
+</html>

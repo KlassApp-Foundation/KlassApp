@@ -603,14 +603,25 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Landing/auth/error LIVE CUTOVER shipped ([PR #536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
+## Current Status: September 12, 2026 — Landing mobile bugfixes + creative review mocks (`fix/landing-mobile-bugs`)
+
+- **Branch**: `fix/landing-mobile-bugs` (off `main` tip after #537). Shipping verified mobile bugs first; Toshi hub + rotating hero are **OD review mocks only** — not in Blade yet.
+- **Earlier mobile sweep claim was wrong**: a page-level “mobile sweep passed” after cutover missed real live bugs on `klassapp.xyz` (compare table overflow, protocol Layer/KA overlap, dead hamburger, hero phone-above-text, footer `href="#"`). This pass re-verified **per section** with Playwright screenshots.
+- **Fixed in code (local verified)**: stacked compare cards; hide `.protocol-visual` ≤900px; real mobile nav panel + `initMobileNav()`; footer → `/terms-of-service` + `/privacy-policy`; hero `.phone-wrapper { order: 0 }` so copy reads first.
+- **Hamburger root cause**: toggle existed with **no panel DOM and no JS handler** — click was a no-op.
+- **Creative (review before Blade)**: real screenshots of `cloud.laravel.com` vs live Toshi hub; mocks at `docs/od-mocks/klassapp-landing-v3-toshi-hub-cloud-quality.html` + `klassapp-landing-v3-hero-role-rotate.html` (3 role states + reduced-motion panel).
+- **Still open**: rotating hero + Toshi cloud-quality polish need design approval before production implement; footer social icons still `href="#"` (separate gap); Terms/Privacy *pages* exist but remain thin legal stubs if content quality is insufficient.
+- **Verify**: `LandingPreviewV3Test` passed; `e2e/verify-landing-mobile-fixes.cjs` all PASS locally; artifacts `e2e/screenshots/landing-fix-verify/`.
+- **Deploy**: staging first, then production once staging confirms — see Session Log / PR when opened.
+
+## Previous: September 12, 2026 — Landing/auth/error LIVE CUTOVER shipped ([PR #536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
 
 - **Merged**: [#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536) merge `638d359b` (includes prior [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) `749940c5` + [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) designs).
 - **What went live**: `/` → landing-v2 (Protocol Cores, HITL, prod footer, vintage hero v2); `/login` `/register` password-reset pages → vintage Pass-2 auth shells; live `errors/{404,419,500}` → Pass-2 vintage shells. `/landing-preview` → 301 `/`.
 - **Staging deploy**: `depl-a2bad172-875e-44eb-950d-8c67762424f8` @ `638d359b` — **succeeded**; functional verify OK (login, register, full password reset, 404).
 - **Production deploy**: `depl-a2bad357-d8a4-4e02-8838-d111e6cc3da2` @ `638d359b` — **succeeded**; functional verify OK with synthetic probe users only (then flagged `inactive`).
 - **Rollback point (pre-cutover prod)**: `depl-a2b8b963-2b17-4c79-9f5c-f635f178b469` @ commit `075e25c5` — redeploy that Cloud deployment / commit if needed.
-- **Not fully verified**: end-to-end Google OAuth *callback* — `/auth/google` redirects to Google on staging+prod, but `redirect_uri` is still `http://localhost:8000/auth/google/callback` (pre-existing Cloud env misconfig; cutover did not change OAuth controllers). Interactive Google consent was not completed in this session.
+- **Note**: Google OAuth `redirect_uri` localhost misconfig was fixed in a later Cloud env session (not this mobile-bugs branch).
 
 ## Previous: September 12, 2026 — Auth brand-header balance on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
 
@@ -1790,6 +1801,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-12: Landing mobile bugs (live) + OD creative mocks — **IN PROGRESS** (`fix/landing-mobile-bugs`)
+- **Work done**: Re-diagnosed live `klassapp.xyz` with per-section Playwright (not page-level sweep). Fixed: compare → stacked cards; protocol mesh hidden on mobile; hamburger panel+JS; footer Terms/Privacy real routes; hero text-before-phone. Built review mocks for Toshi hub (vs real Laravel Cloud screenshot) and 3-state rotating hero + reduced-motion. **Did not** implement rotating hero / Toshi polish in Blade — awaiting review.
+- **Files modified**: `landing-v2.blade.php`, `landing-preview.css`, `landing-preview.js`, `LandingPreviewV3Test.php`, `public/build/*`, `e2e/verify-landing-mobile-fixes.cjs`, `e2e/screenshots/landing-fix-verify/*`, `docs/od-mocks/*`, `knowledge.md`
+- **Key decisions**: Earlier cutover “mobile sweep passed” claim was incorrect and is recorded as such. Hide protocol decorative mesh on ≤900px rather than fight overlap. Creative hero rotation stays mock-only until approved (perf / reduced-motion constraints).
+- **Status**: 🚧 Local verified; opening PR → staging deploy → prod after staging clean
+- **Edge cases flagged**: Footer social links still `#`; Terms/Privacy linked but may need real legal copy; OD daemon stalled on discovery forms — mocks authored from real side-by-side screenshots into OD project + `docs/od-mocks/`
 
 ### 2026-09-12: Landing/auth/error LIVE CUTOVER — **MERGED+DEPLOYED+VERIFIED** ([#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
 - **Work done**: Confirmed #535 was still open (`merged:false`) → admin-merged `749940c5`. Implemented live cutover on `feature/landing-auth-error-cutover`: WelcomeController → `landing-v2`; auth controllers → `auth.preview.*`; live `errors/{404,419,500}` → Pass-2 vintage; `/landing-preview` 301 → `/`; preview badge only when `isPreview`. Merged #536 (`638d359b`). Staged then production Cloud deploys of that tip.
