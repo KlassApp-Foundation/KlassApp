@@ -5,6 +5,33 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 const navbar = document.getElementById('navbar');
 window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', window.scrollY > 10); }, { passive: true });
 
+/* Mobile nav — toggle was previously a dead button (no panel, no handler). */
+(function initMobileNav() {
+  const toggle = document.getElementById('navbarMobileToggle');
+  const panel = document.getElementById('navbarMobilePanel');
+  if (!toggle || !panel) return;
+
+  function setOpen(open) {
+    panel.hidden = !open;
+    panel.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.classList.toggle('is-open', open);
+    document.body.classList.toggle('nav-open', open);
+  }
+
+  toggle.addEventListener('click', () => {
+    setOpen(panel.hidden);
+  });
+
+  panel.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => setOpen(false));
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !panel.hidden) setOpen(false);
+  });
+})();
+
 /* Hero chat sequence: typing indicator → message appears */
 (function initChatSequence() {
   const messages = document.querySelectorAll('#phone-messages .msg');

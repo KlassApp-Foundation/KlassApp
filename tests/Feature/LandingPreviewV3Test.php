@@ -53,5 +53,17 @@ class LandingPreviewV3Test extends TestCase
         $response->assertDontSee('Q1 2027', false);
         $response->assertDontSee('ds-kpi-card', false);
         $this->assertStringNotContainsString("\u{2014}", $response->getContent());
+
+        // Mobile nav + compare cards + real legal footer links (Sep 2026 mobile bugfix)
+        $response->assertSee('id="navbarMobileToggle"', false);
+        $response->assertSee('id="navbarMobilePanel"', false);
+        $response->assertSee('compare-list', false);
+        $response->assertSee('compare-card', false);
+        $response->assertDontSee('compare-table-wrap', false);
+        $response->assertSee('/terms-of-service', false);
+        $response->assertSee('/privacy-policy', false);
+        $content = $response->getContent();
+        $this->assertStringNotContainsString('href="#">Terms</a>', $content);
+        $this->assertStringNotContainsString('href="#">Privacy</a>', $content);
     }
 }

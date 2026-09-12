@@ -160,12 +160,54 @@ section {
   border: none;
   cursor: pointer;
   padding: 8px;
+  position: relative;
+  z-index: 60;
 }
 .navbar-mobile-toggle svg {
   width: 24px;
   height: 24px;
   color: var(--text-primary);
 }
+.navbar-mobile-toggle .icon-close { display: none; }
+.navbar-mobile-toggle.is-open .icon-open { display: none; }
+.navbar-mobile-toggle.is-open .icon-close { display: block; }
+.navbar-mobile-panel {
+  display: none;
+  border-top: 1px solid color-mix(in srgb, var(--paper-edge) 55%, var(--border));
+  background: color-mix(in srgb, var(--paper-base) 92%, white);
+  padding: 12px 24px 20px;
+}
+.navbar-mobile-panel.is-open,
+.navbar-mobile-panel:not([hidden]) {
+  display: block;
+}
+.navbar-mobile-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.navbar-mobile-links a {
+  display: block;
+  padding: 12px 4px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+.navbar-mobile-links li:last-child a { border-bottom: none; }
+.navbar-mobile-cta {
+  margin-top: 8px;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background: var(--brand-green) !important;
+  color: var(--brand-white) !important;
+  border-bottom: none !important;
+  font-weight: 600 !important;
+}
+body.nav-open { overflow: hidden; }
 
 /* ---- Buttons ---- */
 .btn {
@@ -2034,7 +2076,8 @@ section {
   .hero-sub { margin-left: auto; margin-right: auto; }
   .hero-actions { justify-content: center; }
   .hero-trust { justify-content: center; }
-  .phone-wrapper { order: -1; }
+  /* Headline/copy first on mobile — phone mockup follows (was order:-1). */
+  .phone-wrapper { order: 0; }
   .connector-float { display: none; }
   .panel-table-header { display: none; }
   .panel-row {
@@ -2049,6 +2092,8 @@ section {
   .protocol-left { align-items: center; }
   .protocol-header { text-align: center; }
   .protocol-header p { margin: 0 auto; }
+  /* Decorative mesh overlaps cards at narrow widths — hide; cards carry the content. */
+  .protocol-visual { display: none; }
   .toshi-grid { grid-template-columns: 1fr; }
   .toshi-visual-channels { gap: 10px; }
   .navbar-links { display: none; }
@@ -3245,6 +3290,59 @@ section {
   font-size: 0.9375rem;
   color: var(--text-muted);
 }
+.compare-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.compare-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--brand-white);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.compare-col {
+  padding: 18px 22px;
+}
+.compare-before {
+  color: var(--text-secondary);
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--brand-light) 55%, white);
+}
+.compare-after {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--brand-green) 5%, white);
+}
+.compare-label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.compare-col p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+@media (max-width: 700px) {
+  .compare-card {
+    grid-template-columns: 1fr;
+  }
+  .compare-before {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+/* Legacy table selectors kept inert if any cached HTML remains */
 .compare-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--border);
@@ -3255,7 +3353,6 @@ section {
 .compare-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 640px;
   font-size: 0.9375rem;
 }
 .compare-table th,

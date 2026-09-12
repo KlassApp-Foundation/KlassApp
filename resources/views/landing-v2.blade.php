@@ -30,9 +30,21 @@
       <li><a href="#faq">FAQ</a></li>
     </ul>
     <a href="{{ url('/register') }}" class="navbar-cta">Start free</a>
-    <button class="navbar-mobile-toggle" aria-label="Menu">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    <button type="button" class="navbar-mobile-toggle" id="navbarMobileToggle" aria-label="Menu" aria-expanded="false" aria-controls="navbarMobilePanel">
+      <svg class="icon-open" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <svg class="icon-close" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
     </button>
+  </div>
+  <div class="navbar-mobile-panel" id="navbarMobilePanel" hidden>
+    <ul class="navbar-mobile-links">
+      <li><a href="#connectors">Integrations</a></li>
+      <li><a href="#toshi">Toshi</a></li>
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#trust">Protocol Cores</a></li>
+      <li><a href="#compare">What we address</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="{{ url('/register') }}" class="navbar-mobile-cta">Start free</a></li>
+    </ul>
   </div>
 </nav>
 
@@ -665,33 +677,47 @@
       <h2>What we actually address</h2>
       <p class="lead">Illustrative of real product capability. Not sourced from a named school.</p>
     </div>
-    <div class="compare-table-wrap reveal">
-      <table class="compare-table">
-        <thead>
-          <tr>
-            <th scope="col">Before</th>
-            <th scope="col">KlassApp way</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Fee reminders mean phone calls and follow-up visits</td>
-            <td>Automated reminders on WhatsApp, email, or Telegram, whichever channel your parents already use</td>
-          </tr>
-          <tr>
-            <td>Report cards are printed and sent home, sometimes lost along the way</td>
-            <td>Parents get results the moment marks are finalized, on their connected channels</td>
-          </tr>
-          <tr>
-            <td>Setting up a new term means days of spreadsheet work</td>
-            <td>A guided setup configures classes and streams in minutes, through any connected channel</td>
-          </tr>
-          <tr>
-            <td>Every setup step means filling out forms, one field at a time</td>
-            <td>Just tell Toshi what you need, in plain language, and it does the rest</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="compare-list reveal" role="list">
+      <article class="compare-card" role="listitem">
+        <div class="compare-col compare-before">
+          <span class="compare-label">Before</span>
+          <p>Fee reminders mean phone calls and follow-up visits</p>
+        </div>
+        <div class="compare-col compare-after">
+          <span class="compare-label">KlassApp way</span>
+          <p>Automated reminders on WhatsApp, email, or Telegram, whichever channel your parents already use</p>
+        </div>
+      </article>
+      <article class="compare-card" role="listitem">
+        <div class="compare-col compare-before">
+          <span class="compare-label">Before</span>
+          <p>Report cards are printed and sent home, sometimes lost along the way</p>
+        </div>
+        <div class="compare-col compare-after">
+          <span class="compare-label">KlassApp way</span>
+          <p>Parents get results the moment marks are finalized, on their connected channels</p>
+        </div>
+      </article>
+      <article class="compare-card" role="listitem">
+        <div class="compare-col compare-before">
+          <span class="compare-label">Before</span>
+          <p>Setting up a new term means days of spreadsheet work</p>
+        </div>
+        <div class="compare-col compare-after">
+          <span class="compare-label">KlassApp way</span>
+          <p>A guided setup configures classes and streams in minutes, through any connected channel</p>
+        </div>
+      </article>
+      <article class="compare-card" role="listitem">
+        <div class="compare-col compare-before">
+          <span class="compare-label">Before</span>
+          <p>Every setup step means filling out forms, one field at a time</p>
+        </div>
+        <div class="compare-col compare-after">
+          <span class="compare-label">KlassApp way</span>
+          <p>Just tell Toshi what you need, in plain language, and it does the rest</p>
+        </div>
+      </article>
     </div>
   </div>
 </section>
@@ -789,8 +815,8 @@
         <p class="site-footer-tagline">Smarter schools start here.</p>
       </div>
       <nav class="site-footer-links" aria-label="Footer">
-        <a href="#">Terms</a>
-        <a href="#">Privacy</a>
+        <a href="{{ url('/terms-of-service') }}">Terms</a>
+        <a href="{{ url('/privacy-policy') }}">Privacy</a>
         <a href="/docs/community/">Docs</a>
         <a href="/contact">Contact</a>
       </nav>
