@@ -605,7 +605,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Current Status: September 12, 2026 — Footer/Community/HITL/protocol mesh/Toshi hub flow on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
 
-- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` (preview routes only).
+- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `893f1bc5` (preview routes only).
 - **This pass**:
   1. Production footer from `landing.blade.php` (large KlassApp wordmark, logo + “Smarter schools start here.”, Terms/Privacy/Docs/Contact, socials, ©) — newsletter omitted.
   2. Removed `#community` and redundant `#open-source` (Free. Open. Self-hostable.) — Protocol Open Source card remains the OSS message.
@@ -1763,6 +1763,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-12: Prod footer + strip Community/OSS CTA + HITL + protocol mesh + Toshi hub flow — **PR #534**
+- **Work done**: Replaced preview footer with production `landing.blade.php` footer block (no Stay-in-the-loop newsletter). Removed `#community` and `#open-source` sections (redundant with Protocol Open Source card). Added Meet Toshi human-in-the-loop callout. OD remocks `klassapp-landing-v3-protocol-visual-v2.html` + `klassapp-landing-v3-toshi-hub-flow-v2.html` ported (mesh visual; hub mark + directional/streak connectors). Hero CTA / nav Community retargeted to `#protocol`.
+- **Files modified**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/js/landing-preview.js`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-preview-build-verify.cjs`, `e2e/screenshots/landing-preview-build/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Copy production footer links/socials as-is (`Terms`/`Privacy` `#`). Strip both community + Free.Open.Self-hostable CTA because user description matched that heading. No Q1 dates from OD mock copy. Badges in Toshi diagram untouched.
+- **Status**: 📝 Pushed on [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534)
+- **Verify**: Feature 43 assertions; Playwright 3bp `ok=true` (prodFooter, noCommunity, HITL, mesh, hub arrows/streaks); isolation clean; no em dash / Q1 2027
 
 ### 2026-09-12: Vintage hero v2 + nav/hub logos; footer stay simple — **PR #534**
 - **Work done**: Open Design remock `klassapp-landing-v3-hero-vintage-paper-v2.html` (grain opacity ~half of v1; ledger ruled lines via `--paper-rule`) then ported as default hero on `/landing-preview`. Nav text wordmark → `images/klassapp-logo-primary.svg`. Toshi connector hub center → icon `images/klassapp-logo.svg` + compact “Toshi” label. Footer intentionally unchanged (KlassApp wordmark + Docs/Open source/Community/Contact) — denser Nimbalyst-style footer rejected.
