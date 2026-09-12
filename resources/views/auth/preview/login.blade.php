@@ -49,7 +49,7 @@
                 <input id="remember" type="checkbox" class="ap-checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
                 <label for="remember" class="ap-checkbox-label">Remember me</label>
               </div>
-              <a href="{{ route('preview.reset-request') }}" class="ap-link">Forgot password?</a>
+              <a href="{{ route('password.email') }}" class="ap-link">Forgot password?</a>
             </div>
             <button type="submit" class="ap-submit" data-testid="ap-primary-submit">Sign in</button>
           </form>
@@ -61,7 +61,7 @@
           </a>
 
           <div class="ap-meta">
-            <p>Don't have an account? <a href="{{ route('preview.register') }}">Sign up</a></p>
+            <p>Don't have an account? <a href="{{ route('register') }}">Sign up</a></p>
           </div>
         @endif
       </div>

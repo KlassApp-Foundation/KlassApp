@@ -48,7 +48,7 @@
           <input type="hidden" name="email" value="{{ $email }}">
           <button type="submit" class="ap-back">{{ __("Didn't receive it? Resend code") }}</button>
         </form>
-        <a href="{{ route('preview.reset-request') }}" class="ap-back" style="margin-top: 8px;">← Try a different email</a>
+        <a href="{{ route('password.email') }}" class="ap-back" style="margin-top: 8px;">← Try a different email</a>
       </div>
     </div>
   </div>

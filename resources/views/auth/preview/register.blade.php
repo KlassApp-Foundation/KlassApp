@@ -97,7 +97,7 @@
             </button>
 
             <div class="ap-meta">
-              Already have an account? <a href="{{ route('preview.login') }}">Sign in</a>
+              Already have an account? <a href="{{ route('login') }}">Sign in</a>
             </div>
           </form>
         @endif

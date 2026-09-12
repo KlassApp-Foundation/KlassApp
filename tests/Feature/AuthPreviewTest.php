@@ -42,7 +42,7 @@ class AuthPreviewTest extends TestCase
     {
         $this->get('/preview/reset-request')->assertOk()
             ->assertSee('name="email"', false)
-            ->assertSee('action="'.route('password.email').'"', false);
+            ->assertSee('action="'.url('/password/reset').'"', false);
 
         $code = $this->get('/preview/reset-code');
         $code->assertOk();

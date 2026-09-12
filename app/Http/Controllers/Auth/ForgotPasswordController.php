@@ -87,6 +87,6 @@ class ForgotPasswordController extends Controller
             ]);
         }
 
-        return view('auth.passwords.email');
+        return view('auth.preview.reset-request');
     }
 }

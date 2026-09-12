@@ -71,17 +71,17 @@ class ErrorsPreviewTest extends TestCase
         $response->assertDontSee('$schoolId');
     }
 
-    public function test_real_404_still_uses_illustrated_layout_not_pass2(): void
+    public function test_real_404_uses_pass2_vintage_shell_after_cutover(): void
     {
         $response = $this->get('/this-route-definitely-does-not-exist-phase-c-'.uniqid());
 
         $response->assertNotFound();
-        $response->assertSee('klass-error-shell', false);
-        $response->assertSee('klass-error-code', false);
+        $response->assertSee('data-error-shell="pass2"', false);
+        $response->assertSee('data-error-paper="vintage"', false);
+        $response->assertSee('err-card', false);
         $response->assertSee('Page Not Found');
-        $response->assertDontSee('data-error-shell="pass2"', false);
-        $response->assertDontSee('err-card', false);
-        $response->assertDontSee('Preview');
+        $response->assertDontSee('klass-error-shell', false);
+        $response->assertDontSee('>Preview<', false);
     }
 
     public function test_preview_500_view_is_structurally_sound_with_http_exception(): void
@@ -107,7 +107,7 @@ class ErrorsPreviewTest extends TestCase
         $this->assertStringNotContainsString('must be of type int', $html);
     }
 
-    public function test_live_500_view_still_illustrated_and_does_not_leak_exception_text(): void
+    public function test_live_500_view_uses_pass2_shell_and_does_not_leak_exception_text(): void
     {
         $exception = new HttpException(
             500,
@@ -119,9 +119,10 @@ class ErrorsPreviewTest extends TestCase
             'exception' => $exception,
         ])->render();
 
-        $this->assertStringContainsString('klass-error-shell', $html);
+        $this->assertStringContainsString('data-error-shell="pass2"', $html);
         $this->assertStringContainsString('Server Error', $html);
-        $this->assertStringNotContainsString('data-error-shell="pass2"', $html);
+        $this->assertStringContainsString('Something went wrong on our end', $html);
+        $this->assertStringNotContainsString('klass-error-shell', $html);
         $this->assertStringNotContainsString('TypeError', $html);
         $this->assertStringNotContainsString('$schoolId', $html);
     }

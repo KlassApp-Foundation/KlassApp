@@ -59,7 +59,7 @@
           <button type="submit" class="ap-submit" data-testid="ap-primary-submit">{{ __('Reset Password') }}</button>
         </form>
 
-        <a href="{{ route('preview.login') }}" class="ap-back">← Back to sign in</a>
+        <a href="{{ route('login') }}" class="ap-back">← Back to sign in</a>
       </div>
     </div>
   </div>

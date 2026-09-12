@@ -1,6 +1,8 @@
 {{-- Brand header: desktop top-aligned stack; mobile logo|copy row (OD brand-header-balance-v1). --}}
 <aside class="ap-brand-panel">
-  <span class="ap-preview-badge">Preview</span>
+  @if (! empty($isPreview))
+    <span class="ap-preview-badge">Preview</span>
+  @endif
   <div class="ap-brand-row">
     <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="ap-brand-logo" alt="KlassApp">
     <div class="ap-brand-copy">

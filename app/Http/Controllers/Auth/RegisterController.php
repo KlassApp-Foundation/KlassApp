@@ -41,7 +41,7 @@ class RegisterController extends Controller
         }
 
         return response()
-            ->view('auth.register')
+            ->view('auth.preview.register')
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     }
 

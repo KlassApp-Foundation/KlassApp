@@ -8,7 +8,7 @@ class LandingPreviewV3Test extends TestCase
 {
     public function test_landing_preview_returns_v4_sections_and_copy(): void
     {
-        $response = $this->get('/landing-preview');
+        $response = $this->get('/');
 
         $response->assertOk();
         $response->assertSee('id="hero"', false);
