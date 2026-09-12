@@ -14,10 +14,15 @@ class ErrorsPreviewTest extends TestCase
 
             $response->assertOk();
             $response->assertSee('data-error-shell="pass2"', false);
+            $response->assertSee('data-error-paper="vintage"', false);
             $response->assertSee('data-error-code="'.$code.'"', false);
             $response->assertSee('Error '.$code);
             $response->assertSee('Preview');
             $response->assertSee('data-testid="exception-present"', false);
+            $response->assertSee('family=Sora', false);
+            $response->assertSee('--paper-base', false);
+            $response->assertDontSee('Bricolage', false);
+            $response->assertDontSee("\u{2014}");
         }
     }
 

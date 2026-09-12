@@ -603,7 +603,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Footer/Community/HITL/protocol mesh/Toshi hub flow on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
+## Current Status: September 12, 2026 — Auth/error vintage paper preview on `feature/auth-error-vintage-paper` (opening PR)
+
+- **Branch**: `feature/auth-error-vintage-paper` off `main` (`dfae51ed` = #534 merge). Preview routes only — live `/login`, `/register`, live `errors/*` untouched.
+- **Prior**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) **merged** (`merged:true`, merge SHA `dfae51ed`). [#377](https://github.com/KlassApp-Foundation/KlassApp/pull/377) **closed** (design-proposal blocking question resolved via #534).
+- **This pass**: OD mock `klassapp-auth-error-vintage-paper-v1.html` → additive vintage paper bg on `/preview/login|register|reset-*|force-change-password` + `/preview/errors/{404,419,500}`. Typography stays **Sora/DM Sans** (not landing Bricolage/Inter). Locks held: 44×44 toggle, `#DC2626/#FEF2F2/#FECACA`, green CTAs, force-change zero escape hatch.
+- **Verify**: AuthPreview + ErrorsPreview **15 passed (166 assertions)**. Playwright `e2e/auth-error-vintage-verify.cjs` `ok=true` desktop/tablet/mobile; pass2 locks true; `dsElements=0`; no em dashes. Artifacts `e2e/screenshots/auth-error-vintage/`.
+
+## Previous: September 12, 2026 — Footer/Community/HITL/protocol mesh/Toshi hub flow on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
 
 - **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `893f1bc5` (preview routes only).
 - **This pass**:
@@ -1763,6 +1770,17 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-12: Auth/error vintage paper (OD → preview) — **PR opening**
+- **Work done**: After merging #534 and closing #377: Open Design mock `klassapp-auth-error-vintage-paper-v1.html` (cursor-agent/auto); ported full-page paper (ledger + grain 0.22, `#F5F0E6` family) onto auth-preview CSS + errors-preview layout. Kept Sora/DM Sans and all Pass-2 locks. New Playwright `e2e/auth-error-vintage-verify.cjs`.
+- **Files modified**: `resources/css/auth-preview.css`, `resources/views/auth/preview/*`, `resources/views/errors-preview/layout.blade.php`, `tests/Feature/{AuthPreview,ErrorsPreview}Test.php`, `e2e/auth-error-vintage-verify.cjs`, `e2e/screenshots/auth-error-vintage/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Vintage is additive background only — never swap auth typography to landing fonts. Preview-only; no live cutover.
+- **Status**: 🚧 Opening PR on `feature/auth-error-vintage-paper`
+- **Verify**: Feature 15 passed (166 assertions); Playwright 3bp `ok=true` (paperBody, toggle44, greens, errorTokens, forceNoEscape, isolation)
+
+### 2026-09-12: Merge #534 + close #377
+- **Work done**: Real review of #534 (preview-only scope, auth locks, tests 15/158 then em-dash scrub `452df659`); squash-merged with admin (`merged:true`, SHA `dfae51ed`). Closed #377 with comment that Nimbalyst-vs-restraint resolution landed via #534.
+- **Status**: ✅ #534 MERGED; #377 CLOSED (not merged)
 
 ### 2026-09-12: Prod footer + strip Community/OSS CTA + HITL + protocol mesh + Toshi hub flow — **PR #534**
 - **Work done**: Replaced preview footer with production `landing.blade.php` footer block (no Stay-in-the-loop newsletter). Removed `#community` and `#open-source` sections (redundant with Protocol Open Source card). Added Meet Toshi human-in-the-loop callout. OD remocks `klassapp-landing-v3-protocol-visual-v2.html` + `klassapp-landing-v3-toshi-hub-flow-v2.html` ported (mesh visual; hub mark + directional/streak connectors). Hero CTA / nav Community retargeted to `#protocol`.

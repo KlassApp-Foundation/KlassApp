@@ -1,0 +1,469 @@
+{
+  "base": "http://127.0.0.1:8000",
+  "at": "2026-09-12T11:38:20.267Z",
+  "viewports": {
+    "desktop": {
+      "screens": {
+        "login": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/desktop-login.png",
+          "pass": true
+        },
+        "register": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/desktop-register.png",
+          "pass": true
+        },
+        "reset-request": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/desktop-reset-request.png",
+          "pass": true
+        },
+        "reset-code": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/desktop-reset-code.png",
+          "pass": true
+        },
+        "reset-newpw": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/desktop-reset-newpw.png",
+          "pass": true
+        },
+        "force-change-password": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/desktop-force-change-password.png",
+          "pass": true
+        },
+        "error-404": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "shell": true,
+            "sora": true,
+            "bricolage": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperVar": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/desktop-error-404.png",
+          "pass": true
+        },
+        "error-419": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "shell": true,
+            "sora": true,
+            "bricolage": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperVar": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/desktop-error-419.png",
+          "pass": true
+        },
+        "error-500": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "shell": true,
+            "sora": true,
+            "bricolage": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperVar": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/desktop-error-500.png",
+          "pass": true
+        }
+      },
+      "consoleErrors": [],
+      "pass": true
+    },
+    "tablet": {
+      "screens": {
+        "login": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/tablet-login.png",
+          "pass": true
+        },
+        "register": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/tablet-register.png",
+          "pass": true
+        },
+        "reset-request": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/tablet-reset-request.png",
+          "pass": true
+        },
+        "reset-code": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/tablet-reset-code.png",
+          "pass": true
+        },
+        "reset-newpw": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/tablet-reset-newpw.png",
+          "pass": true
+        },
+        "force-change-password": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/tablet-force-change-password.png",
+          "pass": true
+        },
+        "error-404": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "shell": true,
+            "sora": true,
+            "bricolage": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperVar": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/tablet-error-404.png",
+          "pass": true
+        },
+        "error-419": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "shell": true,
+            "sora": true,
+            "bricolage": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperVar": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/tablet-error-419.png",
+          "pass": true
+        },
+        "error-500": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "shell": true,
+            "sora": true,
+            "bricolage": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperVar": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/tablet-error-500.png",
+          "pass": true
+        }
+      },
+      "consoleErrors": [],
+      "pass": true
+    },
+    "mobile": {
+      "screens": {
+        "login": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/mobile-login.png",
+          "pass": true
+        },
+        "register": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/mobile-register.png",
+          "pass": true
+        },
+        "reset-request": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/mobile-reset-request.png",
+          "pass": true
+        },
+        "reset-code": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/mobile-reset-code.png",
+          "pass": true
+        },
+        "reset-newpw": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/mobile-reset-newpw.png",
+          "pass": true
+        },
+        "force-change-password": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "sora": true,
+            "dmSans": true,
+            "bricolage": false,
+            "interOnly": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperRgb": "rgb(245, 240, 230)",
+            "hasPrimary": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/mobile-force-change-password.png",
+          "pass": true
+        },
+        "error-404": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "shell": true,
+            "sora": true,
+            "bricolage": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperVar": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/mobile-error-404.png",
+          "pass": true
+        },
+        "error-419": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "shell": true,
+            "sora": true,
+            "bricolage": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperVar": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/mobile-error-419.png",
+          "pass": true
+        },
+        "error-500": {
+          "status": 200,
+          "checks": {
+            "paper": true,
+            "shell": true,
+            "sora": true,
+            "bricolage": false,
+            "emDash": false,
+            "dsElements": 0,
+            "paperVar": true
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/auth-error-vintage/mobile-error-500.png",
+          "pass": true
+        }
+      },
+      "consoleErrors": [],
+      "pass": true
+    }
+  },
+  "pass2": {
+    "toggle44": true,
+    "primaryGreen": true,
+    "primaryHover": true,
+    "errorTokens": true,
+    "paperBody": true,
+    "forceNoEscape": true,
+    "raw": {
+      "metrics": {
+        "toggle": {
+          "w": 44,
+          "h": 44
+        },
+        "submitBg": "rgb(34, 197, 94)",
+        "alert": {
+          "color": "rgb(220, 38, 38)",
+          "backgroundColor": "rgb(254, 242, 242)",
+          "borderColor": "rgb(254, 202, 202)"
+        },
+        "paperBg": "rgb(245, 240, 230)"
+      },
+      "hoverBg": "rgb(22, 163, 74)",
+      "force": {
+        "hasSkip": false,
+        "hasCancel": false,
+        "hasSignOut": false
+      }
+    },
+    "pass": true
+  },
+  "ok": true
+}

@@ -8,7 +8,7 @@
 @section('title', 'Update password')
 
 @section('content')
-<div class="ap-page" data-ap-screen="force-change-password">
+<div class="ap-page" data-ap-paper="vintage" data-ap-screen="force-change-password">
   <div class="ap-card">
     <span class="ap-preview-badge">Preview</span>
     <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="ap-logo" alt="KlassApp">

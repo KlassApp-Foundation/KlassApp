@@ -3,6 +3,7 @@
      Path: resources/views/errors-preview/ — NOT resources/views/errors/ (live cutover is a separate decision).
      Self-contained CSS — do NOT @vite here (mirrors live error reliability).
      Typography: Sora/DM Sans (live auth + errors.illustrated-layout), not landing Bricolage/Inter.
+     Vintage paper bg: OD klassapp-auth-error-vintage-paper-v1.html (additive; fonts unchanged).
      Preview routes pass a synthetic $exception; never echo raw exception text on 500. --}}
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -16,9 +17,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --paper-base: #F5F0E6;
+            --paper-mid: #EFE6D5;
+            --paper-deep: #E8DCC8;
+            --paper-edge: #D4C4A8;
+            --paper-ink-wash: rgba(92, 74, 48, 0.03);
+            --paper-rule: rgba(120, 95, 60, 0.07);
+        }
         body {
             font-family: 'DM Sans', sans-serif;
-            background: #FAFAF5;
+            background: var(--paper-base);
             color: #1E293B;
             min-height: 100vh;
             display: flex;
@@ -28,22 +37,46 @@
             -webkit-font-smoothing: antialiased;
             position: relative;
             overflow: hidden;
+            isolation: isolate;
         }
         body::before {
             content: "";
             position: absolute;
-            inset: -20% -10%;
-            background:
-                radial-gradient(40% 35% at 15% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 70%),
-                radial-gradient(35% 30% at 85% 15%, rgba(30, 111, 217, 0.06) 0%, transparent 70%);
+            inset: 0;
+            z-index: 0;
             pointer-events: none;
+            background:
+                radial-gradient(ellipse 90% 80% at 50% 30%, var(--paper-base) 0%, var(--paper-mid) 55%, var(--paper-deep) 100%),
+                radial-gradient(ellipse 75% 70% at 50% 40%, transparent 40%, var(--paper-ink-wash) 100%),
+                linear-gradient(180deg, rgba(212, 196, 168, 0.16) 0%, transparent 18%, transparent 82%, rgba(196, 176, 140, 0.18) 100%),
+                linear-gradient(90deg, rgba(180, 155, 110, 0.09) 0%, transparent 8%, transparent 92%, rgba(180, 155, 110, 0.08) 100%),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 31px,
+                    var(--paper-rule) 31px,
+                    var(--paper-rule) 32px
+                );
+        }
+        body::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.22;
+            mix-blend-mode: multiply;
+            background-image:
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
+            background-size: 180px 180px;
         }
         .err-card {
             position: relative;
+            z-index: 1;
             width: 100%;
             max-width: 480px;
             background: #FFFFFF;
-            border: 1px solid #E2E8F0;
+            border: 1px solid color-mix(in srgb, var(--paper-edge) 45%, #E2E8F0);
             border-radius: 20px;
             padding: 48px 40px;
             text-align: center;
@@ -155,7 +188,7 @@
     </style>
     @stack('styles')
 </head>
-<body data-error-shell="pass2" data-error-code="@yield('code')">
+<body data-error-shell="pass2" data-error-paper="vintage" data-error-code="@yield('code')">
     <div class="err-card">
         @if (! empty($isPreview))
             <span class="err-preview-badge">Preview</span>

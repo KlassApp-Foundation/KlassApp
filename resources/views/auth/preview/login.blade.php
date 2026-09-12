@@ -5,7 +5,7 @@
 @section('title', 'Sign in')
 
 @section('content')
-<div class="ap-page" data-ap-screen="login">
+<div class="ap-page" data-ap-paper="vintage" data-ap-screen="login">
   <div class="ap-card">
     <span class="ap-preview-badge">Preview</span>
     <img src="{{ asset('images/klassapp-logo-primary.svg') }}" class="ap-logo" alt="KlassApp">

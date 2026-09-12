@@ -85,6 +85,20 @@ class AuthPreviewTest extends TestCase
         $response->assertSee('These credentials do not match our records.');
     }
 
+    public function test_preview_pages_use_vintage_paper_and_sora_not_bricolage(): void
+    {
+        foreach (['login', 'register', 'reset-request', 'reset-code', 'reset-newpw', 'force-change-password'] as $screen) {
+            $response = $this->get('/preview/'.$screen);
+
+            $response->assertOk();
+            $response->assertSee('data-ap-paper="vintage"', false);
+            $response->assertSee('family=Sora', false);
+            $response->assertSee('family=DM+Sans', false);
+            $response->assertDontSee('Bricolage', false);
+            $response->assertDontSee("\u{2014}");
+        }
+    }
+
     public function test_preview_login_form_posts_to_real_login_validation(): void
     {
         $response = $this->from('/preview/login')->post('/login', [

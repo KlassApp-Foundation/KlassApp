@@ -1,11 +1,13 @@
 /**
  * Auth preview restyle — Pass 2 tokens from locked
  * klassapp-auth-error-pass2/auth-error.html.
+ * Vintage paper background: OD klassapp-auth-error-vintage-paper-v1.html
+ * (additive; typography stays Sora/DM Sans — not landing Bricolage/Inter).
  * Preview routes only (/preview/*). Live /login etc. untouched until cutover.
  */
 
 :root {
-  --ap-bg: #FAFAF5;
+  --ap-bg: #F5F0E6;
   --ap-white: #FFFFFF;
   --ap-ink: #0F172A;
   --ap-muted: #64748B;
@@ -23,6 +25,13 @@
   --ap-node-border: #BFDBFE;
   --ap-radius: 16px;
   --ap-radius-sm: 10px;
+  /* Vintage paper (landing hero v2 / OD auth vintage v1) — background only */
+  --paper-base: #F5F0E6;
+  --paper-mid: #EFE6D5;
+  --paper-deep: #E8DCC8;
+  --paper-edge: #D4C4A8;
+  --paper-ink-wash: rgba(92, 74, 48, 0.03);
+  --paper-rule: rgba(120, 95, 60, 0.07);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -31,7 +40,7 @@
   margin: 0;
   min-height: 100vh;
   font-family: 'DM Sans', sans-serif;
-  background: var(--ap-bg);
+  background: var(--paper-base);
   color: var(--ap-ink);
 }
 
@@ -42,25 +51,51 @@
   place-items: center;
   padding: 24px 16px;
   overflow: hidden;
+  isolation: isolate;
 }
 
+/* Full-page vintage paper: wash + ledger rules */
 .ap-page::before {
   content: "";
   position: absolute;
-  inset: -20% -10%;
-  background:
-    radial-gradient(40% 35% at 15% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 70%),
-    radial-gradient(35% 30% at 85% 15%, rgba(30, 111, 217, 0.06) 0%, transparent 70%),
-    radial-gradient(30% 25% at 75% 85%, rgba(34, 197, 94, 0.04) 0%, transparent 60%);
+  inset: 0;
+  z-index: 0;
   pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 80% at 50% 30%, var(--paper-base) 0%, var(--paper-mid) 55%, var(--paper-deep) 100%),
+    radial-gradient(ellipse 75% 70% at 50% 40%, transparent 40%, var(--paper-ink-wash) 100%),
+    linear-gradient(180deg, rgba(212, 196, 168, 0.16) 0%, transparent 18%, transparent 82%, rgba(196, 176, 140, 0.18) 100%),
+    linear-gradient(90deg, rgba(180, 155, 110, 0.09) 0%, transparent 8%, transparent 92%, rgba(180, 155, 110, 0.08) 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 31px,
+      var(--paper-rule) 31px,
+      var(--paper-rule) 32px
+    );
+}
+
+/* Paper grain (opacity 0.22 — matches landing hero v2) */
+.ap-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
 }
 
 .ap-card {
   position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 420px;
   background: linear-gradient(165deg, var(--ap-white) 0%, var(--ap-node-tint) 100%);
-  border: 1px solid var(--ap-node-border);
+  border: 1px solid color-mix(in srgb, var(--paper-edge) 45%, var(--ap-node-border));
   border-radius: var(--ap-radius);
   padding: 36px 40px 40px;
   box-shadow:
