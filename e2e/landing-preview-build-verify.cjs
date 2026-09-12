@@ -42,6 +42,11 @@ const viewports = [
       adminStack: document.querySelectorAll('.admin-stack').length,
       pillars: document.querySelectorAll('.pillar').length,
       provable: (document.body.textContent || '').includes('Provable'),
+      protocolCores: (document.body.textContent || '').includes('Protocol Cores'),
+      howProtocol: (document.body.textContent || '').includes('One protocol layer')
+        && (document.body.textContent || '').includes('protocol orchestration')
+        && (document.body.textContent || '').includes('Protocol path')
+        && !(document.body.textContent || '').includes('One intelligence layer orchestrating three perspectives'),
       compare: !!document.getElementById('compare'),
       faq: !!document.getElementById('faq'),
       emDash: (document.body.textContent || '').includes('\u2014'),
@@ -83,7 +88,7 @@ const viewports = [
       screenshot: shot,
     };
     report.viewports[vp.name] = entry;
-    if (res.status() !== 200 || consoleErrors.length || ids.some((x) => !x.present) || productUi.pillars < 5 || productUi.emDash || productUi.q1 || !productUi.provable) {
+    if (res.status() !== 200 || consoleErrors.length || ids.some((x) => !x.present) || productUi.pillars < 5 || productUi.emDash || productUi.q1 || !productUi.provable || !productUi.protocolCores || !productUi.howProtocol) {
       report.ok = false;
     }
     if (isolation.dsElements > 0 || isolation.htmlHasDsKpi) report.ok = false;

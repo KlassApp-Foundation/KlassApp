@@ -1,6 +1,6 @@
 {
   "base": "http://127.0.0.1:8000",
-  "at": "2026-09-12T01:12:30.800Z",
+  "at": "2026-09-12T09:34:02.004Z",
   "viewports": {
     "desktop": {
       "status": 200,
@@ -54,6 +54,8 @@
         "adminStack": 1,
         "pillars": 5,
         "provable": true,
+        "protocolCores": true,
+        "howProtocol": true,
         "compare": true,
         "faq": true,
         "emDash": false,
@@ -119,6 +121,8 @@
         "adminStack": 1,
         "pillars": 5,
         "provable": true,
+        "protocolCores": true,
+        "howProtocol": true,
         "compare": true,
         "faq": true,
         "emDash": false,
@@ -184,6 +188,8 @@
         "adminStack": 1,
         "pillars": 5,
         "provable": true,
+        "protocolCores": true,
+        "howProtocol": true,
         "compare": true,
         "faq": true,
         "emDash": false,

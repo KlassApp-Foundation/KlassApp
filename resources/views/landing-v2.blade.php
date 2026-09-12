@@ -25,7 +25,7 @@
       <li><a href="#connectors">Integrations</a></li>
       <li><a href="#toshi">Toshi</a></li>
       <li><a href="#how-it-works">How it works</a></li>
-      <li><a href="#trust">Trust</a></li>
+      <li><a href="#trust">Protocol Cores</a></li>
       <li><a href="#compare">What we address</a></li>
       <li><a href="#community">Community</a></li>
       <li><a href="#faq">FAQ</a></li>
@@ -285,12 +285,12 @@
   <div class="container">
     <div class="how-header reveal">
       <h2>How it works</h2>
-      <p>One intelligence layer orchestrating three perspectives on the same school.</p>
+      <p>One protocol layer. Toshi orchestrates WhatsApp, Drive, and Slack as a single connected system, so every role sees the same school through the channel they already use.</p>
     </div>
 
     <div class="how-flow" id="how-flow">
       <div class="how-hub reveal">
-        <div class="how-hub-node"><span class="hub-pulse"></span> Toshi orchestrates</div>
+        <div class="how-hub-node"><span class="hub-pulse"></span> Toshi · protocol orchestration</div>
       </div>
 
       <div class="how-columns">
@@ -338,17 +338,17 @@
               <div class="how-step" data-delay="0">
                 <span class="how-step-dot"></span>
                 <div class="how-step-title"><span class="how-step-num">01</span> Fee reminder</div>
-                <p>Toshi sends a gentle fee balance reminder via WhatsApp in the parent's preferred language, with a payment link.</p>
+                <p>Through the WhatsApp connector, Toshi sends a gentle fee balance reminder in the parent's preferred language, with a payment link.</p>
               </div>
               <div class="how-step" data-delay="400">
                 <span class="how-step-dot"></span>
                 <div class="how-step-title"><span class="how-step-num">02</span> Absentee alert</div>
-                <p>When a child is marked absent, Toshi messages the parent automatically and relays any response back to the teacher.</p>
+                <p>When a child is marked absent, Toshi messages the parent on WhatsApp and relays any reply back to the teacher dashboard, keeping both sides on the same protocol path.</p>
               </div>
               <div class="how-step orchestrate" data-delay="800">
                 <span class="how-step-dot"></span>
-                <div class="how-step-title"><span class="how-step-num">03</span> Toshi orchestrates</div>
-                <p>WhatsApp → SMS fallback → Dashboard notification → Teacher update</p>
+                <div class="how-step-title"><span class="how-step-num">03</span> Protocol path</div>
+                <p>One connected flow: WhatsApp → SMS fallback → Dashboard notification → Teacher update.</p>
               </div>
             </div>
           </div>
@@ -419,17 +419,17 @@
               <div class="how-step" data-delay="200">
                 <span class="how-step-dot"></span>
                 <div class="how-step-title"><span class="how-step-num">01</span> Attendance summary</div>
-                <p>Toshi compiles daily attendance, identifies patterns, and drafts absence follow-ups for teacher review before sending.</p>
+                <p>From the dashboard, Toshi compiles daily attendance, identifies patterns, and drafts absence follow-ups for teacher review before the protocol sends them.</p>
               </div>
               <div class="how-step" data-delay="600">
                 <span class="how-step-dot"></span>
                 <div class="how-step-title"><span class="how-step-num">02</span> Report generation</div>
-                <p>End-of-term reports are auto-generated from grade data, reviewed by the teacher, then distributed to parents via email and WhatsApp.</p>
+                <p>End-of-term reports are auto-generated from grade data, reviewed by the teacher, stored in Drive, then delivered to parents on email and WhatsApp.</p>
               </div>
               <div class="how-step orchestrate" data-delay="1000">
                 <span class="how-step-dot"></span>
-                <div class="how-step-title"><span class="how-step-num">03</span> Toshi orchestrates</div>
-                <p>Dashboard input → Google Drive storage → Parent delivery → Archive</p>
+                <div class="how-step-title"><span class="how-step-num">03</span> Protocol path</div>
+                <p>One connected flow: Dashboard input → Google Drive storage → Parent delivery → Archive.</p>
               </div>
             </div>
           </div>
@@ -488,17 +488,17 @@
               <div class="how-step" data-delay="300">
                 <span class="how-step-dot"></span>
                 <div class="how-step-title"><span class="how-step-num">01</span> Weekly digest</div>
-                <p>Toshi generates a weekly school summary: attendance rates, fee collection, communication metrics : emailed to leadership and saved to Drive.</p>
+                <p>Toshi generates a weekly school summary (attendance, fees, communication metrics), emails leadership, and files the same packet to Drive in one orchestration.</p>
               </div>
               <div class="how-step" data-delay="700">
                 <span class="how-step-dot"></span>
                 <div class="how-step-title"><span class="how-step-num">02</span> Term planning</div>
-                <p>Before each term, Toshi prepares enrolment projections, staffing suggestions, and fee structure recommendations based on historical data.</p>
+                <p>Before each term, Toshi prepares enrolment projections, staffing suggestions, and fee structure recommendations from historical data, ready to share across Slack and the dashboard.</p>
               </div>
               <div class="how-step orchestrate" data-delay="1100">
                 <span class="how-step-dot"></span>
-                <div class="how-step-title"><span class="how-step-num">03</span> Toshi orchestrates</div>
-                <p>Multi-source data → Analysis → Slack alert → PDF report → Calendar event</p>
+                <div class="how-step-title"><span class="how-step-num">03</span> Protocol path</div>
+                <p>One connected flow: Multi-source data → Analysis → Slack alert → PDF report → Calendar event.</p>
               </div>
             </div>
           </div>
@@ -513,7 +513,7 @@
   <div class="container">
     <div class="trust-header">
       <div class="reveal">
-        <div class="trust-kicker">Infrastructure</div>
+        <div class="trust-kicker">Protocol Cores</div>
         <h2>Built the way real infrastructure should be</h2>
         <p class="lead">Five commitments that shape how KlassApp is built: four live platform primitives, and one honest forward direction.</p>
       </div>
