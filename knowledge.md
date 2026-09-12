@@ -603,7 +603,17 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 13, 2026 — Landing official brand connector icons LIVE ([PR #541](https://github.com/KlassApp-Foundation/KlassApp/pull/541) MERGED+DEPLOYED)
+## Current Status: September 13, 2026 — Laravel Nightwatch LIVE ([PR #543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) MERGED+DEPLOYED)
+
+- **Merged**: [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) merge `7683a604` (`feature/laravel-nightwatch`) — `laravel/nightwatch` ^1.30, published `config/nightwatch.php`, `LOG_STACK` via env (default `daily`; Cloud set to `daily,nightwatch`).
+- **Cloud env (staging + production)**: `NIGHTWATCH_TOKEN` set (not in git), `NIGHTWATCH_REQUEST_SAMPLE_RATE=1.0`, `NIGHTWATCH_EXCEPTION_SAMPLE_RATE=1.0`, `LOG_CHANNEL=stack`, `LOG_STACK=daily,nightwatch`.
+- **Background agent**: `php artisan nightwatch:agent` on staging + prod App instances.
+- **Staging verify**: `php artisan nightwatch:status` → agent running; agent log `Listening on [127.0.0.1:2407]; Version [1.30.0]`; HTTP probes 200.
+- **Production**: deploy `depl-a2bb46d3-…` @ `7683a604` **succeeded**; `nightwatch:status` → agent running; Cloud logs show agent initiated listening `:2407` v1.30.0; `klassapp.xyz` /login /contact 200.
+- **Dashboard**: ingest token is not a Nightwatch REST dashboard API key (public API 403). Confirm request/log charts in the Nightwatch UI (or OAuth MCP). Do not commit the token.
+- **Pending docs**: `TOOLING.md` from `klassapp-tool-stack.md` + `AGENTS.md` one-line pointer — blocked until source content is provided (file not on disk; paste missing from request).
+
+## Previous: September 13, 2026 — Landing official brand connector icons LIVE ([PR #541](https://github.com/KlassApp-Foundation/KlassApp/pull/541) MERGED+DEPLOYED)
 
 - **Merged**: [#541](https://github.com/KlassApp-Foundation/KlassApp/pull/541) merge `7d418196` (`fix/landing-official-brand-icons`).
 - **Shipped**: Official WhatsApp / Slack / Google Drive SVG marks on hero Connected float, orchestration panel, chips, Toshi hub. Neutral `brand-well` wells (no recolor). Email/SMS/Calendar stay generic.
@@ -10102,3 +10112,10 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - **Key decisions**: Per-column UI chrome over grid; subtle 3D only on admin floating card stack; brand tokens only (no --d-*/.ds-*); omit hairline column bridge so it does not cut through previews.
 - **Status**: ✅ Done (section mock — not merged into locked v3)
 - **Edge cases flagged**: Re-add bridge below previews if merge needs the original connector motif.
+
+### 2026-09-13: Laravel Nightwatch on staging + production
+- **Work done**: Installed `laravel/nightwatch` ^1.30; published config; made `LOG_STACK` env-driven (preserve `daily` + add `nightwatch` on Cloud). Merged [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) `7683a604`. Set Cloud env vars on staging + production (token not in repo). Added `php artisan nightwatch:agent` background processes. Deployed staging then production (`depl-a2bb46d3-…` succeeded). Verified `nightwatch:status` agent running on both; prod agent logs Listening `:2407` v1.30.0; HTTP 200 probes.
+- **Files modified**: `composer.json`/`lock`, `config/nightwatch.php`, `config/logging.php`, `.env.example`, `knowledge.md` (this stamp).
+- **Key decisions**: Stack channel `daily,nightwatch` (not replacing daily); do not enable Cloud “Connect Nightwatch” UI on top without checking for a double agent; ingest token ≠ Nightwatch dashboard API (403 on public REST).
+- **Status**: ✅ MERGED + DEPLOYED staging & prod. Dashboard chart confirm is UI-side. `TOOLING.md` docs PR blocked — `klassapp-tool-stack.md` content not found on disk / not pasted.
+- **Edge cases flagged**: Staging has empty `__probe` env var leftover; rotate Nightwatch token if it was ever pasted into chat logs.
