@@ -1,8 +1,8 @@
 /**
- * Auth preview restyle — Pass 2 tokens from locked
- * klassapp-auth-error-pass2/auth-error.html.
- * Vintage paper background: OD klassapp-auth-error-vintage-paper-v1.html
- * (additive; typography stays Sora/DM Sans — not landing Bricolage/Inter).
+ * Auth preview restyle - Pass 2 tokens + vintage paper v2 breakpoints.
+ * OD: klassapp-auth-error-vintage-paper-v2-breakpoints.html
+ * Paper CSS copied from landing .hero-bg-vintage (exact layers).
+ * Typography stays Sora/DM Sans (not landing Bricolage/Inter).
  * Preview routes only (/preview/*). Live /login etc. untouched until cutover.
  */
 
@@ -12,7 +12,8 @@
   --ap-ink: #0F172A;
   --ap-muted: #64748B;
   --ap-border: #E2E8F0;
-  --ap-input-bg: #F8FAFC;
+  --ap-input-bg: rgba(255, 255, 255, 0.5);
+  --ap-input-bg-focus: rgba(255, 255, 255, 0.55);
   --ap-primary: #22C55E;
   --ap-primary-hover: #16A34A;
   --ap-error: #DC2626;
@@ -23,9 +24,9 @@
   --ap-success-text: #166534;
   --ap-node-tint: #F0F7FF;
   --ap-node-border: #BFDBFE;
-  --ap-radius: 16px;
-  --ap-radius-sm: 10px;
-  /* Vintage paper (landing hero v2 / OD auth vintage v1) — background only */
+  --ap-radius: 12px;
+  --ap-radius-sm: 8px;
+  /* Exact landing hero paper tokens */
   --paper-base: #F5F0E6;
   --paper-mid: #EFE6D5;
   --paper-deep: #E8DCC8;
@@ -42,27 +43,31 @@
   font-family: 'DM Sans', sans-serif;
   background: var(--paper-base);
   color: var(--ap-ink);
+  -webkit-font-smoothing: antialiased;
 }
 
 .ap-page {
   position: relative;
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px 16px;
   overflow: hidden;
   isolation: isolate;
 }
 
-/* Full-page vintage paper: wash + ledger rules */
-.ap-page::before {
-  content: "";
+/* ---- Exact hero vintage paper (landing .hero-bg-vintage) ---- */
+.ap-bg-vintage {
   position: absolute;
   inset: 0;
-  z-index: 0;
   pointer-events: none;
+  z-index: 0;
   background:
-    radial-gradient(ellipse 90% 80% at 50% 30%, var(--paper-base) 0%, var(--paper-mid) 55%, var(--paper-deep) 100%),
+    radial-gradient(ellipse 90% 80% at 50% 30%, var(--paper-base) 0%, var(--paper-mid) 55%, var(--paper-deep) 100%);
+}
+
+.ap-bg-vintage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
     radial-gradient(ellipse 75% 70% at 50% 40%, transparent 40%, var(--paper-ink-wash) 100%),
     linear-gradient(180deg, rgba(212, 196, 168, 0.16) 0%, transparent 18%, transparent 82%, rgba(196, 176, 140, 0.18) 100%),
     linear-gradient(90deg, rgba(180, 155, 110, 0.09) 0%, transparent 8%, transparent 92%, rgba(180, 155, 110, 0.08) 100%),
@@ -75,13 +80,10 @@
     );
 }
 
-/* Paper grain (opacity 0.22 — matches landing hero v2) */
-.ap-page::after {
-  content: "";
+.ap-bg-vintage::after {
+  content: '';
   position: absolute;
   inset: 0;
-  z-index: 0;
-  pointer-events: none;
   opacity: 0.22;
   mix-blend-mode: multiply;
   background-image:
@@ -89,45 +91,92 @@
   background-size: 180px 180px;
 }
 
-.ap-card {
+/* ---- Shell: mobile column / desktop two-column ---- */
+.ap-shell {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   width: 100%;
-  max-width: 420px;
-  background: linear-gradient(165deg, var(--ap-white) 0%, var(--ap-node-tint) 100%);
-  border: 1px solid color-mix(in srgb, var(--paper-edge) 45%, var(--ap-node-border));
-  border-radius: var(--ap-radius);
-  padding: 36px 40px 40px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.90),
-    0 1px 2px rgba(15, 23, 42, 0.05),
-    0 12px 40px rgba(15, 23, 42, 0.06);
 }
 
-.ap-card--wide { max-width: 440px; }
+.ap-brand-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 28px 20px 8px;
+}
 
-.ap-logo {
+.ap-brand-logo {
   display: block;
-  margin: 0 auto 16px;
-  width: 160px;
+  width: 148px;
   height: auto;
+}
+
+.ap-brand-tagline {
+  margin: 8px 0 0;
+  font-family: 'Sora', sans-serif;
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  color: var(--ap-ink);
+  max-width: 18ch;
+}
+
+.ap-brand-support {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ap-muted);
+  line-height: 1.5;
+  max-width: 32ch;
+}
+
+.ap-form-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 20px 32px;
+}
+
+/* Transparent shell - paper/rules/grain stay visible (no opaque white card) */
+.ap-form-shell,
+.ap-card {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+.ap-card--wide { max-width: 420px; }
+
+.ap-form-shell .ap-logo,
+.ap-card .ap-logo {
+  display: none; /* logo lives in brand panel */
 }
 
 .ap-title {
   margin: 0;
-  text-align: center;
+  text-align: left;
   font-family: 'Sora', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 1.375rem;
+  font-weight: 600;
   color: var(--ap-ink);
   letter-spacing: -0.02em;
 }
 
 .ap-sub {
-  margin: 8px 0 0;
-  text-align: center;
+  margin: 6px 0 0;
+  text-align: left;
   color: var(--ap-muted);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
@@ -146,7 +195,7 @@
 .ap-input {
   width: 100%;
   background: var(--ap-input-bg);
-  border: 1.5px solid var(--ap-border);
+  border: 1.5px solid color-mix(in srgb, var(--paper-edge) 60%, var(--ap-border));
   border-radius: var(--ap-radius-sm);
   padding: 12px 16px;
   font-size: 15px;
@@ -154,11 +203,14 @@
   outline: none;
   min-height: 48px;
   font-family: 'DM Sans', sans-serif;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
 .ap-input:focus {
   border-color: var(--ap-primary);
+  background: var(--ap-input-bg-focus);
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
 }
 
@@ -180,7 +232,7 @@
 .ap-password-wrap { position: relative; }
 .ap-password-wrap .ap-input { padding-right: 52px; }
 
-/* Pass 2: 44×44 tap target wrapping 20px icon — do not regress */
+/* Pass 2: 44x44 tap target wrapping 20px icon - do not regress */
 .ap-password-toggle {
   position: absolute;
   right: 8px;
@@ -223,13 +275,14 @@
 }
 
 .ap-alert--error {
-  background: var(--ap-error-bg);
+  background: color-mix(in srgb, var(--ap-error-bg) 88%, transparent);
   border: 1px solid var(--ap-error-border);
   color: var(--ap-error);
+  backdrop-filter: blur(4px);
 }
 
 .ap-alert--success {
-  background: var(--ap-success-bg);
+  background: color-mix(in srgb, var(--ap-success-bg) 88%, transparent);
   border: 1px solid var(--ap-success-border);
   color: var(--ap-success-text);
   font-weight: 600;
@@ -269,7 +322,7 @@
 .ap-link {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ap-primary);
+  color: var(--ap-primary-hover);
   text-decoration: none;
   min-height: 44px;
   display: inline-flex;
@@ -319,7 +372,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--ap-border);
+  background: color-mix(in srgb, var(--paper-edge) 55%, var(--ap-border));
 }
 
 .ap-google {
@@ -330,33 +383,35 @@
   width: 100%;
   padding: 13px 14px;
   min-height: 50px;
-  border: 1px solid var(--ap-border);
+  border: 1px solid color-mix(in srgb, var(--paper-edge) 60%, var(--ap-border));
   border-radius: var(--ap-radius-sm);
-  background: #fff;
+  background: var(--ap-input-bg);
   color: #1E293B;
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .ap-google:hover {
-  background: var(--ap-input-bg);
+  background: var(--ap-input-bg-focus);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.04);
   transform: translateY(-1px);
 }
 
 .ap-meta {
   margin-top: 20px;
-  text-align: center;
+  text-align: left;
   font-size: 13px;
   color: var(--ap-muted);
 }
 
 .ap-meta a {
-  color: var(--ap-primary);
+  color: var(--ap-primary-hover);
   font-weight: 600;
   text-decoration: none;
 }
@@ -364,7 +419,7 @@
 .ap-back {
   display: block;
   margin-top: 16px;
-  text-align: center;
+  text-align: left;
   color: var(--ap-muted);
   font-size: 14px;
   text-decoration: none;
@@ -374,6 +429,7 @@
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
   width: 100%;
+  padding: 0;
 }
 
 .ap-back:hover { color: var(--ap-primary); }
@@ -383,11 +439,12 @@
   margin: 0 0 16px;
   padding: 12px 14px;
   background: var(--ap-input-bg);
-  border: 1px solid var(--ap-border);
+  border: 1px solid color-mix(in srgb, var(--paper-edge) 55%, var(--ap-border));
   border-radius: var(--ap-radius-sm);
   display: flex;
   flex-direction: column;
   gap: 5px;
+  backdrop-filter: blur(6px);
 }
 
 .ap-requirements-title {
@@ -420,7 +477,7 @@
   margin-top: 20px;
   padding: 12px 16px;
   border-radius: var(--ap-radius-sm);
-  background: var(--ap-error-bg);
+  background: color-mix(in srgb, var(--ap-error-bg) 88%, transparent);
   border: 1px solid var(--ap-error-border);
   color: var(--ap-error);
   font-size: 14px;
@@ -429,20 +486,64 @@
 }
 
 .ap-preview-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #1E6FD9;
-  background: #EFF6FF;
+  background: color-mix(in srgb, #EFF6FF 80%, transparent);
   border: 1px solid #BFDBFE;
   border-radius: 999px;
   padding: 4px 10px;
 }
 
-@media (max-width: 480px) {
-  .ap-card { padding: 28px 20px 32px; }
+/* ---- Desktop: genuine two-column (not centered mobile card) ---- */
+@media (min-width: 960px) {
+  .ap-shell {
+    display: grid;
+    grid-template-columns: 45% 55%;
+    align-items: stretch;
+  }
+
+  .ap-brand-panel {
+    justify-content: center;
+    padding: 64px 72px 64px 80px;
+    border-right: 1px solid color-mix(in srgb, var(--paper-edge) 40%, transparent);
+    gap: 0;
+  }
+
+  .ap-brand-panel .ap-preview-badge {
+    position: absolute;
+    top: 32px;
+    left: 80px;
+  }
+
+  .ap-brand-logo {
+    width: 180px;
+    margin-bottom: 20px;
+  }
+
+  .ap-brand-tagline {
+    font-size: 1.75rem;
+    margin-top: 0;
+  }
+
+  .ap-brand-support {
+    margin-top: 16px;
+    font-size: 0.9375rem;
+  }
+
+  .ap-form-panel {
+    justify-content: center;
+    padding: 64px 96px 64px 72px;
+  }
+
+  .ap-title {
+    font-size: 1.5rem;
+  }
+
+  .ap-sub {
+    font-size: 0.9375rem;
+    margin-bottom: 4px;
+  }
 }

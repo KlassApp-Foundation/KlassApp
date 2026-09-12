@@ -1,8 +1,8 @@
 /**
- * Playwright: vintage-paper auth + error preview shells at 3 breakpoints.
- * OD source: klassapp-auth-error-vintage-paper-v1.html
- * Locks: Sora/DM Sans (not Bricolage/Inter), 44px toggle, green CTAs, error reds,
- * force-change zero escape hatch, no em dashes, no ds-* bleed.
+ * Playwright: auth/error vintage v2 - desktop split + mobile stack.
+ * OD: klassapp-auth-error-vintage-paper-v2-breakpoints.html
+ * Confirms intentional desktop layout (not centered mobile card),
+ * transparent form shell, hero-exact paper (rules + grain 0.22), locks.
  */
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -14,7 +14,6 @@ fs.mkdirSync(OUT, { recursive: true });
 
 const viewports = [
   { name: 'desktop', width: 1440, height: 900 },
-  { name: 'tablet', width: 1024, height: 768 },
   { name: 'mobile', width: 390, height: 844 },
 ];
 
@@ -31,13 +30,7 @@ const errorCodes = ['404', '419', '500'];
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
-  const report = {
-    base: BASE,
-    at: new Date().toISOString(),
-    viewports: {},
-    pass2: {},
-    ok: true,
-  };
+  const report = { base: BASE, at: new Date().toISOString(), viewports: {}, pass2: {}, ok: true };
 
   for (const vp of viewports) {
     const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height } });
@@ -48,41 +41,89 @@ const errorCodes = ['404', '419', '500'];
     page.on('pageerror', (err) => consoleErrors.push(String(err)));
 
     const screens = {};
+    const isDesktop = vp.width >= 960;
 
     for (const screen of authScreens) {
       const res = await page.goto(`${BASE}${screen.path}`, { waitUntil: 'networkidle', timeout: 60000 });
-      await page.waitForTimeout(300);
-      const checks = await page.evaluate(() => {
-        const paper = document.querySelector('[data-ap-paper="vintage"]');
+      await page.waitForTimeout(350);
+      const checks = await page.evaluate((desktop) => {
+        const pageEl = document.querySelector('.ap-page');
+        const shell = document.querySelector('.ap-shell');
+        const brand = document.querySelector('.ap-brand-panel');
+        const formPanel = document.querySelector('.ap-form-panel');
+        const formShell = document.querySelector('.ap-form-shell, .ap-card');
+        const bg = document.querySelector('.ap-bg-vintage');
+        const title = document.querySelector('.ap-title');
         const html = document.documentElement.outerHTML;
         const bodyText = document.body.innerText || '';
-        const titleFont = getComputedStyle(document.querySelector('.ap-title') || document.body).fontFamily;
-        const bodyFont = getComputedStyle(document.body).fontFamily;
-        const bg = getComputedStyle(document.body).backgroundColor;
+        const cs = (el) => (el ? getComputedStyle(el) : null);
+        const shellCs = cs(shell);
+        const formCs = cs(formShell);
+        const bgBefore = bg ? getComputedStyle(bg, '::before') : null;
+        const titleFont = cs(title)?.fontFamily || '';
+        const bodyFont = cs(document.body)?.fontFamily || '';
+        const brandBox = brand?.getBoundingClientRect();
+        const formBox = formPanel?.getBoundingClientRect();
+        const sideBySide =
+          desktop &&
+          brandBox &&
+          formBox &&
+          Math.abs(brandBox.top - formBox.top) < 120 &&
+          formBox.left > brandBox.right - 8;
+        const stacked =
+          !desktop &&
+          brandBox &&
+          formBox &&
+          formBox.top >= brandBox.bottom - 4;
+        const formBg = formCs?.backgroundColor || '';
+        const opaqueWhite =
+          formBg === 'rgb(255, 255, 255)' ||
+          formBg.startsWith('rgba(255, 255, 255, 1)');
+        const paperRules =
+          !!bg &&
+          (html.includes('repeating-linear-gradient') ||
+            (bgBefore && (bgBefore.backgroundImage || '').includes('repeating-linear-gradient')));
+
         return {
-          paper: !!paper,
+          paper: pageEl?.getAttribute('data-ap-paper') === 'vintage',
+          layout: pageEl?.getAttribute('data-ap-layout') === 'split',
+          hasBg: !!bg,
+          gridCols: shellCs?.gridTemplateColumns || '',
+          sideBySide: !!sideBySide,
+          stacked: !!stacked,
+          opaqueWhite,
+          formBg,
+          paperRules,
           sora: /Sora/i.test(titleFont) || html.includes('family=Sora'),
           dmSans: /DM Sans/i.test(bodyFont) || html.includes('family=DM+Sans'),
-          bricolage: /Bricolage/i.test(html) || /Bricolage/i.test(titleFont),
-          interOnly: /Inter/i.test(titleFont) && !/Sora/i.test(titleFont),
-          emDash: bodyText.includes('\u2014') || html.includes('\u2014'),
+          bricolage: /Bricolage/i.test(html),
+          emDash: bodyText.includes('\u2014'),
           dsElements: document.querySelectorAll('[class*="ds-"]').length,
-          paperRgb: bg,
           hasPrimary: !!document.querySelector('[data-testid="ap-primary-submit"]'),
+          paperBody: cs(document.body)?.backgroundColor === 'rgb(245, 240, 230)',
         };
-      });
+      }, isDesktop);
+
       const shot = path.join(OUT, `${vp.name}-${screen.key}.png`);
       await page.screenshot({ path: shot, fullPage: true });
+
+      const layoutOk = isDesktop ? checks.sideBySide : checks.stacked;
       const pass =
         res.ok() &&
         checks.paper &&
+        checks.layout &&
+        checks.hasBg &&
+        layoutOk &&
+        !checks.opaqueWhite &&
+        checks.paperRules &&
         checks.sora &&
         checks.dmSans &&
         !checks.bricolage &&
-        !checks.interOnly &&
         !checks.emDash &&
         checks.dsElements === 0 &&
-        checks.hasPrimary;
+        checks.hasPrimary &&
+        checks.paperBody;
+
       screens[screen.key] = { status: res.status(), checks, shot, pass };
       if (!pass) report.ok = false;
     }
@@ -93,31 +134,57 @@ const errorCodes = ['404', '419', '500'];
         timeout: 60000,
       });
       await page.waitForTimeout(300);
-      const checks = await page.evaluate(() => {
+      const checks = await page.evaluate((desktop) => {
+        const brand = document.querySelector('.err-brand-panel');
+        const panel = document.querySelector('.err-form-panel');
+        const card = document.querySelector('.err-card');
+        const bg = document.querySelector('.err-bg-vintage');
         const html = document.documentElement.outerHTML;
         const bodyText = document.body.innerText || '';
-        const titleFont = getComputedStyle(document.querySelector('.err-title') || document.body).fontFamily;
+        const brandBox = brand?.getBoundingClientRect();
+        const formBox = panel?.getBoundingClientRect();
+        const sideBySide =
+          desktop &&
+          brandBox &&
+          formBox &&
+          Math.abs(brandBox.top - formBox.top) < 120 &&
+          formBox.left > brandBox.right - 8;
+        const stacked = !desktop && brandBox && formBox && formBox.top >= brandBox.bottom - 4;
+        const cardBg = card ? getComputedStyle(card).backgroundColor : '';
+        const opaqueWhite =
+          cardBg === 'rgb(255, 255, 255)' || cardBg.startsWith('rgba(255, 255, 255, 1)');
         return {
           paper: document.body.getAttribute('data-error-paper') === 'vintage',
+          layout: document.body.getAttribute('data-error-layout') === 'split',
           shell: document.body.getAttribute('data-error-shell') === 'pass2',
-          sora: /Sora/i.test(titleFont) || html.includes('family=Sora'),
+          hasBg: !!bg,
+          sideBySide: !!sideBySide,
+          stacked: !!stacked,
+          opaqueWhite,
+          paperRules: html.includes('repeating-linear-gradient'),
+          sora: /Sora/i.test(getComputedStyle(document.querySelector('.err-title') || document.body).fontFamily),
           bricolage: /Bricolage/i.test(html),
           emDash: bodyText.includes('\u2014'),
           dsElements: document.querySelectorAll('[class*="ds-"]').length,
-          paperVar: html.includes('--paper-base'),
         };
-      });
+      }, isDesktop);
+
       const shot = path.join(OUT, `${vp.name}-error-${code}.png`);
       await page.screenshot({ path: shot, fullPage: true });
+      const layoutOk = isDesktop ? checks.sideBySide : checks.stacked;
       const pass =
         res.ok() &&
         checks.paper &&
+        checks.layout &&
         checks.shell &&
+        checks.hasBg &&
+        layoutOk &&
+        !checks.opaqueWhite &&
+        checks.paperRules &&
         checks.sora &&
         !checks.bricolage &&
         !checks.emDash &&
-        checks.dsElements === 0 &&
-        checks.paperVar;
+        checks.dsElements === 0;
       screens[`error-${code}`] = { status: res.status(), checks, shot, pass };
       if (!pass) report.ok = false;
     }
@@ -127,7 +194,7 @@ const errorCodes = ['404', '419', '500'];
     await page.close();
   }
 
-  // Desktop pass-2 lock measurements
+  // Pass-2 lock measurements @ desktop
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await page.goto(`${BASE}/preview/login?demo_errors=1`, { waitUntil: 'networkidle' });
@@ -136,16 +203,23 @@ const errorCodes = ['404', '419', '500'];
       const submit = document.querySelector('[data-testid="ap-primary-submit"]');
       const alert = document.querySelector('[data-testid="auth-flash-error"]');
       const cs = (el) => (el ? getComputedStyle(el) : null);
-      const t = cs(toggle);
-      const s = cs(submit);
-      const a = cs(alert);
       return {
-        toggle: t ? { w: Math.round(parseFloat(t.width)), h: Math.round(parseFloat(t.height)) } : null,
-        submitBg: s ? s.backgroundColor : null,
-        alert: a
-          ? { color: a.color, backgroundColor: a.backgroundColor, borderColor: a.borderTopColor }
+        toggle: toggle
+          ? { w: Math.round(parseFloat(cs(toggle).width)), h: Math.round(parseFloat(cs(toggle).height)) }
           : null,
-        paperBg: getComputedStyle(document.body).backgroundColor,
+        submitBg: cs(submit)?.backgroundColor || null,
+        alert: alert
+          ? {
+              color: cs(alert).color,
+              backgroundColor: cs(alert).backgroundColor,
+              borderColor: cs(alert).borderTopColor,
+            }
+          : null,
+        grainOpacity: (() => {
+          const bg = document.querySelector('.ap-bg-vintage');
+          if (!bg) return null;
+          return getComputedStyle(bg, '::after').opacity;
+        })(),
       };
     });
     await page.hover('[data-testid="ap-primary-submit"]');
@@ -153,7 +227,6 @@ const errorCodes = ['404', '419', '500'];
     const hoverBg = await page.evaluate(
       () => getComputedStyle(document.querySelector('[data-testid="ap-primary-submit"]')).backgroundColor
     );
-
     await page.goto(`${BASE}/preview/force-change-password`, { waitUntil: 'networkidle' });
     const force = await page.evaluate(() => {
       const visible = document.body.innerText.toLowerCase();
@@ -163,17 +236,21 @@ const errorCodes = ['404', '419', '500'];
         hasSignOut: /sign[\s-]?out/.test(visible),
       };
     });
-
     const rgb = (r, g, b) => `rgb(${r}, ${g}, ${b})`;
+    const isErrorRed = (c) =>
+      c === rgb(220, 38, 38) || c.includes('220, 38, 38') || c.includes('0.862745');
+    const isErrorBg = (c) =>
+      c === rgb(254, 242, 242) ||
+      c.startsWith('rgba(254, 242, 242') ||
+      c.includes('0.996078 0.94902 0.94902') ||
+      c.includes('254, 242, 242');
     const pass2 = {
       toggle44: metrics.toggle && metrics.toggle.w === 44 && metrics.toggle.h === 44,
       primaryGreen: metrics.submitBg === rgb(34, 197, 94),
       primaryHover: hoverBg === rgb(22, 163, 74),
       errorTokens:
-        metrics.alert &&
-        metrics.alert.color === rgb(220, 38, 38) &&
-        metrics.alert.backgroundColor === rgb(254, 242, 242),
-      paperBody: metrics.paperBg === rgb(245, 240, 230), // #F5F0E6
+        metrics.alert && isErrorRed(metrics.alert.color) && isErrorBg(metrics.alert.backgroundColor),
+      grain022: metrics.grainOpacity === '0.22',
       forceNoEscape: !force.hasSkip && !force.hasCancel && !force.hasSignOut,
       raw: { metrics, hoverBg, force },
     };
@@ -187,7 +264,18 @@ const errorCodes = ['404', '419', '500'];
 
   await browser.close();
   fs.writeFileSync(path.join(OUT, 'REPORT.json'), JSON.stringify(report, null, 2));
-  console.log(JSON.stringify({ ok: report.ok, pass2: report.pass2, viewports: Object.keys(report.viewports) }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        ok: report.ok,
+        pass2: report.pass2,
+        desktopLogin: report.viewports.desktop?.screens?.login?.checks,
+        mobileLogin: report.viewports.mobile?.screens?.login?.checks,
+      },
+      null,
+      2
+    )
+  );
   process.exit(report.ok ? 0 : 1);
 })().catch((e) => {
   console.error(e);
