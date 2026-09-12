@@ -65,5 +65,16 @@ class LandingPreviewV3Test extends TestCase
         $content = $response->getContent();
         $this->assertStringNotContainsString('href="#">Terms</a>', $content);
         $this->assertStringNotContainsString('href="#">Privacy</a>', $content);
+
+        // Hero role rotate + Toshi cloud-quality + real socials (Sep 2026 polish)
+        $response->assertSee('id="heroRoleDeck"', false);
+        $response->assertSee('id="heroRoleDots"', false);
+        $response->assertSee('Parent · WhatsApp', false);
+        $response->assertSee('Teacher · Drive', false);
+        $response->assertSee('Admin · Slack', false);
+        $response->assertSee('channel-ico', false);
+        $response->assertSee('https://x.com/klassapp', false);
+        $response->assertSee('https://github.com/KlassApp-Foundation', false);
+        $this->assertStringNotContainsString('href="#" class="site-footer-social"', $content);
     }
 }

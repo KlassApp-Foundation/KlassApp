@@ -603,7 +603,19 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 12, 2026 — Landing mobile bugfixes LIVE ([PR #538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) MERGED+DEPLOYED)
+## Current Status: September 12, 2026 — Landing Toshi hub + rotating hero polish (`feature/landing-toshi-hero-polish`)
+
+- **Branch**: `feature/landing-toshi-hero-polish` — ports approved OD mocks into live Blade/CSS/JS.
+- **Shipped in this PR (local verified)**:
+  1. Meet Toshi hub: mist glow, glass/depth framing, filled channel tiles, stronger gradient strokes (kept measured DOM connectors).
+  2. Hero: Parent WhatsApp / Teacher Drive / Admin Slack rotate with 3D-ish CSS transitions; `prefers-reduced-motion` static Parent + dots hidden.
+  3. Footer socials: real `https://x.com/klassapp`, `https://github.com/KlassApp-Foundation`, `/contact` (removed dead `#` FB/IG/LinkedIn placeholders — no confirmed profiles for those).
+- **Legal audit**: `/terms-of-service` has substantive copy (~6k visible chars, Uganda-oriented sections). `/privacy-policy` has real but **thinner legacy Gegosoft** copy (~2.8k) — not an empty stub, but worth a counsel rewrite before heavy media attention.
+- **Perf (local, before→after landing-preview assets)**: CSS 63.7→67.6 kB (+~4 kB); JS 4.2→4.7 kB (+~0.5 kB). FCP ~1.8s on cold local — no heavy media added.
+- **Verify**: `LandingPreviewV3Test` 61 assertions; `e2e/verify-landing-creative-polish.cjs` all PASS (desktop/mobile/reduced-motion + legal).
+- **Deploy plan**: staging first, then production.
+
+## Previous: September 12, 2026 — Landing mobile bugfixes LIVE ([PR #538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) MERGED+DEPLOYED)
 
 - **Merged**: [#538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) merge `e9c3b22c` (`fix/landing-mobile-bugs`).
 - **Earlier mobile sweep claim was wrong**: page-level “mobile sweep passed” after cutover missed real live bugs (compare overflow, protocol Layer/KA overlap, dead hamburger, hero phone-above-text, footer `href="#"`). Re-verified **per section**.
@@ -611,8 +623,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Hamburger root cause**: toggle with **no panel DOM and no JS handler**.
 - **Staging**: `depl-a2bb070e-…` @ `e9c3b22c` succeeded — Playwright 5/5 PASS.
 - **Production**: `depl-a2bb084e-…` @ `e9c3b22c` succeeded — Playwright 5/5 PASS on `klassapp.xyz`.
-- **Creative still review-only**: `docs/od-mocks/` Toshi hub cloud-quality + rotating role hero (3 states + reduced-motion) — **not** in Blade yet; approve before implement.
-- **Still open**: footer socials still `#`; Terms/Privacy pages exist but may need real legal copy.
+- **Creative**: OD mocks approved and ported in the follow-up polish branch above.
 
 ## Previous: September 12, 2026 — Landing/auth/error LIVE CUTOVER shipped ([PR #536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
 
@@ -1802,12 +1813,15 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-12: Landing mobile bugs (live) + OD creative mocks — **IN PROGRESS** (`fix/landing-mobile-bugs`)
-- **Work done**: Re-diagnosed live `klassapp.xyz` with per-section Playwright (not page-level sweep). Fixed: compare → stacked cards; protocol mesh hidden on mobile; hamburger panel+JS; footer Terms/Privacy real routes; hero text-before-phone. Built review mocks for Toshi hub (vs real Laravel Cloud screenshot) and 3-state rotating hero + reduced-motion. **Did not** implement rotating hero / Toshi polish in Blade — awaiting review.
-- **Files modified**: `landing-v2.blade.php`, `landing-preview.css`, `landing-preview.js`, `LandingPreviewV3Test.php`, `public/build/*`, `e2e/verify-landing-mobile-fixes.cjs`, `e2e/screenshots/landing-fix-verify/*`, `docs/od-mocks/*`, `knowledge.md`
-- **Key decisions**: Earlier cutover “mobile sweep passed” claim was incorrect and is recorded as such. Hide protocol decorative mesh on ≤900px rather than fight overlap. Creative hero rotation stays mock-only until approved (perf / reduced-motion constraints).
+### 2026-09-12: Landing Toshi hub + rotating hero polish — **IN PROGRESS** (`feature/landing-toshi-hero-polish`)
+- **Work done**: Ported approved OD mocks into live landing. Toshi hub cloud-quality CSS (mist/glass/tiles/stronger strokes); hero Parent/Teacher/Admin rotate with reduced-motion fallback; footer socials → X + GitHub + Contact. Audited Terms (substantive) vs Privacy (real but thin/legacy Gegosoft).
+- **Files modified**: `landing-v2.blade.php`, `landing-preview.css`, `landing-preview.js`, `LandingPreviewV3Test.php`, `e2e/verify-landing-creative-polish.cjs`, `e2e/screenshots/landing-creative-polish/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Kept measured DOM Toshi connectors (better than static mock SVG) while applying mock visual language. Only link socials with confirmed presence. Landing page bandwidth concern lifted for creative ambition; still recorded asset delta.
+- **Status**: 🚧 Local verified; opening PR → staging → prod
+- **Edge cases flagged**: Privacy policy needs counsel rewrite before media push; no Facebook/Instagram/LinkedIn profiles confirmed so those icons were removed rather than left as `#`
+
+### 2026-09-12: Landing mobile bugs (live) + OD creative mocks — **MERGED+DEPLOYED** ([#538](https://github.com/KlassApp-Foundation/KlassApp/pull/538))
 - **Status**: ✅ MERGED `e9c3b22c` · staging `depl-a2bb070e-…` · production `depl-a2bb084e-…` — Playwright 5/5 on staging + `klassapp.xyz`
-- **Edge cases flagged**: Footer social links still `#`; Terms/Privacy linked but may need real legal copy; OD daemon stalled on discovery forms — mocks authored from real side-by-side screenshots into OD project + `docs/od-mocks/`
 
 ### 2026-09-12: Landing/auth/error LIVE CUTOVER — **MERGED+DEPLOYED+VERIFIED** ([#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
 - **Work done**: Confirmed #535 was still open (`merged:false`) → admin-merged `749940c5`. Implemented live cutover on `feature/landing-auth-error-cutover`: WelcomeController → `landing-v2`; auth controllers → `auth.preview.*`; live `errors/{404,419,500}` → Pass-2 vintage; `/landing-preview` 301 → `/`; preview badge only when `isPreview`. Merged #536 (`638d359b`). Staged then production Cloud deploys of that tip.
