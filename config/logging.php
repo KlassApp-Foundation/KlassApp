@@ -35,7 +35,13 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['daily'],
+            // LOG_STACK lets Laravel Cloud Nightwatch inject
+            // "laravel-cloud-socket,nightwatch" without dropping local daily logs by default.
+            'channels' => array_values(array_filter(array_map(
+                'trim',
+                explode(',', (string) env('LOG_STACK', 'daily'))
+            ))),
+            'ignore_exceptions' => false,
         ],
 
         'single' => [
