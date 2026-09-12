@@ -605,7 +605,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ## Current Status: September 12, 2026 — Auth brand-header balance on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
 
-- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper` tip `3f43afab`. Preview routes only.
+- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper` tip `ad73f45c`. Preview routes only.
 - **This pass**: OD `klassapp-auth-brand-header-balance-v1.html` (desktop + mobile). Desktop brand block top-aligned (`justify-content: flex-start`, `padding-top: 130px`) so logo + heading are not floating in the lower half. Mobile brand is a **logo | copy** row (not a tall vertical stack) before the form. Mirrored on error preview brand panel.
 - **Verify**: Feature tests 15 passed (220 assertions). Playwright `ok=true` — desktop `brandTopAligned` (register `logoTop≈130`); mobile `brandLogoCopyRow`; prior locks held (`sideBySide`/`stacked`, transparent shell, paperRules, grain 0.22, toggle44, greens, forceNoEscape). Artifacts `e2e/screenshots/auth-error-vintage/{desktop,mobile}-*.png`.
 - **Status**: 📝 PR open — brand-header balance pushed.
