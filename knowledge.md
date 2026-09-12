@@ -616,8 +616,8 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Background agent**: `php artisan nightwatch:agent` on staging + prod App instances.
 - **Staging verify**: `php artisan nightwatch:status` → agent running; agent log `Listening on [127.0.0.1:2407]; Version [1.30.0]`; HTTP probes 200.
 - **Production**: deploy `depl-a2bb46d3-…` @ `7683a604` **succeeded**; `nightwatch:status` → agent running; Cloud logs show agent initiated listening `:2407` v1.30.0; `klassapp.xyz` /login /contact 200.
-- **Dashboard**: ingest token is not a Nightwatch REST dashboard API key (public API 403). Confirm request/log charts in the Nightwatch UI (or OAuth MCP). Do not commit the token.
-- **Pending docs**: `TOOLING.md` from `klassapp-tool-stack.md` + `AGENTS.md` one-line pointer — blocked until source content is provided (file not on disk; paste missing from request).
+- **Dashboard**: ingest token is not a Nightwatch REST dashboard API key (public API 403). Confirm request/log charts in the Nightwatch UI (or OAuth MCP). Do not commit the token. Token also in Doppler `klassapp` (`dev`/`stg`/`prd`).
+- **Docs**: root `TOOLING.md` + `AGENTS.md` pointer + Instatus Future Initiative — see this session's docs PR.
 
 ## Previous: September 13, 2026 — Landing official brand connector icons LIVE ([PR #541](https://github.com/KlassApp-Foundation/KlassApp/pull/541) MERGED+DEPLOYED)
 
