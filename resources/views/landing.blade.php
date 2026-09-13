@@ -22,7 +22,7 @@
     <meta name="twitter:image" content="{{ asset('images/klassapp-logo-stacked.svg') }}" />
 
     <link rel="canonical" href="{{ url()->current() }}" />
-    <link rel="icon" type="image/svg+xml" href="{{ asset('images/klassapp-logo.svg') }}" />
+    @include('layouts.partials.favicon')
 
     <!-- Google Fonts: Sora + DM Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
