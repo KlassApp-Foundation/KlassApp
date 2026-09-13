@@ -86,7 +86,7 @@
         </div>
     @else
         <div class="mt-4">
-            <x-table :headers="['#', 'Student Name', 'Class', 'Parent / Guardian', 'Status', 'Actions']" hover>
+            <x-table :headers="['#', 'Student Name', 'Class', 'Parent / Guardian', 'Status', 'Actions']">
                 @foreach($students as $student)
                     <tr>
                         <td class="text-gray-400 text-xs font-mono">{{ $loop->iteration + ($students->currentPage() - 1) * $students->perPage() }}</td>

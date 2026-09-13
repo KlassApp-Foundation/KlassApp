@@ -1,7 +1,7 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @php $headers = ['Section Name', 'Status', 'Actions']; @endphp
 <div class="">
-   <x-table :headers="$headers" hover>
+   <x-table :headers="$headers">
       @forelse($sections as $section)
          <tr>
             <td data-label="Section Name" class="font-medium">{{ $section->name }}</td>

@@ -1,7 +1,7 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @php $headers = ['Student Name', 'Teacher Name', 'Type', 'Date', 'Detail', 'Notify Parents', 'Actions']; @endphp
 <div class="custom-table overflow-x-auto">
-   <x-table :headers="$headers" hover>
+   <x-table :headers="$headers">
       @forelse($disciplines as $discipline)
          <tr>
             <td data-label="Student Name">
