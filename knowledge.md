@@ -10184,3 +10184,36 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Files modified**: (shipped in #546) `components/table.blade.php`, `dashboard-refresh.css`, 8 admin table call sites, `TableAndButtonClassContractTest.php`, `knowledge.md`.
 - **Key decisions**: Hover stays intrinsic to `.ds-table-ledger`; do not gate behind a prop. Temporary synthetic fee payments (`PR546-VERIFY-*`) created then deleted for striping pixel proof on empty demo school.
 - **Status**: ✅ MERGED + DEPLOYED + live-verified.
+
+### 2026-09-13: KlassApp logo asset inventory (pre–design-system brand update)
+- **Work done**: Full filesystem + usage map of every KlassApp logo file under `public/images/`, `public/favicon/`, docs copies, and uploads. Confirmed by MD5/viewBox/pixel sampling (not filename alone).
+- **Canonical SVG variants**:
+  1. **Icon (green K)** — `klassapp-logo.svg` ≡ `klassapp-logo-primary.svg` ≡ `public/favicon/favicon.svg` (identical MD5 `e06b7124…`, viewBox 2000×2000). Despite the `-primary` name, this is **icon-only**, not a wordmark.
+  2. **Horizontal wordmark** — `klassapp-logo-dark.svg` (2048×754, navy/green/white). **Zero live Blade references**.
+  3. **Stacked** — `klassapp-logo-stacked.svg` (2048×1117). Used only as `og:image` / `twitter:image` on `landing.blade.php` + `landing2.blade.php`.
+- **No white/reversed SVG exists.** `klassapp-k-white.png` is a colourful mark on light bg (misnamed), unused.
+- **Live usage**: nav/auth/email/admin almost all use `klassapp-logo-primary.svg` (icon); favicon/Toshi/errors use `klassapp-logo.svg` (same file); one legacy path `klassapplogo-dark.png` in `landing-layout.blade.php`.
+- **Orphans / typos**: `klassapp-logo-*.png`, `klassaplogo-primary.png`, `klassapp-app-icon.png`, `klassapp-k-white.png`, `uploads/klassapp_assets.png` (= primary.png). Favicon PNG set under `public/favicon/` is mostly **legacy GeGo orange**, not KlassApp green.
+- **Status**: ✅ Inventory only (no code changes).
+- **Edge cases flagged**: `landing-layout` points at missing `public/favicon.svg` (root); naming `primary.svg` ≠ wordmark will confuse DS sync unless renamed or documented.
+
+### 2026-09-13: Favicon / PWA icon audit — GeGo leftovers replaced with KlassApp green
+- **Found wrong**:
+  1. **Every** `public/favicon/*.png` (+ `.ico`) was **GeGo orange** (~RGB 224,64,32), including the `favicon-32x32.png` wired as PNG fallback in `layouts/partials/favicon.blade.php` and all `android-icon-*` / `apple-icon-*` / `ms-icon-*` sizes.
+  2. `apple-touch-icon` pointed at **SVG** (`images/klassapp-logo.svg`) — poor iOS support; should be opaque 180×180 PNG.
+  3. `manifest.json` used **root-absolute** icon paths (`/android-icon-*.png`) that **404** (files live under `/favicon/`); name was generic `"App"`; no 512px icon for installability.
+  4. `browserconfig.xml` pointed at `/ms-icon-*.png` (also missing at site root).
+  5. `components/landing-layout.blade.php` linked `asset('favicon.svg')` / apple-touch to a **missing** `public/favicon.svg`.
+  6. Landing pages (`landing`, `landing2`, `landing-v2`) only had a bare SVG `<link rel="icon">` — no apple-touch / manifest / PNG fallbacks.
+  7. `layouts/video.blade.php` + `admission.blade.php` had **no** favicon links at all.
+  8. `images/favicon.png` was a 32×32 solid-green placeholder (settings default), not the real mark.
+- **Fixed**:
+  - Regenerated all favicon PNG/ICO sizes from `public/images/klassapp-logo.svg` (cairosvg + Pillow); added `android-icon-512x512.png`; synced `favicon/favicon.svg`, root `public/favicon.svg`, root `public/favicon.ico`, and `images/favicon.png`.
+  - Rewrote `favicon.blade.php`: SVG + 16/32 PNG + apple-touch **180 PNG** + manifest + browserconfig + `theme-color #199D52`.
+  - Rewrote `manifest.json` (name KlassApp, relative icon srcs, 192+512) and `browserconfig.xml` (`/favicon/ms-icon-*`).
+  - Landing layouts + landing-layout + video/admission now `@include` the partial; `students-standalone.html` head updated.
+  - New `tests/Feature/FaviconBrandAssetsTest.php` (green-vs-orange pixel assert + head/manifest contracts).
+- **Browser verify** (`:8012` Playwright): `/` and `/login` head links resolve **HTTP 200**; canvas sample of favicon-32 + apple-180 = **KLASSAPP_GREEN** (orange=0); all 25 favicon PNGs green; manifest icons 36→512 all 200; install **criteria** met (name/192/512/standalone). `beforeinstallprompt` did **not** fire on localhost (Chromium engagement/HTTPS heuristic — expected; not a missing asset).
+- **Evidence**: `e2e/screenshots/favicon-audit/regenerated-icons.png`
+- **Status**: ✅ Fixed + tested locally (not committed / not deployed unless asked)
+- **Files modified**: `public/favicon/*`, `public/favicon.svg`, `public/favicon.ico`, `public/images/favicon.png`, `resources/views/layouts/partials/favicon.blade.php`, landing/admission/video/landing-layout blades, `public/students-standalone.html`, `tests/Feature/FaviconBrandAssetsTest.php`, `knowledge.md`
