@@ -609,7 +609,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 13, 2026 — Laravel Nightwatch LIVE ([PR #543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) MERGED+DEPLOYED)
+## Current Status: September 13, 2026 — DS table striped + `.ds-btn-md` LIVE ([PR #546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) MERGED+DEPLOYED)
+
+- **Merged**: [#546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) merge `14f91188` (`fix/table-striped-prop-and-btn-md-size`) — `mergedAt` 2026-09-13T01:06:52Z.
+- **Shipped**: `<x-table striped>` emits `ds-table-striped`; dead `hover` prop removed (ledger hover is unconditional); `.ds-btn-md` restored as deliberate no-op matching `.ds-btn` base metrics.
+- **Production deploy**: `depl-a2bb7eb1-…` @ `14f91188` **succeeded** (empty-body `POST …/deployments`).
+- **Live verify** (`klassapp.xyz`, demo `admin@uireview.klassapp.demo`): `/admin/fees/payments` table classes include `ds-table-striped`; even rows `rgb(250, 250, 245)` / odd `rgba(0,0,0,0)`. Record Payment `sm` button `5px 12px` / `12.48px`. Injected `.ds-btn-md` `8px 18px` / `13.6px` (unchanged vs pre-fix). Synthetic `PR546-VERIFY-*` fee rows removed after check.
+- **Tests**: `TableAndButtonClassContractTest` 9 passed / 28 assertions locally on PR tip.
+
+## Previous: September 13, 2026 — Laravel Nightwatch LIVE ([PR #543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) MERGED+DEPLOYED)
 
 - **Merged**: [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) merge `7683a604` (`feature/laravel-nightwatch`) — `laravel/nightwatch` ^1.30, published `config/nightwatch.php`, `LOG_STACK` via env (default `daily`; Cloud set to `daily,nightwatch`).
 - **Cloud env (staging + production)**: `NIGHTWATCH_TOKEN` set (not in git), `NIGHTWATCH_REQUEST_SAMPLE_RATE=1.0`, `NIGHTWATCH_EXCEPTION_SAMPLE_RATE=1.0`, `LOG_CHANNEL=stack`, `LOG_STACK=daily,nightwatch`.
@@ -10170,3 +10178,9 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Status**: PR open — [#546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) (`fix/table-striped-prop-and-btn-md-size`).
 - **Edge cases flagged**: `.ds-btn-secondary` still unstyled (3 call sites). `resources/views/components/DESIGN_SYSTEM.md` remains stale on this component — it documents `.ds-table` + `striped`/`hover`, while the component emits `.ds-table-ledger` and no longer has a `hover` prop; its badge colour table is also wrong on every hex. `.dt-row-alt` (`#F8F5F0`) is defined in the stylesheet but emitted nowhere — dead CSS, left alone.
 - **Note for AGENTS.md**: line 71 claims `ds-*` classes live in `resources/assets/sass/`. That is stale — there are **zero** `.ds-` selectors in `resources/assets/sass/`; they are all in the hand-maintained, git-tracked `public/css/dashboard-refresh.css`, which layouts link directly via `asset()`. Not corrected in this PR to keep the diff scoped.
+
+### 2026-09-13: PR #546 DS striped + btn-md — MERGED + DEPLOYED + live-verified
+- **Work done**: Reviewed and merged [#546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) (`14f91188`). Triggered production deploy `depl-a2bb7eb1-…` @ `14f91188` (succeeded). Playwright-verified striping on `/admin/fees/payments` and button metrics (md no-op).
+- **Files modified**: (shipped in #546) `components/table.blade.php`, `dashboard-refresh.css`, 8 admin table call sites, `TableAndButtonClassContractTest.php`, `knowledge.md`.
+- **Key decisions**: Hover stays intrinsic to `.ds-table-ledger`; do not gate behind a prop. Temporary synthetic fee payments (`PR546-VERIFY-*`) created then deleted for striping pixel proof on empty demo school.
+- **Status**: ✅ MERGED + DEPLOYED + live-verified.
