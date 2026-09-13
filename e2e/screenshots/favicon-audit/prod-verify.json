@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "url": "https://klassapp.xyz",
+  "deploy": "depl-a2bc3a9d-e704-4e82-8668-2f40c1616567",
+  "commit": "d0c3600fb031ddcb86c5a3a40081666252c7d881",
+  "pr": 549,
+  "canvas": {
+    "tab32": {"verdict": "KLASSAPP_GREEN", "green": 70, "orange": 0},
+    "apple180": {"verdict": "KLASSAPP_GREEN", "green": 1538, "orange": 0},
+    "android192": {"verdict": "KLASSAPP_GREEN", "green": 1937, "orange": 0}
+  },
+  "http": "all probed favicon/manifest/browserconfig assets HTTP 200",
+  "manifest": {"name": "KlassApp", "theme_color": "#199D52", "has192": true, "has512": true}
+}

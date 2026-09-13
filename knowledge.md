@@ -10215,5 +10215,12 @@ Fixes the two `TRACKED ISSUE` entries above.
   - New `tests/Feature/FaviconBrandAssetsTest.php` (green-vs-orange pixel assert + head/manifest contracts).
 - **Browser verify** (`:8012` Playwright): `/` and `/login` head links resolve **HTTP 200**; canvas sample of favicon-32 + apple-180 = **KLASSAPP_GREEN** (orange=0); all 25 favicon PNGs green; manifest icons 36→512 all 200; install **criteria** met (name/192/512/standalone). `beforeinstallprompt` did **not** fire on localhost (Chromium engagement/HTTPS heuristic — expected; not a missing asset).
 - **Evidence**: `e2e/screenshots/favicon-audit/regenerated-icons.png`
-- **Status**: ✅ Fixed + tested locally (not committed / not deployed unless asked)
+- **Status**: ✅ MERGED + DEPLOYED + prod-verified — [#549](https://github.com/KlassApp-Foundation/KlassApp/pull/549) merge `d0c3600f`; deploy `depl-a2bc3a9d-…` **deployment.succeeded** @ 2026-09-13T09:55:28Z
 - **Files modified**: `public/favicon/*`, `public/favicon.svg`, `public/favicon.ico`, `public/images/favicon.png`, `resources/views/layouts/partials/favicon.blade.php`, landing/admission/video/landing-layout blades, `public/students-standalone.html`, `tests/Feature/FaviconBrandAssetsTest.php`, `knowledge.md`
+
+### 2026-09-13: Favicon brand fix — MERGED #549 + prod deploy + live Playwright on klassapp.xyz
+- **Work done**: Opened/merged [#549](https://github.com/KlassApp-Foundation/KlassApp/pull/549) (`fix/favicon-klassapp-brand-assets` → `main`). GitHub API `merged: true` (`merge_commit_sha` `d0c3600fb031ddcb86c5a3a40081666252c7d881`, `merged_at` 2026-09-13T09:52:58Z). Triggered Cloud deploy `depl-a2bc3a9d-e704-4e82-8668-2f40c1616567` @ that commit → **deployment.succeeded**.
+- **Prod Playwright** (`https://klassapp.xyz`): `ok=true`. Head on `/` and `/login` serves SVG + 16/32 PNG + apple-180 + manifest + browserconfig + `theme-color #199D52`. All probed assets HTTP **200** (byte sizes match regenerated files). Canvas pixel sampling: favicon-32 `green=70 orange=0`, apple-180 `green=1538 orange=0`, android-192 `green=1937 orange=0` → **KLASSAPP_GREEN**. Manifest name KlassApp, relative icon srcs, 192+512 all 200.
+- **Evidence**: `e2e/screenshots/favicon-audit/prod-verify.json` (+ prior `regenerated-icons.png`)
+- **Status**: ✅ MERGED + DEPLOYED + live-verified on production
+- **Edge cases flagged**: `beforeinstallprompt` still not asserted on prod (Chromium install UX heuristics); assets meet install criteria.
