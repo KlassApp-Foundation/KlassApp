@@ -50,8 +50,8 @@
         @auth
             @if(in_array(auth()->user()->usergroup_id, [1, 3]))
                 @livewire('agent-toshi')
-                <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper">
-                    <div id="toshi-toggle" class="toshi-toggle" title="Open Toshi" onclick="document.body.classList.toggle('toshi-collapsed');var t=document.getElementById('toshi-toggle');t.textContent=document.body.classList.contains('toshi-collapsed')?'◀':'▶'">▶</div>
+                <div id="toshi-toggle-wrapper" class="toshi-toggle-wrapper" data-testid="toshi-toggle-wrapper">
+                    <div id="toshi-toggle" class="toshi-toggle" data-testid="toshi-toggle" title="Open Toshi" onclick="document.body.classList.toggle('toshi-collapsed');var t=document.getElementById('toshi-toggle');t.textContent=document.body.classList.contains('toshi-collapsed')?'◀':'▶'">▶</div>
                 </div>
             @endif
         @endauth
