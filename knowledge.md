@@ -618,14 +618,23 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Wizard + Toshi parity bugs **MERGED + STAGING ONLY** ([#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601)) — prod cutover still pending
+## Current Status: September 14, 2026 — LIN ≠ School Student ID **MERGED + STAGING** ([#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603)) — prod cutover still pending
+
+- **Verdict**: `student_academics.lin` already existed separately from `school_student_id`. [#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601) incorrectly folded upload `lin` into `school_student_id` — **regression**, not a missing-column gap.
+- **Merged**: [#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603) `cc320c98` — GitHub API `merged: true`. Distinct collection + persistence in Toshi, wizard, upload template; engine writes both columns (+ `userprofiles.LIN`).
+- **Staging deploy**: `depl-a2bf1728-…` @ `cc320c98` **succeeded** (`deployment.succeeded`).
+- **Verify**: PHPUnit 22 PASS (independent LIN + School Student ID persistence).
+- **Production**: **NOT deployed**.
+
+## Previous: September 14, 2026 — Wizard + Toshi parity bugs **MERGED + STAGING ONLY** ([#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601)) — prod cutover still pending
 
 - **Merged**: [#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601) `7e6ae1fe` (`fix/wizard-toshi-parity-bugs`) — GitHub API `merged: true`.
-- **Shipped**: Wizard plan empty-state no longer contradicts “select a plan”; finish errors list incomplete step labels; students Continue requires add or explicit Skip; Toshi `commitAll` passes gender + `school_student_id`/UNEB (legacy `lin` folded); Toshi chat form fields + plan empty messaging.
+- **Shipped**: Wizard plan empty-state no longer contradicts “select a plan”; finish errors list incomplete step labels; students Continue requires add or explicit Skip; Toshi `commitAll` passes gender + `school_student_id`/UNEB (legacy `lin` folded — **corrected by [#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603)**); Toshi chat form fields + plan empty messaging.
 - **Staging deploy**: `depl-a2befa13-…` @ `7e6ae1fe` **succeeded** (`deployment.succeeded`).
 - **Verify**: PHPUnit onboarding suite 38 PASS (incl. `WizardToshiParityBugsTest`); Playwright `e2e/wizard-toshi-parity-bugs-verify.cjs` PASS on staging (students Continue gate + Toshi gender/school-id in DOM).
 - **Four-surface on staging**: Pieces 1–4 complete; parity gates closed before cutover.
 - **Production**: **NOT deployed** — coordinated cutover still held.
+- **Stamp**: [#602](https://github.com/KlassApp-Foundation/KlassApp/pull/602) `24377d98` — GitHub API `merged: true`.
 
 ## Previous: September 14, 2026 — Four-surface program **COMPLETE on STAGING** (Pieces 1–4) — prod cutover pending
 
@@ -2036,6 +2045,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: LIN distinct from School Student ID — **MERGED + STAGING** ([#603](https://github.com/KlassApp-Foundation/KlassApp/pull/603))
+- **Work done**: Confirmed `student_academics.lin` ≠ `school_student_id` in schema; reverted #601 fold of upload `lin` into school ID; wired optional LIN in Toshi + wizard + upload template; engine persists both columns independently.
+- **Files modified**: `OnboardingEngine.php`, `OnboardingNameListExtractor.php`, `StudentUploadTemplateService.php`, `AgentToshi.php`, `ManualOnboardingWizard.php`, blades, related tests, `knowledge.md`
+- **Key decisions**: Situation = regression from #601 (not a missing-column gap). Also write `userprofiles.LIN` for admin UI parity.
+- **Status**: ✅ MERGED `cc320c98` · GitHub API `merged: true` · staging `depl-a2bf1728-…` succeeded · PHPUnit PASS · **prod held**
+- **Edge cases flagged**: Admin admission still validates LIN as 14-char alpha_num; onboarding keeps optional soft string.
 
 ### 2026-09-14: Wizard + Toshi parity bugs (plan/students/gender/ID) — **MERGED + STAGING ONLY** ([#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601))
 - **Work done**: Fix wizard plan empty vs select contradiction + specific finish incomplete-step labels; block silent students Continue (require Skip for now); pass gender + `school_student_id`/UNEB through Toshi `commitAll` (create + complete-draft); fold upload `lin` → `school_student_id`; Toshi chat form fields + plan empty messaging. PHPUnit + Playwright; staging deploy only.
