@@ -621,11 +621,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 ## Current Status: September 14, 2026 — Piece 2 Toshi panel PR1 on **STAGING ONLY** ([#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595))
 
 - **Merged**: [#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595) `ab89d1cc` (`piece2/toshi-header-composer`) — GitHub API `merged: true`.
+- **Harden/stamp**: [#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596) **MERGED** `aa819151` — GitHub API `merged: true` @ `2026-09-14T17:18:24Z` (e2e panel-scoped chips + knowledge stamp).
 - **Shipped**: Clay/warm header + composer (`#c96442` / `#f5f4ed` / radius 16); chip-first Yes/No confirms (shared partial); composer deferred while `awaitingConfirm`; **FROZEN — Pulse** banner + canary `.ds-table-ledger thead { backdrop-filter: blur(12px) }` untouched in Pulse block; source + `public/vendor/toshi-ui/toshi-ui.css` both published.
-- **Staging deploy**: `depl-a2bed2bd-…` @ `ab89d1cc` **succeeded**.
-- **Staging verify**: Pulse canary + header/composer tokens @ 375/414/768/1280 PASS; chip confirm PASS after e2e scoped to `#toshi-panel` (modal chips are `display:none` — do not assert unscoped `isVisible`). Harden/stamp PR: [#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596) (`piece2/pr1-verify-harden`).
+- **Staging deploy**: `depl-a2bed2bd-…` @ `ab89d1cc` **succeeded** (PR1). Harden is docs/e2e-only — no redeploy required for #596.
+- **Staging verify**: Pulse canary + header/composer tokens @ 375/414/768/1280 PASS; chip confirm PASS (`#toshi-panel` scoped).
 - **Production**: **NOT deployed** — Piece 2 hold until coordinated four-surface cutover.
-- **Next**: Piece 2 chips/plan+confirm card polish → docking/pill (≥1280 / ≤640 fullscreen). Pulse stays frozen.
+- **Next / in flight**: Piece 2 PR2 chips/plan+confirm card polish (`piece2/chips-plan-confirm-cards`) → then docking/pill. Pulse stays frozen.
 
 ## Previous: September 14, 2026 — Piece 3 onboarding wizard **CLOSED on STAGING** ([#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593))
 

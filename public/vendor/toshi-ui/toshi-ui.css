@@ -176,9 +176,11 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
-   PIECE 2 — Toshi panel chrome (header / composer / confirm chips)
+   PIECE 2 — Toshi panel chrome (header / composer / chips / cards)
    Clay kit tokens: clay #c96442 · warm #f5f4ed · border #e8e6dc
    Safe to edit in Piece 2 PRs. Do NOT move Pulse rules into this block.
+   Card/chip overrides here intentionally win over dashboard-refresh.css
+   (toshi-ui.css loads after it). Pulse .ds-* / sidebar rules stay FROZEN.
    ══════════════════════════════════════════════════════════════ */
 
 [data-toshi-root] {
@@ -396,6 +398,152 @@
     background: var(--toshi-warm);
     border: 1px solid var(--toshi-border-kit);
     border-radius: 16px;
+}
+
+/* ── Suggestion chips (assistant prompts) — clay, not Pulse green ── */
+[data-toshi-root] .toshi-chip-suggestion {
+    background: var(--toshi-warm);
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 12px;
+    color: var(--toshi-ink);
+}
+
+[data-toshi-root] .toshi-chip-suggestion:hover {
+    border-color: rgba(201, 100, 66, 0.45);
+    background: rgba(201, 100, 66, 0.08);
+}
+
+[data-toshi-root] .toshi-chip-suggestion:focus-visible {
+    box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px rgba(201, 100, 66, 0.45);
+}
+
+/* ── Onboarding plan option cards ── */
+[data-toshi-root] .toshi-option-card {
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 12px;
+    background: #FFFFFF;
+    box-shadow: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+[data-toshi-root] .toshi-option-card:hover,
+[data-toshi-root] .toshi-option-card:focus-visible {
+    border-color: var(--toshi-clay);
+    box-shadow: 0 2px 10px rgba(201, 100, 66, 0.14);
+    outline: none;
+}
+
+[data-toshi-root] .toshi-option-card-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+    background: var(--toshi-clay);
+    color: #FFFFFF;
+    flex-shrink: 0;
+}
+
+/* ── Tool confirmation card (write-tool pending) ── */
+[data-toshi-root] .toshi-confirm-card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    border: 1px solid var(--toshi-border-kit);
+    box-shadow: 0 1px 3px rgba(20, 20, 19, 0.04), 0 8px 24px rgba(20, 20, 19, 0.06);
+}
+
+[data-toshi-root] .toshi-confirm-card::before {
+    background: var(--toshi-clay);
+}
+
+[data-toshi-root] .toshi-confirm-card-icon {
+    background: rgba(201, 100, 66, 0.12);
+    color: var(--toshi-clay);
+}
+
+[data-toshi-root] .toshi-confirm-btn-yes {
+    background: var(--toshi-clay);
+    border-color: var(--toshi-clay);
+    color: #FFFFFF;
+}
+
+[data-toshi-root] .toshi-confirm-btn-yes:hover {
+    background: #b55738;
+    border-color: #b55738;
+}
+
+[data-toshi-root] .toshi-confirm-btn-no {
+    background: var(--toshi-warm);
+    color: var(--toshi-ink);
+    border-color: var(--toshi-border-kit);
+}
+
+[data-toshi-root] .toshi-confirm-btn-no:hover {
+    background: #e8e6dc;
+    border-color: #e8e6dc;
+}
+
+[data-toshi-root] .toshi-confirm-btn:focus-visible {
+    outline: 2px solid var(--toshi-clay);
+    outline-offset: 2px;
+}
+
+/* ── Execution plan card ── */
+[data-toshi-root] .toshi-plan-card {
+    background: var(--toshi-warm);
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(20, 20, 19, 0.04);
+}
+
+[data-toshi-root] .toshi-plan-card-title {
+    color: var(--toshi-ink);
+}
+
+[data-toshi-root] .toshi-plan-card-count {
+    color: var(--toshi-clay);
+    background: rgba(201, 100, 66, 0.12);
+}
+
+[data-toshi-root] .toshi-plan-step.step-active {
+    color: var(--toshi-clay);
+    background: rgba(201, 100, 66, 0.12);
+}
+
+[data-toshi-root] .toshi-plan-step.step-active .toshi-plan-step-num {
+    color: var(--toshi-clay);
+}
+
+[data-toshi-root] .toshi-plan-btn-execute {
+    background: var(--toshi-clay);
+    color: #FFFFFF;
+}
+
+[data-toshi-root] .toshi-plan-btn-execute:hover {
+    background: #b55738;
+}
+
+[data-toshi-root] .toshi-plan-btn-cancel {
+    background: #FFFFFF;
+    color: var(--toshi-muted);
+    border: 1px solid var(--toshi-border-kit);
+}
+
+[data-toshi-root] .toshi-plan-btn-cancel:hover {
+    background: #e8e6dc;
+    color: var(--toshi-ink);
+}
+
+[data-toshi-root] .toshi-plan-card-processing {
+    color: var(--toshi-clay);
+}
+
+[data-toshi-root] .toshi-plan-card-processing::before {
+    border-color: rgba(201, 100, 66, 0.25);
+    border-top-color: var(--toshi-clay);
 }
 
 /* ══════════════════════════════════════════════════════════════
