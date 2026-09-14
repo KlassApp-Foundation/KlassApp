@@ -1714,16 +1714,12 @@ class AgentToshi extends Component
                 continue;
             }
 
-            $linkSubject = Subject::where('school_id', $school->id)
-                ->where('section_id', $linkStandardLink->section_id)
-                ->whereRaw('LOWER(name) = ?', [strtolower($subjectName)])
-                ->first();
-
-            if (! $linkSubject) {
-                $linkSubject = Subject::where('school_id', $school->id)
-                    ->whereRaw('LOWER(name) = ?', [strtolower($subjectName)])
-                    ->first();
-            }
+            $linkSubject = $engine->resolveOrCreateSubjectForClass(
+                $school,
+                $academicYear,
+                $linkStandardLink,
+                $subjectName
+            );
 
             if ($teacherUser && $linkStandardLink && $linkSubject) {
                 Teacherlink::firstOrCreate([

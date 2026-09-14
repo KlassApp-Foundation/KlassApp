@@ -70,7 +70,8 @@ class SchoolCategorySeederTest extends TestCase
             'name' => 'Primary Seven',
         ]);
 
-        $this->assertSame(4, Subject::where('school_id', $this->school->id)->count());
+        // 7 primary sections × 4 core subjects
+        $this->assertSame(28, Subject::where('school_id', $this->school->id)->count());
         $this->assertDatabaseHas('subjects', [
             'school_id' => $this->school->id,
             'standard_id' => Standard::where('school_id', $this->school->id)->value('id'),
@@ -96,7 +97,7 @@ class SchoolCategorySeederTest extends TestCase
     }
 
     /** @test */
-    public function nursery_category_seeds_sections_and_grading_but_no_subjects(): void
+    public function nursery_category_seeds_sections_grading_and_early_years_subjects(): void
     {
         $this->school->school_category = 'nursery';
         $this->school->save();
@@ -113,7 +114,12 @@ class SchoolCategorySeederTest extends TestCase
             'school_id' => $this->school->id,
             'name' => 'Top Class',
         ]);
-        $this->assertSame(0, Subject::where('school_id', $this->school->id)->count());
+        // 3 nursery sections × 4 early-years subjects
+        $this->assertSame(12, Subject::where('school_id', $this->school->id)->count());
+        $this->assertDatabaseHas('subjects', [
+            'school_id' => $this->school->id,
+            'name' => 'Literacy',
+        ]);
         $this->assertSame(4, SchoolGradingSystem::where('school_id', $this->school->id)->count());
     }
 
@@ -128,7 +134,8 @@ class SchoolCategorySeederTest extends TestCase
         $this->assertSame(2, Standard::where('school_id', $this->school->id)->count());
         $this->assertSame(10, Section::where('school_id', $this->school->id)->count());
         $this->assertSame(10, StandardLink::where('school_id', $this->school->id)->count());
-        $this->assertSame(4, Subject::where('school_id', $this->school->id)->count());
+        // Nursery 3×4 + primary 7×4
+        $this->assertSame(40, Subject::where('school_id', $this->school->id)->count());
         // Nursery (4) + primary (9) grading rows.
         $this->assertSame(13, SchoolGradingSystem::where('school_id', $this->school->id)->count());
     }
@@ -151,7 +158,7 @@ class SchoolCategorySeederTest extends TestCase
             'school_id' => $this->school->id,
             'name' => 'Senior Four',
         ]);
-        $this->assertSame(7, Subject::where('school_id', $this->school->id)->count());
+        $this->assertSame(28, Subject::where('school_id', $this->school->id)->count());
         $this->assertDatabaseHas('subjects', [
             'school_id' => $this->school->id,
             'name' => 'Chemistry',
@@ -193,8 +200,8 @@ class SchoolCategorySeederTest extends TestCase
             'school_id' => $this->school->id,
             'name' => 'Senior Six',
         ]);
-        // 7 o-level + 11 a-level subjects.
-        $this->assertSame(18, Subject::where('school_id', $this->school->id)->count());
+        // 4 o-level × 7 + 2 a-level × 11 subjects (per-section rows).
+        $this->assertSame(50, Subject::where('school_id', $this->school->id)->count());
         $this->assertDatabaseHas('subjects', [
             'school_id' => $this->school->id,
             'name' => 'General Paper',
@@ -228,7 +235,7 @@ class SchoolCategorySeederTest extends TestCase
         $this->assertSame(1, Standard::where('school_id', $this->school->id)->count());
         $this->assertSame(7, Section::where('school_id', $this->school->id)->count());
         $this->assertSame(7, StandardLink::where('school_id', $this->school->id)->count());
-        $this->assertSame(4, Subject::where('school_id', $this->school->id)->count());
+        $this->assertSame(28, Subject::where('school_id', $this->school->id)->count());
         $this->assertSame(9, SchoolGradingSystem::where('school_id', $this->school->id)->count());
     }
 

@@ -63,10 +63,18 @@ class SchoolCategorySeeder
      * PR). Codes with known collisions are left null rather than guessed:
      * - UACE 220 is shared by Geography and Economics;
      * - UACE 840 is shared by ICT, General Mathematics and Entrepreneurship.
-     * Nursery classes carry no subjects (that is the prevailing app behaviour).
+     * Nursery classes carry NCDC-style early-years subjects (Literacy, Numeracy, …).
+     * Codes with known collisions are left null rather than guessed:
+     * - UACE 220 is shared by Geography and Economics;
+     * - UACE 840 is shared by ICT, General Mathematics and Entrepreneurship.
      */
     private const SUBJECTS = [
-        'nursery' => [],
+        'nursery' => [
+            'Literacy' => null,
+            'Numeracy' => null,
+            'Motor Skills' => null,
+            'Social/Emotional' => null,
+        ],
         'primary' => [
             'English Language' => '013',
             'Mathematics' => '007',

@@ -46,6 +46,11 @@ class DashboardController extends Controller
     */
     public function index(Request $request)
     {
+        // SiteAdmin belongs on the platform shell — not the school-admin sidebar.
+        if ((int) Auth::user()->usergroup_id === 1) {
+            return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUsergroup(1));
+        }
+
         $admin_id  =   Auth::id();
         $school_id =   Auth::user()->school_id;
 
