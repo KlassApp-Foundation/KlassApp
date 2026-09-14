@@ -609,7 +609,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 4 dashboard home shell on **STAGING ONLY** ([#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566))
+## Current Status: September 14, 2026 — Piece 4 students roster on **STAGING ONLY** ([#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568))
+
+- **Merged**: [#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568) `460fb0c1` (`feat/dashboard-students-roster-kit`) — GitHub API `merged: true`.
+- **Shipped**: Admin students kit composition — `ds-page-head`, filter card, selectable/sortable `<x-table>` / `.ds-table-ledger`, WhatsApp column, `dt-name-link`, empty state + `dt-pagination`.
+- **Staging deploy**: `depl-a2be4304-…` @ `460fb0c1` **succeeded**.
+- **Staging verify**: Playwright `e2e/dashboard-students-roster-verify.cjs` PASS 375/414/768/1280; Pulse ledger thead `blur(12px)`.
+- **Production**: **NOT deployed** — four-surface program hold.
+- **Next**: fees KPI + inline record-payment + save indicator → exams/marks → residual `dashboard-kpi-card` cleanup.
+
+## Previous: September 14, 2026 — Piece 4 dashboard home shell on **STAGING ONLY** ([#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566))
 
 - **Merged**: [#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566) `c39b45b3` (`feat/dashboard-home-shell-kit`) — GitHub API `merged: true`.
 - **Shipped**: Admin home kit composition — time-of-day greeting + LIVE badge, full-width `ds-kpi-card` grid, fees+connected-tools topfold; incomplete setup keeps product demo under greeting/LIVE.
@@ -1897,6 +1906,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Piece 4 students roster — **MERGED + STAGING ONLY** ([#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568))
+- **Work done**: Kit parity for `/admin/students` — `ds-page-head`, filter card, selectable/sortable ledger with WhatsApp + `dt-name-link`, empty/pagination chrome. Pulse canaries unchanged.
+- **Files modified**: `StudentController.php`, `admin/member/index.blade.php`, `StudentsRosterKitContractTest.php`, `e2e/dashboard-students-roster-verify.cjs`
+- **Key decisions**: Keep stream/status filters (beyond kit’s search+class) for real ops; edit URL still uses student `name` (standing rule #18); checkboxes are visual/select-all only (no bulk action invented).
+- **Status**: ✅ MERGED `460fb0c1` · staging `depl-a2be4304-…` · **prod held**
+- **Edge cases flagged**: phase4 staging school has 3 students — ledger path verified live; empty-state copy covered by Blade contract.
 
 ### 2026-09-14: Piece 4 dashboard home shell — **MERGED + STAGING ONLY** ([#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566))
 - **Work done**: Kit parity for admin home — greeting/LIVE, full-width KPI grid, fees+connected-tools topfold; empty-state demo coexistence. Pulse canaries unchanged.
