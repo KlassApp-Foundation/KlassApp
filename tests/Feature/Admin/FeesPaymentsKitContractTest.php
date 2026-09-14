@@ -21,6 +21,7 @@ class FeesPaymentsKitContractTest extends TestCase
         $this->assertStringContainsString('dt-name-link', $blade);
         $this->assertStringContainsString('Record payment', $blade);
         $this->assertStringContainsString("@push('scripts')", $blade);
+        $this->assertStringContainsString("closest('#fees-record-toggle')", $blade);
     }
 
     public function test_reduced_motion_still_stops_save_indicator_d_pulse(): void
