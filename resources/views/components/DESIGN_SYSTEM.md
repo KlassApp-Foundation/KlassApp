@@ -42,7 +42,7 @@ Token CSS mirrors (for agents / prototyping): `resources/assets/design-system/to
 
 **Shadows.** Default elevation is a **hairline ring**: `0 0 0 1px var(--d-border)`. `md` / `lg` add soft drop shadows; only floating Toshi goes to `0 8px 40px rgba(0,0,0,.12)`. Focus: 3px `rgba(30,111,217,.25)` on inputs; 2px blue outline at 2px offset on buttons.
 
-**Motion.** Hover `translateY(-1px)` / 0.2s; press `scale(0.97)` / 0.15s. Looping animation only on LIVE badge sheen, its pulsing dot, and loading-dot bounce. **No `prefers-reduced-motion` in source** — known a11y gap.
+**Motion.** Hover `translateY(-1px)` / 0.2s; press `scale(0.97)` / 0.15s. Looping animation only on LIVE badge sheen, its pulsing dot, and loading-dot bounce. Under `@media (prefers-reduced-motion: reduce)` those three loops are disabled (sheen pseudo removed; dots static).
 
 **Layout.** Sidebar ~252px; content under ~58px top bar. KPIs: `repeat(auto-fill, minmax(220px, 1fr))`. Tables scroll in `.ds-table-wrap`; restack as cards ≤767px (`data-label` on every `<td>`). Touch target token: `--d-touch-target-min: 44px` (baked into `.ds-btn`).
 
@@ -269,6 +269,32 @@ Sentence case labels only. For a coloured dot + text, use `.ds-dot .ds-dot-green
 
 ---
 
+## Onboarding constants (canonical PHP — replace any Claude Design / kit placeholders)
+
+Do **not** use inferred size buckets or category labels from the Claude Design export React kit. Read these from PHP:
+
+### `OnboardingStepsService::STUDENT_SIZE_OPTIONS`
+1. `Under 100 students`
+2. `100-300 students`
+3. `300-500 students`
+4. `500+ students`
+
+### `SchoolCategorySeeder::CATEGORIES` (key → label)
+| Key | Label |
+|---|---|
+| `nursery` | Nursery only |
+| `primary` | Primary |
+| `primary_nursery` | Primary + Nursery |
+| `o_level` | O-Level |
+| `o_a_level` | O-Level + A-Level |
+
+### `OnboardingStepsService::ALL_STEPS` order (keys)
+`school_name` → `student_size` → `country` → `curriculum` → `school_category` → `emis` → `uneb_center` → `academic_year` → `standards` → `subjects` → `teachers` → `students` → `terms` → `fees` → `whatsapp_verify` → `plan_selection`
+
+Note: wizard UI may show a **review** screen after these; `review` is **not** a key in `ALL_STEPS`. `emis` / `uneb_center` are conditionally filtered via `applicableSteps(School)`.
+
+---
+
 ## Open items / caveats
 
 - Official purpose-built **light horizontal** lockup still preferred over the extract from `klassapp-stacked.svg` (`klassapp-horizontal-light.svg` is the current mechanical extract).
@@ -276,6 +302,7 @@ Sentence case labels only. For a coloured dot + text, use `.ds-dot .ds-dot-green
 - Narrow-width **sidebar** behaviour is not fully specified in CSS — layout Blade owns it below 1280px.
 - No photography/illustration system — empty states with actions, not stock art.
 - Icons: Heroicons v1 outline, 24×24, stroke 2, `currentColor` (KPI glyphs inline in `<x-ds-kpi-card>`).
+- Other infinite loops in the same CSS (`d-pulse` on save indicator, `toshi-spin`) are **not** yet covered by the reduced-motion block — only the three DESIGN_SYSTEM looping animations above.
 
 ---
 
