@@ -31,7 +31,7 @@
     <x-ds-kpi-card icon="check" :value="$kpis['rate_label']" label="Collection rate" color="blue" />
 </div>
 
-<div id="fees-record-form" data-testid="fees-record-form" class="{{ $showRecordForm ? '' : 'hidden' }}" style="margin-bottom: 16px;">
+<div id="fees-record-form" data-testid="fees-record-form" @if(! $showRecordForm) hidden @endif style="margin-bottom: 16px;">
     <x-card title="Record a payment">
         <form method="POST" action="{{ route('admin.fee-payments.store') }}" id="fees-inline-record-form">
             @csrf
@@ -81,52 +81,56 @@
 </div>
 
 @if($payments->isEmpty())
-    <x-card padding="lg" class="text-center" data-testid="fees-empty">
-        <p class="ds-empty-state-title">No payments recorded yet</p>
-        <p class="ds-empty-state-desc">Use Record payment above, or open the full form.</p>
-    </x-card>
+    <div data-testid="fees-empty">
+        <x-card padding="lg" class="text-center">
+            <p class="ds-empty-state-title">No payments recorded yet</p>
+            <p class="ds-empty-state-desc">Use Record payment above, or open the full form.</p>
+        </x-card>
+    </div>
 @else
-    <x-card padding="none" data-testid="fees-ledger-card">
-        <div data-testid="fees-ledger">
-            <x-table :headers="['Date', 'Student', 'Class', 'Amount', 'Method', 'Status']" sortable striped>
-                @foreach($payments as $payment)
-                    @php
-                        $className = $payment->student?->studentAcademicLatest?->standardLink?->section?->name
-                            ?? $payment->feeCategory?->standard?->name
-                            ?? null;
-                        $status = $payment->status ?: 'paid';
-                    @endphp
-                    <tr>
-                        <td data-label="Date">{{ \Carbon\Carbon::parse($payment->paid_on)->format('d M') }}</td>
-                        <td data-label="Student">
-                            @if($payment->student)
-                                <a class="dt-name-link" href="{{ url('/admin/student/edit/' . $payment->student->name) }}">
-                                    {{ $payment->student->displayName ?: $payment->student->name }}
-                                </a>
-                            @else
-                                Deleted
-                            @endif
-                        </td>
-                        <td data-label="Class">{{ $className ?: '—' }}</td>
-                        <td class="dt-cell-num" data-label="Amount">UGX {{ number_format($payment->amount, 0) }}</td>
-                        <td data-label="Method">{{ $payment->payment_method ?: '—' }}</td>
-                        <td class="dt-cell-badge" data-label="Status">
-                            @if($status === 'paid')
-                                <span class="dt-badge dt-badge-active">Paid</span>
-                            @elseif($status === 'partial' || $status === 'warning')
-                                <span class="dt-badge" style="background:#FFFBEB;color:#B45309;">Part paid</span>
-                            @else
-                                <span class="dt-badge dt-badge-inactive">{{ ucfirst($status) }}</span>
-                            @endif
-                        </td>
-                    </tr>
-                @endforeach
-            </x-table>
-        </div>
-        <div class="dt-pagination px-4">
-            {{ $payments->links() }}
-        </div>
-    </x-card>
+    <div data-testid="fees-ledger-card">
+        <x-card padding="none">
+            <div data-testid="fees-ledger">
+                <x-table :headers="['Date', 'Student', 'Class', 'Amount', 'Method', 'Status']" sortable striped>
+                    @foreach($payments as $payment)
+                        @php
+                            $className = $payment->student?->studentAcademicLatest?->standardLink?->section?->name
+                                ?? $payment->feeCategory?->standard?->name
+                                ?? null;
+                            $status = $payment->status ?: 'paid';
+                        @endphp
+                        <tr>
+                            <td data-label="Date">{{ \Carbon\Carbon::parse($payment->paid_on)->format('d M') }}</td>
+                            <td data-label="Student">
+                                @if($payment->student)
+                                    <a class="dt-name-link" href="{{ url('/admin/student/edit/' . $payment->student->name) }}">
+                                        {{ $payment->student->displayName ?: $payment->student->name }}
+                                    </a>
+                                @else
+                                    Deleted
+                                @endif
+                            </td>
+                            <td data-label="Class">{{ $className ?: '—' }}</td>
+                            <td class="dt-cell-num" data-label="Amount">UGX {{ number_format($payment->amount, 0) }}</td>
+                            <td data-label="Method">{{ $payment->payment_method ?: '—' }}</td>
+                            <td class="dt-cell-badge" data-label="Status">
+                                @if($status === 'paid')
+                                    <span class="dt-badge dt-badge-active">Paid</span>
+                                @elseif($status === 'partial' || $status === 'warning')
+                                    <span class="dt-badge" style="background:#FFFBEB;color:#B45309;">Part paid</span>
+                                @else
+                                    <span class="dt-badge dt-badge-inactive">{{ ucfirst($status) }}</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </x-table>
+            </div>
+            <div class="dt-pagination px-4">
+                {{ $payments->links() }}
+            </div>
+        </x-card>
+    </div>
 @endif
 
 </div>
@@ -141,13 +145,13 @@
 
     function setOpen(open) {
         if (!formWrap || !toggle) return;
-        formWrap.classList.toggle('hidden', !open);
+        formWrap.hidden = !open;
         toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
     if (toggle) {
         toggle.addEventListener('click', function () {
-            setOpen(formWrap.classList.contains('hidden'));
+            setOpen(!!formWrap.hidden);
         });
     }
     if (cancel) {
