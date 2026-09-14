@@ -3229,9 +3229,10 @@ body.toshi-manual-wizard [data-toshi-root] {
 }
 
 /* ── Reduced motion ────────────────────────────────────────────────────────
-   Disables the three infinite loops called out in DESIGN_SYSTEM.md:
-   LIVE badge sheen, LIVE pulsing dot, loading-dot bounce.
-   Keep the solid badge / dots visible — only stop the looping animation. */
+   Disables every infinite loop in this stylesheet:
+   LIVE badge sheen, LIVE pulsing dot, loading-dot bounce,
+   save-indicator d-pulse, Toshi plan-card toshi-spin.
+   Keep the solid elements visible — only stop the looping animation. */
 @media (prefers-reduced-motion: reduce) {
     .dashboard-shell--admin .dashboard-live-badge::after {
         animation: none;
@@ -3247,5 +3248,15 @@ body.toshi-manual-wizard [data-toshi-root] {
         animation: none;
         opacity: 0.7;
         transform: none;
+    }
+
+    .ds-save-indicator--saving .ds-save-indicator__dot {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    [data-toshi-root] .toshi-plan-card-processing::before {
+        animation: none;
     }
 }
