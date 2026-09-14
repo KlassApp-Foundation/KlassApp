@@ -219,7 +219,53 @@ class WizardToshiParityBugsTest extends TestCase
         $this->assertSame('U1234/567', $academic->board_registration_number);
     }
 
-    public function test_toshi_maps_legacy_lin_upload_key_to_school_student_id(): void
+    public function test_toshi_commit_all_keeps_lin_and_school_student_id_distinct(): void
+    {
+        $this->seedClassStructure('P1');
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(AgentToshi::class);
+        $component->set('mode', 'complete');
+        $component->set('schoolId', $this->school->id);
+        $component->set('schoolName', $this->school->name);
+        $component->set('standards', [['name' => 'P1']]);
+        $component->set('subjects', []);
+        $component->set('teacherList', []);
+        $component->set('teacherLinks', []);
+        $component->set('terms', []);
+        $component->set('studentList', ['Both Ids Student']);
+        $component->set('actionData', [
+            'students' => [[
+                'name' => 'Both Ids Student',
+                'class' => 'P1',
+                'gender' => 'female',
+                'school_student_id' => 'SCH-INTERNAL-1',
+                'lin' => 'UG123456789012',
+            ]],
+        ]);
+        $component->call('commit');
+
+        $this->assertTrue((bool) ($component->get('reviewData')['committed'] ?? false));
+
+        $student = User::query()
+            ->where('school_id', $this->school->id)
+            ->where('usergroup_id', 6)
+            ->where('name', 'Both Ids Student')
+            ->first();
+        $this->assertNotNull($student);
+
+        $academic = StudentAcademic::where('user_id', $student->id)->first();
+        $this->assertNotNull($academic);
+        $this->assertSame('SCH-INTERNAL-1', $academic->school_student_id);
+        $this->assertSame('UG123456789012', $academic->lin);
+        $this->assertNotSame($academic->school_student_id, $academic->lin);
+
+        $profile = Userprofile::where('user_id', $student->id)->first();
+        $this->assertNotNull($profile);
+        $this->assertSame('UG123456789012', $profile->LIN ?? $profile->getAttribute('LIN'));
+    }
+
+    public function test_toshi_maps_lin_upload_key_to_lin_column_not_school_student_id(): void
     {
         $this->seedClassStructure('P1');
         $this->actingAs($this->admin);
@@ -234,7 +280,6 @@ class WizardToshiParityBugsTest extends TestCase
         $component->set('teacherLinks', []);
         $component->set('terms', []);
         $component->set('studentList', ['Lin Student']);
-        // Simulate the pre-fix upload shape that stored the ID under 'lin'
         $component->set('actionData', [
             'students' => [[
                 'name' => 'Lin Student',
@@ -254,24 +299,28 @@ class WizardToshiParityBugsTest extends TestCase
             ->first();
         $this->assertNotNull($student);
         $this->assertSame('male', Userprofile::where('user_id', $student->id)->value('gender'));
-        $this->assertSame(
-            'LIN-999',
-            StudentAcademic::where('user_id', $student->id)->value('school_student_id')
-        );
+        $academic = StudentAcademic::where('user_id', $student->id)->first();
+        $this->assertNotNull($academic);
+        $this->assertSame('LIN-999', $academic->lin);
+        $this->assertNull($academic->school_student_id);
     }
 
-    public function test_name_list_extractor_maps_lin_header_to_school_student_id(): void
+    public function test_name_list_extractor_maps_lin_and_school_student_id_separately(): void
     {
         $tmp = tempnam(sys_get_temp_dir(), 'lin-upload-');
         $csv = $tmp.'.csv';
         rename($tmp, $csv);
-        file_put_contents($csv, "Name,Class,Gender,LIN\nLin Kid,P1,female,EMIS-42\n");
+        file_put_contents(
+            $csv,
+            "Name,Class,Gender,School Student ID,LIN\nBoth Kid,P1,female,ADM-42,EMIS-42\n"
+        );
 
         try {
             $rows = app(OnboardingNameListExtractor::class)->extractNamesFromFile($csv, 'csv');
             $this->assertCount(1, $rows);
-            $this->assertSame('Lin Kid', $rows[0]['name']);
-            $this->assertSame('EMIS-42', $rows[0]['school_student_id']);
+            $this->assertSame('Both Kid', $rows[0]['name']);
+            $this->assertSame('ADM-42', $rows[0]['school_student_id']);
+            $this->assertSame('EMIS-42', $rows[0]['lin']);
             $this->assertSame('female', strtolower((string) $rows[0]['gender']));
         } finally {
             @unlink($csv);
@@ -285,6 +334,7 @@ class WizardToshiParityBugsTest extends TestCase
         $this->assertStringContainsString('No plans are available yet. Contact support.', $blade);
         $this->assertStringContainsString('data-testid="toshi-student-gender"', $blade);
         $this->assertStringContainsString('data-testid="toshi-student-school-id"', $blade);
+        $this->assertStringContainsString('data-testid="toshi-student-lin"', $blade);
         $this->assertStringContainsString('data-testid="toshi-student-board-reg"', $blade);
         $this->assertStringNotContainsString(
             "OnboardingEngine::saveStudents doesn't use them",

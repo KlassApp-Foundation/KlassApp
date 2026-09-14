@@ -168,6 +168,7 @@ class AgentToshi extends Component
     public $studentFormType = '';
     public $studentFormGender = '';
     public $studentFormSchoolStudentId = '';
+    public $studentFormLin = '';
     public $studentFormBoardRegNumber = '';
     public $studentFormParent = '';
     public $studentFormParentPhone = '';
@@ -1738,6 +1739,7 @@ class AgentToshi extends Component
         $this->studentFormType = '';
         $this->studentFormGender = '';
         $this->studentFormSchoolStudentId = '';
+        $this->studentFormLin = '';
         $this->studentFormBoardRegNumber = '';
         $this->studentFormParent = '';
         $this->studentFormParentPhone = '';
@@ -1829,6 +1831,7 @@ class AgentToshi extends Component
             'stream' => $this->studentFormStream,
             'type' => $this->studentFormType,
             'school_student_id' => trim((string) $this->studentFormSchoolStudentId),
+            'lin' => trim((string) $this->studentFormLin),
             'board_registration_number' => trim((string) $this->studentFormBoardRegNumber),
         ];
         if ($this->studentFormParent) $entry['parent'] = trim($this->studentFormParent);
@@ -1838,6 +1841,7 @@ class AgentToshi extends Component
         $this->studentFormName = '';
         $this->studentFormGender = '';
         $this->studentFormSchoolStudentId = '';
+        $this->studentFormLin = '';
         $this->studentFormBoardRegNumber = '';
         // Keep class + stream sticky for batch entry (wizard defaults stream when class has streams)
         $this->studentFormParent = '';
@@ -2153,13 +2157,8 @@ class AgentToshi extends Component
                     }
                 } else {
                     $this->studentList = array_values(array_unique($plainNames));
-                    // Prefer school_student_id / gender / UNEB from the shared extractor row shape.
-                    // Legacy 'lin' / EMIS columns are folded into school_student_id (never a separate key).
+                    // Prefer extractor row shape: school_student_id and lin stay distinct.
                     $this->actionData['students'] = array_map(function ($r) {
-                        $schoolStudentId = trim((string) ($r['school_student_id'] ?? ''));
-                        if ($schoolStudentId === '') {
-                            $schoolStudentId = trim((string) ($r['lin'] ?? $r['learner_id'] ?? ''));
-                        }
                         $gender = strtolower(trim((string) ($r['gender'] ?? '')));
                         if (! in_array($gender, ['male', 'female'], true)) {
                             $gender = null;
@@ -2172,7 +2171,8 @@ class AgentToshi extends Component
                             'stream' => $r['stream'] ?? '',
                             'parent' => $r['parent'] ?? '',
                             'parent_phone' => $r['parent_phone'] ?? '',
-                            'school_student_id' => $schoolStudentId,
+                            'school_student_id' => trim((string) ($r['school_student_id'] ?? '')),
+                            'lin' => trim((string) ($r['lin'] ?? $r['learner_id'] ?? '')),
                             'board_registration_number' => trim((string) ($r['board_registration_number'] ?? '')),
                             'date_of_birth' => trim((string) ($r['date_of_birth'] ?? '')),
                         ];
@@ -5989,11 +5989,11 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     /**
      * Normalize Toshi student drafts for OnboardingEngine::saveStudents().
-     * Folds legacy upload keys (`lin` / `learner_id`) into `school_student_id`
-     * and passes gender through (engine already persists userprofiles.gender).
+     * Passes gender, school_student_id, and lin through as distinct fields
+     * (lin = Uganda national Learner Identification Number).
      *
      * @param  list<array<string, mixed>|string>  $studentRecords
-     * @return list<array{name: string, class: string, stream: string, phone: string, school_student_id: string, board_registration_number: string, gender: string, date_of_birth: string}>
+     * @return list<array{name: string, class: string, stream: string, phone: string, school_student_id: string, lin: string, board_registration_number: string, gender: string, date_of_birth: string}>
      */
     private function mapStudentRecordsForEngine(array $studentRecords): array
     {
@@ -6005,6 +6005,7 @@ class AgentToshi extends Component
                     'stream' => '',
                     'phone' => '',
                     'school_student_id' => '',
+                    'lin' => '',
                     'board_registration_number' => '',
                     'gender' => '',
                     'date_of_birth' => '',
@@ -6016,17 +6017,13 @@ class AgentToshi extends Component
                 $gender = '';
             }
 
-            $schoolStudentId = trim((string) ($record['school_student_id'] ?? ''));
-            if ($schoolStudentId === '') {
-                $schoolStudentId = trim((string) ($record['lin'] ?? $record['learner_id'] ?? ''));
-            }
-
             return [
                 'name' => trim((string) ($record['name'] ?? '')),
                 'class' => trim((string) ($record['class'] ?? '')),
                 'stream' => trim((string) ($record['stream'] ?? '')),
                 'phone' => trim((string) ($record['phone'] ?? $record['parent_phone'] ?? '')),
-                'school_student_id' => $schoolStudentId,
+                'school_student_id' => trim((string) ($record['school_student_id'] ?? '')),
+                'lin' => trim((string) ($record['lin'] ?? $record['learner_id'] ?? '')),
                 'board_registration_number' => trim((string) ($record['board_registration_number'] ?? '')),
                 'gender' => $gender,
                 'date_of_birth' => trim((string) ($record['date_of_birth'] ?? $record['dob'] ?? '')),

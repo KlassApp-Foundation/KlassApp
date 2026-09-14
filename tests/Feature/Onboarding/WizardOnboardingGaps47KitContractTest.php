@@ -16,6 +16,8 @@ class WizardOnboardingGaps47KitContractTest extends TestCase
 
         $this->assertStringContainsString('data-testid="wizard-student-gender"', $blade);
         $this->assertStringContainsString('data-testid="wizard-student-dob"', $blade);
+        $this->assertStringContainsString('data-testid="wizard-student-school-id"', $blade);
+        $this->assertStringContainsString('data-testid="wizard-student-lin"', $blade);
         $this->assertStringContainsString('data-testid="wizard-teacher-classes"', $blade);
         $this->assertStringContainsString('data-testid="wizard-teacher-subjects"', $blade);
         $this->assertStringContainsString('wire:model="teacherSelectedClasses"', $blade);
@@ -40,6 +42,7 @@ class WizardOnboardingGaps47KitContractTest extends TestCase
         $this->assertNotFalse($src);
         $this->assertStringContainsString("'Gender'", $src);
         $this->assertStringContainsString("'School Student ID'", $src);
+        $this->assertStringContainsString("'LIN'", $src);
         $this->assertStringContainsString("'UNEB Reg No.'", $src);
         $this->assertStringContainsString("'Date of Birth'", $src);
         $this->assertStringContainsString('isCandidateClass', $src);

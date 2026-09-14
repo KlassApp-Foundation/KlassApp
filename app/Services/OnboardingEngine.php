@@ -1157,8 +1157,12 @@ class OnboardingEngine
      *
      * Each entry in $students must contain at least 'name'.
      * Optional keys: 'class' (section name to resolve StandardLink), 'email',
-     * 'phone', 'school_student_id', 'board_registration_number', 'gender'
+     * 'phone', 'school_student_id', 'lin' (Learner Identification Number),
+     * 'board_registration_number', 'gender'
      * (male|female on userprofiles), 'date_of_birth' (optional).
+     *
+     * school_student_id = school-internal ID; lin = Uganda national LIN.
+     * They are distinct columns on student_academics — never aliases.
      *
      * board_registration_number is persisted only for UNEB candidate classes
      * (P.7 / S.4 / S.6) via isCandidateClass().
@@ -1236,6 +1240,11 @@ class OnboardingEngine
                 $gender = null;
             }
 
+            $lin = trim((string) ($draft['lin'] ?? $draft['learner_id'] ?? ''));
+            if ($lin === '') {
+                $lin = null;
+            }
+
             $dobRaw = trim((string) ($draft['date_of_birth'] ?? $draft['dob'] ?? ''));
             $dob = null;
             if ($dobRaw !== '') {
@@ -1258,6 +1267,7 @@ class OnboardingEngine
                     'alternate_no'  => $phone ?: null,
                     'gender'        => $gender,
                     'date_of_birth' => $dob,
+                    'LIN'           => $lin,
                 ]
             );
 
@@ -1297,6 +1307,7 @@ class OnboardingEngine
                     'user_id' => $student->id,
                     'standardLink_id' => $link->id,
                     'klassapp_student_id' => $klassappId,
+                    'lin' => $lin,
                     'school_student_id' => $schoolStudentId !== '' ? $schoolStudentId : null,
                     'board_registration_number' => $boardReg !== '' ? $boardReg : null,
                 ]);

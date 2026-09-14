@@ -410,6 +410,7 @@ class ToshiActionService
             'class' => $className,
             'phone' => trim($data['phone'] ?? ''),
             'school_student_id' => trim($data['school_student_id'] ?? ''),
+            'lin' => trim($data['lin'] ?? ''),
             'board_registration_number' => trim($data['board_registration_number'] ?? ''),
         ]]);
 
