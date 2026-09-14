@@ -609,14 +609,27 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 4 students roster on **STAGING ONLY** ([#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568))
+## Current Status: September 14, 2026 — Piece 4 dashboard kit parity **COMPLETE on STAGING ONLY** (`origin/main` tip `f5b9eeee`)
+
+- **Four surfaces + cleanup — all merged + staging-verified** (GitHub API `merged: true`):
+  - Home shell [#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566) `c39b45b3`
+  - Students roster [#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568) `460fb0c1`
+  - Fees payments [#570](https://github.com/KlassApp-Foundation/KlassApp/pull/570) `3762a9c0` + follow-ups [#571](https://github.com/KlassApp-Foundation/KlassApp/pull/571) `1fbe4927` · [#572](https://github.com/KlassApp-Foundation/KlassApp/pull/572) `c08e8835` · [#574](https://github.com/KlassApp-Foundation/KlassApp/pull/574) `dc84ebe5` (Vue remount → document click delegation)
+  - Exams/marks [#573](https://github.com/KlassApp-Foundation/KlassApp/pull/573) `6f6b62e9`
+  - Residual KPI cleanup [#575](https://github.com/KlassApp-Foundation/KlassApp/pull/575) `f5b9eeee` (approvals + superadmin → `ds-kpi-*`; EOT panel → `dashboard-chart-card`)
+- **Latest staging deploy**: `depl-a2be523f-…` @ `f5b9eeee` **succeeded**.
+- **Staging verify**: fees Playwright PASS (KPI green + form toggle `hidden→false`); exams PASS 375/414/768/1280 + ledger `blur(12px)`; approvals spot-check KPI `rgb(34, 197, 94)`, no legacy `dashboard-kpi-card`.
+- **Production**: **NOT deployed** — hold until four-surface cutover is explicitly approved.
+- **Next**: production cutover approval (or leftover CSS `.dashboard-kpi-card` rules in `dashboard-refresh.css` / standalone HTML — blades clean).
+
+## Previous: September 14, 2026 — Piece 4 students roster on **STAGING ONLY** ([#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568))
 
 - **Merged**: [#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568) `460fb0c1` (`feat/dashboard-students-roster-kit`) — GitHub API `merged: true`.
 - **Shipped**: Admin students kit composition — `ds-page-head`, filter card, selectable/sortable `<x-table>` / `.ds-table-ledger`, WhatsApp column, `dt-name-link`, empty state + `dt-pagination`.
 - **Staging deploy**: `depl-a2be4304-…` @ `460fb0c1` **succeeded**.
 - **Staging verify**: Playwright `e2e/dashboard-students-roster-verify.cjs` PASS 375/414/768/1280; Pulse ledger thead `blur(12px)`.
 - **Production**: **NOT deployed** — four-surface program hold.
-- **Next**: fees KPI + inline record-payment + save indicator → exams/marks → residual `dashboard-kpi-card` cleanup.
+- **Next**: fees → exams/marks → residual KPI cleanup (now done — see Current Status).
 
 ## Previous: September 14, 2026 — Piece 4 dashboard home shell on **STAGING ONLY** ([#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566))
 
@@ -1906,6 +1919,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Piece 4 fees + exams + KPI cleanup — **MERGED + STAGING ONLY** ([#570](https://github.com/KlassApp-Foundation/KlassApp/pull/570)–[#575](https://github.com/KlassApp-Foundation/KlassApp/pull/575))
+- **Work done**: Fees kit (KPI row, inline record form, save indicator, ledger) + Vue remount fix via `@push('scripts')` + document-level click delegation; exams/marks kit (page head, KPI fold, `.ds-grid-marks`, missing-subject reminder, unfiltered empty state); residual Blade `dashboard-kpi-card` → `ds-kpi-*` (approvals + superadmin) and EOT chart reclass.
+- **Files modified**: fees/payments blades + controller tests/e2e; marks filter blades + `MarksController`; approvals inbox; superadmin dashboard; `_eot-kpi-card.blade.php`; `DashboardKpiCleanupContractTest.php`
+- **Key decisions**: Never put interactive `<script>` inside Vue `#app` content; prefer document delegation after remount; `<x-card>`/`<x-table>` do not forward `data-testid` — wrap in plain `<div>`; EOT panel is a chart, not a KPI.
+- **Status**: ✅ MERGED tip `f5b9eeee` · staging `depl-a2be523f-…` · fees form toggle verified · approvals Pulse green · **prod held**
+- **Edge cases flagged**: fees empty path may omit ledger blur canary (`blur: null`); CSS still contains unused `.dashboard-kpi-card` rules in `dashboard-refresh.css` / standalone HTML — blades have zero remaining usages.
 
 ### 2026-09-14: Piece 4 students roster — **MERGED + STAGING ONLY** ([#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568))
 - **Work done**: Kit parity for `/admin/students` — `ds-page-head`, filter card, selectable/sortable ledger with WhatsApp + `dt-name-link`, empty/pagination chrome. Pulse canaries unchanged.
