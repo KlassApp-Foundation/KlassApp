@@ -248,6 +248,23 @@ class ManualOnboardingWizard extends Component
     }
 
     /**
+     * Button-driven student-size selection (card radiogroup; mirrors selectSchoolCategory).
+     * Livewire 3 has no public set() — wire:click="set(...)" was a no-op and blocked Next.
+     */
+    public function selectStudentSize(string $size): void
+    {
+        if (! in_array($size, OnboardingStepsService::STUDENT_SIZE_OPTIONS, true)) {
+            $this->errorMessage = 'Please choose an approximate school size.';
+
+            return;
+        }
+
+        $this->studentSize = $size;
+        $this->errorMessage = '';
+        $this->resetErrorBag('studentSize');
+    }
+
+    /**
      * Button-driven school category selection (same shape as AgentToshi::selectSchoolCategory).
      * Livewire 3 has no public set() — wire:click="set(...)" was a no-op and blocked Next.
      */

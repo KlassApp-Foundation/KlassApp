@@ -3111,6 +3111,11 @@ body.toshi-manual-wizard [data-toshi-root] {
     .manual-wizard-plan-grid {
         grid-template-columns: repeat(3, 1fr);
     }
+
+    /* Four real STUDENT_SIZE_OPTIONS — 2×2 reads cleaner than a sparse 3-col. */
+    .manual-wizard-plan-grid--sizes {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .manual-wizard-plan-card {

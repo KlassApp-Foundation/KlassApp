@@ -136,6 +136,18 @@ class StudentSizeOnboardingTest extends TestCase
         $this->assertSame('500+ students', $this->school->fresh()->student_size);
     }
 
+    public function test_wizard_select_student_size_card_sets_property_and_rejects_kit_placeholder(): void
+    {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManualOnboardingWizard::class)
+            ->call('selectStudentSize', 'Under 100 students')
+            ->assertSet('studentSize', 'Under 100 students')
+            ->call('selectStudentSize', '1-100')
+            ->assertSet('studentSize', 'Under 100 students')
+            ->assertSet('errorMessage', 'Please choose an approximate school size.');
+    }
+
     public function test_toshi_complete_mode_student_size_action_persists(): void
     {
         $this->actingAs($this->admin);
