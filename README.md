@@ -2,6 +2,8 @@
 
 **Tools connected by intelligence.**
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/KlassApp-Foundation/KlassApp)
+
 KlassApp is a multi-tenant school management platform built around **Toshi**, an AI agent that orchestrates the channels schools already use: WhatsApp, email, Drive, Slack, SMS, and the web dashboard. It is not just another SMS admin panel. The product direction is an **agentic protocol** for education: role-aware actions, human-in-the-loop approvals, and connectors that grow with the school.
 
 Live product: [https://klassapp.xyz](https://klassapp.xyz)
