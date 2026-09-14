@@ -107,7 +107,13 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
             ->call('next') // uneb
             ->call('next') // academic year seeds classes/subjects/grading
             ->call('next') // structure checkpoint (optional)
-            ;
+            ->call('next'); // subjects checkpoint (always shown once) → teachers
+
+        $this->assertSame(
+            'teachers',
+            $component->instance()->steps[$component->get('stepIndex')]['key'] ?? null,
+            'advanceToTeachers must land on the teachers step'
+        );
     }
 
     public function test_students_step_exists_after_teachers_in_checklist(): void
@@ -188,12 +194,15 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
         $component = Livewire::test(ManualOnboardingWizard::class);
         $this->advanceToTeachers($component);
 
+        // skipOptionalStep advances to the next incomplete *blocking* step, so it can
+        // jump past the other optional step (students). Jump to students explicitly.
+        $component->call('skipOptionalStep'); // discard/complete teachers
+        $this->goToStepKey($component, 'students');
         $component
-            ->call('skipOptionalStep') // teachers
-            ->assertSee('Students')
-            ->call('skipOptionalStep') // students
-            ->call('next') // terms
-            ->call('next') // fees
+            ->assertSeeHtml('data-testid="wizard-students-bulk"')
+            ->call('skipOptionalStep') // students → next blocking (terms)
+            ->call('next') // terms → fees
+            ->call('next') // fees → whatsapp
             ->set('whatsappPhone', '+256700777888')
             ->call('sendWhatsAppVerificationCode');
 
@@ -219,6 +228,69 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
         $this->assertTrue(
             \Illuminate\Support\Facades\Route::has('admin.students.upload-template'),
             'Student upload template must be the dynamic per-school route'
+        );
+    }
+
+    public function test_skip_optional_step_discards_teacher_drafts_without_persisting(): void
+    {
+        $this->actingAs($this->admin);
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $this->advanceToTeachers($component);
+
+        $component
+            ->set('teacherPaste', "Draft One\nDraft Two")
+            ->call('applyTeacherPaste')
+            ->assertCount('teacherDrafts', 2)
+            ->call('skipOptionalStep')
+            ->assertCount('teacherDrafts', 0);
+
+        $this->assertSame(0, Teacherlink::where('school_id', $this->school->id)->count());
+    }
+
+    public function test_skip_optional_step_discards_student_drafts_without_persisting(): void
+    {
+        $this->actingAs($this->admin);
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $this->advanceToTeachers($component);
+        $component->call('skipOptionalStep');
+        $this->goToStepKey($component, 'students');
+
+        $component
+            ->set('studentPaste', "Amina Draft\nBrian Draft")
+            ->call('applyStudentPaste')
+            ->assertCount('studentDrafts', 2)
+            ->call('skipOptionalStep')
+            ->assertCount('studentDrafts', 0);
+
+        $this->assertSame(0, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
+    }
+
+    public function test_teachers_html_includes_confirm_only_when_drafts_exist(): void
+    {
+        $this->actingAs($this->admin);
+        $component = Livewire::test(ManualOnboardingWizard::class);
+        $this->advanceToTeachers($component);
+
+        $component->assertDontSeeHtml('You have teachers in the list that will not be saved. Skip anyway?');
+
+        $component
+            ->set('teacherPaste', 'Confirm Teacher')
+            ->call('applyTeacherPaste')
+            ->assertSeeHtml('You have teachers in the list that will not be saved. Skip anyway?')
+            ->assertSeeHtml('data-testid="wizard-teachers-skip"');
+    }
+
+    private function goToStepKey(object $component, string $key): void
+    {
+        $keys = array_column($component->instance()->steps, 'key');
+        $index = array_search($key, $keys, true);
+        $this->assertNotFalse($index, "step {$key} missing from wizard steps");
+        $component->call('goToStep', $index);
+        // Livewire test HTML can lag one tick after stepIndex-only updates.
+        $component->call('goToStep', $index);
+        $this->assertSame(
+            $key,
+            $component->instance()->steps[$component->get('stepIndex')]['key'] ?? null
         );
     }
 }

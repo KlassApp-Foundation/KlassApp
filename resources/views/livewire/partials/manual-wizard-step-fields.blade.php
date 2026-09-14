@@ -246,16 +246,17 @@
                class="manual-wizard-bulk-link"
                data-testid="wizard-teacher-template">Download template</a>
             <label class="manual-wizard-bulk-upload">
-                Upload file
-                <input type="file" class="hidden" wire:model="teacherUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-teacher-upload" />
+                <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Upload file</span>
+                <input type="file" class="manual-wizard-bulk-file" wire:model="teacherUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-teacher-upload" />
             </label>
         </div>
-        <div wire:loading wire:target="teacherUpload" class="text-xs text-gray-500 mb-2">Parsing file…</div>
+        <div wire:loading wire:target="teacherUpload" class="manual-wizard-bulk-loading">Parsing file…</div>
 
         @if(count($teacherDrafts ?? []) > 0)
             <ul class="manual-wizard-bulk-list" data-testid="wizard-teacher-list">
                 @foreach($teacherDrafts as $i => $row)
-                    <li class="manual-wizard-bulk-item">
+                    <li class="manual-wizard-bulk-item" wire:key="teacher-draft-{{ $i }}">
                         <span class="manual-wizard-bulk-item-main">
                             <strong>{{ $row['name'] }}</strong>
                             <span class="manual-wizard-bulk-meta">{{ $row['email'] }}@if(!empty($row['phone'])) · {{ $row['phone'] }}@endif</span>
@@ -266,10 +267,10 @@
             </ul>
         @endif
 
-        <div class="ds-form-group">
+        <div class="ds-form-group" data-testid="wizard-teacher-paste-block">
             <label class="ds-form-label" for="wizard-teacher-paste">Paste names (one per line)</label>
-            <textarea id="wizard-teacher-paste" class="ds-form-input w-full" rows="3" wire:model="teacherPaste" placeholder="John Ssali&#10;Grace Nakamya"></textarea>
-            <button type="button" class="ds-btn ds-btn-outline ds-btn-sm mt-2" wire:click="applyTeacherPaste" data-testid="wizard-teacher-paste-btn">Add from paste</button>
+            <textarea id="wizard-teacher-paste" class="ds-form-input ds-form-textarea w-full" rows="3" wire:model="teacherPaste" placeholder="John Ssali&#10;Grace Nakamya" data-testid="wizard-teacher-paste"></textarea>
+            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="applyTeacherPaste" data-testid="wizard-teacher-paste-btn">Add from paste</x-button>
         </div>
 
         <div class="manual-wizard-bulk-divider"><span>or add one at a time</span></div>
@@ -277,7 +278,7 @@
         <div class="ds-form-group">
             <label class="ds-form-label" for="wizard-teacher-name">Teacher name</label>
             <input id="wizard-teacher-name" type="text" class="ds-form-input w-full" wire:model="teacherName" placeholder="e.g. Jane Nabirye" autocomplete="name" data-testid="wizard-teacher-name" />
-            <p class="text-xs text-gray-500 mt-1" style="color:#64748B;">Full name only — put the phone number in the Phone field below.</p>
+            <p class="manual-wizard-bulk-help">Full name only — put the phone number in the Phone field below.</p>
         </div>
         <div class="ds-form-group">
             <label class="ds-form-label" for="wizard-teacher-email">Email</label>
@@ -288,15 +289,25 @@
             <label class="ds-form-label" for="wizard-teacher-phone">Phone (optional)</label>
             <input id="wizard-teacher-phone" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="teacherPhone" placeholder="+2567…" data-testid="wizard-teacher-phone" />
         </div>
-        <button type="button" class="ds-btn ds-btn-outline ds-btn-sm" wire:click="addTeacherDraft" data-testid="wizard-teacher-add">+ Add teacher</button>
-        <p class="text-xs text-gray-500 mt-3" style="color:#64748B;">Optional — skip if you’ll add teachers later. Continue saves everyone in the list.</p>
-        <button type="button"
-                class="ds-btn ds-btn-ghost ds-btn-sm mt-2"
-                wire:click="skipOptionalStep"
-                @if(count($teacherDrafts ?? []) > 0)
-                    wire:confirm="You have teachers in the list that will not be saved. Skip anyway?"
-                @endif
-                data-testid="wizard-teachers-skip">Skip for now</button>
+        <x-button type="button" variant="outline" size="sm" wire:click="addTeacherDraft" data-testid="wizard-teacher-add">+ Add teacher</x-button>
+        <p class="manual-wizard-bulk-footnote">Optional — skip if you’ll add teachers later. Continue saves everyone in the list.</p>
+        {{-- Do not put @if inside <x-button> attrs — it breaks the outer @elseif chain when Blade compiles components. --}}
+        @if(count($teacherDrafts ?? []) > 0)
+            <x-button type="button"
+                      variant="ghost"
+                      size="sm"
+                      class="mt-2"
+                      wire:click="skipOptionalStep"
+                      wire:confirm="You have teachers in the list that will not be saved. Skip anyway?"
+                      data-testid="wizard-teachers-skip">Skip for now</x-button>
+        @else
+            <x-button type="button"
+                      variant="ghost"
+                      size="sm"
+                      class="mt-2"
+                      wire:click="skipOptionalStep"
+                      data-testid="wizard-teachers-skip">Skip for now</x-button>
+        @endif
     </div>
 
 @elseif($stepKey === 'students')
@@ -305,7 +316,7 @@
             <a href="{{ route('admin.students.upload-template') }}"
                class="manual-wizard-bulk-link"
                data-testid="wizard-student-template">Download template</a>
-            <p class="text-xs text-gray-500 w-full mt-1" data-testid="wizard-student-stream-help">
+            <p class="manual-wizard-bulk-help w-full" data-testid="wizard-student-stream-help">
                 @if(!empty($schoolHasStreams))
                     When a class has streams, pick a stream by default. You can still choose “Base class (no stream)” to enrol on the undivided class.
                 @else
@@ -313,16 +324,17 @@
                 @endif
             </p>
             <label class="manual-wizard-bulk-upload">
-                Upload file
-                <input type="file" class="hidden" wire:model="studentUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-student-upload" />
+                <svg class="manual-wizard-bulk-upload-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Upload file</span>
+                <input type="file" class="manual-wizard-bulk-file" wire:model="studentUpload" accept=".csv,.xlsx,.xls,.txt,.docx,.pdf" data-testid="wizard-student-upload" />
             </label>
         </div>
-        <div wire:loading wire:target="studentUpload" class="text-xs text-gray-500 mb-2">Parsing file…</div>
+        <div wire:loading wire:target="studentUpload" class="manual-wizard-bulk-loading">Parsing file…</div>
 
         @if(count($studentDrafts ?? []) > 0)
             <ul class="manual-wizard-bulk-list" data-testid="wizard-student-list">
                 @foreach($studentDrafts as $i => $row)
-                    <li class="manual-wizard-bulk-item">
+                    <li class="manual-wizard-bulk-item" wire:key="student-draft-{{ $i }}">
                         <span class="manual-wizard-bulk-item-main">
                             <strong>{{ $row['name'] }}</strong>
                             <span class="manual-wizard-bulk-meta">
@@ -336,23 +348,23 @@
             </ul>
         @endif
 
-        <div class="ds-form-group">
+        <div class="ds-form-group" data-testid="wizard-student-paste-block">
             <label class="ds-form-label" for="wizard-student-paste">Paste names (one per line)</label>
-            <textarea id="wizard-student-paste" class="ds-form-input w-full" rows="3" wire:model="studentPaste" placeholder="Amina Nakato&#10;Brian Okello"></textarea>
-            <button type="button" class="ds-btn ds-btn-outline ds-btn-sm mt-2" wire:click="applyStudentPaste" data-testid="wizard-student-paste-btn">Add from paste</button>
+            <textarea id="wizard-student-paste" class="ds-form-input ds-form-textarea w-full" rows="3" wire:model="studentPaste" placeholder="Amina Nakato&#10;Brian Okello" data-testid="wizard-student-paste"></textarea>
+            <x-button type="button" variant="outline" size="sm" class="mt-2" wire:click="applyStudentPaste" data-testid="wizard-student-paste-btn">Add from paste</x-button>
         </div>
 
         <div class="manual-wizard-bulk-divider"><span>or add one at a time</span></div>
 
         <div class="ds-form-group">
             <label class="ds-form-label" for="wizard-student-name">Student name</label>
-            <input id="wizard-student-name" type="text" class="ds-form-input w-full" wire:model="studentName" />
+            <input id="wizard-student-name" type="text" class="ds-form-input w-full" wire:model="studentName" data-testid="wizard-student-name" />
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="manual-wizard-bulk-pair">
             <div class="ds-form-group">
                 <label class="ds-form-label" for="wizard-student-class">Class</label>
                 @if(count($structureClasses ?? []) > 0)
-                    <select id="wizard-student-class" class="ds-form-input w-full" wire:model.live="studentClass" data-testid="wizard-student-class">
+                    <select id="wizard-student-class" class="ds-form-input ds-form-select w-full" wire:model.live="studentClass" data-testid="wizard-student-class">
                         <option value="">Select class…</option>
                         @foreach($structureClasses as $class)
                             <option value="{{ $class['name'] }}">{{ $class['name'] }}</option>
@@ -380,7 +392,7 @@
                     }
                 @endphp
                 @if(count($studentStreamOptions) > 0)
-                    <select id="wizard-student-stream" class="ds-form-input w-full" wire:model="studentStream" data-testid="wizard-student-stream">
+                    <select id="wizard-student-stream" class="ds-form-input ds-form-select w-full" wire:model="studentStream" data-testid="wizard-student-stream">
                         <option value="">Base class (no stream)</option>
                         @foreach($studentStreamOptions as $streamLabel)
                             <option value="{{ $streamLabel }}">{{ $streamLabel }}</option>
@@ -391,7 +403,7 @@
                 @endif
             </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="manual-wizard-bulk-pair">
             <div class="ds-form-group">
                 <label class="ds-form-label" for="wizard-student-parent">Parent name</label>
                 <input id="wizard-student-parent" type="text" class="ds-form-input w-full" wire:model="studentParent" />
@@ -401,7 +413,7 @@
                 <input id="wizard-student-parent-phone" type="text" class="ds-form-input w-full" wire:model="studentParentPhone" placeholder="+2567…" />
             </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="manual-wizard-bulk-pair">
             <div class="ds-form-group">
                 <label class="ds-form-label" for="wizard-student-school-id">School Student ID <span class="text-xs text-gray-400">(optional)</span></label>
                 <input id="wizard-student-school-id" type="text" class="ds-form-input w-full" wire:model="studentSchoolStudentId" placeholder="e.g. ADM-2025-001" />
@@ -411,15 +423,24 @@
                 <input id="wizard-student-board-reg" type="text" class="ds-form-input w-full" wire:model="studentBoardRegNumber" placeholder="e.g. U1234/567" />
             </div>
         </div>
-        <button type="button" class="ds-btn ds-btn-outline ds-btn-sm" wire:click="addStudentDraft" data-testid="wizard-student-add">+ Add student</button>
-        <p class="text-xs text-gray-500 mt-3" style="color:#64748B;">Optional — skip if you’ll enrol students later. KlassApp IDs are generated automatically.</p>
-        <button type="button"
-                class="ds-btn ds-btn-ghost ds-btn-sm mt-2"
-                wire:click="skipOptionalStep"
-                @if(count($studentDrafts ?? []) > 0)
-                    wire:confirm="You have students in the list that will not be saved. Skip anyway?"
-                @endif
-                data-testid="wizard-students-skip">Skip for now</button>
+        <x-button type="button" variant="outline" size="sm" wire:click="addStudentDraft" data-testid="wizard-student-add">+ Add student</x-button>
+        <p class="manual-wizard-bulk-footnote">Optional — skip if you’ll enrol students later. KlassApp IDs are generated automatically.</p>
+        @if(count($studentDrafts ?? []) > 0)
+            <x-button type="button"
+                      variant="ghost"
+                      size="sm"
+                      class="mt-2"
+                      wire:click="skipOptionalStep"
+                      wire:confirm="You have students in the list that will not be saved. Skip anyway?"
+                      data-testid="wizard-students-skip">Skip for now</x-button>
+        @else
+            <x-button type="button"
+                      variant="ghost"
+                      size="sm"
+                      class="mt-2"
+                      wire:click="skipOptionalStep"
+                      data-testid="wizard-students-skip">Skip for now</x-button>
+        @endif
     </div>
 
 @elseif($stepKey === 'terms')
