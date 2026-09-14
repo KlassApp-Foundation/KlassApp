@@ -618,7 +618,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 3 PR5 review panels on **STAGING ONLY** ([#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589))
+## Current Status: September 14, 2026 — Piece 3 gaps 4–7 on **STAGING ONLY** ([#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591))
+
+- **Merged**: [#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591) `e7265574` (`feat/wizard-onboarding-gaps-4-7`) — GitHub API `merged: true`.
+- **Shipped**: (4) student gender + template Gender / School Student ID / UNEB Reg No. / optional DOB; (5) teacher class×subject → real `Teacherlink`; (6) fees name/amount/whole-school|class/term/yearly; (7) multi-term prefill Term 1–3 + mark current (no one-term auto-advance). Deferred: editable term dates later / flag-card UI — not built.
+- **Staging deploy**: `depl-a2bebe87-…` @ `e7265574` **succeeded** (`deployment.succeeded`).
+- **Staging verify**: PHPUnit gaps + kit + bulk/template PASS; Playwright `e2e/wizard-gaps-4-7-verify.cjs` PASS @ 375/414/768/1280.
+- **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
+- **Next**: Piece 3 wrap / residual polish if any.
+
+## Previous: September 14, 2026 — Piece 3 PR5 review panels on **STAGING ONLY** ([#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589))
 
 - **Merged**: [#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589) `4c072788` (`feat/wizard-review-cards`) — GitHub API `merged: true`.
 - **Shipped**: Review & confirm → responsive **settings panels** (1/2/3-col) with Edit → `editSection` on every row; subjects review `unique()`s names (see finding below).
@@ -1970,6 +1979,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Piece 3 gaps 4–7 (student fields, teacherlinks, fees, multi-term) — **MERGED + STAGING ONLY** ([#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591))
+- **Work done**: Gender on student form + template; School Student ID / UNEB / optional DOB on template; teacher class×subject → `Teacherlink`; fees scope/term/yearly drafts; terms prefill Term 1–3 + mark current (removed one-term early-return). PHPUnit + Playwright @ four viewports; staging deploy only.
+- **Files modified**: `ManualOnboardingWizard.php`, `OnboardingEngine.php`, `OnboardingNameListExtractor.php`, `StudentUploadTemplateService.php`, `manual-wizard-step-fields.blade.php`, `dashboard-refresh.css`, `WizardOnboardingGaps47Test.php`, `WizardOnboardingGaps47KitContractTest.php`, `e2e/wizard-gaps-4-7-verify.cjs`, `knowledge.md`
+- **Key decisions**: Reuse admin `Teacherlink` model (cartesian class×subject); yearly fee = `academic_term_id` null; term status enum `last|current|next` with normalize-to-one-current; deferred editable term dates / flag-card — not built.
+- **Status**: ✅ MERGED `e7265574` · staging `depl-a2bebe87-…` · Playwright PASS · **prod held**
+- **Edge cases flagged**: Teachers without class/subject selection create users with zero teacherlinks (intentional — no silent first-class assignment).
 
 ### 2026-09-14: Piece 3 PR5 review panels + subjects unique display — **MERGED + STAGING ONLY** ([#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589))
 - **Work done**: Review step → panel grid with Edit per section; subjects review `unique()` + “unique across N class rows”; contract PHPUnit + Playwright e2e; knowledge stamp.
