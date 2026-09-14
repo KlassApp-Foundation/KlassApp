@@ -1,0 +1,25 @@
+{
+  "mode": "staging",
+  "base": "https://klassapp-staging-7mpoqg.laravel.cloud",
+  "at": "2026-09-14T21:26:34.196Z",
+  "children": [],
+  "holistic": {
+    "landingOk": true,
+    "landingPaper": true,
+    "landingSora": true,
+    "loginOk": true,
+    "forced404Status": 404,
+    "forced404Page": true,
+    "adminDashboardUrl": "https://klassapp-staging-7mpoqg.laravel.cloud/admin/dashboard",
+    "adminLoggedIn": true,
+    "adminToshiDocked": true,
+    "adminHasKpiOrIncompleteOk": true,
+    "pulseTheadBlur": true,
+    "wizardShell": true,
+    "planCards": true,
+    "planEmptyAbsent": true,
+    "teacherLoggedIn": true,
+    "teacherToshiPresent": true
+  },
+  "ok": true
+}

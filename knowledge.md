@@ -618,16 +618,28 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Plans seed + Toshi fee/term parity **MERGED + STAGING** ([#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607)) — prod cutover still pending
+## Current Status: September 15, 2026 — **FOUR-SURFACE PRODUCTION CUTOVER LIVE** (Pieces 1–4) @ `2e5a382`
+
+- **Milestone**: Coordinated production cutover of the complete four-surface design program — Piece 1 landing/auth/error `--d-*` · Piece 4 dashboard kit · Piece 3 wizard · Piece 2 Toshi panel — plus parity/bugfix stack (#601/#603/#605/#607).
+- **Main tip**: `2e5a382` ([#608](https://github.com/KlassApp-Foundation/KlassApp/pull/608) stamp of #607) — GitHub API confirmed every program PR `merged: true` with real SHAs (see Session Log cutover entry for full table).
+- **Rollback point (pre-cutover prod)**: `depl-a2be2ae7-471c-4b96-8f55-f75e8a346e5d` @ **`ca0e114`** (#560 reduced-motion). Confirmed still readable as `deployment.succeeded`. **Note**: empty-body `POST …/deployments` always ships branch tip — `commit_hash` in body is ignored (verified during probe). Fast rollback = revert/reset `main` to `ca0e114` then redeploy, or Cloud dashboard redeploy of that prior deployment if exposed.
+- **Staging fresh deploy**: `depl-a2bf311a-…` @ `2e5a382` **succeeded**.
+- **Production deploy**: `depl-a2bf3117-…` @ `2e5a382` **succeeded** (`deployment.succeeded`) — live on `klassapp.xyz`.
+- **Staging holistic verify**: auth/errors/dashboard×4/wizard×4/plans/Toshi Admin+Teacher PASS; landing re-PASS after `networkidle`→`load` (hibernation flake); register→wizard plan cards PASS (`e2e/four-surface-*`).
+- **Production holistic verify**: landing/auth/404 PASS; synthetic register→wizard plan cards Freemium/Growth/Premium + Continue PASS; dashboard home shell PASS (incomplete-setup); Toshi docked/pill/mobile PASS for **Admin** (`cutover.prod.…@v.test`) **and Teacher** (`cutover.prod.teacher.…@v.test`); Pulse canary ledger blur + clay dock (no Pulse green on dock). Evidence: `e2e/screenshots/four-surface-cutover/`.
+- **Cleanup**: synthetic cutover users flagged `status=inactive` (not deleted) on prod + staging.
+- **Process note**: A rollback-capability probe POSTed with `commit_hash` and accidentally started the production deploy early (Cloud ignored the hash and shipped tip). Staging verify still completed green before relying on prod; full prod verify followed on the live tip.
+
+## Previous: September 14, 2026 — Plans seed + Toshi fee/term parity **MERGED + STAGING** ([#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607)) — superseded by cutover above
 
 - **Plans root cause**: Staging had **0** `plans` rows (genuine missing seed data). Production already has Freemium / Growth ($35) / Premium — **real schools not blocked**.
 - **Staging fix**: Seeded via `PlansTableSeeder` / `plans:ensure`; wizard plan cards live-verified.
 - **Merged**: [#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607) `6ffecc83` — GitHub API `merged: true`. Toshi yearly fee checkbox + mark-current term picker; `plans:ensure` command.
 - **Staging deploy**: `depl-a2bf27cd-…` @ `6ffecc83` **succeeded**.
 - **Verify**: PHPUnit 9 PASS; Playwright `e2e/plans-and-toshi-fees-terms-verify.cjs` PASS (plan cards + Toshi yearly/term markup).
-- **Production**: **NOT deployed** (plans already present; Toshi parity is staging-only for now).
+- **Production**: now live via four-surface cutover `2e5a382`.
 
-## Previous: September 14, 2026 — Wizard empty-plan message once **MERGED + STAGING** ([#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605)) — prod cutover still pending
+## Previous: September 14, 2026 — Wizard empty-plan message once **MERGED + STAGING** ([#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605))
 
 - **Cause**: Continue on empty `plan_selection` set shell `errorMessage` to the same string already shown in the step `@empty` alert (`wizard-plan-empty`) — duplicate UI, not a loop.
 - **Merged**: [#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605) `60ba933c` — GitHub API `merged: true`. `next()` short-circuits without setting `errorMessage`; shell banner suppressed if that duplicate string would still appear.
@@ -2062,6 +2074,21 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-15: Four-surface design program **PRODUCTION CUTOVER** (Pieces 1–4) — LIVE @ `2e5a382`
+- **Work done**: Full PR merge sweep via GitHub API; fresh staging deploy; holistic Playwright across all four surfaces; documented rollback `ca0e114` / `depl-a2be2ae7-…`; production deploy of main tip; real prod verify (register/wizard plans, Admin+Teacher Toshi dock/mobile, Pulse canary); synthetic users flagged inactive; knowledge stamp.
+- **PR sweep (all `merged: true` + SHA)**:
+  - **Piece 1**: #562 `e5c22ac5` · #563 `33558296` · #564 `6c76f36d` (+ stamp #565); foundation #536 already live.
+  - **Piece 4**: #566 `c39b45b3` · #568 `460fb0c1` · #570 `3762a9c0` · #573 `6f6b62e9` · #575 `f5b9eeee` (+ stamps #567/#569/#576; fixes #571/#572/#574).
+  - **Piece 3**: #577 `4856d765` · #579 `56bbf08f` · #583 `d1a1f087` · #586 `3cb0db6e` · #589 `4c072788` · #591 `e7265574` · #593 `d07f0adb` (+ stamps).
+  - **Piece 2**: #595 `ab89d1cc` · #597 `d68f32a6` · #599 `a012e5a1` (+ #596 harden / stamps).
+  - **Parity/bugs**: #601 `7e6ae1fe` · #603 `cc320c98` · #605 `60ba933c` · #607 `6ffecc83` (+ stamps #602/#604/#606/#608).
+  - **Open design PRs**: none blocking.
+- **Deploys**: staging `depl-a2bf311a-…` · production `depl-a2bf3117-…` — both `deployment.succeeded` @ `2e5a382`.
+- **Files modified**: `knowledge.md`, `e2e/four-surface-cutover-verify.cjs`, `e2e/four-surface-register-wizard-walkthrough.cjs`, `e2e/landing-d-tokens-verify.cjs` (`load` not `networkidle`), evidence under `e2e/screenshots/four-surface-cutover/`.
+- **Key decisions**: Treat accidental early prod deploy (commit_hash probe ignored by Cloud) as the cutover ship after staging green; never delete synthetic cutover users — `status=inactive`.
+- **Status**: ✅ LIVE on `klassapp.xyz` · staging + prod holistic PASS · rollback point documented
+- **Edge cases flagged**: Staging `networkidle` hangs on landing (analytics/hibernation) — use `load`. Incomplete-setup schools lack KPI strip / empty student ledger thead — Pulse verified on pages that have ledger chrome. `school_category` Livewire jump returned false once in walkthrough (other steps OK).
 
 ### 2026-09-14: Plans seed + Toshi fee yearly / term current — **MERGED + STAGING** ([#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607))
 
