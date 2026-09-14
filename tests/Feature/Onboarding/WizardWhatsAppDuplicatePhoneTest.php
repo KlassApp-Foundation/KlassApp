@@ -130,7 +130,7 @@ class WizardWhatsAppDuplicatePhoneTest extends TestCase
             ->call('verifyWhatsAppCode')
             ->assertSet('whatsappVerified', true)
             ->call('next')
-            ->assertSet('errorMessage', 'This WhatsApp number is already registered')
+            ->assertSet('errorMessage', 'WhatsApp number +256700555666 is already registered to another account. Use a different number.')
             ->assertDontSee('SQLSTATE', false)
             ->assertDontSee('Integrity constraint', false)
             ->assertDontSee('whatsapp_users_phone_unique', false);
@@ -138,7 +138,7 @@ class WizardWhatsAppDuplicatePhoneTest extends TestCase
         $html = $component->html();
         $this->assertStringNotContainsString('SQLSTATE', $html);
         $this->assertStringNotContainsString('Connection:', $html);
-        $this->assertStringContainsString('This WhatsApp number is already registered', $html);
+        $this->assertStringContainsString('already registered to another account', $html);
 
         $this->assertNull(
             WhatsAppUser::where('user_id', $this->admin->id)->first(),

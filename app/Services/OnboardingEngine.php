@@ -1236,86 +1236,116 @@ class OnboardingEngine
      * or 'links' => [ ['standardLink_id' => int, 'subject_id' => int], ... ]
      * (same Teacherlink model used by admin teacher-link import).
      *
+     * Email uniqueness is **global** (`users.users_email_unique`) — provided
+     * emails that already exist anywhere (including soft-deleted rows) fail
+     * with a ValidationException before any insert.
+     *
      * Returns ['created' => [...], 'skipped' => [...]].
+     *
+     * @throws ValidationException
      */
     public function saveTeachers(School $school, AcademicYear $year, array $teachers): array
     {
-        $created = [];
-        $skipped = [];
+        try {
+            return DB::transaction(function () use ($school, $year, $teachers) {
+                $created = [];
+                $skipped = [];
+                $batchEmails = [];
 
-        foreach ($teachers as $draft) {
-            $name = trim((string) ($draft['name'] ?? ''));
-            $email = trim((string) ($draft['email'] ?? ''));
-            $phone = trim((string) ($draft['phone'] ?? ''));
+                // Pass 1: refuse colliding emails before creating anyone.
+                foreach ($teachers as $draft) {
+                    $name = trim((string) ($draft['name'] ?? ''));
+                    $email = trim((string) ($draft['email'] ?? ''));
+                    if ($name === '' || $email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        continue;
+                    }
+                    $emailKey = Str::lower($email);
+                    if (isset($batchEmails[$emailKey])) {
+                        throw ValidationException::withMessages([
+                            'teachers' => "Email '{$email}' appears more than once in this teacher list. Each teacher needs a unique email.",
+                        ]);
+                    }
+                    $batchEmails[$emailKey] = $name;
+                    $this->assertEmailAvailableGlobally(
+                        $email,
+                        " for teacher {$name}"
+                    );
+                }
 
-            if ($name === '' || $email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $skipped[] = ['name' => $name, 'email' => $email, 'reason' => 'Invalid name or email'];
-                continue;
-            }
+                foreach ($teachers as $draft) {
+                    $name = trim((string) ($draft['name'] ?? ''));
+                    $email = trim((string) ($draft['email'] ?? ''));
+                    $phone = trim((string) ($draft['phone'] ?? ''));
 
-            // Email dedup within this school: generate a fallback
-            if (User::where('school_id', $school->id)->where('email', $email)->exists()) {
-                $email = 'teacher.'.Str::lower(Str::random(6)).'@'.($school->slug ?: 'school').'.test';
-            }
+                    if ($name === '' || $email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $skipped[] = ['name' => $name, 'email' => $email, 'reason' => 'Invalid name or email'];
+                        continue;
+                    }
 
-            $teacher = User::create([
-                'school_id'       => $school->id,
-                'usergroup_id'   => 5,
-                'name'            => $name,
-                'email'           => $email,
-                'password'        => bcrypt(Str::random(16)),
-                'status'          => 'active',
-                'email_verified'  => 1,
-                'is_reset'        => 1,
-                'mobile_no'       => $phone ?: null,
-            ]);
+                    $teacher = User::create([
+                        'school_id'       => $school->id,
+                        'usergroup_id'   => 5,
+                        'name'            => $name,
+                        'email'           => $email,
+                        'password'        => bcrypt(Str::random(16)),
+                        'status'          => 'active',
+                        'email_verified'  => 1,
+                        'is_reset'        => 1,
+                        'mobile_no'       => $phone ?: null,
+                    ]);
 
-            Userprofile::firstOrCreate(
-                ['user_id' => $teacher->id],
-                [
-                    'school_id'     => $school->id,
-                    'usergroup_id'  => 5,
-                    'firstname'     => $name,
-                    'lastname'      => '',
-                    'profession'    => 'teacher',
-                    'status'        => 'active',
-                    'alternate_no'  => $phone ?: null,
-                ]
-            );
+                    Userprofile::firstOrCreate(
+                        ['user_id' => $teacher->id],
+                        [
+                            'school_id'     => $school->id,
+                            'usergroup_id'  => 5,
+                            'firstname'     => $name,
+                            'lastname'      => '',
+                            'profession'    => 'teacher',
+                            'status'        => 'active',
+                            'alternate_no'  => $phone ?: null,
+                        ]
+                    );
 
-            $links = [];
-            if (! empty($draft['links']) && is_array($draft['links'])) {
-                foreach ($draft['links'] as $linkRow) {
-                    $standardLinkId = (int) ($linkRow['standardLink_id'] ?? 0);
-                    $subjectId = (int) ($linkRow['subject_id'] ?? 0);
-                    if ($standardLinkId > 0 && $subjectId > 0) {
+                    $links = [];
+                    if (! empty($draft['links']) && is_array($draft['links'])) {
+                        foreach ($draft['links'] as $linkRow) {
+                            $standardLinkId = (int) ($linkRow['standardLink_id'] ?? 0);
+                            $subjectId = (int) ($linkRow['subject_id'] ?? 0);
+                            if ($standardLinkId > 0 && $subjectId > 0) {
+                                $links[] = [
+                                    'standardLink_id' => $standardLinkId,
+                                    'subject_id' => $subjectId,
+                                ];
+                            }
+                        }
+                    } elseif (! empty($draft['standardLink_id']) && ! empty($draft['subject_id'])) {
                         $links[] = [
-                            'standardLink_id' => $standardLinkId,
-                            'subject_id' => $subjectId,
+                            'standardLink_id' => (int) $draft['standardLink_id'],
+                            'subject_id' => (int) $draft['subject_id'],
                         ];
                     }
+
+                    foreach ($links as $linkRow) {
+                        Teacherlink::firstOrCreate([
+                            'school_id'        => $school->id,
+                            'academic_year_id'  => $year->id,
+                            'standardLink_id'  => $linkRow['standardLink_id'],
+                            'subject_id'       => $linkRow['subject_id'],
+                            'teacher_id'       => $teacher->id,
+                        ]);
+                    }
+
+                    $created[] = ['name' => $name, 'email' => $email, 'user_id' => $teacher->id];
                 }
-            } elseif (! empty($draft['standardLink_id']) && ! empty($draft['subject_id'])) {
-                $links[] = [
-                    'standardLink_id' => (int) $draft['standardLink_id'],
-                    'subject_id' => (int) $draft['subject_id'],
-                ];
-            }
 
-            foreach ($links as $linkRow) {
-                Teacherlink::firstOrCreate([
-                    'school_id'        => $school->id,
-                    'academic_year_id'  => $year->id,
-                    'standardLink_id'  => $linkRow['standardLink_id'],
-                    'subject_id'       => $linkRow['subject_id'],
-                    'teacher_id'       => $teacher->id,
-                ]);
-            }
-
-            $created[] = ['name' => $name, 'email' => $email, 'user_id' => $teacher->id];
+                return ['created' => $created, 'skipped' => $skipped];
+            });
+        } catch (UniqueConstraintViolationException $e) {
+            throw ValidationException::withMessages([
+                'teachers' => $this->describeUniqueConstraintViolation($e),
+            ]);
         }
-
-        return ['created' => $created, 'skipped' => $skipped];
     }
 
     /**
@@ -1333,163 +1363,203 @@ class OnboardingEngine
      * board_registration_number is persisted only for UNEB candidate classes
      * (P.7 / S.4 / S.6) via isCandidateClass().
      *
+     * Email uniqueness is **global** (`users.users_email_unique`). Provided
+     * emails that collide fail loudly; blank emails get a globally-unique
+     * placeholder. LIN uniqueness is **global** (`student_academics_lin_unique`)
+     * because UNEB LINs are nationally unique — colliding LINs fail loudly.
+     *
      * Returns ['created' => [...], 'skipped' => [...]].
+     *
+     * @throws ValidationException
      */
     public function saveStudents(School $school, AcademicYear $year, array $students): array
     {
-        $created = [];
-        $skipped = [];
+        try {
+            return DB::transaction(function () use ($school, $year, $students) {
+                $created = [];
+                $skipped = [];
 
-        $firstLink = StandardLink::where('school_id', $school->id)
-            ->where('academic_year_id', $year->id)
-            ->first();
+                $firstLink = StandardLink::where('school_id', $school->id)
+                    ->where('academic_year_id', $year->id)
+                    ->first();
 
-        // Pass 1: refuse unmatched class names before creating anyone.
-        // Silent first-class fallback when a name was provided is never acceptable.
-        $unmatchedClasses = [];
-        foreach ($students as $draft) {
-            $name = trim((string) ($draft['name'] ?? ''));
-            $className = trim((string) ($draft['class'] ?? ''));
-            $stream = trim((string) ($draft['stream'] ?? ''));
-            if ($name === '' || $className === '') {
-                continue;
-            }
-            if (! $this->ensureStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
-                $label = $stream !== '' ? "{$className} / stream {$stream}" : "'{$className}'";
-                $unmatchedClasses[] = "{$name} → {$label}";
-            }
-        }
-        if ($unmatchedClasses !== []) {
-            throw ValidationException::withMessages([
-                'students' => 'Could not place student(s) into a class: '
-                    .implode('; ', $unmatchedClasses)
-                    .'. Use the exact class/section name (e.g. Senior Four, P1 A) or class + stream (e.g. class P1 and stream A). '
-                    .'Known short forms (e.g. S.4) are accepted — students were not silently assigned to another class.',
-            ]);
-        }
+                // Pass 1: refuse unmatched classes / colliding emails / LINs before creating anyone.
+                $unmatchedClasses = [];
+                $batchEmails = [];
+                $batchLins = [];
+                foreach ($students as $draft) {
+                    $name = trim((string) ($draft['name'] ?? ''));
+                    $className = trim((string) ($draft['class'] ?? ''));
+                    $stream = trim((string) ($draft['stream'] ?? ''));
+                    if ($name !== '' && $className !== '') {
+                        if (! $this->ensureStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
+                            $label = $stream !== '' ? "{$className} / stream {$stream}" : "'{$className}'";
+                            $unmatchedClasses[] = "{$name} → {$label}";
+                        }
+                    }
 
-        foreach ($students as $draft) {
-            $name = trim((string) ($draft['name'] ?? ''));
+                    $email = trim((string) ($draft['email'] ?? ''));
+                    if ($name !== '' && $email !== '') {
+                        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                            throw ValidationException::withMessages([
+                                'students' => "Student {$name} has an invalid email '{$email}'. Fix it or leave email blank to auto-generate one.",
+                            ]);
+                        }
+                        $emailKey = Str::lower($email);
+                        if (isset($batchEmails[$emailKey])) {
+                            throw ValidationException::withMessages([
+                                'students' => "Email '{$email}' appears more than once in this student list. Each student needs a unique email, or leave email blank.",
+                            ]);
+                        }
+                        $batchEmails[$emailKey] = $name;
+                        $this->assertEmailAvailableGlobally($email, " for student {$name}");
+                    }
 
-            if ($name === '') {
-                $skipped[] = ['name' => '', 'reason' => 'Name is required'];
-                continue;
-            }
+                    $lin = trim((string) ($draft['lin'] ?? $draft['learner_id'] ?? ''));
+                    if ($name !== '' && $lin !== '') {
+                        $linKey = Str::upper($lin);
+                        if (isset($batchLins[$linKey])) {
+                            throw ValidationException::withMessages([
+                                'students' => "LIN '{$lin}' appears more than once in this student list. Each student needs a unique LIN, or leave it blank.",
+                            ]);
+                        }
+                        $batchLins[$linKey] = $name;
+                        $this->assertLinAvailableGlobally($lin, $name);
+                    }
+                }
+                if ($unmatchedClasses !== []) {
+                    throw ValidationException::withMessages([
+                        'students' => 'Could not place student(s) into a class: '
+                            .implode('; ', $unmatchedClasses)
+                            .'. Use the exact class/section name (e.g. Senior Four, P1 A) or class + stream (e.g. class P1 and stream A). '
+                            .'Known short forms (e.g. S.4) are accepted — students were not silently assigned to another class.',
+                    ]);
+                }
 
-            $email = trim((string) ($draft['email'] ?? ''));
-            if ($email === '') {
-                // Generate a placeholder email for students (who may not have email)
-                $email = 'student.'.Str::lower(Str::random(8)).'@'.($school->slug ?: 'school').'.local';
-            }
+                foreach ($students as $draft) {
+                    $name = trim((string) ($draft['name'] ?? ''));
 
-            // Email dedup within this school
-            if (User::where('school_id', $school->id)->where('email', $email)->exists()) {
-                $email = 'student.'.Str::lower(Str::random(8)).'@'.($school->slug ?: 'school').'.local';
-            }
+                    if ($name === '') {
+                        $skipped[] = ['name' => '', 'reason' => 'Name is required'];
+                        continue;
+                    }
 
-            $phone = trim((string) ($draft['phone'] ?? ''));
+                    $providedEmail = trim((string) ($draft['email'] ?? ''));
+                    if ($providedEmail === '') {
+                        $email = $this->allocateGeneratedEmail($school, 'student', '.local');
+                    } else {
+                        $email = $providedEmail;
+                    }
 
-            $student = User::create([
-                'school_id'       => $school->id,
-                'usergroup_id'   => 6,
-                'name'            => $name,
-                'email'           => $email,
-                'password'        => bcrypt(Str::random(16)),
-                'status'          => 'active',
-                'email_verified'  => 1,
-                'is_reset'        => 1,
-                'mobile_no'       => $phone ?: null,
-            ]);
+                    $phone = trim((string) ($draft['phone'] ?? ''));
 
-            $gender = strtolower(trim((string) ($draft['gender'] ?? '')));
-            if (! in_array($gender, ['male', 'female'], true)) {
-                $gender = null;
-            }
+                    $student = User::create([
+                        'school_id'       => $school->id,
+                        'usergroup_id'   => 6,
+                        'name'            => $name,
+                        'email'           => $email,
+                        'password'        => bcrypt(Str::random(16)),
+                        'status'          => 'active',
+                        'email_verified'  => 1,
+                        'is_reset'        => 1,
+                        'mobile_no'       => $phone ?: null,
+                    ]);
 
-            $lin = trim((string) ($draft['lin'] ?? $draft['learner_id'] ?? ''));
-            if ($lin === '') {
-                $lin = null;
-            }
+                    $gender = strtolower(trim((string) ($draft['gender'] ?? '')));
+                    if (! in_array($gender, ['male', 'female'], true)) {
+                        $gender = null;
+                    }
 
-            $dobRaw = trim((string) ($draft['date_of_birth'] ?? $draft['dob'] ?? ''));
-            $dob = null;
-            if ($dobRaw !== '') {
-                try {
-                    $dob = Carbon::parse($dobRaw)->startOfDay();
-                } catch (\Throwable) {
+                    $lin = trim((string) ($draft['lin'] ?? $draft['learner_id'] ?? ''));
+                    if ($lin === '') {
+                        $lin = null;
+                    }
+
+                    $dobRaw = trim((string) ($draft['date_of_birth'] ?? $draft['dob'] ?? ''));
                     $dob = null;
+                    if ($dobRaw !== '') {
+                        try {
+                            $dob = Carbon::parse($dobRaw)->startOfDay();
+                        } catch (\Throwable) {
+                            $dob = null;
+                        }
+                    }
+
+                    Userprofile::firstOrCreate(
+                        ['user_id' => $student->id],
+                        [
+                            'school_id'     => $school->id,
+                            'usergroup_id'  => 6,
+                            'firstname'     => $name,
+                            'lastname'      => '',
+                            'profession'    => 'student',
+                            'status'        => 'active',
+                            'alternate_no'  => $phone ?: null,
+                            'gender'        => $gender,
+                            'date_of_birth' => $dob,
+                            'LIN'           => $lin,
+                        ]
+                    );
+
+                    // Generate KlassApp student ID
+                    $klassappId = StudentIdGeneratorService::nextForStudent($student);
+
+                    $className = trim((string) ($draft['class'] ?? ''));
+                    $stream = trim((string) ($draft['stream'] ?? ''));
+                    $link = null;
+
+                    if ($className !== '') {
+                        $link = $this->ensureStandardLinkForClass(
+                            $school,
+                            $year,
+                            $className,
+                            $stream !== '' ? $stream : null
+                        );
+                    } elseif ($firstLink) {
+                        // No class provided: keep legacy first-link assignment for paste-name paths.
+                        $link = StandardLink::with(['standard', 'section'])->find($firstLink->id) ?? $firstLink;
+                    }
+
+                    if ($link) {
+                        $schoolStudentId = trim((string) ($draft['school_student_id'] ?? ''));
+                        $boardReg = trim((string) ($draft['board_registration_number'] ?? ''));
+                        $stdName = trim((string) ($link->standard?->name ?? ''));
+                        $secName = trim((string) ($link->section?->name ?? $className));
+
+                        // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6)
+                        if ($boardReg !== '' && ! (self::isCandidateClass($stdName) || self::isCandidateClass($secName))) {
+                            $boardReg = '';
+                        }
+
+                        StudentAcademic::create([
+                            'school_id' => $school->id,
+                            'academic_year_id' => $year->id,
+                            'user_id' => $student->id,
+                            'standardLink_id' => $link->id,
+                            'klassapp_student_id' => $klassappId,
+                            'lin' => $lin,
+                            'school_student_id' => $schoolStudentId !== '' ? $schoolStudentId : null,
+                            'board_registration_number' => $boardReg !== '' ? $boardReg : null,
+                        ]);
+                    }
+
+                    $created[] = [
+                        'name'         => $name,
+                        'email'        => $email,
+                        'user_id'      => $student->id,
+                        'klassapp_id'  => $klassappId,
+                        'class'        => $link?->section?->name,
+                        'standardLink_id' => $link?->id,
+                    ];
                 }
-            }
 
-            Userprofile::firstOrCreate(
-                ['user_id' => $student->id],
-                [
-                    'school_id'     => $school->id,
-                    'usergroup_id'  => 6,
-                    'firstname'     => $name,
-                    'lastname'      => '',
-                    'profession'    => 'student',
-                    'status'        => 'active',
-                    'alternate_no'  => $phone ?: null,
-                    'gender'        => $gender,
-                    'date_of_birth' => $dob,
-                    'LIN'           => $lin,
-                ]
-            );
-
-            // Generate KlassApp student ID
-            $klassappId = StudentIdGeneratorService::nextForStudent($student);
-
-            $className = trim((string) ($draft['class'] ?? ''));
-            $stream = trim((string) ($draft['stream'] ?? ''));
-            $link = null;
-
-            if ($className !== '') {
-                $link = $this->ensureStandardLinkForClass(
-                    $school,
-                    $year,
-                    $className,
-                    $stream !== '' ? $stream : null
-                );
-            } elseif ($firstLink) {
-                // No class provided: keep legacy first-link assignment for paste-name paths.
-                $link = StandardLink::with(['standard', 'section'])->find($firstLink->id) ?? $firstLink;
-            }
-
-            if ($link) {
-                $schoolStudentId = trim((string) ($draft['school_student_id'] ?? ''));
-                $boardReg = trim((string) ($draft['board_registration_number'] ?? ''));
-                $stdName = trim((string) ($link->standard?->name ?? ''));
-                $secName = trim((string) ($link->section?->name ?? $className));
-
-                // Only persist UNEB board reg for candidate classes (P.7 / S.4 / S.6)
-                if ($boardReg !== '' && ! (self::isCandidateClass($stdName) || self::isCandidateClass($secName))) {
-                    $boardReg = '';
-                }
-
-                StudentAcademic::create([
-                    'school_id' => $school->id,
-                    'academic_year_id' => $year->id,
-                    'user_id' => $student->id,
-                    'standardLink_id' => $link->id,
-                    'klassapp_student_id' => $klassappId,
-                    'lin' => $lin,
-                    'school_student_id' => $schoolStudentId !== '' ? $schoolStudentId : null,
-                    'board_registration_number' => $boardReg !== '' ? $boardReg : null,
-                ]);
-            }
-
-            $created[] = [
-                'name'         => $name,
-                'email'        => $email,
-                'user_id'      => $student->id,
-                'klassapp_id'  => $klassappId,
-                'class'        => $link?->section?->name,
-                'standardLink_id' => $link?->id,
-            ];
+                return ['created' => $created, 'skipped' => $skipped];
+            });
+        } catch (UniqueConstraintViolationException $e) {
+            throw ValidationException::withMessages([
+                'students' => $this->describeUniqueConstraintViolation($e),
+            ]);
         }
-
-        return ['created' => $created, 'skipped' => $skipped];
     }
 
     /**
@@ -1648,9 +1718,12 @@ class OnboardingEngine
      * Link a WhatsApp number to a user for this school.
      *
      * Uses updateOrCreate by user_id so re-submitting is idempotent.
-     * Catches phone-unique constraint violations and returns them as skipped.
+     * Phone uniqueness is **global** (`whatsapp_users_phone_unique`) — collisions
+     * surface as ValidationException (wizard + Toshi both show the message).
      *
-     * Returns ['linked' => [...], 'skipped' => [...]].
+     * Returns ['linked' => [...], 'skipped' => [...]] for empty / already-linked cases.
+     *
+     * @throws ValidationException
      */
     public function saveWhatsApp(School $school, int $userId, string $phone): array
     {
@@ -1665,8 +1738,14 @@ class OnboardingEngine
             return ['linked' => null, 'skipped' => [['reason' => 'User already has a WhatsApp record']]];
         }
 
+        if (WhatsAppUser::where('phone', $phone)->exists()) {
+            throw ValidationException::withMessages([
+                'whatsappPhone' => "WhatsApp number {$phone} is already registered to another account. Use a different number.",
+            ]);
+        }
+
         try {
-            $whatsapp = WhatsAppUser::updateOrCreate(
+            WhatsAppUser::updateOrCreate(
                 ['user_id' => $userId],
                 [
                     'phone'       => $phone,
@@ -1678,8 +1757,120 @@ class OnboardingEngine
 
             return ['linked' => ['user_id' => $userId, 'phone' => $phone], 'skipped' => null];
         } catch (UniqueConstraintViolationException $e) {
-            return ['linked' => null, 'skipped' => [['reason' => 'This WhatsApp number is already registered']]];
+            throw ValidationException::withMessages([
+                'whatsappPhone' => $this->describeUniqueConstraintViolation($e),
+            ]);
         }
+    }
+
+    /**
+     * users.email is globally unique (login identity). Soft-deleted rows still
+     * occupy the unique index in MySQL — check withTrashed().
+     *
+     * @throws ValidationException
+     */
+    public function assertEmailAvailableGlobally(string $email, string $forLabel = ''): void
+    {
+        if (User::withTrashed()->where('email', $email)->exists()) {
+            throw ValidationException::withMessages([
+                'email' => "Email '{$email}' is already registered{$forLabel}. Use a different email, or leave email blank to auto-generate one.",
+            ]);
+        }
+    }
+
+    /**
+     * student_academics.lin is globally unique (UNEB national learner ID).
+     *
+     * @throws ValidationException
+     */
+    public function assertLinAvailableGlobally(string $lin, string $studentName): void
+    {
+        if (StudentAcademic::where('lin', $lin)->exists()) {
+            throw ValidationException::withMessages([
+                'students' => "LIN '{$lin}' for {$studentName} is already registered to another student. Use a unique LIN or leave it blank.",
+            ]);
+        }
+    }
+
+    /**
+     * Allocate a placeholder email that does not collide with users.users_email_unique.
+     */
+    public function allocateGeneratedEmail(School $school, string $prefix, string $domainSuffix): string
+    {
+        do {
+            $email = $prefix.'.'.Str::lower(Str::random(8)).'@'.($school->slug ?: 'school').$domainSuffix;
+        } while (User::withTrashed()->where('email', $email)->exists());
+
+        return $email;
+    }
+
+    /**
+     * Map a UniqueConstraintViolationException to a specific, actionable message.
+     * Public so wizard/Toshi last-resort catches can reuse the same wording.
+     */
+    public function describeUniqueConstraintViolation(UniqueConstraintViolationException $e): string
+    {
+        $msg = $e->getMessage();
+        $value = null;
+        if (preg_match("/Duplicate entry '([^']+)'/", $msg, $m)) {
+            $value = $m[1];
+        }
+
+        if (str_contains($msg, 'users_email_unique') || str_contains($msg, 'users.users_email_unique')) {
+            return $value
+                ? "Email '{$value}' is already registered. Use a different email, or leave email blank to auto-generate one."
+                : 'That email is already registered. Use a different email, or leave email blank to auto-generate one.';
+        }
+
+        if (str_contains($msg, 'student_academics_lin_unique') || str_contains($msg, 'student_academics.lin')) {
+            return $value
+                ? "LIN '{$value}' is already registered to another student. Use a unique LIN or leave it blank."
+                : 'That LIN is already registered to another student. Use a unique LIN or leave it blank.';
+        }
+
+        if (str_contains($msg, 'klassapp_student_id')) {
+            return 'Could not assign a unique KlassApp student ID. Please try again.';
+        }
+
+        if (str_contains($msg, 'users_school_registration_unique') || str_contains($msg, 'registration_number')) {
+            return 'Could not assign a unique registration number. Please try again.';
+        }
+
+        if (str_contains($msg, 'std_school_pay_number')) {
+            return $value
+                ? "School Pay number '{$value}' is already used at this school."
+                : 'That School Pay number is already used at this school.';
+        }
+
+        if (str_contains($msg, 'whatsapp_users_phone') || str_contains($msg, 'whatsapp_users.phone')) {
+            return $value
+                ? "WhatsApp number {$value} is already registered to another account. Use a different number."
+                : 'That WhatsApp number is already registered to another account. Use a different number.';
+        }
+
+        if (str_contains($msg, 'schools_name_unique') || str_contains($msg, 'schools.name')) {
+            return $value
+                ? "School name '{$value}' is already taken. Choose a different name."
+                : 'That school name is already taken. Choose a different name.';
+        }
+
+        if (str_contains($msg, 'schools_email_unique') || str_contains($msg, 'schools.email')) {
+            return $value
+                ? "School email '{$value}' is already registered. Use a different email."
+                : 'That school email is already registered. Use a different email.';
+        }
+
+        if (str_contains($msg, 'schools_phone_unique') || str_contains($msg, 'schools.phone')) {
+            return $value
+                ? "School phone '{$value}' is already registered. Use a different phone number."
+                : 'That school phone is already registered. Use a different phone number.';
+        }
+
+        if (str_contains($msg, 'google_id')) {
+            return 'That Google account is already linked to another user.';
+        }
+
+        return 'A duplicate value conflicted with an existing record (often email or LIN). Fix the duplicate and try again.';
     }
 
     /**
