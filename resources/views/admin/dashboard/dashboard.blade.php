@@ -2,12 +2,20 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-    <div class="dashboard-shell dashboard-shell--admin">
-        <div class="dashboard-heading">
+    <div class="dashboard-shell dashboard-shell--admin" data-testid="admin-dashboard-shell">
+        <div class="dashboard-home-head" data-testid="dashboard-home-head">
             <div>
-                <h1 class="dashboard-section-title">Admin</h1>
-                <p class="dashboard-subtitle">Live school activity, enrollment pulse, and updates in one place.</p>
+                <h1 class="dashboard-title" data-testid="dashboard-greeting">
+                    {{ ($greeting['phrase'] ?? 'Hello') }}, {{ $greeting['name'] ?? 'Admin' }}
+                </h1>
+                <p class="dashboard-subtitle" data-testid="dashboard-context-line">
+                    {{ $dashboardContextLine ?? 'School overview' }}
+                </p>
             </div>
+            <span class="dashboard-live-badge" data-testid="dashboard-live-badge">
+                <span class="dashboard-live-dot" aria-hidden="true"></span>
+                Live
+            </span>
         </div>
         @include('partials.message')
         @if(!empty($setupIncomplete))
@@ -21,18 +29,79 @@
         @endif
 
         @if(empty($setupIncomplete))
-        <div class="flex flex-wrap my-2 dashboard-topfold">
-            <div class="w-full xl:w-1/3 lg:w-2/3 my-2">
-                <div class="dashboard-kpi-grid">
-                    <x-ds-kpi-card icon="users" value="{{ $dashboard['studentCount'] }}" label="Students" color="green" :link="url('/admin/students')" />
-                    <x-ds-kpi-card icon="classes" value="{{ $dashboard['teacherCount'] }}" label="Teachers" color="blue" :link="url('/admin/teachers')" />
-                    <x-ds-kpi-card icon="users" value="{{ $dashboard['parentCount'] }}" label="Parents" color="amber" :link="url('/admin/parents')" />
-                    <x-ds-kpi-card icon="users" value="{{ $dashboard['nonteachingCount'] }}" label="Non Teaching Staff" color="red" :link="url('/admin/staffs')" />
-                    <x-ds-kpi-card icon="whatsapp" value="{{ $dashboard['whatsapp']['parentsOptedIn'] }}" label="WhatsApp Parents" color="green" />
-                    <x-ds-kpi-card icon="message" value="{{ $dashboard['whatsapp']['messagesThisMonth'] }}" label="Messages This Month" color="blue" />
+        <div class="dashboard-kpi-grid" data-testid="dashboard-kpi-grid">
+            <x-ds-kpi-card icon="users" value="{{ $dashboard['studentCount'] }}" label="Students" color="green" :link="url('/admin/students')" />
+            <x-ds-kpi-card icon="classes" value="{{ $dashboard['teacherCount'] }}" label="Teachers" color="blue" :link="url('/admin/teachers')" />
+            <x-ds-kpi-card icon="users" value="{{ $dashboard['parentCount'] }}" label="Parents" color="amber" :link="url('/admin/parents')" />
+            <x-ds-kpi-card icon="users" value="{{ $dashboard['nonteachingCount'] }}" label="Non Teaching Staff" color="red" :link="url('/admin/staffs')" />
+            <x-ds-kpi-card icon="whatsapp" value="{{ $dashboard['whatsapp']['parentsOptedIn'] }}" label="WhatsApp Parents" color="green" />
+            <x-ds-kpi-card icon="message" value="{{ $dashboard['whatsapp']['messagesThisMonth'] }}" label="Messages This Month" color="blue" />
+        </div>
+
+        {{-- Kit topfold: fees pulse + connected tools --}}
+        <div class="dashboard-topfold dashboard-topfold--kit" data-testid="dashboard-topfold-kit">
+            <div class="dashboard-topfold-fees" data-testid="dashboard-topfold-fees">
+                <div class="flex flex-wrap items-center justify-between mb-3 gap-2">
+                    <div>
+                        <h2 class="ds-section-title">Fee collection trends</h2>
+                        <p class="ds-section-subtitle">Live intake across the selected period</p>
+                    </div>
+                    <div class="flex gap-1 bg-gray-100 rounded-lg p-0.5" role="group">
+                        <a href="{{ request()->fullUrlWithQuery(['period' => 'day']) }}"
+                           class="px-3 py-2.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'day' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                            Days
+                        </a>
+                        <a href="{{ request()->fullUrlWithQuery(['period' => 'week']) }}"
+                           class="px-3 py-2.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'week' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                            Weeks
+                        </a>
+                        <a href="{{ request()->fullUrlWithQuery(['period' => 'month']) }}"
+                           class="px-3 py-2.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'month' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                            Months
+                        </a>
+                    </div>
                 </div>
+                <canvas id="feeTrendChart" class="dashboard-chart-canvas" style="height:180px;" data-testid="dashboard-fee-trend-chart"></canvas>
             </div>
-            <div class="w-full lg:w-1/3 px-1 my-3">
+            <div class="dashboard-connected-tools" data-testid="dashboard-connected-tools">
+                <h2 class="ds-section-title">Connected tools</h2>
+                <p class="ds-section-subtitle">KlassApp runs inside what the school already uses</p>
+                <ul class="dashboard-connected-list">
+                    <li class="dashboard-connected-row">
+                        <span class="dashboard-connected-label">
+                            <x-brand.whatsapp class="dashboard-connected-mark" />
+                            {{ number_format((int) ($dashboard['whatsapp']['parentsOptedIn'] ?? 0)) }} parents reachable
+                        </span>
+                        <x-badge variant="active">Live</x-badge>
+                    </li>
+                    <li class="dashboard-connected-row">
+                        <span class="dashboard-connected-label">
+                            <x-brand.google-drive class="dashboard-connected-mark" />
+                            Reports filed to Drive
+                        </span>
+                        <x-badge variant="active">Live</x-badge>
+                    </li>
+                    <li class="dashboard-connected-row">
+                        <span class="dashboard-connected-label">
+                            <svg class="dashboard-connected-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                            </svg>
+                            Notice board
+                        </span>
+                        @php $noticeCount = is_countable($dashboard['noticeboard'] ?? null) ? count($dashboard['noticeboard']) : 0; @endphp
+                        @if($noticeCount > 0)
+                            <x-badge variant="pending">{{ $noticeCount }} {{ \Illuminate\Support\Str::plural('item', $noticeCount) }}</x-badge>
+                        @else
+                            <x-badge variant="info">Empty</x-badge>
+                        @endif
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap my-2 gap-2">
+            <div class="w-full lg:w-1/2 px-1 my-3">
                 <div class="bg-white custom-shadow px-5 py-4 border dashboard-chart-card">
                     <div>
                         <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Students</h1>
@@ -61,7 +130,7 @@
                     </div>
                 </div>
             </div>
-            <div class="w-full xl:w-1/3 lg:w-full md:w-1/3 px-1 my-3">
+            <div class="w-full lg:w-1/2 px-1 my-3">
                 <div class="bg-white custom-shadow px-3 py-2 border dashboard-notice-card">
                     <div>
                         <h1 class="text-gray-800 font-semibold text-lg border-b mx-2 py-1 pb-3 dashboard-panel-title">Notice Board</h1>
@@ -287,32 +356,6 @@
                         <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Students Per Class</h1>
                     </div>
                     <canvas id="barChart" class="dashboard-chart-canvas"></canvas>
-                </div>
-            </div>
-        </div>
-
-        {{-- Fee Collection Trend Chart --}}
-        <div class="flex my-2 gap-4">
-            <div class="w-full">
-                <div class="bg-white custom-shadow px-5 py-4 border dashboard-chart-card">
-                    <div class="flex flex-wrap items-center justify-between mb-4">
-                        <h1 class="text-gray-800 font-semibold text-xl dashboard-panel-title">Fee Collection Trends</h1>
-                        <div class="flex gap-1 bg-gray-100 rounded-lg p-0.5" role="group">
-                            <a href="{{ request()->fullUrlWithQuery(['period' => 'day']) }}"
-                               class="px-3 py-2.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'day' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
-                                Days
-                            </a>
-                            <a href="{{ request()->fullUrlWithQuery(['period' => 'week']) }}"
-                               class="px-3 py-2.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'week' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
-                                Weeks
-                            </a>
-                            <a href="{{ request()->fullUrlWithQuery(['period' => 'month']) }}"
-                               class="px-3 py-2.5 text-xs font-semibold rounded-md transition-colors duration-150 {{ $trendPeriod === 'month' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
-                                Months
-                            </a>
-                        </div>
-                    </div>
-                    <canvas id="feeTrendChart" class="dashboard-chart-canvas" style="height:260px;"></canvas>
                 </div>
             </div>
         </div>
