@@ -609,7 +609,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Dashboard reduced-motion sweep COMPLETE ([PR #560](https://github.com/KlassApp-Foundation/KlassApp/pull/560) MERGED+DEPLOYED)
+## Current Status: September 14, 2026 — Piece 1 landing/auth/error `--d-*` alignment on **STAGING ONLY** ([#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564))
+
+- **Merged to `main`**: [#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) `e5c22ac5` (landing canvas/ink/Sora+DM Sans) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) `33558296` (auth ds-btn metrics + blue focus) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564) `6c76f36d` (error parchment + ds-btn metrics + blue focus).
+- **Staging deploys**: `depl-a2be32ba-…` (#562) · `depl-a2be3755-…` (#563) · `depl-a2be39e9-…` (#564) — all succeeded on `env-a2b86c90-…`.
+- **Staging verify** (`klassapp-staging-7mpoqg.laravel.cloud`): landing body `rgb(250,250,245)` + Sora; `/login` Playwright `e2e/auth-d-tokens-verify.cjs` PASS (375/414/768/1280); live 404 Playwright `e2e/errors-d-tokens-verify.cjs` PASS.
+- **Production**: **NOT deployed** — explicit hold; keep Piece 1 on staging until cutover is approved.
+- **Still open (Piece 1)**: landing `.btn` glow/geometry cleanup; optional class rename `.ap-submit` / `.err-btn*` → `ds-btn` markup (metrics already match).
+
+## Previous: September 14, 2026 — Dashboard reduced-motion sweep COMPLETE ([PR #560](https://github.com/KlassApp-Foundation/KlassApp/pull/560) MERGED+DEPLOYED)
 
 - **Merged**: [#560](https://github.com/KlassApp-Foundation/KlassApp/pull/560) merge `ca0e1143` (`fix/reduced-motion-pulse-spin`) — save-indicator `d-pulse` and Toshi `toshi-spin` join the three loops from [#558](https://github.com/KlassApp-Foundation/KlassApp/pull/558) under `@media (prefers-reduced-motion: reduce)`.
 - **Production deploy**: `depl-a2be2ae7-471c-4b96-8f55-f75e8a346e5d` @ `ca0e1143` **succeeded**.
@@ -1880,6 +1888,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Piece 1 landing/auth/error `--d-*` alignment — **MERGED + STAGING ONLY** ([#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564))
+- **Work done**: Atomic PRs aligning public surfaces to DESIGN_SYSTEM canvas `#FAFAF5`, ink `#1E293B`, Sora+DM Sans (landing), and ds-btn metrics + blue focus (auth + errors). PHPUnit contracts + Playwright locks at 375/414/768/1280. User directive: keep everything on staging — **no production deploy**.
+- **Files modified**: `resources/css/landing-preview.css`, `landing-v2.blade.php`, `resources/css/auth-preview.css`, `resources/views/errors-preview/layout.blade.php`, Vite build assets, `tests/Feature/{LandingPreviewV3,AuthPreview,ErrorsPreview,LandingAuthErrorCutover}Test.php`, `e2e/{landing,auth,errors}-d-tokens-verify.cjs`
+- **Key decisions**: One surface family per PR; keep `.ap-submit` / `.err-btn*` class names while matching ds-btn geometry; green remains CTA fill, blue is focus/links; staging hibernation → prefer Playwright `waitUntil: 'load'` over `networkidle`.
+- **Status**: ✅ MERGED to `main` · staging verified · **prod held**
+- **Edge cases flagged**: Prod still on pre-#562 visual tokens until cutover approved. Landing primary `.btn` glow still follows earlier landing pass (geometry cleanup deferred).
 
 ### 2026-09-14: Pulse styling global consistency — **MERGED+DEPLOYED** ([#555](https://github.com/KlassApp-Foundation/KlassApp/pull/555))
 - **Work done**: Migrated SchoolAdmin home dashboard (`resources/views/admin/dashboard/dashboard.blade.php`) from legacy `.dashboard-kpi-card` to `<x-ds-kpi-card>` (6 enrollment/WhatsApp KPIs + pending approvals). Extended Pulse data-table treatment in `toshi-ui.css` to `.ds-table-ledger` (sticky header `backdrop-filter: blur(12px)` — previously dead code targeting only `.ds-table` while `<x-table>` emits ledger class). Published CSS; added `e2e/verify-pulse-global-fix.cjs`.
