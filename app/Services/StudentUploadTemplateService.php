@@ -100,7 +100,17 @@ class StudentUploadTemplateService
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Students');
 
-        $headers = ['Name', 'Class', 'Stream', 'Parent Name', 'Parent Phone'];
+        $headers = [
+            'Name',
+            'Class',
+            'Stream',
+            'Gender',
+            'Parent Name',
+            'Parent Phone',
+            'School Student ID',
+            'UNEB Reg No.',
+            'Date of Birth',
+        ];
         foreach ($headers as $col => $header) {
             $sheet->setCellValue([$col + 1, 1], $header);
         }
@@ -122,6 +132,7 @@ class StudentUploadTemplateService
             'Grace Mbabazi',
             'Henry Mugisha',
         ];
+        $genders = ['female', 'male', 'female', 'male', 'female', 'male', 'female', 'male'];
         $parents = [
             ['Sarah Nakato', '+256771234567'],
             ['Peter Okello', '+256772345678'],
@@ -136,11 +147,18 @@ class StudentUploadTemplateService
         $rowCount = min(count($samples), count($names));
         for ($i = 0; $i < $rowCount; $i++) {
             $excelRow = $i + 2;
+            $className = (string) $samples[$i]['class'];
             $sheet->setCellValue([1, $excelRow], $names[$i]);
-            $sheet->setCellValue([2, $excelRow], $samples[$i]['class']);
+            $sheet->setCellValue([2, $excelRow], $className);
             $sheet->setCellValue([3, $excelRow], $samples[$i]['stream']);
-            $sheet->setCellValue([4, $excelRow], $parents[$i][0]);
-            $sheet->setCellValue([5, $excelRow], $parents[$i][1]);
+            $sheet->setCellValue([4, $excelRow], $genders[$i]);
+            $sheet->setCellValue([5, $excelRow], $parents[$i][0]);
+            $sheet->setCellValue([6, $excelRow], $parents[$i][1]);
+            $sheet->setCellValue([7, $excelRow], 'ADM-2025-'.str_pad((string) ($i + 1), 3, '0', STR_PAD_LEFT));
+            // UNEB reg only for candidate classes (P.7 / S.4 / S.6)
+            $uneb = OnboardingEngine::isCandidateClass($className) ? 'U1234/'.(100 + $i) : '';
+            $sheet->setCellValue([8, $excelRow], $uneb);
+            $sheet->setCellValue([9, $excelRow], ''); // DOB optional — leave blank in samples
         }
 
         return $spreadsheet;

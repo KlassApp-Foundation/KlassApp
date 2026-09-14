@@ -259,7 +259,11 @@
                     <li class="manual-wizard-bulk-item" wire:key="teacher-draft-{{ $i }}">
                         <span class="manual-wizard-bulk-item-main">
                             <strong>{{ $row['name'] }}</strong>
-                            <span class="manual-wizard-bulk-meta">{{ $row['email'] }}@if(!empty($row['phone'])) · {{ $row['phone'] }}@endif</span>
+                            <span class="manual-wizard-bulk-meta">
+                                {{ $row['email'] }}@if(!empty($row['phone'])) · {{ $row['phone'] }}@endif
+                                @if(!empty($row['classes'])) · {{ is_array($row['classes']) ? implode(', ', $row['classes']) : $row['classes'] }}@endif
+                                @if(!empty($row['subjects'])) · {{ is_array($row['subjects']) ? implode(', ', $row['subjects']) : $row['subjects'] }}@endif
+                            </span>
                         </span>
                         <button type="button" class="manual-wizard-bulk-remove" wire:click="removeTeacherDraft({{ $i }})" aria-label="Remove">✕</button>
                     </li>
@@ -288,6 +292,32 @@
         <div class="ds-form-group">
             <label class="ds-form-label" for="wizard-teacher-phone">Phone (optional)</label>
             <input id="wizard-teacher-phone" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="teacherPhone" placeholder="+2567…" data-testid="wizard-teacher-phone" />
+        </div>
+        <div class="ds-form-group" data-testid="wizard-teacher-classes">
+            <label class="ds-form-label">Classes taught <span class="text-xs text-gray-400">(optional)</span></label>
+            <div class="manual-wizard-check-grid">
+                @forelse(($structureClasses ?? []) as $class)
+                    <label class="manual-wizard-check">
+                        <input type="checkbox" value="{{ $class['name'] }}" wire:model="teacherSelectedClasses" />
+                        <span>{{ $class['name'] }}</span>
+                    </label>
+                @empty
+                    <p class="manual-wizard-bulk-help">Add classes first to assign teachers to them.</p>
+                @endforelse
+            </div>
+        </div>
+        <div class="ds-form-group" data-testid="wizard-teacher-subjects">
+            <label class="ds-form-label">Subjects taught <span class="text-xs text-gray-400">(optional)</span></label>
+            <div class="manual-wizard-check-grid">
+                @forelse(($existingSubjectNames ?? []) as $subjectName)
+                    <label class="manual-wizard-check">
+                        <input type="checkbox" value="{{ $subjectName }}" wire:model="teacherSelectedSubjects" />
+                        <span>{{ $subjectName }}</span>
+                    </label>
+                @empty
+                    <p class="manual-wizard-bulk-help">Add subjects first to assign them to teachers.</p>
+                @endforelse
+            </div>
         </div>
         <x-button type="button" variant="outline" size="sm" wire:click="addTeacherDraft" data-testid="wizard-teacher-add">+ Add teacher</x-button>
         <p class="manual-wizard-bulk-footnote">Optional — skip if you’ll add teachers later. Continue saves everyone in the list.</p>
@@ -339,6 +369,7 @@
                             <strong>{{ $row['name'] }}</strong>
                             <span class="manual-wizard-bulk-meta">
                                 {{ $row['class'] ?: 'No class' }}@if(!empty($row['stream'])) · {{ $row['stream'] }}@endif
+                                @if(!empty($row['gender'])) · {{ ucfirst($row['gender']) }}@endif
                                 @if(!empty($row['parent'])) · {{ $row['parent'] }}@endif
                             </span>
                         </span>
@@ -405,6 +436,20 @@
         </div>
         <div class="manual-wizard-bulk-pair">
             <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-student-gender">Gender</label>
+                <select id="wizard-student-gender" class="ds-form-input ds-form-select w-full" wire:model="studentGender" data-testid="wizard-student-gender">
+                    <option value="">Select…</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                </select>
+            </div>
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-student-dob">Date of birth <span class="text-xs text-gray-400">(optional)</span></label>
+                <input id="wizard-student-dob" type="date" class="ds-form-input w-full" wire:model="studentDateOfBirth" data-testid="wizard-student-dob" />
+            </div>
+        </div>
+        <div class="manual-wizard-bulk-pair">
+            <div class="ds-form-group">
                 <label class="ds-form-label" for="wizard-student-parent">Parent name</label>
                 <input id="wizard-student-parent" type="text" class="ds-form-input w-full" wire:model="studentParent" />
             </div>
@@ -444,29 +489,124 @@
     </div>
 
 @elseif($stepKey === 'terms')
-    <div class="ds-form-group">
-        <label class="ds-form-label" for="wizard-term-name">Term name<span class="text-red-500">*</span></label>
-        <input id="wizard-term-name" type="text" class="ds-form-input w-full" wire:model="termName" />
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="manual-wizard-bulk" data-testid="wizard-terms-bulk">
+        <p class="manual-wizard-bulk-help mb-3">Add every term your school runs, then mark which one is current. Continue only after the list looks right.</p>
+
+        @if(count($termDrafts ?? []) > 0)
+            <ul class="manual-wizard-bulk-list" data-testid="wizard-term-list">
+                @foreach($termDrafts as $i => $row)
+                    <li class="manual-wizard-bulk-item" wire:key="term-draft-{{ $i }}">
+                        <span class="manual-wizard-bulk-item-main">
+                            <strong>{{ $row['name'] }}</strong>
+                            <span class="manual-wizard-bulk-meta">
+                                {{ $row['start'] ?? '' }} → {{ $row['end'] ?? '' }}
+                                @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($row['name'] ?? '')) === 0)
+                                    · <span data-testid="wizard-term-current-badge">Current</span>
+                                @endif
+                            </span>
+                        </span>
+                        <span class="manual-wizard-bulk-item-actions">
+                            @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($row['name'] ?? '')) !== 0)
+                                <button type="button" class="manual-wizard-bulk-link" wire:click="markTermCurrent('{{ str_replace("'", "\\'", $row['name']) }}')" data-testid="wizard-term-mark-current-{{ $i }}">Mark current</button>
+                            @endif
+                            <button type="button" class="manual-wizard-bulk-remove" wire:click="removeTermDraft({{ $i }})" aria-label="Remove">✕</button>
+                        </span>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+
+        <div class="manual-wizard-bulk-divider"><span>add another term</span></div>
+
         <div class="ds-form-group">
-            <label class="ds-form-label" for="wizard-term-start">Starts on<span class="text-red-500">*</span></label>
-            <input id="wizard-term-start" type="date" class="ds-form-input w-full" wire:model="termStartsOn" />
+            <label class="ds-form-label" for="wizard-term-name">Term name</label>
+            <input id="wizard-term-name" type="text" class="ds-form-input w-full" wire:model="termName" data-testid="wizard-term-name" placeholder="e.g. Term 4" />
         </div>
-        <div class="ds-form-group">
-            <label class="ds-form-label" for="wizard-term-end">Ends on<span class="text-red-500">*</span></label>
-            <input id="wizard-term-end" type="date" class="ds-form-input w-full" wire:model="termEndsOn" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-term-start">Starts on</label>
+                <input id="wizard-term-start" type="date" class="ds-form-input w-full" wire:model="termStartsOn" data-testid="wizard-term-start" />
+            </div>
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-term-end">Ends on</label>
+                <input id="wizard-term-end" type="date" class="ds-form-input w-full" wire:model="termEndsOn" data-testid="wizard-term-end" />
+            </div>
         </div>
+        <x-button type="button" variant="outline" size="sm" wire:click="addTermDraft" data-testid="wizard-term-add">+ Add term</x-button>
+        <p class="manual-wizard-bulk-footnote">Prefills Term 1–3 for UNEB schools — edit, add, or remove before Continue.</p>
     </div>
 
 @elseif($stepKey === 'fees')
-    <div class="ds-form-group">
-        <label class="ds-form-label" for="wizard-fee-name">Fee name<span class="text-red-500">*</span></label>
-        <input id="wizard-fee-name" type="text" class="ds-form-input w-full" wire:model="feeName" />
-    </div>
-    <div class="ds-form-group">
-        <label class="ds-form-label" for="wizard-fee-amount">Amount (UGX)<span class="text-red-500">*</span></label>
-        <input id="wizard-fee-amount" type="number" min="1" class="ds-form-input w-full" wire:model="feeAmount" />
+    <div class="manual-wizard-bulk" data-testid="wizard-fees-bulk">
+        @if(count($feeDrafts ?? []) > 0)
+            <ul class="manual-wizard-bulk-list" data-testid="wizard-fee-list">
+                @foreach($feeDrafts as $i => $row)
+                    <li class="manual-wizard-bulk-item" wire:key="fee-draft-{{ $i }}">
+                        <span class="manual-wizard-bulk-item-main">
+                            <strong>{{ $row['name'] }}</strong>
+                            <span class="manual-wizard-bulk-meta">
+                                UGX {{ number_format((float) ($row['amount'] ?? 0)) }}
+                                · {{ ($row['scope'] ?? '') === 'class' ? ($row['class'] ?: 'Class') : 'Whole school' }}
+                                · {{ !empty($row['is_yearly']) ? 'Yearly' : ($row['term'] ?: 'No term') }}
+                            </span>
+                        </span>
+                        <button type="button" class="manual-wizard-bulk-remove" wire:click="removeFeeDraft({{ $i }})" aria-label="Remove">✕</button>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+
+        <div class="ds-form-group">
+            <label class="ds-form-label" for="wizard-fee-name">Fee name<span class="text-red-500">*</span></label>
+            <input id="wizard-fee-name" type="text" class="ds-form-input w-full" wire:model="feeName" data-testid="wizard-fee-name" placeholder="e.g. Tuition" />
+        </div>
+        <div class="ds-form-group">
+            <label class="ds-form-label" for="wizard-fee-amount">Amount (UGX)<span class="text-red-500">*</span></label>
+            <input id="wizard-fee-amount" type="number" min="1" class="ds-form-input w-full" wire:model="feeAmount" data-testid="wizard-fee-amount" />
+        </div>
+        <div class="ds-form-group" data-testid="wizard-fee-scope">
+            <label class="ds-form-label">Applies to<span class="text-red-500">*</span></label>
+            <div class="manual-wizard-check-grid">
+                <label class="manual-wizard-check">
+                    <input type="radio" value="whole_school" wire:model.live="feeScope" />
+                    <span>Whole school</span>
+                </label>
+                <label class="manual-wizard-check">
+                    <input type="radio" value="class" wire:model.live="feeScope" />
+                    <span>One class</span>
+                </label>
+            </div>
+        </div>
+        @if(($feeScope ?? 'whole_school') === 'class')
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-fee-class">Class<span class="text-red-500">*</span></label>
+                <select id="wizard-fee-class" class="ds-form-input ds-form-select w-full" wire:model="feeClass" data-testid="wizard-fee-class">
+                    <option value="">Select class…</option>
+                    @foreach(($structureClasses ?? []) as $class)
+                        <option value="{{ $class['name'] }}">{{ $class['name'] }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
+        <div class="ds-form-group">
+            <label class="manual-wizard-check" data-testid="wizard-fee-yearly">
+                <input type="checkbox" wire:model.live="feeIsYearly" />
+                <span>Yearly fee (not tied to a term)</span>
+            </label>
+        </div>
+        @if(! ($feeIsYearly ?? false))
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-fee-term">Academic term</label>
+                <select id="wizard-fee-term" class="ds-form-input ds-form-select w-full" wire:model="feeTerm" data-testid="wizard-fee-term">
+                    <option value="">Select term…</option>
+                    @foreach(($availableTermNames ?? []) as $termNameOption)
+                        <option value="{{ $termNameOption }}">{{ $termNameOption }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
+        <x-button type="button" variant="outline" size="sm" wire:click="addFeeDraft" data-testid="wizard-fee-add">+ Add fee</x-button>
+        <p class="manual-wizard-bulk-footnote">Add one or more fees, then Continue to save the list.</p>
     </div>
 
 @elseif($stepKey === 'whatsapp_verify')

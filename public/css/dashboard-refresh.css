@@ -3421,6 +3421,34 @@ body.toshi-manual-wizard [data-toshi-root] {
     margin: 4px 0 0;
     line-height: 1.45;
 }
+.manual-wizard-check-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 6px;
+}
+@media (min-width: 768px) {
+    .manual-wizard-check-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+.manual-wizard-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.35;
+}
+.manual-wizard-check input {
+    margin-top: 2px;
+}
+.manual-wizard-bulk-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
 .manual-wizard-bulk-footnote {
     font-size: 12px;
     color: #64748B;

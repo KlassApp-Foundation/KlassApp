@@ -727,7 +727,9 @@ class OnboardingEngine
      *
      * @param  School  $school
      * @param  AcademicYear  $year
-     * @param  array  $terms  [ ['name' => 'Term 1', 'start' => '2025-02-01', 'end' => '2025-05-01'], ... ]
+     * @param  array  $terms  [ ['name' => 'Term 1', 'start' => '2025-02-01', 'end' => '2025-05-01', 'status' => 'current'], ... ]
+     *                        Optional status: last|current|next. When omitted, the first
+     *                        term becomes current if the school has none yet; others are next.
      *
      * @throws ValidationException
      */
@@ -769,9 +771,15 @@ class OnboardingEngine
             $hasStart = $start !== null && trim((string) $start) !== '';
             $hasEnd = $end !== null && trim((string) $end) !== '';
 
+            $requestedStatus = strtolower(trim((string) ($term['status'] ?? '')));
+            if (! in_array($requestedStatus, ['last', 'current', 'next'], true)) {
+                $requestedStatus = null;
+            }
+
             $createAttrs = [
                 'academic_year_id' => $year->id,
-                'status' => 'current',
+                // Default new terms to "next"; promote one to "current" after the batch.
+                'status' => $requestedStatus ?? 'next',
             ];
 
             if ($hasStart) {
@@ -786,6 +794,48 @@ class OnboardingEngine
                 $createAttrs,
             );
         }
+
+        $this->normalizeAcademicTermCurrentStatus($school, $terms);
+    }
+
+    /**
+     * Ensure exactly one "current" term when the batch (or school) needs one.
+     *
+     * Prefer an explicit status=current in $terms; otherwise keep an existing
+     * school current; otherwise promote the first term in this batch.
+     *
+     * @param  array<int, array<string, mixed>>  $terms
+     */
+    private function normalizeAcademicTermCurrentStatus(School $school, array $terms): void
+    {
+        $explicitCurrent = null;
+        foreach ($terms as $term) {
+            $name = trim((string) ($term['name'] ?? ''));
+            $status = strtolower(trim((string) ($term['status'] ?? '')));
+            if ($name !== '' && $status === 'current') {
+                $explicitCurrent = $name;
+                break;
+            }
+        }
+
+        $existingCurrent = AcademicTerm::where('school_id', $school->id)
+            ->where('status', 'current')
+            ->value('name');
+
+        $fallback = trim((string) ($terms[0]['name'] ?? ''));
+        $keep = $explicitCurrent ?: ($existingCurrent ?: $fallback);
+        if ($keep === '') {
+            return;
+        }
+
+        AcademicTerm::where('school_id', $school->id)
+            ->where('status', 'current')
+            ->where('name', '!=', $keep)
+            ->update(['status' => 'next']);
+
+        AcademicTerm::where('school_id', $school->id)
+            ->where('name', $keep)
+            ->update(['status' => 'current']);
     }
 
     /**
@@ -1016,7 +1066,9 @@ class OnboardingEngine
      * Create teacher users with random passwords and is_reset=1.
      *
      * Each entry in $teachers must contain at least 'name' and 'email'.
-     * Optional keys: 'phone', 'standardLink_id', 'subject_id'.
+     * Optional keys: 'phone', 'standardLink_id', 'subject_id',
+     * or 'links' => [ ['standardLink_id' => int, 'subject_id' => int], ... ]
+     * (same Teacherlink model used by admin teacher-link import).
      *
      * Returns ['created' => [...], 'skipped' => [...]].
      */
@@ -1024,9 +1076,6 @@ class OnboardingEngine
     {
         $created = [];
         $skipped = [];
-
-        $link = StandardLink::where('school_id', $school->id)->first();
-        $subject = Subject::where('school_id', $school->id)->first();
 
         foreach ($teachers as $draft) {
             $name = trim((string) ($draft['name'] ?? ''));
@@ -1068,16 +1117,31 @@ class OnboardingEngine
                 ]
             );
 
-            // Teacherlink if class + subject provided
-            $standardLinkId = $draft['standardLink_id'] ?? null;
-            $subjectId = $draft['subject_id'] ?? null;
+            $links = [];
+            if (! empty($draft['links']) && is_array($draft['links'])) {
+                foreach ($draft['links'] as $linkRow) {
+                    $standardLinkId = (int) ($linkRow['standardLink_id'] ?? 0);
+                    $subjectId = (int) ($linkRow['subject_id'] ?? 0);
+                    if ($standardLinkId > 0 && $subjectId > 0) {
+                        $links[] = [
+                            'standardLink_id' => $standardLinkId,
+                            'subject_id' => $subjectId,
+                        ];
+                    }
+                }
+            } elseif (! empty($draft['standardLink_id']) && ! empty($draft['subject_id'])) {
+                $links[] = [
+                    'standardLink_id' => (int) $draft['standardLink_id'],
+                    'subject_id' => (int) $draft['subject_id'],
+                ];
+            }
 
-            if ($standardLinkId && $subjectId) {
+            foreach ($links as $linkRow) {
                 Teacherlink::firstOrCreate([
                     'school_id'        => $school->id,
                     'academic_year_id'  => $year->id,
-                    'standardLink_id'  => $standardLinkId,
-                    'subject_id'       => $subjectId,
+                    'standardLink_id'  => $linkRow['standardLink_id'],
+                    'subject_id'       => $linkRow['subject_id'],
                     'teacher_id'       => $teacher->id,
                 ]);
             }
@@ -1093,7 +1157,8 @@ class OnboardingEngine
      *
      * Each entry in $students must contain at least 'name'.
      * Optional keys: 'class' (section name to resolve StandardLink), 'email',
-     * 'phone', 'school_student_id', 'board_registration_number'.
+     * 'phone', 'school_student_id', 'board_registration_number', 'gender'
+     * (male|female on userprofiles), 'date_of_birth' (optional).
      *
      * board_registration_number is persisted only for UNEB candidate classes
      * (P.7 / S.4 / S.6) via isCandidateClass().
@@ -1166,6 +1231,21 @@ class OnboardingEngine
                 'mobile_no'       => $phone ?: null,
             ]);
 
+            $gender = strtolower(trim((string) ($draft['gender'] ?? '')));
+            if (! in_array($gender, ['male', 'female'], true)) {
+                $gender = null;
+            }
+
+            $dobRaw = trim((string) ($draft['date_of_birth'] ?? $draft['dob'] ?? ''));
+            $dob = null;
+            if ($dobRaw !== '') {
+                try {
+                    $dob = Carbon::parse($dobRaw)->startOfDay();
+                } catch (\Throwable) {
+                    $dob = null;
+                }
+            }
+
             Userprofile::firstOrCreate(
                 ['user_id' => $student->id],
                 [
@@ -1176,6 +1256,8 @@ class OnboardingEngine
                     'profession'    => 'student',
                     'status'        => 'active',
                     'alternate_no'  => $phone ?: null,
+                    'gender'        => $gender,
+                    'date_of_birth' => $dob,
                 ]
             );
 
