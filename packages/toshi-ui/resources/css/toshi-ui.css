@@ -7,7 +7,10 @@
 
 :root { --nav-height: 83px; }
 
-/* ── Toggle wrapper: zero-width flex child that expands to 28px when collapsed ── */
+/* ── Toggle wrapper: zero-width flex child that expands to 28px when collapsed ──
+   Layout places #toshi-toggle-wrapper as a sibling of [data-toshi-root] (app.blade).
+   Selectors below cover both that real DOM and any nested wrapper. */
+.toshi-toggle-wrapper,
 [data-toshi-root] .toshi-toggle-wrapper {
     width: 0;
     flex-shrink: 0;
@@ -15,6 +18,13 @@
     position: relative;
     transition: width 0.25s ease;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   PIECE 2 — Docking / pill / fullscreen chrome (≥1280 dock, ≤640 fullscreen)
+   Behavior unchanged: 380px static flex column, collapse → width 0 + pill,
+   independently scrolling sidebar. Visual treatment = clay kit (not Pulse green).
+   Do NOT move Pulse .ds-* rules into this section.
+   ══════════════════════════════════════════════════════════════ */
 
 @media (min-width: 1280px) {
     body {
@@ -88,10 +98,11 @@
         display: flex !important;
         flex-direction: column;
         border-radius: 0 !important;
-        box-shadow: -4px 0 16px rgba(0,0,0,0.04) !important;
-        border-left: 1px solid #E5E7EB !important;
+        box-shadow: -6px 0 24px rgba(20, 20, 19, 0.06) !important;
+        border-left: 1px solid #e8e6dc !important;
         z-index: auto !important;
         transition: none !important;
+        background: #FFFFFF;
     }
 
     [data-toshi-root] .toshi-messages-area {
@@ -110,20 +121,23 @@
         box-shadow: none !important;
     }
 
-    /* ── Toggle wrapper expands to 28px when collapsed ── */
-    body.toshi-collapsed [data-toshi-root] .toshi-toggle-wrapper {
+    /* ── Toggle wrapper expands to 28px when collapsed (nested or layout sibling) ── */
+    body.toshi-collapsed [data-toshi-root] .toshi-toggle-wrapper,
+    body.toshi-collapsed .toshi-toggle-wrapper {
         width: 28px !important;
     }
 
-    /* ── Toggle positioned inside wrapper — never overlaps content ── */
-    [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle {
+    /* ── Toggle tab — clay kit (layout sibling + nested) ── */
+    .toshi-toggle-wrapper .toshi-toggle,
+    [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle,
+    #toshi-toggle.toshi-toggle {
         position: absolute;
         right: 0;
         top: 50%;
         transform: translateY(-50%);
         width: 28px;
         height: 64px;
-        background: #22C55E;
+        background: #c96442;
         border: none;
         border-radius: 8px 0 0 8px;
         display: flex;
@@ -133,23 +147,38 @@
         color: #FFFFFF;
         cursor: pointer;
         z-index: 1;
-        box-shadow: -2px 0 10px rgba(34,197,94,0.3);
+        box-shadow: -2px 0 10px rgba(201, 100, 66, 0.28);
         user-select: none;
-        transition: width 0.2s ease, box-shadow 0.2s ease;
+        transition: width 0.2s ease, box-shadow 0.2s ease, background 0.15s ease;
     }
-    [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle:hover {
+    .toshi-toggle-wrapper .toshi-toggle:hover,
+    [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle:hover,
+    #toshi-toggle.toshi-toggle:hover {
         width: 36px;
-        box-shadow: -4px 0 16px rgba(34,197,94,0.45);
+        background: #b55738;
+        box-shadow: -4px 0 16px rgba(201, 100, 66, 0.4);
         color: #FFFFFF;
     }
 
+    /* Layout sibling toggle is fixed mid-viewport when collapsed */
+    body.toshi-collapsed #toshi-toggle.toshi-toggle {
+        position: fixed !important;
+        right: 0 !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 10000 !important;
+    }
+
     /* ── Override dashboard-refresh.css display rules (higher specificity) ── */
-    body:not(.toshi-collapsed) [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle {
+    body:not(.toshi-collapsed) .toshi-toggle-wrapper .toshi-toggle,
+    body:not(.toshi-collapsed) [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle,
+    body:not(.toshi-collapsed) #toshi-toggle.toshi-toggle {
         display: none !important;
     }
-    body.toshi-collapsed [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle {
+    body.toshi-collapsed .toshi-toggle-wrapper .toshi-toggle,
+    body.toshi-collapsed [data-toshi-root] .toshi-toggle-wrapper .toshi-toggle,
+    body.toshi-collapsed #toshi-toggle.toshi-toggle {
         display: flex !important;
-        right: 0 !important;
     }
 
     [data-toshi-root] .toshi-pill {
@@ -170,8 +199,68 @@
         left: 0;
         right: 0;
         height: 3px;
-        background: #22C55E;
+        background: #c96442;
         z-index: 1;
+    }
+}
+
+/* ── Floating pill — clay kit (all breakpoints; docked open hides via rules above) ── */
+[data-toshi-root] .toshi-pill {
+    background: #FFFFFF;
+    border: 2px solid #c96442;
+    border-radius: 100px;
+    box-shadow: 0 4px 24px rgba(20, 20, 19, 0.1);
+}
+
+[data-toshi-root] .toshi-pill:hover {
+    border-color: #b55738;
+    box-shadow: 0 6px 32px rgba(201, 100, 66, 0.22);
+}
+
+[data-toshi-root] .toshi-pill-avatar {
+    border: 1px solid rgba(201, 100, 66, 0.45);
+}
+
+[data-toshi-root] .toshi-pill-badge {
+    background: #c96442;
+    color: #FFFFFF;
+}
+
+[data-toshi-root] .toshi-pill-text {
+    color: #5e5d59;
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* ── Fullscreen panel ≤640px — same behavior, clay edge treatment ── */
+@media (max-width: 640px) {
+    [data-toshi-root] .toshi-panel {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        max-height: none;
+        border-radius: 0 !important;
+        border: none;
+        box-shadow: none !important;
+        z-index: 9998;
+    }
+
+    [data-toshi-root] .toshi-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #c96442;
+        z-index: 2;
+    }
+
+    [data-toshi-root] .toshi-panel .toshi-composer {
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
+        background: #FFFFFF;
     }
 }
 

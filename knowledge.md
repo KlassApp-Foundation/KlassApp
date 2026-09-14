@@ -618,13 +618,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 2 Toshi panel PR2 on **STAGING ONLY** ([#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597))
+## Current Status: September 14, 2026 — Piece 2 Toshi docking/pill **IN FLIGHT** (`piece2/docking-pill`)
+
+- **Branch**: `piece2/docking-pill` — clay dock (≥1280 / 380px), collapse→pill+toggle, fullscreen ≤640; multi-role Admin+Teacher verify; Pulse frozen.
+- **Prior Piece 2 on staging**: PR1 [#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595) + harden [#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596); PR2 cards [#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597) + stamp [#598](https://github.com/KlassApp-Foundation/KlassApp/pull/598).
+- **Production**: **NOT deployed** — hold until coordinated four-surface cutover.
+- **Next**: Merge + staging deploy + Playwright Admin/Teacher → knowledge stamp; Piece 2 then complete on staging.
+
+## Previous: September 14, 2026 — Piece 2 Toshi panel PR2 on **STAGING ONLY** ([#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597))
 
 - **Merged**: [#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597) `d68f32a6` (`piece2/chips-plan-confirm-cards`) — GitHub API `merged: true` @ `2026-09-14T17:24:23Z`.
 - **Shipped**: Clay polish for suggestion chips, plan option cards (badge + CSS hover; green inline removed), tool-confirm cards, execution plan cards — overrides in Piece 2 block of `toshi-ui.css` (source≡published). Component testids added.
 - **Pulse canary**: Re-verified after CSS touch — `.ds-table-ledger thead { backdrop-filter: blur(12px) }` + FROZEN banner + sidebar green pill intact.
 - **Staging deploy**: `depl-a2bedef0-…` @ `d68f32a6` **succeeded** (`deployment.succeeded`).
 - **Staging verify**: Playwright `e2e/toshi-piece2-cards-chips-verify.cjs` PASS (Pulse canary + computed clay `rgb(201,100,66)` / warm `rgb(245,244,237)` / radius 16).
+- **Stamp**: [#598](https://github.com/KlassApp-Foundation/KlassApp/pull/598) `ebb774ad` — GitHub API `merged: true`.
 - **Production**: **NOT deployed** — Piece 2 hold until coordinated four-surface cutover.
 - **Next**: Piece 2 docking/pill (≥1280 docked, ≤640 fullscreen). Pulse stays frozen.
 

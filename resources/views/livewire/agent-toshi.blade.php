@@ -7,6 +7,7 @@
          wire:click="show"
          onclick="document.body.classList.remove('toshi-collapsed');"
          class="toshi-pill"
+         data-testid="toshi-pill"
          style="{{ $visible || $maximized ? 'display: none;' : '' }}">
         <div class="toshi-pill-avatar">
             <img src="{{ asset('images/klassapp-logo.svg') }}" class="toshi-pill-logo" alt="KlassApp">
