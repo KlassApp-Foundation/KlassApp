@@ -122,10 +122,87 @@ class DashboardController extends Controller
             'openToshiOnboarding' => $openToshiOnboarding,
             'feeTrend' => $feeTrend,
             'trendPeriod' => $trendPeriod,
+            'greeting' => $this->dashboardGreeting(Auth::user()),
+            'dashboardContextLine' => $this->dashboardContextLine(
+                $school_id,
+                (int) ($dashboard['studentCount'] ?? 0)
+            ),
             'eotKpis' => $school_id
                 ? \App\Http\Controllers\Admin\ReportCardsController::computeEotKpis($school_id)
                 : ['perClass' => [], 'perSubject' => [], 'perGender' => []],
         ] );
+    }
+
+    /**
+     * Kit home shell: time-of-day greeting + first name.
+     *
+     * @return array{phrase: string, name: string}
+     */
+    private function dashboardGreeting(User $user): array
+    {
+        $hour = (int) now()->timezone(config('app.timezone'))->format('G');
+        if ($hour < 12) {
+            $phrase = 'Good morning';
+        } elseif ($hour < 17) {
+            $phrase = 'Good afternoon';
+        } else {
+            $phrase = 'Good evening';
+        }
+
+        $profile = $user->userprofile;
+        $name = trim((string) ($profile->firstname ?? ''));
+        if ($name === '') {
+            $name = explode(' ', (string) $user->name)[0] ?: 'Admin';
+        }
+
+        return [
+            'phrase' => $phrase,
+            'name' => $name,
+        ];
+    }
+
+    /**
+     * Kit subtitle: academic year / current term / enrollment pulse.
+     */
+    private function dashboardContextLine(?int $schoolId, int $studentCount): string
+    {
+        $parts = [];
+
+        if ($schoolId) {
+            $year = SiteHelper::getAcademicYear($schoolId);
+            if ($year) {
+                $parts[] = $year->name ?: ($year->description ?: null);
+            }
+
+            if ($year) {
+                $term = \App\Models\AcademicTerm::query()
+                    ->where('school_id', $schoolId)
+                    ->where('academic_year_id', $year->id)
+                    ->where('status', 'current')
+                    ->orderByDesc('id')
+                    ->first();
+
+                if (! $term) {
+                    $today = now()->toDateString();
+                    $term = \App\Models\AcademicTerm::query()
+                        ->where('school_id', $schoolId)
+                        ->where('academic_year_id', $year->id)
+                        ->whereDate('starts_on', '<=', $today)
+                        ->whereDate('ends_on', '>=', $today)
+                        ->orderByDesc('id')
+                        ->first();
+                }
+
+                if ($term && $term->name) {
+                    $parts[] = $term->name;
+                }
+            }
+        }
+
+        $parts = array_values(array_filter($parts));
+        $prefix = $parts !== [] ? implode(' · ', $parts) : 'School overview';
+
+        return $prefix.' · '.number_format($studentCount).' students enrolled';
     }
 
     public function list(Request $request,$task_flag)

@@ -151,7 +151,10 @@ class DashboardEmptyStatePlanToProfileTest extends TestCase
             'openToshiOnboarding' => false,
             'pendingApprovals' => 0,
             'trendPeriod' => 'month',
-            'feeTrend' => ['labels' => [], 'values' => []],
+            'feeTrend' => [],
+            'greeting' => ['phrase' => 'Good morning', 'name' => 'Admin'],
+            'dashboardContextLine' => 'School overview · 12 students enrolled',
+            'eotKpis' => ['perClass' => [], 'perSubject' => [], 'perGender' => []],
         ]);
 
         $view->assertSee('ds-kpi-card', false);
@@ -159,6 +162,8 @@ class DashboardEmptyStatePlanToProfileTest extends TestCase
         $view->assertSee('Students', false);
         $view->assertSee('Teachers', false);
         $view->assertSee('Notice Board', false);
+        $view->assertSee('Connected tools', false);
+        $view->assertSee('data-testid="dashboard-live-badge"', false);
         $view->assertDontSee('data-testid="plan-usage-banner"', false);
         $view->assertDontSee('Freemium Plan', false);
         $view->assertDontSee('data-testid="dashboard-kpi-placeholder"', false);
