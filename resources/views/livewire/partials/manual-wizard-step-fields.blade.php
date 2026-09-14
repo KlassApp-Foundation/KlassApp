@@ -540,17 +540,13 @@
         <p class="manual-wizard-review-intro">
             Confirm everything looks right. Use Edit to jump back to a step — your later answers stay saved.
         </p>
-        <div class="manual-wizard-review-card" data-testid="wizard-review-card">
-            <div class="manual-wizard-review-header">Review &amp; confirm</div>
-            <div class="manual-wizard-review-body">
-                @forelse(($reviewSummary ?? []) as $row)
-                    <div class="manual-wizard-review-row" data-testid="wizard-review-{{ $row['key'] }}">
-                        <div class="manual-wizard-review-row-main">
+        <div class="manual-wizard-review-panels" data-testid="wizard-review-card">
+            @forelse(($reviewSummary ?? []) as $row)
+                <section class="manual-wizard-review-panel" data-testid="wizard-review-{{ $row['key'] }}">
+                    <header class="manual-wizard-review-panel-head">
+                        <div class="manual-wizard-review-panel-title">
                             <span class="manual-wizard-review-icon" aria-hidden="true">{{ $row['icon'] }}</span>
-                            <div>
-                                <div class="manual-wizard-review-label">{{ $row['label'] }}</div>
-                                <div class="manual-wizard-review-value">{{ $row['value'] }}</div>
-                            </div>
+                            <h3 class="manual-wizard-review-label">{{ $row['label'] }}</h3>
                         </div>
                         <button type="button"
                                 class="manual-wizard-review-edit"
@@ -558,11 +554,12 @@
                                 data-testid="wizard-edit-{{ $row['key'] }}">
                             Edit
                         </button>
-                    </div>
-                @empty
-                    <p class="text-sm text-gray-600">Nothing to review yet.</p>
-                @endforelse
-            </div>
+                    </header>
+                    <div class="manual-wizard-review-value">{{ $row['value'] }}</div>
+                </section>
+            @empty
+                <p class="text-sm text-gray-600">Nothing to review yet.</p>
+            @endforelse
         </div>
     </div>
 @endif
