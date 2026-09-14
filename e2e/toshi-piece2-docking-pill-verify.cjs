@@ -47,7 +47,8 @@ async function openToshi(page) {
   await page.evaluate(() => {
     document.body.classList.remove('toshi-collapsed');
   });
-  await page.locator('[data-toshi-root]').waitFor({ state: 'attached', timeout: 30000 });
+  // Staging hibernation / Livewire boot can lag past 30s on cold requests.
+  await page.locator('[data-toshi-root]').waitFor({ state: 'attached', timeout: 90000 });
   const panel = page.locator('#toshi-panel');
   if (!(await panel.isVisible().catch(() => false))) {
     const pill = page.locator('[data-testid="toshi-pill"], #toshi-pill');
@@ -58,11 +59,11 @@ async function openToshi(page) {
       await page.evaluate(async () => {
         const c = window.Livewire?.all?.().find((x) => (x.name || '').includes('agent-toshi'));
         if (c?.$wire?.set) await c.$wire.set('visible', true);
-      });
-      await page.waitForTimeout(600);
+      }).catch(() => null);
+      await page.waitForTimeout(800);
     }
   }
-  await page.locator('[data-testid="toshi-header"]').waitFor({ state: 'visible', timeout: 30000 });
+  await page.locator('[data-testid="toshi-header"]').waitFor({ state: 'visible', timeout: 60000 });
 }
 
 async function measureDock(page) {
@@ -134,8 +135,22 @@ async function measureDock(page) {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     const page = await ctx.newPage();
     await login(page, role.email);
-    await page.goto(`${BASE}${role.home}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
-    await openToshi(page);
+    console.log(`[${role.key}] post-login url=${page.url()}`);
+    await page.goto(`${BASE}${role.home}`, { waitUntil: 'load', timeout: 120000 });
+    await page.waitForTimeout(1500);
+    console.log(`[${role.key}] home url=${page.url()}`);
+    try {
+      await openToshi(page);
+    } catch (err) {
+      await page.screenshot({ path: path.join(OUT, `${role.key}-open-fail.png`), fullPage: false }).catch(() => null);
+      const snap = await page.evaluate(() => ({
+        url: location.href,
+        hasRoot: !!document.querySelector('[data-toshi-root]'),
+        bodyClass: document.body.className,
+      })).catch(() => ({}));
+      console.error(`[${role.key}] openToshi failed`, snap);
+      throw err;
+    }
 
     const docked = await measureDock(page);
     roleReport.docked = docked;

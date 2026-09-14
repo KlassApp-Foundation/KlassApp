@@ -618,12 +618,23 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 2 Toshi docking/pill **IN FLIGHT** (`piece2/docking-pill`)
+## Current Status: September 14, 2026 — Four-surface program **COMPLETE on STAGING** (Pieces 1–4) — prod cutover pending
 
-- **Branch**: `piece2/docking-pill` — clay dock (≥1280 / 380px), collapse→pill+toggle, fullscreen ≤640; multi-role Admin+Teacher verify; Pulse frozen.
-- **Prior Piece 2 on staging**: PR1 [#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595) + harden [#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596); PR2 cards [#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597) + stamp [#598](https://github.com/KlassApp-Foundation/KlassApp/pull/598).
-- **Production**: **NOT deployed** — hold until coordinated four-surface cutover.
-- **Next**: Merge + staging deploy + Playwright Admin/Teacher → knowledge stamp; Piece 2 then complete on staging.
+- **Piece 2 CLOSED on staging**: docking/pill [#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599) `a012e5a1` — GitHub API `merged: true`. Clay dock ≥1280 (380px flex column, full-height, scrolling sidebar), `body.toshi-collapsed` → width 0 + toggle tab + pill, fullscreen ≤640. Pulse blocks untouched; source≡published `toshi-ui.css`.
+- **Piece 2 stack**: PR1 header/composer [#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595)+[#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596) → PR2 cards/chips [#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597)+[#598](https://github.com/KlassApp-Foundation/KlassApp/pull/598) → PR3 docking [#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599).
+- **Staging deploy**: `depl-a2bee5e6-…` @ `a012e5a1` **succeeded** (`deployment.succeeded`).
+- **Staging verify**: PHPUnit `ToshiPiece2DockingPillContractTest` 6/6 PASS; Playwright `e2e/toshi-piece2-docking-pill-verify.cjs` PASS for **Admin** (`phase4.admin@…`) **and Teacher** (`phase4.teacher@…`) — docked 1280 / collapsed pill / mobile 375; Pulse canary (ledger thead blur + FROZEN banner; dock block clay `#c96442`, no Pulse green).
+- **Four-surface on staging**: Piece 1 landing/auth/errors · Piece 2 Toshi · Piece 3 wizard · Piece 4 dashboard — all verified staging-only.
+- **Production**: **NOT deployed** — coordinated cutover decision is the next gate (no auto-prod).
+- **Staging note**: Teacher web login (usergroup 5) requires `settings.login_status=1`; staging row was missing and was upserted via Commands API for multi-role verify (`optimize:clear` after).
+
+## Previous: September 14, 2026 — Piece 2 Toshi docking/pill on **STAGING ONLY** ([#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599))
+
+- **Merged**: [#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599) `a012e5a1` (`piece2/docking-pill`) — GitHub API `merged: true`.
+- **Shipped**: Clay polish for dock accent/`::before`, layout-sibling `#toshi-toggle` / `.toshi-toggle-wrapper`, pill, ≤640 fullscreen top accent; testids on toggle/wrapper/pill; Pulse FROZEN section untouched.
+- **Staging deploy**: `depl-a2bee5e6-…` @ `a012e5a1` **succeeded**.
+- **Staging verify**: multi-role Admin+Teacher Playwright PASS (see Current Status).
+- **Production**: **NOT deployed** — four-surface cutover hold.
 
 ## Previous: September 14, 2026 — Piece 2 Toshi panel PR2 on **STAGING ONLY** ([#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597))
 
@@ -2057,6 +2068,20 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Files modified**: `knowledge.md`
 - **Key decisions**: Defer until after UI phase; use Cowork + voice guide, not DeepWiki.
 - **Status**: ✅ MERGED via [#581](https://github.com/KlassApp-Foundation/KlassApp/pull/581) `a87b9575`
+- **Edge cases flagged**: None
+
+### 2026-09-14: Piece 2 PR3 docking/pill/fullscreen — **MERGED + STAGING ONLY** ([#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599))
+- **Work done**: Clay chrome for dock (≥1280 / 380px), collapse pill+toggle, fullscreen ≤640; layout-sibling toggle selectors (outside `[data-toshi-root]`); vendor publish both CSS copies; PHPUnit docking contract; multi-role Playwright Admin+Teacher; Pulse canary re-checked.
+- **Files modified**: `packages/toshi-ui/resources/css/toshi-ui.css`, `public/vendor/toshi-ui/toshi-ui.css`, `layouts/app.blade.php`, `layouts/superadmin-app.blade.php`, `ToshiPiece2DockingPillContractTest.php`, `e2e/toshi-piece2-docking-pill-verify.cjs`, `knowledge.md`
+- **Key decisions**: Styling only — preserve existing dock/collapse/fullscreen behavior; never edit Pulse blocks; teacher login needs `settings.login_status=1` (staging was MISSING).
+- **Status**: ✅ MERGED `a012e5a1` · staging `depl-a2bee5e6-…` · Playwright Admin+Teacher PASS · **Piece 2 CLOSED on staging** · four-surface staging-complete · **prod held**
+- **Edge cases flagged**: `AuthenticatesUsers::checkstatus` gates usergroup 5 on `config('settings.login_status')==1`; empty/missing setting → “Invalid Credentials” even when password hash is correct.
+
+### 2026-09-14: Piece 2 PR2 cards/chips stamp — **MERGED** ([#598](https://github.com/KlassApp-Foundation/KlassApp/pull/598))
+- **Work done**: Knowledge Current Status / Session Log for #597 `d68f32a6` + staging `depl-a2bedef0-…`.
+- **Files modified**: `knowledge.md`
+- **Key decisions**: Docs-only stamp after live verify.
+- **Status**: ✅ MERGED `ebb774ad` · **prod held**
 - **Edge cases flagged**: None
 
 ### 2026-09-14: Piece 2 PR1 harden + stamp — **MERGED** ([#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596))
