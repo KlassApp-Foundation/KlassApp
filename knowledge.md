@@ -609,7 +609,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 1 landing/auth/error `--d-*` alignment on **STAGING ONLY** ([#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564))
+## Current Status: September 14, 2026 — Piece 4 dashboard home shell on **STAGING ONLY** ([#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566))
+
+- **Merged**: [#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566) `c39b45b3` (`feat/dashboard-home-shell-kit`) — GitHub API `merged: true`.
+- **Shipped**: Admin home kit composition — time-of-day greeting + LIVE badge, full-width `ds-kpi-card` grid, fees+connected-tools topfold; incomplete setup keeps product demo under greeting/LIVE.
+- **Staging deploy**: `depl-a2be3f57-…` @ `c39b45b3` **succeeded**.
+- **Staging verify**: Playwright `e2e/dashboard-home-shell-verify.cjs` PASS 375/414/768/1280 (phase4 admin is incomplete-setup → greeting+LIVE+demo); Pulse ledger thead `blur(12px)` on `/admin/students`.
+- **Production**: **NOT deployed** — four-surface program hold.
+- **Next**: students roster → fees → exams/marks → residual `dashboard-kpi-card` cleanup.
+
+## Previous: September 14, 2026 — Piece 1 landing/auth/error `--d-*` alignment on **STAGING ONLY** ([#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564))
 
 - **Merged to `main`**: [#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) `e5c22ac5` (landing canvas/ink/Sora+DM Sans) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) `33558296` (auth ds-btn metrics + blue focus) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564) `6c76f36d` (error parchment + ds-btn metrics + blue focus).
 - **Staging deploys**: `depl-a2be32ba-…` (#562) · `depl-a2be3755-…` (#563) · `depl-a2be39e9-…` (#564) — all succeeded on `env-a2b86c90-…`.
@@ -1888,6 +1897,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Piece 4 dashboard home shell — **MERGED + STAGING ONLY** ([#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566))
+- **Work done**: Kit parity for admin home — greeting/LIVE, full-width KPI grid, fees+connected-tools topfold; empty-state demo coexistence. Pulse canaries unchanged.
+- **Files modified**: `DashboardController.php`, `admin/dashboard/dashboard.blade.php`, `dashboard-refresh.css`, tests, `e2e/dashboard-home-shell-verify.cjs`
+- **Key decisions**: Keep real fee Chart.js in topfold (not invent weekly CSS bars); Drive shown as Live capability without inventing a connector status table; staging verify used phase4 incomplete-setup path + students Pulse blur.
+- **Status**: ✅ MERGED `c39b45b3` · staging `depl-a2be3f57-…` · **prod held**
+- **Edge cases flagged**: `phase4.admin@klassapp.xyz` on staging currently `setupIncomplete` — complete-setup KPI Pulse green path covered by PHPUnit view contracts, not staging Playwright this PR.
 
 ### 2026-09-14: Piece 1 landing/auth/error `--d-*` alignment — **MERGED + STAGING ONLY** ([#562](https://github.com/KlassApp-Foundation/KlassApp/pull/562) · [#563](https://github.com/KlassApp-Foundation/KlassApp/pull/563) · [#564](https://github.com/KlassApp-Foundation/KlassApp/pull/564))
 - **Work done**: Atomic PRs aligning public surfaces to DESIGN_SYSTEM canvas `#FAFAF5`, ink `#1E293B`, Sora+DM Sans (landing), and ds-btn metrics + blue focus (auth + errors). PHPUnit contracts + Playwright locks at 375/414/768/1280. User directive: keep everything on staging — **no production deploy**.
