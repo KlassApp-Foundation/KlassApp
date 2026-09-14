@@ -113,13 +113,13 @@
 
 @elseif($stepKey === 'standards')
     <div class="manual-wizard-structure" data-testid="wizard-structure-step">
-        <p class="text-sm text-gray-600 mb-4" style="color:#64748B;">
+        <p class="manual-wizard-structure-intro">
             Your classes are ready from school category. Optionally add streams or invite a class teacher —
             both are optional. Click Continue anytime to skip.
         </p>
 
         @if($structureFlash ?? false)
-            <div class="mb-4 text-sm text-green-700 font-medium" data-testid="wizard-structure-flash">{{ $structureFlash }}</div>
+            <div class="manual-wizard-structure-flash" data-testid="wizard-structure-flash">{{ $structureFlash }}</div>
         @endif
 
         @if(count($structureClasses ?? []) === 0)
@@ -129,58 +129,58 @@
                 <p class="text-xs text-gray-500 mt-1">No classes yet — add one to continue, or finish Academic Year with a UNEB category so classes auto-seed.</p>
             </div>
         @else
-            <div class="space-y-4">
+            <div class="manual-wizard-structure-list">
                 @foreach($structureClasses as $class)
                     @php $sid = (int) $class['section_id']; @endphp
-                    <div class="border border-gray-200 rounded-lg p-4" style="border-color:#E2E8F0;" wire:key="structure-class-{{ $sid }}" data-testid="wizard-structure-class-{{ $sid }}">
-                        <div class="flex flex-wrap items-start justify-between gap-2 mb-3">
+                    <div class="manual-wizard-structure-card" wire:key="structure-class-{{ $sid }}" data-testid="wizard-structure-class-{{ $sid }}">
+                        <div class="manual-wizard-structure-card-head">
                             <div>
-                                <h3 class="font-semibold text-gray-900" style="color:#0F172A;">{{ $class['name'] }}</h3>
+                                <h3 class="manual-wizard-structure-class-name">{{ $class['name'] }}</h3>
                                 @if(!empty($class['streams']))
-                                    <p class="text-xs text-gray-500 mt-1">
+                                    <p class="manual-wizard-structure-streams" data-testid="wizard-structure-streams-{{ $sid }}">
                                         Streams:
                                         @foreach($class['streams'] as $stream)
-                                            <span class="inline-block bg-gray-100 px-2 py-0.5 rounded mr-1">{{ $stream['label'] }}</span>
+                                            <span class="manual-wizard-stream-chip">{{ $stream['label'] }}</span>
                                         @endforeach
                                     </p>
                                 @else
-                                    <p class="text-xs text-gray-500 mt-1">No streams yet — undivided base class.</p>
+                                    <p class="manual-wizard-structure-streams is-empty" data-testid="wizard-structure-streams-empty-{{ $sid }}">No streams yet — undivided base class.</p>
                                 @endif
                             </div>
-                            <div class="text-xs text-gray-600">
+                            <div class="manual-wizard-structure-ct-status" data-testid="wizard-structure-ct-status-{{ $sid }}">
                                 @if(!empty($class['class_teacher_name']))
                                     CT: <strong>{{ $class['class_teacher_name'] }}</strong>
                                     @if(!empty($class['class_teacher_email']))
-                                        <span class="text-gray-400">({{ $class['class_teacher_email'] }})</span>
+                                        <span class="manual-wizard-structure-ct-email">({{ $class['class_teacher_email'] }})</span>
                                     @endif
                                 @else
-                                    <span class="text-gray-400">No class teacher yet</span>
+                                    <span class="manual-wizard-structure-ct-empty">No class teacher yet</span>
                                 @endif
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="manual-wizard-structure-card-body">
                             <div class="ds-form-group mb-0">
                                 <label class="ds-form-label" for="wizard-stream-{{ $sid }}">Add stream</label>
-                                <div class="flex gap-2">
+                                <div class="manual-wizard-structure-stream-row">
                                     <input id="wizard-stream-{{ $sid }}" type="text" class="ds-form-input w-full"
                                            wire:model="structureStreamDrafts.{{ $sid }}"
                                            placeholder="e.g. A, East, Science"
                                            data-testid="wizard-structure-stream-input-{{ $sid }}" />
-                                    <button type="button" class="ds-btn ds-btn-outline ds-btn-sm whitespace-nowrap"
-                                            wire:click="addStructureStream({{ $sid }})"
-                                            data-testid="wizard-structure-add-stream-{{ $sid }}">Add</button>
+                                    <x-button type="button" variant="outline" size="sm" class="whitespace-nowrap"
+                                              wire:click="addStructureStream({{ $sid }})"
+                                              data-testid="wizard-structure-add-stream-{{ $sid }}">Add</x-button>
                                 </div>
                             </div>
 
                             @if(empty($class['class_teacher_id']))
-                                <div class="space-y-2" data-testid="wizard-structure-ct-{{ $sid }}">
+                                <div class="manual-wizard-structure-ct-form" data-testid="wizard-structure-ct-{{ $sid }}">
                                     <label class="ds-form-label">Invite Class Teacher</label>
                                     <input type="text" inputmode="email" autocomplete="email" class="ds-form-input w-full"
                                            wire:model="structureCtDrafts.{{ $sid }}.email"
                                            placeholder="teacher@school.ug"
                                            data-testid="wizard-structure-ct-email-{{ $sid }}" />
-                                    <select class="ds-form-input w-full"
+                                    <select class="ds-form-input ds-form-select w-full"
                                             wire:model.live="structureCtDrafts.{{ $sid }}.existing_teacher_id"
                                             data-testid="wizard-structure-ct-existing-{{ $sid }}">
                                         <option value="">— Create a new teacher —</option>
@@ -195,11 +195,12 @@
                                                data-testid="wizard-structure-ct-name-{{ $sid }}" />
                                         <input type="text" class="ds-form-input w-full"
                                                wire:model="structureCtDrafts.{{ $sid }}.phone"
-                                               placeholder="Phone (optional)" />
+                                               placeholder="Phone (optional)"
+                                               data-testid="wizard-structure-ct-phone-{{ $sid }}" />
                                     @endif
-                                    <button type="button" class="ds-btn ds-btn-outline ds-btn-sm"
-                                            wire:click="inviteStructureClassTeacher({{ $sid }})"
-                                            data-testid="wizard-structure-invite-ct-{{ $sid }}">Send invite</button>
+                                    <x-button type="button" variant="outline" size="sm"
+                                              wire:click="inviteStructureClassTeacher({{ $sid }})"
+                                              data-testid="wizard-structure-invite-ct-{{ $sid }}">Send invite</x-button>
                                 </div>
                             @endif
                         </div>

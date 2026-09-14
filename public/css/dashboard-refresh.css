@@ -3161,6 +3161,102 @@ body.toshi-manual-wizard [data-toshi-root] {
     letter-spacing: 0.04em;
 }
 
+/* Piece 3 PR3 — Structure & class teacher checkpoint cards (kit parity) */
+.manual-wizard-structure-intro {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0 0 16px;
+    line-height: 1.5;
+}
+
+.manual-wizard-structure-flash {
+    font-size: 14px;
+    font-weight: 500;
+    color: #15803d;
+    margin: 0 0 16px;
+}
+
+.manual-wizard-structure-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.manual-wizard-structure-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    background: #ffffff;
+}
+
+.manual-wizard-structure-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.manual-wizard-structure-class-name {
+    font-family: Sora, sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: #0f172a;
+    margin: 0;
+}
+
+.manual-wizard-structure-streams {
+    font-size: 12px;
+    color: #64748b;
+    margin: 4px 0 0;
+}
+
+.manual-wizard-stream-chip {
+    display: inline-block;
+    background: #f1f5f9;
+    padding: 1px 8px;
+    border-radius: 4px;
+    margin-right: 4px;
+}
+
+.manual-wizard-structure-ct-status {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.manual-wizard-structure-ct-email {
+    color: #94a3b8;
+}
+
+.manual-wizard-structure-ct-empty {
+    color: #94a3b8;
+}
+
+.manual-wizard-structure-card-body {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .manual-wizard-structure-card-body {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.manual-wizard-structure-stream-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.manual-wizard-structure-ct-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 /* Wave 3 review / preview — Toshi review-card structure, DS colors */
 .manual-wizard-review-intro {
     font-size: 14px;
