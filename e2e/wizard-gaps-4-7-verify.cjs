@@ -51,13 +51,13 @@ async function gotoWizardStep(page, stepKey) {
   const studentChrome = await page.evaluate(() => ({
     gender: !!document.querySelector('[data-testid=wizard-student-gender]'),
     dob: !!document.querySelector('[data-testid=wizard-student-dob]'),
-    schoolId: !!document.querySelector('#wizard-student-school-id'),
-    boardReg: !!document.querySelector('#wizard-student-board-reg'),
+    schoolId: !!document.querySelector('[data-testid=wizard-student-school-id], #wizard-student-school-id'),
   }));
   console.log('studentChrome', JSON.stringify(studentChrome));
   if (!studentChrome.gender) throw new Error('student gender missing');
   if (!studentChrome.dob) throw new Error('student dob missing');
-  if (!studentChrome.schoolId || !studentChrome.boardReg) throw new Error('student ID fields missing');
+  if (!studentChrome.schoolId) throw new Error('student school id missing');
+  // UNEB reg is gated to candidate classes (P.7 / S.4 / S.6) — may be absent until class selected.
 
   await page.selectOption('[data-testid=wizard-student-gender]', 'female');
   await page.fill('[data-testid=wizard-student-name]', 'E2E Gender Student');

@@ -1346,6 +1346,9 @@ class ManualOnboardingWizard extends Component
     public function updatedStudentClass(): void
     {
         $this->applyStudentStreamDefaultForClass();
+        if (! OnboardingEngine::isCandidateClass(trim($this->studentClass))) {
+            $this->studentBoardRegNumber = '';
+        }
     }
 
     /**
