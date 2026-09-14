@@ -618,7 +618,17 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 3 gaps 4–7 on **STAGING ONLY** ([#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591))
+## Current Status: September 14, 2026 — Piece 3 onboarding wizard **CLOSED on STAGING** ([#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593))
+
+- **Merged**: [#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593) `d07f0adb` (`feat/wizard-piece3-wrap`) — GitHub API `merged: true`.
+- **Wrap polish**: UNEB Reg No. on student form only for candidate classes (`isCandidateClass`); terms copy notes later admin date edits (flag-card deferred — not built).
+- **Piece 3 stack on staging**: shell/nav [#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577) → size/category/plan [#579](https://github.com/KlassApp-Foundation/KlassApp/pull/579) → structure/CT [#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583) → bulk [#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586) → review [#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589) → gaps 4–7 [#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591) → wrap [#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593).
+- **Staging deploy**: `depl-a2bec8ed-…` @ `d07f0adb` **succeeded**.
+- **Staging verify**: PHPUnit wrap PASS; Playwright `e2e/wizard-piece3-wrap-verify.cjs` PASS (shell 17 dots + redesigned steps + UNEB gate) @ 375/414/768/1280.
+- **Production**: **NOT deployed** — hold until coordinated four-surface / Piece 3 cutover.
+- **Next**: Coordinated production cutover when ready (or other product work).
+
+## Previous: September 14, 2026 — Piece 3 gaps 4–7 on **STAGING ONLY** ([#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591))
 
 - **Merged**: [#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591) `e7265574` (`feat/wizard-onboarding-gaps-4-7`) — GitHub API `merged: true`.
 - **Shipped**: (4) student gender + template Gender / School Student ID / UNEB Reg No. / optional DOB; (5) teacher class×subject → real `Teacherlink`; (6) fees name/amount/whole-school|class/term/yearly; (7) multi-term prefill Term 1–3 + mark current (no one-term auto-advance). Deferred: editable term dates later / flag-card UI — not built.
@@ -1979,6 +1989,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Piece 3 wrap — UNEB candidate gate + staging closeout — **MERGED + STAGING ONLY** ([#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593))
+- **Work done**: Gate student UNEB Reg field to `isCandidateClass`; terms deferral copy; wrap PHPUnit + Playwright smoke across redesigned steps; stamp Piece 3 **CLOSED on staging**.
+- **Files modified**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `WizardPiece3WrapTest.php`, `e2e/wizard-piece3-wrap-verify.cjs`, `e2e/wizard-gaps-4-7-verify.cjs`, `knowledge.md`
+- **Key decisions**: Flag-card / later term-date editing still deferred; production cutover remains coordinated hold.
+- **Status**: ✅ MERGED `d07f0adb` · staging `depl-a2bec8ed-…` · Playwright PASS · **prod held** · Piece 3 staging stack complete
+- **Edge cases flagged**: Primary-only demo may lack P.7 in class select — UNEB hide path still verified; candidate show path asserted in PHPUnit when a candidate section exists.
 
 ### 2026-09-14: Piece 3 gaps 4–7 (student fields, teacherlinks, fees, multi-term) — **MERGED + STAGING ONLY** ([#591](https://github.com/KlassApp-Foundation/KlassApp/pull/591))
 - **Work done**: Gender on student form + template; School Student ID / UNEB / optional DOB on template; teacher class×subject → `Teacherlink`; fees scope/term/yearly drafts; terms prefill Term 1–3 + mark current (removed one-term early-return). PHPUnit + Playwright @ four viewports; staging deploy only.
