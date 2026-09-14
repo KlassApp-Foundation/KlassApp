@@ -609,7 +609,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Pulse styling global consistency LIVE ([PR #555](https://github.com/KlassApp-Foundation/KlassApp/pull/555) MERGED+DEPLOYED)
+## Current Status: September 14, 2026 — Dashboard prefers-reduced-motion LIVE ([PR #558](https://github.com/KlassApp-Foundation/KlassApp/pull/558) MERGED+DEPLOYED)
+
+- **Merged**: [#558](https://github.com/KlassApp-Foundation/KlassApp/pull/558) merge `cc01623e` (`fix/dashboard-reduced-motion`) — `@media (prefers-reduced-motion: reduce)` disables LIVE badge sheen, LIVE pulsing dot, and `.ds-loading-dot` bounce in `dashboard-refresh.css`.
+- **Also documented**: real `STUDENT_SIZE_OPTIONS`, `SchoolCategorySeeder::CATEGORIES`, and `OnboardingStepsService::ALL_STEPS` order in `DESIGN_SYSTEM.md` (replacing Claude Design kit placeholders).
+- **Production deploy**: `depl-a2be2723-2d2d-478c-bc4d-2a1babea3c40` @ `cc01623e` **succeeded**.
+- **Live verify**: `https://klassapp.xyz/css/dashboard-refresh.css` contains the media query; Playwright against prod CSS with `emulateMedia({ reducedMotion: 'reduce' })` → all three `animation-name: none`.
+- **Still open**: `d-pulse` (save indicator) and `toshi-spin` not yet under reduced-motion; OD Claude Design dump React kit still has wrong inferred labels (grounding is DESIGN_SYSTEM.md / OD `klassapp` DESIGN.md).
+
+## Previous: September 14, 2026 — Pulse styling global consistency LIVE ([PR #555](https://github.com/KlassApp-Foundation/KlassApp/pull/555) MERGED+DEPLOYED)
 
 - **Merged**: [#555](https://github.com/KlassApp-Foundation/KlassApp/pull/555) merge `cb140999` (`fix/pulse-global-consistency`) — SchoolAdmin dashboard KPIs → `<x-ds-kpi-card>`; Pulse table rules extended to `.ds-table-ledger` in `packages/toshi-ui/resources/css/toshi-ui.css` + published `public/vendor/toshi-ui/toshi-ui.css`.
 - **Follow-up**: [#556](https://github.com/KlassApp-Foundation/KlassApp/pull/556) merge `1238e9ff` — view tests assert `ds-kpi-card` on complete-setup admin dashboard renders.
@@ -10260,5 +10268,6 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Work done**: Confirmed gap was never shipped (only documented in DESIGN_SYSTEM.md). Added `@media (prefers-reduced-motion: reduce)` in `public/css/dashboard-refresh.css` disabling LIVE badge sheen, LIVE pulsing dot, and `.ds-loading-dot` bounce. Documented real onboarding constants (`STUDENT_SIZE_OPTIONS`, `SchoolCategorySeeder::CATEGORIES`, `ALL_STEPS` order) replacing Claude Design kit placeholders. PHPUnit `ReducedMotionContractTest`; Playwright emulateMedia assert animations → `none` under reduce.
 - **Files modified**: `public/css/dashboard-refresh.css`, `resources/views/components/DESIGN_SYSTEM.md`, `tests/Feature/DesignSystem/ReducedMotionContractTest.php`, `knowledge.md`; OD mirror `~/open-design/design-systems/klassapp/DESIGN.md` (out of repo).
 - **Key decisions**: Only the three DESIGN_SYSTEM-named loops; leave `d-pulse` / `toshi-spin` for a follow-up. Solid badge/dots remain visible — animation only stops.
-- **Status**: 🚧 PR opening / shipping
-- **Edge cases flagged**: Claude Design React kit still has wrong inferred size/category labels until someone edits that dump; grounding is DESIGN_SYSTEM.md + OD `klassapp` DESIGN.md.
+- **Status**: ✅ MERGED #558 (`cc01623e`) + DEPLOYED `depl-a2be2723-…` + live CSS/Playwright verified
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/558
+- **Edge cases flagged**: Claude Design React kit still has wrong inferred size/category labels until someone edits that dump; grounding is DESIGN_SYSTEM.md + OD `klassapp` DESIGN.md. `d-pulse` / `toshi-spin` still lack reduced-motion.
