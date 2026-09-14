@@ -178,6 +178,11 @@ class AgentToshi extends Component
     public $feeFormLevel = '';
     public $feeFormClass = '';
     public $feeFormTerm = '';
+    /** Explicit yearly fee (not tied to a term) — mirrors wizard feeIsYearly. */
+    public bool $feeFormIsYearly = false;
+    /** After terms are confirmed, show mark-current picker (mirrors wizard). */
+    public bool $showTermCurrentPicker = false;
+    public string $currentTermName = '';
     public $showExamForm = false;
     public $examFormTerm = '';
     public $examFormType = '';
@@ -1377,6 +1382,7 @@ class AgentToshi extends Component
             || $this->showStudentForm
             || $this->showFeeForm
             || $this->showExamForm
+            || $this->showTermCurrentPicker
             || (
                 $this->substep === 6
                 && in_array($this->steps[$this->step] ?? null, ['teachers', 'students', 'fees', 'exams'], true)
@@ -1408,6 +1414,11 @@ class AgentToshi extends Component
         }
         if ($this->showExamForm || ($stepName === 'exams' && $this->substep === 6)) {
             $this->doneExams();
+
+            return true;
+        }
+        if ($this->showTermCurrentPicker || ($stepName === 'terms' && $this->substep === 3)) {
+            $this->doneTermsCurrent();
 
             return true;
         }
@@ -1887,6 +1898,7 @@ class AgentToshi extends Component
         $this->feeFormLevel = '';
         $this->feeFormClass = '';
         $this->feeFormTerm = '';
+        $this->feeFormIsYearly = false;
         $this->substep = 6;
         $this->botSay("Let's add fee categories. Use the form below to add each fee.");
     }
@@ -1901,21 +1913,106 @@ class AgentToshi extends Component
             return;
         }
 
+        $isYearly = (bool) $this->feeFormIsYearly;
         $this->actionData['fees'][] = [
             'name' => $name,
             'amount' => $amount,
             'level' => $this->feeFormLevel,
             'class' => $this->feeFormClass,
-            'term' => $this->feeFormTerm,
+            'term' => $isYearly ? '' : $this->feeFormTerm,
+            'is_yearly' => $isYearly,
         ];
         $this->feeFormName = '';
         $this->feeFormAmount = '';
         $this->feeFormLevel = '';
         $this->feeFormClass = '';
         $this->feeFormTerm = '';
+        $this->feeFormIsYearly = false;
 
         $count = count($this->actionData['fees']);
-        $this->botSay("Added **{$name}** at " . number_format((float)$amount, 0) . " UGX ({$count} so far). Add another or click **Continue**.");
+        $period = $isYearly ? 'yearly' : 'term';
+        $this->botSay("Added **{$name}** at " . number_format((float)$amount, 0) . " UGX ({$period}, {$count} so far). Add another or click **Continue**.");
+    }
+
+    /**
+     * Mark which collected term is current (wizard parity).
+     */
+    public function markTermCurrent(string $name): void
+    {
+        $name = trim($name);
+        if ($name === '' || $this->terms === []) {
+            return;
+        }
+
+        $matched = false;
+        foreach ($this->terms as $term) {
+            if (strcasecmp(trim((string) ($term['name'] ?? '')), $name) === 0) {
+                $matched = true;
+                $name = trim((string) $term['name']);
+                break;
+            }
+        }
+        if (! $matched) {
+            $this->botSay("I don't recognise that term. Choose one of: " . $this->termNamesList() . '.');
+
+            return;
+        }
+
+        $this->currentTermName = $name;
+        $this->applyCurrentStatusToTerms();
+        $this->botSay("**{$name}** marked as the current term. Tap **Continue** when ready.");
+    }
+
+    public function doneTermsCurrent(): void
+    {
+        if ($this->terms === []) {
+            $this->showTermCurrentPicker = false;
+            $this->substep = 0;
+            $this->advance();
+
+            return;
+        }
+
+        if (trim($this->currentTermName) === '') {
+            $this->currentTermName = trim((string) ($this->terms[0]['name'] ?? ''));
+        }
+        $this->applyCurrentStatusToTerms();
+        $this->showTermCurrentPicker = false;
+        $this->botSay('Current term: **'.$this->currentTermName.'**.');
+        $this->substep = 0;
+        $this->advance();
+    }
+
+    private function promptForCurrentTerm(): void
+    {
+        $this->awaitingConfirm = false;
+        $this->showTermCurrentPicker = true;
+        $this->currentTermName = trim((string) ($this->terms[0]['name'] ?? ''));
+        $this->applyCurrentStatusToTerms();
+        $this->substep = 3;
+        $this->botSay(
+            'Which term is **current** right now? Tap **Mark current** on one term, then **Continue**. '
+            .'(Defaults to '.$this->currentTermName.' if you Continue without changing.)'
+        );
+    }
+
+    private function applyCurrentStatusToTerms(): void
+    {
+        $current = trim($this->currentTermName);
+        foreach ($this->terms as $i => $term) {
+            $name = trim((string) ($term['name'] ?? ''));
+            $this->terms[$i]['status'] = ($current !== '' && strcasecmp($name, $current) === 0)
+                ? 'current'
+                : 'next';
+        }
+    }
+
+    private function termNamesList(): string
+    {
+        return implode(', ', array_filter(array_map(
+            fn ($t) => trim((string) ($t['name'] ?? '')),
+            $this->terms
+        )));
     }
 
     public function removeFee(int $index): void
@@ -5289,8 +5386,7 @@ class AgentToshi extends Component
         if ($this->substep === 1) {
             $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
             if ($yes) {
-                $this->substep = 0;
-                $this->advance();
+                $this->promptForCurrentTerm();
                 return;
             }
             $this->botSay("Please enter your custom terms (e.g. Term I, Term II, Term III):");
@@ -5311,8 +5407,19 @@ class AgentToshi extends Component
                 $this->terms[] = ['name' => $name, 'start' => now()->startOfYear(), 'end' => now()->endOfYear()];
             }
             $this->botSay("**" . count($this->terms) . "** terms saved: " . implode(', ', $names));
-            $this->substep = 0;
-            $this->advance();
+            $this->promptForCurrentTerm();
+            return;
+        }
+
+        // substep 3: explicit current-term selection (wizard parity)
+        if ($this->substep === 3) {
+            $lower = strtolower(trim($text));
+            if (in_array($lower, ['done', 'continue', 'next', 'ok', 'okay'], true)) {
+                $this->doneTermsCurrent();
+
+                return;
+            }
+            $this->markTermCurrent($text);
             return;
         }
     }
@@ -5965,9 +6072,14 @@ class AgentToshi extends Component
                     $entry['level'] = $level;
                 }
 
+                $isYearly = ! empty($fee['is_yearly']);
                 $term = trim((string) ($fee['term'] ?? ''));
-                if ($term !== '') {
+                if ($isYearly) {
+                    $entry['is_yearly'] = true;
+                    // Yearly fees are not tied to a term — do not pass term through.
+                } elseif ($term !== '') {
                     $entry['term'] = $term;
+                    $entry['is_yearly'] = false;
                 }
 
                 $structured[] = $entry;
