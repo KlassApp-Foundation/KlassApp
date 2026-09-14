@@ -609,7 +609,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 13, 2026 — DS table striped + `.ds-btn-md` LIVE ([PR #546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) MERGED+DEPLOYED)
+## Current Status: September 14, 2026 — Claude Design export in-repo ([PR #553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) MERGED — docs + static assets, no deploy)
+
+- **Merged**: [#553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) merge `e4cab345` (`docs/design-system-claude-export`) — GitHub API `merged: true`, `mergedAt` 2026-09-14T07:52:23Z.
+- **Shipped**: Production-validated `resources/views/components/DESIGN_SYSTEM.md`; canonical brand SVGs in `resources/assets/brand/`; token CSS mirrors in `resources/assets/design-system/tokens/`; `public/images/` mirrors + `.gitignore` fix for trackable brand SVGs.
+- **Verify**: 40/40 spot-checks vs `dashboard-refresh.css` before merge; GitHub main sanity: DESIGN_SYSTEM.md ~14KB, 13 files under `resources/assets/brand/`, `colors.css` present.
+- **No deploy** — documentation and static SVGs only.
+
+## Previous: September 13, 2026 — DS table striped + `.ds-btn-md` LIVE ([PR #546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) MERGED+DEPLOYED)
 
 - **Merged**: [#546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) merge `14f91188` (`fix/table-striped-prop-and-btn-md-size`) — `mergedAt` 2026-09-13T01:06:52Z.
 - **Shipped**: `<x-table striped>` emits `ds-table-striped`; dead `hover` prop removed (ledger hover is unconditional); `.ds-btn-md` restored as deliberate no-op matching `.ds-btn` base metrics.
@@ -10224,3 +10231,11 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Evidence**: `e2e/screenshots/favicon-audit/prod-verify.json` (+ prior `regenerated-icons.png`)
 - **Status**: ✅ MERGED + DEPLOYED + live-verified on production
 - **Edge cases flagged**: `beforeinstallprompt` still not asserted on prod (Chromium install UX heuristics); assets meet install criteria.
+
+### 2026-09-14: Claude Design system export → repo DESIGN_SYSTEM.md + brand assets — **MERGED #553**
+- **Work done**: Opened/merged [#553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) (`docs/design-system-claude-export` → `main`). GitHub API `merged: true` (`merge_commit_sha` `e4cab34510d99e2a2e9fc37383373047b459aee8`, `merged_at` 2026-09-14T07:52:23Z).
+- **Shipped**: Replaced stale `DESIGN_SYSTEM.md` with production-validated content (tokens, badge hexes, `.ds-table-ledger`, responsiveness, brand rules). Canonical brand SVGs + README/FAVICONS in `resources/assets/brand/`; token CSS in `resources/assets/design-system/tokens/`; mirrors in `public/images/`; `.gitignore` fixed (`public/images/*` + re-includes).
+- **Corrections vs export**: Table `striped` works (PR #546); `.ds-btn-md` has a CSS rule. Old doc wrong on Tailwind version, table class, badge colours.
+- **GitHub sanity** (post-merge on `main`): DESIGN_SYSTEM.md present (~14KB); 13 brand assets; key strings (`v4.3.3`, `ds-table-ledger`, `#f0eee6`, `resources/assets/brand`) confirmed via raw content fetch.
+- **Status**: ✅ MERGED — no deploy (docs + static SVGs only)
+- **Edge cases flagged**: Favicon PNGs may still be from pre-export icon bytes (#549); optional regen from new `klassapp-icon.svg`. Stacked lockup vertical gap still needs design sign-off.
