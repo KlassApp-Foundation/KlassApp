@@ -23,15 +23,15 @@
         'lg' => 'ds-btn-lg',
         default => 'ds-btn-md',
     };
-    $classes = 'ds-btn ' . $variantClass . ' ' . $sizeClass . ' ' . $class;
+    $classes = trim('ds-btn '.$variantClass.' '.$sizeClass.' '.$class);
 @endphp
 
 @if($href)
-    <a href="{{ $href }}" class="{{ $classes }}" {{ $disabled ? 'aria-disabled="true" tabindex="-1"' : '' }}>
+    <a href="{{ $href }}" {{ $attributes->class($classes) }} @if($disabled) aria-disabled="true" tabindex="-1" @endif>
         {{ $slot }}
     </a>
 @else
-    <button type="{{ $type }}" class="{{ $classes }}" {{ $disabled ? 'disabled' : '' }}>
+    <button {{ $attributes->merge(['type' => $type])->class($classes) }} @disabled($disabled)>
         {{ $slot }}
     </button>
 @endif

@@ -1,26 +1,22 @@
 {{-- SPDX-License-Identifier: MIT --}}
-{{-- Wave 3 manual onboarding wizard shell --}}
-<div class="manual-wizard" wire:key="manual-wizard-root">
-    <div class="ds-page-head">
-        <div class="flex items-center gap-3">
-            <x-button href="{{ url('/admin/dashboard') }}" variant="ghost" size="sm" title="Back to dashboard">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-            </x-button>
-            <div>
-                <h1 class="ds-page-head-title">School setup</h1>
-                <p class="ds-page-head-sub">Step-by-step setup for {{ $school->name }}</p>
-            </div>
+{{-- Piece 3: manual onboarding wizard shell — kit chrome, real OnboardingStepsService steps --}}
+<div class="manual-wizard" wire:key="manual-wizard-root" data-testid="manual-wizard-shell">
+    <div class="manual-wizard-brand" data-testid="wizard-brand">
+        <div class="manual-wizard-brand-mark">
+            <img src="{{ asset('images/klassapp-icon.svg') }}" alt="" width="28" height="28" onerror="this.style.display='none'" />
+            <span class="manual-wizard-brand-name">KlassApp</span>
         </div>
+        <span class="manual-wizard-brand-aside">Setting up without Toshi</span>
     </div>
 
     @if($finished)
         <x-card padding="lg" shadow="md" class="max-w-3xl mx-auto manual-wizard-card">
             <div class="text-center mb-6">
                 <div class="manual-wizard-done-icon" aria-hidden="true">✓</div>
-                <h2 class="text-2xl font-semibold text-gray-900" style="font-family:Sora,sans-serif;color:#0F172A;">
+                <h2 class="ds-page-head-title" style="margin-bottom:4px;">
                     {{ $school->fresh()->name }} is ready
                 </h2>
-                <p class="mt-2 text-sm text-gray-600" style="color:#64748B;">
+                <p class="ds-page-head-sub">
                     Based on what you set up, here are sensible next moves — not a generic checklist.
                 </p>
             </div>
@@ -43,15 +39,25 @@
             </div>
         </x-card>
     @elseif($this->currentStep)
-        @php $step = $this->currentStep; @endphp
+        @php
+            $step = $this->currentStep;
+            $isOptional = in_array($step['key'], \App\Services\OnboardingStepsService::OPTIONAL_STEPS, true);
+            $returningToReview = $returnToStepIndex !== null || $returnToStepKey !== null;
+        @endphp
         <x-card padding="lg" shadow="md" class="max-w-3xl mx-auto manual-wizard-card" wire:key="wizard-card-{{ $stepIndex }}-{{ $step['key'] }}">
-            <div class="mb-6">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500" style="color:#64748B;">
-                    Step {{ $stepIndex + 1 }} of {{ $this->stepCount }}
-                </p>
-                <h2 class="text-xl font-semibold mt-1" style="font-family:Sora,sans-serif;color:#0F172A;">
-                    <span class="mr-2" aria-hidden="true">{{ $step['icon'] }}</span>{{ $step['label'] }}
+            <div class="manual-wizard-step-head mb-6">
+                <h2 class="ds-page-head-title" data-testid="wizard-step-title">
+                    {{ $step['label'] }}
                 </h2>
+                <p class="ds-page-head-sub" data-testid="wizard-step-sub">
+                    Step {{ $stepIndex + 1 }} of {{ $this->stepCount }}
+                    @if($isOptional)
+                        · optional
+                    @endif
+                    @if($returningToReview && ($step['key'] ?? '') !== 'review')
+                        · Next returns you to review
+                    @endif
+                </p>
             </div>
 
             @if($errorMessage)
@@ -77,26 +83,34 @@
         </x-card>
     @endif
 
-    {{-- Footer chrome: Previous | progress dots | Next --}}
+    {{-- Footer chrome: Previous | progress dots | Continue --}}
     @if(! $finished && $this->stepCount > 0)
         @php
             $onReview = ($this->currentStep['key'] ?? '') === 'review';
-            $nextLabel = $onReview ? 'Create School' : (($stepIndex >= $this->stepCount - 1) ? 'Finish' : 'Next');
-            if ($returnToStepIndex !== null && ! $onReview) {
+            $returningToReview = $returnToStepIndex !== null || $returnToStepKey !== null;
+            if ($onReview) {
+                $nextLabel = 'Confirm & finish';
+                $nextVariant = 'success';
+            } elseif ($returningToReview) {
                 $nextLabel = 'Save & return';
+                $nextVariant = 'primary';
+            } else {
+                $nextLabel = 'Continue →';
+                $nextVariant = 'primary';
             }
-            if ($returnToStepKey !== null && ! $onReview) {
-                $nextLabel = 'Save & return';
-            }
+            $prevLabel = ($returningToReview && ! $onReview) ? 'Cancel edit' : '← Previous';
         @endphp
         <nav class="manual-wizard-nav" aria-label="Wizard navigation" data-testid="wizard-nav">
-            <button type="button"
-                    class="ds-btn ds-btn-outline ds-btn-md"
-                    wire:click="previous"
-                    @disabled($stepIndex === 0 && $returnToStepIndex === null && $returnToStepKey === null)
-                    data-testid="wizard-prev">
-                {{ ($returnToStepIndex !== null || $returnToStepKey !== null) && ! $onReview ? 'Cancel edit' : 'Previous' }}
-            </button>
+            <x-button
+                type="button"
+                variant="ghost"
+                size="sm"
+                wire:click="previous"
+                :disabled="$stepIndex === 0 && $returnToStepIndex === null && $returnToStepKey === null"
+                data-testid="wizard-prev"
+            >
+                {{ $prevLabel }}
+            </x-button>
 
             <div class="manual-wizard-progress" role="tablist" aria-label="Setup progress" data-testid="wizard-progress">
                 @foreach($steps as $i => $s)
@@ -110,24 +124,27 @@
                 @endforeach
             </div>
 
-            <button type="button"
-                    class="ds-btn ds-btn-primary ds-btn-md"
-                    wire:click="next"
-                    data-testid="wizard-next">
+            <x-button
+                type="button"
+                :variant="$nextVariant"
+                size="sm"
+                wire:click="next"
+                data-testid="wizard-next"
+            >
                 {{ $nextLabel }}
-            </button>
+            </x-button>
         </nav>
     @elseif($finished)
         <nav class="manual-wizard-nav" aria-label="Wizard navigation">
-            <button type="button" class="ds-btn ds-btn-outline ds-btn-md" wire:click="previous" data-testid="wizard-prev">
-                Previous
-            </button>
+            <x-button type="button" variant="ghost" size="sm" wire:click="previous" data-testid="wizard-prev">
+                ← Previous
+            </x-button>
             <div class="manual-wizard-progress" data-testid="wizard-progress">
                 @foreach($steps as $i => $s)
                     <span class="manual-wizard-dot is-complete" title="{{ $s['label'] }}"></span>
                 @endforeach
             </div>
-            <span class="ds-btn ds-btn-primary ds-btn-md" style="opacity:0.5;pointer-events:none;">Done</span>
+            <span class="ds-btn ds-btn-primary ds-btn-sm" style="opacity:0.5;pointer-events:none;">Done</span>
         </nav>
     @endif
 </div>

@@ -2961,10 +2961,36 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     margin-top: 14px;
 }
 
-/* ── Wave 3: manual wizard shell ── */
+/* ── Wave 3 / Piece 3: manual wizard shell ── */
 .manual-wizard {
     max-width: 880px;
     margin: 0 auto 48px;
+}
+.manual-wizard-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+.manual-wizard-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.manual-wizard-brand-name {
+    font-family: Sora, sans-serif;
+    font-weight: 700;
+    font-size: 21px;
+    letter-spacing: -0.02em;
+    color: var(--d-dark, #0F172A);
+}
+.manual-wizard-brand-aside {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--d-muted, #64748B);
+}
+.manual-wizard-step-head .ds-page-head-title {
+    margin-bottom: 4px;
 }
 .manual-wizard-card {
     margin-top: 8px;
@@ -2983,9 +3009,9 @@ body.toshi-collapsed [data-toshi-root] .toshi-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
-    max-width: 320px;
+    max-width: 420px;
 }
 .manual-wizard-dot {
     width: 10px;
