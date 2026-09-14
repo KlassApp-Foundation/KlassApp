@@ -45,6 +45,12 @@ async function login(page) {
   await page.waitForTimeout(1500);
   await page.waitForSelector('[data-testid=wizard-structure-step]');
 
+  // Capture empty-state chrome before mutations when present.
+  await page.screenshot({
+    path: path.join(OUT, 'structure-empty-1280.png'),
+    fullPage: true,
+  });
+
   const cards = page.locator('[data-testid^=wizard-structure-class-]');
   const cardCount = await cards.count();
   if (cardCount < 1) {
@@ -52,7 +58,6 @@ async function login(page) {
   }
   console.log('cards', cardCount);
 
-  // Empty-state canaries somewhere on the step (phase4 usually has undivided classes).
   const bodyText = await page.locator('[data-testid=wizard-structure-step]').innerText();
   if (!/No streams yet — undivided base class|Streams:/.test(bodyText)) {
     throw new Error('missing stream empty/populated chrome');
@@ -62,14 +67,18 @@ async function login(page) {
   }
   console.log('empty-or-populated chrome OK');
 
-  // Pick first card that still has stream empty + CT invite form when possible.
+  // Prefer a card with invite form (and empty streams when possible).
   let targetSid = null;
+  let inviteSid = null;
   for (let i = 0; i < cardCount; i++) {
     const card = cards.nth(i);
     const testid = await card.getAttribute('data-testid');
     const sid = testid.replace('wizard-structure-class-', '');
     const hasInvite = (await page.locator(`[data-testid=wizard-structure-invite-ct-${sid}]`).count()) > 0;
     const hasEmptyStreams = (await page.locator(`[data-testid=wizard-structure-streams-empty-${sid}]`).count()) > 0;
+    if (hasInvite) {
+      inviteSid = sid;
+    }
     if (hasInvite && hasEmptyStreams) {
       targetSid = sid;
       break;
@@ -79,12 +88,14 @@ async function login(page) {
     }
   }
   if (targetSid === null) {
-    // Fall back: any card with an Add stream button.
     const firstAdd = page.locator('[data-testid^=wizard-structure-add-stream-]').first();
     const addId = await firstAdd.getAttribute('data-testid');
     targetSid = addId.replace('wizard-structure-add-stream-', '');
   }
-  console.log('targetSid', targetSid);
+  if (inviteSid === null) {
+    inviteSid = targetSid;
+  }
+  console.log('targetSid', targetSid, 'inviteSid', inviteSid);
 
   const streamLabel = 'Kit' + Date.now().toString().slice(-5);
   await page.fill(`[data-testid=wizard-structure-stream-input-${targetSid}]`, streamLabel);
@@ -101,16 +112,18 @@ async function login(page) {
   }
   console.log('stream add OK', flash);
 
-  // Invite CT only when the form is still present on this card.
-  const inviteBtn = page.locator(`[data-testid=wizard-structure-invite-ct-${targetSid}]`);
-  if ((await inviteBtn.count()) > 0) {
+  // Invite CT — required live proof for inviteStructureClassTeacher.
+  const inviteBtn = page.locator(`[data-testid=wizard-structure-invite-ct-${inviteSid}]`);
+  if ((await inviteBtn.count()) === 0) {
+    throw new Error('no CT invite form available — clear a class_teacher_id on staging first');
+  }
+  {
     const email = `kit.ct.${Date.now()}@klassapp.xyz`;
-    await page.fill(`[data-testid=wizard-structure-ct-email-${targetSid}]`, email);
-    // Ensure "create new" path shows name/phone.
-    await page.selectOption(`[data-testid=wizard-structure-ct-existing-${targetSid}]`, '');
+    await page.fill(`[data-testid=wizard-structure-ct-email-${inviteSid}]`, email);
+    await page.selectOption(`[data-testid=wizard-structure-ct-existing-${inviteSid}]`, '');
     await page.waitForTimeout(500);
-    await page.fill(`[data-testid=wizard-structure-ct-name-${targetSid}]`, 'Kit Class Teacher');
-    await page.fill(`[data-testid=wizard-structure-ct-phone-${targetSid}]`, '0700123456');
+    await page.fill(`[data-testid=wizard-structure-ct-name-${inviteSid}]`, 'Kit Class Teacher');
+    await page.fill(`[data-testid=wizard-structure-ct-phone-${inviteSid}]`, '0700123456');
     await inviteBtn.click();
     await page.waitForTimeout(2500);
 
@@ -118,17 +131,14 @@ async function login(page) {
     if (!flash2) {
       throw new Error('inviteStructureClassTeacher produced no flash');
     }
-    const status = ((await page.locator(`[data-testid=wizard-structure-ct-status-${targetSid}]`).textContent()) || '').trim();
+    const status = ((await page.locator(`[data-testid=wizard-structure-ct-status-${inviteSid}]`).textContent()) || '').trim();
     if (!/CT:/i.test(status) || /No class teacher yet/i.test(status)) {
       throw new Error('CT status did not populate after invite: ' + status + ' flash=' + flash2);
     }
-    // Invite form should hide once CT assigned.
-    if ((await inviteBtn.count()) > 0) {
+    if ((await page.locator(`[data-testid=wizard-structure-invite-ct-${inviteSid}]`).count()) > 0) {
       throw new Error('CT invite form still visible after successful invite');
     }
     console.log('CT invite OK', flash2, status);
-  } else {
-    console.log('CT already assigned on target — skip invite mutation');
   }
 
   for (const vp of VIEWPORTS) {
