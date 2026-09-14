@@ -9,14 +9,28 @@
 
 @elseif($stepKey === 'student_size')
     <div class="ds-form-group">
-        <label class="ds-form-label" for="wizard-student-size">Approximate number of students<span class="text-red-500">*</span></label>
-        <select id="wizard-student-size" class="ds-form-input ds-form-select w-full" wire:model="studentSize" data-testid="wizard-student-size">
-            <option value="" disabled>Select range</option>
+        <label class="ds-form-label" id="wizard-student-size-label">Approximate number of students<span class="text-red-500">*</span></label>
+        <p class="text-xs text-gray-500 mt-1 mb-2">Helps tailor setup defaults for your school. You can change this later.</p>
+        <div class="manual-wizard-plan-grid manual-wizard-plan-grid--sizes"
+             data-testid="wizard-student-size"
+             role="radiogroup"
+             aria-labelledby="wizard-student-size-label">
             @foreach(\App\Services\OnboardingStepsService::STUDENT_SIZE_OPTIONS as $option)
-                <option value="{{ $option }}">{{ $option }}</option>
+                @php
+                    $isSelected = $studentSize === $option;
+                    $sizeSlug = \Illuminate\Support\Str::slug($option);
+                @endphp
+                <button type="button"
+                        class="manual-wizard-plan-card {{ $isSelected ? 'is-selected' : '' }}"
+                        wire:click="selectStudentSize({{ \Illuminate\Support\Js::from($option) }})"
+                        role="radio"
+                        aria-checked="{{ $isSelected ? 'true' : 'false' }}"
+                        data-testid="wizard-student-size-{{ $sizeSlug }}">
+                    <span class="manual-wizard-plan-name">{{ $option }}</span>
+                </button>
             @endforeach
-        </select>
-        <p class="text-xs text-gray-500 mt-1">Helps tailor setup defaults for your school. You can change this later.</p>
+        </div>
+        @error('studentSize') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
     </div>
 
 @elseif($stepKey === 'country')

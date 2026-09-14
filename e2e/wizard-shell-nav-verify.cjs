@@ -83,12 +83,17 @@ async function login(page) {
 
   await page.click('[data-step-key=student_size]');
   await page.waitForTimeout(1200);
-  await page.waitForSelector('#wizard-student-size');
-  const opts = await page.locator('#wizard-student-size option').allTextContents();
+  await page.waitForSelector('[data-testid=wizard-student-size]');
+  const sizeLabels = await page
+    .locator('[data-testid=wizard-student-size] .manual-wizard-plan-name')
+    .allTextContents();
   for (const size of REAL_SIZES) {
-    if (!opts.some((o) => o.trim() === size)) {
-      throw new Error('missing real size option: ' + size);
+    if (!sizeLabels.some((o) => o.trim() === size)) {
+      throw new Error('missing real size option: ' + size + ' got ' + JSON.stringify(sizeLabels));
     }
+  }
+  if (sizeLabels.some((l) => /1-100|1000\+|101-300/.test(l))) {
+    throw new Error('kit placeholder size leaked');
   }
   console.log('sizes OK');
 

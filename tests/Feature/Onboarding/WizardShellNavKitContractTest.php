@@ -40,6 +40,11 @@ class WizardShellNavKitContractTest extends TestCase
         $blade = file_get_contents(resource_path('views/livewire/partials/manual-wizard-step-fields.blade.php'));
 
         $this->assertStringContainsString('OnboardingStepsService::STUDENT_SIZE_OPTIONS', $blade);
+        $this->assertStringContainsString('selectStudentSize', $blade);
+        $this->assertStringContainsString('manual-wizard-plan-grid--sizes', $blade);
+        $this->assertStringContainsString('data-testid="wizard-student-size"', $blade);
+        // Size is a card radiogroup, not a <select>.
+        $this->assertDoesNotMatchRegularExpression('/<select[^>]*(id|data-testid)=["\']wizard-student-size/', $blade);
 
         foreach (OnboardingStepsService::STUDENT_SIZE_OPTIONS as $option) {
             $this->assertContains($option, [
@@ -66,6 +71,10 @@ class WizardShellNavKitContractTest extends TestCase
         $blade = file_get_contents(resource_path('views/livewire/partials/manual-wizard-step-fields.blade.php'));
 
         $this->assertStringContainsString('SchoolCategorySeeder::CATEGORIES', $blade);
+        $this->assertStringContainsString('selectSchoolCategory', $blade);
+        $this->assertStringContainsString('data-testid="wizard-category-options"', $blade);
+        $this->assertStringContainsString('data-testid="wizard-plan-cards"', $blade);
+        $this->assertStringContainsString('selectPlan', $blade);
 
         $this->assertSame([
             'nursery' => 'Nursery only',
@@ -81,6 +90,17 @@ class WizardShellNavKitContractTest extends TestCase
         $this->assertStringNotContainsString('primary_secondary', $blade);
 
         $this->assertCount(16, OnboardingStepsService::ALL_STEPS);
+    }
+
+    public function test_css_size_grid_is_two_columns_at_sm(): void
+    {
+        $css = file_get_contents(public_path('css/dashboard-refresh.css'));
+
+        $this->assertStringContainsString('.manual-wizard-plan-grid--sizes', $css);
+        $this->assertMatchesRegularExpression(
+            '/\.manual-wizard-plan-grid--sizes\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*1fr\)/s',
+            $css
+        );
     }
 
     public function test_x_button_forwards_wire_click_attributes(): void
