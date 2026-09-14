@@ -618,7 +618,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Four-surface program **COMPLETE on STAGING** (Pieces 1–4) — prod cutover pending
+## Current Status: September 14, 2026 — Wizard + Toshi parity bugs **MERGED + STAGING ONLY** ([#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601)) — prod cutover still pending
+
+- **Merged**: [#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601) `7e6ae1fe` (`fix/wizard-toshi-parity-bugs`) — GitHub API `merged: true`.
+- **Shipped**: Wizard plan empty-state no longer contradicts “select a plan”; finish errors list incomplete step labels; students Continue requires add or explicit Skip; Toshi `commitAll` passes gender + `school_student_id`/UNEB (legacy `lin` folded); Toshi chat form fields + plan empty messaging.
+- **Staging deploy**: `depl-a2befa13-…` @ `7e6ae1fe` **succeeded** (`deployment.succeeded`).
+- **Verify**: PHPUnit onboarding suite 38 PASS (incl. `WizardToshiParityBugsTest`); Playwright `e2e/wizard-toshi-parity-bugs-verify.cjs` PASS on staging (students Continue gate + Toshi gender/school-id in DOM).
+- **Four-surface on staging**: Pieces 1–4 complete; parity gates closed before cutover.
+- **Production**: **NOT deployed** — coordinated cutover still held.
+
+## Previous: September 14, 2026 — Four-surface program **COMPLETE on STAGING** (Pieces 1–4) — prod cutover pending
 
 - **Piece 2 CLOSED on staging**: docking/pill [#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599) `a012e5a1` — GitHub API `merged: true`. Clay dock ≥1280 (380px flex column, full-height, scrolling sidebar), `body.toshi-collapsed` → width 0 + toggle tab + pill, fullscreen ≤640. Pulse blocks untouched; source≡published `toshi-ui.css`.
 - **Piece 2 stack**: PR1 header/composer [#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595)+[#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596) → PR2 cards/chips [#597](https://github.com/KlassApp-Foundation/KlassApp/pull/597)+[#598](https://github.com/KlassApp-Foundation/KlassApp/pull/598) → PR3 docking [#599](https://github.com/KlassApp-Foundation/KlassApp/pull/599).
@@ -2027,6 +2036,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Wizard + Toshi parity bugs (plan/students/gender/ID) — **MERGED + STAGING ONLY** ([#601](https://github.com/KlassApp-Foundation/KlassApp/pull/601))
+- **Work done**: Fix wizard plan empty vs select contradiction + specific finish incomplete-step labels; block silent students Continue (require Skip for now); pass gender + `school_student_id`/UNEB through Toshi `commitAll` (create + complete-draft); fold upload `lin` → `school_student_id`; Toshi chat form fields + plan empty messaging. PHPUnit + Playwright; staging deploy only.
+- **Files modified**: `ManualOnboardingWizard.php`, `OnboardingStepsService.php`, `AgentToshi.php`, `OnboardingNameListExtractor.php`, `agent-toshi.blade.php`, `manual-wizard-step-fields.blade.php`, `WizardToshiParityBugsTest.php`, related onboarding tests, `e2e/wizard-toshi-parity-bugs-verify.cjs`, `knowledge.md`
+- **Key decisions**: Teachers may still auto-skip on empty Continue; students must not. Engine already supported gender/ID — Toshi mappers were dropping them (stale comment removed).
+- **Status**: ✅ MERGED `7e6ae1fe` · GitHub API `merged: true` · staging `depl-a2befa13-…` @ `7e6ae1fe` succeeded · Playwright PASS · **prod held**
+- **Edge cases flagged**: Live plan empty-state needs a school with zero active plans (PHPUnit covers); staging demo usually past plan step.
 
 ### 2026-09-14: Piece 3 wrap — UNEB candidate gate + staging closeout — **MERGED + STAGING ONLY** ([#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593))
 - **Work done**: Gate student UNEB Reg field to `isCandidateClass`; terms deferral copy; wrap PHPUnit + Playwright smoke across redesigned steps; stamp Piece 3 **CLOSED on staging**.
