@@ -618,7 +618,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 3 onboarding wizard **CLOSED on STAGING** ([#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593))
+## Current Status: September 14, 2026 — Piece 2 Toshi panel PR1 on **STAGING ONLY** ([#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595))
+
+- **Merged**: [#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595) `ab89d1cc` (`piece2/toshi-header-composer`) — GitHub API `merged: true`.
+- **Shipped**: Clay/warm header + composer (`#c96442` / `#f5f4ed` / radius 16); chip-first Yes/No confirms (shared partial); composer deferred while `awaitingConfirm`; **FROZEN — Pulse** banner + canary `.ds-table-ledger thead { backdrop-filter: blur(12px) }` untouched in Pulse block; source + `public/vendor/toshi-ui/toshi-ui.css` both published.
+- **Staging deploy**: `depl-a2bed2bd-…` @ `ab89d1cc` **succeeded**.
+- **Staging verify**: Pulse canary + header/composer tokens @ 375/414/768/1280 PASS; chip confirm PASS after e2e scoped to `#toshi-panel` (modal chips are `display:none` — do not assert unscoped `isVisible`). Follow-up harden/stamp on branch `piece2/pr1-verify-harden`.
+- **Production**: **NOT deployed** — Piece 2 hold until coordinated four-surface cutover.
+- **Next**: Piece 2 chips/plan+confirm card polish → docking/pill (≥1280 / ≤640 fullscreen). Pulse stays frozen.
+
+## Previous: September 14, 2026 — Piece 3 onboarding wizard **CLOSED on STAGING** ([#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593))
 
 - **Merged**: [#593](https://github.com/KlassApp-Foundation/KlassApp/pull/593) `d07f0adb` (`feat/wizard-piece3-wrap`) — GitHub API `merged: true`.
 - **Wrap polish**: UNEB Reg No. on student form only for candidate classes (`isCandidateClass`); terms copy notes later admin date edits (flag-card deferred — not built).
@@ -2031,6 +2040,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Key decisions**: Defer until after UI phase; use Cowork + voice guide, not DeepWiki.
 - **Status**: ✅ MERGED via [#581](https://github.com/KlassApp-Foundation/KlassApp/pull/581) `a87b9575`
 - **Edge cases flagged**: None
+
+### 2026-09-14: Piece 2 PR1 Toshi header/composer + chip confirms — **MERGED + STAGING ONLY** ([#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595))
+- **Work done**: Open Design clay chrome on Toshi panel header/composer; shared `toshi-confirm-chips` partial (panel + modal); composer deferred while awaiting confirm; Pulse freeze banner + ledger blur canary preserved; contract tests (source≡published + Livewire chip HTML); Playwright visual + chip inject.
+- **Files modified**: `packages/toshi-ui/resources/css/toshi-ui.css`, `public/vendor/toshi-ui/toshi-ui.css`, `agent-toshi.blade.php`, `livewire/partials/toshi-confirm-chips.blade.php`, `ToshiPiece2HeaderComposerContractTest.php`, `e2e/toshi-piece2-header-composer-verify.cjs`, `knowledge.md`
+- **Key decisions**: Do not touch Pulse blocks in toshi-ui.css; chip asserts must scope `#toshi-panel` (modal chips exist but parent `display:none`); `$wire.set('awaitingConfirm')` is valid for e2e inject; prod held.
+- **Status**: ✅ MERGED `ab89d1cc` · staging `depl-a2bed2bd-…` · Playwright PASS (visual + chips) · **prod held**
+- **Edge cases flagged**: Unscoped Playwright `isVisible` on `toshi-confirm-chips` fails when first match is the hidden modal instance; `body.innerHTML.includes` false-positives against Livewire snapshot JSON.
 
 ### 2026-09-14: Piece 3 PR2 size/category/plan card grids — **MERGED + STAGING ONLY** ([#579](https://github.com/KlassApp-Foundation/KlassApp/pull/579))
 - **Work done**: Replaced student-size `<select>` with kit-style `manual-wizard-plan-card` radiogroup driven by `OnboardingStepsService::STUDENT_SIZE_OPTIONS`; added `ManualOnboardingWizard::selectStudentSize`; 2-col `--sizes` grid CSS; contract + Livewire rejection of kit placeholders (`1-100`); e2e reads card labels not `<option>`s. Category/plan already card grids — assertions tightened.

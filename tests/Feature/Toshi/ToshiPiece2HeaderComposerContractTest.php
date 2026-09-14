@@ -2,6 +2,12 @@
 
 namespace Tests\Feature\Toshi;
 
+use App\Livewire\AgentToshi;
+use App\Models\School;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
@@ -9,6 +15,17 @@ use Tests\TestCase;
  */
 class ToshiPiece2HeaderComposerContractTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        DB::table('usergroups')->upsert([
+            ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
+        ], 'id');
+    }
+
     public function test_published_toshi_ui_css_keeps_pulse_ledger_blur_canary(): void
     {
         $css = file_get_contents(public_path('vendor/toshi-ui/toshi-ui.css'));
@@ -38,5 +55,36 @@ class ToshiPiece2HeaderComposerContractTest extends TestCase
         $source = file_get_contents(base_path('packages/toshi-ui/resources/css/toshi-ui.css'));
         $published = file_get_contents(public_path('vendor/toshi-ui/toshi-ui.css'));
         $this->assertSame($source, $published, 'Run: php artisan vendor:publish --tag=toshi-ui-css --force');
+    }
+
+    public function test_awaiting_confirm_renders_chip_buttons_not_free_text_primary(): void
+    {
+        $school = School::create([
+            'name' => 'Piece2 Chip School',
+            'email' => 'piece2-chip@klassapp.test',
+            'phone' => '0700000099',
+            'status' => 1,
+            'slug' => 'piece2-chip-school',
+            'toshi_enabled' => 1,
+        ]);
+        $admin = User::factory()->create([
+            'school_id' => $school->id,
+            'usergroup_id' => 3,
+            'email' => 'piece2.chip.admin@klassapp.test',
+            'status' => 'active',
+        ]);
+
+        $html = Livewire::actingAs($admin)
+            ->test(AgentToshi::class)
+            ->set('visible', true)
+            ->set('awaitingConfirm', true)
+            ->html();
+
+        $this->assertStringContainsString('data-testid="toshi-confirm-chips"', $html);
+        $this->assertStringContainsString('data-testid="toshi-confirm-yes"', $html);
+        $this->assertStringContainsString('data-testid="toshi-confirm-no"', $html);
+        $this->assertStringContainsString('wire:click="confirmYes"', $html);
+        $this->assertStringContainsString('toshi-composer--awaiting-confirm', $html);
+        $this->assertStringContainsString('Use Yes / No above', $html);
     }
 }
