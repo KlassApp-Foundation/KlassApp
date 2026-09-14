@@ -1,123 +1,92 @@
 @extends('layouts.admin.layout')
 
 @section('content')
+<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4" data-testid="exams-marks">
 
-<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
-
-@include('layouts.partials.page-header', [
-    'title' => 'Marks',
-    'subtitle' => 'View and filter student marks across exams and subjects.',
-])
-
-<div class="relative mt-4">
-    <div class="bg-white rounded-lg shadow p-4">
-        @include('admin.marks.filter-form')  
-        </div>
-    </div>
-
-    <div class="grid gap-4 mt-6">
-
-        {{-- Page Header --}}
+    <div class="ds-page-head" data-testid="exams-page-head">
         <div>
-            <h1 class="text-xl font-bold text-gray-800">Students Marks Overview</h1>
-            <p class="text-gray-600 mt-1">
-                Filter and review student performance by class, academic year, and term.
-            </p>
+            <h1 class="ds-page-head-title">{{ ($type->name ?? null) ? (($type->name === 'End of Term' || str_contains(strtolower($type->name), 'end')) ? 'End of term marks' : ($type->name.' marks')) : 'Marks' }}</h1>
+            <p class="ds-page-head-sub" data-testid="exams-page-sub">{{ $marksSubtitle }}</p>
         </div>
-
-        {{-- Stats Cards (only meaningful when filtered) --}}
-        @if (request()->hasAny(['term', 'year', 'class']))
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div class="bg-gradient-to-br from-blue-50 to-white p-2 rounded-xl shadow-sm border hover:shadow transition">
-                    <p class="text-sm text-gray-600 font-medium">Total Students</p>
-                    <h3 class="text-3xl font-bold text-blue-700 mt-1">
-                        {{-- {{ dd($marks) }} --}}
-                        {{ $students->unique()->count() }}
-                        {{-- {{ dd($marks) }} --}}
-                    </h3>
-                </div>
-
-                <div class="bg-gradient-to-br from-green-50 to-white p-2 rounded-xl shadow-sm border hover:shadow transition">
-                    <p class="text-sm text-gray-600 font-medium">Subjects Covered</p>
-                    <h3 class="text-3xl font-bold text-green-700 mt-1">
-                        {{ $subjectsCovered }}
-                    </h3>
-                </div>
-
-                <div class="bg-gradient-to-br from-purple-50 to-white p-2 rounded-xl shadow-sm border hover:shadow transition">
-                    <p class="text-sm text-gray-600 font-medium">Records Found</p>
-                    <h3 class="text-3xl font-bold text-purple-700 mt-1">
-                        {{ $students->total() }}
-                    </h3>
-                </div>
-            </div>
-        @endif
-
-        {{-- Results Section --}}
-        <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
-            <div class="p-2 border-b flex items-center gap-8">
-                <h3 class="text-lg font-semibold text-gray-800"> 
-                    {{ $type->name . " " . $term }}  Exam Results 
-                    for
-                    
-                </h3>
-                    @if(!empty($students) && $students->isNotEmpty()) 
-                    <div class="flex items-center gap-2 text-sm font-semibold text-gray-600">
-                        <span>{{ $class->name }}</span>
-                        <span> {{ $year }} </span>
-                    </div>
-                      @endif
-            </div>
-            <div class="p-6">
-                 @if (!empty($students) && $students->isNotEmpty())
-                     @include('admin.marks.results-table2')
-                       @if ($type->name === "End Of Year")
-                            <div class="py-4 flex items-center justify-end gap-2">
-                            <div class="flex items-center gap-1">
-                                <span class='text-red-400 underline font-semibold'>NOTE:</span>
-                                <p class='text-sm'>Downlad Student Report cards before finalizing promotion </p>
-                            </div>
-                          @if ($class)
-                              @include("admin.marks.promotion")
-                          @endif  
-                        </div>
-                       @endif
-                  @else
-                @if (request()->hasAny(['term', 'year', 'class']))
-                        <div class="text-center py-16 text-gray-500">
-                            <div class="text-6xl mb-4 opacity-40">🔍</div>
-                            <h4 class="text-xl font-medium text-gray-700 mb-2">No marks found</h4>
-                            <p class="text-gray-500">
-                                Try adjusting the filters or check if data exists for this combination.
-                            </p>
-                        </div>
-                    @else
-                        <div class="text-center py-20 text-gray-400">
-                            <div class="text-7xl mb-6 opacity-30">📊</div>
-                            <h4 class="text-xl font-medium">Ready when you are</h4>
-                            <p class="mt-3">
-                                Select class, academic year and term above to view student marks.
-                            </p>
-                        </div>
-                    @endif
-                @endif
-            </div>
-
-            {{-- ====== pagination ========= --}}
-            @if (!empty($marks) && $marks->isNotEmpty())
-                <div class="px-6 py-4 border-t bg-gray-50">
-                    {{ $marks->appends(request()->query())->links() }}
-                </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            @if($filtered && $students->isNotEmpty() && $missingSubjects->isEmpty())
+                <span class="ds-save-indicator ds-save-indicator--saved" data-testid="exams-save-indicator">
+                    <span class="ds-save-indicator__dot" aria-hidden="true"></span>
+                    All marks saved
+                </span>
+            @endif
+            @if($filtered && $students->isNotEmpty())
+                <a href="{{ route('admin.marksheet.download', request()->query()) }}" class="ds-btn ds-btn-ghost text-sm">Download sheet</a>
             @endif
         </div>
-
-        {{-- <a href="
-          {{ route("admin.marksheet.download", [$student, $class->id]) }}" 
-           class="bg-green-600 hover:bg-green-500 px-2 py-1 rounded text-white">
-           Download Report
-          </a> --}}
-
     </div>
-</div>
 
+    @include('partials.message')
+
+    <div data-testid="exams-filter-card" class="mb-4">
+        @include('admin.marks.filter-form')
+    </div>
+
+    @if($filtered)
+        <div class="dashboard-kpi-grid mb-4" data-testid="exams-kpi-grid">
+            <x-ds-kpi-card icon="users" :value="(string) $students->total()" label="Students" color="blue" />
+            <x-ds-kpi-card icon="book" :value="(string) $subjectsCovered" label="Subjects covered" color="green" />
+            <x-ds-kpi-card icon="exam" :value="(string) $subjects->count()" label="Subjects on grid" color="amber" />
+        </div>
+    @endif
+
+    @if($filtered && $missingSubjects->isNotEmpty())
+        <div class="ds-reminder-banner" data-testid="exams-reminder-banner" style="margin-bottom: 16px;">
+            <div style="font-family: var(--d-font-display, 'Sora', sans-serif); font-weight: 600; font-size: 14px; color: var(--d-dark);">
+                {{ $missingSubjects->count() }} {{ \Illuminate\Support\Str::plural('subject', $missingSubjects->count()) }} still missing marks
+            </div>
+            <div style="font-size: 13px; color: var(--d-text-secondary); margin-top: 4px;">
+                {{ $missingSubjects->pluck('name')->join(', ', ' and ') }}
+                {{ $missingSubjects->count() === 1 ? 'has' : 'have' }} no submitted entries
+                @if($class)
+                    for {{ $class->name }}
+                @endif.
+                Publishing now would send incomplete report cards to parents.
+            </div>
+            <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="{{ url('/admin/exams') }}" class="ds-btn ds-btn-primary text-sm">Remind subject teachers</a>
+            </div>
+        </div>
+    @endif
+
+    <div data-testid="exams-grid-card">
+        <x-card padding="none">
+            @if(! $filtered)
+                <div class="ds-table-empty ds-empty-state" data-testid="exams-empty">
+                    <p class="ds-empty-state-title">Ready when you are</p>
+                    <p class="ds-empty-state-desc">Select class, term and exam type above to view the marks grid.</p>
+                </div>
+            @elseif($students->isEmpty())
+                <div class="ds-table-empty ds-empty-state" data-testid="exams-empty">
+                    <p class="ds-empty-state-title">No marks found</p>
+                    <p class="ds-empty-state-desc">Try adjusting the filters or check if data exists for this combination.</p>
+                </div>
+            @else
+                <div data-testid="exams-marks-grid">
+                    @include('admin.marks.results-table2')
+                </div>
+                @if(($type->name ?? '') === 'End Of Year')
+                    <div class="px-4 py-4 flex items-center justify-end gap-2 flex-wrap">
+                        <div class="flex items-center gap-1">
+                            <span class="text-red-400 underline font-semibold">NOTE:</span>
+                            <p class="text-sm">Download student report cards before finalizing promotion.</p>
+                        </div>
+                        @if($class)
+                            @include('admin.marks.promotion')
+                        @endif
+                    </div>
+                @endif
+                <div class="dt-pagination px-4">
+                    {{ $students->withQueryString()->links() }}
+                </div>
+            @endif
+        </x-card>
+    </div>
+
+</div>
 @endsection
