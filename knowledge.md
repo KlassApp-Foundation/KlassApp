@@ -609,14 +609,12 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 3 PR1 wizard shell/nav on **STAGING ONLY** ([#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577))
+## Current Status: September 14, 2026 — Piece 3 PR2 size/category/plan cards on **STAGING ONLY** (opening)
 
-- **Merged**: [#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577) `4856d765` (`feat/wizard-shell-nav-kit`) — GitHub API `merged: true`.
-- **Shipped**: Manual onboarding wizard kit chrome — KlassApp brand strip (“Setting up without Toshi”), kit step head, Previous / 17 dots / **Continue →**, review **Confirm & finish** via `<x-button>` (attribute bag now forwards `wire:click`). Real `STUDENT_SIZE_OPTIONS` + `SchoolCategorySeeder::CATEGORIES` locked in contract tests (not kit placeholders). `data-toshi-manual-wizard` untouched.
-- **Staging deploy**: `depl-a2be6957-…` @ `4856d765` **succeeded**.
-- **Staging verify**: Playwright chrome + size/category constants + review Confirm label + screenshots 375/414/768/1280. Phase4 school has empty plan catalog (no Freemium cards) — Continue walk past plan_selection needs seeded plans; progress-dot jump still reaches review.
-- **Production**: **NOT deployed** — four-surface / Piece 3 hold until coordinated cutover.
-- **Next**: Piece 3 PR2 plan/category/size card grids → structure checkpoint cards → bulk lists → review polish.
+- **In flight**: `feat/wizard-size-category-cards` — student size step is a `manual-wizard-plan-card` radiogroup (real `STUDENT_SIZE_OPTIONS`), with `selectStudentSize` mirroring `selectSchoolCategory`; category + plan grids already on cards; 2×2 size CSS modifier.
+- **Prior**: [#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577) shell/nav · [#578](https://github.com/KlassApp-Foundation/KlassApp/pull/578) stamp `4c89d581`.
+- **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
+- **Next**: Merge/deploy PR2 → structure checkpoint cards → bulk lists → review polish.
 
 ## Previous: September 14, 2026 — Piece 4 dashboard kit parity **COMPLETE on STAGING ONLY** (`origin/main` tip was `f5b9eeee` / stamp `692b4210`)
 
@@ -1927,6 +1925,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Piece 3 PR2 size/category/plan card grids — **opening**
+- **Work done**: Replaced student-size `<select>` with kit-style `manual-wizard-plan-card` radiogroup driven by `OnboardingStepsService::STUDENT_SIZE_OPTIONS`; added `ManualOnboardingWizard::selectStudentSize`; 2-col `--sizes` grid CSS; contract + Livewire rejection of kit placeholders (`1-100`); e2e reads card labels not `<option>`s. Category/plan already card grids — assertions tightened.
+- **Files modified**: `manual-wizard-step-fields.blade.php`, `ManualOnboardingWizard.php`, `dashboard-refresh.css`, `WizardShellNavKitContractTest.php`, `StudentSizeOnboardingTest.php`, `e2e/wizard-shell-nav-verify.cjs`, `knowledge.md`
+- **Key decisions**: Production size labels override kit `SIZES` placeholders; size uses 2×2 at `sm+` (4 options) vs plans’ 3-col.
+- **Status**: 🚧 PR opening on `feat/wizard-size-category-cards`
+- **Edge cases flagged**: Invalid `selectStudentSize` keeps prior selection and sets `errorMessage` (same pattern as category).
 
 ### 2026-09-14: Piece 3 PR1 wizard shell + nav kit parity — **MERGED + STAGING ONLY** ([#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577))
 - **Work done**: Brand strip, kit step head, Continue → / Confirm & finish nav via `<x-button>` (attribute merge for `wire:click`), progress width for 17 dots, canvas page shell. Contract tests lock real size/category constants; hardened `e2e/wizard-shell-nav-verify.cjs`.
