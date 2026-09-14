@@ -618,7 +618,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Wizard empty-plan message once **MERGED + STAGING** ([#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605)) — prod cutover still pending
+## Current Status: September 14, 2026 — Plans seed + Toshi fee/term parity **MERGED + STAGING** ([#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607)) — prod cutover still pending
+
+- **Plans root cause**: Staging had **0** `plans` rows (genuine missing seed data). Production already has Freemium / Growth ($35) / Premium — **real schools not blocked**.
+- **Staging fix**: Seeded via `PlansTableSeeder` / `plans:ensure`; wizard plan cards live-verified.
+- **Merged**: [#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607) `6ffecc83` — GitHub API `merged: true`. Toshi yearly fee checkbox + mark-current term picker; `plans:ensure` command.
+- **Staging deploy**: `depl-a2bf27cd-…` @ `6ffecc83` **succeeded**.
+- **Verify**: PHPUnit 9 PASS; Playwright `e2e/plans-and-toshi-fees-terms-verify.cjs` PASS (plan cards + Toshi yearly/term markup).
+- **Production**: **NOT deployed** (plans already present; Toshi parity is staging-only for now).
+
+## Previous: September 14, 2026 — Wizard empty-plan message once **MERGED + STAGING** ([#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605)) — prod cutover still pending
 
 - **Cause**: Continue on empty `plan_selection` set shell `errorMessage` to the same string already shown in the step `@empty` alert (`wizard-plan-empty`) — duplicate UI, not a loop.
 - **Merged**: [#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605) `60ba933c` — GitHub API `merged: true`. `next()` short-circuits without setting `errorMessage`; shell banner suppressed if that duplicate string would still appear.
@@ -2053,6 +2062,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Plans seed + Toshi fee yearly / term current — **MERGED + STAGING** ([#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607))
+
+- **Work done**: Confirmed staging `plans` count=0 vs production count=3 (Freemium/Growth/Premium). Seeded staging; added `plans:ensure`. Toshi: yearly fee checkbox + mark-current term picker (wizard parity).
+- **Files**: `EnsurePlansCommand.php`, `AgentToshi.php`, `agent-toshi.blade.php`, tests, `e2e/plans-and-toshi-fees-terms-verify.cjs`, `knowledge.md`.
+- **Status**: Merged `6ffecc83`; staging `depl-a2bf27cd-…` **succeeded**. Prod not deployed (plans already OK).
+- **Edge**: Staging Cloud provision skipped `DatabaseSeeder`/plans — re-run `php artisan plans:ensure` after empty envs.
 
 ### 2026-09-14: Wizard empty-plan message once — **MERGED + STAGING** ([#605](https://github.com/KlassApp-Foundation/KlassApp/pull/605))
 
