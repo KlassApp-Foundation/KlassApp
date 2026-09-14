@@ -623,7 +623,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Merged**: [#595](https://github.com/KlassApp-Foundation/KlassApp/pull/595) `ab89d1cc` (`piece2/toshi-header-composer`) — GitHub API `merged: true`.
 - **Shipped**: Clay/warm header + composer (`#c96442` / `#f5f4ed` / radius 16); chip-first Yes/No confirms (shared partial); composer deferred while `awaitingConfirm`; **FROZEN — Pulse** banner + canary `.ds-table-ledger thead { backdrop-filter: blur(12px) }` untouched in Pulse block; source + `public/vendor/toshi-ui/toshi-ui.css` both published.
 - **Staging deploy**: `depl-a2bed2bd-…` @ `ab89d1cc` **succeeded**.
-- **Staging verify**: Pulse canary + header/composer tokens @ 375/414/768/1280 PASS; chip confirm PASS after e2e scoped to `#toshi-panel` (modal chips are `display:none` — do not assert unscoped `isVisible`). Follow-up harden/stamp on branch `piece2/pr1-verify-harden`.
+- **Staging verify**: Pulse canary + header/composer tokens @ 375/414/768/1280 PASS; chip confirm PASS after e2e scoped to `#toshi-panel` (modal chips are `display:none` — do not assert unscoped `isVisible`). Harden/stamp PR: [#596](https://github.com/KlassApp-Foundation/KlassApp/pull/596) (`piece2/pr1-verify-harden`).
 - **Production**: **NOT deployed** — Piece 2 hold until coordinated four-surface cutover.
 - **Next**: Piece 2 chips/plan+confirm card polish → docking/pill (≥1280 / ≤640 fullscreen). Pulse stays frozen.
 
