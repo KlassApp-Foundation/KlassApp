@@ -1,20 +1,22 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  /* Aligned to DESIGN_SYSTEM.md / --d-* (canvas #FAFAF5, ink #1E293B, Sora + DM Sans).
+     Button geometry/glow cleanup is a follow-up PR — this pass is tokens + type only. */
   --brand-blue: #1E6FD9;
   --brand-green: #22C55E;
   --brand-dark: #0F172A;
   --brand-light: #F8FAFC;
   --brand-white: #FFFFFF;
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
   --text-muted: #94A3B8;
   --border: #E2E8F0;
   --violet-accent: #8B5CF6;
   --brand-amber: #D97706;
 
-  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
 
   --container: 1200px;
   --radius-sm: 8px;
@@ -29,10 +31,10 @@
   --shadow-glow-violet: 0 0 16px rgba(139,92,246,0.2);
   --shadow-glow-amber: 0 0 16px rgba(217,119,6,0.18);
 
-  /* Hero vintage paper (OD v2) — background only; never replaces brand text/CTA tokens */
-  --paper-base: #F5F0E6;
-  --paper-mid: #EFE6D5;
-  --paper-deep: #E8DCC8;
+  /* Hero vintage paper — wash shifted to canonical parchment; grain/rules unchanged */
+  --paper-base: #FAFAF5;
+  --paper-mid: #F3F0E8;
+  --paper-deep: #EBE6DA;
   --paper-edge: #D4C4A8;
   --paper-ink-wash: rgba(92, 74, 48, 0.03);
   --paper-rule: rgba(120, 95, 60, 0.07);
@@ -45,7 +47,7 @@ body {
   font-family: var(--font-body);
   font-weight: 400;
   color: var(--text-primary);
-  background: var(--brand-white);
+  background: var(--paper-base);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
