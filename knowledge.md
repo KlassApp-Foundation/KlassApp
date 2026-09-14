@@ -618,14 +618,20 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 15, 2026 — **SiteAdmin redirect + spreadsheet placement fixes LOCAL** (not pushed)
+## Current Status: September 15, 2026 — **SiteAdmin OAuth + spreadsheet placement MERGED + STAGING** ([#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611))
 
-- **In progress (local, uncommitted on `docs/cutover-stamp-merged`)**: three investigate/fix items from real QA xlsx uploads.
-  1. **SiteAdmin sidebar gap (real bug)**: Google OAuth always landed SiteAdmin (`usergroup_id=1`, no school) on `/admin/dashboard` (school shell). Fix: shared `AuthRedirectHelper` + Google/password/`RedirectIfAuthenticated` + Admin dashboard redirect to `/superadmin/dashboard`.
-  2. **Student class placement**: not a matching bug — streams in the file (e.g. `Primary One` + `A`) did not exist after wizard seed of base classes only. Fix: `OnboardingEngine::ensureStandardLinkForClass()` auto-creates stream via `ClassStructureService::addStream` when the **base** class exists.
-  3. **Teacher Literacy / Baby Class**: nursery subjects were empty in `SchoolCategorySeeder`; plus UNEB name aliases. Fix: seed Literacy/Numeracy/Motor Skills/Social-Emotional; `resolveOrCreateSubjectForClass()` + aliases; wired in wizard + Toshi.
-- **Verify**: PHPUnit `GoogleSiteAdminRedirectTest` + `RealSpreadsheetUploadPlacementTest` (34/34 students; full teacher fixture incl. David Okello → Literacy/Baby Class) PASS against `tests/fixtures/klassapp-*-test-data.xlsx`. User still does their own manual UI upload.
-- **Production tip unchanged**: four-surface cutover still live at `2e5a382` / stamp `557fb980` until this fix ships.
+- **Merged**: [#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611) `f863de73` — GitHub API `merged: true`.
+- **Staging deploy**: `depl-a2bf5410-…` @ `f863de73` **succeeded** (`deployment.succeeded`). **Production: NOT deployed.**
+- **Fixes**:
+  1. SiteAdmin (`usergroup_id=1`) → `/superadmin/dashboard` via shared `AuthRedirectHelper` (Google OAuth + password + guest middleware + Admin dashboard bounce).
+  2. Student upload auto-creates streams when base class exists (`ensureStandardLinkForClass`).
+  3. Nursery subjects seeded (Literacy/Numeracy/Motor Skills/Social-Emotional) + `resolveOrCreateSubjectForClass` aliases in wizard/Toshi.
+- **Staging live verify**:
+  - Deployed code: `AuthRedirectHelper` ug1→`/superadmin/dashboard`; `GoogleAuthController` uses helper; fixtures present.
+  - Created synthetic SiteAdmin `siteadmin.pr611@klassapp.xyz` (password `demo123`, `google_id` set) — Playwright login lands on `/superadmin/dashboard`; `/admin/dashboard` bounces back; no school student sidebar links. Evidence: `e2e/screenshots/pr611-siteadmin/`.
+  - Google entry: login `data-testid=login-google` → `/auth/google` → 302 to `accounts.google.com` with staging callback URI (interactive Google account click-through not automated; callback uses same helper as password path).
+  - Real fixtures on school 14: **34/34** students placed (incl. `Primary One A` auto-stream); **16** teachers / **61** teacherlinks; David Okello → Literacy on Baby Class **yes**.
+- **Edge**: Pre-existing schools without nursery subjects still get subjects created on first teacher assign. Auto-stream requires base class.
 
 ## Previous: September 15, 2026 — **FOUR-SURFACE PRODUCTION CUTOVER LIVE** (Pieces 1–4) — app `2e5a382` · stamp `557fb980`
 
@@ -2086,16 +2092,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-15: SiteAdmin Google redirect + real xlsx student/teacher placement — **LOCAL FIX (not pushed)**
-- **Findings (before fix)**:
-  1. SiteAdmin school sidebar = **real gap**, not intentional: password login used role redirect; Google OAuth always sent ug=1 to `/admin/dashboard`.
-  2. Student placement near-total fail = **setup-order**, not matcher: file streams need `{Class} {Stream}` sections; wizard seeds undivided bases only → 1/34 without streams, 34/34 when streams exist or auto-created.
-  3. `Subject 'Literacy' was not found for class 'Baby Class'` = **seeding mismatch**: `SchoolCategorySeeder` nursery subjects were `[]`; Literacy never existed for Baby Class.
-- **Fixes**: `AuthRedirectHelper`; Google + Login + RedirectIfAuthenticated + Admin\DashboardController; `ensureStandardLinkForClass`; nursery subjects + `subjectNameCandidates` / `resolveOrCreateSubjectForClass` in wizard + Toshi.
-- **Files**: `app/Helpers/AuthRedirectHelper.php`, auth controllers/middleware, `OnboardingEngine.php`, `SchoolCategorySeeder.php`, `ManualOnboardingWizard.php`, `AgentToshi.php`, `tests/fixtures/klassapp-*-test-data.xlsx`, `GoogleSiteAdminRedirectTest.php`, `RealSpreadsheetUploadPlacementTest.php`, `SchoolCategorySeederTest.php`.
-- **Verify**: PHPUnit focused suites PASS (SiteAdmin → `/superadmin/dashboard`; 34 students + Literacy/Baby Class teacher fixture). Did **not** upload on the user’s behalf in the live UI.
-- **Status**: Local only — needs branch/PR/ship. Existing schools seeded before this change still lack nursery subjects until re-seed or first teacher assign creates them via `resolveOrCreateSubjectForClass`.
-- **Edge**: Auto-stream only when base class exists; missing Senior on primary-only school still hard-fails (correct).
+### 2026-09-15: SiteAdmin Google redirect + real xlsx student/teacher placement — **MERGED + STAGING** ([#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611))
+- **Findings (before fix)**: SiteAdmin school sidebar = real Google OAuth gap; student placement = setup-order (missing streams); Literacy/Baby Class = empty nursery subject seed.
+- **Merged**: [#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611) `f863de73` — API `merged: true`.
+- **Staging**: `depl-a2bf5410-…` @ `f863de73` **succeeded**. Production **not** deployed.
+- **Staging verify**: SiteAdmin Playwright → `/superadmin/dashboard`; `/auth/google` → Google OAuth; Cloud Commands fixture uploads school 14 → 34 students + Literacy/Baby Class teacherlink. Screenshots `e2e/screenshots/pr611-siteadmin/`; runner `e2e/siteadmin-superadmin-redirect-verify.cjs`.
+- **Status**: ✅ Staging-only program stamp. User still does their own manual UI upload on their account.
+- **Edge**: Interactive Google account click-through not automated in CI; deployed callback uses `AuthRedirectHelper` (confirmed on staging filesystem). Auto-stream needs base class.
 
 ### 2026-09-15: Four-surface design program **PRODUCTION CUTOVER** (Pieces 1–4) — LIVE @ `2e5a382`
 - **Work done**: Full PR merge sweep via GitHub API; fresh staging deploy; holistic Playwright across all four surfaces; documented rollback `ca0e114` / `depl-a2be2ae7-…`; production deploy of main tip; real prod verify (register/wizard plans, Admin+Teacher Toshi dock/mobile, Pulse canary); synthetic users flagged inactive; knowledge stamp.
