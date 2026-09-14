@@ -1,21 +1,22 @@
 /**
- * Auth preview restyle - Pass 2 tokens + vintage paper v2 breakpoints.
- * OD: klassapp-auth-error-vintage-paper-v2-breakpoints.html
- * Paper CSS copied from landing .hero-bg-vintage (exact layers).
- * Typography stays Sora/DM Sans (not landing Bricolage/Inter).
- * Preview routes only (/preview/*). Live /login etc. untouched until cutover.
+ * Auth shell — Pass 2 tokens + vintage paper + ds-btn metrics / blue focus.
+ * Canvas/ink aligned to DESIGN_SYSTEM.md --d-* (#FAFAF5 / #1E293B).
+ * Primary actions keep green fill; focus rings use blue (inform), not green glow.
+ * Typography: Sora + DM Sans.
  */
 
 :root {
-  --ap-bg: #F5F0E6;
+  --ap-bg: #FAFAF5;
   --ap-white: #FFFFFF;
-  --ap-ink: #0F172A;
+  --ap-ink: #1E293B;
   --ap-muted: #64748B;
   --ap-border: #E2E8F0;
   --ap-input-bg: rgba(255, 255, 255, 0.5);
   --ap-input-bg-focus: rgba(255, 255, 255, 0.55);
   --ap-primary: #22C55E;
   --ap-primary-hover: #16A34A;
+  --ap-focus: #1E6FD9;
+  --ap-focus-ring: rgba(30, 111, 217, 0.25);
   --ap-error: #DC2626;
   --ap-error-bg: #FEF2F2;
   --ap-error-border: #FECACA;
@@ -26,10 +27,10 @@
   --ap-node-border: #BFDBFE;
   --ap-radius: 12px;
   --ap-radius-sm: 8px;
-  /* Exact landing hero paper tokens */
-  --paper-base: #F5F0E6;
-  --paper-mid: #EFE6D5;
-  --paper-deep: #E8DCC8;
+  /* Match landing parchment wash (grain/rules unchanged) */
+  --paper-base: #FAFAF5;
+  --paper-mid: #F3F0E8;
+  --paper-deep: #EBE6DA;
   --paper-edge: #D4C4A8;
   --paper-ink-wash: rgba(92, 74, 48, 0.03);
   --paper-rule: rgba(120, 95, 60, 0.07);
@@ -227,9 +228,9 @@
 }
 
 .ap-input:focus {
-  border-color: var(--ap-primary);
+  border-color: var(--ap-focus);
   background: var(--ap-input-bg-focus);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+  box-shadow: 0 0 0 3px var(--ap-focus-ring);
 }
 
 .ap-input::placeholder { color: #94A3B8; }
@@ -271,7 +272,12 @@
 }
 
 .ap-password-toggle:hover { color: var(--ap-ink); }
-.ap-password-toggle:focus { outline: none; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12); }
+.ap-password-toggle:focus,
+.ap-password-toggle:focus-visible {
+  outline: 2px solid var(--ap-focus);
+  outline-offset: 2px;
+  box-shadow: none;
+}
 .ap-password-toggle svg { width: 20px; height: 20px; flex-shrink: 0; }
 
 .ap-error {
@@ -340,7 +346,7 @@
 .ap-link {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ap-primary-hover);
+  color: var(--ap-focus);
   text-decoration: none;
   min-height: 44px;
   display: inline-flex;
@@ -349,30 +355,43 @@
 
 .ap-link:hover { text-decoration: underline; }
 
+/* ds-btn metrics: 8×18, 0.85rem, min-height 44, radius 8 — green fill, blue focus */
 .ap-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  border: 0;
+  border: 1px solid var(--ap-primary);
   border-radius: var(--ap-radius-sm);
   background: var(--ap-primary);
   color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  padding: 14px;
-  min-height: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 8px 18px;
+  min-height: 44px;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
-  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  box-shadow: none;
 }
 
 .ap-submit:hover {
   background: var(--ap-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 18px rgba(34, 197, 94, 0.2);
+  border-color: var(--ap-primary-hover);
+  transform: none;
+  box-shadow: none;
 }
 
-.ap-submit:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+.ap-submit:focus,
+.ap-submit:focus-visible {
+  outline: 2px solid var(--ap-focus);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.ap-submit:active {
+  transform: scale(0.97);
 }
 
 .ap-divider {
@@ -394,31 +413,40 @@
 }
 
 .ap-google {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
-  padding: 13px 14px;
-  min-height: 50px;
+  padding: 8px 18px;
+  min-height: 44px;
   border: 1px solid color-mix(in srgb, var(--paper-edge) 60%, var(--ap-border));
   border-radius: var(--ap-radius-sm);
   background: var(--ap-input-bg);
-  color: #1E293B;
-  font-size: 15px;
+  color: var(--ap-ink);
+  font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.4;
   text-decoration: none;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  box-shadow: none;
 }
 
 .ap-google:hover {
   background: var(--ap-input-bg-focus);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.04);
-  transform: translateY(-1px);
+  box-shadow: none;
+  transform: none;
+}
+
+.ap-google:focus,
+.ap-google:focus-visible {
+  outline: 2px solid var(--ap-focus);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 .ap-meta {
@@ -429,7 +457,7 @@
 }
 
 .ap-meta a {
-  color: var(--ap-primary-hover);
+  color: var(--ap-focus);
   font-weight: 600;
   text-decoration: none;
 }
