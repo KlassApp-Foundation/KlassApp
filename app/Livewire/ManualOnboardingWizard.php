@@ -1002,7 +1002,12 @@ class ManualOnboardingWizard extends Component
 
         $year = AcademicYear::where('school_id', $sid)->first();
         $links = StandardLink::with('section')->where('school_id', $sid)->get();
-        $subjects = Subject::where('school_id', $sid)->pluck('name')->filter()->values();
+        $subjects = Subject::where('school_id', $sid)
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->values();
+        $subjectRowCount = Subject::where('school_id', $sid)->count();
         $teachers = Teacherlink::with('teacher.userprofile')
             ->where('school_id', $sid)
             ->get()
@@ -1066,7 +1071,19 @@ class ManualOnboardingWizard extends Component
             ['key' => 'uneb_center', 'label' => 'UNEB centre', 'icon' => '🎓', 'value' => $unebDisplay],
             ['key' => 'academic_year', 'label' => 'Academic year', 'icon' => '📅', 'value' => $yearValue],
             ['key' => 'standards', 'label' => 'Structure & Class Teachers', 'icon' => '🏷️', 'value' => $classNames->isEmpty() ? '—' : $classNames->implode(', ')],
-            ['key' => 'subjects', 'label' => 'Subjects', 'icon' => '📖', 'value' => $subjects->isEmpty() ? '—' : $subjects->implode(', ')],
+            [
+                'key' => 'subjects',
+                'label' => 'Subjects',
+                'icon' => '📖',
+                // Subjects are stored per class/section (intentional). Review shows unique
+                // names — repeating "English" once per P.1–P.7 is noise, not a roster.
+                'value' => $subjects->isEmpty()
+                    ? '—'
+                    : ($subjects->implode(', ')
+                        .($subjectRowCount > $subjects->count()
+                            ? ' · '.$subjects->count().' unique across '.$subjectRowCount.' class rows'
+                            : '')),
+            ],
             ['key' => 'teachers', 'label' => 'Teachers', 'icon' => '👩‍🏫', 'value' => $teachers->isEmpty() ? '—' : $teachers->implode(', ')],
             [
                 'key' => 'students',
