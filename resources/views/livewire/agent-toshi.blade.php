@@ -306,6 +306,29 @@
             </div>
             @endif
 
+            {{-- Terms: mark which term is current (wizard parity) --}}
+            @if($showTermCurrentPicker && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'terms')
+            <div class="toshi-form-card" data-testid="toshi-term-current-picker">
+                <span class="toshi-section-title">Mark current term</span>
+                <div class="toshi-spacer-8">
+                    @foreach($terms as $ti => $term)
+                    <div class="toshi-list-item" wire:key="toshi-term-{{ $ti }}">
+                        <span class="flex-1">
+                            {{ $term['name'] ?? '' }}
+                            @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($term['name'] ?? '')) === 0)
+                                <span class="toshi-tag-link" data-testid="toshi-term-current-badge">· Current</span>
+                            @endif
+                        </span>
+                        @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($term['name'] ?? '')) !== 0)
+                        <button type="button" class="toshi-btn-primary-sm" wire:click="markTermCurrent('{{ str_replace("'", "\\'", $term['name'] ?? '') }}')" data-testid="toshi-term-mark-current-{{ $ti }}">Mark current</button>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+                <button type="button" class="toshi-btn-done" wire:click="doneTermsCurrent" data-testid="toshi-term-current-continue">Continue</button>
+            </div>
+            @endif
+
             {{-- Fee inline form --}}
             @if($showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
             <div class="toshi-form-card">
@@ -325,7 +348,7 @@
                 <div class="toshi-spacer-8">
                     @foreach($fees as $fi => $f)
                     <div class="toshi-list-item">
-                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif</span>
+                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif@if(!empty($f['is_yearly'])) · Yearly@elseif(!empty($f['term'])) · {{ $f['term'] }}@endif</span>
                         <button wire:click="removeFee({{ $fi }})" type="button"
                                 class="toshi-remove-btn">✕</button>
                     </div>
@@ -334,9 +357,9 @@
                 @endif
                 <div class="toshi-flex-col">
                     <input type="text" wire:model="feeFormName" placeholder="Fee name *"
-                           class="toshi-input">
+                           class="toshi-input" data-testid="toshi-fee-name">
                     <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
-                           class="toshi-input">
+                           class="toshi-input" data-testid="toshi-fee-amount">
                     <select wire:model="feeFormLevel"
                             class="toshi-input">
                         <option value="">Level (optional)</option>
@@ -354,20 +377,26 @@
                         <option value="{{ $std['name'] }}">
                         @endforeach
                     </datalist>
+                    <label class="toshi-check flex items-center gap-2 text-sm" data-testid="toshi-fee-yearly">
+                        <input type="checkbox" wire:model.live="feeFormIsYearly" />
+                        <span>Yearly fee (not tied to a term)</span>
+                    </label>
+                    @if(! $feeFormIsYearly)
                     <select wire:model="feeFormTerm"
-                            class="toshi-input">
+                            class="toshi-input" data-testid="toshi-fee-term">
                         <option value="">Term (optional)</option>
                         <option value="Term I">Term I</option>
                         <option value="Term II">Term II</option>
                         <option value="Term III">Term III</option>
                     </select>
+                    @endif
                     <div class="flex gap-2">
                         <button wire:click="saveFee" type="button"
-                                class="toshi-btn-primary-sm">
+                                class="toshi-btn-primary-sm" data-testid="toshi-fee-add">
                             + Add Fee
                         </button>
                         <button wire:click="doneFees" type="button"
-                                class="toshi-btn-done">
+                                class="toshi-btn-done" data-testid="toshi-fee-continue">
                             Continue ({{ count($this->actionData['fees'] ?? []) }})
                         </button>
                     </div>
@@ -1210,6 +1239,29 @@
                                                 </div>
                                                 @endif
 
+                                    {{-- Terms: mark current (maximized) --}}
+                                    @if($showTermCurrentPicker && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'terms')
+                                    <div class="toshi-form-card" data-testid="toshi-term-current-picker-modal">
+                                        <span class="toshi-section-title">Mark current term</span>
+                                        <div class="toshi-spacer-8">
+                                            @foreach($terms as $ti => $term)
+                                            <div class="toshi-list-item" wire:key="toshi-term-modal-{{ $ti }}">
+                                                <span class="flex-1">
+                                                    {{ $term['name'] ?? '' }}
+                                                    @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($term['name'] ?? '')) === 0)
+                                                        <span class="toshi-tag-link">· Current</span>
+                                                    @endif
+                                                </span>
+                                                @if(strcasecmp((string) ($currentTermName ?? ''), (string) ($term['name'] ?? '')) !== 0)
+                                                <button type="button" class="toshi-btn-primary-sm" wire:click="markTermCurrent('{{ str_replace("'", "\\'", $term['name'] ?? '') }}')">Mark current</button>
+                                                @endif
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                        <button type="button" class="toshi-btn-done" wire:click="doneTermsCurrent">Continue</button>
+                                    </div>
+                                    @endif
+
                                     {{-- Fee inline form (maximized) --}}
                                     @if($showFeeForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'fees')
                                     <div class="toshi-form-card">
@@ -1229,7 +1281,7 @@
                                         <div class="toshi-spacer-8">
                                             @foreach($fees as $fi => $f)
                                             <div class="toshi-list-item">
-                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif</span>
+                        <span class="flex-1">{{ $f['name'] }}@if(!empty($f['amount'])) — {{ number_format((float)$f['amount'], 0) }} UGX @endif@if(!empty($f['level'])) · {{ $f['level'] === 'all' ? 'All Levels' : (\App\Models\FeesCategories::tierDisplayLabel($f['level']) ?? $f['level']) }}@endif@if(!empty($f['class'])) · {{ $f['class'] }}@endif@if(!empty($f['is_yearly'])) · Yearly@elseif(!empty($f['term'])) · {{ $f['term'] }}@endif</span>
                                                 <button wire:click="removeFee({{ $fi }})" type="button"
                                                         class="toshi-remove-btn">✕</button>
                                             </div>
@@ -1238,9 +1290,9 @@
                                         @endif
                                         <div class="toshi-flex-col">
                                             <input type="text" wire:model="feeFormName" placeholder="Fee name *"
-                                                   class="toshi-input">
+                                                   class="toshi-input" data-testid="toshi-fee-name-modal">
                                             <input type="number" wire:model="feeFormAmount" placeholder="Amount (UGX) *"
-                                                   class="toshi-input">
+                                                   class="toshi-input" data-testid="toshi-fee-amount-modal">
                                             <select wire:model="feeFormLevel"
                                                     class="toshi-input">
                                                 <option value="">Level (optional)</option>
@@ -1258,13 +1310,19 @@
                                                 <option value="{{ $std['name'] }}">
                                                 @endforeach
                                             </datalist>
+                                            <label class="toshi-check flex items-center gap-2 text-sm" data-testid="toshi-fee-yearly-modal">
+                                                <input type="checkbox" wire:model.live="feeFormIsYearly" />
+                                                <span>Yearly fee (not tied to a term)</span>
+                                            </label>
+                                            @if(! $feeFormIsYearly)
                                             <select wire:model="feeFormTerm"
-                                                    class="toshi-input">
+                                                    class="toshi-input" data-testid="toshi-fee-term-modal">
                                                 <option value="">Term (optional)</option>
                                                 <option value="Term I">Term I</option>
                                                 <option value="Term II">Term II</option>
                                                 <option value="Term III">Term III</option>
                                             </select>
+                                            @endif
                                             <div class="flex gap-2">
                                                 <button wire:click="saveFee" type="button"
                                                         class="toshi-btn-primary-sm">
