@@ -246,6 +246,7 @@ class AcademicYearCurrentResolutionTest extends TestCase
         ]);
 
         $view->assertDontSee('data-testid="empty-state-product-demo"', false);
-        $view->assertSee('dashboard-kpi-card', false);
+        $view->assertSee('ds-kpi-card', false);
+        $view->assertDontSee('dashboard-kpi-card', false);
     }
 }
