@@ -1,13 +1,13 @@
 <div class="ds-table-wrap">
-    <table class="ds-grid-marks">
+    <table class="ds-grid-marks" data-testid="ds-grid-marks">
         <thead>
             <tr>
                 <th>#</th>
                 <th>Student</th>
                 @foreach ($subjects as $subject)
                     <th>
-                        {{ str($subject->name)->limit(4, "") }}
-                        <span class="gm-subject-code">{{ str($subject->name)->limit(10, "") }}</span>
+                        {{ str($subject->name)->limit(4, '') }}
+                        <span class="gm-subject-code">/100</span>
                     </th>
                 @endforeach
                 <th>Total</th>
@@ -20,16 +20,31 @@
             @foreach ($students as $student)
                 <tr>
                     <td>{{ ($students->currentPage() - 1) * $students->perPage() + $loop->iteration }}</td>
-                    <td>{{ ucwords(strtolower($student->userprofile?->firstname . " ".$student->userprofile?->lastname ?? "Student". $student->id)) }}</td>
-                    @foreach ($subjects as $subject)
-                        @php $mark = $student?->marks->where("subject_id", $subject->id)->first()->marks; @endphp
-                        <td>{{ $mark ? ceil($mark) : '—' }}</td>
-                    @endforeach
-                    <td class="gm-total">{{ $student->marks->sum('marks') }}</td>
-                    <td class="gm-agg">{{ $student->marks->sum('marks') ? "—" : "—" }}</td>
-                    <td class="gm-pos">—</td>
                     <td>
-                        <a href="{{ route('admin.report.student.class', [$student, $class->id, $exam->id]) }}" class="text-blue-600 hover:text-blue-800 text-xs" target="_blank">Report</a>
+                        @php
+                            $display = trim(($student->userprofile?->firstname ?? '').' '.($student->userprofile?->lastname ?? ''));
+                            if ($display === '') {
+                                $display = $student->displayName ?: ($student->name ?: 'Student '.$student->id);
+                            }
+                        @endphp
+                        {{ ucwords(strtolower($display)) }}
+                    </td>
+                    @foreach ($subjects as $subject)
+                        @php
+                            $markRow = $student->marks->firstWhere('subject_id', $subject->id);
+                            $mark = $markRow?->marks;
+                        @endphp
+                        <td>{{ $mark !== null ? ceil($mark) : '—' }}</td>
+                    @endforeach
+                    <td class="gm-total">{{ $student->total ?? $student->marks->sum('marks') }}</td>
+                    <td class="gm-agg">{{ $student->avg ?? '—' }}</td>
+                    <td class="gm-pos">{{ $student->position ?? '—' }}</td>
+                    <td>
+                        @if($exam && $class)
+                            <a href="{{ route('admin.report.student.class', [$student, $class->id, $exam->id]) }}" class="dt-name-link text-xs" target="_blank" rel="noopener">Report</a>
+                        @else
+                            —
+                        @endif
                     </td>
                 </tr>
             @endforeach
