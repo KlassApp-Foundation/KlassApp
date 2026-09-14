@@ -1,0 +1,19 @@
+{
+  "mode": "prod",
+  "base": "https://klassapp.xyz",
+  "email": "cutover.prod.1789421288249@v.test",
+  "at": "2026-09-14T21:28:08.249Z",
+  "checks": {
+    "registerLanded": true,
+    "wizardShell": true,
+    "jumpedPlan": true,
+    "planCards": true,
+    "planEmptyAbsent": true,
+    "planContinue": true,
+    "step_student_size": true,
+    "step_school_category": false,
+    "step_standards": true,
+    "step_review": true
+  },
+  "ok": true
+}

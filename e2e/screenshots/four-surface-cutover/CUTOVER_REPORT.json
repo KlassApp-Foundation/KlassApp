@@ -1,0 +1,27 @@
+{
+  "milestone": "Four-surface design program production cutover (Pieces 1-4)",
+  "at": "2026-09-14T21:31:00Z",
+  "main_tip": "2e5a382bc77bc81dbfcb2c551f879f34a8e2b351",
+  "rollback_point": {
+    "deployment": "depl-a2be2ae7-471c-4b96-8f55-f75e8a346e5d",
+    "commit": "ca0e1143826207eac45b1b8d790a3ac5c92e7c4a",
+    "pr": 560,
+    "note": "POST /deployments ignores commit_hash and always ships branch tip; rollback requires revert/reset main then redeploy, or Cloud dashboard redeploy of prior deployment if available."
+  },
+  "staging_deploy": "depl-a2bf311a-650b-4105-a6b5-c2ff4413c2ad",
+  "production_deploy": "depl-a2bf3117-1b9b-4ead-bcd0-44f83d1fcb12",
+  "process_note": "Rollback probe accidentally POSTed a production deployment (commit_hash body ignored \u2192 shipped main tip 2e5a382). Staging verify completed successfully; production verify followed on live tip.",
+  "staging": {
+    "children_pass": "11/12 initially; landing re-ran PASS after networkidle\u2192load",
+    "holistic": true,
+    "register_wizard": true,
+    "toshi_admin_teacher": true
+  },
+  "production": {
+    "landing_auth_errors": true,
+    "register_wizard_plans": true,
+    "dashboard_home_incomplete": true,
+    "toshi_admin_teacher_dock_mobile": true,
+    "pulse_canary_blur_clay": true
+  }
+}

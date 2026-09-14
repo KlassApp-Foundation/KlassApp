@@ -32,7 +32,8 @@ function fail(msg) {
 
   for (const vp of viewports) {
     const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height } });
-    const res = await page.goto(`${BASE}/`, { waitUntil: 'networkidle', timeout: 90000 });
+    // `load` not `networkidle` — staging hibernation / third-party beacons can stall forever.
+    const res = await page.goto(`${BASE}/`, { waitUntil: 'load', timeout: 90000 });
     if (!res || !res.ok()) {
       fail(`${vp.name}: HTTP ${res ? res.status() : 'null'}`);
       report.ok = false;
