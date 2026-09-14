@@ -609,7 +609,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Dashboard prefers-reduced-motion LIVE ([PR #558](https://github.com/KlassApp-Foundation/KlassApp/pull/558) MERGED+DEPLOYED)
+## Current Status: September 14, 2026 — Dashboard reduced-motion sweep COMPLETE ([PR #560](https://github.com/KlassApp-Foundation/KlassApp/pull/560) MERGED+DEPLOYED)
+
+- **Merged**: [#560](https://github.com/KlassApp-Foundation/KlassApp/pull/560) merge `ca0e1143` (`fix/reduced-motion-pulse-spin`) — save-indicator `d-pulse` and Toshi `toshi-spin` join the three loops from [#558](https://github.com/KlassApp-Foundation/KlassApp/pull/558) under `@media (prefers-reduced-motion: reduce)`.
+- **Production deploy**: `depl-a2be2ae7-471c-4b96-8f55-f75e8a346e5d` @ `ca0e1143` **succeeded**.
+- **Live verify**: prod `dashboard-refresh.css` contains both new rules; Playwright `emulateMedia({ reducedMotion: 'reduce' })` → `d-pulse` and `toshi-spin` compute `animation-name: none`.
+- **Sweep status**: all five infinite loops in `dashboard-refresh.css` now respect reduced motion.
+
+## Previous: September 14, 2026 — Dashboard prefers-reduced-motion LIVE ([PR #558](https://github.com/KlassApp-Foundation/KlassApp/pull/558) MERGED+DEPLOYED)
 
 - **Merged**: [#558](https://github.com/KlassApp-Foundation/KlassApp/pull/558) merge `cc01623e` (`fix/dashboard-reduced-motion`) — `@media (prefers-reduced-motion: reduce)` disables LIVE badge sheen, LIVE pulsing dot, and `.ds-loading-dot` bounce in `dashboard-refresh.css`.
 - **Also documented**: real `STUDENT_SIZE_OPTIONS`, `SchoolCategorySeeder::CATEGORIES`, and `OnboardingStepsService::ALL_STEPS` order in `DESIGN_SYSTEM.md` (replacing Claude Design kit placeholders).
@@ -10275,5 +10282,6 @@ Fixes the two `TRACKED ISSUE` entries above.
 ### 2026-09-14: Complete dashboard reduced-motion sweep (d-pulse + toshi-spin)
 - **Work done**: Extended `@media (prefers-reduced-motion: reduce)` to save-indicator `d-pulse` and Toshi plan-card `toshi-spin`. Updated DESIGN_SYSTEM.md + OD klassapp DESIGN.md. PHPUnit asserts all five loops; Playwright emulateMedia confirms both new ones → `animation-name: none`.
 - **Files modified**: `public/css/dashboard-refresh.css`, `tests/Feature/DesignSystem/ReducedMotionContractTest.php`, `resources/views/components/DESIGN_SYSTEM.md`, `knowledge.md`
-- **Status**: 🚧 PR opening / shipping
+- **Status**: ✅ MERGED #560 (`ca0e1143`) + DEPLOYED `depl-a2be2ae7-…` + prod Playwright verified
+- **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/560
 - **Edge cases flagged**: none remaining for infinite loops in `dashboard-refresh.css`
