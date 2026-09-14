@@ -95,15 +95,43 @@ async function login(page) {
     console.warn('WARN: not on students step — skip live gate (PHPUnit covers it)');
   }
 
-  // Plan empty vs cards: only assert when the plan step is visible; otherwise PHPUnit
-  // covers empty-state messaging (staging demo usually already has a plan / is past step).
+  // Jump to plan_selection and assert empty copy appears exactly once (no shell duplicate).
+  const jumpedPlan = await cssPage.evaluate(() => {
+    const root = document.querySelector('[data-testid="manual-wizard-shell"]');
+    if (!root || !window.Livewire) return false;
+    const comp = window.Livewire.find(root.getAttribute('wire:id'));
+    if (!comp) return false;
+    const steps = comp.get('steps') || [];
+    const idx = steps.findIndex((s) => s && s.key === 'plan_selection');
+    if (idx < 0) return false;
+    comp.call('goToStep', idx);
+    return true;
+  }).catch(() => false);
+  if (jumpedPlan) await cssPage.waitForTimeout(1200);
+
+  const EMPTY_MSG = 'No plans are available yet. Contact support.';
   const planEmpty = await cssPage.locator('[data-testid="wizard-plan-empty"]').count();
   const planCards = await cssPage.locator('[data-testid="wizard-plan-cards"]').count();
-  if (planEmpty > 0 || planCards > 0) {
-    report.checks.planEmptyOrCardsPresent = true;
+  if (planEmpty > 0) {
+    const continueBtn = cssPage.locator('[data-testid="wizard-next"], [data-testid="wizard-continue"], button:has-text("Continue")').first();
+    await continueBtn.click();
+    await cssPage.waitForTimeout(1000);
+    const bodyText = await cssPage.locator('body').innerText();
+    const occurrences = bodyText.split(EMPTY_MSG).length - 1;
+    const shellErr = await cssPage.locator('[data-testid="wizard-error"]').count();
+    report.checks.planEmptyOnce = occurrences === 1 && shellErr === 0;
+    report.checks.planEmptyOccurrenceCount = occurrences;
+    report.checks.planEmptyShellErrorCount = shellErr;
+    if (!report.checks.planEmptyOnce) {
+      fail(`Plan empty message must appear exactly once (got ${occurrences}, shell errors ${shellErr})`);
+    }
+    await cssPage.screenshot({ path: path.join(OUT, 'plan-empty-once.png') });
+  } else if (planCards > 0) {
+    report.checks.planEmptyOnce = 'skipped-plans-present';
+    console.warn('WARN: active plans on this school — skip once-only empty assert (PHPUnit covers it)');
   } else {
-    report.checks.planEmptyOrCardsPresent = 'skipped-not-on-plan-step';
-    console.warn('WARN: not on plan step — skip live plan empty/cards (PHPUnit covers it)');
+    report.checks.planEmptyOnce = 'skipped-not-on-plan-step';
+    console.warn('WARN: not on plan step — skip live plan empty once (PHPUnit covers it)');
   }
 
   // Toshi form fields: open panel and try to surface student form via Livewire

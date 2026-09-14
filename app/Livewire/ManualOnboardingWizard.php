@@ -773,6 +773,13 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
+        // No active plans: the step's @empty alert already explains this. Do not also
+        // push the same string into the shell error banner (duplicate on Continue).
+        if (($step['key'] ?? '') === 'plan_selection'
+            && Plan::query()->where('is_active', 1)->doesntExist()) {
+            return;
+        }
+
         try {
             $this->persistCurrentStep($step['key']);
         } catch (ValidationException $e) {
@@ -2193,7 +2200,8 @@ class ManualOnboardingWizard extends Component
     private function savePlan(School $school): void
     {
         if (Plan::query()->where('is_active', 1)->doesntExist()) {
-            // Match the empty-state alert — do not also demand "Select a plan".
+            // Prefer the in-step empty alert; next() short-circuits before this when empty.
+            // Keep a guard for any direct persist path without duplicating UX intent.
             throw ValidationException::withMessages([
                 'plan' => 'No plans are available yet. Contact support.',
             ]);
