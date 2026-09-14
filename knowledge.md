@@ -618,13 +618,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 15, 2026 — **Onboarding unique-constraint audit + dedup fix** (PR pending ship)
+## Current Status: September 15, 2026 — **Onboarding unique-constraint audit MERGED + STAGING** ([#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613))
 
+- **Merged**: [#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613) `c228a59e` — GitHub API `merged: true`.
+- **Staging deploy**: `depl-a2bf681a-…` @ `c228a59e` **succeeded** (`deployment.succeeded`). **Production: NOT deployed.**
 - **Problem**: Wizard Teachers/Students showed generic “Could not save this step” after successful xlsx parse — staging logs: `users_email_unique` (`dokello@school.ug`) and `student_academics_lin_unique` (`LIN2501001001`) from leftover school 14 “PR611 Upload School”. Engine checked email **per-school**; DB is **global**. LIN had **no** pre-check.
-- **Staging cleanup**: School 14 retired (`status=0`, users `inactive`, emails remapped to `retired.*@retired.test`, LINs nulled). Other tonight schools 10–13 had **no** `@school.ug` / `LIN250x` fixture collisions.
-- **Code**: `OnboardingEngine` global email + LIN validation (ValidationException); WhatsApp phone pre-check; `describeUniqueConstraintViolation()`; wizard + Toshi catch UniqueConstraint → specific messages. Shared engine path = both surfaces.
-- **Verify**: PHPUnit SaveTeachers/SaveStudents/SaveWhatsApp + `WizardUniqueConstraintSurfacingTest` + WhatsApp duplicate. **Production: NOT deployed.**
-- Full audit table: see Session Log + “Onboarding unique-constraint audit (2026-09-15)” below.
+- **Staging cleanup**: School 14 retired (`status=0`, users `inactive`, emails remapped, LINs nulled). Confirmed live: `dokello@school.ug` count=0, `LIN2501001001` count=0, `assertEmailAvailableGlobally` present. Schools 10–13 had no fixture collisions.
+- **Code**: `OnboardingEngine` global email + LIN validation; WhatsApp phone pre-check; `describeUniqueConstraintViolation()`; wizard + Toshi surface UniqueConstraint → specific messages.
+- **Verify**: PHPUnit SaveTeachers/SaveStudents/SaveWhatsApp + `WizardUniqueConstraintSurfacingTest` + WhatsApp duplicate. Staging filesystem method present.
+- Full audit table: “Onboarding unique-constraint audit (2026-09-15)” below.
 
 ## Previous: September 15, 2026 — **SiteAdmin OAuth + spreadsheet placement MERGED + STAGING** ([#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611))
 
@@ -2127,11 +2129,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-15: Onboarding unique-constraint audit + global email/LIN dedup — **shipping**
-- **Work done**: Full unique-index audit (users / student_academics / schools / structure / WhatsApp / etc.); retired staging school 14 (freed emails+LINs); fixed engine gaps; surfaced specific ValidationException / UniqueConstraint messages in wizard `next()` and Toshi `commit()`; PHPUnit + Livewire collision tests.
-- **Files**: `OnboardingEngine.php`, `ManualOnboardingWizard.php`, `AgentToshi.php`, SaveTeachers/SaveStudents/SaveWhatsApp tests, `WizardUniqueConstraintSurfacingTest.php`, `WizardWhatsAppDuplicatePhoneTest.php`, `e2e/wizard-unique-constraint-collisions.cjs`, `knowledge.md`.
-- **Key decisions**: Keep email + LIN **global**; align code (don’t catch-and-hide); remap unique fields when retiring test schools (inactive alone still holds unique index).
-- **Status**: 🚧 PR / merge / staging deploy in progress — production **not** in scope.
+### 2026-09-15: Onboarding unique-constraint audit + global email/LIN dedup — **MERGED + STAGING** ([#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613))
+- **Work done**: Full unique-index audit; retired staging school 14; fixed engine gaps; specific ValidationException / UniqueConstraint messages in wizard + Toshi; PHPUnit + Livewire collision tests.
+- **Merged**: [#613](https://github.com/KlassApp-Foundation/KlassApp/pull/613) `c228a59e` — API `merged: true`.
+- **Staging**: `depl-a2bf681a-…` @ `c228a59e` **succeeded**. Production **not** deployed.
+- **Files**: `OnboardingEngine.php`, `ManualOnboardingWizard.php`, `AgentToshi.php`, SaveTeachers/SaveStudents/SaveWhatsApp tests, `WizardUniqueConstraintSurfacingTest.php`, `e2e/wizard-unique-constraint-collisions.cjs`, `knowledge.md`.
+- **Key decisions**: Keep email + LIN **global**; align code (don’t catch-and-hide); remap unique fields when retiring test schools.
+- **Status**: ✅ Merged + staging verified (school 14 retired; method live).
 - **Edge**: Wizard student drafts do not pass `email` to engine (LIN is the wizard collision surface); Toshi/engine still enforce global email. Soft-deleted users occupy email unique.
 
 ### 2026-09-15: SiteAdmin Google redirect + real xlsx student/teacher placement — **MERGED + STAGING** ([#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611))
