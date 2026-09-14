@@ -9,7 +9,7 @@
 @endphp
 
 @if($hasAnyData)
-<div class="bg-white custom-shadow px-5 py-4 border dashboard-kpi-card mt-4">
+<div class="bg-white custom-shadow px-5 py-4 border dashboard-chart-card mt-4">
     <div class="flex items-center justify-between mb-4">
         <h3 class="text-gray-800 font-semibold text-xl dashboard-panel-title">EOT Performance</h3>
     </div>
