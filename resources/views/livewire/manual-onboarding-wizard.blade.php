@@ -61,7 +61,16 @@
             </div>
 
             @if($errorMessage)
-                <div class="mb-4 text-sm text-red-600 font-medium" role="alert" data-testid="wizard-error">{{ $errorMessage }}</div>
+                @php
+                    // #601 made savePlan() reuse the empty-state copy; after Continue that
+                    // would show twice (shell banner + step @empty). Prefer the in-step alert.
+                    $suppressDuplicatePlanEmpty = ($step['key'] ?? '') === 'plan_selection'
+                        && $errorMessage === 'No plans are available yet. Contact support.'
+                        && $this->plans->isEmpty();
+                @endphp
+                @unless($suppressDuplicatePlanEmpty)
+                    <div class="mb-4 text-sm text-red-600 font-medium" role="alert" data-testid="wizard-error">{{ $errorMessage }}</div>
+                @endunless
             @endif
 
             <div class="manual-wizard-fields space-y-4" wire:key="step-{{ $step['key'] }}">

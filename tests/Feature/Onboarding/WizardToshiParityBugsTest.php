@@ -114,9 +114,20 @@ class WizardToshiParityBugsTest extends TestCase
             ->assertSeeHtml('data-testid="wizard-plan-empty"')
             ->assertSee('No plans are available yet. Contact support.')
             ->assertDontSee('Select a plan to continue.')
+            ->assertDontSeeHtml('data-testid="wizard-error"')
             ->call('next')
-            ->assertSet('errorMessage', 'No plans are available yet. Contact support.')
+            // Stay on plan step; shell error must not duplicate the in-step empty alert.
+            ->assertSet('errorMessage', '')
+            ->assertSeeHtml('data-testid="wizard-plan-empty"')
+            ->assertDontSeeHtml('data-testid="wizard-error"')
             ->assertDontSee('Select a plan to continue.');
+
+        $html = $component->html();
+        $this->assertSame(
+            1,
+            substr_count($html, 'No plans are available yet. Contact support.'),
+            'Empty-plan message must render exactly once'
+        );
     }
 
     public function test_wizard_finish_lists_exact_incomplete_steps(): void
