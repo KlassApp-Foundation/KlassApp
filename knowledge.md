@@ -10271,3 +10271,9 @@ Fixes the two `TRACKED ISSUE` entries above.
 - **Status**: ✅ MERGED #558 (`cc01623e`) + DEPLOYED `depl-a2be2723-…` + live CSS/Playwright verified
 - **PR**: https://github.com/KlassApp-Foundation/KlassApp/pull/558
 - **Edge cases flagged**: Claude Design React kit still has wrong inferred size/category labels until someone edits that dump; grounding is DESIGN_SYSTEM.md + OD `klassapp` DESIGN.md. `d-pulse` / `toshi-spin` still lack reduced-motion.
+
+### 2026-09-14: Complete dashboard reduced-motion sweep (d-pulse + toshi-spin)
+- **Work done**: Extended `@media (prefers-reduced-motion: reduce)` to save-indicator `d-pulse` and Toshi plan-card `toshi-spin`. Updated DESIGN_SYSTEM.md + OD klassapp DESIGN.md. PHPUnit asserts all five loops; Playwright emulateMedia confirms both new ones → `animation-name: none`.
+- **Files modified**: `public/css/dashboard-refresh.css`, `tests/Feature/DesignSystem/ReducedMotionContractTest.php`, `resources/views/components/DESIGN_SYSTEM.md`, `knowledge.md`
+- **Status**: 🚧 PR opening / shipping
+- **Edge cases flagged**: none remaining for infinite loops in `dashboard-refresh.css`
