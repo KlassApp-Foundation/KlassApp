@@ -85,17 +85,35 @@ async function gotoWizardStep(page, stepKey) {
     throw new Error('wire:confirm missing after drafts: ' + skipConfirmAfter);
   }
 
-  // Upload a CSV teacher row
+  // Upload a CSV teacher row — Livewire file uploads are async; wait for list growth.
   const teacherCsv = path.join(os.tmpdir(), 'wizard-teachers-e2e.csv');
   fs.writeFileSync(
     teacherCsv,
     'Name,Email,Subjects,Classes,Phone\nE2E Upload Teacher,e2e.upload@klassapp.xyz,Math,P1,+256700999888\n'
   );
+  const teacherCountBeforeUpload = await page.locator('[data-testid=wizard-teacher-list] li').count();
   await page.setInputFiles('[data-testid=wizard-teacher-upload]', teacherCsv);
-  await page.waitForTimeout(2500);
+  await page.waitForFunction(
+    (before) => {
+      const n = document.querySelectorAll('[data-testid=wizard-teacher-list] li').length;
+      const err = document.querySelector('.manual-wizard-error, [data-testid=wizard-error]')?.textContent || '';
+      return n > before || /No names|Upload failed|Supported files/i.test(err);
+    },
+    teacherCountBeforeUpload,
+    { timeout: 20000 }
+  ).catch(() => {});
+  await page.waitForTimeout(1000);
   const teacherListAfterUpload = await page.locator('[data-testid=wizard-teacher-list] li').count();
-  if (teacherListAfterUpload < 3) {
-    throw new Error('upload did not add teacher, count=' + teacherListAfterUpload);
+  const teacherErr = ((await page.locator('.manual-wizard-error, [role=alert]').first().textContent().catch(() => '')) || '').trim();
+  if (teacherListAfterUpload <= teacherCountBeforeUpload) {
+    throw new Error(
+      'upload did not add teacher, before=' +
+        teacherCountBeforeUpload +
+        ' after=' +
+        teacherListAfterUpload +
+        ' err=' +
+        JSON.stringify(teacherErr)
+    );
   }
   console.log('teacher upload OK', teacherListAfterUpload);
 
@@ -166,11 +184,17 @@ async function gotoWizardStep(page, stepKey) {
     studentCsv,
     'Name,Class,Stream,Parent Name,Parent Phone\nE2E Upload Student,P.1,,Parent E2E,+256700111000\n'
   );
+  const studentCountBeforeUpload = await page.locator('[data-testid=wizard-student-list] li').count();
   await page.setInputFiles('[data-testid=wizard-student-upload]', studentCsv);
-  await page.waitForTimeout(2500);
+  await page.waitForFunction(
+    (before) => document.querySelectorAll('[data-testid=wizard-student-list] li').length > before,
+    studentCountBeforeUpload,
+    { timeout: 20000 }
+  ).catch(() => {});
+  await page.waitForTimeout(1000);
   const studentListAfterUpload = await page.locator('[data-testid=wizard-student-list] li').count();
-  if (studentListAfterUpload < 2) {
-    throw new Error('student upload failed, count=' + studentListAfterUpload);
+  if (studentListAfterUpload <= studentCountBeforeUpload) {
+    throw new Error('student upload failed, before=' + studentCountBeforeUpload + ' after=' + studentListAfterUpload);
   }
   console.log('student upload OK', studentListAfterUpload);
 
