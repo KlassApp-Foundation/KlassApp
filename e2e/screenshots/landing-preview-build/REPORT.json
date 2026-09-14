@@ -1,6 +1,6 @@
 {
   "base": "http://127.0.0.1:8000",
-  "at": "2026-09-12T10:36:49.916Z",
+  "at": "2026-09-14T09:21:16.948Z",
   "viewports": {
     "desktop": {
       "status": 200,
@@ -63,7 +63,15 @@
         "protocolMesh": true,
         "openSourceCard": true,
         "prodFooter": true,
-        "noCommunitySection": true
+        "noCommunitySection": true,
+        "paperBase": true,
+        "textPrimary": true,
+        "soraDisplay": true,
+        "dmSansBody": true,
+        "noBricolage": true,
+        "noInterLink": true,
+        "bodyCanvas": true,
+        "bodyInk": true
       },
       "isolation": {
         "dsElements": 0,
@@ -133,7 +141,15 @@
         "protocolMesh": true,
         "openSourceCard": true,
         "prodFooter": true,
-        "noCommunitySection": true
+        "noCommunitySection": true,
+        "paperBase": true,
+        "textPrimary": true,
+        "soraDisplay": true,
+        "dmSansBody": true,
+        "noBricolage": true,
+        "noInterLink": true,
+        "bodyCanvas": true,
+        "bodyInk": true
       },
       "isolation": {
         "dsElements": 0,
@@ -203,7 +219,15 @@
         "protocolMesh": true,
         "openSourceCard": true,
         "prodFooter": true,
-        "noCommunitySection": true
+        "noCommunitySection": true,
+        "paperBase": true,
+        "textPrimary": true,
+        "soraDisplay": true,
+        "dmSansBody": true,
+        "noBricolage": true,
+        "noInterLink": true,
+        "bodyCanvas": true,
+        "bodyInk": true
       },
       "isolation": {
         "dsElements": 0,

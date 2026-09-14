@@ -19,6 +19,10 @@ class LandingAuthErrorCutoverTest extends TestCase
         $response->assertDontSee('id="community"', false);
         $response->assertDontSee('noindex,nofollow', false);
         $response->assertSee('build/assets/landing-preview-', false);
+        $response->assertSee('family=Sora', false);
+        $response->assertSee('family=DM+Sans', false);
+        $this->assertStringNotContainsString('Bricolage', $response->getContent());
+        $this->assertStringNotContainsString('family=Inter', $response->getContent());
     }
 
     public function test_legacy_landing_preview_redirects_to_home(): void

@@ -27,7 +27,7 @@ const absentIds = ['community', 'open-source'];
     });
     page.on('pageerror', (err) => consoleErrors.push(String(err)));
 
-    const res = await page.goto(`${BASE}/landing-preview`, { waitUntil: 'networkidle', timeout: 60000 });
+    const res = await page.goto(`${BASE}/`, { waitUntil: 'networkidle', timeout: 60000 });
     await page.evaluate(() => {
       document.querySelectorAll('.reveal').forEach((el) => el.classList.add('visible'));
     });
@@ -39,6 +39,10 @@ const absentIds = ['community', 'open-source'];
     );
     const productUi = await page.evaluate(() => {
       const text = document.body.textContent || '';
+      const root = getComputedStyle(document.documentElement);
+      const body = getComputedStyle(document.body);
+      const h1 = getComputedStyle(document.querySelector('h1') || document.body);
+      const html = document.documentElement.outerHTML;
       return {
         pillars: document.querySelectorAll('.pillar').length,
         provable: text.includes('Provable'),
@@ -64,6 +68,15 @@ const absentIds = ['community', 'open-source'];
           && !text.includes('Stay in the loop')
           && !document.querySelector('.footer-columns'),
         noCommunitySection: !document.getElementById('community') && !document.getElementById('open-source'),
+        // Canonical DESIGN_SYSTEM parchment + type (Piece 1)
+        paperBase: root.getPropertyValue('--paper-base').trim().toLowerCase() === '#fafaf5',
+        textPrimary: root.getPropertyValue('--text-primary').trim().toLowerCase() === '#1e293b',
+        soraDisplay: /Sora/i.test(root.getPropertyValue('--font-display')) && /Sora/i.test(h1.fontFamily),
+        dmSansBody: /DM Sans/i.test(root.getPropertyValue('--font-body')) && /DM Sans/i.test(body.fontFamily),
+        noBricolage: !/Bricolage/i.test(html),
+        noInterLink: !/family=Inter/i.test(html),
+        bodyCanvas: body.backgroundColor === 'rgb(250, 250, 245)',
+        bodyInk: body.color === 'rgb(30, 41, 59)',
       };
     });
 
@@ -122,6 +135,14 @@ const absentIds = ['community', 'open-source'];
       || !productUi.openSourceCard
       || !productUi.prodFooter
       || !productUi.noCommunitySection
+      || !productUi.paperBase
+      || !productUi.textPrimary
+      || !productUi.soraDisplay
+      || !productUi.dmSansBody
+      || !productUi.noBricolage
+      || !productUi.noInterLink
+      || !productUi.bodyCanvas
+      || !productUi.bodyInk
       || isolation.dsElements > 0
       || isolation.htmlHasDsKpi
     ) {
