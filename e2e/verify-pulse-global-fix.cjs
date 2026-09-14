@@ -65,7 +65,7 @@ async function login(page) {
   });
   report.checks.push({ name: 'admin_dashboard_kpi', ...kpi });
 
-  await page.goto(`${BASE}/admin/fees/payments`, { waitUntil: 'networkidle', timeout: 90000 });
+  await page.goto(`${BASE}/admin/students`, { waitUntil: 'networkidle', timeout: 90000 });
   await page.waitForSelector('table.ds-table-ledger', { timeout: 30000 }).catch(() => null);
   await page.waitForTimeout(1000);
 
