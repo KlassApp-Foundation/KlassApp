@@ -618,7 +618,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 3 PR3 structure/CT cards on **STAGING ONLY** ([#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583))
+## Current Status: September 14, 2026 — Piece 3 PR4 bulk teachers/students on **STAGING ONLY** ([#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586))
+
+- **Merged**: [#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586) `3cb0db6e` (`feat/wizard-bulk-teachers-students-kit`) — GitHub API `merged: true`.
+- **Shipped**: Teachers/students bulk kit chrome — paste + Add from paste, email/phone (teachers), Download template (static teacher xlsx + dynamic `admin.students.upload-template`), Upload file, Skip for now with `wire:confirm` when drafts exist; primary actions via `<x-button>`; standards step no longer misuses `.manual-wizard-bulk-*`.
+- **Staging deploy**: `depl-a2be9a70-…` @ `3cb0db6e` **succeeded**.
+- **Staging verify**: Playwright paste/upload/template download (teacher xlsx + dynamic student `student-upload-template-phase-4-roster-demo-school.xlsx` 6455 bytes) + skip+confirm + viewports 375/414/768/1280 PASS (`e2e/wizard-bulk-teachers-students-verify.cjs`).
+- **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
+- **Next**: Piece 3 review polish.
+
+## Previous: September 14, 2026 — Piece 3 PR3 structure/CT cards on **STAGING ONLY** ([#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583))
 
 - **Merged**: [#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583) `d1a1f087` (`feat/wizard-structure-ct-cards`) — GitHub API `merged: true`.
 - **Shipped**: Structure & Class Teacher checkpoint kit cards — `manual-wizard-structure-card`, stream chips / “No streams yet — undivided base class.”, CT empty/populated, `<x-button>` Add / Send invite → real `addStructureStream` / `inviteStructureClassTeacher` (validation + flash copy unchanged).
@@ -1951,6 +1960,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Piece 3 PR4 bulk teachers/students kit — **MERGED + STAGING ONLY** ([#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586))
+- **Work done**: Restyled teachers/students bulk steps to kit (toolbar, paste, pair grid, help/footnote, upload icon); kept paste/upload/email/phone/Download template/Skip+`wire:confirm`; `<x-button>` for primary actions (template stays `<a>`); contract + feature PHPUnit; Playwright e2e (paste, upload, both templates, skip+confirm, 375/414/768/1280). E2e upload waits hardened in follow-up on this stamp branch.
+- **Files modified**: `manual-wizard-step-fields.blade.php`, `dashboard-refresh.css`, `ManualWizardBulkTeachersStudentsTest.php`, `WizardBulkTeachersStudentsKitContractTest.php`, `e2e/wizard-bulk-teachers-students-verify.cjs`, `knowledge.md`
+- **Key decisions**: Do not put Blade `@if` inside `<x-button>` attrs (breaks outer `@elseif` compile); student template remains dynamic `route('admin.students.upload-template')`; after Skip, progress-dot jump to students (skip advances past optional steps to next blocking).
+- **Status**: ✅ MERGED `3cb0db6e` · staging `depl-a2be9a70-…` · Playwright PASS (dynamic student template 6455 bytes) · **prod held**
+- **Edge cases flagged**: Livewire file upload needs wait-for-list-growth (fixed timeout was flaky); `advanceToTeachers` must include subjects checkpoint `next`.
 
 ### 2026-09-14: Piece 3 PR3 structure & class-teacher cards — **MERGED + STAGING ONLY** ([#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583))
 - **Work done**: Kit CSS card chrome for standards step; stream chips + empty/CT copy; `<x-button>` for Add/Send invite; contract + Livewire action tests; `e2e/wizard-structure-ct-verify.cjs` (requires invite form — staging CT cleared once via Commands API for live invite proof).
