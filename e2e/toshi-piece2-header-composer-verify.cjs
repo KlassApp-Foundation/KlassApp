@@ -136,48 +136,93 @@ async function ensureToshiOpen(page) {
     await context.close();
   }
 
-  // Chip-based confirmation: force awaitingConfirm via Livewire if needed by messaging
+  // Chip-based confirmation: force awaitingConfirm via Livewire (independent of chat state).
   const confirmCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await confirmCtx.newPage();
   await login(page);
   await page.goto(`${BASE}/admin/dashboard`, { waitUntil: 'load', timeout: 90000 });
   await ensureToshiOpen(page);
 
-  // Try to enter a confirm state: school name confirm is common on incomplete setup.
-  // Send a message that may trigger awaitingConfirm, or detect existing chips.
-  let chips = page.locator('[data-testid="toshi-confirm-chips"]');
-  if (!(await chips.isVisible().catch(() => false))) {
-    const input = page.locator('#toshi-input-panel');
-    if (await input.isEditable().catch(() => false)) {
-      await input.fill('yes');
-      // Prefer not relying on typed confirm — nudge onboarding if present
-      await input.fill('continue setup');
-      await page.locator('[data-testid="toshi-send"]').click({ force: true }).catch(() => null);
-      await page.waitForTimeout(1500);
-    }
-  }
-
-  // Livewire test hook: if still no chips, inject awaitingConfirm via Alpine/$wire
-  if (!(await chips.isVisible().catch(() => false))) {
-    await page.evaluate(async () => {
+  const inject = await page.evaluate(async () => {
+    if (!window.Livewire) return { ok: false, reason: 'no Livewire' };
+    const all = typeof window.Livewire.all === 'function' ? window.Livewire.all() : [];
+    let component = all.find((c) => {
+      const name = (c.name || c.__instance?.fingerprint?.name || '').toString();
+      return name === 'agent-toshi' || name.includes('agent-toshi');
+    }) || null;
+    if (!component) {
       const root = document.querySelector('[data-toshi-root]');
-      if (!root || !window.Livewire) return;
-      const component = window.Livewire.find(
-        root.closest('[wire\\:id]')?.getAttribute('wire:id')
-        || document.querySelector('[wire\\:id]')?.getAttribute('wire:id')
-      );
-      if (component) {
-        component.set('awaitingConfirm', true);
-        await component.$refresh();
-      }
-    });
-    await page.waitForTimeout(800);
-  }
+      const wireEl = root?.closest('[wire\\:id]') || (root?.hasAttribute('wire:id') ? root : null)
+        || document.querySelector('[wire\\:id]');
+      const id = wireEl?.getAttribute('wire:id');
+      if (id) component = window.Livewire.find(id);
+    }
+    if (!component) {
+      return {
+        ok: false,
+        reason: 'no component',
+        names: all.map((c) => c.name || c.__instance?.fingerprint?.name || '?'),
+      };
+    }
 
-  chips = page.locator('[data-testid="toshi-confirm-chips"]');
-  const yesBtn = page.locator('[data-testid="toshi-confirm-yes"]');
-  const visible = await chips.isVisible().catch(() => false);
-  report.chipConfirm = { chipsVisible: visible };
+    const wire = component.$wire;
+    if (!wire || typeof wire.set !== 'function') {
+      return { ok: false, reason: 'no $wire.set', id: component.id || component.__livewireId };
+    }
+
+    await wire.set('visible', true);
+    await wire.set('awaitingConfirm', true);
+    if (typeof wire.$commit === 'function') {
+      await wire.$commit();
+    }
+
+    // Wait for network morph; poll for real DOM nodes (not snapshot JSON strings).
+    for (let i = 0; i < 40; i++) {
+      if (document.querySelector('#toshi-panel [data-testid="toshi-confirm-chips"]')) break;
+      await new Promise((r) => setTimeout(r, 250));
+    }
+
+    const chipNodes = document.querySelectorAll('[data-testid="toshi-confirm-chips"]');
+    return {
+      ok: true,
+      name: component.name || 'found',
+      id: component.id || component.__livewireId,
+      awaitingConfirm: wire.awaitingConfirm,
+      visible: wire.visible,
+      chipNodeCount: chipNodes.length,
+      panelChipCount: document.querySelectorAll('#toshi-panel [data-testid="toshi-confirm-chips"]').length,
+      composerDeferredCount: document.querySelectorAll('.toshi-composer--awaiting-confirm').length,
+      panelDisplay: document.querySelector('#toshi-panel')
+        ? getComputedStyle(document.querySelector('#toshi-panel')).display
+        : null,
+    };
+  });
+  report.chipConfirm = { inject };
+
+  await page.waitForSelector('#toshi-panel [data-testid="toshi-confirm-chips"]', { timeout: 5000 }).catch(() => null);
+
+  const chipsMeta = await page.evaluate(() => {
+    const nodes = [...document.querySelectorAll('[data-testid="toshi-confirm-chips"]')];
+    return nodes.map((el) => {
+      const style = getComputedStyle(el);
+      const panel = el.closest('#toshi-panel, #toshi-modal');
+      return {
+        variant: el.getAttribute('data-toshi-confirm-variant'),
+        display: style.display,
+        visibility: style.visibility,
+        parentId: panel?.id || null,
+        parentDisplay: panel ? getComputedStyle(panel).display : null,
+        w: Math.round(el.getBoundingClientRect().width),
+        h: Math.round(el.getBoundingClientRect().height),
+      };
+    });
+  });
+  report.chipConfirm.chipsMeta = chipsMeta;
+
+  const chips = page.locator('#toshi-panel [data-testid="toshi-confirm-chips"]');
+  const yesBtn = page.locator('#toshi-panel [data-testid="toshi-confirm-yes"]');
+  const visible = (await chips.count()) > 0 && await chips.first().isVisible().catch(() => false);
+  report.chipConfirm.chipsVisible = visible;
 
   if (!visible) {
     fail('confirm chips not visible after attempting to enter awaitingConfirm');
@@ -195,7 +240,6 @@ async function ensureToshiOpen(page) {
     const still = await chips.isVisible().catch(() => false);
     report.chipConfirm.afterYesGone = !still;
     if (still) {
-      // confirmYes may re-enter awaitingConfirm for next substep — still proves click registered
       report.chipConfirm.afterYesGone = 'still_or_next_confirm';
       console.log('NOTE: chips still present after Yes (may be next confirm substep) — click registered');
     }
@@ -207,7 +251,9 @@ async function ensureToshiOpen(page) {
 
   fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report, null, 2));
-  if (!report.ok) process.exit(1);
+  if (!report.ok) {
+    process.exit(1);
+  }
   console.log('PASS Piece 2 PR1 header/composer + chip confirm + Pulse canary');
 })().catch((e) => {
   console.error(e);
