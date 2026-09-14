@@ -618,12 +618,14 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 3 PR3 structure/CT cards **opening** (`feat/wizard-structure-ct-cards`)
+## Current Status: September 14, 2026 — Piece 3 PR3 structure/CT cards on **STAGING ONLY** ([#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583))
 
-- **In flight**: Kit restyle for Structure & Class Teacher checkpoint — `manual-wizard-structure-card`, stream chips / empty copy, CT empty/populated, `<x-button>` Add / Send invite wired to `addStructureStream` / `inviteStructureClassTeacher` (behavior unchanged).
-- **Prior**: [#579](https://github.com/KlassApp-Foundation/KlassApp/pull/579) size cards · [#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577) shell/nav.
-- **Production**: **NOT deployed**.
-- **Next**: Merge/deploy PR3 → bulk lists → review polish.
+- **Merged**: [#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583) `d1a1f087` (`feat/wizard-structure-ct-cards`) — GitHub API `merged: true`.
+- **Shipped**: Structure & Class Teacher checkpoint kit cards — `manual-wizard-structure-card`, stream chips / “No streams yet — undivided base class.”, CT empty/populated, `<x-button>` Add / Send invite → real `addStructureStream` / `inviteStructureClassTeacher` (validation + flash copy unchanged).
+- **Staging deploy**: `depl-a2be8a03-…` @ `d1a1f087` **succeeded**.
+- **Staging verify**: Playwright stream flash `Added stream “Kit56272” to P.4 Demo.` + CT invite flash + status `CT: Kit Class Teacher` + viewports 375/414/768/1280 PASS (`e2e/wizard-structure-ct-verify.cjs`).
+- **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
+- **Next**: Piece 3 PR4 bulk teachers/students lists → review polish.
 
 ## Previous: September 14, 2026 — Piece 3 PR2 size/category/plan cards on **STAGING ONLY** ([#579](https://github.com/KlassApp-Foundation/KlassApp/pull/579))
 
@@ -632,7 +634,6 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Staging deploy**: `depl-a2be7d97-…` @ `56bbf08f` **succeeded**.
 - **Staging verify**: Playwright size cards + category labels + review Confirm + viewports 375/414/768/1280 PASS.
 - **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
-- **Next**: Piece 3 PR3 structure & class-teacher checkpoint cards → bulk lists → review polish.
 
 ## Previous: September 14, 2026 — Piece 3 PR1 wizard shell/nav on **STAGING ONLY** ([#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577))
 
@@ -1951,12 +1952,12 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-14: Piece 3 PR3 structure & class-teacher cards — **opening**
-- **Work done**: Kit CSS card chrome for standards step; stream chips + empty/CT copy; `<x-button>` for Add/Send invite; contract + Livewire action tests; `e2e/wizard-structure-ct-verify.cjs`.
+### 2026-09-14: Piece 3 PR3 structure & class-teacher cards — **MERGED + STAGING ONLY** ([#583](https://github.com/KlassApp-Foundation/KlassApp/pull/583))
+- **Work done**: Kit CSS card chrome for standards step; stream chips + empty/CT copy; `<x-button>` for Add/Send invite; contract + Livewire action tests; `e2e/wizard-structure-ct-verify.cjs` (requires invite form — staging CT cleared once via Commands API for live invite proof).
 - **Files modified**: `manual-wizard-step-fields.blade.php`, `dashboard-refresh.css`, `WizardStructureKitContractTest.php`, `WizardStructureClassTeacherTest.php`, `e2e/wizard-structure-ct-verify.cjs`, `knowledge.md`
 - **Key decisions**: Visual-only — validation/flash copy and Livewire actions unchanged.
-- **Status**: 🚧 PR opening
-- **Edge cases flagged**: Staging e2e mutates phase4 school (adds stream + CT invite) — uses unique labels/emails.
+- **Status**: ✅ MERGED `d1a1f087` · staging `depl-a2be8a03-…` · Playwright stream+CT invite PASS · **prod held**
+- **Edge cases flagged**: Phase4 staging often has only one structure card with CT pre-assigned — e2e must clear `class_teacher_id` (demo) or fail loudly if invite form absent.
 
 ### 2026-09-14: Flag community docs process under Future Initiatives
 - **Work done**: Logged deferred community-docs workflow (GitHub Community Standards checklist → Claude Cowork drafts with Content Fundamentals voice; DeepWiki explicitly out of scope).
