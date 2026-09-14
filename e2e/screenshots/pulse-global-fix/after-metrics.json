@@ -1,0 +1,15 @@
+{
+  "at": "2026-09-14T08:20:00.000Z",
+  "deploy": "depl-a2be1a50-f365-414f-87bb-58a46f8e486e",
+  "mergeCommit": "cb140999d72bcaa75cd643b836619553f2eae8ee",
+  "checks": {
+    "css_has_ds-table-ledger_thead": true,
+    "admin_students_ledger_thead_blur": "blur(12px)",
+    "admin_attendance_ledger_thead_blur": "blur(12px)",
+    "teacher_kpi_value_color": "rgb(34, 197, 94)",
+    "admin_dashboard_kpi": {
+      "note": "UI Review demo school (124) has setupIncomplete=true on prod — KPI grid is hidden behind product demo placeholder. ds-kpi-card markup verified via PHPUnit view tests (DashboardEmptyStatePlanToProfileTest).",
+      "blade_on_main": "resources/views/admin/dashboard/dashboard.blade.php uses x-ds-kpi-card when setup complete"
+    }
+  }
+}

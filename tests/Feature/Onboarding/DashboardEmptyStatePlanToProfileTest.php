@@ -154,7 +154,8 @@ class DashboardEmptyStatePlanToProfileTest extends TestCase
             'feeTrend' => ['labels' => [], 'values' => []],
         ]);
 
-        $view->assertSee('dashboard-kpi-card', false);
+        $view->assertSee('ds-kpi-card', false);
+        $view->assertDontSee('dashboard-kpi-card', false);
         $view->assertSee('Students', false);
         $view->assertSee('Teachers', false);
         $view->assertSee('Notice Board', false);
