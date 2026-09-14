@@ -172,6 +172,7 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next')
             ->call('next') // uneb skip
             ->call('next') // academic year seeds classes/subjects/grading
+            ->call('next') // structure checkpoint (optional)
             ->set('teacherName', 'Grace')
             ->set('teacherEmail', 'grace@wave3.sch.ug')
             ->call('next')
@@ -236,7 +237,8 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next')
             ->set('unebCenterNumber', 'U333')
             ->call('next')
-            ->call('next') // academic year seeds classes/subjects → auto-advances past them
+            ->call('next') // academic year seeds classes/subjects
+            ->call('next') // structure checkpoint (optional)
             ->set('teacherName', 'Amina Teacher')
             ->set('teacherEmail', 'amina@wave3.sch.ug')
             ->call('next')
@@ -288,7 +290,8 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next')
             ->set('unebCenterNumber', 'U999')
             ->call('next')
-            ->call('next') // academic year seeds classes/subjects → auto-advances past them
+            ->call('next') // academic year seeds classes/subjects
+            ->call('next') // structure checkpoint (optional)
             ->set('teacherName', 'Helen Teacher')
             ->set('teacherEmail', 'helen@wave3.sch.ug')
             ->call('next')
@@ -384,10 +387,10 @@ class ManualUiWave3WizardTest extends TestCase
             ->call('next'); // academic year → lands on classes
 
         $component
-            ->assertSee('Classes')
+            ->assertSee('Structure & Class Teachers')
             ->call('previous')
             ->assertSee('Academic year')
-            ->assertDontSeeHtml('>Classes</h2>');
+            ->assertDontSeeHtml('>Structure &amp; Class Teachers</h2>');
     }
 
     public function test_wizard_page_hides_toshi_via_body_class_hook(): void

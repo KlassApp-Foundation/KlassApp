@@ -1,0 +1,211 @@
+{
+  "pass": true,
+  "base": "http://127.0.0.1:8020",
+  "viewports": {
+    "760": {
+      "screens": {
+        "404": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "404",
+            "title": "Page Not Found",
+            "hasException": true,
+            "primary": "Go to home"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/404-760.png",
+          "pass": true
+        },
+        "419": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "419",
+            "title": "Page Expired",
+            "hasException": true,
+            "primary": "Refresh and try again"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/419-760.png",
+          "pass": true
+        },
+        "500": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "500",
+            "title": "Server Error",
+            "hasException": true,
+            "primary": "Try again"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/500-760.png",
+          "pass": true
+        }
+      },
+      "pass": true,
+      "errors": []
+    },
+    "900": {
+      "screens": {
+        "404": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "404",
+            "title": "Page Not Found",
+            "hasException": true,
+            "primary": "Go to home"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/404-900.png",
+          "pass": true
+        },
+        "419": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "419",
+            "title": "Page Expired",
+            "hasException": true,
+            "primary": "Refresh and try again"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/419-900.png",
+          "pass": true
+        },
+        "500": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "500",
+            "title": "Server Error",
+            "hasException": true,
+            "primary": "Try again"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/500-900.png",
+          "pass": true
+        }
+      },
+      "pass": true,
+      "errors": []
+    },
+    "1024": {
+      "screens": {
+        "404": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "404",
+            "title": "Page Not Found",
+            "hasException": true,
+            "primary": "Go to home"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/404-1024.png",
+          "pass": true
+        },
+        "419": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "419",
+            "title": "Page Expired",
+            "hasException": true,
+            "primary": "Refresh and try again"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/419-1024.png",
+          "pass": true
+        },
+        "500": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "500",
+            "title": "Server Error",
+            "hasException": true,
+            "primary": "Try again"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/500-1024.png",
+          "pass": true
+        }
+      },
+      "pass": true,
+      "errors": []
+    },
+    "1440": {
+      "screens": {
+        "404": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "404",
+            "title": "Page Not Found",
+            "hasException": true,
+            "primary": "Go to home"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/404-1440.png",
+          "pass": true
+        },
+        "419": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "419",
+            "title": "Page Expired",
+            "hasException": true,
+            "primary": "Refresh and try again"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/419-1440.png",
+          "pass": true
+        },
+        "500": {
+          "status": 200,
+          "checks": {
+            "shell": "pass2",
+            "code": "500",
+            "title": "Server Error",
+            "hasException": true,
+            "primary": "Try again"
+          },
+          "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/errors-preview/500-1440.png",
+          "pass": true
+        }
+      },
+      "pass": true,
+      "errors": []
+    }
+  },
+  "checks": {
+    "amberPrimary": true,
+    "refreshCopy": true,
+    "verbatim419": true,
+    "soraTitle": true,
+    "dmSansBody": true,
+    "noLeak500": true,
+    "raw": {
+      "measured": {
+        "msg": "Your session has expired. Please refresh the page and try again. Your data is safe — no changes have been lost.",
+        "primaryText": "Refresh and try again",
+        "primaryBg": "rgb(217, 119, 6)",
+        "cardRadius": 20,
+        "fontBody": "\"DM Sans\", sans-serif",
+        "fontTitle": "Sora, sans-serif"
+      }
+    },
+    "pass": true
+  },
+  "consoleErrors": [],
+  "deviations": [
+    "Typography: Sora/DM Sans (existing errors.illustrated-layout + auth), not mockup Bricolage/Inter.",
+    "Logo: SVG asset (klassapp-logo-primary.svg) instead of mockup text wordmark.",
+    "Pass-2 lives only under resources/views/errors-preview/; live resources/views/errors/ untouched (A/B pattern).",
+    "401/403/429/503 not in Pass-2 mockup scope."
+  ],
+  "real404": {
+    "status": 404,
+    "real": {
+      "pass2Shell": null,
+      "hasKlassShell": true,
+      "hasErrCard": false,
+      "previewBadge": false,
+      "title": "Page Not Found"
+    },
+    "pass": true
+  }
+}

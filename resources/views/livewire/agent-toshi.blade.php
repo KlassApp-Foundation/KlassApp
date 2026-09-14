@@ -214,7 +214,11 @@
 
             {{-- Student inline form --}}
             @if($showStudentForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'students')
-            <div class="toshi-form-card">
+            @php
+                $students = $this->actionData['students'] ?? [];
+                $toshiStreamOptions = $this->streamsForStudentFormClass();
+            @endphp
+            <div class="toshi-form-card" data-testid="toshi-student-form">
                 <div class="toshi-flex-row">
                     <span class="toshi-section-title">Add Student</span>
                     <div class="flex items-center gap-2 toshi-ml-auto">
@@ -227,14 +231,17 @@
                     </div>
                 </div>
                 <p class="text-xs mt-1" style="color:#87867f;" data-testid="toshi-student-stream-help">
-                    Leave Stream blank if your school doesn't use streams.
+                    @if(count($toshiStreamOptions) > 0)
+                        Pick a stream when this class is split. Base class (no stream) is still allowed.
+                    @else
+                        Leave Stream blank if your school doesn't use streams.
+                    @endif
                 </p>
-                @php $students = $this->actionData['students'] ?? []; @endphp
                 @if(count($students) > 0)
                 <div class="toshi-spacer-8">
                     @foreach($students as $si => $s)
                     <div class="toshi-list-item">
-                        <span class="flex-1">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #87867f;">({{ $s['class'] }})</span>@endif</span>
+                        <span class="flex-1">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #87867f;">({{ $s['class'] }}@if(!empty($s['stream'])) · {{ $s['stream'] }}@endif)</span>@endif</span>
                         <button wire:click="removeStudent({{ $si }})" type="button"
                                 class="toshi-remove-btn">✕</button>
                     </div>
@@ -244,27 +251,29 @@
                 <div class="toshi-flex-col">
                     <input type="text" wire:model="studentFormName" placeholder="Student name *"
                            class="toshi-input">
-                    <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
-                           class="toshi-input">
-<select wire:model="studentFormType"
-        class="toshi-input">
-    <option value="">Type (optional)</option>
-    <option value="boarding">Boarding</option>
-    <option value="day">Day Scholar</option>
-</select>
-<select wire:model="studentFormType"
-                                                    class="toshi-input">
-                                                <option value="">Type (optional)</option>
-                                                <option value="boarding">Boarding</option>
-                                                <option value="day">Day Scholar</option>
-                                            </select>
-                    <input type="text" wire:model="studentFormClass" placeholder="Class *" list="student-class-list"
-                           class="toshi-input">
+                    <input type="text" wire:model.live="studentFormClass" placeholder="Class *" list="student-class-list"
+                           class="toshi-input" data-testid="toshi-student-class">
                     <datalist id="student-class-list">
                         @foreach($this->standards ?? [] as $std)
                         <option value="{{ $std['name'] }}">
                         @endforeach
                     </datalist>
+                    @if(count($toshiStreamOptions) > 0)
+                    <select wire:model="studentFormStream" class="toshi-input" data-testid="toshi-student-stream">
+                        <option value="">Base class (no stream)</option>
+                        @foreach($toshiStreamOptions as $streamLabel)
+                        <option value="{{ $streamLabel }}">{{ $streamLabel }}</option>
+                        @endforeach
+                    </select>
+                    @else
+                    <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
+                           class="toshi-input" data-testid="toshi-student-stream">
+                    @endif
+                    <select wire:model="studentFormType" class="toshi-input">
+                        <option value="">Type (optional)</option>
+                        <option value="boarding">Boarding</option>
+                        <option value="day">Day Scholar</option>
+                    </select>
                     <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
                            class="toshi-input">
                     <input type="text" wire:model="studentFormParentPhone" placeholder="Parent phone (optional)"
@@ -449,13 +458,18 @@
             </div>
             @endif
 
-            {{-- Plan Selection Buttons --}}
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection' && !$selectedPlanId)
-            <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
+            {{-- Plan Selection Buttons — same cards for step-index land AND any leftover actionStep --}}
+            @if(!$selectedPlanId && (
+                (!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection')
+                || $actionStep === 'onboarding_plan_selection'
+            ))
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;" data-testid="toshi-plan-cards">
                 @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
                 @foreach($plans as $plan)
                 <button wire:click="selectPlan({{ $plan->id }})"
                         class="toshi-option-card"
+                        data-testid="toshi-plan-{{ $plan->id }}"
+                        data-plan-name="{{ $plan->name }}"
                         onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
                         onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
                     <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
@@ -838,12 +852,13 @@
                 + Add Exam
             </button>
             @endif
-            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
+            @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && ($substep === 5 || ($substep === 0 && $this->shouldUseStructureCheckpoint())))
             <button wire:click="confirmSkipAll" type="button"
                     class="toshi-btn-outline"
+                    data-testid="toshi-structure-done"
                     onmouseover="this.style.background='#e8e6dc'"
                     onmouseout="this.style.background='#f5f4ed'">
-                Skip All
+                {{ $substep === 5 ? 'Skip All' : 'Done with structure' }}
             </button>
             @endif
         </div>
@@ -1145,27 +1160,34 @@
 
                                                 {{-- Student inline form --}}
                                                 @if($showStudentForm && !empty($steps) && isset($steps[$step]) && $steps[$step] === 'students')
-                                                <div class="toshi-form-card">
+                                                @php
+                                                    $students = $this->actionData['students'] ?? [];
+                                                    $toshiStreamOptions = $this->streamsForStudentFormClass();
+                                                @endphp
+                                                <div class="toshi-form-card" data-testid="toshi-student-form">
                                                     <div class="toshi-flex-row">
                                                         <span class="toshi-section-title">Add Student</span>
-                    <div class="flex items-center gap-2 toshi-ml-auto">
-                        <a href="{{ route('admin.students.upload-template') }}"
-                           class="toshi-tag-link" data-testid="toshi-student-template">Download Template</a>
-                        <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
-                            Upload File
-                            <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
-                        </label>
-                    </div>
+                                                        <div class="flex items-center gap-2 toshi-ml-auto">
+                                                            <a href="{{ route('admin.students.upload-template') }}"
+                                                               class="toshi-tag-link" data-testid="toshi-student-template">Download Template</a>
+                                                            <label class="flex items-center gap-1 cursor-pointer toshi-chip-compact">
+                                                                Upload File
+                                                                <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.txt,.docx">
+                                                            </label>
+                                                        </div>
                                                     </div>
                                                     <p class="text-xs mt-1" style="color:#87867f;" data-testid="toshi-student-stream-help">
-                                                        Leave Stream blank if your school doesn't use streams.
+                                                        @if(count($toshiStreamOptions) > 0)
+                                                            Pick a stream when this class is split. Base class (no stream) is still allowed.
+                                                        @else
+                                                            Leave Stream blank if your school doesn't use streams.
+                                                        @endif
                                                     </p>
-                                                    @php $students = $this->actionData['students'] ?? []; @endphp
                                                     @if(count($students) > 0)
                                                     <div class="toshi-spacer-8">
                                                         @foreach($students as $si => $s)
                                                         <div class="toshi-list-item">
-                                                            <span class="flex-1">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #87867f;">({{ $s['class'] }})</span>@endif</span>
+                                                            <span class="flex-1">{{ $s['name'] }}@if(!empty($s['class'])) <span style="color: #87867f;">({{ $s['class'] }}@if(!empty($s['stream'])) · {{ $s['stream'] }}@endif)</span>@endif</span>
                                                             <button wire:click="removeStudent({{ $si }})" type="button"
                                                                     class="toshi-remove-btn">✕</button>
                                                         </div>
@@ -1175,18 +1197,29 @@
                                                     <div class="toshi-flex-col">
                                                         <input type="text" wire:model="studentFormName" placeholder="Student name *"
                                                                class="toshi-input">
-                                                        <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
-                           class="toshi-input">
-
-                    <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
-                           class="toshi-input">
-                    <input type="text" wire:model="studentFormClass" placeholder="Class *" list="student-class-list"
-                                                               class="toshi-input">
-                                                        <datalist id="student-class-list">
+                                                        <input type="text" wire:model.live="studentFormClass" placeholder="Class *" list="student-class-list-modal"
+                                                               class="toshi-input" data-testid="toshi-student-class">
+                                                        <datalist id="student-class-list-modal">
                                                             @foreach($this->standards ?? [] as $std)
                                                             <option value="{{ $std['name'] }}">
                                                             @endforeach
                                                         </datalist>
+                                                        @if(count($toshiStreamOptions) > 0)
+                                                        <select wire:model="studentFormStream" class="toshi-input" data-testid="toshi-student-stream">
+                                                            <option value="">Base class (no stream)</option>
+                                                            @foreach($toshiStreamOptions as $streamLabel)
+                                                            <option value="{{ $streamLabel }}">{{ $streamLabel }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @else
+                                                        <input type="text" wire:model="studentFormStream" placeholder="Stream (optional)"
+                                                               class="toshi-input" data-testid="toshi-student-stream">
+                                                        @endif
+                                                        <select wire:model="studentFormType" class="toshi-input">
+                                                            <option value="">Type (optional)</option>
+                                                            <option value="boarding">Boarding</option>
+                                                            <option value="day">Day Scholar</option>
+                                                        </select>
                                                         <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
                                                                class="toshi-input">
                                                         <input type="text" wire:model="studentFormParentPhone" placeholder="Parent phone (optional)"
@@ -1371,21 +1404,26 @@
                                                 </div>
                                                 @endif
                                     
-                        {{-- Buttons inside maximize modal --}}
-                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection' && !$selectedPlanId)
-                        <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;">
+                        {{-- Buttons inside maximize modal — same cards for step land + leftover actionStep --}}
+                        @if(!$selectedPlanId && (
+                            (!empty($steps) && isset($steps[$step]) && $steps[$step] === 'plan_selection')
+                            || $actionStep === 'onboarding_plan_selection'
+                        ))
+                        <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" data-testid="toshi-plan-cards">
                             @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
                             @foreach($plans as $plan)
                             <button wire:click="selectPlan({{ $plan->id }})"
                                     class="toshi-option-card"
+                                    data-testid="toshi-plan-{{ $plan->id }}"
+                                    data-plan-name="{{ $plan->name }}"
                                     onmouseover="this.style.borderColor='#22C55E';this.style.boxShadow='0 2px 8px rgba(34,197,94,0.15)'"
                                     onmouseout="this.style.borderColor='#e8e6dc';this.style.boxShadow='none'">
                                 <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #22C55E; color: white;">{{ $loop->first ? '🆓' : ($loop->iteration === 2 ? '⭐' : '👑') }}</div>
                                 <div class="flex-1">
                                     <div style="font-weight: 600;">{{ ucfirst($plan->name) }}</div>
                                     <div style="color: #5e5d59; font-size: 12px; margin-top: 2px;">
-                                        @if(strtolower($plan->name) === 'premium')
-                                            Contact sales
+                                        @if($plan->is_custom_pricing)
+                                            Contact Us
                                         @elseif($plan->amount > 0)
                                             ${{ number_format($plan->amount) }} / {{ $plan->cycle }} days
                                         @else
@@ -1649,12 +1687,13 @@
                             + Add Exam
                         </button>
                         @endif
-                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && $substep === 5)
+                        @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'standards' && ($substep === 5 || ($substep === 0 && $this->shouldUseStructureCheckpoint())))
                         <button wire:click="confirmSkipAll" type="button"
                                 class="toshi-btn-outline"
+                                data-testid="toshi-structure-done"
                                 onmouseover="this.style.background='#e8e6dc'"
                                 onmouseout="this.style.background='#f5f4ed'">
-                            Skip All
+                            {{ $substep === 5 ? 'Skip All' : 'Done with structure' }}
                         </button>
                         @endif
                 </div>

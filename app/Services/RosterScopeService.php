@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\SiteHelper;
 use App\Models\AcademicYear;
 use App\Models\Section;
 use App\Models\StandardLink;
@@ -89,6 +90,60 @@ class RosterScopeService
         }
 
         return $query->get();
+    }
+
+    /**
+     * Whether the actor may open this student's teacher profile surfaces.
+     *
+     * Teachers: same school + current-year enrollment on a stream visible via
+     * {@see applyTeacherStreamVisibility()} (stream CT, section CT fallback, or
+     * current-year Teacherlink). Admins: same-school (superadmin: any school).
+     * Hard deny otherwise — no partial/limited-info fallback.
+     */
+    public function actorCanAccessStudent(User $actor, User $student, ?int $academicYearId = null): bool
+    {
+        if ((int) $student->usergroup_id !== 6) {
+            return false;
+        }
+
+        $schoolId = (int) $student->school_id;
+
+        try {
+            $this->assertActorCanAccessSchool($actor, $schoolId);
+        } catch (HttpException) {
+            return false;
+        }
+
+        if ($this->isAdmin($actor)) {
+            return true;
+        }
+
+        if ($academicYearId === null) {
+            $year = SiteHelper::getAcademicYear($schoolId);
+            if ($year === null) {
+                return false;
+            }
+            $academicYearId = (int) $year->id;
+        } else {
+            try {
+                $this->assertAcademicYearBelongsToSchool($academicYearId, $schoolId);
+            } catch (NotFoundHttpException) {
+                return false;
+            }
+        }
+
+        return StudentAcademic::query()
+            ->where('student_academics.school_id', $schoolId)
+            ->where('student_academics.academic_year_id', $academicYearId)
+            ->where('student_academics.user_id', $student->id)
+            ->whereHas('standardLink', function (Builder $streamQuery) use ($actor, $schoolId, $academicYearId): void {
+                $streamQuery
+                    ->where('standards_link.school_id', $schoolId)
+                    ->where('standards_link.academic_year_id', $academicYearId)
+                    ->where('standards_link.status', 1);
+                $this->applyTeacherStreamVisibility($streamQuery, $actor, $schoolId, $academicYearId);
+            })
+            ->exists();
     }
 
     public function effectiveClassTeacher(Section $section, ?StandardLink $stream): ?User

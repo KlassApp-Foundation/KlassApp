@@ -50,6 +50,102 @@ class ClassStructureService
     }
 
     /**
+     * Read-only snapshot of base classes for the year, with stream children and CT.
+     *
+     * @return list<array{
+     *     section_id: int,
+     *     standard_link_id: int,
+     *     name: string,
+     *     class_teacher_id: int|null,
+     *     class_teacher_name: string|null,
+     *     class_teacher_email: string|null,
+     *     streams: list<array{section_id: int, standard_link_id: int, label: string, name: string}>
+     * }>
+     */
+    public function structureSnapshot(School $school, AcademicYear $year): array
+    {
+        $links = StandardLink::query()
+            ->with(['section', 'teacher'])
+            ->where('school_id', $school->id)
+            ->where('academic_year_id', $year->id)
+            ->where(function ($q) {
+                $q->where('status', 1)->orWhere('status', '1');
+            })
+            ->get()
+            ->filter(fn (StandardLink $link) => $link->section
+                && (int) $link->section->school_id === (int) $school->id
+                && (int) $link->section->status === 1);
+
+        if ($links->isEmpty()) {
+            return [];
+        }
+
+        /** @var array<int, array{base: Section, link: StandardLink, streams: list<array{section_id: int, standard_link_id: int, label: string, name: string}>}> $grouped */
+        $grouped = [];
+
+        foreach ($links as $link) {
+            $section = $link->section;
+            $base = $this->resolveBaseSection($section);
+            $baseId = (int) $base->id;
+
+            if (! isset($grouped[$baseId])) {
+                $baseLink = $links->first(
+                    fn (StandardLink $candidate) => (int) $candidate->section_id === $baseId
+                );
+                if (! $baseLink) {
+                    // Stream exists without a linked base row for this year — skip.
+                    continue;
+                }
+                $grouped[$baseId] = [
+                    'base' => $base,
+                    'link' => $baseLink,
+                    'streams' => [],
+                ];
+            }
+
+            if ((int) $section->id === $baseId) {
+                continue;
+            }
+
+            $baseName = trim((string) $base->name);
+            $sectionName = trim((string) $section->name);
+            $prefix = $baseName.' ';
+            $label = str_starts_with($sectionName, $prefix)
+                ? trim(substr($sectionName, strlen($prefix)))
+                : $sectionName;
+
+            $grouped[$baseId]['streams'][] = [
+                'section_id' => (int) $section->id,
+                'standard_link_id' => (int) $link->id,
+                'label' => $label,
+                'name' => $sectionName,
+            ];
+        }
+
+        $rows = [];
+        foreach ($grouped as $entry) {
+            $baseLink = $entry['link'];
+            $teacher = $baseLink->teacher;
+            $streams = $entry['streams'];
+            usort($streams, fn ($a, $b) => strcasecmp($a['label'], $b['label']));
+
+            $rows[] = [
+                'section_id' => (int) $entry['base']->id,
+                'standard_link_id' => (int) $baseLink->id,
+                'name' => trim((string) $entry['base']->name),
+                'class_teacher_id' => $baseLink->class_teacher_id ? (int) $baseLink->class_teacher_id : null,
+                'class_teacher_name' => $teacher?->name,
+                'class_teacher_email' => $teacher?->email,
+                'streams' => array_values($streams),
+            ];
+        }
+
+        usort($rows, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
+
+        return array_values($rows);
+    }
+
+    /**
      * Add a named stream under a base class. Keeps the base section; creates
      * "{Base} {Label}" section + StandardLink; copies subjects from the base.
      *

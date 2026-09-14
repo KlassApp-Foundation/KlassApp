@@ -315,10 +315,34 @@ class TeacherReportCardsTest extends TestCase
         $this->actingAs($this->classTeacher);
         $ctHtml = view('layouts.teacher.menu')->render();
         $this->assertStringContainsString(route('teacher.reports.cards.index'), $ctHtml);
+        $this->assertStringNotContainsString('/teacher/report-cards', $ctHtml);
 
         $this->actingAs($this->subjectTeacher);
         $subjHtml = view('layouts.teacher.menu')->render();
         $this->assertStringNotContainsString(route('teacher.reports.cards.index'), $subjHtml);
+    }
+
+    public function test_legacy_singular_report_cards_paths_redirect_to_canonical(): void
+    {
+        $this->actingAs($this->classTeacher)
+            ->get('/teacher/report-cards')
+            ->assertMovedPermanently()
+            ->assertRedirect('/teacher/reports/cards');
+
+        $this->actingAs($this->classTeacher)
+            ->get('/teacher/report-cards/'.$this->stream->id)
+            ->assertMovedPermanently()
+            ->assertRedirect('/teacher/reports/cards/'.$this->stream->id);
+
+        $this->actingAs($this->classTeacher)
+            ->get('/teacher/report-cards/'.$this->stream->id.'/student/'.$this->student->id.'/preview')
+            ->assertMovedPermanently()
+            ->assertRedirect('/teacher/reports/cards/'.$this->stream->id.'/student/'.$this->student->id.'/preview');
+
+        $this->actingAs($this->classTeacher)
+            ->get('/teacher/report-cards/'.$this->stream->id.'/student/'.$this->student->id.'/download')
+            ->assertMovedPermanently()
+            ->assertRedirect('/teacher/reports/cards/'.$this->stream->id.'/student/'.$this->student->id.'/download');
     }
 
     public function test_empty_state_when_no_contributing_exam(): void

@@ -537,9 +537,9 @@ class OnboardingEngine
      * and user-supplied classes supplement (not replace) the seeded defaults.
      * When no category is set, a 'primary' standard is created as fallback.
      *
-     * Streams: if 'streams' is non-empty, each stream gets its own Section
-     * (named "ClassName StreamLetter") and StandardLink. If empty, one Section
-     * per class name with one StandardLink.
+     * Streams: if 'streams' is non-empty, keeps the undivided base Section + link
+     * and adds each stream via ClassStructureService::addStream ("{Class} {Label}").
+     * If empty, one Section per class name with one StandardLink.
      *
      * @param  School  $school
      * @param  AcademicYear  $year
@@ -594,44 +594,39 @@ class OnboardingEngine
                 ]
             );
 
+            // Always keep the undivided base section (ClassStructureService parity).
+            // Streams are additive name-encoded children ("{Class} {Label}"), never
+            // replacements for the base.
+            $baseSection = Section::firstOrCreate(
+                ['school_id' => $school->id, 'name' => $className],
+                ['status' => '1']
+            );
+
+            StandardLink::firstOrCreate(array_filter([
+                'school_id' => $school->id,
+                'academic_year_id' => $year->id,
+                'standard_id' => $standard->id,
+                'section_id' => $baseSection->id,
+                'status' => '1',
+                'sub_group' => $subGroup,
+            ]));
+
             if (is_array($streams) && count($streams) > 0) {
-                // Create a section per stream
+                $structure = app(ClassStructureService::class);
                 foreach ($streams as $stream) {
                     $streamName = trim((string) $stream);
                     if ($streamName === '') {
                         continue;
                     }
-                    $sectionName = $className.' '.$streamName;
-
-                    $section = Section::firstOrCreate(
-                        ['school_id' => $school->id, 'name' => $sectionName],
-                        ['status' => '1']
-                    );
-
-                    StandardLink::firstOrCreate(array_filter([
-                        'school_id' => $school->id,
-                        'academic_year_id' => $year->id,
-                        'standard_id' => $standard->id,
-                        'section_id' => $section->id,
-                        'status' => '1',
-                        'sub_group' => $subGroup,
-                    ]));
+                    $result = $structure->addStream($school, $year, $baseSection, $streamName);
+                    if ($subGroup !== null && $subGroup !== '') {
+                        $link = $result['standard_link'];
+                        if ($link->sub_group !== $subGroup) {
+                            $link->sub_group = $subGroup;
+                            $link->save();
+                        }
+                    }
                 }
-            } else {
-                // No streams — single section per class
-                $section = Section::firstOrCreate(
-                    ['school_id' => $school->id, 'name' => $className],
-                    ['status' => '1']
-                );
-
-                StandardLink::firstOrCreate(array_filter([
-                    'school_id' => $school->id,
-                    'academic_year_id' => $year->id,
-                    'standard_id' => $standard->id,
-                    'section_id' => $section->id,
-                    'status' => '1',
-                    'sub_group' => $subGroup,
-                ]));
             }
         }
     }

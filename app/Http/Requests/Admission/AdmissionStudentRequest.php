@@ -44,16 +44,6 @@ class AdmissionStudentRequest extends FormRequest
             return preg_match('/^[A-Za-z\s]+$/', request('religion')) ;
         });
 
-        Validator::extend('check_community',function($attribute,$value,$parameters,$validator)
-        {
-            return preg_match('/^[A-Za-z\s]+$/', request('community')) ;
-        });
-
-        Validator::extend('check_mother_tongue',function($attribute,$value,$parameters,$validator)
-        {
-            return preg_match('/^[A-Za-z\s]+$/', request('mother_tongue')) ;
-        });
-
         Validator::extend('check_identification_marks',function($attribute,$value,$parameters,$validator)
         {
             return preg_match('/^[A-Za-z\s]+$/', request('identification_marks')) ;
@@ -74,7 +64,6 @@ class AdmissionStudentRequest extends FormRequest
             'name'                      => 'required|check_name',
             'date_of_birth'             => 'nullable|date',
             'gender'                    => 'required',
-            'community'                 => 'required|check_community',
             'identification_marks'      => 'required|check_identification_marks',
             'school_last_studied'       => 'nullable|check_school_last_studied',
             'reason_for_leaving'        => 'nullable|check_reason_for_leaving',
@@ -112,12 +101,6 @@ class AdmissionStudentRequest extends FormRequest
 
             'religion.required'                                 => 'Religion Required',
             'religion.check_religion'                           => 'Enter Valid Religion',
-
-            'community.required'                                => 'Community Required',
-            'community.check_community'                         => 'Enter Valid Community Required',
-
-            'mother_tongue.required'                            => 'Mother Tongue Required',
-            'mother_tongue.check_mother_tongue'                 => 'Enter Valid Mother Tongue',
 
             'identification_marks.required'                     => 'Identification Mark Required',
             'identification_marks.check_identification_marks'   => 'Enter Valid Identification Mark',

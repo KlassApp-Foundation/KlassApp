@@ -5,7 +5,7 @@
     >
         <div>
             <fieldset class="shadow">
-                <h6 class="text-sm font-bold mb-3">Half Yearly Mark Details</h6>
+                <h6 class="text-sm font-bold mb-3">Previous School Marks</h6>
                 <div class="flex flex-col lg:flex-row">
                     <div class="w-full">
                         <div class="flex flex-col lg:flex-row">
@@ -31,13 +31,13 @@
                             <div class="w-full lg:w-1/2 lg:mr-2">
                                 <div class="my-1">
                                     <label for="name" class="tw-form-label mr-2"
-                                        >Tamil</label
+                                        >Local Language</label
                                     >
                                     <input
                                         type="text"
                                         name="tamil"
                                         v-model="tamil"
-                                        placeholder="Tamil"
+                                        placeholder="Local Language"
                                         class="tw-form-control w-1/2 mx-4 my-1 py-2"
                                     />
                                 </div>
@@ -94,13 +94,13 @@
                             <div class="w-full lg:w-1/2 lg:mr-2">
                                 <div class="my-1">
                                     <label for="name" class="tw-form-label mr-2"
-                                        >Social</label
+                                        >Social Studies</label
                                     >
                                     <input
                                         type="text"
                                         name="social"
                                         v-model="social"
-                                        placeholder="Social"
+                                        placeholder="Social Studies"
                                         class="tw-form-control w-1/2 mx-4 my-1 py-2"
                                     />
                                 </div>
@@ -117,7 +117,7 @@
                 <div class="flex flex-col lg:flex-row">
                     <div class="w-full my-1">
                         <h6 class="text-sm font-bold mb-3">
-                            Board of Study<span class="text-red-500">*</span>
+                            Examination Board<span class="text-red-500">*</span>
                         </h6>
                         <ul class="list-reset leading-loose flex items-center">
                             <li v-for="board in boardlist">
@@ -170,7 +170,7 @@
                     <h6 class="text-sm font-bold mb-3">
                         Group Selection<span
                             class="text-red-500 whitespace-nowrap"
-                            >*Only For Class X , XI , XII</span
+                            >*Only for UNEB candidate classes (e.g. S.4, S.6)</span
                         >
                     </h6>
                     <ul class="list-reset leading-loose">
@@ -201,7 +201,7 @@
                                 ><h6 class="text-sm font-bold mb-3">
                                     Board Registration Number<span
                                         class="text-red-500 whitespace-nowrap"
-                                        >*Only For Class X , XI , XII</span
+                                        >*Only for UNEB candidate classes (e.g. S.4, S.6)</span
                                     >
                                 </h6></label
                             >

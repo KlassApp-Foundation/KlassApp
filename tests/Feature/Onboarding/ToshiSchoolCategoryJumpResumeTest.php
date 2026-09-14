@@ -149,7 +149,23 @@ class ToshiSchoolCategoryJumpResumeTest extends TestCase
             'school_category' => ['school_category', 'onboarding_school_category'],
             'emis' => ['emis', 'onboarding_emis'],
             'uneb_center' => ['uneb_center', 'onboarding_uneb_center'],
-            'plan_selection' => ['plan_selection', 'onboarding_plan_selection'],
+            // plan_selection lands on create-flow step index (cards), not actionStep
         ];
+    }
+
+    public function jump_to_incomplete_plan_selection_lands_on_step_index_not_action_step(): void
+    {
+        $this->actingAs($this->admin);
+
+        $component = Livewire::test(AgentToshi::class);
+        $method = new ReflectionMethod(AgentToshi::class, 'jumpToIncompleteOnboardingStep');
+        $method->setAccessible(true);
+        $method->invoke($component->instance(), 'plan_selection');
+
+        $this->assertNull($component->get('actionStep'));
+        $steps = $component->get('steps');
+        $idx = array_search('plan_selection', $steps, true);
+        $this->assertNotFalse($idx);
+        $this->assertSame($idx, $component->get('step'));
     }
 }

@@ -27,6 +27,85 @@ Route::get('/docs/community/{path?}', function ($path = '') {
     return response(file_get_contents("{$base}/index.html"), 200, ['Content-Type' => 'text/html']);
 })->where('path', '.*');
 
+// Locked v3 landing — live cutover on /. Legacy preview URL redirects.
+Route::redirect('/landing-preview', '/', 301)->name('landing.preview');
+
+// Auth/error design-review URLs (still serve the same shells for e2e/regression).
+// Live /login, /register, password/*, and errors/{404,419,500} now use these designs.
+Route::prefix('preview')->name('preview.')->group(function () {
+    $withDemo = function (string $view, array $data = [], array $fieldErrors = []) {
+        $data['isPreview'] = true;
+        $response = view($view, $data);
+        if (! request()->boolean('demo_errors')) {
+            return $response;
+        }
+
+        $errors = $fieldErrors ?: [
+            'email' => 'These credentials do not match our records.',
+        ];
+
+        return $response
+            ->withErrors($errors)
+            ->with('failmessage', $errors[array_key_first($errors)]);
+    };
+
+    Route::get('/login', function () use ($withDemo) {
+        return $withDemo('auth.preview.login');
+    })->name('login');
+
+    Route::get('/register', function () use ($withDemo) {
+        return $withDemo('auth.preview.register', [], [
+            'email' => 'The email has already been taken.',
+        ]);
+    })->name('register');
+
+    Route::get('/reset-request', function () use ($withDemo) {
+        return $withDemo('auth.preview.reset-request', [], [
+            'email' => 'We can\'t find a user with that e-mail address.',
+        ]);
+    })->name('reset-request');
+
+    Route::get('/reset-code', function () use ($withDemo) {
+        return $withDemo('auth.preview.reset-code', [
+            'email' => request('email', 'grace@school.ug'),
+        ], [
+            'code' => 'The code you entered is incorrect. Please try again.',
+        ]);
+    })->name('reset-code');
+
+    Route::get('/reset-newpw', function () use ($withDemo) {
+        return $withDemo('auth.preview.reset-newpw', [
+            'token' => request('token', 'preview-token'),
+            'email' => request('email', 'grace@school.ug'),
+        ], [
+            'password' => 'The password must contain at least one uppercase and one lowercase letter.',
+        ]);
+    })->name('reset-newpw');
+
+    Route::get('/force-change-password', function () use ($withDemo) {
+        return $withDemo('auth.preview.force-change-password', [], [
+            'password' => 'The password must contain at least one symbol.',
+        ]);
+    })->name('force-change-password');
+
+    // Phase C — preview-only Pass-2 error shells (errors-preview/*, not live errors/*).
+    Route::get('/errors/{code}', function (string $code) {
+        $allowed = ['404', '419', '500'];
+        abort_unless(in_array($code, $allowed, true), 404);
+
+        $exception = new \Symfony\Component\HttpKernel\Exception\HttpException(
+            (int) $code,
+            'Preview: synthetic HttpException for design review (not a real failure).'
+        );
+
+        return response()->view("errors-preview.{$code}", [
+            'errors' => new \Illuminate\Support\ViewErrorBag,
+            'exception' => $exception,
+            'isPreview' => true,
+        ], 200);
+    })->where('code', '404|419|500')->name('errors');
+});
+
 // Landing page v2 (Flare-style)
 Route::get('/landing2', function () {
     return view('landing2');

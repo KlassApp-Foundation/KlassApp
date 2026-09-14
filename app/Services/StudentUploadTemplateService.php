@@ -79,7 +79,19 @@ class StudentUploadTemplateService
             ];
         }
 
-        return $rows;
+        // Prefer stream sample rows first when streams exist; keep blank-stream
+        // base rows so base enrollment stays documented.
+        $withStream = [];
+        $withoutStream = [];
+        foreach ($rows as $row) {
+            if (($row['stream'] ?? '') !== '') {
+                $withStream[] = $row;
+            } else {
+                $withoutStream[] = $row;
+            }
+        }
+
+        return array_values(array_merge($withStream, $withoutStream));
     }
 
     public function spreadsheet(School $school, ?AcademicYear $year = null): Spreadsheet

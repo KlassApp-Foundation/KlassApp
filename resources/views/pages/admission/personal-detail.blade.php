@@ -164,11 +164,11 @@
      <div class="flex flex-col lg:flex-row">
           <div class="w-full lg:w-1/2 my-1 mr-2">
            <label for="name" class="tw-form-label">Driver's Name</label>
-            <input type="text"  name="aadhar" placeholder="" class="tw-form-control w-full my-1 py-2">
+            <input type="text"  name="driver_name" placeholder="" class="tw-form-control w-full my-1 py-2">
           </div>
            <div class="w-full lg:w-1/2 my-1 mr-2">
            <label for="name" class="tw-form-label">Phone Number</label>
-            <input type="text"  name="aadhar" placeholder="" class="tw-form-control w-full my-1 py-2">
+            <input type="text"  name="driver_mobile_number" placeholder="" class="tw-form-control w-full my-1 py-2">
           </div>
       </div>  
      </div>

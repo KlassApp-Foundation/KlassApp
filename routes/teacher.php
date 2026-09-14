@@ -344,6 +344,27 @@ Route::get( '/document/get/{name}', 'StudentDetailsController@showDocuments' );
 // Route::get('/marks/viewmark/{standard_id}/{user_id}/{exam_id}/{academic_year_id}', 'MarkController@viewmark' );
 
 // Class-teacher report cards (own streams only — not admin batch/template tools)
+// Canonical path is reports/cards. Keep singular report-cards as 301 aliases —
+// harnesses and guessed URLs hit /teacher/report-cards and 404 without these.
+Route::get('report-cards', function () {
+    return redirect()->route('teacher.reports.cards.index', [], 301);
+});
+Route::get('report-cards/{stdLink}', function (string $stdLink) {
+    return redirect()->route('teacher.reports.cards.show', ['stdLink' => $stdLink], 301);
+});
+Route::get('report-cards/{stdLink}/student/{learner}/preview', function (string $stdLink, string $learner) {
+    return redirect()->route('teacher.reports.cards.student.preview', [
+        'stdLink' => $stdLink,
+        'learner' => $learner,
+    ], 301);
+});
+Route::get('report-cards/{stdLink}/student/{learner}/download', function (string $stdLink, string $learner) {
+    return redirect()->route('teacher.reports.cards.student.download', [
+        'stdLink' => $stdLink,
+        'learner' => $learner,
+    ], 301);
+});
+
 Route::prefix('reports/cards')->name('teacher.reports.cards.')->group(function () {
     Route::get('/', 'ReportCardsController@index')->name('index');
     Route::get('/{stdLink}', 'ReportCardsController@show')->name('show');

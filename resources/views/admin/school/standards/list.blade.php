@@ -1,7 +1,7 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @php $headers = ['Standard Name', 'Status', 'Actions']; @endphp
 <div class="relative">
-   <x-table :headers="$headers" hover>
+   <x-table :headers="$headers">
       @forelse($standards as $standard)
          <tr>
             <td data-label="Standard Name" class="font-medium">{{ $standard->name }}</td>

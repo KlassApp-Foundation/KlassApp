@@ -209,6 +209,18 @@ class ClassTeacherExamCreateTest extends TestCase
         ]);
     }
 
+    public function test_create_form_prefills_current_term(): void
+    {
+        $response = $this->actingAs($this->classTeacher)
+            ->get(route('teacher.exams.create', ['section' => $this->section->id]));
+
+        $response->assertOk();
+        $response->assertSee('data-testid="exam-term-select"', false);
+        $response->assertSee('value="'.$this->term->id.'"', false);
+        $response->assertSee('(current)', false);
+        $response->assertDontSee('<option value="">Select Term</option>', false);
+    }
+
     public function test_class_teacher_cannot_create_exam_for_other_class(): void
     {
         $otherSubject = Subject::where('section_id', $this->otherSection->id)->firstOrFail();

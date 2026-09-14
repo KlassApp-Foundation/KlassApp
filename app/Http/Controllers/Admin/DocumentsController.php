@@ -29,7 +29,8 @@ class DocumentsController extends Controller
     public function index($name)
     {
         //
-        $user = User::where('name',$name)->first();
+        $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+        if ($user === null) { abort(404); }
         $documents = Document::where('user_id',$user->id)->where('status',1)->get();
 
         $documents = UserDocumentResource::collection($documents);
@@ -48,7 +49,8 @@ class DocumentsController extends Controller
         //
         try
         {
-            $user = User::where('name',$name)->first();
+            $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+        if ($user === null) { abort(404); }
             $file = $request->file('attachment');
             
             if($file)
@@ -119,7 +121,8 @@ class DocumentsController extends Controller
         //
         try
         {
-            $user = User::where('name',$name)->first();
+            $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+        if ($user === null) { abort(404); }
             $file = $request->file('attachment');
             if($file)
             { 

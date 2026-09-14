@@ -242,7 +242,7 @@ class DashboardController extends Controller
         //
         try
         {
-            $user = User::where('name',$request->name)->first();
+            $user = User::findByExactNameInSchool($request->name, (int) Auth::user()->school_id, 6);
 
             $feepayment = FeePayment::where('id',$fee_id)->first();
 

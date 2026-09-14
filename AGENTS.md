@@ -4,6 +4,8 @@
 >
 > For full project history, past incidents, and session-by-session decisions, read `knowledge.md` in the repo root **first**, before starting any task. Update it before ending a phase of work (see "Session workflow" below). This file is the distilled, standing rule set; `knowledge.md` is the historical record.
 
+See TOOLING.md for the full stack reference — which tool to use for which kind of task.
+
 ## Environment reality check
 
 **Do not assume you have production access.** Whether a given session has real SSH access to `root@46.101.111.131` (the DigitalOcean droplet running the `sms-app` Docker container) is inconsistent across sessions and tools — some have it, some don't. Check for real (attempt an SSH connection or confirm the binary/key exist) before planning work that depends on it, and scope your work to what you've actually confirmed. If you don't have production access, say so plainly and hand off anything that genuinely needs it rather than guessing at production state.
@@ -32,6 +34,7 @@ These apply to every change, in every session, regardless of which tool is runni
 15. **When output looks garbled or suspicious, write it to a file and read the file back** — don't trust a raw streamed terminal render for anything you're about to act on (a rendered PDF, an image, long structured output). This has caught real false negatives before.
 16. **Read `knowledge.md` first in any session, before planning.** Update it before ending a phase of work: a Session Log entry (date, work done, files touched, decisions, status, edge cases), PR number/URL/branch when you open one, and the merge commit SHA + refreshed "Current Status" when it merges. Don't leave "not pushed" / "opening PR" stubs once the PR is actually open or merged.
 17. **Configurable, but never blank — prefill sensible defaults.** When a step's underlying data model is genuinely configurable (any number of terms, any class names, any fee structures), the UI presented to the user should still start with sensible, real-world defaults pre-filled — not an empty form asking them to build structure from scratch. Example: academic terms are stored as fully configurable (any number, any names — see `saveTerms`), but the UI should prefill the 3 standard UNEB terms as a starting point, which the school can then edit, add to, or remove from. Apply this consistently across **both interfaces** — Toshi's chat flow and the manual wizard's forms — whenever either is designed or touched, not just one. **Status: documented principle, not yet implemented.** The terms backend (`saveTerms`) is shipped; the terms UI in Toshi and the wizard has not been redesigned to prefill defaults yet. Full skill with known defaults per step, trigger guidance, and implementation checklist: `docs/onboarding-defaults-skill.md`.
+18. **Database lookups must always use the primary key (`id`) or another guaranteed-unique column — never `name`, or any other field with no uniqueness constraint.** This caused a real cross-school data bug (fixed in [PR #517](https://github.com/KlassApp-Foundation/KlassApp/pull/517)) where a name collision between two different students at two different schools resolved to the wrong user. Scope by `id` (and `school_id` when the lookup is tenant-bound); do not identify a row by display name alone.
 
 ## Known bug patterns (quick reference — full detail in `knowledge.md`)
 
@@ -82,6 +85,41 @@ Section naming convention: `P.1`–`P.7` = Primary One through Primary Seven; `S
 - Database changes: confirm with an actual `SELECT`, not an assumption that the migration "should have" worked.
 - Deploy: run the full deploy script (`scripts/deploy-manual.sh`), then verify on the live site — not just that the script exited 0.
 - Env vars: a shell-exported var can silently override `.env` via `Dotenv\Repository` reading `getenv()`/`$_SERVER`/`$_ENV` at boot. If an env value looks wrong, check all three sources, not just the `.env` file.
+
+## PhpStorm MCP direct-HTTP workaround
+
+Devin's platform-level MCP support does **not** include the `phpstorm` server type. The platform explicitly reports `The agent does not support the following MCP servers: phpstorm`. This is **not** a missing header, malformed `mcpServers` config, or authentication problem — do not re-diagnose it.
+
+Instead, call the native PhpStorm MCP server directly with raw HTTP. The native server is built into **PhpStorm 2026.1+** and runs on `http://127.0.0.1:64342/stream` by default. Do **not** confuse it with the old third-party "MCP Server AI Companion" plugin, which runs on a different port/endpoint and rejects these calls with `405` — that is a different problem and unrelated to this one.
+
+### Initialize once per task
+
+```bash
+curl -s -i -X POST http://127.0.0.1:64342/stream \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"devin","version":"1.0"}},"id":1}'
+```
+
+- Save the `mcp-session-id` header from the response.
+- Re-use that exact header on every subsequent call. Header name is `mcp-session-id` (lowercase in the raw response).
+- Each tool call is another JSON-RPC `POST` to `http://127.0.0.1:64342/stream` using `method: "tools/call"` and `params: { "name": "...", "arguments": { ... } }`.
+
+### Confirmed tools and exact required parameters
+
+| Tool | Required arguments | Notes |
+|---|---|---|
+| `get_file_text_by_path` | `projectPath`, `pathInProject` | `pathInProject` is relative to the project root. Do **not** use `path`. Optional `maxLinesCount` and `truncateMode`. |
+| `laravel_idea_get_eloquent_model` | `projectPath`, `modelFqn` | e.g. `App\\Models\\User` |
+| `laravel_idea_get_routes` | `projectPath` | Optional `urlPattern` or `routeTargetPattern` |
+| `run_inspections` | — | Confirmed available; call with the same JSON-RPC shape |
+
+### Verified working examples
+
+- `get_file_text_by_path` with `pathInProject: "knowledge.md"` returned real file content.
+- `laravel_idea_get_eloquent_model` with `modelFqn: "App\\Models\\User"` returned ~12 KB of real fields, relations, and related files.
+
+Use this direct-HTTP pattern whenever structured PHP/Laravel code access is needed instead of `mcp_call_tool` for the `phpstorm` server.
 
 ## Session workflow
 

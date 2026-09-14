@@ -1,0 +1,64 @@
+/* KlassApp colour tokens — values verbatim from the app's :root block. */
+:root {
+    /* ── Brand Primary ── */
+    --d-blue: #1E6FD9;
+    --d-green: #22C55E;
+    --d-amber: #D97706;
+
+    /* ── Accent (green is primary CTA) ── */
+    --d-accent: var(--d-green);
+    --d-accent-lt: #4ADE80;
+    --d-accent-dk: #16A34A;
+
+    /* ── Surface & Canvas ── */
+    --d-canvas: #FAFAF5;
+    --d-surface: #FAFAF5;
+    --d-shell: #FAFAF5;
+    --d-white: #FFFFFF;
+
+    /* ── Text ── */
+    --d-text: #1E293B;
+    --d-text-secondary: #64748B;
+    --d-muted: #94A3B8;
+    --d-text-on-accent: #FFFFFF;
+
+    /* ── Dark Surfaces (Sidebar) ── */
+    --d-dark: #0F172A;
+    --d-dark-surface: #1E293B;
+    --d-dark-fg: #CBD5E1;
+    --d-dark-border: #334155;
+    --d-dark-active: var(--d-green);
+
+    /* ── Borders & Rings ── */
+    --d-border: #E2E8F0;
+    --d-border-strong: #CBD5E1;
+
+    /* ── Semantic ── */
+    --d-red: #DC2626;
+
+    /* ── Shadows (ring-based) ── */
+    --d-ring: 0 0 0 1px var(--d-border);
+
+    /* ── Interactive States ── */
+    --d-disabled: #94A3B8;
+    --d-disabled-bg: #F1F5F9;
+    --d-focus-ring: 0 0 0 3px rgba(30, 111, 217, 0.25);
+    --d-touch-target-min: 44px;
+}
+
+/* ── Toshi assistant scope ──
+   The AI assistant runs on a warm, clay-accented palette that deliberately
+   differs from the blue/green app chrome. Declared on [data-toshi-root]
+   upstream; mirrored here so the values are readable as tokens. */
+[data-toshi-root] {
+    --toshi-bg: var(--d-white);
+    --toshi-border: #e8e6dc;
+    --toshi-accent: #c96442;
+    --toshi-accent-hover: #a84d32;
+    --toshi-warm-bg: #f5f4ed;
+    --toshi-warm-text: #5e5d59;
+    --toshi-label-text: #87867f;
+    --toshi-title-text: #141413;
+    --toshi-user-bubble: rgba(201, 100, 66, 0.10);
+    --toshi-bot-bubble: var(--d-surface);
+}

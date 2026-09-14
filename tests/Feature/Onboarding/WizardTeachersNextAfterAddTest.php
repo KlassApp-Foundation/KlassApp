@@ -100,7 +100,8 @@ class WizardTeachersNextAfterAddTest extends TestCase
             ->set('ministryCode', 'EMIS-BRIGHT')
             ->call('next')
             ->call('next') // uneb
-            ->call('next'); // academic year seeds classes/subjects → teachers
+            ->call('next') // academic year seeds classes/subjects
+            ->call('next'); // structure checkpoint (optional) → teachers
     }
 
     public function test_next_after_add_teacher_persists_even_when_deferred_email_resyncs_blank(): void

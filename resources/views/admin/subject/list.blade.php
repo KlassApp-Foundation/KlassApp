@@ -20,7 +20,7 @@
 <div class="relative">
    @if(count($subject) != 0)
    @php $headers = ['Subject Name', 'Class', 'Subject Code', 'Type', 'Actions']; @endphp
-   <x-table :headers="$headers" hover>
+   <x-table :headers="$headers">
       @foreach($subject as $subjects)
          <tr>
             <td data-label="Subject Name" class="font-medium">{{ $subjects->name }}</td>

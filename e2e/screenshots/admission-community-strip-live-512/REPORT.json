@@ -1,0 +1,14 @@
+{
+  "base": "https://klassapp.xyz",
+  "slug": "kampala-primary-academy",
+  "community_visible": false,
+  "student_next_ok": true,
+  "vite_asset": true,
+  "errors": [],
+  "screenshots": [
+    "01-open.png",
+    "02-student.png",
+    "03-after-next.png"
+  ],
+  "pass": true
+}

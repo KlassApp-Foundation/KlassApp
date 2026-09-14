@@ -15,12 +15,12 @@ use App\Http\Resources\UserDetail as UserDetailResource;
 use App\Http\Resources\Discipline as DisciplineResource;
 use App\Http\Resources\User as UserResource;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use App\Models\StudentAcademic;
 use Illuminate\Http\Request;
 // use App\Schoolplus\Student;
 use App\Schoolplus\StudentService;
+use App\Services\RosterScopeService;
 use App\Traits\LogActivity;
 use App\Models\ActivityLog;
 use App\Models\Document;
@@ -37,6 +37,33 @@ class StudentDetailsController extends Controller
     use Common;
 
     /**
+     * Hard deny unless the student is on the teacher's current-year roster
+     * (stream/section CT or Teacherlink) — same boundary as RosterScopeService.
+     *
+     * Name lookup is school-scoped: bare users.name is not globally unique
+     * (cross-school collisions must not authorize/deny the wrong student).
+     */
+    private function authorizeRosterStudent(string $name): User
+    {
+        $actor = Auth::user();
+
+        if ($actor === null) {
+            abort(403);
+        }
+
+        $user = User::findByExactNameInSchool($name, (int) $actor->school_id, 6);
+
+        if (
+            $user === null
+            || ! app(RosterScopeService::class)->actorCanAccessStudent($actor, $user)
+        ) {
+            abort(403);
+        }
+
+        return $user;
+    }
+
+    /**
      * Display the specified resource.
      *
      * @param  int  $id
@@ -44,17 +71,11 @@ class StudentDetailsController extends Controller
      */
     public function show($name)
     {
-        //
-      	$user = User::with('studentAcademicLatest')->where('name',$name)->first();
-      	$parents = $user->parent;
-      	if(Gate::allows('member',$user))
-      	{
-        	return view('/teacher/student/show',['user' => $user , 'parents' => $parents]);
-      	}
-      	else
-      	{
-        	abort(403);
-      	}
+        $user = $this->authorizeRosterStudent($name);
+        $user->load('studentAcademicLatest');
+        $parents = $user->parent;
+
+        return view('/teacher/student/show', ['user' => $user, 'parents' => $parents]);
     }
 
     /**
@@ -65,12 +86,10 @@ class StudentDetailsController extends Controller
      */
     public function showDetails($name)
     {
-        //
-        $users = User::with('userprofile')->where('name', $name)->get();
+        $user = $this->authorizeRosterStudent($name);
+        $user->load('userprofile');
 
-        $users = UserDetailResource::collection($users);
-
-        return $users;
+        return UserDetailResource::collection(collect([$user]));
     }
 
     /**
@@ -81,8 +100,8 @@ class StudentDetailsController extends Controller
      */
     public function showRelations($name)
     {
-        //
-        $student = User::with('userprofile')->where('name', $name)->first();
+        $student = $this->authorizeRosterStudent($name);
+        $student->load('userprofile');
 
         $parents = UserRelationResource::collection($student->parents);
 
@@ -97,48 +116,32 @@ class StudentDetailsController extends Controller
      */
     public function showSiblings($name)
     {
-        //
-        $student = User::with('userprofile')->where('name', $name)->get();
+        $student = $this->authorizeRosterStudent($name);
+        $student->load('userprofile');
 
-        $siblings = UserSiblingResource::collection($student);
+        $siblings = UserSiblingResource::collection(collect([$student]));
 
         return $siblings;
     }
 
     public function showActivity($name)
     {
-        //
-        $user = User::with('userprofile')->where('name', $name)->first();
-        if(Gate::allows('member',$user))
-        {
-            $activitylog = ActivityLog::where('subject_id',$user->userprofile->id)->orWhere('subject_id',$user->members[0]['id'])->paginate(5);
+        $user = $this->authorizeRosterStudent($name);
+        $user->load('userprofile');
 
-            $activitylog = ActivityLogResource::collection($activitylog);
+        $activitylog = ActivityLog::where('subject_id', $user->userprofile->id)->orWhere('subject_id', $user->members[0]['id'])->paginate(5);
 
-            return $activitylog;
-        }
-        else
-        {
-            abort(403);
-        }
+        return ActivityLogResource::collection($activitylog);
     }
 
     public function showActivityLog($name)
     {
-        //
-        $user = User::with('userprofile')->where('name', $name)->first();
-        if(Gate::allows('member',$user))
-        {
-            $activitylog = ActivityLog::where('causer_id',$user->userprofile->id)->orWhere('causer_id',$user->members[0]['id'])->paginate(5);
+        $user = $this->authorizeRosterStudent($name);
+        $user->load('userprofile');
 
-            $activitylog = ActivityLogResource::collection($activitylog);
+        $activitylog = ActivityLog::where('causer_id', $user->userprofile->id)->orWhere('causer_id', $user->members[0]['id'])->paginate(5);
 
-            return $activitylog;
-        }
-        else
-        {
-            abort(403);
-        }
+        return ActivityLogResource::collection($activitylog);
     }
 
     /**
@@ -149,8 +152,8 @@ class StudentDetailsController extends Controller
      */
     public function showDisciplines($name)
     {
-        //
-        $student = User::with('disciplineUser','disciplineTeacher')->where('name', $name)->first();
+        $student = $this->authorizeRosterStudent($name);
+        $student->load('disciplineUser', 'disciplineTeacher');
 
         $discipline = DisciplineResource::collection($student->disciplineUser);
 
@@ -165,8 +168,7 @@ class StudentDetailsController extends Controller
      */
     public function showAttendance($name)
     {
-        //
-        $student = User::where('name', $name)->first();
+        $student = $this->authorizeRosterStudent($name);
 
         $attendances = AttendanceUserResource::collection($student->AttendanceUserAbsent);
 
@@ -181,8 +183,7 @@ class StudentDetailsController extends Controller
      */
     public function showMedicalHistory($name)
     {
-        //
-        $student = User::where('name', $name)->first();
+        $student = $this->authorizeRosterStudent($name);
 
         $medicals = [];
 
@@ -198,8 +199,8 @@ class StudentDetailsController extends Controller
 
     public function showBookLent($name)
     {
-        //
-        $student = User::with('lending')->where('name', $name)->first();
+        $student = $this->authorizeRosterStudent($name);
+        $student->load('lending');
 
         $lent = BookLendingResource::collection($student->lending);
 
@@ -213,7 +214,8 @@ class StudentDetailsController extends Controller
      */
     public function showmark($name)
     {
-       $users = User::with('marks')->where('name', $name)->first();
+       $users = $this->authorizeRosterStudent($name);
+       $users->load('marks');
        $studentId=$users->id;
        $examId=$users->marks[0]['exam_id'];
 
@@ -222,7 +224,7 @@ class StudentDetailsController extends Controller
 
     public function showAllMark($name)
     {
-        $users = User::where('name', $name)->first();
+        $users = $this->authorizeRosterStudent($name);
 
         $studentId=$users->id;
 
@@ -231,9 +233,10 @@ class StudentDetailsController extends Controller
 
     public function compareMarks($name)
     {
-        $users=User::with('studentAcademic')->where('name',$name)->get();
-        $studentId=$users[0]['id'];
-        $standardId=$users[0]['studentAcademicLatest']['standardLink_id'];
+        $users = $this->authorizeRosterStudent($name);
+        $users->load('studentAcademic');
+        $studentId=$users->id;
+        $standardId=$users->studentAcademicLatest->standardLink_id;
         if(class_exists('Gegok12\Exam\Models\Mark'))
         {
             $exam=\Gegok12\Exam\Models\Mark::where('school_id',Auth::user()->school_id)->where('standard_id',$standardId)->take(2)->orderBy('exam_id','DESC')->groupBy('exam_id')->pluck('exam_id')->toArray();
@@ -256,8 +259,7 @@ class StudentDetailsController extends Controller
      */
     public function showDocuments($name)
     {
-        //
-        $user = User::where('name',$name)->first();
+        $user = $this->authorizeRosterStudent($name);
         $documents = Document::where('user_id',$user->id)->where('status',1)->get();
 
         $documents = UserDocumentResource::collection($documents);

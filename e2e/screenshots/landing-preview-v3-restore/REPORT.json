@@ -1,0 +1,66 @@
+{
+  "pass": true,
+  "viewports": {
+    "desktop": {
+      "status": 200,
+      "errors": [],
+      "checks": {
+        "present": {
+          "hero": true,
+          "connectors": true,
+          "toshi": true,
+          "how-it-works": true,
+          "protocol": true,
+          "open-source": true
+        },
+        "channels": 5,
+        "title": "KlassApp — Your school's tools, connected by intelligence",
+        "q12027": true,
+        "toolsConnected": true
+      },
+      "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-preview-v3-restore/desktop-full.png",
+      "pass": true
+    },
+    "tablet": {
+      "status": 200,
+      "errors": [],
+      "checks": {
+        "present": {
+          "hero": true,
+          "connectors": true,
+          "toshi": true,
+          "how-it-works": true,
+          "protocol": true,
+          "open-source": true
+        },
+        "channels": 5,
+        "title": "KlassApp — Your school's tools, connected by intelligence",
+        "q12027": true,
+        "toolsConnected": true
+      },
+      "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-preview-v3-restore/tablet-full.png",
+      "pass": true
+    },
+    "mobile": {
+      "status": 200,
+      "errors": [],
+      "checks": {
+        "present": {
+          "hero": true,
+          "connectors": true,
+          "toshi": true,
+          "how-it-works": true,
+          "protocol": true,
+          "open-source": true
+        },
+        "channels": 5,
+        "title": "KlassApp — Your school's tools, connected by intelligence",
+        "q12027": true,
+        "toolsConnected": true
+      },
+      "shot": "/Users/mac/projects/KlassApp/e2e/screenshots/landing-preview-v3-restore/mobile-full.png",
+      "pass": true
+    }
+  },
+  "consoleErrors": []
+}

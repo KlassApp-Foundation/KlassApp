@@ -81,16 +81,17 @@ class ContentStepsTest extends TestCase
             ['name' => 'P2'],
         ]);
 
-        // P1 has 2 stream sections, P2 has 1 section = 3 total
-        $this->assertEquals(3, Section::where('school_id', $school->id)->count());
-        $this->assertEquals(3, StandardLink::where('school_id', $school->id)
+        // P1 keeps base + 2 stream children; P2 has 1 section = 4 total
+        $this->assertEquals(4, Section::where('school_id', $school->id)->count());
+        $this->assertEquals(4, StandardLink::where('school_id', $school->id)
             ->where('academic_year_id', $year->id)->count());
 
         $sectionNames = Section::where('school_id', $school->id)
             ->pluck('name')->sort()->values()->toArray();
-        $this->assertTrue(in_array('P1 A', $sectionNames) || in_array('P1A', $sectionNames)
-            || in_array('P1 - A', $sectionNames),
-            'Stream section name should combine class and stream');
+        $this->assertContains('P1', $sectionNames, 'Base class must remain when streams are added');
+        $this->assertContains('P1 A', $sectionNames);
+        $this->assertContains('P1 B', $sectionNames);
+        $this->assertContains('P2', $sectionNames);
     }
 
     public function test_save_standards_is_idempotent_firstOrCreate(): void
@@ -279,9 +280,10 @@ class ContentStepsTest extends TestCase
             ->where('academic_year_id', $year->id)
             ->get();
 
-        $this->assertEquals(2, $links->count());
+        // Base P1 + stream children P1 A / P1 B
+        $this->assertEquals(3, $links->count());
 
-        // Both stream links should have sub_group = 'lower'
+        // Base and both stream links should have sub_group = 'lower'
         foreach ($links as $link) {
             $this->assertSame('lower', $link->sub_group);
         }
@@ -370,12 +372,12 @@ class ContentStepsTest extends TestCase
             'P1' => ['Mathematics'],
         ]);
 
-        // With 2 streams, Mathematics should be created for both sections
+        // Base P1 + stream children — Mathematics on each section
         $mathSubjects = \DB::table('subjects')
             ->where('school_id', $school->id)
             ->where('name', 'Mathematics')
             ->count();
-        $this->assertEquals(2, $mathSubjects);
+        $this->assertEquals(3, $mathSubjects);
     }
 
     public function test_save_subjects_rejects_empty_subjects_array(): void

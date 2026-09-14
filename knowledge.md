@@ -14,26 +14,26 @@
 | **Bundler** | **Vite 8** (sole) | Phase 3 **CLOSED on `main`** — merge `9bdf185` (from `migration/vite` / `3bc5c70`). Scripts: `npm run dev` / `npm run build`. Blade `@vite([...])`. |
 | **MySQL** | 8.0 | `docker-compose.yml` |
 | **Redis** | 7.x | `docker-compose.yml` |
-| **Production host** | **Laravel Cloud** (`klassapp.xyz`, EU-West-1, via Composer Build + Valkey). DigitalOcean droplet (`46.101.111.131`) is **retired** — do not SSH it. | Laravel Cloud MCP / Commands API |
+| **Production host** | **Laravel Cloud** (`klassapp.xyz`, EU-West-1, via Composer Build + Valkey). DigitalOcean droplet (`46.101.111.131`) is **retired** — do not SSH it. | MCP (read) · Commands API · **Deploy POST** (see below) |
 
 > ⚠️ `composer.json` platform config says `8.3.6` but production runs **8.4.23** — verify via Cloud Commands, not SSH.
 > 🆕 Cursor rules now live in `.cursor/rules/*.mdc` — `project-context.mdc`, `frontend.mdc`, `known-pitfalls.mdc`.
 
-## Laravel Cloud MCP (preferred over raw Commands API)
+## Laravel Cloud MCP (read-only inspect; not a deploy trigger)
 
-Laravel Cloud has an official MCP server for deploy/environment/command tooling: `https://mcp.laravel.cloud/mcp`
+Laravel Cloud MCP (`https://mcp.laravel.cloud/mcp`) is **READ-ONLY**. It can list applications, environments, deployments, logs, metrics, etc. It has **no** tool that starts a deployment or runs shell commands. Do not assume MCP can ship code after a merge.
 
 ### Getting the token
 
-The token lives in Doppler under the `klassapp` project, `dev` config, key name **`CLOUD_AGENT_TOOLING`**:
+Same org API token for MCP, Commands API, and the deploy-trigger endpoint. Prefer Doppler key **`CLOUD_AGENT_TOOLING`**:
 ```bash
 doppler secrets get CLOUD_AGENT_TOOLING --config dev --plain
 ```
-Do **not** hardcode or commit this token. Every agent session should retrieve it fresh from Doppler.
+(Fallback names seen in agent configs: `LARAVEL_CLOUD` under Doppler `my-agent`, or the value already in `~/.cursor/mcp.json` → `laravel-cloud` → `X-Auth-Token`.) Do **not** hardcode or commit the token.
 
 ### Wiring into an MCP-capable agent
 
-All clients need the same URL + `X-Auth-Token` header:
+MCP clients send the token as **`X-Auth-Token`**. REST write calls (Commands + Deploy) use **`Authorization: Bearer <token>`** instead.
 
 ```json
 {
@@ -53,19 +53,166 @@ All clients need the same URL + `X-Auth-Token` header:
 | **Claude Code** | `claude mcp add --transport http laravel-cloud https://mcp.laravel.cloud/mcp --header "X-Auth-Token: <token>"` | HTTP | Then `claude mcp enable laravel-cloud`. |
 | **MCP Inspector / generic** | Same URL + header pattern | HTTP | Add via that tool's own UI or config file. |
 
-Once wired, agents get native deploy/environment/command tools — no more hand-rolled `curl` to the raw Commands API.
+Once wired, agents can **inspect** Cloud state (including `list-deployments` / `get-deployment`). To **ship**, use the deploy-trigger REST call below. To run `php artisan …` on prod, use the Commands API.
 
-### Raw Commands API (fallback for non-MCP tools)
+### Raw Commands API (run artisan / shell on the environment — not a deploy)
 
-If you must call the REST API directly (e.g. from a script that isn't MCP-capable):
-- Base URL: `https://cloud.laravel.com/api`
-- Commands endpoint: `POST /api/environments/{environment_id}/commands` with flat body `{"command":"php artisan …"}` (not JSON:API-wrapped). Top-level `POST /api/commands` redirects and is not usable.
+Base URL: `https://cloud.laravel.com/api`
+
+- Auth: `Authorization: Bearer <token>` + `Accept: application/json`
+- Commands: `POST /api/environments/{environment_id}/commands` with flat body `{"command":"php artisan …"}` (not JSON:API-wrapped). Top-level `POST /api/commands` redirects and is not usable.
 - Poll: `GET /api/commands/{id}` until status is `command.success`
 - Environment vars: `POST /api/environments/{id}/variables` with `"method": "set"` (also flat body)
-- Env vars are applied only after a redeploy, not immediately (see `config:clear` alone is insufficient)
-- Prefer `curl` over Python `urllib` — Cloudflare may block non-browser User-Agents on some paths.
+- Env vars are applied only after a **real deployment**, not after `config:clear` alone
+- Prefer `curl` over Python `urllib` — Cloudflare may block some User-Agents
+- Production environment id: `env-a2ac7a89-dbf5-43aa-ac95-ca88d3065873`
+- Staging environment id: `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016` (see **Staging & Preview Environments** below)
+
+This endpoint runs a one-off command. It does **not** build/release a new commit. For that, use the section below.
+
+## Triggering a real deployment (distinct from the Commands API)
+
+Laravel Cloud's MCP server is **READ-ONLY** — it has no deploy-trigger tool. Push-to-deploy is **off** on production; merging to `main` alone does not ship. To actually start a deployment programmatically:
+
+```http
+POST https://cloud.laravel.com/api/environments/{environment}/deployments
+Authorization: Bearer <token>
+Accept: application/json
+
+(empty body — no JSON)
+```
+
+Example (`curl`):
+
+```bash
+TOKEN="$(doppler secrets get CLOUD_AGENT_TOOLING --config dev --plain)"
+ENV_ID="env-a2ac7a89-dbf5-43aa-ac95-ca88d3065873"   # KlassApp production
+
+curl -sS -X POST \
+  "https://cloud.laravel.com/api/environments/${ENV_ID}/deployments" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "Accept: application/json"
+# → 201 with data.id like depl-… and attributes.commit_hash
+```
+
+This is **different from the Commands API** (which runs arbitrary shell via a `"command"` field). This endpoint starts a **real deployment** of the environment’s latest commit (typically current `main` tip).
+
+**After triggering**, poll status with either:
+- REST: `GET https://cloud.laravel.com/api/deployments/{deployment_id}` (or list `GET …/environments/{environment}/deployments`) until `attributes.status` is `deployment.succeeded` / failed / cancelled
+- MCP (read-capable): `list-deployments` / `get-deployment`
+
+**Token:** same `CLOUD_AGENT_TOOLING` (or equivalent) already used for the Commands API and MCP config.
 
 > 🔐 **Security**: `~/.cursor/mcp.json` is gitignored inside the repo (`.gitignore` line `.cursor/mcp.json`). `~/.cursor` and `~/.config/goose` live outside any repo entirely. Never paste the real token value into a PR description, commit message, or knowledge.md — always retrieve it from Doppler.
+
+## Staging & Preview Environments (contributor reference — provisioned 2026-09-11)
+
+Application: **KlassApp** (`app-a2ac7a87-f8aa-42db-8055-ba41bab5be50`, eu-west-1, repo `KlassApp-Foundation/KlassApp`).
+
+### What exists today
+
+| Environment | ID | URL | Git branch | Data | Notes |
+|---|---|---|---|---|---|
+| **production** | `env-a2ac7a89-dbf5-43aa-ac95-ca88d3065873` | `https://klassapp-production-xsisi4.laravel.cloud` (+ custom `klassapp.xyz`) | `main` | Real schools (live) | Push-to-deploy **off**; deploy via `POST …/deployments` |
+| **staging** | `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016` | `https://klassapp-staging-7mpoqg.laravel.cloud` | `main` | **Demo/seed only** — never production dumps | Push-to-deploy **on**; hibernates; scheduler enabled |
+
+**Before 2026-09-11:** Cloud had **only production** (confirmed via `list-environments` / API — 1 environment).
+
+### Staging isolation (verified)
+
+- Logical MySQL schema **`klassapp-staging`** on cluster `klassapp-mysql` (`db-schema-a2b86c6f-ceb7-49aa-8d45-0cc891e61e25`) — **empty** at create; **not** restored/cloned from production.
+- Production schema remains `production` on the same cluster (compute shared; **data namespaces separate**).
+- Staging Valkey: same `klassapp-redis` cache with **`CACHE_PREFIX` / `REDIS_PREFIX` = `klassapp_staging_`** so keys do not collide with prod.
+- Staging filesystem: **local** (no prod R2 bucket attached).
+- Staging does **not** carry production WhatsApp Business tokens (mail uses `MAIL_MAILER=log`).
+- Live check after first deploy (`depl-a2b86d10-…` **succeeded**):
+  - Staging: `APP_ENV=staging`, `db=klassapp-staging`, HTTP **200** on `/` and `/login`
+  - Staging school count after demo seed: **1**; production school count unchanged: **42** / `db=production`
+
+### Staging demo seed (test data only)
+
+```bash
+# Via Cloud Commands API on staging env id above:
+php artisan db:seed --class=UsergroupTableSeeder --force
+php artisan db:seed --class=RolesTableSeeder --force
+php artisan db:seed --class=CountriesTableSeeder --force
+php artisan db:seed --class=Phase4RosterDemoSeeder --force
+```
+
+Demo accounts (staging only — password `demo123`):
+
+| Role | Email |
+|---|---|
+| School admin | `phase4.admin@klassapp.xyz` |
+| Subject teacher | `phase4.teacher@klassapp.xyz` |
+| Class teacher | `phase4.class-teacher@klassapp.xyz` |
+
+School: **Phase 4 Roster Demo School** (`phase4-roster-demo@klassapp.xyz`).
+
+**Rule:** never restore a production snapshot into staging; re-seed demo data if you wipe the schema.
+
+### Deploying staging
+
+```bash
+TOKEN="$(doppler secrets get CLOUD_AGENT_TOOLING --config dev --plain)"
+STAGING="env-a2b86c90-4bf8-4889-9c2d-d10fe62db016"
+curl -sS -X POST "https://cloud.laravel.com/api/environments/${STAGING}/deployments" \
+  -H "Authorization: Bearer ${TOKEN}" -H "Accept: application/json"
+```
+
+Staging also has **push-to-deploy** enabled for `main` (production does not). Prefer Commands/Deploy API for intentional releases when in doubt.
+
+### Preview Environments (per-PR) — status & how to finish enablement
+
+Laravel Cloud **Preview Environments** auto-create an isolated environment per pull request (unique `*.laravel.cloud` URL, posted as a PR comment), then destroy it when the PR merges/closes. Docs: https://cloud.laravel.com/docs/preview-environments
+
+**Status as of 2026-09-11 (agent-verified):**
+
+- **Not configured yet.** No preview automation exists on production or staging.
+- The **public Cloud API OpenAPI** and **`laravel/cloud-cli` v0.6** expose **zero** endpoints/commands to create or list preview automations (probed paths all 404; CLI has no `preview*` commands). Enabling requires the **Cloud dashboard UI** once.
+- Historical PRs (#520–#523) have **no** Laravel Cloud preview URL comments.
+
+**One-time dashboard setup (do this before external contributors rely on previews):**
+
+1. Open [Laravel Cloud](https://cloud.laravel.com) → application **KlassApp**.
+2. Prefer target **staging** (not production) → **Settings → Preview environments → New automation**.
+3. Recommended automation defaults for isolation:
+   - Auto-deploy on creation: **on**
+   - Delete on merge/close: **on**
+   - Database: **Create new and scale to zero** (or new schema) — **never “Share with target”** for contributor PRs
+   - Cache: new/scale-to-zero **or** share with prefix only
+   - Object storage: none or new bucket (do **not** share `klassapp-prod`)
+   - Environment variables: set a **fresh** set for previews (Cloud does **not** auto-copy target secrets — good). Include at least `APP_KEY` (Cloud prefills), `APP_ENV=preview`, `APP_DEBUG=true`, and any non-secret config the app needs. **Do not** paste production WhatsApp tokens.
+4. Save. Open a test PR against `main` and confirm:
+   - A new environment appears with `created_from_automation: true`
+   - Cloud posts a live preview URL on the PR
+   - That URL is **not** production or persistent staging
+   - Closing/merging the PR removes the preview environment
+
+**What a contributor should expect after automation is live:**
+
+1. Open a PR targeting `main` (or the branch configured on the automation’s target environment).
+2. Wait for Cloud to provision + deploy (minutes; scales to zero when idle).
+3. Find the preview URL in the PR timeline comment from Laravel Cloud.
+4. Test against **demo/seed data only** on that ephemeral environment — never against production.
+5. Persistent **staging** (`klassapp-staging-7mpoqg.laravel.cloud`) remains the long-lived shared sandbox for manual QA; previews are short-lived per PR.
+
+**Until the dashboard automation exists:** contributors use local Docker / CI + the persistent **staging** URL for live checks; opening a PR will **not** spin a Cloud preview.
+
+## Monthly Release Strategy (added 2026-09-11)
+
+Adopted cadence: continuous small fixes/improvements ship as normal (no batching needed). Real feature work lands on staging first via the normal PR/review workflow, gets tested there, then batches into a deliberate release once or twice a month — tagged (git tag or GitHub Release), deployed to production as one intentional event rather than a constant drip. Each release pairs with a changelog/announcement (email to school admins, in-app "What's New" banner, or a public changelog page) — this is what turns shipped code into something users and the market actually notice.
+
+## Staging Environment (added 2026-09-11)
+
+Product-facing compact notes (contributor detail remains in **Staging & Preview Environments** above):
+
+- URL: https://klassapp-staging-7mpoqg.laravel.cloud (temporary — real custom subdomain like staging.klassapp.xyz not yet set up, planned via Spaceship DNS)
+- Environment id: `env-a2b86c90-4bf8-4889-9c2d-d10fe62db016`
+- Separate isolated database schema (`klassapp-staging`) — NOT a production clone, seeded with demo data only
+- Demo login: `phase4.admin@klassapp.xyz` / `demo123` (plus teacher accounts from Phase4RosterDemoSeeder)
+- Isolation confirmed: 1 school on staging vs 42 on production at time of setup
+- Preview Environments (auto-provision per PR) NOT yet enabled — must be manually turned on once via Cloud dashboard (staging → Settings → Preview environments → New automation); no API/CLI path exists for this step. Must isolate DB and NOT share production WhatsApp/R2 credentials when configuring.
 
 ## Known Bug Patterns & Lessons (reference — check before touching related code)
 
@@ -364,6 +511,12 @@ If you must call the REST API directly (e.g. from a script that isn't MCP-capabl
 
 ### Future Initiatives (flagged, not yet in progress)
 
+#### Public status page via Instatus — deferred until after the UI design phase
+
+**Flagged**: 2026-09-13 — **Deferred** until after the UI design phase.
+
+Free tier to start (unlimited subscribers/teams, no custom domain), upgrade to paid tier ($20/mo) for a custom domain like `status.klassapp.xyz` later. Purpose: real trust signal for schools depending on the platform daily, lets people check status themselves during an incident instead of messaging individually. Also listed in `TOOLING.md` under Monitoring & reliability.
+
 #### Invite class teacher to take ownership of a class (admin-driven)
 
 **Phase 1: Admin CRUD trigger — MERGED** (#485, `5830f747`, 2026-09-09). Admin invites a teacher (new or existing) as CT from the class list. Email-only; schools-scoped; `TeacherInviteMail` backward-compat.
@@ -374,6 +527,8 @@ If you must call the REST API directly (e.g. from a script that isn't MCP-capabl
 - Admins **keep** the ability to add classes and students directly (Toshi complete mode, manual wizard, admin CRUD).
 - Inviting a teacher to own their class is additive: use it when useful; skip it when the admin prefers to enter everything themselves.
 - WhatsApp channel remains blocked (template `teacher_account_invite` REJECTED on Meta — email is the working channel).
+
+**Small future improvement (not a bug, not urgent — flagged 2026-09-10)**: a bounced invite email still silently assigns the class teacher in the database. This matches the existing co-admin invite pattern (assignment happens immediately; email is a notification, not a gate). Confirmed with real Mailtrap evidence during CT invite Phase 1 live verification (2026-09-09): fake `@klassapp.xyz` test address bounced (`554`, mailbox does not exist) while `class_teacher_id` was still set correctly (Cloud school **34**, Baby Class section/link **204** → user **134**). Possible follow-up: flag unreachable/bounced invites for admin review so an admin knows a CT assignment exists but the invited person was never notified. No product decision yet.
 
 #### UI migration: away from inherited GeGoK12 UI, toward KlassApp's own modern UI
 
@@ -393,9 +548,295 @@ KlassApp's UI currently carries visual/structural inheritance from GeGoK12 (the 
 - `app/Traits/AdmissionUser.php` — Indian demographic fields (aadhar_number, caste, sub_caste, community, mother_tongue, lin)
 - Various Blade views still using GeGoK12-era layout patterns (un-audited)
 
+#### Security & Trust Roadmap (added 2026-09-11)
+
+**Internal access minimization ("break-glass" access)**
+Currently, Superadmin has real cross-tenant access to all schools' data (legitimate today for support/billing/troubleshooting). Future goal: staff access to any individual school's data should require an explicit reason, get logged, and potentially need a second approver for sensitive data — matching how serious cloud companies handle internal access. Not built. Needs its own scoping pass.
+
+**CT invite: replace temp-password email with a tokenized magic link**
+Current CT invite flow emails a temp password + direct login (deliberately reused an existing pattern under time pressure). Better UX identified: a tokenized magic-link accept flow instead. Deferred, real future work.
+
+**Toshi as an MCP server**
+Confirmed technically real and buildable via Laravel's first-party `laravel/mcp` package (pairs with `laravel/ai`, which Toshi already runs on) — would let external AI clients (Cursor, Claude, others) call INTO KlassApp/Toshi directly, not just the other way around. Not started.
+
+**Business-facing unique ID for teachers/staff**
+Same pattern as students' KLS ID — a clean, platform-wide identifier for staff. Useful for Toshi monetization plans. Not built.
+
+**Cryptographically verifiable, tamper-evident student records**
+Real need: Uganda's new progressive-assessment curriculum means student records need to stay trustworthy from nursery through university, across institutions, over many years. Concrete driving use case: STUDENT TRANSFERS between schools — a receiving school could verify a transferring student's records weren't tampered with, without needing to trust/contact the original school directly. Technical approach (deliberately NOT blockchain): hash-chaining (each record stores a hash of its own data plus the previous record's hash, fully self-hosted, no external service, no wallets, no gas fees) + digital signatures on final transcripts/report cards (same technique universities use for verifiable digital diplomas). Optional future-future enhancement: external independent timestamp anchoring via OpenTimestamps (free, Bitcoin-based, much lighter than a platform like Hedera) if truly independent verifiability beyond KlassApp's own database is ever needed — not needed for v1. Positioned as a genuinely differentiated, technically credible product/marketing claim: "cryptographically verifiable transcripts."
+
+**Voting module for Guilds and PTA/School Board elections**
+Same hash-chain tamper-evidence primitive as above, applied to school governance voting (student Guild elections, PTA/School Board votes) — records structured so post-hoc tampering becomes mathematically detectable. Real, distinct feature idea, not yet scoped.
+
+**Agent identity for cross-organization trust (ERC-8004-style) — explicitly NOT now**
+Only becomes relevant if Toshi is ever called by OTHER organizations' independent AI agents in a real multi-vendor agent economy — a genuinely different problem than internal KlassApp auth. Noted for a possible distant future, not an active plan.
+
+#### Security Maturity Ladder (added 2026-09-11)
+1. Continuous test coverage growth — ongoing habit, not a one-time push.
+2. A real professional security audit/pentest before WIDE public launch (not necessarily before the Oct 10 n8n demo). Realistic 2026 US market budget for KlassApp's current stage: $4,000-$15,000 for a properly scoped, genuinely manual engagement (anything under ~$2,000-3,000 is likely just an automated scan rebranded — be wary). Should test against the current OWASP Top 10 (2025 edition).
+3. A bug bounty program only AFTER the professional audit, never instead of or before it.
+
+#### Real security talking point for demos/media (added 2026-09-11)
+Tonight, a real access-control gap was found, root-caused, and fixed with real evidence (PR #514, #516, #517: a teacher could access another school's — and in some cases any school's — student data, including medical records, through several ungated endpoints). This falls under OWASP's current #1-ranked risk category, "Broken Access Control" (2025 list). Honest, accurate, technically credible framing for public conversations: "We found and fixed a real access-control gap in exactly the category OWASP ranks as the single most critical web security risk." Real cryptography already in production use: bcrypt password hashing, secure session tokens, HTTPS/TLS encryption in transit.
+
+#### Go-to-market plan
+User wants a formal GTM plan scoped as its own future initiative, same discovery-then-build treatment as tonight's other major work. Not started.
+
+
+#### Toshi Readiness & Design Scope (added 2026-09-11)
+
+Two distinct Toshi capabilities exist, confirmed via real production data:
+1. **Guided/known-method flows** (structure setup, CT invite, onboarding commands) — a separate code path that does NOT touch the SDK or LLM API key at all. Fully functional today, no funding required.
+2. **Free-form open-ended chat** (ask anything, get an AI-generated answer) — gated behind TOSHI_SDK_V2_ENABLED, currently false in production. Blocked on a funded LLM API key (user has one ready, not yet provided — not urgent, this is a design phase, not an activation phase).
+
+Access map, confirmed via real production queries:
+- Web chat panel (floating "Toshi Agent" pill) mounts for usergroup_id in [1,3,4,5,11,8,10,6] — SiteAdmin, SchoolAdmin, Deputy, Teacher, Accountant, Librarian, Receptionist, Student.
+- Student has web Toshi access. Parent does NOT — Parent is WhatsApp-only, and the WhatsApp Toshi channel is also currently disabled (TOSHI_WHATSAPP_CHANNEL_ENABLED=false).
+- All 42 live schools have toshi_enabled=1 — no schools sitting disabled.
+- Separate /admin/toshi-activity page exists (activity log, not the chat panel).
+- School Admin has extra entry points: incomplete-setup banner, ?toshi_onboarding=1, admin dashboard trigger.
+
+Design scope decision: design should cover BOTH capabilities honestly — guided/known-methods as fully real and demo-ready now, free-form chat designed as its own clearly-scoped piece that activates once funded, not assumed live. Practical note for the Oct 10 n8n demo: if the free-form key stays unprovided by then, lean on the guided/known-methods surface for any live demo, avoid open-ended free-form chat on stage to prevent a silent-failure moment.
+
+Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from config (env-only now via OPENAI_COMPATIBLE_API_KEY) — coordinated with PR #488.
+
+**#488 vs #527 check (closed 2026-09-11):** #488 was **opened** 2026-09-09 but **not** merged until **2026-09-11T15:39:44Z** (`24f4be71`) — do not treat the open date as a merge. #527 then rebased onto that tip and merged **2026-09-11T15:42:20Z** (`56db335d`). Unique pieces from both are on `main` and production: #488 → dead `provision-klassapp.sh` deleted + `MissingToshiLlmApiKeyException`; #527 → staging 402 evidence, unit guard, enable-block notes. Live-verified after Cloud deploy `depl-a2b8b180-…` (see `docs/evidence/toshi-sdk-v2-enable/prod-verify-2026-09-11.txt`).
+
+#### Deferred until after the UI phase
+- Sweep for other instances of the "unscoped name-based lookup" bug pattern found tonight (fixed once in PR #517, may recur elsewhere).
+- WhatsApp OAuth to replace manual phone-entry parent linking.
+- Toshi parity broadly for anything else built wizard-first tonight.
+
 ---
 
-## Current Status: September 10, 2026 — shipping Stage 3 CT stream surface
+## Current Status: September 14, 2026 — Claude Design export in-repo ([PR #553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) MERGED — docs + static assets, no deploy)
+
+- **Merged**: [#553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) merge `e4cab345` (`docs/design-system-claude-export`) — GitHub API `merged: true`, `mergedAt` 2026-09-14T07:52:23Z.
+- **Shipped**: Production-validated `resources/views/components/DESIGN_SYSTEM.md`; canonical brand SVGs in `resources/assets/brand/`; token CSS mirrors in `resources/assets/design-system/tokens/`; `public/images/` mirrors + `.gitignore` fix for trackable brand SVGs.
+- **Verify**: 40/40 spot-checks vs `dashboard-refresh.css` before merge; GitHub main sanity: DESIGN_SYSTEM.md ~14KB, 13 files under `resources/assets/brand/`, `colors.css` present.
+- **No deploy** — documentation and static SVGs only.
+
+## Previous: September 13, 2026 — DS table striped + `.ds-btn-md` LIVE ([PR #546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) MERGED+DEPLOYED)
+
+- **Merged**: [#546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) merge `14f91188` (`fix/table-striped-prop-and-btn-md-size`) — `mergedAt` 2026-09-13T01:06:52Z.
+- **Shipped**: `<x-table striped>` emits `ds-table-striped`; dead `hover` prop removed (ledger hover is unconditional); `.ds-btn-md` restored as deliberate no-op matching `.ds-btn` base metrics.
+- **Production deploy**: `depl-a2bb7eb1-…` @ `14f91188` **succeeded** (empty-body `POST …/deployments`).
+- **Live verify** (`klassapp.xyz`, demo `admin@uireview.klassapp.demo`): `/admin/fees/payments` table classes include `ds-table-striped`; even rows `rgb(250, 250, 245)` / odd `rgba(0,0,0,0)`. Record Payment `sm` button `5px 12px` / `12.48px`. Injected `.ds-btn-md` `8px 18px` / `13.6px` (unchanged vs pre-fix). Synthetic `PR546-VERIFY-*` fee rows removed after check.
+- **Tests**: `TableAndButtonClassContractTest` 9 passed / 28 assertions locally on PR tip.
+
+## Previous: September 13, 2026 — Laravel Nightwatch LIVE ([PR #543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) MERGED+DEPLOYED)
+
+- **Merged**: [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) merge `7683a604` (`feature/laravel-nightwatch`) — `laravel/nightwatch` ^1.30, published `config/nightwatch.php`, `LOG_STACK` via env (default `daily`; Cloud set to `daily,nightwatch`).
+- **Cloud env (staging + production)**: `NIGHTWATCH_TOKEN` set (not in git), `NIGHTWATCH_REQUEST_SAMPLE_RATE=1.0`, `NIGHTWATCH_EXCEPTION_SAMPLE_RATE=1.0`, `LOG_CHANNEL=stack`, `LOG_STACK=daily,nightwatch`.
+- **Background agent**: `php artisan nightwatch:agent` on staging + prod App instances.
+- **Staging verify**: `php artisan nightwatch:status` → agent running; agent log `Listening on [127.0.0.1:2407]; Version [1.30.0]`; HTTP probes 200.
+- **Production**: deploy `depl-a2bb46d3-…` @ `7683a604` **succeeded**; `nightwatch:status` → agent running; Cloud logs show agent initiated listening `:2407` v1.30.0; `klassapp.xyz` /login /contact 200.
+- **Dashboard**: ingest token is not a Nightwatch REST dashboard API key (public API 403). Confirm request/log charts in the Nightwatch UI (or OAuth MCP). Do not commit the token. Token also in Doppler `klassapp` (`dev`/`stg`/`prd`).
+- **Docs**: root `TOOLING.md` + `AGENTS.md` pointer + Instatus Future Initiative — see this session's docs PR.
+
+## Previous: September 13, 2026 — Landing official brand connector icons LIVE ([PR #541](https://github.com/KlassApp-Foundation/KlassApp/pull/541) MERGED+DEPLOYED)
+
+- **Merged**: [#541](https://github.com/KlassApp-Foundation/KlassApp/pull/541) merge `7d418196` (`fix/landing-official-brand-icons`).
+- **Shipped**: Official WhatsApp / Slack / Google Drive SVG marks on hero Connected float, orchestration panel, chips, Toshi hub. Neutral `brand-well` wells (no recolor). Email/SMS/Calendar stay generic.
+- **Staging**: `depl-a2bb3554-…` @ `7d418196` — Playwright brand checks PASS.
+- **Production**: `depl-a2bb361e-…` @ `7d418196` — Playwright brand checks PASS on `klassapp.xyz`.
+
+## Previous: September 12, 2026 — Landing Toshi hub + rotating hero LIVE ([PR #539](https://github.com/KlassApp-Foundation/KlassApp/pull/539) MERGED+DEPLOYED)
+
+- **Merged**: [#539](https://github.com/KlassApp-Foundation/KlassApp/pull/539) merge `4f442325` (`feature/landing-toshi-hero-polish`).
+- **Shipped**: Meet Toshi mist/glass/filled tiles; Parent WhatsApp / Teacher Drive / Admin Slack hero rotate + `prefers-reduced-motion` static Parent; footer socials → X + GitHub + Contact.
+- **Legal**: Terms substantive (~6k); Privacy real but thinner legacy Gegosoft (~2.8k) — counsel rewrite before heavy media.
+- **Perf**: CSS ~63.7→67.6 kB; JS ~4.2→4.7 kB. Staging transferSize ~12k reported for landing assets; prod FCP ~2.7s cold.
+- **Staging**: `depl-a2bb12eb-…` @ `4f442325` (push-to-deploy) — Playwright creative polish PASS.
+- **Production**: `depl-a2bb13ce-…` @ `4f442325` — Playwright creative polish PASS on `klassapp.xyz`.
+
+## Previous: September 12, 2026 — Landing mobile bugfixes LIVE ([PR #538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) MERGED+DEPLOYED)
+
+- **Merged**: [#538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) merge `e9c3b22c` (`fix/landing-mobile-bugs`).
+- **Earlier mobile sweep claim was wrong**: page-level “mobile sweep passed” after cutover missed real live bugs (compare overflow, protocol Layer/KA overlap, dead hamburger, hero phone-above-text, footer `href="#"`). Re-verified **per section**.
+- **Shipped fixes**: stacked compare cards; hide `.protocol-visual` ≤900px; real mobile nav panel + `initMobileNav()`; footer → `/terms-of-service` + `/privacy-policy`; hero text before phone (`order: 0`).
+- **Hamburger root cause**: toggle with **no panel DOM and no JS handler**.
+- **Staging**: `depl-a2bb070e-…` @ `e9c3b22c` succeeded — Playwright 5/5 PASS.
+- **Production**: `depl-a2bb084e-…` @ `e9c3b22c` succeeded — Playwright 5/5 PASS on `klassapp.xyz`.
+- **Creative**: OD mocks approved and shipped in [#539](https://github.com/KlassApp-Foundation/KlassApp/pull/539).
+
+## Previous: September 12, 2026 — Landing mobile bugfixes LIVE ([PR #538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) MERGED+DEPLOYED)
+
+- **Merged**: [#538](https://github.com/KlassApp-Foundation/KlassApp/pull/538) merge `e9c3b22c` (`fix/landing-mobile-bugs`).
+- **Earlier mobile sweep claim was wrong**: page-level “mobile sweep passed” after cutover missed real live bugs (compare overflow, protocol Layer/KA overlap, dead hamburger, hero phone-above-text, footer `href="#"`). Re-verified **per section**.
+- **Shipped fixes**: stacked compare cards; hide `.protocol-visual` ≤900px; real mobile nav panel + `initMobileNav()`; footer → `/terms-of-service` + `/privacy-policy`; hero text before phone (`order: 0`).
+- **Hamburger root cause**: toggle with **no panel DOM and no JS handler**.
+- **Staging**: `depl-a2bb070e-…` @ `e9c3b22c` succeeded — Playwright 5/5 PASS.
+- **Production**: `depl-a2bb084e-…` @ `e9c3b22c` succeeded — Playwright 5/5 PASS on `klassapp.xyz`.
+- **Creative**: OD mocks approved and ported in the follow-up polish branch above.
+
+## Previous: September 12, 2026 — Landing/auth/error LIVE CUTOVER shipped ([PR #536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
+
+- **Merged**: [#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536) merge `638d359b` (includes prior [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) `749940c5` + [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) designs).
+- **What went live**: `/` → landing-v2 (Protocol Cores, HITL, prod footer, vintage hero v2); `/login` `/register` password-reset pages → vintage Pass-2 auth shells; live `errors/{404,419,500}` → Pass-2 vintage shells. `/landing-preview` → 301 `/`.
+- **Staging deploy**: `depl-a2bad172-875e-44eb-950d-8c67762424f8` @ `638d359b` — **succeeded**; functional verify OK (login, register, full password reset, 404).
+- **Production deploy**: `depl-a2bad357-d8a4-4e02-8838-d111e6cc3da2` @ `638d359b` — **succeeded**; functional verify OK with synthetic probe users only (then flagged `inactive`).
+- **Rollback point (pre-cutover prod)**: `depl-a2b8b963-2b17-4c79-9f5c-f635f178b469` @ commit `075e25c5` — redeploy that Cloud deployment / commit if needed.
+- **Note**: Google OAuth `redirect_uri` localhost misconfig was fixed in a later Cloud env session (not this mobile-bugs branch).
+
+## Previous: September 12, 2026 — Auth brand-header balance on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
+
+- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper` tip `ad73f45c`. Preview routes only.
+- **This pass**: OD `klassapp-auth-brand-header-balance-v1.html` (desktop + mobile). Desktop brand block top-aligned (`justify-content: flex-start`, `padding-top: 130px`) so logo + heading are not floating in the lower half. Mobile brand is a **logo | copy** row (not a tall vertical stack) before the form. Mirrored on error preview brand panel.
+- **Verify**: Feature tests 15 passed (220 assertions). Playwright `ok=true` — desktop `brandTopAligned` (register `logoTop≈130`); mobile `brandLogoCopyRow`; prior locks held (`sideBySide`/`stacked`, transparent shell, paperRules, grain 0.22, toggle44, greens, forceNoEscape). Artifacts `e2e/screenshots/auth-error-vintage/{desktop,mobile}-*.png`.
+- **Status**: ✅ MERGED as `749940c5` (then cut over live via #536).
+
+## Previous: September 12, 2026 — Auth/error desktop+mobile vintage v2 on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535)
+
+- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — branch `feature/auth-error-vintage-paper` tip `1e9e8ebb`. Preview routes only.
+- **This pass (review fixes)**: OD `klassapp-auth-error-vintage-paper-v2-breakpoints.html` — genuine **desktop two-column** (brand | form) vs **mobile stacked**. Removed opaque white form card. Paper CSS is the **exact** landing `.hero-bg-vintage` (wash + ruled lines + grain 0.22). Applied to all auth + error previews. Typography remains Sora/DM Sans.
+- **Standing design rule**: every new surface must be mocked for **desktop AND mobile as separate compositions** in Open Design before Blade/CSS — never a mobile layout merely centered on a wide canvas.
+- **Verify**: Feature tests 15 passed (202 assertions). Playwright `ok=true` — desktop `sideBySide` / mobile `stacked`; `opaqueWhite=false`; `paperRules=true`; `grain022=true`; locks held. Artifacts `e2e/screenshots/auth-error-vintage/{desktop,mobile}-*.png`.
+- **Status**: ✅ MERGED via #535.
+
+## Previous: September 12, 2026 — Auth/error vintage paper v1 on [PR #535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) (`feature/auth-error-vintage-paper`)
+
+- **PR**: [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) — tip `6067e036` / `e7b873a7`. First vintage paper pass (centered card); superseded by desktop+mobile v2 above.
+## Previous: September 12, 2026 — Footer/Community/HITL/protocol mesh/Toshi hub flow on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
+
+- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `893f1bc5` (preview routes only).
+- **This pass**:
+  1. Production footer from `landing.blade.php` (large KlassApp wordmark, logo + “Smarter schools start here.”, Terms/Privacy/Docs/Contact, socials, ©) — newsletter omitted.
+  2. Removed `#community` and redundant `#open-source` (Free. Open. Self-hostable.) — Protocol Open Source card remains the OSS message.
+  3. Meet Toshi: “Human in the loop” callout (confirm-before-write / Yes/No gate).
+  4. OD `klassapp-landing-v3-protocol-visual-v2.html` statement mesh ported (no Q1 dates).
+  5. OD `klassapp-landing-v3-toshi-hub-flow-v2.html` hub mark + directional/streak flow lines (badges unchanged).
+- **Verify**: `LandingPreviewV3Test` 43 assertions. Playwright `ok=true` 1440/1024/390 — prodFooter, noCommunitySection, humanInLoop, protocolMesh, toshiHubMark/arrows/streaks; zero console errors; `ds-*` isolation clean; no em dashes / Q1 2027. Artifacts `e2e/screenshots/landing-preview-build/{desktop,tablet,mobile}-{hero,toshi,protocol,footer,full}.png`.
+- **Still prior**: Vintage hero v2 + FINAL v4 copy + Protocol Cores framing on same PR.
+
+## Previous: September 12, 2026 — Vintage hero v2 + logo marks on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
+
+- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `34980e98` (preview routes only — live `/`, `/login`, `/register`, live `errors/*` untouched).
+- **This pass**: OD remock `klassapp-landing-v3-hero-vintage-paper-v2.html` (fainter grain + ledger rules) → ported to `/landing-preview`. Nav uses `klassapp-logo-primary.svg` (was text wordmark). Toshi hub center uses icon `klassapp-logo.svg`. Footer kept simple KlassApp wordmark (explicit no Nimbalyst multi-column).
+- **Verify**: `LandingPreviewV3Test` 1 passed (33 assertions). Playwright `ok=true` desktop/tablet/mobile — vintageHero, navPrimaryLogo, toshiHubLogo, simpleFooter; zero console errors; `ds-*` / `--d-*` isolation clean. Artifacts `e2e/screenshots/landing-preview-build/{desktop,tablet,mobile}-{hero,toshi,footer,full}.png`. Vite `landing-preview-BVj0D0oE.css`.
+- **Still prior**: Protocol Cores + How It Works framing + FINAL v4 copy on same PR.
+
+## Previous: September 12, 2026 — Protocol Cores + How It Works protocol framing on [PR #534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`)
+
+- **PR**: [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) — branch `feature/landing-auth-preview-build` tip `2d9d5b5b` off `main` (`6333b0a5`). Preview routes only — live `/`, `/login`, `/register`, live `errors/*` untouched.
+- **Port**: Source-only from `origin/feature/auth-pages-preview` (Blade/CSS/JS/routes/tests/e2e). No hand-ported `knowledge.md` conflict; Vite `public/build` regenerated fresh (`landing-preview-DJ3HvCyn.css`).
+- **Open Design**: `agentId: cursor-agent` + `model: auto` (Cursor agent inside OD — not opencode/deepseek; China opt-in blocked). Mocks:
+  - `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3-pillars-community.html`
+  - `/Users/mac/open-design/.od/projects/1ea10327-1368-46f2-93a1-59e99cd5f249/klassapp-landing-v3-how-it-works-enrich.html`
+- **Landing direction built**: locked hero/core narrative retained; new `#trust` (Secure/Scalable/Private/Interoperable, Nimbalyst density, real OWASP access-control talking points from Future Initiatives); new `#community` (Q1 2027 OSS path); `#how-it-works` enriched with product UI mockups (WhatsApp / teacher dash / admin stack + subtle perspective).
+- **Verify**: Feature tests 15 passed (139 assertions). Playwright `e2e/landing-preview-build-verify.cjs` — desktop/tablet/mobile, zero console errors, 4 pillars, OWASP copy present, `ds-*` / `--d-*` isolation clean; `/preview/login` + `/preview/errors/404` 200. Artifacts `e2e/screenshots/landing-preview-build/`.
+- **Still prior**: [#530](https://github.com/KlassApp-Foundation/KlassApp/pull/530) **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `075e25c5`) — name-lookup tenant scope.
+
+## Previous: September 11, 2026 — #488+#527 **MERGED+DEPLOYED+LIVE-VERIFIED** (tip `56db335d`)
+
+- **#488 API**: `merged:true` at **2026-09-11T15:39:44Z** (squash `24f4be71`). **Not** merged on 2026-09-09 — that was only the PR **open** date; earlier “merged two days ago” claims were wrong.
+- **#527 API**: `merged:true` at **2026-09-11T15:42:20Z** (squash `56db335d`), rebased onto post-#488 main (duplicate key-removal hunks dropped; kept staging 402 evidence + unit guard + enable-block notes).
+- **Cloud prod deploy**: `depl-a2b8b180-6ea4-4339-8349-fecc68c972f0` **deployment.succeeded** @ tip `56db335d`.
+- **Live verify** (Commands API `comm-a2b8b268-…`, evidence `docs/evidence/toshi-sdk-v2-enable/prod-verify-2026-09-11.txt`):
+  - `scripts/provision-klassapp.sh` → **NO_GONE_OK**
+  - `config/ai.php` / `config/toshi.php` literal `sk-…` → **NO_OK**
+  - runtime AI key → **EMPTY** (no hardcoded fallback)
+  - `MissingToshiLlmApiKeyException` class → **OK**; clearing key then `ToshiLlm::model()` → **THREW_MissingToshiLlmApiKeyException_OK** with message requiring `OPENAI_COMPATIBLE_API_KEY`
+  - staging evidence + unit guard files present on deploy
+- **Prior tip**: `34f93d12` (#525).
+
+
+## Previous: September 11, 2026 ([#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519)+[#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `85452439`) — Cloud object storage + scheduler + Uganda admission copy
+
+- **✅ Object storage (Laravel Cloud R2)**: Bucket `klassapp-prod` provisioned; env `FILESYSTEM_DISK=s3` (+ AWS_* / endpoint). Config prefers `FILESYSTEM_DISK` over legacy `FILESYSTEM_DRIVER`; S3 disk omits ACL `visibility` (R2 rejects it). WhatsApp report PDFs use default disk and stream via `Storage::response` when not local.
+- **✅ Scheduler**: App instance `uses_scheduler: true`. Every-minute `scheduler-heartbeat` writes `Cache::put('scheduler_heartbeat_at', …)`. After clear + ~95s wait: heartbeat=`2026-09-11T13:58:19+03:00` (autonomous `schedule:run`, not manual).
+- **✅ Uganda admission copy** [#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519): `AcademicDetail.vue` / student `Edit.vue` — Previous School Marks, Local Language, Examination Board, UNEB candidate classes (S.4/S.6). v-model field names unchanged (copy-only).
+- **Investigation (no code) — promotion vs academic year**: Finalize promotion / `PromotionImport` create next-year `StudentAcademic` rows but **do not** flip `academic_years.status` to make the upcoming year current. Admin must separately set the new year current. Docs silent — treat as **unclear intentional vs oversight**; do not auto-advance until product confirms.
+- **Merges**: [#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519) squash `8e6a364d`; [#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) squash `85452439db808f91baecc866e88b7e1f3536c0a6`.
+- **Cloud**: `depl-a2b848b2-8b23-4cee-b2dd-4c0447a31cfb` **deployment.succeeded** @ **2026-09-11T10:50:58Z** (commit `85452439`).
+- **Live storage**: `config('filesystems.default')=s3`; `Storage::disk('s3')->put/exists/get/delete` on `cloud-verify/*.txt` **ok**.
+- **Live copy**: Cloud `grep` on deployed `AcademicDetail.vue` / `Edit.vue` shows UNEB / Examination Board / Previous School Marks / Local Language.
+- **Tests**: CloudObjectStorageConfigTest, SchedulerHeartbeatRegistrationTest, WhatsAppReportDiskRoutingTest, ParentReportCardRequestTest (11 passed); UgandaAdmissionCopyLabelsTest (in #519).
+- **Prior**: [#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516)+[#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) tip `98a7dd47` — teacher roster profile scope.
+
+## Previous: September 11, 2026 ([#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516)+[#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `98a7dd47`) — Teacher student-profile roster scope
+
+- **✅ Roster gate** replaces school-only `Gate::member` on Teacher `StudentDetailsController` (show + JSON tabs including medical/discipline/docs/marks). Boundary = `RosterScopeService::actorCanAccessStudent()` (stream/section CT **or** current-year Teacherlink). Hard **403** otherwise — no partial profile.
+- **✅ #517** school-scopes name lookup (`name` + `school_id` + `usergroup_id=6`) — bare `users.name` is not globally unique; live CT was false-403'd when unscoped `first()` returned a cross-school twin.
+- **Merges**: [#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516) squash `6179e34f`; [#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) squash `98a7dd47`.
+- **Cloud**: `depl-a2b82c50-…` **deployment.succeeded** @ **2026-09-11T09:31:44Z** (commit `98a7dd47`).
+- **Prior**: [#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) tip `d60abafc` — school-only Gate::member floor (superseded by roster scope).
+
+## Previous: September 11, 2026 ([#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d60abafc`) — Teacher student-detail Gate::member parity
+
+- **✅ Cross-tenant floor** on Teacher `StudentDetailsController` JSON endpoints that previously had **no** gate (weaker than `show()`): details, relations, siblings, discipline, attendance, library, showmark/showallmark/comparemark, medicalHistory, documents. Same `Gate::member` (`school_id`) via `authorizeMemberStudent()`.
+- **Superseded** by roster scope [#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516)+[#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517).
+- **Merge**: [#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) squash `d60abafcd49678ab022c11deb3a5a55bb4d1d0fa` @ **2026-09-11T01:23:43Z**.
+- **Cloud**: `depl-a2b77e77-e9bb-4b1b-b3ae-d6e879254103` **deployment.succeeded** @ **2026-09-11T01:25:33Z** (commit `d60abafc`).
+- **Prior**: [#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) tip `e4402052` (+ docs [#513](https://github.com/KlassApp-Foundation/KlassApp/pull/513) `74290460`) — see Previous.
+
+## Previous: September 11, 2026 ([#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e4402052`) — Admission caste Community strip
+
+- **✅ Public Admission student-detail** no longer collects Indian caste-category **Community** (UI + `AdmissionStudentRequest`); DB `admissions.community` kept.
+- **Also cleaned** dead admission fieldset blades (height/weight/religion/community/mother tongue/aadhaar/blood group) deferred since #469.
+- **Root cause of prior miss**: `layouts/admission` still loaded Mix `public/js/app.js` — Vite Vue edits never reached the browser. Layout now `@vite(app.js)` + local jQuery.
+- **Merge**: [#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) squash `e4402052b17cbc7c19f04a17d7083c5329d3992b` @ **2026-09-11T01:02:58Z**.
+- **Cloud**: `depl-a2b776fc-6390-4bc8-9627-0a1ea53db4d8` **deployment.succeeded** @ **2026-09-11T01:04:40Z** (commit `e4402052`).
+- **Live** (`kampala-primary-academy` / school **33**, admission temporarily opened then closed): Community absent; student-detail Next → academic step; Vite app asset present. `e2e/screenshots/admission-community-strip-live-512/REPORT.json` **pass: true**.
+- **Prior**: [#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) tip `e61174f9` — see Previous.
+
+## Previous: September 11, 2026 ([#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e61174f9`) — Toshi Structure streams + CT invite parity (KLS.1)
+
+- **✅ Toshi parity with wizard #502 Structure & Class Teachers** live on `klassapp.xyz`:
+  1. Complete-mode after Academic Year **always** lands on `standards` structure checkpoint (even when StandardLinks seeded).
+  2. Optional `stream Class: labels` → `ClassStructureService::addStream` (base kept); optional `ct Class: Name, email` → `ClassTeacherInviteService`; **done**/**skip** advances (never blocks).
+  3. `OnboardingEngine::saveStandards` with streams keeps undivided base + additive name-encoded children.
+  4. Student form stream `<select>` defaults to first stream when class is split; base option remains.
+- **Merge (GitHub API `merged: true`)**: [#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) squash `e61174f9fa52ad1369e9145d1f26fae2bf995563` @ **2026-09-11T00:21:35Z**.
+- **Cloud deploy** (empty-body `POST …/deployments`, not Commands API): `depl-a2b76847-1830-4a07-ae21-834d3da2a78d` **deployment.succeeded** @ **2026-09-11T00:23:28Z** (commit `e61174f9`).
+- **Live** school **45** (`caveats504.1789078396536@live-verify.test`):
+  - UI: `stream Primary One: Kls1305461` → ✅ added (base kept); `ct Primary One: KLS1 Teacher, ct.kls1…@live-verify.test` → ✅ invited; student form streams = `["Kls1305461"]` (default).
+  - **DB** (`comm-a2b769f8-…` **command.success**): section **274** `Primary One Kls1305461`; base **267** `Primary One` kept; teacher **188** (usergroup 5); `standards_link` **260** `class_teacher_id=188`.
+  - Evidence: `e2e/screenshots/toshi-streams-parity-510/VERIFY.json` (**pass: true**) + screenshots `03`–`06`.
+- **Tracker**: **KLS.1 done** — mark complete in Nimbalyst UI (`tracker_update` not available this session).
+- **Prior**: [#506](https://github.com/KlassApp-Foundation/KlassApp/pull/506) tip `2682fac2` — see Previous.
+
+## Previous: September 11, 2026 ([#506](https://github.com/KlassApp-Foundation/KlassApp/pull/506) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `2682fac2`) — Toshi skip Continue + plan card/sidebar parity
+
+- **✅ Design-audit follow-up (separate from #504 caveats)** live on `klassapp.xyz`:
+  1. Typed **`skip`** (and Skip this step / typed `continue`) on teachers/students/fees/exams **Continue** forms advances — was a silent no-op while `substep=6` and handlers only covered 0/1.
+  2. **Plan selection** checklist resume and sidebar `jumpToStep` both land on create-flow `plan_selection` **with plan cards** (not text-only `actionStep=onboarding_plan_selection`).
+- **Merge**: [#506](https://github.com/KlassApp-Foundation/KlassApp/pull/506) squash `2682fac2f7603bc44af6a9f3b195def4a2483100` @ 2026-09-10T22:49:51Z.
+- **Cloud**: `depl-a2b74a33-9f2e-474e-b117-323f542b63d1` **deployment.succeeded** @ 2026-09-10T22:59:21Z (commit `2682fac2`).
+- **Live** (`caveats504.1789078396536@live-verify.test`): typed skip closed teachers form + advanced; plan cards visible after jump; Freemium `selectPlan` → `selectedPlanId=1`. Evidence `e2e/screenshots/toshi-skip-plan-parity-506/VERIFY.json` (**pass: true**).
+- **UI design flag (not rebuilt now)**: prefer chips/buttons over free-text for Toshi actions; free-text-only paths still include school name / EMIS / UNEB / some fee & exam entry — for upcoming UI design phase.
+- **Prior**: [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504)+[#505](https://github.com/KlassApp-Foundation/KlassApp/pull/505) presentation caveats tip `e26dba5f` — see Previous.
+
+## Previous: September 11, 2026 ([#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504)+[#505](https://github.com/KlassApp-Foundation/KlassApp/pull/505) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `e26dba5f`) — presentation caveats
+
+- **✅ Six presentation caveats** live after [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) + follow-up [#505](https://github.com/KlassApp-Foundation/KlassApp/pull/505).
+- **Merges**: #504 squash `de312b0c` @ 2026-09-10T22:05:57Z; #505 squash `e26dba5f` @ 2026-09-10T22:16:09Z.
+- **Cloud**: `depl-a2b73809-…` (#504) + `depl-a2b73b5f-…` (#505) **deployment.succeeded**.
+- **Live** school `caveats504.1789078396536@live-verify.test`: subjects checkpoint, teacher phone soft-reject, exam term prefill, typed `yeah`, review confirm, Toshi **Classes** label.
+
+## Previous: September 10, 2026 ([#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `d661aec8`) — Structure & Class Teachers wizard checkpoint
+
+- **✅ Wizard Structure & Class Teachers**: Repurposed dead `standards` step (label **Structure & Class Teachers**) after Academic Year. Per auto-seeded class: optional Add stream + optional Invite CT (neither blocks Next). `ClassStructureService::structureSnapshot()` feeds the UI; wires existing `addStream` / `ClassTeacherInviteService`. After AY, Next **always** lands on `standards` even when StandardLinks already exist (seeded complete no longer skips the checkpoint).
+- **✅ Students stream default**: When a class has streams, wizard class select defaults stream to the first stream; “Base class (no stream)” remains selectable. CSV template sample rows prefer stream rows first.
+- **Tests**: `WizardStructureClassTeacherTest` + wizard walk fixtures (extra Next after AY).
+- **PR / merge / deploy**: [#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) squash `d661aec8`. Cloud `depl-a2b69b59-991d-4228-bbb7-bf721c7f3662` **deployment.succeeded**.
+- **Live** (`klassapp.xyz`): register → Structure: stream **East** on Primary Five + CT invite; Students (progress-dot): Primary Five → stream **East**, base option present. Evidence `/tmp/structure-wizard-verify-1789052203275/`, `/tmp/structure-students-verify-1789052703182/VERIFY.json`.
+- **Out of scope (at #502 ship)**: Making streams required. **Toshi parity**: shipped [#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) (see Current Status).
+- **Prior**: [#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) / [#501](https://github.com/KlassApp-Foundation/KlassApp/pull/501) report-cards redirect; stages 2–4 `#497`/`#496`/`#495`/`#493` — see Previous.
+
+## Previous: September 10, 2026 ([#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `c851a168`) — CT report-cards singular → plural redirect
+
+- **✅ Teacher report-cards URL fix**: Guessed `/teacher/report-cards/...` 404'd; canonical CT routes are `/teacher/reports/cards/...`. Product menu already used `route('teacher.reports.cards.*')` (no hardcoded singular in app Blade/JS). [#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) adds 301 redirects via named routes. Cloud `depl-a2b68967-…` **deployment.succeeded** tip `c851a168`. Live CT (school **33**): `/teacher/report-cards` → `/teacher/reports/cards`; sidebar only canonical; stream show `…/cards/195` OK; singular show redirects.
+- **Prior tip (stages 2–4)**: [#497](https://github.com/KlassApp-Foundation/KlassApp/pull/497) `ad18baa6` / [#496](https://github.com/KlassApp-Foundation/KlassApp/pull/496) / [#495](https://github.com/KlassApp-Foundation/KlassApp/pull/495) / [#493](https://github.com/KlassApp-Foundation/KlassApp/pull/493) — see Previous.
+
+## Previous: September 10, 2026 ([#497](https://github.com/KlassApp-Foundation/KlassApp/pull/497) **MERGED+DEPLOYED+LIVE-VERIFIED**; tip `ad18baa6`) — stages 2–4 complete — superseded above
+
+- **✅ Stage 4 dynamic student template**: Per-school `admin.students.upload-template` XLSX from current sections; help text “Leave Stream blank…”; hard-fail unmatched streams unchanged. Cloud `depl-a2b6748c-…` **deployment.succeeded** tip `ad18baa6`. Live school **33**: route/views/help present; 9 sample class rows (real sections, not static Baby Class); hard-fail markers still in `OnboardingEngine::saveStudents`.
+- **✅ Stage 3 CT streams**: [#496](https://github.com/KlassApp-Foundation/KlassApp/pull/496) tip `f652cfe3` / `depl-a2b671e0-…`. Live: CT auth owns assigned section not peer; routes/menu present; probe cleaned.
+- **✅ Stage 2 additive streams**: [#495](https://github.com/KlassApp-Foundation/KlassApp/pull/495) tip `8813f513` / `depl-a2b66c54-…`. Live: name-encoded addStream, base kept, `stream` col unused.
+- **✅ Student size (stage 1)**: [#493](https://github.com/KlassApp-Foundation/KlassApp/pull/493) `fe846881`.
+
+## Previous: September 10, 2026 — shipping Stage 3 CT stream surface — superseded above
 
 - **🚧 Stage 3 (CT add/rename)**: Teacher `/teacher/class-streams` — auth via `ExamAuthorization::sectionIdsForClassTeacher()`; no delete/merge. Branch `feature/ct-stream-surface`.
 - **✅ Stage 2 additive streams**: [#495](https://github.com/KlassApp-Foundation/KlassApp/pull/495) **MERGED+DEPLOYED+LIVE-VERIFIED** tip `8813f513`. Cloud `depl-a2b66c54-…` **deployment.succeeded**. Live school **33**: `addStream(Primary One, Vz4281)` → section **214** `Primary One Vz4281`, base **195** kept, `standards_link.stream=null`, subjects 4→4; probe section/link flagged `status=0`. Routes/views present on prod.
@@ -1417,24 +1858,268 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
-### 2026-09-10: Stage 3 CT stream surface (add/rename) — **SHIPPING**
-- **Work done**: Teacher `/teacher/class-streams` — list owned sections, add stream, rename. Auth exclusively via `ExamAuthorization::sectionIdsForClassTeacher()` (403 on peer class). Reuses `ClassStructureService`. Sidebar “Class Streams” next to Report Cards when CT links exist. No delete/merge routes.
-- **Files modified**: `Teacher/ClassStreamController.php`, `resources/views/teacher/class-stream/*`, `routes/teacher.php`, `layouts/teacher/menu.blade.php`, `ClassTeacherStreamSurfaceTest.php`, `knowledge.md`
-- **Key decisions**: Dedicated CT controller (not school-wide SectionPolicy; not muddying read-only ClassRoster). Nav gated with same CT links helper as Report Cards.
-- **Tests**: `ClassTeacherStreamSurfaceTest` — 5 passed.
-- **Also stamped**: Stage 2 live-verify on Cloud (school 33) after `depl-a2b66c54` succeeded; Commands API path is `POST /api/environments/{env}/commands` (flat `/api/commands` redirects).
-- **Status**: 🚧 Opening PR `feature/ct-stream-surface`
-- **Edge cases flagged**: Subject name accessor uppercases on copy (`ENGLISH`); assert by section_id count in tests.
+### 2026-09-13: Landing official brand connector icons — **MERGED+DEPLOYED** ([#541](https://github.com/KlassApp-Foundation/KlassApp/pull/541))
+- **Work done**: Confirmed prior icons were Lucide-style stroke glyphs. Added `<x-brand.whatsapp|slack|google-drive>` with official color marks; wired into hero float, connectors panel/chips, Toshi hub. Neutral brand-well CSS (no recolor). Playwright screenshots confirm recognizable official marks.
+- **Files modified**: `resources/views/components/brand/*`, `landing-v2.blade.php`, `landing-preview.css`, `LandingPreviewV3Test.php`, `e2e/verify-landing-brand-icons.cjs`, screenshots, `public/build/*`, `knowledge.md`
+- **Key decisions**: Email/SMS/Calendar stay generic (no single official brand). Keep "Works with" framing; do not imply partnership.
+- **Status**: ✅ MERGED `7d418196` · staging `depl-a2bb3554-…` · production `depl-a2bb361e-…`
+- **Edge cases flagged**: WhatsApp official glyph is itself a green circle + white handset — do not confuse with Lucide speech-bubble approximation
+
+### 2026-09-12: Landing Toshi hub + rotating hero polish — **MERGED+DEPLOYED** ([#539](https://github.com/KlassApp-Foundation/KlassApp/pull/539))
+- **Work done**: Ported approved OD mocks into live landing. Toshi hub cloud-quality CSS (mist/glass/tiles/stronger strokes); hero Parent/Teacher/Admin rotate with reduced-motion fallback; footer socials → X + GitHub + Contact. Audited Terms (substantive) vs Privacy (real but thin/legacy Gegosoft). Staging auto-deploy + prod manual deploy; Playwright creative polish PASS on both.
+- **Files modified**: `landing-v2.blade.php`, `landing-preview.css`, `landing-preview.js`, `LandingPreviewV3Test.php`, `e2e/verify-landing-creative-polish.cjs`, `e2e/screenshots/landing-creative-polish/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Kept measured DOM Toshi connectors while applying mock visual language. Only link socials with confirmed presence. Landing page bandwidth concern lifted for creative ambition; still recorded asset delta.
+- **Status**: ✅ MERGED `4f442325` · staging `depl-a2bb12eb-…` · production `depl-a2bb13ce-…`
+- **Edge cases flagged**: Privacy policy needs counsel rewrite before media push; no Facebook/Instagram/LinkedIn profiles confirmed so those icons were removed rather than left as `#`
+
+### 2026-09-12: Landing mobile bugs (live) + OD creative mocks — **MERGED+DEPLOYED** ([#538](https://github.com/KlassApp-Foundation/KlassApp/pull/538))
+- **Status**: ✅ MERGED `e9c3b22c` · staging `depl-a2bb070e-…` · production `depl-a2bb084e-…` — Playwright 5/5 on staging + `klassapp.xyz`
+
+### 2026-09-12: Landing/auth/error LIVE CUTOVER — **MERGED+DEPLOYED+VERIFIED** ([#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536))
+- **Work done**: Confirmed #535 was still open (`merged:false`) → admin-merged `749940c5`. Implemented live cutover on `feature/landing-auth-error-cutover`: WelcomeController → `landing-v2`; auth controllers → `auth.preview.*`; live `errors/{404,419,500}` → Pass-2 vintage; `/landing-preview` 301 → `/`; preview badge only when `isPreview`. Merged #536 (`638d359b`). Staged then production Cloud deploys of that tip.
+- **Files modified**: `WelcomeController`, auth controllers (login/register/forgot/reset-code/reset/force-change), `routes/web.php`, `landing-v2.blade.php`, auth preview blades (live route links), `errors/{404,419,500}.blade.php`, cutover + preview tests, `knowledge.md`
+- **Key decisions**: Real route/view swap (not parallel forever). Synthetic probe accounts only on production (users 189/190 + school 46 flagged `inactive` after verify). Rollback = prior prod deploy `depl-a2b8b963-…` @ `075e25c5`.
+- **Status**: ✅ MERGED `638d359b` · staging `depl-a2bad172-…` succeeded · production `depl-a2bad357-…` succeeded
+- **Verify (staging)**: Landing Protocol Cores/HITL/vintage/footer OK; login `phase4.admin@klassapp.xyz` → `/admin/dashboard` + session; register new account → dashboard; password reset request→code→new password→login OK (demo pw restored); 404 Pass-2 OK; `/auth/google` → Google (redirect_uri still localhost — pre-existing).
+- **Verify (production)**: Same page shells on `klassapp.xyz`; login probe user → `/superadmin/dashboard`; full password reset with DB-fetched code; register synthetic → `/admin/dashboard`; 404 Pass-2 OK; Google redirect starts (callback URI still localhost — **not** full OAuth complete).
+- **Edge cases flagged**: Google OAuth `redirect_uri=http://localhost:8000/...` on staging+prod Cloud env — separate fix before Monday if schools use Google sign-in.
+
+### 2026-09-12: Auth brand-header balance (desktop top-align + mobile logo|copy) — **PR #535**
+- **Work done**: OD mock `klassapp-auth-brand-header-balance-v1.html` first (both breakpoints). Desktop: brand panel `flex-start` + `130px` top padding (was vertically centered / floating low). Mobile: `.ap-brand-row` / `.err-brand-row` — logo left, heading+subtitle right. Applied across auth preview shared brand panel + error preview layout.
+- **Files modified**: `resources/css/auth-preview.css`, `resources/views/auth/preview/_brand-panel.blade.php`, `resources/views/errors-preview/layout.blade.php`, `tests/Feature/{AuthPreview,ErrorsPreview}Test.php`, `e2e/auth-error-vintage-verify.cjs`, screenshots, `public/build/*`, `knowledge.md`
+- **Key decisions**: Mobile horizontal brand unit; desktop stays stacked logo→copy but top-aligned in the column. Locks unchanged (Sora/DM Sans, 44×44 toggle, error reds, green CTAs, force-change no escape).
+- **Status**: ✅ MERGED via [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) (`749940c5`) then live cutover [#536](https://github.com/KlassApp-Foundation/KlassApp/pull/536)
+- **Verify**: Feature 220 assertions; Playwright desktop `brandTopAligned` + mobile `brandLogoCopyRow` on auth + error previews; prior vintage/layout locks still `ok=true`
+
+### 2026-09-12: Auth/error desktop split + transparent paper (v2 breakpoints) — **PR #535**
+- **Work done**: Local review of #535 found desktop was a centered mobile card, opaque white form card, and paper not matching hero rules. OD remock `klassapp-auth-error-vintage-paper-v2-breakpoints.html` (desktop 1440 two-col + mobile 390 stack). Ported: `.ap-bg-vintage` / `.err-bg-vintage` = exact `.hero-bg-vintage` layers; transparent form/error shells; brand+form split on all auth + error previews.
+- **Files modified**: `resources/css/auth-preview.css`, `resources/views/auth/preview/*`, `resources/views/errors-preview/layout.blade.php`, tests, `e2e/auth-error-vintage-verify.cjs`, screenshots, `public/build/*`, `knowledge.md`
+- **Key decisions**: Desktop and mobile are different compositions (standing rule going forward). Opaque white card removed so ruled paper shows through. Fonts stay Sora/DM Sans.
+- **Status**: 📝 Pushed on [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) tip `1e9e8ebb`
+- **Verify**: Feature 202 assertions; Playwright desktop/mobile `ok=true` (sideBySide/stacked, no opaque white, paperRules, grain 0.22, locks)
+
+### 2026-09-12: Auth/error vintage paper (OD → preview) — **PR #535**
+- **Work done**: After merging #534 and closing #377: Open Design mock `klassapp-auth-error-vintage-paper-v1.html` (cursor-agent/auto); ported full-page paper (ledger + grain 0.22, `#F5F0E6` family) onto auth-preview CSS + errors-preview layout. Kept Sora/DM Sans and all Pass-2 locks. New Playwright `e2e/auth-error-vintage-verify.cjs`.
+- **Files modified**: `resources/css/auth-preview.css`, `resources/views/auth/preview/*`, `resources/views/errors-preview/layout.blade.php`, `tests/Feature/{AuthPreview,ErrorsPreview}Test.php`, `e2e/auth-error-vintage-verify.cjs`, `e2e/screenshots/auth-error-vintage/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Vintage is additive background only — never swap auth typography to landing fonts. Preview-only; no live cutover.
+- **Status**: 📝 PR open — [#535](https://github.com/KlassApp-Foundation/KlassApp/pull/535) (`feature/auth-error-vintage-paper`, tip `6067e036`)
+- **Verify**: Feature 15 passed (166 assertions); Playwright 3bp `ok=true` (paperBody, toggle44, greens, errorTokens, forceNoEscape, isolation)
+### 2026-09-12: Merge #534 + close #377
+- **Work done**: Real review of #534 (preview-only scope, auth locks, tests 15/158 then em-dash scrub `452df659`); squash-merged with admin (`merged:true`, SHA `dfae51ed`). Closed #377 with comment that Nimbalyst-vs-restraint resolution landed via #534.
+- **Status**: ✅ #534 MERGED; #377 CLOSED (not merged)
+
+### 2026-09-12: Prod footer + strip Community/OSS CTA + HITL + protocol mesh + Toshi hub flow — **PR #534**
+- **Work done**: Replaced preview footer with production `landing.blade.php` footer block (no Stay-in-the-loop newsletter). Removed `#community` and `#open-source` sections (redundant with Protocol Open Source card). Added Meet Toshi human-in-the-loop callout. OD remocks `klassapp-landing-v3-protocol-visual-v2.html` + `klassapp-landing-v3-toshi-hub-flow-v2.html` ported (mesh visual; hub mark + directional/streak connectors). Hero CTA / nav Community retargeted to `#protocol`.
+- **Files modified**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/js/landing-preview.js`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-preview-build-verify.cjs`, `e2e/screenshots/landing-preview-build/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Copy production footer links/socials as-is (`Terms`/`Privacy` `#`). Strip both community + Free.Open.Self-hostable CTA because user description matched that heading. No Q1 dates from OD mock copy. Badges in Toshi diagram untouched.
+- **Status**: 📝 Pushed on [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534)
+- **Verify**: Feature 43 assertions; Playwright 3bp `ok=true` (prodFooter, noCommunity, HITL, mesh, hub arrows/streaks); isolation clean; no em dash / Q1 2027
+
+### 2026-09-12: Vintage hero v2 + nav/hub logos; footer stay simple — **PR #534**
+- **Work done**: Open Design remock `klassapp-landing-v3-hero-vintage-paper-v2.html` (grain opacity ~half of v1; ledger ruled lines via `--paper-rule`) then ported as default hero on `/landing-preview`. Nav text wordmark → `images/klassapp-logo-primary.svg`. Toshi connector hub center → icon `images/klassapp-logo.svg` + compact “Toshi” label. Footer intentionally unchanged (KlassApp wordmark + Docs/Open source/Community/Contact) — denser Nimbalyst-style footer rejected.
+- **Files modified**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-preview-build-verify.cjs`, `e2e/screenshots/landing-preview-build/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Vintage is the preview hero surface (not a review toggle). Nav uses primary mark used across auth/admission; hub uses compact green icon (not white PNG) on light glass core. Footer comment documents the no-expand decision.
+- **Status**: 📝 Pushed on [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534)
+- **Verify**: Feature test 33 assertions pass. Playwright 1440/1024/390 `ok=true` with `vintageHero`/`navPrimaryLogo`/`toshiHubLogo`/`simpleFooter`; isolation `dsElements=0`; focus shots hero/toshi/footer per breakpoint.
+
+### 2026-09-12: Protocol Cores rename + How It Works protocol framing — **PR #534**
+- **Work done**: Renamed `#trust` section label/nav from Trust/Pillars framing to **Protocol Cores** (same 5 pillars/content). Refined How It Works copy to infuse protocol orchestration (WhatsApp/Drive/Slack as one connected system) into existing numbered steps; step 03 titles now "Protocol path".
+- **Files modified**: `resources/views/landing-v2.blade.php`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-preview-build-verify.cjs`, `e2e/screenshots/landing-preview-build/*`, `knowledge.md`
+- **Key decisions**: Keep `id="trust"` anchor; display name is Protocol Cores. How It Works is a language/framing refinement, not a structural rewrite.
+- **Status**: 📝 Pushed on [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534)
+- **Verify**: 15 feature tests passed; Playwright 1440/1024/390 `ok=true`, `protocolCores=true`, `howProtocol=true`, zero console errors, no ds-* leakage
+
+### 2026-09-12: Landing content FINAL v4 + README OSS date scrub — **PR #534**
+- **Work done**: Implemented locked `docs/klassapp-landing-content-final-v4.md` into `/landing-preview` (hero tagline, 5 pillars incl. Provable-as-coming, community silent-on-date, comparison table, FAQ). Narrow README edit: removed explicit Q1 2027 open-source date; free/open/self-hostable framing. Vintage hero mock not ported (no lock decision yet).
+- **Files modified**: `README.md`, `docs/klassapp-landing-content-final-v4.md`, `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `tests/Feature/LandingPreviewV3Test.php`, `e2e/landing-preview-build-verify.cjs`, `e2e/screenshots/landing-preview-build/*`, `public/build/*`, `knowledge.md`
+- **Key decisions**: Provable uses Coming badge + "Stated direction. Not a live feature yet." Comparison flagged as illustrative. No em dashes. Preview routes only.
+- **Status**: 📝 Pushed on [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534)
+- **Verify**: Feature tests 15 passed; Playwright desktop/tablet/mobile ok=true, 5 pillars, Provable present, no Q1 2027 / em dash / ds-* leakage
+
+### 2026-09-12: Landing + auth preview build (OD cursor-agent) — **LOCAL BRANCH**
+- **Work done**: Fresh branch `feature/landing-auth-preview-build` off `main`. Ported auth-pages-preview source only (no stale `public/build` / no conflicted `knowledge.md`). Open Design via **cursor-agent/auto** for pillars+community and how-it-works enrich mocks; implemented into `landing-v2` + `landing-preview.css`. Auth/errors preview routes unchanged.
+- **Files modified**: `resources/views/landing-v2.blade.php`, `resources/css/landing-preview.css`, `resources/css/auth-preview.css`, `resources/js/landing-preview.js`, `resources/views/auth/preview/*`, `resources/views/errors-preview/*`, `resources/views/layouts/auth-preview.blade.php`, `routes/web.php`, `vite.config.js`, `tests/Feature/{LandingPreviewV3,AuthPreview,ErrorsPreview}Test.php`, `e2e/*`, `public/build/*` (regenerated), `knowledge.md`
+- **Key decisions**: OD agent = `cursor-agent` (adopts Cursor model); Secure pillar uses real PR #514/#516/#517 access-control talking points; stay on preview routes (no live cutover); design-system isolation (no `--d-*` / `.ds-*`).
+- **Status**: 📝 PR open — [#534](https://github.com/KlassApp-Foundation/KlassApp/pull/534) (`feature/landing-auth-preview-build`, tip `2d9d5b5b`). Awaiting review. Not cut over to live routes.
+- **Edge cases flagged**: DeepSeek `opencode-go/deepseek-v4-flash` still China-opt-in blocked for OD; use cursor-agent. Live `/` still Tailwind CDN + inline (unchanged).
+
+### 2026-09-11: Land monthly release strategy + staging product notes — **MERGED**
+- **Work done**: Rebased wanted content from [#526](https://github.com/KlassApp-Foundation/KlassApp/pull/526) onto current main (dropped stale Current Status / Toshi-readiness stamps that conflicted with later #528–#532). Adds Monthly Release Strategy + compact Staging Environment product notes.
+- **Files modified**: `knowledge.md`
+- **PR / merge**: [#526](https://github.com/KlassApp-Foundation/KlassApp/pull/526) squash `cf41530b`
+
+### 2026-09-11: Land bounced-CT-invite Future Initiative note — **MERGED**
+- **Work done**: Rebased wanted content from [#487](https://github.com/KlassApp-Foundation/KlassApp/pull/487) onto current main (dropped stale Current Status stamps from the old branch tip). Adds Future Initiative note that bounced invite email still assigns `class_teacher_id`.
+- **Files modified**: `knowledge.md`
+- **PR / merge**: [#487](https://github.com/KlassApp-Foundation/KlassApp/pull/487) squash `02851568`
+- **Status**: ✅ MERGED (`merged:true` @ 2026-09-11T16:49:47Z)
+
+### 2026-09-11: Sweep unscoped User name lookups (#517 pattern) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **PR / merge**: [#530](https://github.com/KlassApp-Foundation/KlassApp/pull/530) squash `075e25c5` @ 2026-09-11T16:03:34Z · branch `fix/user-name-lookup-school-scope`
+- **Work done**: Codebase sweep for `User::where('name', …)` / equivalent identity lookups without `school_id` (or id). PHPStorm MCP first wave; completed coverage with ripgrep/scripted co-occurrence classification (scoped vs unscoped). Fixed real-risk route-name and write-path lookups; left already-scoped Parent/TeacherList/UserProfile and intentional search/LIKE as safe. Added `User::findByExactNameInSchool` + Admin/Teacher student-detail helpers; Teacher residual loads use authorized user. Production Cloud deploy + Commands file verify.
+- **Files modified**: `app/Models/User.php`; Admin/Teacher `StudentDetailsController`; `StudentController`, `TeacherShowController`, `TeacherEditController`, `StaffController`, `DocumentsController`, `BankDetailController`, `StaffAttendanceController`, `UserController`, Admin+Accountant `DashboardController`, `DisciplineController`; traits `AdmissionUser`/`RegisterUser`; FormRequests; `Api/Search/UserSearchController`; tests; `docs/evidence/name-lookup-scope/prod-verify-2026-09-11.txt`; `knowledge.md`.
+- **Key decisions**: Prefer id/authorized-model reuse after gate; else exact name + `school_id` (+ usergroup when role-known). Within-school same-name collisions remain possible (still not unique) — school scope closes the Grace Auma cross-tenant class.
+- **Cloud**: `depl-a2b8b963-…` **succeeded** @ `075e25c5`. Live: helpers OK; bare Teacher/Admin `User::where('name'` gone.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: Within-school duplicate names still ambiguous; long-term prefer id in routes. Commented-out API user search still scoped if re-enabled.
+
+### 2026-09-11: #488+#527 overlap resolved — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Merged #488 then #527 with API `merged:true` confirmations; rebased #527 onto post-#488 main; production Cloud deploy tip `56db335d`; live Commands verify script gone, no hardcoded sk, fail-loud exception throws.
+- **API evidence**: #488 `merged_at=2026-09-11T15:39:44Z` squash `24f4be71`; #527 `merged_at=2026-09-11T15:42:20Z` squash `56db335d`. Deploy `depl-a2b8b180-…` **succeeded**.
+- **Live evidence**: `docs/evidence/toshi-sdk-v2-enable/prod-verify-2026-09-11.txt` — `provision_script_exists=NO_GONE_OK`, `*_has_sk_literal=NO_OK`, `fail_loud=THREW_MissingToshiLlmApiKeyException_OK`.
+- **Correction**: #488 was **not** merged on 2026-09-09; real merge is 2026-09-11T15:39:44Z.
+- **Files modified**: landed via #488+#527; this stamp + prod evidence file.
+- **PR / merge**: [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) + [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527)
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+
+### 2026-09-11: Merge #488 for real + rebase #527 — **IN PROGRESS → ship**
+- **Work done**: Merged [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) via `gh pr merge --admin --squash`. API confirm: `merged:true`, `merged_at=2026-09-11T15:39:44Z`, squash on main `24f4be71`. Verified on `origin/main`: key env-only, `MissingToshiLlmApiKeyException` present, `scripts/provision-klassapp.sh` gone. Rebased [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527) onto that tip; kept #488 config, retained #527 evidence/unit/notes; deduped `.env.example` OPENAI_COMPATIBLE keys.
+- **Correction**: #488 was **never** merged on 2026-09-09 — only opened then. Real merge is **2026-09-11T15:39:44Z**.
+- **Files modified**: rebase of #527 branch; `knowledge.md`, `.env.example`
+- **Status**: 🚧 merging #527 next, then Cloud production deploy + live verify
+- **Edge cases flagged**: During rebase, take #488 (`ours`/main) for overlapping `config/ai.php` / `config/toshi.php` hunks.
+
+### 2026-09-11: PR #488 status correction (API) — **#527 resolved against main**
+- **Work done**: GitHub API confirm: `#488` `merged:false` / `state:open` / `merged_at:null` (opened 2026-09-09, never merged). Speculative `merge_commit_sha` not on `origin/main`. Main still ships hardcoded LLM key. Rebased/verified `#527` onto current `main` (already up to date). Framing “wait for merged #488 then rebase” was wrong — #488 was never on main.
+- **Files modified**: `knowledge.md`
+- **Key decisions**: Resolve #527 against current main; treat #488 as a parallel open security PR to coordinate with, not a predecessor already landed.
+- **PR / merge**: [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527)
+- **Status**: ✅ Corrected
+- **Edge cases flagged**: Earlier “merged two days ago” memory likely conflated PR **open** date (2026-09-09) with merge.
+
+### 2026-09-11: TOSHI_SDK_V2_ENABLED enable attempt — **BLOCKED (DeepSeek 402)**
+- **Work done**: Investigated why flag was off (staged rollout, not a known app bug). Enabled `TOSHI_SDK_V2_ENABLED=true` on **staging** + redeployed; ran Admin/Teacher free-form `ToshiSdkV2Service::ask` + direct agent prompts. LLM path fails with DeepSeek HTTP 402 Insufficient Balance. Production flag left **false**. Removed hardcoded API key from config (env-only). Logged evidence under `docs/evidence/toshi-sdk-v2-enable/`.
+- **Files modified**: `config/ai.php`, `config/toshi.php`, `.env.example`, `knowledge.md`, `docs/evidence/toshi-sdk-v2-enable/staging-2026-09-11.txt`
+- **Key decisions**: Do not flip production until staging shows real LLM transcripts with a funded `OPENAI_COMPATIBLE_API_KEY`. Guided onboarding is not gated by SDK flag (assistant-mode only).
+- **PR / merge**: [#527](https://github.com/KlassApp-Foundation/KlassApp/pull/527) branch `ops/toshi-sdk-v2-enable-staging`
+- **Status**: ⏸️ Blocked on funded LLM API key (PR open)
+- **Edge cases flagged**: Staging demo school had `toshi_enabled=0` after seed — forced on for gate test; Cloud env had no OPENAI_* vars (relied on committed default).
+
+### 2026-09-11: Cloud object storage + scheduler heartbeat — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Provisioned Cloud R2 bucket `klassapp-prod` + env `FILESYSTEM_DISK=s3`/AWS_*; updated `config/filesystems.php` (no S3 ACL visibility); WhatsApp report PDFs on default disk with stream serve; every-minute `scheduler-heartbeat` Cache key for autonomous scheduler proof.
+- **Files modified**: `config/filesystems.php`, `app/Services/WhatsAppReportCardDeliveryService.php`, `app/Http/Controllers/WhatsAppReportFileController.php`, `app/Console/Kernel.php`, new feature tests.
+- **Key decisions**: Copy-only Uganda labels shipped separately (#519); promotion year-advance left as product question (no code).
+- **PR / merge**: [#520](https://github.com/KlassApp-Foundation/KlassApp/pull/520) squash `85452439`
+- **Cloud**: `depl-a2b848b2-…` **deployment.succeeded** @ 2026-09-11T10:50:58Z tip `85452439`
+- **Live**: S3 put/get/delete ok; heartbeat after clear+~95s = `2026-09-11T13:58:19+03:00`; instance `uses_scheduler: true`
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+
+### 2026-09-11: Uganda admission / student Edit copy (GeGoK12 leftovers) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Replaced India-era labels in `AcademicDetail.vue` + `student/Edit.vue` with Uganda-facing copy (Examination Board, Local Language, Previous School Marks, UNEB S.4/S.6 hints). No v-model/schema changes.
+- **PR / merge**: [#519](https://github.com/KlassApp-Foundation/KlassApp/pull/519) squash `8e6a364d`
+- **Cloud**: shipped with tip `85452439` deploy (same as #520)
+- **Live**: Cloud `grep` on deployed Vue sources confirms new labels
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+
+### 2026-09-11: Student promotion vs academic-year advance — **INVESTIGATION ONLY**
+- **Finding**: Promotion finalize / import writes next-year `StudentAcademic` (and related) rows against the upcoming year; **does not** change `academic_years.status` so the school’s “current” year stays put until an admin flips it.
+- **Key files**: `StudentPromotionService`, `PromotionController`, `PromotionImport`
+- **Product flag**: Looks like a deliberate two-step (promote into upcoming while old year stays current for archives), but docs are silent — **do not auto-advance without product confirmation**
+- **Status**: ✅ Reported; no code change
+
+### 2026-09-11: Teacher student-profile roster scope — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Replaced Teacher `StudentDetailsController` `Gate::member` with `RosterScopeService::actorCanAccessStudent()` (CT or current-year Teacherlink → full profile incl. medical; else hard 403). Stripped teacher deep links from StandardsLink class-browse `students.vue`. Follow-up #517 school-scopes name lookup after live CT false-403 from cross-school duplicate `users.name`.
+- **Files modified**: `app/Services/RosterScopeService.php`, `app/Http/Controllers/Teacher/StudentDetailsController.php`, `resources/assets/js/components/academic/class/students.vue`, `tests/Feature/Teacher/TeacherStudentDetailsRosterScopeTest.php`, `tests/Feature/Teacher/TeacherStudentDetailsMemberGateTest.php`, `knowledge.md`
+- **Key decisions**: Reuse roster visibility (no new role model); admin remains only cross-class PII path; visitor log picker kept (no profile deep links found); medical/discipline same boundary as general profile.
+- **PR / merge**: [#516](https://github.com/KlassApp-Foundation/KlassApp/pull/516) `6179e34f`; [#517](https://github.com/KlassApp-Foundation/KlassApp/pull/517) `98a7dd47`
+- **Cloud**: `depl-a2b82c50-…` **deployment.succeeded** @ 2026-09-11T09:31:44Z tip `98a7dd47`
+- **Live**: subject allow + CT allow (post-#517) + same-school deny 403 matrix + class-browse/visitorlog browse OK (`comm-a2b82d22-…`)
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: Same-school duplicate `users.name` still ambiguous (first match within school); no principal/substitute/delegation exceptions (out of scope).
+
+### 2026-09-11: Teacher student-detail Gate::member parity — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Added `authorizeMemberStudent()` (`Gate::member` / same `school_id`) to previously ungated Teacher `StudentDetailsController` JSON endpoints so they match `show()`’s cross-tenant floor.
+- **Files modified**: `app/Http/Controllers/Teacher/StudentDetailsController.php`, `tests/Feature/Teacher/TeacherStudentDetailsMemberGateTest.php`
+- **Key decisions**: Minimal parity only — not class-scoped CT access; class scope remains product follow-up.
+- **PR / merge**: [#514](https://github.com/KlassApp-Foundation/KlassApp/pull/514) squash `d60abafc` @ 2026-09-11T01:23:43Z
+- **Deploy**: `depl-a2b77e77-…` **deployment.succeeded** @ 2026-09-11T01:25:33Z
+- **Live**: teacher 22/school 17 denied details for student 29/school 18 → HTTP **403** (`comm-a2b77f7a-…`)
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: Same-school teacher profile access remains school-wide (pre-existing); `showmark`/`showAllMark` still reference missing `Student` class after gate (pre-existing breakage).
+
+### 2026-09-11: Admission caste Community strip — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: UI-only strip of Admission **Community** (caste) from live Vue + `AdmissionStudentRequest`; cleaned deferred Track A leftovers on dead admission blades; pointed `layouts/admission` at Vite so Mix `public/js/app.js` no longer served the stale field.
+- **Files modified**: `StudentDetail.vue`, `AdmissionStudentRequest.php`, `layouts/admission.blade.php`, dead `pages/admission/*-detail.blade.php`, tests, Vite build assets, `e2e/admission-community-strip-ui.cjs`.
+- **Key decisions**: Keep DB columns; wire admission layout to Vite (required for UI to reflect Vue source); temporarily open then close admissions on school 33 for live verify.
+- **Status**: ✅ MERGED [#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512) `e4402052` · Cloud `depl-a2b776fc-…` succeeded · live `e2e/screenshots/admission-community-strip-live-512/REPORT.json` pass=true
+- **Edge cases flagged**: AcademicDetail still has Indian board/Tamil mark labels (out of Track A scope). Stale Mix `public/js/app.js` remains in repo for any other leftover Mix consumers.
+
+### 2026-09-11: Toshi Structure streams + CT invite parity (KLS.1) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Shipped previously-local `feature/toshi-streams-parity` end-to-end — Structure checkpoint after AY, `stream`/`ct` commands, additive `saveStandards`, student stream default.
+- **Files modified**: `AgentToshi.php`, `agent-toshi.blade.php`, `OnboardingEngine.php`, `OnboardingStepsService.php`, `ToshiStructureStreamsParityTest.php`, `ContentStepsTest.php`
+- **PR / merge**: [#510](https://github.com/KlassApp-Foundation/KlassApp/pull/510) — GitHub API **`merged: true`**, squash `e61174f9` @ 2026-09-11T00:21:35Z.
+- **Deploy**: empty-body `POST …/deployments` → `depl-a2b76847-…` **deployment.succeeded** @ 2026-09-11T00:23:28Z (commit `e61174f9`).
+- **Live DB**: school **45** section **274** `Primary One Kls1305461`; base **267** kept; teacher **188** / link **260** (`comm-a2b769f8-…`). Evidence `e2e/screenshots/toshi-streams-parity-510/VERIFY.json`.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED — **KLS.1 done** (mark in Nimbalyst UI manually; no `tracker_update` tool here).
+- **Edge cases**: Create-mode (no schoolId) still uses in-memory class+stream Q&A until commit. Prefer chips over free-text commands for UI design phase.
+
+### 2026-09-11: Document Laravel Cloud deploy-trigger API (vs Commands API / MCP) — **MERGED**
+- **Work done**: Promoted empty-body `POST …/environments/{env}/deployments` + `Authorization: Bearer` into its own top-level **Triggering a real deployment** section beside Commands API. Corrected MCP docs (read-only; no deploy tool). Clarified Commands API ≠ deploy; push-to-deploy is off.
+- **Files modified**: `knowledge.md`
+- **PR / merge**: [#508](https://github.com/KlassApp-Foundation/KlassApp/pull/508) squash `39410e86`.
+- **Status**: ✅ MERGED
+
+### 2026-09-11: Toshi typed skip on Continue forms + plan card/sidebar parity — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Fixed two design-audit findings left after #504/#505:
+  1. Continue-form `substep=6` ignored typed `skip`/`continue`/`done` and `skipStep()` — routed via `finishInlineCollectionForm()` / early `send()` handling (same class as typed-yes order bug).
+  2. `jumpToIncompleteOnboardingStep('plan_selection')` used text-only `actionStep`; removed from actionMap, map to create-flow `plan_selection` step; `jumpToStep` clears leftover actionStep; blade shows cards for step or legacy actionStep.
+- **Files modified**: `AgentToshi.php`, `agent-toshi.blade.php`, `ToshiSkipContinueFormParityTest.php`, `ToshiSchoolCategoryJumpResumeTest.php`
+- **PR / merge / deploy**: [#506](https://github.com/KlassApp-Foundation/KlassApp/pull/506) squash `2682fac2`. Cloud `depl-a2b74a33-…` **deployment.succeeded**.
+- **Live**: `e2e/screenshots/toshi-skip-plan-parity-506/VERIFY.json` pass; school `caveats504.1789078396536@live-verify.test`.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged / design note**: Prefer chips/buttons over free-text for Toshi actions. Free-text-only paths still include school name, EMIS, UNEB, some fee/exam entry — flag for UI design phase (not rebuilt in #506). Cloud deploy: empty-body `POST …/deployments` + `Authorization: Bearer` (MCP is read-only).
+
+### 2026-09-11: Presentation caveats (subjects checkpoint / Toshi yes / exam term / labels) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Six live-demo caveats investigated with evidence, then fixed:
+  1. Wizard Subjects silently skipped after category seed → force-land subjects after Structure (mirror AY→standards); seeded list + “already set up” cue; blank Next is no-op; can add another.
+  2. Teacher name/phone mix-up → name placeholder + helper + soft reject phone-like names.
+  3. Exam Term blank default → prefill current (else first) term; drop empty Select when defaulted; “(current)” label.
+  4–5. Toshi typed `yes`/`yeah` ≠ Yes chip / Confirm → free-text affirmatives/negatives call `confirmYes`/`confirmNo` **before** `actionStep` and assistant early-return; review accepts `yes`/`confirm`/`ok`/… as commit aliases.
+  6. Toshi checklist “Structure & Class Teachers” → `toshi_label` **Classes** via `OnboardingStepsService::labelForContext`; wizard label unchanged.
+- **Files modified**: `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `ExamController.php`, `teacher/exams/form.blade.php`, `AgentToshi.php`, `OnboardingStepsService.php`, `OnboardingHelper.php`, `WizardStructureClassTeacherTest.php`, `ClassTeacherExamCreateTest.php`, + `WizardSubjectsCheckpointTest.php`, `ToshiFreeTextConfirmParityTest.php`
+- **Key decisions**: Subjects checkpoint mirrors Structure (reviewable seeded step, not silent skip). Confirm free-text must beat action flows (student_size was swallowing `yes`). Exam term sort is PHP-side (SQLite has no `FIELD()`).
+- **Tests**: focused suites green; #505 cleared default subject on seeded checkpoint.
+- **PR / merge / deploy**: [#504](https://github.com/KlassApp-Foundation/KlassApp/pull/504) `de312b0c` + [#505](https://github.com/KlassApp-Foundation/KlassApp/pull/505) `e26dba5f`. Cloud `depl-a2b73809-…` / `depl-a2b73b5f-…` **deployment.succeeded**.
+- **Live**: `caveats504.1789078396536@live-verify.test` — subjects, teacher phone soft-reject, exam term, typed yeah, review confirm, Classes label.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: Non yes/no text while `awaitingConfirm` still falls through in setup (school-name correction). Assistant + pending tool + unclear text prompts yes/no only.
+
+### 2026-09-10: Structure & Class Teachers wizard checkpoint — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Repurposed `standards` step as Structure & Class Teachers (optional streams + CT invite per class). Forced post-AY landing on `standards` despite seeder marking the step complete. Students enrollment defaults to first stream when streams exist; base class remains selectable. CSV template prefers stream sample rows.
+- **Files modified**: `ClassStructureService.php`, `OnboardingStepsService.php`, `OnboardingHelper.php`, `ManualOnboardingWizard.php`, `manual-wizard-step-fields.blade.php`, `StudentUploadTemplateService.php`, `tests/Feature/Onboarding/WizardStructureClassTeacherTest.php` (+ wizard walk fixture updates)
+- **Key decisions**: Reuse existing `standards` slot (no new step). Neither stream nor CT blocks Next. Optional `students`/`teachers` still skipped by Next when empty — live Students verify used progress-dot `goToStep` (`data-step-key="students"`). Toshi out of scope.
+- **PR / merge / deploy**: [#502](https://github.com/KlassApp-Foundation/KlassApp/pull/502) squash `d661aec8` @ 2026-09-10T14:48:41Z. Cloud `depl-a2b69b59-991d-4228-bbb7-bf721c7f3662` **deployment.succeeded**.
+- **Live**: Structure stream East + CT invite OK (`/tmp/structure-wizard-verify-1789052203275/`). Students: Primary Five → `streamVal=East`, base option present (`/tmp/structure-students-verify-1789052703182/VERIFY.json` **ok: true**).
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: Empty Next on Teachers jumps past optional Students to next blocking step (WhatsApp); use progress dots or Review Edit to open Students. Full-name registration rejects digit characters.
+
+### 2026-09-10: CT singular `/teacher/report-cards` → canonical `reports/cards` — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Investigated 404 on `/teacher/report-cards/...`. App UI already emits `teacher.reports.cards.*` (sidebar/asserted). Root cause of live 404s: guessed/harness singular paths, not a hardcoded product link. Added 301 redirects in `routes/teacher.php` via `redirect()->route(..., 301)` (plain `permanentRedirect` to relative `reports/cards` dropped the `teacher` prefix). Tests cover sidebar never emits singular + four legacy paths 301.
+- **Files modified**: `routes/teacher.php`, `tests/Feature/Teacher/TeacherReportCardsTest.php`
+- **PR / merge / deploy**: [#500](https://github.com/KlassApp-Foundation/KlassApp/pull/500) squash `c851a168`. Cloud `depl-a2b68967-75d3-44b8-a443-baa13e16073e` **deployment.succeeded**.
+- **Live** (school **33** CT): `/teacher/report-cards` → `/teacher/reports/cards` (200, Report Cards UI); sidebar hrefs canonical only; open stream `195`; `/teacher/report-cards/195` → canonical show. Evidence `/tmp/report-cards-redirect-verify-*/VERIFY.json`.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: `Route::permanentRedirect` destinations inside a prefix group are root-absolute unless named-route redirects are used.
+
+### 2026-09-10: Stage 4 dynamic student upload template — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: `StudentUploadTemplateService` builds per-school XLSX from current year sections. Route `admin.students.upload-template`. Wizard + Toshi links updated; help text “Leave Stream blank if your school doesn't use streams.” Hard-fail unmatched streams unchanged.
+- **PR / merge / deploy**: [#497](https://github.com/KlassApp-Foundation/KlassApp/pull/497) squash `ad18baa6`. Cloud `depl-a2b6748c-…` **deployment.succeeded**.
+- **Live** (school **33**): route/help/dynamic link present; 9 real class samples (no Baby Class static set); hard-fail source markers intact.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
+- **Edge cases flagged**: Full name-encoded sections without a shorter base (e.g. `P1 A`) appear as Class=`P1 A` with blank Stream — valid for class-only `saveStudents` matching.
+
+### 2026-09-10: Stage 3 CT stream surface (add/rename) — **MERGED+DEPLOYED+LIVE-VERIFIED**
+- **Work done**: Teacher `/teacher/class-streams` — list/add/rename owned sections via `ExamAuthorization::sectionIdsForClassTeacher()`. No delete/merge.
+- **PR / merge / deploy**: [#496](https://github.com/KlassApp-Foundation/KlassApp/pull/496) squash `f652cfe3`. Cloud `depl-a2b671e0-…` **deployment.succeeded**.
+- **Live**: routes/views/menu; owns assigned not peer; probe CT 136 / section 215 cleaned.
+- **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
 
 ### 2026-09-10: Stage 2 additive stream creation (name-encoded) — **MERGED+DEPLOYED+LIVE-VERIFIED**
-- **Work done**: Added `ClassStructureService` (`addStream` / `renameStream` / `resolveBaseSection`). Creates `{Base} {Label}` sections via `OnboardingEngine::composeClassAndStream`; keeps undivided base; copies subjects from base; never writes `standards_link.stream`. Admin UI: Add stream on `/admin/sections` → `ClassStreamController`.
-- **Files modified**: `app/Services/ClassStructureService.php`, `app/Http/Controllers/Admin/ClassStreamController.php`, `resources/views/admin/class-stream/create.blade.php`, `resources/views/admin/school/sections/list.blade.php`, `routes/admin.php`, `tests/Feature/ClassStructureServiceTest.php`, `knowledge.md`
-- **Key decisions**: Reuse saveStandards name-encoding (not CreateStreamTool’s `stream` column). Seeder unchanged. Rename helper included for Stage 3 reuse.
-- **Tests**: `ClassStructureServiceTest` — 6 passed.
+- **Work done**: `ClassStructureService::addStream` / admin Add stream UI; name-encoding; base kept; subjects copied; `standards_link.stream` unused.
 - **PR / merge / deploy**: [#495](https://github.com/KlassApp-Foundation/KlassApp/pull/495) squash `8813f513`. Cloud `depl-a2b66c54-…` **deployment.succeeded**.
-- **Live** (school **33**): `Primary One` + `Vz4281` → section 214 `Primary One Vz4281`; base 195 kept; `link.stream=null`; subjects 4=4; probe flagged `status=0`. Routes/views confirmed on prod.
+- **Live** (school **33**): Primary One + Vz4281 → section 214; base kept; stream col null; subjects 4=4.
 - **Status**: ✅ MERGED+DEPLOYED+LIVE-VERIFIED
-- **Edge cases flagged**: Adding stream from an existing stream section resolves to base name (`Primary One A` + B → `Primary One B`). Accidental local `migrate:fresh` during early verify wiped agent local DB — use Cloud Commands for evidence.
+- **Note**: Cloud Commands API is `POST /api/environments/{env}/commands` (flat `/api/commands` redirects).
 
 ### 2026-09-10: Student size onboarding step (wizard + Toshi) — **MERGED**
 - **Work done**: Restored approximate school size as an early onboarding step (`student_size`) after school name on both the manual wizard and Toshi. Canonical buckets match `auth/onboarding.blade.php` (`STUDENT_SIZE_OPTIONS`). Persists via `OnboardingEngine::saveStudentSize()` → `schools.student_size`. Finished create-mode gaps left incomplete mid-session: `handleStudentSize`, draft restore, create `commitAll` write, review summary, complete-mode commit persist, `OnboardingHelper` label.
@@ -9356,7 +10041,7 @@ Ran full suite on base commit (stashed changes) vs this branch:
 ### 2026-09-09: Strip height/weight from medical-history UI (#469)
 
 - **Work done**: UI-only removal matching Track A — `CreateMedicalHistory.vue`, `medicalHistory.vue` (Admin+Teacher `mode`), `MedicalHistoryRequest`, Admin+Teacher `StudentDetailsController` show/add medical history. No longer gate medical tab on `height && weight` (now medication/allergy content). DB `student_academics.height`/`weight` retained.
-- **Admission investigation**: `pages/admission/student-detail.blade.php` (+ related fieldset blades) **dead code** — not routed; live public admission is Vue via `pages/admission/admission.blade.php`. Flag only; cleanup deferred.
+- **Admission investigation**: `pages/admission/student-detail.blade.php` (+ related fieldset blades) were dead code at the time — not routed; live public admission is Vue via `pages/admission/admission.blade.php`. **✅ Cleaned in [#512](https://github.com/KlassApp-Foundation/KlassApp/pull/512)** (Track A leftovers + Community).
 - **Tests**: `MedicalHistoryHeightWeightStripTest` + `LegacyDemographicsValidationTest` — 25 passed.
 - **PR**: [#469](https://github.com/KlassApp-Foundation/KlassApp/pull/469) — merge `7e5d506f`.
 - **Deploy**: Cloud `depl-a2b375c2-f1df-4fa8-b585-e8c5de1be689` **deployment.succeeded** on `7e5d506f` (includes `npm run build`).
@@ -9434,3 +10119,123 @@ Ran full suite on base commit (stashed changes) vs this branch:
 - `.cursor/mcp.json` created (was not present globally before)
 - `~/.config/goose/config.yaml` updated in place
 - Both files verified: structure correct, git-safe, token is placeholder only
+
+### 2026-09-10: Security — remove embedded DO deploy key + hardcoded LLM API key
+
+- **Work done**: Confirmed embedded OpenSSH key in `scripts/provision-klassapp.sh` is **not** `~/.ssh/id_ed25519_do` (fingerprints differ: script=`klassapp-deploy` SHA256:X3nxxH0X… vs DO=`moemucu@gmail.com` SHA256:Q1eW4cVt…). Deleted the script (DO droplet provisioner for `46.101.111.131` — retired; dead code). Removed hardcoded `sk-2ccccb77…` defaults from `config/ai.php` + `config/toshi.php`; `ToshiLlm::model()`/`provider()` now throw `MissingToshiLlmApiKeyException` when `OPENAI_COMPATIBLE_API_KEY` / `TOSHI_LLM_API_KEY` unset.
+- **Key prefix to rotate/check**: `sk-2ccccb77` (was baked as default for openai-compatible / DeepSeek-style provider — verify in provider dashboard whether still live).
+- **Files modified**: deleted `scripts/provision-klassapp.sh`; `config/ai.php`, `config/toshi.php`, `app/AiAgents/ToshiLlm.php`, `app/Exceptions/MissingToshiLlmApiKeyException.php`, `tests/Feature/Toshi/ToshiLlmConfigConsistencyTest.php`, `.env.example`, `knowledge.md`.
+- **Status**: ✅ Security PR open — [#488](https://github.com/KlassApp-Foundation/KlassApp/pull/488) (`security/remove-embedded-secrets`).
+
+### 2026-09-12: Landing v3 how-it-works enrich mock
+- **Work done**: Standalone HTML mock enriching #how-it-works with CrewAI-style product UI previews (Parent WhatsApp, Teacher attendance dash, Admin isometric digest) above existing role steps; copy preserved; locked v3 untouched.
+- **Files modified**: open-design project `klassapp-landing-v3-how-it-works-enrich.html` (design artifact only)
+- **Key decisions**: Per-column UI chrome over grid; subtle 3D only on admin floating card stack; brand tokens only (no --d-*/.ds-*); omit hairline column bridge so it does not cut through previews.
+- **Status**: ✅ Done (section mock — not merged into locked v3)
+- **Edge cases flagged**: Re-add bridge below previews if merge needs the original connector motif.
+
+### 2026-09-13: Laravel Nightwatch on staging + production
+- **Work done**: Installed `laravel/nightwatch` ^1.30; published config; made `LOG_STACK` env-driven (preserve `daily` + add `nightwatch` on Cloud). Merged [#543](https://github.com/KlassApp-Foundation/KlassApp/pull/543) `7683a604`. Set Cloud env vars on staging + production (token not in repo). Added `php artisan nightwatch:agent` background processes. Deployed staging then production (`depl-a2bb46d3-…` succeeded). Verified `nightwatch:status` agent running on both; prod agent logs Listening `:2407` v1.30.0; HTTP 200 probes. `NIGHTWATCH_TOKEN` also stored in Doppler (`klassapp` / `dev`+`stg`+`prd`).
+- **Files modified**: `composer.json`/`lock`, `config/nightwatch.php`, `config/logging.php`, `.env.example`, `knowledge.md` (this stamp).
+- **Key decisions**: Stack channel `daily,nightwatch` (not replacing daily); do not enable Cloud “Connect Nightwatch” UI on top without checking for a double agent; ingest token ≠ Nightwatch dashboard API (403 on public REST).
+- **Status**: ✅ MERGED + DEPLOYED staging & prod. Dashboard chart confirm is UI-side.
+- **Edge cases flagged**: Staging has empty `__probe` env var leftover; rotate Nightwatch token if it was ever pasted into chat logs.
+
+### 2026-09-13: TOOLING.md + Instatus Future Initiative
+- **Work done**: Added root `TOOLING.md` (full tool stack reference). One-line pointer from `AGENTS.md`. Logged Instatus public status page as deferred Future Initiative (after UI design phase; free tier → paid custom domain later).
+- **Files modified**: `TOOLING.md` (new), `AGENTS.md`, `knowledge.md`.
+- **Status**: docs PR (this session) — no deploy.
+
+### 2026-09-13: TRACKED ISSUE — `<x-table>` `striped` / `hover` are dead props, but 8 production views pass them
+
+**Bug**: `resources/views/components/table.blade.php` declares `'striped' => false` and `'hover' => true` in `@props`, but **neither is referenced anywhere in the template**. The `$classes` string is built only from `ds-table-ledger`, `$densityClass` (`dt-comfortable`/`dt-compact`) and `$cardMobileClass` — no striping or hover class is ever emitted from these props. They are accepted and silently discarded.
+
+- **Impact**: 8 Blade views pass them expecting a visual effect they are not getting. Confirmed call sites include `<x-table :headers="$headers" hover>` (5 occurrences), `admin/fees/payments.blade.php` (`striped hover class="mt-4"`), `admin/fees/unmatched.blade.php` (`hover class="mt-4"`), and the students index (`hover`). Any row-hover that *is* visible today comes from `.ds-table-ledger` itself, not from the prop.
+- **Discovered**: during the Claude Design system sync, while porting the Blade component contracts to React — the prop list and the emitted class list did not reconcile.
+- **The CSS already exists and works.** `public/css/dashboard-refresh.css:467-470` defines `.ds-table-striped tbody tr:nth-child(even) { background: var(--d-surface) }` and `.ds-table-hover tbody tr:hover { background: rgba(34,197,94,0.04) }`. Both are standalone selectors (not scoped under `.ds-table`), so they apply to a `.ds-table-ledger` table too. **Nothing needs to be written — the component just never emits them.**
+- **Two divergent table paths in the codebase**: views that hand-roll `<table class="ds-table ds-table-striped ds-table-hover">` (library cards/books/lends, alumni marks/directory, superadmin school-list) **do** get striping and hover. Views that use `<x-table striped hover>` get neither. Same visual intent, opposite outcome, depending on which path the author picked.
+- **CORRECTION — the two props are not the same problem.** An initial read of this issue proposed wiring *both* props to `.ds-table-striped` / `.ds-table-hover`. That is wrong for `hover`: `dashboard-refresh.css:1971` already defines `.ds-table-ledger tbody tr:hover { background: rgba(34,197,94,0.04); box-shadow: inset 3px 0 0 var(--d-green) }` **unconditionally**, and it is *richer* than the generic `.ds-table-hover` (which only sets the background). So every `<x-table>` — and every raw `<table class="ds-table-ledger">` — already hovers. The `hover` prop had nothing to toggle, and making it conditional would have stripped hover from the 8 raw-markup ledger tables that depend on the unconditional rule.
+- **Fix shipped**: `striped` implemented (emits `.ds-table-striped`); `hover` **removed** from `@props` and from all 8 call sites, with a comment recording that hover is intrinsic to `.ds-table-ledger`. See the resolution entry below.
+- **Related**: `DESIGN_SYSTEM.md` documents this component as emitting `.ds-table` with `striped`/`hover` props — that doc predates the `.ds-table-ledger` rewrite and is stale on both counts.
+
+### 2026-09-13: TRACKED ISSUE — `.ds-btn-md` has no CSS rule, and it is the default button size
+
+**Bug**: `resources/views/components/button.blade.php` maps `size="md"` → `ds-btn-md` and **`md` is the default** (`'size' => 'md'` in `@props`). But `public/css/dashboard-refresh.css` defines **no `.ds-btn-md` rule at all**. `.ds-btn-sm` and `.ds-btn-lg` both exist.
+
+- **Impact**: every `<x-button>` written without an explicit `size` emits a class that matches nothing, so default buttons render at whatever the `.ds-btn` base rule gives them. There is no crash and no visual error — which is why it has survived; the default size is simply not a designed size. Any future edit to `.ds-btn` silently redefines what "default" means.
+- **Scope of the check**: 58 of the 59 `ds-*` classes referenced by the six DS Blade components verify against `dashboard-refresh.css`. `.ds-btn-md` is the only miss.
+- **Discovered**: during the Claude Design system sync, cross-checking every class the components emit against the real stylesheet.
+- **Same defect, second class: `.ds-btn-secondary` has no colour rule either.** It appears in `dashboard-refresh.css` only twice (lines 2261 and 2270), both touch-target rules setting `min-height: 44px` / `inline-flex` — there is **no** `background` / `color` / `border-color` for it, unlike `.ds-btn-primary` (line 334). Three production call sites apply it as raw markup in `resources/views/admin/marks/submission-detail.blade.php` (lines 14, 29, 98), including a ternary `$allLocked ? 'ds-btn-success' : 'ds-btn-secondary'` — so the "unlocked" state renders as a bare `.ds-btn` while the "locked" state is green. `<x-button>` has no `secondary` variant at all, so this class is only reachable by hand-writing markup.
+- **Root cause found in git history.** `8e9ba63b` originally added all three sizes together, including `.ds-btn-md { padding: 8px 18px; font-size: 0.85rem; }`. `8d6fb9eb` ("full Flare-inspired redesign") deleted the three-line block and re-added **only `sm` and `lg`** — dropping `md` by accident. It went unnoticed because those exact values are what the `.ds-btn` base rule carries, so nothing moved.
+- **Measured, not assumed**: a headless-Chromium render of `<x-button size="md">` and `<x-button>` (no size prop) both compute to `padding: 8px 18px; font-size: 13.6px` (= `0.85rem`) — identical before and after the fix. So this was **harmless leftover naming**, not a visual defect; default buttons were already rendering at the intended medium size.
+- **Fix shipped**: restored the original `.ds-btn-md` rule verbatim. It is a deliberate no-op that restates the base metrics, so the sm/md/lg scale is explicit and symmetrical and a future edit to `.ds-btn` can't silently redefine "default". See the resolution entry below.
+- **`.ds-btn-secondary` deferred — NOT fixed in that PR.** It is a real but separate defect needing a product decision (is `secondary` a variant or should those three call sites use `outline`?), and folding it in would have widened a two-line fix into a restyle. Still open.
+
+### 2026-09-13: RESOLVED — x-table `striped` implemented, dead `hover` prop removed, `.ds-btn-md` restored (#546)
+
+Fixes the two `TRACKED ISSUE` entries above.
+
+- **Work done**:
+  - `resources/views/components/table.blade.php` — `striped` now appends `ds-table-striped`; `hover` removed from `@props` entirely (it emitted nothing and could not be made conditional without breaking the 8 raw-markup ledger tables — see the CORRECTION bullet above). Added a header comment recording that row hover is intrinsic to `.ds-table-ledger`.
+  - Stripped the dead `hover` attribute from all 8 `<x-table>` call sites (fees/payments, fees/unmatched, member/index, subject/list, exams/index, discipline/list, school/sections/list, school/standards/list). `striped` on fees/payments preserved.
+  - `public/css/dashboard-refresh.css` — restored `.ds-btn-md { padding: 8px 18px; font-size: 0.85rem; }`, verbatim from `8e9ba63b`, with a comment naming `8d6fb9eb` as the commit that dropped it.
+- **Files modified**: `resources/views/components/table.blade.php`, `public/css/dashboard-refresh.css`, 8 admin Blade views, `tests/Feature/DesignSystem/TableAndButtonClassContractTest.php` (new), `knowledge.md`.
+- **Key decisions**: treat the two props separately rather than symmetrically — implement `striped`, delete `hover`. Restore `.ds-btn-md` as a deliberate no-op restating the base metrics rather than inventing new values, so the sm/md/lg scale is explicit and a future `.ds-btn` edit can't silently redefine "default". Leave `.ds-btn-secondary` open.
+- **Verification (measured, not assumed)**: headless-Chromium render of the real Blade component against the real stylesheet. Striping: every row `rgba(0,0,0,0)` before → even rows `rgb(250,250,245)` (= `#FAFAF5` = `var(--d-surface)`) after. Buttons: `size="md"` and no-size-prop both `padding: 8px 18px; font-size: 13.6px`, **byte-identical before and after**, confirming the restore changes nothing visually. New test 9 passing / 28 assertions, and **5 of the 9 fail when the fixes are reverted** (proving the test is not tautological). 19 passing across existing tests that render the 8 edited views.
+- **Status**: PR open — [#546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) (`fix/table-striped-prop-and-btn-md-size`).
+- **Edge cases flagged**: `.ds-btn-secondary` still unstyled (3 call sites). `resources/views/components/DESIGN_SYSTEM.md` remains stale on this component — it documents `.ds-table` + `striped`/`hover`, while the component emits `.ds-table-ledger` and no longer has a `hover` prop; its badge colour table is also wrong on every hex. `.dt-row-alt` (`#F8F5F0`) is defined in the stylesheet but emitted nowhere — dead CSS, left alone.
+- **Note for AGENTS.md**: line 71 claims `ds-*` classes live in `resources/assets/sass/`. That is stale — there are **zero** `.ds-` selectors in `resources/assets/sass/`; they are all in the hand-maintained, git-tracked `public/css/dashboard-refresh.css`, which layouts link directly via `asset()`. Not corrected in this PR to keep the diff scoped.
+
+### 2026-09-13: PR #546 DS striped + btn-md — MERGED + DEPLOYED + live-verified
+- **Work done**: Reviewed and merged [#546](https://github.com/KlassApp-Foundation/KlassApp/pull/546) (`14f91188`). Triggered production deploy `depl-a2bb7eb1-…` @ `14f91188` (succeeded). Playwright-verified striping on `/admin/fees/payments` and button metrics (md no-op).
+- **Files modified**: (shipped in #546) `components/table.blade.php`, `dashboard-refresh.css`, 8 admin table call sites, `TableAndButtonClassContractTest.php`, `knowledge.md`.
+- **Key decisions**: Hover stays intrinsic to `.ds-table-ledger`; do not gate behind a prop. Temporary synthetic fee payments (`PR546-VERIFY-*`) created then deleted for striping pixel proof on empty demo school.
+- **Status**: ✅ MERGED + DEPLOYED + live-verified.
+
+### 2026-09-13: KlassApp logo asset inventory (pre–design-system brand update)
+- **Work done**: Full filesystem + usage map of every KlassApp logo file under `public/images/`, `public/favicon/`, docs copies, and uploads. Confirmed by MD5/viewBox/pixel sampling (not filename alone).
+- **Canonical SVG variants**:
+  1. **Icon (green K)** — `klassapp-logo.svg` ≡ `klassapp-logo-primary.svg` ≡ `public/favicon/favicon.svg` (identical MD5 `e06b7124…`, viewBox 2000×2000). Despite the `-primary` name, this is **icon-only**, not a wordmark.
+  2. **Horizontal wordmark** — `klassapp-logo-dark.svg` (2048×754, navy/green/white). **Zero live Blade references**.
+  3. **Stacked** — `klassapp-logo-stacked.svg` (2048×1117). Used only as `og:image` / `twitter:image` on `landing.blade.php` + `landing2.blade.php`.
+- **No white/reversed SVG exists.** `klassapp-k-white.png` is a colourful mark on light bg (misnamed), unused.
+- **Live usage**: nav/auth/email/admin almost all use `klassapp-logo-primary.svg` (icon); favicon/Toshi/errors use `klassapp-logo.svg` (same file); one legacy path `klassapplogo-dark.png` in `landing-layout.blade.php`.
+- **Orphans / typos**: `klassapp-logo-*.png`, `klassaplogo-primary.png`, `klassapp-app-icon.png`, `klassapp-k-white.png`, `uploads/klassapp_assets.png` (= primary.png). Favicon PNG set under `public/favicon/` is mostly **legacy GeGo orange**, not KlassApp green.
+- **Status**: ✅ Inventory only (no code changes).
+- **Edge cases flagged**: `landing-layout` points at missing `public/favicon.svg` (root); naming `primary.svg` ≠ wordmark will confuse DS sync unless renamed or documented.
+
+### 2026-09-13: Favicon / PWA icon audit — GeGo leftovers replaced with KlassApp green
+- **Found wrong**:
+  1. **Every** `public/favicon/*.png` (+ `.ico`) was **GeGo orange** (~RGB 224,64,32), including the `favicon-32x32.png` wired as PNG fallback in `layouts/partials/favicon.blade.php` and all `android-icon-*` / `apple-icon-*` / `ms-icon-*` sizes.
+  2. `apple-touch-icon` pointed at **SVG** (`images/klassapp-logo.svg`) — poor iOS support; should be opaque 180×180 PNG.
+  3. `manifest.json` used **root-absolute** icon paths (`/android-icon-*.png`) that **404** (files live under `/favicon/`); name was generic `"App"`; no 512px icon for installability.
+  4. `browserconfig.xml` pointed at `/ms-icon-*.png` (also missing at site root).
+  5. `components/landing-layout.blade.php` linked `asset('favicon.svg')` / apple-touch to a **missing** `public/favicon.svg`.
+  6. Landing pages (`landing`, `landing2`, `landing-v2`) only had a bare SVG `<link rel="icon">` — no apple-touch / manifest / PNG fallbacks.
+  7. `layouts/video.blade.php` + `admission.blade.php` had **no** favicon links at all.
+  8. `images/favicon.png` was a 32×32 solid-green placeholder (settings default), not the real mark.
+- **Fixed**:
+  - Regenerated all favicon PNG/ICO sizes from `public/images/klassapp-logo.svg` (cairosvg + Pillow); added `android-icon-512x512.png`; synced `favicon/favicon.svg`, root `public/favicon.svg`, root `public/favicon.ico`, and `images/favicon.png`.
+  - Rewrote `favicon.blade.php`: SVG + 16/32 PNG + apple-touch **180 PNG** + manifest + browserconfig + `theme-color #199D52`.
+  - Rewrote `manifest.json` (name KlassApp, relative icon srcs, 192+512) and `browserconfig.xml` (`/favicon/ms-icon-*`).
+  - Landing layouts + landing-layout + video/admission now `@include` the partial; `students-standalone.html` head updated.
+  - New `tests/Feature/FaviconBrandAssetsTest.php` (green-vs-orange pixel assert + head/manifest contracts).
+- **Browser verify** (`:8012` Playwright): `/` and `/login` head links resolve **HTTP 200**; canvas sample of favicon-32 + apple-180 = **KLASSAPP_GREEN** (orange=0); all 25 favicon PNGs green; manifest icons 36→512 all 200; install **criteria** met (name/192/512/standalone). `beforeinstallprompt` did **not** fire on localhost (Chromium engagement/HTTPS heuristic — expected; not a missing asset).
+- **Evidence**: `e2e/screenshots/favicon-audit/regenerated-icons.png`
+- **Status**: ✅ MERGED + DEPLOYED + prod-verified — [#549](https://github.com/KlassApp-Foundation/KlassApp/pull/549) merge `d0c3600f`; deploy `depl-a2bc3a9d-…` **deployment.succeeded** @ 2026-09-13T09:55:28Z
+- **Files modified**: `public/favicon/*`, `public/favicon.svg`, `public/favicon.ico`, `public/images/favicon.png`, `resources/views/layouts/partials/favicon.blade.php`, landing/admission/video/landing-layout blades, `public/students-standalone.html`, `tests/Feature/FaviconBrandAssetsTest.php`, `knowledge.md`
+
+### 2026-09-13: Favicon brand fix — MERGED #549 + prod deploy + live Playwright on klassapp.xyz
+- **Work done**: Opened/merged [#549](https://github.com/KlassApp-Foundation/KlassApp/pull/549) (`fix/favicon-klassapp-brand-assets` → `main`). GitHub API `merged: true` (`merge_commit_sha` `d0c3600fb031ddcb86c5a3a40081666252c7d881`, `merged_at` 2026-09-13T09:52:58Z). Triggered Cloud deploy `depl-a2bc3a9d-e704-4e82-8668-2f40c1616567` @ that commit → **deployment.succeeded**.
+- **Prod Playwright** (`https://klassapp.xyz`): `ok=true`. Head on `/` and `/login` serves SVG + 16/32 PNG + apple-180 + manifest + browserconfig + `theme-color #199D52`. All probed assets HTTP **200** (byte sizes match regenerated files). Canvas pixel sampling: favicon-32 `green=70 orange=0`, apple-180 `green=1538 orange=0`, android-192 `green=1937 orange=0` → **KLASSAPP_GREEN**. Manifest name KlassApp, relative icon srcs, 192+512 all 200.
+- **Evidence**: `e2e/screenshots/favicon-audit/prod-verify.json` (+ prior `regenerated-icons.png`)
+- **Status**: ✅ MERGED + DEPLOYED + live-verified on production
+- **Edge cases flagged**: `beforeinstallprompt` still not asserted on prod (Chromium install UX heuristics); assets meet install criteria.
+
+### 2026-09-14: Claude Design system export → repo DESIGN_SYSTEM.md + brand assets — **MERGED #553**
+- **Work done**: Opened/merged [#553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) (`docs/design-system-claude-export` → `main`). GitHub API `merged: true` (`merge_commit_sha` `e4cab34510d99e2a2e9fc37383373047b459aee8`, `merged_at` 2026-09-14T07:52:23Z).
+- **Shipped**: Replaced stale `DESIGN_SYSTEM.md` with production-validated content (tokens, badge hexes, `.ds-table-ledger`, responsiveness, brand rules). Canonical brand SVGs + README/FAVICONS in `resources/assets/brand/`; token CSS in `resources/assets/design-system/tokens/`; mirrors in `public/images/`; `.gitignore` fixed (`public/images/*` + re-includes).
+- **Corrections vs export**: Table `striped` works (PR #546); `.ds-btn-md` has a CSS rule. Old doc wrong on Tailwind version, table class, badge colours.
+- **GitHub sanity** (post-merge on `main`): DESIGN_SYSTEM.md present (~14KB); 13 brand assets; key strings (`v4.3.3`, `ds-table-ledger`, `#f0eee6`, `resources/assets/brand`) confirmed via raw content fetch.
+- **Status**: ✅ MERGED — no deploy (docs + static SVGs only)
+- **Edge cases flagged**: Favicon PNGs may still be from pre-export icon bytes (#549); optional regen from new `klassapp-icon.svg`. Stacked lockup vertical gap still needs design sign-off.

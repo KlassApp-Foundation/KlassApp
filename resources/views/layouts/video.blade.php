@@ -2,6 +2,7 @@
 <!-- <!DOCTYPE html> -->
 <html lang="en">
 <head>
+    @include('layouts.partials.favicon')
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/1.1.3/tailwind.min.css" rel="stylesheet">
 </head>

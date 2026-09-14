@@ -9,6 +9,7 @@ use App\Http\Requests\BankDetailRequest;
 use App\Http\Controllers\Controller;
 use App\Models\TransactionAccount;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Exception;
 
@@ -21,7 +22,8 @@ class BankDetailController extends Controller
      */
     public function index($name)
     {
-        $user = User::where('name',$name)->first();
+        $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+        if ($user === null) { abort(404); }
         $account = TransactionAccount::where('user_id',$user->id)->first();
 
         //$documents = UserDocumentResource::collection($documents);
@@ -49,7 +51,8 @@ class BankDetailController extends Controller
     {
         /* try
         {*/
-            $user = User::where('name',$name)->first();
+            $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+        if ($user === null) { abort(404); }
     
             $account = new TransactionAccount;
 

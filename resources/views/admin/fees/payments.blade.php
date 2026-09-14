@@ -23,7 +23,7 @@
         <p class="text-gray-400 text-sm">No payments recorded yet. Use Toshi or the "Record Payment" button above.</p>
     </x-card>
 @else
-    <x-table :headers="['#', 'Student', 'Amount', 'Method', 'Reference', 'Fee Category', 'Paid On', 'Recorded By']" striped hover class="mt-4">
+    <x-table :headers="['#', 'Student', 'Amount', 'Method', 'Reference', 'Fee Category', 'Paid On', 'Recorded By']" striped class="mt-4">
         @foreach($payments as $payment)
         <tr>
             <td>{{ $loop->iteration }}</td>

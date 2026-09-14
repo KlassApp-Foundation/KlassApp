@@ -31,7 +31,8 @@ class UserController extends Controller
     {
       try
       {
-        $user = User::where('name',$name)->first();
+        $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
+        if ($user === null) { abort(404); }
 
         $this->reset_token($user);
 

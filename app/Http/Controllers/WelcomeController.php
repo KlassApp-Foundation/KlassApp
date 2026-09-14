@@ -5,23 +5,15 @@
  */
 namespace App\Http\Controllers;
 
-use App\Models\Plan;
-use Illuminate\Http\Request;
-
 class WelcomeController extends Controller
 {
     /**
-     * Display a the welcome page from the View File
+     * Display the public landing page.
      *
      * @return \Illuminate\Http\Response
      */
     public function __invoke()
-{
-    $plans = Plan::query()
-        ->where('is_active', true)
-        ->orderBy('amount')
-        ->get();
-// dd($plans);
-    return view('landing', compact('plans'));
-}
+    {
+        return view('landing-v2');
+    }
 }

@@ -388,6 +388,12 @@ a.ds-kpi-card:hover {
 }
 
 .ds-btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+/* .ds-btn-md is button.blade.php's default size. It restates the .ds-btn base
+   values rather than overriding them, so the scale is explicit and symmetrical
+   with sm/lg. Originally added in 8e9ba63b and dropped by accident in 8d6fb9eb
+   (the Flare redesign re-added only sm and lg), which left every default-size
+   button carrying a class with no rule. */
+.ds-btn-md { padding: 8px 18px; font-size: 0.85rem; }
 .ds-btn-lg { padding: 12px 24px; font-size: 0.95rem; }
 
 /* ── Badge System ── */

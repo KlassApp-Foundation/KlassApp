@@ -129,7 +129,8 @@ return [
         'openai-compatible' => [
             'driver' => 'openai-compatible',
             'url' => env('OPENAI_COMPATIBLE_URL', 'https://api.deepseek.com'),
-            'key' => env('OPENAI_COMPATIBLE_API_KEY', 'sk-2ccccb77847d446aa75105000aafab98'),
+            // No hardcoded default — missing key must fail loudly (see ToshiLlm::assertApiKeyConfigured).
+            'key' => env('OPENAI_COMPATIBLE_API_KEY', env('TOSHI_LLM_API_KEY')),
             'models' => [
                 'text' => [
                     'default' => env('OPENAI_COMPATIBLE_MODEL', 'deepseek-chat'),
