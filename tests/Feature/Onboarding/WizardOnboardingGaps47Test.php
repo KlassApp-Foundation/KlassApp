@@ -147,7 +147,7 @@ class WizardOnboardingGaps47Test extends TestCase
 
         $spreadsheet = app(StudentUploadTemplateService::class)->spreadsheet($this->school, $year);
         $headers = [];
-        for ($col = 1; $col <= 9; $col++) {
+        for ($col = 1; $col <= 10; $col++) {
             $headers[] = $spreadsheet->getActiveSheet()->getCell([$col, 1])->getValue();
         }
 
@@ -159,6 +159,7 @@ class WizardOnboardingGaps47Test extends TestCase
             'Parent Name',
             'Parent Phone',
             'School Student ID',
+            'LIN',
             'UNEB Reg No.',
             'Date of Birth',
         ], $headers);
@@ -167,8 +168,8 @@ class WizardOnboardingGaps47Test extends TestCase
     public function test_name_list_extractor_parses_gender_and_ids(): void
     {
         $tmp = tempnam(sys_get_temp_dir(), 'stu');
-        file_put_contents($tmp, "Name,Class,Gender,School Student ID,UNEB Reg No.,Date of Birth\n"
-            ."Amina,P.7,female,ADM-1,U1234/001,2012-01-15\n");
+        file_put_contents($tmp, "Name,Class,Gender,School Student ID,LIN,UNEB Reg No.,Date of Birth\n"
+            ."Amina,P.7,female,ADM-1,UG111111111111,U1234/001,2012-01-15\n");
 
         $rows = app(OnboardingNameListExtractor::class)->extractNamesFromFile($tmp, 'csv');
         @unlink($tmp);
@@ -176,11 +177,12 @@ class WizardOnboardingGaps47Test extends TestCase
         $this->assertCount(1, $rows);
         $this->assertSame('female', $rows[0]['gender']);
         $this->assertSame('ADM-1', $rows[0]['school_student_id']);
+        $this->assertSame('UG111111111111', $rows[0]['lin']);
         $this->assertSame('U1234/001', $rows[0]['board_registration_number']);
         $this->assertSame('2012-01-15', $rows[0]['date_of_birth']);
     }
 
-    public function test_student_draft_persists_gender_and_school_id(): void
+    public function test_student_draft_persists_gender_school_id_and_lin(): void
     {
         $this->actingAs($this->admin);
         $component = Livewire::test(ManualOnboardingWizard::class);
@@ -195,6 +197,7 @@ class WizardOnboardingGaps47Test extends TestCase
             ->set('studentClass', $section->name)
             ->set('studentGender', 'female')
             ->set('studentSchoolStudentId', 'ADM-GAPS-1')
+            ->set('studentLin', 'UG222222222222')
             ->call('addStudentDraft')
             ->call('next');
 
@@ -208,6 +211,7 @@ class WizardOnboardingGaps47Test extends TestCase
         $academic = StudentAcademic::where('user_id', $student->id)->first();
         $this->assertNotNull($academic);
         $this->assertSame('ADM-GAPS-1', $academic->school_student_id);
+        $this->assertSame('UG222222222222', $academic->lin);
     }
 
     public function test_teacher_assignment_creates_teacherlinks_for_class_subject_pairs(): void

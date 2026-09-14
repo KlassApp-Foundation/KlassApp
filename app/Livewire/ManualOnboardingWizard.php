@@ -158,6 +158,8 @@ class ManualOnboardingWizard extends Component
 
     public string $studentSchoolStudentId = '';
 
+    public string $studentLin = '';
+
     public string $studentBoardRegNumber = '';
 
     public string $studentGender = '';
@@ -413,6 +415,7 @@ class ManualOnboardingWizard extends Component
             'parent' => trim($this->studentParent),
             'parent_phone' => trim($this->studentParentPhone),
             'school_student_id' => trim($this->studentSchoolStudentId),
+            'lin' => trim($this->studentLin),
             'board_registration_number' => trim($this->studentBoardRegNumber),
             'gender' => $gender,
             'date_of_birth' => trim($this->studentDateOfBirth),
@@ -423,6 +426,7 @@ class ManualOnboardingWizard extends Component
         $this->studentParent = '';
         $this->studentParentPhone = '';
         $this->studentSchoolStudentId = '';
+        $this->studentLin = '';
         $this->studentBoardRegNumber = '';
         $this->studentGender = '';
         $this->studentDateOfBirth = '';
@@ -449,6 +453,7 @@ class ManualOnboardingWizard extends Component
                 'parent' => '',
                 'parent_phone' => '',
                 'school_student_id' => '',
+                'lin' => '',
                 'board_registration_number' => '',
                 'gender' => '',
                 'date_of_birth' => '',
@@ -566,6 +571,7 @@ class ManualOnboardingWizard extends Component
                     'parent' => (string) ($row['parent'] ?? ''),
                     'parent_phone' => (string) ($row['parent_phone'] ?? ''),
                     'school_student_id' => (string) ($row['school_student_id'] ?? ''),
+                    'lin' => (string) ($row['lin'] ?? ''),
                     'board_registration_number' => (string) ($row['board_registration_number'] ?? ''),
                     'gender' => (string) ($row['gender'] ?? ''),
                     'date_of_birth' => (string) ($row['date_of_birth'] ?? ''),
@@ -1973,6 +1979,7 @@ class ManualOnboardingWizard extends Component
                 'class' => trim((string) ($draft['class'] ?? '')),
                 'stream' => trim((string) ($draft['stream'] ?? '')),
                 'school_student_id' => trim((string) ($draft['school_student_id'] ?? '')),
+                'lin' => trim((string) ($draft['lin'] ?? '')),
                 'board_registration_number' => trim((string) ($draft['board_registration_number'] ?? '')),
                 'gender' => trim((string) ($draft['gender'] ?? '')),
                 'date_of_birth' => trim((string) ($draft['date_of_birth'] ?? '')),

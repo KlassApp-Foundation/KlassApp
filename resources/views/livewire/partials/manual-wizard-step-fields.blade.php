@@ -460,9 +460,15 @@
         </div>
         <div class="manual-wizard-bulk-pair">
             <div class="ds-form-group">
-                <label class="ds-form-label" for="wizard-student-school-id">School Student ID <span class="text-xs text-gray-400">(optional)</span></label>
+                <label class="ds-form-label" for="wizard-student-school-id">School Student ID <span class="text-xs text-gray-400">(optional, school-internal)</span></label>
                 <input id="wizard-student-school-id" type="text" class="ds-form-input w-full" wire:model="studentSchoolStudentId" placeholder="e.g. ADM-2025-001" data-testid="wizard-student-school-id" />
             </div>
+            <div class="ds-form-group">
+                <label class="ds-form-label" for="wizard-student-lin">LIN <span class="text-xs text-gray-400">(optional, national learner ID)</span></label>
+                <input id="wizard-student-lin" type="text" class="ds-form-input w-full" wire:model="studentLin" placeholder="e.g. 14-digit LIN" data-testid="wizard-student-lin" />
+            </div>
+        </div>
+        <div class="manual-wizard-bulk-pair">
             @php
                 $showStudentUneb = \App\Services\OnboardingEngine::isCandidateClass(trim((string) ($studentClass ?? '')));
             @endphp

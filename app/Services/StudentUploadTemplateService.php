@@ -108,6 +108,7 @@ class StudentUploadTemplateService
             'Parent Name',
             'Parent Phone',
             'School Student ID',
+            'LIN',
             'UNEB Reg No.',
             'Date of Birth',
         ];
@@ -155,10 +156,11 @@ class StudentUploadTemplateService
             $sheet->setCellValue([5, $excelRow], $parents[$i][0]);
             $sheet->setCellValue([6, $excelRow], $parents[$i][1]);
             $sheet->setCellValue([7, $excelRow], 'ADM-2025-'.str_pad((string) ($i + 1), 3, '0', STR_PAD_LEFT));
+            $sheet->setCellValue([8, $excelRow], ''); // LIN optional — leave blank in samples
             // UNEB reg only for candidate classes (P.7 / S.4 / S.6)
             $uneb = OnboardingEngine::isCandidateClass($className) ? 'U1234/'.(100 + $i) : '';
-            $sheet->setCellValue([8, $excelRow], $uneb);
-            $sheet->setCellValue([9, $excelRow], ''); // DOB optional — leave blank in samples
+            $sheet->setCellValue([9, $excelRow], $uneb);
+            $sheet->setCellValue([10, $excelRow], ''); // DOB optional — leave blank in samples
         }
 
         return $spreadsheet;

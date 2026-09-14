@@ -28,6 +28,7 @@ class OnboardingNameListExtractor
      *     classes: string,
      *     gender: string,
      *     school_student_id: string,
+     *     lin: string,
      *     board_registration_number: string,
      *     date_of_birth: string
      * }>
@@ -166,10 +167,14 @@ class OnboardingNameListExtractor
             'admission number',
             'admission no',
             'adm no',
-            // Legacy / EMIS column names — map into school_student_id (not a separate 'lin' key)
+        ]);
+        // Distinct from school_student_id — Uganda national Learner Identification Number.
+        $linIdx = $this->findHeaderIndex($lowerHeaders, [
             'lin',
-            'learner_id',
             'learner identification number',
+            'learner id',
+            'learner_id',
+            'emis lin',
             'emis_lin',
         ]);
         $boardRegIdx = $this->findHeaderIndex($lowerHeaders, [
@@ -255,6 +260,7 @@ class OnboardingNameListExtractor
                 'classes' => ($classesIdx !== null && ! empty($row[$classesIdx] ?? '')) ? $row[$classesIdx] : '',
                 'gender' => $gender,
                 'school_student_id' => ($schoolIdIdx !== null && ! empty($row[$schoolIdIdx] ?? '')) ? $row[$schoolIdIdx] : '',
+                'lin' => ($linIdx !== null && ! empty($row[$linIdx] ?? '')) ? $row[$linIdx] : '',
                 'board_registration_number' => ($boardRegIdx !== null && ! empty($row[$boardRegIdx] ?? '')) ? $row[$boardRegIdx] : '',
                 'date_of_birth' => ($dobIdx !== null && ! empty($row[$dobIdx] ?? '')) ? $row[$dobIdx] : '',
             ]);
@@ -512,6 +518,7 @@ class OnboardingNameListExtractor
      *     classes: string,
      *     gender: string,
      *     school_student_id: string,
+     *     lin: string,
      *     board_registration_number: string,
      *     date_of_birth: string
      * }
@@ -530,6 +537,7 @@ class OnboardingNameListExtractor
             'classes' => '',
             'gender' => '',
             'school_student_id' => '',
+            'lin' => '',
             'board_registration_number' => '',
             'date_of_birth' => '',
         ], $overrides);

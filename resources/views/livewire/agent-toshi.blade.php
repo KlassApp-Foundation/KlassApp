@@ -280,8 +280,10 @@
                         <option value="male">Male</option>
                         <option value="female">Female</option>
                     </select>
-                    <input type="text" wire:model="studentFormSchoolStudentId" placeholder="School Student ID (optional)"
+                    <input type="text" wire:model="studentFormSchoolStudentId" placeholder="School Student ID (optional, school-internal)"
                            class="toshi-input" data-testid="toshi-student-school-id">
+                    <input type="text" wire:model="studentFormLin" placeholder="LIN (optional, national learner ID)"
+                           class="toshi-input" data-testid="toshi-student-lin">
                     @if(\App\Services\OnboardingEngine::isCandidateClass(trim((string) $studentFormClass)))
                     <input type="text" wire:model="studentFormBoardRegNumber" placeholder="UNEB Reg No. (optional)"
                            class="toshi-input" data-testid="toshi-student-board-reg">
@@ -1182,8 +1184,10 @@
                                                             <option value="male">Male</option>
                                                             <option value="female">Female</option>
                                                         </select>
-                                                        <input type="text" wire:model="studentFormSchoolStudentId" placeholder="School Student ID (optional)"
+                                                        <input type="text" wire:model="studentFormSchoolStudentId" placeholder="School Student ID (optional, school-internal)"
                                                                class="toshi-input" data-testid="toshi-student-school-id">
+                                                        <input type="text" wire:model="studentFormLin" placeholder="LIN (optional, national learner ID)"
+                                                               class="toshi-input" data-testid="toshi-student-lin">
                                                         @if(\App\Services\OnboardingEngine::isCandidateClass(trim((string) $studentFormClass)))
                                                         <input type="text" wire:model="studentFormBoardRegNumber" placeholder="UNEB Reg No. (optional)"
                                                                class="toshi-input" data-testid="toshi-student-board-reg">
