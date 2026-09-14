@@ -609,7 +609,16 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 4 dashboard kit parity **COMPLETE on STAGING ONLY** (`origin/main` tip `f5b9eeee`)
+## Current Status: September 14, 2026 — Piece 3 PR1 wizard shell/nav on **STAGING ONLY** ([#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577))
+
+- **Merged**: [#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577) `4856d765` (`feat/wizard-shell-nav-kit`) — GitHub API `merged: true`.
+- **Shipped**: Manual onboarding wizard kit chrome — KlassApp brand strip (“Setting up without Toshi”), kit step head, Previous / 17 dots / **Continue →**, review **Confirm & finish** via `<x-button>` (attribute bag now forwards `wire:click`). Real `STUDENT_SIZE_OPTIONS` + `SchoolCategorySeeder::CATEGORIES` locked in contract tests (not kit placeholders). `data-toshi-manual-wizard` untouched.
+- **Staging deploy**: `depl-a2be6957-…` @ `4856d765` **succeeded**.
+- **Staging verify**: Playwright chrome + size/category constants + review Confirm label + screenshots 375/414/768/1280. Phase4 school has empty plan catalog (no Freemium cards) — Continue walk past plan_selection needs seeded plans; progress-dot jump still reaches review.
+- **Production**: **NOT deployed** — four-surface / Piece 3 hold until coordinated cutover.
+- **Next**: Piece 3 PR2 plan/category/size card grids → structure checkpoint cards → bulk lists → review polish.
+
+## Previous: September 14, 2026 — Piece 4 dashboard kit parity **COMPLETE on STAGING ONLY** (`origin/main` tip was `f5b9eeee` / stamp `692b4210`)
 
 - **Four surfaces + cleanup — all merged + staging-verified** (GitHub API `merged: true`):
   - Home shell [#566](https://github.com/KlassApp-Foundation/KlassApp/pull/566) `c39b45b3`
@@ -617,10 +626,9 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
   - Fees payments [#570](https://github.com/KlassApp-Foundation/KlassApp/pull/570) `3762a9c0` + follow-ups [#571](https://github.com/KlassApp-Foundation/KlassApp/pull/571) `1fbe4927` · [#572](https://github.com/KlassApp-Foundation/KlassApp/pull/572) `c08e8835` · [#574](https://github.com/KlassApp-Foundation/KlassApp/pull/574) `dc84ebe5` (Vue remount → document click delegation)
   - Exams/marks [#573](https://github.com/KlassApp-Foundation/KlassApp/pull/573) `6f6b62e9`
   - Residual KPI cleanup [#575](https://github.com/KlassApp-Foundation/KlassApp/pull/575) `f5b9eeee` (approvals + superadmin → `ds-kpi-*`; EOT panel → `dashboard-chart-card`)
-- **Latest staging deploy**: `depl-a2be523f-…` @ `f5b9eeee` **succeeded**.
-- **Staging verify**: fees Playwright PASS (KPI green + form toggle `hidden→false`); exams PASS 375/414/768/1280 + ledger `blur(12px)`; approvals spot-check KPI `rgb(34, 197, 94)`, no legacy `dashboard-kpi-card`.
-- **Production**: **NOT deployed** — hold until four-surface cutover is explicitly approved.
-- **Next**: production cutover approval (or leftover CSS `.dashboard-kpi-card` rules in `dashboard-refresh.css` / standalone HTML — blades clean).
+- **Latest staging deploy (Piece 4 tip)**: `depl-a2be523f-…` @ `f5b9eeee` **succeeded** (superseded by Piece 3 #577 on staging).
+- **Production**: **NOT deployed** — hold until coordinated cutover is explicitly approved.
+- **Next**: Piece 3 onboarding wizard visual redesign (PR1 shell/nav shipped — see Current Status).
 
 ## Previous: September 14, 2026 — Piece 4 students roster on **STAGING ONLY** ([#568](https://github.com/KlassApp-Foundation/KlassApp/pull/568))
 
@@ -1919,6 +1927,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Piece 3 PR1 wizard shell + nav kit parity — **MERGED + STAGING ONLY** ([#577](https://github.com/KlassApp-Foundation/KlassApp/pull/577))
+- **Work done**: Brand strip, kit step head, Continue → / Confirm & finish nav via `<x-button>` (attribute merge for `wire:click`), progress width for 17 dots, canvas page shell. Contract tests lock real size/category constants; hardened `e2e/wizard-shell-nav-verify.cjs`.
+- **Files modified**: `manual-onboarding-wizard.blade.php`, `wizard.blade.php`, `button.blade.php`, `dashboard-refresh.css`, `WizardShellNavKitContractTest.php`, `ManualUiWave3WizardTest.php` (Confirm label), `e2e/wizard-shell-nav-verify.cjs`
+- **Key decisions**: No Toshi CTA on manual path (Piece 2); production constants override kit placeholders; staging phase4 may lack Plan rows — verify review via progress-dot jump.
+- **Status**: ✅ MERGED `4856d765` · staging `depl-a2be6957-…` · Playwright chrome/constants/viewports PASS · **prod held**
+- **Edge cases flagged**: Pre-existing `ManualUiWave3WizardTest` WhatsApp→plan walk still fails on `main` (OTP next not advancing) — unrelated to PR1. Full create-mode Continue walk needs seeded `plans` on staging.
 
 ### 2026-09-14: Piece 4 fees + exams + KPI cleanup — **MERGED + STAGING ONLY** ([#570](https://github.com/KlassApp-Foundation/KlassApp/pull/570)–[#575](https://github.com/KlassApp-Foundation/KlassApp/pull/575))
 - **Work done**: Fees kit (KPI row, inline record form, save indicator, ledger) + Vue remount fix via `@push('scripts')` + document-level click delegation; exams/marks kit (page head, KPI fold, `.ds-grid-marks`, missing-subject reminder, unfiltered empty state); residual Blade `dashboard-kpi-card` → `ds-kpi-*` (approvals + superadmin) and EOT chart reclass.
