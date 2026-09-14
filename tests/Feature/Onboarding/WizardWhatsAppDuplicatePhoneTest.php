@@ -115,7 +115,7 @@ class WizardWhatsAppDuplicatePhoneTest extends TestCase
             ->call('next') // academic year seeds classes/subjects/grading
             ->call('next') // structure checkpoint (optional)
             ->call('next') // teachers skip
-            ->call('next') // students skip
+            ->call('skipOptionalStep') // students (explicit skip)
             ->call('next') // terms (defaults)
             ->call('next') // fees (defaults)
             ->assertSee('WhatsApp verification')

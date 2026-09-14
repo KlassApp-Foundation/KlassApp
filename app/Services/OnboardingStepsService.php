@@ -306,14 +306,15 @@ class OnboardingStepsService
      */
     public static function hasBlockingIncompleteSteps(School $school, ?int $userId = null): bool
     {
-        return self::nextBlockingIncompleteStep($school, $userId) !== null;
+        return self::blockingIncompleteSteps($school, $userId) !== [];
     }
 
     /**
-     * @return ?array{key: string, label: string, icon: string, is_complete: bool, route: ?string}
+     * @return list<array{key: string, label: string, icon: string, is_complete: bool, route: ?string}>
      */
-    public static function nextBlockingIncompleteStep(School $school, ?int $userId = null): ?array
+    public static function blockingIncompleteSteps(School $school, ?int $userId = null): array
     {
+        $blocking = [];
         foreach (self::steps($school, $userId) as $step) {
             if ($step['is_complete']) {
                 continue;
@@ -321,11 +322,18 @@ class OnboardingStepsService
             if (in_array($step['key'], self::OPTIONAL_STEPS, true)) {
                 continue;
             }
-
-            return $step;
+            $blocking[] = $step;
         }
 
-        return null;
+        return $blocking;
+    }
+
+    /**
+     * @return ?array{key: string, label: string, icon: string, is_complete: bool, route: ?string}
+     */
+    public static function nextBlockingIncompleteStep(School $school, ?int $userId = null): ?array
+    {
+        return self::blockingIncompleteSteps($school, $userId)[0] ?? null;
     }
 
     /**

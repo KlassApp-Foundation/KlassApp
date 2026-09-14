@@ -174,7 +174,7 @@ class AcademicYearCurrentResolutionTest extends TestCase
             ->set('teacherName', 'Ada')
             ->set('teacherEmail', 'ada@ayresolve.sch.ug')
             ->call('next')
-            ->call('next') // students skip
+            ->call('skipOptionalStep') // students (explicit skip)
             ->call('next') // terms
             ->call('next') // fees
             ->set('whatsappPhone', '+256700999111')

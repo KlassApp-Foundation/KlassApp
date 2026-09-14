@@ -166,6 +166,9 @@ class AgentToshi extends Component
     public $studentFormClass = '';
     public $studentFormStream = '';
     public $studentFormType = '';
+    public $studentFormGender = '';
+    public $studentFormSchoolStudentId = '';
+    public $studentFormBoardRegNumber = '';
     public $studentFormParent = '';
     public $studentFormParentPhone = '';
     public $showFeeForm = false;
@@ -1733,6 +1736,9 @@ class AgentToshi extends Component
         $this->studentFormClass = '';
         $this->studentFormStream = '';
         $this->studentFormType = '';
+        $this->studentFormGender = '';
+        $this->studentFormSchoolStudentId = '';
+        $this->studentFormBoardRegNumber = '';
         $this->studentFormParent = '';
         $this->studentFormParentPhone = '';
         $this->substep = 6;
@@ -1805,20 +1811,34 @@ class AgentToshi extends Component
             return;
         }
 
-        // Parse optional gender suffix from name — same pattern as actionAddStudent()
-        $gender = null;
+        // Prefer explicit form gender; fall back to optional "(male)/(female)" suffix on name.
+        $gender = strtolower(trim((string) $this->studentFormGender));
         $name = $raw;
-        if (preg_match('/^(.+?)\s*\((\s*male\s*|\s*female\s*)\)\s*$/i', $raw, $m)) {
-            $name = trim($m[1]);
-            $gender = strtolower(trim($m[2]));
+        if (! in_array($gender, ['male', 'female'], true)) {
+            $gender = null;
+            if (preg_match('/^(.+?)\s*\((\s*male\s*|\s*female\s*)\)\s*$/i', $raw, $m)) {
+                $name = trim($m[1]);
+                $gender = strtolower(trim($m[2]));
+            }
         }
 
-        $entry = ['name' => $name, 'gender' => $gender, 'class' => $class, 'stream' => $this->studentFormStream, 'type' => $this->studentFormType];
+        $entry = [
+            'name' => $name,
+            'gender' => $gender,
+            'class' => $class,
+            'stream' => $this->studentFormStream,
+            'type' => $this->studentFormType,
+            'school_student_id' => trim((string) $this->studentFormSchoolStudentId),
+            'board_registration_number' => trim((string) $this->studentFormBoardRegNumber),
+        ];
         if ($this->studentFormParent) $entry['parent'] = trim($this->studentFormParent);
         if ($this->studentFormParentPhone) $entry['parent_phone'] = trim($this->studentFormParentPhone);
 
         $this->actionData['students'][] = $entry;
         $this->studentFormName = '';
+        $this->studentFormGender = '';
+        $this->studentFormSchoolStudentId = '';
+        $this->studentFormBoardRegNumber = '';
         // Keep class + stream sticky for batch entry (wizard defaults stream when class has streams)
         $this->studentFormParent = '';
         $this->studentFormParentPhone = '';
@@ -2133,17 +2153,30 @@ class AgentToshi extends Component
                     }
                 } else {
                     $this->studentList = array_values(array_unique($plainNames));
-                    // Try to extract optional LIN (Learner Identification Number) from the file
-                    $linValues = $this->extractColumnFromFile($this->attachment->getRealPath(), $ext, ['lin', 'learner_id', 'learner_identification_number', 'emis_lin']);
-                    $this->actionData['students'] = array_map(fn($i, $r) => [
-                        'name' => $r['name'],
-                        'gender' => null,
-                        'class' => $r['class'] ?? '',
-                        'stream' => $r['stream'] ?? '',
-                        'parent' => $r['parent'] ?? '',
-                        'parent_phone' => $r['parent_phone'] ?? '',
-                        'lin' => $linValues[$i] ?? '',
-                    ], array_keys($nameRows), $nameRows);
+                    // Prefer school_student_id / gender / UNEB from the shared extractor row shape.
+                    // Legacy 'lin' / EMIS columns are folded into school_student_id (never a separate key).
+                    $this->actionData['students'] = array_map(function ($r) {
+                        $schoolStudentId = trim((string) ($r['school_student_id'] ?? ''));
+                        if ($schoolStudentId === '') {
+                            $schoolStudentId = trim((string) ($r['lin'] ?? $r['learner_id'] ?? ''));
+                        }
+                        $gender = strtolower(trim((string) ($r['gender'] ?? '')));
+                        if (! in_array($gender, ['male', 'female'], true)) {
+                            $gender = null;
+                        }
+
+                        return [
+                            'name' => $r['name'],
+                            'gender' => $gender,
+                            'class' => $r['class'] ?? '',
+                            'stream' => $r['stream'] ?? '',
+                            'parent' => $r['parent'] ?? '',
+                            'parent_phone' => $r['parent_phone'] ?? '',
+                            'school_student_id' => $schoolStudentId,
+                            'board_registration_number' => trim((string) ($r['board_registration_number'] ?? '')),
+                            'date_of_birth' => trim((string) ($r['date_of_birth'] ?? '')),
+                        ];
+                    }, $nameRows);
                     $this->showStudentForm = false;
                 }
                 $label = $stepName === 'teachers' ? 'teachers' : 'students';
@@ -3766,11 +3799,24 @@ class AgentToshi extends Component
             $this->selectPlan($plan->id);
             return;
         }
+        if (\App\Models\Plan::query()->where('is_active', 1)->doesntExist()) {
+            $this->botSay('No plans are available yet. Contact support.');
+
+            return;
+        }
         $this->botSay("Please select a plan using the buttons above (you can pick any tier).");
     }
 
     private function promptPlanSelection(): void
     {
+        $activePlans = \App\Models\Plan::query()->where('is_active', 1)->count();
+        if ($activePlans === 0) {
+            $this->suggestedPlanId = null;
+            $this->botSay('No plans are available yet. Contact support.');
+
+            return;
+        }
+
         $count = 0;
         if ($this->schoolId) {
             $count = \App\Services\OnboardingStepsService::countActiveStudents((int) $this->schoolId);
@@ -5941,6 +5987,53 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     //  Commit everything to the database
     // ════════════════════════════════════════════════
+    /**
+     * Normalize Toshi student drafts for OnboardingEngine::saveStudents().
+     * Folds legacy upload keys (`lin` / `learner_id`) into `school_student_id`
+     * and passes gender through (engine already persists userprofiles.gender).
+     *
+     * @param  list<array<string, mixed>|string>  $studentRecords
+     * @return list<array{name: string, class: string, stream: string, phone: string, school_student_id: string, board_registration_number: string, gender: string, date_of_birth: string}>
+     */
+    private function mapStudentRecordsForEngine(array $studentRecords): array
+    {
+        return array_map(function ($record) {
+            if (is_string($record)) {
+                return [
+                    'name' => trim($record),
+                    'class' => '',
+                    'stream' => '',
+                    'phone' => '',
+                    'school_student_id' => '',
+                    'board_registration_number' => '',
+                    'gender' => '',
+                    'date_of_birth' => '',
+                ];
+            }
+
+            $gender = strtolower(trim((string) ($record['gender'] ?? '')));
+            if (! in_array($gender, ['male', 'female'], true)) {
+                $gender = '';
+            }
+
+            $schoolStudentId = trim((string) ($record['school_student_id'] ?? ''));
+            if ($schoolStudentId === '') {
+                $schoolStudentId = trim((string) ($record['lin'] ?? $record['learner_id'] ?? ''));
+            }
+
+            return [
+                'name' => trim((string) ($record['name'] ?? '')),
+                'class' => trim((string) ($record['class'] ?? '')),
+                'stream' => trim((string) ($record['stream'] ?? '')),
+                'phone' => trim((string) ($record['phone'] ?? $record['parent_phone'] ?? '')),
+                'school_student_id' => $schoolStudentId,
+                'board_registration_number' => trim((string) ($record['board_registration_number'] ?? '')),
+                'gender' => $gender,
+                'date_of_birth' => trim((string) ($record['date_of_birth'] ?? $record['dob'] ?? '')),
+            ];
+        }, $studentRecords);
+    }
+
     private function commitAll()
     {
         DB::transaction(function () {
@@ -6092,24 +6185,11 @@ class AgentToshi extends Component
                 // Fixes: random password per student (not shared admin password),
                 // is_reset=1 on every account, Userprofile with alternate_no for phone,
                 // email dedup with fallback, proper StandardLink resolution.
-                // Note: gender/LIN fields are passed through in the draft but
-                // OnboardingEngine::saveStudents doesn't use them — they'll be
-                // added when gender/LIN support is added to the engine. The engine
-                // creates StudentAcademic with klassapp_student_id via nextForStudent.
+                // Gender + school_student_id + board_registration_number pass through to the engine.
                 $studentRecords = !empty($this->actionData['students'])
                     ? $this->actionData['students']
                     : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
-                $studentDrafts = array_map(function ($record) {
-                    $name = is_string($record) ? $record : ($record['name'] ?? '');
-                    return [
-                        'name'  => trim((string) $name),
-                        'class' => trim((string) (is_array($record) ? ($record['class'] ?? '') : '')),
-                        'stream' => trim((string) (is_array($record) ? ($record['stream'] ?? '') : '')),
-                        'phone' => trim((string) (is_array($record) ? ($record['phone'] ?? '') : '')),
-                        'school_student_id' => trim((string) (is_array($record) ? ($record['school_student_id'] ?? '') : '')),
-                        'board_registration_number' => trim((string) (is_array($record) ? ($record['board_registration_number'] ?? '') : '')),
-                    ];
-                }, $studentRecords);
+                $studentDrafts = $this->mapStudentRecordsForEngine($studentRecords);
                 app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
 
                 // ── Terms: delegate to OnboardingEngine (idempotent via firstOrCreate) ──
@@ -6245,21 +6325,12 @@ class AgentToshi extends Component
                 // ── Students: delegate to OnboardingEngine ──
                 // Fixes: random password per student, is_reset=1, Userprofile.alternate_no for phone,
                 // proper StandardLink resolution, klassapp_student_id via nextForStudent.
+                // Gender + school_student_id + board_registration_number pass through to the engine.
                 if (!empty($this->studentList) || !empty($this->actionData['students'])) {
                     $studentRecords = !empty($this->actionData['students'])
                         ? $this->actionData['students']
                         : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
-                    $studentDrafts = array_map(function ($record) {
-                        $name = is_string($record) ? $record : ($record['name'] ?? '');
-                        return [
-                            'name'  => trim((string) $name),
-                            'class' => trim((string) (is_array($record) ? ($record['class'] ?? '') : '')),
-                            'stream' => trim((string) (is_array($record) ? ($record['stream'] ?? '') : '')),
-                            'phone' => trim((string) (is_array($record) ? ($record['phone'] ?? '') : '')),
-                            'school_student_id' => trim((string) (is_array($record) ? ($record['school_student_id'] ?? '') : '')),
-                            'board_registration_number' => trim((string) (is_array($record) ? ($record['board_registration_number'] ?? '') : '')),
-                        ];
-                    }, $studentRecords);
+                    $studentDrafts = $this->mapStudentRecordsForEngine($studentRecords);
                     app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
                 }
 

@@ -275,6 +275,17 @@
                         <option value="boarding">Boarding</option>
                         <option value="day">Day Scholar</option>
                     </select>
+                    <select wire:model="studentFormGender" class="toshi-input" data-testid="toshi-student-gender">
+                        <option value="">Gender (optional)</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                    <input type="text" wire:model="studentFormSchoolStudentId" placeholder="School Student ID (optional)"
+                           class="toshi-input" data-testid="toshi-student-school-id">
+                    @if(\App\Services\OnboardingEngine::isCandidateClass(trim((string) $studentFormClass)))
+                    <input type="text" wire:model="studentFormBoardRegNumber" placeholder="UNEB Reg No. (optional)"
+                           class="toshi-input" data-testid="toshi-student-board-reg">
+                    @endif
                     <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
                            class="toshi-input">
                     <input type="text" wire:model="studentFormParentPhone" placeholder="Parent phone (optional)"
@@ -466,7 +477,7 @@
             ))
             <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;" data-testid="toshi-plan-cards">
                 @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
-                @foreach($plans as $plan)
+                @forelse($plans as $plan)
                 <button wire:click="selectPlan({{ $plan->id }})"
                         class="toshi-option-card"
                         data-testid="toshi-plan-{{ $plan->id }}"
@@ -485,7 +496,11 @@
                         </div>
                     </div>
                 </button>
-                @endforeach
+                @empty
+                <p class="text-sm" role="alert" data-testid="toshi-plan-empty" style="color:#b42318; padding: 8px 4px;">
+                    No plans are available yet. Contact support.
+                </p>
+                @endforelse
             </div>
             @endif
 
@@ -1162,6 +1177,17 @@
                                                             <option value="boarding">Boarding</option>
                                                             <option value="day">Day Scholar</option>
                                                         </select>
+                                                        <select wire:model="studentFormGender" class="toshi-input" data-testid="toshi-student-gender">
+                                                            <option value="">Gender (optional)</option>
+                                                            <option value="male">Male</option>
+                                                            <option value="female">Female</option>
+                                                        </select>
+                                                        <input type="text" wire:model="studentFormSchoolStudentId" placeholder="School Student ID (optional)"
+                                                               class="toshi-input" data-testid="toshi-student-school-id">
+                                                        @if(\App\Services\OnboardingEngine::isCandidateClass(trim((string) $studentFormClass)))
+                                                        <input type="text" wire:model="studentFormBoardRegNumber" placeholder="UNEB Reg No. (optional)"
+                                                               class="toshi-input" data-testid="toshi-student-board-reg">
+                                                        @endif
                                                         <input type="text" wire:model="studentFormParent" placeholder="Parent name (optional)"
                                                                class="toshi-input">
                                                         <input type="text" wire:model="studentFormParentPhone" placeholder="Parent phone (optional)"
@@ -1353,7 +1379,7 @@
                         ))
                         <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" data-testid="toshi-plan-cards">
                             @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
-                            @foreach($plans as $plan)
+                            @forelse($plans as $plan)
                             <button wire:click="selectPlan({{ $plan->id }})"
                                     class="toshi-option-card"
                                     data-testid="toshi-plan-{{ $plan->id }}"
@@ -1372,7 +1398,11 @@
                                     </div>
                                 </div>
                             </button>
-                            @endforeach
+                            @empty
+                            <p class="text-sm" role="alert" data-testid="toshi-plan-empty" style="color:#b42318; padding: 8px 4px;">
+                                No plans are available yet. Contact support.
+                            </p>
+                            @endforelse
                         </div>
                         @endif
 
