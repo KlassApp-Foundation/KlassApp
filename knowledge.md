@@ -618,16 +618,18 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 15, 2026 — **FOUR-SURFACE PRODUCTION CUTOVER LIVE** (Pieces 1–4) @ `2e5a382`
+## Current Status: September 15, 2026 — **FOUR-SURFACE PRODUCTION CUTOVER LIVE** (Pieces 1–4) — app `2e5a382` · stamp `557fb980`
 
 - **Milestone**: Coordinated production cutover of the complete four-surface design program — Piece 1 landing/auth/error `--d-*` · Piece 4 dashboard kit · Piece 3 wizard · Piece 2 Toshi panel — plus parity/bugfix stack (#601/#603/#605/#607).
-- **Main tip**: `2e5a382` ([#608](https://github.com/KlassApp-Foundation/KlassApp/pull/608) stamp of #607) — GitHub API confirmed every program PR `merged: true` with real SHAs (see Session Log cutover entry for full table).
+- **App on production**: `2e5a382` (`depl-a2bf3117-…`) — design program tip. **Knowledge stamp**: [#609](https://github.com/KlassApp-Foundation/KlassApp/pull/609) `557fb980` — GitHub API `merged: true`.
+- **PR sweep**: every program PR `merged: true` with real SHAs (see Session Log cutover entry for full table).
 - **Rollback point (pre-cutover prod)**: `depl-a2be2ae7-471c-4b96-8f55-f75e8a346e5d` @ **`ca0e114`** (#560 reduced-motion). Confirmed still readable as `deployment.succeeded`. **Note**: empty-body `POST …/deployments` always ships branch tip — `commit_hash` in body is ignored (verified during probe). Fast rollback = revert/reset `main` to `ca0e114` then redeploy, or Cloud dashboard redeploy of that prior deployment if exposed.
 - **Staging fresh deploy**: `depl-a2bf311a-…` @ `2e5a382` **succeeded**.
 - **Production deploy**: `depl-a2bf3117-…` @ `2e5a382` **succeeded** (`deployment.succeeded`) — live on `klassapp.xyz`.
 - **Staging holistic verify**: auth/errors/dashboard×4/wizard×4/plans/Toshi Admin+Teacher PASS; landing re-PASS after `networkidle`→`load` (hibernation flake); register→wizard plan cards PASS (`e2e/four-surface-*`).
 - **Production holistic verify**: landing/auth/404 PASS; synthetic register→wizard plan cards Freemium/Growth/Premium + Continue PASS; dashboard home shell PASS (incomplete-setup); Toshi docked/pill/mobile PASS for **Admin** (`cutover.prod.…@v.test`) **and Teacher** (`cutover.prod.teacher.…@v.test`); Pulse canary ledger blur + clay dock (no Pulse green on dock). Evidence: `e2e/screenshots/four-surface-cutover/`.
 - **Cleanup**: synthetic cutover users flagged `status=inactive` (not deleted) on prod + staging.
+- **Stamp**: [#609](https://github.com/KlassApp-Foundation/KlassApp/pull/609) — cutover runners + knowledge record.
 - **Process note**: A rollback-capability probe POSTed with `commit_hash` and accidentally started the production deploy early (Cloud ignored the hash and shipped tip). Staging verify still completed green before relying on prod; full prod verify followed on the live tip.
 
 ## Previous: September 14, 2026 — Plans seed + Toshi fee/term parity **MERGED + STAGING** ([#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607)) — superseded by cutover above
@@ -2087,7 +2089,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Deploys**: staging `depl-a2bf311a-…` · production `depl-a2bf3117-…` — both `deployment.succeeded` @ `2e5a382`.
 - **Files modified**: `knowledge.md`, `e2e/four-surface-cutover-verify.cjs`, `e2e/four-surface-register-wizard-walkthrough.cjs`, `e2e/landing-d-tokens-verify.cjs` (`load` not `networkidle`), evidence under `e2e/screenshots/four-surface-cutover/`.
 - **Key decisions**: Treat accidental early prod deploy (commit_hash probe ignored by Cloud) as the cutover ship after staging green; never delete synthetic cutover users — `status=inactive`.
-- **Status**: ✅ LIVE on `klassapp.xyz` · staging + prod holistic PASS · rollback point documented
+- **Status**: ✅ LIVE on `klassapp.xyz` · staging + prod holistic PASS · rollback point documented · stamp [#609](https://github.com/KlassApp-Foundation/KlassApp/pull/609) `557fb980` MERGED
 - **Edge cases flagged**: Staging `networkidle` hangs on landing (analytics/hibernation) — use `load`. Incomplete-setup schools lack KPI strip / empty student ledger thead — Pulse verified on pages that have ledger chrome. `school_category` Livewire jump returned false once in walkthrough (other steps OK).
 
 ### 2026-09-14: Plans seed + Toshi fee yearly / term current — **MERGED + STAGING** ([#607](https://github.com/KlassApp-Foundation/KlassApp/pull/607))
