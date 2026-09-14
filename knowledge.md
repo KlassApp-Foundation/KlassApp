@@ -618,7 +618,17 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Piece 3 PR4 bulk teachers/students on **STAGING ONLY** ([#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586))
+## Current Status: September 14, 2026 — Piece 3 PR5 review panels on **STAGING ONLY** ([#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589))
+
+- **Merged**: [#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589) `4c072788` (`feat/wizard-review-cards`) — GitHub API `merged: true`.
+- **Shipped**: Review & confirm → responsive **settings panels** (1/2/3-col) with Edit → `editSection` on every row; subjects review `unique()`s names (see finding below).
+- **Subjects finding**: Not junk DB duplicates. `SchoolCategorySeeder` creates one `subjects` row per class/section by design. Review previously `pluck('name')` without `unique()` → English/Math/Science/SST repeated once per class. **Display aggregation bug** — fixed; DB model unchanged.
+- **Staging deploy**: `depl-a2beabc4-…` @ `4c072788` **succeeded**.
+- **Staging verify**: Playwright 16 panels + Edit school_name/subjects + unique subjects + viewports 375/414/768/1280 PASS (`e2e/wizard-review-panels-verify.cjs`).
+- **Production**: **NOT deployed** — Piece 3 hold until coordinated cutover.
+- **Next**: Piece 3 wrap / residual polish if any.
+
+## Previous: September 14, 2026 — Piece 3 PR4 bulk teachers/students on **STAGING ONLY** ([#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586))
 
 - **Merged**: [#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586) `3cb0db6e` (`feat/wizard-bulk-teachers-students-kit`) — GitHub API `merged: true`.
 - **Shipped**: Teachers/students bulk kit chrome — paste + Add from paste, email/phone (teachers), Download template (static teacher xlsx + dynamic `admin.students.upload-template`), Upload file, Skip for now with `wire:confirm` when drafts exist; primary actions via `<x-button>`; standards step no longer misuses `.manual-wizard-bulk-*`.
@@ -1960,6 +1970,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Piece 3 PR5 review panels + subjects unique display — **MERGED + STAGING ONLY** ([#589](https://github.com/KlassApp-Foundation/KlassApp/pull/589))
+- **Work done**: Review step → panel grid with Edit per section; subjects review `unique()` + “unique across N class rows”; contract PHPUnit + Playwright e2e; knowledge stamp.
+- **Files modified**: `ManualOnboardingWizard.php` (`buildReviewSummary`), `manual-wizard-step-fields.blade.php`, `dashboard-refresh.css`, `WizardReviewPanelsKitContractTest.php`, `e2e/wizard-review-panels-verify.cjs`, `knowledge.md`
+- **Key decisions**: Subjects duplication is intentional per-class rows from `SchoolCategorySeeder` — fix display only, do not collapse DB rows.
+- **Status**: ✅ MERGED `4c072788` · staging `depl-a2beabc4-…` · Playwright PASS · **prod held**
+- **Edge cases flagged**: Demo staging may show few distinct subject names; uniqueness still asserted.
 
 ### 2026-09-14: Piece 3 PR4 bulk teachers/students kit — **MERGED + STAGING ONLY** ([#586](https://github.com/KlassApp-Foundation/KlassApp/pull/586))
 - **Work done**: Restyled teachers/students bulk steps to kit (toolbar, paste, pair grid, help/footnote, upload icon); kept paste/upload/email/phone/Download template/Skip+`wire:confirm`; `<x-button>` for primary actions (template stays `<a>`); contract + feature PHPUnit; Playwright e2e (paste, upload, both templates, skip+confirm, 375/414/768/1280). E2e upload waits hardened in follow-up on this stamp branch.
