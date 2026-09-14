@@ -122,6 +122,12 @@ class StudentUploadTemplateDynamicTest extends TestCase
         $this->assertSame('Name', $sheet[1]['A']);
         $this->assertSame('Class', $sheet[1]['B']);
         $this->assertSame('Stream', $sheet[1]['C']);
+        $this->assertSame('Gender', $sheet[1]['D']);
+        $this->assertSame('Parent Name', $sheet[1]['E']);
+        $this->assertSame('Parent Phone', $sheet[1]['F']);
+        $this->assertSame('School Student ID', $sheet[1]['G']);
+        $this->assertSame('UNEB Reg No.', $sheet[1]['H']);
+        $this->assertSame('Date of Birth', $sheet[1]['I']);
 
         $classes = array_column(array_slice($sheet, 1), 'B');
         $streams = array_column(array_slice($sheet, 1), 'C');

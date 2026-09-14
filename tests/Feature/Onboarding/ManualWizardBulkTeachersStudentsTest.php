@@ -161,7 +161,9 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
             ->call('applyTeacherPaste')
             ->call('next'); // persist teachers → students
 
-        $this->assertSame(2, Teacherlink::where('school_id', $this->school->id)->count());
+        $this->assertSame(2, User::where('school_id', $this->school->id)->where('usergroup_id', 5)->count());
+        // Teacherlinks only when classes/subjects are selected on the draft.
+        $this->assertSame(0, Teacherlink::where('school_id', $this->school->id)->count());
 
         $csv = "Name,Class,Stream,Parent Name,Parent Phone\nAmina Student,P.1,,Parent A,+256700333444\nBrian Student,P.1,,Parent B,+256700555666\n";
         $file = UploadedFile::fake()->createWithContent('students.csv', $csv);
@@ -201,7 +203,11 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
         $component
             ->assertSeeHtml('data-testid="wizard-students-bulk"')
             ->call('skipOptionalStep') // students → next blocking (terms)
-            ->call('next') // terms → fees
+            ->call('next') // terms (prefilled Term 1–3 + current) → fees
+            ->set('feeName', 'Tuition')
+            ->set('feeAmount', '100000')
+            ->set('feeScope', 'whole_school')
+            ->set('feeIsYearly', true)
             ->call('next') // fees → whatsapp
             ->set('whatsappPhone', '+256700777888')
             ->call('sendWhatsAppVerificationCode');

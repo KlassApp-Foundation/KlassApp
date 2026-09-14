@@ -25,7 +25,11 @@ class OnboardingNameListExtractor
      *     email: string,
      *     phone: string,
      *     subjects: string,
-     *     classes: string
+     *     classes: string,
+     *     gender: string,
+     *     school_student_id: string,
+     *     board_registration_number: string,
+     *     date_of_birth: string
      * }>
      */
     public function extractNamesFromFile(string $path, string $ext): array
@@ -154,6 +158,31 @@ class OnboardingNameListExtractor
         $phoneIdx = $this->findHeaderIndex($lowerHeaders, ['phone', 'mobile', 'tel', 'telephone']);
         $subjectsIdx = $this->findHeaderIndex($lowerHeaders, ['subjects', 'subject']);
         $classesIdx = $this->findHeaderIndex($lowerHeaders, ['classes']);
+        $genderIdx = $this->findHeaderIndex($lowerHeaders, ['gender', 'sex']);
+        $schoolIdIdx = $this->findHeaderIndex($lowerHeaders, [
+            'school student id',
+            'school_student_id',
+            'student id',
+            'admission number',
+            'admission no',
+            'adm no',
+        ]);
+        $boardRegIdx = $this->findHeaderIndex($lowerHeaders, [
+            'uneb reg no.',
+            'uneb reg no',
+            'uneb registration',
+            'board registration number',
+            'board_registration_number',
+            'uneb number',
+            'uneb no',
+        ]);
+        $dobIdx = $this->findHeaderIndex($lowerHeaders, [
+            'date of birth',
+            'date_of_birth',
+            'dob',
+            'birth date',
+            'birthday',
+        ]);
 
         $names = [];
         $prevColB = '';
@@ -199,6 +228,16 @@ class OnboardingNameListExtractor
                 $name .= ' '.$row[$lastIdx];
             }
 
+            $gender = ($genderIdx !== null && ! empty($row[$genderIdx] ?? '')) ? $row[$genderIdx] : '';
+            $genderLower = strtolower($gender);
+            if (in_array($genderLower, ['m', 'male', 'boy'], true)) {
+                $gender = 'male';
+            } elseif (in_array($genderLower, ['f', 'female', 'girl'], true)) {
+                $gender = 'female';
+            } else {
+                $gender = '';
+            }
+
             $names[] = $this->emptyRow([
                 'name' => $name,
                 'class' => ($classIdx !== null && ! empty($row[$classIdx] ?? '')) ? $row[$classIdx] : '',
@@ -209,6 +248,10 @@ class OnboardingNameListExtractor
                 'phone' => ($phoneIdx !== null && ! empty($row[$phoneIdx] ?? '')) ? $row[$phoneIdx] : '',
                 'subjects' => ($subjectsIdx !== null && ! empty($row[$subjectsIdx] ?? '')) ? $row[$subjectsIdx] : '',
                 'classes' => ($classesIdx !== null && ! empty($row[$classesIdx] ?? '')) ? $row[$classesIdx] : '',
+                'gender' => $gender,
+                'school_student_id' => ($schoolIdIdx !== null && ! empty($row[$schoolIdIdx] ?? '')) ? $row[$schoolIdIdx] : '',
+                'board_registration_number' => ($boardRegIdx !== null && ! empty($row[$boardRegIdx] ?? '')) ? $row[$boardRegIdx] : '',
+                'date_of_birth' => ($dobIdx !== null && ! empty($row[$dobIdx] ?? '')) ? $row[$dobIdx] : '',
             ]);
         }
 
@@ -452,7 +495,21 @@ class OnboardingNameListExtractor
 
     /**
      * @param  array<string, string>  $overrides
-     * @return array{name: string, class: string, stream: string, parent: string, parent_phone: string, email: string, phone: string, subjects: string, classes: string}
+     * @return array{
+     *     name: string,
+     *     class: string,
+     *     stream: string,
+     *     parent: string,
+     *     parent_phone: string,
+     *     email: string,
+     *     phone: string,
+     *     subjects: string,
+     *     classes: string,
+     *     gender: string,
+     *     school_student_id: string,
+     *     board_registration_number: string,
+     *     date_of_birth: string
+     * }
      */
     private function emptyRow(array $overrides = []): array
     {
@@ -466,6 +523,10 @@ class OnboardingNameListExtractor
             'phone' => '',
             'subjects' => '',
             'classes' => '',
+            'gender' => '',
+            'school_student_id' => '',
+            'board_registration_number' => '',
+            'date_of_birth' => '',
         ], $overrides);
     }
 }
