@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2945f78a7c33b17a0c7ebb75c032ee90",
+    "content-hash": "03140501338937db9a92876a63ba580d",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -4089,20 +4089,20 @@
         },
         {
             "name": "laravel/ai",
-            "version": "v0.10.2",
+            "version": "v0.11.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/ai.git",
-                "reference": "71b90141894a409de0929c4e1c522bbf7a706bfb"
+                "reference": "ee2c5162838d440c4e2e629ea93c8c87e838eaed"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/ai/zipball/71b90141894a409de0929c4e1c522bbf7a706bfb",
-                "reference": "71b90141894a409de0929c4e1c522bbf7a706bfb",
+                "url": "https://api.github.com/repos/laravel/ai/zipball/ee2c5162838d440c4e2e629ea93c8c87e838eaed",
+                "reference": "ee2c5162838d440c4e2e629ea93c8c87e838eaed",
                 "shasum": ""
             },
             "require": {
-                "aws/aws-sdk-php": "^3.339",
+                "aws/aws-sdk-php": "^3.369.1",
                 "illuminate/console": "^12.0|^13.0",
                 "illuminate/container": "^12.0|^13.0",
                 "illuminate/contracts": "^12.0|^13.0",
@@ -4161,7 +4161,7 @@
                 "issues": "https://github.com/laravel/ai/issues",
                 "source": "https://github.com/laravel/ai"
             },
-            "time": "2026-07-28T20:04:31+00:00"
+            "time": "2026-09-03T09:04:44+00:00"
         },
         {
             "name": "laravel/framework",
