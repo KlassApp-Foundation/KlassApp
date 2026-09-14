@@ -609,7 +609,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 14, 2026 — Claude Design export in-repo ([PR #553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) MERGED — docs + static assets, no deploy)
+## Current Status: September 14, 2026 — Pulse styling global consistency LIVE ([PR #555](https://github.com/KlassApp-Foundation/KlassApp/pull/555) MERGED+DEPLOYED)
+
+- **Merged**: [#555](https://github.com/KlassApp-Foundation/KlassApp/pull/555) merge `cb140999` (`fix/pulse-global-consistency`) — SchoolAdmin dashboard KPIs → `<x-ds-kpi-card>`; Pulse table rules extended to `.ds-table-ledger` in `packages/toshi-ui/resources/css/toshi-ui.css` + published `public/vendor/toshi-ui/toshi-ui.css`.
+- **Follow-up**: [#556](https://github.com/KlassApp-Foundation/KlassApp/pull/556) merge `1238e9ff` — view tests assert `ds-kpi-card` on complete-setup admin dashboard renders.
+- **Production deploy**: `depl-a2be1a50-f365-414f-87bb-58a46f8e486e` @ `cb140999` **succeeded** (manual Cloud `POST …/deployments`).
+- **Live verify** (`klassapp.xyz`): `vendor/toshi-ui/toshi-ui.css` contains `.ds-table-ledger thead` blur rule; `/admin/students` + `/admin/attendance` ledger `thead` computed `backdrop-filter: blur(12px)`; teacher dashboard KPI values `rgb(34, 197, 94)` (Pulse green reference). UI Review demo admin (`admin@uireview.klassapp.demo`) currently has `setupIncomplete=true` — KPI grid hidden behind product-demo placeholder on prod; admin `ds-kpi-card` markup verified via PHPUnit view tests + will show Pulse green when setup completes.
+- **Evidence**: `e2e/verify-pulse-global-fix.cjs`; screenshots `e2e/screenshots/pulse-global-fix/{before,after}-*.png` + metrics JSON.
+
+## Previous: September 14, 2026 — Claude Design export in-repo ([PR #553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) MERGED — docs + static assets, no deploy)
 
 - **Merged**: [#553](https://github.com/KlassApp-Foundation/KlassApp/pull/553) merge `e4cab345` (`docs/design-system-claude-export`) — GitHub API `merged: true`, `mergedAt` 2026-09-14T07:52:23Z.
 - **Shipped**: Production-validated `resources/views/components/DESIGN_SYSTEM.md`; canonical brand SVGs in `resources/assets/brand/`; token CSS mirrors in `resources/assets/design-system/tokens/`; `public/images/` mirrors + `.gitignore` fix for trackable brand SVGs.
@@ -1857,6 +1865,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Pulse styling global consistency — **MERGED+DEPLOYED** ([#555](https://github.com/KlassApp-Foundation/KlassApp/pull/555))
+- **Work done**: Migrated SchoolAdmin home dashboard (`resources/views/admin/dashboard/dashboard.blade.php`) from legacy `.dashboard-kpi-card` to `<x-ds-kpi-card>` (6 enrollment/WhatsApp KPIs + pending approvals). Extended Pulse data-table treatment in `toshi-ui.css` to `.ds-table-ledger` (sticky header `backdrop-filter: blur(12px)` — previously dead code targeting only `.ds-table` while `<x-table>` emits ledger class). Published CSS; added `e2e/verify-pulse-global-fix.cjs`.
+- **Files modified**: `resources/views/admin/dashboard/dashboard.blade.php`, `packages/toshi-ui/resources/css/toshi-ui.css`, `public/vendor/toshi-ui/toshi-ui.css`, `e2e/verify-pulse-global-fix.cjs`, `e2e/screenshots/pulse-global-fix/*`, test follow-up [#556](https://github.com/KlassApp-Foundation/KlassApp/pull/556)
+- **Key decisions**: Keep Pulse as global future-default (not scoped to Toshi panel). Minimal diff — no changes to `dashboard-refresh.css` legacy overrides; removing `.dashboard-kpi-value` usage avoids `!important` dark-ink override so Pulse green wins from `toshi-ui.css` load order.
+- **Status**: ✅ MERGED `cb140999` · production `depl-a2be1a50-…` succeeded · tests [#556](https://github.com/KlassApp-Foundation/KlassApp/pull/556) `1238e9ff`
+- **Verify**: Before prod capture — admin dashboard `hasLegacy: true`, CSS lacked ledger thead rule. After deploy — `/admin/students` ledger thead `blur(12px)`; teacher KPI `rgb(34, 197, 94)`; PHPUnit `post_onboarding_dashboard_shows_kpis` asserts `ds-kpi-card`. Demo admin school setup-incomplete on prod hides KPI grid (not a regression).
+- **Edge cases flagged**: `/admin/fees/payments` had no table DOM for UI Review demo at verify time (empty/redirect) — use `/admin/students` for ledger blur checks. Superadmin dashboard + approvals inbox still use legacy `.dashboard-kpi-card` (out of scope this PR).
 
 ### 2026-09-13: Landing official brand connector icons — **MERGED+DEPLOYED** ([#541](https://github.com/KlassApp-Foundation/KlassApp/pull/541))
 - **Work done**: Confirmed prior icons were Lucide-style stroke glyphs. Added `<x-brand.whatsapp|slack|google-drive>` with official color marks; wired into hero float, connectors panel/chips, Toshi hub. Neutral brand-well CSS (no recolor). Playwright screenshots confirm recognizable official marks.
