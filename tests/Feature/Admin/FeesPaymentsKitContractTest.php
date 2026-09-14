@@ -20,6 +20,7 @@ class FeesPaymentsKitContractTest extends TestCase
         $this->assertStringContainsString('ds-save-indicator--saving', $blade);
         $this->assertStringContainsString('dt-name-link', $blade);
         $this->assertStringContainsString('Record payment', $blade);
+        $this->assertStringContainsString("@push('scripts')", $blade);
     }
 
     public function test_reduced_motion_still_stops_save_indicator_d_pulse(): void
