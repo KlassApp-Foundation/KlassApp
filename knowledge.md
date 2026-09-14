@@ -1948,7 +1948,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Logged deferred community-docs workflow (GitHub Community Standards checklist → Claude Cowork drafts with Content Fundamentals voice; DeepWiki explicitly out of scope).
 - **Files modified**: `knowledge.md`
 - **Key decisions**: Defer until after UI phase; use Cowork + voice guide, not DeepWiki.
-- **Status**: 🚧 Docs PR opening
+- **Status**: ✅ MERGED via [#581](https://github.com/KlassApp-Foundation/KlassApp/pull/581) `a87b9575`
 - **Edge cases flagged**: None
 
 ### 2026-09-14: Piece 3 PR2 size/category/plan card grids — **MERGED + STAGING ONLY** ([#579](https://github.com/KlassApp-Foundation/KlassApp/pull/579))
