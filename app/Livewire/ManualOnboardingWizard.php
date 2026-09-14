@@ -786,6 +786,12 @@ class ManualOnboardingWizard extends Component
             $this->errorMessage = collect($e->errors())->flatten()->first() ?: 'Please check the form.';
 
             return;
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            report($e);
+            $this->errorMessage = app(\App\Services\OnboardingEngine::class)
+                ->describeUniqueConstraintViolation($e);
+
+            return;
         } catch (\Throwable $e) {
             report($e);
             // Never surface raw SQL / connection strings to the wizard UI.

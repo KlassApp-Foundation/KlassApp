@@ -618,7 +618,15 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 ---
 
-## Current Status: September 15, 2026 — **SiteAdmin OAuth + spreadsheet placement MERGED + STAGING** ([#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611))
+## Current Status: September 15, 2026 — **Onboarding unique-constraint audit + dedup fix** (PR pending ship)
+
+- **Problem**: Wizard Teachers/Students showed generic “Could not save this step” after successful xlsx parse — staging logs: `users_email_unique` (`dokello@school.ug`) and `student_academics_lin_unique` (`LIN2501001001`) from leftover school 14 “PR611 Upload School”. Engine checked email **per-school**; DB is **global**. LIN had **no** pre-check.
+- **Staging cleanup**: School 14 retired (`status=0`, users `inactive`, emails remapped to `retired.*@retired.test`, LINs nulled). Other tonight schools 10–13 had **no** `@school.ug` / `LIN250x` fixture collisions.
+- **Code**: `OnboardingEngine` global email + LIN validation (ValidationException); WhatsApp phone pre-check; `describeUniqueConstraintViolation()`; wizard + Toshi catch UniqueConstraint → specific messages. Shared engine path = both surfaces.
+- **Verify**: PHPUnit SaveTeachers/SaveStudents/SaveWhatsApp + `WizardUniqueConstraintSurfacingTest` + WhatsApp duplicate. **Production: NOT deployed.**
+- Full audit table: see Session Log + “Onboarding unique-constraint audit (2026-09-15)” below.
+
+## Previous: September 15, 2026 — **SiteAdmin OAuth + spreadsheet placement MERGED + STAGING** ([#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611))
 
 - **Merged**: [#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611) `f863de73` — GitHub API `merged: true`.
 - **Staging deploy**: `depl-a2bf5410-…` @ `f863de73` **succeeded** (`deployment.succeeded`). **Production: NOT deployed.**
@@ -631,9 +639,36 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
   - Created synthetic SiteAdmin `siteadmin.pr611@klassapp.xyz` (password `demo123`, `google_id` set) — Playwright login lands on `/superadmin/dashboard`; `/admin/dashboard` bounces back; no school student sidebar links. Evidence: `e2e/screenshots/pr611-siteadmin/`.
   - Google entry: login `data-testid=login-google` → `/auth/google` → 302 to `accounts.google.com` with staging callback URI (interactive Google account click-through not automated; callback uses same helper as password path).
   - Real fixtures on school 14: **34/34** students placed (incl. `Primary One A` auto-stream); **16** teachers / **61** teacherlinks; David Okello → Literacy on Baby Class **yes**.
-- **Edge**: Pre-existing schools without nursery subjects still get subjects created on first teacher assign. Auto-stream requires base class.
+- **Edge**: Pre-existing schools without nursery subjects still get subjects created on first teacher assign. Auto-stream requires base class. **School 14 later retired** during unique-constraint cleanup (emails/LINs held global unique slots).
+
+## Onboarding unique-constraint audit (2026-09-15)
+
+Complete unique-index inventory vs onboarding code (wizard + Toshi → `OnboardingEngine` / signup). Re-audit only if schema uniques change.
+
+| Table | Unique constraint | Scope | App behavior (before → after) | Verdict |
+|---|---|---|---|---|
+| `users` | `users_email_unique` (email) | **Global** | Per-school check + silent remap → **global assert + ValidationException** (provided emails); generated placeholders loop until globally unique | **GAP FIXED** — keep global (login identity) |
+| `users` | `users_google_id_unique` | Global | Onboarding teacher/student paths do not set `google_id` | OK (no gap) |
+| `users` | `users_school_registration_unique` (school_id, registration_number) | Per-school | `StudentIdGeneratorService` → `KLS{school}{seq}` | OK |
+| `student_academics` | `student_academics_lin_unique` (lin) | **Global** | Insert with no pre-check → **global assert + ValidationException** | **GAP FIXED** — keep global (UNEB national LIN) |
+| `student_academics` | `student_academics_klassapp_student_id_unique` | Global | Generator embeds school_id; race-safe sequence table | OK |
+| `student_academics` | `(school_id, std_school_pay_number)` | Per-school | Onboarding saveStudents does not set pay number | OK |
+| `schools` | name, email, phone, school_pay_code, ministry_code | Global each | Signup/`uniqueSchoolName`; phone NULL not `''`; Toshi preflight name/admin email | OK (no teacher/student gap) |
+| `sections` / `standards` | `(school_id, name)` | Per-school | `firstOrCreate` keys match | OK |
+| `standards_link` | `(school_id, section_id, academic_year_id, stream)` | Per-school | `firstOrCreate` / ensure helpers | OK |
+| `subjects` | `(school_id, section_id, name)` | Per-school | `firstOrCreate` | OK |
+| `academic_terms` | `(school_id, name)` | Per-school | `firstOrCreate` in `saveTerms` | OK |
+| `fees_categories` | `(school_id, standard_id, section_id, name)` | Per-school | `firstOrCreate` | OK |
+| `current_plans` | `(school_id, plan_id)` | Per-school | `updateOrCreate` | OK |
+| `whatsapp_users` | `whatsapp_users_phone_unique` (phone) | **Global** | Catch → skipped → **pre-check + ValidationException** (specific message) | **HARDENED** (was partially OK) |
+| `class_teacher_links` | (none beyond PK) | — | `firstOrCreate` | OK |
+| `userprofiles` / `student_parent_links` / `parent_profiles` | (none beyond PK) | — | — | OK |
+| `users.mobile_no` | **not unique** | — | Parent-phone collision was not today’s bug | N/A |
+
+**Product decisions**: Email and LIN stay **globally** unique; code must match DB (fail with helpful validation), not silently invent conflicting identities. Soft-deleted users still occupy `users.email` unique — checks use `withTrashed()`. Retiring test schools must remap emails / null LINs or they keep blocking uploads.
 
 ## Previous: September 15, 2026 — **FOUR-SURFACE PRODUCTION CUTOVER LIVE** (Pieces 1–4) — app `2e5a382` · stamp `557fb980`
+
 
 - **Milestone**: Coordinated production cutover of the complete four-surface design program — Piece 1 landing/auth/error `--d-*` · Piece 4 dashboard kit · Piece 3 wizard · Piece 2 Toshi panel — plus parity/bugfix stack (#601/#603/#605/#607).
 - **App on production**: `2e5a382` (`depl-a2bf3117-…`) — design program tip. **Knowledge stamp**: [#609](https://github.com/KlassApp-Foundation/KlassApp/pull/609) `557fb980` — GitHub API `merged: true`.
@@ -2091,6 +2126,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-15: Onboarding unique-constraint audit + global email/LIN dedup — **shipping**
+- **Work done**: Full unique-index audit (users / student_academics / schools / structure / WhatsApp / etc.); retired staging school 14 (freed emails+LINs); fixed engine gaps; surfaced specific ValidationException / UniqueConstraint messages in wizard `next()` and Toshi `commit()`; PHPUnit + Livewire collision tests.
+- **Files**: `OnboardingEngine.php`, `ManualOnboardingWizard.php`, `AgentToshi.php`, SaveTeachers/SaveStudents/SaveWhatsApp tests, `WizardUniqueConstraintSurfacingTest.php`, `WizardWhatsAppDuplicatePhoneTest.php`, `e2e/wizard-unique-constraint-collisions.cjs`, `knowledge.md`.
+- **Key decisions**: Keep email + LIN **global**; align code (don’t catch-and-hide); remap unique fields when retiring test schools (inactive alone still holds unique index).
+- **Status**: 🚧 PR / merge / staging deploy in progress — production **not** in scope.
+- **Edge**: Wizard student drafts do not pass `email` to engine (LIN is the wizard collision surface); Toshi/engine still enforce global email. Soft-deleted users occupy email unique.
 
 ### 2026-09-15: SiteAdmin Google redirect + real xlsx student/teacher placement — **MERGED + STAGING** ([#611](https://github.com/KlassApp-Foundation/KlassApp/pull/611))
 - **Findings (before fix)**: SiteAdmin school sidebar = real Google OAuth gap; student placement = setup-order (missing streams); Literacy/Baby Class = empty nursery subject seed.

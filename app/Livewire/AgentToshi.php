@@ -5886,11 +5886,17 @@ class AgentToshi extends Component
             // After completing onboarding: school admin goes to assistant mode for Q&A,
             // super admin stays in create mode to onboard another school.
             $this->mode = $this->mode === 'complete' ? 'assistant' : 'create';
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $msg = collect($e->errors())->flatten()->first() ?: 'Please check the form and try again.';
+            $this->botSay('⚠️ '.$msg);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            \Log::error('Onboarding unique constraint: '.$e->getMessage());
+            $this->botSay('⚠️ '.app(\App\Services\OnboardingEngine::class)->describeUniqueConstraintViolation($e));
         } catch (\Illuminate\Database\QueryException $e) {
             \Log::error('Onboarding DB error: ' . $e->getMessage());
             $code = $e->getCode();
             if ($code == 23000) {
-                $this->botSay("This school or email already exists in the system. Please check for duplicates and try again.");
+                $this->botSay('⚠️ A duplicate value conflicted with an existing record (often email or LIN). Fix the duplicate and try again.');
             } elseif ($code == 2002 || $code == 1045) {
                 $this->botSay("Unable to connect to the database. Please try again in a moment.");
             } else {
