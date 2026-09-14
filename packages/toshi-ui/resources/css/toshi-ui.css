@@ -175,6 +175,239 @@
     }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   PIECE 2 — Toshi panel chrome (header / composer / confirm chips)
+   Clay kit tokens: clay #c96442 · warm #f5f4ed · border #e8e6dc
+   Safe to edit in Piece 2 PRs. Do NOT move Pulse rules into this block.
+   ══════════════════════════════════════════════════════════════ */
+
+[data-toshi-root] {
+    --toshi-clay: #c96442;
+    --toshi-warm: #f5f4ed;
+    --toshi-border-kit: #e8e6dc;
+    --toshi-ink: #141413;
+    --toshi-muted: #5e5d59;
+}
+
+[data-toshi-root] .toshi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    min-height: 56px;
+    background: var(--toshi-warm);
+    border-bottom: 1px solid var(--toshi-border-kit);
+    flex-shrink: 0;
+}
+
+[data-toshi-root] .toshi-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+[data-toshi-root] .toshi-header-logo img {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+}
+
+[data-toshi-root] .toshi-header-logo span {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--toshi-clay);
+    letter-spacing: -0.02em;
+}
+
+[data-toshi-root] .toshi-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+[data-toshi-root] .toshi-header-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--toshi-muted);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+[data-toshi-root] .toshi-header-btn:hover {
+    background: rgba(201, 100, 66, 0.1);
+    color: var(--toshi-clay);
+}
+
+[data-toshi-root] .toshi-header-btn[title="Restart onboarding"] {
+    width: auto;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--toshi-clay);
+}
+
+/* Confirm chips — primary interaction when awaitingConfirm */
+[data-toshi-root] .toshi-confirm-chips {
+    flex-shrink: 0;
+    padding: 10px 16px 12px;
+    background: #FFFFFF;
+    border-top: 1px solid var(--toshi-border-kit);
+}
+
+[data-toshi-root] .toshi-confirm-chips-hint {
+    margin: 0 0 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--toshi-muted);
+    line-height: 1.35;
+}
+
+[data-toshi-root] .toshi-confirm-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+[data-toshi-root] .toshi-chip-action {
+    flex: 1 1 120px;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--toshi-border-kit);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+[data-toshi-root] .toshi-chip-action:active {
+    transform: scale(0.98);
+}
+
+[data-toshi-root] .toshi-chip-action--yes {
+    background: var(--toshi-clay);
+    border-color: var(--toshi-clay);
+    color: #FFFFFF;
+}
+
+[data-toshi-root] .toshi-chip-action--yes:hover {
+    background: #b55738;
+    border-color: #b55738;
+}
+
+[data-toshi-root] .toshi-chip-action--no {
+    background: var(--toshi-warm);
+    color: var(--toshi-ink);
+}
+
+[data-toshi-root] .toshi-chip-action--no:hover {
+    background: #e8e6dc;
+}
+
+[data-toshi-root] .toshi-chip-action--secondary {
+    flex: 1 1 100%;
+    background: #FFFFFF;
+    color: var(--toshi-clay);
+    border-color: rgba(201, 100, 66, 0.35);
+}
+
+[data-toshi-root] .toshi-chip-action--secondary:hover {
+    background: rgba(201, 100, 66, 0.08);
+}
+
+[data-toshi-root] .toshi-confirm-chips[data-toshi-confirm-variant="modal"] {
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+/* Composer — kit bar; deferred when chips are the primary action */
+[data-toshi-root] .toshi-composer {
+    flex-shrink: 0;
+    padding: 0 16px 14px;
+    background: #FFFFFF;
+}
+
+[data-toshi-root] .toshi-composer-inner {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    background: var(--toshi-warm);
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 16px;
+    padding: 6px 6px 6px 8px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+[data-toshi-root] .toshi-composer-inner:focus-within {
+    border-color: rgba(201, 100, 66, 0.45);
+    box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.12);
+}
+
+[data-toshi-root] .toshi-composer-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--toshi-ink);
+    background: transparent;
+    resize: none;
+    padding: 10px 4px;
+    line-height: 1.5;
+    min-height: 24px;
+    max-height: 160px;
+}
+
+[data-toshi-root] .toshi-composer-input::placeholder {
+    color: #87867f;
+}
+
+[data-toshi-root] .toshi-composer--awaiting-confirm .toshi-composer-inner {
+    opacity: 0.55;
+}
+
+[data-toshi-root] .toshi-composer--awaiting-confirm .toshi-composer-input {
+    pointer-events: none;
+}
+
+[data-toshi-root] .toshi-composer--awaiting-confirm button[type="submit"] {
+    pointer-events: none;
+    opacity: 0.4;
+}
+
+[data-toshi-root] .toshi-composer--awaiting-confirm .toshi-attach-btn {
+    pointer-events: none;
+}
+
+/* Modal composer shares the same kit bar */
+[data-toshi-root] .toshi-composer-box .toshi-composer-inner {
+    background: var(--toshi-warm);
+    border: 1px solid var(--toshi-border-kit);
+    border-radius: 16px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FROZEN — Pulse design system (Piece 2 HARD BOUNDARY)
+   Do NOT edit these rules in Piece 2 / Toshi panel PRs.
+   Canary (must remain in published public/vendor/toshi-ui/toshi-ui.css):
+     .ds-table-ledger thead { backdrop-filter: blur(12px); }
+   Includes: .ds-kpi-card*, .ds-table*, .ds-table-ledger*, sidebar green pill.
+   Checklist on every toshi-ui.css PR: confirm this section's Pulse canary
+   still present after publish; diff must not alter Pulse selectors/values.
+   ══════════════════════════════════════════════════════════════ */
+
 /* ── KPI Cards: Pulse treatment ── */
 .ds-kpi-card {
     background: #FFFFFF;
