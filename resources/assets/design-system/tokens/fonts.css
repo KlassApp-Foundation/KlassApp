@@ -1,0 +1,4 @@
+/* KlassApp webfonts. Both families are served from Google Fonts by the app's own
+   stylesheet — there are no self-hosted binaries in the source bundle, so the
+   @font-face rules live at Google's end and this import is the declaration. */
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap");

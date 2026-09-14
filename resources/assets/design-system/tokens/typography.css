@@ -1,0 +1,30 @@
+/* KlassApp typography tokens. Families are upstream; the scale tokens below are
+   an intentional addition — the sizes are lifted verbatim from the app CSS,
+   which repeats the rem literals rather than tokenising them. */
+:root {
+    --d-font-display: "Sora", system-ui, sans-serif;   /* headings, KPI values, table headers */
+    --d-font-body: "DM Sans", system-ui, sans-serif;   /* everything else */
+
+    /* Weights in use */
+    --d-weight-regular: 400;
+    --d-weight-medium: 500;
+    --d-weight-semibold: 600;
+    --d-weight-bold: 700;
+
+    /* Size scale (rem literals as they appear in the app CSS) */
+    --d-text-dashboard-title: 1.8rem;  /* dashboard h1, Sora 700, -0.02em */
+    --d-text-page-title: 1.4rem;       /* .ds-page-head-title, Sora 700, -0.02em */
+    --d-text-kpi-value: 1.6rem;        /* .ds-kpi-value, Sora 700 */
+    --d-text-section: 1.1rem;          /* .ds-section-title, Sora 600 */
+    --d-text-card-title: 1rem;         /* .ds-card-title, Sora 600 */
+    --d-text-subtitle: 0.9rem;         /* .dashboard-subtitle */
+    --d-text-body: 0.85rem;            /* table cells, buttons, inputs */
+    --d-text-small: 0.8rem;            /* pagination, save indicator */
+    --d-text-label: 0.78rem;           /* .ds-label, .ds-kpi-label, help text */
+    --d-text-micro: 0.72rem;           /* badges, ledger th, live badge */
+
+    /* Tracking */
+    --d-tracking-tight: -0.02em;       /* Sora display headings */
+    --d-tracking-caps: 0.04em;         /* uppercase table headers */
+    --d-tracking-caps-wide: 0.08em;    /* the LIVE badge */
+}
