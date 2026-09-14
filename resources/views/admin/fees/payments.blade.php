@@ -139,37 +139,42 @@
 @push('scripts')
 <script>
 (function () {
-    var formWrap = document.getElementById('fees-record-form');
-    var toggle = document.getElementById('fees-record-toggle');
-    var cancel = document.getElementById('fees-record-cancel');
-    var inlineForm = document.getElementById('fees-inline-record-form');
-    var indicator = document.getElementById('fees-save-indicator');
+    function formWrap() { return document.getElementById('fees-record-form'); }
+    function toggleBtn() { return document.getElementById('fees-record-toggle'); }
 
     function setOpen(open) {
-        if (!formWrap || !toggle) return;
-        formWrap.hidden = !open;
+        var form = formWrap();
+        var toggle = toggleBtn();
+        if (!form || !toggle) return;
+        form.hidden = !open;
         toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
-    if (toggle) {
-        toggle.addEventListener('click', function () {
-            setOpen(!!formWrap.hidden);
-        });
-    }
-    if (cancel) {
-        cancel.addEventListener('click', function () { setOpen(false); });
-    }
-    if (inlineForm) {
-        inlineForm.addEventListener('submit', function () {
-            var btn = document.getElementById('fees-save-payment');
-            if (!btn) return;
-            var saving = document.createElement('span');
-            saving.className = 'ds-save-indicator ds-save-indicator--saving';
-            saving.setAttribute('data-testid', 'fees-save-saving');
-            saving.innerHTML = '<span class="ds-save-indicator__dot" aria-hidden="true"></span>Saving…';
-            btn.insertAdjacentElement('beforebegin', saving);
-        });
-    }
+    // Delegate: Vue remounts #app and replaces the button after this script runs.
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('#fees-record-toggle')) {
+            var form = formWrap();
+            if (!form) return;
+            setOpen(!!form.hidden);
+            return;
+        }
+        if (e.target.closest('#fees-record-cancel')) {
+            setOpen(false);
+        }
+    });
+
+    document.addEventListener('submit', function (e) {
+        if (!e.target || e.target.id !== 'fees-inline-record-form') return;
+        var btn = document.getElementById('fees-save-payment');
+        if (!btn) return;
+        var saving = document.createElement('span');
+        saving.className = 'ds-save-indicator ds-save-indicator--saving';
+        saving.setAttribute('data-testid', 'fees-save-saving');
+        saving.innerHTML = '<span class="ds-save-indicator__dot" aria-hidden="true"></span>Saving…';
+        btn.insertAdjacentElement('beforebegin', saving);
+    });
+
+    var indicator = document.getElementById('fees-save-indicator');
     if (indicator) {
         setTimeout(function () {
             indicator.style.opacity = '0';
