@@ -517,6 +517,15 @@ Product-facing compact notes (contributor detail remains in **Staging & Preview 
 
 Free tier to start (unlimited subscribers/teams, no custom domain), upgrade to paid tier ($20/mo) for a custom domain like `status.klassapp.xyz` later. Purpose: real trust signal for schools depending on the platform daily, lets people check status themselves during an incident instead of messaging individually. Also listed in `TOOLING.md` under Monitoring & reliability.
 
+#### Community docs process — deferred until after the UI phase
+
+**Flagged**: 2026-09-14 — **Deferred** until after the UI phase.
+
+1. Check [github.com/KlassApp-Foundation/KlassApp/community](https://github.com/KlassApp-Foundation/KlassApp/community) for GitHub's real Community Standards checklist to know exactly what's missing (README, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, LICENSE, `SECURITY.md`, issue/PR templates).
+2. Use Claude Cowork to draft the missing files, fed the design system's Content Fundamentals voice guide so community docs match the product's established tone.
+
+**Not the right tool**: DeepWiki — it only reads code and cannot generate values/process documents.
+
 #### Invite class teacher to take ownership of a class (admin-driven)
 
 **Phase 1: Admin CRUD trigger — MERGED** (#485, `5830f747`, 2026-09-09). Admin invites a teacher (new or existing) as CT from the class list. Email-only; schools-scoped; `TeacherInviteMail` backward-compat.
@@ -1934,6 +1943,13 @@ Phase B: Mix→Vite + Vue 3 runtime
 ---
 
 ## Session Log
+
+### 2026-09-14: Flag community docs process under Future Initiatives
+- **Work done**: Logged deferred community-docs workflow (GitHub Community Standards checklist → Claude Cowork drafts with Content Fundamentals voice; DeepWiki explicitly out of scope).
+- **Files modified**: `knowledge.md`
+- **Key decisions**: Defer until after UI phase; use Cowork + voice guide, not DeepWiki.
+- **Status**: 🚧 Docs PR opening
+- **Edge cases flagged**: None
 
 ### 2026-09-14: Piece 3 PR2 size/category/plan card grids — **MERGED + STAGING ONLY** ([#579](https://github.com/KlassApp-Foundation/KlassApp/pull/579))
 - **Work done**: Replaced student-size `<select>` with kit-style `manual-wizard-plan-card` radiogroup driven by `OnboardingStepsService::STUDENT_SIZE_OPTIONS`; added `ManualOnboardingWizard::selectStudentSize`; 2-col `--sizes` grid CSS; contract + Livewire rejection of kit placeholders (`1-100`); e2e reads card labels not `<option>`s. Category/plan already card grids — assertions tightened.
