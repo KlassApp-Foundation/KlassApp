@@ -81,6 +81,8 @@ class LandingAuthErrorCutoverTest extends TestCase
         $notFound->assertSee('data-error-code="404"', false);
         $notFound->assertSee('Page Not Found');
         $notFound->assertDontSee('>Preview<', false);
+        $notFound->assertSee('--paper-base: #FAFAF5', false);
+        $notFound->assertSee('padding: 8px 18px', false);
 
         $expired = $this->get('/preview/errors/419');
         $expired->assertOk();
