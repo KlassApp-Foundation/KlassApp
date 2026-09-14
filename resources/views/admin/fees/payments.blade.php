@@ -134,7 +134,9 @@
 @endif
 
 </div>
+@endsection
 
+@push('scripts')
 <script>
 (function () {
     var formWrap = document.getElementById('fees-record-form');
@@ -176,4 +178,4 @@
     }
 })();
 </script>
-@endsection
+@endpush
