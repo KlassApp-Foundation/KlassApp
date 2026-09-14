@@ -92,8 +92,9 @@ class ManualUiWave3WizardTest extends TestCase
         $response = $this->get('/admin/onboarding/wizard');
 
         $response->assertOk();
-        $response->assertSee('School setup', false);
+        $response->assertSee('Setting up without Toshi', false);
         $response->assertSee('data-testid="wizard-nav"', false);
+        $response->assertSee('Continue →', false);
         $response->assertSee('data-testid="wizard-progress"', false);
         $response->assertSee('data-testid="wizard-prev"', false);
         $response->assertSee('data-testid="wizard-next"', false);
@@ -338,7 +339,7 @@ class ManualUiWave3WizardTest extends TestCase
         $component
             ->assertSeeHtml('data-testid="wizard-review"')
             ->assertSee('Preview Academy Renamed')
-            ->assertSee('Create School')
+            ->assertSee('Confirm & finish')
             ->assertSee('Primary One') // seeded by SchoolCategorySeeder
             ->assertSee('ENGLISH')
             ->assertSee('HELEN TEACHER') // displayName strips digits + uppercases profile names
