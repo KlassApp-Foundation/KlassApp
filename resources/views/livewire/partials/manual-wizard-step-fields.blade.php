@@ -461,12 +461,17 @@
         <div class="manual-wizard-bulk-pair">
             <div class="ds-form-group">
                 <label class="ds-form-label" for="wizard-student-school-id">School Student ID <span class="text-xs text-gray-400">(optional)</span></label>
-                <input id="wizard-student-school-id" type="text" class="ds-form-input w-full" wire:model="studentSchoolStudentId" placeholder="e.g. ADM-2025-001" />
+                <input id="wizard-student-school-id" type="text" class="ds-form-input w-full" wire:model="studentSchoolStudentId" placeholder="e.g. ADM-2025-001" data-testid="wizard-student-school-id" />
             </div>
-            <div class="ds-form-group">
-                <label class="ds-form-label" for="wizard-student-board-reg">UNEB Reg No. <span class="text-xs text-gray-400">(candidate classes only)</span></label>
-                <input id="wizard-student-board-reg" type="text" class="ds-form-input w-full" wire:model="studentBoardRegNumber" placeholder="e.g. U1234/567" />
-            </div>
+            @php
+                $showStudentUneb = \App\Services\OnboardingEngine::isCandidateClass(trim((string) ($studentClass ?? '')));
+            @endphp
+            @if($showStudentUneb)
+                <div class="ds-form-group" data-testid="wizard-student-uneb-wrap">
+                    <label class="ds-form-label" for="wizard-student-board-reg">UNEB Reg No. <span class="text-xs text-gray-400">(optional)</span></label>
+                    <input id="wizard-student-board-reg" type="text" class="ds-form-input w-full" wire:model="studentBoardRegNumber" placeholder="e.g. U1234/567" data-testid="wizard-student-board-reg" />
+                </div>
+            @endif
         </div>
         <x-button type="button" variant="outline" size="sm" wire:click="addStudentDraft" data-testid="wizard-student-add">+ Add student</x-button>
         <p class="manual-wizard-bulk-footnote">Optional — skip if you’ll enrol students later. KlassApp IDs are generated automatically.</p>
@@ -490,7 +495,7 @@
 
 @elseif($stepKey === 'terms')
     <div class="manual-wizard-bulk" data-testid="wizard-terms-bulk">
-        <p class="manual-wizard-bulk-help mb-3">Add every term your school runs, then mark which one is current. Continue only after the list looks right.</p>
+        <p class="manual-wizard-bulk-help mb-3" data-testid="wizard-terms-intro">Review the three UNEB terms (or add more), mark which one is current, then Continue. Dates can be adjusted later in admin settings.</p>
 
         @if(count($termDrafts ?? []) > 0)
             <ul class="manual-wizard-bulk-list" data-testid="wizard-term-list">
@@ -533,7 +538,7 @@
             </div>
         </div>
         <x-button type="button" variant="outline" size="sm" wire:click="addTermDraft" data-testid="wizard-term-add">+ Add term</x-button>
-        <p class="manual-wizard-bulk-footnote">Prefills Term 1–3 for UNEB schools — edit, add, or remove before Continue.</p>
+        <p class="manual-wizard-bulk-footnote" data-testid="wizard-terms-footnote">Prefills Term 1–3 for UNEB schools — edit, add, or remove before Continue. Start/end dates stay editable in admin later (not a blocking step).</p>
     </div>
 
 @elseif($stepKey === 'fees')
